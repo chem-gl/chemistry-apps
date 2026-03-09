@@ -22,3 +22,5 @@
 - Solo existira un .md, el README.md y los que estan en la carpeta .github/instructions/ con las instrucciones para copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
 - seguir las convenciones de programacion para codigo de ciencia
 - al ambientarse debe quedar claro que el usuario puede ejecutar el código en su máquina local o en un servidor, y que se pueden usar diferentes IDEs o editores de texto para trabajar con el código
+- No crear archivos .sh (al menos que se pida especificamente) para ejecutar comandos, se deben ejecutar directamente con el entorno virtual o npm scripts, de tal forma que el usuario pueda ejecutar los comandos sin necesidad de usar scripts adicionales, por ejemplo: `./venv/bin/python manage.py test` o `npm run build`
+- se debe verificar que todo este bien conectado y funcionando, continuamente verificar y eliminar cualquier código que no funcione o que no se integre correctamente, para mantener un proyecto limpio y funcional, eliminando cualquier codigo muerto o archivos que no se usen, y asegurando que todo el código que quede sea funcional y esté bien integrado en el proyecto

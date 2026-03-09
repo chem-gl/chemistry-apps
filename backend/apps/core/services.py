@@ -48,6 +48,7 @@ class JobService:
             status="pending",
             cache_hit=False,
             cache_miss=True,
+            results=None,
         )
 
     @staticmethod
@@ -129,6 +130,7 @@ class JobService:
             RuntimeError,
         ) as service_error:
             job.status = "failed"
+            job.results = None
             job.error_trace = str(service_error)
-            job.save(update_fields=["status", "error_trace", "updated_at"])
+            job.save(update_fields=["status", "results", "error_trace", "updated_at"])
             logger.error("Execution failed for job %s: %s", job_id, service_error)

@@ -308,3 +308,4 @@ Complete OpenAPI documentation
 Realistic API examples  
 Consistent API design
 solo se usara o ya sea django para el backen en produccion y sqlite para el desarrollo local nunca se mockeara la base de datos, se usara la misma tecnologia en ambos entornos para evitar problemas de compatibilidad o diferencias en el comportamiento.
+- Se debe usar la ultima version de Django y python de ser necesario buscar en internet las ultimas versiones de Django y python y verificar que se estan usando las ultimas versiones de Django y python, esto ayuda a mantener el código actualizado y aprovechar las mejoras y optimizaciones que se han hecho en las ultimas versiones de Django y python, ademas de usar codigo corto y potente

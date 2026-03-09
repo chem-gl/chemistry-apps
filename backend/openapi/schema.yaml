@@ -5,6 +5,83 @@ info:
   description: API para plataforma científica ejecutable estructurada a través de
     plugins.
 paths:
+  /api/calculator/jobs/:
+    post:
+      operationId: calculator_jobs_create
+      description: Recibe parámetros estrictos de calculadora y despacha el trabajo
+        en background cuando no existe caché.
+      summary: Crear Job de Calculadora
+      tags:
+      - Calculator
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculatorJobCreate'
+            examples:
+              CrearJobCalculadora:
+                value:
+                  version: 1.0.0
+                  op: add
+                  a: 5.0
+                  b: 3.0
+                summary: Crear job calculadora
+                description: Contrato estricto para crear un job de calculadora.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalculatorJobCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalculatorJobCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculatorJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato de calculadora.
+  /api/calculator/jobs/{id}/:
+    get:
+      operationId: calculator_jobs_retrieve
+      description: Devuelve estado y resultado del job de calculadora por UUID.
+      summary: Consultar Job de Calculadora
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job de calculadora.
+        required: true
+      tags:
+      - Calculator
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculatorJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de calculadora no encontrado.
   /api/jobs/:
     post:
       operationId: jobs_create
@@ -69,6 +146,7 @@ paths:
         name: id
         schema:
           type: string
+        description: UUID del job cientifico a consultar.
         required: true
       tags:
       - Jobs
@@ -91,6 +169,151 @@ paths:
           description: El trabajo no pudo ser encontrado en el Registry local.
 components:
   schemas:
+    CalculatorJobCreate:
+      type: object
+      description: Define parámetros estrictos para crear un job de calculadora.
+      properties:
+        version:
+          type: string
+          default: '1.0'
+          description: Versión del algoritmo calculadora.
+          maxLength: 50
+        op:
+          allOf:
+          - $ref: '#/components/schemas/CalculatorOperationEnum'
+          description: |-
+            Operación aritmética a ejecutar.
+
+            * `add` - add
+            * `sub` - sub
+            * `mul` - mul
+            * `div` - div
+        a:
+          type: number
+          format: double
+          description: Primer operando numérico.
+        b:
+          type: number
+          format: double
+          description: Segundo operando numérico.
+      required:
+      - a
+      - b
+      - op
+    CalculatorJobResponse:
+      type: object
+      description: Respuesta tipada para jobs de calculadora consumibles por frontend.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        parameters:
+          $ref: '#/components/schemas/CalculatorParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/CalculatorResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - status
+      - updated_at
+    CalculatorOperationEnum:
+      enum:
+      - add
+      - sub
+      - mul
+      - div
+      type: string
+      description: |-
+        * `add` - add
+        * `sub` - sub
+        * `mul` - mul
+        * `div` - div
+    CalculatorParameters:
+      type: object
+      description: Estructura de parámetros persistidos para el job calculadora.
+      properties:
+        op:
+          $ref: '#/components/schemas/CalculatorOperationEnum'
+        a:
+          type: number
+          format: double
+        b:
+          type: number
+          format: double
+      required:
+      - a
+      - b
+      - op
+    CalculatorResult:
+      type: object
+      description: Resultado estricto del plugin calculadora.
+      properties:
+        final_result:
+          type: number
+          format: double
+        metadata:
+          $ref: '#/components/schemas/CalculatorResultMetadata'
+      required:
+      - final_result
+      - metadata
+    CalculatorResultMetadata:
+      type: object
+      description: Metadatos de trazabilidad del resultado de calculadora.
+      properties:
+        operation_used:
+          $ref: '#/components/schemas/CalculatorOperationEnum'
+        operand_a:
+          type: number
+          format: double
+        operand_b:
+          type: number
+          format: double
+      required:
+      - operand_a
+      - operand_b
+      - operation_used
     ErrorResponse:
       type: object
       description: Schema consistente para respuestas de error API.

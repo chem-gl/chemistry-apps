@@ -3,7 +3,12 @@
 from typing import Optional, cast
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import status, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -25,6 +30,9 @@ class JobViewSet(viewsets.ViewSet):
     Controlador para despachar y consultar Jobs Científicos en el entorno descentralizado.
     La capa HTTP está puramente desacoplada de la ejecución científica real.
     """
+
+    queryset = ScientificJob.objects.all()
+    lookup_field = "id"
 
     @extend_schema(
         summary="Despachar Job Científico",
@@ -73,6 +81,14 @@ class JobViewSet(viewsets.ViewSet):
     @extend_schema(
         summary="Consultar Estado y Resultados de un Job",
         description="Recupera todo el estado guardado incluyendo outputs una vez finalizado el trabajo subyacente.",
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job cientifico a consultar.",
+            )
+        ],
         responses={
             200: ScientificJobSerializer,
             404: OpenApiResponse(
@@ -81,10 +97,10 @@ class JobViewSet(viewsets.ViewSet):
             ),
         },
     )
-    def retrieve(self, request: Request, pk: Optional[str] = None) -> Response:
+    def retrieve(self, request: Request, id: Optional[str] = None) -> Response:
         """
         Obtiene un job según su UUID.
         """
-        job = get_object_or_404(ScientificJob, pk=pk)
+        job = get_object_or_404(ScientificJob, pk=id)
         result_serializer = ScientificJobSerializer(job)
         return Response(result_serializer.data, status=status.HTTP_200_OK)

@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from .cache import generate_job_hash
 from .models import ScientificCacheEntry, ScientificJob
+from .processing import PluginRegistry
 from .services import JobService
 from .types import JSONMap
 
@@ -86,3 +87,16 @@ class JobApiTests(TestCase):
         self.assertEqual(retrieve_response.status_code, 200)
         self.assertEqual(retrieve_response.data["status"], "completed")
         self.assertEqual(retrieve_response.data["plugin_name"], "calculator")
+
+
+class CalculatorTemplateIntegrationTests(TestCase):
+    """Valida integración de la app calculadora como plantilla desacoplada."""
+
+    def test_calculator_plugin_is_registered_and_executes(self) -> None:
+        calculator_parameters: JSONMap = {"op": "mul", "a": 7, "b": 6}
+
+        execution_result: JSONMap = PluginRegistry.execute(
+            "calculator", calculator_parameters
+        )
+
+        self.assertEqual(execution_result["final_result"], 42.0)

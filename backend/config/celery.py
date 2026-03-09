@@ -1,17 +1,17 @@
+"""celery.py: Configuración central de Celery para tareas asíncronas."""
+
 import os
 
 from celery import Celery
 
-# Set the default Django settings module for the 'celery' program.
+# Define el módulo de settings por defecto para Celery.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 app = Celery("config")
 
-# Using a string here means the worker doesn't have to serialize
-# the configuration object to child processes.
-# - namespace='CELERY' means all celery-related configuration keys
-#   should have a `CELERY_` prefix.
+# Usar cadena evita serializar el objeto de configuración a procesos hijos.
+# namespace='CELERY' indica que las claves deben usar prefijo `CELERY_`.
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
-# Load task modules from all registered Django apps.
+# Carga tareas desde todas las apps registradas.
 app.autodiscover_tasks()

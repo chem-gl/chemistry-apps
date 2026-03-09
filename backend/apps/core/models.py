@@ -23,11 +23,11 @@ class ScientificJob(models.Model):
     algorithm_version = models.CharField(max_length=50, default="1.0")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
 
-    # Traceability
+    # Trazabilidad
     cache_hit = models.BooleanField(default=False)
     cache_miss = models.BooleanField(default=True)
 
-    # Store parameters/results simply (in real app could be JSONField)
+    # Persistencia simple de parámetros/resultados.
     parameters = models.JSONField(default=dict)
     results = models.JSONField(default=dict, blank=True, null=True)
     error_trace = models.TextField(blank=True, null=True)

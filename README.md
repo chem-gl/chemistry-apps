@@ -1,30 +1,116 @@
 # Plataforma Científica Modular
 
-Plataforma por plugins basada en Django (backend) y Angular (frontend) diseñada para aplicaciones científicas modulares. La plataforma permite la ejecución asíncrona de jobs científicos pesados, incorpora un sistema de caché basado en hashes, y se adhiere rígidamente a contratos definidos mediante OpenAPI-first, los cuales son consumidos automáticamente por rutinas del frontend.
+Backend Django + frontend Angular para ejecutar trabajos científicos por apps modulares, con contratos estrictos OpenAPI por dominio.
 
-## Arquitectura por Plugins
+## Estado actual del sistema
 
-Esta plataforma está diseñada de forma modular, permitiendo extenderla creando "plugins" (aplicaciones de Django / módulos Lazy de Angular). Cada app científica (ej. simulación cuántica, procesamiento químico) es un módulo independiente que interactúa con un "core" base que provee los servicios de enrutamiento, base de datos, encolamiento y despacho en segundo plano de jobs.
+- Arquitectura por capas: `routers -> services -> processing/plugins`.
+- Ejecución asíncrona con Celery + Redis.
+- Caché determinista por hash (`job_hash`) para evitar recomputo.
+- OpenAPI-first: los contratos del backend se exportan y el cliente Angular se regenera automáticamente.
+- Contrato estricto por app habilitado para `calculator`.
 
-**Aislamiento y desacoplo (Regla Routers -> Services):**
+## Rutas principales
 
-- **Controladores (Routers):** Los Endpoints de la API son estúpidos, su única función es mapear reques/responses y delegar validaciones simples.
-- **Servicios:** La lógica de negocio real residirá independientemente en servicios aislados de la capa HTTP. Esto facilita el código que no dependa puramente de un Request asincrono, para que se pueda llamar a través de scripts de batch o APIs RPC si fuese necesario.
+Backend (`backend/config/urls.py`):
 
-## Ciclo de Vida de los Jobs Científicos (ScientificJob)
+- `POST /api/calculator/jobs/` crear job de calculadora con payload estricto.
+- `GET /api/calculator/jobs/{id}/` consultar estado y resultado estricto de calculadora.
+- `POST /api/jobs/` y `GET /api/jobs/{id}/` rutas genéricas de core.
+- `GET /api/schema/` contrato OpenAPI.
+- `GET /api/docs/` Swagger UI.
 
-1. **Pending**: Un Job es creado mediante un endpoint HTTP con los parámetros de la simulación pero en espera a ser despachado.
-2. **Running**: El Job ha sido recogido por un worker (Celery) que se encarga del cómputo científico en el fondo.
-3. **Completed**: El cálculo finaliza exitosamente; genera `outputs` u artefactos persistentes listos para ser consumidos y actualiza el estado.
-4. **Failed**: Captura e interrumpe simulaciones erróneas, persistiendo la traza de stack o error particular del framework científico empaquetado.
+Frontend (`frontend/src/app/app.routes.ts`):
 
-## Diseño del Cache
+- `/calculator` vista principal de calculadora.
 
-Con el costo computacional de las operaciones científicas, los jobs emplean caché exhaustivo:
+## Contratos estrictos por app (Calculator)
 
-- **Fingerprinting (Hash) Repetible:** Antes de ejecutar o incluso encolar un proceso complejo, el input combinado (archivos e insumos físicos de simulación), los parámetros, sumados a la versión particular del algoritmo subyacente formulan un hash de Job de entrada combinada.
-- Si este hash tiene correspondencia con operaciones concluidas (Caché Hit), el Job se marca automáticamente como completado y se referencian los mismos resultantes en milésimas de segundo en lugar de incurrir de nuevo en simulaciones extenuantes.
-- En caso opuesto (Caché Miss), la ejecución se acopla según el flujo regular.
+Definidos en:
 
-> [!NOTE]
-> Nota de entorno: El usuario puede ejecutar el código en una máquina local o en un servidor, y se pueden emplear diferentes IDEs o editores de código (como VS Code) sin complicaciones, dado que no depende de interfaces integradas localmente, solo los brokers (Redis) y entornos de virtualización nativa.
+- `backend/apps/calculator/schemas.py`
+- `backend/apps/calculator/routers.py`
+- `backend/apps/calculator/types.py`
+
+Contrato de creación:
+
+```json
+{
+	"version": "1.0.0",
+	"op": "add",
+	"a": 5,
+	"b": 3
+}
+```
+
+Contrato de respuesta (resumen):
+
+- `id`, `status`, `cache_hit`, `cache_miss`
+- `parameters` tipado (`op`, `a`, `b`)
+- `results` tipado (`final_result`, `metadata`) o `null` cuando aún no termina
+
+## Consumo desde frontend
+
+El frontend consume el contrato autogenerado usando wrapper en:
+
+- `frontend/src/app/core/api/jobs-api.service.ts`
+
+Ese wrapper usa `CalculatorService` generado desde OpenAPI para:
+
+- crear job (`calculatorJobsCreate`)
+- consultar job (`calculatorJobsRetrieve`)
+- hacer polling hasta `completed` o `failed`
+
+## Generación de OpenAPI y cliente Angular
+
+Script oficial del proyecto:
+
+- `scripts/create_openapi.py`
+
+Qué valida antes de generar:
+
+- entorno virtual de Python activo
+- `npm` instalado
+- Angular CLI y OpenAPI Generator CLI instalados en `frontend/node_modules`
+
+Qué genera:
+
+- `backend/openapi/schema.yaml`
+- cliente Angular en `frontend/src/app/core/api/generated/`
+
+Ejecución recomendada:
+
+```bash
+./backend/venv/bin/python scripts/create_openapi.py
+```
+
+## Validación rápida
+
+Desde la raíz del repositorio:
+
+```bash
+cd backend && ./venv/bin/python manage.py test apps.calculator.tests apps.core.tests -v 1
+cd ../frontend && NG_CLI_ANALYTICS=false CI=true npm test -- --no-watch
+cd ../frontend && npm run build
+```
+
+## Cómo crear una nueva app científica
+
+Referencia base: `backend/apps/calculator/` (plantilla actual).
+
+1. Crear carpeta de app (ejemplo `backend/apps/simulator/`).
+2. Definir tipos estrictos en `types.py`.
+3. Definir contratos OpenAPI en `schemas.py` (request/response tipados).
+4. Implementar plugin en `plugin.py` y registrar en `PluginRegistry`.
+5. Exponer endpoints dedicados en `routers.py` con su propio path (`/api/simulator/jobs/`).
+6. Crear `apps.py` con `ready()` para auto-registro del plugin.
+7. Registrar la app en `INSTALLED_APPS` (`backend/config/settings.py`).
+8. Registrar rutas en `backend/config/urls.py`.
+9. Agregar tests de contrato y flujo (`tests.py`).
+10. Regenerar OpenAPI + cliente Angular:
+
+```bash
+./backend/venv/bin/python scripts/create_openapi.py
+```
+
+11. Crear/actualizar wrapper frontend para consumir el nuevo servicio generado.

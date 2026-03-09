@@ -1,4 +1,4 @@
-"""apps.py: Configuracion de la app core y registro de plugins al iniciar Django."""
+"""apps.py: Configuración base de la app core del dominio científico."""
 
 from django.apps import AppConfig
 
@@ -6,7 +6,3 @@ from django.apps import AppConfig
 class CoreConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.core"
-
-    def ready(self) -> None:
-        """Importa plugins para registrarlos en el registry en el arranque."""
-        from . import plugins  # noqa: F401
