@@ -1,0 +1,12 @@
+[flake8]
+extend-ignore = E203
+exclude =
+    .git,
+    __pycache__,
+    docs/source/conf.py,
+    old,
+    build,
+    dist
+max-complexity = 10
+# agregar 120 como max-line-length
+max-line-length = 120

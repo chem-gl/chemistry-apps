@@ -1,0 +1,203 @@
+openapi: 3.0.3
+info:
+  title: Plataforma Científica Modular API
+  version: 1.0.0
+  description: API para plataforma científica ejecutable estructurada a través de
+    plugins.
+paths:
+  /api/jobs/:
+    post:
+      operationId: jobs_create
+      description: Evalua reglas de hashing/caching y despacha al worker Celery solo
+        cuando el job no tiene cache disponible.
+      summary: Despachar Job Científico
+      tags:
+      - Jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+            examples:
+              EjemploDeCreaciónDeJob:
+                value:
+                  plugin_name: calculator
+                  version: '1.0'
+                  parameters:
+                    op: add
+                    a: 5
+                    b: 3
+                summary: Ejemplo de Creación de Job
+                description: Creación de una tarea matemática en background.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScientificJob'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ErrorPluginNoRegistrado:
+                  value:
+                    detail: Plugin requested is not registered
+                  summary: Error plugin no registrado
+          description: Error de validacion en parametros.
+  /api/jobs/{id}/:
+    get:
+      operationId: jobs_retrieve
+      description: Recupera todo el estado guardado incluyendo outputs una vez finalizado
+        el trabajo subyacente.
+      summary: Consultar Estado y Resultados de un Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScientificJob'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El trabajo no pudo ser encontrado en el Registry local.
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Schema consistente para respuestas de error API.
+      properties:
+        detail:
+          type: string
+          description: Descripción del error manejado por API.
+      required:
+      - detail
+    JobCreate:
+      type: object
+      description: |-
+        Serializer puro para las peticiones de creación de un nuevo
+        Job científico, siguiendo fuertemente el schema de OpenAPI.
+      properties:
+        plugin_name:
+          type: string
+          description: El nombre registrado del plugin o algoritmo a ejecutar.
+          maxLength: 100
+        version:
+          type: string
+          default: '1.0'
+          description: Versión asociada del algoritmo que será parte de la llave de
+            caché.
+          maxLength: 50
+        parameters:
+          description: Diccionario dinámico de inputs o parámetros del job.
+      required:
+      - parameters
+      - plugin_name
+    ScientificJob:
+      type: object
+      description: |-
+        Serializer central que describe toda la entidad del Job.
+        Usado como schema de salida.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        parameters:
+          readOnly: true
+        results:
+          readOnly: true
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - results
+      - status
+      - updated_at
+    StatusEnum:
+      enum:
+      - pending
+      - running
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `running` - Running
+        * `completed` - Completed
+        * `failed` - Failed
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

@@ -1,0 +1,5 @@
+- Los contratos generados a partir de OpenAPI deben colocarse EXCLUSIVAMENTE en `frontend/src/app/core/api/generated/`.
+- BAJO NINGUNA CIRCUNSTANCIA se debe alterar manualmente el código autogenerado que reside en dicho directorio. Cualquier cambio se debe propagar regenerando el contrato a partir de las fuentes OpenAPI primarias (back).
+- Utilizar los scripts npm existentes en `frontend/package.json` o definir allí nuevos de llamarse explícitamente a rutinas de Open Api Generator (o cliente afín), ej `npm run api:generate`.
+- Se requiere envolver o proteger las abstracciones de los contratos mediante wrappers, ubicados en `frontend/src/app/core/api/`. Esto ayuda a desacoplar el frontend y componentes visuales de posibles roturas o variaciones bruscas en las reglas de nombrado de la autogeneración.
+- Emplear validaciones de tipado estrictas, se asume configuración strict mode de Typescript y la preservación semántica de los objetos originados generados de OpenAPI a través de modelos locales mapeados si fuese justificable.
