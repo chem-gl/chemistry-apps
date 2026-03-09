@@ -3,7 +3,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { ScientificJob } from '../core/api/generated';
+import type { CalculatorJobResponse } from '../core/api/generated';
 import { CalculatorParams, JobsApiService } from '../core/api/jobs-api.service';
 
 @Component({
@@ -93,7 +93,7 @@ export class CalculatorComponent {
 
   isLoading = signal(false);
   currentJobId = signal<string | null>(null);
-  lastResult = signal<ScientificJob | null>(null);
+  lastResult = signal<CalculatorJobResponse | null>(null);
   errorMessage = signal<string | null>(null);
 
   dispatch(): void {

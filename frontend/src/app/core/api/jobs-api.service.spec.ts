@@ -3,7 +3,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideApi, ScientificJob } from './generated';
+import { CalculatorJobResponse, provideApi } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
 describe('JobsApiService', () => {
@@ -32,7 +32,7 @@ describe('JobsApiService', () => {
   });
 
   it('should dispatch calculator job', () => {
-    const mockResponse: ScientificJob = {
+    const mockResponse: CalculatorJobResponse = {
       id: '12345',
       job_hash: 'abc123',
       plugin_name: 'calculator',
@@ -42,7 +42,7 @@ describe('JobsApiService', () => {
       cache_miss: true,
       error_trace: null,
       parameters: { op: 'add', a: 2, b: 3 },
-      results: {},
+      results: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -52,13 +52,13 @@ describe('JobsApiService', () => {
       expect(job.plugin_name).toBe('calculator');
     });
 
-    const req = httpMock.expectOne('http://localhost:8000/api/jobs/');
+    const req = httpMock.expectOne('http://localhost:8000/api/calculator/jobs/');
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
   });
 
   it('should retrieve job status', () => {
-    const mockJob: ScientificJob = {
+    const mockJob: CalculatorJobResponse = {
       id: 'test-id',
       job_hash: 'hash',
       plugin_name: 'calculator',
@@ -67,8 +67,11 @@ describe('JobsApiService', () => {
       cache_hit: false,
       cache_miss: true,
       error_trace: null,
-      parameters: {},
-      results: { final_result: 42 },
+      parameters: { op: 'add', a: 20, b: 22 },
+      results: {
+        final_result: 42,
+        metadata: { operation_used: 'add', operand_a: 20, operand_b: 22 },
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -78,7 +81,7 @@ describe('JobsApiService', () => {
       expect(job.results?.['final_result']).toBe(42);
     });
 
-    const req = httpMock.expectOne('http://localhost:8000/api/jobs/test-id/');
+    const req = httpMock.expectOne('http://localhost:8000/api/calculator/jobs/test-id/');
     expect(req.request.method).toBe('GET');
     req.flush(mockJob);
   });

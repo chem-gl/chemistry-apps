@@ -36,7 +36,7 @@ export interface JobsServiceInterface {
      * Consultar Estado y Resultados de un Job
      * Recupera todo el estado guardado incluyendo outputs una vez finalizado el trabajo subyacente.
      * @endpoint get /api/jobs/{id}/
-     * @param id 
+     * @param id UUID del job cientifico a consultar.
      */
     jobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<ScientificJob>;
 

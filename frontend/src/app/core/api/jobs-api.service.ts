@@ -2,7 +2,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import { Observable, shareReplay } from 'rxjs';
-import { JobCreate, JobsService, ScientificJob } from './generated';
+import { CalculatorJobCreate, CalculatorJobResponse, CalculatorService } from './generated';
 
 export interface CalculatorParams {
   op: 'add' | 'sub' | 'mul' | 'div';
@@ -14,25 +14,29 @@ export interface CalculatorParams {
   providedIn: 'root',
 })
 export class JobsApiService {
-  private readonly jobsClient = inject(JobsService);
+  private readonly calculatorClient = inject(CalculatorService);
 
   dispatchCalculatorJob(
     params: CalculatorParams,
     version: string = '1.0.0',
-  ): Observable<ScientificJob> {
-    const payload: JobCreate = {
-      plugin_name: 'calculator',
+  ): Observable<CalculatorJobResponse> {
+    const payload: CalculatorJobCreate = {
       version,
-      parameters: params,
+      op: params.op,
+      a: params.a,
+      b: params.b,
     };
-    return this.jobsClient.jobsCreate(payload).pipe(shareReplay(1));
+    return this.calculatorClient.calculatorJobsCreate(payload).pipe(shareReplay(1));
   }
 
-  getJobStatus(jobId: string): Observable<ScientificJob> {
-    return this.jobsClient.jobsRetrieve(jobId);
+  getJobStatus(jobId: string): Observable<CalculatorJobResponse> {
+    return this.calculatorClient.calculatorJobsRetrieve(jobId);
   }
 
-  pollJobUntilCompleted(jobId: string, intervalMs: number = 1000): Observable<ScientificJob> {
+  pollJobUntilCompleted(
+    jobId: string,
+    intervalMs: number = 1000,
+  ): Observable<CalculatorJobResponse> {
     return new Observable((observer) => {
       const pollInterval = setInterval(() => {
         this.getJobStatus(jobId).subscribe({
