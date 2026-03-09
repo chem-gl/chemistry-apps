@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from unittest.mock import patch
+from uuid import uuid4
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from .app_registry import ScientificAppDefinition, ScientificAppRegistry
 from .cache import generate_job_hash
 from .models import ScientificCacheEntry, ScientificJob
 from .processing import PluginRegistry
 from .services import JobService
 from .types import JSONMap
+
+PluginSourceCallable = Callable[[JSONMap], JSONMap]
 
 
 class HashingTests(TestCase):
@@ -68,6 +74,19 @@ class JobApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
+    def _create_job_record(self, plugin_name: str, status_value: str) -> ScientificJob:
+        """Crea un job persistido para validar escenarios de listado y filtrado."""
+        return ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name=plugin_name,
+            algorithm_version="1.0.0",
+            status=status_value,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"plugin_name": plugin_name},
+            results={"ok": True} if status_value == "completed" else None,
+        )
+
     def test_create_and_retrieve_job(self) -> None:
         payload: JSONMap = {
             "plugin_name": "calculator",
@@ -88,6 +107,44 @@ class JobApiTests(TestCase):
         self.assertEqual(retrieve_response.data["status"], "completed")
         self.assertEqual(retrieve_response.data["plugin_name"], "calculator")
 
+    def test_list_jobs_returns_all_apps_and_statuses(self) -> None:
+        first_job: ScientificJob = self._create_job_record(
+            plugin_name="calculator", status_value="pending"
+        )
+        second_job: ScientificJob = self._create_job_record(
+            plugin_name="thermodynamics", status_value="completed"
+        )
+
+        list_response = self.client.get("/api/jobs/")
+
+        self.assertEqual(list_response.status_code, 200)
+        returned_job_ids: set[str] = {str(item["id"]) for item in list_response.data}
+        self.assertIn(str(first_job.id), returned_job_ids)
+        self.assertIn(str(second_job.id), returned_job_ids)
+
+        job_status_by_id: dict[str, str] = {
+            str(item["id"]): str(item["status"]) for item in list_response.data
+        }
+        self.assertEqual(job_status_by_id[str(first_job.id)], "pending")
+        self.assertEqual(job_status_by_id[str(second_job.id)], "completed")
+
+    def test_list_jobs_supports_filters_and_invalid_status(self) -> None:
+        self._create_job_record(plugin_name="calculator", status_value="completed")
+        self._create_job_record(plugin_name="calculator", status_value="failed")
+        self._create_job_record(plugin_name="kinetics", status_value="completed")
+
+        filtered_response = self.client.get(
+            "/api/jobs/", {"plugin_name": "calculator", "status": "completed"}
+        )
+        self.assertEqual(filtered_response.status_code, 200)
+        self.assertEqual(len(filtered_response.data), 1)
+        self.assertEqual(filtered_response.data[0]["plugin_name"], "calculator")
+        self.assertEqual(filtered_response.data[0]["status"], "completed")
+
+        invalid_status_response = self.client.get("/api/jobs/", {"status": "done"})
+        self.assertEqual(invalid_status_response.status_code, 400)
+        self.assertIn("Invalid status filter", invalid_status_response.data["detail"])
+
 
 class CalculatorTemplateIntegrationTests(TestCase):
     """Valida integración de la app calculadora como plantilla desacoplada."""
@@ -100,3 +157,100 @@ class CalculatorTemplateIntegrationTests(TestCase):
         )
 
         self.assertEqual(execution_result["final_result"], 42.0)
+
+
+class PluginRegistryValidationTests(TestCase):
+    """Asegura validación de colisiones en registro de plugins."""
+
+    def setUp(self) -> None:
+        self.original_plugins: dict[str, PluginSourceCallable] = dict(
+            PluginRegistry._plugins
+        )
+        self.original_plugin_sources: dict[str, str] = dict(
+            PluginRegistry._plugin_sources
+        )
+        PluginRegistry._plugins.clear()
+        PluginRegistry._plugin_sources.clear()
+
+    def tearDown(self) -> None:
+        PluginRegistry._plugins = self.original_plugins
+        PluginRegistry._plugin_sources = self.original_plugin_sources
+
+    def test_register_raises_for_duplicated_name_from_different_source(self) -> None:
+        def first_plugin(parameters: JSONMap) -> JSONMap:
+            return {"origin": "first", "parameters": parameters}
+
+        def second_plugin(parameters: JSONMap) -> JSONMap:
+            return {"origin": "second", "parameters": parameters}
+
+        PluginRegistry.register("duplicated-plugin")(first_plugin)
+
+        with self.assertRaises(ImproperlyConfigured):
+            PluginRegistry.register("duplicated-plugin")(second_plugin)
+
+
+class ScientificAppRegistryValidationTests(TestCase):
+    """Verifica unicidad de metadatos de app científica al levantar el sistema."""
+
+    def setUp(self) -> None:
+        self.original_by_plugin: dict[str, ScientificAppDefinition] = dict(
+            ScientificAppRegistry._definitions_by_plugin
+        )
+        self.original_by_route_prefix: dict[str, ScientificAppDefinition] = dict(
+            ScientificAppRegistry._definitions_by_route_prefix
+        )
+        self.original_by_api_base_path: dict[str, ScientificAppDefinition] = dict(
+            ScientificAppRegistry._definitions_by_api_base_path
+        )
+        ScientificAppRegistry._definitions_by_plugin.clear()
+        ScientificAppRegistry._definitions_by_route_prefix.clear()
+        ScientificAppRegistry._definitions_by_api_base_path.clear()
+
+    def tearDown(self) -> None:
+        ScientificAppRegistry._definitions_by_plugin = self.original_by_plugin
+        ScientificAppRegistry._definitions_by_route_prefix = (
+            self.original_by_route_prefix
+        )
+        ScientificAppRegistry._definitions_by_api_base_path = (
+            self.original_by_api_base_path
+        )
+
+    def test_register_raises_for_duplicate_plugin_name(self) -> None:
+        first_definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.calculator",
+            plugin_name="calculator",
+            api_route_prefix="calculator/jobs",
+            api_base_path="/api/calculator/jobs/",
+            route_basename="calculator-job",
+        )
+        second_definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.thermo",
+            plugin_name="calculator",
+            api_route_prefix="thermo/jobs",
+            api_base_path="/api/thermo/jobs/",
+            route_basename="thermo-job",
+        )
+
+        ScientificAppRegistry.register(first_definition)
+        with self.assertRaises(ImproperlyConfigured):
+            ScientificAppRegistry.register(second_definition)
+
+    def test_register_raises_for_duplicate_api_base_path(self) -> None:
+        first_definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.calculator",
+            plugin_name="calculator",
+            api_route_prefix="calculator/jobs",
+            api_base_path="/api/shared/jobs/",
+            route_basename="calculator-job",
+        )
+        second_definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.kinetics",
+            plugin_name="kinetics",
+            api_route_prefix="kinetics/jobs",
+            api_base_path="/api/shared/jobs/",
+            route_basename="kinetics-job",
+        )
+
+        ScientificAppRegistry.register(first_definition)
+        with self.assertRaises(ImproperlyConfigured):
+            ScientificAppRegistry.register(second_definition)

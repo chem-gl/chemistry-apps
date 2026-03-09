@@ -83,6 +83,51 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job de calculadora no encontrado.
   /api/jobs/:
+    get:
+      operationId: jobs_list
+      description: Devuelve el listado de jobs científicos registrados en todas las
+        apps, incluyendo su estado actual. Permite filtros opcionales por plugin y
+        estado.
+      summary: Listar Jobs Científicos
+      parameters:
+      - in: query
+        name: plugin_name
+        schema:
+          type: string
+        description: Filtra por nombre de plugin/app científica.
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: 'Filtra por estado del job. Valores válidos: pending, running,
+          completed, failed.'
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScientificJob'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                EstadoInválido:
+                  value:
+                    detail: 'Invalid status filter. Allowed values are: pending, running,
+                      completed, failed.'
+                  summary: Estado inválido
+          description: Filtro de estado inválido.
     post:
       operationId: jobs_create
       description: Evalua reglas de hashing/caching y despacha al worker Celery solo

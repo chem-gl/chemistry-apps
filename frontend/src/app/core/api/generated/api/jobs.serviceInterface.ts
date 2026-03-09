@@ -33,6 +33,15 @@ export interface JobsServiceInterface {
     jobsCreate(jobCreate: JobCreate, extraHttpRequestParams?: any): Observable<ScientificJob>;
 
     /**
+     * Listar Jobs Científicos
+     * Devuelve el listado de jobs científicos registrados en todas las apps, incluyendo su estado actual. Permite filtros opcionales por plugin y estado.
+     * @endpoint get /api/jobs/
+     * @param pluginName Filtra por nombre de plugin/app científica.
+     * @param status Filtra por estado del job. Valores válidos: pending, running, completed, failed.
+     */
+    jobsList(pluginName?: string, status?: string, extraHttpRequestParams?: any): Observable<Array<ScientificJob>>;
+
+    /**
      * Consultar Estado y Resultados de un Job
      * Recupera todo el estado guardado incluyendo outputs una vez finalizado el trabajo subyacente.
      * @endpoint get /api/jobs/{id}/

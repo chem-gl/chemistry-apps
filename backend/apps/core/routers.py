@@ -13,6 +13,7 @@ from rest_framework import status, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from .definitions import ALLOWED_JOB_STATUS_FILTERS
 from .models import ScientificJob
 from .schemas import (
     ErrorResponseSerializer,
@@ -33,6 +34,75 @@ class JobViewSet(viewsets.ViewSet):
 
     queryset = ScientificJob.objects.all()
     lookup_field = "id"
+
+    @extend_schema(
+        summary="Listar Jobs Científicos",
+        description=(
+            "Devuelve el listado de jobs científicos registrados en todas las apps, "
+            "incluyendo su estado actual. Permite filtros opcionales por plugin y estado."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="plugin_name",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Filtra por nombre de plugin/app científica.",
+            ),
+            OpenApiParameter(
+                name="status",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Filtra por estado del job. Valores válidos: "
+                    "pending, running, completed, failed."
+                ),
+            ),
+        ],
+        responses={
+            200: ScientificJobSerializer(many=True),
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Filtro de estado inválido.",
+                examples=[
+                    OpenApiExample(
+                        "Estado inválido",
+                        value={
+                            "detail": "Invalid status filter. Allowed values are: pending, running, completed, failed."
+                        },
+                    )
+                ],
+            ),
+        },
+    )
+    def list(self, request: Request) -> Response:
+        """Lista jobs de todas las apps con filtros opcionales."""
+        plugin_name_filter: str | None = request.query_params.get("plugin_name")
+        status_filter: str | None = request.query_params.get("status")
+
+        if (
+            status_filter is not None
+            and status_filter not in ALLOWED_JOB_STATUS_FILTERS
+        ):
+            return Response(
+                {
+                    "detail": (
+                        "Invalid status filter. Allowed values are: "
+                        "pending, running, completed, failed."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        jobs_queryset = ScientificJob.objects.all().order_by("-created_at")
+
+        if plugin_name_filter:
+            jobs_queryset = jobs_queryset.filter(plugin_name=plugin_name_filter)
+
+        if status_filter:
+            jobs_queryset = jobs_queryset.filter(status=status_filter)
+
+        result_serializer = ScientificJobSerializer(jobs_queryset, many=True)
+        return Response(result_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Despachar Job Científico",

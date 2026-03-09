@@ -8,6 +8,8 @@ from apps.core.types import JSONMap
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
+
 
 class CalculatorContractApiTests(TestCase):
     """Valida request/response estrictos del endpoint dedicado de calculadora."""
@@ -25,12 +27,12 @@ class CalculatorContractApiTests(TestCase):
 
         with patch("apps.core.tasks.execute_scientific_job.delay") as delay_mock:
             create_response = self.client.post(
-                "/api/calculator/jobs/",
+                APP_API_BASE_PATH,
                 request_payload,
                 format="json",
             )
             self.assertEqual(create_response.status_code, 201)
-            self.assertEqual(create_response.data["plugin_name"], "calculator")
+            self.assertEqual(create_response.data["plugin_name"], PLUGIN_NAME)
             self.assertEqual(create_response.data["parameters"]["op"], "mul")
             self.assertEqual(create_response.data["status"], "pending")
             self.assertIsNone(create_response.data["results"])
@@ -39,7 +41,7 @@ class CalculatorContractApiTests(TestCase):
 
         JobService.run_job(created_job_id)
 
-        retrieve_response = self.client.get(f"/api/calculator/jobs/{created_job_id}/")
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
         self.assertEqual(retrieve_response.status_code, 200)
         self.assertEqual(retrieve_response.data["status"], "completed")
         self.assertEqual(retrieve_response.data["results"]["final_result"], 42.0)
@@ -56,7 +58,9 @@ class CalculatorContractApiTests(TestCase):
         }
 
         response = self.client.post(
-            "/api/calculator/jobs/", invalid_payload, format="json"
+            APP_API_BASE_PATH,
+            invalid_payload,
+            format="json",
         )
 
         self.assertEqual(response.status_code, 400)
@@ -74,6 +78,6 @@ class CalculatorContractApiTests(TestCase):
             results={"value": 1},
         )
 
-        response = self.client.get(f"/api/calculator/jobs/{foreign_job.id}/")
+        response = self.client.get(f"{APP_API_BASE_PATH}{foreign_job.id}/")
 
         self.assertEqual(response.status_code, 404)
