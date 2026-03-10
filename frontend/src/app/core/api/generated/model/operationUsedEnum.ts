@@ -10,13 +10,15 @@
 
 
 /**
- * * `add` - add * `sub` - sub * `mul` - mul * `div` - div
+ * * `add` - add * `sub` - sub * `mul` - mul * `div` - div * `pow` - pow * `fact` - fact
  */
 export const OperationUsedEnum = {
     Add: 'add',
     Sub: 'sub',
     Mul: 'mul',
-    Div: 'div'
+    Div: 'div',
+    Pow: 'pow',
+    Fact: 'fact'
 } as const;
 export type OperationUsedEnum = typeof OperationUsedEnum[keyof typeof OperationUsedEnum];
 

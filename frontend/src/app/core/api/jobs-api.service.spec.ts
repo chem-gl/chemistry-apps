@@ -3,8 +3,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { API_BASE_URL } from '../shared/constants';
 import { CalculatorJobResponse, provideApi } from './generated';
 import { JobsApiService } from './jobs-api.service';
+
+const EXPECTED_CALCULATOR_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
 
 describe('JobsApiService', () => {
   let service: JobsApiService;
@@ -15,7 +18,7 @@ describe('JobsApiService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideApi('http://localhost:8000'),
+        provideApi(API_BASE_URL),
         JobsApiService,
       ],
     });
@@ -52,7 +55,7 @@ describe('JobsApiService', () => {
       expect(job.plugin_name).toBe('calculator');
     });
 
-    const req = httpMock.expectOne('http://localhost:8000/api/calculator/jobs/');
+    const req = httpMock.expectOne(EXPECTED_CALCULATOR_JOBS_URL);
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
   });
@@ -81,7 +84,7 @@ describe('JobsApiService', () => {
       expect(job.results?.['final_result']).toBe(42);
     });
 
-    const req = httpMock.expectOne('http://localhost:8000/api/calculator/jobs/test-id/');
+    const req = httpMock.expectOne(`${EXPECTED_CALCULATOR_JOBS_URL}test-id/`);
     expect(req.request.method).toBe('GET');
     req.flush(mockJob);
   });
