@@ -14,6 +14,7 @@ from drf_spectacular.views import (
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
+router.trailing_slash = "/?"
 router.register(CORE_JOBS_ROUTE_PREFIX, JobViewSet, basename=CORE_JOBS_ROUTE_BASENAME)
 router.register(APP_ROUTE_PREFIX, CalculatorJobViewSet, basename=APP_ROUTE_BASENAME)
 

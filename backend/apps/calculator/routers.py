@@ -5,7 +5,7 @@ from typing import cast
 from apps.core.models import ScientificJob
 from apps.core.schemas import ErrorResponseSerializer
 from apps.core.services import JobService
-from apps.core.tasks import execute_scientific_job
+from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -63,7 +63,7 @@ class CalculatorJobViewSet(viewsets.ViewSet):
         )
 
         if job.status == "pending":
-            execute_scientific_job.delay(str(job.id))
+            dispatch_scientific_job(str(job.id))
 
         response_serializer = CalculatorJobResponseSerializer(job)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

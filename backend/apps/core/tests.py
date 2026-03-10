@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -94,11 +97,12 @@ class JobApiTests(TestCase):
             "parameters": {"op": "add", "a": 8, "b": 5},
         }
 
-        with patch("apps.core.tasks.execute_scientific_job.delay") as delay_mock:
+        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
             create_response = self.client.post("/api/jobs/", payload, format="json")
             self.assertEqual(create_response.status_code, 201)
             created_job_id: str = str(create_response.data["id"])
-            delay_mock.assert_called_once()
+            dispatch_mock.assert_called_once_with(created_job_id)
 
         JobService.run_job(created_job_id)
 
@@ -144,6 +148,40 @@ class JobApiTests(TestCase):
         invalid_status_response = self.client.get("/api/jobs/", {"status": "done"})
         self.assertEqual(invalid_status_response.status_code, 400)
         self.assertIn("Invalid status filter", invalid_status_response.data["detail"])
+
+    def test_jobs_endpoints_accept_requests_without_trailing_slash(self) -> None:
+        payload: JSONMap = {
+            "plugin_name": "calculator",
+            "version": "1.0.0",
+            "parameters": {"op": "add", "a": 1, "b": 2},
+        }
+
+        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post("/api/jobs", payload, format="json")
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        retrieve_response = self.client.get(f"/api/jobs/{created_job_id}")
+        self.assertEqual(retrieve_response.status_code, 200)
+
+        list_response = self.client.get("/api/jobs")
+        self.assertEqual(list_response.status_code, 200)
+
+    def test_create_job_keeps_pending_when_dispatch_is_unavailable(self) -> None:
+        payload: JSONMap = {
+            "plugin_name": "calculator",
+            "version": "1.0.0",
+            "parameters": {"op": "add", "a": 2, "b": 3},
+        }
+
+        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = False
+            create_response = self.client.post("/api/jobs/", payload, format="json")
+
+        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.data["status"], "pending")
 
 
 class CalculatorTemplateIntegrationTests(TestCase):
@@ -254,3 +292,176 @@ class ScientificAppRegistryValidationTests(TestCase):
         ScientificAppRegistry.register(first_definition)
         with self.assertRaises(ImproperlyConfigured):
             ScientificAppRegistry.register(second_definition)
+
+
+class DevelopmentUpCommandTests(TestCase):
+    """Valida el comando `manage.py up` para levantar servicios locales."""
+
+    @patch("apps.core.management.commands.up.sleep")
+    @patch("apps.core.management.commands.up.subprocess.Popen")
+    def test_up_command_can_run_without_celery(
+        self,
+        popen_mock: MagicMock,
+        sleep_mock: MagicMock,
+    ) -> None:
+        del sleep_mock
+
+        runserver_process: MagicMock = MagicMock()
+        runserver_process.wait.return_value = 0
+        runserver_process.poll.return_value = 0
+        popen_mock.return_value = runserver_process
+
+        call_command(
+            "up",
+            "--without-celery",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+        )
+
+        self.assertEqual(popen_mock.call_count, 1)
+        called_command: list[str] = list(popen_mock.call_args.args[0])
+        called_cwd: Path = Path(str(popen_mock.call_args.kwargs["cwd"]))
+        self.assertEqual(
+            called_command[-2:],
+            ["runserver", "127.0.0.1:8000"],
+        )
+        self.assertEqual(called_cwd.name, "backend")
+
+    @patch("apps.core.management.commands.up.sleep")
+    @patch("apps.core.management.commands.up.subprocess.Popen")
+    @patch("apps.core.management.commands.up.Command._is_broker_reachable")
+    def test_up_command_starts_celery_and_runserver(
+        self,
+        broker_reachable_mock: MagicMock,
+        popen_mock: MagicMock,
+        sleep_mock: MagicMock,
+    ) -> None:
+        del sleep_mock
+        broker_reachable_mock.return_value = True
+
+        celery_process: MagicMock = MagicMock()
+        celery_process.poll.side_effect = [None, None]
+
+        runserver_process: MagicMock = MagicMock()
+        runserver_process.wait.return_value = 0
+        runserver_process.poll.return_value = 0
+
+        popen_mock.side_effect = [celery_process, runserver_process]
+
+        call_command("up")
+
+        self.assertEqual(popen_mock.call_count, 2)
+        first_call_command: list[str] = list(popen_mock.call_args_list[0].args[0])
+        second_call_command: list[str] = list(popen_mock.call_args_list[1].args[0])
+        first_call_cwd: Path = Path(str(popen_mock.call_args_list[0].kwargs["cwd"]))
+        second_call_cwd: Path = Path(str(popen_mock.call_args_list[1].kwargs["cwd"]))
+
+        self.assertEqual(
+            first_call_command[1:6], ["-m", "celery", "-A", "config", "worker"]
+        )
+        self.assertEqual(second_call_command[-2:], ["runserver", "127.0.0.1:8000"])
+        self.assertEqual(first_call_cwd.name, "backend")
+        self.assertEqual(second_call_cwd.name, "backend")
+        celery_process.terminate.assert_called_once()
+
+    @patch("apps.core.management.commands.up.sleep")
+    @patch("apps.core.management.commands.up.subprocess.Popen")
+    @patch("apps.core.management.commands.up.Command._wait_for_broker_reachable")
+    @patch("apps.core.management.commands.up.Command._is_broker_reachable")
+    def test_up_command_starts_redis_if_broker_is_down(
+        self,
+        broker_reachable_mock: MagicMock,
+        wait_broker_mock: MagicMock,
+        popen_mock: MagicMock,
+        sleep_mock: MagicMock,
+    ) -> None:
+        del sleep_mock
+        broker_reachable_mock.return_value = False
+        wait_broker_mock.return_value = True
+
+        redis_process: MagicMock = MagicMock()
+        redis_process.poll.side_effect = [None, None]
+
+        celery_process: MagicMock = MagicMock()
+        celery_process.poll.side_effect = [None, None]
+
+        runserver_process: MagicMock = MagicMock()
+        runserver_process.wait.return_value = 0
+        runserver_process.poll.return_value = 0
+
+        popen_mock.side_effect = [redis_process, celery_process, runserver_process]
+
+        call_command("up")
+
+        self.assertEqual(popen_mock.call_count, 3)
+        first_call_command: list[str] = list(popen_mock.call_args_list[0].args[0])
+        second_call_command: list[str] = list(popen_mock.call_args_list[1].args[0])
+        third_call_command: list[str] = list(popen_mock.call_args_list[2].args[0])
+
+        self.assertEqual(first_call_command[0], "redis-server")
+        self.assertEqual(
+            second_call_command[1:6],
+            ["-m", "celery", "-A", "config", "worker"],
+        )
+        self.assertEqual(third_call_command[-2:], ["runserver", "127.0.0.1:8000"])
+        redis_process.terminate.assert_called_once()
+        celery_process.terminate.assert_called_once()
+
+    @patch("apps.core.management.commands.up.subprocess.Popen")
+    @patch("apps.core.management.commands.up.Command._is_broker_reachable")
+    def test_up_command_raises_error_if_redis_binary_is_missing(
+        self,
+        broker_reachable_mock: MagicMock,
+        popen_mock: MagicMock,
+    ) -> None:
+        broker_reachable_mock.return_value = False
+        popen_mock.side_effect = [
+            FileNotFoundError("redis-server"),
+            FileNotFoundError("valkey-server"),
+        ]
+
+        with self.assertRaises(CommandError):
+            call_command("up")
+
+    @patch("apps.core.management.commands.up.sleep")
+    @patch("apps.core.management.commands.up.subprocess.Popen")
+    @patch("apps.core.management.commands.up.Command._wait_for_broker_reachable")
+    @patch("apps.core.management.commands.up.Command._is_broker_reachable")
+    def test_up_command_uses_valkey_if_redis_binary_is_missing(
+        self,
+        broker_reachable_mock: MagicMock,
+        wait_broker_mock: MagicMock,
+        popen_mock: MagicMock,
+        sleep_mock: MagicMock,
+    ) -> None:
+        del sleep_mock
+        broker_reachable_mock.return_value = False
+        wait_broker_mock.return_value = True
+
+        redis_not_found_error = FileNotFoundError("redis-server")
+
+        valkey_process: MagicMock = MagicMock()
+        valkey_process.poll.side_effect = [None, None]
+
+        celery_process: MagicMock = MagicMock()
+        celery_process.poll.side_effect = [None, None]
+
+        runserver_process: MagicMock = MagicMock()
+        runserver_process.wait.return_value = 0
+        runserver_process.poll.return_value = 0
+
+        popen_mock.side_effect = [
+            redis_not_found_error,
+            valkey_process,
+            celery_process,
+            runserver_process,
+        ]
+
+        call_command("up")
+
+        self.assertEqual(popen_mock.call_count, 4)
+        second_call_command: list[str] = list(popen_mock.call_args_list[1].args[0])
+        self.assertEqual(second_call_command[0], "valkey-server")
+        valkey_process.terminate.assert_called_once()

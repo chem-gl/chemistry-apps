@@ -21,7 +21,7 @@ from .schemas import (
     ScientificJobSerializer,
 )
 from .services import JobService
-from .tasks import execute_scientific_job
+from .tasks import dispatch_scientific_job
 from .types import JobCreatePayload
 
 
@@ -143,7 +143,7 @@ class JobViewSet(viewsets.ViewSet):
 
         # Iniciar proceso Background si no acertó la caché temprana y el job fue realmente creado virgen
         if job.status == "pending":
-            execute_scientific_job.delay(str(job.id))
+            dispatch_scientific_job(str(job.id))
 
         result_serializer = ScientificJobSerializer(job)
         return Response(result_serializer.data, status=status.HTTP_201_CREATED)

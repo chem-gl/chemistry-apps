@@ -25,7 +25,8 @@ class CalculatorContractApiTests(TestCase):
             "b": 6.0,
         }
 
-        with patch("apps.core.tasks.execute_scientific_job.delay") as delay_mock:
+        with patch("apps.calculator.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
                 request_payload,
@@ -37,7 +38,7 @@ class CalculatorContractApiTests(TestCase):
             self.assertEqual(create_response.data["status"], "pending")
             self.assertIsNone(create_response.data["results"])
             created_job_id: str = str(create_response.data["id"])
-            delay_mock.assert_called_once()
+            dispatch_mock.assert_called_once_with(created_job_id)
 
         JobService.run_job(created_job_id)
 
@@ -81,3 +82,27 @@ class CalculatorContractApiTests(TestCase):
         response = self.client.get(f"{APP_API_BASE_PATH}{foreign_job.id}/")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_calculator_endpoints_accept_requests_without_trailing_slash(self) -> None:
+        request_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "add",
+            "a": 3.0,
+            "b": 4.0,
+        }
+
+        with patch("apps.calculator.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH.rstrip("/"),
+                request_payload,
+                format="json",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        retrieve_response = self.client.get(
+            f"{APP_API_BASE_PATH.rstrip('/')}/{created_job_id}"
+        )
+        self.assertEqual(retrieve_response.status_code, 200)
