@@ -91,6 +91,17 @@ def calculator_plugin(
     second_operand: float | None = validated_input["b"]
 
     emit_log(
+        "debug",
+        "calculator.plugin",
+        "Log fantasma: se ejecutará la operación de calculadora solicitada.",
+        {
+            "operation": operation_name,
+            "operand_a": first_operand,
+            "operand_b": second_operand,
+        },
+    )
+
+    emit_log(
         "info",
         "calculator.plugin",
         "Iniciando operación de calculadora.",

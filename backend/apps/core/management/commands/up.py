@@ -22,8 +22,8 @@ class Command(BaseCommand):
         """Define opciones del comando para host, puerto y worker."""
         parser.add_argument(
             "--host",
-            default="127.0.0.1",
-            help="Host para runserver (default: 127.0.0.1)",
+            default="0.0.0.0",
+            help="Host para runserver (default: 0.0.0.0)",
         )
         parser.add_argument(
             "--port",
@@ -129,11 +129,8 @@ class Command(BaseCommand):
                 runserver_command,
                 cwd=backend_root_path,
             )
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Runserver iniciado en http://{host_value}:{port_value}/"
-                )
-            )
+            public_url: str = self._build_public_runserver_url(host_value, port_value)
+            self.stdout.write(self.style.SUCCESS(f"Runserver iniciado en {public_url}"))
 
             runserver_return_code: int = runserver_process.wait()
             if runserver_return_code != 0:
@@ -237,6 +234,12 @@ class Command(BaseCommand):
     def _redis_server_command_candidates(self) -> tuple[str, ...]:
         """Comandos candidatos para levantar un servidor compatible Redis."""
         return ("redis-server", "valkey-server")
+
+    def _build_public_runserver_url(self, host_value: str, port_value: str) -> str:
+        """Construye URL de acceso amigable para localhost o binding abierto."""
+        if host_value == "0.0.0.0":
+            return f"http://localhost:{port_value}/ (bind 0.0.0.0)"
+        return f"http://{host_value}:{port_value}/"
 
     def _stop_process(
         self,

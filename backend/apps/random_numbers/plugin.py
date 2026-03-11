@@ -144,6 +144,7 @@ def random_numbers_plugin(
     while generated_count < total_numbers:
         remaining_numbers: int = total_numbers - generated_count
         current_batch_size: int = min(numbers_per_batch, remaining_numbers)
+        batch_generated_numbers: list[int] = []
         emit_log(
             "info",
             "random_numbers.plugin",
@@ -158,6 +159,7 @@ def random_numbers_plugin(
         for _ in range(current_batch_size):
             next_number: int = random_generator.randint(0, 1_000_000)
             generated_numbers.append(next_number)
+            batch_generated_numbers.append(next_number)
             generated_count += 1
             emit_log(
                 "debug",
@@ -176,6 +178,18 @@ def random_numbers_plugin(
                 "running",
                 f"Generados {generated_count}/{total_numbers} números aleatorios.",
             )
+
+        emit_log(
+            "info",
+            "random_numbers.plugin",
+            "Lote generado; se publica snapshot acumulado de números generados.",
+            {
+                "batch_generated_numbers": batch_generated_numbers,
+                "generated_count": generated_count,
+                "generated_numbers_so_far": list(generated_numbers),
+                "total_numbers": total_numbers,
+            },
+        )
 
         if generated_count < total_numbers:
             emit_log(

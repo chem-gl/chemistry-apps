@@ -176,3 +176,11 @@ class RandomNumbersContractApiTests(TestCase):
         sources: set[str] = {str(item.source) for item in job_logs}
         self.assertIn("core.runtime", sources)
         self.assertIn("random_numbers.plugin", sources)
+
+        snapshot_log = job_logs.filter(
+            message="Lote generado; se publica snapshot acumulado de números generados."
+        ).first()
+        self.assertIsNotNone(snapshot_log)
+        assert snapshot_log is not None
+        self.assertIn("generated_count", snapshot_log.payload)
+        self.assertIn("generated_numbers_so_far", snapshot_log.payload)

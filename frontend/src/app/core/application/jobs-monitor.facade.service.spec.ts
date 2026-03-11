@@ -35,6 +35,8 @@ describe('JobsMonitorFacadeService', () => {
     listJobs: ReturnType<typeof vi.fn>;
     getScientificJobStatus: ReturnType<typeof vi.fn>;
     getJobLogs: ReturnType<typeof vi.fn>;
+    streamJobEvents: ReturnType<typeof vi.fn>;
+    streamJobLogEvents: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -62,6 +64,8 @@ describe('JobsMonitorFacadeService', () => {
           ],
         }),
       ),
+      streamJobEvents: vi.fn(() => of()),
+      streamJobLogEvents: vi.fn(() => of()),
     };
 
     TestBed.configureTestingModule({
@@ -129,5 +133,16 @@ describe('JobsMonitorFacadeService', () => {
     expect(facadeService.selectedJob()?.id).toBe('job-1');
     expect(facadeService.selectedJobLogs().length).toBe(1);
     expect(facadeService.selectedJobLogs()[0].source).toBe('tests.monitor');
+  });
+
+  it('starts live streams when opening details for an active job', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      of(makeScientificJob({ id: 'job-running', status: 'running' })),
+    );
+
+    facadeService.openJobDetails('job-running');
+
+    expect(jobsApiServiceMock.streamJobEvents).toHaveBeenCalledWith('job-running');
+    expect(jobsApiServiceMock.streamJobLogEvents).toHaveBeenCalledWith('job-running');
   });
 });

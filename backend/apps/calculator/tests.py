@@ -224,7 +224,11 @@ class CalculatorContractApiTests(TestCase):
             source="calculator.plugin",
         ).order_by("event_index")
 
-        self.assertGreaterEqual(calculator_logs.count(), 2)
+        self.assertGreaterEqual(calculator_logs.count(), 3)
         messages: list[str] = [str(item.message) for item in calculator_logs]
+        self.assertIn(
+            "Log fantasma: se ejecutará la operación de calculadora solicitada.",
+            messages,
+        )
         self.assertIn("Iniciando operación de calculadora.", messages)
         self.assertIn("Operación de calculadora completada.", messages)

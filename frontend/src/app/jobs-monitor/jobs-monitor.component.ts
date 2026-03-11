@@ -135,6 +135,12 @@ import {
                 </div>
 
                 <p class="job-message">{{ activeJob.progress_message }}</p>
+
+                <div class="actions-cell">
+                  <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
+                    Ver logs en vivo
+                  </button>
+                </div>
               </article>
             }
           </div>
@@ -229,6 +235,7 @@ import {
                   <p><strong>Estado:</strong> {{ selectedJob.status }}</p>
                   <p><strong>Etapa:</strong> {{ selectedJob.progress_stage }}</p>
                   <p><strong>Progreso:</strong> {{ selectedJob.progress_percentage }}%</p>
+                  <p><strong>Mensaje:</strong> {{ selectedJob.progress_message }}</p>
                   <p>
                     <strong>Actualizado:</strong>
                     {{ selectedJob.updated_at | date: 'dd/MM HH:mm:ss' }}

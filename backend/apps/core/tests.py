@@ -397,6 +397,34 @@ class JobApiTests(TestCase):
         self.assertEqual(response.data["results"][1]["event_index"], 2)
         self.assertEqual(response.data["next_after_event_index"], 2)
 
+    def test_logs_endpoint_returns_events_for_running_job(self) -> None:
+        job: ScientificJob = self._create_job_record(
+            plugin_name="random-numbers",
+            status_value="running",
+        )
+        ScientificJob.objects.filter(id=job.id).update(
+            progress_percentage=55,
+            progress_stage="running",
+            progress_message="Generados 11/20 números aleatorios.",
+        )
+        self._create_log_event(
+            job=job, event_index=1, message="Procesando lote de generación"
+        )
+        self._create_log_event(
+            job=job, event_index=2, message="Número generado correctamente"
+        )
+
+        response = self.client.get(f"/api/jobs/{job.id}/logs/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(
+            response.data["results"][0]["message"], "Procesando lote de generación"
+        )
+        self.assertEqual(
+            response.data["results"][1]["message"], "Número generado correctamente"
+        )
+
     def test_logs_events_endpoint_returns_sse_log_payload(self) -> None:
         job: ScientificJob = self._create_job_record(
             plugin_name="calculator",
@@ -594,7 +622,7 @@ class DevelopmentUpCommandTests(TestCase):
         self.assertEqual(
             first_call_command[1:6], ["-m", "celery", "-A", "config", "worker"]
         )
-        self.assertEqual(second_call_command[-2:], ["runserver", "127.0.0.1:8000"])
+        self.assertEqual(second_call_command[-2:], ["runserver", "0.0.0.0:8000"])
         self.assertEqual(first_call_cwd.name, "backend")
         self.assertEqual(second_call_cwd.name, "backend")
         celery_process.terminate.assert_called_once()
@@ -638,7 +666,7 @@ class DevelopmentUpCommandTests(TestCase):
             second_call_command[1:6],
             ["-m", "celery", "-A", "config", "worker"],
         )
-        self.assertEqual(third_call_command[-2:], ["runserver", "127.0.0.1:8000"])
+        self.assertEqual(third_call_command[-2:], ["runserver", "0.0.0.0:8000"])
         redis_process.terminate.assert_called_once()
         celery_process.terminate.assert_called_once()
 

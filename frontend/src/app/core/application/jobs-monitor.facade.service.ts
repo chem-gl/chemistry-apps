@@ -17,6 +17,8 @@ export type JobStatusFilterOption = JobListStatusFilter | 'all';
 export class JobsMonitorFacadeService implements OnDestroy {
   private readonly jobsApiService = inject(JobsApiService);
   private refreshSubscription: Subscription | null = null;
+  private detailProgressSubscription: Subscription | null = null;
+  private detailLogsSubscription: Subscription | null = null;
 
   readonly jobs = signal<ScientificJob[]>([]);
   readonly isLoading = signal<boolean>(false);
@@ -128,6 +130,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   }
 
   openJobDetails(jobId: string): void {
+    this.stopDetailStreams();
     this.selectedJobId.set(jobId);
     this.isDetailsLoading.set(true);
     this.detailsErrorMessage.set(null);
@@ -138,8 +141,9 @@ export class JobsMonitorFacadeService implements OnDestroy {
     }).subscribe({
       next: ({ job, logsPage }) => {
         this.selectedJob.set(job);
-        this.selectedJobLogs.set(logsPage.results);
+        this.selectedJobLogs.set(this.mergeLogEntries([], logsPage.results));
         this.isDetailsLoading.set(false);
+        this.startDetailStreams(jobId, job.status);
       },
       error: (detailsError: Error) => {
         this.detailsErrorMessage.set(`No se pudo cargar detalle del job: ${detailsError.message}`);
@@ -149,6 +153,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   }
 
   closeJobDetails(): void {
+    this.stopDetailStreams();
     this.selectedJobId.set(null);
     this.selectedJob.set(null);
     this.selectedJobLogs.set([]);
@@ -158,6 +163,74 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stopAutoRefresh();
+    this.stopDetailStreams();
+  }
+
+  private startDetailStreams(jobId: string, jobStatus: ScientificJob['status']): void {
+    if (jobStatus !== 'pending' && jobStatus !== 'running') {
+      return;
+    }
+
+    this.detailProgressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
+      next: (jobSnapshot) => {
+        const currentJob: ScientificJob | null = this.selectedJob();
+        if (currentJob === null || currentJob.id !== jobId) {
+          return;
+        }
+
+        this.selectedJob.set({
+          ...currentJob,
+          status: jobSnapshot.status,
+          progress_percentage: jobSnapshot.progress_percentage,
+          progress_stage: jobSnapshot.progress_stage,
+          progress_message: jobSnapshot.progress_message,
+          progress_event_index: jobSnapshot.progress_event_index,
+          updated_at: jobSnapshot.updated_at,
+        });
+      },
+      complete: () => {
+        this.jobsApiService.getScientificJobStatus(jobId).subscribe({
+          next: (job) => this.selectedJob.set(job),
+        });
+      },
+      error: () => {
+        // Mantener modal estable aunque falle el stream SSE de progreso.
+      },
+    });
+
+    this.detailLogsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
+      next: (logEntry: JobLogEntryView) => {
+        this.selectedJobLogs.update((currentLogs) => this.mergeLogEntries(currentLogs, [logEntry]));
+      },
+      error: () => {
+        // Mantener modal estable aunque falle el stream SSE de logs.
+      },
+    });
+  }
+
+  private stopDetailStreams(): void {
+    this.detailProgressSubscription?.unsubscribe();
+    this.detailLogsSubscription?.unsubscribe();
+    this.detailProgressSubscription = null;
+    this.detailLogsSubscription = null;
+  }
+
+  private mergeLogEntries(
+    currentLogs: JobLogEntryView[],
+    newLogs: JobLogEntryView[],
+  ): JobLogEntryView[] {
+    const mergedLogsByEventIndex: Map<number, JobLogEntryView> = new Map(
+      currentLogs.map((logEntry: JobLogEntryView) => [logEntry.eventIndex, logEntry]),
+    );
+
+    newLogs.forEach((logEntry: JobLogEntryView) => {
+      mergedLogsByEventIndex.set(logEntry.eventIndex, logEntry);
+    });
+
+    return [...mergedLogsByEventIndex.values()].sort(
+      (leftLog: JobLogEntryView, rightLog: JobLogEntryView) =>
+        leftLog.eventIndex - rightLog.eventIndex,
+    );
   }
 
   private buildFilters(): JobListFilters {
