@@ -84,7 +84,23 @@ SPECTACULAR_SETTINGS = {
             ("sub", "sub"),
             ("mul", "mul"),
             ("div", "div"),
-        ]
+            ("pow", "pow"),
+            ("factorial", "factorial"),
+        ],
+        "JobStatusEnum": [
+            ("pending", "Pending"),
+            ("running", "Running"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        "JobProgressStageEnum": [
+            ("pending", "pending"),
+            ("queued", "queued"),
+            ("running", "running"),
+            ("caching", "caching"),
+            ("completed", "completed"),
+            ("failed", "failed"),
+        ],
     },
 }
 

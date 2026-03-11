@@ -28,5 +28,6 @@ def dispatch_scientific_job(job_id: str) -> bool:
 
 @shared_task(bind=True)
 def execute_scientific_job(self: Task, job_id: str) -> None:
-    logger.info(f"Starting async processing for job {job_id}")
+    """Ejecuta en worker Celery la lógica científica de un job persistido."""
+    logger.info("Iniciando procesamiento asíncrono para job %s", job_id)
     JobService.run_job(job_id)

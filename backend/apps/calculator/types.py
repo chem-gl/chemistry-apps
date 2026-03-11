@@ -1,8 +1,15 @@
 """types.py: Tipos estrictos de la app calculadora para uso como plantilla."""
 
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, NotRequired, TypeAlias, TypedDict
 
-CalculatorOperation: TypeAlias = Literal["add", "sub", "mul", "div"]
+CalculatorOperation: TypeAlias = Literal[
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "pow",
+    "factorial",
+]
 
 
 class CalculatorInput(TypedDict):
@@ -10,7 +17,7 @@ class CalculatorInput(TypedDict):
 
     op: CalculatorOperation
     a: float
-    b: float
+    b: float | None
 
 
 class CalculatorMetadata(TypedDict):
@@ -18,7 +25,7 @@ class CalculatorMetadata(TypedDict):
 
     operation_used: CalculatorOperation
     operand_a: float
-    operand_b: float
+    operand_b: float | None
 
 
 class CalculatorResult(TypedDict):
@@ -34,4 +41,4 @@ class CalculatorJobCreatePayload(TypedDict):
     version: str
     op: CalculatorOperation
     a: float
-    b: float
+    b: NotRequired[float | None]

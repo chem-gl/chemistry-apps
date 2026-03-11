@@ -53,7 +53,7 @@ class CalculatorContractApiTests(TestCase):
     def test_create_calculator_job_rejects_invalid_operation(self) -> None:
         invalid_payload: JSONMap = {
             "version": "1.0.0",
-            "op": "pow",
+            "op": "sqrt",
             "a": 2.0,
             "b": 3.0,
         }
@@ -66,6 +66,96 @@ class CalculatorContractApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("op", response.data)
+
+    def test_create_and_run_calculator_pow_operation(self) -> None:
+        request_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "pow",
+            "a": 2.0,
+            "b": 8.0,
+        }
+
+        with patch("apps.calculator.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                request_payload,
+                format="json",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["results"]["final_result"], 256.0)
+        self.assertEqual(
+            retrieve_response.data["results"]["metadata"]["operation_used"], "pow"
+        )
+
+    def test_create_and_run_calculator_factorial_operation(self) -> None:
+        request_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "factorial",
+            "a": 5.0,
+        }
+
+        with patch("apps.calculator.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                request_payload,
+                format="json",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["results"]["final_result"], 120.0)
+        self.assertEqual(
+            retrieve_response.data["results"]["metadata"]["operation_used"],
+            "factorial",
+        )
+        self.assertIsNone(retrieve_response.data["results"]["metadata"]["operand_b"])
+
+    def test_create_factorial_rejects_second_operand(self) -> None:
+        invalid_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "factorial",
+            "a": 5.0,
+            "b": 2.0,
+        }
+
+        response = self.client.post(
+            APP_API_BASE_PATH,
+            invalid_payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("b", response.data)
+
+    def test_create_factorial_rejects_non_integer_operand(self) -> None:
+        invalid_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "factorial",
+            "a": 3.5,
+        }
+
+        response = self.client.post(
+            APP_API_BASE_PATH,
+            invalid_payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("a", response.data)
 
     def test_retrieve_calculator_endpoint_ignores_other_plugins(self) -> None:
         foreign_job: ScientificJob = ScientificJob.objects.create(

@@ -8,7 +8,7 @@ from django.db import models
 class ScientificJob(models.Model):
     """Representa un job cientifico ejecutable de forma asincrona."""
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: list[tuple[str, str]] = [
         ("pending", "Pending"),
         ("running", "Running"),
         ("completed", "Completed"),
@@ -32,13 +32,34 @@ class ScientificJob(models.Model):
     results = models.JSONField(default=dict, blank=True, null=True)
     error_trace = models.TextField(blank=True, null=True)
 
+    # Progreso de ejecución para consultas y streaming de eventos SSE.
+    progress_percentage = models.PositiveIntegerField(
+        default=0,
+        help_text="Porcentaje de progreso entre 0 y 100.",
+    )
+    progress_stage = models.CharField(
+        max_length=40,
+        default="pending",
+        help_text="Etapa actual de ejecución: pending/queued/running/caching/completed/failed.",
+    )
+    progress_message = models.CharField(
+        max_length=255,
+        default="Job creado y pendiente de ejecución.",
+        help_text="Mensaje corto y legible del estado de progreso.",
+    )
+    progress_event_index = models.PositiveIntegerField(
+        default=0,
+        help_text="Contador incremental de eventos de progreso emitidos.",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Retorna una representación compacta para trazabilidad de logs."""
         return f"{self.plugin_name} - {self.id} ({self.status})"
 
 

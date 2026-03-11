@@ -46,6 +46,65 @@ class ErrorResponseSerializer(serializers.Serializer):
     detail = serializers.CharField(help_text="Descripción del error manejado por API.")
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Snapshot de progreso",
+            value={
+                "job_id": "8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",
+                "status": "running",
+                "progress_percentage": 35,
+                "progress_stage": "running",
+                "progress_message": "Ejecutando plugin científico.",
+                "progress_event_index": 3,
+                "updated_at": "2026-03-10T12:00:00Z",
+            },
+            response_only=True,
+            description="Estado actual del job para consumo por polling o SSE.",
+        )
+    ]
+)
+class JobProgressSnapshotSerializer(serializers.Serializer):
+    """Contrato de progreso de job usado en endpoint snapshot y stream SSE."""
+
+    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    status = serializers.ChoiceField(
+        choices=[
+            ("pending", "Pending"),
+            ("running", "Running"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        help_text="Estado principal del ciclo de vida del job.",
+    )
+    progress_percentage = serializers.IntegerField(
+        min_value=0,
+        max_value=100,
+        help_text="Porcentaje de avance entre 0 y 100.",
+    )
+    progress_stage = serializers.ChoiceField(
+        choices=[
+            ("pending", "pending"),
+            ("queued", "queued"),
+            ("running", "running"),
+            ("caching", "caching"),
+            ("completed", "completed"),
+            ("failed", "failed"),
+        ],
+        help_text="Etapa fina de ejecución para seguimiento en tiempo real.",
+    )
+    progress_message = serializers.CharField(
+        help_text="Mensaje legible para usuario con contexto de ejecución."
+    )
+    progress_event_index = serializers.IntegerField(
+        min_value=0,
+        help_text="Contador incremental de eventos emitidos por el job.",
+    )
+    updated_at = serializers.DateTimeField(
+        help_text="Marca temporal de última actualización."
+    )
+
+
 class ScientificJobSerializer(serializers.ModelSerializer):
     """
     Serializer central que describe toda la entidad del Job.
@@ -62,6 +121,10 @@ class ScientificJobSerializer(serializers.ModelSerializer):
             "status",
             "cache_hit",
             "cache_miss",
+            "progress_percentage",
+            "progress_stage",
+            "progress_message",
+            "progress_event_index",
             "parameters",
             "results",
             "error_trace",

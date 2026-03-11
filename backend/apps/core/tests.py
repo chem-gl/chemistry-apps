@@ -182,6 +182,41 @@ class JobApiTests(TestCase):
 
         self.assertEqual(create_response.status_code, 201)
         self.assertEqual(create_response.data["status"], "pending")
+        self.assertEqual(create_response.data["progress_stage"], "pending")
+        self.assertIn("Broker no disponible", create_response.data["progress_message"])
+
+    def test_progress_endpoint_returns_job_snapshot(self) -> None:
+        job: ScientificJob = self._create_job_record(
+            plugin_name="calculator",
+            status_value="pending",
+        )
+
+        response = self.client.get(f"/api/jobs/{job.id}/progress/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(str(response.data["job_id"]), str(job.id))
+        self.assertIn("progress_percentage", response.data)
+        self.assertIn("progress_stage", response.data)
+        self.assertIn("progress_message", response.data)
+        self.assertIn("progress_event_index", response.data)
+
+    def test_events_endpoint_returns_sse_payload(self) -> None:
+        job: ScientificJob = self._create_job_record(
+            plugin_name="calculator",
+            status_value="completed",
+        )
+
+        response = self.client.get(
+            f"/api/jobs/{job.id}/events/",
+            {"timeout_seconds": 1},
+            HTTP_ACCEPT="text/event-stream",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/event-stream")
+        stream_payload_text: str = b"".join(response.streaming_content).decode("utf-8")
+        self.assertIn("event: job.progress", stream_payload_text)
+        self.assertIn(str(job.id), stream_payload_text)
 
 
 class CalculatorTemplateIntegrationTests(TestCase):

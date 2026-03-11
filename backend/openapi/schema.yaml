@@ -19,13 +19,29 @@ paths:
             schema:
               $ref: '#/components/schemas/CalculatorJobCreate'
             examples:
-              CrearJobCalculadora:
+              CrearJobCalculadoraPotencia:
+                value:
+                  version: 1.0.0
+                  op: pow
+                  a: 2.0
+                  b: 8.0
+                summary: Crear job calculadora potencia
+                description: 'Contrato estricto para potencia: resultado 2^8.'
+              CrearJobCalculadoraFactorial:
+                value:
+                  version: 1.0.0
+                  op: factorial
+                  a: 5.0
+                summary: Crear job calculadora factorial
+                description: 'Contrato estricto para factorial: solo usa el campo
+                  a.'
+              CrearJobCalculadoraBásico:
                 value:
                   version: 1.0.0
                   op: add
                   a: 5.0
                   b: 3.0
-                summary: Crear job calculadora
+                summary: Crear job calculadora básico
                 description: Contrato estricto para crear un job de calculadora.
           application/x-www-form-urlencoded:
             schema:
@@ -50,6 +66,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FactorialInválido:
+                  value:
+                    a:
+                    - Para factorial, a debe ser un entero no negativo.
+                  summary: Factorial inválido
+                OperaciónBinariaSinB:
+                  value:
+                    b:
+                    - El campo b es obligatorio para operaciones binarias.
+                  summary: Operación binaria sin b
           description: Error de validación del contrato de calculadora.
   /api/calculator/jobs/{id}/:
     get:
@@ -212,6 +239,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: El trabajo no pudo ser encontrado en el Registry local.
+  /api/jobs/{id}/events/:
+    get:
+      operationId: jobs_events_retrieve
+      description: Abre un stream Server-Sent Events para recibir actualizaciones
+        de progreso en tiempo real hasta completar/fallar o alcanzar timeout.
+      summary: Suscribirse a eventos de progreso de un Job (SSE)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      - in: query
+        name: timeout_seconds
+        schema:
+          type: integer
+        description: 'Tiempo máximo del stream SSE en segundos. Valor por defecto:
+          30.'
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                EventoSSE:
+                  value: |+
+                    id: 4
+                    event: job.progress
+                    data: {"job_id":"8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24","status":"running","progress_percentage":35,"progress_stage":"running","progress_message":"Ejecutando plugin científico.","progress_event_index":4,"updated_at":"2026-03-10T12:00:00Z"}
+
+                  summary: Evento SSE
+          description: Flujo SSE de eventos job.progress con id incremental.
+        '404':
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+  /api/jobs/{id}/progress/:
+    get:
+      operationId: jobs_progress_retrieve
+      description: Devuelve un snapshot del progreso actual del job para facilitar
+        monitorización por polling o reconexión de stream SSE.
+      summary: Consultar progreso de un Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobProgressSnapshot'
+              examples:
+                SnapshotDeProgreso:
+                  value:
+                    job_id: 8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24
+                    status: running
+                    progress_percentage: 35
+                    progress_stage: running
+                    progress_message: Ejecutando plugin científico.
+                    progress_event_index: 3
+                    updated_at: '2026-03-10T12:00:00Z'
+                  summary: Snapshot de progreso
+                  description: Estado actual del job para consumo por polling o SSE.
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
 components:
   schemas:
     CalculatorJobCreate:
@@ -233,6 +350,8 @@ components:
             * `sub` - sub
             * `mul` - mul
             * `div` - div
+            * `pow` - pow
+            * `factorial` - factorial
         a:
           type: number
           format: double
@@ -240,10 +359,11 @@ components:
         b:
           type: number
           format: double
-          description: Segundo operando numérico.
+          nullable: true
+          description: Segundo operando numérico. Es obligatorio para add/sub/mul/div/pow
+            y no debe enviarse para factorial.
       required:
       - a
-      - b
       - op
     CalculatorJobResponse:
       type: object
@@ -265,7 +385,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/JobStatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -309,12 +429,16 @@ components:
       - sub
       - mul
       - div
+      - pow
+      - factorial
       type: string
       description: |-
         * `add` - add
         * `sub` - sub
         * `mul` - mul
         * `div` - div
+        * `pow` - pow
+        * `factorial` - factorial
     CalculatorParameters:
       type: object
       description: Estructura de parámetros persistidos para el job calculadora.
@@ -324,12 +448,14 @@ components:
         a:
           type: number
           format: double
+          description: Primer operando almacenado para trazabilidad.
         b:
           type: number
           format: double
+          nullable: true
+          description: Segundo operando cuando aplica; ausente o nulo para factorial.
       required:
       - a
-      - b
       - op
     CalculatorResult:
       type: object
@@ -348,13 +474,26 @@ components:
       description: Metadatos de trazabilidad del resultado de calculadora.
       properties:
         operation_used:
-          $ref: '#/components/schemas/CalculatorOperationEnum'
+          allOf:
+          - $ref: '#/components/schemas/CalculatorOperationEnum'
+          description: |-
+            Operación utilizada por el plugin para obtener el resultado.
+
+            * `add` - add
+            * `sub` - sub
+            * `mul` - mul
+            * `div` - div
+            * `pow` - pow
+            * `factorial` - factorial
         operand_a:
           type: number
           format: double
+          description: Valor de entrada del operando a.
         operand_b:
           type: number
           format: double
+          nullable: true
+          description: Valor de entrada del operando b cuando aplica.
       required:
       - operand_a
       - operand_b
@@ -389,6 +528,89 @@ components:
       required:
       - parameters
       - plugin_name
+    JobProgressSnapshot:
+      type: object
+      description: Contrato de progreso de job usado en endpoint snapshot y stream
+        SSE.
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Identificador único del job.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          description: |-
+            Estado principal del ciclo de vida del job.
+
+            * `pending` - Pending
+            * `running` - Running
+            * `completed` - Completed
+            * `failed` - Failed
+        progress_percentage:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Porcentaje de avance entre 0 y 100.
+        progress_stage:
+          allOf:
+          - $ref: '#/components/schemas/JobProgressStageEnum'
+          description: |-
+            Etapa fina de ejecución para seguimiento en tiempo real.
+
+            * `pending` - pending
+            * `queued` - queued
+            * `running` - running
+            * `caching` - caching
+            * `completed` - completed
+            * `failed` - failed
+        progress_message:
+          type: string
+          description: Mensaje legible para usuario con contexto de ejecución.
+        progress_event_index:
+          type: integer
+          minimum: 0
+          description: Contador incremental de eventos emitidos por el job.
+        updated_at:
+          type: string
+          format: date-time
+          description: Marca temporal de última actualización.
+      required:
+      - job_id
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    JobProgressStageEnum:
+      enum:
+      - pending
+      - queued
+      - running
+      - caching
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - pending
+        * `queued` - queued
+        * `running` - running
+        * `caching` - caching
+        * `completed` - completed
+        * `failed` - failed
+    JobStatusEnum:
+      enum:
+      - pending
+      - running
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `running` - Running
+        * `completed` - Completed
+        * `failed` - Failed
     ScientificJob:
       type: object
       description: |-
@@ -411,7 +633,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/JobStatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -419,6 +641,22 @@ components:
         cache_miss:
           type: boolean
           readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
         parameters:
           readOnly: true
         results:
@@ -446,21 +684,13 @@ components:
       - job_hash
       - parameters
       - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
       - results
       - status
       - updated_at
-    StatusEnum:
-      enum:
-      - pending
-      - running
-      - completed
-      - failed
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `running` - Running
-        * `completed` - Completed
-        * `failed` - Failed
   securitySchemes:
     basicAuth:
       type: http

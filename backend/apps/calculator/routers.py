@@ -8,7 +8,12 @@ from apps.core.services import JobService
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import status, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -37,6 +42,22 @@ class CalculatorJobViewSet(viewsets.ViewSet):
             400: OpenApiResponse(
                 response=ErrorResponseSerializer,
                 description="Error de validación del contrato de calculadora.",
+                examples=[
+                    OpenApiExample(
+                        "Factorial inválido",
+                        value={
+                            "a": ["Para factorial, a debe ser un entero no negativo."]
+                        },
+                    ),
+                    OpenApiExample(
+                        "Operación binaria sin b",
+                        value={
+                            "b": [
+                                "El campo b es obligatorio para operaciones binarias."
+                            ]
+                        },
+                    ),
+                ],
             ),
         },
     )
@@ -53,8 +74,10 @@ class CalculatorJobViewSet(viewsets.ViewSet):
         parameters_payload: JSONMap = {
             "op": validated_payload["op"],
             "a": validated_payload["a"],
-            "b": validated_payload["b"],
         }
+        second_operand_value: float | None = validated_payload.get("b")
+        if second_operand_value is not None:
+            parameters_payload["b"] = second_operand_value
 
         job: ScientificJob = JobService.create_job(
             plugin_name=PLUGIN_NAME,
@@ -62,8 +85,11 @@ class CalculatorJobViewSet(viewsets.ViewSet):
             parameters=parameters_payload,
         )
 
+        dispatch_result: bool = True
         if job.status == "pending":
-            dispatch_scientific_job(str(job.id))
+            dispatch_result = dispatch_scientific_job(str(job.id))
+            JobService.register_dispatch_result(str(job.id), dispatch_result)
+            job.refresh_from_db()
 
         response_serializer = CalculatorJobResponseSerializer(job)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
