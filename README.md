@@ -261,10 +261,6 @@ Riesgo técnico pendiente:
 
 - backend/apps/calculator/apps.py: registro de app y plugin.
 - backend/apps/calculator/definitions.py: constantes de ruta/plugin/version.
-- backend/apps/calculator/types.py: tipos de entrada/salida.
-- backend/apps/calculator/schemas.py: contratos OpenAPI estrictos de calculator.
-- backend/apps/calculator/plugin.py: lógica de cálculo con logs.
-- backend/apps/calculator/routers.py: endpoints de calculator.
 - backend/apps/calculator/tests.py: pruebas de contrato y flujo.
 
 ### Backend random_numbers
@@ -307,17 +303,9 @@ Riesgo técnico pendiente:
 ### Frontend core API
 
 - frontend/src/app/core/api/jobs-api.service.ts: wrapper estable sobre cliente generado.
-- frontend/src/app/core/api/jobs-api.service.spec.ts: tests del wrapper.
-- frontend/src/app/core/api/generated/*: cliente OpenAPI autogenerado (no editar manualmente).
-
-### Frontend workflows/facades
-
 - frontend/src/app/core/application/calculator-workflow.service.ts: flujo de calculadora.
 - frontend/src/app/core/application/random-numbers-workflow.service.ts: flujo random-numbers.
 - frontend/src/app/core/application/jobs-monitor.facade.service.ts: estado y filtros del monitor.
-- frontend/src/app/core/application/random-numbers-workflow.service.spec.ts: tests workflow random.
-- frontend/src/app/core/application/jobs-monitor.facade.service.spec.ts: tests facade monitor.
-
 ### Frontend componentes de dominio
 
 - frontend/src/app/apps-hub/apps-hub.component.ts: hub de acceso a apps.
@@ -334,8 +322,6 @@ Riesgo técnico pendiente:
 5. Evitar dependencias no necesarias.
 6. Cubrir con tests cualquier cambio funcional.
 7. No acoplar componentes al cliente generado: usar wrappers/facades.
-
-## Guía completa: crear una nueva app científica robusta
 
 Sección solicitada para implementar apps con input/output, errores, recuperación y pausa cooperativa.
 
@@ -378,10 +364,6 @@ En types.py:
 
 1. TypedDict para input.
 2. TypedDict para output.
-3. Tipos auxiliares estrictos.
-
-### 4. Definir contratos OpenAPI en schemas.py
-
 Debe incluir:
 
 1. Serializer de creación con validaciones de negocio.
@@ -410,8 +392,6 @@ Buenas prácticas:
 4. Evitar efectos secundarios irreversibles por iteración.
 
 ### 6. Manejo de errores recomendado
-
-Dentro del plugin:
 
 1. Capturar errores esperables (ValueError, URLError, etc.).
 2. Registrar log warning/error con contexto.
