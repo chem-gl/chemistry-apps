@@ -25,7 +25,7 @@ from .ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
-from .types import JSONMap
+from .types import JSONMap, PluginProgressCallback
 
 
 class DjangoCacheRepositoryAdapter(CacheRepositoryPort):
@@ -84,11 +84,20 @@ class DjangoPluginExecutionAdapter(PluginExecutionPort):
     pero no depende directamente del módulo `processing`.
     """
 
-    def execute(self, plugin_name: str, parameters: JSONMap) -> JSONMap:
+    def execute(
+        self,
+        plugin_name: str,
+        parameters: JSONMap,
+        progress_callback: PluginProgressCallback | None = None,
+    ) -> JSONMap:
         """Ejecuta el plugin en el registro global del dominio."""
         from .processing import PluginRegistry
 
-        return PluginRegistry.execute(plugin_name, parameters)
+        return PluginRegistry.execute(
+            plugin_name,
+            parameters,
+            progress_callback=progress_callback,
+        )
 
 
 @dataclass(slots=True)

@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "apps.core",
     "apps.calculator.apps.CalculatorConfig",
+    "apps.random_numbers.apps.RandomNumbersConfig",
 ]
 
 if ENABLE_CORS:

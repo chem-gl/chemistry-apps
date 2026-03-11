@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .models import ScientificJob
-from .types import JobProgressStage, JSONMap
+from .types import JobProgressStage, JSONMap, PluginProgressCallback
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +64,12 @@ class PluginExecutionPort(Protocol):
     procesamiento especializado.
     """
 
-    def execute(self, plugin_name: str, parameters: JSONMap) -> JSONMap:
+    def execute(
+        self,
+        plugin_name: str,
+        parameters: JSONMap,
+        progress_callback: PluginProgressCallback | None = None,
+    ) -> JSONMap:
         """Ejecuta un plugin registrado y retorna un payload JSON tipado."""
 
 

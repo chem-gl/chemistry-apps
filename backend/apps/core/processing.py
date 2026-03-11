@@ -11,13 +11,17 @@ Uso esperado desde una app:
     locales en el propio plugin para robustez de ejecución asíncrona.
 """
 
+import inspect
 from collections.abc import Callable
+from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .types import JSONMap
+from .types import JSONMap, PluginProgressCallback
 
-PluginCallable = Callable[[JSONMap], JSONMap]
+PluginCallable = (
+    Callable[[JSONMap], JSONMap] | Callable[[JSONMap, PluginProgressCallback], JSONMap]
+)
 
 
 class PluginRegistry:
@@ -60,7 +64,12 @@ class PluginRegistry:
         return wrapper
 
     @classmethod
-    def execute(cls, name: str, parameters: JSONMap) -> JSONMap:
+    def execute(
+        cls,
+        name: str,
+        parameters: JSONMap,
+        progress_callback: PluginProgressCallback | None = None,
+    ) -> JSONMap:
         """Ejecuta la lógica de plugin registrada con parámetros tipados.
 
         Este método es invocado por la capa de servicios. Si el plugin no está
@@ -70,4 +79,19 @@ class PluginRegistry:
         if name not in cls._plugins:
             raise ValueError(f"Plugin {name} has not been registered in PluginRegistry")
 
-        return cls._plugins[name](parameters)
+        plugin_callable: PluginCallable = cls._plugins[name]
+        callback_to_use: PluginProgressCallback = (
+            progress_callback
+            if progress_callback is not None
+            else lambda _percentage, _stage, _message: None
+        )
+
+        plugin_signature = inspect.signature(plugin_callable)
+        if len(plugin_signature.parameters) >= 2:
+            plugin_with_progress = cast(
+                Callable[[JSONMap, PluginProgressCallback], JSONMap], plugin_callable
+            )
+            return plugin_with_progress(parameters, callback_to_use)
+
+        plugin_without_progress = cast(Callable[[JSONMap], JSONMap], plugin_callable)
+        return plugin_without_progress(parameters)

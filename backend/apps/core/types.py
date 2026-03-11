@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Literal, TypeAlias, TypedDict
 
 JSONPrimitive: TypeAlias = str | int | float | bool | None
@@ -16,6 +17,7 @@ JobProgressStage: TypeAlias = Literal[
     "completed",
     "failed",
 ]
+PluginProgressCallback: TypeAlias = Callable[[int, JobProgressStage, str], None]
 
 
 class JobCreatePayload(TypedDict):

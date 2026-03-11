@@ -27,7 +27,7 @@ from .ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
-from .types import JSONMap
+from .types import JobProgressStage, JSONMap
 
 logger = logging.getLogger(__name__)
 
@@ -158,9 +158,35 @@ class RuntimeJobService:
         )
 
         try:
+
+            def report_plugin_progress(
+                plugin_percentage: int,
+                plugin_stage: JobProgressStage,
+                plugin_message: str,
+            ) -> None:
+                """Publica progreso granular del plugin dentro del rango de ejecución.
+
+                Se mapea el rango [0, 100] del plugin al rango [35, 79] del flujo
+                global para reservar 80% al paso de cache y 100% al cierre.
+                """
+                normalized_percentage: int = max(0, min(100, int(plugin_percentage)))
+                mapped_runtime_percentage: int = 35 + int(
+                    normalized_percentage * 44 / 100
+                )
+
+                self.progress_publisher.publish(
+                    job,
+                    JobProgressUpdate(
+                        percentage=mapped_runtime_percentage,
+                        stage=plugin_stage,
+                        message=plugin_message,
+                    ),
+                )
+
             result_payload: JSONMap = self.plugin_execution.execute(
                 job.plugin_name,
                 job.parameters,
+                progress_callback=report_plugin_progress,
             )
 
             self.progress_publisher.publish(
