@@ -1,1 +1,15 @@
-/* You can add global styles to this file, and also import other style files */
+/* styles.scss: Estilos globales base para layout y tipografia de la aplicacion. */
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+}
+
+body {
+	color: #132524;
+}

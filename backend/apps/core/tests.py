@@ -214,7 +214,7 @@ class JobApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/event-stream")
-        stream_payload_text: str = b"".join(response.streaming_content).decode("utf-8")
+        stream_payload_text: str = response.content.decode("utf-8")
         self.assertIn("event: job.progress", stream_payload_text)
         self.assertIn(str(job.id), stream_payload_text)
 

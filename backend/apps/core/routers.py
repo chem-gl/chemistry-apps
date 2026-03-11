@@ -4,7 +4,7 @@ import json
 from time import monotonic, sleep
 from typing import Iterator, cast
 
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -325,7 +325,7 @@ class JobViewSet(viewsets.ViewSet):
         url_path=CORE_JOBS_EVENTS_ROUTE_SUFFIX,
         renderer_classes=[ServerSentEventsRenderer],
     )
-    def events(self, request: Request, id: str | None = None) -> StreamingHttpResponse:
+    def events(self, request: Request, id: str | None = None) -> HttpResponse:
         """Expone stream SSE de progreso del job con heartbeats de conexión."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
 
@@ -339,7 +339,7 @@ class JobViewSet(viewsets.ViewSet):
             request.query_params.get("timeout_seconds")
         )
 
-        response: StreamingHttpResponse = StreamingHttpResponse(
+        response: HttpResponse = HttpResponse(
             self._stream_job_events(
                 job_id=str(job.id),
                 last_event_index=last_event_index,
@@ -349,7 +349,6 @@ class JobViewSet(viewsets.ViewSet):
             status=status.HTTP_200_OK,
         )
         response["Cache-Control"] = "no-cache"
-        response["Connection"] = "keep-alive"
         response["X-Accel-Buffering"] = "no"
         return response
 

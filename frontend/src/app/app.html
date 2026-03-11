@@ -1,1 +1,21 @@
-<router-outlet />
+<div class="app-shell">
+    <header class="top-bar">
+        <div class="brand-block">
+            <p class="brand-kicker">Chemistry Apps</p>
+            <h1>Scientific Control Desk</h1>
+        </div>
+
+        <nav class="main-nav" aria-label="Navegacion principal">
+            @for (navItem of primaryNavigationItems; track navItem.path) {
+            <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
+                [title]="navItem.hint">
+                {{ navItem.label }}
+            </a>
+            }
+        </nav>
+    </header>
+
+    <main class="content-shell">
+        <router-outlet />
+    </main>
+    </div>

@@ -4,7 +4,12 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'calculator',
+    redirectTo: 'jobs',
+  },
+  {
+    path: 'jobs',
+    loadComponent: () =>
+      import('./jobs-monitor/jobs-monitor.component').then((m) => m.JobsMonitorComponent),
   },
   {
     path: 'calculator',
@@ -12,7 +17,11 @@ export const routes: Routes = [
       import('./calculator/calculator.component').then((m) => m.CalculatorComponent),
   },
   {
+    path: 'apps',
+    loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
+  },
+  {
     path: '**',
-    redirectTo: 'calculator',
+    redirectTo: 'jobs',
   },
 ];

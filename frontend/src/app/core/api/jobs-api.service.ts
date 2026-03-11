@@ -12,6 +12,7 @@ import {
   CalculatorService,
   JobProgressSnapshot,
   JobsService,
+  ScientificJob,
 } from './generated';
 
 /**
@@ -32,12 +33,29 @@ export interface CalculatorParams {
   b?: number;
 }
 
+/** Estados válidos para filtrado de jobs en listados globales */
+export type JobListStatusFilter = 'pending' | 'running' | 'completed' | 'failed';
+
+/** Filtros opcionales para consultar jobs en el monitor */
+export interface JobListFilters {
+  pluginName?: string;
+  status?: JobListStatusFilter;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly jobsClient = inject(JobsService);
+
+  /**
+   * Lista jobs globales del sistema con filtros opcionales por plugin y estado.
+   * Se usa en el monitor para visualizar activos, completados y fallidos.
+   */
+  listJobs(filters: JobListFilters = {}): Observable<ScientificJob[]> {
+    return this.jobsClient.jobsList(filters.pluginName, filters.status).pipe(shareReplay(1));
+  }
 
   /**
    * Despacha un job de calculadora al backend.

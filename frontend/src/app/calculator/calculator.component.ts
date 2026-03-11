@@ -3,43 +3,14 @@
 // Muestra secciones de avance con barra de progreso, etapa y mensaje antes del resultado.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import type {
-  CalculatorJobResponse,
-  CalculatorOperationEnum,
-  JobProgressSnapshot,
-} from '../core/api/generated';
-import { CalculatorParams, JobsApiService } from '../core/api/jobs-api.service';
-
-/** Descriptor de visualización para cada operación disponible en el selector */
-interface OperationOption {
-  value: CalculatorOperationEnum;
-  label: string;
-  /** Indica si la operación necesita segundo operando (b) */
-  requiresB: boolean;
-}
-
-/** Sección activa del flujo de la UI */
-type UiSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
-
-/** Etapas del ciclo de vida del job tal como las emite el backend */
-const STAGE_LABELS: Record<string, string> = {
-  pending: 'Pendiente',
-  queued: 'En cola',
-  running: 'Ejecutando',
-  caching: 'Almacenando en caché',
-  completed: 'Completado',
-  failed: 'Fallido',
-};
-
-/** Orden de las etapas para el stepper visual (excluye 'failed') */
-const STAGE_STEPS: string[] = ['pending', 'queued', 'running', 'caching', 'completed'];
+import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
 
 @Component({
   selector: 'app-calculator',
   imports: [CommonModule, FormsModule],
+  providers: [CalculatorWorkflowService],
   template: `
     <div class="calc-wrapper">
       <h2 class="calc-title">Calculadora Científica</h2>
@@ -542,152 +513,42 @@ const STAGE_STEPS: string[] = ['pending', 'queued', 'running', 'caching', 'compl
     }
   `,
 })
-export class CalculatorComponent implements OnDestroy {
-  private readonly jobsApi = inject(JobsApiService);
-  /** Suscripción activa al stream SSE o al polling; se limpia en ngOnDestroy */
-  private progressSub: Subscription | null = null;
+export class CalculatorComponent {
+  private readonly workflowService = inject(CalculatorWorkflowService);
 
-  /** Opciones de operación con metadatos de visualización */
-  readonly operations: OperationOption[] = [
-    { value: 'add', label: 'Suma (+)', requiresB: true },
-    { value: 'sub', label: 'Resta (-)', requiresB: true },
-    { value: 'mul', label: 'Multiplicación (×)', requiresB: true },
-    { value: 'div', label: 'División (÷)', requiresB: true },
-    { value: 'pow', label: 'Potencia (^)', requiresB: true },
-    { value: 'factorial', label: 'Factorial (n!)', requiresB: false },
-  ];
+  readonly operations = this.workflowService.operations;
+  readonly stageSteps = this.workflowService.stageSteps;
+  readonly selectedOperation = this.workflowService.selectedOperation;
+  readonly firstOperand = this.workflowService.firstOperand;
+  readonly secondOperand = this.workflowService.secondOperand;
+  readonly activeSection = this.workflowService.activeSection;
+  readonly currentJobId = this.workflowService.currentJobId;
+  readonly progressSnapshot = this.workflowService.progressSnapshot;
+  readonly lastResult = this.workflowService.lastResult;
+  readonly errorMessage = this.workflowService.errorMessage;
+  readonly requiresSecondOperand = this.workflowService.requiresSecondOperand;
+  readonly isProcessing = this.workflowService.isProcessing;
+  readonly progressPercentage = this.workflowService.progressPercentage;
+  readonly progressMessage = this.workflowService.progressMessage;
+  readonly currentStage = this.workflowService.currentStage;
 
-  /** Pasos del stepper (sin 'failed'; se manejará como error) */
-  readonly stageSteps: string[] = STAGE_STEPS;
-
-  // ── Estado reactivo de la UI ──
-  readonly selectedOperation = signal<CalculatorOperationEnum>('add');
-  readonly firstOperand = signal<number>(5);
-  readonly secondOperand = signal<number>(3);
-  readonly activeSection = signal<UiSection>('idle');
-  readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
-  readonly lastResult = signal<CalculatorJobResponse | null>(null);
-  readonly errorMessage = signal<string | null>(null);
-
-  // ── Computed ──
-  readonly requiresSecondOperand = computed(
-    () => this.operations.find((o) => o.value === this.selectedOperation())?.requiresB ?? true,
-  );
-  readonly isProcessing = computed(
-    () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
-  );
-  readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparando...',
-  );
-  readonly currentStage = computed(() => this.progressSnapshot()?.progress_stage ?? 'pending');
-
-  /** Etiqueta legible de una etapa de progreso */
-  stageLabel(stage: string): string {
-    return STAGE_LABELS[stage] ?? stage;
+  stageLabel(stageName: string): string {
+    return this.workflowService.stageLabel(stageName);
   }
 
-  /** Indica si el stepper debe mostrar una etapa como completada */
-  isStepDone(step: string): boolean {
-    const currentIdx = STAGE_STEPS.indexOf(this.currentStage());
-    const stepIdx = STAGE_STEPS.indexOf(step);
-    return stepIdx < currentIdx;
+  isStepDone(stepName: string): boolean {
+    return this.workflowService.isStepDone(stepName);
   }
 
-  /** Indica si el stepper debe resaltar una etapa como la activa actual */
-  isStepActive(step: string): boolean {
-    return this.currentStage() === step;
+  isStepActive(stepName: string): boolean {
+    return this.workflowService.isStepActive(stepName);
   }
 
-  /** Despacha el job al backend y abre el stream SSE de progreso */
   dispatch(): void {
-    this.progressSub?.unsubscribe();
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.lastResult.set(null);
-    this.progressSnapshot.set(null);
-    this.currentJobId.set(null);
-
-    const params: CalculatorParams = {
-      op: this.selectedOperation(),
-      a: this.firstOperand(),
-      ...(this.requiresSecondOperand() ? { b: this.secondOperand() } : {}),
-    };
-
-    this.jobsApi.dispatchCalculatorJob(params).subscribe({
-      next: (job) => {
-        this.currentJobId.set(job.id);
-        if (job.status === 'completed') {
-          // Cache hit: resultado disponible de inmediato, sin necesidad de esperar
-          this.lastResult.set(job);
-          this.activeSection.set('result');
-        } else {
-          // Job encolado: activar progreso en tiempo real
-          this.activeSection.set('progress');
-          this.startProgressStream(job.id);
-        }
-      },
-      error: (err: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Error al despachar: ${err.message}`);
-      },
-    });
+    this.workflowService.dispatch();
   }
 
-  /** Abre stream SSE; al fallar activa polling de respaldo */
-  private startProgressStream(jobId: string): void {
-    this.progressSub = this.jobsApi.streamJobEvents(jobId).subscribe({
-      next: (snapshot) => this.progressSnapshot.set(snapshot),
-      complete: () => this.fetchFinalResult(jobId),
-      error: () => this.startPollingFallback(jobId),
-    });
-  }
-
-  /** Polling periódico de snapshot cuando SSE no está disponible */
-  private startPollingFallback(jobId: string): void {
-    this.progressSub = this.jobsApi.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot) => {
-        this.progressSnapshot.set(snapshot);
-        this.fetchFinalResult(jobId);
-      },
-      error: (err: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Error verificando progreso: ${err.message}`);
-      },
-    });
-  }
-
-  /** Consulta resultado estrictamente tipado tras la señal de completado */
-  private fetchFinalResult(jobId: string): void {
-    this.jobsApi.getJobStatus(jobId).subscribe({
-      next: (job) => {
-        if (job.status === 'failed') {
-          this.activeSection.set('error');
-          this.errorMessage.set(job.error_trace ?? 'El job falló sin detalle disponible.');
-        } else {
-          this.lastResult.set(job);
-          this.activeSection.set('result');
-        }
-      },
-      error: (err: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Error obteniendo resultado: ${err.message}`);
-      },
-    });
-  }
-
-  /** Reinicia la UI al estado inicial para una nueva operación */
   reset(): void {
-    this.progressSub?.unsubscribe();
-    this.activeSection.set('idle');
-    this.progressSnapshot.set(null);
-    this.lastResult.set(null);
-    this.errorMessage.set(null);
-    this.currentJobId.set(null);
-  }
-
-  ngOnDestroy(): void {
-    this.progressSub?.unsubscribe();
+    this.workflowService.reset();
   }
 }

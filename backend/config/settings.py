@@ -7,6 +7,33 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 
+def _load_dotenv_file(env_file_path: Path) -> None:
+    """Carga variables desde un archivo .env local sin sobreescribir entorno existente."""
+    if not env_file_path.exists():
+        return
+
+    for raw_line in env_file_path.read_text(encoding="utf-8").splitlines():
+        line_value: str = raw_line.strip()
+
+        if line_value == "" or line_value.startswith("#"):
+            continue
+
+        if "=" not in line_value:
+            continue
+
+        key_name, raw_env_value = line_value.split("=", 1)
+        normalized_key: str = key_name.strip()
+        normalized_value: str = raw_env_value.strip().strip('"').strip("'")
+
+        if normalized_key == "":
+            continue
+
+        os.environ.setdefault(normalized_key, normalized_value)
+
+
+_load_dotenv_file(Path(__file__).resolve().parent.parent / ".env")
+
+
 def _get_env_bool(variable_name: str, default_value: bool) -> bool:
     """Convierte una variable de entorno textual a booleano de forma segura."""
     raw_value: str = os.getenv(variable_name, str(default_value))

@@ -124,26 +124,22 @@ Qué valida y genera:
 ## Puesta en marcha local
 
 ```bash
-# 1. Backend
+# 1. Backend — levanta Redis (si no está activo), Celery worker y runserver en paralelo
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 python manage.py migrate
-python manage.py up          # Alias: migrate + collectstatic + check
+python manage.py up
 
-# 2. Worker Celery (terminal separada)
-source backend/venv/bin/activate
-cd backend
-celery -A config worker --loglevel=info
-
-# 3. Redis (docker o servicio local)
-docker run -p 6379:6379 redis:7-alpine
-
-# 4. Frontend
+# 2. Frontend (terminal separada)
 cd frontend
 npm install
 npm start                    # http://localhost:4200
 ```
+
+> `manage.py up` detecta si Redis está corriendo; si no, lo inicia automáticamente (`redis-server` o `valkey-server`).
+> Usa `--without-celery` para levantar solo Django sin worker ni Redis.
 
 ## Validación rápida
 

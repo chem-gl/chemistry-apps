@@ -11,12 +11,14 @@ import {
   JobProgressSnapshot,
   JobProgressStageEnum,
   JobStatusEnum,
+  ScientificJob,
   provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
 const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
 const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
+const JOBS_LIST_URL: string = `${API_BASE_URL}/api/jobs/`;
 
 /** Respuesta base reutilizable en tests de calculadora */
 function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
@@ -46,6 +48,29 @@ function makeProgressSnapshot(overrides: Partial<JobProgressSnapshot> = {}): Job
     progress_stage: JobProgressStageEnum.Running,
     progress_message: 'Ejecutando cálculo...',
     progress_event_index: 1,
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/** Job global base para tests de monitor/listado */
+function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
+  return {
+    id: 'job-id-1',
+    job_hash: 'hash-value',
+    plugin_name: 'calculator',
+    algorithm_version: '1.0.0',
+    status: JobStatusEnum.Pending,
+    cache_hit: false,
+    cache_miss: true,
+    progress_percentage: 0,
+    progress_stage: 'pending',
+    progress_message: 'Pendiente',
+    progress_event_index: 1,
+    parameters: null,
+    results: null,
+    error_trace: null,
+    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
   };
@@ -188,5 +213,32 @@ describe('JobsApiService', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('should list jobs without filters', () => {
+    const jobs = [makeScientificJob({ id: 'job-a' }), makeScientificJob({ id: 'job-b' })];
+
+    service.listJobs().subscribe((jobItems) => {
+      expect(jobItems.length).toBe(2);
+      expect(jobItems[0].id).toBe('job-a');
+    });
+
+    const req = httpMock.expectOne(JOBS_LIST_URL);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys().length).toBe(0);
+    req.flush(jobs);
+  });
+
+  it('should list jobs with status and plugin filters', () => {
+    service.listJobs({ status: 'completed', pluginName: 'calculator' }).subscribe();
+
+    const req = httpMock.expectOne(
+      (request) =>
+        request.url === JOBS_LIST_URL &&
+        request.params.get('status') === 'completed' &&
+        request.params.get('plugin_name') === 'calculator',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 });
