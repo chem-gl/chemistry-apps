@@ -10,12 +10,13 @@
 
 
 /**
- * * `pending` - pending * `queued` - queued * `running` - running * `caching` - caching * `completed` - completed * `failed` - failed
+ * * `pending` - pending * `queued` - queued * `running` - running * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed
  */
 export const JobProgressStageEnum = {
     Pending: 'pending',
     Queued: 'queued',
     Running: 'running',
+    Recovering: 'recovering',
     Caching: 'caching',
     Completed: 'completed',
     Failed: 'failed'

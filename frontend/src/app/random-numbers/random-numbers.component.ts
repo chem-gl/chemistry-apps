@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ScientificJob } from '../core/api/generated';
+import { JobLogEntryView } from '../core/api/jobs-api.service';
 import { RandomNumbersWorkflowService } from '../core/application/random-numbers-workflow.service';
 
 @Component({
@@ -93,7 +94,31 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
           </div>
 
           <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
+          <p class="progress-stage">Etapa: {{ workflow.progressSnapshot()?.progress_stage }}</p>
           <p class="progress-message">{{ workflow.progressMessage() }}</p>
+        </section>
+      }
+
+      @if (workflow.jobLogs().length > 0) {
+        <section class="logs-card" aria-label="Logs de ejecución random numbers">
+          <h3>Logs de ejecución</h3>
+          <div class="logs-list">
+            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+              <article class="log-item">
+                <header class="log-header">
+                  <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                    {{ logEntry.level }}
+                  </span>
+                  <span class="log-source">{{ logEntry.source }}</span>
+                  <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                  <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+              </article>
+            }
+          </div>
         </section>
       }
 
@@ -292,6 +317,113 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
       color: #5d4b8a;
     }
 
+    .progress-stage {
+      margin: 0.2rem 0;
+      color: #4c1d95;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .logs-card {
+      border: 1px solid #ddd6fe;
+      border-radius: 14px;
+      background: #fff;
+      padding: 1rem;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .logs-card h3 {
+      margin: 0;
+      color: #3b2073;
+      font-size: 1rem;
+    }
+
+    .logs-list {
+      display: grid;
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow: auto;
+      padding-right: 0.2rem;
+    }
+
+    .log-item {
+      border: 1px solid #e3ddff;
+      border-radius: 9px;
+      background: #fcfbff;
+      padding: 0.5rem 0.6rem;
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      font-size: 0.72rem;
+    }
+
+    .log-level {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 0.08rem 0.42rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .log-level-debug {
+      color: #374151;
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+    }
+
+    .log-level-info {
+      color: #4c1d95;
+      background: #ede9fe;
+      border-color: #c4b5fd;
+    }
+
+    .log-level-warning {
+      color: #854d0e;
+      background: #fef9c3;
+      border-color: #fde68a;
+    }
+
+    .log-level-error {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .log-source,
+    .log-index {
+      color: #6b7280;
+      font-family: 'Consolas', 'Liberation Mono', monospace;
+      font-size: 0.72rem;
+    }
+
+    .log-message {
+      margin: 0;
+      color: #3b2073;
+      font-size: 0.82rem;
+    }
+
+    .log-payload {
+      margin: 0;
+      font-size: 0.72rem;
+      font-family: 'Consolas', 'Liberation Mono', monospace;
+      background: #fff;
+      border: 1px solid #ede9fe;
+      border-radius: 7px;
+      padding: 0.4rem;
+      color: #4c1d95;
+      overflow: auto;
+    }
+
     .meta-grid {
       display: grid;
       gap: 0.35rem;
@@ -481,5 +613,13 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
     };
     const rawGeneratedNumbers: unknown = resultsRecord.generated_numbers;
     return Array.isArray(rawGeneratedNumbers) ? rawGeneratedNumbers.length : 0;
+  }
+
+  hasPayload(logEntry: JobLogEntryView): boolean {
+    return Object.keys(logEntry.payload).length > 0;
+  }
+
+  logLevelClass(logLevel: JobLogEntryView['level']): string {
+    return `log-level log-level-${logLevel}`;
   }
 }

@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
   CalculatorJobResponse,
+  JobLogList,
   JobProgressSnapshot,
   JobProgressStageEnum,
   JobStatusEnum,
@@ -19,6 +20,7 @@ import { JobsApiService } from './jobs-api.service';
 const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
 const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
 const JOBS_LIST_URL: string = `${API_BASE_URL}/api/jobs/`;
+const JOBS_LOGS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/logs/`;
 
 /** Respuesta base reutilizable en tests de calculadora */
 function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
@@ -72,6 +74,35 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     error_trace: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
+  return {
+    job_id: 'job-id-1',
+    count: 2,
+    next_after_event_index: 8,
+    results: [
+      {
+        job_id: 'job-id-1',
+        event_index: 7,
+        level: 'info',
+        source: 'calculator.plugin',
+        message: 'Iniciando operación de calculadora.',
+        payload: { operation: 'add' },
+        created_at: new Date().toISOString(),
+      },
+      {
+        job_id: 'job-id-1',
+        event_index: 8,
+        level: 'info',
+        source: 'calculator.plugin',
+        message: 'Operación de calculadora completada.',
+        payload: { result: 7 },
+        created_at: new Date().toISOString(),
+      },
+    ],
     ...overrides,
   };
 }
@@ -277,5 +308,26 @@ describe('JobsApiService', () => {
     const req = httpMock.expectOne(`${JOBS_LIST_URL}random-job-2/`);
     expect(req.request.method).toBe('GET');
     req.flush(scientificJob);
+  });
+
+  it('should list job logs and map payload to wrapper contract', () => {
+    const logsResponse = makeJobLogsResponse();
+
+    service.getJobLogs('job-id-1', { afterEventIndex: 6, limit: 10 }).subscribe((logsPage) => {
+      expect(logsPage.jobId).toBe('job-id-1');
+      expect(logsPage.count).toBe(2);
+      expect(logsPage.results[0].eventIndex).toBe(7);
+      expect(logsPage.results[0].source).toBe('calculator.plugin');
+      expect(logsPage.results[0].payload['operation']).toBe('add');
+    });
+
+    const req = httpMock.expectOne(
+      (request) =>
+        request.url === JOBS_LOGS_URL('job-id-1') &&
+        request.params.get('after_event_index') === '6' &&
+        request.params.get('limit') === '10',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(logsResponse);
   });
 });

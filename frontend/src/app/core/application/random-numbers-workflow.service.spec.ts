@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
 import { ScientificJob } from '../api/generated';
+import { JobLogsPageView } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { RandomNumbersWorkflowService } from './random-numbers-workflow.service';
 
@@ -45,11 +46,20 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
 
 describe('RandomNumbersWorkflowService', () => {
   let workflowService: RandomNumbersWorkflowService;
+  const emptyLogsPage: JobLogsPageView = {
+    jobId: 'random-job-1',
+    count: 0,
+    nextAfterEventIndex: 0,
+    results: [],
+  };
+
   let jobsApiServiceMock: {
     dispatchScientificJob: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
+    streamJobLogEvents: ReturnType<typeof vi.fn>;
     pollJobUntilCompleted: ReturnType<typeof vi.fn>;
     getScientificJobStatus: ReturnType<typeof vi.fn>;
+    getJobLogs: ReturnType<typeof vi.fn>;
     listJobs: ReturnType<typeof vi.fn>;
   };
 
@@ -57,8 +67,10 @@ describe('RandomNumbersWorkflowService', () => {
     jobsApiServiceMock = {
       dispatchScientificJob: vi.fn((): Observable<ScientificJob> => of(makeScientificJob())),
       streamJobEvents: vi.fn(),
+      streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
       getScientificJobStatus: vi.fn(),
+      getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
       listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
     };
 

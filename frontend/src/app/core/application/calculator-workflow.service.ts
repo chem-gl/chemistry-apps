@@ -7,7 +7,7 @@ import type {
   CalculatorOperationEnum,
   JobProgressSnapshot,
 } from '../api/generated';
-import { CalculatorParams, JobsApiService } from '../api/jobs-api.service';
+import { CalculatorParams, JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
 
 /** Descriptor de visualizacion para cada operacion disponible en el selector */
 export interface OperationOption {
@@ -24,18 +24,27 @@ const STAGE_LABELS: Record<string, string> = {
   pending: 'Pendiente',
   queued: 'En cola',
   running: 'Ejecutando',
+  recovering: 'Recuperando',
   caching: 'Almacenando en cache',
   completed: 'Completado',
   failed: 'Fallido',
 };
 
 /** Orden de etapas para stepper visual */
-const STAGE_STEPS: string[] = ['pending', 'queued', 'running', 'caching', 'completed'];
+const STAGE_STEPS: string[] = [
+  'pending',
+  'queued',
+  'running',
+  'recovering',
+  'caching',
+  'completed',
+];
 
 @Injectable()
 export class CalculatorWorkflowService implements OnDestroy {
   private readonly jobsApiService = inject(JobsApiService);
   private progressSubscription: Subscription | null = null;
+  private logsSubscription: Subscription | null = null;
 
   readonly operations: OperationOption[] = [
     { value: 'add', label: 'Suma (+)', requiresB: true },
@@ -54,6 +63,7 @@ export class CalculatorWorkflowService implements OnDestroy {
   readonly activeSection = signal<UiSection>('idle');
   readonly currentJobId = signal<string | null>(null);
   readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly lastResult = signal<CalculatorJobResponse | null>(null);
   readonly errorMessage = signal<string | null>(null);
 
@@ -91,10 +101,12 @@ export class CalculatorWorkflowService implements OnDestroy {
 
   dispatch(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
     this.lastResult.set(null);
     this.progressSnapshot.set(null);
+    this.jobLogs.set([]);
     this.currentJobId.set(null);
 
     const jobParams: CalculatorParams = {
@@ -109,6 +121,7 @@ export class CalculatorWorkflowService implements OnDestroy {
 
         if (jobResponse.status === 'completed') {
           this.lastResult.set(jobResponse);
+          this.loadHistoricalLogs(jobResponse.id);
           this.activeSection.set('result');
           return;
         }
@@ -125,8 +138,10 @@ export class CalculatorWorkflowService implements OnDestroy {
 
   reset(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('idle');
     this.progressSnapshot.set(null);
+    this.jobLogs.set([]);
     this.lastResult.set(null);
     this.errorMessage.set(null);
     this.currentJobId.set(null);
@@ -134,14 +149,17 @@ export class CalculatorWorkflowService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
   }
 
   /** Permite cargar un resultado previo de calculadora usando un jobId existente */
   openHistoricalJob(jobId: string): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('dispatching');
     this.currentJobId.set(jobId);
     this.errorMessage.set(null);
+    this.jobLogs.set([]);
 
     this.jobsApiService.getJobStatus(jobId).subscribe({
       next: (jobResponse: CalculatorJobResponse) => {
@@ -152,6 +170,7 @@ export class CalculatorWorkflowService implements OnDestroy {
         }
 
         this.lastResult.set(jobResponse);
+        this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
       },
       error: (statusError: Error) => {
@@ -162,10 +181,39 @@ export class CalculatorWorkflowService implements OnDestroy {
   }
 
   private startProgressStream(jobId: string): void {
+    this.startLogStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (jobSnapshot: JobProgressSnapshot) => this.progressSnapshot.set(jobSnapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
+    });
+  }
+
+  private startLogStream(jobId: string): void {
+    this.logsSubscription?.unsubscribe();
+    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
+      next: (logEntry: JobLogEntryView) => {
+        this.jobLogs.update((currentLogs) => {
+          if (currentLogs.some((item) => item.eventIndex === logEntry.eventIndex)) {
+            return currentLogs;
+          }
+          return [...currentLogs, logEntry].sort(
+            (leftEntry, rightEntry) => leftEntry.eventIndex - rightEntry.eventIndex,
+          );
+        });
+      },
+      error: () => {
+        // El stream SSE de logs puede cerrarse en reconexiones; no interrumpir flujo principal.
+      },
+    });
+  }
+
+  private loadHistoricalLogs(jobId: string): void {
+    this.jobsApiService.getJobLogs(jobId, { limit: 200 }).subscribe({
+      next: (logsPage) => this.jobLogs.set(logsPage.results),
+      error: () => {
+        // Mantener la UI funcional aunque no se puedan recuperar logs históricos.
+      },
     });
   }
 
@@ -192,6 +240,7 @@ export class CalculatorWorkflowService implements OnDestroy {
         }
 
         this.lastResult.set(jobResponse);
+        this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
       },
       error: (statusError: Error) => {

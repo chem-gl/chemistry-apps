@@ -4,4 +4,7 @@ export * from './calculator.serviceInterface';
 export * from './jobs.service';
 import { JobsService } from './jobs.service';
 export * from './jobs.serviceInterface';
-export const APIS = [CalculatorService, JobsService];
+export * from './randomNumbers.service';
+import { RandomNumbersService } from './randomNumbers.service';
+export * from './randomNumbers.serviceInterface';
+export const APIS = [CalculatorService, JobsService, RandomNumbersService];

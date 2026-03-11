@@ -7,6 +7,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { JobLogEntryView } from '../core/api/jobs-api.service';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
 
 @Component({
@@ -74,6 +75,30 @@ import { CalculatorWorkflowService } from '../core/application/calculator-workfl
       @if (activeSection() === 'dispatching') {
         <section class="calc-section" aria-live="polite">
           <p class="status-text">Enviando job al servidor...</p>
+        </section>
+      }
+
+      @if (jobLogs().length > 0) {
+        <section class="calc-section logs-section" aria-label="Logs del job">
+          <h3 class="section-title">Logs de ejecución</h3>
+
+          <div class="logs-list">
+            @for (logEntry of jobLogs(); track logEntry.eventIndex) {
+              <article class="log-item">
+                <header class="log-header">
+                  <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                    {{ logEntry.level }}
+                  </span>
+                  <span class="log-source">{{ logEntry.source }}</span>
+                  <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                  <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+              </article>
+            }
+          </div>
         </section>
       }
 
@@ -444,6 +469,95 @@ import { CalculatorWorkflowService } from '../core/application/calculator-workfl
       font-style: italic;
     }
 
+    /* ── Sección de logs ── */
+    .logs-section {
+      border-color: #dbeafe;
+      background: #f8fbff;
+    }
+
+    .logs-list {
+      display: grid;
+      gap: 0.6rem;
+      max-height: 280px;
+      overflow: auto;
+      padding-right: 0.2rem;
+    }
+
+    .log-item {
+      border: 1px solid #dbe5f5;
+      border-radius: 8px;
+      background: #fff;
+      padding: 0.55rem 0.65rem;
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      font-size: 0.72rem;
+    }
+
+    .log-level {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 0.08rem 0.42rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .log-level-debug {
+      color: #374151;
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+    }
+
+    .log-level-info {
+      color: #1d4ed8;
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .log-level-warning {
+      color: #854d0e;
+      background: #fef9c3;
+      border-color: #fde68a;
+    }
+
+    .log-level-error {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .log-source,
+    .log-index {
+      color: #6b7280;
+      font-family: monospace;
+      font-size: 0.72rem;
+    }
+
+    .log-message {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #1f2937;
+    }
+
+    .log-payload {
+      margin: 0;
+      font-size: 0.72rem;
+      font-family: monospace;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.45rem;
+      color: #334155;
+      overflow: auto;
+    }
+
     /* ── Sección de resultado ── */
     .result-section {
       border-color: #bbf7d0;
@@ -535,6 +649,7 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   readonly progressPercentage = this.workflowService.progressPercentage;
   readonly progressMessage = this.workflowService.progressMessage;
   readonly currentStage = this.workflowService.currentStage;
+  readonly jobLogs = this.workflowService.jobLogs;
 
   ngOnInit(): void {
     this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
@@ -567,5 +682,13 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   reset(): void {
     this.workflowService.reset();
+  }
+
+  hasPayload(logEntry: JobLogEntryView): boolean {
+    return Object.keys(logEntry.payload).length > 0;
+  }
+
+  logLevelClass(logLevel: JobLogEntryView['level']): string {
+    return `log-level log-level-${logLevel}`;
   }
 }

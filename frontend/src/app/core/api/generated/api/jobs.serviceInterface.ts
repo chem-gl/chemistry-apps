@@ -13,6 +13,7 @@ import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
 import { JobCreate } from '../model/models';
+import { JobLogList } from '../model/models';
 import { JobProgressSnapshot } from '../model/models';
 import { ScientificJob } from '../model/models';
 
@@ -50,6 +51,25 @@ export interface JobsServiceInterface {
      * @param status Filtra por estado del job. Valores válidos: pending, running, completed, failed.
      */
     jobsList(pluginName?: string, status?: string, extraHttpRequestParams?: any): Observable<Array<ScientificJob>>;
+
+    /**
+     * Suscribirse a logs de un Job (SSE)
+     * Abre un stream Server-Sent Events para recibir logs en tiempo real hasta timeout o finalización del job.
+     * @endpoint get /api/jobs/{id}/logs/events/
+     * @param id UUID del job científico.
+     * @param timeoutSeconds Tiempo máximo del stream SSE en segundos. Valor por defecto: 30.
+     */
+    jobsLogsEventsRetrieve(id: string, timeoutSeconds?: number, extraHttpRequestParams?: any): Observable<string>;
+
+    /**
+     * Consultar historial de logs de un Job
+     * Devuelve eventos de log persistidos para un job en orden ascendente por event_index, con soporte de cursor incremental y límite de página.
+     * @endpoint get /api/jobs/{id}/logs/
+     * @param id UUID del job científico.
+     * @param afterEventIndex Retorna eventos con índice mayor al valor indicado.
+     * @param limit Cantidad máxima de eventos a devolver. Máximo 500.
+     */
+    jobsLogsRetrieve(id: string, afterEventIndex?: number, limit?: number, extraHttpRequestParams?: any): Observable<JobLogList>;
 
     /**
      * Consultar progreso de un Job

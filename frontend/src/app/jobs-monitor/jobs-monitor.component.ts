@@ -128,7 +128,9 @@ import {
 
                 <div class="job-meta">
                   <span>{{ activeJob.progress_percentage }}%</span>
-                  <span>{{ activeJob.progress_stage }}</span>
+                  <span class="stage-pill" [class]="stageClassName(activeJob.progress_stage)">
+                    {{ activeJob.progress_stage }}
+                  </span>
                 </div>
 
                 <p class="job-message">{{ activeJob.progress_message }}</p>
@@ -151,6 +153,7 @@ import {
                   <th>App</th>
                   <th>Estado</th>
                   <th>Progreso</th>
+                  <th>Etapa</th>
                   <th>Cache</th>
                   <th>Actualizado</th>
                   <th>Acción</th>
@@ -167,6 +170,11 @@ import {
                       </span>
                     </td>
                     <td>{{ finishedJob.progress_percentage }}%</td>
+                    <td>
+                      <span class="stage-pill" [class]="stageClassName(finishedJob.progress_stage)">
+                        {{ finishedJob.progress_stage }}
+                      </span>
+                    </td>
                     <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
                     <td>{{ finishedJob.updated_at | date: 'dd/MM HH:mm:ss' }}</td>
                     <td>
@@ -441,6 +449,56 @@ import {
       color: #315b5a;
     }
 
+    .stage-pill {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 0.1rem 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #dbe4ee;
+    }
+
+    .stage-pending,
+    .stage-queued {
+      background: #fef9c3;
+      color: #854d0e;
+      border-color: #fde68a;
+    }
+
+    .stage-running {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-color: #93c5fd;
+    }
+
+    .stage-recovering {
+      background: #ede9fe;
+      color: #5b21b6;
+      border-color: #c4b5fd;
+    }
+
+    .stage-caching {
+      background: #cffafe;
+      color: #155e75;
+      border-color: #67e8f9;
+    }
+
+    .stage-completed {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+
+    .stage-failed {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
     .table-wrap {
       overflow: auto;
       border: 1px solid #cfe6e2;
@@ -525,6 +583,10 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
 
   statusClassName(jobStatus: ScientificJob['status']): string {
     return `job-status status-${jobStatus}`;
+  }
+
+  stageClassName(progressStage: string): string {
+    return `stage-pill stage-${progressStage}`;
   }
 
   appRouteForJob(jobItem: ScientificJob): string | null {

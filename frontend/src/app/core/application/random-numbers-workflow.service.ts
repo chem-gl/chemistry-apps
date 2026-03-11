@@ -3,7 +3,7 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { JobProgressSnapshot, ScientificJob } from '../api/generated';
-import { JobsApiService } from '../api/jobs-api.service';
+import { JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
 
 /** Secciones de flujo para la UI de random numbers */
 type RandomNumbersSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -22,6 +22,7 @@ export interface RandomNumbersResultData {
 export class RandomNumbersWorkflowService implements OnDestroy {
   private readonly jobsApiService = inject(JobsApiService);
   private progressSubscription: Subscription | null = null;
+  private logsSubscription: Subscription | null = null;
 
   readonly seedUrl = signal<string>('https://example.com/seed.txt');
   readonly numbersPerBatch = signal<number>(5);
@@ -31,6 +32,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   readonly activeSection = signal<RandomNumbersSection>('idle');
   readonly currentJobId = signal<string | null>(null);
   readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<RandomNumbersResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly historyJobs = signal<ScientificJob[]>([]);
@@ -48,10 +50,12 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   dispatch(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
     this.resultData.set(null);
     this.progressSnapshot.set(null);
+    this.jobLogs.set([]);
     this.currentJobId.set(null);
 
     this.jobsApiService
@@ -78,6 +82,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
             }
 
             this.resultData.set(immediateResultData);
+            this.loadHistoricalLogs(jobResponse.id);
             this.activeSection.set('result');
             this.loadHistory();
             return;
@@ -95,9 +100,11 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   reset(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('idle');
     this.currentJobId.set(null);
     this.progressSnapshot.set(null);
+    this.jobLogs.set([]);
     this.resultData.set(null);
     this.errorMessage.set(null);
   }
@@ -123,9 +130,11 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   /** Reabre un job histórico por id para visualizar su resultado en la app */
   openHistoricalJob(jobId: string): void {
+    this.logsSubscription?.unsubscribe();
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
     this.currentJobId.set(jobId);
+    this.jobLogs.set([]);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJob) => {
@@ -144,6 +153,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         }
 
         this.resultData.set(historicalResultData);
+        this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
       },
       error: (statusError: Error) => {
@@ -155,13 +165,43 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.progressSubscription?.unsubscribe();
+    this.logsSubscription?.unsubscribe();
   }
 
   private startProgressStream(jobId: string): void {
+    this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
+    });
+  }
+
+  private startLogsStream(jobId: string): void {
+    this.logsSubscription?.unsubscribe();
+    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
+      next: (logEntry: JobLogEntryView) => {
+        this.jobLogs.update((currentLogs) => {
+          if (currentLogs.some((item) => item.eventIndex === logEntry.eventIndex)) {
+            return currentLogs;
+          }
+          return [...currentLogs, logEntry].sort(
+            (leftEntry, rightEntry) => leftEntry.eventIndex - rightEntry.eventIndex,
+          );
+        });
+      },
+      error: () => {
+        // Mantener flujo de progreso aun cuando falle stream SSE de logs.
+      },
+    });
+  }
+
+  private loadHistoricalLogs(jobId: string): void {
+    this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
+      next: (logsPage) => this.jobLogs.set(logsPage.results),
+      error: () => {
+        // No bloquear render de resultados si falla la consulta de logs históricos.
+      },
     });
   }
 
@@ -195,6 +235,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         }
 
         this.resultData.set(finalResultData);
+        this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
         this.loadHistory();
       },

@@ -28,7 +28,7 @@ export interface JobProgressSnapshot {
      */
     progress_percentage: number;
     /**
-     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `caching` - caching * `completed` - completed * `failed` - failed
+     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed
      */
     progress_stage: JobProgressStageEnum;
     /**

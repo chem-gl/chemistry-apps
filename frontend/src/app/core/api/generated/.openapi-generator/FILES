@@ -7,6 +7,8 @@ api/calculator.service.ts
 api/calculator.serviceInterface.ts
 api/jobs.service.ts
 api/jobs.serviceInterface.ts
+api/randomNumbers.service.ts
+api/randomNumbers.serviceInterface.ts
 configuration.ts
 encoder.ts
 git_push.sh
@@ -19,10 +21,18 @@ model/calculatorResult.ts
 model/calculatorResultMetadata.ts
 model/errorResponse.ts
 model/jobCreate.ts
+model/jobLogEvent.ts
+model/jobLogList.ts
 model/jobProgressSnapshot.ts
 model/jobProgressStageEnum.ts
 model/jobStatusEnum.ts
+model/levelEnum.ts
 model/models.ts
+model/randomNumbersJobCreate.ts
+model/randomNumbersJobResponse.ts
+model/randomNumbersParameters.ts
+model/randomNumbersResult.ts
+model/randomNumbersResultMetadata.ts
 model/scientificJob.ts
 param.ts
 provide-api.ts
