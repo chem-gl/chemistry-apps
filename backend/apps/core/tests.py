@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -11,11 +12,12 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .app_registry import ScientificAppDefinition, ScientificAppRegistry
 from .cache import generate_job_hash
-from .models import ScientificCacheEntry, ScientificJob
+from .models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
 from .processing import PluginRegistry
 from .services import JobService
 from .types import JSONMap
@@ -57,6 +59,28 @@ class JobServiceTests(TestCase):
         ).exists()
         self.assertTrue(cache_entry_exists)
 
+    def test_run_job_persists_terminal_progress_when_completed(self) -> None:
+        payload: JSONMap = {"op": "add", "a": 4, "b": 6}
+        job: ScientificJob = JobService.create_job("calculator", "1.0.0", payload)
+
+        JobService.run_job(str(job.id))
+
+        refreshed_job: ScientificJob = ScientificJob.objects.get(id=job.id)
+        self.assertEqual(refreshed_job.status, "completed")
+        self.assertEqual(refreshed_job.progress_percentage, 100)
+        self.assertEqual(refreshed_job.progress_stage, "completed")
+
+    def test_run_job_persists_terminal_progress_when_failed(self) -> None:
+        payload: JSONMap = {"op": "div", "a": 10, "b": 0}
+        job: ScientificJob = JobService.create_job("calculator", "1.0.0", payload)
+
+        JobService.run_job(str(job.id))
+
+        refreshed_job: ScientificJob = ScientificJob.objects.get(id=job.id)
+        self.assertEqual(refreshed_job.status, "failed")
+        self.assertEqual(refreshed_job.progress_percentage, 100)
+        self.assertEqual(refreshed_job.progress_stage, "failed")
+
     def test_create_job_uses_early_cache_hit(self) -> None:
         payload: JSONMap = {"op": "sub", "a": 10, "b": 3}
         base_job: ScientificJob = JobService.create_job("calculator", "1.0.0", payload)
@@ -69,6 +93,102 @@ class JobServiceTests(TestCase):
         self.assertEqual(cached_job.status, "completed")
         self.assertTrue(cached_job.cache_hit)
         self.assertFalse(cached_job.cache_miss)
+
+    def test_active_recovery_requeues_stale_running_job(self) -> None:
+        stale_job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 2, "b": 3},
+            progress_percentage=40,
+            progress_stage="running",
+            progress_message="Ejecutando plugin científico.",
+            progress_event_index=2,
+            recovery_attempts=0,
+            max_recovery_attempts=2,
+        )
+        ScientificJob.objects.filter(id=stale_job.id).update(
+            updated_at=timezone.now() - timedelta(seconds=180)
+        )
+
+        summary = JobService.run_active_recovery(
+            dispatch_callback=lambda _job_id: True,
+            stale_seconds=60,
+            include_pending_jobs=True,
+        )
+
+        stale_job.refresh_from_db()
+        self.assertEqual(summary["stale_running_detected"], 1)
+        self.assertEqual(summary["requeued_successfully"], 1)
+        self.assertEqual(stale_job.status, "pending")
+        self.assertEqual(stale_job.recovery_attempts, 1)
+        self.assertEqual(stale_job.progress_stage, "queued")
+
+    def test_active_recovery_marks_failed_when_retry_limit_exceeded(self) -> None:
+        stale_job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 2, "b": 3},
+            progress_percentage=55,
+            progress_stage="running",
+            progress_message="Ejecutando plugin científico.",
+            progress_event_index=3,
+            recovery_attempts=2,
+            max_recovery_attempts=2,
+        )
+        ScientificJob.objects.filter(id=stale_job.id).update(
+            updated_at=timezone.now() - timedelta(seconds=200)
+        )
+
+        summary = JobService.run_active_recovery(
+            dispatch_callback=lambda _job_id: True,
+            stale_seconds=60,
+            include_pending_jobs=False,
+        )
+
+        stale_job.refresh_from_db()
+        self.assertEqual(summary["marked_failed_by_retries"], 1)
+        self.assertEqual(stale_job.status, "failed")
+        self.assertIn("Límite de recuperación automática", str(stale_job.error_trace))
+
+    def test_active_recovery_requeues_stale_pending_job(self) -> None:
+        pending_job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="pending",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 2, "b": 3},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Broker no disponible. El job permanece pendiente.",
+            progress_event_index=1,
+            recovery_attempts=0,
+            max_recovery_attempts=3,
+        )
+        ScientificJob.objects.filter(id=pending_job.id).update(
+            updated_at=timezone.now() - timedelta(seconds=180)
+        )
+
+        summary = JobService.run_active_recovery(
+            dispatch_callback=lambda _job_id: True,
+            stale_seconds=60,
+            include_pending_jobs=True,
+        )
+
+        pending_job.refresh_from_db()
+        self.assertEqual(summary["stale_pending_detected"], 1)
+        self.assertEqual(summary["requeued_successfully"], 1)
+        self.assertEqual(pending_job.recovery_attempts, 1)
+        self.assertEqual(pending_job.progress_stage, "queued")
 
 
 class JobApiTests(TestCase):
@@ -88,6 +208,24 @@ class JobApiTests(TestCase):
             cache_miss=True,
             parameters={"plugin_name": plugin_name},
             results={"ok": True} if status_value == "completed" else None,
+        )
+
+    def _create_log_event(
+        self,
+        *,
+        job: ScientificJob,
+        event_index: int,
+        message: str,
+        level: str = "info",
+    ) -> ScientificJobLogEvent:
+        """Crea un evento de log para validar endpoints de observabilidad."""
+        return ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=event_index,
+            level=level,
+            source="tests.core",
+            message=message,
+            payload={"event_index": event_index},
         )
 
     def test_create_and_retrieve_job(self) -> None:
@@ -185,6 +323,29 @@ class JobApiTests(TestCase):
         self.assertEqual(create_response.data["progress_stage"], "pending")
         self.assertIn("Broker no disponible", create_response.data["progress_message"])
 
+    def test_retrieve_job_normalizes_legacy_terminal_progress_fields(self) -> None:
+        completed_job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="completed",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            results={"final_result": 3},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Estado legado inconsistente.",
+            progress_event_index=1,
+        )
+
+        response = self.client.get(f"/api/jobs/{completed_job.id}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], "completed")
+        self.assertEqual(response.data["progress_percentage"], 100)
+        self.assertEqual(response.data["progress_stage"], "completed")
+
     def test_progress_endpoint_returns_job_snapshot(self) -> None:
         job: ScientificJob = self._create_job_record(
             plugin_name="calculator",
@@ -216,6 +377,43 @@ class JobApiTests(TestCase):
         self.assertEqual(response["Content-Type"], "text/event-stream")
         stream_payload_text: str = response.content.decode("utf-8")
         self.assertIn("event: job.progress", stream_payload_text)
+        self.assertIn(str(job.id), stream_payload_text)
+
+    def test_logs_endpoint_returns_paginated_events(self) -> None:
+        job: ScientificJob = self._create_job_record(
+            plugin_name="calculator",
+            status_value="completed",
+        )
+        self._create_log_event(job=job, event_index=1, message="Job iniciado")
+        self._create_log_event(job=job, event_index=2, message="Plugin ejecutado")
+        self._create_log_event(job=job, event_index=3, message="Job completado")
+
+        response = self.client.get(f"/api/jobs/{job.id}/logs/", {"limit": 2})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["results"][0]["event_index"], 1)
+        self.assertEqual(response.data["results"][1]["event_index"], 2)
+        self.assertEqual(response.data["next_after_event_index"], 2)
+
+    def test_logs_events_endpoint_returns_sse_log_payload(self) -> None:
+        job: ScientificJob = self._create_job_record(
+            plugin_name="calculator",
+            status_value="completed",
+        )
+        self._create_log_event(job=job, event_index=1, message="Job finalizado")
+
+        response = self.client.get(
+            f"/api/jobs/{job.id}/logs/events/",
+            {"timeout_seconds": 1},
+            HTTP_ACCEPT="text/event-stream",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/event-stream")
+        stream_payload_text: str = response.content.decode("utf-8")
+        self.assertIn("event: job.log", stream_payload_text)
         self.assertIn(str(job.id), stream_payload_text)
 
 

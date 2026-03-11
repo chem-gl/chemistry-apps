@@ -16,6 +16,7 @@ from functools import lru_cache
 
 from .adapters import (
     DjangoCacheRepositoryAdapter,
+    DjangoJobLogPublisherAdapter,
     DjangoJobProgressPublisherAdapter,
     DjangoPluginExecutionAdapter,
 )
@@ -34,4 +35,5 @@ def build_job_service() -> RuntimeJobService:
         cache_repository=DjangoCacheRepositoryAdapter(),
         plugin_execution=DjangoPluginExecutionAdapter(),
         progress_publisher=DjangoJobProgressPublisherAdapter(),
+        log_publisher=DjangoJobLogPublisherAdapter(),
     )

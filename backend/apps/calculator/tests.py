@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from apps.core.models import ScientificJob
+from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 from apps.core.types import JSONMap
 from django.test import TestCase
@@ -196,3 +196,35 @@ class CalculatorContractApiTests(TestCase):
             f"{APP_API_BASE_PATH.rstrip('/')}/{created_job_id}"
         )
         self.assertEqual(retrieve_response.status_code, 200)
+
+    def test_calculator_job_persists_start_and_finish_logs(self) -> None:
+        request_payload: JSONMap = {
+            "version": "1.0.0",
+            "op": "add",
+            "a": 3.0,
+            "b": 4.0,
+        }
+
+        with patch("apps.calculator.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                request_payload,
+                format="json",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        JobService.run_job(created_job_id)
+
+        job: ScientificJob = ScientificJob.objects.get(id=created_job_id)
+        calculator_logs = ScientificJobLogEvent.objects.filter(
+            job=job,
+            source="calculator.plugin",
+        ).order_by("event_index")
+
+        self.assertGreaterEqual(calculator_logs.count(), 2)
+        messages: list[str] = [str(item.message) for item in calculator_logs]
+        self.assertIn("Iniciando operación de calculadora.", messages)
+        self.assertIn("Operación de calculadora completada.", messages)

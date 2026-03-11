@@ -16,8 +16,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .models import ScientificJob
-from .types import JobProgressStage, JSONMap, PluginProgressCallback
+from .models import ScientificJob, ScientificJobLogEvent
+from .types import (
+    JobLogLevel,
+    JobProgressStage,
+    JSONMap,
+    PluginLogCallback,
+    PluginProgressCallback,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +33,16 @@ class JobProgressUpdate:
     percentage: int
     stage: JobProgressStage
     message: str
+
+
+@dataclass(frozen=True, slots=True)
+class JobLogUpdate:
+    """Representa una actualización de log tipada para un job científico."""
+
+    level: JobLogLevel
+    source: str
+    message: str
+    payload: JSONMap | None = None
 
 
 class CacheRepositoryPort(Protocol):
@@ -69,6 +85,7 @@ class PluginExecutionPort(Protocol):
         plugin_name: str,
         parameters: JSONMap,
         progress_callback: PluginProgressCallback | None = None,
+        log_callback: PluginLogCallback | None = None,
     ) -> JSONMap:
         """Ejecuta un plugin registrado y retorna un payload JSON tipado."""
 
@@ -82,3 +99,14 @@ class JobProgressPublisherPort(Protocol):
 
     def publish(self, job: ScientificJob, progress_update: JobProgressUpdate) -> None:
         """Persiste una actualización de progreso en el job recibido."""
+
+
+class JobLogPublisherPort(Protocol):
+    """Puerto para persistir eventos de log correlacionados por job."""
+
+    def publish(
+        self,
+        job: ScientificJob,
+        log_update: JobLogUpdate,
+    ) -> ScientificJobLogEvent:
+        """Persiste un evento de log para el job recibido."""

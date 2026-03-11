@@ -87,6 +87,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
             ("pending", "pending"),
             ("queued", "queued"),
             ("running", "running"),
+            ("recovering", "recovering"),
             ("caching", "caching"),
             ("completed", "completed"),
             ("failed", "failed"),
@@ -103,6 +104,104 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(
         help_text="Marca temporal de última actualización."
     )
+
+
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Evento de log de job",
+            value={
+                "job_id": "8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",
+                "event_index": 12,
+                "level": "info",
+                "source": "random_numbers.plugin",
+                "message": "Procesando lote de generación.",
+                "payload": {
+                    "current_batch_size": 5,
+                    "generated_count_before_batch": 10,
+                    "remaining_numbers": 7,
+                },
+                "created_at": "2026-03-11T10:25:00Z",
+            },
+            response_only=True,
+            description="Evento de observabilidad de ejecución correlacionado por job.",
+        )
+    ]
+)
+class JobLogEventSerializer(serializers.Serializer):
+    """Contrato de un evento de log persistido para un job."""
+
+    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    event_index = serializers.IntegerField(
+        min_value=1,
+        help_text="Índice incremental del evento de log dentro del job.",
+    )
+    level = serializers.ChoiceField(
+        choices=[
+            ("debug", "debug"),
+            ("info", "info"),
+            ("warning", "warning"),
+            ("error", "error"),
+        ],
+        help_text="Nivel de severidad del evento de log.",
+    )
+    source = serializers.CharField(help_text="Origen del evento de log.")
+    message = serializers.CharField(help_text="Mensaje de observabilidad.")
+    payload = serializers.JSONField(
+        help_text="Contexto estructurado adicional del evento de log."
+    )
+    created_at = serializers.DateTimeField(
+        help_text="Marca temporal de creación del evento."
+    )
+
+
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Listado de logs por job",
+            value={
+                "job_id": "8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",
+                "count": 2,
+                "next_after_event_index": 13,
+                "results": [
+                    {
+                        "job_id": "8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",
+                        "event_index": 12,
+                        "level": "info",
+                        "source": "random_numbers.plugin",
+                        "message": "Procesando lote de generación.",
+                        "payload": {"current_batch_size": 5},
+                        "created_at": "2026-03-11T10:25:00Z",
+                    },
+                    {
+                        "job_id": "8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",
+                        "event_index": 13,
+                        "level": "debug",
+                        "source": "random_numbers.plugin",
+                        "message": "Número generado correctamente.",
+                        "payload": {"generated_number": 1024},
+                        "created_at": "2026-03-11T10:25:01Z",
+                    },
+                ],
+            },
+            response_only=True,
+            description="Página de logs de ejecución de un job.",
+        )
+    ]
+)
+class JobLogListSerializer(serializers.Serializer):
+    """Contrato de respuesta para listado paginado de logs por job."""
+
+    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    count = serializers.IntegerField(
+        min_value=0,
+        help_text="Cantidad de eventos en la página de resultados.",
+    )
+    next_after_event_index = serializers.IntegerField(
+        min_value=0,
+        help_text="Cursor recomendado para consultar la siguiente página.",
+    )
+    results = JobLogEventSerializer(many=True)
 
 
 class ScientificJobSerializer(serializers.ModelSerializer):
@@ -132,3 +231,27 @@ class ScientificJobSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+    def to_representation(self, instance: ScientificJob):
+        """Normaliza salida terminal para evitar inconsistencias legacy en UI."""
+        raw_representation = super().to_representation(instance)
+
+        normalized_representation = {
+            key: value for key, value in raw_representation.items()
+        }
+        job_status_value: str = str(instance.status)
+
+        if job_status_value in {"completed", "failed"}:
+            normalized_representation["progress_percentage"] = 100
+            normalized_representation["progress_stage"] = job_status_value
+
+            if job_status_value == "completed":
+                normalized_representation["progress_message"] = (
+                    "Job completado correctamente."
+                )
+            else:
+                normalized_representation["progress_message"] = (
+                    "Job finalizado con error. Revisar error_trace."
+                )
+
+        return normalized_representation

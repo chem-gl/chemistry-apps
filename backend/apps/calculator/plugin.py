@@ -14,7 +14,12 @@ import math
 from typing import cast
 
 from apps.core.processing import PluginRegistry
-from apps.core.types import JSONMap, JSONValue
+from apps.core.types import (
+    JSONMap,
+    JSONValue,
+    PluginLogCallback,
+    PluginProgressCallback,
+)
 
 from .definitions import PLUGIN_NAME, SUPPORTED_OPERATIONS
 from .types import CalculatorInput, CalculatorOperation, CalculatorResult
@@ -63,16 +68,38 @@ def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
 
 
 @PluginRegistry.register(PLUGIN_NAME)
-def calculator_plugin(parameters: JSONMap) -> JSONMap:
+def calculator_plugin(
+    parameters: JSONMap,
+    progress_callback: PluginProgressCallback | None = None,
+    log_callback: PluginLogCallback | None = None,
+) -> JSONMap:
     """Ejecuta operaciones aritméticas bajo el contrato publicado en schemas.
 
     Esta función es llamada indirectamente por `JobService` a través de
     `PluginRegistry.execute(...)`, no por la capa HTTP.
     """
+    del progress_callback
+    emit_log: PluginLogCallback = (
+        log_callback
+        if log_callback is not None
+        else lambda _level, _source, _message, _payload: None
+    )
+
     validated_input: CalculatorInput = _build_calculator_input(parameters)
     operation_name: CalculatorOperation = validated_input["op"]
     first_operand: float = validated_input["a"]
     second_operand: float | None = validated_input["b"]
+
+    emit_log(
+        "info",
+        "calculator.plugin",
+        "Iniciando operación de calculadora.",
+        {
+            "operation": operation_name,
+            "operand_a": first_operand,
+            "operand_b": second_operand,
+        },
+    )
 
     logger.info(
         "Ejecutando calculadora '%s' con operandos %s y %s",
@@ -106,4 +133,15 @@ def calculator_plugin(parameters: JSONMap) -> JSONMap:
             "operand_b": second_operand,
         },
     }
+
+    emit_log(
+        "info",
+        "calculator.plugin",
+        "Operación de calculadora completada.",
+        {
+            "operation": operation_name,
+            "result": result_value,
+        },
+    )
+
     return typed_response_payload

@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 from urllib.error import URLError
 
-from apps.core.models import ScientificJob
+from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 from apps.core.types import JSONMap
 from django.test import TestCase
@@ -145,3 +145,34 @@ class RandomNumbersContractApiTests(TestCase):
         self.assertIsNotNone(job.results)
         self.assertEqual(len(job.results["generated_numbers"]), 4)
         self.assertEqual(len(job.results["metadata"]["seed_digest"]), 64)
+
+    @patch("apps.random_numbers.plugin.sleep")
+    @patch("apps.random_numbers.plugin.urlopen")
+    def test_random_numbers_job_persists_runtime_and_plugin_logs(
+        self,
+        urlopen_mock: Mock,
+        sleep_mock: Mock,
+    ) -> None:
+        del sleep_mock
+        mocked_response = Mock()
+        mocked_response.read.return_value = b"seed-data"
+        urlopen_mock.return_value.__enter__.return_value = mocked_response
+
+        job: ScientificJob = JobService.create_job(
+            plugin_name=PLUGIN_NAME,
+            version="1.0.0",
+            parameters={
+                "seed_url": "https://example.com/seed.txt",
+                "numbers_per_batch": 2,
+                "interval_seconds": 1,
+                "total_numbers": 4,
+            },
+        )
+
+        JobService.run_job(str(job.id))
+
+        job_logs = ScientificJobLogEvent.objects.filter(job=job).order_by("event_index")
+        self.assertGreaterEqual(job_logs.count(), 4)
+        sources: set[str] = {str(item.source) for item in job_logs}
+        self.assertIn("core.runtime", sources)
+        self.assertIn("random_numbers.plugin", sources)

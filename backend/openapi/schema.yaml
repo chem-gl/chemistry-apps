@@ -285,6 +285,119 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/jobs/{id}/logs/:
+    get:
+      operationId: jobs_logs_retrieve
+      description: Devuelve eventos de log persistidos para un job en orden ascendente
+        por event_index, con soporte de cursor incremental y límite de página.
+      summary: Consultar historial de logs de un Job
+      parameters:
+      - in: query
+        name: after_event_index
+        schema:
+          type: integer
+        description: Retorna eventos con índice mayor al valor indicado.
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Cantidad máxima de eventos a devolver. Máximo 500.
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobLogList'
+              examples:
+                ListadoDeLogsPorJob:
+                  value:
+                    job_id: 8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24
+                    count: 2
+                    next_after_event_index: 13
+                    results:
+                    - job_id: 8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24
+                      event_index: 12
+                      level: info
+                      source: random_numbers.plugin
+                      message: Procesando lote de generación.
+                      payload:
+                        current_batch_size: 5
+                      created_at: '2026-03-11T10:25:00Z'
+                    - job_id: 8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24
+                      event_index: 13
+                      level: debug
+                      source: random_numbers.plugin
+                      message: Número generado correctamente.
+                      payload:
+                        generated_number: 1024
+                      created_at: '2026-03-11T10:25:01Z'
+                  summary: Listado de logs por job
+                  description: Página de logs de ejecución de un job.
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+  /api/jobs/{id}/logs/events/:
+    get:
+      operationId: jobs_logs_events_retrieve
+      description: Abre un stream Server-Sent Events para recibir logs en tiempo real
+        hasta timeout o finalización del job.
+      summary: Suscribirse a logs de un Job (SSE)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      - in: query
+        name: timeout_seconds
+        schema:
+          type: integer
+        description: 'Tiempo máximo del stream SSE en segundos. Valor por defecto:
+          30.'
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                EventoSSEDeLog:
+                  value: |+
+                    id: 12
+                    event: job.log
+                    data: {"job_id":"8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24","event_index":12,"level":"info","source":"random_numbers.plugin","message":"Procesando lote de generación.","payload":{"current_batch_size":5},"created_at":"2026-03-11T10:25:00Z"}
+
+                  summary: Evento SSE de log
+          description: Flujo SSE de eventos job.log con id incremental.
+        '404':
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
   /api/jobs/{id}/progress/:
     get:
       operationId: jobs_progress_retrieve
@@ -329,6 +442,85 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/random-numbers/jobs/:
+    post:
+      operationId: random_numbers_jobs_create
+      description: Crea un job asíncrono que genera números aleatorios por lotes según
+        una URL semilla y un intervalo en segundos.
+      summary: Crear Job de Números Aleatorios
+      tags:
+      - RandomNumbers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RandomNumbersJobCreate'
+            examples:
+              CrearJobRandomNumbers:
+                value:
+                  version: 1.0.0
+                  seed_url: https://example.com/seed.txt
+                  numbers_per_batch: 5
+                  interval_seconds: 120
+                  total_numbers: 55
+                summary: Crear job random numbers
+                description: Genera 55 números en lotes de 5 con 120 segundos entre
+                  lotes.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RandomNumbersJobCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RandomNumbersJobCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RandomNumbersJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato random_numbers.
+  /api/random-numbers/jobs/{id}/:
+    get:
+      operationId: random_numbers_jobs_retrieve
+      description: Devuelve estado y resultado de random_numbers por UUID.
+      summary: Consultar Job de Números Aleatorios
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job random_numbers.
+        required: true
+      tags:
+      - RandomNumbers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RandomNumbersJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job random_numbers no encontrado.
 components:
   schemas:
     CalculatorJobCreate:
@@ -536,6 +728,73 @@ components:
       required:
       - parameters
       - plugin_name
+    JobLogEvent:
+      type: object
+      description: Contrato de un evento de log persistido para un job.
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Identificador único del job.
+        event_index:
+          type: integer
+          minimum: 1
+          description: Índice incremental del evento de log dentro del job.
+        level:
+          allOf:
+          - $ref: '#/components/schemas/LevelEnum'
+          description: |-
+            Nivel de severidad del evento de log.
+
+            * `debug` - debug
+            * `info` - info
+            * `warning` - warning
+            * `error` - error
+        source:
+          type: string
+          description: Origen del evento de log.
+        message:
+          type: string
+          description: Mensaje de observabilidad.
+        payload:
+          description: Contexto estructurado adicional del evento de log.
+        created_at:
+          type: string
+          format: date-time
+          description: Marca temporal de creación del evento.
+      required:
+      - created_at
+      - event_index
+      - job_id
+      - level
+      - message
+      - payload
+      - source
+    JobLogList:
+      type: object
+      description: Contrato de respuesta para listado paginado de logs por job.
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Identificador único del job.
+        count:
+          type: integer
+          minimum: 0
+          description: Cantidad de eventos en la página de resultados.
+        next_after_event_index:
+          type: integer
+          minimum: 0
+          description: Cursor recomendado para consultar la siguiente página.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobLogEvent'
+      required:
+      - count
+      - job_id
+      - next_after_event_index
+      - results
     JobProgressSnapshot:
       type: object
       description: Contrato de progreso de job usado en endpoint snapshot y stream
@@ -569,6 +828,7 @@ components:
             * `pending` - pending
             * `queued` - queued
             * `running` - running
+            * `recovering` - recovering
             * `caching` - caching
             * `completed` - completed
             * `failed` - failed
@@ -596,6 +856,7 @@ components:
       - pending
       - queued
       - running
+      - recovering
       - caching
       - completed
       - failed
@@ -604,6 +865,7 @@ components:
         * `pending` - pending
         * `queued` - queued
         * `running` - running
+        * `recovering` - recovering
         * `caching` - caching
         * `completed` - completed
         * `failed` - failed
@@ -619,6 +881,188 @@ components:
         * `running` - Running
         * `completed` - Completed
         * `failed` - Failed
+    LevelEnum:
+      enum:
+      - debug
+      - info
+      - warning
+      - error
+      type: string
+      description: |-
+        * `debug` - debug
+        * `info` - info
+        * `warning` - warning
+        * `error` - error
+    RandomNumbersJobCreate:
+      type: object
+      description: Valida request de creación para jobs de generación aleatoria.
+      properties:
+        version:
+          type: string
+          default: 1.0.0
+          maxLength: 50
+        seed_url:
+          type: string
+          format: uri
+          description: URL cuyo contenido se usa como semilla determinista.
+        numbers_per_batch:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Cantidad de números generados por ciclo.
+        interval_seconds:
+          type: integer
+          maximum: 3600
+          minimum: 1
+          description: Tiempo de espera entre ciclos de generación en segundos.
+        total_numbers:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          description: Cantidad total de números aleatorios a generar.
+      required:
+      - interval_seconds
+      - numbers_per_batch
+      - seed_url
+      - total_numbers
+    RandomNumbersJobResponse:
+      type: object
+      description: Salida tipada para jobs de random_numbers.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/RandomNumbersParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/RandomNumbersResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    RandomNumbersParameters:
+      type: object
+      description: Contrato persistido de parámetros del job random_numbers.
+      properties:
+        seed_url:
+          type: string
+          format: uri
+        numbers_per_batch:
+          type: integer
+          minimum: 1
+        interval_seconds:
+          type: integer
+          minimum: 1
+        total_numbers:
+          type: integer
+          minimum: 1
+      required:
+      - interval_seconds
+      - numbers_per_batch
+      - seed_url
+      - total_numbers
+    RandomNumbersResult:
+      type: object
+      description: Resultado tipado de números aleatorios generados.
+      properties:
+        generated_numbers:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+        metadata:
+          $ref: '#/components/schemas/RandomNumbersResultMetadata'
+      required:
+      - generated_numbers
+      - metadata
+    RandomNumbersResultMetadata:
+      type: object
+      description: Metadatos del resultado de generación aleatoria.
+      properties:
+        seed_url:
+          type: string
+          format: uri
+        seed_digest:
+          type: string
+          maxLength: 64
+        numbers_per_batch:
+          type: integer
+          minimum: 1
+        interval_seconds:
+          type: integer
+          minimum: 1
+        total_numbers:
+          type: integer
+          minimum: 1
+      required:
+      - interval_seconds
+      - numbers_per_batch
+      - seed_digest
+      - seed_url
+      - total_numbers
     ScientificJob:
       type: object
       description: |-

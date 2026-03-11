@@ -17,15 +17,18 @@ from dataclasses import dataclass
 from typing import cast
 
 from django.db.models import F
+from django.utils import timezone
 
-from .models import ScientificCacheEntry, ScientificJob
+from .models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
 from .ports import (
     CacheRepositoryPort,
+    JobLogPublisherPort,
+    JobLogUpdate,
     JobProgressPublisherPort,
     JobProgressUpdate,
     PluginExecutionPort,
 )
-from .types import JSONMap, PluginProgressCallback
+from .types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 
 class DjangoCacheRepositoryAdapter(CacheRepositoryPort):
@@ -89,6 +92,7 @@ class DjangoPluginExecutionAdapter(PluginExecutionPort):
         plugin_name: str,
         parameters: JSONMap,
         progress_callback: PluginProgressCallback | None = None,
+        log_callback: PluginLogCallback | None = None,
     ) -> JSONMap:
         """Ejecuta el plugin en el registro global del dominio."""
         from .processing import PluginRegistry
@@ -97,6 +101,7 @@ class DjangoPluginExecutionAdapter(PluginExecutionPort):
             plugin_name,
             parameters,
             progress_callback=progress_callback,
+            log_callback=log_callback,
         )
 
 
@@ -117,12 +122,44 @@ class DjangoJobProgressPublisherAdapter(JobProgressPublisherPort):
         job.progress_stage = progress_update.stage
         job.progress_message = progress_update.message
         job.progress_event_index = next_event_index
+        job.last_heartbeat_at = timezone.now()
         job.save(
             update_fields=[
                 "progress_percentage",
                 "progress_stage",
                 "progress_message",
                 "progress_event_index",
+                "last_heartbeat_at",
                 "updated_at",
             ]
+        )
+
+
+class DjangoJobLogPublisherAdapter(JobLogPublisherPort):
+    """Publicador persistente de eventos de log por job."""
+
+    def publish(
+        self,
+        job: ScientificJob,
+        log_update: JobLogUpdate,
+    ) -> ScientificJobLogEvent:
+        """Crea un evento incremental por job para stream e historial."""
+        last_event: ScientificJobLogEvent | None = (
+            ScientificJobLogEvent.objects.filter(job=job)
+            .order_by("-event_index")
+            .first()
+        )
+        next_event_index: int = 1 if last_event is None else last_event.event_index + 1
+
+        normalized_payload: JSONMap = (
+            log_update.payload if log_update.payload is not None else {}
+        )
+
+        return ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=next_event_index,
+            level=log_update.level,
+            source=log_update.source,
+            message=log_update.message,
+            payload=normalized_payload,
         )

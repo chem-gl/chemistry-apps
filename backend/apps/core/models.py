@@ -51,6 +51,24 @@ class ScientificJob(models.Model):
         default=0,
         help_text="Contador incremental de eventos de progreso emitidos.",
     )
+    last_heartbeat_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Última señal de vida del proceso de ejecución del job.",
+    )
+    recovery_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text="Cantidad de intentos de recuperación aplicados al job.",
+    )
+    max_recovery_attempts = models.PositiveIntegerField(
+        default=5,
+        help_text="Cantidad máxima de reencolados automáticos permitidos.",
+    )
+    last_recovered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Marca temporal del último intento de recuperación activa.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -79,3 +97,60 @@ class ScientificCacheEntry(models.Model):
 
     def __str__(self) -> str:
         return f"Cache<{self.plugin_name}:{self.algorithm_version}:{self.job_hash[:8]}>"
+
+
+class ScientificJobLogEvent(models.Model):
+    """Evento de log persistido y correlacionado con un job científico."""
+
+    LEVEL_CHOICES: list[tuple[str, str]] = [
+        ("debug", "Debug"),
+        ("info", "Info"),
+        ("warning", "Warning"),
+        ("error", "Error"),
+    ]
+
+    job = models.ForeignKey(
+        ScientificJob,
+        on_delete=models.CASCADE,
+        related_name="log_events",
+    )
+    event_index = models.PositiveIntegerField(
+        help_text="Indice incremental de evento dentro del job.",
+    )
+    level = models.CharField(
+        max_length=10,
+        choices=LEVEL_CHOICES,
+        default="info",
+        help_text="Nivel del log emitido por runtime o plugin.",
+    )
+    source = models.CharField(
+        max_length=80,
+        default="core.runtime",
+        help_text="Origen del evento de log para diagnostico.",
+    )
+    message = models.CharField(
+        max_length=255,
+        help_text="Mensaje de log legible para diagnostico de ejecucion.",
+    )
+    payload = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Contexto estructurado adicional del evento.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["event_index", "created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["job", "event_index"],
+                name="unique_job_log_event_index",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["job", "event_index"]),
+            models.Index(fields=["job", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"JobLog<{self.job_id}:{self.event_index}:{self.level}>"

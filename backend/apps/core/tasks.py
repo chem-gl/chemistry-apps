@@ -14,6 +14,7 @@ import logging
 
 from celery import shared_task
 from celery.app.task import Task
+from django.conf import settings
 from kombu.exceptions import OperationalError
 from redis.exceptions import ConnectionError as RedisConnectionError
 
@@ -47,5 +48,51 @@ def execute_scientific_job(self: Task, job_id: str) -> None:
     La tarea no conoce reglas de negocio detalladas: delega todo en `JobService`
     para mantener consistencia con ejecuciones iniciadas desde HTTP.
     """
+    if getattr(settings, "JOB_RECOVERY_ENABLED", True):
+        run_active_recovery(exclude_job_id=job_id)
+
     logger.info("Iniciando procesamiento asíncrono para job %s", job_id)
     JobService.run_job(job_id)
+
+
+@shared_task(bind=True)
+def run_active_recovery(
+    self: Task, exclude_job_id: str | None = None
+) -> dict[str, int]:
+    """Ejecuta recuperación activa de jobs huérfanos por caída/reinicio."""
+    del self
+    if not getattr(settings, "JOB_RECOVERY_ENABLED", True):
+        return {
+            "stale_running_detected": 0,
+            "stale_pending_detected": 0,
+            "requeued_successfully": 0,
+            "requeue_failed": 0,
+            "marked_failed_by_retries": 0,
+        }
+
+    stale_seconds: int = int(getattr(settings, "JOB_RECOVERY_STALE_SECONDS", 60))
+    include_pending_jobs: bool = bool(
+        getattr(settings, "JOB_RECOVERY_INCLUDE_PENDING", True)
+    )
+
+    summary = JobService.run_active_recovery(
+        dispatch_callback=dispatch_scientific_job,
+        stale_seconds=stale_seconds,
+        include_pending_jobs=include_pending_jobs,
+        exclude_job_id=exclude_job_id,
+    )
+    logger.info(
+        "Recuperación activa ejecutada: running=%s pending=%s requeued=%s failed_requeue=%s exceeded=%s",
+        summary["stale_running_detected"],
+        summary["stale_pending_detected"],
+        summary["requeued_successfully"],
+        summary["requeue_failed"],
+        summary["marked_failed_by_retries"],
+    )
+    return {
+        "stale_running_detected": int(summary["stale_running_detected"]),
+        "stale_pending_detected": int(summary["stale_pending_detected"]),
+        "requeued_successfully": int(summary["requeued_successfully"]),
+        "requeue_failed": int(summary["requeue_failed"]),
+        "marked_failed_by_retries": int(summary["marked_failed_by_retries"]),
+    }

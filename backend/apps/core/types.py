@@ -13,11 +13,14 @@ JobProgressStage: TypeAlias = Literal[
     "pending",
     "queued",
     "running",
+    "recovering",
     "caching",
     "completed",
     "failed",
 ]
 PluginProgressCallback: TypeAlias = Callable[[int, JobProgressStage, str], None]
+JobLogLevel: TypeAlias = Literal["debug", "info", "warning", "error"]
+PluginLogCallback: TypeAlias = Callable[[JobLogLevel, str, str, JSONMap | None], None]
 
 
 class JobCreatePayload(TypedDict):
@@ -38,3 +41,34 @@ class JobProgressSnapshot(TypedDict):
     progress_message: str
     progress_event_index: int
     updated_at: str
+
+
+class JobLogEntry(TypedDict):
+    """Evento tipado de logging en tiempo real por job."""
+
+    job_id: str
+    event_index: int
+    level: JobLogLevel
+    source: str
+    message: str
+    payload: JSONMap
+    created_at: str
+
+
+class JobLogListResponse(TypedDict):
+    """Respuesta tipada para listado paginado de logs por job."""
+
+    job_id: str
+    count: int
+    next_after_event_index: int
+    results: list[JobLogEntry]
+
+
+class JobRecoverySummary(TypedDict):
+    """Resumen tipado de ejecución de recuperación activa de jobs."""
+
+    stale_running_detected: int
+    stale_pending_detected: int
+    requeued_successfully: int
+    requeue_failed: int
+    marked_failed_by_retries: int

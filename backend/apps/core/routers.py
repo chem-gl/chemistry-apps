@@ -22,21 +22,33 @@ from rest_framework.response import Response
 from .definitions import (
     ALLOWED_JOB_STATUS_FILTERS,
     CORE_JOBS_EVENTS_ROUTE_SUFFIX,
+    CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX,
+    CORE_JOBS_LOGS_ROUTE_SUFFIX,
     CORE_JOBS_PROGRESS_ROUTE_SUFFIX,
     DEFAULT_SSE_TIMEOUT_SECONDS,
     MAX_SSE_TIMEOUT_SECONDS,
     SSE_POLL_INTERVAL_SECONDS,
 )
-from .models import ScientificJob
+from .models import ScientificJob, ScientificJobLogEvent
 from .schemas import (
     ErrorResponseSerializer,
     JobCreateSerializer,
+    JobLogListSerializer,
     JobProgressSnapshotSerializer,
     ScientificJobSerializer,
 )
 from .services import JobService
 from .tasks import dispatch_scientific_job
-from .types import JobCreatePayload, JobProgressSnapshot, JobProgressStage, JobStatus
+from .types import (
+    JobCreatePayload,
+    JobLogEntry,
+    JobLogLevel,
+    JobLogListResponse,
+    JobProgressSnapshot,
+    JobProgressStage,
+    JobStatus,
+    JSONMap,
+)
 
 
 class ServerSentEventsRenderer(BaseRenderer):
@@ -70,6 +82,25 @@ def _serialize_sse_progress_event(snapshot: JobProgressSnapshot) -> str:
     )
 
 
+def _build_job_log_entry(log_event: ScientificJobLogEvent) -> JobLogEntry:
+    """Construye contrato tipado de evento de log por job."""
+    return {
+        "job_id": str(log_event.job_id),
+        "event_index": int(log_event.event_index),
+        "level": cast(JobLogLevel, log_event.level),
+        "source": str(log_event.source),
+        "message": str(log_event.message),
+        "payload": cast(JSONMap, log_event.payload),
+        "created_at": log_event.created_at.isoformat().replace("+00:00", "Z"),
+    }
+
+
+def _serialize_sse_log_event(log_entry: JobLogEntry) -> str:
+    """Serializa evento de log al formato SSE para consumo en tiempo real."""
+    payload: str = json.dumps(log_entry, ensure_ascii=True, separators=(",", ":"))
+    return f"id: {log_entry['event_index']}\nevent: job.log\ndata: {payload}\n\n"
+
+
 def _parse_timeout_seconds(raw_timeout_seconds: str | None) -> int:
     """Normaliza timeout de stream SSE dentro de un rango seguro."""
     if raw_timeout_seconds is None:
@@ -85,6 +116,21 @@ def _parse_timeout_seconds(raw_timeout_seconds: str | None) -> int:
     if parsed_timeout_seconds > MAX_SSE_TIMEOUT_SECONDS:
         return MAX_SSE_TIMEOUT_SECONDS
     return parsed_timeout_seconds
+
+
+def _parse_non_negative_int(raw_value: str | None, default_value: int) -> int:
+    """Normaliza query params enteros no negativos con fallback seguro."""
+    if raw_value is None:
+        return default_value
+
+    try:
+        parsed_value: int = int(raw_value)
+    except ValueError:
+        return default_value
+
+    if parsed_value < 0:
+        return default_value
+    return parsed_value
 
 
 @extend_schema(tags=["Jobs"])
@@ -271,6 +317,158 @@ class JobViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        summary="Consultar historial de logs de un Job",
+        description=(
+            "Devuelve eventos de log persistidos para un job en orden ascendente "
+            "por event_index, con soporte de cursor incremental y límite de página."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            ),
+            OpenApiParameter(
+                name="after_event_index",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description="Retorna eventos con índice mayor al valor indicado.",
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description="Cantidad máxima de eventos a devolver. Máximo 500.",
+            ),
+        ],
+        responses={
+            200: JobLogListSerializer,
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+    )
+    @action(detail=True, methods=["get"], url_path=CORE_JOBS_LOGS_ROUTE_SUFFIX)
+    def logs(self, request: Request, id: str | None = None) -> Response:
+        """Lista logs persistidos por job para diagnóstico y auditoría."""
+        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        after_event_index: int = _parse_non_negative_int(
+            request.query_params.get("after_event_index"),
+            default_value=0,
+        )
+        raw_limit: int = _parse_non_negative_int(
+            request.query_params.get("limit"),
+            default_value=50,
+        )
+        normalized_limit: int = max(1, min(500, raw_limit if raw_limit > 0 else 50))
+
+        log_events_queryset = ScientificJobLogEvent.objects.filter(
+            job=job,
+            event_index__gt=after_event_index,
+        ).order_by("event_index")[:normalized_limit]
+
+        log_entries: list[JobLogEntry] = [
+            _build_job_log_entry(log_event) for log_event in log_events_queryset
+        ]
+        next_after_event_index: int = (
+            log_entries[-1]["event_index"]
+            if len(log_entries) > 0
+            else after_event_index
+        )
+        response_payload: JobLogListResponse = {
+            "job_id": str(job.id),
+            "count": len(log_entries),
+            "next_after_event_index": next_after_event_index,
+            "results": log_entries,
+        }
+        serializer = JobLogListSerializer(response_payload)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Suscribirse a logs de un Job (SSE)",
+        description=(
+            "Abre un stream Server-Sent Events para recibir logs en tiempo real "
+            "hasta timeout o finalización del job."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            ),
+            OpenApiParameter(
+                name="timeout_seconds",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Tiempo máximo del stream SSE en segundos. "
+                    f"Valor por defecto: {DEFAULT_SSE_TIMEOUT_SECONDS}."
+                ),
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.STR,
+                description="Flujo SSE de eventos job.log con id incremental.",
+                examples=[
+                    OpenApiExample(
+                        "Evento SSE de log",
+                        value=(
+                            "id: 12\n"
+                            "event: job.log\n"
+                            'data: {"job_id":"8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",'
+                            '"event_index":12,"level":"info",'
+                            '"source":"random_numbers.plugin",'
+                            '"message":"Procesando lote de generación.",'
+                            '"payload":{"current_batch_size":5},'
+                            '"created_at":"2026-03-11T10:25:00Z"}\n\n'
+                        ),
+                    )
+                ],
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path=CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX,
+        renderer_classes=[ServerSentEventsRenderer],
+    )
+    def logs_events(self, request: Request, id: str | None = None) -> HttpResponse:
+        """Expone stream SSE de logs de job para observabilidad en tiempo real."""
+        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+
+        last_event_id_header: str | None = request.headers.get("Last-Event-ID")
+        last_event_index: int = (
+            int(last_event_id_header)
+            if last_event_id_header is not None and last_event_id_header.isdigit()
+            else 0
+        )
+        timeout_seconds: int = _parse_timeout_seconds(
+            request.query_params.get("timeout_seconds")
+        )
+
+        response: HttpResponse = HttpResponse(
+            self._stream_job_log_events(
+                job_id=str(job.id),
+                last_event_index=last_event_index,
+                timeout_seconds=timeout_seconds,
+            ),
+            content_type="text/event-stream",
+            status=status.HTTP_200_OK,
+        )
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    @extend_schema(
         summary="Suscribirse a eventos de progreso de un Job (SSE)",
         description=(
             "Abre un stream Server-Sent Events para recibir actualizaciones de "
@@ -398,3 +596,48 @@ class JobViewSet(viewsets.ViewSet):
             ).first()
             if final_job is not None:
                 yield _serialize_sse_progress_event(_build_progress_snapshot(final_job))
+
+    def _stream_job_log_events(
+        self,
+        *,
+        job_id: str,
+        last_event_index: int,
+        timeout_seconds: int,
+    ) -> Iterator[str]:
+        """Genera eventos SSE de logs de job hasta timeout o fin de ejecución."""
+        del self
+        started_at: float = monotonic()
+        observed_event_index: int = last_event_index
+        next_heartbeat_at: float = started_at + 10.0
+
+        while (monotonic() - started_at) < float(timeout_seconds):
+            refreshed_job: ScientificJob | None = ScientificJob.objects.filter(
+                id=job_id
+            ).first()
+
+            if refreshed_job is None:
+                yield (
+                    "event: job.error\n"
+                    'data: {"detail":"Job no encontrado durante stream"}\n\n'
+                )
+                return
+
+            pending_events = ScientificJobLogEvent.objects.filter(
+                job_id=job_id,
+                event_index__gt=observed_event_index,
+            ).order_by("event_index")
+
+            for pending_event in pending_events:
+                log_entry: JobLogEntry = _build_job_log_entry(pending_event)
+                yield _serialize_sse_log_event(log_entry)
+                observed_event_index = pending_event.event_index
+
+            if refreshed_job.status in {"completed", "failed"}:
+                return
+
+            now: float = monotonic()
+            if now >= next_heartbeat_at:
+                yield ": keep-alive\n\n"
+                next_heartbeat_at = now + 10.0
+
+            sleep(SSE_POLL_INTERVAL_SECONDS)

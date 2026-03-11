@@ -52,6 +52,15 @@ def _get_env_list(variable_name: str, default_value: list[str]) -> list[str]:
     return parsed_values
 
 
+def _get_env_int(variable_name: str, default_value: int) -> int:
+    """Convierte una variable de entorno textual a entero seguro."""
+    raw_value: str = os.getenv(variable_name, str(default_value)).strip()
+    try:
+        return int(raw_value)
+    except ValueError:
+        return default_value
+
+
 # Construye rutas internas del proyecto desde BASE_DIR.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -125,6 +134,7 @@ SPECTACULAR_SETTINGS = {
             ("pending", "pending"),
             ("queued", "queued"),
             ("running", "running"),
+            ("recovering", "recovering"),
             ("caching", "caching"),
             ("completed", "completed"),
             ("failed", "failed"),
@@ -138,6 +148,11 @@ CELERY_RESULT_BACKEND = os.getenv(
     "CELERY_RESULT_BACKEND",
     "redis://localhost:6379/0",
 )
+
+JOB_RECOVERY_ENABLED = _get_env_bool("JOB_RECOVERY_ENABLED", True)
+JOB_RECOVERY_STALE_SECONDS = max(5, _get_env_int("JOB_RECOVERY_STALE_SECONDS", 60))
+JOB_RECOVERY_MAX_ATTEMPTS = max(1, _get_env_int("JOB_RECOVERY_MAX_ATTEMPTS", 5))
+JOB_RECOVERY_INCLUDE_PENDING = _get_env_bool("JOB_RECOVERY_INCLUDE_PENDING", True)
 
 
 MIDDLEWARE = [

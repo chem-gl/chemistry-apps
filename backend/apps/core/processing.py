@@ -17,10 +17,12 @@ from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .types import JSONMap, PluginProgressCallback
+from .types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 PluginCallable = (
-    Callable[[JSONMap], JSONMap] | Callable[[JSONMap, PluginProgressCallback], JSONMap]
+    Callable[[JSONMap], JSONMap]
+    | Callable[[JSONMap, PluginProgressCallback], JSONMap]
+    | Callable[[JSONMap, PluginProgressCallback, PluginLogCallback], JSONMap]
 )
 
 
@@ -69,6 +71,7 @@ class PluginRegistry:
         name: str,
         parameters: JSONMap,
         progress_callback: PluginProgressCallback | None = None,
+        log_callback: PluginLogCallback | None = None,
     ) -> JSONMap:
         """Ejecuta la lógica de plugin registrada con parámetros tipados.
 
@@ -85,8 +88,24 @@ class PluginRegistry:
             if progress_callback is not None
             else lambda _percentage, _stage, _message: None
         )
+        log_callback_to_use: PluginLogCallback = (
+            log_callback
+            if log_callback is not None
+            else lambda _level, _source, _message, _payload: None
+        )
 
         plugin_signature = inspect.signature(plugin_callable)
+        if len(plugin_signature.parameters) >= 3:
+            plugin_with_progress_and_logs = cast(
+                Callable[[JSONMap, PluginProgressCallback, PluginLogCallback], JSONMap],
+                plugin_callable,
+            )
+            return plugin_with_progress_and_logs(
+                parameters,
+                callback_to_use,
+                log_callback_to_use,
+            )
+
         if len(plugin_signature.parameters) >= 2:
             plugin_with_progress = cast(
                 Callable[[JSONMap, PluginProgressCallback], JSONMap], plugin_callable
