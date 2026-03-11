@@ -85,6 +85,12 @@ paths:
                     - El campo b es obligatorio para operaciones binarias.
                   summary: Operación binaria sin b
           description: Error de validación del contrato de calculadora.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
   /api/calculator/jobs/{id}/:
     get:
       operationId: calculator_jobs_retrieve
@@ -574,6 +580,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Error de validación del contrato random_numbers.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
   /api/random-numbers/jobs/{id}/:
     get:
       operationId: random_numbers_jobs_retrieve

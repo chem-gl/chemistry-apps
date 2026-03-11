@@ -10,9 +10,9 @@ Este módulo muestra el patrón recomendado para apps científicas basadas en
 
 from typing import cast
 
+from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
 from apps.core.schemas import ErrorResponseSerializer
-from apps.core.services import JobService
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 from django.shortcuts import get_object_or_404
@@ -71,6 +71,10 @@ class CalculatorJobViewSet(viewsets.ViewSet):
                     ),
                 ],
             ),
+            503: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="No fue posible encolar o crear el job.",
+            ),
         },
     )
     def create(self, request: Request) -> Response:
@@ -95,17 +99,37 @@ class CalculatorJobViewSet(viewsets.ViewSet):
         if second_operand_value is not None:
             parameters_payload["b"] = second_operand_value
 
-        job: ScientificJob = JobService.create_job(
-            plugin_name=PLUGIN_NAME,
+        declarative_api = DeclarativeJobAPI(
+            dispatch_callback=dispatch_scientific_job,
+        )
+        submit_result = declarative_api.submit_job(
+            plugin=PLUGIN_NAME,
             version=version_value,
             parameters=parameters_payload,
-        )
+        ).run()
 
-        dispatch_result: bool = True
-        if job.status == "pending":
-            dispatch_result = dispatch_scientific_job(str(job.id))
-            JobService.register_dispatch_result(str(job.id), dispatch_result)
-            job.refresh_from_db()
+        if submit_result.is_failure():
+            error_message: str = submit_result.fold(
+                on_failure=lambda error_value: str(error_value),
+                on_success=lambda _: "Error desconocido al crear el job.",
+            )
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job_handle = submit_result.get_or_else(None)
+        if job_handle is None:
+            return Response(
+                {"detail": "No se pudo obtener el handle del job creado."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job: ScientificJob = get_object_or_404(
+            ScientificJob,
+            pk=job_handle.job_id,
+            plugin_name=PLUGIN_NAME,
+        )
 
         response_serializer = CalculatorJobResponseSerializer(job)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

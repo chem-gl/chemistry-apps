@@ -32,9 +32,8 @@ Uso esperado:
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import cast
-
-from django.utils import timezone
 
 from .app_registry import ScientificAppRegistry
 from .models import ScientificJob
@@ -47,7 +46,9 @@ from .types import (
     JobDispatchError,
     JobExecutionError,
     JobHandle,
+    JobLogLevel,
     JobLogListResponse,
+    JobPauseNotSupportedError,
     JobProgressSnapshot,
     JobStatus,
     JobTimeoutError,
@@ -61,8 +62,13 @@ from .types import (
 class ConcreteJobHandle(JobHandle[JSONMap]):
     """Implementación concreta de JobHandle sobre ScientificJob ORM."""
 
-    def __init__(self, job: ScientificJob) -> None:
+    def __init__(
+        self,
+        job: ScientificJob,
+        dispatch_callback: Callable[[str], bool] = dispatch_scientific_job,
+    ) -> None:
         self._job = job
+        self._dispatch_callback = dispatch_callback
 
     @property
     def job_id(self) -> str:
@@ -94,13 +100,14 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
         self, after_event_index: int = 0, limit: int = 100
     ) -> JobLogListResponse:
         """Obtiene logs del job de forma paginada."""
-        log_events = self._job.scientificjoblogevent_set.filter(
+        log_events = self._job.log_events.filter(
             event_index__gt=after_event_index
         ).order_by("event_index")[:limit]
 
         next_index = 0
-        if log_events:
-            next_index = log_events.last().event_index + 1
+        last_event = log_events.last()
+        if last_event is not None:
+            next_index = int(last_event.event_index) + 1
 
         return {
             "job_id": str(self._job.id),
@@ -203,7 +210,7 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
 
             try:
                 JobService.resume_job(str(self._job.id))
-                was_dispatched = dispatch_scientific_job(str(self._job.id))
+                was_dispatched = self._dispatch_callback(str(self._job.id))
                 if not was_dispatched:
                     return Failure(
                         JobDispatchError(
@@ -223,9 +230,12 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
 class DeclarativeJobAPI:
     """API declarativa protegida para acceso multicanal a jobs."""
 
-    def __init__(self) -> None:
-        """Inicializa API con servicios core."""
-        pass
+    def __init__(
+        self,
+        dispatch_callback: Callable[[str], bool] = dispatch_scientific_job,
+    ) -> None:
+        """Inicializa API con callback de encolado configurable."""
+        self._dispatch_callback = dispatch_callback
 
     def submit_job(
         self,
@@ -255,13 +265,16 @@ class DeclarativeJobAPI:
                 )
 
                 # Intentar encolar (broker puede fallar, pero es tolerable)
-                was_dispatched = dispatch_scientific_job(str(job.id))
+                was_dispatched = self._dispatch_callback(str(job.id))
 
                 # Registrar resultado del dispatch
                 JobService.register_dispatch_result(str(job.id), was_dispatched)
 
                 # Retornar handle aunque dispatch haya fallado
-                handle = ConcreteJobHandle(job)
+                handle = ConcreteJobHandle(
+                    job=job,
+                    dispatch_callback=self._dispatch_callback,
+                )
                 return Success(handle)
 
             except Exception as exc_value:
@@ -273,7 +286,10 @@ class DeclarativeJobAPI:
         """Obtiene handle para job existente."""
         try:
             job = ScientificJob.objects.get(id=job_id)
-            handle = ConcreteJobHandle(job)
+            handle = ConcreteJobHandle(
+                job=job,
+                dispatch_callback=self._dispatch_callback,
+            )
             return Success(handle)
         except ScientificJob.DoesNotExist:
             return Failure(DomainError(f"Job {job_id} not found"))
@@ -301,7 +317,11 @@ class DeclarativeJobAPI:
             submit_result = submit_task.run()
 
             if submit_result.is_failure():
-                return Failure(submit_result.fold(lambda e: e, lambda _: None))
+                submit_error: DomainError = submit_result.fold(
+                    on_failure=lambda error_value: error_value,
+                    on_success=lambda _: DomainError("Unexpected submit state"),
+                )
+                return Failure(submit_error)
 
             handle = submit_result.get_or_else(None)
             if not handle:
@@ -321,15 +341,22 @@ class DeclarativeJobAPI:
     ) -> Result[list[JobHandle[JSONMap]], DomainError]:
         """Lista jobs con filtros opcionales (no diferido)."""
         try:
-            query = ScientificJob.objects.all().order_by("-created_at")[:limit]
+            query = ScientificJob.objects.all()
 
-            if plugin_name:
+            if plugin_name is not None:
                 query = query.filter(plugin_name=plugin_name)
 
-            if status:
+            if status is not None:
                 query = query.filter(status=status)
 
-            handles = [ConcreteJobHandle(job) for job in query]
+            jobs = query.order_by("-created_at")[:limit]
+            handles = [
+                ConcreteJobHandle(
+                    job=job,
+                    dispatch_callback=self._dispatch_callback,
+                )
+                for job in jobs
+            ]
             return Success(handles)
 
         except Exception as exc_value:
