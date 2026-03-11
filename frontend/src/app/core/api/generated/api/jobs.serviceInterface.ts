@@ -12,6 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
+import { JobControlActionResponse } from '../model/models';
 import { JobCreateRequest } from '../model/models';
 import { JobLogList } from '../model/models';
 import { JobProgressSnapshot } from '../model/models';
@@ -48,7 +49,7 @@ export interface JobsServiceInterface {
      * Devuelve el listado de jobs científicos registrados en todas las apps, incluyendo su estado actual. Permite filtros opcionales por plugin y estado.
      * @endpoint get /api/jobs/
      * @param pluginName Filtra por nombre de plugin/app científica.
-     * @param status Filtra por estado del job. Valores válidos: pending, running, completed, failed.
+     * @param status Filtra por estado del job. Valores válidos: pending, running, paused, completed, failed.
      */
     jobsList(pluginName?: string, status?: string, extraHttpRequestParams?: any): Observable<Array<ScientificJob>>;
 
@@ -72,12 +73,28 @@ export interface JobsServiceInterface {
     jobsLogsRetrieve(id: string, afterEventIndex?: number, limit?: number, extraHttpRequestParams?: any): Observable<JobLogList>;
 
     /**
+     * Solicitar pausa de un Job
+     * Solicita pausa cooperativa para un job. Si el job está pending se pausa de inmediato; si está running queda marcada la pausa y el plugin coopera en la próxima verificación de control.
+     * @endpoint post /api/jobs/{id}/pause/
+     * @param id UUID del job científico.
+     */
+    jobsPauseCreate(id: string, extraHttpRequestParams?: any): Observable<JobControlActionResponse>;
+
+    /**
      * Consultar progreso de un Job
      * Devuelve un snapshot del progreso actual del job para facilitar monitorización por polling o reconexión de stream SSE.
      * @endpoint get /api/jobs/{id}/progress/
      * @param id UUID del job científico.
      */
     jobsProgressRetrieve(id: string, extraHttpRequestParams?: any): Observable<JobProgressSnapshot>;
+
+    /**
+     * Reanudar un Job pausado
+     * Reanuda un job pausado y lo reencola para continuar desde su estado persistido cuando el plugin soporta pausa cooperativa.
+     * @endpoint post /api/jobs/{id}/resume/
+     * @param id UUID del job científico.
+     */
+    jobsResumeCreate(id: string, extraHttpRequestParams?: any): Observable<JobControlActionResponse>;
 
     /**
      * Consultar Estado y Resultados de un Job

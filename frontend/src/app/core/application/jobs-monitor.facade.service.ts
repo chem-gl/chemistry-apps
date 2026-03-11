@@ -4,6 +4,7 @@ import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import { ScientificJob } from '../api/generated';
 import {
+  JobControlActionResult,
   JobListFilters,
   JobListStatusFilter,
   JobLogEntryView,
@@ -32,6 +33,8 @@ export class JobsMonitorFacadeService implements OnDestroy {
   readonly selectedJobLogs = signal<JobLogEntryView[]>([]);
   readonly isDetailsLoading = signal<boolean>(false);
   readonly detailsErrorMessage = signal<string | null>(null);
+  readonly controllingJobId = signal<string | null>(null);
+  readonly controlErrorMessage = signal<string | null>(null);
 
   readonly pluginOptions = computed(() => {
     const discoveredPlugins: string[] = this.jobs()
@@ -47,7 +50,8 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   readonly activeJobs = computed(() =>
     this.jobs().filter(
-      (jobItem: ScientificJob) => jobItem.status === 'pending' || jobItem.status === 'running',
+      (jobItem: ScientificJob) =>
+        jobItem.status === 'pending' || jobItem.status === 'running' || jobItem.status === 'paused',
     ),
   );
 
@@ -161,6 +165,50 @@ export class JobsMonitorFacadeService implements OnDestroy {
     this.detailsErrorMessage.set(null);
   }
 
+  isControlActionRunning(jobId: string): boolean {
+    return this.controllingJobId() === jobId;
+  }
+
+  pauseJob(jobId: string): void {
+    this.controllingJobId.set(jobId);
+    this.controlErrorMessage.set(null);
+
+    this.jobsApiService.pauseJob(jobId).subscribe({
+      next: (controlResult: JobControlActionResult) => {
+        this.controllingJobId.set(null);
+        this.replaceJobInState(controlResult.job);
+        if (this.selectedJobId() === jobId) {
+          this.selectedJob.set(controlResult.job);
+        }
+      },
+      error: (controlError: Error) => {
+        this.controllingJobId.set(null);
+        this.controlErrorMessage.set(`No se pudo pausar el job: ${controlError.message}`);
+      },
+    });
+  }
+
+  resumeJob(jobId: string): void {
+    this.controllingJobId.set(jobId);
+    this.controlErrorMessage.set(null);
+
+    this.jobsApiService.resumeJob(jobId).subscribe({
+      next: (controlResult: JobControlActionResult) => {
+        this.controllingJobId.set(null);
+        this.replaceJobInState(controlResult.job);
+        if (this.selectedJobId() === jobId) {
+          this.selectedJob.set(controlResult.job);
+          this.stopDetailStreams();
+          this.startDetailStreams(jobId, controlResult.job.status);
+        }
+      },
+      error: (controlError: Error) => {
+        this.controllingJobId.set(null);
+        this.controlErrorMessage.set(`No se pudo reanudar el job: ${controlError.message}`);
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     this.stopAutoRefresh();
     this.stopDetailStreams();
@@ -241,5 +289,13 @@ export class JobsMonitorFacadeService implements OnDestroy {
       status: statusFilterValue === 'all' ? undefined : statusFilterValue,
       pluginName: pluginFilterValue === 'all' ? undefined : pluginFilterValue,
     };
+  }
+
+  private replaceJobInState(updatedJob: ScientificJob): void {
+    this.jobs.update((currentJobs: ScientificJob[]) =>
+      currentJobs.map((jobItem: ScientificJob) =>
+        jobItem.id === updatedJob.id ? updatedJob : jobItem,
+      ),
+    );
   }
 }

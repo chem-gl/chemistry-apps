@@ -77,6 +77,13 @@ class ScientificAppRegistry:
         return bool(definition.supports_pause_resume)
 
     @classmethod
+    def get_definition_by_plugin(
+        cls, plugin_name: str
+    ) -> ScientificAppDefinition | None:
+        """Obtiene definición de app por nombre de plugin."""
+        return cls._definitions_by_plugin.get(plugin_name)
+
+    @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:
         existing_definition: ScientificAppDefinition | None = (
             cls._definitions_by_plugin.get(definition.plugin_name)

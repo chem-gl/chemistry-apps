@@ -2,8 +2,8 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { JobProgressSnapshot, ScientificJob } from '../api/generated';
-import { JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
+import { JobProgressSnapshot, JobProgressStageEnum, ScientificJob } from '../api/generated';
+import { JobControlActionResult, JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
 
 /** Secciones de flujo para la UI de random numbers */
 type RandomNumbersSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -37,6 +37,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   readonly errorMessage = signal<string | null>(null);
   readonly historyJobs = signal<ScientificJob[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
+  readonly isControlActionLoading = signal<boolean>(false);
 
   readonly isProcessing = computed(
     () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
@@ -44,9 +45,22 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
 
+  readonly isPaused = computed(() => this.progressSnapshot()?.status === 'paused');
+
   readonly progressMessage = computed(
     () => this.progressSnapshot()?.progress_message ?? 'Preparando generación...',
   );
+
+  private normalizeProgressStage(
+    rawProgressStage: string,
+    fallbackStage: JobProgressStageEnum,
+  ): JobProgressStageEnum {
+    const supportedStages: ReadonlyArray<JobProgressStageEnum> =
+      Object.values(JobProgressStageEnum);
+    return supportedStages.includes(rawProgressStage as JobProgressStageEnum)
+      ? (rawProgressStage as JobProgressStageEnum)
+      : fallbackStage;
+  }
 
   dispatch(): void {
     this.progressSubscription?.unsubscribe();
@@ -107,6 +121,72 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
     this.resultData.set(null);
     this.errorMessage.set(null);
+    this.isControlActionLoading.set(false);
+  }
+
+  pauseCurrentJob(): void {
+    const currentJobId: string | null = this.currentJobId();
+    if (currentJobId === null) {
+      return;
+    }
+
+    this.isControlActionLoading.set(true);
+    this.jobsApiService.pauseJob(currentJobId).subscribe({
+      next: (controlResult: JobControlActionResult) => {
+        this.isControlActionLoading.set(false);
+        this.progressSnapshot.update((currentSnapshot) =>
+          currentSnapshot === null
+            ? currentSnapshot
+            : {
+                ...currentSnapshot,
+                status: controlResult.job.status,
+                progress_stage: this.normalizeProgressStage(
+                  controlResult.job.progress_stage,
+                  currentSnapshot.progress_stage,
+                ),
+                progress_message: controlResult.job.progress_message,
+                progress_percentage: controlResult.job.progress_percentage,
+              },
+        );
+      },
+      error: (controlError: Error) => {
+        this.isControlActionLoading.set(false);
+        this.errorMessage.set(`No se pudo pausar el job: ${controlError.message}`);
+      },
+    });
+  }
+
+  resumeCurrentJob(): void {
+    const currentJobId: string | null = this.currentJobId();
+    if (currentJobId === null) {
+      return;
+    }
+
+    this.isControlActionLoading.set(true);
+    this.jobsApiService.resumeJob(currentJobId).subscribe({
+      next: (controlResult: JobControlActionResult) => {
+        this.isControlActionLoading.set(false);
+        this.progressSnapshot.update((currentSnapshot) =>
+          currentSnapshot === null
+            ? currentSnapshot
+            : {
+                ...currentSnapshot,
+                status: controlResult.job.status,
+                progress_stage: this.normalizeProgressStage(
+                  controlResult.job.progress_stage,
+                  currentSnapshot.progress_stage,
+                ),
+                progress_message: controlResult.job.progress_message,
+                progress_percentage: controlResult.job.progress_percentage,
+              },
+        );
+        this.startProgressStream(currentJobId);
+      },
+      error: (controlError: Error) => {
+        this.isControlActionLoading.set(false);
+        this.errorMessage.set(`No se pudo reanudar el job: ${controlError.message}`);
+      },
+    });
   }
 
   /** Carga historial de jobs random-numbers para reabrir resultados pasados */
@@ -170,10 +250,17 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   }
 
   private startProgressStream(jobId: string): void {
+    this.progressSubscription?.unsubscribe();
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
-      complete: () => this.fetchFinalResult(jobId),
+      complete: () => {
+        const latestSnapshot: JobProgressSnapshot | null = this.progressSnapshot();
+        if (latestSnapshot !== null && latestSnapshot.status === 'paused') {
+          return;
+        }
+        this.fetchFinalResult(jobId);
+      },
       error: () => this.startPollingFallback(jobId),
     });
   }

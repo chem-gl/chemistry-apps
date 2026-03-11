@@ -100,6 +100,12 @@ import {
         </section>
       }
 
+      @if (facade.controlErrorMessage(); as controlError) {
+        <section class="state state-error" role="alert">
+          {{ controlError }}
+        </section>
+      }
+
       <section class="jobs-section" aria-label="Jobs activos">
         <h2>En ejecucion</h2>
         @if (facade.activeJobs().length === 0) {
@@ -140,7 +146,43 @@ import {
                   <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
                     Ver logs en vivo
                   </button>
+
+                  @if (activeJob.supports_pause_resume) {
+                    @if (activeJob.status === 'paused') {
+                      <button
+                        class="control-btn resume-btn"
+                        (click)="resumeJob(activeJob.id)"
+                        [disabled]="facade.isControlActionRunning(activeJob.id)"
+                      >
+                        {{
+                          facade.isControlActionRunning(activeJob.id)
+                            ? 'Reanudando...'
+                            : 'Continuar'
+                        }}
+                      </button>
+                    } @else {
+                      <button
+                        class="control-btn pause-btn"
+                        (click)="pauseJob(activeJob.id)"
+                        [disabled]="
+                          facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
+                        "
+                      >
+                        @if (activeJob.pause_requested) {
+                          Pausa solicitada...
+                        } @else {
+                          {{
+                            facade.isControlActionRunning(activeJob.id) ? 'Pausando...' : 'Pausar'
+                          }}
+                        }
+                      </button>
+                    }
+                  }
                 </div>
+
+                @if (activeJob.pause_requested && activeJob.status !== 'paused') {
+                  <p class="pause-hint">Se registró solicitud de pausa cooperativa.</p>
+                }
               </article>
             }
           </div>
@@ -241,6 +283,45 @@ import {
                     {{ selectedJob.updated_at | date: 'dd/MM HH:mm:ss' }}
                   </p>
                 </div>
+
+                @if (selectedJob.supports_pause_resume) {
+                  <div class="actions-cell">
+                    @if (selectedJob.status === 'paused') {
+                      <button
+                        class="control-btn resume-btn"
+                        (click)="resumeJob(selectedJob.id)"
+                        [disabled]="facade.isControlActionRunning(selectedJob.id)"
+                      >
+                        {{
+                          facade.isControlActionRunning(selectedJob.id)
+                            ? 'Reanudando...'
+                            : 'Continuar job'
+                        }}
+                      </button>
+                    } @else if (
+                      selectedJob.status === 'running' || selectedJob.status === 'pending'
+                    ) {
+                      <button
+                        class="control-btn pause-btn"
+                        (click)="pauseJob(selectedJob.id)"
+                        [disabled]="
+                          facade.isControlActionRunning(selectedJob.id) ||
+                          selectedJob.pause_requested
+                        "
+                      >
+                        @if (selectedJob.pause_requested) {
+                          Pausa solicitada...
+                        } @else {
+                          {{
+                            facade.isControlActionRunning(selectedJob.id)
+                              ? 'Pausando...'
+                              : 'Pausar job'
+                          }}
+                        }
+                      </button>
+                    }
+                  </div>
+                }
 
                 @if (selectedJob.error_trace !== null && selectedJob.error_trace !== '') {
                   <section class="error-trace-box" aria-label="Error trace del job">
@@ -482,6 +563,12 @@ import {
       border-color: #93c5fd;
     }
 
+    .status-paused {
+      background: #ede9fe;
+      color: #5b21b6;
+      border-color: #c4b5fd;
+    }
+
     .status-completed {
       background: #dcfce7;
       color: #166534;
@@ -554,6 +641,12 @@ import {
       background: #dbeafe;
       color: #1d4ed8;
       border-color: #93c5fd;
+    }
+
+    .stage-paused {
+      background: #ede9fe;
+      color: #5b21b6;
+      border-color: #c4b5fd;
     }
 
     .stage-recovering {
@@ -641,6 +734,34 @@ import {
       font-size: 0.76rem;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .control-btn {
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .pause-btn {
+      color: #7c2d12;
+      background: #ffedd5;
+      border-color: #fdba74;
+    }
+
+    .resume-btn {
+      color: #5b21b6;
+      background: #ede9fe;
+      border-color: #c4b5fd;
+    }
+
+    .pause-hint {
+      margin: 0;
+      font-size: 0.76rem;
+      color: #7c2d12;
+      font-weight: 700;
     }
 
     .details-overlay {
@@ -847,6 +968,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     { value: 'all', label: 'Todos' },
     { value: 'pending', label: 'Pending' },
     { value: 'running', label: 'Running' },
+    { value: 'paused', label: 'Paused' },
     { value: 'completed', label: 'Completed' },
     { value: 'failed', label: 'Failed' },
   ];
@@ -882,6 +1004,14 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
 
   closeJobDetails(): void {
     this.facade.closeJobDetails();
+  }
+
+  pauseJob(jobId: string): void {
+    this.facade.pauseJob(jobId);
+  }
+
+  resumeJob(jobId: string): void {
+    this.facade.resumeJob(jobId);
   }
 
   statusClassName(jobStatus: ScientificJob['status']): string {

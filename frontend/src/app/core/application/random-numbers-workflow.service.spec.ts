@@ -20,6 +20,11 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     progress_stage: 'completed',
     progress_message: 'Completado',
     progress_event_index: 3,
+    supports_pause_resume: true,
+    pause_requested: false,
+    runtime_state: {},
+    paused_at: null,
+    resumed_at: null,
     parameters: {
       seed_url: 'https://example.com/seed.txt',
       numbers_per_batch: 5,

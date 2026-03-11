@@ -20,6 +20,7 @@ model/calculatorParameters.ts
 model/calculatorResult.ts
 model/calculatorResultMetadata.ts
 model/errorResponse.ts
+model/jobControlActionResponse.ts
 model/jobCreateRequest.ts
 model/jobLogEvent.ts
 model/jobLogList.ts

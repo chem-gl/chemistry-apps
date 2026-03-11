@@ -96,6 +96,26 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
           <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
           <p class="progress-stage">Etapa: {{ workflow.progressSnapshot()?.progress_stage }}</p>
           <p class="progress-message">{{ workflow.progressMessage() }}</p>
+
+          <div class="actions">
+            @if (workflow.isPaused()) {
+              <button
+                class="btn-secondary"
+                (click)="resumeCurrentJob()"
+                [disabled]="workflow.isControlActionLoading()"
+              >
+                {{ workflow.isControlActionLoading() ? 'Reanudando...' : 'Continuar job' }}
+              </button>
+            } @else {
+              <button
+                class="btn-warning"
+                (click)="pauseCurrentJob()"
+                [disabled]="workflow.isControlActionLoading()"
+              >
+                {{ workflow.isControlActionLoading() ? 'Pausando...' : 'Pausar job' }}
+              </button>
+            }
+          </div>
         </section>
       }
 
@@ -283,6 +303,16 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
     .btn-secondary {
       color: #5b21b6;
       background: #fff;
+    }
+
+    .btn-warning {
+      border: 1px solid #ea580c;
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #7c2d12;
+      background: #ffedd5;
     }
 
     .job-id,
@@ -588,6 +618,14 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
 
   dispatch(): void {
     this.workflow.dispatch();
+  }
+
+  pauseCurrentJob(): void {
+    this.workflow.pauseCurrentJob();
+  }
+
+  resumeCurrentJob(): void {
+    this.workflow.resumeCurrentJob();
   }
 
   reset(): void {

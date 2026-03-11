@@ -20,6 +20,11 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     progress_stage: 'pending',
     progress_message: 'Pending',
     progress_event_index: 1,
+    supports_pause_resume: false,
+    pause_requested: false,
+    runtime_state: {},
+    paused_at: null,
+    resumed_at: null,
     parameters: null,
     results: null,
     error_trace: null,
@@ -37,6 +42,8 @@ describe('JobsMonitorFacadeService', () => {
     getJobLogs: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
     streamJobLogEvents: ReturnType<typeof vi.fn>;
+    pauseJob: ReturnType<typeof vi.fn>;
+    resumeJob: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -66,6 +73,18 @@ describe('JobsMonitorFacadeService', () => {
       ),
       streamJobEvents: vi.fn(() => of()),
       streamJobLogEvents: vi.fn(() => of()),
+      pauseJob: vi.fn((jobId: string) =>
+        of({
+          detail: 'Pausa solicitada',
+          job: makeScientificJob({ id: jobId, status: 'paused', progress_stage: 'paused' }),
+        }),
+      ),
+      resumeJob: vi.fn((jobId: string) =>
+        of({
+          detail: 'Reanudación solicitada',
+          job: makeScientificJob({ id: jobId, status: 'pending', progress_stage: 'queued' }),
+        }),
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -144,5 +163,29 @@ describe('JobsMonitorFacadeService', () => {
 
     expect(jobsApiServiceMock.streamJobEvents).toHaveBeenCalledWith('job-running');
     expect(jobsApiServiceMock.streamJobLogEvents).toHaveBeenCalledWith('job-running');
+  });
+
+  it('requests pause and updates selected job state', () => {
+    facadeService.openJobDetails('job-1');
+    facadeService.pauseJob('job-1');
+
+    expect(jobsApiServiceMock.pauseJob).toHaveBeenCalledWith('job-1');
+    expect(facadeService.selectedJob()?.status).toBe('paused');
+  });
+
+  it('requests resume and updates selected job state', () => {
+    jobsApiServiceMock.getScientificJobStatus
+      .mockReturnValueOnce(
+        of(makeScientificJob({ id: 'job-1', status: 'paused', progress_stage: 'paused' })),
+      )
+      .mockReturnValueOnce(
+        of(makeScientificJob({ id: 'job-1', status: 'pending', progress_stage: 'queued' })),
+      );
+
+    facadeService.openJobDetails('job-1');
+    facadeService.resumeJob('job-1');
+
+    expect(jobsApiServiceMock.resumeJob).toHaveBeenCalledWith('job-1');
+    expect(facadeService.selectedJob()?.status).toBe('pending');
   });
 });

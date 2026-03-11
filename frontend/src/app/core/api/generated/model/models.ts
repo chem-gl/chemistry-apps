@@ -5,6 +5,7 @@ export * from './calculatorParameters';
 export * from './calculatorResult';
 export * from './calculatorResultMetadata';
 export * from './errorResponse';
+export * from './jobControlActionResponse';
 export * from './jobCreateRequest';
 export * from './jobLogEvent';
 export * from './jobLogList';

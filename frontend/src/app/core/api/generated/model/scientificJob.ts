@@ -29,7 +29,7 @@ export interface ScientificJob {
      */
     readonly progress_percentage: number;
     /**
-     * Etapa actual de ejecución: pending/queued/running/caching/completed/failed.
+     * Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.
      */
     readonly progress_stage: string;
     /**
@@ -40,6 +40,26 @@ export interface ScientificJob {
      * Contador incremental de eventos de progreso emitidos.
      */
     readonly progress_event_index: number;
+    /**
+     * Indica si el plugin permite pausa cooperativa y reanudación.
+     */
+    readonly supports_pause_resume: boolean;
+    /**
+     * Marca de control cooperativo para solicitar pausa de ejecución.
+     */
+    readonly pause_requested: boolean;
+    /**
+     * Estado serializable de ejecución para reanudar tareas pausadas.
+     */
+    readonly runtime_state: any | null;
+    /**
+     * Marca temporal del último momento en que el job quedó en pausa.
+     */
+    readonly paused_at: string | null;
+    /**
+     * Marca temporal de la última reanudación explícita del job.
+     */
+    readonly resumed_at: string | null;
     readonly parameters: any | null;
     readonly results: any | null;
     readonly error_trace: string | null;

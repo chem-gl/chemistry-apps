@@ -31,7 +31,7 @@ export interface RandomNumbersJobResponse {
      */
     readonly progress_percentage: number;
     /**
-     * Etapa actual de ejecución: pending/queued/running/caching/completed/failed.
+     * Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.
      */
     readonly progress_stage: string;
     /**

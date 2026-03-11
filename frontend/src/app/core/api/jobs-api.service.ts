@@ -10,6 +10,7 @@ import {
   CalculatorJobResponse,
   CalculatorOperationEnum,
   CalculatorService,
+  JobControlActionResponse,
   JobCreateRequest,
   JobLogList,
   JobProgressSnapshot,
@@ -36,7 +37,7 @@ export interface CalculatorParams {
 }
 
 /** Estados válidos para filtrado de jobs en listados globales */
-export type JobListStatusFilter = 'pending' | 'running' | 'completed' | 'failed';
+export type JobListStatusFilter = 'pending' | 'running' | 'paused' | 'completed' | 'failed';
 
 /** Filtros opcionales para consultar jobs en el monitor */
 export interface JobListFilters {
@@ -79,12 +80,27 @@ export interface JobLogsPageView {
   results: JobLogEntryView[];
 }
 
+/** Resultado normalizado de acciones de control de ejecución (pause/resume) */
+export interface JobControlActionResult {
+  detail: string;
+  job: ScientificJob;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly jobsClient = inject(JobsService);
+
+  private normalizeControlActionResult(
+    rawResponse: JobControlActionResponse,
+  ): JobControlActionResult {
+    return {
+      detail: rawResponse.detail,
+      job: rawResponse.job as ScientificJob,
+    };
+  }
 
   private normalizeLogEntry(rawEvent: {
     job_id: string;
@@ -159,6 +175,26 @@ export class JobsApiService {
     );
   }
 
+  /** Solicita pausa cooperativa de un job cuando su plugin lo permite */
+  pauseJob(jobId: string): Observable<JobControlActionResult> {
+    return this.jobsClient.jobsPauseCreate(jobId).pipe(
+      map((rawResponse: JobControlActionResponse) =>
+        this.normalizeControlActionResult(rawResponse),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Reanuda un job pausado y dispara su reencolado */
+  resumeJob(jobId: string): Observable<JobControlActionResult> {
+    return this.jobsClient.jobsResumeCreate(jobId).pipe(
+      map((rawResponse: JobControlActionResponse) =>
+        this.normalizeControlActionResult(rawResponse),
+      ),
+      shareReplay(1),
+    );
+  }
+
   /**
    * Despacha un job de calculadora al backend.
    * Si existe caché (job_hash conocido), el backend retorna resultado inmediato con status 'completed'.
@@ -228,7 +264,11 @@ export class JobsApiService {
           const snapshot = JSON.parse(messageEvent.data) as JobProgressSnapshot;
           observer.next(snapshot);
           // El stream termina cuando el job llega a estado terminal
-          if (snapshot.status === 'completed' || snapshot.status === 'failed') {
+          if (
+            snapshot.status === 'completed' ||
+            snapshot.status === 'failed' ||
+            snapshot.status === 'paused'
+          ) {
             source.close();
             observer.complete();
           }

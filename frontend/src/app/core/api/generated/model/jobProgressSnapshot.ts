@@ -20,7 +20,7 @@ export interface JobProgressSnapshot {
      */
     job_id: string;
     /**
-     * Estado principal del ciclo de vida del job.  * `pending` - Pending * `running` - Running * `completed` - Completed * `failed` - Failed
+     * Estado principal del ciclo de vida del job.  * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed
      */
     status: JobStatusEnum;
     /**
@@ -28,7 +28,7 @@ export interface JobProgressSnapshot {
      */
     progress_percentage: number;
     /**
-     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed
+     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `paused` - paused * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed
      */
     progress_stage: JobProgressStageEnum;
     /**

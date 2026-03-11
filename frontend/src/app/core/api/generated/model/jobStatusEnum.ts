@@ -10,11 +10,12 @@
 
 
 /**
- * * `pending` - Pending * `running` - Running * `completed` - Completed * `failed` - Failed
+ * * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed
  */
 export const JobStatusEnum = {
     Pending: 'pending',
     Running: 'running',
+    Paused: 'paused',
     Completed: 'completed',
     Failed: 'failed'
 } as const;
