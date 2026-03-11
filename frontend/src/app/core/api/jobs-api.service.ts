@@ -6,11 +6,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL } from '../shared/constants';
 import {
-  CalculatorJobCreate,
+  CalculatorJobCreateRequest,
   CalculatorJobResponse,
   CalculatorOperationEnum,
   CalculatorService,
-  JobCreate,
+  JobCreateRequest,
   JobLogList,
   JobProgressSnapshot,
   JobsService,
@@ -131,7 +131,7 @@ export class JobsApiService {
    * Se usa para nuevas apps sin acoplar componentes al código generado.
    */
   dispatchScientificJob(params: ScientificJobDispatchParams): Observable<ScientificJob> {
-    const payload: JobCreate = {
+    const payload: JobCreateRequest = {
       plugin_name: params.pluginName,
       version: params.version ?? '1.0.0',
       parameters: params.parameters,
@@ -170,7 +170,7 @@ export class JobsApiService {
     params: CalculatorParams,
     version: string = '1.0.0',
   ): Observable<CalculatorJobResponse> {
-    const payload: CalculatorJobCreate = {
+    const payload: CalculatorJobCreateRequest = {
       version,
       op: params.op,
       a: params.a,

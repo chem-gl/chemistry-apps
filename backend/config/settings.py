@@ -52,6 +52,51 @@ def _get_env_list(variable_name: str, default_value: list[str]) -> list[str]:
     return parsed_values
 
 
+def _merge_unique_values(
+    primary_values: list[str],
+    secondary_values: list[str],
+) -> list[str]:
+    """Une listas preservando orden y removiendo duplicados vacíos."""
+    merged_values: list[str] = []
+
+    for candidate_value in [*primary_values, *secondary_values]:
+        normalized_candidate: str = candidate_value.strip()
+        if normalized_candidate == "":
+            continue
+        if normalized_candidate in merged_values:
+            continue
+        merged_values.append(normalized_candidate)
+
+    return merged_values
+
+
+def _build_openapi_servers(server_urls: list[str]) -> list[dict[str, str]]:
+    """Genera definición de servers para OpenAPI a partir de URLs configuradas."""
+    servers: list[dict[str, str]] = []
+
+    for raw_url in server_urls:
+        normalized_url: str = raw_url.strip()
+        if normalized_url == "":
+            continue
+
+        description_value: str = "Servidor configurado por entorno"
+        if "localhost" in normalized_url:
+            description_value = "Entorno local por hostname"
+        elif "127.0.0.1" in normalized_url:
+            description_value = "Entorno local por loopback"
+        elif "0.0.0.0" in normalized_url:
+            description_value = "Binding local para pruebas en red"
+
+        servers.append(
+            {
+                "url": normalized_url,
+                "description": description_value,
+            }
+        )
+
+    return servers
+
+
 def _get_env_int(variable_name: str, default_value: int) -> int:
     """Convierte una variable de entorno textual a entero seguro."""
     raw_value: str = os.getenv(variable_name, str(default_value)).strip()
@@ -73,10 +118,19 @@ SECRET_KEY = os.getenv(
 # Advertencia de seguridad: desactivar DEBUG en producción.
 DEBUG = _get_env_bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = _get_env_list(
-    "DJANGO_ALLOWED_HOSTS",
-    ["127.0.0.1", "localhost"],
+DEFAULT_ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "0.0.0.0", "[::1]"]
+DJANGO_DEBUG_ALLOW_ALL_HOSTS: bool = _get_env_bool(
+    "DJANGO_DEBUG_ALLOW_ALL_HOSTS",
+    True,
 )
+
+ALLOWED_HOSTS: list[str] = _get_env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    DEFAULT_ALLOWED_HOSTS,
+)
+
+if DEBUG and DJANGO_DEBUG_ALLOW_ALL_HOSTS and "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
 ENABLE_CORS = _get_env_bool("ENABLE_CORS", False)
 CORS_PACKAGE_INSTALLED = find_spec("corsheaders") is not None
@@ -110,11 +164,70 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+DEFAULT_OPENAPI_SERVER_URLS: list[str] = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+OPENAPI_SERVER_URLS: list[str] = _get_env_list(
+    "OPENAPI_SERVER_URLS",
+    DEFAULT_OPENAPI_SERVER_URLS,
+)
+
+OPENAPI_TITLE: str = os.getenv(
+    "OPENAPI_TITLE",
+    "Chemistry Apps API",
+)
+OPENAPI_VERSION: str = os.getenv("OPENAPI_VERSION", "1.0.0")
+OPENAPI_DESCRIPTION: str = os.getenv(
+    "OPENAPI_DESCRIPTION",
+    (
+        "API de plataforma científica modular para ejecutar jobs asíncronos "
+        "por plugins (calculator y random-numbers), con observabilidad de progreso "
+        "y logs en tiempo real, cache por hash y recuperación activa automática."
+    ),
+)
+OPENAPI_CONTACT_NAME: str = os.getenv("OPENAPI_CONTACT_NAME", "Chemistry Apps Team")
+OPENAPI_CONTACT_URL: str = os.getenv(
+    "OPENAPI_CONTACT_URL",
+    "https://github.com/chem-gl/chemistry-apps",
+)
+OPENAPI_LICENSE_NAME: str = os.getenv("OPENAPI_LICENSE_NAME", "MIT")
+OPENAPI_LICENSE_URL: str = os.getenv(
+    "OPENAPI_LICENSE_URL",
+    "https://opensource.org/license/mit/",
+)
+
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Plataforma Científica Modular API",
-    "DESCRIPTION": "API para plataforma científica ejecutable estructurada a través de plugins.",
-    "VERSION": "1.0.0",
+    "TITLE": OPENAPI_TITLE,
+    "DESCRIPTION": OPENAPI_DESCRIPTION,
+    "VERSION": OPENAPI_VERSION,
     "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": True,
+    "SCHEMA_PATH_PREFIX": r"/api",
+    "SERVERS": _build_openapi_servers(OPENAPI_SERVER_URLS),
+    "TAGS": [
+        {
+            "name": "Jobs",
+            "description": "Operaciones genéricas para consulta, progreso, eventos SSE y logs de jobs.",
+        },
+        {
+            "name": "Calculator",
+            "description": "Endpoints de ejecución para operaciones matemáticas de calculadora científica.",
+        },
+        {
+            "name": "RandomNumbers",
+            "description": "Endpoints de generación por lotes de números aleatorios con semilla externa.",
+        },
+    ],
+    "CONTACT": {
+        "name": OPENAPI_CONTACT_NAME,
+        "url": OPENAPI_CONTACT_URL,
+    },
+    "LICENSE": {
+        "name": OPENAPI_LICENSE_NAME,
+        "url": OPENAPI_LICENSE_URL,
+    },
     "ENUM_NAME_OVERRIDES": {
         "CalculatorOperationEnum": [
             ("add", "add"),
@@ -138,6 +251,12 @@ SPECTACULAR_SETTINGS = {
             ("caching", "caching"),
             ("completed", "completed"),
             ("failed", "failed"),
+        ],
+        "LevelEnum": [
+            ("debug", "debug"),
+            ("info", "info"),
+            ("warning", "warning"),
+            ("error", "error"),
         ],
     },
 }
@@ -214,9 +333,29 @@ else:
 # Configuración CORS para frontends permitidos.
 CORS_ALLOW_ALL_ORIGINS = _get_env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOW_CREDENTIALS = _get_env_bool("CORS_ALLOW_CREDENTIALS", True)
-CORS_ALLOWED_ORIGINS = _get_env_list(
+
+DEFAULT_CORS_ALLOWED_ORIGINS: list[str] = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://0.0.0.0:4200",
+]
+
+CORS_ALLOWED_ORIGINS: list[str] = _get_env_list(
     "CORS_ALLOWED_ORIGINS",
-    ["http://localhost:4200", "http://127.0.0.1:4200"],
+    DEFAULT_CORS_ALLOWED_ORIGINS,
+)
+
+CORS_ALLOWED_ORIGIN_REGEXES: list[str] = _get_env_list(
+    "CORS_ALLOWED_ORIGIN_REGEXES",
+    [r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\d{1,3}(?:\.\d{1,3}){3})(:\d+)?$"],
+)
+
+CSRF_TRUSTED_ORIGINS: list[str] = _merge_unique_values(
+    _get_env_list(
+        "CSRF_TRUSTED_ORIGINS",
+        ["http://localhost:4200", "http://127.0.0.1:4200", "http://0.0.0.0:4200"],
+    ),
+    CORS_ALLOWED_ORIGINS,
 )
 
 

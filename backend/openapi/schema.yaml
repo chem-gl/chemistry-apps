@@ -1,9 +1,16 @@
 openapi: 3.0.3
 info:
-  title: Plataforma Científica Modular API
+  title: Chemistry Apps API
   version: 1.0.0
-  description: API para plataforma científica ejecutable estructurada a través de
-    plugins.
+  description: API de plataforma científica modular para ejecutar jobs asíncronos
+    por plugins (calculator y random-numbers), con observabilidad de progreso y logs
+    en tiempo real, cache por hash y recuperación activa automática.
+  contact:
+    name: Chemistry Apps Team
+    url: https://github.com/chem-gl/chemistry-apps
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit/
 paths:
   /api/calculator/jobs/:
     post:
@@ -17,7 +24,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalculatorJobCreate'
+              $ref: '#/components/schemas/CalculatorJobCreateRequest'
             examples:
               CrearJobCalculadoraPotencia:
                 value:
@@ -45,10 +52,10 @@ paths:
                 description: Contrato estricto para crear un job de calculadora.
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CalculatorJobCreate'
+              $ref: '#/components/schemas/CalculatorJobCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CalculatorJobCreate'
+              $ref: '#/components/schemas/CalculatorJobCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -166,7 +173,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobCreate'
+              $ref: '#/components/schemas/JobCreateRequest'
             examples:
               EjemploDeCreaciónDeJob:
                 value:
@@ -180,10 +187,10 @@ paths:
                 description: Creación de una tarea matemática en background.
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/JobCreate'
+              $ref: '#/components/schemas/JobCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/JobCreate'
+              $ref: '#/components/schemas/JobCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -454,7 +461,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RandomNumbersJobCreate'
+              $ref: '#/components/schemas/RandomNumbersJobCreateRequest'
             examples:
               CrearJobRandomNumbers:
                 value:
@@ -468,10 +475,10 @@ paths:
                   lotes.
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RandomNumbersJobCreate'
+              $ref: '#/components/schemas/RandomNumbersJobCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RandomNumbersJobCreate'
+              $ref: '#/components/schemas/RandomNumbersJobCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -523,7 +530,7 @@ paths:
           description: Job random_numbers no encontrado.
 components:
   schemas:
-    CalculatorJobCreate:
+    CalculatorJobCreateRequest:
       type: object
       description: |-
         Define parámetros estrictos para crear un job de calculadora.
@@ -533,6 +540,7 @@ components:
       properties:
         version:
           type: string
+          minLength: 1
           default: '1.0'
           description: Versión del algoritmo calculadora.
           maxLength: 50
@@ -707,7 +715,7 @@ components:
           description: Descripción del error manejado por API.
       required:
       - detail
-    JobCreate:
+    JobCreateRequest:
       type: object
       description: |-
         Serializer puro para las peticiones de creación de un nuevo
@@ -715,10 +723,12 @@ components:
       properties:
         plugin_name:
           type: string
+          minLength: 1
           description: El nombre registrado del plugin o algoritmo a ejecutar.
           maxLength: 100
         version:
           type: string
+          minLength: 1
           default: '1.0'
           description: Versión asociada del algoritmo que será parte de la llave de
             caché.
@@ -893,17 +903,19 @@ components:
         * `info` - info
         * `warning` - warning
         * `error` - error
-    RandomNumbersJobCreate:
+    RandomNumbersJobCreateRequest:
       type: object
       description: Valida request de creación para jobs de generación aleatoria.
       properties:
         version:
           type: string
+          minLength: 1
           default: 1.0.0
           maxLength: 50
         seed_url:
           type: string
           format: uri
+          minLength: 1
           description: URL cuyo contenido se usa como semilla determinista.
         numbers_per_batch:
           type: integer
@@ -1151,3 +1163,18 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+servers:
+- url: http://localhost:8000
+  description: Entorno local por hostname
+- url: http://127.0.0.1:8000
+  description: Entorno local por loopback
+tags:
+- name: Jobs
+  description: Operaciones genéricas para consulta, progreso, eventos SSE y logs de
+    jobs.
+- name: Calculator
+  description: Endpoints de ejecución para operaciones matemáticas de calculadora
+    científica.
+- name: RandomNumbers
+  description: Endpoints de generación por lotes de números aleatorios con semilla
+    externa.

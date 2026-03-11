@@ -27,6 +27,90 @@ Flujo frontend:
 2. Facades/workflows gestionan estado de UI y streams SSE.
 3. Componentes renderizan formularios, progreso, resultados, logs e historial.
 
+## Flujo de tareas (API, apps externas y recuperación)
+
+Este es el flujo real implementado para ejecutar tareas científicas de apps (calculator/random-numbers), tanto desde frontend como desde clientes externos (Postman, curl, otro servicio HTTP):
+
+```mermaid
+flowchart TD
+    A[Cliente externo o Frontend Angular] --> B[POST /api/calculator/jobs/ o /api/random-numbers/jobs/]
+    B --> C[Router de la app valida serializer]
+    C --> D[JobService.create_job]
+    D --> E{Cache hit temprano?}
+    E -- Si --> F[Job completed inmediato]
+    F --> G[Persistir resultado + log de cache]
+    E -- No --> H[Job pending]
+    H --> I[dispatch_scientific_job]
+    I --> J{Broker Redis disponible?}
+    J -- Si --> K[Celery task execute_scientific_job]
+    J -- No --> L[Job queda pending con log/estado trazable]
+
+    K --> M[run_active_recovery previo opcional]
+    M --> N[JobService.run_job]
+    N --> O[PluginRegistry.execute]
+    O --> P[Plugin app: calculator o random-numbers]
+    P --> Q[Progreso + logs por callbacks]
+    Q --> R[Guardar logs/progreso en DB]
+    R --> S{Resultado OK?}
+    S -- Si --> T[Guardar cache + completed]
+    S -- No --> U[failed + error_trace]
+
+    V[GET /api/jobs/:id/progress] --> W[Snapshot de progreso]
+    X[GET /api/jobs/:id/events] --> Y[SSE de progreso en vivo]
+    Z[GET /api/jobs/:id/logs] --> AA[Historial de logs]
+    AB[GET /api/jobs/:id/logs/events] --> AC[SSE de logs en vivo]
+
+    AD[worker_ready de Celery] --> AE[run_active_recovery.delay]
+    AE --> AF[Detectar stale running/pending]
+    AF --> AG{Supera max_recovery_attempts?}
+    AG -- No --> AH[Reencolar job y marcar recovering]
+    AG -- Si --> AI[Marcar failed por limite de recuperación]
+```
+
+### Ejecución por API (incluye clientes externos)
+
+Los endpoints de apps científicas están listos para consumo por frontend y por aplicaciones externas:
+
+1. Crear job de calculadora: `POST /api/calculator/jobs/`
+2. Crear job de random-numbers: `POST /api/random-numbers/jobs/`
+3. Consultar un job específico de app: `GET /api/calculator/jobs/{id}/` o `GET /api/random-numbers/jobs/{id}/`
+4. Consultar job genérico y observabilidad: `GET /api/jobs/{id}/`, `GET /api/jobs/{id}/progress/`, `GET /api/jobs/{id}/events/`, `GET /api/jobs/{id}/logs/`, `GET /api/jobs/{id}/logs/events/`
+
+Ejemplo mínimo con cliente externo (curl):
+
+```bash
+curl -X POST "http://localhost:8000/api/calculator/jobs/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "version": "1.0",
+    "op": "mul",
+    "a": 6,
+    "b": 7
+  }'
+```
+
+### Recuperación activa implementada
+
+La recuperación ya está implementada y operativa en el núcleo:
+
+1. Se ejecuta al levantar el worker (`worker_ready`) y también antes de procesar cada tarea Celery.
+2. Detecta jobs stale (`running` y opcionalmente `pending`) usando `JOB_RECOVERY_STALE_SECONDS`.
+3. Reencola jobs con intento disponible y marca trazabilidad de recuperación.
+4. Si un job supera `JOB_RECOVERY_MAX_ATTEMPTS`, se marca `failed` con razón explícita.
+5. Toda la trazabilidad queda persistida en progreso, logs y `error_trace`.
+
+### Variables de settings relevantes para operación externa y recovery
+
+1. `DJANGO_ALLOWED_HOSTS`: hosts permitidos por Django para acceso HTTP.
+2. `DJANGO_DEBUG_ALLOW_ALL_HOSTS`: en `DEBUG=true`, permite `*` para facilitar pruebas desde IP/LAN.
+3. `ENABLE_CORS`: habilita `django-cors-headers` cuando se requiere frontend en otro origen.
+4. `CORS_ALLOWED_ORIGINS` y `CORS_ALLOWED_ORIGIN_REGEXES`: controlan orígenes permitidos para clientes web externos.
+5. `CSRF_TRUSTED_ORIGINS`: orígenes de confianza para peticiones con credenciales.
+6. `JOB_RECOVERY_ENABLED`: habilita o deshabilita recuperación automática.
+7. `JOB_RECOVERY_STALE_SECONDS`: define a partir de cuándo un job se considera stale.
+8. `JOB_RECOVERY_MAX_ATTEMPTS`: límite de reintentos de recuperación por job.
+9. `JOB_RECOVERY_INCLUDE_PENDING`: incluye jobs `pending` stale en recuperación activa.
+
 ## Estado funcional actual
 
 - Jobs genéricos en core: create/list/retrieve/progress/events/logs.
