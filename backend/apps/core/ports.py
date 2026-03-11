@@ -21,6 +21,7 @@ from .types import (
     JobLogLevel,
     JobProgressStage,
     JSONMap,
+    PluginControlCallback,
     PluginLogCallback,
     PluginProgressCallback,
 )
@@ -86,6 +87,7 @@ class PluginExecutionPort(Protocol):
         parameters: JSONMap,
         progress_callback: PluginProgressCallback | None = None,
         log_callback: PluginLogCallback | None = None,
+        control_callback: PluginControlCallback | None = None,
     ) -> JSONMap:
         """Ejecuta un plugin registrado y retorna un payload JSON tipado."""
 

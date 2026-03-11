@@ -9,10 +9,13 @@ CORE_JOBS_PROGRESS_ROUTE_SUFFIX: Final[str] = "progress"
 CORE_JOBS_EVENTS_ROUTE_SUFFIX: Final[str] = "events"
 CORE_JOBS_LOGS_ROUTE_SUFFIX: Final[str] = "logs"
 CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX: Final[str] = "logs/events"
+CORE_JOBS_PAUSE_ROUTE_SUFFIX: Final[str] = "pause"
+CORE_JOBS_RESUME_ROUTE_SUFFIX: Final[str] = "resume"
 
 ALLOWED_JOB_STATUS_FILTERS: Final[tuple[str, ...]] = (
     "pending",
     "running",
+    "paused",
     "completed",
     "failed",
 )
@@ -21,6 +24,7 @@ ALLOWED_JOB_PROGRESS_STAGES: Final[tuple[str, ...]] = (
     "pending",
     "queued",
     "running",
+    "paused",
     "recovering",
     "caching",
     "completed",

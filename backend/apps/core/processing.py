@@ -17,12 +17,21 @@ from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .types import JSONMap, PluginLogCallback, PluginProgressCallback
+from .types import (
+    JSONMap,
+    PluginControlCallback,
+    PluginLogCallback,
+    PluginProgressCallback,
+)
 
 PluginCallable = (
     Callable[[JSONMap], JSONMap]
     | Callable[[JSONMap, PluginProgressCallback], JSONMap]
     | Callable[[JSONMap, PluginProgressCallback, PluginLogCallback], JSONMap]
+    | Callable[
+        [JSONMap, PluginProgressCallback, PluginLogCallback, PluginControlCallback],
+        JSONMap,
+    ]
 )
 
 
@@ -72,6 +81,7 @@ class PluginRegistry:
         parameters: JSONMap,
         progress_callback: PluginProgressCallback | None = None,
         log_callback: PluginLogCallback | None = None,
+        control_callback: PluginControlCallback | None = None,
     ) -> JSONMap:
         """Ejecuta la lógica de plugin registrada con parámetros tipados.
 
@@ -93,8 +103,31 @@ class PluginRegistry:
             if log_callback is not None
             else lambda _level, _source, _message, _payload: None
         )
+        control_callback_to_use: PluginControlCallback = (
+            control_callback if control_callback is not None else lambda: "continue"
+        )
 
         plugin_signature = inspect.signature(plugin_callable)
+        if len(plugin_signature.parameters) >= 4:
+            plugin_with_progress_logs_and_control = cast(
+                Callable[
+                    [
+                        JSONMap,
+                        PluginProgressCallback,
+                        PluginLogCallback,
+                        PluginControlCallback,
+                    ],
+                    JSONMap,
+                ],
+                plugin_callable,
+            )
+            return plugin_with_progress_logs_and_control(
+                parameters,
+                callback_to_use,
+                log_callback_to_use,
+                control_callback_to_use,
+            )
+
         if len(plugin_signature.parameters) >= 3:
             plugin_with_progress_and_logs = cast(
                 Callable[[JSONMap, PluginProgressCallback, PluginLogCallback], JSONMap],

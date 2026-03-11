@@ -46,6 +46,15 @@ class ErrorResponseSerializer(serializers.Serializer):
     detail = serializers.CharField(help_text="Descripción del error manejado por API.")
 
 
+class JobControlActionResponseSerializer(serializers.Serializer):
+    """Respuesta estándar para acciones de control (pause/resume)."""
+
+    detail = serializers.CharField(help_text="Resultado de la operación de control.")
+    job = serializers.JSONField(
+        help_text="Snapshot actualizado del job tras la acción."
+    )
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -72,6 +81,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
         choices=[
             ("pending", "Pending"),
             ("running", "Running"),
+            ("paused", "Paused"),
             ("completed", "Completed"),
             ("failed", "Failed"),
         ],
@@ -87,6 +97,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
             ("pending", "pending"),
             ("queued", "queued"),
             ("running", "running"),
+            ("paused", "paused"),
             ("recovering", "recovering"),
             ("caching", "caching"),
             ("completed", "completed"),
@@ -224,6 +235,11 @@ class ScientificJobSerializer(serializers.ModelSerializer):
             "progress_stage",
             "progress_message",
             "progress_event_index",
+            "supports_pause_resume",
+            "pause_requested",
+            "runtime_state",
+            "paused_at",
+            "resumed_at",
             "parameters",
             "results",
             "error_trace",

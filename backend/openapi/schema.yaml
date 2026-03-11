@@ -134,7 +134,7 @@ paths:
         schema:
           type: string
         description: 'Filtra por estado del job. Valores válidos: pending, running,
-          completed, failed.'
+          paused, completed, failed.'
       tags:
       - Jobs
       security:
@@ -159,7 +159,7 @@ paths:
                 EstadoInválido:
                   value:
                     detail: 'Invalid status filter. Allowed values are: pending, running,
-                      completed, failed.'
+                      paused, completed, failed.'
                   summary: Estado inválido
           description: Filtro de estado inválido.
     post:
@@ -405,6 +405,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/jobs/{id}/pause/:
+    post:
+      operationId: jobs_pause_create
+      description: Solicita pausa cooperativa para un job. Si el job está pending
+        se pausa de inmediato; si está running queda marcada la pausa y el plugin
+        coopera en la próxima verificación de control.
+      summary: Solicitar pausa de un Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobControlActionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Transición inválida o plugin sin soporte de pausa.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
   /api/jobs/{id}/progress/:
     get:
       operationId: jobs_progress_retrieve
@@ -443,6 +482,44 @@ paths:
                   summary: Snapshot de progreso
                   description: Estado actual del job para consumo por polling o SSE.
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+  /api/jobs/{id}/resume/:
+    post:
+      operationId: jobs_resume_create
+      description: Reanuda un job pausado y lo reencola para continuar desde su estado
+        persistido cuando el plugin soporta pausa cooperativa.
+      summary: Reanudar un Job pausado
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobControlActionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Transición inválida o plugin sin soporte de pausa.
         '404':
           content:
             application/json:
@@ -715,6 +792,18 @@ components:
           description: Descripción del error manejado por API.
       required:
       - detail
+    JobControlActionResponse:
+      type: object
+      description: Respuesta estándar para acciones de control (pause/resume).
+      properties:
+        detail:
+          type: string
+          description: Resultado de la operación de control.
+        job:
+          description: Snapshot actualizado del job tras la acción.
+      required:
+      - detail
+      - job
     JobCreateRequest:
       type: object
       description: |-
@@ -822,6 +911,7 @@ components:
 
             * `pending` - Pending
             * `running` - Running
+            * `paused` - Paused
             * `completed` - Completed
             * `failed` - Failed
         progress_percentage:
@@ -838,6 +928,7 @@ components:
             * `pending` - pending
             * `queued` - queued
             * `running` - running
+            * `paused` - paused
             * `recovering` - recovering
             * `caching` - caching
             * `completed` - completed
@@ -866,6 +957,7 @@ components:
       - pending
       - queued
       - running
+      - paused
       - recovering
       - caching
       - completed
@@ -875,6 +967,7 @@ components:
         * `pending` - pending
         * `queued` - queued
         * `running` - running
+        * `paused` - paused
         * `recovering` - recovering
         * `caching` - caching
         * `completed` - completed
@@ -883,12 +976,14 @@ components:
       enum:
       - pending
       - running
+      - paused
       - completed
       - failed
       type: string
       description: |-
         * `pending` - Pending
         * `running` - Running
+        * `paused` - Paused
         * `completed` - Completed
         * `failed` - Failed
     LevelEnum:
@@ -972,7 +1067,7 @@ components:
         progress_stage:
           type: string
           readOnly: true
-          description: 'Etapa actual de ejecución: pending/queued/running/caching/completed/failed.'
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
         progress_message:
           type: string
           readOnly: true
@@ -1112,7 +1207,7 @@ components:
         progress_stage:
           type: string
           readOnly: true
-          description: 'Etapa actual de ejecución: pending/queued/running/caching/completed/failed.'
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
         progress_message:
           type: string
           readOnly: true
@@ -1121,6 +1216,29 @@ components:
           type: integer
           readOnly: true
           description: Contador incremental de eventos de progreso emitidos.
+        supports_pause_resume:
+          type: boolean
+          readOnly: true
+          description: Indica si el plugin permite pausa cooperativa y reanudación.
+        pause_requested:
+          type: boolean
+          readOnly: true
+          description: Marca de control cooperativo para solicitar pausa de ejecución.
+        runtime_state:
+          readOnly: true
+          description: Estado serializable de ejecución para reanudar tareas pausadas.
+        paused_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Marca temporal del último momento en que el job quedó en pausa.
+        resumed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Marca temporal de la última reanudación explícita del job.
         parameters:
           readOnly: true
         results:
@@ -1147,13 +1265,18 @@ components:
       - id
       - job_hash
       - parameters
+      - pause_requested
+      - paused_at
       - plugin_name
       - progress_event_index
       - progress_message
       - progress_percentage
       - progress_stage
       - results
+      - resumed_at
+      - runtime_state
       - status
+      - supports_pause_resume
       - updated_at
   securitySchemes:
     basicAuth:

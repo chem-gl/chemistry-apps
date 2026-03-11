@@ -190,6 +190,52 @@ class JobServiceTests(TestCase):
         self.assertEqual(pending_job.recovery_attempts, 1)
         self.assertEqual(pending_job.progress_stage, "queued")
 
+    def test_request_pause_on_pending_job_sets_paused_status(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="pending",
+            supports_pause_resume=True,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Job creado.",
+            progress_event_index=1,
+        )
+
+        paused_job: ScientificJob = JobService.request_pause(str(job.id))
+
+        self.assertEqual(paused_job.status, "paused")
+        self.assertFalse(bool(paused_job.pause_requested))
+        self.assertEqual(paused_job.progress_stage, "paused")
+
+    def test_resume_job_moves_paused_job_to_pending(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="paused",
+            supports_pause_resume=True,
+            pause_requested=False,
+            runtime_state={"generated_count": 2},
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=25,
+            progress_stage="paused",
+            progress_message="Pausado por usuario.",
+            progress_event_index=2,
+        )
+
+        resumed_job: ScientificJob = JobService.resume_job(str(job.id))
+
+        self.assertEqual(resumed_job.status, "pending")
+        self.assertFalse(bool(resumed_job.pause_requested))
+        self.assertEqual(resumed_job.progress_stage, "queued")
+
 
 class JobApiTests(TestCase):
     """Verifica endpoints principales y contrato HTTP de jobs."""
@@ -273,6 +319,7 @@ class JobApiTests(TestCase):
     def test_list_jobs_supports_filters_and_invalid_status(self) -> None:
         self._create_job_record(plugin_name="calculator", status_value="completed")
         self._create_job_record(plugin_name="calculator", status_value="failed")
+        self._create_job_record(plugin_name="calculator", status_value="paused")
         self._create_job_record(plugin_name="kinetics", status_value="completed")
 
         filtered_response = self.client.get(
@@ -286,6 +333,11 @@ class JobApiTests(TestCase):
         invalid_status_response = self.client.get("/api/jobs/", {"status": "done"})
         self.assertEqual(invalid_status_response.status_code, 400)
         self.assertIn("Invalid status filter", invalid_status_response.data["detail"])
+
+        paused_response = self.client.get("/api/jobs/", {"status": "paused"})
+        self.assertEqual(paused_response.status_code, 200)
+        self.assertEqual(len(paused_response.data), 1)
+        self.assertEqual(paused_response.data[0]["status"], "paused")
 
     def test_jobs_endpoints_accept_requests_without_trailing_slash(self) -> None:
         payload: JSONMap = {
@@ -443,6 +495,73 @@ class JobApiTests(TestCase):
         stream_payload_text: str = response.content.decode("utf-8")
         self.assertIn("event: job.log", stream_payload_text)
         self.assertIn(str(job.id), stream_payload_text)
+
+    def test_pause_endpoint_pauses_supported_job(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="pending",
+            supports_pause_resume=True,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Job creado.",
+            progress_event_index=1,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/pause/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["job"]["status"], "paused")
+        self.assertEqual(response.data["job"]["progress_stage"], "paused")
+
+    def test_resume_endpoint_requeues_paused_job(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="paused",
+            supports_pause_resume=True,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=42,
+            progress_stage="paused",
+            progress_message="Pausado.",
+            progress_event_index=2,
+        )
+
+        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            response = self.client.post(f"/api/jobs/{job.id}/resume/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["job"]["status"], "pending")
+        self.assertEqual(response.data["job"]["progress_stage"], "queued")
+
+    def test_pause_endpoint_rejects_job_without_pause_support(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=20,
+            progress_stage="running",
+            progress_message="Ejecutando.",
+            progress_event_index=2,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/pause/")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("no soporta pausa", str(response.data["detail"]).lower())
 
 
 class CalculatorTemplateIntegrationTests(TestCase):

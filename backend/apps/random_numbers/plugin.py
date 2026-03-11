@@ -9,11 +9,17 @@ from time import sleep
 from urllib.error import URLError
 from urllib.request import urlopen
 
+from apps.core.exceptions import JobPauseRequested
 from apps.core.processing import PluginRegistry
-from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
+from apps.core.types import (
+    JSONMap,
+    PluginControlCallback,
+    PluginLogCallback,
+    PluginProgressCallback,
+)
 
 from .definitions import PLUGIN_NAME
-from .types import RandomNumbersInput, RandomNumbersResult
+from .types import RandomNumbersInput, RandomNumbersResult, RandomNumbersRuntimeState
 
 logger = logging.getLogger(__name__)
 
@@ -86,17 +92,64 @@ def _resolve_seed_digest(
     return hashlib.sha256(digest_source).hexdigest()
 
 
+def _extract_runtime_state(parameters: JSONMap) -> RandomNumbersRuntimeState | None:
+    """Lee estado serializado de ejecución, si existe, para reanudar el job."""
+    raw_runtime_state: JSONMap | None = (
+        parameters.get("__runtime_state")
+        if isinstance(parameters.get("__runtime_state"), dict)
+        else None
+    )
+    if raw_runtime_state is None:
+        return None
+
+    raw_generated_numbers: JSONMap | list[object] | None = raw_runtime_state.get(
+        "generated_numbers"
+    )
+    if not isinstance(raw_generated_numbers, list):
+        return None
+
+    generated_numbers: list[int] = [
+        int(value) for value in raw_generated_numbers if isinstance(value, int)
+    ]
+    generated_count_value: int = int(raw_runtime_state.get("generated_count", 0))
+    total_numbers_value: int = int(raw_runtime_state.get("total_numbers", 0))
+
+    normalized_generated_count: int = max(len(generated_numbers), generated_count_value)
+    return {
+        "generated_numbers": list(generated_numbers),
+        "generated_count": normalized_generated_count,
+        "total_numbers": total_numbers_value,
+    }
+
+
+def _build_pause_checkpoint(
+    generated_numbers: list[int],
+    generated_count: int,
+    total_numbers: int,
+) -> JSONMap:
+    """Construye checkpoint JSON para pausar y luego reanudar ejecución."""
+    return {
+        "generated_numbers": list(generated_numbers),
+        "generated_count": int(generated_count),
+        "total_numbers": int(total_numbers),
+    }
+
+
 @PluginRegistry.register(PLUGIN_NAME)
 def random_numbers_plugin(
     parameters: JSONMap,
     progress_callback: PluginProgressCallback,
     log_callback: PluginLogCallback | None = None,
+    control_callback: PluginControlCallback | None = None,
 ) -> JSONMap:
     """Genera números pseudoaleatorios en lotes y reporta progreso por iteración."""
     emit_log: PluginLogCallback = (
         log_callback
         if log_callback is not None
         else lambda _level, _source, _message, _payload: None
+    )
+    request_control_action: PluginControlCallback = (
+        control_callback if control_callback is not None else lambda: "continue"
     )
 
     validated_input: RandomNumbersInput = _build_random_numbers_input(parameters)
@@ -141,7 +194,33 @@ def random_numbers_plugin(
     generated_numbers: list[int] = []
     generated_count: int = 0
 
+    runtime_state: RandomNumbersRuntimeState | None = _extract_runtime_state(parameters)
+    if runtime_state is not None:
+        generated_numbers = list(runtime_state["generated_numbers"])
+        generated_count = int(runtime_state["generated_count"])
+        emit_log(
+            "info",
+            "random_numbers.plugin",
+            "Reanudando ejecución desde checkpoint persistido.",
+            {
+                "generated_count": generated_count,
+                "total_numbers": total_numbers,
+            },
+        )
+
+        for _ in range(generated_count):
+            random_generator.randint(0, 1_000_000)
+
     while generated_count < total_numbers:
+        if request_control_action() == "pause":
+            raise JobPauseRequested(
+                checkpoint=_build_pause_checkpoint(
+                    generated_numbers,
+                    generated_count,
+                    total_numbers,
+                )
+            )
+
         remaining_numbers: int = total_numbers - generated_count
         current_batch_size: int = min(numbers_per_batch, remaining_numbers)
         batch_generated_numbers: list[int] = []
@@ -179,6 +258,15 @@ def random_numbers_plugin(
                 f"Generados {generated_count}/{total_numbers} números aleatorios.",
             )
 
+            if request_control_action() == "pause":
+                raise JobPauseRequested(
+                    checkpoint=_build_pause_checkpoint(
+                        generated_numbers,
+                        generated_count,
+                        total_numbers,
+                    )
+                )
+
         emit_log(
             "info",
             "random_numbers.plugin",
@@ -192,6 +280,14 @@ def random_numbers_plugin(
         )
 
         if generated_count < total_numbers:
+            if request_control_action() == "pause":
+                raise JobPauseRequested(
+                    checkpoint=_build_pause_checkpoint(
+                        generated_numbers,
+                        generated_count,
+                        total_numbers,
+                    )
+                )
             emit_log(
                 "info",
                 "random_numbers.plugin",

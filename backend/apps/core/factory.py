@@ -20,7 +20,33 @@ from .adapters import (
     DjangoJobProgressPublisherAdapter,
     DjangoPluginExecutionAdapter,
 )
+from .ports import (
+    CacheRepositoryPort,
+    JobLogPublisherPort,
+    JobProgressPublisherPort,
+    PluginExecutionPort,
+)
 from .services import RuntimeJobService
+
+
+def build_job_service_with_ports(
+    *,
+    cache_repository: CacheRepositoryPort,
+    plugin_execution: PluginExecutionPort,
+    progress_publisher: JobProgressPublisherPort,
+    log_publisher: JobLogPublisherPort,
+) -> RuntimeJobService:
+    """Compone RuntimeJobService con puertos explícitos para integraciones externas.
+
+    Esta función permite reutilizar el núcleo desde otros puntos del programa
+    (funciones, extensiones u orquestadores) sin acoplarse a adaptadores Django.
+    """
+    return RuntimeJobService(
+        cache_repository=cache_repository,
+        plugin_execution=plugin_execution,
+        progress_publisher=progress_publisher,
+        log_publisher=log_publisher,
+    )
 
 
 @lru_cache(maxsize=1)
@@ -31,7 +57,7 @@ def build_job_service() -> RuntimeJobService:
     unitarias avanzadas, se recomienda testear `RuntimeJobService` con dobles
     de prueba en lugar de depender de esta factoría.
     """
-    return RuntimeJobService(
+    return build_job_service_with_ports(
         cache_repository=DjangoCacheRepositoryAdapter(),
         plugin_execution=DjangoPluginExecutionAdapter(),
         progress_publisher=DjangoJobProgressPublisherAdapter(),

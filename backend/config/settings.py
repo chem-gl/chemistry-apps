@@ -240,6 +240,7 @@ SPECTACULAR_SETTINGS = {
         "JobStatusEnum": [
             ("pending", "Pending"),
             ("running", "Running"),
+            ("paused", "Paused"),
             ("completed", "Completed"),
             ("failed", "Failed"),
         ],
@@ -247,6 +248,7 @@ SPECTACULAR_SETTINGS = {
             ("pending", "pending"),
             ("queued", "queued"),
             ("running", "running"),
+            ("paused", "paused"),
             ("recovering", "recovering"),
             ("caching", "caching"),
             ("completed", "completed"),

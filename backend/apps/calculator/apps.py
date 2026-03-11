@@ -46,6 +46,7 @@ class CalculatorConfig(AppConfig):
             api_route_prefix=APP_ROUTE_PREFIX,
             api_base_path=APP_API_BASE_PATH,
             route_basename=APP_ROUTE_BASENAME,
+            supports_pause_resume=False,
         )
         ScientificAppRegistry.register(app_definition)
 

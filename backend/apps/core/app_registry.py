@@ -33,6 +33,7 @@ class ScientificAppDefinition:
     api_route_prefix: str
     api_base_path: str
     route_basename: str
+    supports_pause_resume: bool = False
 
 
 class ScientificAppRegistry:
@@ -64,6 +65,16 @@ class ScientificAppRegistry:
         cls._definitions_by_plugin[definition.plugin_name] = definition
         cls._definitions_by_route_prefix[definition.api_route_prefix] = definition
         cls._definitions_by_api_base_path[definition.api_base_path] = definition
+
+    @classmethod
+    def supports_pause_resume(cls, plugin_name: str) -> bool:
+        """Indica si el plugin registrado declara soporte de pausa cooperativa."""
+        definition: ScientificAppDefinition | None = cls._definitions_by_plugin.get(
+            plugin_name
+        )
+        if definition is None:
+            return False
+        return bool(definition.supports_pause_resume)
 
     @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:

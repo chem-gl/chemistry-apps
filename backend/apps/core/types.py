@@ -8,11 +8,18 @@ from typing import Literal, TypeAlias, TypedDict
 JSONPrimitive: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONPrimitive | list["JSONValue"] | dict[str, "JSONValue"]
 JSONMap: TypeAlias = dict[str, JSONValue]
-JobStatus: TypeAlias = Literal["pending", "running", "completed", "failed"]
+JobStatus: TypeAlias = Literal[
+    "pending",
+    "running",
+    "paused",
+    "completed",
+    "failed",
+]
 JobProgressStage: TypeAlias = Literal[
     "pending",
     "queued",
     "running",
+    "paused",
     "recovering",
     "caching",
     "completed",
@@ -21,6 +28,8 @@ JobProgressStage: TypeAlias = Literal[
 PluginProgressCallback: TypeAlias = Callable[[int, JobProgressStage, str], None]
 JobLogLevel: TypeAlias = Literal["debug", "info", "warning", "error"]
 PluginLogCallback: TypeAlias = Callable[[JobLogLevel, str, str, JSONMap | None], None]
+PluginControlAction: TypeAlias = Literal["continue", "pause"]
+PluginControlCallback: TypeAlias = Callable[[], PluginControlAction]
 
 
 class JobCreatePayload(TypedDict):
@@ -41,6 +50,15 @@ class JobProgressSnapshot(TypedDict):
     progress_message: str
     progress_event_index: int
     updated_at: str
+
+
+class JobControlSnapshot(TypedDict):
+    """Snapshot tipado de control cooperativo de ejecución de un job."""
+
+    job_id: str
+    pause_requested: bool
+    supports_pause_resume: bool
+    status: JobStatus
 
 
 class JobLogEntry(TypedDict):

@@ -11,6 +11,7 @@ class ScientificJob(models.Model):
     STATUS_CHOICES: list[tuple[str, str]] = [
         ("pending", "Pending"),
         ("running", "Running"),
+        ("paused", "Paused"),
         ("completed", "Completed"),
         ("failed", "Failed"),
     ]
@@ -40,7 +41,7 @@ class ScientificJob(models.Model):
     progress_stage = models.CharField(
         max_length=40,
         default="pending",
-        help_text="Etapa actual de ejecución: pending/queued/running/caching/completed/failed.",
+        help_text="Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.",
     )
     progress_message = models.CharField(
         max_length=255,
@@ -50,6 +51,29 @@ class ScientificJob(models.Model):
     progress_event_index = models.PositiveIntegerField(
         default=0,
         help_text="Contador incremental de eventos de progreso emitidos.",
+    )
+    supports_pause_resume = models.BooleanField(
+        default=False,
+        help_text="Indica si el plugin permite pausa cooperativa y reanudación.",
+    )
+    pause_requested = models.BooleanField(
+        default=False,
+        help_text="Marca de control cooperativo para solicitar pausa de ejecución.",
+    )
+    runtime_state = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Estado serializable de ejecución para reanudar tareas pausadas.",
+    )
+    paused_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Marca temporal del último momento en que el job quedó en pausa.",
+    )
+    resumed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Marca temporal de la última reanudación explícita del job.",
     )
     last_heartbeat_at = models.DateTimeField(
         null=True,

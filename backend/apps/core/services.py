@@ -19,12 +19,15 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import cast
 from uuid import UUID
 
 from django.conf import settings
 from django.utils import timezone
 
+from .app_registry import ScientificAppRegistry
 from .cache import generate_job_hash
+from .exceptions import JobPauseRequested
 from .models import ScientificJob
 from .ports import (
     CacheRepositoryPort,
@@ -34,7 +37,13 @@ from .ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
-from .types import JobLogLevel, JobProgressStage, JobRecoverySummary, JSONMap
+from .types import (
+    JobLogLevel,
+    JobProgressStage,
+    JobRecoverySummary,
+    JSONMap,
+    PluginControlAction,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +89,9 @@ class RuntimeJobService:
                 status="completed",
                 cache_hit=True,
                 cache_miss=False,
+                supports_pause_resume=ScientificAppRegistry.supports_pause_resume(
+                    plugin_name
+                ),
                 results=cached_result_payload,
                 progress_percentage=100,
                 progress_stage="completed",
@@ -110,6 +122,9 @@ class RuntimeJobService:
             status="pending",
             cache_hit=False,
             cache_miss=True,
+            supports_pause_resume=ScientificAppRegistry.supports_pause_resume(
+                plugin_name
+            ),
             results=None,
             progress_percentage=0,
             progress_stage="pending",
@@ -178,7 +193,7 @@ class RuntimeJobService:
         if job is None:
             return
 
-        if job.status in {"completed", "failed"}:
+        if job.status in {"completed", "failed", "paused"}:
             logger.info("Job %s ya estaba finalizado con estado %s", job_id, job.status)
             self._publish_job_log(
                 job,
@@ -206,6 +221,20 @@ class RuntimeJobService:
             source="core.runtime",
             message="Job iniciado en worker asíncrono.",
         )
+
+        execution_parameters: JSONMap = {
+            key: value for key, value in cast(JSONMap, job.parameters).items()
+        }
+        runtime_state_value: JSONMap = cast(JSONMap, job.runtime_state)
+        if len(runtime_state_value) > 0:
+            execution_parameters["__runtime_state"] = runtime_state_value
+            self._publish_job_log(
+                job,
+                level="info",
+                source="core.runtime",
+                message="Reanudando ejecución desde estado persistido.",
+                payload={"runtime_state_keys": list(runtime_state_value.keys())},
+            )
 
         cached_result_payload: JSONMap | None = self.cache_repository.get_cached_result(
             job_hash=job.job_hash,
@@ -284,11 +313,26 @@ class RuntimeJobService:
                     payload=payload,
                 )
 
+            def report_plugin_control() -> PluginControlAction:
+                """Informa al plugin si debe continuar o pausar cooperativamente."""
+                refreshed_job: ScientificJob | None = self._get_job_or_none(job_id)
+                if refreshed_job is None:
+                    return "pause"
+
+                if bool(refreshed_job.pause_requested):
+                    return "pause"
+
+                if refreshed_job.status == "paused":
+                    return "pause"
+
+                return "continue"
+
             result_payload: JSONMap = self.plugin_execution.execute(
                 job.plugin_name,
-                job.parameters,
+                execution_parameters,
                 progress_callback=report_plugin_progress,
                 log_callback=report_plugin_log,
+                control_callback=report_plugin_control,
             )
 
             self.progress_publisher.publish(
@@ -318,6 +362,13 @@ class RuntimeJobService:
                 job_id=job_id,
                 result_payload=result_payload,
                 from_cache=False,
+            )
+        except JobPauseRequested as pause_signal:
+            self._finish_with_pause(
+                job=job,
+                job_id=job_id,
+                pause_message=str(pause_signal),
+                checkpoint=pause_signal.checkpoint,
             )
         except (
             ValueError,
@@ -454,6 +505,101 @@ class RuntimeJobService:
 
         return summary
 
+    def request_pause(self, job_id: str) -> ScientificJob:
+        """Solicita pausa cooperativa para un job o lo pausa de inmediato si está pending."""
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para pausar.")
+
+        if not bool(job.supports_pause_resume):
+            raise ValueError("El plugin de este job no soporta pausa/reanudación.")
+
+        if job.status in {"completed", "failed"}:
+            raise ValueError("No es posible pausar un job finalizado.")
+
+        if job.status == "paused":
+            return job
+
+        if job.status == "pending":
+            job.status = "paused"
+            job.pause_requested = False
+            job.progress_stage = "paused"
+            job.progress_message = "Job pausado antes de iniciar ejecución."
+            job.paused_at = timezone.now()
+            job.save(
+                update_fields=[
+                    "status",
+                    "pause_requested",
+                    "progress_stage",
+                    "progress_message",
+                    "paused_at",
+                    "updated_at",
+                ]
+            )
+            self.progress_publisher.publish(
+                job,
+                JobProgressUpdate(
+                    percentage=int(job.progress_percentage),
+                    stage="paused",
+                    message="Job pausado antes de iniciar ejecución.",
+                ),
+            )
+            self._publish_job_log(
+                job,
+                level="warning",
+                source="core.control",
+                message="Job pausado manualmente en estado pending.",
+            )
+            return job
+
+        job.pause_requested = True
+        job.progress_message = "Pausa solicitada. Esperando confirmación cooperativa."
+        job.save(update_fields=["pause_requested", "progress_message", "updated_at"])
+        self._publish_job_log(
+            job,
+            level="warning",
+            source="core.control",
+            message="Solicitud de pausa registrada para el job en ejecución.",
+        )
+        return job
+
+    def resume_job(self, job_id: str) -> ScientificJob:
+        """Reanuda un job pausado dejándolo listo para reencolado."""
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para reanudar.")
+
+        if not bool(job.supports_pause_resume):
+            raise ValueError("El plugin de este job no soporta pausa/reanudación.")
+
+        if job.status != "paused":
+            raise ValueError("Solo se pueden reanudar jobs en estado paused.")
+
+        job.status = "pending"
+        job.pause_requested = False
+        job.progress_stage = "queued"
+        job.progress_message = "Reanudación solicitada. Preparando reencolado del job."
+        job.resumed_at = timezone.now()
+        job.last_heartbeat_at = timezone.now()
+        job.save(
+            update_fields=[
+                "status",
+                "pause_requested",
+                "progress_stage",
+                "progress_message",
+                "resumed_at",
+                "last_heartbeat_at",
+                "updated_at",
+            ]
+        )
+        self._publish_job_log(
+            job,
+            level="info",
+            source="core.control",
+            message="Job marcado como pending para reanudar ejecución.",
+        )
+        return job
+
     def _get_job_or_none(self, job_id: str) -> ScientificJob | None:
         """Recupera un job por UUID y retorna None si no existe o es inválido."""
         try:
@@ -488,6 +634,8 @@ class RuntimeJobService:
         job.cache_hit = from_cache
         job.cache_miss = not from_cache
         job.error_trace = None
+        job.pause_requested = False
+        job.runtime_state = {}
         job.progress_percentage = 100
         job.progress_stage = "completed"
         job.progress_message = completion_message
@@ -498,6 +646,8 @@ class RuntimeJobService:
                 "cache_hit",
                 "cache_miss",
                 "error_trace",
+                "pause_requested",
+                "runtime_state",
                 "progress_percentage",
                 "progress_stage",
                 "progress_message",
@@ -521,6 +671,52 @@ class RuntimeJobService:
         )
         logger.info("Ejecución completada para job %s", job_id)
 
+    def _finish_with_pause(
+        self,
+        *,
+        job: ScientificJob,
+        job_id: str,
+        pause_message: str,
+        checkpoint: JSONMap | None,
+    ) -> None:
+        """Finaliza transición a paused conservando estado para reanudación."""
+        checkpoint_payload: JSONMap = checkpoint if checkpoint is not None else {}
+
+        job.status = "paused"
+        job.pause_requested = False
+        job.runtime_state = checkpoint_payload
+        job.progress_stage = "paused"
+        job.progress_message = pause_message
+        job.paused_at = timezone.now()
+        job.save(
+            update_fields=[
+                "status",
+                "pause_requested",
+                "runtime_state",
+                "progress_stage",
+                "progress_message",
+                "paused_at",
+                "updated_at",
+            ]
+        )
+
+        self.progress_publisher.publish(
+            job,
+            JobProgressUpdate(
+                percentage=int(job.progress_percentage),
+                stage="paused",
+                message=pause_message,
+            ),
+        )
+        self._publish_job_log(
+            job,
+            level="warning",
+            source="core.control",
+            message="Job pausado cooperativamente con estado persistido.",
+            payload={"runtime_state_keys": list(checkpoint_payload.keys())},
+        )
+        logger.info("Ejecución pausada para job %s", job_id)
+
     def _finish_with_failure(
         self, *, job: ScientificJob, job_id: str, error_message: str
     ) -> None:
@@ -528,6 +724,7 @@ class RuntimeJobService:
         job.status = "failed"
         job.results = None
         job.error_trace = error_message
+        job.pause_requested = False
         job.progress_percentage = 100
         job.progress_stage = "failed"
         job.progress_message = "Job finalizado con error. Revisar error_trace."
@@ -536,6 +733,7 @@ class RuntimeJobService:
                 "status",
                 "results",
                 "error_trace",
+                "pause_requested",
                 "progress_percentage",
                 "progress_stage",
                 "progress_message",
@@ -632,3 +830,15 @@ class JobService:
         from .factory import build_job_service
 
         return build_job_service()
+
+    @staticmethod
+    def request_pause(job_id: str) -> ScientificJob:
+        """Solicita pausa de un job reutilizable desde routers, tasks u otros módulos."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.request_pause(job_id)
+
+    @staticmethod
+    def resume_job(job_id: str) -> ScientificJob:
+        """Reanuda un job pausado para permitir su reencolado desde cualquier capa."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.resume_job(job_id)

@@ -29,6 +29,14 @@ class RandomNumbersResult(TypedDict):
     metadata: RandomNumbersMetadata
 
 
+class RandomNumbersRuntimeState(TypedDict):
+    """Estado serializable para pausar y reanudar generación por lotes."""
+
+    generated_numbers: list[int]
+    generated_count: int
+    total_numbers: int
+
+
 class RandomNumbersJobCreatePayload(TypedDict):
     """Payload tipado de creación de jobs random_numbers."""
 

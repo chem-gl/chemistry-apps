@@ -184,3 +184,45 @@ class RandomNumbersContractApiTests(TestCase):
         assert snapshot_log is not None
         self.assertIn("generated_count", snapshot_log.payload)
         self.assertIn("generated_numbers_so_far", snapshot_log.payload)
+
+    @patch("apps.random_numbers.plugin.sleep")
+    @patch("apps.random_numbers.plugin.urlopen")
+    def test_random_numbers_job_supports_pause_and_resume(
+        self,
+        urlopen_mock: Mock,
+        sleep_mock: Mock,
+    ) -> None:
+        del sleep_mock
+        mocked_response = Mock()
+        mocked_response.read.return_value = b"seed-data"
+        urlopen_mock.return_value.__enter__.return_value = mocked_response
+
+        job: ScientificJob = JobService.create_job(
+            plugin_name=PLUGIN_NAME,
+            version="1.0.0",
+            parameters={
+                "seed_url": "https://example.com/seed.txt",
+                "numbers_per_batch": 2,
+                "interval_seconds": 1,
+                "total_numbers": 6,
+            },
+        )
+
+        job.status = "running"
+        job.pause_requested = True
+        job.save(update_fields=["status", "pause_requested", "updated_at"])
+
+        JobService.run_job(str(job.id))
+        job.refresh_from_db()
+
+        self.assertEqual(job.status, "paused")
+        self.assertEqual(job.progress_stage, "paused")
+        self.assertIn("generated_numbers", job.runtime_state)
+
+        resumed_job: ScientificJob = JobService.resume_job(str(job.id))
+        self.assertEqual(resumed_job.status, "pending")
+
+        JobService.run_job(str(job.id))
+        job.refresh_from_db()
+        self.assertEqual(job.status, "completed")
+        self.assertEqual(len(job.results["generated_numbers"]), 6)

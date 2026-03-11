@@ -24,7 +24,9 @@ from .definitions import (
     CORE_JOBS_EVENTS_ROUTE_SUFFIX,
     CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX,
     CORE_JOBS_LOGS_ROUTE_SUFFIX,
+    CORE_JOBS_PAUSE_ROUTE_SUFFIX,
     CORE_JOBS_PROGRESS_ROUTE_SUFFIX,
+    CORE_JOBS_RESUME_ROUTE_SUFFIX,
     DEFAULT_SSE_TIMEOUT_SECONDS,
     MAX_SSE_TIMEOUT_SECONDS,
     SSE_POLL_INTERVAL_SECONDS,
@@ -32,6 +34,7 @@ from .definitions import (
 from .models import ScientificJob, ScientificJobLogEvent
 from .schemas import (
     ErrorResponseSerializer,
+    JobControlActionResponseSerializer,
     JobCreateSerializer,
     JobLogListSerializer,
     JobProgressSnapshotSerializer,
@@ -162,7 +165,7 @@ class JobViewSet(viewsets.ViewSet):
                 location=OpenApiParameter.QUERY,
                 description=(
                     "Filtra por estado del job. Valores válidos: "
-                    "pending, running, completed, failed."
+                    "pending, running, paused, completed, failed."
                 ),
             ),
         ],
@@ -175,7 +178,7 @@ class JobViewSet(viewsets.ViewSet):
                     OpenApiExample(
                         "Estado inválido",
                         value={
-                            "detail": "Invalid status filter. Allowed values are: pending, running, completed, failed."
+                            "detail": "Invalid status filter. Allowed values are: pending, running, paused, completed, failed."
                         },
                     )
                 ],
@@ -195,7 +198,7 @@ class JobViewSet(viewsets.ViewSet):
                 {
                     "detail": (
                         "Invalid status filter. Allowed values are: "
-                        "pending, running, completed, failed."
+                        "pending, running, paused, completed, failed."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -284,6 +287,116 @@ class JobViewSet(viewsets.ViewSet):
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
         result_serializer = ScientificJobSerializer(job)
         return Response(result_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Solicitar pausa de un Job",
+        description=(
+            "Solicita pausa cooperativa para un job. Si el job está pending se pausa "
+            "de inmediato; si está running queda marcada la pausa y el plugin coopera "
+            "en la próxima verificación de control."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            )
+        ],
+        responses={
+            200: JobControlActionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Transición inválida o plugin sin soporte de pausa.",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+        request=None,
+    )
+    @action(detail=True, methods=["post"], url_path=CORE_JOBS_PAUSE_ROUTE_SUFFIX)
+    def pause(self, request: Request, id: str | None = None) -> Response:
+        """Solicita pausa cooperativa para un job con soporte explícito."""
+        del request
+        get_object_or_404(ScientificJob, pk=id)
+
+        try:
+            updated_job: ScientificJob = JobService.request_pause(str(id))
+        except ValueError as control_error:
+            return Response(
+                {"detail": str(control_error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_serializer = ScientificJobSerializer(updated_job)
+        return Response(
+            {
+                "detail": "Solicitud de pausa registrada correctamente.",
+                "job": job_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        summary="Reanudar un Job pausado",
+        description=(
+            "Reanuda un job pausado y lo reencola para continuar desde su estado "
+            "persistido cuando el plugin soporta pausa cooperativa."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            )
+        ],
+        responses={
+            200: JobControlActionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Transición inválida o plugin sin soporte de pausa.",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+        request=None,
+    )
+    @action(detail=True, methods=["post"], url_path=CORE_JOBS_RESUME_ROUTE_SUFFIX)
+    def resume(self, request: Request, id: str | None = None) -> Response:
+        """Reanuda un job pausado y reintenta su encolado de ejecución."""
+        del request
+        get_object_or_404(ScientificJob, pk=id)
+
+        try:
+            resumed_job: ScientificJob = JobService.resume_job(str(id))
+        except ValueError as control_error:
+            return Response(
+                {"detail": str(control_error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        dispatch_result: bool = dispatch_scientific_job(str(resumed_job.id))
+        JobService.register_dispatch_result(str(resumed_job.id), dispatch_result)
+        resumed_job.refresh_from_db()
+
+        job_serializer = ScientificJobSerializer(resumed_job)
+        detail_message: str = (
+            "Job reanudado y encolado correctamente."
+            if dispatch_result
+            else "Job reanudado pero broker no disponible; permanece pendiente."
+        )
+        return Response(
+            {
+                "detail": detail_message,
+                "job": job_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema(
         summary="Consultar progreso de un Job",
@@ -580,7 +693,7 @@ class JobViewSet(viewsets.ViewSet):
                 yield _serialize_sse_progress_event(snapshot)
                 observed_event_index = snapshot["progress_event_index"]
 
-                if snapshot["status"] in {"completed", "failed"}:
+                if snapshot["status"] in {"completed", "failed", "paused"}:
                     return
 
             now: float = monotonic()
@@ -632,7 +745,7 @@ class JobViewSet(viewsets.ViewSet):
                 yield _serialize_sse_log_event(log_entry)
                 observed_event_index = pending_event.event_index
 
-            if refreshed_job.status in {"completed", "failed"}:
+            if refreshed_job.status in {"completed", "failed", "paused"}:
                 return
 
             now: float = monotonic()
