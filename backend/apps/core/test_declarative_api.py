@@ -6,11 +6,9 @@ correctamente para consumo multicanal sin acoplamiento HTTP.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
 from django.test import TestCase
 
-from .types import DeferredTask, DomainError, Failure, PureTask, Result, Success, Task
+from .types import DeferredTask, Failure, PureTask, Result, Success, Task
 
 
 class ResultMonadTests(TestCase):

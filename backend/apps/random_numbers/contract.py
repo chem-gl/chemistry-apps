@@ -18,13 +18,6 @@ Uso:
     )
 """
 
-from apps.core.types import (
-    JSONMap,
-    PluginControlCallback,
-    PluginLogCallback,
-    PluginProgressCallback,
-)
-
 from .definitions import DEFAULT_ALGORITHM_VERSION
 from .definitions import PLUGIN_NAME as RANDOM_PLUGIN_NAME
 from .plugin import _build_random_numbers_input, random_numbers_plugin

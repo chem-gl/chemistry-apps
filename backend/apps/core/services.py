@@ -193,34 +193,39 @@ class RuntimeJobService:
         if job is None:
             return
 
-        if job.status in {"completed", "failed", "paused"}:
-            logger.info("Job %s ya estaba finalizado con estado %s", job_id, job.status)
-            self._publish_job_log(
-                job,
-                level="debug",
-                source="core.runtime",
-                message="Ejecución omitida porque el job ya está finalizado.",
-                payload={"status": job.status},
-            )
+        if self._should_skip_execution(job=job, job_id=job_id):
             return
 
-        job.status = "running"
-        job.last_heartbeat_at = timezone.now()
-        job.save(update_fields=["status", "last_heartbeat_at", "updated_at"])
-        self.progress_publisher.publish(
-            job,
-            JobProgressUpdate(
-                percentage=10,
-                stage="running",
-                message="Job en ejecución por worker asíncrono.",
-            ),
+        execution_parameters: JSONMap = self._prepare_execution_parameters(job)
+
+        if self._try_finish_job_from_cache(job=job, job_id=job_id):
+            return
+
+        self._publish_plugin_execution_start(job)
+        self._execute_runtime_plugin_flow(
+            job=job,
+            job_id=job_id,
+            execution_parameters=execution_parameters,
         )
+
+    def _should_skip_execution(self, *, job: ScientificJob, job_id: str) -> bool:
+        """Determina si el job no debe ejecutarse por estar en estado terminal."""
+        if job.status not in {"completed", "failed", "paused"}:
+            return False
+
+        logger.info("Job %s ya estaba finalizado con estado %s", job_id, job.status)
         self._publish_job_log(
             job,
-            level="info",
+            level="debug",
             source="core.runtime",
-            message="Job iniciado en worker asíncrono.",
+            message="Ejecución omitida porque el job ya está finalizado.",
+            payload={"status": job.status},
         )
+        return True
+
+    def _prepare_execution_parameters(self, job: ScientificJob) -> JSONMap:
+        """Prepara contexto de ejecución, marca estado running y adjunta checkpoint."""
+        self._mark_job_as_running(job)
 
         execution_parameters: JSONMap = {
             key: value for key, value in cast(JSONMap, job.parameters).items()
@@ -236,26 +241,55 @@ class RuntimeJobService:
                 payload={"runtime_state_keys": list(runtime_state_value.keys())},
             )
 
+        return execution_parameters
+
+    def _mark_job_as_running(self, job: ScientificJob) -> None:
+        """Actualiza estado inicial de ejecución y publica evento de arranque."""
+        job.status = "running"
+        job.last_heartbeat_at = timezone.now()
+        job.save(update_fields=["status", "last_heartbeat_at", "updated_at"])
+
+        self.progress_publisher.publish(
+            job,
+            JobProgressUpdate(
+                percentage=10,
+                stage="running",
+                message="Job en ejecución por worker asíncrono.",
+            ),
+        )
+        self._publish_job_log(
+            job,
+            level="info",
+            source="core.runtime",
+            message="Job iniciado en worker asíncrono.",
+        )
+
+    def _try_finish_job_from_cache(self, *, job: ScientificJob, job_id: str) -> bool:
+        """Intenta resolver resultado desde caché y cerrar el job inmediatamente."""
         cached_result_payload: JSONMap | None = self.cache_repository.get_cached_result(
             job_hash=job.job_hash,
             plugin_name=job.plugin_name,
             algorithm_version=job.algorithm_version,
         )
-        if cached_result_payload is not None:
-            self._publish_job_log(
-                job,
-                level="info",
-                source="core.cache",
-                message="Resultado recuperado desde caché durante ejecución.",
-            )
-            self._finish_with_result(
-                job=job,
-                job_id=job_id,
-                result_payload=cached_result_payload,
-                from_cache=True,
-            )
-            return
+        if cached_result_payload is None:
+            return False
 
+        self._publish_job_log(
+            job,
+            level="info",
+            source="core.cache",
+            message="Resultado recuperado desde caché durante ejecución.",
+        )
+        self._finish_with_result(
+            job=job,
+            job_id=job_id,
+            result_payload=cached_result_payload,
+            from_cache=True,
+        )
+        return True
+
+    def _publish_plugin_execution_start(self, job: ScientificJob) -> None:
+        """Publica transición de estado para inicio de ejecución del plugin."""
         self.progress_publisher.publish(
             job,
             JobProgressUpdate(
@@ -272,91 +306,21 @@ class RuntimeJobService:
             payload={"plugin_name": job.plugin_name},
         )
 
+    def _execute_runtime_plugin_flow(
+        self,
+        *,
+        job: ScientificJob,
+        job_id: str,
+        execution_parameters: JSONMap,
+    ) -> None:
+        """Ejecuta plugin con callbacks tipados y gestiona los estados terminales."""
         try:
-
-            def report_plugin_progress(
-                plugin_percentage: int,
-                plugin_stage: JobProgressStage,
-                plugin_message: str,
-            ) -> None:
-                """Publica progreso granular del plugin dentro del rango de ejecución.
-
-                Se mapea el rango [0, 100] del plugin al rango [35, 79] del flujo
-                global para reservar 80% al paso de cache y 100% al cierre.
-                """
-                normalized_percentage: int = max(0, min(100, int(plugin_percentage)))
-                mapped_runtime_percentage: int = 35 + int(
-                    normalized_percentage * 44 / 100
-                )
-
-                self.progress_publisher.publish(
-                    job,
-                    JobProgressUpdate(
-                        percentage=mapped_runtime_percentage,
-                        stage=plugin_stage,
-                        message=plugin_message,
-                    ),
-                )
-
-            def report_plugin_log(
-                level: JobLogLevel,
-                source: str,
-                message: str,
-                payload: JSONMap | None,
-            ) -> None:
-                """Persiste logs del plugin de forma correlacionada por job."""
-                self._publish_job_log(
-                    job,
-                    level=level,
-                    source=source,
-                    message=message,
-                    payload=payload,
-                )
-
-            def report_plugin_control() -> PluginControlAction:
-                """Informa al plugin si debe continuar o pausar cooperativamente."""
-                refreshed_job: ScientificJob | None = self._get_job_or_none(job_id)
-                if refreshed_job is None:
-                    return "pause"
-
-                if bool(refreshed_job.pause_requested):
-                    return "pause"
-
-                if refreshed_job.status == "paused":
-                    return "pause"
-
-                return "continue"
-
-            result_payload: JSONMap = self.plugin_execution.execute(
-                job.plugin_name,
-                execution_parameters,
-                progress_callback=report_plugin_progress,
-                log_callback=report_plugin_log,
-                control_callback=report_plugin_control,
+            result_payload: JSONMap = self._execute_plugin(
+                job=job,
+                job_id=job_id,
+                execution_parameters=execution_parameters,
             )
-
-            self.progress_publisher.publish(
-                job,
-                JobProgressUpdate(
-                    percentage=80,
-                    stage="caching",
-                    message="Persistiendo resultado en caché.",
-                ),
-            )
-            self._publish_job_log(
-                job,
-                level="info",
-                source="core.cache",
-                message="Persistiendo resultado calculado en caché.",
-            )
-
-            self.cache_repository.store_cached_result(
-                job_hash=job.job_hash,
-                plugin_name=job.plugin_name,
-                algorithm_version=job.algorithm_version,
-                result_payload=result_payload,
-            )
-
+            self._persist_result_in_cache(job=job, result_payload=result_payload)
             self._finish_with_result(
                 job=job,
                 job_id=job_id,
@@ -385,8 +349,123 @@ class RuntimeJobService:
                 payload={"error": str(service_error)},
             )
             self._finish_with_failure(
-                job=job, job_id=job_id, error_message=str(service_error)
+                job=job,
+                job_id=job_id,
+                error_message=str(service_error),
             )
+
+    def _execute_plugin(
+        self,
+        *,
+        job: ScientificJob,
+        job_id: str,
+        execution_parameters: JSONMap,
+    ) -> JSONMap:
+        """Ejecuta plugin científico con callbacks de progreso, logging y control."""
+        return self.plugin_execution.execute(
+            job.plugin_name,
+            execution_parameters,
+            progress_callback=self._build_plugin_progress_callback(job),
+            log_callback=self._build_plugin_log_callback(job),
+            control_callback=self._build_plugin_control_callback(job_id),
+        )
+
+    def _build_plugin_progress_callback(
+        self,
+        job: ScientificJob,
+    ) -> Callable[[int, JobProgressStage, str], None]:
+        """Construye callback de progreso para mapear porcentaje del plugin."""
+
+        def report_plugin_progress(
+            plugin_percentage: int,
+            plugin_stage: JobProgressStage,
+            plugin_message: str,
+        ) -> None:
+            normalized_percentage: int = max(0, min(100, int(plugin_percentage)))
+            mapped_runtime_percentage: int = 35 + int(normalized_percentage * 44 / 100)
+
+            self.progress_publisher.publish(
+                job,
+                JobProgressUpdate(
+                    percentage=mapped_runtime_percentage,
+                    stage=plugin_stage,
+                    message=plugin_message,
+                ),
+            )
+
+        return report_plugin_progress
+
+    def _build_plugin_log_callback(
+        self,
+        job: ScientificJob,
+    ) -> Callable[[JobLogLevel, str, str, JSONMap | None], None]:
+        """Construye callback de logging correlacionado para el job en ejecución."""
+
+        def report_plugin_log(
+            level: JobLogLevel,
+            source: str,
+            message: str,
+            payload: JSONMap | None,
+        ) -> None:
+            self._publish_job_log(
+                job,
+                level=level,
+                source=source,
+                message=message,
+                payload=payload,
+            )
+
+        return report_plugin_log
+
+    def _build_plugin_control_callback(
+        self,
+        job_id: str,
+    ) -> Callable[[], PluginControlAction]:
+        """Construye callback de control cooperativo (continue/pause)."""
+
+        def report_plugin_control() -> PluginControlAction:
+            refreshed_job: ScientificJob | None = self._get_job_or_none(job_id)
+            if refreshed_job is None:
+                return "pause"
+
+            if bool(refreshed_job.pause_requested):
+                return "pause"
+
+            if refreshed_job.status == "paused":
+                return "pause"
+
+            return "continue"
+
+        return report_plugin_control
+
+    def _persist_result_in_cache(
+        self,
+        *,
+        job: ScientificJob,
+        result_payload: JSONMap,
+    ) -> None:
+        """Persiste el resultado exitoso en caché y publica trazabilidad."""
+        self.progress_publisher.publish(
+            job,
+            JobProgressUpdate(
+                percentage=80,
+                stage="caching",
+                message="Persistiendo resultado en caché.",
+            ),
+        )
+        self._publish_job_log(
+            job,
+            level="info",
+            source="core.cache",
+            message="Persistiendo resultado calculado en caché.",
+        )
+
+        self.cache_repository.store_cached_result(
+            job_hash=job.job_hash,
+            plugin_name=job.plugin_name,
+            algorithm_version=job.algorithm_version,
+            result_payload=result_payload,
+        )
 
     def run_active_recovery(
         self,

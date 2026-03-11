@@ -178,7 +178,8 @@ class JobViewSet(viewsets.ViewSet):
                     OpenApiExample(
                         "Estado inválido",
                         value={
-                            "detail": "Invalid status filter. Allowed values are: pending, running, paused, completed, failed."
+                            "detail": "Invalid status filter. Allowed values are: pending, running, paused, completed, "
+                            + "failed."
                         },
                     )
                 ],
