@@ -3,8 +3,10 @@
 // Muestra secciones de avance con barra de progreso, etapa y mensaje antes del resultado.
 
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
 
 @Component({
@@ -513,8 +515,10 @@ import { CalculatorWorkflowService } from '../core/application/calculator-workfl
     }
   `,
 })
-export class CalculatorComponent {
+export class CalculatorComponent implements OnInit, OnDestroy {
   private readonly workflowService = inject(CalculatorWorkflowService);
+  private readonly route = inject(ActivatedRoute);
+  private routeSubscription: Subscription | null = null;
 
   readonly operations = this.workflowService.operations;
   readonly stageSteps = this.workflowService.stageSteps;
@@ -531,6 +535,19 @@ export class CalculatorComponent {
   readonly progressPercentage = this.workflowService.progressPercentage;
   readonly progressMessage = this.workflowService.progressMessage;
   readonly currentStage = this.workflowService.currentStage;
+
+  ngOnInit(): void {
+    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
+      const jobId: string | null = paramsMap.get('jobId');
+      if (jobId !== null && jobId.trim() !== '') {
+        this.workflowService.openHistoricalJob(jobId);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
+  }
 
   stageLabel(stageName: string): string {
     return this.workflowService.stageLabel(stageName);

@@ -17,10 +17,10 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     available: true,
   },
   {
-    key: 'future-kinetics',
-    title: 'Nueva app (proxima)',
-    description: 'Espacio reservado para futuras apps cientificas desacopladas.',
-    routePath: '/apps',
-    available: false,
+    key: 'random-numbers',
+    title: 'Random Numbers',
+    description: 'Generacion de numeros aleatorios por lotes con semilla URL y progreso.',
+    routePath: '/random-numbers',
+    available: true,
   },
 ];

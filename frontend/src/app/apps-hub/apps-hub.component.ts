@@ -1,4 +1,4 @@
-// apps-hub.component.ts: Catalogo de navegacion para calculadora y futuras apps cientificas.
+// apps-hub.component.ts: Catalogo de navegacion para calculadora y apps cientificas disponibles.
 
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';

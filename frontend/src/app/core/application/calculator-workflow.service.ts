@@ -136,6 +136,31 @@ export class CalculatorWorkflowService implements OnDestroy {
     this.progressSubscription?.unsubscribe();
   }
 
+  /** Permite cargar un resultado previo de calculadora usando un jobId existente */
+  openHistoricalJob(jobId: string): void {
+    this.progressSubscription?.unsubscribe();
+    this.activeSection.set('dispatching');
+    this.currentJobId.set(jobId);
+    this.errorMessage.set(null);
+
+    this.jobsApiService.getJobStatus(jobId).subscribe({
+      next: (jobResponse: CalculatorJobResponse) => {
+        if (jobResponse.status === 'failed') {
+          this.activeSection.set('error');
+          this.errorMessage.set(jobResponse.error_trace ?? 'El job histórico falló.');
+          return;
+        }
+
+        this.lastResult.set(jobResponse);
+        this.activeSection.set('result');
+      },
+      error: (statusError: Error) => {
+        this.activeSection.set('error');
+        this.errorMessage.set(`Error recuperando job histórico: ${statusError.message}`);
+      },
+    });
+  }
+
   private startProgressStream(jobId: string): void {
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (jobSnapshot: JobProgressSnapshot) => this.progressSnapshot.set(jobSnapshot),

@@ -13,6 +13,7 @@ export class App {
   readonly primaryNavigationItems: ReadonlyArray<{ label: string; path: string; hint: string }> = [
     { label: 'Monitor', path: '/jobs', hint: 'Ver jobs activos y terminados' },
     { label: 'Calculadora', path: '/calculator', hint: 'Lanzar operaciones cientificas' },
+    { label: 'Random', path: '/random-numbers', hint: 'Generar numeros aleatorios en background' },
     { label: 'Apps', path: '/apps', hint: 'Catalogo y nuevas apps' },
   ];
 }

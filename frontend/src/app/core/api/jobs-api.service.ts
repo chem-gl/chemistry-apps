@@ -10,6 +10,7 @@ import {
   CalculatorJobResponse,
   CalculatorOperationEnum,
   CalculatorService,
+  JobCreate,
   JobProgressSnapshot,
   JobsService,
   ScientificJob,
@@ -42,6 +43,13 @@ export interface JobListFilters {
   status?: JobListStatusFilter;
 }
 
+/** Parámetros genéricos para despachar jobs de cualquier app científica */
+export interface ScientificJobDispatchParams {
+  pluginName: string;
+  version?: string;
+  parameters: Record<string, unknown>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -55,6 +63,24 @@ export class JobsApiService {
    */
   listJobs(filters: JobListFilters = {}): Observable<ScientificJob[]> {
     return this.jobsClient.jobsList(filters.pluginName, filters.status).pipe(shareReplay(1));
+  }
+
+  /**
+   * Despacha un job científico genérico vía el endpoint core /api/jobs/.
+   * Se usa para nuevas apps sin acoplar componentes al código generado.
+   */
+  dispatchScientificJob(params: ScientificJobDispatchParams): Observable<ScientificJob> {
+    const payload: JobCreate = {
+      plugin_name: params.pluginName,
+      version: params.version ?? '1.0.0',
+      parameters: params.parameters,
+    };
+    return this.jobsClient.jobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta un job científico genérico por id mediante /api/jobs/{id}/ */
+  getScientificJobStatus(jobId: string): Observable<ScientificJob> {
+    return this.jobsClient.jobsRetrieve(jobId);
   }
 
   /**

@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./calculator/calculator.component').then((m) => m.CalculatorComponent),
   },
   {
+    path: 'random-numbers',
+    loadComponent: () =>
+      import('./random-numbers/random-numbers.component').then((m) => m.RandomNumbersComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

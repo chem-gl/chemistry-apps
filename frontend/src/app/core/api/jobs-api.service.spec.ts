@@ -241,4 +241,41 @@ describe('JobsApiService', () => {
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
+
+  it('should dispatch a generic scientific job', () => {
+    const scientificJob = makeScientificJob({ id: 'random-job-1', plugin_name: 'random-numbers' });
+
+    service
+      .dispatchScientificJob({
+        pluginName: 'random-numbers',
+        version: '1.0.0',
+        parameters: {
+          seed_url: 'https://example.com/seed.txt',
+          numbers_per_batch: 5,
+          interval_seconds: 120,
+          total_numbers: 55,
+        },
+      })
+      .subscribe((job) => {
+        expect(job.plugin_name).toBe('random-numbers');
+      });
+
+    const req = httpMock.expectOne(JOBS_LIST_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body['plugin_name']).toBe('random-numbers');
+    req.flush(scientificJob);
+  });
+
+  it('should get generic scientific job status', () => {
+    const scientificJob = makeScientificJob({ id: 'random-job-2', plugin_name: 'random-numbers' });
+
+    service.getScientificJobStatus('random-job-2').subscribe((job) => {
+      expect(job.id).toBe('random-job-2');
+      expect(job.plugin_name).toBe('random-numbers');
+    });
+
+    const req = httpMock.expectOne(`${JOBS_LIST_URL}random-job-2/`);
+    expect(req.request.method).toBe('GET');
+    req.flush(scientificJob);
+  });
 });

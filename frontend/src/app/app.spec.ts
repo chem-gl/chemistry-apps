@@ -35,6 +35,7 @@ describe('App', () => {
 
     expect(links).toContain('Monitor');
     expect(links).toContain('Calculadora');
+    expect(links).toContain('Random');
     expect(links).toContain('Apps');
   });
 });

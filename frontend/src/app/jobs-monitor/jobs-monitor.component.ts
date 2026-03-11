@@ -3,6 +3,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ScientificJob } from '../core/api/generated';
 import {
   JobStatusFilterOption,
@@ -11,7 +12,7 @@ import {
 
 @Component({
   selector: 'app-jobs-monitor',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   providers: [JobsMonitorFacadeService],
   template: `
     <section class="monitor-shell" aria-label="Monitor de jobs">
@@ -152,6 +153,7 @@ import {
                   <th>Progreso</th>
                   <th>Cache</th>
                   <th>Actualizado</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,6 +169,19 @@ import {
                     <td>{{ finishedJob.progress_percentage }}%</td>
                     <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
                     <td>{{ finishedJob.updated_at | date: 'dd/MM HH:mm:ss' }}</td>
+                    <td>
+                      @if (appRouteForJob(finishedJob); as appRoutePath) {
+                        <a
+                          class="open-result-link"
+                          [routerLink]="appRoutePath"
+                          [queryParams]="{ jobId: finishedJob.id }"
+                        >
+                          Abrir resultado
+                        </a>
+                      } @else {
+                        <span class="open-result-disabled">Sin visor</span>
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -452,6 +467,24 @@ import {
       color: #245a56;
       font-weight: 700;
     }
+
+    .open-result-link {
+      display: inline-flex;
+      text-decoration: none;
+      border: 1px solid #0f766e;
+      border-radius: 999px;
+      padding: 0.2rem 0.5rem;
+      color: #0f766e;
+      background: #effefb;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .open-result-disabled {
+      font-size: 0.75rem;
+      color: #6b7280;
+      font-weight: 600;
+    }
   `,
 })
 export class JobsMonitorComponent implements OnInit, OnDestroy {
@@ -492,5 +525,17 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
 
   statusClassName(jobStatus: ScientificJob['status']): string {
     return `job-status status-${jobStatus}`;
+  }
+
+  appRouteForJob(jobItem: ScientificJob): string | null {
+    if (jobItem.plugin_name === 'random-numbers') {
+      return '/random-numbers';
+    }
+
+    if (jobItem.plugin_name === 'calculator') {
+      return '/calculator';
+    }
+
+    return null;
   }
 }
