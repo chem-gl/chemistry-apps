@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -19,7 +19,7 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { ErrorResponse } from '../model/errorResponse';
 // @ts-ignore
-import { RandomNumbersJobCreate } from '../model/randomNumbersJobCreate';
+import { RandomNumbersJobCreateRequest } from '../model/randomNumbersJobCreateRequest';
 // @ts-ignore
 import { RandomNumbersJobResponse } from '../model/randomNumbersJobResponse';
 
@@ -46,17 +46,17 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
      * Crear Job de Números Aleatorios
      * Crea un job asíncrono que genera números aleatorios por lotes según una URL semilla y un intervalo en segundos.
      * @endpoint post /api/random-numbers/jobs/
-     * @param randomNumbersJobCreate 
+     * @param randomNumbersJobCreateRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public randomNumbersJobsCreate(randomNumbersJobCreate: RandomNumbersJobCreate, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RandomNumbersJobResponse>;
-    public randomNumbersJobsCreate(randomNumbersJobCreate: RandomNumbersJobCreate, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RandomNumbersJobResponse>>;
-    public randomNumbersJobsCreate(randomNumbersJobCreate: RandomNumbersJobCreate, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RandomNumbersJobResponse>>;
-    public randomNumbersJobsCreate(randomNumbersJobCreate: RandomNumbersJobCreate, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (randomNumbersJobCreate === null || randomNumbersJobCreate === undefined) {
-            throw new Error('Required parameter randomNumbersJobCreate was null or undefined when calling randomNumbersJobsCreate.');
+    public randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RandomNumbersJobResponse>;
+    public randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RandomNumbersJobResponse>>;
+    public randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RandomNumbersJobResponse>>;
+    public randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (randomNumbersJobCreateRequest === null || randomNumbersJobCreateRequest === undefined) {
+            throw new Error('Required parameter randomNumbersJobCreateRequest was null or undefined when calling randomNumbersJobsCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -105,7 +105,7 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
         return this.httpClient.request<RandomNumbersJobResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: randomNumbersJobCreate,
+                body: randomNumbersJobCreateRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

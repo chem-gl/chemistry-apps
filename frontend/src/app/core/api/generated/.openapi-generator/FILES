@@ -13,14 +13,14 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
-model/calculatorJobCreate.ts
+model/calculatorJobCreateRequest.ts
 model/calculatorJobResponse.ts
 model/calculatorOperationEnum.ts
 model/calculatorParameters.ts
 model/calculatorResult.ts
 model/calculatorResultMetadata.ts
 model/errorResponse.ts
-model/jobCreate.ts
+model/jobCreateRequest.ts
 model/jobLogEvent.ts
 model/jobLogList.ts
 model/jobProgressSnapshot.ts
@@ -28,7 +28,7 @@ model/jobProgressStageEnum.ts
 model/jobStatusEnum.ts
 model/levelEnum.ts
 model/models.ts
-model/randomNumbersJobCreate.ts
+model/randomNumbersJobCreateRequest.ts
 model/randomNumbersJobResponse.ts
 model/randomNumbersParameters.ts
 model/randomNumbersResult.ts

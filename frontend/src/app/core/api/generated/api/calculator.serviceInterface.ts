@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -11,7 +11,7 @@ import { HttpHeaders }                                       from '@angular/comm
 
 import { Observable }                                        from 'rxjs';
 
-import { CalculatorJobCreate } from '../model/models';
+import { CalculatorJobCreateRequest } from '../model/models';
 import { CalculatorJobResponse } from '../model/models';
 import { ErrorResponse } from '../model/models';
 
@@ -28,9 +28,9 @@ export interface CalculatorServiceInterface {
      * Crear Job de Calculadora
      * Recibe parámetros estrictos de calculadora y despacha el trabajo en background cuando no existe caché.
      * @endpoint post /api/calculator/jobs/
-     * @param calculatorJobCreate 
+     * @param calculatorJobCreateRequest 
      */
-    calculatorJobsCreate(calculatorJobCreate: CalculatorJobCreate, extraHttpRequestParams?: any): Observable<CalculatorJobResponse>;
+    calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, extraHttpRequestParams?: any): Observable<CalculatorJobResponse>;
 
     /**
      * Consultar Job de Calculadora

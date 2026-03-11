@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -17,7 +17,7 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
-import { CalculatorJobCreate } from '../model/calculatorJobCreate';
+import { CalculatorJobCreateRequest } from '../model/calculatorJobCreateRequest';
 // @ts-ignore
 import { CalculatorJobResponse } from '../model/calculatorJobResponse';
 // @ts-ignore
@@ -46,17 +46,17 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
      * Crear Job de Calculadora
      * Recibe parámetros estrictos de calculadora y despacha el trabajo en background cuando no existe caché.
      * @endpoint post /api/calculator/jobs/
-     * @param calculatorJobCreate 
+     * @param calculatorJobCreateRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public calculatorJobsCreate(calculatorJobCreate: CalculatorJobCreate, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CalculatorJobResponse>;
-    public calculatorJobsCreate(calculatorJobCreate: CalculatorJobCreate, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CalculatorJobResponse>>;
-    public calculatorJobsCreate(calculatorJobCreate: CalculatorJobCreate, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CalculatorJobResponse>>;
-    public calculatorJobsCreate(calculatorJobCreate: CalculatorJobCreate, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (calculatorJobCreate === null || calculatorJobCreate === undefined) {
-            throw new Error('Required parameter calculatorJobCreate was null or undefined when calling calculatorJobsCreate.');
+    public calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CalculatorJobResponse>;
+    public calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CalculatorJobResponse>>;
+    public calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CalculatorJobResponse>>;
+    public calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (calculatorJobCreateRequest === null || calculatorJobCreateRequest === undefined) {
+            throw new Error('Required parameter calculatorJobCreateRequest was null or undefined when calling calculatorJobsCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -105,7 +105,7 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
         return this.httpClient.request<CalculatorJobResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: calculatorJobCreate,
+                body: calculatorJobCreateRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

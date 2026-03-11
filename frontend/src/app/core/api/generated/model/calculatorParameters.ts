@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *

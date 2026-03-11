@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -12,7 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
-import { RandomNumbersJobCreate } from '../model/models';
+import { RandomNumbersJobCreateRequest } from '../model/models';
 import { RandomNumbersJobResponse } from '../model/models';
 
 
@@ -28,9 +28,9 @@ export interface RandomNumbersServiceInterface {
      * Crear Job de Números Aleatorios
      * Crea un job asíncrono que genera números aleatorios por lotes según una URL semilla y un intervalo en segundos.
      * @endpoint post /api/random-numbers/jobs/
-     * @param randomNumbersJobCreate 
+     * @param randomNumbersJobCreateRequest 
      */
-    randomNumbersJobsCreate(randomNumbersJobCreate: RandomNumbersJobCreate, extraHttpRequestParams?: any): Observable<RandomNumbersJobResponse>;
+    randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, extraHttpRequestParams?: any): Observable<RandomNumbersJobResponse>;
 
     /**
      * Consultar Job de Números Aleatorios

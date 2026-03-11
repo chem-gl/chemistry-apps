@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -12,7 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
-import { JobCreate } from '../model/models';
+import { JobCreateRequest } from '../model/models';
 import { JobLogList } from '../model/models';
 import { JobProgressSnapshot } from '../model/models';
 import { ScientificJob } from '../model/models';
@@ -30,9 +30,9 @@ export interface JobsServiceInterface {
      * Despachar Job Científico
      * Evalua reglas de hashing/caching y despacha al worker Celery solo cuando el job no tiene cache disponible.
      * @endpoint post /api/jobs/
-     * @param jobCreate 
+     * @param jobCreateRequest 
      */
-    jobsCreate(jobCreate: JobCreate, extraHttpRequestParams?: any): Observable<ScientificJob>;
+    jobsCreate(jobCreateRequest: JobCreateRequest, extraHttpRequestParams?: any): Observable<ScientificJob>;
 
     /**
      * Suscribirse a eventos de progreso de un Job (SSE)

@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -19,7 +19,7 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { ErrorResponse } from '../model/errorResponse';
 // @ts-ignore
-import { JobCreate } from '../model/jobCreate';
+import { JobCreateRequest } from '../model/jobCreateRequest';
 // @ts-ignore
 import { JobLogList } from '../model/jobLogList';
 // @ts-ignore
@@ -50,17 +50,17 @@ export class JobsService extends BaseService implements JobsServiceInterface {
      * Despachar Job Científico
      * Evalua reglas de hashing/caching y despacha al worker Celery solo cuando el job no tiene cache disponible.
      * @endpoint post /api/jobs/
-     * @param jobCreate 
+     * @param jobCreateRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public jobsCreate(jobCreate: JobCreate, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScientificJob>;
-    public jobsCreate(jobCreate: JobCreate, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScientificJob>>;
-    public jobsCreate(jobCreate: JobCreate, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScientificJob>>;
-    public jobsCreate(jobCreate: JobCreate, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (jobCreate === null || jobCreate === undefined) {
-            throw new Error('Required parameter jobCreate was null or undefined when calling jobsCreate.');
+    public jobsCreate(jobCreateRequest: JobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScientificJob>;
+    public jobsCreate(jobCreateRequest: JobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScientificJob>>;
+    public jobsCreate(jobCreateRequest: JobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScientificJob>>;
+    public jobsCreate(jobCreateRequest: JobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (jobCreateRequest === null || jobCreateRequest === undefined) {
+            throw new Error('Required parameter jobCreateRequest was null or undefined when calling jobsCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -109,7 +109,7 @@ export class JobsService extends BaseService implements JobsServiceInterface {
         return this.httpClient.request<ScientificJob>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: jobCreate,
+                body: jobCreateRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
