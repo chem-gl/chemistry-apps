@@ -1,4 +1,16 @@
-"""schemas.py: Contratos estrictos OpenAPI para jobs de calculadora."""
+"""schemas.py: Contratos estrictos OpenAPI para jobs de calculadora.
+
+Este módulo define el contrato público de calculator para request/response.
+Debe mantenerse sincronizado con:
+- `types.py` para tipado estático.
+- `plugin.py` para reglas de negocio.
+- `tests.py` para verificación de contrato.
+
+Cuando se agreguen nuevas operaciones, actualizar en conjunto:
+1. `CALCULATOR_OPERATION_CHOICES`.
+2. Validaciones de `CalculatorJobCreateSerializer`.
+3. Tipos literales y pruebas de API.
+"""
 
 from apps.core.models import ScientificJob
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
@@ -39,7 +51,11 @@ CALCULATOR_OPERATION_CHOICES: list[tuple[str, str]] = [
     ]
 )
 class CalculatorJobCreateSerializer(serializers.Serializer):
-    """Define parámetros estrictos para crear un job de calculadora."""
+    """Define parámetros estrictos para crear un job de calculadora.
+
+    Este serializer protege el contrato antes de llegar al plugin. Así se evita
+    encolar trabajos que no cumplirán reglas mínimas de dominio.
+    """
 
     version = serializers.CharField(
         max_length=50,
@@ -63,7 +79,11 @@ class CalculatorJobCreateSerializer(serializers.Serializer):
     def validate(
         self, attrs: dict[str, str | float | None]
     ) -> dict[str, str | float | None]:
-        """Aplica reglas de contrato estricto para factorial y operaciones binarias."""
+        """Aplica reglas de contrato estricto para factorial y binarias.
+
+        `factorial` es unaria (solo `a`), mientras que el resto son binarias
+        y requieren `b`.
+        """
         operation_name: str = str(attrs.get("op", ""))
         second_operand: str | float | None = attrs.get("b")
 
@@ -124,7 +144,11 @@ class CalculatorResultSerializer(serializers.Serializer):
 
 
 class CalculatorJobResponseSerializer(serializers.ModelSerializer):
-    """Respuesta tipada para jobs de calculadora consumibles por frontend."""
+    """Respuesta tipada para jobs de calculadora consumibles por frontend.
+
+    Mantiene consistencia con el modelo de jobs de core y permite a clientes
+    consumir resultados sin interpretar estructuras dinámicas ad-hoc.
+    """
 
     parameters = CalculatorParametersSerializer()
     results = CalculatorResultSerializer(allow_null=True, required=False)

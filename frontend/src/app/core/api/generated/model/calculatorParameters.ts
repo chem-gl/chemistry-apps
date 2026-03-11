@@ -15,8 +15,14 @@ import { CalculatorOperationEnum } from './calculatorOperationEnum';
  */
 export interface CalculatorParameters { 
     op: CalculatorOperationEnum;
+    /**
+     * Primer operando almacenado para trazabilidad.
+     */
     a: number;
-    b: number;
+    /**
+     * Segundo operando cuando aplica; ausente o nulo para factorial.
+     */
+    b?: number | null;
 }
 export namespace CalculatorParameters {
 }

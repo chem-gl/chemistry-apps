@@ -1,4 +1,13 @@
-"""plugin.py: Implementación del plugin calculadora desacoplado y reutilizable."""
+"""plugin.py: Implementación del plugin calculadora desacoplado y reutilizable.
+
+Este módulo contiene la lógica de dominio de calculator y su registro en
+`PluginRegistry` de `apps.core.processing`.
+
+Pautas de uso para apps que reutilicen este patrón:
+1. Mantener la función de plugin libre de dependencias HTTP.
+2. Validar parámetros de dominio antes de ejecutar operaciones.
+3. Retornar un payload tipado y estable para persistencia/cache/OpenAPI.
+"""
 
 import logging
 import math
@@ -14,7 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
-    """Valida y normaliza los parámetros de entrada para la calculadora."""
+    """Valida y normaliza parámetros de entrada para el contrato del plugin.
+
+    Reglas importantes:
+    - `factorial` usa solo `a` y exige entero no negativo.
+    - Operaciones binarias (`add/sub/mul/div/pow`) exigen `b`.
+    """
     raw_operation_value: str = str(parameters.get("op", "add"))
     if raw_operation_value not in SUPPORTED_OPERATIONS:
         raise ValueError(
@@ -50,7 +64,11 @@ def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
 
 @PluginRegistry.register(PLUGIN_NAME)
 def calculator_plugin(parameters: JSONMap) -> JSONMap:
-    """Ejecuta operaciones aritméticas base como plugin de ejemplo plantilla."""
+    """Ejecuta operaciones aritméticas bajo el contrato publicado en schemas.
+
+    Esta función es llamada indirectamente por `JobService` a través de
+    `PluginRegistry.execute(...)`, no por la capa HTTP.
+    """
     validated_input: CalculatorInput = _build_calculator_input(parameters)
     operation_name: CalculatorOperation = validated_input["op"]
     first_operand: float = validated_input["a"]

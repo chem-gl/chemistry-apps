@@ -11,7 +11,7 @@ import { CalculatorOperationEnum } from './calculatorOperationEnum';
 
 
 /**
- * Define parámetros estrictos para crear un job de calculadora.
+ * Define parámetros estrictos para crear un job de calculadora.  Este serializer protege el contrato antes de llegar al plugin. Así se evita encolar trabajos que no cumplirán reglas mínimas de dominio.
  */
 export interface CalculatorJobCreate { 
     /**
@@ -19,7 +19,7 @@ export interface CalculatorJobCreate {
      */
     version?: string;
     /**
-     * Operación aritmética a ejecutar.  * `add` - add * `sub` - sub * `mul` - mul * `div` - div
+     * Operación aritmética a ejecutar.  * `add` - add * `sub` - sub * `mul` - mul * `div` - div * `pow` - pow * `factorial` - factorial
      */
     op: CalculatorOperationEnum;
     /**
@@ -27,9 +27,9 @@ export interface CalculatorJobCreate {
      */
     a: number;
     /**
-     * Segundo operando numérico.
+     * Segundo operando numérico. Es obligatorio para add/sub/mul/div/pow y no debe enviarse para factorial.
      */
-    b: number;
+    b?: number | null;
 }
 export namespace CalculatorJobCreate {
 }

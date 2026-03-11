@@ -1,97 +1,161 @@
 # Plataforma Científica Modular
 
-Backend Django + frontend Angular para ejecutar trabajos científicos por apps modulares, con contratos estrictos OpenAPI por dominio.
+Backend Django + frontend Angular para ejecutar trabajos científicos por apps modulares, con contratos estrictos OpenAPI por dominio, ejecución asíncrona y progreso en tiempo real.
 
 ## Estado actual del sistema
 
-- Arquitectura por capas: `routers -> services -> processing/plugins`.
-- Ejecución asíncrona con Celery + Redis.
-- Caché determinista por hash (`job_hash`) para evitar recomputo.
-- OpenAPI-first: los contratos del backend se exportan y el cliente Angular se regenera automáticamente.
-- Contrato estricto por app habilitado para `calculator`.
+- Arquitectura por capas: `routers → services → ports/adapters → processing/plugins`.
+- Ejecución asíncrona con Celery + Redis; jobs persistidos en SQLite (desarrollo).
+- Caché determinista por hash (`job_hash`) para evitar recomputo de resultados idénticos.
+- Progreso en tiempo real via SSE (`/api/jobs/{id}/events/`) y snapshot de polling (`/api/jobs/{id}/progress/`).
+- OpenAPI-first: el contrato del backend genera automáticamente el cliente Angular.
+- App `calculator` soporta: `add`, `sub`, `mul`, `div`, `pow`, `factorial`.
 
-## Rutas principales
+## Rutas del backend
 
-Backend (`backend/config/urls.py`):
-
-- `POST /api/calculator/jobs/` crear job de calculadora con payload estricto.
-- `GET /api/calculator/jobs/{id}/` consultar estado y resultado estricto de calculadora.
-- `POST /api/jobs/` y `GET /api/jobs/{id}/` rutas genéricas de core.
-- `GET /api/schema/` contrato OpenAPI.
-- `GET /api/docs/` Swagger UI.
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/calculator/jobs/` | Crea job de calculadora (payload estricto) |
+| `GET` | `/api/calculator/jobs/{id}/` | Resultado tipado de calculadora |
+| `POST` | `/api/jobs/` | Crea job genérico de core |
+| `GET` | `/api/jobs/{id}/` | Estado y resultados genérico |
+| `GET` | `/api/jobs/{id}/progress/` | Snapshot de progreso (polling) |
+| `GET` | `/api/jobs/{id}/events/` | Stream SSE de progreso en tiempo real |
+| `GET` | `/api/schema/` | Contrato OpenAPI YAML |
+| `GET` | `/api/docs/` | Swagger UI interactivo |
 
 Frontend (`frontend/src/app/app.routes.ts`):
 
-- `/calculator` vista principal de calculadora.
+- `/calculator` — vista principal de calculadora científica.
 
 ## Contratos estrictos por app (Calculator)
 
-Definidos en:
+### Crear job — `POST /api/calculator/jobs/`
 
-- `backend/apps/calculator/schemas.py`
-- `backend/apps/calculator/routers.py`
-- `backend/apps/calculator/types.py`
+Operaciones binarias (`add`, `sub`, `mul`, `div`, `pow`): requieren `a` y `b`.
 
-Contrato de creación:
+```json
+{ "version": "1.0.0", "op": "add", "a": 5, "b": 3 }
+{ "version": "1.0.0", "op": "pow", "a": 2, "b": 10 }
+```
+
+Factorial: usa solo `a` (entero ≥ 0); enviar `b` es un error de validación.
+
+```json
+{ "version": "1.0.0", "op": "factorial", "a": 7 }
+```
+
+### Respuesta del job (resumen)
+
+- `id`, `status` (`pending` | `running` | `completed` | `failed`)
+- `cache_hit`, `cache_miss`, `job_hash`
+- `progress_percentage` (0–100), `progress_stage`, `progress_message`
+- `parameters` tipado (`op`, `a`, `b?`)
+- `results` tipado (`final_result`, `metadata`) — `null` mientras ejecuta
+
+### Progreso en tiempo real — SSE
+
+```bash
+curl -H "Accept: text/event-stream" http://localhost:8000/api/jobs/{id}/events/
+```
+
+Cada evento emite:
+
+```
+id: 3
+event: job.progress
+data: {"job_id":"...","status":"running","progress_percentage":60,"progress_stage":"running","progress_message":"Ejecutando operación","progress_event_index":3,"updated_at":"..."}
+```
+
+### Snapshot de progreso (polling) — `GET /api/jobs/{id}/progress/`
 
 ```json
 {
-	"version": "1.0.0",
-	"op": "add",
-	"a": 5,
-	"b": 3
+  "job_id": "...",
+  "status": "running",
+  "progress_percentage": 60,
+  "progress_stage": "running",
+  "progress_message": "Ejecutando operación",
+  "progress_event_index": 3,
+  "updated_at": "2026-03-10T20:01:00Z"
 }
 ```
 
-Contrato de respuesta (resumen):
-
-- `id`, `status`, `cache_hit`, `cache_miss`
-- `parameters` tipado (`op`, `a`, `b`)
-- `results` tipado (`final_result`, `metadata`) o `null` cuando aún no termina
-
 ## Consumo desde frontend
 
-El frontend consume el contrato autogenerado usando wrapper en:
+El frontend usa el wrapper **`jobs-api.service.ts`** (no modifica código autogenerado):
 
-- `frontend/src/app/core/api/jobs-api.service.ts`
+```typescript
+// Operación binaria
+this.jobsApi.dispatchCalculatorJob({ op: 'add', a: 5, b: 3 });
 
-Ese wrapper usa `CalculatorService` generado desde OpenAPI para:
+// Potencia
+this.jobsApi.dispatchCalculatorJob({ op: 'pow', a: 2, b: 10 });
 
-- crear job (`calculatorJobsCreate`)
-- consultar job (`calculatorJobsRetrieve`)
-- hacer polling hasta `completed` o `failed`
+// Factorial (sin b)
+this.jobsApi.dispatchCalculatorJob({ op: 'factorial', a: 7 });
+
+// Progreso en tiempo real (SSE — recomendado)
+this.jobsApi.streamJobEvents(jobId).subscribe({ next: snap => ..., complete: () => ... });
+
+// Snapshot puntual (polling — fallback)
+this.jobsApi.getJobProgress(jobId).subscribe(snap => ...);
+
+// Polling hasta estado terminal
+this.jobsApi.pollJobUntilCompleted(jobId, 1000).subscribe(snap => ...);
+```
 
 ## Generación de OpenAPI y cliente Angular
 
 Script oficial del proyecto:
 
-- `scripts/create_openapi.py`
-
-Qué valida antes de generar:
-
-- entorno virtual de Python activo
-- `npm` instalado
-- Angular CLI y OpenAPI Generator CLI instalados en `frontend/node_modules`
-
-Qué genera:
-
-- `backend/openapi/schema.yaml`
-- cliente Angular en `frontend/src/app/core/api/generated/`
-
-Ejecución recomendada:
-
 ```bash
 ./backend/venv/bin/python scripts/create_openapi.py
 ```
 
-## Validación rápida
+Qué valida y genera:
 
-Desde la raíz del repositorio:
+1. Activa entorno virtual Python y verifica npm.
+2. Genera `backend/openapi/schema.yaml` desde las anotaciones del backend.
+3. Genera el cliente Angular en `frontend/src/app/core/api/generated/`.
+
+> **Nunca editar archivos en `generated/` manualmente.** Regenerar siempre con el script.
+
+## Puesta en marcha local
 
 ```bash
+# 1. Backend
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py up          # Alias: migrate + collectstatic + check
+
+# 2. Worker Celery (terminal separada)
+source backend/venv/bin/activate
+cd backend
+celery -A config worker --loglevel=info
+
+# 3. Redis (docker o servicio local)
+docker run -p 6379:6379 redis:7-alpine
+
+# 4. Frontend
+cd frontend
+npm install
+npm start                    # http://localhost:4200
+```
+
+## Validación rápida
+
+```bash
+# Tests backend
 cd backend && ./venv/bin/python manage.py test apps.calculator.tests apps.core.tests -v 1
-cd ../frontend && NG_CLI_ANALYTICS=false CI=true npm test -- --no-watch
-cd ../frontend && npm run build
+
+# Tests frontend
+cd frontend && NG_CLI_ANALYTICS=false CI=true npm test -- --no-watch
+
+# Build de producción Angular
+cd frontend && npm run build
 ```
 
 ## Cómo crear una nueva app científica

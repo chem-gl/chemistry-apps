@@ -1,4 +1,14 @@
-"""definitions.py: Constantes reutilizables de la plantilla de calculadora."""
+"""definitions.py: Constantes reutilizables de la plantilla de calculadora.
+
+Estas constantes representan el contrato de integración con `apps.core`.
+
+Uso esperado:
+- `APP_*` define cómo se enruta esta app dentro de la API global.
+- `PLUGIN_NAME` define la llave usada por `PluginRegistry` para ejecutar
+    operaciones.
+- `SUPPORTED_OPERATIONS` define qué operaciones acepta el plugin y, por tanto,
+    qué valores deben exponer serializers, tipos y pruebas.
+"""
 
 from typing import Final
 

@@ -1,13 +1,55 @@
-// jobs-api.service.spec.ts: Tests unitarios del wrapper desacoplado
+// jobs-api.service.spec.ts: Tests unitarios del wrapper desacoplado JobsApiService.
+// Verifica que el wrapper mapea correctamente parámetros, URLs y respuestas del cliente generado.
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
-import { CalculatorJobResponse, provideApi } from './generated';
+import {
+  CalculatorJobResponse,
+  JobProgressSnapshot,
+  JobProgressStageEnum,
+  JobStatusEnum,
+  provideApi,
+} from './generated';
 import { JobsApiService } from './jobs-api.service';
 
-const EXPECTED_CALCULATOR_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
+const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
+const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
+
+/** Respuesta base reutilizable en tests de calculadora */
+function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
+  return {
+    id: 'test-uuid',
+    job_hash: 'abc123',
+    plugin_name: 'calculator',
+    algorithm_version: '1.0.0',
+    status: JobStatusEnum.Completed,
+    cache_hit: false,
+    cache_miss: true,
+    error_trace: null,
+    parameters: { op: 'add', a: 2, b: 3 },
+    results: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/** Snapshot de progreso base reutilizable */
+function makeProgressSnapshot(overrides: Partial<JobProgressSnapshot> = {}): JobProgressSnapshot {
+  return {
+    job_id: 'test-uuid',
+    status: JobStatusEnum.Running,
+    progress_percentage: 50,
+    progress_stage: JobProgressStageEnum.Running,
+    progress_message: 'Ejecutando cálculo...',
+    progress_event_index: 1,
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
 
 describe('JobsApiService', () => {
   let service: JobsApiService;
@@ -34,58 +76,117 @@ describe('JobsApiService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should dispatch calculator job', () => {
-    const mockResponse: CalculatorJobResponse = {
-      id: '12345',
-      job_hash: 'abc123',
-      plugin_name: 'calculator',
-      algorithm_version: '1.0.0',
-      status: 'pending',
-      cache_hit: false,
-      cache_miss: true,
-      error_trace: null,
-      parameters: { op: 'add', a: 2, b: 3 },
-      results: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+  it('should dispatch job for binary operation (add)', () => {
+    const mockResponse = makeCalcResponse({ parameters: { op: 'add', a: 2, b: 3 } });
 
     service.dispatchCalculatorJob({ op: 'add', a: 2, b: 3 }).subscribe((job) => {
-      expect(job.id).toBe('12345');
+      expect(job.id).toBe('test-uuid');
       expect(job.plugin_name).toBe('calculator');
     });
 
-    const req = httpMock.expectOne(EXPECTED_CALCULATOR_JOBS_URL);
+    const req = httpMock.expectOne(CALC_JOBS_URL);
     expect(req.request.method).toBe('POST');
+    // Debe enviar b para operaciones binarias
+    expect(req.request.body['b']).toBe(3);
+    req.flush(mockResponse);
+  });
+
+  it('should dispatch job for pow operation with b', () => {
+    const mockResponse = makeCalcResponse({ parameters: { op: 'pow', a: 2, b: 10 } });
+
+    service.dispatchCalculatorJob({ op: 'pow', a: 2, b: 10 }).subscribe((job) => {
+      expect(job.parameters?.op).toBe('pow');
+    });
+
+    const req = httpMock.expectOne(CALC_JOBS_URL);
+    expect(req.request.body['op']).toBe('pow');
+    expect(req.request.body['b']).toBe(10);
+    req.flush(mockResponse);
+  });
+
+  it('should dispatch factorial job WITHOUT b field', () => {
+    const mockResponse = makeCalcResponse({
+      parameters: { op: 'factorial', a: 7 },
+      results: {
+        final_result: 5040,
+        metadata: { operation_used: 'factorial', operand_a: 7, operand_b: null },
+      },
+    });
+
+    service.dispatchCalculatorJob({ op: 'factorial', a: 7 }).subscribe((job) => {
+      expect(job.results?.final_result).toBe(5040);
+    });
+
+    const req = httpMock.expectOne(CALC_JOBS_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body['op']).toBe('factorial');
+    // El campo b NO debe existir en el payload (no solo ser null)
+    expect('b' in req.request.body).toBe(false);
     req.flush(mockResponse);
   });
 
   it('should retrieve job status', () => {
-    const mockJob: CalculatorJobResponse = {
-      id: 'test-id',
-      job_hash: 'hash',
-      plugin_name: 'calculator',
-      algorithm_version: '1.0.0',
-      status: 'completed',
-      cache_hit: false,
-      cache_miss: true,
-      error_trace: null,
-      parameters: { op: 'add', a: 20, b: 22 },
+    const mockJob = makeCalcResponse({
+      id: 'status-test-id',
+      status: JobStatusEnum.Completed,
       results: {
         final_result: 42,
         metadata: { operation_used: 'add', operand_a: 20, operand_b: 22 },
       },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    service.getJobStatus('test-id').subscribe((job) => {
-      expect(job.status).toBe('completed');
-      expect(job.results?.['final_result']).toBe(42);
     });
 
-    const req = httpMock.expectOne(`${EXPECTED_CALCULATOR_JOBS_URL}test-id/`);
+    service.getJobStatus('status-test-id').subscribe((job) => {
+      expect(job.status).toBe('completed');
+      expect(job.results?.final_result).toBe(42);
+    });
+
+    const req = httpMock.expectOne(`${CALC_JOBS_URL}status-test-id/`);
     expect(req.request.method).toBe('GET');
     req.flush(mockJob);
+  });
+
+  it('should get job progress snapshot', () => {
+    const jobId = 'progress-test-id';
+    const snapshot = makeProgressSnapshot({ job_id: jobId, progress_percentage: 75 });
+
+    service.getJobProgress(jobId).subscribe((snap) => {
+      expect(snap.job_id).toBe(jobId);
+      expect(snap.progress_percentage).toBe(75);
+      expect(snap.progress_stage).toBe('running');
+    });
+
+    const req = httpMock.expectOne(JOBS_PROGRESS_URL(jobId));
+    expect(req.request.method).toBe('GET');
+    req.flush(snapshot);
+  });
+
+  it('should complete pollJobUntilCompleted when status is completed', () => {
+    vi.useFakeTimers();
+    try {
+      const jobId = 'poll-test-id';
+      const completedSnapshot = makeProgressSnapshot({
+        job_id: jobId,
+        status: JobStatusEnum.Completed,
+        progress_percentage: 100,
+        progress_stage: JobProgressStageEnum.Completed,
+      });
+
+      let resolvedSnap: JobProgressSnapshot | undefined;
+      service.pollJobUntilCompleted(jobId, 50).subscribe({
+        next: (snap) => {
+          resolvedSnap = snap;
+        },
+      });
+
+      // Avanzar el temporizador para que el interval emita el primer valor
+      vi.advanceTimersByTime(50);
+      const req = httpMock.expectOne(JOBS_PROGRESS_URL(jobId));
+      req.flush(completedSnapshot);
+
+      expect(resolvedSnap!.status).toBe('completed');
+      expect(resolvedSnap!.progress_percentage).toBe(100);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

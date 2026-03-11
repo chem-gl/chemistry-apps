@@ -333,7 +333,11 @@ components:
   schemas:
     CalculatorJobCreate:
       type: object
-      description: Define parámetros estrictos para crear un job de calculadora.
+      description: |-
+        Define parámetros estrictos para crear un job de calculadora.
+
+        Este serializer protege el contrato antes de llegar al plugin. Así se evita
+        encolar trabajos que no cumplirán reglas mínimas de dominio.
       properties:
         version:
           type: string
@@ -367,7 +371,11 @@ components:
       - op
     CalculatorJobResponse:
       type: object
-      description: Respuesta tipada para jobs de calculadora consumibles por frontend.
+      description: |-
+        Respuesta tipada para jobs de calculadora consumibles por frontend.
+
+        Mantiene consistencia con el modelo de jobs de core y permite a clientes
+        consumir resultados sin interpretar estructuras dinámicas ad-hoc.
       properties:
         id:
           type: string

@@ -7,13 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { StatusEnum } from './statusEnum';
 import { CalculatorResult } from './calculatorResult';
+import { JobStatusEnum } from './jobStatusEnum';
 import { CalculatorParameters } from './calculatorParameters';
 
 
 /**
- * Respuesta tipada para jobs de calculadora consumibles por frontend.
+ * Respuesta tipada para jobs de calculadora consumibles por frontend.  Mantiene consistencia con el modelo de jobs de core y permite a clientes consumir resultados sin interpretar estructuras dinámicas ad-hoc.
  */
 export interface CalculatorJobResponse { 
     readonly id: string;
@@ -23,7 +23,7 @@ export interface CalculatorJobResponse {
     readonly job_hash: string;
     readonly plugin_name: string;
     readonly algorithm_version: string;
-    readonly status: StatusEnum;
+    readonly status: JobStatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     parameters: CalculatorParameters;

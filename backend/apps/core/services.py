@@ -1,4 +1,17 @@
-"""services.py: Casos de uso del dominio de jobs sin acoplamiento HTTP."""
+"""services.py: Casos de uso del dominio de jobs sin acoplamiento HTTP.
+
+Este módulo representa la lógica de negocio principal de ejecución de jobs.
+Regla de arquitectura aplicada:
+- Los ViewSets y tasks llaman la fachada `JobService`.
+- `JobService` delega en `RuntimeJobService`.
+- `RuntimeJobService` usa puertos para cache, ejecución y progreso.
+
+Cómo debe usarlo una app científica:
+1. Crear jobs con `JobService.create_job(...)` desde su router.
+2. Intentar encolado con `dispatch_scientific_job(...)`.
+3. Registrar resultado de encolado con `JobService.register_dispatch_result(...)`.
+4. Nunca ejecutar plugins directamente desde la capa HTTP.
+"""
 
 from __future__ import annotations
 
@@ -21,7 +34,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass(slots=True)
 class RuntimeJobService:
-    """Orquesta ejecución de jobs usando puertos de infraestructura."""
+    """Orquesta ejecución de jobs usando puertos de infraestructura.
+
+    Esta clase contiene el flujo de negocio completo: creación con cache
+    temprano, transición de estados, publicación de progreso y manejo de error.
+    Se mantiene desacoplada para que sea reutilizable y testeable.
+    """
 
     cache_repository: CacheRepositoryPort
     plugin_execution: PluginExecutionPort
@@ -253,7 +271,12 @@ class RuntimeJobService:
 
 
 class JobService:
-    """Fachada estática para mantener compatibilidad en routers, tasks y pruebas."""
+    """Fachada estática para mantener compatibilidad en routers, tasks y pruebas.
+
+    Esta fachada evita que las apps consumidoras conozcan detalles de factoría
+    o wiring interno. Es la API recomendada para integrar `core` desde otras
+    apps del proyecto.
+    """
 
     @staticmethod
     def create_job(

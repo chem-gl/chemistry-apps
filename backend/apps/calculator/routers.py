@@ -1,4 +1,12 @@
-"""routers.py: Endpoints de calculadora con contrato estricto por app."""
+"""routers.py: Endpoints de calculadora con contrato estricto por app.
+
+Este módulo muestra el patrón recomendado para apps científicas basadas en
+`apps.core`:
+1. Validar request con serializer propio de app.
+2. Delegar creación de job a `JobService`.
+3. Delegar encolado a `dispatch_scientific_job`.
+4. Mantener el router sin lógica matemática de dominio.
+"""
 
 from typing import cast
 
@@ -25,7 +33,11 @@ from .types import CalculatorJobCreatePayload
 
 @extend_schema(tags=["Calculator"])
 class CalculatorJobViewSet(viewsets.ViewSet):
-    """Expone endpoints HTTP por app para crear/consultar jobs de calculadora."""
+    """Expone endpoints HTTP por app para crear/consultar jobs de calculadora.
+
+    Esta capa se limita a orquestar el contrato HTTP y delega la ejecución real
+    a servicios del núcleo core.
+    """
 
     queryset = ScientificJob.objects.filter(plugin_name=PLUGIN_NAME)
     lookup_field = "id"
@@ -62,7 +74,11 @@ class CalculatorJobViewSet(viewsets.ViewSet):
         },
     )
     def create(self, request: Request) -> Response:
-        """Crea un job de calculadora con contrato estricto por app."""
+        """Crea un job de calculadora y registra trazabilidad de encolado.
+
+        Si el broker está disponible, el job pasa a cola asíncrona; de lo
+        contrario, queda pendiente con mensaje explícito de progreso.
+        """
         serializer = CalculatorJobCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -114,7 +130,11 @@ class CalculatorJobViewSet(viewsets.ViewSet):
         },
     )
     def retrieve(self, request: Request, id: str | None = None) -> Response:
-        """Recupera un job de calculadora existente por id."""
+        """Recupera un job de calculadora existente por id.
+
+        Este endpoint es app-específico y filtra por `plugin_name=calculator`
+        para evitar fugas de jobs de otras apps científicas.
+        """
         job: ScientificJob = get_object_or_404(
             ScientificJob,
             pk=id,

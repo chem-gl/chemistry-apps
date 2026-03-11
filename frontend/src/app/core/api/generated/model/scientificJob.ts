@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { StatusEnum } from './statusEnum';
+import { JobStatusEnum } from './jobStatusEnum';
 
 
 /**
@@ -21,9 +21,25 @@ export interface ScientificJob {
     readonly job_hash: string;
     readonly plugin_name: string;
     readonly algorithm_version: string;
-    readonly status: StatusEnum;
+    readonly status: JobStatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
+    /**
+     * Porcentaje de progreso entre 0 y 100.
+     */
+    readonly progress_percentage: number;
+    /**
+     * Etapa actual de ejecución: pending/queued/running/caching/completed/failed.
+     */
+    readonly progress_stage: string;
+    /**
+     * Mensaje corto y legible del estado de progreso.
+     */
+    readonly progress_message: string;
+    /**
+     * Contador incremental de eventos de progreso emitidos.
+     */
+    readonly progress_event_index: number;
     readonly parameters: any | null;
     readonly results: any | null;
     readonly error_trace: string | null;

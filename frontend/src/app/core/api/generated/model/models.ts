@@ -6,5 +6,7 @@ export * from './calculatorResult';
 export * from './calculatorResultMetadata';
 export * from './errorResponse';
 export * from './jobCreate';
+export * from './jobProgressSnapshot';
+export * from './jobProgressStageEnum';
+export * from './jobStatusEnum';
 export * from './scientificJob';
-export * from './statusEnum';

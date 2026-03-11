@@ -1,4 +1,15 @@
-"""ports.py: Puertos del dominio core para servicios, cache, plugins y progreso."""
+"""ports.py: Puertos del dominio core para servicios, cache, plugins y progreso.
+
+Este módulo define interfaces (Protocol) para separar el dominio de su
+infraestructura. La regla de uso es:
+- `services.py` depende de puertos, no de ORM/Celery directamente.
+- `adapters.py` implementa esos puertos usando tecnología concreta.
+- `factory.py` conecta puertos + adaptadores para runtime.
+
+Cuando una app quiera extender comportamiento (por ejemplo otro mecanismo de
+cache o publicación de progreso), debe crear un nuevo adaptador que implemente
+estos puertos, sin modificar el caso de uso principal.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +30,11 @@ class JobProgressUpdate:
 
 
 class CacheRepositoryPort(Protocol):
-    """Puerto para consultar y persistir resultados cacheados por hash."""
+    """Puerto para consultar y persistir resultados cacheados por hash.
+
+    Responsabilidad: encapsular lectura/escritura de cache para que el servicio
+    pueda operar sin conocer detalles de base de datos o motor externo.
+    """
 
     def get_cached_result(
         self,
@@ -42,14 +57,23 @@ class CacheRepositoryPort(Protocol):
 
 
 class PluginExecutionPort(Protocol):
-    """Puerto de ejecución de plugins científicos."""
+    """Puerto de ejecución de plugins científicos.
+
+    Responsabilidad: ejecutar el plugin por nombre y retornar payload tipado.
+    Permite reemplazar el mecanismo de ejecución en pruebas o escenarios de
+    procesamiento especializado.
+    """
 
     def execute(self, plugin_name: str, parameters: JSONMap) -> JSONMap:
         """Ejecuta un plugin registrado y retorna un payload JSON tipado."""
 
 
 class JobProgressPublisherPort(Protocol):
-    """Puerto para publicar y persistir cambios de progreso de un job."""
+    """Puerto para publicar y persistir cambios de progreso de un job.
+
+    Responsabilidad: centralizar cómo se registra avance de ejecución (por
+    ejemplo, persistencia en modelo, emisión a cola, notificación externa).
+    """
 
     def publish(self, job: ScientificJob, progress_update: JobProgressUpdate) -> None:
         """Persiste una actualización de progreso en el job recibido."""

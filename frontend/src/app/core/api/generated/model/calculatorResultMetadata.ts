@@ -14,9 +14,18 @@ import { CalculatorOperationEnum } from './calculatorOperationEnum';
  * Metadatos de trazabilidad del resultado de calculadora.
  */
 export interface CalculatorResultMetadata { 
+    /**
+     * Operación utilizada por el plugin para obtener el resultado.  * `add` - add * `sub` - sub * `mul` - mul * `div` - div * `pow` - pow * `factorial` - factorial
+     */
     operation_used: CalculatorOperationEnum;
+    /**
+     * Valor de entrada del operando a.
+     */
     operand_a: number;
-    operand_b: number;
+    /**
+     * Valor de entrada del operando b cuando aplica.
+     */
+    operand_b: number | null;
 }
 export namespace CalculatorResultMetadata {
 }

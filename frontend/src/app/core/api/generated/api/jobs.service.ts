@@ -21,6 +21,8 @@ import { ErrorResponse } from '../model/errorResponse';
 // @ts-ignore
 import { JobCreate } from '../model/jobCreate';
 // @ts-ignore
+import { JobProgressSnapshot } from '../model/jobProgressSnapshot';
+// @ts-ignore
 import { ScientificJob } from '../model/scientificJob';
 
 // @ts-ignore
@@ -117,6 +119,81 @@ export class JobsService extends BaseService implements JobsServiceInterface {
     }
 
     /**
+     * Suscribirse a eventos de progreso de un Job (SSE)
+     * Abre un stream Server-Sent Events para recibir actualizaciones de progreso en tiempo real hasta completar/fallar o alcanzar timeout.
+     * @endpoint get /api/jobs/{id}/events/
+     * @param id UUID del job científico.
+     * @param timeoutSeconds Tiempo máximo del stream SSE en segundos. Valor por defecto: 30.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public jobsEventsRetrieve(id: string, timeoutSeconds?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/event-stream', context?: HttpContext, transferCache?: boolean}): Observable<string>;
+    public jobsEventsRetrieve(id: string, timeoutSeconds?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/event-stream', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
+    public jobsEventsRetrieve(id: string, timeoutSeconds?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/event-stream', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
+    public jobsEventsRetrieve(id: string, timeoutSeconds?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/event-stream', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling jobsEventsRetrieve.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'timeout_seconds',
+            <any>timeoutSeconds,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/event-stream'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/events/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<string>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Listar Jobs Científicos
      * Devuelve el listado de jobs científicos registrados en todas las apps, incluyendo su estado actual. Permite filtros opcionales por plugin y estado.
      * @endpoint get /api/jobs/
@@ -187,6 +264,68 @@ export class JobsService extends BaseService implements JobsServiceInterface {
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Consultar progreso de un Job
+     * Devuelve un snapshot del progreso actual del job para facilitar monitorización por polling o reconexión de stream SSE.
+     * @endpoint get /api/jobs/{id}/progress/
+     * @param id UUID del job científico.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public jobsProgressRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<JobProgressSnapshot>;
+    public jobsProgressRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<JobProgressSnapshot>>;
+    public jobsProgressRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<JobProgressSnapshot>>;
+    public jobsProgressRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling jobsProgressRetrieve.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/progress/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<JobProgressSnapshot>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

@@ -1,4 +1,15 @@
-"""adapters.py: Adaptadores de infraestructura Django para puertos del dominio core."""
+"""adapters.py: Adaptadores de infraestructura Django para puertos del dominio core.
+
+Estos adaptadores son la implementación concreta de los puertos definidos en
+`ports.py`. En otras palabras, aquí se "aterriza" el dominio a Django ORM y al
+registro de plugins.
+
+Uso esperado:
+1. No llamar estos adaptadores directamente desde routers de apps.
+2. Usar `factory.build_job_service()` para inyectarlos en `RuntimeJobService`.
+3. Si una app requiere otra infraestructura (ej. cache distribuida), implementar
+    nuevos adaptadores sin modificar los casos de uso del dominio.
+"""
 
 from __future__ import annotations
 
@@ -18,7 +29,11 @@ from .types import JSONMap
 
 
 class DjangoCacheRepositoryAdapter(CacheRepositoryPort):
-    """Implementación de cache sobre ORM Django."""
+    """Implementación de cache sobre ORM Django.
+
+    La clave de cache se calcula en la capa de servicios y este adaptador solo
+    resuelve persistencia y contadores de uso.
+    """
 
     def get_cached_result(
         self,
@@ -63,7 +78,11 @@ class DjangoCacheRepositoryAdapter(CacheRepositoryPort):
 
 
 class DjangoPluginExecutionAdapter(PluginExecutionPort):
-    """Implementación de ejecución de plugin usando PluginRegistry."""
+    """Implementación de ejecución de plugin usando PluginRegistry.
+
+    Este adaptador mantiene desacoplamiento: el servicio conoce el puerto,
+    pero no depende directamente del módulo `processing`.
+    """
 
     def execute(self, plugin_name: str, parameters: JSONMap) -> JSONMap:
         """Ejecuta el plugin en el registro global del dominio."""
@@ -74,7 +93,11 @@ class DjangoPluginExecutionAdapter(PluginExecutionPort):
 
 @dataclass(slots=True)
 class DjangoJobProgressPublisherAdapter(JobProgressPublisherPort):
-    """Publicador de progreso persistido en los campos del modelo ScientificJob."""
+    """Publicador de progreso persistido en los campos del modelo ScientificJob.
+
+    Estrategia actual: guardar progreso en la fila del job para que endpoints
+    de snapshot y stream SSE puedan consultar sin estado adicional en memoria.
+    """
 
     def publish(self, job: ScientificJob, progress_update: JobProgressUpdate) -> None:
         """Actualiza etapa, porcentaje, mensaje y contador de evento del job."""

@@ -1,4 +1,9 @@
-"""types.py: Tipos estrictos de la app calculadora para uso como plantilla."""
+"""types.py: Tipos estrictos de la app calculadora para uso como plantilla.
+
+Este módulo centraliza los contratos tipados de dominio usados por plugin,
+serializers y pruebas. Mantenerlos alineados evita inconsistencias entre
+validación HTTP y ejecución real del algoritmo.
+"""
 
 from typing import Literal, NotRequired, TypeAlias, TypedDict
 
@@ -13,7 +18,10 @@ CalculatorOperation: TypeAlias = Literal[
 
 
 class CalculatorInput(TypedDict):
-    """Parámetros normalizados del plugin calculadora."""
+    """Parámetros normalizados del plugin calculadora.
+
+    Este tipo representa la entrada después de validación y normalización.
+    """
 
     op: CalculatorOperation
     a: float
@@ -36,7 +44,11 @@ class CalculatorResult(TypedDict):
 
 
 class CalculatorJobCreatePayload(TypedDict):
-    """Payload estricto para creación de jobs por endpoint de calculadora."""
+    """Payload estricto para creación de jobs por endpoint de calculadora.
+
+    Se usa en `routers.py` para tipar `validated_data` del serializer de
+    creación y construir el payload persistido del job.
+    """
 
     version: str
     op: CalculatorOperation

@@ -1,4 +1,16 @@
-"""app_registry.py: Registro global de metadatos para apps científicas."""
+"""app_registry.py: Registro global de metadatos para apps científicas.
+
+Este módulo existe para validar, durante el arranque de Django, que cada app
+científica registrada en el sistema tenga identidad y rutas únicas.
+
+Cómo se usa desde una app concreta:
+1. En el `apps.py` de la app (por ejemplo calculadora), construir una instancia
+    `ScientificAppDefinition` con el nombre de configuración, nombre de plugin y
+    rutas API.
+2. Llamar `ScientificAppRegistry.register(definition)` dentro de `ready()`.
+3. Si existe colisión de nombre de plugin o rutas, el sistema falla temprano con
+    `ImproperlyConfigured`, evitando errores silenciosos en producción.
+"""
 
 from dataclasses import dataclass
 
@@ -7,7 +19,14 @@ from django.core.exceptions import ImproperlyConfigured
 
 @dataclass(frozen=True, slots=True)
 class ScientificAppDefinition:
-    """Describe metadatos mínimos de una app científica registrada."""
+    """Describe metadatos mínimos de una app científica registrada.
+
+    Esta estructura es el contrato entre una app científica y el núcleo `core`.
+    Define los campos necesarios para:
+    - Resolver colisiones de rutas.
+    - Mantener naming consistente entre plugin y endpoints.
+    - Facilitar trazabilidad cuando se diagnostican errores de startup.
+    """
 
     app_config_name: str
     plugin_name: str
@@ -17,7 +36,13 @@ class ScientificAppDefinition:
 
 
 class ScientificAppRegistry:
-    """Registry global para validar unicidad de plugins y rutas por app."""
+    """Registry global para validar unicidad de plugins y rutas por app.
+
+    El registro es in-memory y se inicializa durante el arranque de Django.
+    No debe usarse como almacenamiento persistente, solo como validación de
+    configuración. Su objetivo principal es detectar mala integración entre apps
+    antes de que se atiendan requests HTTP.
+    """
 
     _definitions_by_plugin: dict[str, ScientificAppDefinition] = {}
     _definitions_by_route_prefix: dict[str, ScientificAppDefinition] = {}
@@ -25,7 +50,13 @@ class ScientificAppRegistry:
 
     @classmethod
     def register(cls, definition: ScientificAppDefinition) -> None:
-        """Registra definición y falla temprano cuando detecta colisiones."""
+        """Registra una app científica y valida colisiones de configuración.
+
+        Este método debe ejecutarse desde `AppConfig.ready()` de cada app.
+        Si la app ya estaba registrada con los mismos datos, la operación es
+        idempotente. Si detecta otro origen con los mismos identificadores,
+        lanza excepción para forzar corrección inmediata.
+        """
         cls._validate_unique_plugin(definition)
         cls._validate_unique_route_prefix(definition)
         cls._validate_unique_api_base_path(definition)

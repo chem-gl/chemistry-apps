@@ -10,13 +10,15 @@
 
 
 /**
- * * `add` - add * `sub` - sub * `mul` - mul * `div` - div
+ * * `add` - add * `sub` - sub * `mul` - mul * `div` - div * `pow` - pow * `factorial` - factorial
  */
 export const CalculatorOperationEnum = {
     Add: 'add',
     Sub: 'sub',
     Mul: 'mul',
-    Div: 'div'
+    Div: 'div',
+    Pow: 'pow',
+    Factorial: 'factorial'
 } as const;
 export type CalculatorOperationEnum = typeof CalculatorOperationEnum[keyof typeof CalculatorOperationEnum];
 

@@ -13,6 +13,7 @@ import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
 import { JobCreate } from '../model/models';
+import { JobProgressSnapshot } from '../model/models';
 import { ScientificJob } from '../model/models';
 
 
@@ -33,6 +34,15 @@ export interface JobsServiceInterface {
     jobsCreate(jobCreate: JobCreate, extraHttpRequestParams?: any): Observable<ScientificJob>;
 
     /**
+     * Suscribirse a eventos de progreso de un Job (SSE)
+     * Abre un stream Server-Sent Events para recibir actualizaciones de progreso en tiempo real hasta completar/fallar o alcanzar timeout.
+     * @endpoint get /api/jobs/{id}/events/
+     * @param id UUID del job científico.
+     * @param timeoutSeconds Tiempo máximo del stream SSE en segundos. Valor por defecto: 30.
+     */
+    jobsEventsRetrieve(id: string, timeoutSeconds?: number, extraHttpRequestParams?: any): Observable<string>;
+
+    /**
      * Listar Jobs Científicos
      * Devuelve el listado de jobs científicos registrados en todas las apps, incluyendo su estado actual. Permite filtros opcionales por plugin y estado.
      * @endpoint get /api/jobs/
@@ -40,6 +50,14 @@ export interface JobsServiceInterface {
      * @param status Filtra por estado del job. Valores válidos: pending, running, completed, failed.
      */
     jobsList(pluginName?: string, status?: string, extraHttpRequestParams?: any): Observable<Array<ScientificJob>>;
+
+    /**
+     * Consultar progreso de un Job
+     * Devuelve un snapshot del progreso actual del job para facilitar monitorización por polling o reconexión de stream SSE.
+     * @endpoint get /api/jobs/{id}/progress/
+     * @param id UUID del job científico.
+     */
+    jobsProgressRetrieve(id: string, extraHttpRequestParams?: any): Observable<JobProgressSnapshot>;
 
     /**
      * Consultar Estado y Resultados de un Job
