@@ -5,6 +5,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ScientificJob } from '../core/api/generated';
+import { JobLogEntryView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
@@ -178,17 +179,23 @@ import {
                     <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
                     <td>{{ finishedJob.updated_at | date: 'dd/MM HH:mm:ss' }}</td>
                     <td>
-                      @if (appRouteForJob(finishedJob); as appRoutePath) {
-                        <a
-                          class="open-result-link"
-                          [routerLink]="appRoutePath"
-                          [queryParams]="{ jobId: finishedJob.id }"
-                        >
-                          Abrir resultado
-                        </a>
-                      } @else {
-                        <span class="open-result-disabled">Sin visor</span>
-                      }
+                      <div class="actions-cell">
+                        <button class="open-logs-btn" (click)="openJobDetails(finishedJob.id)">
+                          Ver logs
+                        </button>
+
+                        @if (appRouteForJob(finishedJob); as appRoutePath) {
+                          <a
+                            class="open-result-link"
+                            [routerLink]="appRoutePath"
+                            [queryParams]="{ jobId: finishedJob.id }"
+                          >
+                            Abrir resultado
+                          </a>
+                        } @else {
+                          <span class="open-result-disabled">Sin visor</span>
+                        }
+                      </div>
                     </td>
                   </tr>
                 }
@@ -197,6 +204,73 @@ import {
           </div>
         }
       </section>
+
+      @if (facade.selectedJobId() !== null) {
+        <section class="details-overlay" aria-label="Detalle de job" (click)="closeJobDetails()">
+          <article class="details-modal" (click)="$event.stopPropagation()">
+            <header class="details-header">
+              <h3>Detalle de job</h3>
+              <button class="close-details-btn" (click)="closeJobDetails()">Cerrar</button>
+            </header>
+
+            @if (facade.isDetailsLoading()) {
+              <p class="details-loading">Cargando detalle y logs...</p>
+            } @else {
+              @if (facade.detailsErrorMessage(); as detailsError) {
+                <p class="details-error">{{ detailsError }}</p>
+              }
+
+              @if (facade.selectedJob(); as selectedJob) {
+                <div class="details-meta-grid">
+                  <p>
+                    <strong>ID:</strong> <span class="mono">{{ selectedJob.id }}</span>
+                  </p>
+                  <p><strong>App:</strong> {{ selectedJob.plugin_name }}</p>
+                  <p><strong>Estado:</strong> {{ selectedJob.status }}</p>
+                  <p><strong>Etapa:</strong> {{ selectedJob.progress_stage }}</p>
+                  <p><strong>Progreso:</strong> {{ selectedJob.progress_percentage }}%</p>
+                  <p>
+                    <strong>Actualizado:</strong>
+                    {{ selectedJob.updated_at | date: 'dd/MM HH:mm:ss' }}
+                  </p>
+                </div>
+
+                @if (selectedJob.error_trace !== null && selectedJob.error_trace !== '') {
+                  <section class="error-trace-box" aria-label="Error trace del job">
+                    <h4>Error trace</h4>
+                    <pre>{{ selectedJob.error_trace }}</pre>
+                  </section>
+                }
+              }
+
+              <section class="logs-box" aria-label="Logs del job">
+                <h4>Logs</h4>
+                @if (facade.selectedJobLogs().length === 0) {
+                  <p class="details-empty">No hay logs disponibles para este job.</p>
+                } @else {
+                  <div class="logs-list">
+                    @for (logEntry of facade.selectedJobLogs(); track logEntry.eventIndex) {
+                      <article class="log-item">
+                        <header class="log-header">
+                          <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                            {{ logEntry.level }}
+                          </span>
+                          <span class="log-source">{{ logEntry.source }}</span>
+                          <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                        </header>
+                        <p class="log-message">{{ logEntry.message }}</p>
+                        @if (hasPayload(logEntry)) {
+                          <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                        }
+                      </article>
+                    }
+                  </div>
+                }
+              </section>
+            }
+          </article>
+        </section>
+      }
     </section>
   `,
   styles: `
@@ -543,6 +617,220 @@ import {
       color: #6b7280;
       font-weight: 600;
     }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .open-logs-btn {
+      border: 1px solid #0f766e;
+      border-radius: 999px;
+      padding: 0.2rem 0.5rem;
+      color: #0f766e;
+      background: #fff;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .details-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.5);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      z-index: 80;
+    }
+
+    .details-modal {
+      width: min(900px, 100%);
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid #d8e7e3;
+      background: #fff;
+      padding: 1rem;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .details-header h3 {
+      margin: 0;
+      color: #073b3a;
+      font-size: 1rem;
+    }
+
+    .close-details-btn {
+      border: 1px solid #0f766e;
+      border-radius: 999px;
+      background: #fff;
+      color: #0f766e;
+      padding: 0.25rem 0.65rem;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .details-loading {
+      margin: 0;
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    .details-error {
+      margin: 0;
+      color: #9f1239;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 10px;
+      padding: 0.55rem;
+      font-weight: 700;
+    }
+
+    .details-meta-grid {
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .details-meta-grid p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: #285b57;
+    }
+
+    .error-trace-box {
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      background: #fff5f5;
+      padding: 0.7rem;
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .error-trace-box h4,
+    .logs-box h4 {
+      margin: 0;
+      color: #7f1d1d;
+      font-size: 0.92rem;
+    }
+
+    .error-trace-box pre {
+      margin: 0;
+      font-size: 0.73rem;
+      background: #fff;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .logs-box {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .details-empty {
+      margin: 0;
+      color: #4b5563;
+      font-size: 0.83rem;
+    }
+
+    .logs-list {
+      display: grid;
+      gap: 0.55rem;
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 0.2rem;
+    }
+
+    .log-item {
+      border: 1px solid #d4e5e2;
+      border-radius: 9px;
+      padding: 0.55rem;
+      background: #f8fffd;
+      display: grid;
+      gap: 0.28rem;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      font-size: 0.72rem;
+    }
+
+    .log-level {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 0.08rem 0.42rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .log-level-debug {
+      color: #374151;
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+    }
+
+    .log-level-info {
+      color: #1d4ed8;
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .log-level-warning {
+      color: #854d0e;
+      background: #fef9c3;
+      border-color: #fde68a;
+    }
+
+    .log-level-error {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .log-source,
+    .log-index {
+      color: #475569;
+      font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
+      font-size: 0.72rem;
+    }
+
+    .log-message {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #1f2937;
+    }
+
+    .log-payload {
+      margin: 0;
+      font-size: 0.72rem;
+      font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
+      background: #fff;
+      border: 1px solid #dbe5f1;
+      border-radius: 8px;
+      padding: 0.45rem;
+      color: #334155;
+      overflow: auto;
+    }
   `,
 })
 export class JobsMonitorComponent implements OnInit, OnDestroy {
@@ -581,6 +869,14 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.setPluginFilter(nextPluginName);
   }
 
+  openJobDetails(jobId: string): void {
+    this.facade.openJobDetails(jobId);
+  }
+
+  closeJobDetails(): void {
+    this.facade.closeJobDetails();
+  }
+
   statusClassName(jobStatus: ScientificJob['status']): string {
     return `job-status status-${jobStatus}`;
   }
@@ -599,5 +895,13 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  hasPayload(logEntry: JobLogEntryView): boolean {
+    return Object.keys(logEntry.payload).length > 0;
+  }
+
+  logLevelClass(logLevel: JobLogEntryView['level']): string {
+    return `log-level log-level-${logLevel}`;
   }
 }

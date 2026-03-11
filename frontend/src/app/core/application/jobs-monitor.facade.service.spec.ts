@@ -31,11 +31,37 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
 
 describe('JobsMonitorFacadeService', () => {
   let facadeService: JobsMonitorFacadeService;
-  let jobsApiServiceMock: { listJobs: ReturnType<typeof vi.fn> };
+  let jobsApiServiceMock: {
+    listJobs: ReturnType<typeof vi.fn>;
+    getScientificJobStatus: ReturnType<typeof vi.fn>;
+    getJobLogs: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     jobsApiServiceMock = {
       listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
+      getScientificJobStatus: vi.fn(
+        (jobId: string): Observable<ScientificJob> =>
+          of(makeScientificJob({ id: jobId, status: 'completed' })),
+      ),
+      getJobLogs: vi.fn(() =>
+        of({
+          jobId: 'job-1',
+          count: 1,
+          nextAfterEventIndex: 1,
+          results: [
+            {
+              jobId: 'job-1',
+              eventIndex: 1,
+              level: 'info',
+              source: 'tests.monitor',
+              message: 'Evento de prueba',
+              payload: {},
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }),
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -93,5 +119,15 @@ describe('JobsMonitorFacadeService', () => {
     facadeService.loadJobs();
 
     expect(facadeService.pluginOptions()).toEqual(['all', 'calculator', 'thermo']);
+  });
+
+  it('loads selected job details and logs', () => {
+    facadeService.openJobDetails('job-1');
+
+    expect(facadeService.isDetailsLoading()).toBe(false);
+    expect(facadeService.selectedJobId()).toBe('job-1');
+    expect(facadeService.selectedJob()?.id).toBe('job-1');
+    expect(facadeService.selectedJobLogs().length).toBe(1);
+    expect(facadeService.selectedJobLogs()[0].source).toBe('tests.monitor');
   });
 });

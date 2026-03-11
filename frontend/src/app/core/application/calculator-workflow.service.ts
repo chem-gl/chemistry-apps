@@ -6,6 +6,7 @@ import type {
   CalculatorJobResponse,
   CalculatorOperationEnum,
   JobProgressSnapshot,
+  ScientificJob,
 } from '../api/generated';
 import { CalculatorParams, JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
 
@@ -66,6 +67,8 @@ export class CalculatorWorkflowService implements OnDestroy {
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly lastResult = signal<CalculatorJobResponse | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly isHistoryLoading = signal<boolean>(false);
 
   readonly requiresSecondOperand = computed(
     () =>
@@ -123,6 +126,7 @@ export class CalculatorWorkflowService implements OnDestroy {
           this.lastResult.set(jobResponse);
           this.loadHistoricalLogs(jobResponse.id);
           this.activeSection.set('result');
+          this.loadHistory();
           return;
         }
 
@@ -164,6 +168,7 @@ export class CalculatorWorkflowService implements OnDestroy {
     this.jobsApiService.getJobStatus(jobId).subscribe({
       next: (jobResponse: CalculatorJobResponse) => {
         if (jobResponse.status === 'failed') {
+          this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
           this.errorMessage.set(jobResponse.error_trace ?? 'El job histórico falló.');
           return;
@@ -176,6 +181,25 @@ export class CalculatorWorkflowService implements OnDestroy {
       error: (statusError: Error) => {
         this.activeSection.set('error');
         this.errorMessage.set(`Error recuperando job histórico: ${statusError.message}`);
+      },
+    });
+  }
+
+  /** Carga historial de jobs de calculadora para reabrir resultados previos */
+  loadHistory(): void {
+    this.isHistoryLoading.set(true);
+
+    this.jobsApiService.listJobs({ pluginName: 'calculator' }).subscribe({
+      next: (jobItems: ScientificJob[]) => {
+        const orderedJobs: ScientificJob[] = [...jobItems].sort(
+          (leftJob: ScientificJob, rightJob: ScientificJob) =>
+            new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
+        );
+        this.historyJobs.set(orderedJobs);
+        this.isHistoryLoading.set(false);
+      },
+      error: () => {
+        this.isHistoryLoading.set(false);
       },
     });
   }
@@ -234,6 +258,7 @@ export class CalculatorWorkflowService implements OnDestroy {
     this.jobsApiService.getJobStatus(jobId).subscribe({
       next: (jobResponse: CalculatorJobResponse) => {
         if (jobResponse.status === 'failed') {
+          this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
           this.errorMessage.set(jobResponse.error_trace ?? 'El job fallo sin detalle disponible.');
           return;
@@ -242,6 +267,7 @@ export class CalculatorWorkflowService implements OnDestroy {
         this.lastResult.set(jobResponse);
         this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
+        this.loadHistory();
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');

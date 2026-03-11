@@ -4,8 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
 import { ScientificJob } from '../api/generated';
-import { JobLogsPageView } from '../api/jobs-api.service';
-import { JobsApiService } from '../api/jobs-api.service';
+import { JobLogsPageView, JobsApiService } from '../api/jobs-api.service';
 import { RandomNumbersWorkflowService } from './random-numbers-workflow.service';
 
 function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {

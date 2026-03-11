@@ -139,6 +139,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJob) => {
         if (jobResponse.status === 'failed') {
+          this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
           this.errorMessage.set(jobResponse.error_trace ?? 'El job histórico terminó con error.');
           return;
@@ -222,6 +223,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJob) => {
         if (jobResponse.status === 'failed') {
+          this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
           this.errorMessage.set(jobResponse.error_trace ?? 'El job terminó con error sin detalle.');
           return;

@@ -1,9 +1,14 @@
 // jobs-monitor.facade.service.ts: Gestiona estado y filtros del monitor de jobs globales.
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, forkJoin, interval } from 'rxjs';
 import { ScientificJob } from '../api/generated';
-import { JobListFilters, JobListStatusFilter, JobsApiService } from '../api/jobs-api.service';
+import {
+  JobListFilters,
+  JobListStatusFilter,
+  JobLogEntryView,
+  JobsApiService,
+} from '../api/jobs-api.service';
 
 /** Estado de filtro para UI (incluye opcion all para monitor global) */
 export type JobStatusFilterOption = JobListStatusFilter | 'all';
@@ -20,6 +25,11 @@ export class JobsMonitorFacadeService implements OnDestroy {
   readonly selectedPluginName = signal<string>('all');
   readonly autoRefreshEnabled = signal<boolean>(true);
   readonly lastUpdatedAt = signal<Date | null>(null);
+  readonly selectedJobId = signal<string | null>(null);
+  readonly selectedJob = signal<ScientificJob | null>(null);
+  readonly selectedJobLogs = signal<JobLogEntryView[]>([]);
+  readonly isDetailsLoading = signal<boolean>(false);
+  readonly detailsErrorMessage = signal<string | null>(null);
 
   readonly pluginOptions = computed(() => {
     const discoveredPlugins: string[] = this.jobs()
@@ -58,6 +68,17 @@ export class JobsMonitorFacadeService implements OnDestroy {
     this.jobsApiService.listJobs(listFilters).subscribe({
       next: (jobItems: ScientificJob[]) => {
         this.jobs.set(jobItems);
+
+        const selectedJobIdValue: string | null = this.selectedJobId();
+        if (selectedJobIdValue !== null) {
+          const refreshedSelectedJob: ScientificJob | undefined = jobItems.find(
+            (jobItem: ScientificJob) => jobItem.id === selectedJobIdValue,
+          );
+          if (refreshedSelectedJob !== undefined) {
+            this.selectedJob.set(refreshedSelectedJob);
+          }
+        }
+
         this.lastUpdatedAt.set(new Date());
         this.isLoading.set(false);
       },
@@ -104,6 +125,35 @@ export class JobsMonitorFacadeService implements OnDestroy {
   stopAutoRefresh(): void {
     this.refreshSubscription?.unsubscribe();
     this.refreshSubscription = null;
+  }
+
+  openJobDetails(jobId: string): void {
+    this.selectedJobId.set(jobId);
+    this.isDetailsLoading.set(true);
+    this.detailsErrorMessage.set(null);
+
+    forkJoin({
+      job: this.jobsApiService.getScientificJobStatus(jobId),
+      logsPage: this.jobsApiService.getJobLogs(jobId, { limit: 250 }),
+    }).subscribe({
+      next: ({ job, logsPage }) => {
+        this.selectedJob.set(job);
+        this.selectedJobLogs.set(logsPage.results);
+        this.isDetailsLoading.set(false);
+      },
+      error: (detailsError: Error) => {
+        this.detailsErrorMessage.set(`No se pudo cargar detalle del job: ${detailsError.message}`);
+        this.isDetailsLoading.set(false);
+      },
+    });
+  }
+
+  closeJobDetails(): void {
+    this.selectedJobId.set(null);
+    this.selectedJob.set(null);
+    this.selectedJobLogs.set([]);
+    this.isDetailsLoading.set(false);
+    this.detailsErrorMessage.set(null);
   }
 
   ngOnDestroy(): void {

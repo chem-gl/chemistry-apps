@@ -7,6 +7,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { ScientificJob } from '../core/api/generated';
 import { JobLogEntryView } from '../core/api/jobs-api.service';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
 
@@ -202,6 +203,52 @@ import { CalculatorWorkflowService } from '../core/application/calculator-workfl
           <button class="btn-secondary" (click)="reset()">Reintentar</button>
         </section>
       }
+
+      <section class="calc-section history-section" aria-label="Historial de jobs calculadora">
+        <div class="history-header">
+          <h3 class="section-title">Historial de resultados</h3>
+          <button class="btn-secondary" (click)="loadHistory()" [disabled]="isHistoryLoading()">
+            {{ isHistoryLoading() ? 'Cargando...' : 'Recargar historial' }}
+          </button>
+        </div>
+
+        @if (historyJobs().length === 0) {
+          <p class="history-empty">Aún no hay jobs históricos para calculadora.</p>
+        } @else {
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Estado</th>
+                  <th>Operación</th>
+                  <th>Actualizado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (historyJob of historyJobs(); track historyJob.id) {
+                  <tr>
+                    <td class="meta-value mono">{{ historyJob.id }}</td>
+                    <td>
+                      <span [class]="historicalStatusClass(historyJob.status)">
+                        {{ historyJob.status }}
+                      </span>
+                    </td>
+                    <td>{{ historicalOperationLabel(historyJob) }}</td>
+                    <td>{{ historyJob.updated_at | date: 'dd/MM HH:mm:ss' }}</td>
+                    <td>
+                      <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                        Abrir resultado
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
     </div>
   `,
   styles: `
@@ -627,6 +674,98 @@ import { CalculatorWorkflowService } from '../core/application/calculator-workfl
       color: #b91c1c;
       font-size: 0.95rem;
     }
+
+    .history-section {
+      border-color: #dbe5f5;
+      background: #f9fbff;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .history-empty {
+      margin: 0;
+      color: #4b5563;
+      font-size: 0.86rem;
+    }
+
+    .history-table-wrap {
+      overflow: auto;
+      border: 1px solid #dbe5f5;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    .history-table th,
+    .history-table td {
+      text-align: left;
+      padding: 0.55rem;
+      border-bottom: 1px solid #eef2f7;
+      font-size: 0.82rem;
+    }
+
+    .history-table th {
+      color: #1e40af;
+      background: #f8fbff;
+      font-weight: 700;
+    }
+
+    .history-status {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .history-completed {
+      color: #166534;
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+
+    .history-failed {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .history-running {
+      color: #1d4ed8;
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .history-pending {
+      color: #854d0e;
+      background: #fef9c3;
+      border-color: #fde68a;
+    }
+
+    .history-open-btn {
+      border: 1px solid #2563eb;
+      background: #fff;
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 0.28rem 0.58rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
   `,
 })
 export class CalculatorComponent implements OnInit, OnDestroy {
@@ -650,8 +789,12 @@ export class CalculatorComponent implements OnInit, OnDestroy {
   readonly progressMessage = this.workflowService.progressMessage;
   readonly currentStage = this.workflowService.currentStage;
   readonly jobLogs = this.workflowService.jobLogs;
+  readonly historyJobs = this.workflowService.historyJobs;
+  readonly isHistoryLoading = this.workflowService.isHistoryLoading;
 
   ngOnInit(): void {
+    this.workflowService.loadHistory();
+
     this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
       const jobId: string | null = paramsMap.get('jobId');
       if (jobId !== null && jobId.trim() !== '') {
@@ -682,6 +825,37 @@ export class CalculatorComponent implements OnInit, OnDestroy {
 
   reset(): void {
     this.workflowService.reset();
+  }
+
+  loadHistory(): void {
+    this.workflowService.loadHistory();
+  }
+
+  openHistoricalJob(jobId: string): void {
+    this.workflowService.openHistoricalJob(jobId);
+  }
+
+  historicalStatusClass(jobStatus: ScientificJob['status']): string {
+    return `history-status history-${jobStatus}`;
+  }
+
+  historicalOperationLabel(job: ScientificJob): string {
+    const rawResults: unknown = job.results;
+    if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
+      return '-';
+    }
+
+    const resultsRecord: { metadata?: unknown } = rawResults as { metadata?: unknown };
+    const rawMetadata: unknown = resultsRecord.metadata;
+    if (rawMetadata === null || typeof rawMetadata !== 'object' || Array.isArray(rawMetadata)) {
+      return '-';
+    }
+
+    const metadataRecord: { operation_used?: unknown } = rawMetadata as {
+      operation_used?: unknown;
+    };
+    const operationUsed: unknown = metadataRecord.operation_used;
+    return typeof operationUsed === 'string' ? operationUsed : '-';
   }
 
   hasPayload(logEntry: JobLogEntryView): boolean {
