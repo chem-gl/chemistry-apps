@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { JobStatusEnum } from './jobStatusEnum';
-import { JobProgressStageEnum } from './jobProgressStageEnum';
+import { StatusEnum } from './statusEnum';
+import { ProgressStageEnum } from './progressStageEnum';
 
 
 /**
@@ -20,17 +20,17 @@ export interface JobProgressSnapshot {
      */
     job_id: string;
     /**
-     * Estado principal del ciclo de vida del job.  * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed
+     * Estado principal del ciclo de vida del job.  * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed * `cancelled` - Cancelled
      */
-    status: JobStatusEnum;
+    status: StatusEnum;
     /**
      * Porcentaje de avance entre 0 y 100.
      */
     progress_percentage: number;
     /**
-     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `paused` - paused * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed
+     * Etapa fina de ejecución para seguimiento en tiempo real.  * `pending` - pending * `queued` - queued * `running` - running * `paused` - paused * `recovering` - recovering * `caching` - caching * `completed` - completed * `failed` - failed * `cancelled` - cancelled
      */
-    progress_stage: JobProgressStageEnum;
+    progress_stage: ProgressStageEnum;
     /**
      * Mensaje legible para usuario con contexto de ejecución.
      */

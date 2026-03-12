@@ -649,6 +649,58 @@ class RuntimeJobService:
         )
         return job
 
+    def cancel_job(self, job_id: str) -> ScientificJob:
+        """Cancela un job de forma irreversible desde cualquier estado activo.
+
+        Solo cancela jobs en estado pending/running/paused. Los jobs en estado
+        completed, failed o cancelled no se pueden cancelar. La cancelación es
+        inmediata e irreversible: no hay operación de reactivación posterior.
+        """
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para cancelar.")
+
+        if job.status in {"completed", "failed", "cancelled"}:
+            raise ValueError(
+                "No es posible cancelar un job en estado terminal "
+                f"(estado actual: {job.status})."
+            )
+
+        previous_status: str = str(job.status)
+        job.status = "cancelled"
+        job.pause_requested = False
+        job.progress_percentage = 100
+        job.progress_stage = "cancelled"
+        job.progress_message = "Job cancelado por el usuario. Operación irreversible."
+        job.save(
+            update_fields=[
+                "status",
+                "pause_requested",
+                "progress_percentage",
+                "progress_stage",
+                "progress_message",
+                "updated_at",
+            ]
+        )
+        broadcast_job_update(job)
+        self.progress_publisher.publish(
+            job,
+            JobProgressUpdate(
+                percentage=100,
+                stage="cancelled",
+                message="Job cancelado por el usuario. Operación irreversible.",
+            ),
+        )
+        self._publish_job_log(
+            job,
+            level="warning",
+            source="core.control",
+            message="Job cancelado manualmente por el usuario.",
+            payload={"previous_status": previous_status},
+        )
+        logger.info("Job %s cancelado manualmente.", job_id)
+        return job
+
     def resume_job(self, job_id: str) -> ScientificJob:
         """Reanuda un job pausado dejándolo listo para reencolado."""
         job: ScientificJob | None = self._get_job_or_none(job_id)
@@ -657,6 +709,9 @@ class RuntimeJobService:
 
         if not bool(job.supports_pause_resume):
             raise ValueError("El plugin de este job no soporta pausa/reanudación.")
+
+        if job.status == "cancelled":
+            raise ValueError("No es posible reanudar un job cancelado.")
 
         if job.status != "paused":
             raise ValueError("Solo se pueden reanudar jobs en estado paused.")
@@ -917,6 +972,12 @@ class JobService:
         from .factory import build_job_service
 
         return build_job_service()
+
+    @staticmethod
+    def cancel_job(job_id: str) -> ScientificJob:
+        """Cancela un job de forma irreversible desde cualquier estado activo."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.cancel_job(job_id)
 
     @staticmethod
     def request_pause(job_id: str) -> ScientificJob:

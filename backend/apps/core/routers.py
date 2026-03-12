@@ -31,6 +31,7 @@ from rest_framework.response import Response
 
 from .definitions import (
     ALLOWED_JOB_STATUS_FILTERS,
+    CORE_JOBS_CANCEL_ROUTE_SUFFIX,
     CORE_JOBS_EVENTS_ROUTE_SUFFIX,
     CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX,
     CORE_JOBS_LOGS_ROUTE_SUFFIX,
@@ -209,7 +210,7 @@ class JobViewSet(viewsets.ViewSet):
                 {
                     "detail": (
                         "Invalid status filter. Allowed values are: "
-                        "pending, running, paused, completed, failed."
+                        "pending, running, paused, completed, failed, cancelled."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -404,6 +405,65 @@ class JobViewSet(viewsets.ViewSet):
         return Response(
             {
                 "detail": detail_message,
+                "job": job_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        summary="Cancelar un Job (irreversible)",
+        description=(
+            "Cancela un job en estado pending, running o paused de forma inmediata e "
+            "irreversible. No es posible reactivar un job cancelado. Los jobs en estado "
+            "completed, failed o cancelled no pueden ser cancelados."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            )
+        ],
+        responses={
+            200: JobControlActionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="El job está en estado terminal y no puede cancelarse.",
+                examples=[
+                    OpenApiExample(
+                        "Job ya finalizado",
+                        value={
+                            "detail": "No es posible cancelar un job en estado terminal (estado actual: completed)."
+                        },
+                    )
+                ],
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+        request=None,
+    )
+    @action(detail=True, methods=["post"], url_path=CORE_JOBS_CANCEL_ROUTE_SUFFIX)
+    def cancel(self, request: Request, id: str | None = None) -> Response:
+        """Cancela un job de forma irreversible si se encuentra en estado activo."""
+        del request
+        get_object_or_404(ScientificJob, pk=id)
+
+        try:
+            cancelled_job: ScientificJob = JobService.cancel_job(str(id))
+        except ValueError as control_error:
+            return Response(
+                {"detail": str(control_error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_serializer = ScientificJobSerializer(cancelled_job)
+        return Response(
+            {
+                "detail": "Job cancelado correctamente. La operación es irreversible.",
                 "job": job_serializer.data,
             },
             status=status.HTTP_200_OK,

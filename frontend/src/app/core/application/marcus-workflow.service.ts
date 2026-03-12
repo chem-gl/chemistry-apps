@@ -3,13 +3,15 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
-import { JobProgressSnapshot, MarcusJobResponse, ScientificJob } from '../api/generated';
 import {
   DownloadedReportFile,
   JobLogEntryView,
   JobLogsPageView,
+  JobProgressSnapshotView,
   JobsApiService,
+  MarcusJobResponseView,
   MarcusParams,
+  ScientificJobView,
 } from '../api/jobs-api.service';
 
 /** Secciones de pantalla activas durante el ciclo de vida del job Marcus */
@@ -70,13 +72,13 @@ export class MarcusWorkflowService implements OnDestroy {
   // ── Estado del flujo ──────────────────────────────────────────────
   readonly activeSection = signal<MarcusSection>('idle');
   readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<MarcusResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly exportErrorMessage = signal<string | null>(null);
   readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly historyJobs = signal<ScientificJobView[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
 
   // ── Señales derivadas ─────────────────────────────────────────────
@@ -188,7 +190,7 @@ export class MarcusWorkflowService implements OnDestroy {
     };
 
     this.jobsApiService.dispatchMarcusJob(params).subscribe({
-      next: (jobResponse: MarcusJobResponse) => {
+      next: (jobResponse: MarcusJobResponseView) => {
         this.currentJobId.set(jobResponse.id);
 
         if (jobResponse.status === 'completed') {
@@ -250,7 +252,7 @@ export class MarcusWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
 
     this.jobsApiService.getMarcusJobStatus(jobId).subscribe({
-      next: (jobResponse: MarcusJobResponse) => {
+      next: (jobResponse: MarcusJobResponseView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -283,9 +285,9 @@ export class MarcusWorkflowService implements OnDestroy {
   loadHistory(): void {
     this.isHistoryLoading.set(true);
     this.jobsApiService.listJobs({ pluginName: 'marcus' }).subscribe({
-      next: (jobItems: ScientificJob[]) => {
-        const orderedJobs: ScientificJob[] = [...jobItems].sort(
-          (a: ScientificJob, b: ScientificJob) =>
+      next: (jobItems: ScientificJobView[]) => {
+        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+          (a: ScientificJobView, b: ScientificJobView) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         );
         this.historyJobs.set(orderedJobs);
@@ -356,7 +358,7 @@ export class MarcusWorkflowService implements OnDestroy {
   private startProgressStream(jobId: string): void {
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
     });
@@ -394,7 +396,7 @@ export class MarcusWorkflowService implements OnDestroy {
 
   private startPollingFallback(jobId: string): void {
     this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshot) => {
+      next: (snapshot: JobProgressSnapshotView) => {
         this.progressSnapshot.set(snapshot);
         this.fetchFinalResult(jobId);
       },
@@ -407,7 +409,7 @@ export class MarcusWorkflowService implements OnDestroy {
 
   private fetchFinalResult(jobId: string): void {
     this.jobsApiService.getMarcusJobStatus(jobId).subscribe({
-      next: (jobResponse: MarcusJobResponse) => {
+      next: (jobResponse: MarcusJobResponseView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -434,7 +436,7 @@ export class MarcusWorkflowService implements OnDestroy {
     });
   }
 
-  private extractResultData(jobResponse: MarcusJobResponse): MarcusResultData | null {
+  private extractResultData(jobResponse: MarcusJobResponseView): MarcusResultData | null {
     const results = jobResponse.results;
     if (results === null || results === undefined) {
       return this.buildSummaryData(jobResponse);
@@ -465,7 +467,7 @@ export class MarcusWorkflowService implements OnDestroy {
     };
   }
 
-  private buildSummaryData(jobResponse: MarcusJobResponse): MarcusResultData | null {
+  private buildSummaryData(jobResponse: MarcusJobResponseView): MarcusResultData | null {
     const params = jobResponse.parameters;
     const fileDescriptors: MarcusFileDescriptor[] = params.file_descriptors.map((fd) => ({
       fieldName: fd.field_name,

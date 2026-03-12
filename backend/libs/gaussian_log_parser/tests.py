@@ -292,14 +292,8 @@ class TestParserWithRealLog(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Prepara recursos."""
         cls.parser = GaussianLogParser()
-        # Buscar archivo de prueba en la carpeta legacy
-        cls.log_file = (
-            Path(__file__).parent.parent.parent.parent
-            / "legacy"
-            / "deprecated"
-            / "read_log_gaussian"
-            / "1_ceto_f3_rad_+.log"
-        )
+        # Usar fixture local para evitar dependencia del código legacy.
+        cls.log_file = Path(__file__).parent / "fixtures" / "1_ceto_f3_rad_+.log"
 
     def test_parse_real_log_file_if_exists(self) -> None:
         """Parsea archivo de log real si existe."""

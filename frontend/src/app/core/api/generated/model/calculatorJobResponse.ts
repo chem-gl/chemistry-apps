@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { StatusEnum } from './statusEnum';
 import { CalculatorResult } from './calculatorResult';
-import { JobStatusEnum } from './jobStatusEnum';
 import { CalculatorParameters } from './calculatorParameters';
 
 
@@ -23,7 +23,7 @@ export interface CalculatorJobResponse {
     readonly job_hash: string;
     readonly plugin_name: string;
     readonly algorithm_version: string;
-    readonly status: JobStatusEnum;
+    readonly status: StatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     parameters: CalculatorParameters;

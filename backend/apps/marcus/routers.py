@@ -9,6 +9,19 @@ from __future__ import annotations
 import hashlib
 from typing import cast
 
+from apps.core.artifacts import ScientificInputArtifactStorageService
+from apps.core.declarative_api import DeclarativeJobAPI
+from apps.core.models import ScientificJob
+from apps.core.reporting import (
+    build_download_filename,
+    build_job_error_report,
+    build_job_log_report,
+    build_text_download_response,
+    validate_job_for_csv_report,
+)
+from apps.core.schemas import ErrorResponseSerializer
+from apps.core.tasks import dispatch_scientific_job
+from apps.core.types import JSONMap
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -23,20 +36,6 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from apps.core.artifacts import ScientificInputArtifactStorageService
-from apps.core.models import ScientificJob
-from apps.core.reporting import (
-    build_download_filename,
-    build_job_error_report,
-    build_job_log_report,
-    build_text_download_response,
-    validate_job_for_csv_report,
-)
-from apps.core.schemas import ErrorResponseSerializer
-from apps.core.services import JobService
-from apps.core.tasks import dispatch_scientific_job
-from apps.core.types import JSONMap
 
 from .definitions import PLUGIN_NAME
 from .schemas import MarcusJobCreateSerializer, MarcusJobResponseSerializer
@@ -183,10 +182,24 @@ class MarcusJobViewSet(viewsets.ViewSet):
         }
 
         version_value: str = str(validated_data["version"])
-        created_job: ScientificJob = JobService.create_job(
-            PLUGIN_NAME,
-            version_value,
-            parameters_payload,
+
+        # Crear job sin encolar (flujo en dos pasos: crear → artefactos → despachar)
+        declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
+        prepare_result = declarative_api.prepare_job(
+            plugin=PLUGIN_NAME,
+            version=version_value,
+            parameters=parameters_payload,
+        ).run()
+
+        if prepare_result.is_failure():
+            return Response(
+                {"detail": "No fue posible crear el job."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job_handle = prepare_result.get_or_else(None)
+        created_job: ScientificJob = get_object_or_404(
+            ScientificJob, pk=job_handle.job_id
         )
 
         artifact_storage_service = ScientificInputArtifactStorageService()
@@ -219,9 +232,8 @@ class MarcusJobViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if created_job.status == "pending":
-            was_dispatched: bool = dispatch_scientific_job(str(created_job.id))
-            JobService.register_dispatch_result(str(created_job.id), was_dispatched)
+        # Despachar al broker ahora que los artefactos están persistidos
+        job_handle.dispatch_if_pending().run()
 
         created_job.refresh_from_db()
         response_serializer = MarcusJobResponseSerializer(created_job)

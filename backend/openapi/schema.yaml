@@ -589,6 +589,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: El trabajo no pudo ser encontrado en el Registry local.
+  /api/jobs/{id}/cancel/:
+    post:
+      operationId: jobs_cancel_create
+      description: Cancela un job en estado pending, running o paused de forma inmediata
+        e irreversible. No es posible reactivar un job cancelado. Los jobs en estado
+        completed, failed o cancelled no pueden ser cancelados.
+      summary: Cancelar un Job (irreversible)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobControlActionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                JobYaFinalizado:
+                  value:
+                    detail: 'No es posible cancelar un job en estado terminal (estado
+                      actual: completed).'
+                  summary: Job ya finalizado
+          description: El job está en estado terminal y no puede cancelarse.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
   /api/jobs/{id}/events/:
     get:
       operationId: jobs_events_retrieve
@@ -1779,7 +1824,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -2008,7 +2053,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -2441,7 +2486,7 @@ components:
           description: Identificador único del job.
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           description: |-
             Estado principal del ciclo de vida del job.
 
@@ -2450,6 +2495,7 @@ components:
             * `paused` - Paused
             * `completed` - Completed
             * `failed` - Failed
+            * `cancelled` - Cancelled
         progress_percentage:
           type: integer
           maximum: 100
@@ -2457,7 +2503,7 @@ components:
           description: Porcentaje de avance entre 0 y 100.
         progress_stage:
           allOf:
-          - $ref: '#/components/schemas/JobProgressStageEnum'
+          - $ref: '#/components/schemas/ProgressStageEnum'
           description: |-
             Etapa fina de ejecución para seguimiento en tiempo real.
 
@@ -2469,6 +2515,7 @@ components:
             * `caching` - caching
             * `completed` - completed
             * `failed` - failed
+            * `cancelled` - cancelled
         progress_message:
           type: string
           description: Mensaje legible para usuario con contexto de ejecución.
@@ -2488,40 +2535,6 @@ components:
       - progress_stage
       - status
       - updated_at
-    JobProgressStageEnum:
-      enum:
-      - pending
-      - queued
-      - running
-      - paused
-      - recovering
-      - caching
-      - completed
-      - failed
-      type: string
-      description: |-
-        * `pending` - pending
-        * `queued` - queued
-        * `running` - running
-        * `paused` - paused
-        * `recovering` - recovering
-        * `caching` - caching
-        * `completed` - completed
-        * `failed` - failed
-    JobStatusEnum:
-      enum:
-      - pending
-      - running
-      - paused
-      - completed
-      - failed
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `running` - Running
-        * `paused` - Paused
-        * `completed` - Completed
-        * `failed` - Failed
     LevelEnum:
       enum:
       - debug
@@ -2633,7 +2646,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -2943,7 +2956,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -3095,6 +3108,28 @@ components:
       description: |-
         * `single` - single
         * `range` - range
+    ProgressStageEnum:
+      enum:
+      - pending
+      - queued
+      - running
+      - paused
+      - recovering
+      - caching
+      - completed
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - pending
+        * `queued` - queued
+        * `running` - running
+        * `paused` - paused
+        * `recovering` - recovering
+        * `caching` - caching
+        * `completed` - completed
+        * `failed` - failed
+        * `cancelled` - cancelled
     RandomNumbersJobCreateRequest:
       type: object
       description: Valida request de creación para jobs de generación aleatoria.
@@ -3149,7 +3184,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -3289,7 +3324,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean
@@ -3386,6 +3421,22 @@ components:
       description: "* `` - \n* `Benzene` - Benzene\n* `Gas phase (Air)` - Gas phase
         (Air)\n* `Pentyl ethanoate` - Pentyl ethanoate\n* `Water` - Water\n* `Other`
         - Other"
+    StatusEnum:
+      enum:
+      - pending
+      - running
+      - paused
+      - completed
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `running` - Running
+        * `paused` - Paused
+        * `completed` - Completed
+        * `failed` - Failed
+        * `cancelled` - Cancelled
     TunnelInputChangeEvent:
       type: object
       description: Evento individual de modificación de entradas.
@@ -3464,7 +3515,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         cache_hit:
           type: boolean

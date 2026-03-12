@@ -2,13 +2,13 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin, interval } from 'rxjs';
-import { ScientificJob } from '../api/generated';
 import {
   JobControlActionResult,
   JobListFilters,
   JobListStatusFilter,
   JobLogEntryView,
   JobsApiService,
+  ScientificJobView,
 } from '../api/jobs-api.service';
 
 /** Estado de filtro para UI (incluye opcion all para monitor global) */
@@ -22,7 +22,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   private detailLogsSubscription: Subscription | null = null;
   private lastKnownJobsSignature: string = '';
 
-  readonly jobs = signal<ScientificJob[]>([]);
+  readonly jobs = signal<ScientificJobView[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
   readonly selectedStatus = signal<JobStatusFilterOption>('all');
@@ -30,7 +30,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   readonly autoRefreshEnabled = signal<boolean>(true);
   readonly lastUpdatedAt = signal<Date | null>(null);
   readonly selectedJobId = signal<string | null>(null);
-  readonly selectedJob = signal<ScientificJob | null>(null);
+  readonly selectedJob = signal<ScientificJobView | null>(null);
   readonly selectedJobLogs = signal<JobLogEntryView[]>([]);
   readonly isDetailsLoading = signal<boolean>(false);
   readonly detailsErrorMessage = signal<string | null>(null);
@@ -39,7 +39,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   readonly pluginOptions = computed(() => {
     const discoveredPlugins: string[] = this.jobs()
-      .map((jobItem: ScientificJob) => jobItem.plugin_name)
+      .map((jobItem: ScientificJobView) => jobItem.plugin_name)
       .filter(
         (pluginName: string, index: number, values: string[]) =>
           values.indexOf(pluginName) === index,
@@ -51,23 +51,31 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   readonly activeJobs = computed(() =>
     this.jobs().filter(
-      (jobItem: ScientificJob) => jobItem.status === 'pending' || jobItem.status === 'running',
+      (jobItem: ScientificJobView) => jobItem.status === 'pending' || jobItem.status === 'running',
     ),
   );
 
   readonly pausedJobs = computed(() =>
-    this.jobs().filter((jobItem: ScientificJob) => jobItem.status === 'paused'),
+    this.jobs().filter((jobItem: ScientificJobView) => jobItem.status === 'paused'),
   );
 
   readonly completedJobs = computed(() =>
-    this.jobs().filter((jobItem: ScientificJob) => jobItem.status === 'completed'),
+    this.jobs().filter((jobItem: ScientificJobView) => jobItem.status === 'completed'),
   );
 
   readonly failedJobs = computed(() =>
-    this.jobs().filter((jobItem: ScientificJob) => jobItem.status === 'failed'),
+    this.jobs().filter((jobItem: ScientificJobView) => jobItem.status === 'failed'),
   );
 
-  readonly finishedJobs = computed(() => [...this.completedJobs(), ...this.failedJobs()]);
+  readonly cancelledJobs = computed(() =>
+    this.jobs().filter((jobItem: ScientificJobView) => jobItem.status === 'cancelled'),
+  );
+
+  readonly finishedJobs = computed(() => [
+    ...this.completedJobs(),
+    ...this.failedJobs(),
+    ...this.cancelledJobs(),
+  ]);
 
   loadJobs(options: { silent?: boolean; updateOnlyOnChange?: boolean } = {}): void {
     const shouldUseSilentMode: boolean = options.silent ?? false;
@@ -81,7 +89,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
     const listFilters: JobListFilters = this.buildFilters();
 
     this.jobsApiService.listJobs(listFilters).subscribe({
-      next: (jobItems: ScientificJob[]) => {
+      next: (jobItems: ScientificJobView[]) => {
         const hasMeaningfulChanges: boolean = this.detectJobsChanges(jobItems);
         const shouldApplyStateUpdate: boolean =
           !shouldUpdateOnlyOnChange || hasMeaningfulChanges || this.jobs().length === 0;
@@ -91,8 +99,8 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
           const selectedJobIdValue: string | null = this.selectedJobId();
           if (selectedJobIdValue !== null) {
-            const refreshedSelectedJob: ScientificJob | undefined = jobItems.find(
-              (jobItem: ScientificJob) => jobItem.id === selectedJobIdValue,
+            const refreshedSelectedJob: ScientificJobView | undefined = jobItems.find(
+              (jobItem: ScientificJobView) => jobItem.id === selectedJobIdValue,
             );
             if (refreshedSelectedJob !== undefined) {
               this.selectedJob.set(refreshedSelectedJob);
@@ -238,24 +246,44 @@ export class JobsMonitorFacadeService implements OnDestroy {
     });
   }
 
+  cancelJob(jobId: string): void {
+    this.controllingJobId.set(jobId);
+    this.controlErrorMessage.set(null);
+
+    this.jobsApiService.cancelJob(jobId).subscribe({
+      next: (controlResult: JobControlActionResult) => {
+        this.controllingJobId.set(null);
+        this.replaceJobInState(controlResult.job);
+        if (this.selectedJobId() === jobId) {
+          this.selectedJob.set(controlResult.job);
+          this.stopDetailStreams();
+        }
+      },
+      error: (controlError: Error) => {
+        this.controllingJobId.set(null);
+        this.controlErrorMessage.set(`Unable to cancel job: ${controlError.message}`);
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     this.stopAutoRefresh();
     this.stopDetailStreams();
   }
 
-  private startDetailStreams(jobId: string, jobStatus: ScientificJob['status']): void {
+  private startDetailStreams(jobId: string, jobStatus: ScientificJobView['status']): void {
     if (jobStatus !== 'pending' && jobStatus !== 'running') {
       return;
     }
 
     this.detailProgressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (jobSnapshot) => {
-        const currentJob: ScientificJob | null = this.selectedJob();
+        const currentJob: ScientificJobView | null = this.selectedJob();
         if (currentJob === null || currentJob.id !== jobId) {
           return;
         }
 
-        const nextJobState: ScientificJob = {
+        const nextJobState: ScientificJobView = {
           ...currentJob,
           status: jobSnapshot.status,
           progress_percentage: jobSnapshot.progress_percentage,
@@ -328,26 +356,29 @@ export class JobsMonitorFacadeService implements OnDestroy {
     };
   }
 
-  private replaceJobInState(updatedJob: ScientificJob): void {
-    this.jobs.update((currentJobs: ScientificJob[]) => this.upsertJob(currentJobs, updatedJob));
+  private replaceJobInState(updatedJob: ScientificJobView): void {
+    this.jobs.update((currentJobs: ScientificJobView[]) => this.upsertJob(currentJobs, updatedJob));
   }
 
-  private upsertJob(currentJobs: ScientificJob[], updatedJob: ScientificJob): ScientificJob[] {
-    const otherJobs: ScientificJob[] = currentJobs.filter(
-      (jobItem: ScientificJob) => jobItem.id !== updatedJob.id,
+  private upsertJob(
+    currentJobs: ScientificJobView[],
+    updatedJob: ScientificJobView,
+  ): ScientificJobView[] {
+    const otherJobs: ScientificJobView[] = currentJobs.filter(
+      (jobItem: ScientificJobView) => jobItem.id !== updatedJob.id,
     );
 
     return this.filterJobs([updatedJob, ...otherJobs]).sort(
-      (leftJob: ScientificJob, rightJob: ScientificJob) =>
+      (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
         new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
     );
   }
 
-  private filterJobs(jobItems: ScientificJob[]): ScientificJob[] {
+  private filterJobs(jobItems: ScientificJobView[]): ScientificJobView[] {
     const statusFilterValue: JobStatusFilterOption = this.selectedStatus();
     const pluginFilterValue: string = this.selectedPluginName();
 
-    return jobItems.filter((jobItem: ScientificJob) => {
+    return jobItems.filter((jobItem: ScientificJobView) => {
       const matchesStatus: boolean =
         statusFilterValue === 'all' || jobItem.status === statusFilterValue;
       const matchesPlugin: boolean =
@@ -356,15 +387,15 @@ export class JobsMonitorFacadeService implements OnDestroy {
     });
   }
 
-  private detectJobsChanges(jobItems: ScientificJob[]): boolean {
+  private detectJobsChanges(jobItems: ScientificJobView[]): boolean {
     const nextSignature: string = this.buildJobsSignature(jobItems);
     const hasChanges: boolean = nextSignature !== this.lastKnownJobsSignature;
     this.lastKnownJobsSignature = nextSignature;
     return hasChanges;
   }
 
-  private buildJobsSignature(jobItems: ScientificJob[]): string {
-    const normalizedItems = jobItems.map((jobItem: ScientificJob) => ({
+  private buildJobsSignature(jobItems: ScientificJobView[]): string {
+    const normalizedItems = jobItems.map((jobItem: ScientificJobView) => ({
       id: jobItem.id,
       updated_at: jobItem.updated_at,
       status: jobItem.status,

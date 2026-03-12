@@ -3,11 +3,15 @@
 import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
-import { ScientificJob } from '../api/generated';
-import { DownloadedReportFile, JobLogsPageView, JobsApiService } from '../api/jobs-api.service';
+import {
+  DownloadedReportFile,
+  JobLogsPageView,
+  JobsApiService,
+  ScientificJobView,
+} from '../api/jobs-api.service';
 import { MolarFractionsWorkflowService } from './molar-fractions-workflow.service';
 
-function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
+function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
   return {
     id: 'molar-job-1',
     job_hash: 'hash-1',

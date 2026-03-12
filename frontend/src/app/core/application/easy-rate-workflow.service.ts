@@ -3,13 +3,15 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
-import { EasyRateJobResponse, JobProgressSnapshot, ScientificJob } from '../api/generated';
 import {
   DownloadedReportFile,
+  EasyRateJobResponseView,
   EasyRateParams,
   JobLogEntryView,
   JobLogsPageView,
+  JobProgressSnapshotView,
   JobsApiService,
+  ScientificJobView,
 } from '../api/jobs-api.service';
 
 /** Secciones de pantalla activas durante el ciclo de vida del job */
@@ -97,13 +99,13 @@ export class EasyRateWorkflowService implements OnDestroy {
   // ── Estado del flujo ──────────────────────────────────────────────
   readonly activeSection = signal<EasyRateSection>('idle');
   readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<EasyRateResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly exportErrorMessage = signal<string | null>(null);
   readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly historyJobs = signal<ScientificJobView[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
 
   // ── Señales derivadas ─────────────────────────────────────────────
@@ -215,7 +217,7 @@ export class EasyRateWorkflowService implements OnDestroy {
     };
 
     this.jobsApiService.dispatchEasyRateJob(params).subscribe({
-      next: (jobResponse: EasyRateJobResponse) => {
+      next: (jobResponse: EasyRateJobResponseView) => {
         this.currentJobId.set(jobResponse.id);
 
         if (jobResponse.status === 'completed') {
@@ -276,7 +278,7 @@ export class EasyRateWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
 
     this.jobsApiService.getEasyRateJobStatus(jobId).subscribe({
-      next: (jobResponse: EasyRateJobResponse) => {
+      next: (jobResponse: EasyRateJobResponseView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -309,9 +311,9 @@ export class EasyRateWorkflowService implements OnDestroy {
   loadHistory(): void {
     this.isHistoryLoading.set(true);
     this.jobsApiService.listJobs({ pluginName: 'easy-rate' }).subscribe({
-      next: (jobItems: ScientificJob[]) => {
-        const orderedJobs: ScientificJob[] = [...jobItems].sort(
-          (a: ScientificJob, b: ScientificJob) =>
+      next: (jobItems: ScientificJobView[]) => {
+        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+          (a: ScientificJobView, b: ScientificJobView) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         );
         this.historyJobs.set(orderedJobs);
@@ -382,7 +384,7 @@ export class EasyRateWorkflowService implements OnDestroy {
   private startProgressStream(jobId: string): void {
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
     });
@@ -420,7 +422,7 @@ export class EasyRateWorkflowService implements OnDestroy {
 
   private startPollingFallback(jobId: string): void {
     this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshot) => {
+      next: (snapshot: JobProgressSnapshotView) => {
         this.progressSnapshot.set(snapshot);
         this.fetchFinalResult(jobId);
       },
@@ -433,7 +435,7 @@ export class EasyRateWorkflowService implements OnDestroy {
 
   private fetchFinalResult(jobId: string): void {
     this.jobsApiService.getEasyRateJobStatus(jobId).subscribe({
-      next: (jobResponse: EasyRateJobResponse) => {
+      next: (jobResponse: EasyRateJobResponseView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -460,7 +462,7 @@ export class EasyRateWorkflowService implements OnDestroy {
     });
   }
 
-  private extractResultData(jobResponse: EasyRateJobResponse): EasyRateResultData | null {
+  private extractResultData(jobResponse: EasyRateJobResponseView): EasyRateResultData | null {
     const results = jobResponse.results;
     if (results === null || results === undefined) {
       return this.buildSummaryData(jobResponse);
@@ -503,7 +505,7 @@ export class EasyRateWorkflowService implements OnDestroy {
     };
   }
 
-  private buildSummaryData(jobResponse: EasyRateJobResponse): EasyRateResultData | null {
+  private buildSummaryData(jobResponse: EasyRateJobResponseView): EasyRateResultData | null {
     const params = jobResponse.parameters;
     const fileDescriptors: EasyRateFileDescriptor[] = params.file_descriptors.map((fd) => ({
       fieldName: fd.field_name,

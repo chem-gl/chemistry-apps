@@ -94,6 +94,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
             ("paused", "Paused"),
             ("completed", "Completed"),
             ("failed", "Failed"),
+            ("cancelled", "Cancelled"),
         ],
         help_text="Estado principal del ciclo de vida del job.",
     )
@@ -112,6 +113,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
             ("caching", "caching"),
             ("completed", "completed"),
             ("failed", "failed"),
+            ("cancelled", "cancelled"),
         ],
         help_text="Etapa fina de ejecución para seguimiento en tiempo real.",
     )

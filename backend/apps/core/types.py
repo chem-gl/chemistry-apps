@@ -30,6 +30,7 @@ JobStatus: TypeAlias = Literal[
     "paused",
     "completed",
     "failed",
+    "cancelled",
 ]
 JobProgressStage: TypeAlias = Literal[
     "pending",
@@ -40,6 +41,7 @@ JobProgressStage: TypeAlias = Literal[
     "caching",
     "completed",
     "failed",
+    "cancelled",
 ]
 PluginProgressCallback: TypeAlias = Callable[[int, JobProgressStage, str], None]
 JobLogLevel: TypeAlias = Literal["debug", "info", "warning", "error"]
@@ -170,6 +172,15 @@ class JobPauseNotSupportedError(DomainError):
     def __init__(self, *, plugin_name: str) -> None:
         self.plugin_name = plugin_name
         super().__init__(f"Plugin {plugin_name} does not support pause/resume")
+
+
+class JobCancelError(DomainError):
+    """Job cannot be cancelled (already in terminal state)."""
+
+    def __init__(self, *, job_id: str, reason: str) -> None:
+        self.job_id = job_id
+        self.reason = reason
+        super().__init__(f"Cannot cancel job {job_id}: {reason}")
 
 
 # === MONADIC TYPES FOR DECLARATIVE CONSUMPTION ===

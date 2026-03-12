@@ -5,8 +5,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ScientificJob } from '../core/api/generated';
-import { JobLogEntryView } from '../core/api/jobs-api.service';
+import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
 import { RandomNumbersWorkflowService } from '../core/application/random-numbers-workflow.service';
 
 @Component({
@@ -56,15 +55,15 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
     this.workflow.openHistoricalJob(jobId);
   }
 
-  historicalActionLabel(job: ScientificJob): string {
+  historicalActionLabel(job: ScientificJobView): string {
     return this.hasFinalHistoricalResult(job) ? 'Open result' : 'View summary';
   }
 
-  historicalStatusClass(jobStatus: ScientificJob['status']): string {
+  historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
   }
 
-  historicalNumbersCount(job: ScientificJob): number {
+  historicalNumbersCount(job: ScientificJobView): number {
     const rawResults: unknown = job.results;
     if (rawResults !== null && typeof rawResults === 'object' && !Array.isArray(rawResults)) {
       const resultsRecord: { generated_numbers?: unknown } = rawResults as {
@@ -92,7 +91,7 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
     return Array.isArray(runtimeGeneratedNumbers) ? runtimeGeneratedNumbers.length : 0;
   }
 
-  private hasFinalHistoricalResult(job: ScientificJob): boolean {
+  private hasFinalHistoricalResult(job: ScientificJobView): boolean {
     const rawResults: unknown = job.results;
     if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
       return false;

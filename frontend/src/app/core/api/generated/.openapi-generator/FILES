@@ -41,8 +41,6 @@ model/jobCreateRequest.ts
 model/jobLogEvent.ts
 model/jobLogList.ts
 model/jobProgressSnapshot.ts
-model/jobProgressStageEnum.ts
-model/jobStatusEnum.ts
 model/levelEnum.ts
 model/marcusArtifactDescriptor.ts
 model/marcusJobResponse.ts
@@ -59,6 +57,7 @@ model/molarFractionsMetadata.ts
 model/molarFractionsParameters.ts
 model/molarFractionsResult.ts
 model/phModeEnum.ts
+model/progressStageEnum.ts
 model/randomNumbersJobCreateRequest.ts
 model/randomNumbersJobResponse.ts
 model/randomNumbersParameters.ts
@@ -66,6 +65,7 @@ model/randomNumbersResult.ts
 model/randomNumbersResultMetadata.ts
 model/scientificJob.ts
 model/solventEnum.ts
+model/statusEnum.ts
 model/tunnelInputChangeEvent.ts
 model/tunnelJobCreateRequest.ts
 model/tunnelJobResponse.ts

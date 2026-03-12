@@ -5,8 +5,11 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ScientificJob } from '../core/api/generated';
-import { DownloadedReportFile, JobLogEntryView } from '../core/api/jobs-api.service';
+import {
+  DownloadedReportFile,
+  JobLogEntryView,
+  ScientificJobView,
+} from '../core/api/jobs-api.service';
 import {
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
@@ -57,11 +60,11 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
     this.workflow.setPkaCount(this.toNumber(rawValue));
   }
 
-  historicalStatusClass(jobStatus: ScientificJob['status']): string {
+  historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
   }
 
-  historicalModeLabel(job: ScientificJob): string {
+  historicalModeLabel(job: ScientificJobView): string {
     const rawParameters: unknown = job.parameters;
     if (
       rawParameters === null ||

@@ -108,7 +108,13 @@ export interface MarcusParams {
 }
 
 /** Estados válidos para filtrado de jobs en listados globales */
-export type JobListStatusFilter = 'pending' | 'running' | 'paused' | 'completed' | 'failed';
+export type JobListStatusFilter =
+  | 'pending'
+  | 'running'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
 /** Filtros opcionales para consultar jobs en el monitor */
 export interface JobListFilters {
@@ -162,6 +168,15 @@ export interface DownloadedReportFile {
   filename: string;
   blob: Blob;
 }
+
+// Tipos de vista exportados por la capa wrapper para evitar dependencias directas
+// desde componentes/facades al cliente OpenAPI autogenerado.
+export type ScientificJobView = ScientificJob;
+export type JobProgressSnapshotView = JobProgressSnapshot;
+export type CalculatorJobResponseView = CalculatorJobResponse;
+export type EasyRateJobResponseView = EasyRateJobResponse;
+export type MarcusJobResponseView = MarcusJobResponse;
+export type CalculatorOperationView = CalculatorOperationEnum;
 
 export interface JobsRealtimeQuery {
   jobId?: string;
@@ -568,6 +583,16 @@ export class JobsApiService {
   /** Reanuda un job pausado y dispara su reencolado */
   resumeJob(jobId: string): Observable<JobControlActionResult> {
     return this.jobsClient.jobsResumeCreate(jobId).pipe(
+      map((rawResponse: JobControlActionResponse) =>
+        this.normalizeControlActionResult(rawResponse),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Cancela un job de forma irreversible (pending/running/paused -> cancelled) */
+  cancelJob(jobId: string): Observable<JobControlActionResult> {
+    return this.jobsClient.jobsCancelCreate(jobId).pipe(
       map((rawResponse: JobControlActionResponse) =>
         this.normalizeControlActionResult(rawResponse),
       ),

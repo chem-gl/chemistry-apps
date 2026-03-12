@@ -43,6 +43,7 @@ from .types import (
     DeferredTask,
     DomainError,
     Failure,
+    JobCancelError,
     JobDispatchError,
     JobExecutionError,
     JobHandle,
@@ -151,7 +152,7 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
             self._job.refresh_from_db()
 
             # Chequear si alcanzó estado terminal
-            if self._job.status in ("completed", "failed", "paused"):
+            if self._job.status in ("completed", "failed", "paused", "cancelled"):
                 if self._job.status == "failed":
                     error_reason = self._job.error_trace or "Unknown error"
                     return Failure(
@@ -160,6 +161,13 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
                             job_id=self.job_id,
                             reason=error_reason,
                             error_trace=self._job.error_trace,
+                        )
+                    )
+                if self._job.status == "cancelled":
+                    return Failure(
+                        JobCancelError(
+                            job_id=self.job_id,
+                            reason="El job fue cancelado durante la ejecución.",
                         )
                     )
                 # Completed o paused: retornar resultados
@@ -225,6 +233,58 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
                 )
 
         return DeferredTask(resume_task)
+
+    def cancel(self) -> Task[None, DomainError]:
+        """Tarea diferida para cancelar el job de forma irreversible."""
+
+        def cancel_task() -> Result[None, DomainError]:
+            self._job.refresh_from_db()
+
+            if self._job.status in {"completed", "failed", "cancelled"}:
+                return Failure(
+                    JobCancelError(
+                        job_id=self.job_id,
+                        reason=f"El job ya está en estado terminal: {self._job.status}",
+                    )
+                )
+
+            try:
+                JobService.cancel_job(str(self._job.id))
+                self._job.refresh_from_db()
+                return Success(None)
+            except Exception as exc_value:
+                return Failure(
+                    DomainError(f"Failed to cancel job {self.job_id}: {exc_value}")
+                )
+
+        return DeferredTask(cancel_task)
+
+    def dispatch_if_pending(self) -> Task[None, DomainError]:
+        """Tarea diferida para despachar el job si todavía está pendiente.
+
+        Úsalo después de almacenar artefactos de entrada cuando el flujo de
+        creación se realiza en dos pasos con ``DeclarativeJobAPI.prepare_job()``.
+        Los jobs con cache hit (status != pending) se ignoran silenciosamente.
+        """
+
+        def dispatch_task() -> Result[None, DomainError]:
+            self._job.refresh_from_db()
+            if self._job.status != "pending":
+                # Cache hit o estado ya cambiado: nada que despachar
+                return Success(None)
+
+            try:
+                was_dispatched = self._dispatch_callback(str(self._job.id))
+                JobService.register_dispatch_result(str(self._job.id), was_dispatched)
+                return Success(None)
+            except Exception as exc_value:
+                return Failure(
+                    DomainError(
+                        f"Failed to dispatch job {self.job_id}: {exc_value}"
+                    )
+                )
+
+        return DeferredTask(dispatch_task)
 
 
 class DeclarativeJobAPI:
@@ -295,6 +355,44 @@ class DeclarativeJobAPI:
             return Failure(DomainError(f"Job {job_id} not found"))
         except Exception as exc_value:
             return Failure(DomainError(f"Failed to get job handle: {exc_value}"))
+
+    def prepare_job(
+        self,
+        *,
+        plugin: str,
+        parameters: JSONMap,
+        version: str = "1.0",
+    ) -> Task[JobHandle[JSONMap], DomainError]:
+        """Tarea diferida que crea el job sin encolarlo.
+
+        Usa este método cuando necesitas realizar pasos intermedios (por
+        ejemplo, persistir artefactos de entrada) antes de despachar al broker.
+        Después de los pasos intermedios, usa ``handle.dispatch_if_pending()``
+        para encolar la ejecución.
+        """
+
+        def prepare_computation() -> Result[JobHandle[JSONMap], DomainError]:
+            try:
+                app_def = ScientificAppRegistry.get_definition_by_plugin(plugin)
+                if not app_def:
+                    return Failure(
+                        DomainError(f"Plugin '{plugin}' not found in registry")
+                    )
+
+                job = JobService.create_job(
+                    plugin_name=plugin, version=version, parameters=parameters
+                )
+
+                handle = ConcreteJobHandle(
+                    job=job,
+                    dispatch_callback=self._dispatch_callback,
+                )
+                return Success(handle)
+
+            except Exception as exc_value:
+                return Failure(DomainError(f"Failed to prepare job: {exc_value}"))
+
+        return DeferredTask(prepare_computation)
 
     def submit_and_wait(
         self,

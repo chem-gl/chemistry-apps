@@ -36,6 +36,11 @@
             <p class="kpi-value">{{ facade.failedJobs().length }}</p>
         </article>
 
+        <article class="kpi-card">
+          <p class="kpi-label">Cancelled</p>
+          <p class="kpi-value">{{ facade.cancelledJobs().length }}</p>
+        </article>
+
         <article class="kpi-card kpi-time">
             <p class="kpi-label">Last update</p>
             <p class="kpi-time-value">
@@ -124,6 +129,10 @@
                         }
                     </button>
                     }
+<button class="control-btn cancel-btn" (click)="cancelJob(activeJob.id)"
+  [disabled]="facade.isControlActionRunning(activeJob.id)">
+  {{ facade.isControlActionRunning(activeJob.id) ? 'Cancelling...' : 'Cancel' }}
+</button>
                 </div>
 
                 @if (activeJob.pause_requested && activeJob.status !== 'paused') {
@@ -179,6 +188,10 @@
                         {{ facade.isControlActionRunning(pausedJob.id) ? 'Resuming...' : 'Resume' }}
                     </button>
                     }
+<button class="control-btn cancel-btn" (click)="cancelJob(pausedJob.id)"
+  [disabled]="facade.isControlActionRunning(pausedJob.id)">
+  {{ facade.isControlActionRunning(pausedJob.id) ? 'Cancelling...' : 'Cancel' }}
+</button>
                 </div>
             </article>
             }
@@ -187,9 +200,9 @@
     </section>
 
     <section class="jobs-section" aria-label="Finished jobs">
-        <h2>Completed and failed</h2>
+        <h2>Completed, failed and cancelled</h2>
         @if (facade.finishedJobs().length === 0) {
-        <p class="empty-state">No completed jobs for this filter yet.</p>
+        <p class="empty-state">No terminal jobs for this filter yet.</p>
         } @else {
         <div class="table-wrap">
             <table>
@@ -283,6 +296,12 @@
                     }
                 </button>
                 }
+@if (selectedJob.status === 'pending' || selectedJob.status === 'running' || selectedJob.status === 'paused') {
+<button class="control-btn cancel-btn" (click)="cancelJob(selectedJob.id)"
+  [disabled]="facade.isControlActionRunning(selectedJob.id)">
+  {{ facade.isControlActionRunning(selectedJob.id) ? 'Cancelling...' : 'Cancel job' }}
+</button>
+}
             </div>
             }
 

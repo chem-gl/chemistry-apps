@@ -802,6 +802,205 @@ class JobApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("no soporta pausa", str(response.data["detail"]).lower())
 
+    def test_cancel_endpoint_cancels_pending_job(self) -> None:
+        """Verifica que se puede cancelar un job en estado pending."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="pending",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Job creado.",
+            progress_event_index=1,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 200)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "cancelled")
+        self.assertEqual(response.data["job"]["status"], "cancelled")
+        self.assertEqual(response.data["job"]["progress_stage"], "cancelled")
+
+    def test_cancel_endpoint_cancels_running_job(self) -> None:
+        """Verifica que se puede cancelar un job en estado running."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=30,
+            progress_stage="running",
+            progress_message="Ejecutando.",
+            progress_event_index=3,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 200)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "cancelled")
+
+    def test_cancel_endpoint_cancels_paused_job(self) -> None:
+        """Verifica que se puede cancelar un job en estado paused."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="paused",
+            supports_pause_resume=True,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=50,
+            progress_stage="paused",
+            progress_message="Pausado.",
+            progress_event_index=5,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 200)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "cancelled")
+        self.assertIn("irreversible", response.data["detail"].lower())
+
+    def test_cancel_endpoint_rejects_completed_job(self) -> None:
+        """Verifica que no se puede cancelar un job ya completado."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="completed",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            results={"result": 3.0},
+            progress_percentage=100,
+            progress_stage="completed",
+            progress_message="Completado.",
+            progress_event_index=8,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("terminal", response.data["detail"].lower())
+
+    def test_cancel_endpoint_rejects_failed_job(self) -> None:
+        """Verifica que no se puede cancelar un job fallido."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="failed",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "divide", "a": 1, "b": 0},
+            progress_percentage=100,
+            progress_stage="failed",
+            progress_message="Error.",
+            progress_event_index=4,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("terminal", response.data["detail"].lower())
+
+    def test_cancel_endpoint_rejects_already_cancelled_job(self) -> None:
+        """Verifica que no se puede cancelar un job ya cancelado (idempotencia negativa)."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="cancelled",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=100,
+            progress_stage="cancelled",
+            progress_message="Cancelado.",
+            progress_event_index=3,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/cancel/")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("terminal", response.data["detail"].lower())
+
+    def test_resume_endpoint_rejects_cancelled_job(self) -> None:
+        """Verifica que no se puede reanudar un job cancelado."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="cancelled",
+            supports_pause_resume=True,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=100,
+            progress_stage="cancelled",
+            progress_message="Cancelado.",
+            progress_event_index=5,
+        )
+
+        response = self.client.post(f"/api/jobs/{job.id}/resume/")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("cancelado", response.data["detail"].lower())
+
+    def test_list_jobs_filter_by_cancelled_status(self) -> None:
+        """Verifica que el filtro por estado cancelled funciona correctamente."""
+        ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="cancelled",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=100,
+            progress_stage="cancelled",
+            progress_message="Cancelado.",
+            progress_event_index=2,
+        )
+        ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="completed",
+            supports_pause_resume=False,
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            results={"result": 3.0},
+            progress_percentage=100,
+            progress_stage="completed",
+            progress_message="Completado.",
+            progress_event_index=5,
+        )
+
+        response = self.client.get("/api/jobs/?status=cancelled")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["status"], "cancelled")
+
 
 class RealtimeHelpersTests(TestCase):
     """Valida serialización y broadcasting del canal realtime de jobs."""

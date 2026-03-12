@@ -4,8 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ScientificJob } from '../core/api/generated';
-import { JobLogEntryView } from '../core/api/jobs-api.service';
+import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
@@ -28,6 +27,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     { value: 'paused', label: 'Paused' },
     { value: 'completed', label: 'Completed' },
     { value: 'failed', label: 'Failed' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   ngOnInit(): void {
@@ -71,7 +71,11 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.resumeJob(jobId);
   }
 
-  statusClassName(jobStatus: ScientificJob['status']): string {
+  cancelJob(jobId: string): void {
+    this.facade.cancelJob(jobId);
+  }
+
+  statusClassName(jobStatus: ScientificJobView['status']): string {
     return `job-status status-${jobStatus}`;
   }
 
@@ -79,7 +83,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     return `stage-pill stage-${progressStage}`;
   }
 
-  appRouteForJob(jobItem: ScientificJob): string | null {
+  appRouteForJob(jobItem: ScientificJobView): string | null {
     if (jobItem.plugin_name === 'random-numbers') {
       return '/random-numbers';
     }
@@ -95,7 +99,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  resultActionLabel(jobItem: ScientificJob): string {
+  resultActionLabel(jobItem: ScientificJobView): string {
     if (jobItem.plugin_name === 'random-numbers' && !this.hasFinalRandomNumbersResult(jobItem)) {
       return 'View summary';
     }
@@ -103,7 +107,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     return 'Open result';
   }
 
-  private hasFinalRandomNumbersResult(jobItem: ScientificJob): boolean {
+  private hasFinalRandomNumbersResult(jobItem: ScientificJobView): boolean {
     if (jobItem.plugin_name !== 'random-numbers') {
       return true;
     }

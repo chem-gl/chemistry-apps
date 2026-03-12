@@ -216,6 +216,12 @@ select {
   border-color: #fecaca;
 }
 
+.status-cancelled {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
 .job-id,
 .mono {
   margin: 0;
@@ -301,6 +307,12 @@ select {
   border-color: #fecaca;
 }
 
+.stage-cancelled {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
 .table-wrap {
   overflow: auto;
   border: 1px solid #cfe6e2;
@@ -379,6 +391,12 @@ th {
   color: #5b21b6;
   background: #ede9fe;
   border-color: #c4b5fd;
+}
+
+.cancel-btn {
+  color: #9a3412;
+  background: #ffedd5;
+  border-color: #fdba74;
 }
 
 .pause-hint {

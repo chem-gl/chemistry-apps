@@ -28,6 +28,14 @@ export interface JobsServiceInterface {
     configuration: Configuration;
 
     /**
+     * Cancelar un Job (irreversible)
+     * Cancela un job en estado pending, running o paused de forma inmediata e irreversible. No es posible reactivar un job cancelado. Los jobs en estado completed, failed o cancelled no pueden ser cancelados.
+     * @endpoint post /api/jobs/{id}/cancel/
+     * @param id UUID del job científico.
+     */
+    jobsCancelCreate(id: string, extraHttpRequestParams?: any): Observable<JobControlActionResponse>;
+
+    /**
      * Despachar Job Científico
      * Evalua reglas de hashing/caching y despacha al worker Celery solo cuando el job no tiene cache disponible.
      * @endpoint post /api/jobs/

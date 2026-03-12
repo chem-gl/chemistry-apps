@@ -2,13 +2,14 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
-import { JobProgressSnapshot, ScientificJob } from '../api/generated';
 import {
   DownloadedReportFile,
   JobLogEntryView,
   JobLogsPageView,
+  JobProgressSnapshotView,
   JobsApiService,
   MolarFractionsParams,
+  ScientificJobView,
 } from '../api/jobs-api.service';
 
 type MolarFractionsSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -54,13 +55,13 @@ export class MolarFractionsWorkflowService implements OnDestroy {
 
   readonly activeSection = signal<MolarFractionsSection>('idle');
   readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<MolarFractionsResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly exportErrorMessage = signal<string | null>(null);
   readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly historyJobs = signal<ScientificJobView[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
 
   readonly pkaInputSlots = computed<number[]>(() =>
@@ -111,7 +112,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     const dispatchParams: MolarFractionsParams = this.buildDispatchParams();
 
     this.jobsApiService.dispatchMolarFractionsJob(dispatchParams).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         this.currentJobId.set(jobResponse.id);
 
         if (jobResponse.status === 'completed') {
@@ -164,7 +165,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -195,9 +196,9 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     this.isHistoryLoading.set(true);
 
     this.jobsApiService.listJobs({ pluginName: 'molar-fractions' }).subscribe({
-      next: (jobItems: ScientificJob[]) => {
-        const orderedJobs: ScientificJob[] = [...jobItems].sort(
-          (leftJob: ScientificJob, rightJob: ScientificJob) =>
+      next: (jobItems: ScientificJobView[]) => {
+        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
             new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
         );
         this.historyJobs.set(orderedJobs);
@@ -281,7 +282,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
   private startProgressStream(jobId: string): void {
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
     });
@@ -317,7 +318,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
 
   private startPollingFallback(jobId: string): void {
     this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshot) => {
+      next: (snapshot: JobProgressSnapshotView) => {
         this.progressSnapshot.set(snapshot);
         this.fetchFinalResult(jobId);
       },
@@ -330,7 +331,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
 
   private fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -358,7 +359,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     });
   }
 
-  private extractResultData(jobResponse: ScientificJob): MolarFractionsResultData | null {
+  private extractResultData(jobResponse: ScientificJobView): MolarFractionsResultData | null {
     const rawResults: unknown = jobResponse.results;
     if (!this.isRecord(rawResults)) {
       return null;
@@ -423,7 +424,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     };
   }
 
-  private extractSummaryData(jobResponse: ScientificJob): MolarFractionsResultData | null {
+  private extractSummaryData(jobResponse: ScientificJobView): MolarFractionsResultData | null {
     const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawParameters)) {
       return null;
@@ -530,7 +531,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     };
   }
 
-  private buildHistoricalSummaryMessage(jobStatus: ScientificJob['status']): string {
+  private buildHistoricalSummaryMessage(jobStatus: ScientificJobView['status']): string {
     if (jobStatus === 'pending') {
       return 'Historical summary: this job is still pending execution.';
     }

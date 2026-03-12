@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { StatusEnum } from './statusEnum';
 import { RandomNumbersParameters } from './randomNumbersParameters';
-import { JobStatusEnum } from './jobStatusEnum';
 import { RandomNumbersResult } from './randomNumbersResult';
 
 
@@ -23,7 +23,7 @@ export interface RandomNumbersJobResponse {
     readonly job_hash: string;
     readonly plugin_name: string;
     readonly algorithm_version: string;
-    readonly status: JobStatusEnum;
+    readonly status: StatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     /**

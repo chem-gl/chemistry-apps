@@ -3,11 +3,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
-import { ScientificJob } from '../api/generated';
-import { JobLogsPageView, JobsApiService } from '../api/jobs-api.service';
+import { JobLogsPageView, JobsApiService, ScientificJobView } from '../api/jobs-api.service';
 import { RandomNumbersWorkflowService } from './random-numbers-workflow.service';
 
-function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
+function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
   return {
     id: 'random-job-1',
     job_hash: 'hash-1',
@@ -69,13 +68,13 @@ describe('RandomNumbersWorkflowService', () => {
 
   beforeEach(() => {
     jobsApiServiceMock = {
-      dispatchScientificJob: vi.fn((): Observable<ScientificJob> => of(makeScientificJob())),
+      dispatchScientificJob: vi.fn((): Observable<ScientificJobView> => of(makeScientificJob())),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
       getScientificJobStatus: vi.fn(),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
-      listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
+      listJobs: vi.fn((): Observable<ScientificJobView[]> => of([])),
     };
 
     TestBed.configureTestingModule({

@@ -2,12 +2,13 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
-import { JobProgressSnapshot, ScientificJob } from '../api/generated';
 import {
   DownloadedReportFile,
   JobLogEntryView,
   JobLogsPageView,
+  JobProgressSnapshotView,
   JobsApiService,
+  ScientificJobView,
   TunnelInputChangeEvent,
 } from '../api/jobs-api.service';
 
@@ -45,13 +46,13 @@ export class TunnelWorkflowService implements OnDestroy {
 
   readonly activeSection = signal<TunnelSection>('idle');
   readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<TunnelResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly exportErrorMessage = signal<string | null>(null);
   readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly historyJobs = signal<ScientificJobView[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
 
   readonly isProcessing = computed(
@@ -113,7 +114,7 @@ export class TunnelWorkflowService implements OnDestroy {
         inputChangeEvents: this.inputChangeEvents(),
       })
       .subscribe({
-        next: (jobResponse: ScientificJob) => {
+        next: (jobResponse: ScientificJobView) => {
           this.currentJobId.set(jobResponse.id);
           this.syncInputsFromJobParameters(jobResponse);
 
@@ -167,7 +168,7 @@ export class TunnelWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
 
         if (jobResponse.status === 'failed') {
@@ -202,9 +203,9 @@ export class TunnelWorkflowService implements OnDestroy {
     this.isHistoryLoading.set(true);
 
     this.jobsApiService.listJobs({ pluginName: 'tunnel-effect' }).subscribe({
-      next: (jobItems: ScientificJob[]) => {
-        const orderedJobs: ScientificJob[] = [...jobItems].sort(
-          (leftJob: ScientificJob, rightJob: ScientificJob) =>
+      next: (jobItems: ScientificJobView[]) => {
+        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
             new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
         );
         this.historyJobs.set(orderedJobs);
@@ -286,7 +287,7 @@ export class TunnelWorkflowService implements OnDestroy {
   private startProgressStream(jobId: string): void {
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
       error: () => this.startPollingFallback(jobId),
     });
@@ -325,7 +326,7 @@ export class TunnelWorkflowService implements OnDestroy {
 
   private startPollingFallback(jobId: string): void {
     this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshot) => {
+      next: (snapshot: JobProgressSnapshotView) => {
         this.progressSnapshot.set(snapshot);
         this.fetchFinalResult(jobId);
       },
@@ -338,7 +339,7 @@ export class TunnelWorkflowService implements OnDestroy {
 
   private fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
 
         if (jobResponse.status === 'failed') {
@@ -367,7 +368,7 @@ export class TunnelWorkflowService implements OnDestroy {
     });
   }
 
-  private extractResultData(jobResponse: ScientificJob): TunnelResultData | null {
+  private extractResultData(jobResponse: ScientificJobView): TunnelResultData | null {
     const rawResults: unknown = jobResponse.results;
     if (!this.isRecord(rawResults)) {
       return null;
@@ -415,7 +416,7 @@ export class TunnelWorkflowService implements OnDestroy {
     };
   }
 
-  private extractSummaryData(jobResponse: ScientificJob): TunnelResultData | null {
+  private extractSummaryData(jobResponse: ScientificJobView): TunnelResultData | null {
     const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawParameters)) {
       return null;
@@ -453,7 +454,7 @@ export class TunnelWorkflowService implements OnDestroy {
     };
   }
 
-  private syncInputsFromJobParameters(jobResponse: ScientificJob): void {
+  private syncInputsFromJobParameters(jobResponse: ScientificJobView): void {
     const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawParameters)) {
       return;
@@ -522,7 +523,7 @@ export class TunnelWorkflowService implements OnDestroy {
     return parsedEvents;
   }
 
-  private buildHistoricalSummaryMessage(jobStatus: ScientificJob['status']): string {
+  private buildHistoricalSummaryMessage(jobStatus: ScientificJobView['status']): string {
     if (jobStatus === 'pending') {
       return 'Historical summary: this tunnel job is still pending execution.';
     }

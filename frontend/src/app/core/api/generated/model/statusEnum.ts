@@ -1,5 +1,5 @@
 /**
- * Plataforma Científica Modular API
+ * Chemistry Apps API
  *
  * 
  *
@@ -10,13 +10,15 @@
 
 
 /**
- * * `pending` - Pending * `running` - Running * `completed` - Completed * `failed` - Failed
+ * * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed * `cancelled` - Cancelled
  */
 export const StatusEnum = {
     Pending: 'pending',
     Running: 'running',
+    Paused: 'paused',
     Completed: 'completed',
-    Failed: 'failed'
+    Failed: 'failed',
+    Cancelled: 'cancelled'
 } as const;
 export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];
 

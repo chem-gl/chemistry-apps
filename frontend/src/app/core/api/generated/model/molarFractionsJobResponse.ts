@@ -8,7 +8,7 @@
  * Do not edit the class manually.
  */
 import { MolarFractionsResult } from './molarFractionsResult';
-import { JobStatusEnum } from './jobStatusEnum';
+import { StatusEnum } from './statusEnum';
 import { MolarFractionsParameters } from './molarFractionsParameters';
 
 
@@ -23,7 +23,7 @@ export interface MolarFractionsJobResponse {
     readonly job_hash: string;
     readonly plugin_name: string;
     readonly algorithm_version: string;
-    readonly status: JobStatusEnum;
+    readonly status: StatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     /**

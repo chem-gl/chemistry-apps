@@ -5,8 +5,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ScientificJob } from '../core/api/generated';
-import { JobLogEntryView } from '../core/api/jobs-api.service';
+import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
 
 @Component({
@@ -83,11 +82,11 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     this.workflowService.openHistoricalJob(jobId);
   }
 
-  historicalStatusClass(jobStatus: ScientificJob['status']): string {
+  historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
   }
 
-  historicalOperationLabel(job: ScientificJob): string {
+  historicalOperationLabel(job: ScientificJobView): string {
     const rawResults: unknown = job.results;
     if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
       return '-';

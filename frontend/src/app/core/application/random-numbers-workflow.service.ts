@@ -3,12 +3,12 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import {
-  JobProgressSnapshot,
-  JobProgressStageEnum,
-  JobStatusEnum,
-  ScientificJob,
-} from '../api/generated';
-import { JobControlActionResult, JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
+  JobControlActionResult,
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  JobsApiService,
+  ScientificJobView,
+} from '../api/jobs-api.service';
 
 /** Secciones de flujo para la UI de random numbers */
 type RandomNumbersSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -25,6 +25,27 @@ export interface RandomNumbersResultData {
   summaryMessage: string | null;
 }
 
+const SUPPORTED_PROGRESS_STAGES: ReadonlyArray<JobProgressSnapshotView['progress_stage']> = [
+  'pending',
+  'queued',
+  'running',
+  'paused',
+  'recovering',
+  'caching',
+  'completed',
+  'failed',
+  'cancelled',
+];
+
+const SUPPORTED_JOB_STATUSES: ReadonlyArray<ScientificJobView['status']> = [
+  'pending',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'cancelled',
+];
+
 @Injectable()
 export class RandomNumbersWorkflowService implements OnDestroy {
   private readonly jobsApiService = inject(JobsApiService);
@@ -38,11 +59,11 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   readonly activeSection = signal<RandomNumbersSection>('idle');
   readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshot | null>(null);
+  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<RandomNumbersResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
-  readonly historyJobs = signal<ScientificJob[]>([]);
+  readonly historyJobs = signal<ScientificJobView[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
   readonly isControlActionLoading = signal<boolean>(false);
 
@@ -71,12 +92,12 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   private normalizeProgressStage(
     rawProgressStage: string,
-    fallbackStage: JobProgressStageEnum,
-  ): JobProgressStageEnum {
-    const supportedStages: ReadonlyArray<JobProgressStageEnum> =
-      Object.values(JobProgressStageEnum);
-    return supportedStages.includes(rawProgressStage as JobProgressStageEnum)
-      ? (rawProgressStage as JobProgressStageEnum)
+    fallbackStage: JobProgressSnapshotView['progress_stage'],
+  ): JobProgressSnapshotView['progress_stage'] {
+    return SUPPORTED_PROGRESS_STAGES.includes(
+      rawProgressStage as JobProgressSnapshotView['progress_stage'],
+    )
+      ? (rawProgressStage as JobProgressSnapshotView['progress_stage'])
       : fallbackStage;
   }
 
@@ -101,7 +122,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         },
       })
       .subscribe({
-        next: (jobResponse: ScientificJob) => {
+        next: (jobResponse: ScientificJobView) => {
           this.currentJobId.set(jobResponse.id);
 
           if (jobResponse.status === 'completed') {
@@ -213,9 +234,9 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.isHistoryLoading.set(true);
 
     this.jobsApiService.listJobs({ pluginName: 'random-numbers' }).subscribe({
-      next: (jobItems: ScientificJob[]) => {
-        const orderedJobs: ScientificJob[] = [...jobItems].sort(
-          (leftJob: ScientificJob, rightJob: ScientificJob) =>
+      next: (jobItems: ScientificJobView[]) => {
+        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
             new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
         );
         this.historyJobs.set(orderedJobs);
@@ -238,7 +259,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.progressSnapshot.set(null);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -275,9 +296,9 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.progressSubscription?.unsubscribe();
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => {
-        const latestSnapshot: JobProgressSnapshot | null = this.progressSnapshot();
+        const latestSnapshot: JobProgressSnapshotView | null = this.progressSnapshot();
         this.logsSubscription?.unsubscribe();
         this.logsSubscription = null;
         if (latestSnapshot !== null && latestSnapshot.status === 'paused') {
@@ -319,7 +340,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   private startPollingFallback(jobId: string): void {
     this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshot) => {
+      next: (snapshot: JobProgressSnapshotView) => {
         this.progressSnapshot.set(snapshot);
         this.fetchFinalResult(jobId);
       },
@@ -332,7 +353,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
   private fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJob) => {
+      next: (jobResponse: ScientificJobView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
@@ -359,7 +380,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     });
   }
 
-  private extractResultData(jobResponse: ScientificJob): RandomNumbersResultData | null {
+  private extractResultData(jobResponse: ScientificJobView): RandomNumbersResultData | null {
     const rawResults: unknown = jobResponse.results;
     if (!this.isRecord(rawResults)) {
       return null;
@@ -403,7 +424,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     };
   }
 
-  private extractSummaryData(jobResponse: ScientificJob): RandomNumbersResultData | null {
+  private extractSummaryData(jobResponse: ScientificJobView): RandomNumbersResultData | null {
     const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawParameters)) {
       return null;
@@ -459,7 +480,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   }
 
   private buildHistoricalSummaryMessage(
-    jobStatus: ScientificJob['status'],
+    jobStatus: ScientificJobView['status'],
     generatedCount: number,
     totalNumbers: number,
   ): string {
@@ -475,10 +496,10 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     return `Historical summary available: ${generatedCount}/${totalNumbers} generated numbers.`;
   }
 
-  private syncProgressSnapshotFromJob(jobResponse: ScientificJob): void {
-    const normalizedStage: JobProgressStageEnum = this.normalizeProgressStage(
+  private syncProgressSnapshotFromJob(jobResponse: ScientificJobView): void {
+    const normalizedStage: JobProgressSnapshotView['progress_stage'] = this.normalizeProgressStage(
       jobResponse.progress_stage,
-      JobProgressStageEnum.Pending,
+      'pending',
     );
 
     this.progressSnapshot.set({
@@ -492,11 +513,10 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     });
   }
 
-  private normalizeStatus(rawStatus: string): JobStatusEnum {
-    const supportedStatuses: ReadonlyArray<JobStatusEnum> = Object.values(JobStatusEnum);
-    return supportedStatuses.includes(rawStatus as JobStatusEnum)
-      ? (rawStatus as JobStatusEnum)
-      : JobStatusEnum.Pending;
+  private normalizeStatus(rawStatus: string): ScientificJobView['status'] {
+    return SUPPORTED_JOB_STATUSES.includes(rawStatus as ScientificJobView['status'])
+      ? (rawStatus as ScientificJobView['status'])
+      : 'pending';
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

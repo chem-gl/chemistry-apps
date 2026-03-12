@@ -3,11 +3,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
-import { ScientificJob } from '../api/generated';
-import { JobsApiService } from '../api/jobs-api.service';
+import { JobsApiService, ScientificJobView } from '../api/jobs-api.service';
 import { JobsMonitorFacadeService } from './jobs-monitor.facade.service';
 
-function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
+function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
   return {
     id: 'job-1',
     job_hash: 'hash-1',
@@ -48,9 +47,9 @@ describe('JobsMonitorFacadeService', () => {
 
   beforeEach(() => {
     jobsApiServiceMock = {
-      listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
+      listJobs: vi.fn((): Observable<ScientificJobView[]> => of([])),
       getScientificJobStatus: vi.fn(
-        (jobId: string): Observable<ScientificJob> =>
+        (jobId: string): Observable<ScientificJobView> =>
           of(makeScientificJob({ id: jobId, status: 'completed' })),
       ),
       getJobLogs: vi.fn(() =>
@@ -190,7 +189,7 @@ describe('JobsMonitorFacadeService', () => {
   });
 
   it('keeps lastUpdatedAt unchanged on silent refresh when jobs did not change', () => {
-    const fixedJobs: ScientificJob[] = [
+    const fixedJobs: ScientificJobView[] = [
       makeScientificJob({
         id: 'stable-job-1',
         status: 'completed',
