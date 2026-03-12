@@ -1,4 +1,14 @@
-"""apps.py: Configuración Django de la app random_numbers."""
+"""apps.py: Configuración Django de la app random_numbers.
+
+Objetivo del archivo:
+- Integrar la app en el startup de Django y registrar su contrato de
+    enrutamiento/plugin en `ScientificAppRegistry`.
+
+Cómo se usa:
+- Django instancia `RandomNumbersConfig` al cargar `INSTALLED_APPS`.
+- En `ready()`, se valida unicidad de plugin/rutas y se importa `plugin.py`
+    para activar el decorador `@PluginRegistry.register(...)`.
+"""
 
 from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
 from django.apps import AppConfig

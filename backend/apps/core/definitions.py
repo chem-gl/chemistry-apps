@@ -1,4 +1,15 @@
-"""definitions.py: Constantes globales del dominio core para rutas y estados."""
+"""definitions.py: Constantes globales del dominio core para rutas y estados.
+
+Objetivo del archivo:
+- Centralizar contratos estáticos compartidos por routers, serializers,
+    consumers y documentación OpenAPI/SSE.
+
+Cómo se usa:
+- `routers.py` consume prefijos/sufijos para construir endpoints consistentes.
+- `routing.py` utiliza `CORE_JOBS_WEBSOCKET_ROUTE_PATH` para WebSocket.
+- Validaciones de filtros y etapas de progreso reutilizan las tuplas `ALLOWED_*`
+    para evitar duplicar literales en múltiples módulos.
+"""
 
 from typing import Final
 

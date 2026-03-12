@@ -1,4 +1,14 @@
-"""tests.py: Pruebas de contrato y dominio para la app random_numbers."""
+"""tests.py: Pruebas de contrato y dominio para la app random_numbers.
+
+Objetivo del archivo:
+- Validar que los endpoints y el plugin cumplan el contrato funcional esperado
+    (validación, ejecución, progreso, logs y soporte pause/resume).
+
+Cómo se usa:
+- Ejecutar con `python manage.py test apps.random_numbers`.
+- Sirve como guía de comportamiento para nuevas apps científicas que adopten
+    el mismo patrón de integración con `apps.core`.
+"""
 
 from __future__ import annotations
 

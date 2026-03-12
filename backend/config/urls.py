@@ -1,4 +1,13 @@
-"""urls.py: Enrutamiento principal del backend y exposición de OpenAPI."""
+"""urls.py: Enrutamiento principal del backend y exposición de OpenAPI.
+
+Objetivo del archivo:
+- Consolidar las rutas HTTP del proyecto: admin, documentación OpenAPI y rutas
+    DRF para jobs core y apps científicas.
+
+Cómo se usa:
+- Registrar aquí cualquier nuevo `ViewSet` de app científica usando el router.
+- Mantener constantes de rutas en cada app (`definitions.py`) evita duplicación.
+"""
 
 from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
 from apps.calculator.routers import CalculatorJobViewSet

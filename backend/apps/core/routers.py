@@ -1,4 +1,14 @@
-"""routers.py: Endpoints HTTP desacoplados que orquestan servicios core."""
+"""routers.py: Endpoints HTTP desacoplados que orquestan servicios core.
+
+Objetivo del archivo:
+- Exponer API transversal de jobs (crear, consultar, progreso, logs, SSE,
+    control pause/resume) reutilizable por cualquier app científica.
+
+Cómo se usa:
+- Las apps por dominio pueden tener su router propio y además apoyarse en estos
+    endpoints comunes para observabilidad y control operativo.
+- La lógica de negocio se delega en `JobService`; este módulo solo orquesta HTTP.
+"""
 
 import json
 from time import monotonic, sleep

@@ -1,4 +1,13 @@
-"""asgi.py: Configuración ASGI del proyecto para despliegues asíncronos."""
+"""asgi.py: Configuración ASGI del proyecto para despliegues asíncronos.
+
+Objetivo del archivo:
+- Exponer la aplicación ASGI oficial del proyecto, combinando tráfico HTTP y
+    WebSocket en una sola entrada.
+
+Cómo se usa:
+- Servidores ASGI (Daphne/Uvicorn) cargan `application` desde este módulo.
+- `URLRouter(websocket_urlpatterns)` habilita stream realtime de jobs.
+"""
 
 import os
 

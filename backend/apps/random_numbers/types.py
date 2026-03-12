@@ -1,4 +1,14 @@
-"""types.py: Tipos estrictos de la app random_numbers."""
+"""types.py: Tipos estrictos de la app random_numbers.
+
+Objetivo del archivo:
+- Definir contratos tipados compartidos entre validación de entrada,
+    ejecución del plugin, persistencia de resultados y pruebas.
+
+Cómo se usa:
+- `plugin.py` usa `RandomNumbersInput`, `RandomNumbersResult` y
+    `RandomNumbersRuntimeState` para mantener semántica estable.
+- `routers.py` usa `RandomNumbersJobCreatePayload` para tipar `validated_data`.
+"""
 
 from typing import TypedDict
 

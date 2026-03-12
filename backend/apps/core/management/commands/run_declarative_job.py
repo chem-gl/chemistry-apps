@@ -1,4 +1,13 @@
-"""run_declarative_job.py: Comando CLI para consumir DeclarativeJobAPI de forma externa."""
+"""run_declarative_job.py: Comando CLI para consumir DeclarativeJobAPI.
+
+Objetivo del archivo:
+- Permitir ejecutar plugins científicos desde terminal sin pasar por HTTP,
+  ideal para pruebas operativas, debugging y automatizaciones.
+
+Cómo se usa:
+- Submit simple: `python manage.py run_declarative_job calculator --parameters '{...}'`.
+- Submit + wait: agregar `--wait --timeout <segundos>`.
+"""
 
 from __future__ import annotations
 

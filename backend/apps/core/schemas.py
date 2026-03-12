@@ -1,4 +1,14 @@
-"""schemas.py: Serializers HTTP y ejemplos OpenAPI del dominio core."""
+"""schemas.py: Serializers HTTP y ejemplos OpenAPI del dominio core.
+
+Objetivo del archivo:
+- Definir contratos de entrada/salida de la API común de jobs con ejemplos
+    OpenAPI consistentes para integraciones frontend/backend.
+
+Cómo se usa:
+- `routers.py` usa estos serializers para validar requests y serializar
+    respuestas en endpoints genéricos del dominio core.
+- Las apps consumidoras pueden reutilizar estos contratos de error y progreso.
+"""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers

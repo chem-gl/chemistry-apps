@@ -1,4 +1,13 @@
-"""up.py: Comando para levantar Django y Celery en paralelo para desarrollo."""
+"""up.py: Comando para levantar Django y Celery en paralelo para desarrollo.
+
+Objetivo del archivo:
+- Facilitar un arranque local productivo del backend con un solo comando,
+  coordinando `runserver`, `celery worker` y disponibilidad del broker.
+
+Cómo se usa:
+- Flujo completo: `python manage.py up`.
+- Solo API HTTP: `python manage.py up --without-celery`.
+"""
 
 from __future__ import annotations
 

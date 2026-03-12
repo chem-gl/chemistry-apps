@@ -1,4 +1,14 @@
-"""tests.py: Pruebas unitarias e integracion API para core y cache de jobs."""
+"""tests.py: Pruebas unitarias e integracion API para core y cache de jobs.
+
+Objetivo del archivo:
+- Cubrir flujo end-to-end del motor de jobs: hashing, cache, ejecución,
+    recuperación activa, broadcasting realtime, registro de plugins y contrato HTTP.
+
+Cómo se usa:
+- Ejecutar con `python manage.py test apps.core`.
+- También funciona como especificación ejecutable para nuevas apps que usen
+    arquitectura por capas y puertos/adaptadores del core.
+"""
 
 from __future__ import annotations
 

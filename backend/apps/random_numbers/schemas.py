@@ -1,4 +1,14 @@
-"""schemas.py: Contratos OpenAPI estrictos para la app random_numbers."""
+"""schemas.py: Contratos OpenAPI estrictos para la app random_numbers.
+
+Objetivo del archivo:
+- Declarar serializers de request/response como contrato público HTTP de la app.
+
+Cómo se usa:
+- `routers.py` valida entradas con `RandomNumbersJobCreateSerializer`.
+- `RandomNumbersJobResponseSerializer` define la forma estable de salida para
+    polling, monitoreo y documentación OpenAPI.
+- Las restricciones de campos deben mantenerse alineadas con `plugin.py`.
+"""
 
 from apps.core.models import ScientificJob
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer

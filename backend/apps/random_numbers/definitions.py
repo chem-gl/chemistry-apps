@@ -1,4 +1,14 @@
-"""definitions.py: Constantes de integración de la app random_numbers."""
+"""definitions.py: Constantes de integración de la app random_numbers.
+
+Objetivo del archivo:
+- Reunir todos los valores estáticos que definen identidad de app, rutas API,
+  nombre del plugin y límites de validación.
+
+Cómo se usa:
+- `apps.py` consume constantes de registro en `ScientificAppRegistry`.
+- `routers.py` y `urls.py` reutilizan prefijos/base paths sin hardcode.
+- `schemas.py` usa límites máximos para validar payloads HTTP.
+"""
 
 from typing import Final
 

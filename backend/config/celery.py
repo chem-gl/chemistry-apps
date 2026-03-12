@@ -1,4 +1,14 @@
-"""celery.py: Configuración central de Celery para tareas asíncronas."""
+"""celery.py: Configuración central de Celery para tareas asíncronas.
+
+Objetivo del archivo:
+- Crear la instancia de Celery, cargar settings Django y autodescubrir tareas
+    compartidas del proyecto.
+
+Cómo se usa:
+- El worker se levanta con `celery -A config worker -l info`.
+- Al iniciar, dispara recuperación activa de jobs huérfanos mediante la señal
+    `worker_ready` para mejorar resiliencia operativa.
+"""
 
 import os
 

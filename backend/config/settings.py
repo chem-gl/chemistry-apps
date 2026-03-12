@@ -1,4 +1,14 @@
-"""settings.py: Configuración central de Django para el backend científico."""
+"""settings.py: Configuración central de Django para el backend científico.
+
+Objetivo del archivo:
+- Definir configuración única de entorno para apps, base de datos, REST,
+    OpenAPI, Channels, Celery y políticas operativas del runtime.
+
+Cómo se usa:
+- Se carga automáticamente al ejecutar `manage.py`, `celery` y servidores
+    ASGI/WSGI mediante `DJANGO_SETTINGS_MODULE=config.settings`.
+- La prioridad de valores es: entorno del sistema -> `.env` local -> defaults.
+"""
 
 import os
 import sys

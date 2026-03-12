@@ -1,4 +1,13 @@
-"""consumers.py: Consumers WebSocket para progreso y logs en tiempo real."""
+"""consumers.py: Consumers WebSocket para progreso y logs en tiempo real.
+
+Objetivo del archivo:
+- Implementar el canal bidireccional de observabilidad para jobs científicos.
+
+Cómo se usa:
+- Channels enruta conexiones a `JobsStreamConsumer` mediante `routing.py`.
+- El cliente puede filtrar por `job_id` o `plugin_name` y pedir snapshot inicial.
+- Los eventos emitidos por `realtime.py` se reenvían en formato JSON estable.
+"""
 
 from __future__ import annotations
 

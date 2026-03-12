@@ -1,4 +1,13 @@
-"""realtime.py: Serialización y broadcasting de eventos de jobs por WebSocket."""
+"""realtime.py: Serialización y broadcasting de eventos de jobs por WebSocket.
+
+Objetivo del archivo:
+- Construir payloads de transporte realtime y publicarlos en grupos de Channels
+    (global, por plugin y por job).
+
+Cómo se usa:
+- `services.py` y `adapters.py` llaman `broadcast_job_update/progress/log`.
+- `consumers.py` recibe esos eventos y los distribuye a clientes WebSocket.
+"""
 
 from __future__ import annotations
 

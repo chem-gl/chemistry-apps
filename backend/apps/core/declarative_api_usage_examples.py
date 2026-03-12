@@ -1,4 +1,13 @@
-"""declarative_api_usage_examples.py: Ejemplos tipados de consumo externo de DeclarativeJobAPI."""
+"""declarative_api_usage_examples.py: Ejemplos tipados de consumo externo.
+
+Objetivo del archivo:
+- Mostrar patrones de consumo de `DeclarativeJobAPI` desde código no HTTP
+    (scripts, integraciones internas, servicios externos).
+
+Cómo se usa:
+- Importar las funciones de ejemplo como plantilla para construir adaptadores
+    reales con manejo explícito de `Result` y errores de dominio.
+"""
 
 from __future__ import annotations
 

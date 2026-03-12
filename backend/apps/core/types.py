@@ -1,4 +1,14 @@
-"""types.py: Tipos compartidos para tipado estricto del dominio cientifico."""
+"""types.py: Tipos compartidos para tipado estricto del dominio cientifico.
+
+Objetivo del archivo:
+- Centralizar aliases JSON, snapshots de dominio, errores tipados y abstracciones
+    funcionales (Result/Task/JobHandle) usadas por todo `apps.core`.
+
+Cómo se usa:
+- Importar tipos desde aquí evita divergencias semánticas entre servicios,
+    routers, adapters, tasks y pruebas.
+- Cualquier nuevo contrato transversal debe definirse aquí antes de propagarse.
+"""
 
 from __future__ import annotations
 

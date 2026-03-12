@@ -1,4 +1,14 @@
-"""routers.py: Endpoints de la app random_numbers sobre el núcleo de jobs."""
+"""routers.py: Endpoints de la app random_numbers sobre el núcleo de jobs.
+
+Objetivo del archivo:
+- Exponer endpoints de creación/consulta para random_numbers sin mezclar lógica
+    matemática o de infraestructura en la capa HTTP.
+
+Cómo se usa:
+1. Validar request con serializer propio de app.
+2. Delegar creación y encolado a `DeclarativeJobAPI` + `dispatch_scientific_job`.
+3. Responder con serializer de salida desacoplado del ORM directo.
+"""
 
 from typing import cast
 

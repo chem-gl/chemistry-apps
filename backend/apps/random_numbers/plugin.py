@@ -1,4 +1,14 @@
-"""plugin.py: Lógica de generación de números aleatorios con progreso incremental."""
+"""plugin.py: Lógica de generación de números aleatorios con progreso incremental.
+
+Objetivo del archivo:
+- Implementar la lógica de dominio del plugin random_numbers de forma pura,
+    reutilizable y desacoplada de HTTP/ORM.
+
+Cómo se usa:
+- `PluginRegistry` ejecuta `random_numbers_plugin` durante `JobService.run_job`.
+- El plugin reporta progreso/logs mediante callbacks y soporta pausa cooperativa
+    lanzando `JobPauseRequested` con checkpoint.
+"""
 
 from __future__ import annotations
 

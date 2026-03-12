@@ -1,4 +1,15 @@
-"""models.py: Entidades persistentes para jobs cientificos y cache por hash."""
+"""models.py: Entidades persistentes para jobs cientificos y cache por hash.
+
+Objetivo del archivo:
+- Modelar el estado durable del ciclo de vida de jobs, cache de resultados y
+    eventos de logs para trazabilidad operativa.
+
+Cómo se usa:
+- `services.py` crea/actualiza `ScientificJob` y `ScientificCacheEntry`.
+- `adapters.py` persiste eventos en `ScientificJobLogEvent`.
+- `routers.py`, `consumers.py` y `realtime.py` serializan estos datos para API
+    HTTP y streaming WebSocket/SSE.
+"""
 
 import uuid
 
