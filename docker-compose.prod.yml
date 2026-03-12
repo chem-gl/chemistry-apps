@@ -7,26 +7,34 @@ services:
       POSTGRES_DB: chemistry_db
       POSTGRES_USER: chemistry_user
       POSTGRES_PASSWORD: chemistry_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
+      - ./.docker/prod/postgres:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chemistry_user -d chemistry_db"]
       interval: 5s
       timeout: 3s
       retries: 15
+    networks:
+      - app_prod_net
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    hostname: redis
+    command: ["redis-server", "--appendonly", "yes", "--dir", "/data"]
     volumes:
-      - redis_prod_data:/data
+      - ./.docker/prod/redis:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      app_prod_net:
+        aliases:
+          - redis
 
   backend:
     build:
@@ -60,6 +68,8 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app_prod_net
 
   celery-worker:
     build:
@@ -82,6 +92,8 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    volumes:
+      - ./.docker/prod/celery-logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,6 +102,8 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_prod_net
 
   celery-beat:
     build:
@@ -98,7 +112,7 @@ services:
       target: prod
     working_dir: /app
     command: >
-      sh -c "python -m celery -A config beat -l info"
+      sh -c "python -m celery -A config beat -l info --pidfile=/data/celery-beat.pid"
     environment:
       DJANGO_DEBUG: "False"
       DJANGO_DEBUG_ALLOW_ALL_HOSTS: "False"
@@ -112,6 +126,9 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    volumes:
+      - ./.docker/prod/celery-beat:/data
+      - ./.docker/prod/celery-logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,6 +137,8 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_prod_net
 
   frontend:
     build:
@@ -134,7 +153,9 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_prod_net
 
-volumes:
-  postgres_prod_data:
-  redis_prod_data:
+networks:
+  app_prod_net:
+    driver: bridge

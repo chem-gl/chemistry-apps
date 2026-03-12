@@ -3,17 +3,22 @@
 services:
   redis:
     image: redis:7-alpine
+    hostname: redis
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6380}:6379"
     volumes:
-      - redis_dev_data:/data
+      - ./.docker/dev/redis:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      app_dev_net:
+        aliases:
+          - redis
 
   backend:
     build:
@@ -39,13 +44,15 @@ services:
       DB_SQLITE_PATH: "/data/db.sqlite3"
     volumes:
       - ./backend:/app
-      - backend_sqlite_data:/data
+      - ./.docker/dev/sqlite:/data
     ports:
       - "8000:8000"
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app_dev_net
 
   celery-worker:
     build:
@@ -65,13 +72,15 @@ services:
       DB_SQLITE_PATH: "/data/db.sqlite3"
     volumes:
       - ./backend:/app
-      - backend_sqlite_data:/data
+      - ./.docker/dev/sqlite:/data
     depends_on:
       redis:
         condition: service_healthy
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_dev_net
 
   celery-beat:
     build:
@@ -91,13 +100,15 @@ services:
       DB_SQLITE_PATH: "/data/db.sqlite3"
     volumes:
       - ./backend:/app
-      - backend_sqlite_data:/data
+      - ./.docker/dev/sqlite:/data
     depends_on:
       redis:
         condition: service_healthy
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_dev_net
 
   frontend:
     build:
@@ -119,8 +130,12 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - app_dev_net
 
 volumes:
-  redis_dev_data:
-  backend_sqlite_data:
   frontend_node_modules:
+
+networks:
+  app_dev_net:
+    driver: bridge
