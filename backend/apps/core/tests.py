@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 from django.core.exceptions import ImproperlyConfigured
@@ -15,10 +15,19 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .adapters import DjangoJobLogPublisherAdapter
 from .app_registry import ScientificAppDefinition, ScientificAppRegistry
 from .cache import generate_job_hash
 from .models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
+from .ports import JobLogUpdate
 from .processing import PluginRegistry
+from .realtime import (
+    broadcast_job_log,
+    broadcast_job_update,
+    build_job_log_entry,
+    build_job_progress_snapshot,
+    build_scientific_job_payload,
+)
 from .services import JobService
 from .types import JSONMap
 
@@ -189,6 +198,58 @@ class JobServiceTests(TestCase):
         self.assertEqual(summary["requeued_successfully"], 1)
         self.assertEqual(pending_job.recovery_attempts, 1)
         self.assertEqual(pending_job.progress_stage, "queued")
+
+    def test_log_publisher_retries_when_event_index_collides(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=20,
+            progress_stage="running",
+            progress_message="En ejecución",
+            progress_event_index=1,
+        )
+
+        ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=1,
+            level="info",
+            source="tests.core",
+            message="Evento inicial",
+            payload={},
+        )
+        ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=2,
+            level="info",
+            source="tests.core",
+            message="Evento concurrente",
+            payload={},
+        )
+
+        publisher = DjangoJobLogPublisherAdapter()
+
+        with patch.object(publisher, "_resolve_next_event_index", side_effect=[2, 3]):
+            created_event: ScientificJobLogEvent = publisher.publish(
+                job,
+                JobLogUpdate(
+                    level="warning",
+                    source="tests.recovery",
+                    message="Evento tras colisión",
+                    payload={"phase": "retry"},
+                ),
+            )
+
+        self.assertEqual(created_event.event_index, 3)
+        self.assertEqual(created_event.level, "warning")
+        self.assertEqual(
+            ScientificJobLogEvent.objects.filter(job=job, event_index=3).count(),
+            1,
+        )
 
     def test_request_pause_on_pending_job_sets_paused_status(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
@@ -427,7 +488,7 @@ class JobApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/event-stream")
-        stream_payload_text: str = response.content.decode("utf-8")
+        stream_payload_text: str = b"".join(response.streaming_content).decode("utf-8")
         self.assertIn("event: job.progress", stream_payload_text)
         self.assertIn(str(job.id), stream_payload_text)
 
@@ -492,7 +553,7 @@ class JobApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/event-stream")
-        stream_payload_text: str = response.content.decode("utf-8")
+        stream_payload_text: str = b"".join(response.streaming_content).decode("utf-8")
         self.assertIn("event: job.log", stream_payload_text)
         self.assertIn(str(job.id), stream_payload_text)
 
@@ -562,6 +623,98 @@ class JobApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("no soporta pausa", str(response.data["detail"]).lower())
+
+
+class RealtimeHelpersTests(TestCase):
+    """Valida serialización y broadcasting del canal realtime de jobs."""
+
+    def test_build_scientific_job_payload_normalizes_terminal_state(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="completed",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 2, "b": 3},
+            results={"final_result": 5},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Estado legado.",
+            progress_event_index=3,
+        )
+
+        payload = build_scientific_job_payload(job)
+
+        self.assertEqual(payload["id"], str(job.id))
+        self.assertEqual(payload["status"], "completed")
+        self.assertEqual(payload["progress_percentage"], 100)
+        self.assertEqual(payload["progress_stage"], "completed")
+
+    def test_build_progress_and_log_payloads_preserve_contract_shape(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="random-numbers",
+            algorithm_version="1.0.0",
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"seed_url": "https://example.com/seed.txt"},
+            progress_percentage=45,
+            progress_stage="running",
+            progress_message="Generando lote actual.",
+            progress_event_index=8,
+        )
+        log_event: ScientificJobLogEvent = ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=5,
+            level="info",
+            source="tests.realtime",
+            message="Evento realtime de prueba.",
+            payload={"batch": 2},
+        )
+
+        progress_snapshot = build_job_progress_snapshot(job)
+        log_entry = build_job_log_entry(log_event)
+
+        self.assertEqual(progress_snapshot["job_id"], str(job.id))
+        self.assertEqual(progress_snapshot["progress_event_index"], 8)
+        self.assertEqual(log_entry["event_index"], 5)
+        self.assertEqual(log_entry["payload"]["batch"], 2)
+
+    def test_broadcast_job_update_and_log_publish_to_expected_groups(self) -> None:
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "mul", "a": 4, "b": 5},
+            progress_percentage=20,
+            progress_stage="running",
+            progress_message="Procesando cálculo.",
+            progress_event_index=2,
+        )
+        log_event: ScientificJobLogEvent = ScientificJobLogEvent.objects.create(
+            job=job,
+            event_index=1,
+            level="info",
+            source="tests.realtime",
+            message="Log realtime.",
+            payload={},
+        )
+        mocked_group_send = AsyncMock()
+        mocked_channel_layer = MagicMock(group_send=mocked_group_send)
+
+        with patch(
+            "apps.core.realtime.get_channel_layer",
+            return_value=mocked_channel_layer,
+        ):
+            broadcast_job_update(job)
+            broadcast_job_log(log_event)
+
+        self.assertEqual(mocked_group_send.await_count, 6)
 
 
 class CalculatorTemplateIntegrationTests(TestCase):

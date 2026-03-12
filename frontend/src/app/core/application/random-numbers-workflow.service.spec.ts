@@ -112,4 +112,53 @@ describe('RandomNumbersWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.generatedNumbers.length).toBe(3);
   });
+
+  it('opens paused historical job as summary when final results are unavailable', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      of(
+        makeScientificJob({
+          id: 'paused-job-1',
+          status: 'paused',
+          results: null,
+          runtime_state: {
+            generated_numbers: [101, 202, 303],
+            generated_count: 3,
+            total_numbers: 10,
+          },
+          parameters: {
+            seed_url: 'https://example.com/seed.txt',
+            numbers_per_batch: 5,
+            interval_seconds: 120,
+            total_numbers: 10,
+          },
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('paused-job-1');
+
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
+    expect(workflowService.resultData()?.generatedNumbers).toEqual([101, 202, 303]);
+    expect(workflowService.errorMessage()).toBeNull();
+  });
+
+  it('keeps error section when historical job has neither results nor summary data', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      of(
+        makeScientificJob({
+          id: 'broken-job-1',
+          status: 'paused',
+          results: null,
+          runtime_state: null,
+          parameters: null,
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('broken-job-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('resultado ni el resumen histórico');
+  });
 });

@@ -4,7 +4,7 @@ import json
 from time import monotonic, sleep
 from typing import Iterator, cast
 
-from django.http import HttpResponse
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -555,7 +555,9 @@ class JobViewSet(viewsets.ViewSet):
         url_path=CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX,
         renderer_classes=[ServerSentEventsRenderer],
     )
-    def logs_events(self, request: Request, id: str | None = None) -> HttpResponse:
+    def logs_events(
+        self, request: Request, id: str | None = None
+    ) -> StreamingHttpResponse:
         """Expone stream SSE de logs de job para observabilidad en tiempo real."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
 
@@ -569,7 +571,7 @@ class JobViewSet(viewsets.ViewSet):
             request.query_params.get("timeout_seconds")
         )
 
-        response: HttpResponse = HttpResponse(
+        response: StreamingHttpResponse = StreamingHttpResponse(
             self._stream_job_log_events(
                 job_id=str(job.id),
                 last_event_index=last_event_index,
@@ -637,7 +639,9 @@ class JobViewSet(viewsets.ViewSet):
         url_path=CORE_JOBS_EVENTS_ROUTE_SUFFIX,
         renderer_classes=[ServerSentEventsRenderer],
     )
-    def events(self, request: Request, id: str | None = None) -> HttpResponse:
+    def events(
+        self, request: Request, id: str | None = None
+    ) -> StreamingHttpResponse:
         """Expone stream SSE de progreso del job con heartbeats de conexión."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
 
@@ -651,7 +655,7 @@ class JobViewSet(viewsets.ViewSet):
             request.query_params.get("timeout_seconds")
         )
 
-        response: HttpResponse = HttpResponse(
+        response: StreamingHttpResponse = StreamingHttpResponse(
             self._stream_job_events(
                 job_id=str(job.id),
                 last_event_index=last_event_index,
@@ -677,39 +681,44 @@ class JobViewSet(viewsets.ViewSet):
         observed_event_index: int = last_event_index
         next_heartbeat_at: float = started_at + 10.0
 
-        while (monotonic() - started_at) < float(timeout_seconds):
-            refreshed_job: ScientificJob | None = ScientificJob.objects.filter(
-                id=job_id
-            ).first()
+        try:
+            while (monotonic() - started_at) < float(timeout_seconds):
+                refreshed_job: ScientificJob | None = ScientificJob.objects.filter(
+                    id=job_id
+                ).first()
 
-            if refreshed_job is None:
-                yield (
-                    "event: job.error\n"
-                    'data: {"detail":"Job no encontrado durante stream"}\n\n'
-                )
-                return
-
-            snapshot: JobProgressSnapshot = _build_progress_snapshot(refreshed_job)
-            if snapshot["progress_event_index"] > observed_event_index:
-                yield _serialize_sse_progress_event(snapshot)
-                observed_event_index = snapshot["progress_event_index"]
-
-                if snapshot["status"] in {"completed", "failed", "paused"}:
+                if refreshed_job is None:
+                    yield (
+                        "event: job.error\n"
+                        'data: {"detail":"Job no encontrado durante stream"}\n\n'
+                    )
                     return
 
-            now: float = monotonic()
-            if now >= next_heartbeat_at:
-                yield ": keep-alive\n\n"
-                next_heartbeat_at = now + 10.0
+                snapshot: JobProgressSnapshot = _build_progress_snapshot(refreshed_job)
+                if snapshot["progress_event_index"] > observed_event_index:
+                    yield _serialize_sse_progress_event(snapshot)
+                    observed_event_index = snapshot["progress_event_index"]
 
-            sleep(SSE_POLL_INTERVAL_SECONDS)
+                    if snapshot["status"] in {"completed", "failed", "paused"}:
+                        return
 
-        if observed_event_index == last_event_index:
-            final_job: ScientificJob | None = ScientificJob.objects.filter(
-                id=job_id
-            ).first()
-            if final_job is not None:
-                yield _serialize_sse_progress_event(_build_progress_snapshot(final_job))
+                now: float = monotonic()
+                if now >= next_heartbeat_at:
+                    yield ": keep-alive\n\n"
+                    next_heartbeat_at = now + 10.0
+
+                sleep(SSE_POLL_INTERVAL_SECONDS)
+
+            if observed_event_index == last_event_index:
+                final_job: ScientificJob | None = ScientificJob.objects.filter(
+                    id=job_id
+                ).first()
+                if final_job is not None:
+                    yield _serialize_sse_progress_event(
+                        _build_progress_snapshot(final_job)
+                    )
+        except (GeneratorExit, BrokenPipeError, ConnectionResetError):
+            return
 
     def _stream_job_log_events(
         self,
@@ -724,34 +733,37 @@ class JobViewSet(viewsets.ViewSet):
         observed_event_index: int = last_event_index
         next_heartbeat_at: float = started_at + 10.0
 
-        while (monotonic() - started_at) < float(timeout_seconds):
-            refreshed_job: ScientificJob | None = ScientificJob.objects.filter(
-                id=job_id
-            ).first()
+        try:
+            while (monotonic() - started_at) < float(timeout_seconds):
+                refreshed_job: ScientificJob | None = ScientificJob.objects.filter(
+                    id=job_id
+                ).first()
 
-            if refreshed_job is None:
-                yield (
-                    "event: job.error\n"
-                    'data: {"detail":"Job no encontrado durante stream"}\n\n'
-                )
-                return
+                if refreshed_job is None:
+                    yield (
+                        "event: job.error\n"
+                        'data: {"detail":"Job no encontrado durante stream"}\n\n'
+                    )
+                    return
 
-            pending_events = ScientificJobLogEvent.objects.filter(
-                job_id=job_id,
-                event_index__gt=observed_event_index,
-            ).order_by("event_index")
+                pending_events = ScientificJobLogEvent.objects.filter(
+                    job_id=job_id,
+                    event_index__gt=observed_event_index,
+                ).order_by("event_index")
 
-            for pending_event in pending_events:
-                log_entry: JobLogEntry = _build_job_log_entry(pending_event)
-                yield _serialize_sse_log_event(log_entry)
-                observed_event_index = pending_event.event_index
+                for pending_event in pending_events:
+                    log_entry: JobLogEntry = _build_job_log_entry(pending_event)
+                    yield _serialize_sse_log_event(log_entry)
+                    observed_event_index = pending_event.event_index
 
-            if refreshed_job.status in {"completed", "failed", "paused"}:
-                return
+                if refreshed_job.status in {"completed", "failed", "paused"}:
+                    return
 
-            now: float = monotonic()
-            if now >= next_heartbeat_at:
-                yield ": keep-alive\n\n"
-                next_heartbeat_at = now + 10.0
+                now: float = monotonic()
+                if now >= next_heartbeat_at:
+                    yield ": keep-alive\n\n"
+                    next_heartbeat_at = now + 10.0
 
-            sleep(SSE_POLL_INTERVAL_SECONDS)
+                sleep(SSE_POLL_INTERVAL_SECONDS)
+        except (GeneratorExit, BrokenPipeError, ConnectionResetError):
+            return

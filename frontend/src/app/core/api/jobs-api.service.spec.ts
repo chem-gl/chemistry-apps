@@ -115,8 +115,44 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
 describe('JobsApiService', () => {
   let service: JobsApiService;
   let httpMock: HttpTestingController;
+  let capturedWebSocketUrls: string[];
+  let originalWebSocket: typeof WebSocket | undefined;
+  let mockSocketInstance: {
+    readyState: number;
+    close: ReturnType<typeof vi.fn>;
+    onmessage: ((event: MessageEvent<string>) => void) | null;
+    onerror: (() => void) | null;
+    onclose: (() => void) | null;
+  };
 
   beforeEach(() => {
+    originalWebSocket = globalThis.WebSocket;
+    capturedWebSocketUrls = [];
+    mockSocketInstance = {
+      readyState: 1,
+      close: vi.fn(),
+      onmessage: null,
+      onerror: null,
+      onclose: null,
+    };
+    class MockWebSocket {
+      readyState: number = 1;
+      close = vi.fn();
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onerror: (() => void) | null = null;
+      onclose: (() => void) | null = null;
+
+      constructor(url: string) {
+        capturedWebSocketUrls.push(url);
+        mockSocketInstance = this;
+      }
+    }
+    Object.defineProperty(globalThis, 'WebSocket', {
+      value: MockWebSocket,
+      writable: true,
+      configurable: true,
+    });
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -131,6 +167,11 @@ describe('JobsApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    Object.defineProperty(globalThis, 'WebSocket', {
+      value: originalWebSocket,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('should be created', () => {
@@ -334,5 +375,41 @@ describe('JobsApiService', () => {
     );
     expect(req.request.method).toBe('GET');
     req.flush(logsResponse);
+  });
+
+  it('should open jobs realtime websocket and map snapshot and updates', () => {
+    const receivedEvents: Array<string> = [];
+
+    service.streamJobsRealtime({ pluginName: 'calculator', includeLogs: false }).subscribe({
+      next: (event) => {
+        receivedEvents.push(event.event);
+      },
+    });
+
+    expect(capturedWebSocketUrls.length).toBe(1);
+    expect(capturedWebSocketUrls[0]).toContain('plugin_name=calculator');
+    expect(capturedWebSocketUrls[0]).toContain('include_logs=false');
+
+    mockSocketInstance.onmessage?.(
+      new MessageEvent('message', {
+        data: JSON.stringify({
+          event: 'jobs.snapshot',
+          data: {
+            items: [makeScientificJob({ id: 'socket-job-1' })],
+          },
+        }),
+      }),
+    );
+
+    mockSocketInstance.onmessage?.(
+      new MessageEvent('message', {
+        data: JSON.stringify({
+          event: 'job.updated',
+          data: makeScientificJob({ id: 'socket-job-2', status: 'running' }),
+        }),
+      }),
+    );
+
+    expect(receivedEvents).toEqual(['jobs.snapshot', 'job.updated']);
   });
 });

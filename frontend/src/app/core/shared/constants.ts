@@ -34,3 +34,20 @@ function resolveApiBaseUrl(configuredApiBaseUrl: string): string {
 }
 
 export const API_BASE_URL: string = resolveApiBaseUrl(environment.apiBaseUrl);
+
+function resolveWebSocketBaseUrl(apiBaseUrl: string): string {
+  const normalizedApiBaseUrl: string = apiBaseUrl.replace(TRAILING_SLASH_PATTERN, '');
+
+  if (normalizedApiBaseUrl.startsWith('https://')) {
+    return normalizedApiBaseUrl.replace('https://', 'wss://');
+  }
+
+  if (normalizedApiBaseUrl.startsWith('http://')) {
+    return normalizedApiBaseUrl.replace('http://', 'ws://');
+  }
+
+  return normalizedApiBaseUrl;
+}
+
+export const WEBSOCKET_BASE_URL: string = resolveWebSocketBaseUrl(API_BASE_URL);
+export const JOBS_WEBSOCKET_URL: string = `${WEBSOCKET_BASE_URL}/ws/jobs/stream/`;

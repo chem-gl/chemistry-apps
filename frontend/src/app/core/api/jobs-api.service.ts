@@ -4,7 +4,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
-import { API_BASE_URL } from '../shared/constants';
+import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
   CalculatorJobCreateRequest,
   CalculatorJobResponse,
@@ -86,12 +86,52 @@ export interface JobControlActionResult {
   job: ScientificJob;
 }
 
+export interface JobsRealtimeQuery {
+  jobId?: string;
+  pluginName?: string;
+  includeLogs?: boolean;
+  includeSnapshot?: boolean;
+  activeOnly?: boolean;
+}
+
+export interface JobsSnapshotRealtimeEvent {
+  event: 'jobs.snapshot';
+  data: {
+    items: ScientificJob[];
+  };
+}
+
+export interface JobUpdatedRealtimeEvent {
+  event: 'job.updated';
+  data: ScientificJob;
+}
+
+export interface JobProgressRealtimeEvent {
+  event: 'job.progress';
+  data: JobProgressSnapshot;
+}
+
+export interface JobLogRealtimeEvent {
+  event: 'job.log';
+  data: JobLogEntryView;
+}
+
+export type JobsRealtimeEvent =
+  | JobsSnapshotRealtimeEvent
+  | JobUpdatedRealtimeEvent
+  | JobProgressRealtimeEvent
+  | JobLogRealtimeEvent;
+
 @Injectable({
   providedIn: 'root',
 })
 export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly jobsClient = inject(JobsService);
+
+  private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
+    return rawJob as ScientificJob;
+  }
 
   private normalizeControlActionResult(
     rawResponse: JobControlActionResponse,
@@ -132,6 +172,98 @@ export class JobsApiService {
       payload: normalizedPayload,
       createdAt: rawEvent.created_at,
     };
+  }
+
+  private buildJobsRealtimeUrl(query: JobsRealtimeQuery = {}): string {
+    const url: URL = new URL(JOBS_WEBSOCKET_URL);
+
+    if (query.jobId !== undefined) {
+      url.searchParams.set('job_id', query.jobId);
+    }
+
+    if (query.pluginName !== undefined) {
+      url.searchParams.set('plugin_name', query.pluginName);
+    }
+
+    if (query.includeLogs !== undefined) {
+      url.searchParams.set('include_logs', String(query.includeLogs));
+    }
+
+    if (query.includeSnapshot !== undefined) {
+      url.searchParams.set('include_snapshot', String(query.includeSnapshot));
+    }
+
+    if (query.activeOnly !== undefined) {
+      url.searchParams.set('active_only', String(query.activeOnly));
+    }
+
+    return url.toString();
+  }
+
+  private normalizeRealtimeEvent(rawEvent: unknown): JobsRealtimeEvent | null {
+    if (rawEvent === null || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) {
+      return null;
+    }
+
+    const candidateEvent: Record<string, unknown> = rawEvent as Record<string, unknown>;
+    const rawEventName: unknown = candidateEvent['event'];
+    const rawData: unknown = candidateEvent['data'];
+
+    if (typeof rawEventName !== 'string' || rawData === null || rawData === undefined) {
+      return null;
+    }
+
+    if (rawEventName === 'jobs.snapshot') {
+      const snapshotContainer: Record<string, unknown> | null =
+        typeof rawData === 'object' && !Array.isArray(rawData)
+          ? (rawData as Record<string, unknown>)
+          : null;
+      const rawItems: unknown[] = Array.isArray(snapshotContainer?.['items'])
+        ? (snapshotContainer?.['items'] as unknown[])
+        : [];
+
+      return {
+        event: 'jobs.snapshot',
+        data: {
+          items: rawItems.map((rawItem: unknown) =>
+            this.normalizeScientificJob(rawItem as ScientificJob),
+          ),
+        },
+      };
+    }
+
+    if (rawEventName === 'job.updated') {
+      return {
+        event: 'job.updated',
+        data: this.normalizeScientificJob(rawData as ScientificJob),
+      };
+    }
+
+    if (rawEventName === 'job.progress') {
+      return {
+        event: 'job.progress',
+        data: rawData as JobProgressSnapshot,
+      };
+    }
+
+    if (rawEventName === 'job.log') {
+      return {
+        event: 'job.log',
+        data: this.normalizeLogEntry(
+          rawData as {
+            job_id: string;
+            event_index: number;
+            level: string;
+            source: string;
+            message: string;
+            payload: unknown;
+            created_at: string;
+          },
+        ),
+      };
+    }
+
+    return null;
   }
 
   /**
@@ -317,6 +449,40 @@ export class JobsApiService {
       };
 
       return () => source.close();
+    });
+  }
+
+  /** Abre stream WebSocket global o filtrado para jobs, progreso y logs. */
+  streamJobsRealtime(query: JobsRealtimeQuery = {}): Observable<JobsRealtimeEvent> {
+    return new Observable<JobsRealtimeEvent>((observer) => {
+      const socket = new WebSocket(this.buildJobsRealtimeUrl(query));
+
+      socket.onmessage = (messageEvent: MessageEvent<string>) => {
+        try {
+          const parsedPayload: unknown = JSON.parse(messageEvent.data);
+          const normalizedEvent: JobsRealtimeEvent | null =
+            this.normalizeRealtimeEvent(parsedPayload);
+          if (normalizedEvent !== null) {
+            observer.next(normalizedEvent);
+          }
+        } catch {
+          // Ignorar frames malformados y continuar escuchando.
+        }
+      };
+
+      socket.onerror = () => {
+        observer.error(new Error('WebSocket jobs stream connection error'));
+      };
+
+      socket.onclose = () => {
+        observer.complete();
+      };
+
+      return () => {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          socket.close();
+        }
+      };
     });
   }
 

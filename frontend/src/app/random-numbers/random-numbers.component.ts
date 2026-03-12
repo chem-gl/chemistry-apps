@@ -146,6 +146,22 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
         <section class="result-card" aria-label="Resultado random numbers">
           <h3>Resultado generado</h3>
 
+          @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+            <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+          }
+
+          @if (workflow.canResumeFromResult()) {
+            <div class="actions">
+              <button
+                class="btn-secondary"
+                (click)="resumeCurrentJob()"
+                [disabled]="workflow.isControlActionLoading()"
+              >
+                {{ workflow.isControlActionLoading() ? 'Reanudando...' : 'Continuar job' }}
+              </button>
+            </div>
+          }
+
           <div class="meta-grid">
             <p><strong>URL semilla:</strong> {{ resultData.seedUrl }}</p>
             <p>
@@ -210,7 +226,7 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
                     <td>{{ historyJob.updated_at | date: 'dd/MM HH:mm:ss' }}</td>
                     <td>
                       <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                        Abrir resultado
+                        {{ historicalActionLabel(historyJob) }}
                       </button>
                     </td>
                   </tr>
@@ -466,6 +482,17 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
       font-size: 0.88rem;
     }
 
+    .summary-banner {
+      margin: 0 0 0.7rem;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 9px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
     h4 {
       margin: 0.2rem 0 0.5rem;
       color: #3b2073;
@@ -578,6 +605,12 @@ import { RandomNumbersWorkflowService } from '../core/application/random-numbers
       border-color: #93c5fd;
     }
 
+    .history-paused {
+      color: #7c2d12;
+      background: #ffedd5;
+      border-color: #fdba74;
+    }
+
     .history-pending {
       color: #854d0e;
       background: #fef9c3;
@@ -636,21 +669,59 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
     this.workflow.openHistoricalJob(jobId);
   }
 
+  historicalActionLabel(job: ScientificJob): string {
+    return this.hasFinalHistoricalResult(job) ? 'Abrir resultado' : 'Ver resumen';
+  }
+
   historicalStatusClass(jobStatus: ScientificJob['status']): string {
     return `history-status history-${jobStatus}`;
   }
 
   historicalNumbersCount(job: ScientificJob): number {
     const rawResults: unknown = job.results;
-    if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
+    if (rawResults !== null && typeof rawResults === 'object' && !Array.isArray(rawResults)) {
+      const resultsRecord: { generated_numbers?: unknown } = rawResults as {
+        generated_numbers?: unknown;
+      };
+      const rawGeneratedNumbers: unknown = resultsRecord.generated_numbers;
+      if (Array.isArray(rawGeneratedNumbers)) {
+        return rawGeneratedNumbers.length;
+      }
+    }
+
+    const rawRuntimeState: unknown = job.runtime_state;
+    if (
+      rawRuntimeState === null ||
+      typeof rawRuntimeState !== 'object' ||
+      Array.isArray(rawRuntimeState)
+    ) {
       return 0;
     }
 
-    const resultsRecord: { generated_numbers?: unknown } = rawResults as {
+    const runtimeStateRecord: { generated_numbers?: unknown } = rawRuntimeState as {
       generated_numbers?: unknown;
     };
-    const rawGeneratedNumbers: unknown = resultsRecord.generated_numbers;
-    return Array.isArray(rawGeneratedNumbers) ? rawGeneratedNumbers.length : 0;
+    const runtimeGeneratedNumbers: unknown = runtimeStateRecord.generated_numbers;
+    return Array.isArray(runtimeGeneratedNumbers) ? runtimeGeneratedNumbers.length : 0;
+  }
+
+  private hasFinalHistoricalResult(job: ScientificJob): boolean {
+    const rawResults: unknown = job.results;
+    if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
+      return false;
+    }
+
+    const resultsRecord: { generated_numbers?: unknown; metadata?: unknown } = rawResults as {
+      generated_numbers?: unknown;
+      metadata?: unknown;
+    };
+
+    return (
+      Array.isArray(resultsRecord.generated_numbers) &&
+      resultsRecord.metadata !== null &&
+      typeof resultsRecord.metadata === 'object' &&
+      !Array.isArray(resultsRecord.metadata)
+    );
   }
 
   hasPayload(logEntry: JobLogEntryView): boolean {

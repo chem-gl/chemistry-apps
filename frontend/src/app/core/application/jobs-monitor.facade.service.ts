@@ -20,6 +20,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   private refreshSubscription: Subscription | null = null;
   private detailProgressSubscription: Subscription | null = null;
   private detailLogsSubscription: Subscription | null = null;
+  private lastKnownJobsSignature: string = '';
 
   readonly jobs = signal<ScientificJob[]>([]);
   readonly isLoading = signal<boolean>(false);
@@ -50,9 +51,12 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   readonly activeJobs = computed(() =>
     this.jobs().filter(
-      (jobItem: ScientificJob) =>
-        jobItem.status === 'pending' || jobItem.status === 'running' || jobItem.status === 'paused',
+      (jobItem: ScientificJob) => jobItem.status === 'pending' || jobItem.status === 'running',
     ),
+  );
+
+  readonly pausedJobs = computed(() =>
+    this.jobs().filter((jobItem: ScientificJob) => jobItem.status === 'paused'),
   );
 
   readonly completedJobs = computed(() =>
@@ -65,32 +69,48 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
   readonly finishedJobs = computed(() => [...this.completedJobs(), ...this.failedJobs()]);
 
-  loadJobs(): void {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
+  loadJobs(options: { silent?: boolean; updateOnlyOnChange?: boolean } = {}): void {
+    const shouldUseSilentMode: boolean = options.silent ?? false;
+    const shouldUpdateOnlyOnChange: boolean = options.updateOnlyOnChange ?? false;
+
+    if (!shouldUseSilentMode) {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+    }
 
     const listFilters: JobListFilters = this.buildFilters();
 
     this.jobsApiService.listJobs(listFilters).subscribe({
       next: (jobItems: ScientificJob[]) => {
-        this.jobs.set(jobItems);
+        const hasMeaningfulChanges: boolean = this.detectJobsChanges(jobItems);
+        const shouldApplyStateUpdate: boolean =
+          !shouldUpdateOnlyOnChange || hasMeaningfulChanges || this.jobs().length === 0;
 
-        const selectedJobIdValue: string | null = this.selectedJobId();
-        if (selectedJobIdValue !== null) {
-          const refreshedSelectedJob: ScientificJob | undefined = jobItems.find(
-            (jobItem: ScientificJob) => jobItem.id === selectedJobIdValue,
-          );
-          if (refreshedSelectedJob !== undefined) {
-            this.selectedJob.set(refreshedSelectedJob);
+        if (shouldApplyStateUpdate) {
+          this.jobs.set(jobItems);
+
+          const selectedJobIdValue: string | null = this.selectedJobId();
+          if (selectedJobIdValue !== null) {
+            const refreshedSelectedJob: ScientificJob | undefined = jobItems.find(
+              (jobItem: ScientificJob) => jobItem.id === selectedJobIdValue,
+            );
+            if (refreshedSelectedJob !== undefined) {
+              this.selectedJob.set(refreshedSelectedJob);
+            }
           }
+
+          this.lastUpdatedAt.set(new Date());
         }
 
-        this.lastUpdatedAt.set(new Date());
-        this.isLoading.set(false);
+        if (!shouldUseSilentMode) {
+          this.isLoading.set(false);
+        }
       },
       error: (loadError: Error) => {
-        this.errorMessage.set(`No se pudo cargar el monitor: ${loadError.message}`);
-        this.isLoading.set(false);
+        if (!shouldUseSilentMode) {
+          this.errorMessage.set(`No se pudo cargar el monitor: ${loadError.message}`);
+          this.isLoading.set(false);
+        }
       },
     });
   }
@@ -111,12 +131,13 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
     if (nextEnabledState) {
       this.startAutoRefresh();
-    } else {
-      this.stopAutoRefresh();
+      return;
     }
+
+    this.stopAutoRefresh();
   }
 
-  startAutoRefresh(refreshIntervalMs: number = 3000): void {
+  startAutoRefresh(refreshIntervalMs: number = 8000): void {
     this.stopAutoRefresh();
 
     this.refreshSubscription = interval(refreshIntervalMs).subscribe(() => {
@@ -124,7 +145,15 @@ export class JobsMonitorFacadeService implements OnDestroy {
         return;
       }
 
-      this.loadJobs();
+      // Evita polling innecesario cuando la pestaña no está visible.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+
+      this.loadJobs({
+        silent: true,
+        updateOnlyOnChange: true,
+      });
     });
   }
 
@@ -226,7 +255,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
           return;
         }
 
-        this.selectedJob.set({
+        const nextJobState: ScientificJob = {
           ...currentJob,
           status: jobSnapshot.status,
           progress_percentage: jobSnapshot.progress_percentage,
@@ -234,14 +263,22 @@ export class JobsMonitorFacadeService implements OnDestroy {
           progress_message: jobSnapshot.progress_message,
           progress_event_index: jobSnapshot.progress_event_index,
           updated_at: jobSnapshot.updated_at,
-        });
+        };
+
+        this.selectedJob.set(nextJobState);
+        this.replaceJobInState(nextJobState);
       },
       complete: () => {
+        this.stopDetailStreams();
         this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-          next: (job) => this.selectedJob.set(job),
+          next: (job) => {
+            this.selectedJob.set(job);
+            this.replaceJobInState(job);
+          },
         });
       },
       error: () => {
+        this.stopDetailStreams();
         // Mantener modal estable aunque falle el stream SSE de progreso.
       },
     });
@@ -292,10 +329,55 @@ export class JobsMonitorFacadeService implements OnDestroy {
   }
 
   private replaceJobInState(updatedJob: ScientificJob): void {
-    this.jobs.update((currentJobs: ScientificJob[]) =>
-      currentJobs.map((jobItem: ScientificJob) =>
-        jobItem.id === updatedJob.id ? updatedJob : jobItem,
-      ),
+    this.jobs.update((currentJobs: ScientificJob[]) => this.upsertJob(currentJobs, updatedJob));
+  }
+
+  private upsertJob(currentJobs: ScientificJob[], updatedJob: ScientificJob): ScientificJob[] {
+    const otherJobs: ScientificJob[] = currentJobs.filter(
+      (jobItem: ScientificJob) => jobItem.id !== updatedJob.id,
     );
+
+    return this.filterJobs([updatedJob, ...otherJobs]).sort(
+      (leftJob: ScientificJob, rightJob: ScientificJob) =>
+        new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
+    );
+  }
+
+  private filterJobs(jobItems: ScientificJob[]): ScientificJob[] {
+    const statusFilterValue: JobStatusFilterOption = this.selectedStatus();
+    const pluginFilterValue: string = this.selectedPluginName();
+
+    return jobItems.filter((jobItem: ScientificJob) => {
+      const matchesStatus: boolean =
+        statusFilterValue === 'all' || jobItem.status === statusFilterValue;
+      const matchesPlugin: boolean =
+        pluginFilterValue === 'all' || jobItem.plugin_name === pluginFilterValue;
+      return matchesStatus && matchesPlugin;
+    });
+  }
+
+  private detectJobsChanges(jobItems: ScientificJob[]): boolean {
+    const nextSignature: string = this.buildJobsSignature(jobItems);
+    const hasChanges: boolean = nextSignature !== this.lastKnownJobsSignature;
+    this.lastKnownJobsSignature = nextSignature;
+    return hasChanges;
+  }
+
+  private buildJobsSignature(jobItems: ScientificJob[]): string {
+    const normalizedItems = jobItems.map((jobItem: ScientificJob) => ({
+      id: jobItem.id,
+      updated_at: jobItem.updated_at,
+      status: jobItem.status,
+      progress_event_index: jobItem.progress_event_index,
+      progress_percentage: jobItem.progress_percentage,
+      progress_stage: jobItem.progress_stage,
+      progress_message: jobItem.progress_message,
+      pause_requested: jobItem.pause_requested,
+      cache_hit: jobItem.cache_hit,
+      cache_miss: jobItem.cache_miss,
+      error_trace: jobItem.error_trace,
+    }));
+
+    return JSON.stringify(normalizedItems);
   }
 }

@@ -154,7 +154,7 @@ describe('JobsMonitorFacadeService', () => {
     expect(facadeService.selectedJobLogs()[0].source).toBe('tests.monitor');
   });
 
-  it('starts live streams when opening details for an active job', () => {
+  it('starts SSE streams when opening details for an active job', () => {
     jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
       of(makeScientificJob({ id: 'job-running', status: 'running' })),
     );
@@ -187,5 +187,60 @@ describe('JobsMonitorFacadeService', () => {
 
     expect(jobsApiServiceMock.resumeJob).toHaveBeenCalledWith('job-1');
     expect(facadeService.selectedJob()?.status).toBe('pending');
+  });
+
+  it('keeps lastUpdatedAt unchanged on silent refresh when jobs did not change', () => {
+    const fixedJobs: ScientificJob[] = [
+      makeScientificJob({
+        id: 'stable-job-1',
+        status: 'completed',
+        updated_at: '2026-03-11T12:00:00Z',
+      }),
+    ];
+
+    jobsApiServiceMock.listJobs.mockReturnValue(of(fixedJobs));
+
+    facadeService.loadJobs();
+    const firstUpdatedAt: Date | null = facadeService.lastUpdatedAt();
+
+    facadeService.loadJobs({ silent: true, updateOnlyOnChange: true });
+    const secondUpdatedAt: Date | null = facadeService.lastUpdatedAt();
+
+    expect(firstUpdatedAt).not.toBeNull();
+    expect(secondUpdatedAt).not.toBeNull();
+    expect(secondUpdatedAt?.getTime()).toBe(firstUpdatedAt?.getTime());
+  });
+
+  it('updates lastUpdatedAt on silent refresh when jobs changed', () => {
+    jobsApiServiceMock.listJobs
+      .mockReturnValueOnce(
+        of([
+          makeScientificJob({
+            id: 'job-delta-1',
+            status: 'running',
+            updated_at: '2026-03-11T12:00:00Z',
+          }),
+        ]),
+      )
+      .mockReturnValueOnce(
+        of([
+          makeScientificJob({
+            id: 'job-delta-1',
+            status: 'completed',
+            updated_at: '2026-03-11T12:00:05Z',
+          }),
+        ]),
+      );
+
+    facadeService.loadJobs();
+    const firstUpdatedAt: Date | null = facadeService.lastUpdatedAt();
+
+    facadeService.loadJobs({ silent: true, updateOnlyOnChange: true });
+    const secondUpdatedAt: Date | null = facadeService.lastUpdatedAt();
+
+    expect(firstUpdatedAt).not.toBeNull();
+    expect(secondUpdatedAt).not.toBeNull();
+    expect(secondUpdatedAt).not.toBe(firstUpdatedAt);
+    expect(facadeService.jobs()[0].status).toBe('completed');
   });
 });

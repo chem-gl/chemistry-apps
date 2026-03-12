@@ -37,6 +37,7 @@ from .ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
+from .realtime import broadcast_job_update
 from .types import (
     JobLogLevel,
     JobProgressStage,
@@ -112,6 +113,7 @@ class RuntimeJobService:
                     "cache_hit": True,
                 },
             )
+            broadcast_job_update(cached_job)
             return cached_job
 
         created_job: ScientificJob = ScientificJob.objects.create(
@@ -145,6 +147,7 @@ class RuntimeJobService:
                 "cache_hit": False,
             },
         )
+        broadcast_job_update(created_job)
         return created_job
 
     def register_dispatch_result(self, job_id: str, was_dispatched: bool) -> None:
@@ -634,6 +637,7 @@ class RuntimeJobService:
         job.pause_requested = True
         job.progress_message = "Pausa solicitada. Esperando confirmación cooperativa."
         job.save(update_fields=["pause_requested", "progress_message", "updated_at"])
+        broadcast_job_update(job)
         self._publish_job_log(
             job,
             level="warning",
@@ -671,6 +675,7 @@ class RuntimeJobService:
                 "updated_at",
             ]
         )
+        broadcast_job_update(job)
         self._publish_job_log(
             job,
             level="info",
@@ -921,3 +926,4 @@ class JobService:
         """Reanuda un job pausado para permitir su reencolado desde cualquier capa."""
         runtime_service: RuntimeJobService = JobService._get_runtime_service()
         return runtime_service.resume_job(job_id)
+

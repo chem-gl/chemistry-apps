@@ -13,10 +13,12 @@ Uso esperado:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import cast
 
-from django.db.models import F
+from django.db import IntegrityError, transaction
+from django.db.models import F, Max
 from django.utils import timezone
 
 from .models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
@@ -28,12 +30,15 @@ from .ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
+from .realtime import broadcast_job_log, broadcast_job_progress
 from .types import (
     JSONMap,
     PluginControlCallback,
     PluginLogCallback,
     PluginProgressCallback,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class DjangoCacheRepositoryAdapter(CacheRepositoryPort):
@@ -140,33 +145,78 @@ class DjangoJobProgressPublisherAdapter(JobProgressPublisherPort):
                 "updated_at",
             ]
         )
+        broadcast_job_progress(job)
 
 
 class DjangoJobLogPublisherAdapter(JobLogPublisherPort):
     """Publicador persistente de eventos de log por job."""
+
+    MAX_EVENT_INDEX_RETRIES: int = 5
+
+    def _resolve_next_event_index(self, job: ScientificJob) -> int:
+        """Calcula el siguiente índice incremental de logs para un job."""
+        aggregate_result: dict[str, int | None] = ScientificJobLogEvent.objects.filter(
+            job=job
+        ).aggregate(max_event_index=Max("event_index"))
+        current_max_event_index: int | None = aggregate_result["max_event_index"]
+        return (
+            1 if current_max_event_index is None else int(current_max_event_index) + 1
+        )
 
     def publish(
         self,
         job: ScientificJob,
         log_update: JobLogUpdate,
     ) -> ScientificJobLogEvent:
-        """Crea un evento incremental por job para stream e historial."""
-        last_event: ScientificJobLogEvent | None = (
-            ScientificJobLogEvent.objects.filter(job=job)
-            .order_by("-event_index")
-            .first()
-        )
-        next_event_index: int = 1 if last_event is None else last_event.event_index + 1
+        """Crea un evento incremental por job para stream e historial.
 
+        Usa reintentos para resolver colisiones por concurrencia cuando varios
+        workers publican logs del mismo job en ventanas de tiempo muy cortas.
+        """
         normalized_payload: JSONMap = (
             log_update.payload if log_update.payload is not None else {}
         )
 
-        return ScientificJobLogEvent.objects.create(
-            job=job,
-            event_index=next_event_index,
-            level=log_update.level,
-            source=log_update.source,
-            message=log_update.message,
-            payload=normalized_payload,
+        retry_number: int
+        for retry_number in range(1, self.MAX_EVENT_INDEX_RETRIES + 1):
+            try:
+                with transaction.atomic():
+                    ScientificJob.objects.select_for_update().get(pk=job.pk)
+                    next_event_index: int = self._resolve_next_event_index(job)
+                    created_log_event: ScientificJobLogEvent = (
+                        ScientificJobLogEvent.objects.create(
+                            job=job,
+                            event_index=next_event_index,
+                            level=log_update.level,
+                            source=log_update.source,
+                            message=log_update.message,
+                            payload=normalized_payload,
+                        )
+                    )
+
+                broadcast_job_log(created_log_event)
+                return created_log_event
+            except IntegrityError:
+                logger.warning(
+                    "Colisión de event_index detectada para job %s (intento %s/%s).",
+                    job.id,
+                    retry_number,
+                    self.MAX_EVENT_INDEX_RETRIES,
+                )
+
+        fallback_log_event: ScientificJobLogEvent | None = (
+            ScientificJobLogEvent.objects.filter(job=job)
+            .order_by("-event_index", "-created_at")
+            .first()
+        )
+        if fallback_log_event is not None:
+            logger.error(
+                "No se pudo insertar nuevo log tras %s intentos para job %s; se retorna último evento existente.",
+                self.MAX_EVENT_INDEX_RETRIES,
+                job.id,
+            )
+            return fallback_log_event
+
+        raise RuntimeError(
+            f"No fue posible publicar log para job {job.id} tras {self.MAX_EVENT_INDEX_RETRIES} intentos."
         )

@@ -2,7 +2,12 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { JobProgressSnapshot, JobProgressStageEnum, ScientificJob } from '../api/generated';
+import {
+  JobProgressSnapshot,
+  JobProgressStageEnum,
+  JobStatusEnum,
+  ScientificJob,
+} from '../api/generated';
 import { JobControlActionResult, JobLogEntryView, JobsApiService } from '../api/jobs-api.service';
 
 /** Secciones de flujo para la UI de random numbers */
@@ -16,6 +21,8 @@ export interface RandomNumbersResultData {
   numbersPerBatch: number;
   intervalSeconds: number;
   totalNumbers: number;
+  isHistoricalSummary: boolean;
+  summaryMessage: string | null;
 }
 
 @Injectable()
@@ -46,6 +53,17 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
 
   readonly isPaused = computed(() => this.progressSnapshot()?.status === 'paused');
+
+  readonly canResumeFromResult = computed(() => {
+    const currentResultData: RandomNumbersResultData | null = this.resultData();
+    return (
+      this.activeSection() === 'result' &&
+      currentResultData !== null &&
+      currentResultData.isHistoricalSummary &&
+      this.progressSnapshot()?.status === 'paused' &&
+      this.currentJobId() !== null
+    );
+  });
 
   readonly progressMessage = computed(
     () => this.progressSnapshot()?.progress_message ?? 'Preparando generación...',
@@ -166,6 +184,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     this.jobsApiService.resumeJob(currentJobId).subscribe({
       next: (controlResult: JobControlActionResult) => {
         this.isControlActionLoading.set(false);
+        this.activeSection.set('progress');
         this.progressSnapshot.update((currentSnapshot) =>
           currentSnapshot === null
             ? currentSnapshot
@@ -211,10 +230,12 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   /** Reabre un job histórico por id para visualizar su resultado en la app */
   openHistoricalJob(jobId: string): void {
     this.logsSubscription?.unsubscribe();
+    this.progressSubscription?.unsubscribe();
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
     this.currentJobId.set(jobId);
     this.jobLogs.set([]);
+    this.progressSnapshot.set(null);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJob) => {
@@ -226,14 +247,17 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         }
 
         const historicalResultData: RandomNumbersResultData | null =
-          this.extractResultData(jobResponse);
+          this.extractResultData(jobResponse) ?? this.extractSummaryData(jobResponse);
         if (historicalResultData === null) {
           this.activeSection.set('error');
-          this.errorMessage.set('No fue posible reconstruir el resultado histórico del job.');
+          this.errorMessage.set(
+            'No fue posible reconstruir el resultado ni el resumen histórico del job.',
+          );
           return;
         }
 
         this.resultData.set(historicalResultData);
+        this.syncProgressSnapshotFromJob(jobResponse);
         this.loadHistoricalLogs(jobId);
         this.activeSection.set('result');
       },
@@ -256,6 +280,8 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       next: (snapshot: JobProgressSnapshot) => this.progressSnapshot.set(snapshot),
       complete: () => {
         const latestSnapshot: JobProgressSnapshot | null = this.progressSnapshot();
+        this.logsSubscription?.unsubscribe();
+        this.logsSubscription = null;
         if (latestSnapshot !== null && latestSnapshot.status === 'paused') {
           return;
         }
@@ -374,7 +400,105 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       numbersPerBatch,
       intervalSeconds,
       totalNumbers,
+      isHistoricalSummary: false,
+      summaryMessage: null,
     };
+  }
+
+  private extractSummaryData(jobResponse: ScientificJob): RandomNumbersResultData | null {
+    const rawParameters: unknown = jobResponse.parameters;
+    if (!this.isRecord(rawParameters)) {
+      return null;
+    }
+
+    const seedUrl: unknown = rawParameters['seed_url'];
+    const numbersPerBatch: unknown = rawParameters['numbers_per_batch'];
+    const intervalSeconds: unknown = rawParameters['interval_seconds'];
+    const totalNumbers: unknown = rawParameters['total_numbers'];
+
+    if (
+      typeof seedUrl !== 'string' ||
+      typeof numbersPerBatch !== 'number' ||
+      typeof intervalSeconds !== 'number' ||
+      typeof totalNumbers !== 'number'
+    ) {
+      return null;
+    }
+
+    const rawRuntimeState: unknown = jobResponse.runtime_state;
+    const generatedNumbers: number[] = this.extractGeneratedNumbersFromRuntime(rawRuntimeState);
+    const summaryMessage: string = this.buildHistoricalSummaryMessage(
+      jobResponse.status,
+      generatedNumbers.length,
+      totalNumbers,
+    );
+
+    return {
+      generatedNumbers,
+      seedUrl,
+      seedDigest: 'No disponible (job aún no completado)',
+      numbersPerBatch,
+      intervalSeconds,
+      totalNumbers,
+      isHistoricalSummary: true,
+      summaryMessage,
+    };
+  }
+
+  private extractGeneratedNumbersFromRuntime(rawRuntimeState: unknown): number[] {
+    if (!this.isRecord(rawRuntimeState)) {
+      return [];
+    }
+
+    const runtimeGeneratedNumbers: unknown = rawRuntimeState['generated_numbers'];
+    if (!Array.isArray(runtimeGeneratedNumbers)) {
+      return [];
+    }
+
+    return runtimeGeneratedNumbers.filter(
+      (value: unknown): value is number => typeof value === 'number',
+    );
+  }
+
+  private buildHistoricalSummaryMessage(
+    jobStatus: ScientificJob['status'],
+    generatedCount: number,
+    totalNumbers: number,
+  ): string {
+    if (jobStatus === 'paused') {
+      return `Resumen parcial: job en pausa con ${generatedCount}/${totalNumbers} números generados.`;
+    }
+    if (jobStatus === 'running' || jobStatus === 'pending') {
+      return `Resumen parcial: job en ejecución con ${generatedCount}/${totalNumbers} números generados.`;
+    }
+    if (jobStatus === 'completed') {
+      return `Resumen histórico reconstruido: ${generatedCount}/${totalNumbers} números disponibles.`;
+    }
+    return `Resumen histórico disponible: ${generatedCount}/${totalNumbers} números generados.`;
+  }
+
+  private syncProgressSnapshotFromJob(jobResponse: ScientificJob): void {
+    const normalizedStage: JobProgressStageEnum = this.normalizeProgressStage(
+      jobResponse.progress_stage,
+      JobProgressStageEnum.Pending,
+    );
+
+    this.progressSnapshot.set({
+      job_id: jobResponse.id,
+      status: this.normalizeStatus(jobResponse.status),
+      progress_percentage: jobResponse.progress_percentage,
+      progress_stage: normalizedStage,
+      progress_message: jobResponse.progress_message,
+      progress_event_index: jobResponse.progress_event_index,
+      updated_at: jobResponse.updated_at,
+    });
+  }
+
+  private normalizeStatus(rawStatus: string): JobStatusEnum {
+    const supportedStatuses: ReadonlyArray<JobStatusEnum> = Object.values(JobStatusEnum);
+    return supportedStatuses.includes(rawStatus as JobStatusEnum)
+      ? (rawStatus as JobStatusEnum)
+      : JobStatusEnum.Pending;
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

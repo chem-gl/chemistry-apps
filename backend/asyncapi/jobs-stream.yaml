@@ -1,0 +1,188 @@
+asyncapi: 3.0.0
+info:
+  title: Chemistry Apps Jobs Realtime API
+  version: 1.0.0
+  description: >-
+    Contrato AsyncAPI para el stream WebSocket de progreso, estado global y logs
+    de jobs científicos.
+servers:
+  local:
+    host: localhost:8000
+    pathname: /ws/jobs/stream/
+    protocol: ws
+    description: Servidor local para desarrollo
+channels:
+  jobsStream:
+    address: /ws/jobs/stream/
+    messages:
+      jobsSnapshot:
+        $ref: "#/components/messages/JobsSnapshotMessage"
+      jobUpdated:
+        $ref: "#/components/messages/JobUpdatedMessage"
+      jobProgress:
+        $ref: "#/components/messages/JobProgressMessage"
+      jobLog:
+        $ref: "#/components/messages/JobLogMessage"
+operations:
+  receiveJobsRealtime:
+    action: receive
+    channel:
+      $ref: "#/channels/jobsStream"
+    summary: Recibe snapshot inicial y eventos incrementales de jobs
+    description: >-
+      Permite filtrar por job_id o plugin_name vía query string y opcionalmente
+      incluir logs en el stream.
+components:
+  messages:
+    JobsSnapshotMessage:
+      name: jobs.snapshot
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            const: jobs.snapshot
+          data:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScientificJob"
+            required: [items]
+        required: [event, data]
+    JobUpdatedMessage:
+      name: job.updated
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            const: job.updated
+          data:
+            $ref: "#/components/schemas/ScientificJob"
+        required: [event, data]
+    JobProgressMessage:
+      name: job.progress
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            const: job.progress
+          data:
+            $ref: "#/components/schemas/JobProgressSnapshot"
+        required: [event, data]
+    JobLogMessage:
+      name: job.log
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            const: job.log
+          data:
+            $ref: "#/components/schemas/JobLogEntry"
+        required: [event, data]
+  schemas:
+    ScientificJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plugin_name:
+          type: string
+        status:
+          type: string
+        progress_percentage:
+          type: integer
+        progress_stage:
+          type: string
+        progress_message:
+          type: string
+        progress_event_index:
+          type: integer
+        supports_pause_resume:
+          type: boolean
+        pause_requested:
+          type: boolean
+        parameters:
+          type: object
+          additionalProperties: true
+        results:
+          type: object
+          nullable: true
+          additionalProperties: true
+        error_trace:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - plugin_name
+        - status
+        - progress_percentage
+        - progress_stage
+        - progress_message
+        - progress_event_index
+        - supports_pause_resume
+        - pause_requested
+        - updated_at
+    JobProgressSnapshot:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        progress_percentage:
+          type: integer
+        progress_stage:
+          type: string
+        progress_message:
+          type: string
+        progress_event_index:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - job_id
+        - status
+        - progress_percentage
+        - progress_stage
+        - progress_message
+        - progress_event_index
+        - updated_at
+    JobLogEntry:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        event_index:
+          type: integer
+        level:
+          type: string
+        source:
+          type: string
+        message:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - job_id
+        - event_index
+        - level
+        - source
+        - message
+        - payload
+        - created_at

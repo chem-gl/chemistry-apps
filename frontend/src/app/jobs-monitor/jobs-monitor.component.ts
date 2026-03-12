@@ -45,6 +45,11 @@ import {
         </article>
 
         <article class="kpi-card">
+          <p class="kpi-label">Pausados</p>
+          <p class="kpi-value">{{ facade.pausedJobs().length }}</p>
+        </article>
+
+        <article class="kpi-card">
           <p class="kpi-label">Terminados</p>
           <p class="kpi-value">{{ facade.finishedJobs().length }}</p>
         </article>
@@ -147,42 +152,105 @@ import {
                     Ver logs en vivo
                   </button>
 
+                  @if (activeJob.plugin_name === 'random-numbers') {
+                    <a
+                      class="open-result-link"
+                      [routerLink]="'/random-numbers'"
+                      [queryParams]="{ jobId: activeJob.id }"
+                    >
+                      {{ resultActionLabel(activeJob) }}
+                    </a>
+                  }
+
                   @if (activeJob.supports_pause_resume) {
-                    @if (activeJob.status === 'paused') {
-                      <button
-                        class="control-btn resume-btn"
-                        (click)="resumeJob(activeJob.id)"
-                        [disabled]="facade.isControlActionRunning(activeJob.id)"
-                      >
-                        {{
-                          facade.isControlActionRunning(activeJob.id)
-                            ? 'Reanudando...'
-                            : 'Continuar'
-                        }}
-                      </button>
-                    } @else {
-                      <button
-                        class="control-btn pause-btn"
-                        (click)="pauseJob(activeJob.id)"
-                        [disabled]="
-                          facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
-                        "
-                      >
-                        @if (activeJob.pause_requested) {
-                          Pausa solicitada...
-                        } @else {
-                          {{
-                            facade.isControlActionRunning(activeJob.id) ? 'Pausando...' : 'Pausar'
-                          }}
-                        }
-                      </button>
-                    }
+                    <button
+                      class="control-btn pause-btn"
+                      (click)="pauseJob(activeJob.id)"
+                      [disabled]="
+                        facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
+                      "
+                    >
+                      @if (activeJob.pause_requested) {
+                        Pausa solicitada...
+                      } @else {
+                        {{ facade.isControlActionRunning(activeJob.id) ? 'Pausando...' : 'Pausar' }}
+                      }
+                    </button>
                   }
                 </div>
 
                 @if (activeJob.pause_requested && activeJob.status !== 'paused') {
                   <p class="pause-hint">Se registró solicitud de pausa cooperativa.</p>
                 }
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="jobs-section" aria-label="Jobs pausados">
+        <h2>Pausados</h2>
+        @if (facade.pausedJobs().length === 0) {
+          <p class="empty-state">No hay jobs pausados para los filtros actuales.</p>
+        } @else {
+          <div class="jobs-grid">
+            @for (pausedJob of facade.pausedJobs(); track pausedJob.id) {
+              <article class="job-card">
+                <header class="job-card-header">
+                  <span class="job-plugin">{{ pausedJob.plugin_name }}</span>
+                  <span class="job-status" [class]="statusClassName(pausedJob.status)">
+                    {{ pausedJob.status }}
+                  </span>
+                </header>
+
+                <p class="job-id">{{ pausedJob.id }}</p>
+
+                <div
+                  class="progress-track"
+                  role="progressbar"
+                  [attr.aria-valuenow]="pausedJob.progress_percentage"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <div class="progress-fill" [style.width.%]="pausedJob.progress_percentage"></div>
+                </div>
+
+                <div class="job-meta">
+                  <span>{{ pausedJob.progress_percentage }}%</span>
+                  <span class="stage-pill" [class]="stageClassName(pausedJob.progress_stage)">
+                    {{ pausedJob.progress_stage }}
+                  </span>
+                </div>
+
+                <p class="job-message">{{ pausedJob.progress_message }}</p>
+
+                <div class="actions-cell">
+                  <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">
+                    Ver logs
+                  </button>
+
+                  @if (pausedJob.plugin_name === 'random-numbers') {
+                    <a
+                      class="open-result-link"
+                      [routerLink]="'/random-numbers'"
+                      [queryParams]="{ jobId: pausedJob.id }"
+                    >
+                      {{ resultActionLabel(pausedJob) }}
+                    </a>
+                  }
+
+                  @if (pausedJob.supports_pause_resume) {
+                    <button
+                      class="control-btn resume-btn"
+                      (click)="resumeJob(pausedJob.id)"
+                      [disabled]="facade.isControlActionRunning(pausedJob.id)"
+                    >
+                      {{
+                        facade.isControlActionRunning(pausedJob.id) ? 'Reanudando...' : 'Continuar'
+                      }}
+                    </button>
+                  }
+                </div>
               </article>
             }
           </div>
@@ -238,7 +306,7 @@ import {
                             [routerLink]="appRoutePath"
                             [queryParams]="{ jobId: finishedJob.id }"
                           >
-                            Abrir resultado
+                            {{ resultActionLabel(finishedJob) }}
                           </a>
                         } @else {
                           <span class="open-result-disabled">Sin visor</span>
@@ -393,6 +461,22 @@ import {
     .subtitle {
       margin: 0;
       color: #315b5a;
+    }
+
+    .realtime-banner {
+      margin: 0;
+      padding: 0.7rem 0.85rem;
+      border-radius: 12px;
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      color: #166534;
+      font-weight: 700;
+    }
+
+    .realtime-banner-offline {
+      background: #fff7ed;
+      border-color: #fdba74;
+      color: #9a3412;
     }
 
     .header-actions {
@@ -1032,6 +1116,37 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  resultActionLabel(jobItem: ScientificJob): string {
+    if (jobItem.plugin_name === 'random-numbers' && !this.hasFinalRandomNumbersResult(jobItem)) {
+      return 'Ver resumen';
+    }
+
+    return 'Abrir resultado';
+  }
+
+  private hasFinalRandomNumbersResult(jobItem: ScientificJob): boolean {
+    if (jobItem.plugin_name !== 'random-numbers') {
+      return true;
+    }
+
+    const rawResults: unknown = jobItem.results;
+    if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
+      return false;
+    }
+
+    const resultRecord: { generated_numbers?: unknown; metadata?: unknown } = rawResults as {
+      generated_numbers?: unknown;
+      metadata?: unknown;
+    };
+
+    return (
+      Array.isArray(resultRecord.generated_numbers) &&
+      resultRecord.metadata !== null &&
+      typeof resultRecord.metadata === 'object' &&
+      !Array.isArray(resultRecord.metadata)
+    );
   }
 
   hasPayload(logEntry: JobLogEntryView): boolean {

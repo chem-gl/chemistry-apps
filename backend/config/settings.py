@@ -1,6 +1,7 @@
 """settings.py: Configuración central de Django para el backend científico."""
 
 import os
+import sys
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -144,12 +145,14 @@ if ENABLE_CORS and not CORS_PACKAGE_INSTALLED:
 # Definición de aplicaciones instaladas.
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "drf_spectacular",
     "apps.core",
@@ -290,6 +293,7 @@ if ENABLE_CORS:
     MIDDLEWARE.insert(1, "corsheaders.middleware.CorsMiddleware")
 
 ROOT_URLCONF = "config.urls"
+ASGI_APPLICATION = "config.asgi.application"
 
 TEMPLATES = [
     {
@@ -307,6 +311,32 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+
+
+CHANNEL_LAYERS_REDIS_URL = os.getenv(
+    "CHANNEL_LAYERS_REDIS_URL",
+    CELERY_BROKER_URL,
+)
+USE_INMEMORY_CHANNEL_LAYER = _get_env_bool(
+    "USE_INMEMORY_CHANNEL_LAYER",
+    "test" in sys.argv,
+)
+
+if USE_INMEMORY_CHANNEL_LAYER:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [CHANNEL_LAYERS_REDIS_URL],
+            },
+        }
+    }
 
 
 # Base de datos configurable por entorno, con fallback a SQLite para local.

@@ -11,6 +11,7 @@ CORE_JOBS_LOGS_ROUTE_SUFFIX: Final[str] = "logs"
 CORE_JOBS_LOGS_EVENTS_ROUTE_SUFFIX: Final[str] = "logs/events"
 CORE_JOBS_PAUSE_ROUTE_SUFFIX: Final[str] = "pause"
 CORE_JOBS_RESUME_ROUTE_SUFFIX: Final[str] = "resume"
+CORE_JOBS_WEBSOCKET_ROUTE_PATH: Final[str] = "ws/jobs/stream/"
 
 ALLOWED_JOB_STATUS_FILTERS: Final[tuple[str, ...]] = (
     "pending",
