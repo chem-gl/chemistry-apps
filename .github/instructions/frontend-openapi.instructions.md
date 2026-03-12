@@ -1,8 +1,50 @@
-- Los contratos generados a partir de OpenAPI deben colocarse EXCLUSIVAMENTE en `frontend/src/app/core/api/generated/`.
-- BAJO NINGUNA CIRCUNSTANCIA se debe alterar manualmente el código autogenerado que reside en dicho directorio. Cualquier cambio se debe propagar regenerando el contrato a partir de las fuentes OpenAPI primarias (back).
-- Utilizar los scripts npm existentes en `frontend/package.json` o definir allí nuevos de llamarse explícitamente a rutinas de Open Api Generator (o cliente afín), ej `npm run api:generate`.
-- Se requiere envolver o proteger las abstracciones de los contratos mediante wrappers, ubicados en `frontend/src/app/core/api/`. Esto ayuda a desacoplar el frontend y componentes visuales de posibles roturas o variaciones bruscas en las reglas de nombrado de la autogeneración.
-- Emplear validaciones de tipado estrictas, se asume configuración strict mode de Typescript y la preservación semántica de los objetos originados generados de OpenAPI a través de modelos locales mapeados si fuese justificable.
-- se debe usar environments para definir la url base del backend, y no hardcodear urls en los servicios o componentes, de tal forma que se pueda cambiar fácilmente la url del backend sin necesidad de modificar el código de los servicios o componentes, por ejemplo: `export const API_BASE_URL = 'http://localhost:8000/api';` en `frontend/src/app/core/shared/constants.ts` esta tambieb se debe usar para lso servucios autogenerados
-- sedebe usar los operadores @if @for, etc, de La ultima version de Angular para usar las ultimas caracteristicas de Angular y evitar codigo duplicado, por ejemplo en los componentes visuales, se pueden usar @if para mostrar u ocultar elementos dependiendo de las condiciones, o @for para iterar sobre listas de datos y generar elementos dinamicamente, esto ayuda a mantener el código limpio y evitar la duplicación de código en los componentes visuales.
-- se es necesario se debe usar la ultima version de Angular y sus ultimas caracteristicas para esto hay que busca la documentacion oficial de Angular y verificar que se estan usando las ultimas caracteristicas de Angular, esto ayuda a mantener el código actualizado y aprovechar las mejoras y optimizaciones que se han hecho en las ultimas versiones de Angular, ademas de evitar problemas de compatibilidad con versiones anteriores.
+---
+applyTo: "frontend/src/**/*.{ts,html,scss}"
+---
+
+# Frontend OpenAPI Integration Instructions
+
+Estas reglas son obligatorias cuando el backend cambie contratos, especialmente al integrar una nueva app científica.
+
+## 1. Ubicación y manejo de código generado
+
+- Los contratos generados desde OpenAPI deben ubicarse exclusivamente en frontend/src/app/core/api/generated/.
+- Bajo ninguna circunstancia se debe editar manualmente el código autogenerado en ese directorio.
+- Cualquier ajuste debe propagarse regenerando desde la fuente OpenAPI del backend.
+
+## 2. Generación y scripts
+
+- Usar scripts npm existentes en frontend/package.json para generación de cliente.
+- Si falta script, agregarlo en package.json (ejemplo: npm run api:generate).
+- No ejecutar flujos manuales dispersos fuera de scripts versionados.
+
+## 3. Wrappers obligatorios
+
+- Proteger el contrato generado con wrappers en frontend/src/app/core/api/.
+- Los componentes visuales y servicios de dominio no deben depender directamente de generated/.
+- Mapear modelos generados a modelos locales cuando ayude a estabilidad semántica.
+
+## 4. Configuración de base URL
+
+- No hardcodear URLs de backend en componentes o servicios.
+- Usar environments y constantes compartidas para API base URL.
+- La URL base debe ser reutilizable tanto por wrappers como por cliente autogenerado.
+
+## 5. Angular moderno y plantillas limpias
+
+- Usar operadores de control de flujo modernos de Angular (@if, @for, etc.) para evitar duplicación.
+- Mantener strict mode de TypeScript y tipado estricto de respuestas OpenAPI.
+- Priorizar compatibilidad con versión actual de Angular.
+
+## 6. Validación después de nueva app científica
+
+Cuando se conecte una nueva app científica en backend:
+
+1. regenerar schema OpenAPI
+2. regenerar cliente frontend
+3. adaptar wrappers de frontend
+4. verificar build/test del frontend
+
+Referencia de proceso backend:
+
+- consultar .github/instructions/scientific-app-onboarding.instructions.md

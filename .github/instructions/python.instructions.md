@@ -2,6 +2,21 @@
 applyTo: "**/*.py"
 ---
 
+# Integración de Nueva App Científica (obligatorio)
+
+Al crear o conectar una nueva app científica en backend se debe seguir el manual:
+
+- .github/instructions/scientific-app-onboarding.instructions.md
+
+Resumen mínimo esperado:
+
+1. crear app con estructura completa (apps.py, definitions.py, types.py, schemas.py, plugin.py, routers.py, contract.py, tests.py)
+2. registrar ScientificAppDefinition en ready() y publicar plugin en PluginRegistry
+3. tipar estrictamente contratos de entrada/salida sin Any
+4. documentar OpenAPI con serializers y ejemplos realistas
+5. conectar app en settings.py y urls.py
+6. validar con check, tests y regeneración de schema OpenAPI
+
 # Python Strict Typing and API Documentation Instructions
 
 This project requires **strict static typing** and **complete API documentation**.

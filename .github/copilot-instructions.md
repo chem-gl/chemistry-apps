@@ -20,6 +20,7 @@
 - mantener la coherencia en el estilo de codificación
 - usar control de versiones de manera efectiva
 - Solo existira un .md, el README.md y los que estan en la carpeta .github/instructions/ con las instrucciones para copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
+- no crear .md adicionales como para decir cosas de phases o cosas asi, solo se usara el README.md para documentar el proyecto y los archivos .md en la carpeta .github/instructions/ para las instrucciones de copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
 - seguir las convenciones de programacion para codigo de ciencia
 - al ambientarse debe quedar claro que el usuario puede ejecutar el código en su máquina local o en un servidor, y que se pueden usar diferentes IDEs o editores de texto para trabajar con el código
 - No crear archivos .sh (al menos que se pida especificamente) para ejecutar comandos, se deben ejecutar directamente con el entorno virtual o npm scripts, de tal forma que el usuario pueda ejecutar los comandos sin necesidad de usar scripts adicionales, por ejemplo: `./venv/bin/python manage.py test` o `npm run build`
