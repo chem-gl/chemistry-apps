@@ -33,6 +33,30 @@ export interface RandomNumbersServiceInterface {
     randomNumbersJobsCreate(randomNumbersJobCreateRequest: RandomNumbersJobCreateRequest, extraHttpRequestParams?: any): Observable<RandomNumbersJobResponse>;
 
     /**
+     * Descargar Reporte CSV de Random Numbers
+     * Descarga un CSV con índice secuencial y números generados. Solo aplica para jobs en estado completed.
+     * @endpoint get /api/random-numbers/jobs/{id}/report-csv/
+     * @param id A UUID string identifying this scientific job.
+     */
+    randomNumbersJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte de Error de Random Numbers
+     * Descarga un reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y traza de fallo.
+     * @endpoint get /api/random-numbers/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    randomNumbersJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG de Random Numbers
+     * Descarga un log técnico con parámetros, resultados, eventos y CSV embebido cuando el job ya está completed.
+     * @endpoint get /api/random-numbers/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    randomNumbersJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Consultar Job de Números Aleatorios
      * Devuelve estado y resultado de random_numbers por UUID.
      * @endpoint get /api/random-numbers/jobs/{id}/

@@ -2,6 +2,7 @@
 // Este servicio actua como fachada estable: protege al resto del frontend de cambios en
 // el cliente generado y centraliza la logica de despacho, polling y streaming de progreso.
 
+import { HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
@@ -15,6 +16,7 @@ import {
   JobLogList,
   JobProgressSnapshot,
   JobsService,
+  MolarFractionsService,
   ScientificJob,
 } from './generated';
 
@@ -97,6 +99,12 @@ export interface JobControlActionResult {
   job: ScientificJob;
 }
 
+/** Representa un archivo descargable retornado por reportes backend */
+export interface DownloadedReportFile {
+  filename: string;
+  blob: Blob;
+}
+
 export interface JobsRealtimeQuery {
   jobId?: string;
   pluginName?: string;
@@ -138,6 +146,7 @@ export type JobsRealtimeEvent =
 })
 export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
+  private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly jobsClient = inject(JobsService);
 
   private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
@@ -151,6 +160,56 @@ export class JobsApiService {
       detail: rawResponse.detail,
       job: rawResponse.job as ScientificJob,
     };
+  }
+
+  private normalizeDownloadedReport(
+    response: HttpResponse<Blob>,
+    fallbackFilename: string,
+  ): DownloadedReportFile {
+    const responseBlob: Blob | null = response.body;
+    if (responseBlob === null) {
+      throw new Error('Backend report response is empty.');
+    }
+
+    const contentDispositionHeader: string | null = response.headers.get('content-disposition');
+    const filename: string = this.extractFilenameFromHeader(
+      contentDispositionHeader,
+      fallbackFilename,
+    );
+
+    return {
+      filename,
+      blob: responseBlob,
+    };
+  }
+
+  private extractFilenameFromHeader(
+    contentDispositionHeader: string | null,
+    fallbackFilename: string,
+  ): string {
+    if (contentDispositionHeader === null) {
+      return fallbackFilename;
+    }
+
+    const utf8Match: RegExpMatchArray | null =
+      contentDispositionHeader.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match !== null) {
+      const encodedFilename: string | undefined = utf8Match[1];
+      if (encodedFilename !== undefined && encodedFilename.trim() !== '') {
+        return decodeURIComponent(encodedFilename.trim());
+      }
+    }
+
+    const regularMatch: RegExpMatchArray | null =
+      contentDispositionHeader.match(/filename="?([^";]+)"?/i);
+    if (regularMatch !== null) {
+      const rawFilename: string | undefined = regularMatch[1];
+      if (rawFilename !== undefined && rawFilename.trim() !== '') {
+        return rawFilename.trim();
+      }
+    }
+
+    return fallbackFilename;
   }
 
   private normalizeLogEntry(rawEvent: {
@@ -334,6 +393,26 @@ export class JobsApiService {
   /** Consulta un job científico genérico por id mediante /api/jobs/{id}/ */
   getScientificJobStatus(jobId: string): Observable<ScientificJob> {
     return this.jobsClient.jobsRetrieve(jobId);
+  }
+
+  /** Descarga el reporte CSV de molar fractions directamente desde backend */
+  downloadMolarFractionsCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.molarFractionsClient.molarFractionsJobsReportCsvRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `molar_fractions_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte LOG de molar fractions directamente desde backend */
+  downloadMolarFractionsLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.molarFractionsClient.molarFractionsJobsReportLogRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `molar_fractions_${jobId}_report.log`),
+      ),
+      shareReplay(1),
+    );
   }
 
   /** Consulta historial de logs por job con cursor incremental */

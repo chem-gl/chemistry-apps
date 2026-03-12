@@ -21,6 +21,10 @@ const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
 const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
 const JOBS_LIST_URL: string = `${API_BASE_URL}/api/jobs/`;
 const JOBS_LOGS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/logs/`;
+const MOLAR_REPORT_CSV_URL = (id: string): string =>
+  `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-csv/`;
+const MOLAR_REPORT_LOG_URL = (id: string): string =>
+  `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-log/`;
 
 /** Respuesta base reutilizable en tests de calculadora */
 function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
@@ -411,5 +415,43 @@ describe('JobsApiService', () => {
     );
 
     expect(receivedEvents).toEqual(['jobs.snapshot', 'job.updated']);
+  });
+
+  it('should download molar fractions CSV report from backend endpoint', () => {
+    const reportJobId: string = 'molar-report-csv-id';
+
+    service.downloadMolarFractionsCsvReport(reportJobId).subscribe((reportFile) => {
+      expect(reportFile.filename).toBe('molar_fractions_backend_report.csv');
+      expect(reportFile.blob.size).toBeGreaterThan(0);
+    });
+
+    const req = httpMock.expectOne(MOLAR_REPORT_CSV_URL(reportJobId));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob(['ph,f0,sum_fraction\n7.0,0.1,1.0'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="molar_fractions_backend_report.csv"',
+      },
+    });
+  });
+
+  it('should download molar fractions LOG report from backend endpoint', () => {
+    const reportJobId: string = 'molar-report-log-id';
+
+    service.downloadMolarFractionsLogReport(reportJobId).subscribe((reportFile) => {
+      expect(reportFile.filename).toBe('molar_fractions_backend_report.log');
+      expect(reportFile.blob.size).toBeGreaterThan(0);
+    });
+
+    const req = httpMock.expectOne(MOLAR_REPORT_LOG_URL(reportJobId));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob(['=== JOB REPORT ==='], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="molar_fractions_backend_report.log"',
+      },
+    });
   });
 });

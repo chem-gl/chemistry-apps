@@ -29,11 +29,11 @@ Flujo frontend:
 
 ## Flujo de tareas (API, apps externas y recuperación)
 
-Este es el flujo real implementado para ejecutar tareas científicas de apps (calculator/random-numbers), tanto desde frontend como desde clientes externos (Postman, curl, otro servicio HTTP):
+Este es el flujo real implementado para ejecutar tareas científicas de apps (calculator/random-numbers/molar-fractions), tanto desde frontend como desde clientes externos (Postman, curl, otro servicio HTTP):
 
 ```mermaid
 flowchart TD
-    A[Cliente externo o Frontend Angular] --> B[POST /api/calculator/jobs/ o /api/random-numbers/jobs/]
+    A[Cliente externo o Frontend Angular] --> B[POST /api/calculator/jobs/ o /api/random-numbers/jobs/ o /api/molar-fractions/jobs/]
     B --> C[Router de la app valida serializer]
     C --> D[JobService.create_job]
     D --> E{Cache hit temprano?}
@@ -48,7 +48,7 @@ flowchart TD
     K --> M[run_active_recovery previo opcional]
     M --> N[JobService.run_job]
     N --> O[PluginRegistry.execute]
-    O --> P[Plugin app: calculator o random-numbers]
+    O --> P[Plugin app: calculator, random-numbers o molar-fractions]
     P --> Q[Progreso + logs por callbacks]
     Q --> R[Guardar logs/progreso en DB]
     R --> S{Resultado OK?}
@@ -73,8 +73,48 @@ Los endpoints de apps científicas están listos para consumo por frontend y por
 
 1. Crear job de calculadora: `POST /api/calculator/jobs/`
 2. Crear job de random-numbers: `POST /api/random-numbers/jobs/`
-3. Consultar un job específico de app: `GET /api/calculator/jobs/{id}/` o `GET /api/random-numbers/jobs/{id}/`
-4. Consultar job genérico y observabilidad: `GET /api/jobs/{id}/`, `GET /api/jobs/{id}/progress/`, `GET /api/jobs/{id}/events/`, `GET /api/jobs/{id}/logs/`, `GET /api/jobs/{id}/logs/events/`
+3. Crear job de molar-fractions: `POST /api/molar-fractions/jobs/`
+4. Consultar un job específico de app: `GET /api/calculator/jobs/{id}/`, `GET /api/random-numbers/jobs/{id}/` o `GET /api/molar-fractions/jobs/{id}/`
+5. Reportes síncronos por app:
+  - `GET /api/<app>/jobs/{id}/report-csv/`
+  - `GET /api/<app>/jobs/{id}/report-log/`
+  - `GET /api/<app>/jobs/{id}/report-error/`
+6. Consultar job genérico y observabilidad: `GET /api/jobs/{id}/`, `GET /api/jobs/{id}/progress/`, `GET /api/jobs/{id}/events/`, `GET /api/jobs/{id}/logs/`, `GET /api/jobs/{id}/logs/events/`
+
+Reglas de activación de reportes:
+
+1. `report-csv`: disponible solo si el job está `completed` y tiene `results` persistidos. Si no aplica, responde `409`.
+2. `report-log`: siempre disponible; incluye parámetros, resultados, eventos y agrega bloque CSV embebido cuando el job está `completed`.
+3. `report-error`: disponible solo para jobs `failed` con `error_trace`; en otro caso responde `409`.
+
+Uso recomendado de endpoints de reportes:
+
+1. Descargar CSV de resultados de molar fractions:
+
+```bash
+curl -L "http://localhost:8000/api/molar-fractions/jobs/<job-id>/report-csv/" \
+  -o molar-fractions-report.csv
+```
+
+2. Descargar LOG técnico completo de molar fractions:
+
+```bash
+curl -L "http://localhost:8000/api/molar-fractions/jobs/<job-id>/report-log/" \
+  -o molar-fractions-report.log
+```
+
+3. Descargar reporte de error cuando un job falló:
+
+```bash
+curl -L "http://localhost:8000/api/molar-fractions/jobs/<job-id>/report-error/" \
+  -o molar-fractions-error.log
+```
+
+Notas de consumo:
+
+1. Estos endpoints retornan archivos descargables y fijan `Content-Disposition` con un nombre de archivo estable desde backend.
+2. El frontend debe consumirlos como `Blob` y no reconstruir el contenido localmente si se quiere garantizar que el archivo descargado coincide exactamente con lo persistido en backend.
+3. El patrón es el mismo para `calculator` y `random-numbers`, cambiando únicamente el prefijo `/api/<app>/jobs/{id}/...`.
 
 Ejemplo mínimo con cliente externo (curl):
 
@@ -114,7 +154,7 @@ La recuperación ya está implementada y operativa en el núcleo:
 ## Estado funcional actual
 
 - Jobs genéricos en core: create/list/retrieve/progress/events/logs.
-- Apps científicas activas: calculator y random-numbers.
+- Apps científicas activas: calculator, random-numbers y molar-fractions.
 - Recovery activo con heartbeat y reencolado automático.
 - Logs de job persistidos + stream SSE de logs.
 - Frontend con monitor global de jobs y visor de logs.
@@ -199,7 +239,7 @@ Regla clave:
 
 ```bash
 cd backend && ./venv/bin/python manage.py check
-cd backend && ./venv/bin/python manage.py test apps.core.tests apps.calculator.tests apps.random_numbers.tests
+cd backend && ./venv/bin/python manage.py test apps.core.tests apps.calculator.tests apps.random_numbers.tests apps.molar_fractions.tests
 cd frontend && npm test -- --watch=false
 cd frontend && npm run build
 ```
@@ -272,6 +312,16 @@ Riesgo técnico pendiente:
 - backend/apps/random_numbers/plugin.py: generación por lotes con semilla, progreso y logs.
 - backend/apps/random_numbers/routers.py: endpoints de random_numbers.
 - backend/apps/random_numbers/tests.py: pruebas de flujo y validaciones.
+
+### Backend molar_fractions
+
+- backend/apps/molar_fractions/apps.py: registro de app y plugin.
+- backend/apps/molar_fractions/definitions.py: constantes de ruta/plugin/version.
+- backend/apps/molar_fractions/types.py: tipos de entrada/salida.
+- backend/apps/molar_fractions/schemas.py: contratos OpenAPI de molar_fractions.
+- backend/apps/molar_fractions/plugin.py: cálculo de fracciones molares con trazabilidad.
+- backend/apps/molar_fractions/routers.py: endpoints de molar_fractions.
+- backend/apps/molar_fractions/tests.py: pruebas de flujo y validaciones.
 
 ### OpenAPI backend
 
@@ -436,6 +486,30 @@ Mientras se implementa lo anterior, usar recuperación activa para resiliencia a
 1. En apps.py registrar ScientificAppDefinition en ready().
 2. En urls.py agregar router de la nueva app.
 3. En settings.py incluir app en INSTALLED_APPS.
+
+### 9.1. Agregar endpoints síncronos adicionales de reportes (ejemplo)
+
+Para extender cualquier app con descargas por estado, usar acciones `@action` en su `ViewSet`:
+
+```python
+@action(detail=True, methods=["get"], url_path="report-csv")
+def report_csv(self, request: Request, id: str | None = None) -> HttpResponse | Response:
+  job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+  validation_error = validate_job_for_csv_report(job)
+  if validation_error is not None:
+    return Response({"detail": validation_error}, status=status.HTTP_409_CONFLICT)
+
+  csv_content = build_app_specific_csv(job)
+  filename = build_download_filename(PLUGIN_NAME, str(job.id), "report", "csv")
+  return build_text_download_response(csv_content, filename, "text/csv; charset=utf-8")
+```
+
+Patrón recomendado para cada app:
+
+1. `report-csv`: implementar una función `build_app_specific_csv(job)` con columnas de dominio.
+2. `report-log`: reutilizar `build_job_log_report(job, csv_content=...)` para incluir inputs, resultados y logs.
+3. `report-error`: reutilizar `build_job_error_report(job)` para exponer razón de fallo solo en `failed`.
+4. Documentar cada acción con `extend_schema` y respuestas `200/404/409`.
 
 ### 10. Crear pruebas completas
 

@@ -6,9 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ScientificJob } from '../core/api/generated';
-import { JobLogEntryView } from '../core/api/jobs-api.service';
+import { DownloadedReportFile, JobLogEntryView } from '../core/api/jobs-api.service';
 import {
-  MolarFractionsResultData,
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
 } from '../core/application/molar-fractions-workflow.service';
@@ -93,89 +92,36 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
   }
 
   canExportRows(): boolean {
-    const resultData: MolarFractionsResultData | null = this.workflow.resultData();
-    return resultData !== null && resultData.rows.length > 0;
+    return this.workflow.currentJobId() !== null && !this.workflow.isExporting();
   }
 
   exportCsv(): void {
-    const resultData: MolarFractionsResultData | null = this.workflow.resultData();
-    if (resultData === null || resultData.rows.length === 0) {
-      return;
-    }
-
-    const csvContent: string = this.buildCsv(resultData);
-    const filename: string = this.buildFilename('csv');
-    this.downloadFile(filename, csvContent, 'text/csv;charset=utf-8');
+    this.workflow.downloadCsvReport().subscribe({
+      next: (downloadedFile: DownloadedReportFile) => {
+        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+      },
+      error: () => {
+        // El workflow ya expone mensaje de error para la UI.
+      },
+    });
   }
 
   exportLog(): void {
-    const resultData: MolarFractionsResultData | null = this.workflow.resultData();
-    if (resultData === null) {
-      return;
-    }
-
-    const csvContent: string = this.buildCsv(resultData);
-    const generatedAtIso: string = new Date().toISOString();
-    const currentJobId: string = this.workflow.currentJobId() ?? 'unknown';
-
-    const logContent: string = [
-      `MOLAR FRACTIONS EXPORT LOG`,
-      `Generated at: ${generatedAtIso}`,
-      `Job ID: ${currentJobId}`,
-      '',
-      'INPUT DATA',
-      `- pKa values: ${resultData.metadata.pkaValues.join(', ')}`,
-      `- pH mode: ${resultData.metadata.phMode}`,
-      `- pH min: ${resultData.metadata.phMin}`,
-      `- pH max: ${resultData.metadata.phMax}`,
-      `- pH step: ${resultData.metadata.phStep}`,
-      `- Total species: ${resultData.metadata.totalSpecies}`,
-      `- Total points: ${resultData.metadata.totalPoints}`,
-      '',
-      'CSV DATA',
-      csvContent,
-    ].join('\n');
-
-    const filename: string = this.buildFilename('log');
-    this.downloadFile(filename, logContent, 'text/plain;charset=utf-8');
+    this.workflow.downloadLogReport().subscribe({
+      next: (downloadedFile: DownloadedReportFile) => {
+        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+      },
+      error: () => {
+        // El workflow ya expone mensaje de error para la UI.
+      },
+    });
   }
 
   toNumber(rawValue: number | string): number {
     return Number(rawValue);
   }
 
-  private buildCsv(resultData: MolarFractionsResultData): string {
-    const headers: string[] = ['pH', ...resultData.speciesLabels, 'Sum'];
-    const lines: string[] = [headers.join(',')];
-
-    for (const rowItem of resultData.rows) {
-      const cells: string[] = [
-        rowItem.ph.toFixed(2),
-        ...rowItem.fractions.map((fractionValue) => fractionValue.toExponential(6).toUpperCase()),
-        rowItem.sumFraction.toExponential(6).toUpperCase(),
-      ];
-      lines.push(cells.map((cellValue) => this.escapeCsvCell(cellValue)).join(','));
-    }
-
-    return lines.join('\n');
-  }
-
-  private escapeCsvCell(rawValue: string): string {
-    if (rawValue.includes(',') || rawValue.includes('"') || rawValue.includes('\n')) {
-      return `"${rawValue.replace(/"/g, '""')}"`;
-    }
-    return rawValue;
-  }
-
-  private buildFilename(extension: 'csv' | 'log'): string {
-    const currentJobId: string = this.workflow.currentJobId() ?? 'result';
-    const safeJobId: string = currentJobId.replace(/[^a-zA-Z0-9-_]/g, '_');
-    const timestamp: string = new Date().toISOString().replace(/[:.]/g, '-');
-    return `molar-fractions-${safeJobId}-${timestamp}.${extension}`;
-  }
-
-  private downloadFile(filename: string, content: string, mimeType: string): void {
-    const blob: Blob = new Blob([content], { type: mimeType });
+  private downloadFile(filename: string, blob: Blob): void {
     const objectUrl: string = URL.createObjectURL(blob);
     const linkElement: HTMLAnchorElement = document.createElement('a');
 

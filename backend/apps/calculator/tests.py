@@ -2,11 +2,12 @@
 
 from unittest.mock import patch
 
+from django.test import TestCase
+from rest_framework.test import APIClient
+
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 from apps.core.types import JSONMap
-from django.test import TestCase
-from rest_framework.test import APIClient
 
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 
@@ -232,3 +233,81 @@ class CalculatorContractApiTests(TestCase):
         )
         self.assertIn("Iniciando operación de calculadora.", messages)
         self.assertIn("Operación de calculadora completada.", messages)
+
+    def test_report_csv_returns_download_for_completed_calculator_job(self) -> None:
+        completed_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="c" * 64,
+            parameters={
+                "op": "mul",
+                "a": 6.0,
+                "b": 7.0,
+            },
+            status="completed",
+            cache_hit=False,
+            cache_miss=True,
+            results={
+                "final_result": 42.0,
+                "metadata": {
+                    "operation_used": "mul",
+                    "operand_a": 6.0,
+                    "operand_b": 7.0,
+                },
+            },
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{completed_job.id}/report-csv/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", str(response["Content-Type"]))
+
+        csv_content: str = response.content.decode("utf-8")
+        self.assertIn("operation,operand_a,operand_b,final_result", csv_content)
+        self.assertIn("mul", csv_content)
+        self.assertIn("42.0000000000", csv_content)
+
+    def test_report_csv_returns_conflict_for_non_completed_calculator_job(self) -> None:
+        running_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="d" * 64,
+            parameters={
+                "op": "mul",
+                "a": 6.0,
+                "b": 7.0,
+            },
+            status="running",
+            cache_hit=False,
+            cache_miss=True,
+            results=None,
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{running_job.id}/report-csv/")
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("completed", str(response.data["detail"]))
+
+    def test_report_error_returns_download_for_failed_calculator_job(self) -> None:
+        failed_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="e" * 64,
+            parameters={
+                "op": "div",
+                "a": 10.0,
+                "b": 0.0,
+            },
+            status="failed",
+            cache_hit=False,
+            cache_miss=True,
+            error_trace="Division by zero controlada para prueba.",
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{failed_job.id}/report-error/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/plain", str(response["Content-Type"]))
+        report_content: str = response.content.decode("utf-8")
+        self.assertIn("=== JOB ERROR REPORT ===", report_content)
+        self.assertIn("Division by zero controlada para prueba.", report_content)

@@ -11,11 +11,12 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from django.test import TestCase
+from rest_framework.test import APIClient
+
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 from apps.core.types import JSONMap
-from django.test import TestCase
-from rest_framework.test import APIClient
 
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 
@@ -242,3 +243,96 @@ class MolarFractionsContractApiTests(TestCase):
         )
         self.assertIn("Cálculo de punto completado correctamente.", messages)
         self.assertIn("Cálculo global de fracciones molares completado.", messages)
+
+    def test_report_csv_returns_download_for_completed_molar_job(self) -> None:
+        completed_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="m" * 64,
+            parameters={
+                "pka_values": [4.75],
+                "ph_mode": "single",
+                "ph_value": 7.4,
+            },
+            status="completed",
+            cache_hit=False,
+            cache_miss=True,
+            results={
+                "species_labels": ["f0", "f1"],
+                "rows": [
+                    {
+                        "ph": 7.4,
+                        "fractions": [0.1, 0.9],
+                        "sum_fraction": 1.0,
+                    }
+                ],
+                "metadata": {
+                    "pka_values": [4.75],
+                    "ph_mode": "single",
+                    "ph_min": 7.4,
+                    "ph_max": 7.4,
+                    "ph_step": 0.1,
+                    "total_species": 2,
+                    "total_points": 1,
+                },
+            },
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{completed_job.id}/report-csv/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", str(response["Content-Type"]))
+        self.assertIn("attachment;", str(response["Content-Disposition"]))
+
+        csv_content: str = response.content.decode("utf-8")
+        self.assertIn("ph,f0,f1,sum_fraction", csv_content)
+        self.assertIn("7.400000", csv_content)
+
+    def test_report_csv_returns_conflict_when_job_is_not_completed(self) -> None:
+        pending_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="n" * 64,
+            parameters={
+                "pka_values": [4.75],
+                "ph_mode": "single",
+                "ph_value": 7.4,
+            },
+            status="pending",
+            cache_hit=False,
+            cache_miss=True,
+            results=None,
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{pending_job.id}/report-csv/")
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("completed", str(response.data["detail"]))
+
+    def test_report_error_returns_download_for_failed_molar_job(self) -> None:
+        failed_job: ScientificJob = ScientificJob.objects.create(
+            plugin_name=PLUGIN_NAME,
+            algorithm_version="1.0.0",
+            job_hash="o" * 64,
+            parameters={
+                "pka_values": [2.2, 7.2],
+                "ph_mode": "range",
+                "ph_min": 0.0,
+                "ph_max": 14.0,
+                "ph_step": 1.0,
+            },
+            status="failed",
+            cache_hit=False,
+            cache_miss=True,
+            error_trace="Fallo de prueba en cálculo de fracciones molares.",
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{failed_job.id}/report-error/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/plain", str(response["Content-Type"]))
+        report_content: str = response.content.decode("utf-8")
+        self.assertIn("=== JOB ERROR REPORT ===", report_content)
+        self.assertIn(
+            "Fallo de prueba en cálculo de fracciones molares.", report_content
+        )

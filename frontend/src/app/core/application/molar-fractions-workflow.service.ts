@@ -1,9 +1,10 @@
 // molar-fractions-workflow.service.ts: Orquesta formulario, progreso y resultados de molar fractions.
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
 import { JobProgressSnapshot, ScientificJob } from '../api/generated';
 import {
+  DownloadedReportFile,
   JobLogEntryView,
   JobLogsPageView,
   JobsApiService,
@@ -57,6 +58,8 @@ export class MolarFractionsWorkflowService implements OnDestroy {
   readonly jobLogs = signal<JobLogEntryView[]>([]);
   readonly resultData = signal<MolarFractionsResultData | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly exportErrorMessage = signal<string | null>(null);
+  readonly isExporting = signal<boolean>(false);
   readonly historyJobs = signal<ScientificJob[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
 
@@ -99,6 +102,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
 
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
+    this.exportErrorMessage.set(null);
     this.resultData.set(null);
     this.progressSnapshot.set(null);
     this.jobLogs.set([]);
@@ -146,6 +150,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
     this.jobLogs.set([]);
     this.resultData.set(null);
     this.errorMessage.set(null);
+    this.exportErrorMessage.set(null);
   }
 
   openHistoricalJob(jobId: string): void {
@@ -154,6 +159,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
 
     this.activeSection.set('dispatching');
     this.errorMessage.set(null);
+    this.exportErrorMessage.set(null);
     this.currentJobId.set(jobId);
     this.jobLogs.set([]);
 
@@ -201,6 +207,50 @@ export class MolarFractionsWorkflowService implements OnDestroy {
         this.isHistoryLoading.set(false);
       },
     });
+  }
+
+  downloadCsvReport(): Observable<DownloadedReportFile> {
+    const selectedJobId: string | null = this.currentJobId();
+    if (selectedJobId === null || selectedJobId.trim() === '') {
+      throw new Error('No job selected for CSV export.');
+    }
+
+    this.exportErrorMessage.set(null);
+    this.isExporting.set(true);
+
+    return this.jobsApiService.downloadMolarFractionsCsvReport(selectedJobId).pipe(
+      finalize(() => this.isExporting.set(false)),
+      catchError((requestError: unknown) => {
+        const normalizedErrorMessage: string =
+          requestError instanceof Error
+            ? requestError.message
+            : 'Unknown error while downloading CSV report.';
+        this.exportErrorMessage.set(`Unable to download CSV report: ${normalizedErrorMessage}`);
+        return throwError(() => requestError);
+      }),
+    );
+  }
+
+  downloadLogReport(): Observable<DownloadedReportFile> {
+    const selectedJobId: string | null = this.currentJobId();
+    if (selectedJobId === null || selectedJobId.trim() === '') {
+      throw new Error('No job selected for LOG export.');
+    }
+
+    this.exportErrorMessage.set(null);
+    this.isExporting.set(true);
+
+    return this.jobsApiService.downloadMolarFractionsLogReport(selectedJobId).pipe(
+      finalize(() => this.isExporting.set(false)),
+      catchError((requestError: unknown) => {
+        const normalizedErrorMessage: string =
+          requestError instanceof Error
+            ? requestError.message
+            : 'Unknown error while downloading LOG report.';
+        this.exportErrorMessage.set(`Unable to download LOG report: ${normalizedErrorMessage}`);
+        return throwError(() => requestError);
+      }),
+    );
   }
 
   ngOnDestroy(): void {

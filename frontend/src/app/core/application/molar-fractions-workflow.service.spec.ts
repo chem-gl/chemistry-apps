@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
 import { ScientificJob } from '../api/generated';
-import { JobLogsPageView, JobsApiService } from '../api/jobs-api.service';
+import { DownloadedReportFile, JobLogsPageView, JobsApiService } from '../api/jobs-api.service';
 import { MolarFractionsWorkflowService } from './molar-fractions-workflow.service';
 
 function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
@@ -75,6 +75,8 @@ describe('MolarFractionsWorkflowService', () => {
     getScientificJobStatus: ReturnType<typeof vi.fn>;
     getJobLogs: ReturnType<typeof vi.fn>;
     listJobs: ReturnType<typeof vi.fn>;
+    downloadMolarFractionsCsvReport: ReturnType<typeof vi.fn>;
+    downloadMolarFractionsLogReport: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -86,6 +88,8 @@ describe('MolarFractionsWorkflowService', () => {
       getScientificJobStatus: vi.fn(),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
       listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
+      downloadMolarFractionsCsvReport: vi.fn(),
+      downloadMolarFractionsLogReport: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -165,5 +169,41 @@ describe('MolarFractionsWorkflowService', () => {
 
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('reconstruct');
+  });
+
+  it('requests CSV export from backend for current job', () => {
+    const csvFile: DownloadedReportFile = {
+      filename: 'molar_fractions_job-report.csv',
+      blob: new Blob(['ph,f0,sum_fraction'], { type: 'text/csv' }),
+    };
+    jobsApiServiceMock.downloadMolarFractionsCsvReport.mockReturnValue(of(csvFile));
+
+    workflowService.currentJobId.set('molar-export-csv-1');
+
+    workflowService.downloadCsvReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('molar_fractions_job-report.csv');
+    });
+
+    expect(jobsApiServiceMock.downloadMolarFractionsCsvReport).toHaveBeenCalledWith(
+      'molar-export-csv-1',
+    );
+  });
+
+  it('requests LOG export from backend for current job', () => {
+    const logFile: DownloadedReportFile = {
+      filename: 'molar_fractions_job-report.log',
+      blob: new Blob(['log-content'], { type: 'text/plain' }),
+    };
+    jobsApiServiceMock.downloadMolarFractionsLogReport.mockReturnValue(of(logFile));
+
+    workflowService.currentJobId.set('molar-export-log-1');
+
+    workflowService.downloadLogReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('molar_fractions_job-report.log');
+    });
+
+    expect(jobsApiServiceMock.downloadMolarFractionsLogReport).toHaveBeenCalledWith(
+      'molar-export-log-1',
+    );
   });
 });

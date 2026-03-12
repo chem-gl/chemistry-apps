@@ -110,6 +110,37 @@ En routers.py:
 
 No incluir lógica científica en el router.
 
+### Paso 6.1: Endpoints adicionales sin trazabilidad
+
+Algunas apps necesitan endpoints auxiliares que no crean un `ScientificJob` nuevo ni forman parte del ciclo de vida de ejecución. Ejemplos válidos:
+
+- `report-csv`
+- `report-log`
+- `report-error`
+- descargas o vistas derivadas a partir de `results`, `parameters`, `error_trace` o logs ya persistidos
+
+Reglas obligatorias para estos endpoints:
+
+- exponerlos como acciones adicionales del `ViewSet` de la app cuando dependen de un job existente
+- no llamar `dispatch_scientific_job`
+- no cambiar `status`, `progress`, `runtime_state` ni otra trazabilidad del job
+- validar precondiciones de negocio y responder `409` cuando el estado del job no permita la operación
+- documentarlos con `extend_schema`; usar `OpenApiTypes.BINARY` si retornan archivos descargables
+- devolver `Content-Type` y `Content-Disposition` consistentes para consumo por frontend o clientes externos
+
+Patrón recomendado:
+
+1. resolver el job filtrando por `plugin_name`
+2. validar si el endpoint aplica al estado actual
+3. construir el contenido derivado en una función auxiliar o helper compartido
+4. retornar `HttpResponse` descargable sin crear un nuevo job
+
+Buenas prácticas:
+
+- reutilizar helpers compartidos del core cuando exista un patrón transversal de reportes
+- mantener la transformación de contenido fuera de la acción HTTP cuando la lógica crezca
+- cubrir pruebas de `200`, `404`, `409`, `Content-Type`, `Content-Disposition` y contenido esperado
+
 ### Paso 7: Publicar contrato declarativo
 
 En contract.py exponer función get\_<nombre>\_contract() con:

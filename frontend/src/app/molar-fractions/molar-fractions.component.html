@@ -125,12 +125,16 @@
 
             <div class="action-row export-row">
                 <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
-                    Export CSV
+                    {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
                 </button>
-                <button class="btn-secondary" (click)="exportLog()">
+                <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
                     Export LOG (inputs + CSV)
                 </button>
             </div>
+
+            @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+            <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+            }
 
             @if (resultData.rows.length === 0) {
             <p class="status-message">No final rows available yet for this historical job.</p>

@@ -122,6 +122,120 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job de calculadora no encontrado.
+  /api/calculator/jobs/{id}/report-csv/:
+    get:
+      operationId: calculator_jobs_report_csv_retrieve
+      description: Descarga un CSV con operación usada, operandos y resultado final.
+        Solo aplica para jobs en estado completed.
+      summary: Descargar Reporte CSV de Calculadora
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Calculator
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV construido desde resultados del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de calculadora no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/calculator/jobs/{id}/report-error/:
+    get:
+      operationId: calculator_jobs_report_error_retrieve
+      description: Descarga un reporte de error para jobs failed con error_trace.
+        Incluye parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error de Calculadora
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Calculator
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con contexto del error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de calculadora no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/calculator/jobs/{id}/report-log/:
+    get:
+      operationId: calculator_jobs_report_log_retrieve
+      description: Descarga un log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG de Calculadora
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Calculator
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de calculadora no encontrado.
   /api/jobs/:
     get:
       operationId: jobs_list
@@ -630,6 +744,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job de molar_fractions no encontrado.
+  /api/molar-fractions/jobs/{id}/report-csv/:
+    get:
+      operationId: molar_fractions_jobs_report_csv_retrieve
+      description: Descarga un CSV con filas de pH, columnas f0..fn y sum_fraction.
+        Solo aplica para jobs en estado completed.
+      summary: Descargar Reporte CSV de Molar Fractions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV generado a partir de resultados del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de molar_fractions no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/molar-fractions/jobs/{id}/report-error/:
+    get:
+      operationId: molar_fractions_jobs_report_error_retrieve
+      description: Descarga un reporte de error con parámetros de entrada y traza
+        de fallo. Solo aplica para jobs en estado failed con error_trace persistido.
+      summary: Descargar Reporte de Error de Molar Fractions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del fallo del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de molar_fractions no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/molar-fractions/jobs/{id}/report-log/:
+    get:
+      operationId: molar_fractions_jobs_report_log_retrieve
+      description: Descarga un log técnico con metadata del job, parámetros de entrada,
+        snapshot de resultados y eventos persistidos. Si el job está completed, incluye
+        además un bloque CSV embebido.
+      summary: Descargar Reporte LOG de Molar Fractions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad completa del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de molar_fractions no encontrado.
   /api/random-numbers/jobs/:
     post:
       operationId: random_numbers_jobs_create
@@ -709,6 +938,120 @@ paths:
               schema:
                 $ref: '#/components/schemas/RandomNumbersJobResponse'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job random_numbers no encontrado.
+  /api/random-numbers/jobs/{id}/report-csv/:
+    get:
+      operationId: random_numbers_jobs_report_csv_retrieve
+      description: Descarga un CSV con índice secuencial y números generados. Solo
+        aplica para jobs en estado completed.
+      summary: Descargar Reporte CSV de Random Numbers
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - RandomNumbers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV construido desde resultados del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job random_numbers no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/random-numbers/jobs/{id}/report-error/:
+    get:
+      operationId: random_numbers_jobs_report_error_retrieve
+      description: Descarga un reporte de error para jobs failed con error_trace.
+        Incluye parámetros de entrada y traza de fallo.
+      summary: Descargar Reporte de Error de Random Numbers
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - RandomNumbers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del error del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job random_numbers no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/random-numbers/jobs/{id}/report-log/:
+    get:
+      operationId: random_numbers_jobs_report_log_retrieve
+      description: Descarga un log técnico con parámetros, resultados, eventos y CSV
+        embebido cuando el job ya está completed.
+      summary: Descargar Reporte LOG de Random Numbers
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - RandomNumbers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad del job.
         '404':
           content:
             application/json:
