@@ -214,3 +214,88 @@ Resumen mínimo:
 - El parser de logs Gaussian usa fixture local en:
   - `backend/libs/gaussian_log_parser/fixtures/`
 - Esto evita depender del código `legacy/` para pruebas del parser.
+
+## 10) Levantar en desarrollo y en producción
+
+### Desarrollo local
+
+#### Backend (API + worker)
+
+Opción recomendada con un solo comando:
+
+```bash
+cd backend
+./venv/bin/python manage.py up
+```
+
+Si quieres levantar solo la API HTTP sin Celery:
+
+```bash
+cd backend
+./venv/bin/python manage.py up --without-celery
+```
+
+Alternativa manual en tres terminales:
+
+```bash
+# terminal 1
+cd backend
+redis-server
+
+# terminal 2
+cd backend
+./venv/bin/python -m celery -A config worker -l info
+
+# terminal 3
+cd backend
+./venv/bin/python manage.py runserver
+```
+
+#### Frontend (Angular)
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+### Producción
+
+#### Backend (Django ASGI + Celery)
+
+1. Definir variables de entorno seguras (mínimo):
+
+```bash
+export DJANGO_DEBUG=False
+export DJANGO_SECRET_KEY="<clave-segura>"
+export DJANGO_ALLOWED_HOSTS="tu-dominio.com,www.tu-dominio.com"
+export CELERY_BROKER_URL="redis://127.0.0.1:6379/0"
+export CELERY_RESULT_BACKEND="redis://127.0.0.1:6379/0"
+```
+
+2. Aplicar migraciones y levantar API ASGI con Daphne:
+
+```bash
+cd backend
+./venv/bin/python manage.py migrate
+./venv/bin/daphne -b 0.0.0.0 -p 8000 config.asgi:application
+```
+
+3. Levantar worker de Celery:
+
+```bash
+cd backend
+./venv/bin/python -m celery -A config worker -l info
+```
+
+Nota: en producción, Daphne y Celery deben correr como servicios gestionados (por ejemplo systemd o supervisor), detrás de un reverse proxy (Nginx o equivalente).
+
+#### Frontend (build de producción)
+
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+El contenido generado en `frontend/dist/frontend/` debe publicarse como estático (Nginx, CDN o hosting estático). La API backend se expone por dominio/ruta del reverse proxy.
