@@ -27,6 +27,9 @@ from apps.random_numbers.definitions import (
     APP_ROUTE_PREFIX as RANDOM_NUMBERS_ROUTE_PREFIX,
 )
 from apps.random_numbers.routers import RandomNumbersJobViewSet
+from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
+from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
+from apps.tunnel.routers import TunnelJobViewSet
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (
@@ -49,6 +52,11 @@ router.register(
     MOLAR_FRACTIONS_ROUTE_PREFIX,
     MolarFractionsJobViewSet,
     basename=MOLAR_FRACTIONS_ROUTE_BASENAME,
+)
+router.register(
+    TUNNEL_ROUTE_PREFIX,
+    TunnelJobViewSet,
+    basename=TUNNEL_ROUTE_BASENAME,
 )
 
 urlpatterns = [

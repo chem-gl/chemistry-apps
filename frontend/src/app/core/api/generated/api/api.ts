@@ -10,4 +10,7 @@ export * from './molarFractions.serviceInterface';
 export * from './randomNumbers.service';
 import { RandomNumbersService } from './randomNumbers.service';
 export * from './randomNumbers.serviceInterface';
-export const APIS = [CalculatorService, JobsService, MolarFractionsService, RandomNumbersService];
+export * from './tunnel.service';
+import { TunnelService } from './tunnel.service';
+export * from './tunnel.serviceInterface';
+export const APIS = [CalculatorService, JobsService, MolarFractionsService, RandomNumbersService, TunnelService];

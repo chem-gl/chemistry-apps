@@ -30,4 +30,12 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/molar-fractions',
     available: true,
   },
+  {
+    key: 'tunnel',
+    title: 'Tunnel Effect',
+    description:
+      'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
+    routePath: '/tunnel',
+    available: true,
+  },
 ];

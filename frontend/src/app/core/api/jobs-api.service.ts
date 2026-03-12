@@ -2,7 +2,7 @@
 // Este servicio actua como fachada estable: protege al resto del frontend de cambios en
 // el cliente generado y centraliza la logica de despacho, polling y streaming de progreso.
 
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
@@ -46,6 +46,24 @@ export interface MolarFractionsParams {
   phMin?: number;
   phMax?: number;
   phStep?: number;
+  version?: string;
+}
+
+/** Evento de modificación de una entrada de Tunnel capturado en UI */
+export interface TunnelInputChangeEvent {
+  fieldName: string;
+  previousValue: number;
+  newValue: number;
+  changedAt: string;
+}
+
+/** Parámetros de entrada para crear un job de efecto túnel */
+export interface TunnelParams {
+  reactionBarrierZpe: number;
+  imaginaryFrequency: number;
+  reactionEnergyZpe: number;
+  temperature: number;
+  inputChangeEvents: TunnelInputChangeEvent[];
   version?: string;
 }
 
@@ -145,6 +163,7 @@ export type JobsRealtimeEvent =
   providedIn: 'root',
 })
 export class JobsApiService {
+  private readonly httpClient = inject(HttpClient);
   private readonly calculatorClient = inject(CalculatorService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly jobsClient = inject(JobsService);
@@ -390,6 +409,40 @@ export class JobsApiService {
     });
   }
 
+  /** Despacha un job de efecto túnel vía API core desacoplada */
+  dispatchTunnelJob(params: TunnelParams): Observable<ScientificJob> {
+    if (params.reactionBarrierZpe <= 0) {
+      throw new Error('reactionBarrierZpe must be greater than zero.');
+    }
+
+    if (params.imaginaryFrequency <= 0) {
+      throw new Error('imaginaryFrequency must be greater than zero.');
+    }
+
+    if (params.temperature <= 0) {
+      throw new Error('temperature must be greater than zero.');
+    }
+
+    const payloadParameters: Record<string, unknown> = {
+      reaction_barrier_zpe: Number(params.reactionBarrierZpe),
+      imaginary_frequency: Number(params.imaginaryFrequency),
+      reaction_energy_zpe: Number(params.reactionEnergyZpe),
+      temperature: Number(params.temperature),
+      input_change_events: params.inputChangeEvents.map((eventItem: TunnelInputChangeEvent) => ({
+        field_name: eventItem.fieldName,
+        previous_value: Number(eventItem.previousValue),
+        new_value: Number(eventItem.newValue),
+        changed_at: eventItem.changedAt,
+      })),
+    };
+
+    return this.dispatchScientificJob({
+      pluginName: 'tunnel-effect',
+      version: params.version ?? '2.0.0',
+      parameters: payloadParameters,
+    });
+  }
+
   /** Consulta un job científico genérico por id mediante /api/jobs/{id}/ */
   getScientificJobStatus(jobId: string): Observable<ScientificJob> {
     return this.jobsClient.jobsRetrieve(jobId);
@@ -413,6 +466,36 @@ export class JobsApiService {
       ),
       shareReplay(1),
     );
+  }
+
+  /** Descarga el reporte CSV de Tunnel directamente desde backend */
+  downloadTunnelCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.httpClient
+      .get(`${API_BASE_URL}/api/tunnel/jobs/${jobId}/report-csv/`, {
+        observe: 'response',
+        responseType: 'blob',
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) =>
+          this.normalizeDownloadedReport(response, `tunnel_effect_${jobId}_report.csv`),
+        ),
+        shareReplay(1),
+      );
+  }
+
+  /** Descarga el reporte LOG de Tunnel directamente desde backend */
+  downloadTunnelLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.httpClient
+      .get(`${API_BASE_URL}/api/tunnel/jobs/${jobId}/report-log/`, {
+        observe: 'response',
+        responseType: 'blob',
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) =>
+          this.normalizeDownloadedReport(response, `tunnel_effect_${jobId}_report.log`),
+        ),
+        shareReplay(1),
+      );
   }
 
   /** Consulta historial de logs por job con cursor incremental */

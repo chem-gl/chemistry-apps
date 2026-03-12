@@ -11,6 +11,8 @@ api/molarFractions.service.ts
 api/molarFractions.serviceInterface.ts
 api/randomNumbers.service.ts
 api/randomNumbers.serviceInterface.ts
+api/tunnel.service.ts
+api/tunnel.serviceInterface.ts
 configuration.ts
 encoder.ts
 git_push.sh
@@ -44,6 +46,12 @@ model/randomNumbersParameters.ts
 model/randomNumbersResult.ts
 model/randomNumbersResultMetadata.ts
 model/scientificJob.ts
+model/tunnelInputChangeEvent.ts
+model/tunnelJobCreateRequest.ts
+model/tunnelJobResponse.ts
+model/tunnelMetadata.ts
+model/tunnelParameters.ts
+model/tunnelResult.ts
 param.ts
 provide-api.ts
 query.params.ts

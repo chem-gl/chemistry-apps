@@ -1,0 +1,221 @@
+<!-- tunnel.component.html: Tunnel effect app UI equivalent to legacy Tkinter inputs/output. -->
+<section class="tunnel-shell" aria-label="Tunnel effect scientific app">
+    <header class="tunnel-header">
+        <p class="eyebrow">Tunnel Effect</p>
+        <h2>Asymmetric Eckart Tunneling Calculator</h2>
+        <p>
+            Enter the same fields from the legacy desktop tool and track each input modification to
+            understand how the final result was produced.
+        </p>
+    </header>
+
+    <div class="workspace-grid">
+        <section class="entry-panel" aria-label="Input parameters">
+            <h3>Data Entry</h3>
+
+            <div class="field-grid">
+                <label>
+                    Reaction barrier ZPE (kcal/mol)
+                    <input type="number" step="0.0001" [ngModel]="workflow.reactionBarrierZpe()"
+                        (ngModelChange)="workflow.updateReactionBarrierZpe(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Imaginary frequency (cm-1)
+                    <input type="number" step="0.01" [ngModel]="workflow.imaginaryFrequency()"
+                        (ngModelChange)="workflow.updateImaginaryFrequency(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Reaction energy ZPE (kcal/mol)
+                    <input type="number" step="0.0001" [ngModel]="workflow.reactionEnergyZpe()"
+                        (ngModelChange)="workflow.updateReactionEnergyZpe(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Temperature (K)
+                    <input type="number" step="0.01" [ngModel]="workflow.temperature()"
+                        (ngModelChange)="workflow.updateTemperature(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+                    {{ workflow.isProcessing() ? 'Processing...' : 'Data ok, Run Tunnel' }}
+                </button>
+                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+                    Reset
+                </button>
+                <button class="btn-secondary" (click)="clearInputHistory()"
+                    [disabled]="workflow.isProcessing() || workflow.inputChangeEvents().length === 0">
+                    Clear input trace
+                </button>
+            </div>
+        </section>
+
+        <section class="result-panel" aria-label="Results and progress">
+            <h3>Output</h3>
+
+            @if (workflow.activeSection() === 'dispatching') {
+            <p class="status-message">Submitting tunnel effect job to backend...</p>
+            }
+
+            @if (workflow.activeSection() === 'progress') {
+            <div class="progress-card">
+                <p class="job-id">{{ workflow.currentJobId() }}</p>
+                <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()"
+                    aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+                </div>
+                <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
+                <p class="progress-message">{{ workflow.progressMessage() }}</p>
+            </div>
+            }
+
+            @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+            @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+            <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+            }
+
+            <div class="metadata-grid">
+                <p><strong>Barrier ZPE:</strong> {{ resultData.reactionBarrierZpe }}</p>
+                <p><strong>Frequency:</strong> {{ resultData.imaginaryFrequency }}</p>
+                <p><strong>Energy ZPE:</strong> {{ resultData.reactionEnergyZpe }}</p>
+                <p><strong>Temperature:</strong> {{ resultData.temperature }}</p>
+                <p><strong>Model:</strong> {{ resultData.modelName ?? '--' }}</p>
+                <p><strong>Input events:</strong> {{ resultData.inputEventCount }}</p>
+            </div>
+
+            <div class="output-block" [class.output-empty]="!hasResultValues(resultData)">
+                <p>U: {{ formatOutputValue(resultData.u) }}</p>
+                <p>Alpha 1: {{ formatOutputValue(resultData.alpha1) }}</p>
+                <p>Alpha 2: {{ formatOutputValue(resultData.alpha2) }}</p>
+                <p>G: {{ formatOutputValue(resultData.g) }}</p>
+                <p>Kappa TST: {{ formatOutputValue(resultData.kappaTst) }}</p>
+            </div>
+
+            <div class="action-row export-row">
+                <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
+                    {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+                </button>
+                <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
+                    Export LOG (inputs + results)
+                </button>
+            </div>
+
+            @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+            <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+            }
+            }
+
+            @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+            <p class="error-message" role="alert">{{ currentError }}</p>
+            }
+        </section>
+    </div>
+
+    <section class="events-card" aria-label="Input modification events">
+        <div class="events-header">
+            <h3>Input Modification Trace</h3>
+            <p>{{ workflow.inputChangeEvents().length }} events captured</p>
+        </div>
+
+        @if (workflow.inputChangeEvents().length === 0) {
+        <p class="status-message">No input modifications captured yet.</p>
+        } @else {
+        <div class="table-wrap">
+            <table class="events-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Field</th>
+                        <th>Previous</th>
+                        <th>New</th>
+                        <th>Changed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (eventItem of workflow.inputChangeEvents(); track $index) {
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ eventItem.fieldName }}</td>
+                        <td>{{ eventItem.previousValue }}</td>
+                        <td>{{ eventItem.newValue }}</td>
+                        <td>{{ eventItem.changedAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </section>
+
+    @if (workflow.jobLogs().length > 0) {
+    <section class="logs-card" aria-label="Execution logs">
+        <h3>Execution logs</h3>
+        <div class="logs-list">
+            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+            <article class="log-item">
+                <header class="log-header">
+                    <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                        {{ logEntry.level }}
+                    </span>
+                    <span class="log-source">{{ logEntry.source }}</span>
+                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+            </article>
+            }
+        </div>
+    </section>
+    }
+
+    <section class="history-card" aria-label="Historical jobs">
+        <div class="history-header">
+            <h3>Historical jobs</h3>
+            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+            </button>
+        </div>
+
+        @if (workflow.historyJobs().length === 0) {
+        <p class="status-message">No historical jobs yet for tunnel effect.</p>
+        } @else {
+        <div class="table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+                    <tr>
+                        <td class="mono">{{ historyJob.id }}</td>
+                        <td>
+                            <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
+                        </td>
+                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                        <td>
+                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                                Open
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </section>
+</section>

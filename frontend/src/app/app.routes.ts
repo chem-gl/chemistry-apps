@@ -27,6 +27,10 @@ export const routes: Routes = [
       import('./molar-fractions/molar-fractions.component').then((m) => m.MolarFractionsComponent),
   },
   {
+    path: 'tunnel',
+    loadComponent: () => import('./tunnel/tunnel.component').then((m) => m.TunnelComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

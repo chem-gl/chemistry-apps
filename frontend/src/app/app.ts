@@ -23,6 +23,11 @@ export class App {
       path: '/molar-fractions',
       hint: 'Compute molar fractions by pH',
     },
+    {
+      label: 'Tunnel Effect',
+      path: '/tunnel',
+      hint: 'Calculate tunneling correction and trace input edits',
+    },
     { label: 'Apps', path: '/apps', hint: 'Catalog and future scientific apps' },
   ];
 }

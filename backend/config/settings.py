@@ -169,6 +169,7 @@ INSTALLED_APPS = [
     "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
     "apps.molar_fractions.apps.MolarFractionsConfig",
+    "apps.tunnel.apps.TunnelConfig",
 ]
 
 if ENABLE_CORS:
@@ -236,6 +237,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "MolarFractions",
             "description": "Endpoints para cálculo asíncrono de fracciones molares en equilibrio ácido-base.",
+        },
+        {
+            "name": "Tunnel",
+            "description": "Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica y trazabilidad de cambios de entrada.",
         },
     ],
     "CONTACT": {

@@ -1058,6 +1058,214 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job random_numbers no encontrado.
+  /api/tunnel/jobs/:
+    post:
+      operationId: tunnel_jobs_create
+      description: Crea un job asíncrono para calcular el efecto túnel usando teoría
+        de Eckart asimétrica y librería CK_TEST.
+      summary: Crear Job de Tunnel
+      tags:
+      - Tunnel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+            examples:
+              CrearJobTunnelConTrazabilidadDeCambios:
+                value:
+                  version: 2.0.0
+                  reaction_barrier_zpe: 3.5
+                  imaginary_frequency: 625.0
+                  reaction_energy_zpe: -8.2
+                  temperature: 298.15
+                  input_change_events:
+                  - field_name: reaction_barrier_zpe
+                    previous_value: 0.0
+                    new_value: 3.5
+                    changed_at: '2026-03-12T10:01:10.000Z'
+                  - field_name: imaginary_frequency
+                    previous_value: 0.0
+                    new_value: 625.0
+                    changed_at: '2026-03-12T10:01:19.000Z'
+                summary: Crear job Tunnel con trazabilidad de cambios
+                description: Calcula el efecto túnel con teoría de barrera de Eckart
+                  asimétrica y registra eventos de edición de entradas para auditoría.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato de Tunnel.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
+  /api/tunnel/jobs/{id}/:
+    get:
+      operationId: tunnel_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job de Tunnel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job de Tunnel.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de Tunnel no encontrado.
+  /api/tunnel/jobs/{id}/report-csv/:
+    get:
+      operationId: tunnel_jobs_report_csv_retrieve
+      description: Descarga CSV con entradas del cálculo y salida final (U, Alpha1,
+        Alpha2, G, Kappa). Solo aplica para jobs completed.
+      summary: Descargar Reporte CSV de Tunnel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV generado a partir del job Tunnel.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de Tunnel no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/tunnel/jobs/{id}/report-error/:
+    get:
+      operationId: tunnel_jobs_report_error_retrieve
+      description: Descarga reporte de error con parámetros de entrada y traza de
+        fallo. Solo aplica para jobs failed con error_trace persistido.
+      summary: Descargar Reporte de Error de Tunnel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del fallo del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de Tunnel no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/tunnel/jobs/{id}/report-log/:
+    get:
+      operationId: tunnel_jobs_report_log_retrieve
+      description: Descarga un log técnico con parámetros, resultados y eventos de
+        entrada capturados para auditoría del cálculo Tunnel.
+      summary: Descargar Reporte LOG de Tunnel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad completa del job Tunnel.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de Tunnel no encontrado.
 components:
   schemas:
     CalculatorJobCreateRequest:
@@ -1973,6 +2181,223 @@ components:
       - status
       - supports_pause_resume
       - updated_at
+    TunnelInputChangeEvent:
+      type: object
+      description: Evento individual de modificación de entradas.
+      properties:
+        field_name:
+          type: string
+          maxLength: 100
+        previous_value:
+          type: number
+          format: double
+        new_value:
+          type: number
+          format: double
+        changed_at:
+          type: string
+          maxLength: 80
+      required:
+      - changed_at
+      - field_name
+      - new_value
+      - previous_value
+    TunnelJobCreateRequest:
+      type: object
+      description: Valida parámetros de creación para jobs de efecto túnel.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 2.0.0
+          maxLength: 50
+        reaction_barrier_zpe:
+          type: number
+          format: double
+          description: Reaction barrier ZPE en kcal/mol.
+        imaginary_frequency:
+          type: number
+          format: double
+          description: Imaginary frequency en cm^-1 (sin signo negativo).
+        reaction_energy_zpe:
+          type: number
+          format: double
+          description: Reaction energy ZPE en kcal/mol.
+        temperature:
+          type: number
+          format: double
+          description: Temperatura en Kelvin.
+        input_change_events:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          description: Eventos de modificación de entradas capturados en frontend.
+          maxItems: 2000
+      required:
+      - imaginary_frequency
+      - reaction_barrier_zpe
+      - reaction_energy_zpe
+      - temperature
+    TunnelJobResponse:
+      type: object
+      description: Respuesta estable para jobs de la app Tunnel.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/TunnelParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/TunnelResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    TunnelMetadata:
+      type: object
+      description: Metadatos técnicos de resultado Tunnel.
+      properties:
+        model_name:
+          type: string
+          maxLength: 120
+        source_library:
+          type: string
+          maxLength: 120
+        units:
+          type: object
+          additionalProperties:
+            type: string
+        input_event_count:
+          type: integer
+          minimum: 0
+      required:
+      - input_event_count
+      - model_name
+      - source_library
+      - units
+    TunnelParameters:
+      type: object
+      description: Parámetros persistidos de entrada para un job Tunnel.
+      properties:
+        reaction_barrier_zpe:
+          type: number
+          format: double
+        imaginary_frequency:
+          type: number
+          format: double
+        reaction_energy_zpe:
+          type: number
+          format: double
+        temperature:
+          type: number
+          format: double
+        input_change_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TunnelInputChangeEvent'
+      required:
+      - imaginary_frequency
+      - input_change_events
+      - reaction_barrier_zpe
+      - reaction_energy_zpe
+      - temperature
+    TunnelResult:
+      type: object
+      description: Resultado tipado del cálculo Tunnel.
+      properties:
+        u:
+          type: number
+          format: double
+          description: Factor adimensional U.
+        alpha_1:
+          type: number
+          format: double
+          description: Parámetro Alpha 1.
+        alpha_2:
+          type: number
+          format: double
+          description: Parámetro Alpha 2.
+        g:
+          type: number
+          format: double
+          description: Valor G integrado para corrección túnel.
+        kappa_tst:
+          type: number
+          format: double
+          description: Factor de corrección túnel respecto al término clásico exp(-U).
+        metadata:
+          $ref: '#/components/schemas/TunnelMetadata'
+      required:
+      - alpha_1
+      - alpha_2
+      - g
+      - kappa_tst
+      - metadata
+      - u
   securitySchemes:
     basicAuth:
       type: http
@@ -1999,3 +2424,6 @@ tags:
 - name: MolarFractions
   description: Endpoints para cálculo asíncrono de fracciones molares en equilibrio
     ácido-base.
+- name: Tunnel
+  description: Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica
+    y trazabilidad de cambios de entrada.

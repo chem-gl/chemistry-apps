@@ -1,0 +1,343 @@
+/* tunnel.component.scss: Styles for tunnel effect scientific app. */
+.tunnel-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.tunnel-header h2 {
+  margin: 0.2rem 0;
+  color: #102a43;
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.tunnel-header p {
+  margin: 0;
+  color: #334e68;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.entry-panel,
+.result-panel,
+.events-card,
+.logs-card,
+.history-card {
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 1rem;
+  min-width: 0;
+}
+
+.entry-panel h3,
+.result-panel h3,
+.events-card h3,
+.logs-card h3,
+.history-card h3 {
+  margin: 0 0 0.8rem;
+  color: #102a43;
+  font-size: 1rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.field-grid label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #243b53;
+}
+
+input {
+  border: 1px solid #bcccdc;
+  border-radius: 9px;
+  padding: 0.46rem 0.6rem;
+  font-size: 0.95rem;
+  background: #fff;
+  width: 100%;
+}
+
+.action-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.history-open-btn {
+  border-radius: 999px;
+  padding: 0.42rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border: 1px solid #0f766e;
+  color: #fff;
+  background: #0f766e;
+}
+
+.btn-secondary,
+.history-open-btn {
+  border: 1px solid #486581;
+  color: #334e68;
+  background: #fff;
+}
+
+.status-message {
+  margin: 0;
+  color: #486581;
+  font-size: 0.86rem;
+}
+
+.progress-card {
+  border: 1px solid #cbd2d9;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id,
+.mono {
+  margin: 0;
+  word-break: break-all;
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.74rem;
+  color: #243b53;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #d9e2ec;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0f766e, #0ea5a1);
+}
+
+.progress-pct,
+.progress-message {
+  margin: 0;
+  color: #334e68;
+  font-size: 0.82rem;
+}
+
+.summary-banner {
+  margin: 0 0 0.6rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 0.3rem 0.7rem;
+  margin-bottom: 0.65rem;
+}
+
+.metadata-grid p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #334e68;
+}
+
+.output-block {
+  border: 1px solid #cbd2d9;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.65rem;
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.65rem;
+}
+
+.output-block p {
+  margin: 0;
+  color: #1f2937;
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.82rem;
+}
+
+.output-empty {
+  opacity: 0.72;
+}
+
+.export-row {
+  margin-bottom: 0.6rem;
+}
+
+.events-header,
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.events-header p {
+  margin: 0;
+  color: #486581;
+  font-size: 0.8rem;
+}
+
+.table-wrap {
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+  overflow: auto;
+  background: #fff;
+  max-width: 100%;
+}
+
+.events-table,
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.events-table th,
+.events-table td,
+.history-table th,
+.history-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e4ecf5;
+  font-size: 0.78rem;
+}
+
+.events-table th,
+.history-table th {
+  background: #f0f4f8;
+  color: #243b53;
+  font-weight: 700;
+}
+
+.error-message {
+  margin: 0;
+  color: #9b1c1c;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.logs-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.log-item {
+  border: 1px solid #d9e2ec;
+  border-radius: 9px;
+  padding: 0.5rem;
+  background: #fff;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.log-header {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+}
+
+.log-level {
+  border-radius: 999px;
+  padding: 0.08rem 0.4rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.log-level-debug {
+  color: #334155;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.log-level-info {
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
+.log-level-warning {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.log-level-error {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.log-source,
+.log-index {
+  color: #486581;
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.log-message {
+  margin: 0;
+  color: #243b53;
+  font-size: 0.8rem;
+}
+
+.log-payload {
+  margin: 0;
+  border: 1px solid #d9e2ec;
+  background: #f8fbff;
+  border-radius: 8px;
+  padding: 0.45rem;
+  color: #334e68;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 1024px) {
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .events-table,
+  .history-table {
+    min-width: 540px;
+  }
+}
