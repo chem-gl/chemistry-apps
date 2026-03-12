@@ -31,6 +31,14 @@ export const routes: Routes = [
     loadComponent: () => import('./tunnel/tunnel.component').then((m) => m.TunnelComponent),
   },
   {
+    path: 'easy-rate',
+    loadComponent: () => import('./easy-rate/easy-rate.component').then((m) => m.EasyRateComponent),
+  },
+  {
+    path: 'marcus',
+    loadComponent: () => import('./marcus/marcus.component').then((m) => m.MarcusComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

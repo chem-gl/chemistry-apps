@@ -170,6 +170,8 @@ INSTALLED_APPS = [
     "apps.random_numbers.apps.RandomNumbersConfig",
     "apps.molar_fractions.apps.MolarFractionsConfig",
     "apps.tunnel.apps.TunnelConfig",
+    "apps.easy_rate.apps.EasyRateConfig",
+    "apps.marcus.apps.MarcusConfig",
 ]
 
 if ENABLE_CORS:
@@ -240,7 +242,24 @@ SPECTACULAR_SETTINGS = {
         },
         {
             "name": "Tunnel",
-            "description": "Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica y trazabilidad de cambios de entrada.",
+            "description": (
+                "Endpoints para cálculo del efecto túnel con teoría de Eckart "
+                "asimétrica y trazabilidad de cambios de entrada."
+            ),
+        },
+        {
+            "name": "EasyRate",
+            "description": (
+                "Endpoints para cinética Easy-rate con carga de archivos Gaussian "
+                "y persistencia de entradas para reproducibilidad."
+            ),
+        },
+        {
+            "name": "Marcus",
+            "description": (
+                "Endpoints para cinética por modelo Marcus con carga multipart "
+                "y persistencia de entradas reproducibles."
+            ),
         },
     ],
     "CONTACT": {

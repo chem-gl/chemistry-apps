@@ -28,6 +28,16 @@ export class App {
       path: '/tunnel',
       hint: 'Calculate tunneling correction and trace input edits',
     },
+    {
+      label: 'Easy-rate',
+      path: '/easy-rate',
+      hint: 'TST + Eckart tunnel rate constants from Gaussian logs',
+    },
+    {
+      label: 'Marcus',
+      path: '/marcus',
+      hint: 'Marcus theory energies and rate constants',
+    },
     { label: 'Apps', path: '/apps', hint: 'Catalog and future scientific apps' },
   ];
 }

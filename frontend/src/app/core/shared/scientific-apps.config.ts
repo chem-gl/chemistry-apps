@@ -38,4 +38,20 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/tunnel',
     available: true,
   },
+  {
+    key: 'easy-rate',
+    title: 'Easy-rate',
+    description:
+      'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
+    routePath: '/easy-rate',
+    available: true,
+  },
+  {
+    key: 'marcus',
+    title: 'Marcus Theory',
+    description:
+      'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
+    routePath: '/marcus',
+    available: true,
+  },
 ];

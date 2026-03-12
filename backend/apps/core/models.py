@@ -189,3 +189,95 @@ class ScientificJobLogEvent(models.Model):
 
     def __str__(self) -> str:
         return f"JobLog<{self.job_id}:{self.event_index}:{self.level}>"
+
+
+class ScientificJobInputArtifact(models.Model):
+    """Metadatos de artefactos de entrada asociados a un job científico."""
+
+    ROLE_CHOICES: list[tuple[str, str]] = [
+        ("input", "Input"),
+        ("auxiliary", "Auxiliary"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    job = models.ForeignKey(
+        ScientificJob,
+        on_delete=models.CASCADE,
+        related_name="input_artifacts",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="input",
+        help_text="Rol del artefacto para trazabilidad de negocio.",
+    )
+    field_name = models.CharField(
+        max_length=80,
+        help_text="Nombre del campo multipart de origen.",
+    )
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Nombre de archivo reportado por el cliente.",
+    )
+    content_type = models.CharField(
+        max_length=120,
+        default="application/octet-stream",
+        help_text="Tipo MIME recibido durante la carga.",
+    )
+    sha256 = models.CharField(
+        max_length=64,
+        help_text="Hash SHA-256 calculado sobre el contenido completo.",
+    )
+    size_bytes = models.PositiveBigIntegerField(
+        default=0,
+        help_text="Tamaño total del artefacto en bytes.",
+    )
+    chunk_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Cantidad de chunks persistidos para reconstrucción.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["job", "field_name"]),
+            models.Index(fields=["job", "created_at"]),
+            models.Index(fields=["sha256"]),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"InputArtifact<{self.job_id}:{self.field_name}:{self.original_filename}>"
+        )
+
+
+class ScientificJobInputArtifactChunk(models.Model):
+    """Persistencia chunked del contenido binario de un artefacto de entrada."""
+
+    artifact = models.ForeignKey(
+        ScientificJobInputArtifact,
+        on_delete=models.CASCADE,
+        related_name="chunks",
+    )
+    chunk_index = models.PositiveIntegerField(
+        help_text="Índice incremental del chunk para reconstrucción ordenada.",
+    )
+    chunk_data = models.BinaryField(help_text="Contenido binario del fragmento.")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["chunk_index"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["artifact", "chunk_index"],
+                name="unique_input_artifact_chunk_index",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["artifact", "chunk_index"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"InputArtifactChunk<{self.artifact_id}:{self.chunk_index}>"

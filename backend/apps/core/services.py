@@ -233,6 +233,9 @@ class RuntimeJobService:
         execution_parameters: JSONMap = {
             key: value for key, value in cast(JSONMap, job.parameters).items()
         }
+        execution_parameters["__job_id"] = str(job.id)
+        execution_parameters["__plugin_name"] = job.plugin_name
+
         runtime_state_value: JSONMap = cast(JSONMap, job.runtime_state)
         if len(runtime_state_value) > 0:
             execution_parameters["__runtime_state"] = runtime_state_value
@@ -926,4 +929,3 @@ class JobService:
         """Reanuda un job pausado para permitir su reencolado desde cualquier capa."""
         runtime_service: RuntimeJobService = JobService._get_runtime_service()
         return runtime_service.resume_job(job_id)
-

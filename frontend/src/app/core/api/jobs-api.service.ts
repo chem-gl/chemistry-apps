@@ -11,11 +11,15 @@ import {
   CalculatorJobResponse,
   CalculatorOperationEnum,
   CalculatorService,
+  EasyRateJobResponse,
+  EasyRateService,
   JobControlActionResponse,
   JobCreateRequest,
   JobLogList,
   JobProgressSnapshot,
   JobsService,
+  MarcusJobResponse,
+  MarcusService,
   MolarFractionsService,
   ScientificJob,
 } from './generated';
@@ -64,6 +68,42 @@ export interface TunnelParams {
   reactionEnergyZpe: number;
   temperature: number;
   inputChangeEvents: TunnelInputChangeEvent[];
+  version?: string;
+}
+
+/** Parámetros de entrada para crear un job Easy-rate con archivos Gaussian */
+export interface EasyRateParams {
+  transitionStateFile: File;
+  reactant1File?: File;
+  reactant2File?: File;
+  product1File?: File;
+  product2File?: File;
+  title?: string;
+  reactionPathDegeneracy?: number;
+  cageEffects?: boolean;
+  diffusion?: boolean;
+  solvent?: string;
+  customViscosity?: number;
+  radiusReactant1?: number;
+  radiusReactant2?: number;
+  reactionDistance?: number;
+  printDataInput?: boolean;
+  version?: string;
+}
+
+/** Parámetros de entrada para crear un job Marcus con 6 archivos Gaussian */
+export interface MarcusParams {
+  reactant1File: File;
+  reactant2File: File;
+  product1AdiabaticFile: File;
+  product2AdiabaticFile: File;
+  product1VerticalFile: File;
+  product2VerticalFile: File;
+  title?: string;
+  diffusion?: boolean;
+  radiusReactant1?: number;
+  radiusReactant2?: number;
+  reactionDistance?: number;
   version?: string;
 }
 
@@ -165,6 +205,8 @@ export type JobsRealtimeEvent =
 export class JobsApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly calculatorClient = inject(CalculatorService);
+  private readonly easyRateClient = inject(EasyRateService);
+  private readonly marcusClient = inject(MarcusService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly jobsClient = inject(JobsService);
 
@@ -704,6 +746,140 @@ export class JobsApiService {
       switchMap(() => this.getJobProgress(jobId)),
       filter((snap) => snap.status === 'completed' || snap.status === 'failed'),
       take(1),
+    );
+  }
+
+  /** Despacha un job Easy-rate con archivos Gaussian en multipart */
+  dispatchEasyRateJob(params: EasyRateParams): Observable<EasyRateJobResponse> {
+    return this.easyRateClient
+      .easyRateJobsCreate(
+        params.transitionStateFile,
+        params.version ?? '1.0.0',
+        params.title,
+        params.reactionPathDegeneracy,
+        params.cageEffects,
+        params.diffusion,
+        params.solvent,
+        params.customViscosity,
+        params.radiusReactant1,
+        params.radiusReactant2,
+        params.reactionDistance,
+        params.printDataInput,
+        params.reactant1File,
+        params.reactant2File,
+        params.product1File,
+        params.product2File,
+      )
+      .pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job Easy-rate por UUID */
+  getEasyRateJobStatus(jobId: string): Observable<EasyRateJobResponse> {
+    return this.easyRateClient.easyRateJobsRetrieve(jobId);
+  }
+
+  /** Descarga reporte CSV de Easy-rate */
+  downloadEasyRateCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.easyRateClient.easyRateJobsReportCsvRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga reporte LOG de Easy-rate */
+  downloadEasyRateLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.easyRateClient.easyRateJobsReportLogRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_report.log`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga reporte de error de Easy-rate */
+  downloadEasyRateErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.easyRateClient.easyRateJobsReportErrorRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_error.txt`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga ZIP de archivos de entrada originales de Easy-rate */
+  downloadEasyRateInputsZip(jobId: string): Observable<DownloadedReportFile> {
+    return this.easyRateClient.easyRateJobsReportInputsRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_inputs.zip`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Despacha un job Marcus con 6 archivos Gaussian en multipart */
+  dispatchMarcusJob(params: MarcusParams): Observable<MarcusJobResponse> {
+    return this.marcusClient
+      .marcusJobsCreate(
+        params.reactant1File,
+        params.reactant2File,
+        params.product1AdiabaticFile,
+        params.product2AdiabaticFile,
+        params.product1VerticalFile,
+        params.product2VerticalFile,
+        params.version ?? '1.0.0',
+        params.title,
+        params.diffusion,
+        params.radiusReactant1,
+        params.radiusReactant2,
+        params.reactionDistance,
+      )
+      .pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job Marcus por UUID */
+  getMarcusJobStatus(jobId: string): Observable<MarcusJobResponse> {
+    return this.marcusClient.marcusJobsRetrieve(jobId);
+  }
+
+  /** Descarga reporte CSV de Marcus */
+  downloadMarcusCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.marcusClient.marcusJobsReportCsvRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `marcus_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga reporte LOG de Marcus */
+  downloadMarcusLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.marcusClient.marcusJobsReportLogRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `marcus_${jobId}_report.log`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga reporte de error de Marcus */
+  downloadMarcusErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.marcusClient.marcusJobsReportErrorRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `marcus_${jobId}_error.txt`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga ZIP de archivos de entrada originales de Marcus */
+  downloadMarcusInputsZip(jobId: string): Observable<DownloadedReportFile> {
+    return this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `marcus_${jobId}_inputs.zip`),
+      ),
+      shareReplay(1),
     );
   }
 }

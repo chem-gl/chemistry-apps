@@ -12,13 +12,17 @@ Cómo se usa:
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import hashlib
+import io
+from collections.abc import Callable, Iterator
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
+from zipfile import ZipFile
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -27,8 +31,14 @@ from rest_framework.test import APIClient
 
 from .adapters import DjangoJobLogPublisherAdapter
 from .app_registry import ScientificAppDefinition, ScientificAppRegistry
+from .artifacts import ScientificInputArtifactStorageService
 from .cache import generate_job_hash
-from .models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
+from .models import (
+    ScientificCacheEntry,
+    ScientificJob,
+    ScientificJobInputArtifact,
+    ScientificJobLogEvent,
+)
 from .ports import JobLogUpdate
 from .processing import PluginRegistry
 from .realtime import (
@@ -306,6 +316,164 @@ class JobServiceTests(TestCase):
         self.assertEqual(resumed_job.status, "pending")
         self.assertFalse(bool(resumed_job.pause_requested))
         self.assertEqual(resumed_job.progress_stage, "queued")
+
+
+class InputArtifactStorageTests(TestCase):
+    """Valida persistencia chunked de artefactos de entrada en base de datos."""
+
+    class _ChunkedUploadedFile(SimpleUploadedFile):
+        """Archivo de prueba que fuerza entrega por chunks para validación."""
+
+        def __init__(
+            self,
+            *,
+            name: str,
+            content: bytes,
+            content_type: str,
+            forced_chunk_size: int,
+        ) -> None:
+            super().__init__(name=name, content=content, content_type=content_type)
+            self._forced_chunk_size: int = forced_chunk_size
+
+        def chunks(self, chunk_size: int | None = None) -> Iterator[bytes]:
+            del chunk_size
+            payload: bytes = bytes(self.read())
+            self.seek(0)
+            for start in range(0, len(payload), self._forced_chunk_size):
+                end: int = start + self._forced_chunk_size
+                yield payload[start:end]
+
+        def multiple_chunks(self, chunk_size: int | None = None) -> bool:
+            del chunk_size
+            return True
+
+    def setUp(self) -> None:
+        self.storage_service = ScientificInputArtifactStorageService()
+        self.job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="easy-rate",
+            algorithm_version="1.0.0",
+            status="pending",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"title": "demo"},
+        )
+
+    def test_store_uploaded_file_persists_metadata_and_content(self) -> None:
+        payload_bytes: bytes = b"first line\nsecond line\n"
+        uploaded_file = SimpleUploadedFile(
+            name="sample.log",
+            content=payload_bytes,
+            content_type="text/plain",
+        )
+
+        artifact: ScientificJobInputArtifact = self.storage_service.store_uploaded_file(
+            job=self.job,
+            uploaded_file=uploaded_file,
+            field_name="reactant_1_file",
+        )
+
+        self.assertEqual(artifact.job_id, self.job.id)
+        self.assertEqual(artifact.field_name, "reactant_1_file")
+        self.assertEqual(artifact.original_filename, "sample.log")
+        self.assertEqual(artifact.content_type, "text/plain")
+        self.assertEqual(artifact.size_bytes, len(payload_bytes))
+        self.assertEqual(artifact.chunk_count, 1)
+        self.assertEqual(artifact.sha256, hashlib.sha256(payload_bytes).hexdigest())
+
+        restored_bytes: bytes = self.storage_service.read_artifact_bytes(
+            artifact=artifact
+        )
+        self.assertEqual(restored_bytes, payload_bytes)
+
+    def test_store_uploaded_file_splits_content_in_multiple_chunks(self) -> None:
+        service_with_small_chunks = ScientificInputArtifactStorageService(
+            chunk_size_bytes=4
+        )
+        payload_bytes: bytes = b"1234567890"
+        uploaded_file = self._ChunkedUploadedFile(
+            name="chunks.log",
+            content=payload_bytes,
+            content_type="text/plain",
+            forced_chunk_size=4,
+        )
+
+        artifact: ScientificJobInputArtifact = (
+            service_with_small_chunks.store_uploaded_file(
+                job=self.job,
+                uploaded_file=uploaded_file,
+                field_name="transition_state_file",
+            )
+        )
+
+        self.assertEqual(artifact.chunk_count, 3)
+        self.assertEqual(
+            list(
+                artifact.chunks.order_by("chunk_index").values_list(
+                    "chunk_index", flat=True
+                )
+            ),
+            [0, 1, 2],
+        )
+        self.assertEqual(
+            service_with_small_chunks.read_artifact_bytes(artifact=artifact),
+            payload_bytes,
+        )
+
+    def test_build_job_artifacts_zip_contains_manifest_and_files(self) -> None:
+        first_payload: bytes = b"reactant data"
+        second_payload: bytes = b"ts data"
+
+        first_file = SimpleUploadedFile(
+            name="shared-name.log",
+            content=first_payload,
+            content_type="text/plain",
+        )
+        second_file = SimpleUploadedFile(
+            name="shared-name.log",
+            content=second_payload,
+            content_type="text/plain",
+        )
+
+        self.storage_service.store_uploaded_file(
+            job=self.job,
+            uploaded_file=first_file,
+            field_name="reactant_file",
+        )
+        self.storage_service.store_uploaded_file(
+            job=self.job,
+            uploaded_file=second_file,
+            field_name="transition_file",
+        )
+
+        zip_bytes: bytes = self.storage_service.build_job_artifacts_zip_bytes(
+            job=self.job
+        )
+        with ZipFile(io.BytesIO(zip_bytes), mode="r") as zip_file:
+            zip_entries: list[str] = zip_file.namelist()
+            self.assertIn("manifest.json", zip_entries)
+
+            content_by_entry: dict[str, bytes] = {
+                entry: zip_file.read(entry)
+                for entry in zip_entries
+                if entry != "manifest.json"
+            }
+
+        reactant_entries: list[str] = [
+            entry
+            for entry in content_by_entry.keys()
+            if entry.startswith("reactant_file/")
+        ]
+        transition_entries: list[str] = [
+            entry
+            for entry in content_by_entry.keys()
+            if entry.startswith("transition_file/")
+        ]
+
+        self.assertEqual(len(reactant_entries), 1)
+        self.assertEqual(len(transition_entries), 1)
+        self.assertEqual(content_by_entry[reactant_entries[0]], first_payload)
+        self.assertEqual(content_by_entry[transition_entries[0]], second_payload)
 
 
 class JobApiTests(TestCase):

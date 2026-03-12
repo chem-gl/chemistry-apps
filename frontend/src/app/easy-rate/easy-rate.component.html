@@ -1,0 +1,406 @@
+<!-- easy-rate.component.html: UI de Easy-rate para cálculo TST + túnel de constantes de velocidad química. -->
+<section class="easy-rate-shell" aria-label="Easy-rate scientific app">
+    <header class="easy-rate-header">
+        <p class="eyebrow">Kinetics — TST + Eckart Tunnel</p>
+        <h2>Easy-rate Calculator</h2>
+        <p>
+            Upload Gaussian log files for your reaction structures and compute rate constants
+            with statistical mechanics, tunneling correction, and optional diffusion control.
+        </p>
+    </header>
+
+    <div class="workspace-grid">
+        <!-- ── Panel de entrada ─────────────────────────────────────── -->
+        <section class="entry-panel" aria-label="Input files and parameters">
+            <h3>Input Files</h3>
+
+            <div class="file-grid">
+                <label class="upload-zone"
+                    [class.has-file]="workflow.transitionStateFile() !== null"
+                    [class.is-disabled]="workflow.isProcessing()">
+                    <span class="upload-label">Transition State <span class="req-mark">*</span></span>
+                    <input type="file" accept=".log,.out,.txt" (change)="onTransitionStateFileChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    @if (workflow.transitionStateFile(); as tsFile) {
+                        <span class="file-badge">{{ tsFile.name }}</span>
+                    } @else {
+                        <span class="upload-hint">Browse .log / .out / .txt</span>
+                    }
+                </label>
+
+                <label class="upload-zone"
+                    [class.has-file]="workflow.reactant1File() !== null"
+                    [class.is-disabled]="workflow.isProcessing()">
+                    <span class="upload-label">Reactant 1 <span class="opt-mark">(optional)</span></span>
+                    <input type="file" accept=".log,.out,.txt" (change)="onReactant1FileChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    @if (workflow.reactant1File(); as r1File) {
+                        <span class="file-badge">{{ r1File.name }}</span>
+                    } @else {
+                        <span class="upload-hint">Browse .log / .out / .txt</span>
+                    }
+                </label>
+
+                <label class="upload-zone"
+                    [class.has-file]="workflow.reactant2File() !== null"
+                    [class.is-disabled]="workflow.isProcessing()">
+                    <span class="upload-label">Reactant 2 <span class="opt-mark">(optional)</span></span>
+                    <input type="file" accept=".log,.out,.txt" (change)="onReactant2FileChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    @if (workflow.reactant2File(); as r2File) {
+                        <span class="file-badge">{{ r2File.name }}</span>
+                    } @else {
+                        <span class="upload-hint">Browse .log / .out / .txt</span>
+                    }
+                </label>
+
+                <label class="upload-zone"
+                    [class.has-file]="workflow.product1File() !== null"
+                    [class.is-disabled]="workflow.isProcessing()">
+                    <span class="upload-label">Product 1 <span class="opt-mark">(optional)</span></span>
+                    <input type="file" accept=".log,.out,.txt" (change)="onProduct1FileChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    @if (workflow.product1File(); as p1File) {
+                        <span class="file-badge">{{ p1File.name }}</span>
+                    } @else {
+                        <span class="upload-hint">Browse .log / .out / .txt</span>
+                    }
+                </label>
+
+                <label class="upload-zone"
+                    [class.has-file]="workflow.product2File() !== null"
+                    [class.is-disabled]="workflow.isProcessing()">
+                    <span class="upload-label">Product 2 <span class="opt-mark">(optional)</span></span>
+                    <input type="file" accept=".log,.out,.txt" (change)="onProduct2FileChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    @if (workflow.product2File(); as p2File) {
+                        <span class="file-badge">{{ p2File.name }}</span>
+                    } @else {
+                        <span class="upload-hint">Browse .log / .out / .txt</span>
+                    }
+                </label>
+            </div>
+
+            <h3 class="section-sub">Parameters</h3>
+
+            <div class="param-grid">
+                <label>
+                    Title
+                    <input type="text" [ngModel]="workflow.title()" (ngModelChange)="workflow.updateTitle($event)"
+                        [disabled]="workflow.isProcessing()" placeholder="Optional reaction label" />
+                </label>
+
+                <label>
+                    Reaction path degeneracy
+                    <input type="number" step="1" min="1" [ngModel]="workflow.reactionPathDegeneracy()"
+                        (ngModelChange)="workflow.updateReactionPathDegeneracy($event)"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Solvent
+                    <select [ngModel]="workflow.solvent()" (ngModelChange)="workflow.updateSolvent($event)"
+                        [disabled]="workflow.isProcessing()">
+                        @for (solventOption of solventOptions; track solventOption) {
+                        <option [value]="solventOption">{{ solventOption }}</option>
+                        }
+                    </select>
+                </label>
+
+                @if (workflow.showCustomViscosity()) {
+                <label>
+                    Custom viscosity (Pa·s)
+                    <input type="number" step="0.0001" [ngModel]="workflow.customViscosity()"
+                        (ngModelChange)="workflow.updateCustomViscosity($event)" [disabled]="workflow.isProcessing()" />
+                </label>
+                }
+            </div>
+
+            <div class="checkbox-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" [checked]="workflow.cageEffects()" (change)="onCageEffectsChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    Cage effects
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" [checked]="workflow.diffusion()" (change)="onDiffusionChange($event)"
+                        [disabled]="workflow.isProcessing()" />
+                    Diffusion correction
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" [checked]="workflow.printDataInput()"
+                        (change)="onPrintDataInputChange($event)" [disabled]="workflow.isProcessing()" />
+                    Print data input
+                </label>
+            </div>
+
+            @if (workflow.showDiffusionFields()) {
+            <div class="param-grid diffusion-fields">
+                <label>
+                    Radius reactant 1 (Å)
+                    <input type="number" step="0.01" [ngModel]="workflow.radiusReactant1()"
+                        (ngModelChange)="workflow.updateRadiusReactant1($event)" [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Radius reactant 2 (Å)
+                    <input type="number" step="0.01" [ngModel]="workflow.radiusReactant2()"
+                        (ngModelChange)="workflow.updateRadiusReactant2($event)" [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Reaction distance (Å)
+                    <input type="number" step="0.01" [ngModel]="workflow.reactionDistance()"
+                        (ngModelChange)="workflow.updateReactionDistance($event)"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+            </div>
+            }
+
+            <div class="action-row">
+                <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
+                    {{ workflow.isProcessing() ? 'Processing...' : 'Run Easy-rate' }}
+                </button>
+                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+                    Reset
+                </button>
+                <button class="btn-secondary" (click)="clearFiles()" [disabled]="workflow.isProcessing()">
+                    Clear files
+                </button>
+            </div>
+        </section>
+
+        <!-- ── Panel de resultado ────────────────────────────────────── -->
+        <section class="result-panel" aria-label="Results and progress">
+            <h3>Output</h3>
+
+            @if (workflow.activeSection() === 'dispatching') {
+            <p class="status-message">Submitting Easy-rate job to backend...</p>
+            }
+
+            @if (workflow.activeSection() === 'progress') {
+            <div class="progress-card">
+                <p class="job-id">{{ workflow.currentJobId() }}</p>
+                <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()"
+                    aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+                </div>
+                <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
+                <p class="progress-message">{{ workflow.progressMessage() }}</p>
+            </div>
+            }
+
+            @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+            @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+            <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+            }
+
+            <div class="result-title-row">
+                <strong>{{ resultData.title || 'Easy-rate result' }}</strong>
+                <span class="solvent-tag">{{ resultData.solventUsed }}</span>
+            </div>
+
+            <!-- Constantes de velocidad -->
+            <div class="result-section">
+                <h4>Rate Constants</h4>
+                <div class="kv-grid">
+                    <span class="kv-label">k (TST)</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }}
+                        L·mol⁻¹·s⁻¹</span>
+                    <span class="kv-label">k (final)</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }}
+                        L·mol⁻¹·s⁻¹</span>
+                    @if (resultData.diffusionApplied) {
+                    <span class="kv-label">k (diff-corrected)</span>
+                    <span class="kv-value mono">{{
+                        formatRateConstant(resultData.rateConstantDiffusionCorrected) }}
+                        L·mol⁻¹·s⁻¹</span>
+                    <span class="kv-label">k_diff</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }}
+                        L·mol⁻¹·s⁻¹</span>
+                    }
+                    <span class="kv-label">κ (TST)</span>
+                    <span class="kv-value mono">{{ resultData.kappaTst.toFixed(6) }}</span>
+                </div>
+            </div>
+
+            <!-- Corrección por túnel -->
+            @if (resultData.tunnelU !== null) {
+            <div class="result-section">
+                <h4>Tunnel Correction (Eckart)</h4>
+                <div class="kv-grid">
+                    <span class="kv-label">U</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelU) }}</span>
+                    <span class="kv-label">α₁</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha1) }}</span>
+                    <span class="kv-label">α₂</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha2) }}</span>
+                    <span class="kv-label">G</span>
+                    <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelG) }}</span>
+                    <span class="kv-label">ν‡ (cm⁻¹)</span>
+                    <span class="kv-value mono">{{ resultData.imaginaryFrequencyCm1.toFixed(2) }}</span>
+                </div>
+            </div>
+            }
+
+            <!-- Termodinámica -->
+            <div class="result-section">
+                <h4>Thermochemistry</h4>
+                <div class="thermo-grid">
+                    <span></span>
+                    <span class="thermo-header">Reaction</span>
+                    <span class="thermo-header">Activation</span>
+                    <span class="thermo-row-label">ΔG (kcal/mol)</span>
+                    <span class="mono">{{ formatKcalMol(resultData.gibbsReactionKcalMol) }}</span>
+                    <span class="mono">{{ formatKcalMol(resultData.gibbsActivationKcalMol) }}</span>
+                    <span class="thermo-row-label">ΔH (kcal/mol)</span>
+                    <span class="mono">{{ formatKcalMol(resultData.enthalpyReactionKcalMol) }}</span>
+                    <span class="mono">{{ formatKcalMol(resultData.enthalpyActivationKcalMol) }}</span>
+                    <span class="thermo-row-label">ΔZPE (kcal/mol)</span>
+                    <span class="mono">{{ formatKcalMol(resultData.zpeReactionKcalMol) }}</span>
+                    <span class="mono">{{ formatKcalMol(resultData.zpeActivationKcalMol) }}</span>
+                </div>
+            </div>
+
+            <!-- Condiciones y flags -->
+            <div class="result-section">
+                <h4>Conditions</h4>
+                <div class="kv-grid">
+                    <span class="kv-label">Temperature</span>
+                    <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
+                    <span class="kv-label">Path degeneracy</span>
+                    <span class="kv-value">{{ resultData.reactionPathDegeneracy }}</span>
+                    @if (resultData.viscosityPaS !== null) {
+                    <span class="kv-label">Viscosity</span>
+                    <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
+                    }
+                </div>
+                <div class="flag-row">
+                    @if (resultData.cageEffectsApplied) {
+                    <span class="flag-tag flag-on">Cage effects</span>
+                    }
+                    @if (resultData.diffusionApplied) {
+                    <span class="flag-tag flag-on">Diffusion</span>
+                    }
+                    @if (resultData.warnNegativeActivation) {
+                    <span class="flag-tag flag-warn">⚠ Negative activation</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Archivos de entrada persistidos -->
+            @if (resultData.fileDescriptors.length > 0) {
+            <div class="result-section">
+                <h4>Persisted Input Files</h4>
+                <div class="file-descriptors-list">
+                    @for (fd of resultData.fileDescriptors; track fd.fieldName) {
+                    <div class="fd-item">
+                        <span class="fd-field">{{ fd.fieldName }}</span>
+                        <span class="fd-name">{{ fd.originalFilename }}</span>
+                        <span class="fd-size">{{ formatBytes(fd.sizeBytes) }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <div class="action-row export-row">
+                <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExport()">
+                    {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+                </button>
+                <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExport()">
+                    Export LOG
+                </button>
+                <button class="btn-secondary" (click)="exportInputsZip()" [disabled]="!canExport()">
+                    Download Inputs ZIP
+                </button>
+            </div>
+
+            @if (workflow.exportErrorMessage(); as exportError) {
+            <p class="error-message" role="alert">{{ exportError }}</p>
+            }
+            }
+
+            @if (workflow.activeSection() === 'error') {
+            <div class="error-block">
+                @if (workflow.errorMessage(); as currentError) {
+                <p class="error-message" role="alert">{{ currentError }}</p>
+                }
+                @if (workflow.currentJobId() !== null) {
+                <button class="btn-secondary" (click)="exportError()" [disabled]="!canExport()">
+                    Download Error Report
+                </button>
+                }
+            </div>
+            }
+        </section>
+    </div>
+
+    <!-- ── Logs de ejecución ──────────────────────────────────────────── -->
+    @if (workflow.jobLogs().length > 0) {
+    <section class="logs-card" aria-label="Execution logs">
+        <h3>Execution logs</h3>
+        <div class="logs-list">
+            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+            <article class="log-item">
+                <header class="log-header">
+                    <span class="log-level" [class]="logLevelClass(logEntry.level)">{{ logEntry.level }}</span>
+                    <span class="log-source">{{ logEntry.source }}</span>
+                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+            </article>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- ── Historial de jobs ──────────────────────────────────────────── -->
+    <section class="history-card" aria-label="Historical jobs">
+        <div class="history-header">
+            <h3>Historical jobs</h3>
+            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+            </button>
+        </div>
+
+        @if (workflow.historyJobs().length === 0) {
+        <p class="status-message">No historical Easy-rate jobs yet.</p>
+        } @else {
+        <div class="table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+                    <tr>
+                        <td class="mono">{{ historyJob.id }}</td>
+                        <td>
+                            <span [class]="historicalStatusClass(historyJob.status)">{{
+                                historyJob.status }}</span>
+                        </td>
+                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                        <td>
+                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                                Open
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </section>
+</section>

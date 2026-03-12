@@ -236,6 +236,229 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job de calculadora no encontrado.
+  /api/easy-rate/jobs/:
+    post:
+      operationId: easy_rate_jobs_create
+      description: Crea un job asíncrono Easy-rate a partir de archivos Gaussian cargados
+        en multipart y parámetros de ejecución.
+      summary: Crear Job Easy-rate
+      tags:
+      - EasyRate
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EasyRateJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EasyRateJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación en create multipart.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
+  /api/easy-rate/jobs/{id}/:
+    get:
+      operationId: easy_rate_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job Easy-rate
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job Easy-rate.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Easy-rate no encontrado.
+  /api/easy-rate/jobs/{id}/report-csv/:
+    get:
+      operationId: easy_rate_jobs_report_csv_retrieve
+      description: Descarga CSV con parámetros clave y resultados principales. Solo
+        aplica para jobs completed.
+      summary: Descargar Reporte CSV de Easy-rate
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV generado a partir del job Easy-rate.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Easy-rate no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/easy-rate/jobs/{id}/report-error/:
+    get:
+      operationId: easy_rate_jobs_report_error_retrieve
+      description: Descarga reporte de error con parámetros y traza de fallo.
+      summary: Descargar Reporte de Error de Easy-rate
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del fallo del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Easy-rate no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/easy-rate/jobs/{id}/report-inputs/:
+    get:
+      operationId: easy_rate_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales de Easy-rate
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Easy-rate no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/easy-rate/jobs/{id}/report-log/:
+    get:
+      operationId: easy_rate_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros, resultados y eventos persistidos.
+      summary: Descargar Reporte LOG de Easy-rate
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad completa del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Easy-rate no encontrado.
   /api/jobs/:
     get:
       operationId: jobs_list
@@ -646,6 +869,228 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/marcus/jobs/:
+    post:
+      operationId: marcus_jobs_create
+      description: Crea un job asíncrono Marcus con seis archivos Gaussian en multipart
+        y parámetros opcionales de difusión.
+      summary: Crear Job Marcus
+      tags:
+      - Marcus
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MarcusJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MarcusJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarcusJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación en create multipart Marcus.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job Marcus.
+  /api/marcus/jobs/{id}/:
+    get:
+      operationId: marcus_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job Marcus
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job Marcus.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarcusJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Marcus no encontrado.
+  /api/marcus/jobs/{id}/report-csv/:
+    get:
+      operationId: marcus_jobs_report_csv_retrieve
+      description: Descarga CSV de resultados principales para jobs completed.
+      summary: Descargar Reporte CSV de Marcus
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV generado a partir del job Marcus.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Marcus no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/marcus/jobs/{id}/report-error/:
+    get:
+      operationId: marcus_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con traza persistida.
+      summary: Descargar Reporte de Error de Marcus
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del fallo del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Marcus no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/marcus/jobs/{id}/report-inputs/:
+    get:
+      operationId: marcus_jobs_report_inputs_retrieve
+      description: Descarga ZIP con artefactos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales de Marcus
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Marcus no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/marcus/jobs/{id}/report-log/:
+    get:
+      operationId: marcus_jobs_report_log_retrieve
+      description: Descarga log técnico de parámetros, resultados y eventos.
+      summary: Descargar Reporte LOG de Marcus
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad completa del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job Marcus no encontrado.
   /api/molar-fractions/jobs/:
     post:
       operationId: molar_fractions_jobs_create
@@ -1268,6 +1713,9 @@ paths:
           description: Job de Tunnel no encontrado.
 components:
   schemas:
+    BlankEnum:
+      enum:
+      - ''
     CalculatorJobCreateRequest:
       type: object
       description: |-
@@ -1444,6 +1892,433 @@ components:
       - operand_a
       - operand_b
       - operation_used
+    EasyRateArtifactDescriptor:
+      type: object
+      description: Descriptor de archivo usado para trazabilidad en parámetros del
+        job.
+      properties:
+        field_name:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          maxLength: 255
+        content_type:
+          type: string
+          maxLength: 120
+        sha256:
+          type: string
+          maxLength: 64
+        size_bytes:
+          type: integer
+          minimum: 0
+      required:
+      - content_type
+      - field_name
+      - original_filename
+      - sha256
+      - size_bytes
+    EasyRateJobCreateRequest:
+      type: object
+      description: Serializer de entrada para creación de jobs Easy-rate.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 2.0.0
+          maxLength: 50
+        title:
+          type: string
+          minLength: 1
+          default: Title
+          maxLength: 160
+        reaction_path_degeneracy:
+          type: number
+          format: double
+          minimum: 1.0e-12
+          default: 1.0
+        cage_effects:
+          type: boolean
+          default: false
+        diffusion:
+          type: boolean
+          default: false
+        solvent:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/SolventEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        custom_viscosity:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_1:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_2:
+          type: number
+          format: double
+          nullable: true
+        reaction_distance:
+          type: number
+          format: double
+          nullable: true
+        print_data_input:
+          type: boolean
+          default: false
+        reactant_1_file:
+          type: string
+          format: binary
+          nullable: true
+        reactant_2_file:
+          type: string
+          format: binary
+          nullable: true
+        transition_state_file:
+          type: string
+          format: binary
+        product_1_file:
+          type: string
+          format: binary
+          nullable: true
+        product_2_file:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - transition_state_file
+    EasyRateJobResponse:
+      type: object
+      description: Serializer de salida para jobs de la app Easy-rate.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/EasyRateParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/EasyRateResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    EasyRateParameters:
+      type: object
+      description: Parámetros persistidos de entrada de un job Easy-rate.
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        reaction_path_degeneracy:
+          type: number
+          format: double
+        cage_effects:
+          type: boolean
+        diffusion:
+          type: boolean
+        solvent:
+          type: string
+          maxLength: 40
+        custom_viscosity:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_1:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_2:
+          type: number
+          format: double
+          nullable: true
+        reaction_distance:
+          type: number
+          format: double
+          nullable: true
+        print_data_input:
+          type: boolean
+        file_descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/EasyRateArtifactDescriptor'
+      required:
+      - cage_effects
+      - custom_viscosity
+      - diffusion
+      - file_descriptors
+      - print_data_input
+      - radius_reactant_1
+      - radius_reactant_2
+      - reaction_distance
+      - reaction_path_degeneracy
+      - solvent
+      - title
+    EasyRateResult:
+      type: object
+      description: Resultado científico de Easy-rate con métricas principales.
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        rate_constant:
+          type: number
+          format: double
+          nullable: true
+        rate_constant_tst:
+          type: number
+          format: double
+          nullable: true
+        rate_constant_diffusion_corrected:
+          type: number
+          format: double
+          nullable: true
+        k_diff:
+          type: number
+          format: double
+          nullable: true
+        gibbs_reaction_kcal_mol:
+          type: number
+          format: double
+        gibbs_activation_kcal_mol:
+          type: number
+          format: double
+        enthalpy_reaction_kcal_mol:
+          type: number
+          format: double
+        enthalpy_activation_kcal_mol:
+          type: number
+          format: double
+        zpe_reaction_kcal_mol:
+          type: number
+          format: double
+        zpe_activation_kcal_mol:
+          type: number
+          format: double
+        tunnel_u:
+          type: number
+          format: double
+          nullable: true
+        tunnel_alpha_1:
+          type: number
+          format: double
+          nullable: true
+        tunnel_alpha_2:
+          type: number
+          format: double
+          nullable: true
+        tunnel_g:
+          type: number
+          format: double
+          nullable: true
+        kappa_tst:
+          type: number
+          format: double
+        temperature_k:
+          type: number
+          format: double
+        imaginary_frequency_cm1:
+          type: number
+          format: double
+        delta_n_reaction:
+          type: integer
+        delta_n_transition:
+          type: integer
+        warn_negative_activation:
+          type: boolean
+        cage_effects_applied:
+          type: boolean
+        diffusion_applied:
+          type: boolean
+        solvent_used:
+          type: string
+          maxLength: 40
+        viscosity_pa_s:
+          type: number
+          format: double
+          nullable: true
+        reaction_path_degeneracy:
+          type: number
+          format: double
+        structures:
+          $ref: '#/components/schemas/EasyRateStructures'
+        metadata:
+          $ref: '#/components/schemas/EasyRateResultMetadata'
+      required:
+      - cage_effects_applied
+      - delta_n_reaction
+      - delta_n_transition
+      - diffusion_applied
+      - enthalpy_activation_kcal_mol
+      - enthalpy_reaction_kcal_mol
+      - gibbs_activation_kcal_mol
+      - gibbs_reaction_kcal_mol
+      - imaginary_frequency_cm1
+      - k_diff
+      - kappa_tst
+      - metadata
+      - rate_constant
+      - rate_constant_diffusion_corrected
+      - rate_constant_tst
+      - reaction_path_degeneracy
+      - solvent_used
+      - structures
+      - temperature_k
+      - title
+      - tunnel_alpha_1
+      - tunnel_alpha_2
+      - tunnel_g
+      - tunnel_u
+      - viscosity_pa_s
+      - warn_negative_activation
+      - zpe_activation_kcal_mol
+      - zpe_reaction_kcal_mol
+    EasyRateResultMetadata:
+      type: object
+      description: Metadatos de trazabilidad de salida Easy-rate.
+      properties:
+        model_name:
+          type: string
+          maxLength: 120
+        source_library:
+          type: string
+          maxLength: 120
+        units:
+          type: object
+          additionalProperties:
+            type: string
+        input_artifact_count:
+          type: integer
+          minimum: 0
+      required:
+      - input_artifact_count
+      - model_name
+      - source_library
+      - units
+    EasyRateStructureSnapshot:
+      type: object
+      description: Snapshot termodinámico de una estructura parseada.
+      properties:
+        source_field:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          nullable: true
+          maxLength: 255
+        free_energy:
+          type: number
+          format: double
+        thermal_enthalpy:
+          type: number
+          format: double
+        zero_point_energy:
+          type: number
+          format: double
+        scf_energy:
+          type: number
+          format: double
+        temperature:
+          type: number
+          format: double
+        negative_frequencies:
+          type: integer
+        imaginary_frequency:
+          type: number
+          format: double
+      required:
+      - free_energy
+      - imaginary_frequency
+      - negative_frequencies
+      - original_filename
+      - scf_energy
+      - source_field
+      - temperature
+      - thermal_enthalpy
+      - zero_point_energy
+    EasyRateStructures:
+      type: object
+      description: Conjunto de estructuras normalizadas usadas por Easy-rate.
+      properties:
+        reactant_1_file:
+          $ref: '#/components/schemas/EasyRateStructureSnapshot'
+        reactant_2_file:
+          $ref: '#/components/schemas/EasyRateStructureSnapshot'
+        transition_state_file:
+          $ref: '#/components/schemas/EasyRateStructureSnapshot'
+        product_1_file:
+          $ref: '#/components/schemas/EasyRateStructureSnapshot'
+        product_2_file:
+          $ref: '#/components/schemas/EasyRateStructureSnapshot'
+      required:
+      - product_1_file
+      - product_2_file
+      - reactant_1_file
+      - reactant_2_file
+      - transition_state_file
     ErrorResponse:
       type: object
       description: Schema consistente para respuestas de error API.
@@ -1659,6 +2534,325 @@ components:
         * `info` - info
         * `warning` - warning
         * `error` - error
+    MarcusArtifactDescriptor:
+      type: object
+      description: Descriptor de archivo persistido en parámetros del job.
+      properties:
+        field_name:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          maxLength: 255
+        content_type:
+          type: string
+          maxLength: 120
+        sha256:
+          type: string
+          maxLength: 64
+        size_bytes:
+          type: integer
+          minimum: 0
+      required:
+      - content_type
+      - field_name
+      - original_filename
+      - sha256
+      - size_bytes
+    MarcusJobCreateRequest:
+      type: object
+      description: Serializer de entrada para jobs Marcus.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 1.0.0
+          maxLength: 50
+        title:
+          type: string
+          minLength: 1
+          default: Title
+          maxLength: 160
+        diffusion:
+          type: boolean
+          default: false
+        radius_reactant_1:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_2:
+          type: number
+          format: double
+          nullable: true
+        reaction_distance:
+          type: number
+          format: double
+          nullable: true
+        reactant_1_file:
+          type: string
+          format: binary
+        reactant_2_file:
+          type: string
+          format: binary
+        product_1_adiabatic_file:
+          type: string
+          format: binary
+        product_2_adiabatic_file:
+          type: string
+          format: binary
+        product_1_vertical_file:
+          type: string
+          format: binary
+        product_2_vertical_file:
+          type: string
+          format: binary
+      required:
+      - product_1_adiabatic_file
+      - product_1_vertical_file
+      - product_2_adiabatic_file
+      - product_2_vertical_file
+      - reactant_1_file
+      - reactant_2_file
+    MarcusJobResponse:
+      type: object
+      description: Serializer de salida para jobs de la app Marcus.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/MarcusParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/MarcusResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    MarcusParameters:
+      type: object
+      description: Parámetros persistidos de entrada para jobs Marcus.
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        diffusion:
+          type: boolean
+        radius_reactant_1:
+          type: number
+          format: double
+          nullable: true
+        radius_reactant_2:
+          type: number
+          format: double
+          nullable: true
+        reaction_distance:
+          type: number
+          format: double
+          nullable: true
+        file_descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarcusArtifactDescriptor'
+      required:
+      - diffusion
+      - file_descriptors
+      - radius_reactant_1
+      - radius_reactant_2
+      - reaction_distance
+      - title
+    MarcusResult:
+      type: object
+      description: Resultado de cinética Marcus.
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        adiabatic_energy_kcal_mol:
+          type: number
+          format: double
+        adiabatic_energy_corrected_kcal_mol:
+          type: number
+          format: double
+        vertical_energy_kcal_mol:
+          type: number
+          format: double
+        reorganization_energy_kcal_mol:
+          type: number
+          format: double
+        barrier_kcal_mol:
+          type: number
+          format: double
+        rate_constant_tst:
+          type: number
+          format: double
+        rate_constant:
+          type: number
+          format: double
+        diffusion_applied:
+          type: boolean
+        k_diff:
+          type: number
+          format: double
+          nullable: true
+        temperature_k:
+          type: number
+          format: double
+        viscosity_pa_s:
+          type: number
+          format: double
+          nullable: true
+        structures:
+          $ref: '#/components/schemas/MarcusStructures'
+        metadata:
+          $ref: '#/components/schemas/MarcusResultMetadata'
+      required:
+      - adiabatic_energy_corrected_kcal_mol
+      - adiabatic_energy_kcal_mol
+      - barrier_kcal_mol
+      - diffusion_applied
+      - k_diff
+      - metadata
+      - rate_constant
+      - rate_constant_tst
+      - reorganization_energy_kcal_mol
+      - structures
+      - temperature_k
+      - title
+      - vertical_energy_kcal_mol
+      - viscosity_pa_s
+    MarcusResultMetadata:
+      type: object
+      description: Metadatos de salida del cálculo Marcus.
+      properties:
+        model_name:
+          type: string
+          maxLength: 120
+        source_library:
+          type: string
+          maxLength: 120
+        units:
+          type: object
+          additionalProperties:
+            type: string
+        input_artifact_count:
+          type: integer
+          minimum: 0
+      required:
+      - input_artifact_count
+      - model_name
+      - source_library
+      - units
+    MarcusStructureSnapshot:
+      type: object
+      description: Snapshot mínimo por estructura usada en modelo Marcus.
+      properties:
+        source_field:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          maxLength: 255
+        scf_energy:
+          type: number
+          format: double
+        thermal_free_enthalpy:
+          type: number
+          format: double
+        temperature:
+          type: number
+          format: double
+      required:
+      - original_filename
+      - scf_energy
+      - source_field
+      - temperature
+      - thermal_free_enthalpy
+    MarcusStructures:
+      type: object
+      description: Conjunto de estructuras obligatorias del cálculo Marcus.
+      properties:
+        reactant_1_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+        reactant_2_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+        product_1_adiabatic_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+        product_2_adiabatic_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+        product_1_vertical_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+        product_2_vertical_file:
+          $ref: '#/components/schemas/MarcusStructureSnapshot'
+      required:
+      - product_1_adiabatic_file
+      - product_1_vertical_file
+      - product_2_adiabatic_file
+      - product_2_vertical_file
+      - reactant_1_file
+      - reactant_2_file
     MolarFractionRow:
       type: object
       description: Fila de tabla de fracciones para un pH específico.
@@ -2181,6 +3375,17 @@ components:
       - status
       - supports_pause_resume
       - updated_at
+    SolventEnum:
+      enum:
+      - Benzene
+      - Gas phase (Air)
+      - Pentyl ethanoate
+      - Water
+      - Other
+      type: string
+      description: "* `` - \n* `Benzene` - Benzene\n* `Gas phase (Air)` - Gas phase
+        (Air)\n* `Pentyl ethanoate` - Pentyl ethanoate\n* `Water` - Water\n* `Other`
+        - Other"
     TunnelInputChangeEvent:
       type: object
       description: Evento individual de modificación de entradas.
@@ -2427,3 +3632,9 @@ tags:
 - name: Tunnel
   description: Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica
     y trazabilidad de cambios de entrada.
+- name: EasyRate
+  description: Endpoints para cinética Easy-rate con carga de archivos Gaussian y
+    persistencia de entradas para reproducibilidad.
+- name: Marcus
+  description: Endpoints para cinética por modelo Marcus con carga multipart y persistencia
+    de entradas reproducibles.

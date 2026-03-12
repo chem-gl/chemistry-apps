@@ -13,6 +13,12 @@ from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
 from apps.calculator.routers import CalculatorJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
 from apps.core.routers import JobViewSet
+from apps.easy_rate.definitions import APP_ROUTE_BASENAME as EASY_RATE_ROUTE_BASENAME
+from apps.easy_rate.definitions import APP_ROUTE_PREFIX as EASY_RATE_ROUTE_PREFIX
+from apps.easy_rate.routers import EasyRateJobViewSet
+from apps.marcus.definitions import APP_ROUTE_BASENAME as MARCUS_ROUTE_BASENAME
+from apps.marcus.definitions import APP_ROUTE_PREFIX as MARCUS_ROUTE_PREFIX
+from apps.marcus.routers import MarcusJobViewSet
 from apps.molar_fractions.definitions import (
     APP_ROUTE_BASENAME as MOLAR_FRACTIONS_ROUTE_BASENAME,
 )
@@ -57,6 +63,16 @@ router.register(
     TUNNEL_ROUTE_PREFIX,
     TunnelJobViewSet,
     basename=TUNNEL_ROUTE_BASENAME,
+)
+router.register(
+    EASY_RATE_ROUTE_PREFIX,
+    EasyRateJobViewSet,
+    basename=EASY_RATE_ROUTE_BASENAME,
+)
+router.register(
+    MARCUS_ROUTE_PREFIX,
+    MarcusJobViewSet,
+    basename=MARCUS_ROUTE_BASENAME,
 )
 
 urlpatterns = [
