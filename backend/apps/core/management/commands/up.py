@@ -3,6 +3,9 @@
 Objetivo del archivo:
 - Facilitar un arranque local productivo del backend con un solo comando,
   coordinando `runserver`, `celery worker` y disponibilidad del broker.
+- Implementa vigilancia de archivos Python con reinicio automático del servidor
+  al detectar cambios, sin depender del reloader interno de Django/Daphne.
+  (Daphne sobreescribe `runserver` y no activa el StatReloader de Django.)
 
 Cómo se usa:
 - Flujo completo: `python manage.py up`.
@@ -15,17 +18,73 @@ import os
 import socket
 import subprocess
 import sys
+import threading
 from pathlib import Path
 from time import sleep
 from urllib.parse import urlparse
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
+# Directorios ignorados por el vigilante de archivos (no son código fuente).
+_WATCH_SKIP_DIRS: frozenset[str] = frozenset(
+    {"venv", ".venv", "__pycache__", ".git", "node_modules", ".mypy_cache"}
+)
+
+# Intervalo de sondeo del vigilante de archivos (segundos).
+_WATCH_POLL_INTERVAL: float = 1.0
+
+
+class _PythonFileWatcher:
+    """Vigila cambios en archivos .py dentro de un directorio raíz.
+
+    Usa sondeo por mtime (stdlib os.stat) sin depender de paquetes externos.
+    Diseñado para correr en un hilo secundario; se detiene limpiamente cuando
+    stop_event es señalado desde el hilo principal.
+    """
+
+    def __init__(self, watch_root: Path) -> None:
+        self._watch_root = watch_root
+        self._baseline: dict[str, float] = self._collect_mtimes()
+
+    def _collect_mtimes(self) -> dict[str, float]:
+        """Recolecta los mtime de cada .py del árbol fuente, saltando directorios irrelevantes."""
+        mtimes: dict[str, float] = {}
+        for root, dirs, files in os.walk(self._watch_root):
+            # Poda en sitio para que os.walk no descienda a directorios ignorados.
+            dirs[:] = [
+                d for d in dirs if d not in _WATCH_SKIP_DIRS and not d.startswith(".")
+            ]
+            root_path = Path(root)
+            for filename in files:
+                if not filename.endswith(".py"):
+                    continue
+                file_path = root_path / filename
+                try:
+                    mtimes[str(file_path)] = file_path.stat().st_mtime
+                except OSError:
+                    pass
+        return mtimes
+
+    def wait_for_change(self, stop_event: threading.Event) -> bool:
+        """Bloquea hasta detectar un cambio o hasta que stop_event sea señalado.
+
+        Returns:
+            True  — se detectó al menos un archivo modificado, creado o eliminado.
+            False — stop_event fue señalado antes de detectar cambios.
+        """
+        while not stop_event.is_set():
+            sleep(_WATCH_POLL_INTERVAL)
+            current_mtimes = self._collect_mtimes()
+            if current_mtimes != self._baseline:
+                self._baseline = current_mtimes
+                return True
+        return False
+
 
 class Command(BaseCommand):
     """Inicia servicios locales necesarios para desarrollo del backend."""
 
-    help = "Levanta runserver y celery worker juntos usando el mismo entorno Python."
+    help = "Levanta runserver y celery worker con auto-reload propio al detectar cambios en .py."
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Define opciones del comando para host, puerto y worker."""
@@ -51,7 +110,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options) -> None:
-        """Orquesta inicio y cierre coordinado de runserver y celery."""
+        """Orquesta inicio, auto-reload y cierre coordinado de runserver y celery."""
         backend_root_path: Path = self._resolve_backend_root_path()
         python_executable_path: str = sys.executable
 
@@ -60,98 +119,195 @@ class Command(BaseCommand):
         celery_loglevel_value: str = str(options["celery_loglevel"])
         run_without_celery: bool = bool(options["without_celery"])
 
-        runserver_command: list[str] = [
-            python_executable_path,
-            "manage.py",
-            "runserver",
-            f"{host_value}:{port_value}",
-        ]
+        runserver_command: list[str] = self._build_runserver_command(
+            python_executable_path=python_executable_path,
+            host_value=host_value,
+            port_value=port_value,
+        )
 
         redis_process: subprocess.Popen[bytes] | None = None
         celery_process: subprocess.Popen[bytes] | None = None
-        runserver_process: subprocess.Popen[bytes] | None = None
 
         try:
             if not run_without_celery:
-                broker_url: str = self._get_celery_broker_url()
-                if not self._is_broker_reachable(broker_url):
-                    if not self._is_redis_broker_url(broker_url):
-                        raise CommandError(
-                            "El broker de Celery no está disponible y no es Redis. "
-                            "Configura un broker accesible o usa --without-celery."
-                        )
-
-                    self.stdout.write(
-                        self.style.WARNING(
-                            "Broker Redis no disponible. Intentando iniciar "
-                            "redis-server automáticamente..."
-                        )
-                    )
-                    redis_process = self._start_redis_server(backend_root_path)
-
-                    broker_is_ready: bool = self._wait_for_broker_reachable(
-                        broker_url,
-                        timeout_seconds=8.0,
-                    )
-                    if not broker_is_ready:
-                        raise CommandError(
-                            "Redis fue iniciado pero no estuvo disponible a tiempo. "
-                            "Revisa el puerto/configuración y vuelve a intentar."
-                        )
-
-                    self.stdout.write(
-                        self.style.SUCCESS("Redis server iniciado correctamente.")
-                    )
-
-            if not run_without_celery:
-                celery_command: list[str] = [
-                    python_executable_path,
-                    "-m",
-                    "celery",
-                    "-A",
-                    "config",
-                    "worker",
-                    "-l",
-                    celery_loglevel_value,
-                ]
-                celery_process = subprocess.Popen(
-                    celery_command,
-                    cwd=backend_root_path,
-                )
-                sleep(0.8)
-
-                celery_return_code: int | None = celery_process.poll()
-                if celery_return_code is not None:
-                    raise CommandError(
-                        "Celery worker terminó inmediatamente. "
-                        "Revisa que Redis esté activo y dependencias instaladas."
-                    )
-
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        "Celery worker iniciado. "
-                        "Presiona Ctrl+C para detener ambos procesos."
-                    )
+                redis_process = self._ensure_broker_available(backend_root_path)
+                celery_process = self._start_celery_worker(
+                    backend_root_path=backend_root_path,
+                    python_executable_path=python_executable_path,
+                    celery_loglevel_value=celery_loglevel_value,
                 )
 
-            runserver_process = subprocess.Popen(
-                runserver_command,
-                cwd=backend_root_path,
+            self._run_runserver_with_restart_loop(
+                backend_root_path=backend_root_path,
+                runserver_command=runserver_command,
+                host_value=host_value,
+                port_value=port_value,
             )
-            public_url: str = self._build_public_runserver_url(host_value, port_value)
-            self.stdout.write(self.style.SUCCESS(f"Runserver iniciado en {public_url}"))
 
-            runserver_return_code: int = runserver_process.wait()
-            if runserver_return_code != 0:
-                raise CommandError(
-                    f"Runserver finalizó con código {runserver_return_code}."
-                )
         except KeyboardInterrupt:
             self.stdout.write(self.style.WARNING("Deteniendo servicios..."))
         finally:
-            self._stop_process(runserver_process, process_name="runserver")
             self._stop_process(celery_process, process_name="celery worker")
             self._stop_process(redis_process, process_name="redis server")
+
+    def _build_runserver_command(
+        self,
+        *,
+        python_executable_path: str,
+        host_value: str,
+        port_value: str,
+    ) -> list[str]:
+        """Construye comando runserver con recarga externa controlada por este comando."""
+        return [
+            python_executable_path,
+            "manage.py",
+            "runserver",
+            "--noreload",
+            f"{host_value}:{port_value}",
+        ]
+
+    def _ensure_broker_available(
+        self,
+        backend_root_path: Path,
+    ) -> subprocess.Popen[bytes] | None:
+        """Garantiza broker accesible; inicia Redis local si aplica y hace falta."""
+        broker_url: str = self._get_celery_broker_url()
+        if self._is_broker_reachable(broker_url):
+            return None
+
+        if not self._is_redis_broker_url(broker_url):
+            raise CommandError(
+                "El broker de Celery no está disponible y no es Redis. "
+                "Configura un broker accesible o usa --without-celery."
+            )
+
+        self.stdout.write(
+            self.style.WARNING(
+                "Broker Redis no disponible. Intentando iniciar "
+                "redis-server automáticamente..."
+            )
+        )
+        redis_process = self._start_redis_server(backend_root_path)
+
+        broker_is_ready: bool = self._wait_for_broker_reachable(
+            broker_url,
+            timeout_seconds=8.0,
+        )
+        if not broker_is_ready:
+            raise CommandError(
+                "Redis fue iniciado pero no estuvo disponible a tiempo. "
+                "Revisa el puerto/configuración y vuelve a intentar."
+            )
+
+        self.stdout.write(self.style.SUCCESS("Redis server iniciado correctamente."))
+        return redis_process
+
+    def _start_celery_worker(
+        self,
+        *,
+        backend_root_path: Path,
+        python_executable_path: str,
+        celery_loglevel_value: str,
+    ) -> subprocess.Popen[bytes]:
+        """Inicia el worker de Celery y valida que no termine de inmediato."""
+        celery_command: list[str] = [
+            python_executable_path,
+            "-m",
+            "celery",
+            "-A",
+            "config",
+            "worker",
+            "-l",
+            celery_loglevel_value,
+        ]
+        celery_process = subprocess.Popen(
+            celery_command,
+            cwd=backend_root_path,
+        )
+        sleep(0.8)
+
+        celery_return_code: int | None = celery_process.poll()
+        if celery_return_code is not None:
+            raise CommandError(
+                "Celery worker terminó inmediatamente. "
+                "Revisa que Redis esté activo y dependencias instaladas."
+            )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                "Celery worker iniciado. Presiona Ctrl+C para detener ambos procesos."
+            )
+        )
+        return celery_process
+
+    def _run_runserver_with_restart_loop(
+        self,
+        *,
+        backend_root_path: Path,
+        runserver_command: list[str],
+        host_value: str,
+        port_value: str,
+    ) -> None:
+        """Ejecuta runserver y lo reinicia cuando cambian archivos Python."""
+        watcher = _PythonFileWatcher(backend_root_path)
+        public_url: str = self._build_public_runserver_url(host_value, port_value)
+        runserver_process: subprocess.Popen[bytes] | None = None
+
+        try:
+            while True:
+                runserver_process = subprocess.Popen(
+                    runserver_command,
+                    cwd=backend_root_path,
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(f"Runserver iniciado en {public_url}")
+                )
+
+                file_changed: bool = self._wait_for_server_or_file_change(
+                    watcher=watcher,
+                    runserver_process=runserver_process,
+                )
+
+                if file_changed:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            "Cambio detectado en archivo Python. Reiniciando servidor..."
+                        )
+                    )
+                    self._stop_process(runserver_process, process_name="runserver")
+                    runserver_process = None
+                    continue
+
+                exit_code: int = runserver_process.returncode or 0
+                if exit_code != 0:
+                    raise CommandError(f"Runserver finalizó con código {exit_code}.")
+                break
+        finally:
+            self._stop_process(runserver_process, process_name="runserver")
+
+    def _wait_for_server_or_file_change(
+        self,
+        *,
+        watcher: _PythonFileWatcher,
+        runserver_process: subprocess.Popen[bytes],
+    ) -> bool:
+        """Espera terminación del servidor o notificación de cambio en archivos."""
+        stop_watching = threading.Event()
+        file_changed = threading.Event()
+
+        def _watch() -> None:
+            if watcher.wait_for_change(stop_watching):
+                file_changed.set()
+
+        watcher_thread = threading.Thread(target=_watch, daemon=True)
+        watcher_thread.start()
+
+        while runserver_process.poll() is None and not file_changed.is_set():
+            sleep(0.2)
+
+        stop_watching.set()
+        watcher_thread.join(timeout=2.0)
+        return file_changed.is_set()
 
     def _resolve_backend_root_path(self) -> Path:
         """Resuelve la raíz backend detectando manage.py de forma robusta."""
