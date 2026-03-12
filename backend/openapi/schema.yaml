@@ -3,8 +3,8 @@ info:
   title: Chemistry Apps API
   version: 1.0.0
   description: API de plataforma científica modular para ejecutar jobs asíncronos
-    por plugins (calculator y random-numbers), con observabilidad de progreso y logs
-    en tiempo real, cache por hash y recuperación activa automática.
+    por plugins (calculator, random-numbers y molar-fractions), con observabilidad
+    de progreso y logs en tiempo real, cache por hash y recuperación activa automática.
   contact:
     name: Chemistry Apps Team
     url: https://github.com/chem-gl/chemistry-apps
@@ -532,6 +532,104 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/molar-fractions/jobs/:
+    post:
+      operationId: molar_fractions_jobs_create
+      description: Crea un job asíncrono para calcular fracciones molares f0..fn en
+        un pH único o en un rango de pH.
+      summary: Crear Job de Molar Fractions
+      tags:
+      - MolarFractions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+            examples:
+              CrearJobMolarFractionsPorRango:
+                value:
+                  version: 1.0.0
+                  pka_values:
+                  - 2.2
+                  - 7.2
+                  - 12.3
+                  ph_mode: range
+                  ph_min: 0.0
+                  ph_max: 14.0
+                  ph_step: 1.0
+                summary: Crear job molar fractions por rango
+                description: Calcula fracciones f0..f3 desde pH 0 hasta 14 con paso
+                  1.
+              CrearJobMolarFractionsEnUnSoloPH:
+                value:
+                  version: 1.0.0
+                  pka_values:
+                  - 4.75
+                  ph_mode: single
+                  ph_value: 7.4
+                summary: Crear job molar fractions en un solo pH
+                description: Calcula fracciones en un único punto de pH.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MolarFractionsJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato de molar_fractions.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
+  /api/molar-fractions/jobs/{id}/:
+    get:
+      operationId: molar_fractions_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job de Molar Fractions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job de molar_fractions.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MolarFractionsJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job de molar_fractions no encontrado.
   /api/random-numbers/jobs/:
     post:
       operationId: random_numbers_jobs_create
@@ -1010,6 +1108,248 @@ components:
         * `info` - info
         * `warning` - warning
         * `error` - error
+    MolarFractionRow:
+      type: object
+      description: Fila de tabla de fracciones para un pH específico.
+      properties:
+        ph:
+          type: number
+          format: double
+          description: Valor de pH evaluado.
+        fractions:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Fracciones molares f0..fn en el orden de especies.
+        sum_fraction:
+          type: number
+          format: double
+          description: Suma de fracciones para verificación numérica.
+      required:
+      - fractions
+      - ph
+      - sum_fraction
+    MolarFractionsJobCreateRequest:
+      type: object
+      description: Valida parámetros de creación para jobs de fracciones molares.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 1.0.0
+          maxLength: 50
+        pka_values:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Lista de pKa en el orden químico definido por el usuario.
+          maxItems: 6
+          minItems: 1
+        ph_mode:
+          allOf:
+          - $ref: '#/components/schemas/PhModeEnum'
+          description: |-
+            Modo de cálculo: single para un pH o range para barrido.
+
+            * `single` - single
+            * `range` - range
+        ph_value:
+          type: number
+          format: double
+          nullable: true
+          description: Valor de pH cuando ph_mode=single.
+        ph_min:
+          type: number
+          format: double
+          nullable: true
+          description: pH inicial para ph_mode=range.
+        ph_max:
+          type: number
+          format: double
+          nullable: true
+          description: pH final para ph_mode=range.
+        ph_step:
+          type: number
+          format: double
+          nullable: true
+          description: Incremento de pH para ph_mode=range.
+      required:
+      - ph_mode
+      - pka_values
+    MolarFractionsJobResponse:
+      type: object
+      description: Respuesta estable para jobs de molar_fractions.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/MolarFractionsParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/MolarFractionsResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    MolarFractionsMetadata:
+      type: object
+      description: Metadatos técnicos del barrido de fracciones molares.
+      properties:
+        pka_values:
+          type: array
+          items:
+            type: number
+            format: double
+        ph_mode:
+          $ref: '#/components/schemas/PhModeEnum'
+        ph_min:
+          type: number
+          format: double
+        ph_max:
+          type: number
+          format: double
+        ph_step:
+          type: number
+          format: double
+        total_species:
+          type: integer
+          minimum: 2
+        total_points:
+          type: integer
+          minimum: 1
+      required:
+      - ph_max
+      - ph_min
+      - ph_mode
+      - ph_step
+      - pka_values
+      - total_points
+      - total_species
+    MolarFractionsParameters:
+      type: object
+      description: Estructura persistida de parámetros de entrada del job.
+      properties:
+        pka_values:
+          type: array
+          items:
+            type: number
+            format: double
+          maxItems: 6
+          minItems: 1
+        ph_mode:
+          $ref: '#/components/schemas/PhModeEnum'
+        ph_value:
+          type: number
+          format: double
+          nullable: true
+        ph_min:
+          type: number
+          format: double
+          nullable: true
+        ph_max:
+          type: number
+          format: double
+          nullable: true
+        ph_step:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - ph_mode
+      - pka_values
+    MolarFractionsResult:
+      type: object
+      description: Resultado tipado del plugin de fracciones molares.
+      properties:
+        species_labels:
+          type: array
+          items:
+            type: string
+            maxLength: 20
+          description: Etiquetas de especies en formato f0..fn.
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/MolarFractionRow'
+        metadata:
+          $ref: '#/components/schemas/MolarFractionsMetadata'
+      required:
+      - metadata
+      - rows
+      - species_labels
+    PhModeEnum:
+      enum:
+      - single
+      - range
+      type: string
+      description: |-
+        * `single` - single
+        * `range` - range
     RandomNumbersJobCreateRequest:
       type: object
       description: Valida request de creación para jobs de generación aleatoria.
@@ -1313,3 +1653,6 @@ tags:
 - name: RandomNumbers
   description: Endpoints de generación por lotes de números aleatorios con semilla
     externa.
+- name: MolarFractions
+  description: Endpoints para cálculo asíncrono de fracciones molares en equilibrio
+    ácido-base.

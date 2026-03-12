@@ -1,6 +1,9 @@
 ---
 applyTo: "frontend/src/**/*.{ts,html,scss}"
 ---
+Para el front end es escencial sismpre tener para todos los componetes separada la logica en sus archivos components .ts y la parte visual en sus archivos .html y .scss, esto es para mantener una buena organizacion del codigo y facilitar su mantenimiento. Ademas, es importante seguir las buenas practicas de Angular para asegurar que el codigo sea escalable y facil de entender para otros desarrolladores. asi como sus test de ser necesarios
+
+se debe tener todo bien documentado y siempre separar la logica de negocio fuera en una capa de serivios separados de los controladores y componentes, esto es para mantener una buena organizacion del codigo y facilitar su mantenimiento. Ademas, es importante seguir las buenas practicas de Angular para asegurar que el codigo sea escalable y facil de entender para otros desarrolladores. asi como sus test de ser necesarios
 
 # Frontend OpenAPI Integration Instructions
 

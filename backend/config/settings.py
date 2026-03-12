@@ -168,6 +168,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
+    "apps.molar_fractions.apps.MolarFractionsConfig",
 ]
 
 if ENABLE_CORS:
@@ -195,7 +196,7 @@ OPENAPI_DESCRIPTION: str = os.getenv(
     "OPENAPI_DESCRIPTION",
     (
         "API de plataforma científica modular para ejecutar jobs asíncronos "
-        "por plugins (calculator y random-numbers), con observabilidad de progreso "
+        "por plugins (calculator, random-numbers y molar-fractions), con observabilidad de progreso "
         "y logs en tiempo real, cache por hash y recuperación activa automática."
     ),
 )
@@ -231,6 +232,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "RandomNumbers",
             "description": "Endpoints de generación por lotes de números aleatorios con semilla externa.",
+        },
+        {
+            "name": "MolarFractions",
+            "description": "Endpoints para cálculo asíncrono de fracciones molares en equilibrio ácido-base.",
         },
     ],
     "CONTACT": {

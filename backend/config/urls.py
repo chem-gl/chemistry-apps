@@ -13,6 +13,13 @@ from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
 from apps.calculator.routers import CalculatorJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
 from apps.core.routers import JobViewSet
+from apps.molar_fractions.definitions import (
+    APP_ROUTE_BASENAME as MOLAR_FRACTIONS_ROUTE_BASENAME,
+)
+from apps.molar_fractions.definitions import (
+    APP_ROUTE_PREFIX as MOLAR_FRACTIONS_ROUTE_PREFIX,
+)
+from apps.molar_fractions.routers import MolarFractionsJobViewSet
 from apps.random_numbers.definitions import (
     APP_ROUTE_BASENAME as RANDOM_NUMBERS_ROUTE_BASENAME,
 )
@@ -37,6 +44,11 @@ router.register(
     RANDOM_NUMBERS_ROUTE_PREFIX,
     RandomNumbersJobViewSet,
     basename=RANDOM_NUMBERS_ROUTE_BASENAME,
+)
+router.register(
+    MOLAR_FRACTIONS_ROUTE_PREFIX,
+    MolarFractionsJobViewSet,
+    basename=MOLAR_FRACTIONS_ROUTE_BASENAME,
 )
 
 urlpatterns = [
