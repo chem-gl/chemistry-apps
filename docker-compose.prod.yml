@@ -1,0 +1,140 @@
+# docker-compose.prod.yml: Entorno de produccion con frontend compilado, backend ASGI y servicios resilientes.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chemistry_db
+      POSTGRES_USER: chemistry_user
+      POSTGRES_PASSWORD: chemistry_pass
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chemistry_user -d chemistry_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_prod_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    working_dir: /app
+    command: >
+      sh -c "python manage.py migrate &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_DEBUG_ALLOW_ALL_HOSTS: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      ENABLE_CORS: "True"
+      CORS_ALLOW_ALL_ORIGINS: "False"
+      CORS_ALLOW_CREDENTIALS: "True"
+      CORS_ALLOWED_ORIGINS: "http://localhost"
+      DB_ENGINE: "postgres"
+      DB_NAME: "chemistry_db"
+      DB_USER: "chemistry_user"
+      DB_PASSWORD: "chemistry_pass"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    working_dir: /app
+    command: >
+      sh -c "python -m celery -A config worker -l info"
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_DEBUG_ALLOW_ALL_HOSTS: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DB_ENGINE: "postgres"
+      DB_NAME: "chemistry_db"
+      DB_USER: "chemistry_user"
+      DB_PASSWORD: "chemistry_pass"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    working_dir: /app
+    command: >
+      sh -c "python -m celery -A config beat -l info"
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_DEBUG_ALLOW_ALL_HOSTS: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DB_ENGINE: "postgres"
+      DB_NAME: "chemistry_db"
+      DB_USER: "chemistry_user"
+      DB_PASSWORD: "chemistry_pass"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        API_BASE_URL: "/api"
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
