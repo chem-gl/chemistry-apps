@@ -1,0 +1,179 @@
+<!-- random-numbers.component.html: Random numbers async generation UI. -->
+<section class="random-shell" aria-label="Random numbers generator">
+    <header>
+        <p class="eyebrow">Random Numbers</p>
+        <h2>Asynchronous Batch Generation</h2>
+        <p>Configure the source URL, batch size, interval, and total output size.</p>
+    </header>
+
+    <section class="form-card" aria-label="Generation parameters">
+        <div class="grid">
+            <label>
+                Seed URL
+                <input type="url" [ngModel]="workflow.seedUrl()" (ngModelChange)="workflow.seedUrl.set($event)"
+                    [disabled]="workflow.isProcessing()" placeholder="https://example.com/seed.txt" />
+            </label>
+
+            <label>
+                Numbers per batch
+                <input type="number" min="1" [ngModel]="workflow.numbersPerBatch()"
+                    (ngModelChange)="workflow.numbersPerBatch.set($event)" [disabled]="workflow.isProcessing()" />
+            </label>
+
+            <label>
+                Batch interval (seconds)
+                <input type="number" min="1" [ngModel]="workflow.intervalSeconds()"
+                    (ngModelChange)="workflow.intervalSeconds.set($event)" [disabled]="workflow.isProcessing()" />
+            </label>
+
+            <label>
+                Total numbers
+                <input type="number" min="1" [ngModel]="workflow.totalNumbers()"
+                    (ngModelChange)="workflow.totalNumbers.set($event)" [disabled]="workflow.isProcessing()" />
+            </label>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+                {{ workflow.isProcessing() ? 'Processing...' : 'Generate' }}
+            </button>
+            <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+                Clear
+            </button>
+        </div>
+    </section>
+
+    @if (workflow.activeSection() === 'progress') {
+    <section class="status-card" aria-live="polite">
+        <h3>Job in Progress</h3>
+        <p class="job-id">{{ workflow.currentJobId() }}</p>
+
+        <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()"
+            aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+        </div>
+
+        <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
+        <p class="progress-stage">Stage: {{ workflow.progressSnapshot()?.progress_stage }}</p>
+        <p class="progress-message">{{ workflow.progressMessage() }}</p>
+
+        <div class="actions">
+            @if (workflow.isPaused()) {
+            <button class="btn-secondary" (click)="resumeCurrentJob()" [disabled]="workflow.isControlActionLoading()">
+                {{ workflow.isControlActionLoading() ? 'Resuming...' : 'Resume job' }}
+            </button>
+            } @else {
+            <button class="btn-warning" (click)="pauseCurrentJob()" [disabled]="workflow.isControlActionLoading()">
+                {{ workflow.isControlActionLoading() ? 'Pausing...' : 'Pause job' }}
+            </button>
+            }
+        </div>
+    </section>
+    }
+
+    @if (workflow.jobLogs().length > 0) {
+    <section class="logs-card" aria-label="Random numbers execution logs">
+        <h3>Execution Logs</h3>
+        <div class="logs-list">
+            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+            <article class="log-item">
+                <header class="log-header">
+                    <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                        {{ logEntry.level }}
+                    </span>
+                    <span class="log-source">{{ logEntry.source }}</span>
+                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+            </article>
+            }
+        </div>
+    </section>
+    }
+
+    @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+    <section class="result-card" aria-label="Random numbers result">
+        <h3>Generated Result</h3>
+
+        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+        <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+        }
+
+        @if (workflow.canResumeFromResult()) {
+        <div class="actions">
+            <button class="btn-secondary" (click)="resumeCurrentJob()" [disabled]="workflow.isControlActionLoading()">
+                {{ workflow.isControlActionLoading() ? 'Resuming...' : 'Resume job' }}
+            </button>
+        </div>
+        }
+
+        <div class="meta-grid">
+            <p><strong>Seed URL:</strong> {{ resultData.seedUrl }}</p>
+            <p><strong>Digest:</strong> <span class="mono">{{ resultData.seedDigest }}</span></p>
+            <p><strong>Batch:</strong> {{ resultData.numbersPerBatch }}</p>
+            <p><strong>Interval:</strong> {{ resultData.intervalSeconds }}s</p>
+            <p><strong>Total:</strong> {{ resultData.totalNumbers }}</p>
+        </div>
+
+        <h4>Random Numbers</h4>
+        <div class="numbers-grid">
+            @for (randomNumber of resultData.generatedNumbers; track $index) {
+            <span class="number-chip">{{ randomNumber }}</span>
+            }
+        </div>
+    </section>
+    }
+
+    @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+    <section class="error-card" role="alert">{{ currentError }}</section>
+    }
+
+    <section class="history-card" aria-label="Random numbers job history">
+        <div class="history-header">
+            <h3>Result History</h3>
+            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+            </button>
+        </div>
+
+        @if (workflow.historyJobs().length === 0) {
+        <p class="history-empty">No historical random numbers jobs yet.</p>
+        } @else {
+        <div class="history-table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Status</th>
+                        <th>Numbers</th>
+                        <th>Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+                    <tr>
+                        <td class="mono">{{ historyJob.id }}</td>
+                        <td>
+                            <span [class]="historicalStatusClass(historyJob.status)">
+                                {{ historyJob.status }}
+                            </span>
+                        </td>
+                        <td>{{ historicalNumbersCount(historyJob) }}</td>
+                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                        <td>
+                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                                {{ historicalActionLabel(historyJob) }}
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </section>
+</section>

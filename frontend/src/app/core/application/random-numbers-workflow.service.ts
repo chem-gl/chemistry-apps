@@ -66,7 +66,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   });
 
   readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparando generación...',
+    () => this.progressSnapshot()?.progress_message ?? 'Preparing generation...',
   );
 
   private normalizeProgressStage(
@@ -109,7 +109,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
               this.extractResultData(jobResponse);
             if (immediateResultData === null) {
               this.activeSection.set('error');
-              this.errorMessage.set('El payload final no tiene el formato esperado.');
+              this.errorMessage.set('The final payload format is invalid.');
               return;
             }
 
@@ -125,7 +125,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');
-          this.errorMessage.set(`Error al crear job random numbers: ${dispatchError.message}`);
+          this.errorMessage.set(`Unable to create random numbers job: ${dispatchError.message}`);
         },
       });
   }
@@ -169,7 +169,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       },
       error: (controlError: Error) => {
         this.isControlActionLoading.set(false);
-        this.errorMessage.set(`No se pudo pausar el job: ${controlError.message}`);
+        this.errorMessage.set(`Unable to pause job: ${controlError.message}`);
       },
     });
   }
@@ -203,7 +203,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       },
       error: (controlError: Error) => {
         this.isControlActionLoading.set(false);
-        this.errorMessage.set(`No se pudo reanudar el job: ${controlError.message}`);
+        this.errorMessage.set(`Unable to resume job: ${controlError.message}`);
       },
     });
   }
@@ -242,7 +242,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'El job histórico terminó con error.');
+          this.errorMessage.set(jobResponse.error_trace ?? 'Historical job failed.');
           return;
         }
 
@@ -250,9 +250,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
           this.extractResultData(jobResponse) ?? this.extractSummaryData(jobResponse);
         if (historicalResultData === null) {
           this.activeSection.set('error');
-          this.errorMessage.set(
-            'No fue posible reconstruir el resultado ni el resumen histórico del job.',
-          );
+          this.errorMessage.set('Unable to reconstruct result or historical summary for this job.');
           return;
         }
 
@@ -263,7 +261,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error recuperando job histórico: ${statusError.message}`);
+        this.errorMessage.set(`Unable to recover historical job: ${statusError.message}`);
       },
     });
   }
@@ -327,7 +325,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       },
       error: (pollingError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error verificando progreso: ${pollingError.message}`);
+        this.errorMessage.set(`Unable to track progress: ${pollingError.message}`);
       },
     });
   }
@@ -338,14 +336,14 @@ export class RandomNumbersWorkflowService implements OnDestroy {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'El job terminó con error sin detalle.');
+          this.errorMessage.set(jobResponse.error_trace ?? 'Job failed with no details.');
           return;
         }
 
         const finalResultData: RandomNumbersResultData | null = this.extractResultData(jobResponse);
         if (finalResultData === null) {
           this.activeSection.set('error');
-          this.errorMessage.set('El payload final no tiene el formato esperado.');
+          this.errorMessage.set('The final payload format is invalid.');
           return;
         }
 
@@ -356,7 +354,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error recuperando resultado: ${statusError.message}`);
+        this.errorMessage.set(`Unable to recover final result: ${statusError.message}`);
       },
     });
   }
@@ -436,7 +434,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     return {
       generatedNumbers,
       seedUrl,
-      seedDigest: 'No disponible (job aún no completado)',
+      seedDigest: 'Not available yet (job not completed)',
       numbersPerBatch,
       intervalSeconds,
       totalNumbers,
@@ -466,15 +464,15 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     totalNumbers: number,
   ): string {
     if (jobStatus === 'paused') {
-      return `Resumen parcial: job en pausa con ${generatedCount}/${totalNumbers} números generados.`;
+      return `Partial summary: paused job with ${generatedCount}/${totalNumbers} generated numbers.`;
     }
     if (jobStatus === 'running' || jobStatus === 'pending') {
-      return `Resumen parcial: job en ejecución con ${generatedCount}/${totalNumbers} números generados.`;
+      return `Partial summary: running job with ${generatedCount}/${totalNumbers} generated numbers.`;
     }
     if (jobStatus === 'completed') {
-      return `Resumen histórico reconstruido: ${generatedCount}/${totalNumbers} números disponibles.`;
+      return `Historical summary rebuilt: ${generatedCount}/${totalNumbers} numbers available.`;
     }
-    return `Resumen histórico disponible: ${generatedCount}/${totalNumbers} números generados.`;
+    return `Historical summary available: ${generatedCount}/${totalNumbers} generated numbers.`;
   }
 
   private syncProgressSnapshotFromJob(jobResponse: ScientificJob): void {

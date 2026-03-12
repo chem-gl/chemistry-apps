@@ -11,9 +11,18 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 })
 export class App {
   readonly primaryNavigationItems: ReadonlyArray<{ label: string; path: string; hint: string }> = [
-    { label: 'Monitor', path: '/jobs', hint: 'Ver jobs activos y terminados' },
-    { label: 'Calculadora', path: '/calculator', hint: 'Lanzar operaciones cientificas' },
-    { label: 'Random', path: '/random-numbers', hint: 'Generar numeros aleatorios en background' },
-    { label: 'Apps', path: '/apps', hint: 'Catalogo y nuevas apps' },
+    { label: 'Jobs Monitor', path: '/jobs', hint: 'Track active and completed jobs' },
+    { label: 'Calculator', path: '/calculator', hint: 'Run scientific operations' },
+    {
+      label: 'Random Numbers',
+      path: '/random-numbers',
+      hint: 'Generate random numbers in background',
+    },
+    {
+      label: 'Molar Fractions',
+      path: '/molar-fractions',
+      hint: 'Compute molar fractions by pH',
+    },
+    { label: 'Apps', path: '/apps', hint: 'Catalog and future scientific apps' },
   ];
 }

@@ -22,6 +22,11 @@ export const routes: Routes = [
       import('./random-numbers/random-numbers.component').then((m) => m.RandomNumbersComponent),
   },
   {
+    path: 'molar-fractions',
+    loadComponent: () =>
+      import('./molar-fractions/molar-fractions.component').then((m) => m.MolarFractionsComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

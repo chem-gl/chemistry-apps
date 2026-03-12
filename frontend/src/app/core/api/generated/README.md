@@ -1,6 +1,6 @@
 # @
 
-API de plataforma científica modular para ejecutar jobs asíncronos por plugins (calculator y random-numbers), con observabilidad de progreso y logs en tiempo real, cache por hash y recuperación activa automática.
+API de plataforma científica modular para ejecutar jobs asíncronos por plugins (calculator, random-numbers y molar-fractions), con observabilidad de progreso y logs en tiempo real, cache por hash y recuperación activa automática.
 
 The version of the OpenAPI document: 1.0.0
 

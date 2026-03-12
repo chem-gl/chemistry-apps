@@ -36,6 +36,17 @@ export interface CalculatorParams {
   b?: number;
 }
 
+/** Parámetros de entrada para crear un job de fracciones molares */
+export interface MolarFractionsParams {
+  pkaValues: number[];
+  phMode: 'single' | 'range';
+  phValue?: number;
+  phMin?: number;
+  phMax?: number;
+  phStep?: number;
+  version?: string;
+}
+
 /** Estados válidos para filtrado de jobs en listados globales */
 export type JobListStatusFilter = 'pending' | 'running' | 'paused' | 'completed' | 'failed';
 
@@ -285,6 +296,39 @@ export class JobsApiService {
       parameters: params.parameters,
     };
     return this.jobsClient.jobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Despacha un job de molar fractions vía API core desacoplada */
+  dispatchMolarFractionsJob(params: MolarFractionsParams): Observable<ScientificJob> {
+    const normalizedPkaValues: number[] = params.pkaValues.map((value) => Number(value));
+    if (normalizedPkaValues.length < 1 || normalizedPkaValues.length > 6) {
+      throw new Error('molar-fractions requiere entre 1 y 6 valores pKa.');
+    }
+
+    const payloadParameters: Record<string, unknown> = {
+      pka_values: normalizedPkaValues,
+      ph_mode: params.phMode,
+    };
+
+    if (params.phMode === 'single') {
+      if (params.phValue === undefined) {
+        throw new Error('phValue es obligatorio cuando phMode=single.');
+      }
+      payloadParameters['ph_value'] = Number(params.phValue);
+    } else {
+      if (params.phMin === undefined || params.phMax === undefined || params.phStep === undefined) {
+        throw new Error('phMin, phMax y phStep son obligatorios cuando phMode=range.');
+      }
+      payloadParameters['ph_min'] = Number(params.phMin);
+      payloadParameters['ph_max'] = Number(params.phMax);
+      payloadParameters['ph_step'] = Number(params.phStep);
+    }
+
+    return this.dispatchScientificJob({
+      pluginName: 'molar-fractions',
+      version: params.version ?? '1.0.0',
+      parameters: payloadParameters,
+    });
   }
 
   /** Consulta un job científico genérico por id mediante /api/jobs/{id}/ */

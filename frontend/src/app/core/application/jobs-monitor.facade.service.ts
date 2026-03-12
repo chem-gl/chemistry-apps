@@ -108,7 +108,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
       },
       error: (loadError: Error) => {
         if (!shouldUseSilentMode) {
-          this.errorMessage.set(`No se pudo cargar el monitor: ${loadError.message}`);
+          this.errorMessage.set(`Unable to load jobs monitor: ${loadError.message}`);
           this.isLoading.set(false);
         }
       },
@@ -179,7 +179,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
         this.startDetailStreams(jobId, job.status);
       },
       error: (detailsError: Error) => {
-        this.detailsErrorMessage.set(`No se pudo cargar detalle del job: ${detailsError.message}`);
+        this.detailsErrorMessage.set(`Unable to load job details: ${detailsError.message}`);
         this.isDetailsLoading.set(false);
       },
     });
@@ -212,7 +212,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
       },
       error: (controlError: Error) => {
         this.controllingJobId.set(null);
-        this.controlErrorMessage.set(`No se pudo pausar el job: ${controlError.message}`);
+        this.controlErrorMessage.set(`Unable to pause job: ${controlError.message}`);
       },
     });
   }
@@ -233,7 +233,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
       },
       error: (controlError: Error) => {
         this.controllingJobId.set(null);
-        this.controlErrorMessage.set(`No se pudo reanudar el job: ${controlError.message}`);
+        this.controlErrorMessage.set(`Unable to resume job: ${controlError.message}`);
       },
     });
   }

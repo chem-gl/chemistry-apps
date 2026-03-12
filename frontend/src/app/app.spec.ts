@@ -33,9 +33,9 @@ describe('App', () => {
       (anchorElement: Element) => anchorElement.textContent?.trim() ?? '',
     );
 
-    expect(links).toContain('Monitor');
-    expect(links).toContain('Calculadora');
-    expect(links).toContain('Random');
+    expect(links).toContain('Jobs Monitor');
+    expect(links).toContain('Calculator');
+    expect(links).toContain('Random Numbers');
     expect(links).toContain('Apps');
   });
 });

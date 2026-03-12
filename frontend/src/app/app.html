@@ -5,7 +5,7 @@
             <h1>Scientific Control Desk</h1>
         </div>
 
-        <nav class="main-nav" aria-label="Navegacion principal">
+        <nav class="main-nav" aria-label="Main navigation">
             @for (navItem of primaryNavigationItems; track navItem.path) {
             <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
                 [title]="navItem.hint">

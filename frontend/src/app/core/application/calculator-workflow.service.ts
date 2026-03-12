@@ -22,13 +22,13 @@ export type UiSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error'
 
 /** Etapas del ciclo de vida del job tal como las emite el backend */
 const STAGE_LABELS: Record<string, string> = {
-  pending: 'Pendiente',
-  queued: 'En cola',
-  running: 'Ejecutando',
-  recovering: 'Recuperando',
-  caching: 'Almacenando en cache',
-  completed: 'Completado',
-  failed: 'Fallido',
+  pending: 'Pending',
+  queued: 'Queued',
+  running: 'Running',
+  recovering: 'Recovering',
+  caching: 'Caching',
+  completed: 'Completed',
+  failed: 'Failed',
 };
 
 /** Orden de etapas para stepper visual */
@@ -48,11 +48,11 @@ export class CalculatorWorkflowService implements OnDestroy {
   private logsSubscription: Subscription | null = null;
 
   readonly operations: OperationOption[] = [
-    { value: 'add', label: 'Suma (+)', requiresB: true },
-    { value: 'sub', label: 'Resta (-)', requiresB: true },
-    { value: 'mul', label: 'Multiplicacion (x)', requiresB: true },
+    { value: 'add', label: 'Addition (+)', requiresB: true },
+    { value: 'sub', label: 'Subtraction (-)', requiresB: true },
+    { value: 'mul', label: 'Multiplication (x)', requiresB: true },
     { value: 'div', label: 'Division (/)', requiresB: true },
-    { value: 'pow', label: 'Potencia (^)', requiresB: true },
+    { value: 'pow', label: 'Power (^)', requiresB: true },
     { value: 'factorial', label: 'Factorial (n!)', requiresB: false },
   ];
 
@@ -83,7 +83,7 @@ export class CalculatorWorkflowService implements OnDestroy {
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
 
   readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparando ejecucion...',
+    () => this.progressSnapshot()?.progress_message ?? 'Preparing execution...',
   );
 
   readonly currentStage = computed(() => this.progressSnapshot()?.progress_stage ?? 'pending');
@@ -135,7 +135,7 @@ export class CalculatorWorkflowService implements OnDestroy {
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error al despachar: ${dispatchError.message}`);
+        this.errorMessage.set(`Unable to dispatch job: ${dispatchError.message}`);
       },
     });
   }
@@ -170,7 +170,7 @@ export class CalculatorWorkflowService implements OnDestroy {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'El job histórico falló.');
+          this.errorMessage.set(jobResponse.error_trace ?? 'Historical job failed.');
           return;
         }
 
@@ -180,7 +180,7 @@ export class CalculatorWorkflowService implements OnDestroy {
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error recuperando job histórico: ${statusError.message}`);
+        this.errorMessage.set(`Unable to recover historical job: ${statusError.message}`);
       },
     });
   }
@@ -249,7 +249,7 @@ export class CalculatorWorkflowService implements OnDestroy {
       },
       error: (pollingError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error verificando progreso: ${pollingError.message}`);
+        this.errorMessage.set(`Unable to track progress: ${pollingError.message}`);
       },
     });
   }
@@ -260,7 +260,7 @@ export class CalculatorWorkflowService implements OnDestroy {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'El job fallo sin detalle disponible.');
+          this.errorMessage.set(jobResponse.error_trace ?? 'Job failed with no details available.');
           return;
         }
 
@@ -271,7 +271,7 @@ export class CalculatorWorkflowService implements OnDestroy {
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Error obteniendo resultado: ${statusError.message}`);
+        this.errorMessage.set(`Unable to load final result: ${statusError.message}`);
       },
     });
   }

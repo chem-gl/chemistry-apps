@@ -159,6 +159,8 @@ describe('RandomNumbersWorkflowService', () => {
     workflowService.openHistoricalJob('broken-job-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('resultado ni el resumen histórico');
+    expect(workflowService.errorMessage()).toContain(
+      'Unable to reconstruct result or historical summary for this job.',
+    );
   });
 });

@@ -11,16 +11,23 @@ export interface ScientificAppRouteItem {
 export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> = [
   {
     key: 'calculator',
-    title: 'Calculadora',
-    description: 'Operaciones aritmeticas con ejecucion asincrona y cache.',
+    title: 'Calculator',
+    description: 'Arithmetic operations with asynchronous execution and cache support.',
     routePath: '/calculator',
     available: true,
   },
   {
     key: 'random-numbers',
     title: 'Random Numbers',
-    description: 'Generacion de numeros aleatorios por lotes con semilla URL y progreso.',
+    description: 'Batch random number generation with URL seed and progress tracking.',
     routePath: '/random-numbers',
+    available: true,
+  },
+  {
+    key: 'molar-fractions',
+    title: 'Molar Fractions',
+    description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
+    routePath: '/molar-fractions',
     available: true,
   },
 ];

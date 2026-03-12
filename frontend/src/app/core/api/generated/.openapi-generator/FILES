@@ -7,6 +7,8 @@ api/calculator.service.ts
 api/calculator.serviceInterface.ts
 api/jobs.service.ts
 api/jobs.serviceInterface.ts
+api/molarFractions.service.ts
+api/molarFractions.serviceInterface.ts
 api/randomNumbers.service.ts
 api/randomNumbers.serviceInterface.ts
 configuration.ts
@@ -29,6 +31,13 @@ model/jobProgressStageEnum.ts
 model/jobStatusEnum.ts
 model/levelEnum.ts
 model/models.ts
+model/molarFractionRow.ts
+model/molarFractionsJobCreateRequest.ts
+model/molarFractionsJobResponse.ts
+model/molarFractionsMetadata.ts
+model/molarFractionsParameters.ts
+model/molarFractionsResult.ts
+model/phModeEnum.ts
 model/randomNumbersJobCreateRequest.ts
 model/randomNumbersJobResponse.ts
 model/randomNumbersParameters.ts
