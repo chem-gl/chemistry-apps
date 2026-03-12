@@ -236,6 +236,27 @@ class ScientificJobInputArtifact(models.Model):
         default=0,
         help_text="Cantidad de chunks persistidos para reconstrucción.",
     )
+    # Política de retención: None → permanente (archivo ≤ umbral de tamaño).
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=(
+            "Fecha de expiración de los chunks binarios. "
+            "None = archivo pequeño, se conserva de forma permanente. "
+            "Pasada esta fecha la tarea de limpieza borra los chunks pero "
+            "preserva los metadatos y el resultado del job."
+        ),
+    )
+    chunks_purged_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=(
+            "Fecha en que se eliminaron los chunks binarios. "
+            "None = chunks aún disponibles en DB."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -245,6 +266,8 @@ class ScientificJobInputArtifact(models.Model):
             models.Index(fields=["job", "field_name"]),
             models.Index(fields=["job", "created_at"]),
             models.Index(fields=["sha256"]),
+            models.Index(fields=["expires_at"]),
+            models.Index(fields=["chunks_purged_at"]),
         ]
 
     def __str__(self) -> str:

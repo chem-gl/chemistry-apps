@@ -317,6 +317,37 @@ JOB_RECOVERY_STALE_SECONDS = max(5, _get_env_int("JOB_RECOVERY_STALE_SECONDS", 6
 JOB_RECOVERY_MAX_ATTEMPTS = max(1, _get_env_int("JOB_RECOVERY_MAX_ATTEMPTS", 5))
 JOB_RECOVERY_INCLUDE_PENDING = _get_env_bool("JOB_RECOVERY_INCLUDE_PENDING", True)
 
+# ---------------------------------------------------------------------------
+# Política de retención de artefactos de entrada (archivos subidos).
+#
+# ARTIFACT_INLINE_THRESHOLD_KB:
+#   Umbral en kilobytes. Archivos cuyo tamaño final <= umbral se almacenan de
+#   forma permanente en DB. Valor por defecto: 250 KB (0.25 MB).
+#
+# ARTIFACT_LARGE_FILE_TTL_DAYS:
+#   Días que se conservan los chunks binarios de archivos que superan el umbral.
+#   Pasado este tiempo la tarea `purge_expired_artifact_chunks` elimina los
+#   chunks PERO preserva los metadatos (sha256, tamaño, nombre, campo) y el
+#   resultado del job para reproducibilidad científica.
+#   Valor por defecto: 30 días (1 mes).
+# ---------------------------------------------------------------------------
+ARTIFACT_INLINE_THRESHOLD_KB: int = max(
+    1, _get_env_int("ARTIFACT_INLINE_THRESHOLD_KB", 250)
+)
+ARTIFACT_LARGE_FILE_TTL_DAYS: int = max(
+    1, _get_env_int("ARTIFACT_LARGE_FILE_TTL_DAYS", 30)
+)
+
+# Tarea periódica de limpieza de chunks expirados (requiere Celery Beat).
+CELERY_BEAT_SCHEDULE = {
+    "purge-expired-artifact-chunks": {
+        "task": "apps.core.tasks.purge_expired_artifact_chunks",
+        # Ejecuta cada día a las 03:00 UTC.
+        "schedule": 86400,  # segundos — equivale a 24 h
+        "options": {"expires": 3600},
+    },
+}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

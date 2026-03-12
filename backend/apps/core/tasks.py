@@ -8,6 +8,9 @@ Uso esperado desde apps:
 3. Si el broker está disponible, Celery ejecuta `execute_scientific_job`.
 4. Si el broker falla, la API no se rompe y el job queda en `pending` con
     mensaje de progreso que facilita observabilidad operativa.
+5. La tarea periódica `purge_expired_artifact_chunks` corre una vez al día y
+    elimina los chunks binarios de artefactos que superaron su TTL preservando
+    los metadatos y el resultado del job.
 """
 
 import logging
@@ -96,3 +99,29 @@ def run_active_recovery(
         "requeue_failed": int(summary["requeue_failed"]),
         "marked_failed_by_retries": int(summary["marked_failed_by_retries"]),
     }
+
+
+@shared_task(bind=True)
+def purge_expired_artifact_chunks(self: Task) -> dict[str, int]:
+    """Elimina chunks binarios de artefactos cuyo TTL expiró.
+
+    Conserva metadatos (sha256, tamaño, nombre, campo) y los resultados del job
+    para trazabilidad y reproducibilidad científica.
+
+    Sólo afecta artefactos con expires_at <= ahora y chunks_purged_at nulo.
+    Archivos ≤ ARTIFACT_INLINE_THRESHOLD_KB tienen expires_at=None y nunca se purgan.
+
+    Retorna estadísticas: purged_artifacts, bytes_freed, errors.
+    """
+    del self
+    from .artifacts import ScientificInputArtifactStorageService
+
+    service = ScientificInputArtifactStorageService()
+    summary: dict[str, int] = service.purge_expired_chunks()
+    logger.info(
+        "Purga de artefactos: purgados=%d  bytes_liberados=%d  errores=%d",
+        summary.get("purged_artifacts", 0),
+        summary.get("bytes_freed", 0),
+        summary.get("errors", 0),
+    )
+    return summary
