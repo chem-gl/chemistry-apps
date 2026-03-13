@@ -7,21 +7,21 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
-  CalculatorJobCreateRequest,
-  CalculatorJobResponse,
-  CalculatorOperationEnum,
-  CalculatorService,
-  EasyRateJobResponse,
-  EasyRateService,
-  JobControlActionResponse,
-  JobCreateRequest,
-  JobLogList,
-  JobProgressSnapshot,
-  JobsService,
-  MarcusJobResponse,
-  MarcusService,
-  MolarFractionsService,
-  ScientificJob,
+    CalculatorJobCreateRequest,
+    CalculatorJobResponse,
+    CalculatorOperationEnum,
+    CalculatorService,
+    EasyRateJobResponse,
+    EasyRateService,
+    JobControlActionResponse,
+    JobCreateRequest,
+    JobLogList,
+    JobProgressSnapshot,
+    JobsService,
+    MarcusJobResponse,
+    MarcusService,
+    MolarFractionsService,
+    ScientificJob,
 } from './generated';
 
 /**
@@ -74,8 +74,8 @@ export interface TunnelParams {
 /** Parámetros de entrada para crear un job Easy-rate con archivos Gaussian */
 export interface EasyRateParams {
   transitionStateFile: File;
-  reactant1File?: File;
-  reactant2File?: File;
+  reactant1File: File;
+  reactant2File: File;
   product1File?: File;
   product2File?: File;
   title?: string;
@@ -774,27 +774,71 @@ export class JobsApiService {
     );
   }
 
+  private appendOptionalString(formData: FormData, key: string, value: string | undefined): void {
+    if (value === undefined) {
+      return;
+    }
+    formData.append(key, value);
+  }
+
+  private appendOptionalNumber(formData: FormData, key: string, value: number | undefined): void {
+    if (value === undefined) {
+      return;
+    }
+    formData.append(key, String(value));
+  }
+
+  private appendOptionalBoolean(
+    formData: FormData,
+    key: string,
+    value: boolean | undefined,
+  ): void {
+    if (value === undefined) {
+      return;
+    }
+    formData.append(key, String(value));
+  }
+
+  private buildEasyRateMultipartPayload(params: EasyRateParams): FormData {
+    const formData = new FormData();
+
+    // Campos obligatorios del contrato estricto.
+    formData.append('reactant_1_file', params.reactant1File);
+    formData.append('reactant_2_file', params.reactant2File);
+    formData.append('transition_state_file', params.transitionStateFile);
+
+    // Al menos un producto es obligatorio; el workflow lo valida antes de invocar.
+    if (params.product1File !== undefined) {
+      formData.append('product_1_file', params.product1File);
+    }
+    if (params.product2File !== undefined) {
+      formData.append('product_2_file', params.product2File);
+    }
+
+    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
+    this.appendOptionalString(formData, 'title', params.title);
+    this.appendOptionalNumber(
+      formData,
+      'reaction_path_degeneracy',
+      params.reactionPathDegeneracy,
+    );
+    this.appendOptionalBoolean(formData, 'cage_effects', params.cageEffects);
+    this.appendOptionalBoolean(formData, 'diffusion', params.diffusion);
+    this.appendOptionalString(formData, 'solvent', params.solvent);
+    this.appendOptionalNumber(formData, 'custom_viscosity', params.customViscosity);
+    this.appendOptionalNumber(formData, 'radius_reactant_1', params.radiusReactant1);
+    this.appendOptionalNumber(formData, 'radius_reactant_2', params.radiusReactant2);
+    this.appendOptionalNumber(formData, 'reaction_distance', params.reactionDistance);
+    this.appendOptionalBoolean(formData, 'print_data_input', params.printDataInput);
+
+    return formData;
+  }
+
   /** Despacha un job Easy-rate con archivos Gaussian en multipart */
   dispatchEasyRateJob(params: EasyRateParams): Observable<EasyRateJobResponse> {
-    return this.easyRateClient
-      .easyRateJobsCreate(
-        params.transitionStateFile,
-        params.version ?? '1.0.0',
-        params.title,
-        params.reactionPathDegeneracy,
-        params.cageEffects,
-        params.diffusion,
-        params.solvent,
-        params.customViscosity,
-        params.radiusReactant1,
-        params.radiusReactant2,
-        params.reactionDistance,
-        params.printDataInput,
-        params.reactant1File,
-        params.reactant2File,
-        params.product1File,
-        params.product2File,
-      )
+    const payload = this.buildEasyRateMultipartPayload(params);
+    return this.httpClient
+      .post<EasyRateJobResponse>(`${API_BASE_URL}/api/easy-rate/jobs/`, payload)
       .pipe(shareReplay(1));
   }
 

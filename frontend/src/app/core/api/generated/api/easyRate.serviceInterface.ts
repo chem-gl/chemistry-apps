@@ -27,6 +27,8 @@ export interface EasyRateServiceInterface {
      * Crear Job Easy-rate
      * Crea un job asíncrono Easy-rate a partir de archivos Gaussian cargados en multipart y parámetros de ejecución.
      * @endpoint post /api/easy-rate/jobs/
+     * @param reactant1File 
+     * @param reactant2File 
      * @param transitionStateFile 
      * @param version 
      * @param title 
@@ -39,12 +41,10 @@ export interface EasyRateServiceInterface {
      * @param radiusReactant2 
      * @param reactionDistance 
      * @param printDataInput 
-     * @param reactant1File 
-     * @param reactant2File 
      * @param product1File 
      * @param product2File 
      */
-    easyRateJobsCreate(transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1File?: Blob, reactant2File?: Blob, product1File?: Blob, product2File?: Blob, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
+    easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
 
     /**
      * Descargar Reporte CSV de Easy-rate

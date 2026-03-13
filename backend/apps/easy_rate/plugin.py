@@ -208,16 +208,15 @@ def _load_structures_from_artifacts(
     if "transition_state_file" not in artifact_by_field:
         raise ValueError("Debe cargarse el archivo transition_state_file.")
 
-    has_reactant: bool = (
-        "reactant_1_file" in artifact_by_field or "reactant_2_file" in artifact_by_field
-    )
+    has_reactant_1: bool = "reactant_1_file" in artifact_by_field
+    has_reactant_2: bool = "reactant_2_file" in artifact_by_field
     has_product: bool = (
         "product_1_file" in artifact_by_field or "product_2_file" in artifact_by_field
     )
-    if not has_reactant:
-        raise ValueError(
-            "Debe cargarse al menos un reactivo (reactant_1_file o reactant_2_file)."
-        )
+    if not has_reactant_1:
+        raise ValueError("Debe cargarse reactant_1_file.")
+    if not has_reactant_2:
+        raise ValueError("Debe cargarse reactant_2_file.")
     if not has_product:
         raise ValueError(
             "Debe cargarse al menos un producto (product_1_file o product_2_file)."

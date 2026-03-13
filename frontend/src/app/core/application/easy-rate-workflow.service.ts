@@ -4,14 +4,14 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
 import {
-  DownloadedReportFile,
-  EasyRateJobResponseView,
-  EasyRateParams,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  ScientificJobView,
+    DownloadedReportFile,
+    EasyRateJobResponseView,
+    EasyRateParams,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    JobsApiService,
+    ScientificJobView,
 } from '../api/jobs-api.service';
 
 /** Secciones de pantalla activas durante el ciclo de vida del job */
@@ -112,9 +112,7 @@ export class EasyRateWorkflowService implements OnDestroy {
   readonly isProcessing = computed(
     () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
   );
-  readonly canDispatch = computed(
-    () => this.transitionStateFile() !== null && !this.isProcessing(),
-  );
+  readonly canDispatch = computed(() => this.validateBeforeDispatch() === null && !this.isProcessing());
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
   readonly progressMessage = computed(
     () => this.progressSnapshot()?.progress_message ?? 'Preparing Easy-rate job...',
@@ -181,11 +179,15 @@ export class EasyRateWorkflowService implements OnDestroy {
 
   /** Despacha el job Easy-rate al backend usando los archivos y parámetros actuales */
   dispatch(): void {
-    const tsFile: File | null = this.transitionStateFile();
-    if (tsFile === null) {
-      this.errorMessage.set('Transition state file is required.');
+    const validationError: string | null = this.validateBeforeDispatch();
+    if (validationError !== null) {
+      this.errorMessage.set(validationError);
       return;
     }
+
+    const tsFile: File = this.transitionStateFile() as File;
+    const reactant1File: File = this.reactant1File() as File;
+    const reactant2File: File = this.reactant2File() as File;
 
     this.progressSubscription?.unsubscribe();
     this.logsSubscription?.unsubscribe();
@@ -200,8 +202,8 @@ export class EasyRateWorkflowService implements OnDestroy {
 
     const params: EasyRateParams = {
       transitionStateFile: tsFile,
-      reactant1File: this.reactant1File() ?? undefined,
-      reactant2File: this.reactant2File() ?? undefined,
+      reactant1File,
+      reactant2File,
       product1File: this.product1File() ?? undefined,
       product2File: this.product2File() ?? undefined,
       title: this.title() || undefined,
@@ -242,6 +244,28 @@ export class EasyRateWorkflowService implements OnDestroy {
         this.errorMessage.set(`Unable to create Easy-rate job: ${dispatchError.message}`);
       },
     });
+  }
+
+  private validateBeforeDispatch(): string | null {
+    const hasReactant1: boolean = this.reactant1File() !== null;
+    const hasReactant2: boolean = this.reactant2File() !== null;
+    const hasTransitionState: boolean = this.transitionStateFile() !== null;
+    const hasAtLeastOneProduct: boolean = this.product1File() !== null || this.product2File() !== null;
+
+    if (!hasReactant1) {
+      return 'Reactant 1 file is required.';
+    }
+    if (!hasReactant2) {
+      return 'Reactant 2 file is required.';
+    }
+    if (!hasTransitionState) {
+      return 'Transition state file is required.';
+    }
+    if (!hasAtLeastOneProduct) {
+      return 'At least one product file is required.';
+    }
+
+    return null;
   }
 
   /** Resetea el formulario de ejecución sin borrar los archivos cargados */

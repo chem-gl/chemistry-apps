@@ -68,6 +68,106 @@ class EasyRateContractApiTests(TestCase):
         reactant_1_file = SimpleUploadedFile(
             "reactant-1.log",
             _build_gaussian_log_content(
+                free_energy=-50.0000,
+                thermal_enthalpy=-49.9000,
+                zero_point_energy=-49.8500,
+                scf_energy=-50.2000,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+        reactant_2_file = SimpleUploadedFile(
+            "reactant-2.log",
+            _build_gaussian_log_content(
+                free_energy=-49.9800,
+                thermal_enthalpy=-49.8800,
+                zero_point_energy=-49.8300,
+                scf_energy=-50.1800,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+        transition_state_file = SimpleUploadedFile(
+            "transition-state.log",
+            _build_gaussian_log_content(
+                free_energy=-99.9300,
+                thermal_enthalpy=-99.8300,
+                zero_point_energy=-99.7800,
+                scf_energy=-100.0000,
+                temperature=298.15,
+                imaginary_frequency=625.0,
+                include_ts_marker=True,
+            ),
+            content_type="text/plain",
+        )
+        product_1_file = SimpleUploadedFile(
+            "product-1.log",
+            _build_gaussian_log_content(
+                free_energy=-100.0200,
+                thermal_enthalpy=-99.9200,
+                zero_point_energy=-99.8700,
+                scf_energy=-100.2500,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+
+        return {
+            "version": "2.0.0",
+            "title": "Easy-rate Test Path",
+            "reaction_path_degeneracy": "1.0",
+            "cage_effects": "true",
+            "diffusion": "true",
+            "solvent": "Water",
+            "radius_reactant_1": "2.10",
+            "radius_reactant_2": "2.30",
+            "reaction_distance": "2.80",
+            "print_data_input": "true",
+            "reactant_1_file": reactant_1_file,
+            "reactant_2_file": reactant_2_file,
+            "transition_state_file": transition_state_file,
+            "product_1_file": product_1_file,
+        }
+
+    def test_create_and_retrieve_easy_rate_job(self) -> None:
+        """Crea job multipart, ejecuta plugin y valida salida tipada."""
+        multipart_payload = self._build_valid_multipart_payload()
+
+        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                multipart_payload,
+                format="multipart",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.data["plugin_name"], PLUGIN_NAME)
+
+        created_job_id: str = str(create_response.data["id"])
+        JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["status"], "completed")
+
+        result_payload = retrieve_response.data["results"]
+        self.assertIn("rate_constant", result_payload)
+        self.assertIn("kappa_tst", result_payload)
+        self.assertIn("gibbs_activation_kcal_mol", result_payload)
+        self.assertIn("structures", result_payload)
+
+    def test_create_easy_rate_rejects_missing_reactant_2(self) -> None:
+        """Valida error 400 cuando falta el segundo reactivo obligatorio."""
+        reactant_1_file = SimpleUploadedFile(
+            "reactant-1.log",
+            _build_gaussian_log_content(
                 free_energy=-100.0000,
                 thermal_enthalpy=-99.9000,
                 zero_point_energy=-99.8500,
@@ -105,83 +205,11 @@ class EasyRateContractApiTests(TestCase):
             content_type="text/plain",
         )
 
-        return {
-            "version": "2.0.0",
-            "title": "Easy-rate Test Path",
-            "reaction_path_degeneracy": "1.0",
-            "cage_effects": "true",
-            "diffusion": "true",
-            "solvent": "Water",
-            "radius_reactant_1": "2.10",
-            "radius_reactant_2": "2.30",
-            "reaction_distance": "2.80",
-            "print_data_input": "true",
-            "reactant_1_file": reactant_1_file,
-            "transition_state_file": transition_state_file,
-            "product_1_file": product_1_file,
-        }
-
-    def test_create_and_retrieve_easy_rate_job(self) -> None:
-        """Crea job multipart, ejecuta plugin y valida salida tipada."""
-        multipart_payload = self._build_valid_multipart_payload()
-
-        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
-            dispatch_mock.return_value = True
-            create_response = self.client.post(
-                APP_API_BASE_PATH,
-                multipart_payload,
-                format="multipart",
-            )
-
-        self.assertEqual(create_response.status_code, 201)
-        self.assertEqual(create_response.data["plugin_name"], PLUGIN_NAME)
-
-        created_job_id: str = str(create_response.data["id"])
-        JobService.run_job(created_job_id)
-
-        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
-        self.assertEqual(retrieve_response.status_code, 200)
-        self.assertEqual(retrieve_response.data["status"], "completed")
-
-        result_payload = retrieve_response.data["results"]
-        self.assertIn("rate_constant", result_payload)
-        self.assertIn("kappa_tst", result_payload)
-        self.assertIn("gibbs_activation_kcal_mol", result_payload)
-        self.assertIn("structures", result_payload)
-
-    def test_create_easy_rate_rejects_missing_reactants(self) -> None:
-        """Valida error 400 cuando no se carga ningún reactivo."""
-        transition_state_file = SimpleUploadedFile(
-            "transition-state.log",
-            _build_gaussian_log_content(
-                free_energy=-99.9500,
-                thermal_enthalpy=-99.8500,
-                zero_point_energy=-99.8000,
-                scf_energy=-100.0000,
-                temperature=298.15,
-                imaginary_frequency=625.0,
-                include_ts_marker=True,
-            ),
-            content_type="text/plain",
-        )
-        product_1_file = SimpleUploadedFile(
-            "product-1.log",
-            _build_gaussian_log_content(
-                free_energy=-100.0500,
-                thermal_enthalpy=-99.9500,
-                zero_point_energy=-99.9000,
-                scf_energy=-100.2500,
-                temperature=298.15,
-                imaginary_frequency=0.0,
-                include_ts_marker=False,
-            ),
-            content_type="text/plain",
-        )
-
         payload = {
             "version": "2.0.0",
             "title": "Invalid payload",
             "reaction_path_degeneracy": "1.0",
+            "reactant_1_file": reactant_1_file,
             "transition_state_file": transition_state_file,
             "product_1_file": product_1_file,
         }
