@@ -138,6 +138,129 @@ Si alguien nuevo entra al proyecto, la forma más útil de entenderlo es esta:
 
 La regla de diseño más importante del repositorio es que una nueva app científica se integra como extensión del sistema, no como excepción. Eso significa reutilizar el core, registrar un plugin, exponer un router propio, documentar el contrato en OpenAPI y dejar que el frontend consuma ese contrato a través de wrappers ya estandarizados.
 
+## Funcionamiento Back
+
+Breve resumen  
+El backend separa responsabilidades: API/routers, core de jobs (persistencia, progreso, logs y orquestación), plugins científicos (ejecución de dominio) y el sistema de colas (Celery + Redis). Los diagramas y el mapa siguiente muestran clases clave y la interacción archivo→archivo que hace funcionar el backend.
+
+### Diagrama de clases (vista lógica)
+```mermaid
+classDiagram
+  class ScientificJob {
+    +UUID id
+    +str plugin_name
+    +str algorithm_version
+    +JSONMap parameters
+    +JSONMap results
+    +int progress_percentage
+    +str progress_stage
+    +str status
+    +JSONMap runtime_state
+  }
+  class JobService {
+    +create_job(plugin_name, version, parameters)
+    +register_dispatch_result(job_id, was_dispatched)
+    +run_job(job_id)
+  }
+  class RuntimeJobService {
+    +create_job(...)
+    +register_dispatch_result(...)
+    +run_job(...)
+  }
+  class PluginExecutionPort {
+    <<interface>>
+    +execute(plugin_name, params, progress_cb, log_cb, control_cb)
+  }
+  class Plugin {
+    +execute(params)
+  }
+  class CeleryTasks {
+    +execute_scientific_job(job_id)
+    +run_active_recovery(...)
+    +purge_expired_artifact_chunks()
+  }
+  class CeleryApp {
+    +app
+  }
+  class Redis
+  class Worker
+
+  JobService --> RuntimeJobService : delega
+  RuntimeJobService --> ScientificJob : persiste/lee
+  RuntimeJobService --> PluginExecutionPort : utiliza
+  PluginExecutionPort <.. Plugin : implementa
+  CeleryTasks --> JobService : llama `run_job`
+  CeleryApp *-- CeleryTasks
+  Worker --> Redis
+  Worker --> CeleryApp : ejecuta tareas
+  RuntimeJobService --> JobProgressPublisherPort : publica progreso
+  RuntimeJobService --> JobLogPublisherPort : publica logs
+```
+
+### Diagrama de interacción (archivo → archivo, flujo de un job)
+```mermaid
+sequenceDiagram
+  participant F as Frontend (UI)
+  participant R as Router (`/apps/<app>/routers.py`)
+  participant JS as JobService (`apps/core/services.py`)
+  participant DB as DB (ScientificJob)
+  participant T as Tasks (`apps/core/tasks.py`)
+  participant C as Celery (`config/celery.py`)
+  participant Redis as Redis (broker)
+  participant W as Worker (celery worker process)
+  participant P as Plugin (`apps/<app>/plugin.py`)
+  participant RT as Realtime (`apps/core/realtime.py`)
+
+  F->>R: POST /api/<app>/create (payload)
+  R->>JS: `create_job(...)` (valida y persiste)
+  JS->>DB: ScientificJob.objects.create(...)
+  JS->>T: `dispatch_scientific_job(job_id)`
+  T->>C: `execute_scientific_job.delay(job_id)` (publica task en broker)
+  C->>Redis: publica tarea
+  W->>Redis: obtiene tarea
+  W->>T: ejecuta `execute_scientific_job(job_id)`
+  T->>JS: `JobService.run_job(job_id)`
+  JS->>P: `PluginExecutionPort.execute(...)` (callbacks: progreso/log/control)
+  P-->>JS: progreso/logs (via callbacks)
+  JS->>DB: actualiza estado/resultados
+  JS->>RT: `broadcast_job_update(...)` (SSE/Websocket)
+  F->>B: consulta progreso / se suscribe a eventos
+```
+
+### Mapa de archivos y responsabilidades (referencias)
+- **[backend/config/celery.py](backend/config/celery.py)**: crea la instancia Celery, carga settings (`namespace='CELERY'`) y conecta `worker_ready` para disparar `run_active_recovery`.  
+- **[backend/config/__init__.py](backend/config/__init__.py)**: reexporta `celery_app` para que `-A config` y herramientas lo detecten.  
+- **[backend/config/settings.py](backend/config/settings.py)**: define `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, `CELERY_BEAT_SCHEDULE` y parámetros de recuperación (`JOB_RECOVERY_*`).  
+- **[backend/apps/core/tasks.py](backend/apps/core/tasks.py)**: tareas Celery públicas: `execute_scientific_job`, `run_active_recovery`, `purge_expired_artifact_chunks`; y helper `dispatch_scientific_job` (captura fallos de broker).  
+- **[backend/apps/core/services.py](backend/apps/core/services.py)**: `JobService`/`RuntimeJobService` — creación, registro de dispatch, ejecución en runtime (persistencia, callbacks de progreso/log, tratamiento de errores y pause/resume).  
+- **[backend/apps/core/management/commands/up.py](backend/apps/core/management/commands/up.py)**: comando dev que orquesta `runserver`, inicia Redis local si hace falta y lanza el worker (`python -m celery -A config worker -l info`).  
+- **[backend/apps/<app>/routers.py](backend/apps/calculator/routers.py)** (ejemplo): valida request, crea job delegando a `JobService` y llama a `dispatch_scientific_job`.  
+- **[backend/apps/<app>/plugin.py](backend/apps/calculator/plugin.py)** (ejemplo): implementación del plugin que implementa la interfaz `PluginExecutionPort` y usa callbacks para progreso/log/control.  
+- **[docker-compose.dev.yml](docker-compose.dev.yml)**: define servicios `redis`, `backend`, `celery-worker` y `celery-beat` para desarrollo; usa `redis` como broker en `redis://redis:6379/0`.  
+- **[README.md](README.md)**: (esta sección) guía y diagramas.
+
+### Puntos operativos y comandos útiles
+- Levantar todo (dev):  
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+- Levantar backend + worker local (sin Docker) (dev):  
+```bash
+cd backend
+./venv/bin/python manage.py up
+```
+- Levantar solo worker:  
+```bash
+cd backend
+./venv/bin/python -m celery -A config worker -l info
+```
+- Ver logs del worker (Docker):  
+```bash
+docker compose -f docker-compose.dev.yml logs -f celery-worker
+```
+
+---
+
 ## 4) Inicio rápido
 
 ### Backend
