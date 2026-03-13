@@ -18,6 +18,8 @@ on:
                 required: true
             VM_SSH_KEY:
                 required: true
+            VM_SSH_PASSPHRASE:
+                required: false
             VM_PROJECT_PATH:
                 required: true
             DJANGO_SECRET_KEY:
@@ -167,6 +169,28 @@ jobs:
                   echo "Revisar firewall/NAT/seguridad de red antes de subir artefactos."
                   exit 1
 
+            - name: Prepare SSH private key
+              id: ssh_key
+              env:
+                  VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+                  VM_SSH_PASSPHRASE: ${{ secrets.VM_SSH_PASSPHRASE }}
+              run: |
+                  set -e
+                  KEY_DIR="$RUNNER_TEMP/ssh"
+                  KEY_FILE="$KEY_DIR/deploy_key"
+
+                  mkdir -p "$KEY_DIR"
+                  printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+                  chmod 600 "$KEY_FILE"
+
+                  if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
+                    echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
+                    echo "Verifica que el secret contenga la llave privada completa y, si está cifrada, define VM_SSH_PASSPHRASE."
+                    exit 1
+                  fi
+
+                  echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
+
             - name: Upload bundle to host (attempt 1)
               id: scp_upload_first
               continue-on-error: true
@@ -175,7 +199,8 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key: ${{ secrets.VM_SSH_KEY }}
+                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
@@ -191,7 +216,8 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key: ${{ secrets.VM_SSH_KEY }}
+                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
@@ -217,7 +243,8 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key: ${{ secrets.VM_SSH_KEY }}
+                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR
                   script: |
                       set -e
