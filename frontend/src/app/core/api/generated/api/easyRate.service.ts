@@ -44,6 +44,8 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
      * Crear Job Easy-rate
      * Crea un job asíncrono Easy-rate a partir de archivos Gaussian cargados en multipart y parámetros de ejecución.
      * @endpoint post /api/easy-rate/jobs/
+     * @param reactant1File 
+     * @param reactant2File 
      * @param transitionStateFile 
      * @param version 
      * @param title 
@@ -56,18 +58,22 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
      * @param radiusReactant2 
      * @param reactionDistance 
      * @param printDataInput 
-     * @param reactant1File 
-     * @param reactant2File 
      * @param product1File 
      * @param product2File 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public easyRateJobsCreate(transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1File?: Blob, reactant2File?: Blob, product1File?: Blob, product2File?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
-    public easyRateJobsCreate(transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1File?: Blob, reactant2File?: Blob, product1File?: Blob, product2File?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
-    public easyRateJobsCreate(transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1File?: Blob, reactant2File?: Blob, product1File?: Blob, product2File?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
-    public easyRateJobsCreate(transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1File?: Blob, reactant2File?: Blob, product1File?: Blob, product2File?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (reactant1File === null || reactant1File === undefined) {
+            throw new Error('Required parameter reactant1File was null or undefined when calling easyRateJobsCreate.');
+        }
+        if (reactant2File === null || reactant2File === undefined) {
+            throw new Error('Required parameter reactant2File was null or undefined when calling easyRateJobsCreate.');
+        }
         if (transitionStateFile === null || transitionStateFile === undefined) {
             throw new Error('Required parameter transitionStateFile was null or undefined when calling easyRateJobsCreate.');
         }

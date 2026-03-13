@@ -7,13 +7,14 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-  CalculatorJobResponse,
-  JobLogList,
-  JobProgressSnapshot,
-  ProgressStageEnum,
-  ScientificJob,
-  StatusEnum,
-  provideApi,
+    CalculatorJobResponse,
+    EasyRateJobResponse,
+    JobLogList,
+    JobProgressSnapshot,
+    ProgressStageEnum,
+    ScientificJob,
+    StatusEnum,
+    provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
@@ -25,6 +26,7 @@ const MOLAR_REPORT_CSV_URL = (id: string): string =>
   `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-csv/`;
 const MOLAR_REPORT_LOG_URL = (id: string): string =>
   `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-log/`;
+const EASY_RATE_JOBS_URL: string = `${API_BASE_URL}/api/easy-rate/jobs/`;
 
 /** Respuesta base reutilizable en tests de calculadora */
 function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
@@ -112,6 +114,40 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
         created_at: new Date().toISOString(),
       },
     ],
+    ...overrides,
+  };
+}
+
+function makeEasyRateResponse(overrides: Partial<EasyRateJobResponse> = {}): EasyRateJobResponse {
+  return {
+    id: 'easy-rate-job-1',
+    job_hash: 'easy-rate-hash',
+    plugin_name: 'easy-rate',
+    algorithm_version: '2.0.0',
+    status: StatusEnum.Pending,
+    cache_hit: false,
+    cache_miss: true,
+    progress_percentage: 0,
+    progress_stage: ProgressStageEnum.Pending,
+    progress_message: 'Pendiente',
+    progress_event_index: 1,
+    parameters: {
+      title: 'Easy-rate Test',
+      reaction_path_degeneracy: 1,
+      cage_effects: false,
+      diffusion: false,
+      solvent: 'Water',
+      custom_viscosity: null,
+      radius_reactant_1: null,
+      radius_reactant_2: null,
+      reaction_distance: null,
+      print_data_input: false,
+      file_descriptors: [],
+    },
+    results: null,
+    error_trace: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -345,6 +381,39 @@ describe('JobsApiService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body['plugin_name']).toBe('random-numbers');
     req.flush(scientificJob);
+  });
+
+  it('should dispatch easy-rate job using multipart form-data with strict required files', () => {
+    const transitionStateFile = new File(['ts'], 'transition-state.log', { type: 'text/plain' });
+    const reactant1File = new File(['r1'], 'reactant-1.log', { type: 'text/plain' });
+    const reactant2File = new File(['r2'], 'reactant-2.log', { type: 'text/plain' });
+    const product1File = new File(['p1'], 'product-1.log', { type: 'text/plain' });
+
+    service
+      .dispatchEasyRateJob({
+        transitionStateFile,
+        reactant1File,
+        reactant2File,
+        product1File,
+        solvent: 'Water',
+        diffusion: false,
+      })
+      .subscribe((job) => {
+        expect(job.plugin_name).toBe('easy-rate');
+      });
+
+    const req = httpMock.expectOne(EASY_RATE_JOBS_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+
+    const payload = req.request.body as FormData;
+    expect(payload.get('solvent')).toBe('Water');
+    expect((payload.get('reactant_1_file') as File).name).toBe('reactant-1.log');
+    expect((payload.get('reactant_2_file') as File).name).toBe('reactant-2.log');
+    expect((payload.get('transition_state_file') as File).name).toBe('transition-state.log');
+    expect((payload.get('product_1_file') as File).name).toBe('product-1.log');
+
+    req.flush(makeEasyRateResponse());
   });
 
   it('should get generic scientific job status', () => {
