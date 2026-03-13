@@ -16,6 +16,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 # Importar y configurar Django solo una vez. Si ya se configuró, `django.setup`
 # no hace nada.
-import django
+import django  # noqa: E402
 
 django.setup()
