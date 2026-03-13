@@ -66,7 +66,7 @@ sequenceDiagram
 
   U->>F: Completa formulario y lanza calculo
   F->>W: Solicita create job
-  W->>B: POST /api/<app>/...
+  W->>B: POST /api/app/...
   B->>C: Valida y registra job
   C->>D: Persiste job en estado pending
   C->>R: Encola ejecucion si aplica
@@ -189,7 +189,7 @@ classDiagram
   RuntimeJobService --> ScientificJob : persiste/lee
   RuntimeJobService --> PluginExecutionPort : utiliza
   PluginExecutionPort <.. Plugin : implementa
-  CeleryTasks --> JobService : llama `run_job`
+  CeleryTasks --> JobService : llama run_job
   CeleryApp *-- CeleryTasks
   Worker --> Redis
   Worker --> CeleryApp : ejecuta tareas
@@ -201,29 +201,29 @@ classDiagram
 ```mermaid
 sequenceDiagram
   participant F as Frontend (UI)
-  participant R as Router (`/apps/<app>/routers.py`)
-  participant JS as JobService (`apps/core/services.py`)
+  participant R as Router (backend/apps/app/routers.py)
+  participant JS as JobService (backend/apps/core/services.py)
   participant DB as DB (ScientificJob)
-  participant T as Tasks (`apps/core/tasks.py`)
-  participant C as Celery (`config/celery.py`)
+  participant T as Tasks (backend/apps/core/tasks.py)
+  participant C as Celery (backend/config/celery.py)
   participant Redis as Redis (broker)
   participant W as Worker (celery worker process)
-  participant P as Plugin (`apps/<app>/plugin.py`)
-  participant RT as Realtime (`apps/core/realtime.py`)
+  participant P as Plugin (backend/apps/app/plugin.py)
+  participant RT as Realtime (backend/apps/core/realtime.py)
 
-  F->>R: POST /api/<app>/create (payload)
-  R->>JS: `create_job(...)` (valida y persiste)
+  F->>R: POST /api/app/create (payload)
+  R->>JS: create_job(...) (valida y persiste)
   JS->>DB: ScientificJob.objects.create(...)
-  JS->>T: `dispatch_scientific_job(job_id)`
-  T->>C: `execute_scientific_job.delay(job_id)` (publica task en broker)
+  JS->>T: dispatch_scientific_job(job_id)
+  T->>C: execute_scientific_job.delay(job_id) (publica task en broker)
   C->>Redis: publica tarea
   W->>Redis: obtiene tarea
   W->>T: ejecuta `execute_scientific_job(job_id)`
   T->>JS: `JobService.run_job(job_id)`
-  JS->>P: `PluginExecutionPort.execute(...)` (callbacks: progreso/log/control)
+  JS->>P: PluginExecutionPort.execute(...) (callbacks: progreso/log/control)
   P-->>JS: progreso/logs (via callbacks)
   JS->>DB: actualiza estado/resultados
-  JS->>RT: `broadcast_job_update(...)` (SSE/Websocket)
+  JS->>RT: broadcast_job_update(...) (SSE/Websocket)
   F->>B: consulta progreso / se suscribe a eventos
 ```
 
@@ -238,6 +238,86 @@ sequenceDiagram
 - **[backend/apps/<app>/plugin.py](backend/apps/calculator/plugin.py)** (ejemplo): implementación del plugin que implementa la interfaz `PluginExecutionPort` y usa callbacks para progreso/log/control.  
 - **[docker-compose.dev.yml](docker-compose.dev.yml)**: define servicios `redis`, `backend`, `celery-worker` y `celery-beat` para desarrollo; usa `redis` como broker en `redis://redis:6379/0`.  
 - **[README.md](README.md)**: (esta sección) guía y diagramas.
+
+### Interacción detallada: flujo de archivos y clases
+
+A continuación se muestra de forma más explícita cómo interactúan los archivos y clases principales durante el ciclo de vida de un job: creación desde el router, encolado, ejecución en worker, ejecución del plugin y publicación de progreso/logs.
+
+#### Mapa de interacción (archivo → archivo)
+```mermaid
+flowchart TD
+  FE[Frontend UI]
+  RT[Router\nbackend/apps/app/routers.py]
+  JS[JobService / RuntimeJobService\nbackend/apps/core/services.py]
+  DB[ScientificJob (Model)\nbackend/apps/core/models.py]
+  TASKS[Tasks Module\nbackend/apps/core/tasks.py]
+  CEL[Celery App\nbackend/config/celery.py]
+  RED[Redis (broker & channels)]
+  WORK[Celery Worker Process]
+  PLG[Plugin Implementation\nbackend/apps/app/plugin.py]
+  REAL[Realtime / Broadcaster\nbackend/apps/core/realtime.py]
+
+  FE -->|HTTP POST| RT
+  RT -->|create_job(...)| JS
+  JS -->|ScientificJob.objects.create(...)| DB
+  JS -->|dispatch_scientific_job(job_id)| TASKS
+  TASKS -->|execute_scientific_job.delay(job_id)| CEL
+  CEL -->|publica tarea| RED
+  RED -->|delivery| WORK
+  WORK -->|ejecuta task| TASKS
+  TASKS -->|JobService.run_job(job_id)| JS
+  JS -->|llama execute(...)| PLG
+  PLG -->|callbacks progress/log| JS
+  JS -->|actualiza estado/resultados| DB
+  JS -->|broadcast_job_update(...)| REAL
+  REAL -->|notifica frontend| FE
+```
+
+#### Secuencia detallada (funciones y llamadas)
+```mermaid
+sequenceDiagram
+  participant Frontend as Frontend UI
+  participant Router as apps/app/routers.py
+  participant Service as apps/core/services.py
+  participant Model as apps/core/models.py
+  participant Tasks as apps/core/tasks.py
+  participant CeleryApp as config/celery.py
+  participant Redis as Redis
+  participant Worker as Celery Worker
+  participant Plugin as apps/app/plugin.py
+  participant Realtime as apps/core/realtime.py
+
+  Frontend->>Router: POST /api/app/create (payload)
+  Router->>Service: create_job(plugin, version, parameters)
+  Service->>Model: ScientificJob.objects.create(...)
+  Service->>Tasks: dispatch_scientific_job(job_id)
+  Tasks->>CeleryApp: execute_scientific_job.delay(job_id)
+  CeleryApp->>Redis: publica tarea en broker
+  Redis->>Worker: entrega tarea al worker
+  Worker->>Tasks: ejecuta execute_scientific_job(job_id)
+  Tasks->>Service: run_job(job_id)
+  Service->>Plugin: PluginExecutionPort.execute(..., progress_cb, log_cb, control_cb)
+  Plugin-->>Service: llama progress_cb / log_cb según avance
+  Service->>Model: guarda progreso, logs y resultado
+  Service->>Realtime: broadcast_job_update(job)
+  Realtime->>Frontend: evento SSE/Websocket / consulta HTTP
+```
+
+#### Resumen rápido por archivo (qué hace y qué expone)
+- `backend/apps/<app>/routers.py`: valida request, crea job con `JobService.create_job()` y solicita encolado con `dispatch_scientific_job(job_id)`.  
+- `backend/apps/core/services.py`: `JobService` / `RuntimeJobService` — crea jobs, aplica cache temprana, registra resultado de dispatch, orquesta `run_job()` que maneja estado, callbacks de progreso/log y persistencia.  
+- `backend/apps/core/tasks.py`: `dispatch_scientific_job()` (resiliente ante broker caído) y las tareas Celery: `execute_scientific_job`, `run_active_recovery`, `purge_expired_artifact_chunks`.  
+- `backend/apps/core/models.py`: definición de `ScientificJob` y campos de trazabilidad (`status`, `progress_*`, `runtime_state`, `results`).  
+- `backend/apps/<app>/plugin.py`: implementación del `PluginExecutionPort` — contiene la lógica científica y usa callbacks para informar progreso y logs.  
+- `backend/config/celery.py`: instancia de Celery, `config_from_object(...)`, `autodiscover_tasks()` y `worker_ready` para desencadenar recuperación activa.  
+- `backend/config/settings.py`: variables `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, `CELERY_BEAT_SCHEDULE` y parámetros `JOB_RECOVERY_*`.  
+- `backend/apps/core/realtime.py`: publica actualizaciones de job a frontend (SSE/WebSockets) usando `CHANNEL_LAYERS_REDIS_URL`.  
+- `backend/apps/core/management/commands/up.py`: helper dev que garantiza broker, inicia `redis-server` si es necesario y orquesta `runserver` + `celery worker`.  
+
+#### Consejos de depuración rápidos
+- Si un job queda en `pending`: revisar `dispatch_scientific_job()` y logs del broker (Redis) y del worker.  
+- Ver logs del worker: `docker compose -f docker-compose.dev.yml logs -f celery-worker` o `./venv/bin/python -m celery -A config worker -l info` en consola.  
+- Comprobar que `CELERY_BROKER_URL` apunta al broker correcto y que `config/celery.py` carga la app (ver `from config import celery_app`).
 
 ### Puntos operativos y comandos útiles
 - Levantar todo (dev):  
