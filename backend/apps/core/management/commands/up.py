@@ -278,7 +278,10 @@ class Command(BaseCommand):
                     runserver_process = None
                     continue
 
-                exit_code: int = runserver_process.returncode or 0
+                # `subprocess.Popen.returncode` puede ser un MagicMock en tests
+                # y evaluarse como truthy, lo que provocaría que se trate como error.
+                # Usamos `poll()` para obtener un entero real (o None) cuando exista.
+                exit_code: int = runserver_process.poll() or 0
                 if exit_code != 0:
                     raise CommandError(f"Runserver finalizó con código {exit_code}.")
                 break

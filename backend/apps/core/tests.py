@@ -1234,8 +1234,8 @@ class DevelopmentUpCommandTests(TestCase):
         called_command: list[str] = list(popen_mock.call_args.args[0])
         called_cwd: Path = Path(str(popen_mock.call_args.kwargs["cwd"]))
         self.assertEqual(
-            called_command[-2:],
-            ["runserver", "127.0.0.1:8000"],
+            called_command[-3:],
+            ["runserver", "--noreload", "127.0.0.1:8000"],
         )
         self.assertEqual(called_cwd.name, "backend")
 
@@ -1271,7 +1271,10 @@ class DevelopmentUpCommandTests(TestCase):
         self.assertEqual(
             first_call_command[1:6], ["-m", "celery", "-A", "config", "worker"]
         )
-        self.assertEqual(second_call_command[-2:], ["runserver", "0.0.0.0:8000"])
+        self.assertEqual(
+            second_call_command[-3:],
+            ["runserver", "--noreload", "0.0.0.0:8000"],
+        )
         self.assertEqual(first_call_cwd.name, "backend")
         self.assertEqual(second_call_cwd.name, "backend")
         celery_process.terminate.assert_called_once()
@@ -1315,7 +1318,10 @@ class DevelopmentUpCommandTests(TestCase):
             second_call_command[1:6],
             ["-m", "celery", "-A", "config", "worker"],
         )
-        self.assertEqual(third_call_command[-2:], ["runserver", "0.0.0.0:8000"])
+        self.assertEqual(
+            third_call_command[-3:],
+            ["runserver", "--noreload", "0.0.0.0:8000"],
+        )
         redis_process.terminate.assert_called_once()
         celery_process.terminate.assert_called_once()
 
