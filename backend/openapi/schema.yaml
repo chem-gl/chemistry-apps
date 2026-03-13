@@ -2015,11 +2015,9 @@ components:
         reactant_1_file:
           type: string
           format: binary
-          nullable: true
         reactant_2_file:
           type: string
           format: binary
-          nullable: true
         transition_state_file:
           type: string
           format: binary
@@ -2032,6 +2030,8 @@ components:
           format: binary
           nullable: true
       required:
+      - reactant_1_file
+      - reactant_2_file
       - transition_state_file
     EasyRateJobResponse:
       type: object

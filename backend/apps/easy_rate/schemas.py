@@ -44,6 +44,7 @@ class EasyRateArtifactDescriptorSerializer(serializers.Serializer):
                 "reaction_distance": 2.8,
                 "print_data_input": True,
                 "reactant_1_file": "<binary .log>",
+                "reactant_2_file": "<binary .log>",
                 "transition_state_file": "<binary .log>",
                 "product_1_file": "<binary .log>",
             },
@@ -70,8 +71,8 @@ class EasyRateJobCreateSerializer(serializers.Serializer):
     reaction_distance = serializers.FloatField(required=False, allow_null=True)
     print_data_input = serializers.BooleanField(default=False)
 
-    reactant_1_file = serializers.FileField(required=False, allow_null=True)
-    reactant_2_file = serializers.FileField(required=False, allow_null=True)
+    reactant_1_file = serializers.FileField(required=True, allow_null=False)
+    reactant_2_file = serializers.FileField(required=True, allow_null=False)
     transition_state_file = serializers.FileField(required=True, allow_null=False)
     product_1_file = serializers.FileField(required=False, allow_null=True)
     product_2_file = serializers.FileField(required=False, allow_null=True)
@@ -83,9 +84,14 @@ class EasyRateJobCreateSerializer(serializers.Serializer):
         product_1_file = attrs.get("product_1_file")
         product_2_file = attrs.get("product_2_file")
 
-        if reactant_1_file is None and reactant_2_file is None:
+        if reactant_1_file is None:
             raise serializers.ValidationError(
-                "Debe cargarse al menos un reactivo (reactant_1_file o reactant_2_file)."
+                {"reactant_1_file": "reactant_1_file es obligatorio."}
+            )
+
+        if reactant_2_file is None:
+            raise serializers.ValidationError(
+                {"reactant_2_file": "reactant_2_file es obligatorio."}
             )
 
         if product_1_file is None and product_2_file is None:
