@@ -398,6 +398,147 @@ npm run build
 - Mantener lógica de negocio fuera de componentes visuales.
 - Mantener tipado estricto y evitar tipos dinámicos ambiguos.
 
+---
+
+## 8) CI/CD y despliegue en producción
+
+### Visión general del pipeline
+
+El pipeline de CI/CD está compuesto por tres workflows en `.github/workflows/`:
+
+| Archivo | Tipo | Propósito |
+|---|---|---|
+| `ci-deploy.yml` | Orquestador | Ejecuta tests, llama a `build.yml` y `deploy.yml` secuencialmente |
+| `build.yml` | Reutilizable | Construye imágenes Docker, genera artefactos comprimidos y crea un Release en GitHub |
+| `deploy.yml` | Reutilizable | Valida secrets, genera `.env`, transfiere artefactos por SCP y despliega vía SSH |
+
+**Disparadores:** push a `main` y Pull Requests hacia `main`.
+
+**Flujo resumido:**
+```
+push/PR → tests (backend + frontend) → build imágenes → crear Release → SCP bundle → SSH docker compose up -d
+```
+
+Las imágenes **no se publican en ningún registry**; se comprime el tar con `gzip`, se sube al host vía SCP y se carga con `docker load`.
+
+---
+
+### Secrets requeridos en GitHub
+
+Ve a **Settings → Secrets and variables → Actions** en el repositorio y define los siguientes secrets:
+
+#### Servidor remoto
+
+| Secret | Descripción | Ejemplo |
+|---|---|---|
+| `VM_HOST` | IP o hostname del servidor | `192.168.1.100` |
+| `VM_PORT` | Puerto SSH del servidor | `22` |
+| `VM_USER` | Usuario SSH con acceso a Docker | `deploy` |
+| `VM_SSH_KEY` | Clave privada SSH (sin passphrase) | contenido de `~/.ssh/id_ed25519` |
+| `VM_PROJECT_PATH` | Directorio absoluto en el servidor donde se desplegará el proyecto | `/home/deploy/chemistry-apps` |
+
+#### Base de datos (PostgreSQL)
+
+| Secret | Descripción | Ejemplo |
+|---|---|---|
+| `DB_NAME` | Nombre de la base de datos | `chemistry_db` |
+| `DB_USER` | Usuario de la base de datos | `chemistry_user` |
+| `DB_PASSWORD` | Contraseña de la base de datos | `s3cr3t_passw0rd` |
+| `DB_PORT` | Puerto interno de PostgreSQL (dentro de la red Docker) | `5432` |
+
+> La base de datos se crea automáticamente en el primer despliegue gracias a las variables `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` que se inyectan al contenedor `postgres:16-alpine`.
+
+#### Django / seguridad
+
+| Secret | Descripción | Ejemplo |
+|---|---|---|
+| `DJANGO_SECRET_KEY` | Clave secreta de Django (cadena larga aleatoria) | `django-insecure-xxxxxxxxxxx` |
+| `ALLOWED_HOSTS` | Hosts permitidos, separados por coma | `back-apps.guzman-lopez.com,localhost` |
+| `CORS_ALLOWED_ORIGINS` | Orígenes CORS permitidos, separados por coma, **con protocolo** | `https://apps.guzman-lopez.com` |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes de confianza CSRF, separados por coma, **con protocolo** | `https://apps.guzman-lopez.com,https://back-apps.guzman-lopez.com` |
+| `BACKEND_PUBLIC_URL` | URL pública del backend. Se usa tanto como `build-arg` en Angular como en el `.env` de producción | `https://back-apps.guzman-lopez.com` |
+
+#### Puertos externos (mapeo host → contenedor)
+
+| Secret | Requerido | Descripción | Ejemplo |
+|---|---|---|---|
+| `EXTERNAL_BACKEND_PORT` | **Sí** | Puerto del host que se mapeará al backend (evitar conflictos con servicios existentes) | `8080` |
+| `EXTERNAL_FRONTEND_PORT` | **Sí** | Puerto del host que se mapeará al frontend | `4210` |
+| `REDIS_PORT` | No | Puerto interno de Redis (por defecto `6379`) | `6379` |
+
+> **Verificar puertos disponibles en el servidor** antes de elegir los valores:
+> ```bash
+> ss -tlnp | grep -E '8080|4210'
+> ```
+
+---
+
+### Configuración de Nginx en el servidor
+
+El servidor Nginx actúa como reverse proxy hacia los contenedores Docker. Configuración de ejemplo para los dominios `apps.guzman-lopez.com` (frontend) y `back-apps.guzman-lopez.com` (backend), usando un certificado wildcard `*.guzman-lopez.com`:
+
+```nginx
+# Frontend
+server {
+    listen 443 ssl;
+    server_name apps.guzman-lopez.com;
+
+    ssl_certificate     /etc/letsencrypt/live/guzman-lopez.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/guzman-lopez.com/privkey.pem;
+
+    location / {
+        proxy_pass         http://127.0.0.1:4210;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+
+# Backend (API)
+server {
+    listen 443 ssl;
+    server_name back-apps.guzman-lopez.com;
+
+    ssl_certificate     /etc/letsencrypt/live/guzman-lopez.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/guzman-lopez.com/privkey.pem;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+
+        # WebSockets / SSE
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade    $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_read_timeout 3600s;
+    }
+}
+
+# Redirigir HTTP → HTTPS
+server {
+    listen 80;
+    server_name apps.guzman-lopez.com back-apps.guzman-lopez.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+Los valores `4210` y `8080` deben coincidir con `EXTERNAL_FRONTEND_PORT` y `EXTERNAL_BACKEND_PORT` respectivamente.
+
+---
+
+### Notas de operación
+
+- **Primer despliegue:** la base de datos se crea sola. Las migraciones de Django se ejecutan automáticamente como parte del entrypoint del contenedor backend.
+- **Persistencia de datos:** los datos de PostgreSQL y Redis se almacenan en `./docker-data/` dentro de `VM_PROJECT_PATH`. Los archivos de media del backend se almacenan en `./backend/media/`.
+- **Limpieza automática de imágenes:** tras cada despliegue se ejecuta `docker image prune -f --filter "until=168h"` para liberar espacio en disco.
+- **Formato de CORS/CSRF:** los valores de `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS` deben incluir el protocolo (`https://`) y pueden contener múltiples orígenes separados por coma sin espacios.
+- **`BACKEND_PUBLIC_URL`** se usa en dos momentos distintos: como `--build-arg API_BASE_URL` al compilar Angular (genera la URL de la API en el bundle estático) y como variable de entorno en el `.env` de producción para Django.
+- **`ALLOWED_HOSTS`** acepta múltiples valores separados por coma: `back-apps.guzman-lopez.com,localhost`.
+
 ## 8) Integración de nueva app científica
 
 Para alta de una nueva app científica en backend y su conexión con frontend, seguir el manual:
