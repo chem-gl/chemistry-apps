@@ -11,18 +11,21 @@ Cómo se usa:
 
 import os
 
-from apps.core.routing import websocket_urlpatterns
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-django_asgi_application = get_asgi_application()
+# Es crucial inicializar la aplicación Django ANTES de importar cualquier
+# módulo que pueda acceder al ORM o a la configuración de la app.
+django_asgi_app = get_asgi_application()
+
+from apps.core.routing import websocket_urlpatterns
 
 application = ProtocolTypeRouter(
     {
-        "http": django_asgi_application,
+        "http": django_asgi_app,
         "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
     }
 )
