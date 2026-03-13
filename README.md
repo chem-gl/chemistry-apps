@@ -246,31 +246,31 @@ A continuación se muestra de forma más explícita cómo interactúan los archi
 #### Mapa de interacción (archivo → archivo)
 ```mermaid
 flowchart TD
-  FE[Frontend UI]
-  RT[Router\nbackend/apps/app/routers.py]
-  JS[JobService / RuntimeJobService\nbackend/apps/core/services.py]
-  DB[ScientificJob (Model)\nbackend/apps/core/models.py]
-  TASKS[Tasks Module\nbackend/apps/core/tasks.py]
-  CEL[Celery App\nbackend/config/celery.py]
-  RED[Redis (broker & channels)]
-  WORK[Celery Worker Process]
-  PLG[Plugin Implementation\nbackend/apps/app/plugin.py]
-  REAL[Realtime / Broadcaster\nbackend/apps/core/realtime.py]
+  FE["Frontend UI"]
+  RT["Router - backend/apps/app/routers.py"]
+  JS["JobService / RuntimeJobService - backend/apps/core/services.py"]
+  DB["ScientificJob Model - backend/apps/core/models.py"]
+  TASKS["Tasks Module - backend/apps/core/tasks.py"]
+  CEL["Celery App - backend/config/celery.py"]
+  RED["Redis broker and channels"]
+  WORK["Celery Worker Process"]
+  PLG["Plugin Implementation - backend/apps/app/plugin.py"]
+  REAL["Realtime / Broadcaster - backend/apps/core/realtime.py"]
 
-  FE -->|HTTP POST| RT
-  RT -->|create_job(...)| JS
-  JS -->|ScientificJob.objects.create(...)| DB
-  JS -->|dispatch_scientific_job(job_id)| TASKS
-  TASKS -->|execute_scientific_job.delay(job_id)| CEL
-  CEL -->|publica tarea| RED
-  RED -->|delivery| WORK
-  WORK -->|ejecuta task| TASKS
-  TASKS -->|JobService.run_job(job_id)| JS
-  JS -->|llama execute(...)| PLG
-  PLG -->|callbacks progress/log| JS
-  JS -->|actualiza estado/resultados| DB
-  JS -->|broadcast_job_update(...)| REAL
-  REAL -->|notifica frontend| FE
+  FE --> RT
+  RT --> JS
+  JS --> DB
+  JS --> TASKS
+  TASKS --> CEL
+  CEL --> RED
+  RED --> WORK
+  WORK --> TASKS
+  TASKS --> JS
+  JS --> PLG
+  PLG --> JS
+  JS --> DB
+  JS --> REAL
+  REAL --> FE
 ```
 
 #### Secuencia detallada (funciones y llamadas)
