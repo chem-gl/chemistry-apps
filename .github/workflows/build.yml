@@ -19,6 +19,10 @@ on:
             BACKEND_PUBLIC_URL:
                 required: false
 
+# Necesario para que el job release pueda crear tags y publicar releases.
+permissions:
+    contents: write
+
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
     BACKEND_IMG_GZ: backend-image.tar.gz
