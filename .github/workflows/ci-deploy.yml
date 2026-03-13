@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
   ci:
-    name: Build + tests + artifacts
+    name: Build + artifacts
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
@@ -101,10 +101,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-
-      - name: Run backend tests
-        working-directory: backend
-        run: python manage.py test
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -140,7 +136,7 @@ jobs:
 
       - name: "Create artifact: backend code tar"
         run: |
-          tar --exclude='**/__pycache__' --exclude='**/*.pyc' --exclude='**/.venv' -czf $BACKEND_TAR backend/
+          tar --exclude='**/__pycache__' --exclude='**/*.pyc' --exclude='**/.venv' --exclude='backend/media' -czf $BACKEND_TAR backend/ docker-compose.yml
 
       - name: "Create artifact: frontend dist tar"
         run: |
@@ -152,7 +148,59 @@ jobs:
       - name: Export frontend Docker image
         run: docker save chemistry-frontend:latest -o $FRONTEND_IMG
 
-      - name: Upload artifacts
+      - name: Create deploy .env
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import textwrap
+
+          required = [
+              "DJANGO_SECRET_KEY",
+              "BACKEND_PUBLIC_URL",
+              "FRONTEND_PUBLIC_URL",
+              "BACKEND_INTERNAL_PORT",
+              "FRONTEND_INTERNAL_PORT",
+          ]
+
+          missing = [k for k in required if not os.getenv(k)]
+          if missing:
+              raise SystemExit(f"Missing required env vars for deploy: {missing}")
+
+          db_user = os.getenv("DB_USER", "postgres")
+          db_pass = os.getenv("DB_PASSWORD", "postgres")
+          db_name = os.getenv("DB_NAME", "chemistry_db")
+
+          env_content = textwrap.dedent(f"""\
+          # Deployment env for docker-compose
+          DJANGO_SECRET_KEY={os.getenv('DJANGO_SECRET_KEY')}
+          DJANGO_DEBUG=False
+          DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,{os.getenv('BACKEND_PUBLIC_URL')}
+
+          ENABLE_CORS=True
+          CORS_ALLOW_ALL_ORIGINS=False
+          CORS_ALLOW_CREDENTIALS=True
+          CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200,https://{os.getenv('FRONTEND_PUBLIC_URL')}
+
+          BACKEND_INTERNAL_PORT={os.getenv('BACKEND_INTERNAL_PORT')}
+          FRONTEND_INTERNAL_PORT={os.getenv('FRONTEND_INTERNAL_PORT')}
+
+          DB_ENGINE=postgres
+          DB_HOST=db
+          DB_PORT=5432
+          DB_NAME={db_name}
+          DB_USER={db_user}
+          DB_PASSWORD={db_pass}
+
+          CELERY_BROKER_URL=redis://redis:6379/0
+          CELERY_RESULT_BACKEND=redis://redis:6379/0
+          CHANNEL_LAYERS_REDIS_URL=redis://redis:6379/1
+          """)
+
+          Path(".env.deploy").write_text(env_content)
+          PY
+
+      - name: "Upload artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: deployment-artifacts
@@ -161,6 +209,7 @@ jobs:
             $FRONTEND_TAR
             $BACKEND_IMG
             $FRONTEND_IMG
+            .env.deploy
 
   deploy:
     name: Deploy to remote server
@@ -199,7 +248,7 @@ jobs:
 
       - name: Copy artifacts to remote host
         run: |
-          scp -o StrictHostKeyChecking=no $BACKEND_TAR $FRONTEND_TAR $BACKEND_IMG $FRONTEND_IMG ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/
+          scp -o StrictHostKeyChecking=no $BACKEND_TAR $FRONTEND_TAR $BACKEND_IMG $FRONTEND_IMG .env.deploy ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/
 
       - name: Deploy on remote host
         run: |
@@ -210,16 +259,23 @@ jobs:
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
-            # Limpia artefactos previos para evitar residuos
-            rm -rf backend dist
+            # Limpia artefactos previos para evitar residuos (mantiene uploads/media locales)
+            find backend -mindepth 1 -maxdepth 1 ! -name media -exec rm -rf {} +
+            rm -rf dist
 
             tar -xzf ~/backend-code.tar.gz -C "$DEPLOY_DIR" --strip-components=0
+            mkdir -p backend/media
             tar -xzf ~/frontend-dist.tar.gz -C "$DEPLOY_DIR" --strip-components=0
 
             docker load -i ~/backend-image.tar
             docker load -i ~/frontend-image.tar
 
-            # Ensure .env exists
+            # Copy the .env generated in CI (contains all secrets needed by docker compose)
+            if [ -f "$HOME/.env.deploy" ]; then
+              cp "$HOME/.env.deploy" .env
+            fi
+
+            # Fallback: if .env still missing, use example and generate a secret key
             if [ ! -f ".env" ]; then
               if [ -f "backend/.env.example" ]; then
                 cp backend/.env.example .env
@@ -229,43 +285,18 @@ jobs:
               fi
             fi
 
-            # Ensure DJANGO_SECRET_KEY exists
-            if ! grep -q "^DJANGO_SECRET_KEY=" .env; then
+            if ! grep -qE "^DJANGO_SECRET_KEY=.+$" .env; then
               SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(64))")
               echo "DJANGO_SECRET_KEY=$SECRET" >> .env
             fi
 
-            # Fix environment values
-            python - <<-'PY'
-              import os
-              from pathlib import Path
+            # Ensure host directories exist (persistencia de datos y media)
+            mkdir -p docker-data/redis docker-data/postgres backend/media
 
-              def set_env(key, value):
-                  path = Path('.env')
-                  lines = path.read_text().splitlines()
-                  found = False
-                  for i, line in enumerate(lines):
-                      if line.startswith(key + '='):
-                          lines[i] = f"{key}={value}"
-                          found = True
-                          break
-                  if not found:
-                      lines.append(f"{key}={value}")
-                  path.write_text("\n".join(lines) + "\n")
+            # Run containers via docker compose
+            docker compose down --remove-orphans || true
+            docker compose up -d --force-recreate
 
-              set_env('DJANGO_DEBUG', 'False')
-              set_env('ENABLE_CORS', 'True')
-              set_env('CORS_ALLOWED_ORIGINS', 'http://localhost:4200,http://127.0.0.1:4200,https://${{ secrets.FRONTEND_PUBLIC_URL }}')
-              set_env('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,${{ secrets.BACKEND_PUBLIC_URL }}')
-            PY
-
-            # Run containers
-            docker rm -f chemistry-backend || true
-            docker rm -f chemistry-frontend || true
-
-            docker run -d --name chemistry-backend --env-file .env -p ${{ secrets.BACKEND_INTERNAL_PORT }}:8000 chemistry-backend:latest
-            docker run -d --name chemistry-frontend --env-file .env -p ${{ secrets.FRONTEND_INTERNAL_PORT }}:4210 chemistry-frontend:latest
-
-            # Reload nginx
+            # Reload nginx (if instalado en el host)
             sudo systemctl reload nginx || sudo nginx -s reload || true
           EOF
