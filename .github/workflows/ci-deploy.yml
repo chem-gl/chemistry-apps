@@ -1,9 +1,3 @@
-# .github/workflows/ci-deploy.yml
-# GitHub Actions pipeline para:
-# 1) ejecutar tests, compilar y generar artefactos (tar + images)
-# 2) subir artefactos a los artifacts de Actions
-# 3) al merge en main, descargar artefactos y desplegar en un servidor Debian via SSH
-
 name: CI / CD
 
 on:
@@ -16,306 +10,72 @@ on:
       - dev
   workflow_dispatch: {}
 
-env:
-  BACKEND_TAR: deployment-bundle.tar.gz
-  BACKEND_IMG: backend-image.tar
-  FRONTEND_IMG: frontend-image.tar
-
 jobs:
-  dev-tests:
-    name: Run tests on dev branch
+  tests:
+    name: Test matrix (${{ matrix.service }})
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev' || github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python 3.12
+        if: matrix.service == 'backend'
         uses: actions/setup-python@v6
         with:
-          python-version: 3.12
+          python-version: &python_version 3.12
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
       - name: Install backend deps
+        if: matrix.service == 'backend'
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
       - name: Run backend tests
+        if: matrix.service == 'backend'
         working-directory: backend
         run: python manage.py test
 
       - name: Setup Node.js
+        if: matrix.service == 'frontend'
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend deps
+        if: matrix.service == 'frontend'
         working-directory: frontend
         run: npm ci
 
-  ci:
-    name: Build + artifacts
-    runs-on: ubuntu-latest
+      - name: Validate frontend build
+        if: matrix.service == 'frontend'
+        working-directory: frontend
+        run: npm run build
+
+  build:
+    name: Build reusable workflow
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     permissions:
       contents: write
-    outputs:
-      artifact_name: ${{ steps.package.outputs.artifact_name }}
-      target_dir: ${{ steps.build_app.outputs.target_dir }}
-      artifact_tar: ${{ steps.build_app.outputs.artifact_tar }}
-      env_name: ${{ steps.build_app.outputs.env_name }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.12
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-
-      - name: Install backend deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend deps
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend (production)
-        run: |
-          docker build \
-            --build-arg API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }} \
-            -t chemistry-frontend:latest \
-            -f frontend/Dockerfile --target prod frontend/
-
-      - name: Build backend Docker image (prod)
-        run: |
-          docker build -t chemistry-backend:latest -f backend/Dockerfile --target prod backend/
-
-      - name: "Create artifact: backend code tar"
-        run: |
-          tar -czf $BACKEND_TAR docker-compose.yml
-
-      - name: Export backend Docker image
-        run: docker save chemistry-backend:latest -o $BACKEND_IMG
-
-      - name: Export frontend Docker image
-        run: docker save chemistry-frontend:latest -o $FRONTEND_IMG
-
-      - name: Build app outputs
-        id: build_app
-        run: |
-          echo "target_dir=~/chemistry-apps" >> $GITHUB_OUTPUT
-          echo "artifact_tar=$BACKEND_TAR" >> $GITHUB_OUTPUT
-          echo "env_name=.env.deploy" >> $GITHUB_OUTPUT
-
-      - name: Set package outputs
-        id: package
-        run: |
-          {
-            echo "artifact_name<<EOF"
-            echo "$BACKEND_TAR"
-            echo "$BACKEND_IMG"
-            echo "$FRONTEND_IMG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Get version
-        id: get_version
-        run: |
-          echo "version=$(git describe --tags --always --dirty || echo no-tag-${GITHUB_SHA::7})" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ steps.package.outputs.artifact_name }}
-          tag_name: ${{ github.ref_name }}-v${{ steps.get_version.outputs.version }}
-          name: "Release ${{ github.ref_name }}-v${{ steps.get_version.outputs.version }}"
-          body: |
-            Automático: se generó la release v${{ steps.get_version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "Upload artifacts"
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-artifacts
-          path: |
-            ${{ env.BACKEND_TAR }}
-            ${{ env.BACKEND_IMG }}
-            ${{ env.FRONTEND_IMG }}
+    uses: ./.github/workflows/build.yml
+    with:
+      create_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    secrets: inherit
 
   deploy:
-    name: Deploy to remote server
-    runs-on: ubuntu-latest
-    needs: ci
+    name: Deploy reusable workflow
     if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Validate required secrets
-        run: |
-          if [ -z "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" ]; then echo "Missing secret: DEPLOY_SSH_PRIVATE_KEY"; exit 1; fi
-          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then echo "Missing secret: DEPLOY_HOST"; exit 1; fi
-          if [ -z "${{ secrets.DEPLOY_USER }}" ]; then echo "Missing secret: DEPLOY_USER"; exit 1; fi
-          if [ -z "${{ secrets.FRONTEND_PUBLIC_URL }}" ]; then echo "Missing secret: FRONTEND_PUBLIC_URL"; exit 1; fi
-          if [ -z "${{ secrets.BACKEND_PUBLIC_URL }}" ]; then echo "Missing secret: BACKEND_PUBLIC_URL"; exit 1; fi
-          if [ -z "${{ secrets.FRONTEND_INTERNAL_PORT }}" ]; then echo "Missing secret: FRONTEND_INTERNAL_PORT"; exit 1; fi
-          if [ -z "${{ secrets.BACKEND_INTERNAL_PORT }}" ]; then echo "Missing secret: BACKEND_INTERNAL_PORT"; exit 1; fi
-
-      - name: Checkout (needed for workflow metadata)
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-artifacts
-
-      - name: Create deploy .env on runner
-        env:
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
-          FRONTEND_PUBLIC_URL: ${{ secrets.FRONTEND_PUBLIC_URL }}
-          BACKEND_INTERNAL_PORT: ${{ secrets.BACKEND_INTERNAL_PORT }}
-          FRONTEND_INTERNAL_PORT: ${{ secrets.FRONTEND_INTERNAL_PORT }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import os
-          import textwrap
-
-          required = [
-              "DJANGO_SECRET_KEY",
-              "BACKEND_PUBLIC_URL",
-              "FRONTEND_PUBLIC_URL",
-              "BACKEND_INTERNAL_PORT",
-              "FRONTEND_INTERNAL_PORT",
-          ]
-
-          missing = [key for key in required if not os.getenv(key)]
-          if missing:
-              raise SystemExit(f"Missing required deploy env vars: {missing}")
-
-          db_user = os.getenv("DB_USER") or "postgres"
-          db_password = os.getenv("DB_PASSWORD") or "postgres"
-          db_name = os.getenv("DB_NAME") or "chemistry_db"
-
-          content = textwrap.dedent(
-              f"""\
-              # Deployment env for docker-compose
-              DJANGO_SECRET_KEY={os.getenv('DJANGO_SECRET_KEY')}
-              DJANGO_DEBUG=False
-              DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,{os.getenv('BACKEND_PUBLIC_URL')}
-
-              ENABLE_CORS=True
-              CORS_ALLOW_ALL_ORIGINS=False
-              CORS_ALLOW_CREDENTIALS=True
-              CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200,https://{os.getenv('FRONTEND_PUBLIC_URL')}
-
-              BACKEND_INTERNAL_PORT={os.getenv('BACKEND_INTERNAL_PORT')}
-              FRONTEND_INTERNAL_PORT={os.getenv('FRONTEND_INTERNAL_PORT')}
-
-              DB_ENGINE=postgres
-              DB_HOST=db
-              DB_PORT=5432
-              DB_NAME={db_name}
-              DB_USER={db_user}
-              DB_PASSWORD={db_password}
-
-              CELERY_BROKER_URL=redis://redis:6379/0
-              CELERY_RESULT_BACKEND=redis://redis:6379/0
-              CHANNEL_LAYERS_REDIS_URL=redis://redis:6379/1
-              """
-          )
-
-          Path(".env.deploy").write_text(content, encoding="utf-8")
-          PY
-
-      - name: Copy artifacts to remote host
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          port: 22
-          source: |
-            ${{ needs.ci.outputs.artifact_tar }}
-            ${{ env.BACKEND_IMG }}
-            ${{ env.FRONTEND_IMG }}
-            .env.deploy
-          target: ${{ needs.ci.outputs.target_dir }}
-
-      - name: Deploy on remote host
-        uses: appleboy/ssh-action@v1.2.2
-        env:
-          TARGET_DIR: ${{ needs.ci.outputs.target_dir }}
-          ARTIFACT_NAME: ${{ needs.ci.outputs.artifact_tar }}
-          ENV_NAME: ${{ needs.ci.outputs.env_name }}
-          BACKEND_IMAGE_TAR: backend-image.tar
-          FRONTEND_IMAGE_TAR: frontend-image.tar
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          envs: TARGET_DIR, ARTIFACT_NAME, ENV_NAME, BACKEND_IMAGE_TAR, FRONTEND_IMAGE_TAR
-          script: |
-            set -euo pipefail
-
-            mkdir -p "$TARGET_DIR"
-            cd "$TARGET_DIR"
-
-            # Limpia artefactos previos para evitar residuos
-            rm -f docker-compose.yml
-
-            tar -xzf "$ARTIFACT_NAME" -C "$TARGET_DIR" --strip-components=0
-            mkdir -p backend/media
-
-            # Evita uso de imagen vieja con misma etiqueta
-            docker image rm chemistry-backend:latest chemistry-frontend:latest || true
-
-            docker load -i "$BACKEND_IMAGE_TAR"
-            docker load -i "$FRONTEND_IMAGE_TAR"
-
-            # Copy the .env generated in CI (contains all secrets needed by docker compose)
-            if [ -f "$TARGET_DIR/$ENV_NAME" ]; then
-              cp "$TARGET_DIR/$ENV_NAME" .env
-            fi
-
-            if [ ! -f ".env" ]; then
-              echo "ERROR: deploy env file not found" >&2
-              exit 1
-            fi
-
-            if ! grep -qE "^DJANGO_SECRET_KEY=.+$" .env; then
-              SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(64))")
-              echo "DJANGO_SECRET_KEY=$SECRET" >> .env
-            fi
-
-            # Ensure host directories exist (persistencia de datos y media)
-            mkdir -p docker-data/redis docker-data/postgres backend/media
-
-            # Run containers via docker compose
-            docker compose down --remove-orphans || true
-            docker compose up -d --force-recreate
-
-            # Reload nginx (if instalado en el host)
-            sudo systemctl reload nginx || sudo nginx -s reload || true
+    needs: [build]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image_tag: ${{ needs.build.outputs.image_tag }}
+    secrets: inherit
