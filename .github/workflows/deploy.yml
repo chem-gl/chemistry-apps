@@ -51,6 +51,7 @@ env:
     BACKEND_IMG_GZ: backend-image.tar.gz
     FRONTEND_IMG_GZ: frontend-image.tar.gz
     DEPLOY_ENV_FILE: .env.deploy
+    DEPLOY_STAGING_DIR: /tmp/chemistry-apps-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
     deploy:
@@ -148,59 +149,67 @@ jobs:
                   IMAGE_TAG=${IMAGE_TAG}
                   EOF
 
-            - name: Upload bundle to host
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ secrets.VM_SSH_KEY }}
-                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
-                  target: ${{ secrets.VM_PROJECT_PATH }}
-                  overwrite: true
+                        - name: Upload bundle to host
+                            uses: appleboy/scp-action@v0.1.7
+                            with:
+                                    host: ${{ secrets.VM_HOST }}
+                                    username: ${{ secrets.VM_USER }}
+                                    port: ${{ secrets.VM_PORT }}
+                                    key: ${{ secrets.VM_SSH_KEY }}
+                                    source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
+                                    target: ${{ env.DEPLOY_STAGING_DIR }}
+                                    overwrite: true
 
-            - name: Deploy on remote host
-              uses: appleboy/ssh-action@v1.2.2
-              env:
-                  VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
-                  DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
-                  BACKEND_IMG_GZ: ${{ env.BACKEND_IMG_GZ }}
-                  FRONTEND_IMG_GZ: ${{ env.FRONTEND_IMG_GZ }}
-                  DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ secrets.VM_SSH_KEY }}
-                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE
-                  script: |
-                      set -e
+                        - name: Deploy on remote host
+                            uses: appleboy/ssh-action@v1.2.2
+                            env:
+                                    VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
+                                    DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
+                                    BACKEND_IMG_GZ: ${{ env.BACKEND_IMG_GZ }}
+                                    FRONTEND_IMG_GZ: ${{ env.FRONTEND_IMG_GZ }}
+                                    DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
+                                    DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
+                            with:
+                                    host: ${{ secrets.VM_HOST }}
+                                    username: ${{ secrets.VM_USER }}
+                                    port: ${{ secrets.VM_PORT }}
+                                    key: ${{ secrets.VM_SSH_KEY }}
+                                    envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR
+                                    script: |
+                                            set -e
 
-                      if ! command -v docker >/dev/null 2>&1; then
-                        echo "docker is not installed on remote host"
-                        exit 1
-                      fi
+                                            if ! command -v docker >/dev/null 2>&1; then
+                                                echo "docker is not installed on remote host"
+                                                exit 1
+                                            fi
 
-                      if docker compose version >/dev/null 2>&1; then
-                        COMPOSE_CMD="docker compose"
-                      elif command -v docker-compose >/dev/null 2>&1; then
-                        COMPOSE_CMD="docker-compose"
-                      else
-                        echo "docker compose plugin (or docker-compose) is required on remote host"
-                        exit 1
-                      fi
+                                            if docker compose version >/dev/null 2>&1; then
+                                                COMPOSE_CMD="docker compose"
+                                            elif command -v docker-compose >/dev/null 2>&1; then
+                                                COMPOSE_CMD="docker-compose"
+                                            else
+                                                echo "docker compose plugin (or docker-compose) is required on remote host"
+                                                exit 1
+                                            fi
 
-                      mkdir -p "$VM_PROJECT_PATH"
-                      cd "$VM_PROJECT_PATH"
+                                            mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
+                                            cd "$VM_PROJECT_PATH"
 
-                      mkdir -p docker-data/postgres docker-data/redis backend/media
+                                            mkdir -p docker-data/postgres docker-data/redis backend/media
 
-                      cp -f "$DEPLOY_ENV_FILE" .env
-                      chmod 600 .env
+                                            install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
+                                            install -m 644 "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" "$DEPLOY_COMPOSE_FILE"
 
-                      gunzip -c "$BACKEND_IMG_GZ" | docker load
-                      gunzip -c "$FRONTEND_IMG_GZ" | docker load
+                                            gunzip -c "$DEPLOY_STAGING_DIR/$BACKEND_IMG_GZ" | docker load
+                                            gunzip -c "$DEPLOY_STAGING_DIR/$FRONTEND_IMG_GZ" | docker load
 
-                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait
+                                            $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait
 
-                      docker image prune -f --filter "until=168h"
+                                            rm -f \
+                                                "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" \
+                                                "$DEPLOY_STAGING_DIR/$BACKEND_IMG_GZ" \
+                                                "$DEPLOY_STAGING_DIR/$FRONTEND_IMG_GZ" \
+                                                "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
+                                            rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
+
+                                            docker image prune -f --filter "until=168h"
