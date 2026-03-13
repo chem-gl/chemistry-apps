@@ -176,12 +176,12 @@ jobs:
                   VM_SSH_PASSPHRASE: ${{ secrets.VM_SSH_PASSPHRASE }}
               run: |
                   set -e
-                  KEY_DIR="$RUNNER_TEMP/ssh"
+                                    KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
                   KEY_FILE="$KEY_DIR/deploy_key"
 
                   mkdir -p "$KEY_DIR"
                   printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
-                  chmod 600 "$KEY_FILE"
+                                    chmod 644 "$KEY_FILE"
 
                   if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
                     echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
@@ -267,6 +267,8 @@ jobs:
                       cd "$VM_PROJECT_PATH"
 
                       mkdir -p docker-data/postgres docker-data/redis backend/media
+                      chown -R "$(id -un)":"$(id -gn)" "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
+                      chmod -R u+rwX "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
 
                       install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
                       install -m 644 "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" "$DEPLOY_COMPOSE_FILE"
@@ -284,4 +286,5 @@ jobs:
                       rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
 
                       docker image prune -f --filter "until=168h"
+                      rm -rf "$VM_PROJECT_PATH/.github/.tmp-ssh" 2>/dev/null || true
                       systemctl restart nginx || true
