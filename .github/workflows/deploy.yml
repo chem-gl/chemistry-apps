@@ -1,6 +1,5 @@
 # .github/workflows/deploy.yml
 # Workflow reutilizable para desplegar en host remoto con Docker Compose.
-
 name: Reusable Deploy
 
 on:
@@ -79,20 +78,20 @@ jobs:
                   _EXTERNAL_FRONTEND_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
               run: |
                   missing=()
-                  [ -z "$_VM_HOST" ]               && missing+=(VM_HOST)
-                  [ -z "$_VM_PORT" ]               && missing+=(VM_PORT)
-                  [ -z "$_VM_USER" ]               && missing+=(VM_USER)
-                  [ -z "$_VM_SSH_KEY" ]            && missing+=(VM_SSH_KEY)
-                  [ -z "$_VM_PROJECT_PATH" ]       && missing+=(VM_PROJECT_PATH)
-                  [ -z "$_DJANGO_SECRET_KEY" ]     && missing+=(DJANGO_SECRET_KEY)
-                  [ -z "$_DB_NAME" ]               && missing+=(DB_NAME)
-                  [ -z "$_DB_USER" ]               && missing+=(DB_USER)
-                  [ -z "$_DB_PASSWORD" ]           && missing+=(DB_PASSWORD)
-                  [ -z "$_DB_PORT" ]               && missing+=(DB_PORT)
-                  [ -z "$_ALLOWED_HOSTS" ]         && missing+=(ALLOWED_HOSTS)
-                  [ -z "$_CORS_ALLOWED_ORIGINS" ]  && missing+=(CORS_ALLOWED_ORIGINS)
-                  [ -z "$_CSRF_TRUSTED_ORIGINS" ]  && missing+=(CSRF_TRUSTED_ORIGINS)
-                  [ -z "$_BACKEND_PUBLIC_URL" ]    && missing+=(BACKEND_PUBLIC_URL)
+                  [ -z "$_VM_HOST" ] && missing+=(VM_HOST)
+                  [ -z "$_VM_PORT" ] && missing+=(VM_PORT)
+                  [ -z "$_VM_USER" ] && missing+=(VM_USER)
+                  [ -z "$_VM_SSH_KEY" ] && missing+=(VM_SSH_KEY)
+                  [ -z "$_VM_PROJECT_PATH" ] && missing+=(VM_PROJECT_PATH)
+                  [ -z "$_DJANGO_SECRET_KEY" ] && missing+=(DJANGO_SECRET_KEY)
+                  [ -z "$_DB_NAME" ] && missing+=(DB_NAME)
+                  [ -z "$_DB_USER" ] && missing+=(DB_USER)
+                  [ -z "$_DB_PASSWORD" ] && missing+=(DB_PASSWORD)
+                  [ -z "$_DB_PORT" ] && missing+=(DB_PORT)
+                  [ -z "$_ALLOWED_HOSTS" ] && missing+=(ALLOWED_HOSTS)
+                  [ -z "$_CORS_ALLOWED_ORIGINS" ] && missing+=(CORS_ALLOWED_ORIGINS)
+                  [ -z "$_CSRF_TRUSTED_ORIGINS" ] && missing+=(CSRF_TRUSTED_ORIGINS)
+                  [ -z "$_BACKEND_PUBLIC_URL" ] && missing+=(BACKEND_PUBLIC_URL)
                   [ -z "$_EXTERNAL_BACKEND_PORT" ] && missing+=(EXTERNAL_BACKEND_PORT)
                   [ -z "$_EXTERNAL_FRONTEND_PORT" ] && missing+=(EXTERNAL_FRONTEND_PORT)
                   if [ ${#missing[@]} -gt 0 ]; then
@@ -149,7 +148,26 @@ jobs:
                   IMAGE_TAG=${IMAGE_TAG}
                   EOF_ENV
 
-            - name: Upload bundle to host
+            - name: Preflight SSH connectivity
+              env:
+                  VM_HOST: ${{ secrets.VM_HOST }}
+                  VM_PORT: ${{ secrets.VM_PORT }}
+              run: |
+                  for attempt in 1 2 3; do
+                    if timeout 10 bash -lc "cat < /dev/null > /dev/tcp/${VM_HOST}/${VM_PORT}" 2>/dev/null; then
+                      echo "Conectividad TCP OK contra ${VM_HOST}:${VM_PORT}"
+                      exit 0
+                    fi
+                    echo "Intento ${attempt}/3 sin conectividad a ${VM_HOST}:${VM_PORT}."
+                    sleep 5
+                  done
+                  echo "ERROR: no hay conectividad TCP hacia ${VM_HOST}:${VM_PORT}."
+                  echo "Revisar firewall/NAT/seguridad de red antes de subir artefactos."
+                  exit 1
+
+            - name: Upload bundle to host (attempt 1)
+              id: scp_upload_first
+              continue-on-error: true
               uses: appleboy/scp-action@v0.1.7
               with:
                   host: ${{ secrets.VM_HOST }}
@@ -159,6 +177,30 @@ jobs:
                   source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
+                  timeout: 120s
+                  command_timeout: 20m
+
+            - name: Upload bundle to host (attempt 2)
+              id: scp_upload_retry
+              if: ${{ steps.scp_upload_first.outcome == 'failure' }}
+              continue-on-error: true
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.VM_HOST }}
+                  username: ${{ secrets.VM_USER }}
+                  port: ${{ secrets.VM_PORT }}
+                  key: ${{ secrets.VM_SSH_KEY }}
+                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
+                  target: ${{ env.DEPLOY_STAGING_DIR }}
+                  overwrite: true
+                  timeout: 120s
+                  command_timeout: 20m
+
+            - name: Validate SCP upload result
+              if: ${{ steps.scp_upload_first.outcome == 'failure' && steps.scp_upload_retry.outcome == 'failure' }}
+              run: |
+                  echo "ERROR: fallaron ambos intentos de subida por SCP."
+                  exit 1
 
             - name: Deploy on remote host
               uses: appleboy/ssh-action@v1.2.2
