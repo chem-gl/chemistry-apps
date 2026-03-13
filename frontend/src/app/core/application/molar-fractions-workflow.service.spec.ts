@@ -85,13 +85,15 @@ describe('MolarFractionsWorkflowService', () => {
 
   beforeEach(() => {
     jobsApiServiceMock = {
-      dispatchMolarFractionsJob: vi.fn((): Observable<ScientificJob> => of(makeScientificJob())),
+      dispatchMolarFractionsJob: vi.fn(
+        (): Observable<ScientificJobView> => of(makeScientificJob()),
+      ),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
       getScientificJobStatus: vi.fn(),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
-      listJobs: vi.fn((): Observable<ScientificJob[]> => of([])),
+      listJobs: vi.fn((): Observable<ScientificJobView[]> => of([])),
       downloadMolarFractionsCsvReport: vi.fn(),
       downloadMolarFractionsLogReport: vi.fn(),
     };

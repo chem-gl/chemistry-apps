@@ -10,9 +10,9 @@ import {
   CalculatorJobResponse,
   JobLogList,
   JobProgressSnapshot,
-  JobProgressStageEnum,
-  JobStatusEnum,
+  ProgressStageEnum,
   ScientificJob,
+  StatusEnum,
   provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
@@ -33,7 +33,7 @@ function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): Calcu
     job_hash: 'abc123',
     plugin_name: 'calculator',
     algorithm_version: '1.0.0',
-    status: JobStatusEnum.Completed,
+    status: StatusEnum.Completed,
     cache_hit: false,
     cache_miss: true,
     error_trace: null,
@@ -49,9 +49,9 @@ function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): Calcu
 function makeProgressSnapshot(overrides: Partial<JobProgressSnapshot> = {}): JobProgressSnapshot {
   return {
     job_id: 'test-uuid',
-    status: JobStatusEnum.Running,
+    status: StatusEnum.Running,
     progress_percentage: 50,
-    progress_stage: JobProgressStageEnum.Running,
+    progress_stage: ProgressStageEnum.Running,
     progress_message: 'Ejecutando cálculo...',
     progress_event_index: 1,
     updated_at: new Date().toISOString(),
@@ -66,7 +66,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     job_hash: 'hash-value',
     plugin_name: 'calculator',
     algorithm_version: '1.0.0',
-    status: JobStatusEnum.Pending,
+    status: StatusEnum.Pending,
     cache_hit: false,
     cache_miss: true,
     progress_percentage: 0,
@@ -234,7 +234,7 @@ describe('JobsApiService', () => {
   it('should retrieve job status', () => {
     const mockJob = makeCalcResponse({
       id: 'status-test-id',
-      status: JobStatusEnum.Completed,
+      status: StatusEnum.Completed,
       results: {
         final_result: 42,
         metadata: { operation_used: 'add', operand_a: 20, operand_b: 22 },
@@ -272,9 +272,9 @@ describe('JobsApiService', () => {
       const jobId = 'poll-test-id';
       const completedSnapshot = makeProgressSnapshot({
         job_id: jobId,
-        status: JobStatusEnum.Completed,
+        status: StatusEnum.Completed,
         progress_percentage: 100,
-        progress_stage: JobProgressStageEnum.Completed,
+        progress_stage: ProgressStageEnum.Completed,
       });
 
       let resolvedSnap: JobProgressSnapshot | undefined;
