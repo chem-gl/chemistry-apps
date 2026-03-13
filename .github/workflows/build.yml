@@ -18,8 +18,6 @@ on:
         secrets:
             BACKEND_PUBLIC_URL:
                 required: false
-            GITHUB_TOKEN:
-                required: false
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
@@ -97,4 +95,4 @@ jobs:
                   body: |
                       Automatico: se genero la release main-${{ needs.build.outputs.image_tag }}
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ github.token }}
