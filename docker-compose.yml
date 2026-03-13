@@ -6,6 +6,7 @@
 # - PostgreSQL (base de datos)
 # - Backend Django (Daphne)
 # - Frontend Angular (Nginx)
+# - Celery Worker (ejecución de jobs científicos)
 #
 # Uso:
 #   docker compose up -d
@@ -56,6 +57,7 @@ services:
     environment:
       # Django / seguridad
       DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
       ENABLE_CORS: "True"
       CORS_ALLOW_ALL_ORIGINS: "False"
       CORS_ALLOW_CREDENTIALS: "True"
@@ -85,7 +87,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-      start_period: 20s
+      start_period: 60s
 
   frontend:
     image: chemistry-frontend:${IMAGE_TAG:-latest}
@@ -95,3 +97,30 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  celery-worker:
+    image: chemistry-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["python", "-m", "celery", "-A", "config", "worker", "-l", "info"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./backend/media:/app/media
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      ENABLE_CORS: "False"
+      DB_ENGINE: "postgres"
+      DB_NAME: ${DB_NAME:-chemistry_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"

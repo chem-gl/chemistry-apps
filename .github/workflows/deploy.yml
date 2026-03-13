@@ -42,9 +42,9 @@ on:
             REDIS_PORT:
                 required: false
             EXTERNAL_BACKEND_PORT:
-                required: false
+                required: true
             EXTERNAL_FRONTEND_PORT:
-                required: false
+                required: true
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
@@ -58,6 +58,48 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Validate required secrets
+              env:
+                  _VM_HOST: ${{ secrets.VM_HOST }}
+                  _VM_PORT: ${{ secrets.VM_PORT }}
+                  _VM_USER: ${{ secrets.VM_USER }}
+                  _VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+                  _VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
+                  _DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+                  _DB_NAME: ${{ secrets.DB_NAME }}
+                  _DB_USER: ${{ secrets.DB_USER }}
+                  _DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  _DB_PORT: ${{ secrets.DB_PORT }}
+                  _ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+                  _CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+                  _CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+                  _BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
+                  _EXTERNAL_BACKEND_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
+                  _EXTERNAL_FRONTEND_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
+              run: |
+                  missing=()
+                  [ -z "$_VM_HOST" ]               && missing+=(VM_HOST)
+                  [ -z "$_VM_PORT" ]               && missing+=(VM_PORT)
+                  [ -z "$_VM_USER" ]               && missing+=(VM_USER)
+                  [ -z "$_VM_SSH_KEY" ]            && missing+=(VM_SSH_KEY)
+                  [ -z "$_VM_PROJECT_PATH" ]       && missing+=(VM_PROJECT_PATH)
+                  [ -z "$_DJANGO_SECRET_KEY" ]     && missing+=(DJANGO_SECRET_KEY)
+                  [ -z "$_DB_NAME" ]               && missing+=(DB_NAME)
+                  [ -z "$_DB_USER" ]               && missing+=(DB_USER)
+                  [ -z "$_DB_PASSWORD" ]           && missing+=(DB_PASSWORD)
+                  [ -z "$_DB_PORT" ]               && missing+=(DB_PORT)
+                  [ -z "$_ALLOWED_HOSTS" ]         && missing+=(ALLOWED_HOSTS)
+                  [ -z "$_CORS_ALLOWED_ORIGINS" ]  && missing+=(CORS_ALLOWED_ORIGINS)
+                  [ -z "$_CSRF_TRUSTED_ORIGINS" ]  && missing+=(CSRF_TRUSTED_ORIGINS)
+                  [ -z "$_BACKEND_PUBLIC_URL" ]    && missing+=(BACKEND_PUBLIC_URL)
+                  [ -z "$_EXTERNAL_BACKEND_PORT" ] && missing+=(EXTERNAL_BACKEND_PORT)
+                  [ -z "$_EXTERNAL_FRONTEND_PORT" ] && missing+=(EXTERNAL_FRONTEND_PORT)
+                  if [ ${#missing[@]} -gt 0 ]; then
+                    echo "ERROR: faltan los siguientes secrets: ${missing[*]}"
+                    exit 1
+                  fi
+                  echo "Todos los secrets requeridos están definidos."
+
             - name: Download deployment artifacts
               uses: actions/download-artifact@v4
               with:
