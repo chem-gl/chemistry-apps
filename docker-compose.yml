@@ -41,7 +41,7 @@ services:
       retries: 10
 
   backend:
-    image: chemistry-backend:latest
+    image: chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       db:
@@ -74,12 +74,24 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; s = socket.create_connection(('127.0.0.1', 8000), 2); s.close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   frontend:
-    image: chemistry-frontend:latest
+    image: chemistry-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:
       - "${FRONTEND_INTERNAL_PORT:-4210}:80"
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy

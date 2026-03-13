@@ -1,0 +1,164 @@
+# .github/workflows/deploy.yml
+# Workflow reutilizable para desplegar en host remoto con Docker Compose.
+
+name: Reusable Deploy
+
+on:
+    workflow_call:
+        inputs:
+            image_tag:
+                description: Tag de imágenes generado en el workflow de build
+                required: true
+                type: string
+        secrets:
+            VM_HOST:
+                required: true
+            VM_PORT:
+                required: true
+            VM_USER:
+                required: true
+            VM_SSH_KEY:
+                required: true
+            VM_PROJECT_PATH:
+                required: true
+            DJANGO_SECRET_KEY:
+                required: true
+            DB_NAME:
+                required: true
+            DB_USER:
+                required: true
+            DB_PASSWORD:
+                required: true
+            DB_PORT:
+                required: true
+            ALLOWED_HOSTS:
+                required: true
+            CORS_ALLOWED_ORIGINS:
+                required: true
+            CSRF_TRUSTED_ORIGINS:
+                required: true
+            BACKEND_PUBLIC_URL:
+                required: true
+            REDIS_PORT:
+                required: false
+            EXTERNAL_BACKEND_PORT:
+                required: false
+            EXTERNAL_FRONTEND_PORT:
+                required: false
+
+env:
+    DEPLOY_COMPOSE_FILE: docker-compose.yml
+    BACKEND_IMG_GZ: backend-image.tar.gz
+    FRONTEND_IMG_GZ: frontend-image.tar.gz
+    DEPLOY_ENV_FILE: .env.deploy
+
+jobs:
+    deploy:
+        name: Deploy on remote host
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Download deployment artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: deployment-artifacts
+                  path: .
+
+            - name: Build .env file for deployment
+              env:
+                  SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+                  DB_NAME: ${{ secrets.DB_NAME }}
+                  DB_USER: ${{ secrets.DB_USER }}
+                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  DB_PORT: ${{ secrets.DB_PORT }}
+                  ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+                  CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+                  CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+                  BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
+                  REDIS_PORT: ${{ secrets.REDIS_PORT }}
+                  BACKEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
+                  FRONTEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
+                  IMAGE_TAG: ${{ inputs.image_tag }}
+              run: |
+                  cat > "$DEPLOY_ENV_FILE" <<EOF
+                  DEBUG=0
+                  SECRET_KEY=${SECRET_KEY}
+                  DB_NAME=${DB_NAME}
+                  DB_USER=${DB_USER}
+                  DB_PASSWORD=${DB_PASSWORD}
+                  DB_PORT=${DB_PORT:-5432}
+                  POSTGRES_DB=${DB_NAME}
+                  POSTGRES_USER=${DB_USER}
+                  POSTGRES_PASSWORD=${DB_PASSWORD}
+                  POSTGRES_PORT=${DB_PORT:-5432}
+                  POSTGRES_HOST=db
+                  REDIS_HOST=redis
+                  REDIS_PORT=${REDIS_PORT:-6379}
+                  CELERY_BROKER_URL=redis://redis:6379/0
+                  CELERY_RESULT_BACKEND=redis://redis:6379/1
+                  ALLOWED_HOSTS=${ALLOWED_HOSTS}
+                  DJANGO_ALLOWED_HOSTS=${ALLOWED_HOSTS}
+                  CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+                  CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
+                  BACKEND_PUBLIC_URL=${BACKEND_PUBLIC_URL}
+                  BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8000}
+                  FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-80}
+                  IMAGE_TAG=${IMAGE_TAG}
+                  EOF
+
+            - name: Upload bundle to host
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.VM_HOST }}
+                  username: ${{ secrets.VM_USER }}
+                  port: ${{ secrets.VM_PORT }}
+                  key: ${{ secrets.VM_SSH_KEY }}
+                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
+                  target: ${{ secrets.VM_PROJECT_PATH }}
+                  overwrite: true
+
+            - name: Deploy on remote host
+              uses: appleboy/ssh-action@v1.2.2
+              env:
+                  VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
+                  DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
+                  BACKEND_IMG_GZ: ${{ env.BACKEND_IMG_GZ }}
+                  FRONTEND_IMG_GZ: ${{ env.FRONTEND_IMG_GZ }}
+                  DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
+              with:
+                  host: ${{ secrets.VM_HOST }}
+                  username: ${{ secrets.VM_USER }}
+                  port: ${{ secrets.VM_PORT }}
+                  key: ${{ secrets.VM_SSH_KEY }}
+                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE
+                  script: |
+                      set -e
+
+                      if ! command -v docker >/dev/null 2>&1; then
+                        echo "docker is not installed on remote host"
+                        exit 1
+                      fi
+
+                      if docker compose version >/dev/null 2>&1; then
+                        COMPOSE_CMD="docker compose"
+                      elif command -v docker-compose >/dev/null 2>&1; then
+                        COMPOSE_CMD="docker-compose"
+                      else
+                        echo "docker compose plugin (or docker-compose) is required on remote host"
+                        exit 1
+                      fi
+
+                      mkdir -p "$VM_PROJECT_PATH"
+                      cd "$VM_PROJECT_PATH"
+
+                      mkdir -p docker-data/postgres docker-data/redis backend/media
+
+                      cp -f "$DEPLOY_ENV_FILE" .env
+                      chmod 600 .env
+
+                      gunzip -c "$BACKEND_IMG_GZ" | docker load
+                      gunzip -c "$FRONTEND_IMG_GZ" | docker load
+
+                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait
+
+                      docker image prune -f --filter "until=168h"
