@@ -1,6 +1,5 @@
 # .github/workflows/deploy.yml
 # Workflow reutilizable para desplegar en host remoto con Docker Compose.
-
 name: Reusable Deploy
 
 on:
