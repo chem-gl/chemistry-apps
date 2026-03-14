@@ -54,4 +54,12 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/marcus',
     available: true,
   },
+  {
+    key: 'smileit',
+    title: 'Smileit',
+    description:
+      'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
+    routePath: '/smileit',
+    available: true,
+  },
 ];

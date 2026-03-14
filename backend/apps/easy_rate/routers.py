@@ -13,19 +13,6 @@ from __future__ import annotations
 import hashlib
 from typing import cast
 
-from apps.core.artifacts import ScientificInputArtifactStorageService
-from apps.core.declarative_api import DeclarativeJobAPI
-from apps.core.models import ScientificJob
-from apps.core.reporting import (
-    build_download_filename,
-    build_job_error_report,
-    build_job_log_report,
-    build_text_download_response,
-    validate_job_for_csv_report,
-)
-from apps.core.schemas import ErrorResponseSerializer
-from apps.core.tasks import dispatch_scientific_job
-from apps.core.types import JSONMap
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -41,8 +28,28 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.artifacts import ScientificInputArtifactStorageService
+from apps.core.declarative_api import DeclarativeJobAPI
+from apps.core.models import ScientificJob
+from apps.core.reporting import (
+    build_download_filename,
+    build_job_error_report,
+    build_job_log_report,
+    build_text_download_response,
+    validate_job_for_csv_report,
+)
+from apps.core.schemas import ErrorResponseSerializer
+from apps.core.tasks import dispatch_scientific_job
+from apps.core.types import JSONMap
+
 from .definitions import PLUGIN_NAME
-from .schemas import EasyRateJobCreateSerializer, EasyRateJobResponseSerializer
+from .plugin import inspect_easy_rate_gaussian_blob
+from .schemas import (
+    EasyRateInspectionRequestSerializer,
+    EasyRateInspectionResponseSerializer,
+    EasyRateJobCreateSerializer,
+    EasyRateJobResponseSerializer,
+)
 
 
 def _normalize_chunk_to_bytes(chunk: bytes | memoryview | str) -> bytes:
@@ -142,6 +149,46 @@ class EasyRateJobViewSet(viewsets.ViewSet):
     lookup_field = "id"
 
     @extend_schema(
+        summary="Inspeccionar archivo Gaussian para Easy-rate",
+        description=(
+            "Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones "
+            "candidatas para selección previa en frontend."
+        ),
+        request=EasyRateInspectionRequestSerializer,
+        responses={
+            200: EasyRateInspectionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="No fue posible inspeccionar el archivo cargado.",
+            ),
+        },
+    )
+    @action(detail=False, methods=["post"], url_path="inspect-input")
+    def inspect_input(self, request: Request) -> Response:
+        """Inspecciona un archivo Gaussian antes de crear un job Easy-rate."""
+        serializer = EasyRateInspectionRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        validated_data: dict[str, object] = cast(
+            dict[str, object], serializer.validated_data
+        )
+        uploaded_file = cast(UploadedFile, validated_data["gaussian_file"])
+        source_field = str(validated_data["source_field"])
+
+        file_chunks: list[bytes] = []
+        for chunk in uploaded_file.chunks():
+            file_chunks.append(_normalize_chunk_to_bytes(chunk))
+        uploaded_file.seek(0)
+
+        inspection_payload = inspect_easy_rate_gaussian_blob(
+            source_field=source_field,
+            original_filename=str(uploaded_file.name),
+            artifact_bytes=b"".join(file_chunks),
+        )
+        response_serializer = EasyRateInspectionResponseSerializer(inspection_payload)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
         summary="Crear Job Easy-rate",
         description=(
             "Crea un job asíncrono Easy-rate a partir de archivos Gaussian "
@@ -205,6 +252,31 @@ class EasyRateJobViewSet(viewsets.ViewSet):
                 else None
             ),
             "print_data_input": bool(validated_data["print_data_input"]),
+            "reactant_1_execution_index": (
+                int(validated_data["reactant_1_execution_index"])
+                if validated_data.get("reactant_1_execution_index") is not None
+                else None
+            ),
+            "reactant_2_execution_index": (
+                int(validated_data["reactant_2_execution_index"])
+                if validated_data.get("reactant_2_execution_index") is not None
+                else None
+            ),
+            "transition_state_execution_index": (
+                int(validated_data["transition_state_execution_index"])
+                if validated_data.get("transition_state_execution_index") is not None
+                else None
+            ),
+            "product_1_execution_index": (
+                int(validated_data["product_1_execution_index"])
+                if validated_data.get("product_1_execution_index") is not None
+                else None
+            ),
+            "product_2_execution_index": (
+                int(validated_data["product_2_execution_index"])
+                if validated_data.get("product_2_execution_index") is not None
+                else None
+            ),
             "file_descriptors": cast(JSONMap, {"items": file_descriptors})["items"],
         }
 

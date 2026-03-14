@@ -33,6 +33,9 @@ from apps.random_numbers.definitions import (
     APP_ROUTE_PREFIX as RANDOM_NUMBERS_ROUTE_PREFIX,
 )
 from apps.random_numbers.routers import RandomNumbersJobViewSet
+from apps.smileit.definitions import APP_ROUTE_BASENAME as SMILEIT_ROUTE_BASENAME
+from apps.smileit.definitions import APP_ROUTE_PREFIX as SMILEIT_ROUTE_PREFIX
+from apps.smileit.routers import SmileitJobViewSet
 from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
 from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
 from apps.tunnel.routers import TunnelJobViewSet
@@ -73,6 +76,11 @@ router.register(
     MARCUS_ROUTE_PREFIX,
     MarcusJobViewSet,
     basename=MARCUS_ROUTE_BASENAME,
+)
+router.register(
+    SMILEIT_ROUTE_PREFIX,
+    SmileitJobViewSet,
+    basename=SMILEIT_ROUTE_BASENAME,
 )
 
 urlpatterns = [

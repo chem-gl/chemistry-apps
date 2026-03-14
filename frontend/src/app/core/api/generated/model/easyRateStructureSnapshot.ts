@@ -15,6 +15,13 @@
 export interface EasyRateStructureSnapshot { 
     source_field: string;
     original_filename: string | null;
+    is_provided: boolean;
+    execution_index: number | null;
+    available_execution_count: number;
+    job_title: string | null;
+    checkpoint_file: string | null;
+    charge: number;
+    multiplicity: number;
     free_energy: number;
     thermal_enthalpy: number;
     zero_point_energy: number;
@@ -22,5 +29,7 @@ export interface EasyRateStructureSnapshot {
     temperature: number;
     negative_frequencies: number;
     imaginary_frequency: number;
+    normal_termination: boolean;
+    is_opt_freq: boolean;
 }
 

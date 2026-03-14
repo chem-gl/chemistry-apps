@@ -15,6 +15,8 @@ api/molarFractions.service.ts
 api/molarFractions.serviceInterface.ts
 api/randomNumbers.service.ts
 api/randomNumbers.serviceInterface.ts
+api/smileit.service.ts
+api/smileit.serviceInterface.ts
 api/tunnel.service.ts
 api/tunnel.serviceInterface.ts
 configuration.ts
@@ -29,6 +31,8 @@ model/calculatorParameters.ts
 model/calculatorResult.ts
 model/calculatorResultMetadata.ts
 model/easyRateArtifactDescriptor.ts
+model/easyRateInspectionExecution.ts
+model/easyRateInspectionResponse.ts
 model/easyRateJobResponse.ts
 model/easyRateParameters.ts
 model/easyRateResult.ts
@@ -64,7 +68,19 @@ model/randomNumbersParameters.ts
 model/randomNumbersResult.ts
 model/randomNumbersResultMetadata.ts
 model/scientificJob.ts
+model/smileitAtomInfo.ts
+model/smileitCatalogEntry.ts
+model/smileitGeneratedStructure.ts
+model/smileitJobCreateRequest.ts
+model/smileitJobResponse.ts
+model/smileitParameters.ts
+model/smileitResult.ts
+model/smileitStructureInspectionRequestRequest.ts
+model/smileitStructureInspectionResponse.ts
+model/smileitSubstituentInput.ts
+model/smileitSubstituentInputRequest.ts
 model/solventEnum.ts
+model/sourceFieldEnum.ts
 model/statusEnum.ts
 model/tunnelInputChangeEvent.ts
 model/tunnelJobCreateRequest.ts

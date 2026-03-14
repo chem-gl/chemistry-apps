@@ -11,8 +11,10 @@ import { HttpHeaders }                                       from '@angular/comm
 
 import { Observable }                                        from 'rxjs';
 
+import { EasyRateInspectionResponse } from '../model/models';
 import { EasyRateJobResponse } from '../model/models';
 import { ErrorResponse } from '../model/models';
+import { SourceFieldEnum } from '../model/models';
 
 
 import { Configuration }                                     from '../configuration';
@@ -41,10 +43,24 @@ export interface EasyRateServiceInterface {
      * @param radiusReactant2 
      * @param reactionDistance 
      * @param printDataInput 
+     * @param reactant1ExecutionIndex 
+     * @param reactant2ExecutionIndex 
+     * @param transitionStateExecutionIndex 
+     * @param product1ExecutionIndex 
+     * @param product2ExecutionIndex 
      * @param product1File 
      * @param product2File 
      */
-    easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
+    easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
+
+    /**
+     * Inspeccionar archivo Gaussian para Easy-rate
+     * Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones candidatas para selección previa en frontend.
+     * @endpoint post /api/easy-rate/jobs/inspect-input/
+     * @param sourceField 
+     * @param gaussianFile 
+     */
+    easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, extraHttpRequestParams?: any): Observable<EasyRateInspectionResponse>;
 
     /**
      * Descargar Reporte CSV de Easy-rate

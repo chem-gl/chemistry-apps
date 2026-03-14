@@ -7,21 +7,27 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
-    CalculatorJobCreateRequest,
-    CalculatorJobResponse,
-    CalculatorOperationEnum,
-    CalculatorService,
-    EasyRateJobResponse,
-    EasyRateService,
-    JobControlActionResponse,
-    JobCreateRequest,
-    JobLogList,
-    JobProgressSnapshot,
-    JobsService,
-    MarcusJobResponse,
-    MarcusService,
-    MolarFractionsService,
-    ScientificJob,
+  CalculatorJobCreateRequest,
+  CalculatorJobResponse,
+  CalculatorOperationEnum,
+  CalculatorService,
+  EasyRateJobResponse,
+  EasyRateService,
+  JobControlActionResponse,
+  JobCreateRequest,
+  JobLogList,
+  JobProgressSnapshot,
+  JobsService,
+  MarcusJobResponse,
+  MarcusService,
+  MolarFractionsService,
+  ScientificJob,
+  SmileitCatalogEntry,
+  SmileitJobCreateRequest,
+  SmileitJobResponse,
+  SmileitService,
+  SmileitStructureInspectionRequestRequest,
+  SmileitStructureInspectionResponse,
 } from './generated';
 
 /**
@@ -78,6 +84,11 @@ export interface EasyRateParams {
   reactant2File: File;
   product1File?: File;
   product2File?: File;
+  transitionStateExecutionIndex?: number;
+  reactant1ExecutionIndex?: number;
+  reactant2ExecutionIndex?: number;
+  product1ExecutionIndex?: number;
+  product2ExecutionIndex?: number;
   title?: string;
   reactionPathDegeneracy?: number;
   cageEffects?: boolean;
@@ -89,6 +100,76 @@ export interface EasyRateParams {
   reactionDistance?: number;
   printDataInput?: boolean;
   version?: string;
+}
+
+/** Campos Gaussian soportados por Easy-rate para inspección y selección. */
+export type EasyRateInputFieldName =
+  | 'transition_state_file'
+  | 'reactant_1_file'
+  | 'reactant_2_file'
+  | 'product_1_file'
+  | 'product_2_file';
+
+/** Resumen normalizado de una ejecución candidata detectada en un archivo Gaussian. */
+export interface EasyRateInspectionExecutionView {
+  sourceField: EasyRateInputFieldName;
+  originalFilename: string | null;
+  executionIndex: number;
+  jobTitle: string | null;
+  checkpointFile: string | null;
+  charge: number;
+  multiplicity: number;
+  freeEnergy: number | null;
+  thermalEnthalpy: number | null;
+  zeroPointEnergy: number | null;
+  scfEnergy: number | null;
+  temperature: number | null;
+  negativeFrequencies: number;
+  imaginaryFrequency: number | null;
+  normalTermination: boolean;
+  isOptFreq: boolean;
+  isValidForRole: boolean;
+  validationErrors: string[];
+}
+
+/** Resultado de inspección previa de un archivo Gaussian en la UI de Easy-rate. */
+export interface EasyRateFileInspectionView {
+  sourceField: EasyRateInputFieldName;
+  originalFilename: string | null;
+  parseErrors: string[];
+  executionCount: number;
+  defaultExecutionIndex: number | null;
+  executions: EasyRateInspectionExecutionView[];
+}
+
+interface EasyRateInspectionExecutionApiResponse {
+  source_field: EasyRateInputFieldName;
+  original_filename: string | null;
+  execution_index: number;
+  job_title: string | null;
+  checkpoint_file: string | null;
+  charge: number;
+  multiplicity: number;
+  free_energy: number | null;
+  thermal_enthalpy: number | null;
+  zero_point_energy: number | null;
+  scf_energy: number | null;
+  temperature: number | null;
+  negative_frequencies: number;
+  imaginary_frequency: number | null;
+  normal_termination: boolean;
+  is_opt_freq: boolean;
+  is_valid_for_role: boolean;
+  validation_errors: string[];
+}
+
+interface EasyRateInspectionApiResponse {
+  source_field: EasyRateInputFieldName;
+  original_filename: string | null;
+  parse_errors: string[];
+  execution_count: number;
+  default_execution_index: number | null;
+  executions: EasyRateInspectionExecutionApiResponse[];
 }
 
 /** Parámetros de entrada para crear un job Marcus con 6 archivos Gaussian */
@@ -178,6 +259,47 @@ export type EasyRateJobResponseView = EasyRateJobResponse;
 export type MarcusJobResponseView = MarcusJobResponse;
 export type CalculatorOperationView = CalculatorOperationEnum;
 
+/** Entrada de catálogo de sustituyentes normalizada para la UI. */
+export type SmileitCatalogEntryView = SmileitCatalogEntry;
+
+/** Información de átomo normalizada para la UI de selección. */
+export interface SmileitAtomInfoView {
+  index: number;
+  symbol: string;
+  implicitHydrogens: number;
+  isAromatic: boolean;
+}
+
+/** Resultado de inspección estructural normalizado para la UI. */
+export interface SmileitStructureInspectionView {
+  canonicalSmiles: string;
+  atomCount: number;
+  atoms: SmileitAtomInfoView[];
+  svg: string;
+}
+
+/** Parámetros de un sustituyente mandado en la UI. */
+export interface SmileitSubstituentParams {
+  name: string;
+  smiles: string;
+  selectedAtomIndex: number;
+}
+
+/** Parámetros de creación de un job smileit (vista camelCase). */
+export interface SmileitGenerationParams {
+  principalSmiles: string;
+  selectedAtomIndices: number[];
+  substituents: SmileitSubstituentParams[];
+  rSubstitutes?: number;
+  numBonds?: number;
+  allowRepeated?: boolean;
+  maxStructures?: number;
+  version?: string;
+}
+
+/** Respuesta de job smileit normalizada para componentes. */
+export type SmileitJobResponseView = SmileitJobResponse;
+
 export interface JobsRealtimeQuery {
   jobId?: string;
   pluginName?: string;
@@ -222,8 +344,102 @@ export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
+  private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly jobsClient = inject(JobsService);
+
+  // ---------------------------------------------------------------------------
+  // Smileit API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Devuelve el catálogo de 17 sustituyentes predefinidos.
+   * Usar para poblar la lista inicial en la UI sin necesidad de escribir SMILES.
+   */
+  listSmileitCatalog(): Observable<SmileitCatalogEntryView[]> {
+    return this.smileitClient.smileitJobsCatalogList().pipe(shareReplay(1));
+  }
+
+  /**
+   * Inspecciona un SMILES y devuelve la estructura canónica, átomos indexados y SVG.
+   * Usar para que el usuario seleccione los átomos de sustitución antes de despachar el job.
+   */
+  inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
+    const request: SmileitStructureInspectionRequestRequest = { smiles };
+    return this.smileitClient.smileitJobsInspectStructureCreate(request).pipe(
+      map(
+        (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
+          canonicalSmiles: raw.canonical_smiles,
+          atomCount: raw.atom_count,
+          atoms: raw.atoms.map((atom) => ({
+            index: atom.index,
+            symbol: atom.symbol,
+            implicitHydrogens: atom.implicit_hydrogens,
+            isAromatic: atom.is_aromatic,
+          })),
+          svg: raw.svg,
+        }),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /**
+   * Despacha un job de generación combinatoria smileit.
+   * Retorna el job creado con status 'pending'; usar streamJobEvents() para progreso.
+   */
+  dispatchSmileitJob(params: SmileitGenerationParams): Observable<SmileitJobResponseView> {
+    const payload: SmileitJobCreateRequest = {
+      version: params.version ?? '1.0.0',
+      principal_smiles: params.principalSmiles,
+      selected_atom_indices: params.selectedAtomIndices,
+      substituents: params.substituents.map((s) => ({
+        name: s.name,
+        smiles: s.smiles,
+        selected_atom_index: s.selectedAtomIndex,
+      })),
+      r_substitutes: params.rSubstitutes,
+      num_bonds: params.numBonds,
+      allow_repeated: params.allowRepeated,
+      max_structures: params.maxStructures,
+    };
+    return this.smileitClient.smileitJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job smileit por UUID. */
+  getSmileitJobStatus(jobId: string): Observable<SmileitJobResponseView> {
+    return this.smileitClient.smileitJobsRetrieve(jobId);
+  }
+
+  /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
+  downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte LOG de smileit (descripción de la generación). */
+  downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.log`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte de error de smileit cuando el job falla. */
+  downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_error.txt`),
+      ),
+      shareReplay(1),
+    );
+  }
 
   private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
     return rawJob as ScientificJob;
@@ -317,6 +533,46 @@ export class JobsApiService {
       message: rawEvent.message,
       payload: normalizedPayload,
       createdAt: rawEvent.created_at,
+    };
+  }
+
+  private normalizeEasyRateInspectionExecution(
+    rawExecution: EasyRateInspectionExecutionApiResponse,
+  ): EasyRateInspectionExecutionView {
+    return {
+      sourceField: rawExecution.source_field,
+      originalFilename: rawExecution.original_filename,
+      executionIndex: rawExecution.execution_index,
+      jobTitle: rawExecution.job_title,
+      checkpointFile: rawExecution.checkpoint_file,
+      charge: rawExecution.charge,
+      multiplicity: rawExecution.multiplicity,
+      freeEnergy: rawExecution.free_energy,
+      thermalEnthalpy: rawExecution.thermal_enthalpy,
+      zeroPointEnergy: rawExecution.zero_point_energy,
+      scfEnergy: rawExecution.scf_energy,
+      temperature: rawExecution.temperature,
+      negativeFrequencies: rawExecution.negative_frequencies,
+      imaginaryFrequency: rawExecution.imaginary_frequency,
+      normalTermination: rawExecution.normal_termination,
+      isOptFreq: rawExecution.is_opt_freq,
+      isValidForRole: rawExecution.is_valid_for_role,
+      validationErrors: rawExecution.validation_errors,
+    };
+  }
+
+  private normalizeEasyRateInspection(
+    rawInspection: EasyRateInspectionApiResponse,
+  ): EasyRateFileInspectionView {
+    return {
+      sourceField: rawInspection.source_field,
+      originalFilename: rawInspection.original_filename,
+      parseErrors: rawInspection.parse_errors,
+      executionCount: rawInspection.execution_count,
+      defaultExecutionIndex: rawInspection.default_execution_index,
+      executions: rawInspection.executions.map((execution) =>
+        this.normalizeEasyRateInspectionExecution(execution),
+      ),
     };
   }
 
@@ -788,11 +1044,7 @@ export class JobsApiService {
     formData.append(key, String(value));
   }
 
-  private appendOptionalBoolean(
-    formData: FormData,
-    key: string,
-    value: boolean | undefined,
-  ): void {
+  private appendOptionalBoolean(formData: FormData, key: string, value: boolean | undefined): void {
     if (value === undefined) {
       return;
     }
@@ -815,13 +1067,27 @@ export class JobsApiService {
       formData.append('product_2_file', params.product2File);
     }
 
-    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
-    this.appendOptionalString(formData, 'title', params.title);
     this.appendOptionalNumber(
       formData,
-      'reaction_path_degeneracy',
-      params.reactionPathDegeneracy,
+      'reactant_1_execution_index',
+      params.reactant1ExecutionIndex,
     );
+    this.appendOptionalNumber(
+      formData,
+      'reactant_2_execution_index',
+      params.reactant2ExecutionIndex,
+    );
+    this.appendOptionalNumber(
+      formData,
+      'transition_state_execution_index',
+      params.transitionStateExecutionIndex,
+    );
+    this.appendOptionalNumber(formData, 'product_1_execution_index', params.product1ExecutionIndex);
+    this.appendOptionalNumber(formData, 'product_2_execution_index', params.product2ExecutionIndex);
+
+    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
+    this.appendOptionalString(formData, 'title', params.title);
+    this.appendOptionalNumber(formData, 'reaction_path_degeneracy', params.reactionPathDegeneracy);
     this.appendOptionalBoolean(formData, 'cage_effects', params.cageEffects);
     this.appendOptionalBoolean(formData, 'diffusion', params.diffusion);
     this.appendOptionalString(formData, 'solvent', params.solvent);
@@ -832,6 +1098,28 @@ export class JobsApiService {
     this.appendOptionalBoolean(formData, 'print_data_input', params.printDataInput);
 
     return formData;
+  }
+
+  /** Inspecciona un archivo Gaussian y devuelve ejecuciones candidatas para Easy-rate. */
+  inspectEasyRateInput(
+    sourceField: EasyRateInputFieldName,
+    gaussianFile: File,
+  ): Observable<EasyRateFileInspectionView> {
+    const formData = new FormData();
+    formData.append('source_field', sourceField);
+    formData.append('gaussian_file', gaussianFile);
+
+    return this.httpClient
+      .post<EasyRateInspectionApiResponse>(
+        `${API_BASE_URL}/api/easy-rate/jobs/inspect-input/`,
+        formData,
+      )
+      .pipe(
+        map((rawInspection: EasyRateInspectionApiResponse) =>
+          this.normalizeEasyRateInspection(rawInspection),
+        ),
+        shareReplay(1),
+      );
   }
 
   /** Despacha un job Easy-rate con archivos Gaussian en multipart */

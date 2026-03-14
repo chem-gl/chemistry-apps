@@ -15,70 +15,110 @@
             <h3>Input Files</h3>
 
             <div class="file-grid">
-                <label class="upload-zone"
-                    [class.has-file]="workflow.transitionStateFile() !== null"
-                    [class.is-disabled]="workflow.isProcessing()">
-                    <span class="upload-label">Transition State <span class="req-mark">*</span></span>
-                    <input type="file" accept=".log,.out,.txt" (change)="onTransitionStateFileChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    @if (workflow.transitionStateFile(); as tsFile) {
-                        <span class="file-badge">{{ tsFile.name }}</span>
-                    } @else {
-                        <span class="upload-hint">Browse .log / .out / .txt</span>
-                    }
-                </label>
+                @for (slot of inputSlots; track trackInputSlot($index, slot)) {
+                <div class="file-slot-card">
+                        <label class="upload-zone"
+                            [class.has-file]="getSelectedFile(slot.fieldName) !== null"
+                            [class.is-disabled]="workflow.isProcessing()">
+                            <span class="upload-label">
+                                {{ slot.label }}
+                                @if (slot.required) {
+                                <span class="req-mark">*</span>
+                                } @else if (slot.note !== null) {
+                                <span class="opt-mark">{{ slot.note }}</span>
+                                }
+                            </span>
+                            <input type="file" accept=".log,.out,.txt" (change)="onInputFileChange(slot.fieldName, $event)"
+                                [disabled]="workflow.isProcessing()" />
+                            @if (getSelectedFile(slot.fieldName); as selectedFile) {
+                            <span class="file-badge">{{ selectedFile.name }}</span>
+                            } @else {
+                            <span class="upload-hint">Browse .log / .out / .txt</span>
+                            }
+                            </label>
 
-                <label class="upload-zone"
-                    [class.has-file]="workflow.reactant1File() !== null"
-                    [class.is-disabled]="workflow.isProcessing()">
-                    <span class="upload-label">Reactant 1 <span class="req-mark">*</span></span>
-                    <input type="file" accept=".log,.out,.txt" (change)="onReactant1FileChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    @if (workflow.reactant1File(); as r1File) {
-                        <span class="file-badge">{{ r1File.name }}</span>
-                    } @else {
-                        <span class="upload-hint">Browse .log / .out / .txt</span>
-                    }
-                </label>
+                        @if (getSelectedFile(slot.fieldName) !== null) {
+                        <div class="inspection-card">
+                            @if (isInspectionPending(slot.fieldName)) {
+                            <p class="inspection-status">Analyzing Gaussian executions...</p>
+                            } @else if (getInspectionError(slot.fieldName); as inspectionError) {
+                            <p class="inspection-error">{{ inspectionError }}</p>
+                            } @else if (getInspection(slot.fieldName); as inspection) {
+                            <div class="inspection-header-row">
+                                <div>
+                                    <strong>Gaussian Preview</strong>
+                                    <p class="inspection-meta">
+                                        {{ inspection.executionCount }} parsed execution(s)
+                                    </p>
+                                </div>
+                        
+                                @if (inspection.executionCount > 1) {
+                                <label class="execution-selector">
+                                    Parsed execution
+                                    <select [ngModel]="getSelectedExecutionIndex(slot.fieldName)"
+                                        (ngModelChange)="workflow.updateSelectedExecutionIndex(slot.fieldName, $event)"
+                                        [disabled]="workflow.isProcessing()">
+                                        @for (execution of inspection.executions; track execution.executionIndex) {
+                                        <option [ngValue]="execution.executionIndex">
+                                            {{ buildExecutionOptionLabel(execution) }}
+                                        </option>
+                                        }
+                                                </select>
+                                            </label>
+                                        }
+                                        </div>
 
-                <label class="upload-zone"
-                    [class.has-file]="workflow.reactant2File() !== null"
-                    [class.is-disabled]="workflow.isProcessing()">
-                    <span class="upload-label">Reactant 2 <span class="req-mark">*</span></span>
-                    <input type="file" accept=".log,.out,.txt" (change)="onReactant2FileChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    @if (workflow.reactant2File(); as r2File) {
-                        <span class="file-badge">{{ r2File.name }}</span>
-                    } @else {
-                        <span class="upload-hint">Browse .log / .out / .txt</span>
-                    }
-                </label>
+                                    @if (inspection.parseErrors.length > 0) {
+                                    <p class="inspection-warning">
+                                        Parser notes: {{ joinMessages(inspection.parseErrors) }}
+                                    </p>
+                                    }
+@if (getSelectedExecution(slot.fieldName); as selectedExecution) {
+<div class="preview-grid">
+    <span class="preview-label">Title</span>
+    <span class="preview-value">{{ selectedExecution.jobTitle || '--' }}</span>
+    <span class="preview-label">Charge / Multiplicity</span>
+    <span class="preview-value">
+        {{ selectedExecution.charge }} / {{ selectedExecution.multiplicity }}
+    </span>
+    <span class="preview-label">SCF</span>
+    <span class="preview-value mono">
+        {{ formatNullableNumber(selectedExecution.scfEnergy) }} hartree
+    </span>
+    <span class="preview-label">G / H / ZPE</span>
+    <span class="preview-value mono">
+        {{ formatNullableNumber(selectedExecution.freeEnergy) }} /
+        {{ formatNullableNumber(selectedExecution.thermalEnthalpy) }} /
+        {{ formatNullableNumber(selectedExecution.zeroPointEnergy) }}
+    </span>
+    <span class="preview-label">Temperature</span>
+    <span class="preview-value mono">
+        {{ formatNullableNumber(selectedExecution.temperature, 2) }} K
+    </span>
+    <span class="preview-label">Imaginary frequency</span>
+    <span class="preview-value mono">
+        {{ formatNullableNumber(selectedExecution.imaginaryFrequency, 2) }} cm⁻¹
+    </span>
+    <span class="preview-label">Optimization / Termination</span>
+    <span class="preview-value">
+        {{ selectedExecution.isOptFreq ? 'OPT+FREQ' : 'Incomplete' }} ·
+        {{ selectedExecution.normalTermination ? 'Normal termination' : 'Not terminated' }}
+    </span>
+</div>
 
-                <label class="upload-zone"
-                    [class.has-file]="workflow.product1File() !== null"
-                    [class.is-disabled]="workflow.isProcessing()">
-                    <span class="upload-label">Product 1 <span class="opt-mark">(at least one product)</span></span>
-                    <input type="file" accept=".log,.out,.txt" (change)="onProduct1FileChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    @if (workflow.product1File(); as p1File) {
-                        <span class="file-badge">{{ p1File.name }}</span>
-                    } @else {
-                        <span class="upload-hint">Browse .log / .out / .txt</span>
-                    }
-                </label>
-
-                <label class="upload-zone"
-                    [class.has-file]="workflow.product2File() !== null"
-                    [class.is-disabled]="workflow.isProcessing()">
-                    <span class="upload-label">Product 2 <span class="opt-mark">(at least one product)</span></span>
-                    <input type="file" accept=".log,.out,.txt" (change)="onProduct2FileChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    @if (workflow.product2File(); as p2File) {
-                        <span class="file-badge">{{ p2File.name }}</span>
-                    } @else {
-                        <span class="upload-hint">Browse .log / .out / .txt</span>
-                    }
-                </label>
+                                        @if (!selectedExecution.isValidForRole) {
+                                        <p class="inspection-error">
+                                            {{ joinMessages(selectedExecution.validationErrors) }}
+                                        </p>
+                                        }
+                                        } @else {
+                                        <p class="inspection-warning">Select one parsed execution to continue.</p>
+                                        }
+                                }
+                            </div>
+                            }
+                            </div>
+                            }
             </div>
 
             <h3 class="section-sub">Parameters</h3>

@@ -70,6 +70,21 @@ class EasyRateJobCreateSerializer(serializers.Serializer):
     radius_reactant_2 = serializers.FloatField(required=False, allow_null=True)
     reaction_distance = serializers.FloatField(required=False, allow_null=True)
     print_data_input = serializers.BooleanField(default=False)
+    reactant_1_execution_index = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    reactant_2_execution_index = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    transition_state_execution_index = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    product_1_execution_index = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    product_2_execution_index = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
 
     reactant_1_file = serializers.FileField(required=True, allow_null=False)
     reactant_2_file = serializers.FileField(required=True, allow_null=False)
@@ -142,6 +157,13 @@ class EasyRateStructureSnapshotSerializer(serializers.Serializer):
 
     source_field = serializers.CharField(max_length=80)
     original_filename = serializers.CharField(max_length=255, allow_null=True)
+    is_provided = serializers.BooleanField()
+    execution_index = serializers.IntegerField(allow_null=True)
+    available_execution_count = serializers.IntegerField(min_value=0)
+    job_title = serializers.CharField(max_length=255, allow_null=True)
+    checkpoint_file = serializers.CharField(max_length=255, allow_null=True)
+    charge = serializers.IntegerField()
+    multiplicity = serializers.IntegerField()
     free_energy = serializers.FloatField()
     thermal_enthalpy = serializers.FloatField()
     zero_point_energy = serializers.FloatField()
@@ -149,6 +171,57 @@ class EasyRateStructureSnapshotSerializer(serializers.Serializer):
     temperature = serializers.FloatField()
     negative_frequencies = serializers.IntegerField()
     imaginary_frequency = serializers.FloatField()
+    normal_termination = serializers.BooleanField()
+    is_opt_freq = serializers.BooleanField()
+
+
+class EasyRateInspectionRequestSerializer(serializers.Serializer):
+    """Serializer de inspección previa de un archivo Gaussian de Easy-rate."""
+
+    source_field = serializers.ChoiceField(
+        choices=(
+            "reactant_1_file",
+            "reactant_2_file",
+            "transition_state_file",
+            "product_1_file",
+            "product_2_file",
+        )
+    )
+    gaussian_file = serializers.FileField(required=True, allow_null=False)
+
+
+class EasyRateInspectionExecutionSerializer(serializers.Serializer):
+    """Resumen de una ejecución candidata detectada durante la inspección."""
+
+    source_field = serializers.CharField(max_length=80)
+    original_filename = serializers.CharField(max_length=255, allow_null=True)
+    execution_index = serializers.IntegerField(min_value=0)
+    job_title = serializers.CharField(max_length=255, allow_null=True)
+    checkpoint_file = serializers.CharField(max_length=255, allow_null=True)
+    charge = serializers.IntegerField()
+    multiplicity = serializers.IntegerField()
+    free_energy = serializers.FloatField(allow_null=True)
+    thermal_enthalpy = serializers.FloatField(allow_null=True)
+    zero_point_energy = serializers.FloatField(allow_null=True)
+    scf_energy = serializers.FloatField(allow_null=True)
+    temperature = serializers.FloatField(allow_null=True)
+    negative_frequencies = serializers.IntegerField(min_value=0)
+    imaginary_frequency = serializers.FloatField(allow_null=True)
+    normal_termination = serializers.BooleanField()
+    is_opt_freq = serializers.BooleanField()
+    is_valid_for_role = serializers.BooleanField()
+    validation_errors = serializers.ListField(child=serializers.CharField())
+
+
+class EasyRateInspectionResponseSerializer(serializers.Serializer):
+    """Resultado agregado de la inspección previa de un archivo Easy-rate."""
+
+    source_field = serializers.CharField(max_length=80)
+    original_filename = serializers.CharField(max_length=255, allow_null=True)
+    parse_errors = serializers.ListField(child=serializers.CharField())
+    execution_count = serializers.IntegerField(min_value=0)
+    default_execution_index = serializers.IntegerField(allow_null=True)
+    executions = EasyRateInspectionExecutionSerializer(many=True)
 
 
 class EasyRateResultMetadataSerializer(serializers.Serializer):
@@ -216,6 +289,11 @@ class EasyRateParametersSerializer(serializers.Serializer):
     radius_reactant_2 = serializers.FloatField(allow_null=True)
     reaction_distance = serializers.FloatField(allow_null=True)
     print_data_input = serializers.BooleanField()
+    reactant_1_execution_index = serializers.IntegerField(allow_null=True)
+    reactant_2_execution_index = serializers.IntegerField(allow_null=True)
+    transition_state_execution_index = serializers.IntegerField(allow_null=True)
+    product_1_execution_index = serializers.IntegerField(allow_null=True)
+    product_2_execution_index = serializers.IntegerField(allow_null=True)
     file_descriptors = EasyRateArtifactDescriptorSerializer(many=True)
 
 

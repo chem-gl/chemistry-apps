@@ -14,7 +14,7 @@ jobs:
   tests:
     name: Test matrix (${{ matrix.service }})
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     strategy:
       fail-fast: false
       matrix:
@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python 3.12
         if: matrix.service == 'backend'
@@ -63,7 +63,7 @@ jobs:
 
   build:
     name: Build reusable workflow
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     permissions:
       contents: write
     uses: ./.github/workflows/build.yml

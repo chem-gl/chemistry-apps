@@ -29,6 +29,8 @@ from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 from .definitions import PLUGIN_NAME
 from .types import (
     EasyRateCalculationResult,
+    EasyRateInspectionExecutionSummary,
+    EasyRateInspectionResult,
     EasyRateJobParameters,
     EasyRateResultMetadata,
     EasyRateStructureSnapshot,
@@ -61,6 +63,13 @@ def _build_zero_structure_snapshot(source_field: str) -> EasyRateStructureSnapsh
     return {
         "source_field": source_field,
         "original_filename": None,
+        "is_provided": False,
+        "execution_index": None,
+        "available_execution_count": 0,
+        "job_title": None,
+        "checkpoint_file": None,
+        "charge": 0,
+        "multiplicity": 1,
         "free_energy": 0.0,
         "thermal_enthalpy": 0.0,
         "zero_point_energy": 0.0,
@@ -68,17 +77,19 @@ def _build_zero_structure_snapshot(source_field: str) -> EasyRateStructureSnapsh
         "temperature": 0.0,
         "negative_frequencies": 0,
         "imaginary_frequency": 0.0,
+        "normal_termination": False,
+        "is_opt_freq": False,
     }
 
 
 def _parse_gaussian_execution(
     *,
-    artifact: ScientificJobInputArtifact,
     parser: GaussianLogParser,
-    storage_service: ScientificInputArtifactStorageService,
-) -> GaussianExecution:
-    """Reconstruye bytes de artefacto y devuelve la última ejecución Gaussian."""
-    artifact_bytes: bytes = storage_service.read_artifact_bytes(artifact=artifact)
+    artifact_bytes: bytes,
+    original_filename: str,
+    selected_execution_index: int | None,
+) -> tuple[GaussianExecution, int, int, list[str]]:
+    """Parsea bytes Gaussian y resuelve la ejecución seleccionada por índice."""
     parser_result = parser.parse_blob(artifact_bytes)
 
     if parser_result.execution_count == 0:
@@ -86,23 +97,48 @@ def _parse_gaussian_execution(
         if joined_errors.strip() == "":
             joined_errors = "No se detectaron ejecuciones Gaussian válidas."
         raise ValueError(
-            f"El archivo '{artifact.original_filename}' no contiene ejecuciones válidas: {joined_errors}"
+            f"El archivo '{original_filename}' no contiene ejecuciones válidas: {joined_errors}"
         )
 
-    execution: GaussianExecution | None = parser_result.last_execution()
+    resolved_execution_index: int = (
+        parser_result.execution_count - 1
+        if selected_execution_index is None
+        else selected_execution_index
+    )
+    if (
+        resolved_execution_index < 0
+        or resolved_execution_index >= parser_result.execution_count
+    ):
+        raise ValueError(
+            (
+                f"El archivo '{original_filename}' tiene {parser_result.execution_count} ejecuciones "
+                f"y se solicitó execution_index={resolved_execution_index}."
+            )
+        )
+
+    execution: GaussianExecution | None = parser_result.executions[
+        resolved_execution_index
+    ]
     if execution is None:
         raise ValueError(
-            f"No fue posible recuperar una ejecución válida del archivo '{artifact.original_filename}'."
+            f"No fue posible recuperar una ejecución válida del archivo '{original_filename}'."
         )
 
-    return execution
+    return (
+        execution,
+        parser_result.execution_count,
+        resolved_execution_index,
+        list(parser_result.errors),
+    )
 
 
 def _build_structure_snapshot(
     *,
     source_field: str,
-    artifact: ScientificJobInputArtifact,
     execution: GaussianExecution,
+    original_filename: str | None,
+    execution_index: int,
+    available_execution_count: int,
 ) -> EasyRateStructureSnapshot:
     """Mapea la ejecución Gaussian a estructura tipada del dominio Easy-rate."""
     raw_imaginary_frequency: float = float(execution.imaginary_frequency)
@@ -115,7 +151,14 @@ def _build_structure_snapshot(
 
     return {
         "source_field": source_field,
-        "original_filename": artifact.original_filename,
+        "original_filename": original_filename,
+        "is_provided": True,
+        "execution_index": execution_index,
+        "available_execution_count": available_execution_count,
+        "job_title": execution.job_title.strip() or None,
+        "checkpoint_file": execution.checkpoint_file.strip() or None,
+        "charge": int(execution.charge),
+        "multiplicity": int(execution.multiplicity),
         "free_energy": float(execution.free_energies),
         "thermal_enthalpy": float(execution.thermal_enthalpies),
         "zero_point_energy": float(execution.zero_point_energy),
@@ -123,15 +166,21 @@ def _build_structure_snapshot(
         "temperature": float(execution.temperature),
         "negative_frequencies": normalized_negative_frequencies,
         "imaginary_frequency": normalized_imaginary_frequency,
+        "normal_termination": bool(execution.normal_termination),
+        "is_opt_freq": bool(execution.is_opt_freq),
     }
 
 
-def _validate_structure_snapshot(
+def _collect_structure_validation_errors(
     *,
     snapshot: EasyRateStructureSnapshot,
     expected_role: str,
-) -> None:
-    """Aplica reglas de integridad termodinámica y frecuencias por rol."""
+) -> list[str]:
+    """Construye errores de validación sin lanzar excepción para reutilizar en preview."""
+    if not snapshot["is_provided"]:
+        return []
+
+    validation_errors: list[str] = []
     required_values: list[float] = [
         snapshot["free_energy"],
         snapshot["thermal_enthalpy"],
@@ -140,25 +189,109 @@ def _validate_structure_snapshot(
     ]
 
     if not all(_is_finite(value) for value in required_values):
-        raise ValueError(
-            f"El archivo '{snapshot['original_filename']}' no tiene termodinámica completa."
+        validation_errors.append(
+            "La ejecución no tiene termodinámica completa (G, H, ZPE, T)."
         )
 
     if expected_role == "transition_state_file":
         if snapshot["negative_frequencies"] != 1:
-            raise ValueError(
+            validation_errors.append(
                 "Transition state debe tener exactamente 1 frecuencia imaginaria."
             )
-        if snapshot["imaginary_frequency"] <= 0.0:
-            raise ValueError(
+        if snapshot["imaginary_frequency"] <= 0.0 or not _is_finite(
+            snapshot["imaginary_frequency"]
+        ):
+            validation_errors.append(
                 "Transition state requiere frecuencia imaginaria válida mayor a cero."
             )
-        return
+        return validation_errors
 
     if snapshot["negative_frequencies"] != 0:
-        raise ValueError(
-            f"La estructura '{snapshot['original_filename']}' debe tener 0 frecuencias imaginarias."
+        validation_errors.append(
+            "Reactivos y productos deben tener 0 frecuencias imaginarias."
         )
+
+    return validation_errors
+
+
+def _validate_structure_snapshot(
+    *,
+    snapshot: EasyRateStructureSnapshot,
+    expected_role: str,
+) -> None:
+    """Aplica reglas de integridad termodinámica y frecuencias por rol."""
+    validation_errors = _collect_structure_validation_errors(
+        snapshot=snapshot,
+        expected_role=expected_role,
+    )
+    if len(validation_errors) == 0:
+        return
+
+    filename: str = snapshot["original_filename"] or expected_role
+    raise ValueError(
+        f"El archivo '{filename}' no es válido para {expected_role}: {' '.join(validation_errors)}"
+    )
+
+
+def inspect_easy_rate_gaussian_blob(
+    *,
+    source_field: str,
+    original_filename: str | None,
+    artifact_bytes: bytes,
+) -> EasyRateInspectionResult:
+    """Inspecciona un archivo Gaussian y devuelve ejecuciones candidatas para UI."""
+    parser = GaussianLogParser()
+    parser_result = parser.parse_blob(artifact_bytes)
+    default_execution_index: int | None = (
+        parser_result.execution_count - 1 if parser_result.execution_count > 0 else None
+    )
+
+    execution_summaries: list[EasyRateInspectionExecutionSummary] = []
+    for execution_index, execution in enumerate(parser_result.executions):
+        snapshot = _build_structure_snapshot(
+            source_field=source_field,
+            execution=execution,
+            original_filename=original_filename,
+            execution_index=execution_index,
+            available_execution_count=parser_result.execution_count,
+        )
+        validation_errors = _collect_structure_validation_errors(
+            snapshot=snapshot,
+            expected_role=source_field,
+        )
+        execution_summaries.append(
+            {
+                "source_field": source_field,
+                "original_filename": original_filename,
+                "execution_index": execution_index,
+                "job_title": snapshot["job_title"],
+                "checkpoint_file": snapshot["checkpoint_file"],
+                "charge": snapshot["charge"],
+                "multiplicity": snapshot["multiplicity"],
+                "free_energy": _to_optional_finite(snapshot["free_energy"]),
+                "thermal_enthalpy": _to_optional_finite(snapshot["thermal_enthalpy"]),
+                "zero_point_energy": _to_optional_finite(snapshot["zero_point_energy"]),
+                "scf_energy": _to_optional_finite(snapshot["scf_energy"]),
+                "temperature": _to_optional_finite(snapshot["temperature"]),
+                "negative_frequencies": snapshot["negative_frequencies"],
+                "imaginary_frequency": _to_optional_finite(
+                    snapshot["imaginary_frequency"]
+                ),
+                "normal_termination": snapshot["normal_termination"],
+                "is_opt_freq": snapshot["is_opt_freq"],
+                "is_valid_for_role": len(validation_errors) == 0,
+                "validation_errors": validation_errors,
+            }
+        )
+
+    return {
+        "source_field": source_field,
+        "original_filename": original_filename,
+        "parse_errors": list(parser_result.errors),
+        "execution_count": parser_result.execution_count,
+        "default_execution_index": default_execution_index,
+        "executions": execution_summaries,
+    }
 
 
 def _resolve_viscosity(
@@ -192,6 +325,7 @@ def _resolve_viscosity(
 def _load_structures_from_artifacts(
     *,
     job_id: str,
+    selected_execution_indices: dict[str, int | None],
     emit_log: PluginLogCallback,
 ) -> tuple[dict[str, EasyRateStructureSnapshot], int]:
     """Carga, parsea y valida snapshots de estructuras desde artefactos DB."""
@@ -239,15 +373,21 @@ def _load_structures_from_artifacts(
             parsed_snapshots[field_name] = _build_zero_structure_snapshot(field_name)
             continue
 
-        execution = _parse_gaussian_execution(
-            artifact=artifact,
-            parser=parser,
-            storage_service=storage_service,
+        artifact_bytes: bytes = storage_service.read_artifact_bytes(artifact=artifact)
+        execution, execution_count, execution_index, parse_errors = (
+            _parse_gaussian_execution(
+                parser=parser,
+                artifact_bytes=artifact_bytes,
+                original_filename=artifact.original_filename,
+                selected_execution_index=selected_execution_indices.get(field_name),
+            )
         )
         snapshot = _build_structure_snapshot(
             source_field=field_name,
-            artifact=artifact,
             execution=execution,
+            original_filename=artifact.original_filename,
+            execution_index=execution_index,
+            available_execution_count=execution_count,
         )
         _validate_structure_snapshot(snapshot=snapshot, expected_role=field_name)
         parsed_snapshots[field_name] = snapshot
@@ -260,6 +400,9 @@ def _load_structures_from_artifacts(
                 "field_name": field_name,
                 "filename": snapshot["original_filename"],
                 "negative_frequencies": snapshot["negative_frequencies"],
+                "execution_index": execution_index,
+                "available_execution_count": execution_count,
+                "parse_errors": parse_errors,
             },
         )
 
@@ -424,8 +567,12 @@ def _compute_thermodynamic_terms(
     gibbs_p2: float = product_2["free_energy"]
 
     molar_volume: float = 0.08206 * temperature_k
-    count_reactants: int = 1 if gibbs_r1 == 0.0 or gibbs_r2 == 0.0 else 2
-    count_products: int = 1 if gibbs_p1 == 0.0 or gibbs_p2 == 0.0 else 2
+    count_reactants: int = sum(
+        1 for snapshot in [react_1, react_2] if snapshot["is_provided"]
+    )
+    count_products: int = sum(
+        1 for snapshot in [product_1, product_2] if snapshot["is_provided"]
+    )
     delta_n_reaction: int = count_products - count_reactants
     delta_n_transition: int = 1 - count_reactants
 
@@ -488,6 +635,11 @@ def _compute_tunnel_terms(
     temperature_k: float,
 ) -> dict[str, float | bool | None]:
     """Calcula métricas de túnel y determina si TST aplica."""
+    if not _is_finite(imaginary_frequency) or imaginary_frequency <= 0.0:
+        raise ValueError(
+            "No se puede evaluar la corrección Eckart sin una frecuencia imaginaria positiva y finita."
+        )
+
     if gibbs_activation <= 0.0:
         return {
             "tunnel_u": None,
@@ -511,6 +663,15 @@ def _compute_tunnel_terms(
             "kappa_tst": 1.0,
             "warn_negative_activation": False,
         }
+
+    if zpe_activation <= zpe_reaction:
+        raise ValueError(
+            (
+                "No se puede evaluar la corrección Eckart porque la barrera ZPE de activación "
+                "debe ser mayor que la energía ZPE de reacción. Revise los productos seleccionados "
+                "o complete las estructuras faltantes antes de ejecutar Easy-rate."
+            )
+        )
 
     tunnel_calculator = TST()
     tunnel_result = tunnel_calculator.set_parameters(
@@ -651,6 +812,31 @@ def _build_easy_rate_parameters(parameters: JSONMap) -> EasyRateJobParameters:
             else None
         ),
         "print_data_input": bool(parameters.get("print_data_input", False)),
+        "reactant_1_execution_index": (
+            int(parameters["reactant_1_execution_index"])
+            if parameters.get("reactant_1_execution_index") is not None
+            else None
+        ),
+        "reactant_2_execution_index": (
+            int(parameters["reactant_2_execution_index"])
+            if parameters.get("reactant_2_execution_index") is not None
+            else None
+        ),
+        "transition_state_execution_index": (
+            int(parameters["transition_state_execution_index"])
+            if parameters.get("transition_state_execution_index") is not None
+            else None
+        ),
+        "product_1_execution_index": (
+            int(parameters["product_1_execution_index"])
+            if parameters.get("product_1_execution_index") is not None
+            else None
+        ),
+        "product_2_execution_index": (
+            int(parameters["product_2_execution_index"])
+            if parameters.get("product_2_execution_index") is not None
+            else None
+        ),
         "file_descriptors": cast(
             list[dict[str, str | int]], normalized_file_descriptors
         ),
@@ -685,6 +871,15 @@ def easy_rate_plugin(
     progress_callback(20, "running", "Reconstruyendo y parseando archivos Gaussian.")
     structures, artifact_count = _load_structures_from_artifacts(
         job_id=job_id_value,
+        selected_execution_indices={
+            "reactant_1_file": normalized_parameters["reactant_1_execution_index"],
+            "reactant_2_file": normalized_parameters["reactant_2_execution_index"],
+            "transition_state_file": normalized_parameters[
+                "transition_state_execution_index"
+            ],
+            "product_1_file": normalized_parameters["product_1_execution_index"],
+            "product_2_file": normalized_parameters["product_2_execution_index"],
+        },
         emit_log=emit_log,
     )
 

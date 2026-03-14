@@ -96,6 +96,22 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       return '/molar-fractions';
     }
 
+    if (jobItem.plugin_name === 'tunnel-effect') {
+      return '/tunnel';
+    }
+
+    if (jobItem.plugin_name === 'easy-rate') {
+      return '/easy-rate';
+    }
+
+    if (jobItem.plugin_name === 'marcus') {
+      return '/marcus';
+    }
+
+    if (jobItem.plugin_name === 'smileit') {
+      return '/smileit';
+    }
+
     return null;
   }
 

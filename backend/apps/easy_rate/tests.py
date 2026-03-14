@@ -57,6 +57,11 @@ def _build_gaussian_log_content(
     return "\n".join(lines).encode("utf-8")
 
 
+def _merge_gaussian_executions(*contents: bytes) -> bytes:
+    """Concatena múltiples ejecuciones Gaussian en un solo archivo lógico."""
+    return b"\n\n".join(contents)
+
+
 class EasyRateContractApiTests(TestCase):
     """Valida contrato HTTP y flujo completo de ejecución Easy-rate."""
 
@@ -241,3 +246,180 @@ class EasyRateContractApiTests(TestCase):
         with ZipFile(BytesIO(response.content), mode="r") as zip_file:
             entry_names: list[str] = zip_file.namelist()
             self.assertIn("manifest.json", entry_names)
+
+    def test_inspect_input_returns_execution_candidates(self) -> None:
+        """Inspecciona archivo multiplexado y expone ejecuciones para selección UI."""
+        valid_transition_state = _build_gaussian_log_content(
+            free_energy=-99.9300,
+            thermal_enthalpy=-99.8300,
+            zero_point_energy=-99.7800,
+            scf_energy=-100.0000,
+            temperature=298.15,
+            imaginary_frequency=625.0,
+            include_ts_marker=True,
+        )
+        invalid_transition_state = _build_gaussian_log_content(
+            free_energy=-99.9500,
+            thermal_enthalpy=-99.8500,
+            zero_point_energy=-99.8000,
+            scf_energy=-100.0100,
+            temperature=298.15,
+            imaginary_frequency=0.0,
+            include_ts_marker=False,
+        )
+        multiplexed_file = SimpleUploadedFile(
+            "transition-multi.log",
+            _merge_gaussian_executions(
+                valid_transition_state, invalid_transition_state
+            ),
+            content_type="text/plain",
+        )
+
+        response = self.client.post(
+            f"{APP_API_BASE_PATH}inspect-input/",
+            {
+                "source_field": "transition_state_file",
+                "gaussian_file": multiplexed_file,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["execution_count"], 2)
+        self.assertEqual(response.data["default_execution_index"], 1)
+        self.assertTrue(response.data["executions"][0]["is_valid_for_role"])
+        self.assertFalse(response.data["executions"][1]["is_valid_for_role"])
+
+    def test_create_and_run_respects_selected_execution_index(self) -> None:
+        """Usa execution_index explícito para evitar que el backend tome la última ejecución."""
+        reactant_1_valid = _build_gaussian_log_content(
+            free_energy=-50.0000,
+            thermal_enthalpy=-49.9000,
+            zero_point_energy=-49.8500,
+            scf_energy=-50.2000,
+            temperature=298.15,
+            imaginary_frequency=0.0,
+            include_ts_marker=False,
+        )
+        reactant_1_invalid = _build_gaussian_log_content(
+            free_energy=-49.9500,
+            thermal_enthalpy=-49.8500,
+            zero_point_energy=-49.8000,
+            scf_energy=-50.1500,
+            temperature=298.15,
+            imaginary_frequency=800.0,
+            include_ts_marker=True,
+        )
+        multipart_payload = self._build_valid_multipart_payload()
+        multipart_payload["reactant_1_file"] = SimpleUploadedFile(
+            "reactant-1-multi.log",
+            _merge_gaussian_executions(reactant_1_valid, reactant_1_invalid),
+            content_type="text/plain",
+        )
+        multipart_payload["reactant_1_execution_index"] = "0"
+
+        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                multipart_payload,
+                format="multipart",
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["status"], "completed")
+        self.assertEqual(
+            retrieve_response.data["results"]["structures"]["reactant_1_file"][
+                "execution_index"
+            ],
+            0,
+        )
+
+    def test_failed_job_exposes_scientific_eckart_error_for_invalid_single_product_case(
+        self,
+    ) -> None:
+        """Convierte fallo opaco de dominio en mensaje científico accionable."""
+        reactant_1_file = SimpleUploadedFile(
+            "reactant-1.log",
+            _build_gaussian_log_content(
+                free_energy=-1.0000,
+                thermal_enthalpy=-1.0000,
+                zero_point_energy=-1.0000,
+                scf_energy=-1.1000,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+        reactant_2_file = SimpleUploadedFile(
+            "reactant-2.log",
+            _build_gaussian_log_content(
+                free_energy=-1.0000,
+                thermal_enthalpy=-1.0000,
+                zero_point_energy=-1.0000,
+                scf_energy=-1.1000,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+        transition_state_file = SimpleUploadedFile(
+            "transition-state.log",
+            _build_gaussian_log_content(
+                free_energy=-1.9000,
+                thermal_enthalpy=-1.9000,
+                zero_point_energy=-1.9000,
+                scf_energy=-2.0000,
+                temperature=298.15,
+                imaginary_frequency=625.0,
+                include_ts_marker=True,
+            ),
+            content_type="text/plain",
+        )
+        product_1_file = SimpleUploadedFile(
+            "product-1.log",
+            _build_gaussian_log_content(
+                free_energy=0.5000,
+                thermal_enthalpy=0.5000,
+                zero_point_energy=0.5000,
+                scf_energy=0.4000,
+                temperature=298.15,
+                imaginary_frequency=0.0,
+                include_ts_marker=False,
+            ),
+            content_type="text/plain",
+        )
+
+        payload = {
+            "version": "2.0.0",
+            "title": "Invalid Eckart setup",
+            "reaction_path_degeneracy": "1.0",
+            "reactant_1_file": reactant_1_file,
+            "reactant_2_file": reactant_2_file,
+            "transition_state_file": transition_state_file,
+            "product_1_file": product_1_file,
+        }
+
+        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH, payload, format="multipart"
+            )
+
+        self.assertEqual(create_response.status_code, 201)
+        created_job_id: str = str(create_response.data["id"])
+
+        JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["status"], "failed")
+        self.assertIn("corrección Eckart", str(retrieve_response.data["error_trace"]))

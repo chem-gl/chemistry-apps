@@ -38,6 +38,11 @@ export class App {
       path: '/marcus',
       hint: 'Marcus theory energies and rate constants',
     },
+    {
+      label: 'Smileit',
+      path: '/smileit',
+      hint: 'Combinatorial SMILES generation and substitution workflow',
+    },
     { label: 'Apps', path: '/apps', hint: 'Catalog and future scientific apps' },
   ];
 }
