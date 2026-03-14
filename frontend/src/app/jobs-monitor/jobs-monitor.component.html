@@ -112,8 +112,8 @@
                 <div class="actions-cell">
                     <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">Open live logs</button>
 
-                    @if (activeJob.plugin_name === 'random-numbers') {
-                    <a class="open-result-link" [routerLink]="'/random-numbers'"
+                    @if (appRouteForJob(activeJob); as appRoutePath) {
+                    <a class="open-result-link" [routerLink]="appRoutePath"
                         [queryParams]="{ jobId: activeJob.id }">
                         {{ resultActionLabel(activeJob) }}
                     </a>
@@ -175,8 +175,8 @@
                 <div class="actions-cell">
                     <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">Open logs</button>
 
-                    @if (pausedJob.plugin_name === 'random-numbers') {
-                    <a class="open-result-link" [routerLink]="'/random-numbers'"
+                    @if (appRouteForJob(pausedJob); as appRoutePath) {
+                    <a class="open-result-link" [routerLink]="appRoutePath"
                         [queryParams]="{ jobId: pausedJob.id }">
                         {{ resultActionLabel(pausedJob) }}
                     </a>

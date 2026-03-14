@@ -1582,6 +1582,282 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job random_numbers no encontrado.
+  /api/smileit/jobs/:
+    post:
+      operationId: smileit_jobs_create
+      description: Crea un job asíncrono que genera moléculas por sustitución combinatoria
+        sobre la molécula principal en los átomos seleccionados.
+      summary: Crear Job Smileit
+      tags:
+      - Smileit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+            examples:
+              GenerarVariantesDelBenceno:
+                value:
+                  version: 1.0.0
+                  principal_smiles: c1ccccc1
+                  selected_atom_indices:
+                  - 0
+                  - 1
+                  substituents:
+                  - name: Amine
+                    smiles: '[NH2]'
+                    selected_atom_index: 0
+                  - name: Chlorine
+                    smiles: '[Cl]'
+                    selected_atom_index: 0
+                  r_substitutes: 2
+                  num_bonds: 1
+                  allow_repeated: false
+                  max_structures: 500
+                summary: Generar variantes del benceno
+                description: Genera variantes del benceno sustituyendo en los átomos
+                  0 y 1 con Amine y Chlorine hasta 2 rondas sin SMILES repetidos.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato smileit.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
+  /api/smileit/jobs/{id}/:
+    get:
+      operationId: smileit_jobs_retrieve
+      description: Devuelve estado y resultado del job smileit por UUID.
+      summary: Consultar Job Smileit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job smileit.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job smileit no encontrado.
+  /api/smileit/jobs/{id}/report-csv/:
+    get:
+      operationId: smileit_jobs_report_csv_retrieve
+      description: Descarga un CSV con índice, nombre y SMILES de cada estructura
+        generada. Solo aplica para jobs en estado completed.
+      summary: Descargar Reporte CSV de Smileit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV construido desde resultados del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job smileit no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El estado del job no permite exportación CSV.
+  /api/smileit/jobs/{id}/report-error/:
+    get:
+      operationId: smileit_jobs_report_error_retrieve
+      description: Descarga un reporte de error para jobs failed con error_trace.
+        Incluye parámetros de entrada y traza de fallo.
+      summary: Descargar Reporte de Error de Smileit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con detalle del error del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job smileit no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no tiene un error exportable.
+  /api/smileit/jobs/{id}/report-log/:
+    get:
+      operationId: smileit_jobs_report_log_retrieve
+      description: Descarga un log técnico con parámetros, resultados, eventos y CSV
+        embebido cuando el job ya está completed.
+      summary: Descargar Reporte LOG de Smileit
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo de texto con trazabilidad del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job smileit no encontrado.
+  /api/smileit/jobs/catalog/:
+    get:
+      operationId: smileit_jobs_catalog_list
+      description: Retorna la lista de sustituyentes del catálogo inicial migrado
+        desde el legado Java Smile-it. Útil para el selector de sustituyentes del
+        frontend.
+      summary: Obtener Catálogo de Sustituyentes
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SmileitCatalogEntry'
+          description: ''
+  /api/smileit/jobs/inspect-structure/:
+    post:
+      operationId: smileit_jobs_inspect_structure_create
+      description: Valida un SMILES y retorna la lista de átomos indexados junto con
+        un SVG de la molécula renderizada. Se usa para que el frontend permita selección
+        interactiva de átomos de sustitución antes de crear el job.
+      summary: Inspeccionar Estructura SMILES
+      tags:
+      - Smileit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+            examples:
+              InspeccionarBenceno:
+                value:
+                  smiles: c1ccccc1
+                summary: Inspeccionar benceno
+                description: Inspecciona la molécula benceno para selección de átomos.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitStructureInspectionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: SMILES inválido o no parseable.
   /api/tunnel/jobs/:
     post:
       operationId: tunnel_jobs_create
@@ -3643,6 +3919,328 @@ components:
       - status
       - supports_pause_resume
       - updated_at
+    SmileitAtomInfo:
+      type: object
+      description: Información de un átomo para la UI de selección interactiva.
+      properties:
+        index:
+          type: integer
+          minimum: 0
+        symbol:
+          type: string
+          maxLength: 10
+        implicit_hydrogens:
+          type: integer
+          minimum: 0
+        is_aromatic:
+          type: boolean
+      required:
+      - implicit_hydrogens
+      - index
+      - is_aromatic
+      - symbol
+    SmileitCatalogEntry:
+      type: object
+      description: Un sustituyente del catálogo inicial o personalizado.
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        smiles:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 300
+        selected_atom_index:
+          type: integer
+          minimum: 0
+      required:
+      - description
+      - name
+      - selected_atom_index
+      - smiles
+    SmileitGeneratedStructure:
+      type: object
+      description: Una molécula generada en el resultado.
+      properties:
+        smiles:
+          type: string
+          maxLength: 2000
+        name:
+          type: string
+          maxLength: 500
+        svg:
+          type: string
+      required:
+      - name
+      - smiles
+      - svg
+    SmileitJobCreateRequest:
+      type: object
+      description: Valida request de creación para jobs de generación smileit.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 1.0.0
+          description: Versión del algoritmo de generación.
+          maxLength: 50
+        principal_smiles:
+          type: string
+          minLength: 1
+          description: SMILES de la molécula principal sobre la que se harán sustituciones.
+          maxLength: 2000
+        selected_atom_indices:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+          description: Índices de los átomos del principal donde se permiten sustituciones.
+          maxItems: 20
+          minItems: 1
+        substituents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitSubstituentInputRequest'
+          description: Lista de sustituyentes a combinar.
+        r_substitutes:
+          type: integer
+          maximum: 10
+          minimum: 1
+          default: 1
+          description: Profundidad (rondas) de sustitución combinatoria.
+        num_bonds:
+          type: integer
+          maximum: 3
+          minimum: 1
+          default: 1
+          description: Orden máximo de enlace a crear (1=simple, 2=doble, 3=triple).
+        allow_repeated:
+          type: boolean
+          default: false
+          description: Si True, se permiten SMILES duplicados en la salida.
+        max_structures:
+          type: integer
+          maximum: 5000
+          minimum: 1
+          default: 500
+          description: Límite de estructuras generadas para evitar explosión combinatoria.
+      required:
+      - principal_smiles
+      - selected_atom_indices
+      - substituents
+    SmileitJobResponse:
+      type: object
+      description: Salida tipada para jobs de smileit.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/SmileitParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/SmileitResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    SmileitParameters:
+      type: object
+      description: Parámetros del job smileit persistidos para trazabilidad.
+      properties:
+        principal_smiles:
+          type: string
+          maxLength: 2000
+        selected_atom_indices:
+          type: array
+          items:
+            type: integer
+        substituents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitSubstituentInput'
+        r_substitutes:
+          type: integer
+        num_bonds:
+          type: integer
+        allow_repeated:
+          type: boolean
+        max_structures:
+          type: integer
+      required:
+      - allow_repeated
+      - max_structures
+      - num_bonds
+      - principal_smiles
+      - r_substitutes
+      - selected_atom_indices
+      - substituents
+    SmileitResult:
+      type: object
+      description: Resultado completo de la generación combinatoria.
+      properties:
+        total_generated:
+          type: integer
+          minimum: 0
+        generated_structures:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitGeneratedStructure'
+        truncated:
+          type: boolean
+        principal_smiles:
+          type: string
+          maxLength: 2000
+        selected_atom_indices:
+          type: array
+          items:
+            type: integer
+      required:
+      - generated_structures
+      - principal_smiles
+      - selected_atom_indices
+      - total_generated
+      - truncated
+    SmileitStructureInspectionRequestRequest:
+      type: object
+      description: Request para el endpoint inspect-structure.
+      properties:
+        smiles:
+          type: string
+          minLength: 1
+          description: Cadena SMILES de la molécula a inspeccionar.
+          maxLength: 2000
+      required:
+      - smiles
+    SmileitStructureInspectionResponse:
+      type: object
+      description: Respuesta del endpoint inspect-structure con átomos indexados y
+        SVG.
+      properties:
+        canonical_smiles:
+          type: string
+          maxLength: 2000
+        atom_count:
+          type: integer
+          minimum: 1
+        atoms:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitAtomInfo'
+        svg:
+          type: string
+          description: Representación SVG de la molécula con índices de átomo visibles.
+      required:
+      - atom_count
+      - atoms
+      - canonical_smiles
+      - svg
+    SmileitSubstituentInput:
+      type: object
+      description: Un sustituyente a usar en la generación combinatoria.
+      properties:
+        name:
+          type: string
+          description: Nombre descriptivo del sustituyente.
+          maxLength: 100
+        smiles:
+          type: string
+          description: Cadena SMILES del sustituyente.
+          maxLength: 2000
+        selected_atom_index:
+          type: integer
+          minimum: 0
+          description: Índice del átomo de anclaje del sustituyente (desde 0).
+      required:
+      - name
+      - selected_atom_index
+      - smiles
+    SmileitSubstituentInputRequest:
+      type: object
+      description: Un sustituyente a usar en la generación combinatoria.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Nombre descriptivo del sustituyente.
+          maxLength: 100
+        smiles:
+          type: string
+          minLength: 1
+          description: Cadena SMILES del sustituyente.
+          maxLength: 2000
+        selected_atom_index:
+          type: integer
+          minimum: 0
+          description: Índice del átomo de anclaje del sustituyente (desde 0).
+      required:
+      - name
+      - selected_atom_index
+      - smiles
     SolventEnum:
       enum:
       - Benzene

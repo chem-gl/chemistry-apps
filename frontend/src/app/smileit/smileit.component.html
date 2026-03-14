@@ -1,0 +1,309 @@
+<!-- smileit.component.html: Interfaz de Smileit para inspección estructural y generación de variantes. -->
+<section class="smileit-shell" aria-label="Smileit scientific app">
+    <header class="smileit-header">
+        <p class="eyebrow">Smileit</p>
+        <h2>Combinatorial SMILES Generator</h2>
+        <p>
+            Inspect the principal molecule, select target atoms, configure substituents, and run combinatorial
+            generations with asynchronous tracking.
+        </p>
+    </header>
+
+    <div class="workspace-grid">
+        <section class="entry-panel" aria-label="Input parameters">
+            <h3>Structure Setup</h3>
+
+            <label>
+                Principal SMILES
+                <input type="text" [ngModel]="workflow.principalSmiles()"
+                    (ngModelChange)="workflow.principalSmiles.set($event)" [disabled]="workflow.isProcessing()"
+                    placeholder="c1ccccc1" />
+            </label>
+
+            <div class="action-row">
+                <button class="btn-secondary" (click)="inspectPrincipalStructure()"
+                    [disabled]="workflow.isProcessing()">
+                    {{ workflow.activeSection() === 'inspecting' ? 'Inspecting...' : 'Inspect structure' }}
+                </button>
+            </div>
+
+            @if (workflow.inspection(); as inspectionResult) {
+            <div class="inspection-card">
+                <p><strong>Canonical:</strong> <span class="mono">{{ inspectionResult.canonicalSmiles }}</span></p>
+                <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
+
+                <p class="hint">Tip: click directly on the molecule image to select atoms with the mouse.</p>
+                <div class="svg-preview inspectable" (click)="onInspectionSvgClick($event)"
+                    [innerHTML]="toTrustedSvg(workflow.inspectionSvg())"></div>
+
+                <h4>Select principal atoms</h4>
+                <div class="atom-grid">
+                    @for (atom of inspectionResult.atoms; track atom.index) {
+                    <button type="button" class="atom-chip" [class.selected]="isAtomSelected(atom.index)"
+                        (click)="workflow.toggleSelectedAtom(atom.index)" [disabled]="workflow.isProcessing()">
+                        #{{ atom.index }} {{ atom.symbol }}
+                    </button>
+                    }
+                </div>
+            </div>
+            }
+
+            <div class="options-grid">
+                <label>
+                    R substitutes
+                    <input type="number" min="1" max="10" [ngModel]="workflow.rSubstitutes()"
+                        (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Max bond order
+                    <input type="number" min="1" max="3" [ngModel]="workflow.numBonds()"
+                        (ngModelChange)="workflow.setNumBonds(toNumber($event))" [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label>
+                    Max structures
+                    <input type="number" min="1" max="5000" [ngModel]="workflow.maxStructures()"
+                        (ngModelChange)="workflow.setMaxStructures(toNumber($event))"
+                        [disabled]="workflow.isProcessing()" />
+                </label>
+
+                <label class="toggle-label">
+                    <input type="checkbox" [ngModel]="workflow.allowRepeated()"
+                        (ngModelChange)="workflow.allowRepeated.set($event)" [disabled]="workflow.isProcessing()" />
+                    Allow repeated SMILES
+                </label>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
+                    {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
+                </button>
+                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">Reset</button>
+            </div>
+        </section>
+
+        <section class="substituent-panel" aria-label="Substituent list and catalog">
+            <h3>Substituents</h3>
+
+            <div class="custom-form">
+                <h4>Add custom substituent</h4>
+                <div class="custom-grid">
+                    <label>
+                        Name
+                        <input type="text" [ngModel]="workflow.customSubstituentName()"
+                            (ngModelChange)="workflow.customSubstituentName.set($event)"
+                            [disabled]="workflow.isProcessing()" />
+                    </label>
+
+                    <label>
+                        SMILES
+                        <input type="text" [ngModel]="workflow.customSubstituentSmiles()"
+                            (ngModelChange)="workflow.customSubstituentSmiles.set($event)"
+                            [disabled]="workflow.isProcessing()" />
+                    </label>
+
+                    <label>
+                        Anchor atom index
+                        <input type="number" min="0" [ngModel]="workflow.customSubstituentSelectedAtomIndex()"
+                            (ngModelChange)="workflow.customSubstituentSelectedAtomIndex.set(toNumber($event))"
+                            [disabled]="workflow.isProcessing()" />
+                    </label>
+                </div>
+                <div class="action-row">
+                    <button class="btn-secondary" (click)="addCustomSubstituent()" [disabled]="workflow.isProcessing()">
+                        Add custom
+                    </button>
+                </div>
+            </div>
+
+            <div class="catalog-card">
+                <h4>Catalog</h4>
+                <div class="catalog-list">
+                    @for (entry of workflow.catalogEntries(); track entry.name + entry.smiles) {
+                    <article class="catalog-item">
+                        <div>
+                            <p class="catalog-name">{{ entry.name }}</p>
+                            <p class="catalog-smiles mono">{{ entry.smiles }}</p>
+                            <p class="catalog-description">{{ entry.description }}</p>
+                        </div>
+                        <button class="catalog-add" (click)="addCatalogSubstituent(entry)"
+                            [disabled]="workflow.isProcessing()">
+                            Add
+                        </button>
+                    </article>
+                    }
+                </div>
+            </div>
+
+            <div class="selected-card">
+                <div class="selected-header">
+                    <h4>Selected substituents</h4>
+                    <button class="btn-secondary" (click)="workflow.clearSubstituents()"
+                        [disabled]="workflow.isProcessing()">
+                        Clear list
+                    </button>
+                </div>
+
+                @if (workflow.substituents().length === 0) {
+                <p class="hint">No substituents selected yet.</p>
+                } @else {
+                <div class="selected-list">
+                    @for (entry of workflow.substituents(); track entry.name + entry.smiles + $index) {
+                    <article class="selected-item">
+                        <div>
+                            <p class="catalog-name">{{ entry.name }}</p>
+                            <p class="catalog-smiles mono">{{ entry.smiles }}</p>
+                        </div>
+                        <div class="anchor-block">
+                            <label>
+                                Anchor
+                                <input type="number" min="0" [ngModel]="entry.selectedAtomIndex"
+                                    (ngModelChange)="workflow.updateSubstituentAnchor($index, toNumber($event))"
+                                    [disabled]="workflow.isProcessing()" />
+                            </label>
+                            <button class="remove-btn" (click)="removeSubstituent($index)"
+                                [disabled]="workflow.isProcessing()">
+                                Remove
+                            </button>
+                        </div>
+                    </article>
+                    }
+                </div>
+                }
+            </div>
+        </section>
+    </div>
+
+    <section class="result-panel" aria-label="Result and progress panel">
+        <h3>Execution</h3>
+
+        @if (workflow.activeSection() === 'dispatching') {
+        <p class="status-message">Dispatching Smileit job...</p>
+        }
+
+        @if (workflow.activeSection() === 'progress') {
+        <div class="progress-card">
+            <p class="job-id mono">{{ workflow.currentJobId() }}</p>
+            <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()"
+                aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+            </div>
+            <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
+            <p class="progress-message">{{ workflow.progressMessage() }}</p>
+        </div>
+        }
+
+        @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+        <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+        }
+
+        <div class="metadata-grid">
+            <p><strong>Total generated:</strong> {{ resultData.totalGenerated }}</p>
+            <p><strong>Truncated:</strong> {{ resultData.truncated ? 'Yes' : 'No' }}</p>
+            <p><strong>Principal:</strong> <span class="mono">{{ resultData.principalSmiles }}</span></p>
+            <p><strong>Selected atoms:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
+        </div>
+
+        <div class="action-row export-row">
+            <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+                {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+            </button>
+            <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">Export LOG</button>
+            <button class="btn-secondary" (click)="exportError()" [disabled]="workflow.isExporting()">Export
+                Error</button>
+        </div>
+
+        @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+        <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+        }
+
+        @if (resultData.generatedStructures.length === 0) {
+        <p class="status-message">No generated structures available in this snapshot.</p>
+        } @else {
+        <div class="structures-grid">
+            @for (structureItem of resultData.generatedStructures; track structureItem.smiles + $index) {
+            <article class="structure-card">
+                <div class="structure-svg" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
+                <p class="structure-name">{{ structureItem.name }}</p>
+                <p class="structure-smiles mono">{{ structureItem.smiles }}</p>
+            </article>
+            }
+        </div>
+        }
+        }
+
+        @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+        <p class="error-message" role="alert">{{ currentError }}</p>
+        }
+    </section>
+
+    @if (workflow.jobLogs().length > 0) {
+    <section class="logs-card" aria-label="Execution logs">
+        <h3>Execution logs</h3>
+        <div class="logs-list">
+            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+            <article class="log-item">
+                <header class="log-header">
+                    <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                        {{ logEntry.level }}
+                    </span>
+                    <span class="log-source">{{ logEntry.source }}</span>
+                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                </header>
+                <p class="log-message">{{ logEntry.message }}</p>
+                @if (hasPayload(logEntry)) {
+                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                }
+            </article>
+            }
+        </div>
+    </section>
+    }
+
+    <section class="history-card" aria-label="Historical Smileit jobs">
+        <div class="history-header">
+            <h3>Historical jobs</h3>
+            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+            </button>
+        </div>
+
+        @if (workflow.historyJobs().length === 0) {
+        <p class="status-message">No historical Smileit jobs yet.</p>
+        } @else {
+        <div class="table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+                    <tr>
+                        <td class="mono">{{ historyJob.id }}</td>
+                        <td>
+                            <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
+                        </td>
+                        <td>{{ historyJob.progress_percentage }}%</td>
+                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                        <td>
+                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                                Open
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </section>
+</section>

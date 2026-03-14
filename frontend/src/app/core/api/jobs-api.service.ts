@@ -7,21 +7,27 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
-    CalculatorJobCreateRequest,
-    CalculatorJobResponse,
-    CalculatorOperationEnum,
-    CalculatorService,
-    EasyRateJobResponse,
-    EasyRateService,
-    JobControlActionResponse,
-    JobCreateRequest,
-    JobLogList,
-    JobProgressSnapshot,
-    JobsService,
-    MarcusJobResponse,
-    MarcusService,
-    MolarFractionsService,
-    ScientificJob,
+  CalculatorJobCreateRequest,
+  CalculatorJobResponse,
+  CalculatorOperationEnum,
+  CalculatorService,
+  EasyRateJobResponse,
+  EasyRateService,
+  JobControlActionResponse,
+  JobCreateRequest,
+  JobLogList,
+  JobProgressSnapshot,
+  JobsService,
+  MarcusJobResponse,
+  MarcusService,
+  MolarFractionsService,
+  ScientificJob,
+  SmileitCatalogEntry,
+  SmileitJobCreateRequest,
+  SmileitJobResponse,
+  SmileitService,
+  SmileitStructureInspectionRequestRequest,
+  SmileitStructureInspectionResponse,
 } from './generated';
 
 /**
@@ -253,6 +259,47 @@ export type EasyRateJobResponseView = EasyRateJobResponse;
 export type MarcusJobResponseView = MarcusJobResponse;
 export type CalculatorOperationView = CalculatorOperationEnum;
 
+/** Entrada de catálogo de sustituyentes normalizada para la UI. */
+export type SmileitCatalogEntryView = SmileitCatalogEntry;
+
+/** Información de átomo normalizada para la UI de selección. */
+export interface SmileitAtomInfoView {
+  index: number;
+  symbol: string;
+  implicitHydrogens: number;
+  isAromatic: boolean;
+}
+
+/** Resultado de inspección estructural normalizado para la UI. */
+export interface SmileitStructureInspectionView {
+  canonicalSmiles: string;
+  atomCount: number;
+  atoms: SmileitAtomInfoView[];
+  svg: string;
+}
+
+/** Parámetros de un sustituyente mandado en la UI. */
+export interface SmileitSubstituentParams {
+  name: string;
+  smiles: string;
+  selectedAtomIndex: number;
+}
+
+/** Parámetros de creación de un job smileit (vista camelCase). */
+export interface SmileitGenerationParams {
+  principalSmiles: string;
+  selectedAtomIndices: number[];
+  substituents: SmileitSubstituentParams[];
+  rSubstitutes?: number;
+  numBonds?: number;
+  allowRepeated?: boolean;
+  maxStructures?: number;
+  version?: string;
+}
+
+/** Respuesta de job smileit normalizada para componentes. */
+export type SmileitJobResponseView = SmileitJobResponse;
+
 export interface JobsRealtimeQuery {
   jobId?: string;
   pluginName?: string;
@@ -297,8 +344,102 @@ export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
+  private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly jobsClient = inject(JobsService);
+
+  // ---------------------------------------------------------------------------
+  // Smileit API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Devuelve el catálogo de 17 sustituyentes predefinidos.
+   * Usar para poblar la lista inicial en la UI sin necesidad de escribir SMILES.
+   */
+  listSmileitCatalog(): Observable<SmileitCatalogEntryView[]> {
+    return this.smileitClient.smileitJobsCatalogList().pipe(shareReplay(1));
+  }
+
+  /**
+   * Inspecciona un SMILES y devuelve la estructura canónica, átomos indexados y SVG.
+   * Usar para que el usuario seleccione los átomos de sustitución antes de despachar el job.
+   */
+  inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
+    const request: SmileitStructureInspectionRequestRequest = { smiles };
+    return this.smileitClient.smileitJobsInspectStructureCreate(request).pipe(
+      map(
+        (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
+          canonicalSmiles: raw.canonical_smiles,
+          atomCount: raw.atom_count,
+          atoms: raw.atoms.map((atom) => ({
+            index: atom.index,
+            symbol: atom.symbol,
+            implicitHydrogens: atom.implicit_hydrogens,
+            isAromatic: atom.is_aromatic,
+          })),
+          svg: raw.svg,
+        }),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /**
+   * Despacha un job de generación combinatoria smileit.
+   * Retorna el job creado con status 'pending'; usar streamJobEvents() para progreso.
+   */
+  dispatchSmileitJob(params: SmileitGenerationParams): Observable<SmileitJobResponseView> {
+    const payload: SmileitJobCreateRequest = {
+      version: params.version ?? '1.0.0',
+      principal_smiles: params.principalSmiles,
+      selected_atom_indices: params.selectedAtomIndices,
+      substituents: params.substituents.map((s) => ({
+        name: s.name,
+        smiles: s.smiles,
+        selected_atom_index: s.selectedAtomIndex,
+      })),
+      r_substitutes: params.rSubstitutes,
+      num_bonds: params.numBonds,
+      allow_repeated: params.allowRepeated,
+      max_structures: params.maxStructures,
+    };
+    return this.smileitClient.smileitJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job smileit por UUID. */
+  getSmileitJobStatus(jobId: string): Observable<SmileitJobResponseView> {
+    return this.smileitClient.smileitJobsRetrieve(jobId);
+  }
+
+  /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
+  downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte LOG de smileit (descripción de la generación). */
+  downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.log`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte de error de smileit cuando el job falla. */
+  downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_error.txt`),
+      ),
+      shareReplay(1),
+    );
+  }
 
   private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
     return rawJob as ScientificJob;

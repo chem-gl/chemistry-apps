@@ -39,6 +39,10 @@ export const routes: Routes = [
     loadComponent: () => import('./marcus/marcus.component').then((m) => m.MarcusComponent),
   },
   {
+    path: 'smileit',
+    loadComponent: () => import('./smileit/smileit.component').then((m) => m.SmileitComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

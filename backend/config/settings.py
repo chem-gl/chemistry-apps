@@ -172,6 +172,7 @@ INSTALLED_APPS = [
     "apps.tunnel.apps.TunnelConfig",
     "apps.easy_rate.apps.EasyRateConfig",
     "apps.marcus.apps.MarcusConfig",
+    "apps.smileit.apps.SmileitConfig",
 ]
 
 if ENABLE_CORS:
