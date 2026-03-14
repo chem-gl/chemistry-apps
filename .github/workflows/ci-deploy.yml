@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python 3.12
         if: matrix.service == 'backend'
@@ -64,8 +64,6 @@ jobs:
   build:
     name: Build reusable workflow
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
     uses: ./.github/workflows/build.yml
     with:
       create_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}

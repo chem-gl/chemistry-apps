@@ -29,6 +29,8 @@ model/calculatorParameters.ts
 model/calculatorResult.ts
 model/calculatorResultMetadata.ts
 model/easyRateArtifactDescriptor.ts
+model/easyRateInspectionExecution.ts
+model/easyRateInspectionResponse.ts
 model/easyRateJobResponse.ts
 model/easyRateParameters.ts
 model/easyRateResult.ts
@@ -65,6 +67,7 @@ model/randomNumbersResult.ts
 model/randomNumbersResultMetadata.ts
 model/scientificJob.ts
 model/solventEnum.ts
+model/sourceFieldEnum.ts
 model/statusEnum.ts
 model/tunnelInputChangeEvent.ts
 model/tunnelJobCreateRequest.ts

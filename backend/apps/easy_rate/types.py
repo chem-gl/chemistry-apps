@@ -38,6 +38,11 @@ class EasyRateCreateValidatedPayload(TypedDict):
     radius_reactant_2: float | None
     reaction_distance: float | None
     print_data_input: bool
+    reactant_1_execution_index: int | None
+    reactant_2_execution_index: int | None
+    transition_state_execution_index: int | None
+    product_1_execution_index: int | None
+    product_2_execution_index: int | None
     reactant_1_file: UploadedFile | None
     reactant_2_file: UploadedFile | None
     transition_state_file: UploadedFile
@@ -58,6 +63,11 @@ class EasyRateJobParameters(TypedDict):
     radius_reactant_2: float | None
     reaction_distance: float | None
     print_data_input: bool
+    reactant_1_execution_index: int | None
+    reactant_2_execution_index: int | None
+    transition_state_execution_index: int | None
+    product_1_execution_index: int | None
+    product_2_execution_index: int | None
     file_descriptors: list[EasyRateArtifactDescriptor]
 
 
@@ -66,6 +76,13 @@ class EasyRateStructureSnapshot(TypedDict):
 
     source_field: str
     original_filename: str | None
+    is_provided: bool
+    execution_index: int | None
+    available_execution_count: int
+    job_title: str | None
+    checkpoint_file: str | None
+    charge: int
+    multiplicity: int
     free_energy: float
     thermal_enthalpy: float
     zero_point_energy: float
@@ -73,6 +90,42 @@ class EasyRateStructureSnapshot(TypedDict):
     temperature: float
     negative_frequencies: int
     imaginary_frequency: float
+    normal_termination: bool
+    is_opt_freq: bool
+
+
+class EasyRateInspectionExecutionSummary(TypedDict):
+    """Resumen serializable de una ejecución Gaussian candidata por archivo."""
+
+    source_field: str
+    original_filename: str | None
+    execution_index: int
+    job_title: str | None
+    checkpoint_file: str | None
+    charge: int
+    multiplicity: int
+    free_energy: float | None
+    thermal_enthalpy: float | None
+    zero_point_energy: float | None
+    scf_energy: float | None
+    temperature: float | None
+    negative_frequencies: int
+    imaginary_frequency: float | None
+    normal_termination: bool
+    is_opt_freq: bool
+    is_valid_for_role: bool
+    validation_errors: list[str]
+
+
+class EasyRateInspectionResult(TypedDict):
+    """Resultado de inspección previa de un archivo Gaussian cargado en UI."""
+
+    source_field: str
+    original_filename: str | None
+    parse_errors: list[str]
+    execution_count: int
+    default_execution_index: int | None
+    executions: list[EasyRateInspectionExecutionSummary]
 
 
 class EasyRateResultMetadata(TypedDict):

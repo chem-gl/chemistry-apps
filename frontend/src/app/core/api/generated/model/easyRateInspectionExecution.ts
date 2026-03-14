@@ -10,26 +10,26 @@
 
 
 /**
- * Snapshot termodinámico de una estructura parseada.
+ * Resumen de una ejecución candidata detectada durante la inspección.
  */
-export interface EasyRateStructureSnapshot { 
+export interface EasyRateInspectionExecution { 
     source_field: string;
     original_filename: string | null;
-    is_provided: boolean;
-    execution_index: number | null;
-    available_execution_count: number;
+    execution_index: number;
     job_title: string | null;
     checkpoint_file: string | null;
     charge: number;
     multiplicity: number;
-    free_energy: number;
-    thermal_enthalpy: number;
-    zero_point_energy: number;
-    scf_energy: number;
-    temperature: number;
+    free_energy: number | null;
+    thermal_enthalpy: number | null;
+    zero_point_energy: number | null;
+    scf_energy: number | null;
+    temperature: number | null;
     negative_frequencies: number;
-    imaginary_frequency: number;
+    imaginary_frequency: number | null;
     normal_termination: boolean;
     is_opt_freq: boolean;
+    is_valid_for_role: boolean;
+    validation_errors: Array<string>;
 }
 

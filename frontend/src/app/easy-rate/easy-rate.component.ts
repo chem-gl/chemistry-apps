@@ -6,11 +6,24 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DownloadedReportFile, JobLogEntryView } from '../core/api/jobs-api.service';
+import {
+  DownloadedReportFile,
+  EasyRateFileInspectionView,
+  EasyRateInputFieldName,
+  EasyRateInspectionExecutionView,
+  JobLogEntryView,
+} from '../core/api/jobs-api.service';
 import {
   EasyRateWorkflowService,
   SOLVENT_OPTIONS,
 } from '../core/application/easy-rate-workflow.service';
+
+interface EasyRateInputSlotView {
+  fieldName: EasyRateInputFieldName;
+  label: string;
+  required: boolean;
+  note: string | null;
+}
 
 @Component({
   selector: 'app-easy-rate',
@@ -25,6 +38,38 @@ export class EasyRateComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
 
   readonly solventOptions: ReadonlyArray<string> = SOLVENT_OPTIONS;
+  readonly inputSlots: ReadonlyArray<EasyRateInputSlotView> = [
+    {
+      fieldName: 'transition_state_file',
+      label: 'Transition State',
+      required: true,
+      note: null,
+    },
+    {
+      fieldName: 'reactant_1_file',
+      label: 'Reactant 1',
+      required: true,
+      note: null,
+    },
+    {
+      fieldName: 'reactant_2_file',
+      label: 'Reactant 2',
+      required: true,
+      note: null,
+    },
+    {
+      fieldName: 'product_1_file',
+      label: 'Product 1',
+      required: false,
+      note: '(at least one product)',
+    },
+    {
+      fieldName: 'product_2_file',
+      label: 'Product 2',
+      required: false,
+      note: '(at least one product)',
+    },
+  ];
 
   ngOnInit(): void {
     this.workflow.loadHistory();
@@ -57,29 +102,57 @@ export class EasyRateComponent implements OnInit, OnDestroy {
   }
 
   // ── Manejadores de archivos ──────────────────────────────────────
-  onTransitionStateFileChange(event: Event): void {
+  onInputFileChange(fieldName: EasyRateInputFieldName, event: Event): void {
     const input: HTMLInputElement = event.target as HTMLInputElement;
-    this.workflow.updateTransitionStateFile(input.files?.[0] ?? null);
+    this.workflow.updateInputFile(fieldName, input.files?.[0] ?? null);
   }
 
-  onReactant1FileChange(event: Event): void {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
-    this.workflow.updateReactant1File(input.files?.[0] ?? null);
+  onExecutionSelectionChange(fieldName: EasyRateInputFieldName, event: Event): void {
+    const selectElement: HTMLSelectElement = event.target as HTMLSelectElement;
+    const nextValue: string = selectElement.value.trim();
+    this.workflow.updateSelectedExecutionIndex(
+      fieldName,
+      nextValue === '' ? null : Number(nextValue),
+    );
   }
 
-  onReactant2FileChange(event: Event): void {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
-    this.workflow.updateReactant2File(input.files?.[0] ?? null);
+  getSelectedFile(fieldName: EasyRateInputFieldName): File | null {
+    return this.workflow.getInputFile(fieldName);
   }
 
-  onProduct1FileChange(event: Event): void {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
-    this.workflow.updateProduct1File(input.files?.[0] ?? null);
+  getInspection(fieldName: EasyRateInputFieldName): EasyRateFileInspectionView | null {
+    return this.workflow.getInspection(fieldName);
   }
 
-  onProduct2FileChange(event: Event): void {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
-    this.workflow.updateProduct2File(input.files?.[0] ?? null);
+  getSelectedExecution(fieldName: EasyRateInputFieldName): EasyRateInspectionExecutionView | null {
+    return this.workflow.getSelectedInspectionExecution(fieldName);
+  }
+
+  getSelectedExecutionIndex(fieldName: EasyRateInputFieldName): number | null {
+    return this.workflow.getSelectedExecutionIndex(fieldName);
+  }
+
+  isInspectionPending(fieldName: EasyRateInputFieldName): boolean {
+    return this.workflow.isInspectionPending(fieldName);
+  }
+
+  getInspectionError(fieldName: EasyRateInputFieldName): string | null {
+    return this.workflow.getInspectionError(fieldName);
+  }
+
+  formatNullableNumber(value: number | null, digits: number = 6): string {
+    if (value === null) return '--';
+    return value.toFixed(digits);
+  }
+
+  buildExecutionOptionLabel(execution: EasyRateInspectionExecutionView): string {
+    const titleSegment: string =
+      execution.jobTitle?.trim() || `Execution ${execution.executionIndex + 1}`;
+    return `${titleSegment} · mult ${execution.multiplicity} · neg freq ${execution.negativeFrequencies}`;
+  }
+
+  joinMessages(messages: string[]): string {
+    return messages.join(' ');
   }
 
   // ── Manejadores de parámetros ────────────────────────────────────
@@ -163,6 +236,10 @@ export class EasyRateComponent implements OnInit, OnDestroy {
     if (jobStatus === 'failed') return 'status-failed';
     if (jobStatus === 'running') return 'status-running';
     return 'status-pending';
+  }
+
+  trackInputSlot(_index: number, slot: EasyRateInputSlotView): EasyRateInputFieldName {
+    return slot.fieldName;
   }
 
   private triggerDownload(filename: string, blob: Blob): void {

@@ -24,6 +24,11 @@ export interface EasyRateParameters {
     radius_reactant_2: number | null;
     reaction_distance: number | null;
     print_data_input: boolean;
+    reactant_1_execution_index: number | null;
+    reactant_2_execution_index: number | null;
+    transition_state_execution_index: number | null;
+    product_1_execution_index: number | null;
+    product_2_execution_index: number | null;
     file_descriptors: Array<EasyRateArtifactDescriptor>;
 }
 

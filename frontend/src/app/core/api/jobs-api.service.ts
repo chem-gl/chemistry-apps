@@ -78,6 +78,11 @@ export interface EasyRateParams {
   reactant2File: File;
   product1File?: File;
   product2File?: File;
+  transitionStateExecutionIndex?: number;
+  reactant1ExecutionIndex?: number;
+  reactant2ExecutionIndex?: number;
+  product1ExecutionIndex?: number;
+  product2ExecutionIndex?: number;
   title?: string;
   reactionPathDegeneracy?: number;
   cageEffects?: boolean;
@@ -89,6 +94,76 @@ export interface EasyRateParams {
   reactionDistance?: number;
   printDataInput?: boolean;
   version?: string;
+}
+
+/** Campos Gaussian soportados por Easy-rate para inspección y selección. */
+export type EasyRateInputFieldName =
+  | 'transition_state_file'
+  | 'reactant_1_file'
+  | 'reactant_2_file'
+  | 'product_1_file'
+  | 'product_2_file';
+
+/** Resumen normalizado de una ejecución candidata detectada en un archivo Gaussian. */
+export interface EasyRateInspectionExecutionView {
+  sourceField: EasyRateInputFieldName;
+  originalFilename: string | null;
+  executionIndex: number;
+  jobTitle: string | null;
+  checkpointFile: string | null;
+  charge: number;
+  multiplicity: number;
+  freeEnergy: number | null;
+  thermalEnthalpy: number | null;
+  zeroPointEnergy: number | null;
+  scfEnergy: number | null;
+  temperature: number | null;
+  negativeFrequencies: number;
+  imaginaryFrequency: number | null;
+  normalTermination: boolean;
+  isOptFreq: boolean;
+  isValidForRole: boolean;
+  validationErrors: string[];
+}
+
+/** Resultado de inspección previa de un archivo Gaussian en la UI de Easy-rate. */
+export interface EasyRateFileInspectionView {
+  sourceField: EasyRateInputFieldName;
+  originalFilename: string | null;
+  parseErrors: string[];
+  executionCount: number;
+  defaultExecutionIndex: number | null;
+  executions: EasyRateInspectionExecutionView[];
+}
+
+interface EasyRateInspectionExecutionApiResponse {
+  source_field: EasyRateInputFieldName;
+  original_filename: string | null;
+  execution_index: number;
+  job_title: string | null;
+  checkpoint_file: string | null;
+  charge: number;
+  multiplicity: number;
+  free_energy: number | null;
+  thermal_enthalpy: number | null;
+  zero_point_energy: number | null;
+  scf_energy: number | null;
+  temperature: number | null;
+  negative_frequencies: number;
+  imaginary_frequency: number | null;
+  normal_termination: boolean;
+  is_opt_freq: boolean;
+  is_valid_for_role: boolean;
+  validation_errors: string[];
+}
+
+interface EasyRateInspectionApiResponse {
+  source_field: EasyRateInputFieldName;
+  original_filename: string | null;
+  parse_errors: string[];
+  execution_count: number;
+  default_execution_index: number | null;
+  executions: EasyRateInspectionExecutionApiResponse[];
 }
 
 /** Parámetros de entrada para crear un job Marcus con 6 archivos Gaussian */
@@ -317,6 +392,46 @@ export class JobsApiService {
       message: rawEvent.message,
       payload: normalizedPayload,
       createdAt: rawEvent.created_at,
+    };
+  }
+
+  private normalizeEasyRateInspectionExecution(
+    rawExecution: EasyRateInspectionExecutionApiResponse,
+  ): EasyRateInspectionExecutionView {
+    return {
+      sourceField: rawExecution.source_field,
+      originalFilename: rawExecution.original_filename,
+      executionIndex: rawExecution.execution_index,
+      jobTitle: rawExecution.job_title,
+      checkpointFile: rawExecution.checkpoint_file,
+      charge: rawExecution.charge,
+      multiplicity: rawExecution.multiplicity,
+      freeEnergy: rawExecution.free_energy,
+      thermalEnthalpy: rawExecution.thermal_enthalpy,
+      zeroPointEnergy: rawExecution.zero_point_energy,
+      scfEnergy: rawExecution.scf_energy,
+      temperature: rawExecution.temperature,
+      negativeFrequencies: rawExecution.negative_frequencies,
+      imaginaryFrequency: rawExecution.imaginary_frequency,
+      normalTermination: rawExecution.normal_termination,
+      isOptFreq: rawExecution.is_opt_freq,
+      isValidForRole: rawExecution.is_valid_for_role,
+      validationErrors: rawExecution.validation_errors,
+    };
+  }
+
+  private normalizeEasyRateInspection(
+    rawInspection: EasyRateInspectionApiResponse,
+  ): EasyRateFileInspectionView {
+    return {
+      sourceField: rawInspection.source_field,
+      originalFilename: rawInspection.original_filename,
+      parseErrors: rawInspection.parse_errors,
+      executionCount: rawInspection.execution_count,
+      defaultExecutionIndex: rawInspection.default_execution_index,
+      executions: rawInspection.executions.map((execution) =>
+        this.normalizeEasyRateInspectionExecution(execution),
+      ),
     };
   }
 
@@ -788,11 +903,7 @@ export class JobsApiService {
     formData.append(key, String(value));
   }
 
-  private appendOptionalBoolean(
-    formData: FormData,
-    key: string,
-    value: boolean | undefined,
-  ): void {
+  private appendOptionalBoolean(formData: FormData, key: string, value: boolean | undefined): void {
     if (value === undefined) {
       return;
     }
@@ -815,13 +926,27 @@ export class JobsApiService {
       formData.append('product_2_file', params.product2File);
     }
 
-    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
-    this.appendOptionalString(formData, 'title', params.title);
     this.appendOptionalNumber(
       formData,
-      'reaction_path_degeneracy',
-      params.reactionPathDegeneracy,
+      'reactant_1_execution_index',
+      params.reactant1ExecutionIndex,
     );
+    this.appendOptionalNumber(
+      formData,
+      'reactant_2_execution_index',
+      params.reactant2ExecutionIndex,
+    );
+    this.appendOptionalNumber(
+      formData,
+      'transition_state_execution_index',
+      params.transitionStateExecutionIndex,
+    );
+    this.appendOptionalNumber(formData, 'product_1_execution_index', params.product1ExecutionIndex);
+    this.appendOptionalNumber(formData, 'product_2_execution_index', params.product2ExecutionIndex);
+
+    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
+    this.appendOptionalString(formData, 'title', params.title);
+    this.appendOptionalNumber(formData, 'reaction_path_degeneracy', params.reactionPathDegeneracy);
     this.appendOptionalBoolean(formData, 'cage_effects', params.cageEffects);
     this.appendOptionalBoolean(formData, 'diffusion', params.diffusion);
     this.appendOptionalString(formData, 'solvent', params.solvent);
@@ -832,6 +957,28 @@ export class JobsApiService {
     this.appendOptionalBoolean(formData, 'print_data_input', params.printDataInput);
 
     return formData;
+  }
+
+  /** Inspecciona un archivo Gaussian y devuelve ejecuciones candidatas para Easy-rate. */
+  inspectEasyRateInput(
+    sourceField: EasyRateInputFieldName,
+    gaussianFile: File,
+  ): Observable<EasyRateFileInspectionView> {
+    const formData = new FormData();
+    formData.append('source_field', sourceField);
+    formData.append('gaussian_file', gaussianFile);
+
+    return this.httpClient
+      .post<EasyRateInspectionApiResponse>(
+        `${API_BASE_URL}/api/easy-rate/jobs/inspect-input/`,
+        formData,
+      )
+      .pipe(
+        map((rawInspection: EasyRateInspectionApiResponse) =>
+          this.normalizeEasyRateInspection(rawInspection),
+        ),
+        shareReplay(1),
+      );
   }
 
   /** Despacha un job Easy-rate con archivos Gaussian en multipart */

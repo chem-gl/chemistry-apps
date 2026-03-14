@@ -459,6 +459,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job Easy-rate no encontrado.
+  /api/easy-rate/jobs/inspect-input/:
+    post:
+      operationId: easy_rate_jobs_inspect_input_create
+      description: Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones
+        candidatas para selección previa en frontend.
+      summary: Inspeccionar archivo Gaussian para Easy-rate
+      tags:
+      - EasyRate
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EasyRateInspectionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EasyRateInspectionRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateInspectionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible inspeccionar el archivo cargado.
   /api/jobs/:
     get:
       operationId: jobs_list
@@ -1963,6 +1997,132 @@ components:
       - original_filename
       - sha256
       - size_bytes
+    EasyRateInspectionExecution:
+      type: object
+      description: Resumen de una ejecución candidata detectada durante la inspección.
+      properties:
+        source_field:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          nullable: true
+          maxLength: 255
+        execution_index:
+          type: integer
+          minimum: 0
+        job_title:
+          type: string
+          nullable: true
+          maxLength: 255
+        checkpoint_file:
+          type: string
+          nullable: true
+          maxLength: 255
+        charge:
+          type: integer
+        multiplicity:
+          type: integer
+        free_energy:
+          type: number
+          format: double
+          nullable: true
+        thermal_enthalpy:
+          type: number
+          format: double
+          nullable: true
+        zero_point_energy:
+          type: number
+          format: double
+          nullable: true
+        scf_energy:
+          type: number
+          format: double
+          nullable: true
+        temperature:
+          type: number
+          format: double
+          nullable: true
+        negative_frequencies:
+          type: integer
+          minimum: 0
+        imaginary_frequency:
+          type: number
+          format: double
+          nullable: true
+        normal_termination:
+          type: boolean
+        is_opt_freq:
+          type: boolean
+        is_valid_for_role:
+          type: boolean
+        validation_errors:
+          type: array
+          items:
+            type: string
+      required:
+      - charge
+      - checkpoint_file
+      - execution_index
+      - free_energy
+      - imaginary_frequency
+      - is_opt_freq
+      - is_valid_for_role
+      - job_title
+      - multiplicity
+      - negative_frequencies
+      - normal_termination
+      - original_filename
+      - scf_energy
+      - source_field
+      - temperature
+      - thermal_enthalpy
+      - validation_errors
+      - zero_point_energy
+    EasyRateInspectionRequestRequest:
+      type: object
+      description: Serializer de inspección previa de un archivo Gaussian de Easy-rate.
+      properties:
+        source_field:
+          $ref: '#/components/schemas/SourceFieldEnum'
+        gaussian_file:
+          type: string
+          format: binary
+      required:
+      - gaussian_file
+      - source_field
+    EasyRateInspectionResponse:
+      type: object
+      description: Resultado agregado de la inspección previa de un archivo Easy-rate.
+      properties:
+        source_field:
+          type: string
+          maxLength: 80
+        original_filename:
+          type: string
+          nullable: true
+          maxLength: 255
+        parse_errors:
+          type: array
+          items:
+            type: string
+        execution_count:
+          type: integer
+          minimum: 0
+        default_execution_index:
+          type: integer
+          nullable: true
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EasyRateInspectionExecution'
+      required:
+      - default_execution_index
+      - execution_count
+      - executions
+      - original_filename
+      - parse_errors
+      - source_field
     EasyRateJobCreateRequest:
       type: object
       description: Serializer de entrada para creación de jobs Easy-rate.
@@ -2012,6 +2172,26 @@ components:
         print_data_input:
           type: boolean
           default: false
+        reactant_1_execution_index:
+          type: integer
+          minimum: 0
+          nullable: true
+        reactant_2_execution_index:
+          type: integer
+          minimum: 0
+          nullable: true
+        transition_state_execution_index:
+          type: integer
+          minimum: 0
+          nullable: true
+        product_1_execution_index:
+          type: integer
+          minimum: 0
+          nullable: true
+        product_2_execution_index:
+          type: integer
+          minimum: 0
+          nullable: true
         reactant_1_file:
           type: string
           format: binary
@@ -2146,6 +2326,21 @@ components:
           nullable: true
         print_data_input:
           type: boolean
+        reactant_1_execution_index:
+          type: integer
+          nullable: true
+        reactant_2_execution_index:
+          type: integer
+          nullable: true
+        transition_state_execution_index:
+          type: integer
+          nullable: true
+        product_1_execution_index:
+          type: integer
+          nullable: true
+        product_2_execution_index:
+          type: integer
+          nullable: true
         file_descriptors:
           type: array
           items:
@@ -2156,12 +2351,17 @@ components:
       - diffusion
       - file_descriptors
       - print_data_input
+      - product_1_execution_index
+      - product_2_execution_index
       - radius_reactant_1
       - radius_reactant_2
+      - reactant_1_execution_index
+      - reactant_2_execution_index
       - reaction_distance
       - reaction_path_degeneracy
       - solvent
       - title
+      - transition_state_execution_index
     EasyRateResult:
       type: object
       description: Resultado científico de Easy-rate con métricas principales.
@@ -2314,6 +2514,26 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        is_provided:
+          type: boolean
+        execution_index:
+          type: integer
+          nullable: true
+        available_execution_count:
+          type: integer
+          minimum: 0
+        job_title:
+          type: string
+          nullable: true
+          maxLength: 255
+        checkpoint_file:
+          type: string
+          nullable: true
+          maxLength: 255
+        charge:
+          type: integer
+        multiplicity:
+          type: integer
         free_energy:
           type: number
           format: double
@@ -2334,10 +2554,23 @@ components:
         imaginary_frequency:
           type: number
           format: double
+        normal_termination:
+          type: boolean
+        is_opt_freq:
+          type: boolean
       required:
+      - available_execution_count
+      - charge
+      - checkpoint_file
+      - execution_index
       - free_energy
       - imaginary_frequency
+      - is_opt_freq
+      - is_provided
+      - job_title
+      - multiplicity
       - negative_frequencies
+      - normal_termination
       - original_filename
       - scf_energy
       - source_field
@@ -3421,6 +3654,20 @@ components:
       description: "* `` - \n* `Benzene` - Benzene\n* `Gas phase (Air)` - Gas phase
         (Air)\n* `Pentyl ethanoate` - Pentyl ethanoate\n* `Water` - Water\n* `Other`
         - Other"
+    SourceFieldEnum:
+      enum:
+      - reactant_1_file
+      - reactant_2_file
+      - transition_state_file
+      - product_1_file
+      - product_2_file
+      type: string
+      description: |-
+        * `reactant_1_file` - reactant_1_file
+        * `reactant_2_file` - reactant_2_file
+        * `transition_state_file` - transition_state_file
+        * `product_1_file` - product_1_file
+        * `product_2_file` - product_2_file
     StatusEnum:
       enum:
       - pending

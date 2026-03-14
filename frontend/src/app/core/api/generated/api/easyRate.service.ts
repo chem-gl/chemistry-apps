@@ -17,9 +17,13 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { EasyRateInspectionResponse } from '../model/easyRateInspectionResponse';
+// @ts-ignore
 import { EasyRateJobResponse } from '../model/easyRateJobResponse';
 // @ts-ignore
 import { ErrorResponse } from '../model/errorResponse';
+// @ts-ignore
+import { SourceFieldEnum } from '../model/sourceFieldEnum';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -58,16 +62,21 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
      * @param radiusReactant2 
      * @param reactionDistance 
      * @param printDataInput 
+     * @param reactant1ExecutionIndex 
+     * @param reactant2ExecutionIndex 
+     * @param transitionStateExecutionIndex 
+     * @param product1ExecutionIndex 
+     * @param product2ExecutionIndex 
      * @param product1File 
      * @param product2File 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
-    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
-    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
-    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, product1File?: Blob, product2File?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
+    public easyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (reactant1File === null || reactant1File === undefined) {
             throw new Error('Required parameter reactant1File was null or undefined when calling easyRateJobsCreate.');
         }
@@ -161,6 +170,21 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
         if (printDataInput !== undefined) {
             localVarFormParams = localVarFormParams.append('print_data_input', <any>printDataInput) as any || localVarFormParams;
         }
+        if (reactant1ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_1_execution_index', <any>reactant1ExecutionIndex) as any || localVarFormParams;
+        }
+        if (reactant2ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_2_execution_index', <any>reactant2ExecutionIndex) as any || localVarFormParams;
+        }
+        if (transitionStateExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('transition_state_execution_index', <any>transitionStateExecutionIndex) as any || localVarFormParams;
+        }
+        if (product1ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_1_execution_index', <any>product1ExecutionIndex) as any || localVarFormParams;
+        }
+        if (product2ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_2_execution_index', <any>product2ExecutionIndex) as any || localVarFormParams;
+        }
         if (reactant1File !== undefined) {
             localVarFormParams = localVarFormParams.append('reactant_1_file', <any>reactant1File) as any || localVarFormParams;
         }
@@ -191,6 +215,99 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
         let localVarPath = `/api/easy-rate/jobs/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<EasyRateJobResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: localVarConvertFormParamsToString ? localVarFormParams.toString() : localVarFormParams,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Inspeccionar archivo Gaussian para Easy-rate
+     * Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones candidatas para selección previa en frontend.
+     * @endpoint post /api/easy-rate/jobs/inspect-input/
+     * @param sourceField 
+     * @param gaussianFile 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateInspectionResponse>;
+    public easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateInspectionResponse>>;
+    public easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateInspectionResponse>>;
+    public easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (sourceField === null || sourceField === undefined) {
+            throw new Error('Required parameter sourceField was null or undefined when calling easyRateJobsInspectInputCreate.');
+        }
+        if (gaussianFile === null || gaussianFile === undefined) {
+            throw new Error('Required parameter gaussianFile was null or undefined when calling easyRateJobsInspectInputCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'multipart/form-data',
+            'application/x-www-form-urlencoded'
+        ];
+
+        const canConsumeForm = this.canConsumeForm(consumes);
+
+        let localVarFormParams: { append(param: string, value: any): any; };
+        let localVarUseForm = false;
+        let localVarConvertFormParamsToString = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        if (localVarUseForm) {
+            localVarFormParams = new FormData();
+        } else {
+            localVarFormParams = new HttpParams({encoder: this.encoder});
+        }
+
+        if (sourceField !== undefined) {
+            localVarFormParams = localVarFormParams.append('source_field', <any>sourceField) as any || localVarFormParams;
+        }
+        if (gaussianFile !== undefined) {
+            localVarFormParams = localVarFormParams.append('gaussian_file', <any>gaussianFile) as any || localVarFormParams;
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/easy-rate/jobs/inspect-input/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<EasyRateInspectionResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: localVarConvertFormParamsToString ? localVarFormParams.toString() : localVarFormParams,
