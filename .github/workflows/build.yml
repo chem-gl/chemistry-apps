@@ -35,7 +35,7 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Resolve image tag
               id: image_meta
@@ -60,7 +60,7 @@ jobs:
               run: docker save chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} | gzip -1 > $FRONTEND_IMG_GZ
 
             - name: Upload deployment artifacts
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: deployment-artifacts
                   path: |
@@ -78,7 +78,7 @@ jobs:
 
         steps:
             - name: Download deployment artifacts
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   name: deployment-artifacts
                   path: .

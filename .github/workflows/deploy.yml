@@ -108,7 +108,7 @@ jobs:
                   echo "Todos los secrets requeridos están definidos."
 
             - name: Download deployment artifacts
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   name: deployment-artifacts
                   path: .
@@ -203,6 +203,11 @@ jobs:
                   fi
 
                   echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
+                                    {
+                                        echo "private_key<<__DEPLOY_KEY__"
+                                        cat "$KEY_FILE"
+                                        echo "__DEPLOY_KEY__"
+                                    } >> "$GITHUB_OUTPUT"
 
             - name: Validate SSH authentication
               uses: appleboy/ssh-action@v1.2.2
@@ -210,7 +215,7 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   script: |
                       echo "SSH authentication OK on $(hostname)"
@@ -223,7 +228,7 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
@@ -240,7 +245,7 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
@@ -267,7 +272,7 @@ jobs:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
-                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
                   envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR
                   script: |
