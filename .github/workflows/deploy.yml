@@ -18,6 +18,8 @@ on:
                 required: true
             VM_SSH_KEY:
                 required: true
+            VM_SSH_KEY_BASE64:
+                required: false
             VM_SSH_PASSPHRASE:
                 required: false
             VM_PROJECT_PATH:
@@ -66,6 +68,7 @@ jobs:
                   _VM_PORT: ${{ secrets.VM_PORT }}
                   _VM_USER: ${{ secrets.VM_USER }}
                   _VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+                  _VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
                   _VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
                   _DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
                   _DB_NAME: ${{ secrets.DB_NAME }}
@@ -83,7 +86,9 @@ jobs:
                   [ -z "$_VM_HOST" ] && missing+=(VM_HOST)
                   [ -z "$_VM_PORT" ] && missing+=(VM_PORT)
                   [ -z "$_VM_USER" ] && missing+=(VM_USER)
-                  [ -z "$_VM_SSH_KEY" ] && missing+=(VM_SSH_KEY)
+                  if [ -z "$_VM_SSH_KEY" ] && [ -z "$_VM_SSH_KEY_BASE64" ]; then
+                    missing+=(VM_SSH_KEY-or-VM_SSH_KEY_BASE64)
+                  fi
                   [ -z "$_VM_PROJECT_PATH" ] && missing+=(VM_PROJECT_PATH)
                   [ -z "$_DJANGO_SECRET_KEY" ] && missing+=(DJANGO_SECRET_KEY)
                   [ -z "$_DB_NAME" ] && missing+=(DB_NAME)
@@ -173,23 +178,42 @@ jobs:
               id: ssh_key
               env:
                   VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+                  VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
                   VM_SSH_PASSPHRASE: ${{ secrets.VM_SSH_PASSPHRASE }}
               run: |
                   set -e
-                                    KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
+                  KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
                   KEY_FILE="$KEY_DIR/deploy_key"
 
                   mkdir -p "$KEY_DIR"
-                  printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
-                                    chmod 644 "$KEY_FILE"
+
+                  if [ -n "${VM_SSH_KEY_BASE64:-}" ]; then
+                    printf '%s' "$VM_SSH_KEY_BASE64" | base64 -d > "$KEY_FILE"
+                  else
+                    printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+                  fi
+
+                  chmod 600 "$KEY_FILE"
 
                   if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
                     echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
-                    echo "Verifica que el secret contenga la llave privada completa y, si está cifrada, define VM_SSH_PASSPHRASE."
+                    echo "Verifica que el secret contenga la llave privada completa (BEGIN/END) o usa VM_SSH_KEY_BASE64."
+                    echo "Si la llave está cifrada, define VM_SSH_PASSPHRASE."
                     exit 1
                   fi
 
                   echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
+
+            - name: Validate SSH authentication
+              uses: appleboy/ssh-action@v1.2.2
+              with:
+                  host: ${{ secrets.VM_HOST }}
+                  username: ${{ secrets.VM_USER }}
+                  port: ${{ secrets.VM_PORT }}
+                  key_path: ${{ steps.ssh_key.outputs.key_path }}
+                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
+                  script: |
+                      echo "SSH authentication OK on $(hostname)"
 
             - name: Upload bundle to host (attempt 1)
               id: scp_upload_first
@@ -269,6 +293,8 @@ jobs:
                       mkdir -p docker-data/postgres docker-data/redis backend/media
                       chown -R "$(id -un)":"$(id -gn)" "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
                       chmod -R u+rwX "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
+                      export HOST_UID="$(id -u)"
+                      export HOST_GID="$(id -g)"
 
                       install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
                       install -m 644 "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" "$DEPLOY_COMPOSE_FILE"

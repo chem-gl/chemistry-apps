@@ -52,6 +52,7 @@ services:
   backend:
     image: chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     networks:
       - chemistry-apps-network
     depends_on:
@@ -113,6 +114,7 @@ services:
   celery-worker:
     image: chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     command: ["python", "-m", "celery", "-A", "config", "worker", "-l", "info"]
     networks:
       - chemistry-apps-network
