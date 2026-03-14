@@ -296,8 +296,9 @@ jobs:
                       cd "$VM_PROJECT_PATH"
 
                       mkdir -p docker-data/postgres docker-data/redis backend/media
-                      chown -R "$(id -un)":"$(id -gn)" "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
-                      chmod -R u+rwX "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
+                      chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
+                      chmod u+rwX backend/media 2>/dev/null || true
+                      chmod u+rwX docker-data/redis 2>/dev/null || true
                       export HOST_UID="$(id -u)"
                       export HOST_GID="$(id -g)"
 
