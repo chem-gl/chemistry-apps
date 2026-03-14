@@ -24,4 +24,4 @@ FROM base AS dev
 CMD ["python", "manage.py", "up", "--without-celery", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM base AS prod
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
+CMD ["sh", "-c", "attempt=1; max_attempts=20; until python manage.py migrate --noinput; do if [ \"$attempt\" -ge \"$max_attempts\" ]; then echo 'Migrations failed after retries'; exit 1; fi; echo \"Migration attempt $attempt/$max_attempts failed, retrying in 5s...\"; attempt=$((attempt+1)); sleep 5; done; exec daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
