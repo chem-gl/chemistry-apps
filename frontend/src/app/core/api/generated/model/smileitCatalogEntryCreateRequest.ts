@@ -10,17 +10,14 @@
 
 
 /**
- * Sustituyente persistente disponible para asignación por bloques.
+ * Payload para crear sustituyente en catálogo persistente.
  */
-export interface SmileitCatalogEntry { 
-    id: string;
-    stable_id: string;
-    version: number;
+export interface SmileitCatalogEntryCreateRequest { 
     name: string;
     smiles: string;
     anchor_atom_indices: Array<number>;
-    categories?: Array<string>;
-    source_reference: string;
+    category_keys: Array<string>;
+    source_reference?: string;
     provenance_metadata?: { [key: string]: string; };
 }
 

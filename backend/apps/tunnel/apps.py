@@ -8,6 +8,8 @@ Cómo se usa:
 - Se importa `plugin.py` para activar `@PluginRegistry.register(...)`.
 """
 
+import logging
+
 from django.apps import AppConfig
 
 from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
@@ -19,6 +21,8 @@ from .definitions import (
     APP_ROUTE_PREFIX,
     PLUGIN_NAME,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TunnelConfig(AppConfig):
@@ -39,4 +43,13 @@ class TunnelConfig(AppConfig):
         )
         ScientificAppRegistry.register(app_definition)
 
-        from . import plugin  # noqa: F401
+        try:
+            from . import plugin  # noqa: F401
+        except ModuleNotFoundError as exc:
+            if not str(exc.name).startswith("libs"):
+                raise
+            logger.warning(
+                "No se registró plugin Tunnel porque falta dependencia local '%s'. "
+                "Los comandos de administración seguirán funcionando.",
+                exc.name,
+            )

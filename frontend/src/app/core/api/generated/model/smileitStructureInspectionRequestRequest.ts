@@ -10,12 +10,9 @@
 
 
 /**
- * Request para el endpoint inspect-structure.
+ * Entrada para inspección de estructura y anotación automática.
  */
 export interface SmileitStructureInspectionRequestRequest { 
-    /**
-     * Cadena SMILES de la molécula a inspeccionar.
-     */
     smiles: string;
 }
 

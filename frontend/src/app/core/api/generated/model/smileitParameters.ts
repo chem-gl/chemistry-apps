@@ -7,19 +7,27 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { SmileitSubstituentInput } from './smileitSubstituentInput';
+import { SiteOverlapPolicyEnum } from './siteOverlapPolicyEnum';
+import { SmileitResolvedAssignmentBlock } from './smileitResolvedAssignmentBlock';
 
 
 /**
- * Parámetros del job smileit persistidos para trazabilidad.
+ * Parámetros persistidos para reproducibilidad completa de la corrida.
  */
 export interface SmileitParameters { 
     principal_smiles: string;
     selected_atom_indices: Array<number>;
-    substituents: Array<SmileitSubstituentInput>;
-    r_substitutes: number;
-    num_bonds: number;
-    allow_repeated: boolean;
-    max_structures: number;
+    assignment_blocks?: Array<SmileitResolvedAssignmentBlock>;
+    r_substitutes?: number;
+    num_bonds?: number;
+    allow_repeated?: boolean;
+    max_structures?: number;
+    site_overlap_policy?: SiteOverlapPolicyEnum;
+    export_name_base?: string;
+    export_padding?: number;
+    references?: { [key: string]: Array<{ [key: string]: any; }>; };
 }
+export namespace SmileitParameters {
+}
+
 

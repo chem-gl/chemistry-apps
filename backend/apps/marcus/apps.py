@@ -4,6 +4,8 @@ Objetivo del archivo:
 - Registrar la app y activar plugin en startup desacoplado.
 """
 
+import logging
+
 from django.apps import AppConfig
 
 from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
@@ -15,6 +17,8 @@ from .definitions import (
     APP_ROUTE_PREFIX,
     PLUGIN_NAME,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MarcusConfig(AppConfig):
@@ -35,4 +39,13 @@ class MarcusConfig(AppConfig):
         )
         ScientificAppRegistry.register(app_definition)
 
-        from . import plugin  # noqa: F401
+        try:
+            from . import plugin  # noqa: F401
+        except ModuleNotFoundError as exc:
+            if not str(exc.name).startswith("libs"):
+                raise
+            logger.warning(
+                "No se registró plugin Marcus porque falta dependencia local '%s'. "
+                "Los comandos de administración seguirán funcionando.",
+                exc.name,
+            )

@@ -7,44 +7,30 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { SmileitSubstituentInputRequest } from './smileitSubstituentInputRequest';
+import { SiteOverlapPolicyEnum } from './siteOverlapPolicyEnum';
+import { SmileitAssignmentBlockInputRequest } from './smileitAssignmentBlockInputRequest';
 
 
 /**
- * Valida request de creación para jobs de generación smileit.
+ * Contrato de creación del job Smile-it con asignación flexible por bloques.
  */
 export interface SmileitJobCreateRequest { 
-    /**
-     * Versión del algoritmo de generación.
-     */
     version?: string;
-    /**
-     * SMILES de la molécula principal sobre la que se harán sustituciones.
-     */
     principal_smiles: string;
-    /**
-     * Índices de los átomos del principal donde se permiten sustituciones.
-     */
     selected_atom_indices: Array<number>;
-    /**
-     * Lista de sustituyentes a combinar.
-     */
-    substituents: Array<SmileitSubstituentInputRequest>;
-    /**
-     * Profundidad (rondas) de sustitución combinatoria.
-     */
+    assignment_blocks: Array<SmileitAssignmentBlockInputRequest>;
+    site_overlap_policy?: SiteOverlapPolicyEnum;
     r_substitutes?: number;
-    /**
-     * Orden máximo de enlace a crear (1=simple, 2=doble, 3=triple).
-     */
     num_bonds?: number;
-    /**
-     * Si True, se permiten SMILES duplicados en la salida.
-     */
     allow_repeated?: boolean;
     /**
-     * Límite de estructuras generadas para evitar explosión combinatoria.
+     * Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.
      */
     max_structures?: number;
+    export_name_base?: string;
+    export_padding?: number;
 }
+export namespace SmileitJobCreateRequest {
+}
+
 

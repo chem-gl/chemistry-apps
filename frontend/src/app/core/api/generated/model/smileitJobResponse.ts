@@ -13,7 +13,7 @@ import { SmileitParameters } from './smileitParameters';
 
 
 /**
- * Salida tipada para jobs de smileit.
+ * Respuesta principal para estado/resultados de job Smile-it.
  */
 export interface SmileitJobResponse { 
     readonly id: string;

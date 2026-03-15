@@ -7,20 +7,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { PatternTypeEnum } from './patternTypeEnum';
 
 
 /**
- * Sustituyente persistente disponible para asignación por bloques.
+ * Patrón estructural persistente para anotación visual.
  */
-export interface SmileitCatalogEntry { 
+export interface SmileitPatternEntry { 
     id: string;
     stable_id: string;
     version: number;
     name: string;
-    smiles: string;
-    anchor_atom_indices: Array<number>;
-    categories?: Array<string>;
+    smarts: string;
+    pattern_type: PatternTypeEnum;
+    caption: string;
     source_reference: string;
     provenance_metadata?: { [key: string]: string; };
 }
+export namespace SmileitPatternEntry {
+}
+
 

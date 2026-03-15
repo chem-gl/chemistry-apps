@@ -7,19 +7,22 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { SmileitPatternReference } from './smileitPatternReference';
 import { SmileitAtomInfo } from './smileitAtomInfo';
+import { SmileitQuickProperties } from './smileitQuickProperties';
+import { SmileitStructuralAnnotation } from './smileitStructuralAnnotation';
 
 
 /**
- * Respuesta del endpoint inspect-structure con átomos indexados y SVG.
+ * Respuesta enriquecida de inspección molecular para la UI.
  */
 export interface SmileitStructureInspectionResponse { 
     canonical_smiles: string;
     atom_count: number;
     atoms: Array<SmileitAtomInfo>;
-    /**
-     * Representación SVG de la molécula con índices de átomo visibles.
-     */
     svg: string;
+    quick_properties: SmileitQuickProperties;
+    annotations: Array<SmileitStructuralAnnotation>;
+    active_pattern_refs: Array<SmileitPatternReference>;
 }
 

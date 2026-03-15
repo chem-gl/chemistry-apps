@@ -16,7 +16,7 @@ Uso:
             "r_substitutes": 1,
             "num_bonds": 1,
             "allow_repeated": False,
-            "max_structures": 100,
+            "max_structures": 0,
         },
     )
 """

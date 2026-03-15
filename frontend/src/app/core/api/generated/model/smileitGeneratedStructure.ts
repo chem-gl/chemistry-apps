@@ -7,14 +7,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { SmileitSubstitutionTraceEvent } from './smileitSubstitutionTraceEvent';
 
 
 /**
- * Una molécula generada en el resultado.
+ * Derivado generado con representación SVG y trazabilidad interna.
  */
 export interface SmileitGeneratedStructure { 
     smiles: string;
     name: string;
     svg: string;
+    traceability?: Array<SmileitSubstitutionTraceEvent>;
 }
 

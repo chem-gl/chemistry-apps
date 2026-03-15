@@ -10,12 +10,10 @@
 
 
 /**
- * Información de átomo para selección de sitios en UI.
+ * Referencia inmutable a sustituyente por stable_id + version.
  */
-export interface SmileitAtomInfo { 
-    index: number;
-    symbol: string;
-    implicit_hydrogens: number;
-    is_aromatic: boolean;
+export interface SmileitSubstituentReferenceInputRequest { 
+    stable_id: string;
+    version: number;
 }
 
