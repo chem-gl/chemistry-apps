@@ -441,7 +441,7 @@ export class SmileitWorkflowService implements OnDestroy {
       numBonds: this.numBonds(),
       allowRepeated: this.allowRepeated(),
       maxStructures: this.maxStructures(),
-      version: '1.0.0',
+      version: '1.0.1',
     };
   }
 
