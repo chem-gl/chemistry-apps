@@ -33,7 +33,6 @@ MAX_SUBSTITUENT_REFS_PER_BLOCK: Final[int] = 120
 MAX_MANUAL_SUBSTITUENTS_PER_BLOCK: Final[int] = 120
 
 # --- Límites de seguridad combinatoria ---
-MAX_GENERATED_STRUCTURES: Final[int] = 5000
 MAX_R_SUBSTITUTES: Final[int] = 10
 MAX_SUBSTITUENTS_IN_LIST: Final[int] = 50
 MAX_SELECTED_ATOMS: Final[int] = 20

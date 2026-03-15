@@ -12,6 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
+import { PatchedSmileitCatalogEntryCreateRequest } from '../model/models';
 import { SmileitCatalogEntry } from '../model/models';
 import { SmileitCatalogEntryCreateRequest } from '../model/models';
 import { SmileitCategory } from '../model/models';
@@ -45,6 +46,15 @@ export interface SmileitServiceInterface {
      * @endpoint get /api/smileit/jobs/catalog/
      */
     smileitJobsCatalogList(extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
+
+    /**
+     * Actualizar Catálogo de Sustituyentes de Usuario
+     * Versiona una entrada de catálogo editable y retorna el catálogo vigente.
+     * @endpoint patch /api/smileit/jobs/catalog/{stable_id}/
+     * @param stableId Stable ID del catálogo a versionar; solo entradas de usuario son editables.
+     * @param patchedSmileitCatalogEntryCreateRequest 
+     */
+    smileitJobsCatalogPartialUpdate(stableId: string, patchedSmileitCatalogEntryCreateRequest?: PatchedSmileitCatalogEntryCreateRequest, extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
 
     /**
      * Listar Categorías Químicas de Smile-it

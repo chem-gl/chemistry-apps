@@ -1988,6 +1988,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/smileit/jobs/catalog/{stable_id}/:
+    patch:
+      operationId: smileit_jobs_catalog_partial_update
+      description: Versiona una entrada de catálogo editable y retorna el catálogo
+        vigente.
+      summary: Actualizar Catálogo de Sustituyentes de Usuario
+      parameters:
+      - in: path
+        name: stable_id
+        schema:
+          type: string
+        description: Stable ID del catálogo a versionar; solo entradas de usuario
+          son editables.
+        required: true
+      tags:
+      - Smileit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSmileitCatalogEntryCreateRequest'
+            examples:
+              AltaDeSustituyenteAromático:
+                value:
+                  name: 4-Fluorophenyl
+                  smiles: c1ccc(cc1)F
+                  anchor_atom_indices:
+                  - 0
+                  category_keys:
+                  - aromatic
+                  - hydrophobic
+                  source_reference: MedicinalChemTeam
+                  provenance_metadata:
+                    ticket: SMI-204
+                    author: team-a
+                summary: Alta de sustituyente aromático
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSmileitCatalogEntryCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSmileitCatalogEntryCreateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SmileitCatalogEntry'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/smileit/jobs/categories/:
     get:
       operationId: smileit_jobs_categories_list
@@ -3887,6 +3954,42 @@ components:
       - metadata
       - rows
       - species_labels
+    PatchedSmileitCatalogEntryCreateRequest:
+      type: object
+      description: Payload para crear sustituyente en catálogo persistente.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        smiles:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        anchor_atom_indices:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+          minItems: 1
+        category_keys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+            pattern: ^[-a-zA-Z0-9_]+$
+          minItems: 1
+        source_reference:
+          type: string
+          minLength: 1
+          default: ''
+          maxLength: 200
+        provenance_metadata:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
     PatternTypeEnum:
       enum:
       - toxicophore
@@ -4403,7 +4506,6 @@ components:
       - name
       - smiles
       - svg
-      - traceability
     SmileitJobCreateRequest:
       type: object
       description: Contrato de creación del job Smile-it con asignación flexible por
@@ -4448,9 +4550,9 @@ components:
           default: false
         max_structures:
           type: integer
-          maximum: 5000
-          minimum: 1
-          default: 500
+          minimum: 0
+          default: 0
+          description: Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.
         export_name_base:
           type: string
           minLength: 1
@@ -4604,23 +4706,31 @@ components:
         r_substitutes:
           type: integer
           minimum: 1
+          default: 1
         num_bonds:
           type: integer
           minimum: 1
+          default: 1
         allow_repeated:
           type: boolean
+          default: false
         max_structures:
           type: integer
-          minimum: 1
+          minimum: 0
+          default: 0
         site_overlap_policy:
-          $ref: '#/components/schemas/SiteOverlapPolicyEnum'
+          allOf:
+          - $ref: '#/components/schemas/SiteOverlapPolicyEnum'
+          default: last_block_wins
         export_name_base:
           type: string
+          default: SMILEIT
           maxLength: 120
         export_padding:
           type: integer
           maximum: 9
           minimum: 3
+          default: 5
         references:
           type: object
           additionalProperties:
@@ -4629,17 +4739,8 @@ components:
               type: object
               additionalProperties: {}
       required:
-      - allow_repeated
-      - assignment_blocks
-      - export_name_base
-      - export_padding
-      - max_structures
-      - num_bonds
       - principal_smiles
-      - r_substitutes
-      - references
       - selected_atom_indices
-      - site_overlap_policy
     SmileitPatternEntry:
       type: object
       description: Patrón estructural persistente para anotación visual.
@@ -4838,6 +4939,7 @@ components:
             $ref: '#/components/schemas/SmileitTraceabilityRow'
         truncated:
           type: boolean
+          default: false
         principal_smiles:
           type: string
           maxLength: 2000
@@ -4848,11 +4950,13 @@ components:
             minimum: 0
         export_name_base:
           type: string
+          default: SMILEIT
           maxLength: 120
         export_padding:
           type: integer
           maximum: 9
           minimum: 3
+          default: 5
         references:
           type: object
           additionalProperties:
@@ -4861,15 +4965,9 @@ components:
               type: object
               additionalProperties: {}
       required:
-      - export_name_base
-      - export_padding
-      - generated_structures
       - principal_smiles
-      - references
       - selected_atom_indices
       - total_generated
-      - traceability_rows
-      - truncated
     SmileitStructuralAnnotation:
       type: object
       description: Región anotada en la estructura principal con tooltip/caption.

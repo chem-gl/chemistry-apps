@@ -13,12 +13,13 @@ from __future__ import annotations
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.core.models import ScientificJob
+from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 
 from .catalog import list_active_patterns
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION
 from .engine import inspect_smiles_structure_with_patterns
+from .models import SmileitSubstituent
 
 
 class SmileitInspectionTests(TestCase):
@@ -36,6 +37,26 @@ class SmileitInspectionTests(TestCase):
         self.assertGreaterEqual(inspection["quick_properties"]["aromatic_rings"], 1)
         self.assertIn("annotations", inspection)
         self.assertIn("active_pattern_refs", inspection)
+
+    def test_inspection_reports_only_matched_patterns(self) -> None:
+        """Las referencias activas deben reflejar solo patrones realmente coincidentes."""
+        patterns = list_active_patterns()
+
+        benzene_inspection = inspect_smiles_structure_with_patterns(
+            smiles="c1ccccc1",
+            patterns=patterns,
+        )
+        self.assertEqual(benzene_inspection["active_pattern_refs"], [])
+
+        nitro_inspection = inspect_smiles_structure_with_patterns(
+            smiles="c1ccccc1[N+](=O)[O-]",
+            patterns=patterns,
+        )
+        self.assertEqual(len(nitro_inspection["active_pattern_refs"]), 1)
+        self.assertEqual(
+            nitro_inspection["active_pattern_refs"][0]["name"],
+            "Nitro Aromatic Alert",
+        )
 
 
 class SmileitCatalogCrudTests(TestCase):
@@ -92,6 +113,77 @@ class SmileitCatalogCrudTests(TestCase):
         self.assertEqual(body["name"], payload["name"])
         self.assertEqual(body["version"], 1)
 
+    def test_update_user_catalog_creates_new_latest_version(self) -> None:
+        """Editar una entrada de usuario debe crear una versión nueva con mismo stable_id."""
+        create_payload = {
+            "name": "CyclobutylHydrophobic",
+            "smiles": "C1CCC1",
+            "anchor_atom_indices": [0],
+            "category_keys": ["hydrophobic"],
+            "source_reference": "local-lab",
+            "provenance_metadata": {"owner": "ui-user"},
+        }
+        create_response = self.client.post(
+            f"{APP_API_BASE_PATH}catalog/",
+            data=create_payload,
+            format="json",
+        )
+        self.assertEqual(create_response.status_code, 201)
+        created_entry = create_response.json()
+
+        update_payload = {
+            "name": "CyclobutylHydrophobicV2",
+            "smiles": "CC1CC1",
+            "anchor_atom_indices": [0],
+            "category_keys": ["hydrophobic"],
+            "source_reference": "local-lab",
+            "provenance_metadata": {"owner": "ui-user", "revision": "2"},
+        }
+        update_response = self.client.patch(
+            f"{APP_API_BASE_PATH}catalog/{created_entry['stable_id']}/",
+            data=update_payload,
+            format="json",
+        )
+
+        self.assertEqual(update_response.status_code, 200)
+        catalog_rows = update_response.json()
+        updated_rows = [
+            row
+            for row in catalog_rows
+            if row["stable_id"] == created_entry["stable_id"]
+        ]
+        self.assertEqual(len(updated_rows), 1)
+        self.assertEqual(updated_rows[0]["name"], "CyclobutylHydrophobicV2")
+        self.assertEqual(updated_rows[0]["version"], 2)
+
+        self.assertFalse(
+            SmileitSubstituent.objects.get(id=created_entry["id"]).is_latest
+        )
+
+    def test_update_seed_catalog_is_rejected(self) -> None:
+        """Las entradas semilla deben mantenerse inmutables para trazabilidad base."""
+        seed_entry = SmileitSubstituent.objects.filter(is_latest=True).first()
+        self.assertIsNotNone(seed_entry)
+        if seed_entry is None:
+            return
+
+        payload = {
+            "name": "ShouldNotUpdateSeed",
+            "smiles": "C",
+            "anchor_atom_indices": [0],
+            "category_keys": ["hydrophobic"],
+            "source_reference": "local-lab",
+            "provenance_metadata": {"owner": "ui-user"},
+        }
+        response = self.client.patch(
+            f"{APP_API_BASE_PATH}catalog/{seed_entry.stable_id}/",
+            data=payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("detail", response.json())
+
 
 class SmileitPatternCrudTests(TestCase):
     """Valida alta de patrones estructurales con caption y SMARTS válidos."""
@@ -117,6 +209,29 @@ class SmileitPatternCrudTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 409)
+
+    def test_create_pattern_accepts_valid_captioned_pattern(self) -> None:
+        """Debe persistir patrón nuevo cuando SMARTS, tipo y caption son válidos."""
+        payload = {
+            "name": "Morpholine Privileged",
+            "smarts": "O1CCNCC1",
+            "pattern_type": "privileged",
+            "caption": "Morpholine ring commonly improves polarity and solubility.",
+            "source_reference": "unit-test",
+            "provenance_metadata": {"case": "valid-pattern"},
+        }
+
+        response = self.client.post(
+            f"{APP_API_BASE_PATH}patterns/",
+            data=payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        body = response.json()
+        self.assertEqual(body["name"], payload["name"])
+        self.assertEqual(body["caption"], payload["caption"])
+        self.assertEqual(body["version"], 1)
 
 
 class SmileitJobBlockTests(TestCase):
@@ -181,6 +296,34 @@ class SmileitJobBlockTests(TestCase):
         self.assertGreaterEqual(int(job_results.get("total_generated", 0)), 1)
         self.assertIn("traceability_rows", job_results)
 
+    def test_create_and_run_job_without_limit_emits_generation_logs(self) -> None:
+        """Con max_structures=0 debe ejecutar sin tope y registrar conteos de avance."""
+        payload = self._valid_payload()
+        payload["max_structures"] = 0
+        payload["r_substitutes"] = 2
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+
+        plugin_logs = ScientificJobLogEvent.objects.filter(
+            job=job,
+            source="smileit.plugin",
+        )
+        self.assertGreaterEqual(plugin_logs.count(), 2)
+
+        round_log = plugin_logs.filter(
+            message="Ronda de generación completada."
+        ).first()
+        self.assertIsNotNone(round_log)
+        assert round_log is not None
+        self.assertIn("generated_structures", round_log.payload)
+
 
 class SmileitExportTests(TestCase):
     """Valida exportes reproducibles de SMILES y trazabilidad."""
@@ -238,3 +381,88 @@ class SmileitExportTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn("derivative_name,derivative_smiles,round_index", content)
+
+
+class SmileitLegacyJobCompatibilityTests(TestCase):
+    """Valida compatibilidad de lectura para jobs históricos de Smile-it."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+
+    def test_retrieve_legacy_job_without_assignment_blocks(self) -> None:
+        """El retrieve debe responder 200 aun si parámetros legacy no traen campos v2."""
+        legacy_job = ScientificJob.objects.create(
+            job_hash="a" * 64,
+            plugin_name="smileit",
+            algorithm_version="1.0.0",
+            status="completed",
+            parameters={
+                "principal_smiles": "c1ccccc1",
+                "selected_atom_indices": [0, 1],
+                "substituents": [
+                    {"name": "Amine", "smiles": "[NH2]", "selected_atom_index": 0}
+                ],
+                "r_substitutes": 1,
+                "num_bonds": 1,
+                "allow_repeated": True,
+                "max_structures": 100,
+            },
+            results={
+                "total_generated": 1,
+                "generated_structures": [],
+                "truncated": False,
+                "principal_smiles": "c1ccccc1",
+                "selected_atom_indices": [0, 1],
+            },
+            progress_percentage=100,
+            progress_stage="completed",
+            progress_message="legacy completed",
+            progress_event_index=12,
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{legacy_job.id}/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["parameters"]["assignment_blocks"], [])
+        self.assertEqual(payload["results"]["traceability_rows"], [])
+
+    def test_retrieve_legacy_job_without_structure_traceability(self) -> None:
+        """El retrieve debe completar trazabilidad vacía si faltan campos por estructura."""
+        legacy_job = ScientificJob.objects.create(
+            job_hash="b" * 64,
+            plugin_name="smileit",
+            algorithm_version="1.0.0",
+            status="completed",
+            parameters={
+                "principal_smiles": "c1ccccc1",
+                "selected_atom_indices": [0],
+                "r_substitutes": 1,
+                "num_bonds": 1,
+                "allow_repeated": False,
+                "max_structures": 50,
+            },
+            results={
+                "total_generated": 1,
+                "generated_structures": [
+                    {
+                        "name": "legacy_00001",
+                        "smiles": "c1ccccc1",
+                        "svg": "<svg></svg>",
+                    }
+                ],
+                "truncated": False,
+                "principal_smiles": "c1ccccc1",
+                "selected_atom_indices": [0],
+            },
+            progress_percentage=100,
+            progress_stage="completed",
+            progress_message="legacy completed",
+            progress_event_index=22,
+        )
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{legacy_job.id}/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(
+            payload["results"]["generated_structures"][0]["traceability"], []
+        )

@@ -14,14 +14,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import cast
+from typing import Final, cast
 
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 from .definitions import (
     DEFAULT_EXPORT_PADDING,
-    MAX_GENERATED_STRUCTURES,
     MAX_NUM_BONDS,
     MAX_R_SUBSTITUTES,
     PLUGIN_NAME,
@@ -38,6 +37,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
 
 
 @dataclass
@@ -111,6 +111,20 @@ def _append_traceability_rows(
         )
 
 
+def _build_generation_progress_percentage(
+    round_index: int,
+    total_rounds: int,
+    node_index: int,
+    node_total: int,
+) -> int:
+    """Calcula porcentaje intermedio de progreso para generación combinatoria."""
+    safe_total_rounds = max(1, total_rounds)
+    safe_node_total = max(1, node_total)
+    fraction = ((round_index - 1) + (node_index / safe_node_total)) / safe_total_rounds
+    raw_percentage = 20 + int(fraction * 60)
+    return max(20, min(80, raw_percentage))
+
+
 def _generate_derivatives(
     principal_smiles: str,
     selected_atom_indices: list[int],
@@ -118,9 +132,11 @@ def _generate_derivatives(
     r_substitutes: int,
     num_bonds: int,
     allow_repeated: bool,
-    max_structures: int,
+    max_structures: int | None,
     export_name_base: str,
     export_padding: int,
+    progress_callback: PluginProgressCallback,
+    log_callback: PluginLogCallback | None,
 ) -> tuple[list[SmileitGeneratedStructure], list[SmileitTraceabilityRow], bool]:
     """Genera derivados con trazabilidad por ronda y por sitio."""
     nodes: list[GeneratedNode] = [
@@ -132,12 +148,13 @@ def _generate_derivatives(
     generated_structures: list[SmileitGeneratedStructure] = []
     truncated = False
     derivative_counter = 1
+    last_reported_generated = 0
 
     for round_index in range(1, r_substitutes + 1):
         snapshot = list(nodes)
         new_nodes: list[GeneratedNode] = []
 
-        for node in snapshot:
+        for node_index, node in enumerate(snapshot, start=1):
             derivative_counter, reached_limit = _expand_derivatives_from_node(
                 node=node,
                 round_index=round_index,
@@ -154,7 +171,48 @@ def _generate_derivatives(
                 new_nodes=new_nodes,
                 max_structures=max_structures,
             )
+
+            current_generated = len(generated_structures)
+            if current_generated - last_reported_generated >= LOG_PROGRESS_BATCH_SIZE:
+                progress_percentage = _build_generation_progress_percentage(
+                    round_index=round_index,
+                    total_rounds=r_substitutes,
+                    node_index=node_index,
+                    node_total=len(snapshot),
+                )
+                progress_callback(
+                    progress_percentage,
+                    "running",
+                    (
+                        "Generando derivados por bloques de asignación. "
+                        f"Estructuras acumuladas: {current_generated}."
+                    ),
+                )
+                _emit_log(
+                    log_callback,
+                    level="info",
+                    source="smileit.plugin",
+                    message="Avance de generación Smile-it.",
+                    payload={
+                        "generated_structures": current_generated,
+                        "round_index": round_index,
+                        "processed_nodes": node_index,
+                        "round_nodes": len(snapshot),
+                    },
+                )
+                last_reported_generated = current_generated
+
             if reached_limit:
+                _emit_log(
+                    log_callback,
+                    level="warning",
+                    source="smileit.plugin",
+                    message="Se alcanzó el límite configurado de estructuras para Smile-it.",
+                    payload={
+                        "generated_structures": len(generated_structures),
+                        "max_structures": max_structures,
+                    },
+                )
                 truncated = True
                 return generated_structures, derivative_rows, truncated
 
@@ -162,6 +220,26 @@ def _generate_derivatives(
             break
 
         nodes.extend(new_nodes)
+        progress_percentage = 20 + int((round_index / max(1, r_substitutes)) * 60)
+        progress_callback(
+            min(80, max(20, progress_percentage)),
+            "running",
+            (
+                f"Ronda {round_index}/{r_substitutes} completada. "
+                f"Estructuras acumuladas: {len(generated_structures)}."
+            ),
+        )
+        _emit_log(
+            log_callback,
+            level="info",
+            source="smileit.plugin",
+            message="Ronda de generación completada.",
+            payload={
+                "round_index": round_index,
+                "total_rounds": r_substitutes,
+                "generated_structures": len(generated_structures),
+            },
+        )
 
     return generated_structures, derivative_rows, truncated
 
@@ -180,7 +258,7 @@ def _expand_derivatives_from_node(
     generated_structures: list[SmileitGeneratedStructure],
     derivative_rows: list[SmileitTraceabilityRow],
     new_nodes: list[GeneratedNode],
-    max_structures: int,
+    max_structures: int | None,
 ) -> tuple[int, bool]:
     """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
     for site_atom_index in selected_atom_indices:
@@ -247,7 +325,10 @@ def _expand_derivatives_from_node(
                     )
                 )
 
-                if len(generated_structures) >= max_structures:
+                if (
+                    max_structures is not None
+                    and len(generated_structures) >= max_structures
+                ):
                     return derivative_counter, True
 
     return derivative_counter, False
@@ -338,9 +419,7 @@ def _build_smileit_input(parameters: JSONMap) -> SmileitInput:
             "r_substitutes": int(parameters.get("r_substitutes", 1)),
             "num_bonds": int(parameters.get("num_bonds", 1)),
             "allow_repeated": bool(parameters.get("allow_repeated", False)),
-            "max_structures": int(
-                parameters.get("max_structures", MAX_GENERATED_STRUCTURES)
-            ),
+            "max_structures": int(parameters.get("max_structures", 0)),
             "site_overlap_policy": str(
                 parameters.get("site_overlap_policy", "last_block_wins")
             ),
@@ -370,9 +449,8 @@ def smileit_plugin(
     options = parsed_input["options"]
     r_substitutes = max(1, min(int(options["r_substitutes"]), MAX_R_SUBSTITUTES))
     num_bonds = max(1, min(int(options["num_bonds"]), MAX_NUM_BONDS))
-    max_structures = max(
-        1, min(int(options["max_structures"]), MAX_GENERATED_STRUCTURES)
-    )
+    max_structures_raw = int(options["max_structures"])
+    max_structures = max_structures_raw if max_structures_raw > 0 else None
     allow_repeated = bool(options["allow_repeated"])
     export_name_base = options["export_name_base"].strip() or "SMILEIT"
     export_padding = int(options["export_padding"])
@@ -410,6 +488,7 @@ def smileit_plugin(
             "blocks": len(parsed_input["assignment_blocks"]),
             "r_substitutes": r_substitutes,
             "num_bonds": num_bonds,
+            "max_structures": max_structures,
         },
     )
 
@@ -425,6 +504,8 @@ def smileit_plugin(
         max_structures=max_structures,
         export_name_base=export_name_base,
         export_padding=export_padding,
+        progress_callback=progress_callback,
+        log_callback=log_callback,
     )
 
     progress_callback(

@@ -155,17 +155,8 @@ def inspect_smiles_structure_with_patterns(
         raise ValueError(f"No se pudo parsear el canónico para anotación: {smiles!r}")
 
     annotations = collect_pattern_annotations(mol, patterns)
-    active_pattern_refs: list[dict[str, str | int]] = [
-        {
-            "stable_id": entry["stable_id"],
-            "version": entry["version"],
-            "name": entry["name"],
-            "pattern_type": entry["pattern_type"],
-        }
-        for entry in patterns
-    ]
     base_result["annotations"] = annotations
-    base_result["active_pattern_refs"] = active_pattern_refs
+    base_result["active_pattern_refs"] = build_active_pattern_refs(annotations)
     return base_result
 
 
@@ -511,3 +502,31 @@ def collect_pattern_annotations(
             )
 
     return annotations
+
+
+def build_active_pattern_refs(
+    annotations: list[SmileitStructuralAnnotation],
+) -> list[dict[str, str | int]]:
+    """Construye referencias únicas solo para patrones realmente coincidentes."""
+    active_refs: list[dict[str, str | int]] = []
+    seen_patterns: set[tuple[str, int]] = set()
+
+    for annotation in annotations:
+        pattern_key = (
+            annotation["pattern_stable_id"],
+            annotation["pattern_version"],
+        )
+        if pattern_key in seen_patterns:
+            continue
+
+        seen_patterns.add(pattern_key)
+        active_refs.append(
+            {
+                "stable_id": annotation["pattern_stable_id"],
+                "version": annotation["pattern_version"],
+                "name": annotation["name"],
+                "pattern_type": annotation["pattern_type"],
+            }
+        )
+
+    return active_refs

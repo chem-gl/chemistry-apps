@@ -17,6 +17,6 @@ export interface SmileitGeneratedStructure {
     smiles: string;
     name: string;
     svg: string;
-    traceability: Array<SmileitSubstitutionTraceEvent>;
+    traceability?: Array<SmileitSubstitutionTraceEvent>;
 }
 

@@ -17,15 +17,15 @@ import { SmileitResolvedAssignmentBlock } from './smileitResolvedAssignmentBlock
 export interface SmileitParameters { 
     principal_smiles: string;
     selected_atom_indices: Array<number>;
-    assignment_blocks: Array<SmileitResolvedAssignmentBlock>;
-    r_substitutes: number;
-    num_bonds: number;
-    allow_repeated: boolean;
-    max_structures: number;
-    site_overlap_policy: SiteOverlapPolicyEnum;
-    export_name_base: string;
-    export_padding: number;
-    references: { [key: string]: Array<{ [key: string]: any; }>; };
+    assignment_blocks?: Array<SmileitResolvedAssignmentBlock>;
+    r_substitutes?: number;
+    num_bonds?: number;
+    allow_repeated?: boolean;
+    max_structures?: number;
+    site_overlap_policy?: SiteOverlapPolicyEnum;
+    export_name_base?: string;
+    export_padding?: number;
+    references?: { [key: string]: Array<{ [key: string]: any; }>; };
 }
 export namespace SmileitParameters {
 }

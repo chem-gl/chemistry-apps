@@ -68,6 +68,34 @@ export interface SmileitSiteCoverageView {
   sourceCount: number;
 }
 
+export interface SmileitCatalogGroupView {
+  key: string;
+  name: string;
+  entries: SmileitCatalogEntryView[];
+}
+
+type SmileitChemicalNotationKind = 'empty' | 'smiles' | 'smarts';
+
+export interface SmileitCatalogDraftPreview {
+  name: string;
+  smiles: string;
+  sourceReference: string;
+  anchorAtomIndices: number[];
+  categoryKeys: string[];
+  categoryNames: string[];
+  notationKind: SmileitChemicalNotationKind;
+  warnings: string[];
+  isReady: boolean;
+}
+
+export interface SmileitBlockCollapsedSummary {
+  selectedSitesLabel: string;
+  categoriesLabel: string;
+  catalogSmilesLabel: string;
+  manualSmilesLabel: string;
+  sourceCount: number;
+}
+
 export interface SmileitResultData {
   totalGenerated: number;
   generatedStructures: SmileitGeneratedStructureView[];
@@ -104,6 +132,7 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly catalogCreateAnchorIndicesText = signal<string>('0');
   readonly catalogCreateCategoryKeys = signal<string[]>([]);
   readonly catalogCreateSourceReference = signal<string>('local-lab');
+  readonly catalogEditingStableId = signal<string | null>(null);
 
   readonly patternCreateName = signal<string>('');
   readonly patternCreateSmarts = signal<string>('');
@@ -115,7 +144,7 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly rSubstitutes = signal<number>(1);
   readonly numBonds = signal<number>(1);
   readonly allowRepeated = signal<boolean>(false);
-  readonly maxStructures = signal<number>(300);
+  readonly maxStructures = signal<number>(0);
   readonly exportNameBase = signal<string>('smileit_run');
   readonly exportPadding = signal<number>(5);
 
@@ -150,7 +179,9 @@ export class SmileitWorkflowService implements OnDestroy {
   );
   readonly uncoveredSelectedSites = computed<number[]>(() => {
     const coveredSites: Set<number> = new Set(
-      this.selectedSiteCoverage().map((coverageItem: SmileitSiteCoverageView) => coverageItem.siteAtomIndex),
+      this.selectedSiteCoverage().map(
+        (coverageItem: SmileitSiteCoverageView) => coverageItem.siteAtomIndex,
+      ),
     );
     return this.selectedAtomIndices().filter((atomIndex: number) => !coveredSites.has(atomIndex));
   });
@@ -164,6 +195,53 @@ export class SmileitWorkflowService implements OnDestroy {
       !this.isProcessing()
     );
   });
+  readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
+  readonly catalogGroups = computed<SmileitCatalogGroupView[]>(() =>
+    this.buildCatalogGroups(this.catalogEntries(), this.categories()),
+  );
+  readonly catalogDraftPreview = computed<SmileitCatalogDraftPreview>(() => {
+    const currentSmiles: string = this.catalogCreateSmiles().trim();
+    const parsedAnchorIndices: number[] = this.parseAtomIndicesInput(
+      this.catalogCreateAnchorIndicesText(),
+    );
+    const notationKind: SmileitChemicalNotationKind = this.detectChemicalNotation(currentSmiles);
+    const selectedCategoryKeys: string[] = this.catalogCreateCategoryKeys();
+    const categoryNameByKey: Map<string, string> = new Map(
+      this.categories().map((category: SmileitCategoryView) => [category.key, category.name]),
+    );
+    const warnings: string[] = [];
+
+    if (notationKind === 'smarts') {
+      warnings.push(
+        'Catalog entries require SMILES notation. Use the Structural pattern catalog for SMARTS.',
+      );
+    }
+    if (parsedAnchorIndices.length === 0) {
+      warnings.push('At least one anchor atom index is required.');
+    }
+    if (selectedCategoryKeys.length === 0) {
+      warnings.push('Select at least one chemistry category.');
+    }
+
+    return {
+      name: this.catalogCreateName().trim(),
+      smiles: currentSmiles,
+      sourceReference: this.catalogCreateSourceReference().trim() || 'local-lab',
+      anchorAtomIndices: parsedAnchorIndices,
+      categoryKeys: selectedCategoryKeys,
+      categoryNames: selectedCategoryKeys.map(
+        (categoryKey: string) => categoryNameByKey.get(categoryKey) ?? categoryKey,
+      ),
+      notationKind,
+      warnings,
+      isReady:
+        this.catalogCreateName().trim() !== '' &&
+        currentSmiles !== '' &&
+        notationKind !== 'smarts' &&
+        parsedAnchorIndices.length > 0 &&
+        selectedCategoryKeys.length > 0,
+    };
+  });
 
   loadInitialData(): void {
     forkJoin({
@@ -175,6 +253,7 @@ export class SmileitWorkflowService implements OnDestroy {
         this.catalogEntries.set(catalog);
         this.categories.set(categories);
         this.patterns.set(patterns);
+        this.refreshBlockCatalogRefsToLatestEntries(catalog);
       },
       error: (requestError: Error) => {
         this.errorMessage.set(`Unable to load Smileit reference data: ${requestError.message}`);
@@ -221,7 +300,8 @@ export class SmileitWorkflowService implements OnDestroy {
 
   addAssignmentBlock(): void {
     const uncoveredSites: number[] = this.uncoveredSelectedSites();
-    const defaultSites: number[] = uncoveredSites.length > 0 ? uncoveredSites : [...this.selectedAtomIndices()];
+    const defaultSites: number[] =
+      uncoveredSites.length > 0 ? uncoveredSites : [...this.selectedAtomIndices()];
     const nextIndex: number = this.assignmentBlocks().length + 1;
 
     this.assignmentBlocks.update((currentBlocks: SmileitAssignmentBlockDraft[]) => [
@@ -466,20 +546,118 @@ export class SmileitWorkflowService implements OnDestroy {
       provenanceMetadata: {},
     };
 
-    this.jobsApiService.createSmileitCatalogEntry(requestPayload).subscribe({
+    const editingStableId: string | null = this.catalogEditingStableId();
+    const saveRequest: Observable<SmileitCatalogEntryView[]> =
+      editingStableId === null
+        ? this.jobsApiService.createSmileitCatalogEntry(requestPayload)
+        : this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
+
+    saveRequest.subscribe({
       next: (catalogEntries: SmileitCatalogEntryView[]) => {
         this.catalogEntries.set(catalogEntries);
-        this.catalogCreateName.set('');
-        this.catalogCreateSmiles.set('');
-        this.catalogCreateAnchorIndicesText.set('0');
-        this.catalogCreateCategoryKeys.set([]);
-        this.catalogCreateSourceReference.set('local-lab');
+        this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
+        this.resetCatalogForm();
         this.errorMessage.set(null);
       },
       error: (requestError: Error) => {
-        this.errorMessage.set(`Unable to create catalog entry: ${requestError.message}`);
+        const actionLabel: string = editingStableId === null ? 'create' : 'update';
+        this.errorMessage.set(`Unable to ${actionLabel} catalog entry: ${requestError.message}`);
       },
     });
+  }
+
+  beginCatalogEntryEdition(entry: SmileitCatalogEntryView): void {
+    if (!this.isCatalogEntryEditable(entry)) {
+      this.errorMessage.set('Seed catalog entries are read-only and cannot be edited from the UI.');
+      return;
+    }
+
+    this.catalogEditingStableId.set(entry.stable_id);
+    this.catalogCreateName.set(entry.name);
+    this.catalogCreateSmiles.set(entry.smiles);
+    this.catalogCreateAnchorIndicesText.set(entry.anchor_atom_indices.join(','));
+    this.catalogCreateCategoryKeys.set([...(entry.categories ?? [])]);
+    this.catalogCreateSourceReference.set(entry.source_reference || 'local-lab');
+    this.errorMessage.set(null);
+  }
+
+  cancelCatalogEdition(): void {
+    this.resetCatalogForm();
+    this.errorMessage.set(null);
+  }
+
+  isCatalogEntryEditable(entry: SmileitCatalogEntryView): boolean {
+    const normalizedSourceReference: string = (entry.source_reference ?? '').trim().toLowerCase();
+    if (
+      normalizedSourceReference === 'legacy-smileit' ||
+      normalizedSourceReference === 'smileit-seed'
+    ) {
+      return false;
+    }
+
+    const rawSeedFlag: string = String(entry.provenance_metadata?.['seed'] ?? '')
+      .trim()
+      .toLowerCase();
+    return rawSeedFlag !== 'true' && rawSeedFlag !== '1' && rawSeedFlag !== 'yes';
+  }
+
+  isCatalogEntryReferenced(
+    block: SmileitAssignmentBlockDraft,
+    catalogEntry: SmileitCatalogEntryView,
+  ): boolean {
+    return block.catalogRefs.some(
+      (entry: SmileitCatalogEntryView) =>
+        entry.stable_id === catalogEntry.stable_id && entry.version === catalogEntry.version,
+    );
+  }
+
+  getAutoCatalogEntriesForBlock(block: SmileitAssignmentBlockDraft): SmileitCatalogEntryView[] {
+    if (block.categoryKeys.length === 0) {
+      return [];
+    }
+
+    const selectedCategories: Set<string> = new Set(block.categoryKeys);
+    const matchedEntries: SmileitCatalogEntryView[] = this.catalogEntries().filter(
+      (entry: SmileitCatalogEntryView) =>
+        (entry.categories ?? []).some((categoryKey: string) => selectedCategories.has(categoryKey)),
+    );
+
+    return [...matchedEntries].sort(
+      (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
+        left.name.localeCompare(right.name),
+    );
+  }
+
+  getBlockCollapsedSummary(block: SmileitAssignmentBlockDraft): SmileitBlockCollapsedSummary {
+    const catalogSmilesPreview: string[] = block.catalogRefs
+      .map((entry: SmileitCatalogEntryView) => entry.smiles)
+      .filter(
+        (smilesValue: string, index: number, items: string[]) =>
+          items.indexOf(smilesValue) === index,
+      );
+    const manualSmilesPreview: string[] = block.manualSubstituents
+      .map((entry: SmileitManualSubstituentDraft) => entry.smiles)
+      .filter(
+        (smilesValue: string, index: number, items: string[]) =>
+          items.indexOf(smilesValue) === index,
+      );
+
+    return {
+      selectedSitesLabel:
+        block.siteAtomIndices.length > 0 ? block.siteAtomIndices.join(', ') : 'No covered sites',
+      categoriesLabel:
+        block.categoryKeys.length > 0 ? block.categoryKeys.join(', ') : 'No category filters',
+      catalogSmilesLabel:
+        catalogSmilesPreview.length > 0
+          ? catalogSmilesPreview.slice(0, 3).join(' | ')
+          : 'No catalog references',
+      manualSmilesLabel:
+        manualSmilesPreview.length > 0
+          ? manualSmilesPreview.slice(0, 3).join(' | ')
+          : 'No manual substituents',
+      sourceCount:
+        block.categoryKeys.length + block.catalogRefs.length + block.manualSubstituents.length,
+    };
   }
 
   createPatternEntry(): void {
@@ -526,7 +704,7 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setMaxStructures(rawValue: number): void {
-    this.maxStructures.set(Math.max(1, Math.min(5000, Math.trunc(rawValue))));
+    this.maxStructures.set(Math.max(0, Math.trunc(rawValue)));
   }
 
   setExportPadding(rawValue: number): void {
@@ -657,7 +835,10 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   downloadCsvReport(): Observable<DownloadedReportFile> {
-    return this.downloadCurrentReport((jobId: string) => this.jobsApiService.downloadSmileitCsvReport(jobId), 'CSV');
+    return this.downloadCurrentReport(
+      (jobId: string) => this.jobsApiService.downloadSmileitCsvReport(jobId),
+      'CSV',
+    );
   }
 
   downloadSmilesReport(): Observable<DownloadedReportFile> {
@@ -675,7 +856,10 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   downloadLogReport(): Observable<DownloadedReportFile> {
-    return this.downloadCurrentReport((jobId: string) => this.jobsApiService.downloadSmileitLogReport(jobId), 'LOG');
+    return this.downloadCurrentReport(
+      (jobId: string) => this.jobsApiService.downloadSmileitLogReport(jobId),
+      'LOG',
+    );
   }
 
   downloadErrorReport(): Observable<DownloadedReportFile> {
@@ -769,7 +953,9 @@ export class SmileitWorkflowService implements OnDestroy {
     this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
       next: (logEntry: JobLogEntryView) => {
         this.jobLogs.update((currentLogs: JobLogEntryView[]) => {
-          if (currentLogs.some((item: JobLogEntryView) => item.eventIndex === logEntry.eventIndex)) {
+          if (
+            currentLogs.some((item: JobLogEntryView) => item.eventIndex === logEntry.eventIndex)
+          ) {
             return currentLogs;
           }
 
@@ -849,23 +1035,27 @@ export class SmileitWorkflowService implements OnDestroy {
 
     return {
       totalGenerated: rawResult.total_generated,
-      generatedStructures: rawResult.generated_structures.map((structureItem, index) => {
+      generatedStructures: (rawResult.generated_structures ?? []).map((structureItem, index) => {
         const normalizedName: string = structureItem.name.trim();
         return {
           name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
           smiles: structureItem.smiles,
           svg: structureItem.svg,
-          traceability: structureItem.traceability,
+          traceability: structureItem.traceability ?? [],
         };
       }),
-      truncated: rawResult.truncated,
+      truncated: rawResult.truncated ?? false,
       principalSmiles: rawResult.principal_smiles,
       selectedAtomIndices: rawResult.selected_atom_indices,
-      assignmentBlocks: jobResponse.parameters.assignment_blocks,
-      traceabilityRows: rawResult.traceability_rows,
-      exportNameBase: rawResult.export_name_base,
-      exportPadding: rawResult.export_padding,
-      references: rawResult.references as Record<string, Array<Record<string, unknown>>>,
+      assignmentBlocks: jobResponse.parameters.assignment_blocks ?? [],
+      traceabilityRows: rawResult.traceability_rows ?? [],
+      exportNameBase:
+        rawResult.export_name_base ?? jobResponse.parameters.export_name_base ?? 'SMILEIT',
+      exportPadding: rawResult.export_padding ?? jobResponse.parameters.export_padding ?? 5,
+      references: (rawResult.references ?? jobResponse.parameters.references ?? {}) as Record<
+        string,
+        Array<Record<string, unknown>>
+      >,
       isHistoricalSummary: false,
       summaryMessage: null,
     };
@@ -883,14 +1073,103 @@ export class SmileitWorkflowService implements OnDestroy {
       truncated: false,
       principalSmiles: rawParameters.principal_smiles,
       selectedAtomIndices: rawParameters.selected_atom_indices,
-      assignmentBlocks: rawParameters.assignment_blocks,
+      assignmentBlocks: rawParameters.assignment_blocks ?? [],
       traceabilityRows: [],
-      exportNameBase: rawParameters.export_name_base,
-      exportPadding: rawParameters.export_padding,
-      references: rawParameters.references as Record<string, Array<Record<string, unknown>>>,
+      exportNameBase: rawParameters.export_name_base ?? 'SMILEIT',
+      exportPadding: rawParameters.export_padding ?? 5,
+      references: (rawParameters.references ?? {}) as Record<
+        string,
+        Array<Record<string, unknown>>
+      >,
       isHistoricalSummary: true,
       summaryMessage: `Historical job status: ${jobResponse.status}. Final structures are not available in this snapshot.`,
     };
+  }
+
+  private resetCatalogForm(): void {
+    this.catalogCreateName.set('');
+    this.catalogCreateSmiles.set('');
+    this.catalogCreateAnchorIndicesText.set('0');
+    this.catalogCreateCategoryKeys.set([]);
+    this.catalogCreateSourceReference.set('local-lab');
+    this.catalogEditingStableId.set(null);
+  }
+
+  private refreshBlockCatalogRefsToLatestEntries(
+    catalogEntries: SmileitCatalogEntryView[] = this.catalogEntries(),
+  ): void {
+    const latestByStableId: Map<string, SmileitCatalogEntryView> = new Map(
+      catalogEntries.map((entry: SmileitCatalogEntryView) => [entry.stable_id, entry]),
+    );
+
+    this.assignmentBlocks.update((currentBlocks: SmileitAssignmentBlockDraft[]) =>
+      currentBlocks.map((block: SmileitAssignmentBlockDraft) => {
+        const dedupeTracker: Set<string> = new Set();
+        const normalizedRefs: SmileitCatalogEntryView[] = block.catalogRefs
+          .map((entry: SmileitCatalogEntryView) => latestByStableId.get(entry.stable_id) ?? entry)
+          .filter((entry: SmileitCatalogEntryView) => {
+            const dedupeKey: string = `${entry.stable_id}::${entry.version}`;
+            if (dedupeTracker.has(dedupeKey)) {
+              return false;
+            }
+            dedupeTracker.add(dedupeKey);
+            return true;
+          });
+
+        return {
+          ...block,
+          catalogRefs: normalizedRefs,
+        };
+      }),
+    );
+  }
+
+  private buildCatalogGroups(
+    catalogEntries: SmileitCatalogEntryView[],
+    categories: SmileitCategoryView[],
+  ): SmileitCatalogGroupView[] {
+    const categoryNameByKey: Map<string, string> = new Map(
+      categories.map((category: SmileitCategoryView) => [category.key, category.name]),
+    );
+    const groupedEntries: Map<string, SmileitCatalogGroupView> = new Map();
+
+    catalogEntries.forEach((entry: SmileitCatalogEntryView) => {
+      const entryCategoryKeys: string[] = entry.categories ?? [];
+      const entryCategories: string[] =
+        entryCategoryKeys.length > 0 ? entryCategoryKeys : ['uncategorized'];
+
+      entryCategories.forEach((categoryKey: string) => {
+        const groupKey: string = categoryKey;
+        const groupName: string =
+          categoryKey === 'uncategorized'
+            ? 'Uncategorized'
+            : (categoryNameByKey.get(categoryKey) ?? categoryKey);
+
+        const existingGroup: SmileitCatalogGroupView | undefined = groupedEntries.get(groupKey);
+        if (existingGroup === undefined) {
+          groupedEntries.set(groupKey, {
+            key: groupKey,
+            name: groupName,
+            entries: [entry],
+          });
+          return;
+        }
+
+        existingGroup.entries.push(entry);
+      });
+    });
+
+    return [...groupedEntries.values()]
+      .map((group: SmileitCatalogGroupView) => ({
+        ...group,
+        entries: [...group.entries].sort(
+          (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
+            left.name.localeCompare(right.name),
+        ),
+      }))
+      .sort((left: SmileitCatalogGroupView, right: SmileitCatalogGroupView) =>
+        left.name.localeCompare(right.name),
+      );
   }
 
   private createBlockDraft(label: string, siteAtomIndices: number[]): SmileitAssignmentBlockDraft {
@@ -898,7 +1177,9 @@ export class SmileitWorkflowService implements OnDestroy {
     return {
       id: `block-${this.blockSequence}`,
       label,
-      siteAtomIndices: [...new Set(siteAtomIndices)].sort((left: number, right: number) => left - right),
+      siteAtomIndices: [...new Set(siteAtomIndices)].sort(
+        (left: number, right: number) => left - right,
+      ),
       categoryKeys: [],
       catalogRefs: [],
       manualSubstituents: [],
@@ -915,7 +1196,9 @@ export class SmileitWorkflowService implements OnDestroy {
     this.assignmentBlocks.update((currentBlocks: SmileitAssignmentBlockDraft[]) =>
       currentBlocks.map((block: SmileitAssignmentBlockDraft) => ({
         ...block,
-        siteAtomIndices: block.siteAtomIndices.filter((atomIndex: number) => selectedSet.has(atomIndex)),
+        siteAtomIndices: block.siteAtomIndices.filter((atomIndex: number) =>
+          selectedSet.has(atomIndex),
+        ),
       })),
     );
   }
@@ -978,6 +1261,19 @@ export class SmileitWorkflowService implements OnDestroy {
   private toggleString(currentValues: string[], nextValue: string): string[] {
     return currentValues.includes(nextValue)
       ? currentValues.filter((item: string) => item !== nextValue)
-      : [...currentValues, nextValue].sort((left: string, right: string) => left.localeCompare(right));
+      : [...currentValues, nextValue].sort((left: string, right: string) =>
+          left.localeCompare(right),
+        );
+  }
+
+  private detectChemicalNotation(rawChemicalText: string): SmileitChemicalNotationKind {
+    const normalizedText: string = rawChemicalText.trim();
+    if (normalizedText === '') {
+      return 'empty';
+    }
+
+    // Heurística simple para advertir entrada SMARTS en formularios que exigen SMILES.
+    const smartsMarkers: RegExp = /\*|;|\$\(|!|\[\$|\?\]|\(\?\)/;
+    return smartsMarkers.test(normalizedText) ? 'smarts' : 'smiles';
   }
 }

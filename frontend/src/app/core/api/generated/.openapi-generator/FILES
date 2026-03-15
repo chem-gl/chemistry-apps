@@ -60,6 +60,7 @@ model/molarFractionsJobResponse.ts
 model/molarFractionsMetadata.ts
 model/molarFractionsParameters.ts
 model/molarFractionsResult.ts
+model/patchedSmileitCatalogEntryCreateRequest.ts
 model/patternTypeEnum.ts
 model/phModeEnum.ts
 model/progressStageEnum.ts

@@ -43,7 +43,6 @@ from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 
 from .definitions import PLUGIN_NAME
-from .plugin import inspect_easy_rate_gaussian_blob
 from .schemas import (
     EasyRateInspectionRequestSerializer,
     EasyRateInspectionResponseSerializer,
@@ -168,6 +167,19 @@ class EasyRateJobViewSet(viewsets.ViewSet):
         """Inspecciona un archivo Gaussian antes de crear un job Easy-rate."""
         serializer = EasyRateInspectionRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        try:
+            from .plugin import inspect_easy_rate_gaussian_blob
+        except ModuleNotFoundError:
+            return Response(
+                {
+                    "detail": (
+                        "Easy-rate no está disponible porque falta dependencia "
+                        "local 'libs' en este entorno."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         validated_data: dict[str, object] = cast(
             dict[str, object], serializer.validated_data

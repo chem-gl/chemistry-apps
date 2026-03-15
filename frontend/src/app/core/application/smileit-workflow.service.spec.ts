@@ -29,6 +29,16 @@ function makeCatalogEntry(): SmileitCatalogEntryView {
   };
 }
 
+function makeEditableCatalogEntry(): SmileitCatalogEntryView {
+  return {
+    ...makeCatalogEntry(),
+    id: 'catalog-custom-1',
+    stable_id: 'custom-1',
+    source_reference: 'local-lab',
+    provenance_metadata: {},
+  };
+}
+
 function makeCategory(): SmileitCategoryView {
   return {
     id: 'category-1',
@@ -194,6 +204,7 @@ describe('SmileitWorkflowService', () => {
     listSmileitCategories: ReturnType<typeof vi.fn>;
     listSmileitPatterns: ReturnType<typeof vi.fn>;
     inspectSmileitStructure: ReturnType<typeof vi.fn>;
+    updateSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     dispatchSmileitJob: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
     streamJobLogEvents: ReturnType<typeof vi.fn>;
@@ -211,6 +222,7 @@ describe('SmileitWorkflowService', () => {
       listSmileitCategories: vi.fn((): Observable<SmileitCategoryView[]> => of([makeCategory()])),
       listSmileitPatterns: vi.fn((): Observable<SmileitPatternEntryView[]> => of([makePattern()])),
       inspectSmileitStructure: vi.fn(),
+      updateSmileitCatalogEntry: vi.fn(),
       dispatchSmileitJob: vi.fn((): Observable<SmileitJobResponseView> => of(makeSmileitJob())),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
@@ -282,7 +294,7 @@ describe('SmileitWorkflowService', () => {
       rSubstitutes: 1,
       numBonds: 1,
       allowRepeated: false,
-      maxStructures: 300,
+      maxStructures: 0,
       exportNameBase: 'smileit_run',
       exportPadding: 5,
       version: '2.0.0',
@@ -343,5 +355,91 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.assignmentBlocks()).toHaveLength(2);
     expect(workflowService.assignmentBlocks()[1].label).toBe('Block 2');
     expect(workflowService.assignmentBlocks()[1].siteAtomIndices).toEqual([1, 2]);
+  });
+
+  it('updates editable catalog entries using versioned endpoint', () => {
+    const editableEntry: SmileitCatalogEntryView = makeEditableCatalogEntry();
+    const updatedEntry: SmileitCatalogEntryView = {
+      ...editableEntry,
+      id: 'catalog-custom-2',
+      version: 2,
+      name: 'Editable catalog v2',
+      smiles: 'CC1CC1',
+    };
+
+    jobsApiServiceMock.listSmileitCatalog.mockReturnValueOnce(of([editableEntry]));
+    jobsApiServiceMock.updateSmileitCatalogEntry.mockReturnValueOnce(of([updatedEntry]));
+
+    workflowService.loadInitialData();
+    workflowService.beginCatalogEntryEdition(editableEntry);
+    workflowService.catalogCreateName.set('Editable catalog v2');
+    workflowService.catalogCreateSmiles.set('CC1CC1');
+    workflowService.catalogCreateAnchorIndicesText.set('0');
+    workflowService.catalogCreateCategoryKeys.set(['hydrophobic']);
+    workflowService.catalogCreateSourceReference.set('local-lab');
+
+    workflowService.createCatalogEntry();
+
+    expect(jobsApiServiceMock.updateSmileitCatalogEntry).toHaveBeenCalledWith(
+      editableEntry.stable_id,
+      {
+        name: 'Editable catalog v2',
+        smiles: 'CC1CC1',
+        anchorAtomIndices: [0],
+        categoryKeys: ['hydrophobic'],
+        sourceReference: 'local-lab',
+        provenanceMetadata: {},
+      },
+    );
+    expect(workflowService.isCatalogEditing()).toBe(false);
+    expect(workflowService.catalogEntries()[0].version).toBe(2);
+  });
+
+  it('warns when catalog draft looks like SMARTS instead of SMILES', () => {
+    workflowService.catalogCreateName.set('Potential SMARTS Draft');
+    workflowService.catalogCreateSmiles.set('[#6]-[*]');
+    workflowService.catalogCreateAnchorIndicesText.set('0');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+
+    const catalogPreview = workflowService.catalogDraftPreview();
+
+    expect(catalogPreview.notationKind).toBe('smarts');
+    expect(catalogPreview.isReady).toBe(false);
+    expect(catalogPreview.warnings[0]).toContain('SMILES');
+  });
+
+  it('builds collapsed summary with selected sites and smiles previews', () => {
+    const summary = workflowService.getBlockCollapsedSummary(makeAssignmentBlock());
+
+    expect(summary.selectedSitesLabel).toBe('1');
+    expect(summary.categoriesLabel).toContain('aromatic');
+    expect(summary.catalogSmilesLabel).toContain('[NH2]c1ccccc1');
+    expect(summary.manualSmilesLabel).toContain('[NH2]');
+    expect(summary.sourceCount).toBe(3);
+  });
+
+  it('restores legacy historical jobs even when assignment blocks are missing', () => {
+    const legacyJob: SmileitJobResponseView = {
+      ...makeSmileitJob(),
+      status: 'completed',
+      results: null,
+      parameters: {
+        principal_smiles: 'c1ccccc1',
+        selected_atom_indices: [1],
+        r_substitutes: 1,
+        num_bonds: 1,
+        allow_repeated: false,
+        max_structures: 100,
+      } as unknown as SmileitJobResponseView['parameters'],
+    };
+
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValueOnce(of(legacyJob));
+
+    workflowService.openHistoricalJob('legacy-job-1');
+
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.assignmentBlocks).toEqual([]);
+    expect(workflowService.resultData()?.exportNameBase).toBe('SMILEIT');
+    expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
   });
 });

@@ -29,6 +29,9 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private routeSubscription: Subscription | null = null;
+  readonly isLibraryPanelCollapsed = signal<boolean>(false);
+  readonly isPatternCatalogCollapsed = signal<boolean>(false);
+  readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.decorateInspectionSvg(
@@ -75,6 +78,41 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.workflow.addAssignmentBlock();
   }
 
+  toggleLibraryPanelCollapse(): void {
+    this.isLibraryPanelCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
+  togglePatternCatalogCollapse(): void {
+    this.isPatternCatalogCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
+  toggleBlockCollapse(blockId: string): void {
+    this.collapsedBlockMap.update((currentState: Record<string, boolean>) => ({
+      ...currentState,
+      [blockId]: !(currentState[blockId] ?? false),
+    }));
+  }
+
+  collapseAllBlocks(): void {
+    const nextState: Record<string, boolean> = {};
+    this.workflow.assignmentBlocks().forEach((block: SmileitAssignmentBlockDraft) => {
+      nextState[block.id] = true;
+    });
+    this.collapsedBlockMap.set(nextState);
+  }
+
+  expandAllBlocks(): void {
+    const nextState: Record<string, boolean> = {};
+    this.workflow.assignmentBlocks().forEach((block: SmileitAssignmentBlockDraft) => {
+      nextState[block.id] = false;
+    });
+    this.collapsedBlockMap.set(nextState);
+  }
+
+  isBlockCollapsed(blockId: string): boolean {
+    return this.collapsedBlockMap()[blockId] ?? false;
+  }
+
   exportCsv(): void {
     this.downloadReport(this.workflow.downloadCsvReport.bind(this.workflow));
   }
@@ -105,6 +143,12 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   isBlockSiteSelected(block: SmileitAssignmentBlockDraft, atomIndex: number): boolean {
     return block.siteAtomIndices.includes(atomIndex);
+  }
+
+  blockSummary(
+    block: SmileitAssignmentBlockDraft,
+  ): ReturnType<SmileitWorkflowService['getBlockCollapsedSummary']> {
+    return this.workflow.getBlockCollapsedSummary(block);
   }
 
   coverageLabel(atomIndex: number): string | null {

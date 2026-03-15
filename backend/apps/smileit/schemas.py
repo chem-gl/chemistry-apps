@@ -22,7 +22,6 @@ from .definitions import (
     MAX_ASSIGNMENT_BLOCKS,
     MAX_CATEGORIES_PER_BLOCK,
     MAX_EXPORT_PADDING,
-    MAX_GENERATED_STRUCTURES,
     MAX_MANUAL_SUBSTITUENTS_PER_BLOCK,
     MAX_NUM_BONDS,
     MAX_PATTERN_CAPTION_LENGTH,
@@ -396,9 +395,9 @@ class SmileitJobCreateSerializer(serializers.Serializer):
     )
     allow_repeated = serializers.BooleanField(default=False)
     max_structures = serializers.IntegerField(
-        min_value=1,
-        max_value=MAX_GENERATED_STRUCTURES,
-        default=500,
+        min_value=0,
+        default=0,
+        help_text="Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.",
     )
     export_name_base = serializers.CharField(max_length=120, default="SMILEIT")
     export_padding = serializers.IntegerField(
@@ -474,18 +473,35 @@ class SmileitParametersSerializer(serializers.Serializer):
     selected_atom_indices = serializers.ListField(
         child=serializers.IntegerField(min_value=0)
     )
-    assignment_blocks = SmileitResolvedAssignmentBlockSerializer(many=True)
-    r_substitutes = serializers.IntegerField(min_value=1)
-    num_bonds = serializers.IntegerField(min_value=1)
-    allow_repeated = serializers.BooleanField()
-    max_structures = serializers.IntegerField(min_value=1)
-    site_overlap_policy = serializers.ChoiceField(choices=SITE_OVERLAP_POLICY_CHOICES)
-    export_name_base = serializers.CharField(max_length=120)
+    assignment_blocks = SmileitResolvedAssignmentBlockSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    r_substitutes = serializers.IntegerField(min_value=1, required=False, default=1)
+    num_bonds = serializers.IntegerField(min_value=1, required=False, default=1)
+    allow_repeated = serializers.BooleanField(required=False, default=False)
+    max_structures = serializers.IntegerField(min_value=0, required=False, default=0)
+    site_overlap_policy = serializers.ChoiceField(
+        choices=SITE_OVERLAP_POLICY_CHOICES,
+        required=False,
+        default="last_block_wins",
+    )
+    export_name_base = serializers.CharField(
+        max_length=120,
+        required=False,
+        default="SMILEIT",
+    )
     export_padding = serializers.IntegerField(
-        min_value=MIN_EXPORT_PADDING, max_value=MAX_EXPORT_PADDING
+        min_value=MIN_EXPORT_PADDING,
+        max_value=MAX_EXPORT_PADDING,
+        required=False,
+        default=DEFAULT_EXPORT_PADDING,
     )
     references = serializers.DictField(
-        child=serializers.ListField(child=serializers.DictField())
+        child=serializers.ListField(child=serializers.DictField()),
+        required=False,
+        default=dict,
     )
 
 
@@ -509,7 +525,11 @@ class SmileitGeneratedStructureSerializer(serializers.Serializer):
     smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
     name = serializers.CharField(max_length=500)
     svg = serializers.CharField()
-    traceability = SmileitSubstitutionTraceEventSerializer(many=True)
+    traceability = SmileitSubstitutionTraceEventSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
 
 
 class SmileitTraceabilityRowSerializer(serializers.Serializer):
@@ -532,19 +552,36 @@ class SmileitResultSerializer(serializers.Serializer):
     """Resultado final de generación combinatoria y exportes reproducibles."""
 
     total_generated = serializers.IntegerField(min_value=0)
-    generated_structures = SmileitGeneratedStructureSerializer(many=True)
-    traceability_rows = SmileitTraceabilityRowSerializer(many=True)
-    truncated = serializers.BooleanField()
+    generated_structures = SmileitGeneratedStructureSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    traceability_rows = SmileitTraceabilityRowSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    truncated = serializers.BooleanField(required=False, default=False)
     principal_smiles = serializers.CharField(max_length=2000)
     selected_atom_indices = serializers.ListField(
         child=serializers.IntegerField(min_value=0)
     )
-    export_name_base = serializers.CharField(max_length=120)
+    export_name_base = serializers.CharField(
+        max_length=120,
+        required=False,
+        default="SMILEIT",
+    )
     export_padding = serializers.IntegerField(
-        min_value=MIN_EXPORT_PADDING, max_value=MAX_EXPORT_PADDING
+        min_value=MIN_EXPORT_PADDING,
+        max_value=MAX_EXPORT_PADDING,
+        required=False,
+        default=DEFAULT_EXPORT_PADDING,
     )
     references = serializers.DictField(
-        child=serializers.ListField(child=serializers.DictField())
+        child=serializers.ListField(child=serializers.DictField()),
+        required=False,
+        default=dict,
     )
 
 

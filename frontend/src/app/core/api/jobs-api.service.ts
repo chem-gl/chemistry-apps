@@ -451,6 +451,27 @@ export class JobsApiService {
     return this.smileitClient.smileitJobsCatalogCreate(payload).pipe(shareReplay(1));
   }
 
+  /** Versiona una entrada editable del catálogo y retorna el catálogo activo actualizado. */
+  updateSmileitCatalogEntry(
+    stableId: string,
+    params: SmileitCatalogEntryCreateParams,
+  ): Observable<SmileitCatalogEntryView[]> {
+    const payload: SmileitCatalogEntryCreateRequest = {
+      name: params.name,
+      smiles: params.smiles,
+      anchor_atom_indices: params.anchorAtomIndices,
+      category_keys: params.categoryKeys,
+      source_reference: params.sourceReference,
+      provenance_metadata: params.provenanceMetadata,
+    };
+
+    return this.httpClient
+      .patch<
+        SmileitCatalogEntryView[]
+      >(`${API_BASE_URL}/smileit/jobs/catalog/${encodeURIComponent(stableId)}/`, payload)
+      .pipe(shareReplay(1));
+  }
+
   /** Crea un nuevo patrón persistente para anotación estructural. */
   createSmileitPatternEntry(
     params: SmileitPatternEntryCreateParams,

@@ -14,6 +14,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 
+from django.db import transaction
 from rdkit import Chem
 
 from .engine import canonicalize_smiles, validate_smarts, verify_substituent_category
@@ -41,6 +42,16 @@ class CategoryValidationResult:
     category_key: str
     passed: bool
     message: str
+
+
+def _is_substituent_user_editable(substituent: SmileitSubstituent) -> bool:
+    """Determina si una entrada de catálogo se puede editar desde la UI."""
+    source_reference = substituent.source_reference.strip().lower()
+    if source_reference in {"legacy-smileit", "smileit-seed"}:
+        return False
+
+    seed_flag = substituent.provenance_metadata.get("seed")
+    return str(seed_flag).strip().lower() not in {"true", "1", "yes"}
 
 
 def _normalize_metadata(raw_metadata: dict[str, str]) -> dict[str, str]:
@@ -191,31 +202,40 @@ def _assert_anchor_indices(smiles: str, anchor_atom_indices: list[int]) -> list[
     return normalized_indices
 
 
-def create_catalog_substituent(
-    payload: SmileitSubstituentCreatePayload,
-) -> SmileitCatalogEntry:
-    """Crea un nuevo sustituyente persistente si pasa validaciones químicas."""
-    canonical_smiles = canonicalize_smiles(payload["smiles"])
-    if canonical_smiles is None:
-        raise ValueError("El SMILES del sustituyente es inválido.")
-
-    anchor_indices = _assert_anchor_indices(
-        canonical_smiles, payload["anchor_atom_indices"]
-    )
-
-    category_map = get_category_map(payload["category_keys"])
-    if len(category_map) != len(set(payload["category_keys"])):
+def _resolve_category_map_or_raise(
+    category_keys: list[str],
+) -> dict[str, SmileitCategory]:
+    """Resuelve categorías activas y valida que todas existan."""
+    category_map = get_category_map(category_keys)
+    if len(category_map) != len(set(category_keys)):
         raise ValueError("Se detectaron categorías inexistentes o no verificables.")
+    return category_map
 
-    duplicates = SmileitSubstituent.objects.filter(
+
+def _assert_no_latest_duplicate_substituent(
+    canonical_smiles: str,
+    anchor_indices: list[int],
+    excluded_stable_id: uuid.UUID | None = None,
+) -> None:
+    """Evita duplicados estructurales en entradas activas de catálogo."""
+    query = SmileitSubstituent.objects.filter(
         is_latest=True,
         is_active=True,
         smiles_canonical=canonical_smiles,
         anchor_atom_indices=anchor_indices,
-    ).exists()
-    if duplicates:
+    )
+    if excluded_stable_id is not None:
+        query = query.exclude(stable_id=excluded_stable_id)
+
+    if query.exists():
         raise ValueError("Ya existe un sustituyente estructuralmente equivalente.")
 
+
+def _validate_substituent_categories_or_raise(
+    canonical_smiles: str,
+    category_map: dict[str, SmileitCategory],
+) -> list[CategoryValidationResult]:
+    """Valida reglas de categorías y retorna resultados para persistencia."""
     category_entries: list[SmileitCategory] = [
         category_map[key] for key in sorted(category_map.keys())
     ]
@@ -228,6 +248,57 @@ def create_catalog_substituent(
         raise ValueError(
             "Categorías no válidas para el sustituyente: " + "; ".join(message_lines)
         )
+
+    return validations
+
+
+def _resolve_latest_user_substituent_for_update(
+    stable_id: str,
+) -> tuple[uuid.UUID, SmileitSubstituent]:
+    """Obtiene el registro vigente editable para realizar una actualización."""
+    try:
+        stable_uuid = uuid.UUID(stable_id)
+    except ValueError as exc:
+        raise ValueError("El stable_id indicado no tiene formato UUID válido.") from exc
+
+    current_substituent = (
+        SmileitSubstituent.objects.filter(
+            stable_id=stable_uuid,
+            is_latest=True,
+            is_active=True,
+        )
+        .prefetch_related("categories")
+        .first()
+    )
+    if current_substituent is None:
+        raise ValueError("No existe un sustituyente activo para el stable_id indicado.")
+
+    if not _is_substituent_user_editable(current_substituent):
+        raise ValueError(
+            "Solo se pueden editar catálogos creados por usuario; los seed son inmutables."
+        )
+
+    return stable_uuid, current_substituent
+
+
+def create_catalog_substituent(
+    payload: SmileitSubstituentCreatePayload,
+) -> SmileitCatalogEntry:
+    """Crea un nuevo sustituyente persistente si pasa validaciones químicas."""
+    canonical_smiles = canonicalize_smiles(payload["smiles"])
+    if canonical_smiles is None:
+        raise ValueError("El SMILES del sustituyente es inválido.")
+
+    anchor_indices = _assert_anchor_indices(
+        canonical_smiles, payload["anchor_atom_indices"]
+    )
+
+    category_map = _resolve_category_map_or_raise(payload["category_keys"])
+    _assert_no_latest_duplicate_substituent(canonical_smiles, anchor_indices)
+    validations = _validate_substituent_categories_or_raise(
+        canonical_smiles,
+        category_map,
+    )
 
     substituent = SmileitSubstituent.objects.create(
         stable_id=uuid.uuid4(),
@@ -252,6 +323,75 @@ def create_catalog_substituent(
         )
 
     return _serialize_substituent(substituent)
+
+
+def update_catalog_substituent(
+    stable_id: str,
+    payload: SmileitSubstituentCreatePayload,
+) -> SmileitCatalogEntry:
+    """Crea una nueva versión editable de un sustituyente de usuario."""
+    stable_uuid, current_substituent = _resolve_latest_user_substituent_for_update(
+        stable_id
+    )
+
+    canonical_smiles = canonicalize_smiles(payload["smiles"])
+    if canonical_smiles is None:
+        raise ValueError("El SMILES del sustituyente es inválido.")
+
+    anchor_indices = _assert_anchor_indices(
+        canonical_smiles, payload["anchor_atom_indices"]
+    )
+
+    category_map = _resolve_category_map_or_raise(payload["category_keys"])
+    _assert_no_latest_duplicate_substituent(
+        canonical_smiles,
+        anchor_indices,
+        excluded_stable_id=stable_uuid,
+    )
+    validations = _validate_substituent_categories_or_raise(
+        canonical_smiles,
+        category_map,
+    )
+
+    normalized_metadata = _normalize_metadata(payload["provenance_metadata"])
+    if len(normalized_metadata) == 0:
+        normalized_metadata = {
+            str(meta_key): str(meta_value)
+            for meta_key, meta_value in current_substituent.provenance_metadata.items()
+        }
+
+    source_reference = payload["source_reference"].strip()
+    if source_reference == "":
+        source_reference = current_substituent.source_reference
+
+    with transaction.atomic():
+        SmileitSubstituent.objects.filter(pk=current_substituent.pk).update(
+            is_latest=False
+        )
+
+        updated_substituent = SmileitSubstituent.objects.create(
+            stable_id=stable_uuid,
+            version=current_substituent.version + 1,
+            is_latest=True,
+            is_active=True,
+            name=payload["name"].strip(),
+            smiles_input=payload["smiles"].strip(),
+            smiles_canonical=canonical_smiles,
+            anchor_atom_indices=anchor_indices,
+            source_reference=source_reference,
+            provenance_metadata=normalized_metadata,
+        )
+
+        for validation in validations:
+            category = category_map[validation.category_key]
+            SmileitSubstituentCategory.objects.create(
+                substituent=updated_substituent,
+                category=category,
+                verification_passed=validation.passed,
+                verification_message=validation.message,
+            )
+
+    return _serialize_substituent(updated_substituent)
 
 
 def create_pattern_entry(payload: SmileitPatternCreatePayload) -> SmileitPatternEntry:

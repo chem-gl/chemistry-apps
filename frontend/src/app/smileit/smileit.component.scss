@@ -107,6 +107,12 @@
   flex-wrap: wrap;
 }
 
+.panel-header-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
 .panel-caption,
 .hint,
 .summary-banner,
@@ -410,6 +416,40 @@ select:focus {
   border-top: 1px solid #e1ebe3;
 }
 
+.block-stack-header {
+  margin-top: 0.75rem;
+}
+
+.collapsed-panel-card,
+.block-collapsed-summary,
+.catalog-preview-card,
+.pattern-reference-card {
+  border: 1px solid #dce9df;
+  border-radius: 14px;
+  background: #f8fcf9;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.block-collapsed-summary p,
+.catalog-preview-card p,
+.pattern-reference-card p {
+  margin: 0.3rem 0;
+}
+
+.catalog-preview-card h5,
+.pattern-reference-card h5 {
+  margin: 0 0 0.35rem;
+  color: #2b5644;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.preview-warning {
+  margin: 0.4rem 0 0;
+}
+
 .block-section h4,
 .catalog-card h3,
 .structures-list-card h4,
@@ -441,6 +481,61 @@ select:focus {
   max-height: 360px;
   overflow: auto;
   padding-right: 0.2rem;
+}
+
+.grouped-catalog-grid {
+  max-height: 280px;
+}
+
+.catalog-group-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.catalog-group-card {
+  border: 1px solid #dbe8de;
+  border-radius: 14px;
+  background: #f9fcfa;
+  padding: 0.7rem;
+}
+
+.catalog-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.catalog-group-header h5 {
+  margin: 0;
+  color: #244537;
+  font-size: 0.9rem;
+}
+
+.auto-catalog-panel {
+  margin-top: 0.8rem;
+  border: 1px dashed #c9dccf;
+  border-radius: 14px;
+  background: #f3f9f4;
+  padding: 0.7rem;
+}
+
+.auto-catalog-panel h5 {
+  margin: 0 0 0.45rem;
+  color: #2b5644;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auto-tag-card {
+  background: #fbfffc;
+}
+
+.manager-catalog-groups {
+  margin-top: 1rem;
 }
 
 .pattern-toxicophore {

@@ -23,6 +23,9 @@ export interface SmileitJobCreateRequest {
     r_substitutes?: number;
     num_bonds?: number;
     allow_repeated?: boolean;
+    /**
+     * Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.
+     */
     max_structures?: number;
     export_name_base?: string;
     export_padding?: number;

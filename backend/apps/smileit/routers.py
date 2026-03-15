@@ -49,6 +49,7 @@ from .catalog import (
     normalize_manual_substituent,
     resolve_catalog_substituent_reference,
     resolve_catalog_substituents_by_categories,
+    update_catalog_substituent,
 )
 from .definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from .engine import inspect_smiles_structure_with_patterns
@@ -70,6 +71,7 @@ from .types import (
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
     SmileitResult,
+    SmileitSubstituentCreatePayload,
 )
 
 logger = logging.getLogger(__name__)
@@ -393,6 +395,64 @@ class SmileitJobViewSet(viewsets.ViewSet):
 
         response_serializer = SmileitCatalogEntrySerializer(created_entry)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Actualizar Catálogo de Sustituyentes de Usuario",
+        parameters=[
+            OpenApiParameter(
+                name="stable_id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description=(
+                    "Stable ID del catálogo a versionar; solo entradas de usuario son editables."
+                ),
+            )
+        ],
+        request=SmileitCatalogEntryCreateSerializer,
+        responses={
+            200: SmileitCatalogEntrySerializer(many=True),
+            404: OpenApiResponse(response=ErrorResponseSerializer),
+            409: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["patch"],
+        url_path=r"catalog/(?P<stable_id>[^/.]+)",
+    )
+    def update_catalog(
+        self, request: Request, stable_id: str | None = None
+    ) -> Response:
+        """Versiona una entrada de catálogo editable y retorna el catálogo vigente."""
+        if stable_id is None:
+            return Response(
+                {"detail": "Debe indicar stable_id para actualizar el catálogo."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        serializer = SmileitCatalogEntryCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            update_catalog_substituent(
+                stable_id=stable_id,
+                payload=cast(
+                    SmileitSubstituentCreatePayload, serializer.validated_data
+                ),
+            )
+        except ValueError as exc:
+            error_message = str(exc)
+            status_code = (
+                status.HTTP_404_NOT_FOUND
+                if "No existe" in error_message
+                else status.HTTP_409_CONFLICT
+            )
+            return Response({"detail": error_message}, status=status_code)
+
+        response_serializer = SmileitCatalogEntrySerializer(
+            list_active_catalog_entries(), many=True
+        )
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Gestionar Patrones Estructurales Smile-it",

@@ -34,6 +34,7 @@ export * from './molarFractionsJobResponse';
 export * from './molarFractionsMetadata';
 export * from './molarFractionsParameters';
 export * from './molarFractionsResult';
+export * from './patchedSmileitCatalogEntryCreateRequest';
 export * from './patternTypeEnum';
 export * from './phModeEnum';
 export * from './progressStageEnum';
