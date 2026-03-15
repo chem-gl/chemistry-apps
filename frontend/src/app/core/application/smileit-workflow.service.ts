@@ -523,11 +523,14 @@ export class SmileitWorkflowService implements OnDestroy {
 
     return {
       totalGenerated: rawResult.total_generated,
-      generatedStructures: rawResult.generated_structures.map((structureItem) => ({
-        name: structureItem.name,
-        smiles: structureItem.smiles,
-        svg: structureItem.svg,
-      })),
+      generatedStructures: rawResult.generated_structures.map((structureItem, index) => {
+        const normalizedName: string = structureItem.name.trim();
+        return {
+          name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
+          smiles: structureItem.smiles,
+          svg: structureItem.svg,
+        };
+      }),
       truncated: rawResult.truncated,
       principalSmiles: rawResult.principal_smiles,
       selectedAtomIndices: rawResult.selected_atom_indices,

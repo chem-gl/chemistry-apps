@@ -34,7 +34,7 @@
 
                 <p class="hint">Tip: click directly on the molecule image to select atoms with the mouse.</p>
                 <div class="svg-preview inspectable" (click)="onInspectionSvgClick($event)"
-                    [innerHTML]="toTrustedSvg(workflow.inspectionSvg())"></div>
+                    [innerHTML]="toTrustedInspectionSvg()"></div>
 
                 <h4>Select principal atoms</h4>
                 <div class="atom-grid">
@@ -45,6 +45,20 @@
                     </button>
                     }
                 </div>
+@if (workflow.substituents().length > 0) {
+<div class="substituent-summary">
+    <h5 class="substituent-summary-title">Active substituents</h5>
+    <ul class="substituent-chip-list">
+        @for (sub of workflow.substituents(); track sub.name + $index) {
+        <li class="substituent-chip-pill">
+            <span class="sub-name">{{ sub.name }}</span>
+            <span class="sub-smiles mono">{{ sub.smiles }}</span>
+            <span class="sub-anchor">atom {{ sub.selectedAtomIndex }}</span>
+        </li>
+        }
+    </ul>
+</div>
+}
             </div>
             }
 
@@ -152,20 +166,20 @@
                 <div class="selected-list">
                     @for (entry of workflow.substituents(); track entry.name + entry.smiles + $index) {
                     <article class="selected-item">
-                        <div>
+                        <div class="selected-item-info">
                             <p class="catalog-name">{{ entry.name }}</p>
                             <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                         </div>
-                        <div class="anchor-block">
-                            <label>
-                                Anchor
+                        <div class="selected-item-controls">
+                            <label class="anchor-label">
+                                Anchor atom
                                 <input type="number" min="0" [ngModel]="entry.selectedAtomIndex"
                                     (ngModelChange)="workflow.updateSubstituentAnchor($index, toNumber($event))"
                                     [disabled]="workflow.isProcessing()" />
                             </label>
                             <button class="remove-btn" (click)="removeSubstituent($index)"
                                 [disabled]="workflow.isProcessing()">
-                                Remove
+                                ✕ Remove
                             </button>
                         </div>
                     </article>
@@ -223,15 +237,20 @@
         @if (resultData.generatedStructures.length === 0) {
         <p class="status-message">No generated structures available in this snapshot.</p>
         } @else {
-        <div class="structures-grid">
+        <section class="structures-list-card" aria-label="Generated sub-chains list">
+            <h4>Generated sub-chains list</h4>
+            <p class="hint">Click a generated molecule name to open its structure preview.</p>
+            <ol class="structures-list">
             @for (structureItem of resultData.generatedStructures; track structureItem.smiles + $index) {
-            <article class="structure-card">
-                <div class="structure-svg" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
-                <p class="structure-name">{{ structureItem.name }}</p>
+            <li class="structures-list-item">
+                <button type="button" class="structure-name-button" (click)="openGeneratedStructureModal(structureItem)">
+                    {{ structureItem.name }}
+                </button>
                 <p class="structure-smiles mono">{{ structureItem.smiles }}</p>
-            </article>
+            </li>
             }
-        </div>
+            </ol>
+            </section>
         }
         }
 
@@ -239,6 +258,22 @@
         <p class="error-message" role="alert">{{ currentError }}</p>
         }
     </section>
+
+    @if (selectedGeneratedStructure(); as selectedStructure) {
+    <div class="structure-modal-backdrop" role="presentation" tabindex="0"
+        (click)="onGeneratedStructureDialogBackdropClick($event)" (keydown)="onGeneratedStructureDialogKeydown($event)">
+        <section class="structure-modal" role="dialog" aria-modal="true" aria-label="Generated molecule preview"
+            (click)="$event.stopPropagation()">
+            <header class="structure-modal-header">
+                <h4>{{ selectedStructure.name }}</h4>
+                <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
+            </header>
+    
+            <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+            <p class="structure-smiles mono">{{ selectedStructure.smiles }}</p>
+        </section>
+    </div>
+    }
 
     @if (workflow.jobLogs().length > 0) {
     <section class="logs-card" aria-label="Execution logs">
