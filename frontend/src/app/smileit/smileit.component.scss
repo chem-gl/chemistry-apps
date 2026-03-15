@@ -45,6 +45,7 @@
 .hero-card,
 .entry-panel,
 .library-panel,
+.pattern-panel,
 .result-panel,
 .logs-card,
 .history-card {
@@ -84,15 +85,20 @@
 .workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(320px, 0.9fr);
 }
 
 .entry-panel,
 .library-panel,
+.pattern-panel,
 .result-panel,
 .logs-card,
 .history-card {
   padding: 1.1rem;
+}
+
+.pattern-panel .catalog-card {
+  margin-top: 0;
 }
 
 .panel-header-row,
@@ -755,6 +761,16 @@ select:focus {
 
 .compact-traceability {
   margin-top: 1rem;
+}
+
+@media (max-width: 1480px) {
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pattern-panel {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 1220px) {
