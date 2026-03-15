@@ -15,6 +15,7 @@ RUN apt-get update \
         libxrender1 \
         libxext6 \
         libx11-6 \
+        libexpat1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /tmp/requirements.txt
