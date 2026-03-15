@@ -45,6 +45,7 @@
 .hero-card,
 .entry-panel,
 .library-panel,
+.pattern-panel,
 .result-panel,
 .logs-card,
 .history-card {
@@ -84,15 +85,32 @@
 .workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(320px, 0.9fr);
+}
+
+.library-panel {
+  order: 1;
+}
+
+.entry-panel {
+  order: 2;
+}
+
+.pattern-panel {
+  order: 3;
 }
 
 .entry-panel,
 .library-panel,
+.pattern-panel,
 .result-panel,
 .logs-card,
 .history-card {
   padding: 1.1rem;
+}
+
+.pattern-panel .catalog-card {
+  margin-top: 0;
 }
 
 .panel-header-row,
@@ -111,6 +129,30 @@
   display: flex;
   gap: 0.45rem;
   flex-wrap: wrap;
+}
+
+.guided-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.guided-action .hint {
+  margin: 0;
+  max-width: 250px;
+  text-align: right;
+}
+
+.site-toolbar-summary {
+  display: grid;
+  gap: 0.22rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.site-toolbar-summary strong {
+  color: #244537;
 }
 
 .panel-caption,
@@ -225,6 +267,7 @@ select:focus {
 
 .inspection-card,
 .catalog-card,
+.generation-card,
 .progress-card,
 .structures-list-card,
 .traceability-card,
@@ -420,6 +463,148 @@ select:focus {
   margin-top: 0.75rem;
 }
 
+.workflow-step-guide {
+  border: 1px solid #d9e7dd;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfefc 0%, #f4faf6 100%);
+  padding: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.workflow-step-guide h4 {
+  margin: 0;
+  color: #244537;
+}
+
+.workflow-step-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.workflow-step-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: start;
+  border: 1px solid #dfebe2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.62rem;
+}
+
+.workflow-step-item strong {
+  color: #244537;
+}
+
+.workflow-step-item.is-active {
+  border-color: #9fbfaa;
+  background: #f3f9f4;
+}
+
+.workflow-step-item.is-done {
+  border-color: #c3ddca;
+  background: #f1f8f3;
+}
+
+.workflow-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: #e5efe8;
+  color: #2f5b46;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.workflow-step-item.is-active .workflow-step-index {
+  background: #2f5b46;
+  color: #fff;
+}
+
+.workflow-step-state {
+  display: inline-flex;
+  padding: 0.12rem 0.52rem;
+  border-radius: 999px;
+  background: #edf5f0;
+  color: #2f5b46;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.workflow-step-item.is-active .workflow-step-state {
+  background: #fff3d6;
+  color: #8a6118;
+}
+
+.workflow-step-item.is-done .workflow-step-state {
+  background: #e6f4ea;
+  color: #245f3c;
+}
+
+.workflow-step-state.generation-ready {
+  background: #e6f4ea;
+  color: #245f3c;
+}
+
+.guidance-hint {
+  margin-top: 0.7rem;
+}
+
+.block-placement-section {
+  background: rgba(244, 249, 245, 0.72);
+  border-radius: 14px;
+  padding: 0.95rem 0 0;
+}
+
+.smiles-hover-target {
+  cursor: zoom-in;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.18rem;
+}
+
+.smiles-hover-preview {
+  position: fixed;
+  z-index: 90;
+  width: min(320px, calc(100vw - 1.5rem));
+  pointer-events: none;
+  border: 1px solid #d7e6dd;
+  border-radius: 18px;
+  background: rgba(255, 253, 250, 0.98);
+  box-shadow: 0 22px 46px rgba(29, 54, 40, 0.16);
+  padding: 0.8rem;
+}
+
+.smiles-hover-preview strong {
+  color: #244537;
+}
+
+.smiles-hover-kicker {
+  margin: 0 0 0.3rem;
+  color: #2f7353;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.smiles-hover-svg {
+  margin-top: 0.55rem;
+  border: 1px solid #dce9df;
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.5rem;
+  overflow: auto;
+}
+
 .collapsed-panel-card,
 .block-collapsed-summary,
 .catalog-preview-card,
@@ -456,6 +641,84 @@ select:focus {
 .traceability-card h4 {
   margin: 0;
   color: #244537;
+}
+
+.catalog-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.catalog-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  background: #ebf5ee;
+  border: 1px solid #cfe0d4;
+  color: #2d5d48;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.catalog-editor-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+  margin-top: 0.95rem;
+}
+
+.catalog-editor-form,
+.catalog-browser-panel {
+  border: 1px solid #dbe8de;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fcfefc 0%, #f7fbf8 100%);
+  padding: 0.95rem;
+}
+
+.catalog-form-grid {
+  margin-top: 0;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-field-full {
+  grid-column: span 2;
+}
+
+.catalog-category-panel {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e3ece5;
+}
+
+.catalog-editor-actions {
+  margin-top: 0.9rem;
+}
+
+.catalog-preview-sidebar {
+  margin-top: 0;
+  position: static;
+}
+
+.catalog-preview-metadata {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-preview-metadata p {
+  margin: 0;
+}
+
+.catalog-browser-panel {
+  margin-top: 1rem;
 }
 
 .catalog-item,
@@ -757,6 +1020,16 @@ select:focus {
   margin-top: 1rem;
 }
 
+@media (max-width: 1480px) {
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pattern-panel {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 1220px) {
   .hero-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -769,6 +1042,42 @@ select:focus {
 
 @media (max-width: 760px) {
   .hero-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .guided-action {
+    align-items: flex-start;
+  }
+
+  .guided-action .hint {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .site-toolbar-summary {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .workflow-step-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .workflow-step-state {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .catalog-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-field-full {
+    grid-column: auto;
+  }
+
+  .catalog-form-grid,
+  .catalog-preview-metadata {
     grid-template-columns: 1fr;
   }
 
