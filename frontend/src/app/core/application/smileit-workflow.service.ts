@@ -168,6 +168,15 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   addCatalogSubstituent(catalogEntry: SmileitCatalogEntryView): void {
+    // Verificar duplicados por nombre y SMILES antes de agregar
+    const alreadyExists: boolean = this.substituents().some(
+      (entry) => entry.name === catalogEntry.name && entry.smiles === catalogEntry.smiles,
+    );
+    if (alreadyExists) {
+      this.errorMessage.set(`Substituent "${catalogEntry.name}" is already in the list.`);
+      return;
+    }
+    this.errorMessage.set(null);
     this.substituents.update((currentEntries) => [
       ...currentEntries,
       {
@@ -187,6 +196,14 @@ export class SmileitWorkflowService implements OnDestroy {
       return;
     }
 
+    // Verificar duplicados por nombre y SMILES antes de agregar
+    const alreadyExists: boolean = this.substituents().some(
+      (entry) => entry.name === entryName && entry.smiles === entrySmiles,
+    );
+    if (alreadyExists) {
+      this.errorMessage.set(`Substituent "${entryName}" with the same SMILES is already in the list.`);
+      return;
+    }
     this.errorMessage.set(null);
     this.substituents.update((currentEntries) => [
       ...currentEntries,
