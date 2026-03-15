@@ -460,71 +460,100 @@
 
         <div class="catalog-management-grid">
             <article class="catalog-card">
-                <h3>Persistent substituent catalog</h3>
-                <p class="panel-caption">
-                    Register validated substituents once and reuse them by immutable stable ID + version.
-                    Use SMILES notation here. SMARTS strings should be registered in Structural pattern catalog.
-                </p>
-                <div class="options-grid compact">
-                    <label>
-                        Name
-                        <input type="text" [ngModel]="workflow.catalogCreateName()"
-                            (ngModelChange)="workflow.catalogCreateName.set($event)" />
-                    </label>
-                    <label>
-                        SMILES
-                        <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
-                            (ngModelChange)="workflow.catalogCreateSmiles.set($event)" placeholder="CC(=O)N" />
-                    </label>
-                    <label>
-                        Anchor indices
-                        <input type="text" [ngModel]="workflow.catalogCreateAnchorIndicesText()"
-                            (ngModelChange)="workflow.catalogCreateAnchorIndicesText.set($event)" placeholder="0,1" />
-                    </label>
-                    <label>
-                        Source reference
-                        <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
-                            (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
-                    </label>
-                </div>
-                <div class="chip-grid compact-chip-grid">
-                    @for (category of workflow.categories(); track category.id) {
-                    <button type="button" class="filter-chip"
-                        [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
-                        (click)="workflow.toggleCatalogCreateCategory(category.key)">
-                        {{ category.name }}
-                    </button>
-                    }
-                </div>
-@if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
-<article class="catalog-preview-card" aria-label="Catalog draft preview">
-    <h5>Catalog draft preview</h5>
-    <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
-    <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}</p>
-    <p><strong>SMILES:</strong> <span class="mono">{{ catalogDraftPreview.smiles || 'Pending' }}</span></p>
-    <p><strong>Anchors:</strong> {{ catalogDraftPreview.anchorAtomIndices.join(', ') || 'Pending' }}</p>
-    <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending' }}</p>
-    <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
-    @if (catalogDraftPreview.warnings.length > 0) {
-    <div class="catalog-preview-warnings">
-        @for (warningText of catalogDraftPreview.warnings; track warningText) {
-        <p class="warning-message preview-warning">{{ warningText }}</p>
-        }
+                <div class="catalog-card-header">
+                    <div>
+                        <h3>Persistent substituent catalog</h3>
+                        <p class="panel-caption">
+                            Register validated substituents once and reuse them by immutable stable ID + version.
+                            Use SMILES notation here. SMARTS strings should be registered in Structural pattern catalog.
+                        </p>
+                    </div>
+                    <div class="catalog-card-badge">SMILES only</div>
+                    </div>
+                    
+                    <div class="catalog-editor-layout">
+                        <section class="catalog-editor-form" aria-label="Catalog editor">
+                            <div class="catalog-form-grid">
+                                <label class="catalog-field-full">
+                                    Name
+                                    <input type="text" [ngModel]="workflow.catalogCreateName()"
+                                        (ngModelChange)="workflow.catalogCreateName.set($event)" />
+                                </label>
+                                <label class="catalog-field-full">
+                                    SMILES
+                                    <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
+                                        (ngModelChange)="workflow.catalogCreateSmiles.set($event)" placeholder="CC(=O)N" />
+                                </label>
+                                <label>
+                                    Anchor indices
+                                    <input type="text" [ngModel]="workflow.catalogCreateAnchorIndicesText()"
+                                        (ngModelChange)="workflow.catalogCreateAnchorIndicesText.set($event)" placeholder="0,1" />
+                                </label>
+                                <label>
+                                    Source reference
+                                    <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
+                                        (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
+                                </label>
+                                </div>
+<div class="catalog-category-panel">
+    <div class="subsection-header">
+        <div>
+            <h4>Chemistry categories</h4>
+            <p class="hint">Select one or more categories to classify the substituent.</p>
+        </div>
     </div>
-    }
-</article>
-}
+                            <div class="chip-grid compact-chip-grid">
+                                @for (category of workflow.categories(); track category.id) {
+                                <button type="button" class="filter-chip"
+                                    [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
+                                    (click)="workflow.toggleCatalogCreateCategory(category.key)">
+                                    {{ category.name }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="action-row compact-actions catalog-editor-actions">
+                            <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
+                                [disabled]="workflow.isProcessing() || !workflow.catalogDraftPreview().isReady">
+                                {{ workflow.isCatalogEditing() ? 'Update catalog entry' : 'Save catalog entry' }}
+                            </button>
+                            @if (workflow.isCatalogEditing()) {
+                            <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()" [disabled]="workflow.isProcessing()">
+                                Cancel edition
+                            </button>
+                            }
+                        </div>
+                        </section>
 
-                <div class="action-row compact-actions">
-                    <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
-                        [disabled]="workflow.isProcessing() || !workflow.catalogDraftPreview().isReady">
-                        {{ workflow.isCatalogEditing() ? 'Update catalog entry' : 'Save catalog entry' }}
-                    </button>
-                    @if (workflow.isCatalogEditing()) {
-                    <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()" [disabled]="workflow.isProcessing()">
-                        Cancel edition
-                    </button>
+                    @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
+                    <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
+                        <h5>Catalog draft preview</h5>
+                        <div class="catalog-preview-metadata">
+                            <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
+                            <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}</p>
+                            <p><strong>SMILES:</strong> <span class="mono">{{ catalogDraftPreview.smiles || 'Pending' }}</span></p>
+                            <p><strong>Anchors:</strong> {{ catalogDraftPreview.anchorAtomIndices.join(', ') || 'Pending' }}</p>
+                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending' }}</p>
+                            <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
+                        </div>
+                        @if (catalogDraftPreview.warnings.length > 0) {
+                        <div class="catalog-preview-warnings">
+                            @for (warningText of catalogDraftPreview.warnings; track warningText) {
+                            <p class="warning-message preview-warning">{{ warningText }}</p>
+                            }
+                        </div>
+                        }
+                    </aside>
                     }
+                </div>
+
+                <section class="catalog-browser-panel" aria-label="Stored substituent catalog">
+                    <div class="subsection-header">
+                        <div>
+                            <h4>Stored substituents</h4>
+                            <p class="hint">Browse grouped entries and edit only user-managed records.</p>
+                        </div>
                     </div>
 
                     <div class="catalog-group-grid manager-catalog-groups">
@@ -541,27 +570,27 @@
                                         <p class="catalog-name">{{ entry.name }}</p>
                                         <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                                         <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
-                                        <small>{{ entry.source_reference || 'no-source' }} · stable_id {{ entry.stable_id }} · v{{
-                                            entry.version }}</small>
+                                        <small>{{ entry.source_reference || 'no-source' }} · stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                                     </div>
                                     @if (workflow.isCatalogEntryEditable(entry)) {
                                     <button class="catalog-add" (click)="workflow.beginCatalogEntryEdition(entry)"
                                         [disabled]="workflow.isProcessing()">
                                         Edit
                                     </button>
-                                }
+                                    }
                                 </article>
                                 }
-                                </div>
-                                </article>
-                                }
-                </div>
+                            </div>
+                            </article>
+                            }
+                            </div>
+                    </section>
                 </article>
 
         </div>
         }
         </section>
-        
+
         <section class="pattern-panel" aria-label="Structural pattern catalog">
         <article class="catalog-card">
             <div class="subsection-header">
@@ -577,7 +606,7 @@
                     {{ isPatternCatalogCollapsed() ? 'Expand section' : 'Minimize section' }}
                 </button>
             </div>
-        
+
             @if (isPatternCatalogCollapsed()) {
             <div class="block-collapsed-summary">
                 <p><strong>Stored patterns:</strong> {{ workflow.patterns().length }}</p>
