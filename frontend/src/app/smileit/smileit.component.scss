@@ -131,6 +131,70 @@ select {
   gap: 0.45rem;
 }
 
+/* Vista previa de sustituyentes activos, debajo de la molécula principal */
+.substituent-summary {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #b7ded7;
+}
+
+.substituent-summary-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.substituent-chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.substituent-chip-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #f0faf8;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
+.sub-name {
+  font-weight: 700;
+  color: #0f4e4a;
+}
+
+.sub-smiles {
+  color: #4b8d85;
+  font-size: 0.74rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub-anchor {
+  margin-left: auto;
+  color: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 0.08rem 0.5rem;
+  white-space: nowrap;
+}
+
 .atom-chip {
   border: 1px solid #82d4c8;
   background: #fff;
@@ -169,7 +233,6 @@ select {
 }
 
 .catalog-item,
-.selected-item,
 .log-item,
 .structure-card {
   border: 1px solid #d8efeb;
@@ -182,6 +245,46 @@ select {
   display: flex;
   justify-content: space-between;
   gap: 0.7rem;
+}
+
+/* Sustituyentes seleccionados: mejor layout con info + controles separados */
+.selected-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid #d8efeb;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0.65rem 0.7rem;
+}
+
+.selected-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.selected-item-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  border-top: 1px solid #e8f6f3;
+  padding-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.anchor-label {
+  flex: 1;
+  min-width: 90px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4b8d85;
+  gap: 0.25rem;
+}
+
+.anchor-label input {
+  width: 100%;
+  font-size: 0.85rem;
 }
 
 .catalog-name {
@@ -211,6 +314,89 @@ select {
   font-size: 0.82rem;
 }
 
+.structures-list-card {
+  border: 1px solid #d8efeb;
+  border-radius: 10px;
+  background: #f8fffd;
+  padding: 0.75rem;
+}
+
+.structures-list-card h4 {
+  margin: 0;
+  color: #0f4e4a;
+}
+
+.structures-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.structures-list-item {
+  border: 1px solid #d8efeb;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0.5rem 0.6rem;
+}
+
+.structure-name-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #0f766e;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.structure-name-button:hover {
+  text-decoration: underline;
+}
+
+.structure-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(2, 18, 17, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.structure-modal {
+  width: min(880px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  border: 1px solid #8dd3ca;
+  border-radius: 14px;
+  background: #fff;
+  padding: 1rem;
+}
+
+.structure-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.structure-modal-header h4 {
+  margin: 0;
+  color: #0f4e4a;
+}
+
+.structure-modal-svg {
+  margin-top: 0.75rem;
+  border: 1px solid #d6ece8;
+  border-radius: 10px;
+  background: #f8fffd;
+  padding: 0.75rem;
+  overflow: auto;
+}
+
 .selected-header,
 .history-header {
   display: flex;
@@ -218,12 +404,6 @@ select {
   justify-content: space-between;
   gap: 0.6rem;
   flex-wrap: wrap;
-}
-
-.anchor-block {
-  display: flex;
-  align-items: end;
-  gap: 0.45rem;
 }
 
 .metadata-grid {

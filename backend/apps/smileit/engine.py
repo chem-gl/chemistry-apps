@@ -32,6 +32,37 @@ def canonicalize_smiles(smiles: str) -> Optional[str]:
     return Chem.MolToSmiles(mol, isomericSmiles=True)
 
 
+def canonicalize_substituent(smiles: str, anchor_idx: int) -> Optional[tuple[str, int]]:
+    """Canonicaliza un SMILES de sustituyente preservando el índice del átomo de anclaje.
+
+    Usa `rootedAtAtom` para iniciar el recorrido SMILES desde el átomo de anclaje,
+    garantizando que al reparse el átomo de anclaje quede en el índice 0.
+    Para sustituyentes monoatómicos el índice siempre es None (manejado por el plugin).
+
+    Args:
+        smiles: SMILES del sustituyente (puede no ser canónico).
+        anchor_idx: Índice del átomo de anclaje en el SMILES original.
+
+    Returns:
+        Tupla (canonical_smiles, new_anchor_idx) o None si el SMILES es inválido.
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    n_atoms: int = mol.GetNumAtoms()
+    # Clampar el índice por si el payload trae un índice fuera de rango
+    safe_anchor: int = min(anchor_idx, n_atoms - 1)
+    if n_atoms == 1:
+        # Monoátomo: el índice siempre es 0
+        return Chem.MolToSmiles(mol, isomericSmiles=True), 0
+    # Rootear el SMILES en el átomo de anclaje: garantiza que al reparse
+    # Chem.MolFromSmiles(result).GetAtomWithIdx(0) sea el átomo de anclaje.
+    rooted_smiles: str = Chem.MolToSmiles(
+        mol, isomericSmiles=True, rootedAtAtom=safe_anchor
+    )
+    return rooted_smiles, 0
+
+
 def validate_smiles(smiles: str) -> bool:
     """Retorna True si el SMILES es parseable por RDKit."""
     return Chem.MolFromSmiles(smiles) is not None
@@ -286,16 +317,20 @@ def _fuse_with_wildcard_anchor(
 def _has_enough_implicit_hydrogens(
     atom_p: Chem.Atom, atom_s: Chem.Atom, bond_order: int
 ) -> bool:
-    """Verifica si los dos átomos tienen suficientes H implícitos para el enlace.
+    """Verifica si los dos átomos tienen suficientes hidrógenos disponibles para el enlace.
 
     Refleja la lógica `haveEnoughImplicitHydrogens` del legado Java.
     Si cualquiera de los dos no es carbono, siempre se permite (heteroátomos
     tienen semántica especial de valencia flexible).
+
+    Para carbonos se comprueba la suma de H implícitos + H explícitos porque
+    sustituyentes como [CH2]Cl o [CH]=O especifican sus H vía notación de
+    corchete (implícitos=0, explícitos>0) pero aún poseen valencia libre.
     """
     if atom_p.GetSymbol() != "C" or atom_s.GetSymbol() != "C":
         return True
-    h_p: int = get_implicit_hydrogens(atom_p)
-    h_s: int = get_implicit_hydrogens(atom_s)
+    h_p: int = get_implicit_hydrogens(atom_p) + atom_p.GetNumExplicitHs()
+    h_s: int = get_implicit_hydrogens(atom_s) + atom_s.GetNumExplicitHs()
     return h_p >= bond_order and h_s >= bond_order
 
 
