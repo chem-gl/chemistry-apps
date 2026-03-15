@@ -10,17 +10,14 @@
 
 
 /**
- * Sustituyente persistente disponible para asignación por bloques.
+ * Sustituyente manual incluido dentro de un bloque de asignación.
  */
-export interface SmileitCatalogEntry { 
-    id: string;
-    stable_id: string;
-    version: number;
+export interface SmileitManualSubstituentInputRequest { 
     name: string;
     smiles: string;
     anchor_atom_indices: Array<number>;
-    categories?: Array<string>;
-    source_reference: string;
+    categories: Array<string>;
+    source_reference?: string;
     provenance_metadata?: { [key: string]: string; };
 }
 

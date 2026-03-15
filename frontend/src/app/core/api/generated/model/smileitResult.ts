@@ -7,17 +7,22 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { SmileitTraceabilityRow } from './smileitTraceabilityRow';
 import { SmileitGeneratedStructure } from './smileitGeneratedStructure';
 
 
 /**
- * Resultado completo de la generación combinatoria.
+ * Resultado final de generación combinatoria y exportes reproducibles.
  */
 export interface SmileitResult { 
     total_generated: number;
     generated_structures: Array<SmileitGeneratedStructure>;
+    traceability_rows: Array<SmileitTraceabilityRow>;
     truncated: boolean;
     principal_smiles: string;
     selected_atom_indices: Array<number>;
+    export_name_base: string;
+    export_padding: number;
+    references: { [key: string]: Array<{ [key: string]: any; }>; };
 }
 

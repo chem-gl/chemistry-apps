@@ -1,4 +1,4 @@
-// smileit.component.ts: Pantalla Smileit para inspección, sustitución y generación combinatoria de SMILES.
+// smileit.component.ts: Pantalla principal de Smile-it con bloques de asignación, análisis medicinal y exportes reproducibles.
 
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
@@ -10,9 +10,9 @@ import {
   DownloadedReportFile,
   JobLogEntryView,
   ScientificJobView,
-  SmileitCatalogEntryView,
 } from '../core/api/jobs-api.service';
 import {
+  SmileitAssignmentBlockDraft,
   SmileitGeneratedStructureView,
   SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
@@ -30,12 +30,16 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private routeSubscription: Subscription | null = null;
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
-  private readonly highlightedInspectionSvg = computed<string>(() =>
-    this.decorateInspectionSvg(this.workflow.inspectionSvg(), this.workflow.selectedAtomIndices()),
+  private readonly decoratedInspectionSvg = computed<string>(() =>
+    this.decorateInspectionSvg(
+      this.workflow.inspectionSvg(),
+      this.workflow.selectedAtomIndices(),
+      this.workflow.inspection()?.annotations ?? [],
+    ),
   );
 
   ngOnInit(): void {
-    this.workflow.loadCatalog();
+    this.workflow.loadInitialData();
     this.workflow.loadHistory();
     this.workflow.inspectPrincipalStructure();
 
@@ -67,49 +71,28 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.workflow.openHistoricalJob(jobId);
   }
 
-  addCatalogSubstituent(entry: SmileitCatalogEntryView): void {
-    this.workflow.addCatalogSubstituent(entry);
-  }
-
-  addCustomSubstituent(): void {
-    this.workflow.addCustomSubstituent();
-  }
-
-  removeSubstituent(indexToRemove: number): void {
-    this.workflow.removeSubstituent(indexToRemove);
+  addAssignmentBlock(): void {
+    this.workflow.addAssignmentBlock();
   }
 
   exportCsv(): void {
-    this.workflow.downloadCsvReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {
-        // El workflow expone el mensaje de error para la UI.
-      },
-    });
+    this.downloadReport(this.workflow.downloadCsvReport.bind(this.workflow));
+  }
+
+  exportSmiles(): void {
+    this.downloadReport(this.workflow.downloadSmilesReport.bind(this.workflow));
+  }
+
+  exportTraceability(): void {
+    this.downloadReport(this.workflow.downloadTraceabilityReport.bind(this.workflow));
   }
 
   exportLog(): void {
-    this.workflow.downloadLogReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {
-        // El workflow expone el mensaje de error para la UI.
-      },
-    });
+    this.downloadReport(this.workflow.downloadLogReport.bind(this.workflow));
   }
 
   exportError(): void {
-    this.workflow.downloadErrorReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {
-        // El workflow expone el mensaje de error para la UI.
-      },
-    });
+    this.downloadReport(this.workflow.downloadErrorReport.bind(this.workflow));
   }
 
   toNumber(rawValue: number | string): number {
@@ -118,6 +101,17 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   isAtomSelected(atomIndex: number): boolean {
     return this.workflow.selectedAtomIndices().includes(atomIndex);
+  }
+
+  isBlockSiteSelected(block: SmileitAssignmentBlockDraft, atomIndex: number): boolean {
+    return block.siteAtomIndices.includes(atomIndex);
+  }
+
+  coverageLabel(atomIndex: number): string | null {
+    const coverageItem = this.workflow
+      .selectedSiteCoverage()
+      .find((entry) => entry.siteAtomIndex === atomIndex);
+    return coverageItem ? `${coverageItem.blockLabel} · P${coverageItem.priority}` : null;
   }
 
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {
@@ -132,12 +126,24 @@ export class SmileitComponent implements OnInit, OnDestroy {
     return `log-level log-level-${logLevel}`;
   }
 
+  patternTypeLabel(patternType: string): string {
+    if (patternType === 'toxicophore') {
+      return 'Toxicophore';
+    }
+
+    if (patternType === 'privileged') {
+      return 'Privileged scaffold';
+    }
+
+    return patternType;
+  }
+
   toTrustedSvg(svgMarkup: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(svgMarkup);
   }
 
   toTrustedInspectionSvg(): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.highlightedInspectionSvg());
+    return this.sanitizer.bypassSecurityTrustHtml(this.decoratedInspectionSvg());
   }
 
   onInspectionSvgClick(mouseEvent: MouseEvent): void {
@@ -187,6 +193,19 @@ export class SmileitComponent implements OnInit, OnDestroy {
     if (keyboardEvent.key === 'Escape') {
       this.closeGeneratedStructureModal();
     }
+  }
+
+  private downloadReport(
+    downloadFactory: () => ReturnType<SmileitWorkflowService['downloadCsvReport']>,
+  ): void {
+    downloadFactory().subscribe({
+      next: (downloadedFile: DownloadedReportFile) => {
+        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+      },
+      error: () => {
+        // El workflow expone el mensaje de error para la UI.
+      },
+    });
   }
 
   private extractAtomIndexFromEvent(mouseEvent: MouseEvent): number | null {
@@ -262,7 +281,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Umbral de tolerancia para evitar seleccionar átomos con clicks lejanos al dibujo.
     const maxDistanceSquared: number = 42 * 42;
     if (bestDistanceSquared <= maxDistanceSquared) {
       return bestAtomIndex;
@@ -280,9 +298,9 @@ export class SmileitComponent implements OnInit, OnDestroy {
       normalizedClassText,
       rawId,
       rawDataAtomIndex.length > 0 ? `atom-${rawDataAtomIndex}` : '',
-    ].filter((candidateText) => candidateText.trim() !== '');
+    ].filter((candidateText: string) => candidateText.trim() !== '');
 
-    const parsedIndices: number[] = atomIndexCandidates.flatMap((candidateText) =>
+    const parsedIndices: number[] = atomIndexCandidates.flatMap((candidateText: string) =>
       this.parseAtomIndices(candidateText),
     );
 
@@ -316,7 +334,17 @@ export class SmileitComponent implements OnInit, OnDestroy {
     return indices;
   }
 
-  private decorateInspectionSvg(rawSvgMarkup: string, selectedAtomIndices: number[]): string {
+  private decorateInspectionSvg(
+    rawSvgMarkup: string,
+    selectedAtomIndices: number[],
+    annotations: Array<{
+      atom_indices: number[];
+      color: string;
+      caption: string;
+      name: string;
+      pattern_type: string;
+    }>,
+  ): string {
     if (rawSvgMarkup.trim() === '') {
       return rawSvgMarkup;
     }
@@ -328,19 +356,91 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return rawSvgMarkup;
     }
 
+    const atomPositions: Map<number, { x: number; y: number }> =
+      this.extractAtomPositionsFromBonds(rootSvg);
     this.ensureAtomHighlightStyle(rootSvg, parsedDocument);
-    this.drawAtomVertexOverlays(rootSvg, parsedDocument, selectedAtomIndices);
+    this.drawAnnotationOverlays(rootSvg, parsedDocument, annotations, atomPositions);
+    this.drawAtomVertexOverlays(rootSvg, parsedDocument, selectedAtomIndices, atomPositions);
 
     return rootSvg.outerHTML;
+  }
+
+  private drawAnnotationOverlays(
+    rootSvg: SVGSVGElement,
+    parsedDocument: Document,
+    annotations: Array<{
+      atom_indices: number[];
+      color: string;
+      caption: string;
+      name: string;
+      pattern_type: string;
+    }>,
+    atomPositions: Map<number, { x: number; y: number }>,
+  ): void {
+    rootSvg
+      .querySelectorAll('[data-smileit-annotation-overlay="true"]')
+      .forEach((overlayNode: Element) => {
+        overlayNode.remove();
+      });
+
+    if (annotations.length === 0 || atomPositions.size === 0) {
+      return;
+    }
+
+    const svgNamespace: string = 'http://www.w3.org/2000/svg';
+    const overlayGroup: SVGGElement = parsedDocument.createElementNS(
+      svgNamespace,
+      'g',
+    ) as SVGGElement;
+    overlayGroup.setAttribute('data-smileit-annotation-overlay', 'true');
+    const radiusOffsets: Map<number, number> = new Map();
+
+    annotations.forEach((annotation) => {
+      annotation.atom_indices.forEach((atomIndex: number) => {
+        const atomPosition = atomPositions.get(atomIndex);
+        if (atomPosition === undefined) {
+          return;
+        }
+
+        const radiusOffset: number = radiusOffsets.get(atomIndex) ?? 0;
+        const ringRadius: number = 13 + radiusOffset * 4;
+        radiusOffsets.set(atomIndex, radiusOffset + 1);
+
+        const annotationCircle: SVGCircleElement = parsedDocument.createElementNS(
+          svgNamespace,
+          'circle',
+        ) as SVGCircleElement;
+        annotationCircle.setAttribute('cx', atomPosition.x.toFixed(2));
+        annotationCircle.setAttribute('cy', atomPosition.y.toFixed(2));
+        annotationCircle.setAttribute('r', ringRadius.toFixed(2));
+        annotationCircle.setAttribute('fill', annotation.color);
+        annotationCircle.setAttribute('fill-opacity', '0.08');
+        annotationCircle.setAttribute('stroke', annotation.color);
+        annotationCircle.setAttribute('stroke-width', '2');
+        annotationCircle.setAttribute('class', `smileit-annotation-ring atom-${atomIndex}`);
+        annotationCircle.setAttribute('data-atom-index', String(atomIndex));
+        annotationCircle.setAttribute('data-smileit-hit-zone', 'true');
+        annotationCircle.setAttribute('style', 'cursor: crosshair;');
+
+        const titleNode: SVGTitleElement = parsedDocument.createElementNS(
+          svgNamespace,
+          'title',
+        ) as SVGTitleElement;
+        titleNode.textContent = `${this.patternTypeLabel(annotation.pattern_type)} · ${annotation.name}: ${annotation.caption}`;
+        annotationCircle.appendChild(titleNode);
+        overlayGroup.appendChild(annotationCircle);
+      });
+    });
+
+    rootSvg.appendChild(overlayGroup);
   }
 
   private drawAtomVertexOverlays(
     rootSvg: SVGSVGElement,
     parsedDocument: Document,
     selectedAtomIndices: number[],
+    atomPositions: Map<number, { x: number; y: number }>,
   ): void {
-    const atomPositions: Map<number, { x: number; y: number }> =
-      this.extractAtomPositionsFromBonds(rootSvg);
     if (atomPositions.size === 0) {
       return;
     }

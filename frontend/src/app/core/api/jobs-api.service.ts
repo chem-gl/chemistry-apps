@@ -21,13 +21,27 @@ import {
   MarcusJobResponse,
   MarcusService,
   MolarFractionsService,
+  PatternTypeEnum,
   ScientificJob,
+  SiteOverlapPolicyEnum,
+  SmileitAssignmentBlockInputRequest,
   SmileitCatalogEntry,
+  SmileitCatalogEntryCreateRequest,
+  SmileitCategory,
   SmileitJobCreateRequest,
   SmileitJobResponse,
+  SmileitManualSubstituentInputRequest,
+  SmileitPatternEntry,
+  SmileitPatternEntryCreateRequest,
+  SmileitPatternReference,
+  SmileitQuickProperties,
+  SmileitResolvedAssignmentBlock,
   SmileitService,
+  SmileitStructuralAnnotation,
   SmileitStructureInspectionRequestRequest,
   SmileitStructureInspectionResponse,
+  SmileitSubstituentReferenceInputRequest,
+  SmileitTraceabilityRow,
 } from './generated';
 
 /**
@@ -261,6 +275,13 @@ export type CalculatorOperationView = CalculatorOperationEnum;
 
 /** Entrada de catálogo de sustituyentes normalizada para la UI. */
 export type SmileitCatalogEntryView = SmileitCatalogEntry;
+export type SmileitCategoryView = SmileitCategory;
+export type SmileitPatternEntryView = SmileitPatternEntry;
+export type SmileitQuickPropertiesView = SmileitQuickProperties;
+export type SmileitStructuralAnnotationView = SmileitStructuralAnnotation;
+export type SmileitPatternReferenceView = SmileitPatternReference;
+export type SmileitTraceabilityRowView = SmileitTraceabilityRow;
+export type SmileitResolvedAssignmentBlockView = SmileitResolvedAssignmentBlock;
 
 /** Información de átomo normalizada para la UI de selección. */
 export interface SmileitAtomInfoView {
@@ -276,24 +297,68 @@ export interface SmileitStructureInspectionView {
   atomCount: number;
   atoms: SmileitAtomInfoView[];
   svg: string;
+  quickProperties: SmileitQuickPropertiesView;
+  annotations: SmileitStructuralAnnotationView[];
+  activePatternRefs: SmileitPatternReferenceView[];
 }
 
-/** Parámetros de un sustituyente mandado en la UI. */
-export interface SmileitSubstituentParams {
+/** Referencia inmutable a un sustituyente persistente. */
+export interface SmileitSubstituentReferenceParams {
+  stableId: string;
+  version: number;
+}
+
+/** Sustituyente manual transportado por la UI. */
+export interface SmileitManualSubstituentParams {
   name: string;
   smiles: string;
-  selectedAtomIndex: number;
+  anchorAtomIndices: number[];
+  categories: string[];
+  sourceReference?: string;
+  provenanceMetadata?: Record<string, string>;
+}
+
+/** Bloque de asignación editable desde la UI. */
+export interface SmileitAssignmentBlockParams {
+  label: string;
+  siteAtomIndices: number[];
+  categoryKeys: string[];
+  substituentRefs: SmileitSubstituentReferenceParams[];
+  manualSubstituents: SmileitManualSubstituentParams[];
+}
+
+/** Payload para registrar una nueva entrada persistente del catálogo. */
+export interface SmileitCatalogEntryCreateParams {
+  name: string;
+  smiles: string;
+  anchorAtomIndices: number[];
+  categoryKeys: string[];
+  sourceReference?: string;
+  provenanceMetadata?: Record<string, string>;
+}
+
+/** Payload para registrar un nuevo patrón estructural persistente. */
+export interface SmileitPatternEntryCreateParams {
+  name: string;
+  smarts: string;
+  patternType: PatternTypeEnum;
+  caption: string;
+  sourceReference?: string;
+  provenanceMetadata?: Record<string, string>;
 }
 
 /** Parámetros de creación de un job smileit (vista camelCase). */
 export interface SmileitGenerationParams {
   principalSmiles: string;
   selectedAtomIndices: number[];
-  substituents: SmileitSubstituentParams[];
+  assignmentBlocks: SmileitAssignmentBlockParams[];
+  siteOverlapPolicy?: SiteOverlapPolicyEnum;
   rSubstitutes?: number;
   numBonds?: number;
   allowRepeated?: boolean;
   maxStructures?: number;
+  exportNameBase?: string;
+  exportPadding?: number;
   version?: string;
 }
 
@@ -353,11 +418,53 @@ export class JobsApiService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Devuelve el catálogo de 17 sustituyentes predefinidos.
-   * Usar para poblar la lista inicial en la UI sin necesidad de escribir SMILES.
+   * Devuelve el catálogo persistente y versionado de sustituyentes.
+   * Usar para poblar la lista inicial y referencias inmutables por bloque.
    */
   listSmileitCatalog(): Observable<SmileitCatalogEntryView[]> {
     return this.smileitClient.smileitJobsCatalogList().pipe(shareReplay(1));
+  }
+
+  /** Devuelve las categorías químicas verificables para filtros y validación. */
+  listSmileitCategories(): Observable<SmileitCategoryView[]> {
+    return this.smileitClient.smileitJobsCategoriesList().pipe(shareReplay(1));
+  }
+
+  /** Devuelve el catálogo de patrones estructurales activos para anotación visual. */
+  listSmileitPatterns(): Observable<SmileitPatternEntryView[]> {
+    return this.smileitClient.smileitJobsPatternsList().pipe(shareReplay(1));
+  }
+
+  /** Crea una nueva entrada persistente en el catálogo de sustituyentes. */
+  createSmileitCatalogEntry(
+    params: SmileitCatalogEntryCreateParams,
+  ): Observable<SmileitCatalogEntryView[]> {
+    const payload: SmileitCatalogEntryCreateRequest = {
+      name: params.name,
+      smiles: params.smiles,
+      anchor_atom_indices: params.anchorAtomIndices,
+      category_keys: params.categoryKeys,
+      source_reference: params.sourceReference,
+      provenance_metadata: params.provenanceMetadata,
+    };
+
+    return this.smileitClient.smileitJobsCatalogCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Crea un nuevo patrón persistente para anotación estructural. */
+  createSmileitPatternEntry(
+    params: SmileitPatternEntryCreateParams,
+  ): Observable<SmileitPatternEntryView[]> {
+    const payload: SmileitPatternEntryCreateRequest = {
+      name: params.name,
+      smarts: params.smarts,
+      pattern_type: params.patternType,
+      caption: params.caption,
+      source_reference: params.sourceReference,
+      provenance_metadata: params.provenanceMetadata,
+    };
+
+    return this.smileitClient.smileitJobsPatternsCreate(payload).pipe(shareReplay(1));
   }
 
   /**
@@ -378,6 +485,9 @@ export class JobsApiService {
             isAromatic: atom.is_aromatic,
           })),
           svg: raw.svg,
+          quickProperties: raw.quick_properties,
+          annotations: raw.annotations,
+          activePatternRefs: raw.active_pattern_refs,
         }),
       ),
       shareReplay(1),
@@ -390,18 +500,41 @@ export class JobsApiService {
    */
   dispatchSmileitJob(params: SmileitGenerationParams): Observable<SmileitJobResponseView> {
     const payload: SmileitJobCreateRequest = {
-      version: params.version ?? '1.0.0',
+      version: params.version ?? '2.0.0',
       principal_smiles: params.principalSmiles,
       selected_atom_indices: params.selectedAtomIndices,
-      substituents: params.substituents.map((s) => ({
-        name: s.name,
-        smiles: s.smiles,
-        selected_atom_index: s.selectedAtomIndex,
-      })),
+      assignment_blocks: params.assignmentBlocks.map(
+        (block: SmileitAssignmentBlockParams): SmileitAssignmentBlockInputRequest => ({
+          label: block.label,
+          site_atom_indices: block.siteAtomIndices,
+          category_keys: block.categoryKeys,
+          substituent_refs: block.substituentRefs.map(
+            (
+              reference: SmileitSubstituentReferenceParams,
+            ): SmileitSubstituentReferenceInputRequest => ({
+              stable_id: reference.stableId,
+              version: reference.version,
+            }),
+          ),
+          manual_substituents: block.manualSubstituents.map(
+            (manual: SmileitManualSubstituentParams): SmileitManualSubstituentInputRequest => ({
+              name: manual.name,
+              smiles: manual.smiles,
+              anchor_atom_indices: manual.anchorAtomIndices,
+              categories: manual.categories,
+              source_reference: manual.sourceReference,
+              provenance_metadata: manual.provenanceMetadata,
+            }),
+          ),
+        }),
+      ),
+      site_overlap_policy: params.siteOverlapPolicy,
       r_substitutes: params.rSubstitutes,
       num_bonds: params.numBonds,
       allow_repeated: params.allowRepeated,
       max_structures: params.maxStructures,
+      export_name_base: params.exportNameBase,
+      export_padding: params.exportPadding,
     };
     return this.smileitClient.smileitJobsCreate(payload).pipe(shareReplay(1));
   }
@@ -416,6 +549,26 @@ export class JobsApiService {
     return this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response').pipe(
       map((response: HttpResponse<Blob>) =>
         this.normalizeDownloadedReport(response, `smileit_${jobId}_report.csv`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el archivo enumerado de SMILES listo para DataWarrior u otros flujos. */
+  downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_structures.smi`),
+      ),
+      shareReplay(1),
+    );
+  }
+
+  /** Descarga el reporte tabular de trazabilidad sitio -> sustituyente por derivado. */
+  downloadSmileitTraceabilityReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response').pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, `smileit_${jobId}_traceability.csv`),
       ),
       shareReplay(1),
     );

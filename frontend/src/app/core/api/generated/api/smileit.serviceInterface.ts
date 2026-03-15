@@ -13,8 +13,12 @@ import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
 import { SmileitCatalogEntry } from '../model/models';
+import { SmileitCatalogEntryCreateRequest } from '../model/models';
+import { SmileitCategory } from '../model/models';
 import { SmileitJobCreateRequest } from '../model/models';
 import { SmileitJobResponse } from '../model/models';
+import { SmileitPatternEntry } from '../model/models';
+import { SmileitPatternEntryCreateRequest } from '../model/models';
 import { SmileitStructureInspectionRequestRequest } from '../model/models';
 import { SmileitStructureInspectionResponse } from '../model/models';
 
@@ -28,57 +32,103 @@ export interface SmileitServiceInterface {
     configuration: Configuration;
 
     /**
-     * Obtener Catálogo de Sustituyentes
-     * Retorna la lista de sustituyentes del catálogo inicial migrado desde el legado Java Smile-it. Útil para el selector de sustituyentes del frontend.
+     * Gestionar Catálogo de Sustituyentes
+     * Lista o crea sustituyentes persistidos activos de Smile-it.
+     * @endpoint post /api/smileit/jobs/catalog/
+     * @param smileitCatalogEntryCreateRequest 
+     */
+    smileitJobsCatalogCreate(smileitCatalogEntryCreateRequest: SmileitCatalogEntryCreateRequest, extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
+
+    /**
+     * Gestionar Catálogo de Sustituyentes
+     * Lista o crea sustituyentes persistidos activos de Smile-it.
      * @endpoint get /api/smileit/jobs/catalog/
      */
     smileitJobsCatalogList(extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
 
     /**
-     * Crear Job Smileit
-     * Crea un job asíncrono que genera moléculas por sustitución combinatoria sobre la molécula principal en los átomos seleccionados.
+     * Listar Categorías Químicas de Smile-it
+     * Lista categorías activas verificables para selección por bloque.
+     * @endpoint get /api/smileit/jobs/categories/
+     */
+    smileitJobsCategoriesList(extraHttpRequestParams?: any): Observable<Array<SmileitCategory>>;
+
+    /**
+     * Crear Job Smile-it v2
+     * Crea job con bloques resueltos y cobertura total obligatoria.
      * @endpoint post /api/smileit/jobs/
      * @param smileitJobCreateRequest 
      */
     smileitJobsCreate(smileitJobCreateRequest: SmileitJobCreateRequest, extraHttpRequestParams?: any): Observable<SmileitJobResponse>;
 
     /**
-     * Inspeccionar Estructura SMILES
-     * Valida un SMILES y retorna la lista de átomos indexados junto con un SVG de la molécula renderizada. Se usa para que el frontend permita selección interactiva de átomos de sustitución antes de crear el job.
+     * Inspeccionar Estructura Smile-it
+     * Inspecciona molécula con propiedades rápidas y anotaciones por patrones.
      * @endpoint post /api/smileit/jobs/inspect-structure/
      * @param smileitStructureInspectionRequestRequest 
      */
     smileitJobsInspectStructureCreate(smileitStructureInspectionRequestRequest: SmileitStructureInspectionRequestRequest, extraHttpRequestParams?: any): Observable<SmileitStructureInspectionResponse>;
 
     /**
-     * Descargar Reporte CSV de Smileit
-     * Descarga un CSV con índice, nombre y SMILES de cada estructura generada. Solo aplica para jobs en estado completed.
+     * Gestionar Patrones Estructurales Smile-it
+     * Lista o crea patrones estructurales activos de Smile-it.
+     * @endpoint post /api/smileit/jobs/patterns/
+     * @param smileitPatternEntryCreateRequest 
+     */
+    smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+
+    /**
+     * Gestionar Patrones Estructurales Smile-it
+     * Lista o crea patrones estructurales activos de Smile-it.
+     * @endpoint get /api/smileit/jobs/patterns/
+     */
+    smileitJobsPatternsList(extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+
+    /**
+     * Descargar CSV de Estructuras Smile-it
+     * Descarga CSV de estructuras derivadas para análisis tabular.
      * @endpoint get /api/smileit/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     smileitJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error de Smileit
-     * Descarga un reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y traza de fallo.
+     * Descargar Reporte de Error Smile-it
+     * Descarga reporte de error cuando el job Smile-it falla.
      * @endpoint get /api/smileit/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
     smileitJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Smileit
-     * Descarga un log técnico con parámetros, resultados, eventos y CSV embebido cuando el job ya está completed.
+     * Descargar Reporte LOG de Smile-it
+     * Descarga reporte técnico completo con logs y resumen de resultados.
      * @endpoint get /api/smileit/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
     smileitJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job Smileit
-     * Devuelve estado y resultado del job smileit por UUID.
+     * Descargar Export Principal SMILES Enumerado
+     * Descarga archivo limpio NAME + NAME_XXXXX SMILES para DataWarrior.
+     * @endpoint get /api/smileit/jobs/{id}/report-smiles/
+     * @param id A UUID string identifying this scientific job.
+     */
+    smileitJobsReportSmilesRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar CSV de Trazabilidad Smile-it
+     * Descarga auditoría sitio -&gt; sustituyente aplicada por derivado.
+     * @endpoint get /api/smileit/jobs/{id}/report-traceability/
+     * @param id A UUID string identifying this scientific job.
+     */
+    smileitJobsReportTraceabilityRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Consultar Job Smile-it
+     * Recupera estado/resultados de un job Smile-it.
      * @endpoint get /api/smileit/jobs/{id}/
-     * @param id UUID del job smileit.
+     * @param id UUID del job Smile-it.
      */
     smileitJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<SmileitJobResponse>;
 
