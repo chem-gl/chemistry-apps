@@ -303,4 +303,45 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.categories()).toHaveLength(1);
     expect(workflowService.patterns()).toHaveLength(1);
   });
+
+  it('prunes obsolete block sites and blocks dispatch when selection expands without coverage', () => {
+    workflowService.selectedAtomIndices.set([0, 1]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        siteAtomIndices: [0, 1],
+        manualSubstituents: [],
+      },
+    ]);
+
+    workflowService.toggleSelectedAtom(1);
+
+    expect(workflowService.assignmentBlocks()[0].siteAtomIndices).toEqual([0]);
+    expect(workflowService.uncoveredSelectedSites()).toEqual([]);
+    expect(workflowService.canDispatch()).toBe(true);
+
+    workflowService.toggleSelectedAtom(2);
+
+    expect(workflowService.selectedAtomIndices()).toEqual([0, 2]);
+    expect(workflowService.assignmentBlocks()[0].siteAtomIndices).toEqual([0]);
+    expect(workflowService.uncoveredSelectedSites()).toEqual([2]);
+    expect(workflowService.canDispatch()).toBe(false);
+  });
+
+  it('creates a new block focused on currently uncovered sites', () => {
+    workflowService.selectedAtomIndices.set([0, 1, 2]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        siteAtomIndices: [0],
+        manualSubstituents: [],
+      },
+    ]);
+
+    workflowService.addAssignmentBlock();
+
+    expect(workflowService.assignmentBlocks()).toHaveLength(2);
+    expect(workflowService.assignmentBlocks()[1].label).toBe('Block 2');
+    expect(workflowService.assignmentBlocks()[1].siteAtomIndices).toEqual([1, 2]);
+  });
 });
