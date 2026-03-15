@@ -20,7 +20,7 @@ APP_API_BASE_PATH: Final[str] = "/api/smileit/jobs/"
 
 # --- Plugin ---
 PLUGIN_NAME: Final[str] = "smileit"
-DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0.0"
+DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0.1"
 
 # --- Límites de seguridad combinatoria ---
 MAX_GENERATED_STRUCTURES: Final[int] = 5000

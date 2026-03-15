@@ -112,7 +112,7 @@ class SmileitSubstituentInputSerializer(serializers.Serializer):
         OpenApiExample(
             "Generar variantes del benceno",
             value={
-                "version": "1.0.0",
+                "version": "1.0.1",
                 "principal_smiles": "c1ccccc1",
                 "selected_atom_indices": [0, 1],
                 "substituents": [
