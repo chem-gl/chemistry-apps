@@ -101,7 +101,7 @@ _INITIAL_CATALOG: list[SmileitCatalogEntry] = [
     ),
     SmileitCatalogEntry(
         name="Nitro",
-        smiles="[N](=O)[O-]",
+        smiles="[N+](=O)[O-]",
         description="Over Nitrogen",
         selected_atom_index=0,
     ),

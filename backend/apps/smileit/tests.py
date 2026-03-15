@@ -23,6 +23,7 @@ from .catalog import get_initial_catalog
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 from .engine import (
     canonicalize_smiles,
+    canonicalize_substituent,
     fuse_molecules,
     inspect_smiles_structure,
     render_molecule_svg,
@@ -176,6 +177,102 @@ class SmileitEngineTests(TestCase):
             bond_order=1,
         )
         self.assertEqual(result, "Nc1ccccc1")
+
+    def test_canonicalize_substituent_preserves_anchor_through_canonical_reordering(
+        self,
+    ) -> None:
+        """C(=O)O se reordena a O=CO; el átomo de anclaje (C) debe quedar en índice 0."""
+        result = canonicalize_substituent("C(=O)O", anchor_idx=0)
+        self.assertIsNotNone(result)
+        assert result is not None
+        canonical_smiles, anchor = result
+        self.assertEqual(anchor, 0)
+        from rdkit import Chem
+
+        mol = Chem.MolFromSmiles(canonical_smiles)
+        self.assertIsNotNone(mol)
+        self.assertEqual(mol.GetAtomWithIdx(0).GetSymbol(), "C")
+
+    def test_canonicalize_substituent_explicit_h_smiles_works(self) -> None:
+        """[CH2]Cl tiene H explícitos; canonicalize_substituent no debe retornar None."""
+        result = canonicalize_substituent("[CH2]Cl", anchor_idx=0)
+        self.assertIsNotNone(result)
+        assert result is not None
+        _, anchor = result
+        self.assertEqual(anchor, 0)
+
+    def test_canonicalize_substituent_invalid_smiles_returns_none(self) -> None:
+        """SMILES inválido debe retornar None."""
+        result = canonicalize_substituent("INVALID!!!", anchor_idx=0)
+        self.assertIsNone(result)
+
+    def test_canonicalize_substituent_single_atom(self) -> None:
+        """Un sustituyente monoatómico debe retornar anchor 0."""
+        result = canonicalize_substituent("N", anchor_idx=0)
+        self.assertIsNotNone(result)
+        assert result is not None
+        _, anchor = result
+        self.assertEqual(anchor, 0)
+
+    def test_fuse_molecules_carboxylic_acid_produces_benzoic_acid(self) -> None:
+        """C(=O)O fusionado con benceno debe producir ácido benzoico."""
+        from rdkit import Chem
+
+        canon = canonicalize_substituent("C(=O)O", anchor_idx=0)
+        self.assertIsNotNone(canon)
+        assert canon is not None
+        canonical_smiles, anchor = canon
+        result = fuse_molecules(
+            principal_smiles="c1ccccc1",
+            substituent_smiles=canonical_smiles,
+            principal_atom_idx=0,
+            substituent_atom_idx=anchor,
+            bond_order=1,
+        )
+        self.assertIsNotNone(result)
+        mol = Chem.MolFromSmiles(result)
+        self.assertIsNotNone(mol)
+        self.assertEqual(mol.GetNumAtoms(), 9)
+
+    def test_fuse_molecules_aldehyde_produces_benzaldehyde(self) -> None:
+        """[CH]=O fusionado con benceno debe producir benzaldehído."""
+        from rdkit import Chem
+
+        canon = canonicalize_substituent("[CH]=O", anchor_idx=0)
+        self.assertIsNotNone(canon)
+        assert canon is not None
+        canonical_smiles, anchor = canon
+        result = fuse_molecules(
+            principal_smiles="c1ccccc1",
+            substituent_smiles=canonical_smiles,
+            principal_atom_idx=0,
+            substituent_atom_idx=anchor,
+            bond_order=1,
+        )
+        self.assertIsNotNone(result)
+        mol = Chem.MolFromSmiles(result)
+        self.assertIsNotNone(mol)
+        self.assertEqual(mol.GetNumAtoms(), 8)
+
+    def test_fuse_molecules_chloromethane_produces_benzyl_chloride(self) -> None:
+        """[CH2]Cl fusionado con benceno debe producir cloruro de bencilo."""
+        from rdkit import Chem
+
+        canon = canonicalize_substituent("[CH2]Cl", anchor_idx=0)
+        self.assertIsNotNone(canon)
+        assert canon is not None
+        canonical_smiles, anchor = canon
+        result = fuse_molecules(
+            principal_smiles="c1ccccc1",
+            substituent_smiles=canonical_smiles,
+            principal_atom_idx=0,
+            substituent_atom_idx=anchor,
+            bond_order=1,
+        )
+        self.assertIsNotNone(result)
+        mol = Chem.MolFromSmiles(result)
+        self.assertIsNotNone(mol)
+        self.assertEqual(mol.GetNumAtoms(), 8)
 
 
 # ---------------------------------------------------------------------------
@@ -593,3 +690,143 @@ class SmileitJobApiTests(TestCase):
             f"{APP_API_BASE_PATH}00000000-0000-0000-0000-000000000000/"
         )
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Tests de integración: todos los sustituyentes del catálogo
+# ---------------------------------------------------------------------------
+
+
+class SmileitCatalogSubstituentsIntegrationTests(TestCase):
+    """Verifica que todos los sustituyentes del catálogo producen fusiones válidas con benceno."""
+
+    def _fuse_catalog_entry(self, smiles: str, anchor_idx: int) -> str | None:
+        """Canonicaliza el sustituyente y lo fusiona con benceno."""
+        result = canonicalize_substituent(smiles, anchor_idx)
+        if result is None:
+            return None
+        canonical_smiles, new_anchor = result
+        return fuse_molecules(
+            principal_smiles="c1ccccc1",
+            substituent_smiles=canonical_smiles,
+            principal_atom_idx=0,
+            substituent_atom_idx=new_anchor,
+            bond_order=1,
+        )
+
+    def test_all_catalog_substituents_fuse_with_benzene(self) -> None:
+        """Todos los sustituyentes del catálogo deben producir una molécula válida al fusionarse con benceno."""
+        from rdkit import Chem
+
+        catalog = get_initial_catalog()
+        failed: list[str] = []
+        for entry in catalog:
+            product = self._fuse_catalog_entry(
+                entry["smiles"], entry["selected_atom_index"]
+            )
+            if product is None or Chem.MolFromSmiles(product) is None:
+                failed.append(f"{entry['name']!r} ({entry['smiles']!r}) -> {product!r}")
+        self.assertFalse(
+            failed,
+            "Sustituyentes que fallaron al fusionarse con benceno:\n"
+            + "\n".join(failed),
+        )
+
+    def test_carboxylic_acid_produces_benzoic_acid_formula(self) -> None:
+        """C(=O)O debe producir ácido benzoico (C7H6O2)."""
+        from rdkit import Chem
+        from rdkit.Chem import rdMolDescriptors
+
+        product = self._fuse_catalog_entry("C(=O)O", anchor_idx=0)
+        self.assertIsNotNone(product)
+        mol = Chem.MolFromSmiles(product)
+        self.assertIsNotNone(mol)
+        self.assertEqual(rdMolDescriptors.CalcMolFormula(mol), "C7H6O2")
+
+    def test_nitro_produces_nitrobenzene_formula(self) -> None:
+        """[N+](=O)[O-] debe producir nitrobenceno (C6H5NO2)."""
+        from rdkit import Chem
+        from rdkit.Chem import rdMolDescriptors
+
+        product = self._fuse_catalog_entry("[N+](=O)[O-]", anchor_idx=0)
+        self.assertIsNotNone(product)
+        mol = Chem.MolFromSmiles(product)
+        self.assertIsNotNone(mol)
+        self.assertEqual(rdMolDescriptors.CalcMolFormula(mol), "C6H5NO2")
+
+    def test_trifluoromethane_produces_trifluoromethylbenzene_formula(self) -> None:
+        """[CH](F)(F)F debe producir (trifluorometil)benceno (C7H5F3)."""
+        from rdkit import Chem
+        from rdkit.Chem import rdMolDescriptors
+
+        product = self._fuse_catalog_entry("[CH](F)(F)F", anchor_idx=0)
+        self.assertIsNotNone(product)
+        mol = Chem.MolFromSmiles(product)
+        self.assertIsNotNone(mol)
+        self.assertEqual(rdMolDescriptors.CalcMolFormula(mol), "C7H5F3")
+
+    def test_plugin_generates_benzoic_acid_from_carboxylic_acid_substituent(
+        self,
+    ) -> None:
+        """El plugin con C(=O)O como sustituyente debe generar ácido benzoico."""
+        from rdkit import Chem
+        from rdkit.Chem import rdMolDescriptors
+
+        params: JSONMap = {
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "substituents": [
+                {
+                    "name": "CarboxylicAcid",
+                    "smiles": "C(=O)O",
+                    "selected_atom_index": 0,
+                },
+            ],
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "allow_repeated": False,
+            "max_structures": 100,
+            "version": "1.0.0",
+        }
+        result = smileit_plugin(params, lambda *a: None)
+        self.assertEqual(result["total_generated"], 2)
+        products = [s["smiles"] for s in result["generated_structures"]]
+        benzoic_acid_found: bool = any(
+            Chem.MolFromSmiles(s) is not None
+            and rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(s)) == "C7H6O2"
+            for s in products
+            if Chem.MolFromSmiles(s) is not None
+        )
+        self.assertTrue(
+            benzoic_acid_found, f"Ácido benzoico no encontrado en: {products}"
+        )
+
+    def test_plugin_generates_nitrobenzene_from_nitro_substituent(self) -> None:
+        """El plugin con [N+](=O)[O-] como sustituyente debe generar nitrobenceno."""
+        from rdkit import Chem
+        from rdkit.Chem import rdMolDescriptors
+
+        params: JSONMap = {
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "substituents": [
+                {"name": "Nitro", "smiles": "[N+](=O)[O-]", "selected_atom_index": 0},
+            ],
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "allow_repeated": False,
+            "max_structures": 100,
+            "version": "1.0.0",
+        }
+        result = smileit_plugin(params, lambda *a: None)
+        self.assertEqual(result["total_generated"], 2)
+        products = [s["smiles"] for s in result["generated_structures"]]
+        nitrobenzene_found: bool = any(
+            Chem.MolFromSmiles(s) is not None
+            and rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(s)) == "C6H5NO2"
+            for s in products
+            if Chem.MolFromSmiles(s) is not None
+        )
+        self.assertTrue(
+            nitrobenzene_found, f"Nitrobenceno no encontrado en: {products}"
+        )

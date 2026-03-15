@@ -39,7 +39,12 @@ from .definitions import (
     MAX_R_SUBSTITUTES,
     PLUGIN_NAME,
 )
-from .engine import canonicalize_smiles, fuse_molecules, render_molecule_svg
+from .engine import (
+    canonicalize_smiles,
+    canonicalize_substituent,
+    fuse_molecules,
+    render_molecule_svg,
+)
 from .types import (
     SmileitGeneratedStructure,
     SmileitInput,
@@ -59,25 +64,28 @@ logger = logging.getLogger(__name__)
 def _expand_substituents(
     substituents: list[SmileitSubstituentInput],
 ) -> list[SmileitSubstituentInput]:
-    """Expande sustituyentes: si uno tuviera múltiples átomos seleccionados,
-    generaría N variantes. En el modelo actual del API cada entrada ya tiene
-    un solo selected_atom_index, por lo que la expansión es 1-a-1.
+    """Expande sustituyentes canonicalizando cada SMILES y preservando el índice
+    de anclaje correcto después del reordenamiento canónico de RDKit.
+
+    Usa `canonicalize_substituent` que rootea el SMILES en el átomo de anclaje,
+    garantizando que al reparse siempre quede en la posición 0.
 
     Mantiene la misma semántica que `generateSubstitutes()` del legado Java.
     """
     expanded: list[SmileitSubstituentInput] = []
     for sub in substituents:
-        canonical = canonicalize_smiles(sub["smiles"])
-        if canonical is None:
+        result = canonicalize_substituent(sub["smiles"], sub["selected_atom_index"])
+        if result is None:
             logger.warning(
                 "Sustituyente con SMILES inválido omitido: %r", sub["smiles"]
             )
             continue
+        canonical, new_anchor_idx = result
         expanded.append(
             SmileitSubstituentInput(
                 name=sub["name"],
                 smiles=canonical,
-                selected_atom_index=sub["selected_atom_index"],
+                selected_atom_index=new_anchor_idx,
             )
         )
     return expanded
