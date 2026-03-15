@@ -308,7 +308,12 @@ jobs:
                       gunzip -c "$DEPLOY_STAGING_DIR/$BACKEND_IMG_GZ" | docker load
                       gunzip -c "$DEPLOY_STAGING_DIR/$FRONTEND_IMG_GZ" | docker load
 
-                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait
+                                            if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
+                                                echo "Deploy failed, collecting compose diagnostics..."
+                                                $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env ps || true
+                                                $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env logs --no-color --tail=200 backend db redis frontend celery-worker || true
+                                                exit 1
+                                            fi
 
                       rm -f \
                         "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" \
