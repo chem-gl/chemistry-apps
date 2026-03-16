@@ -30,8 +30,8 @@ export class SmilesStructureTriggerComponent {
   @Input() triggerLabel: string = 'Preview structure';
 
   @ViewChild('triggerButton') private triggerButtonRef?: ElementRef<HTMLButtonElement>;
+  @ViewChild('modalDialog') private modalDialogRef?: ElementRef<HTMLDialogElement>;
 
-  readonly isModalOpen = signal<boolean>(false);
   readonly isHoverPreviewVisible = signal<boolean>(false);
   readonly hoverPanelPosition = signal<HoverPanelPosition>({
     top: 0,
@@ -49,11 +49,17 @@ export class SmilesStructureTriggerComponent {
       return;
     }
 
-    this.isModalOpen.set(true);
+    const modalDialog: HTMLDialogElement | undefined = this.modalDialogRef?.nativeElement;
+    if (modalDialog === undefined || modalDialog.open) {
+      return;
+    }
+
+    this.hideHoverPreview();
+    modalDialog.showModal();
   }
 
   closeModal(): void {
-    this.isModalOpen.set(false);
+    this.modalDialogRef?.nativeElement.close();
   }
 
   showHoverPreview(): void {
@@ -80,18 +86,14 @@ export class SmilesStructureTriggerComponent {
     };
   }
 
-  onBackdropClick(mouseEvent: MouseEvent): void {
-    const eventTarget: EventTarget | null = mouseEvent.target;
-    if (
-      eventTarget instanceof HTMLElement &&
-      eventTarget.classList.contains('structure-trigger-modal-backdrop')
-    ) {
-      this.closeModal();
+  onDialogBackdropClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined = this.modalDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
     }
-  }
 
-  onModalKeydown(keyboardEvent: KeyboardEvent): void {
-    if (keyboardEvent.key === 'Escape') {
+    const eventTarget: EventTarget | null = mouseEvent.target;
+    if (eventTarget === dialogElement) {
       this.closeModal();
     }
   }

@@ -47,25 +47,42 @@
   filter: drop-shadow(0 14px 26px rgba(26, 50, 39, 0.18));
 }
 
-.structure-trigger-modal-backdrop {
+.structure-trigger-modal-dialog {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.structure-trigger-modal-dialog[open] {
   position: fixed;
   inset: 0;
-  z-index: 72;
-  background: rgba(17, 34, 26, 0.64);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
   padding: 1rem;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.structure-trigger-modal-dialog::backdrop {
+  background: rgba(17, 34, 26, 0.64);
 }
 
 .structure-trigger-modal {
-  width: min(760px, 100%);
+  width: min(760px, calc(100vw - 2rem));
   max-height: 88vh;
   overflow: auto;
   border: 1px solid #c7d9cb;
   border-radius: 20px;
   background: #fffdfa;
   padding: 0.95rem;
+  margin: 0;
 }
 
 .structure-trigger-modal-header {

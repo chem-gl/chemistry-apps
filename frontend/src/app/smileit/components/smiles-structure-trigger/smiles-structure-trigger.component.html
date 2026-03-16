@@ -15,9 +15,7 @@
     }
 </div>
 
-@if (isModalOpen()) {
-<div class="structure-trigger-modal-backdrop" role="presentation" tabindex="0" (click)="onBackdropClick($event)"
-    (keydown)="onModalKeydown($event)">
+<dialog #modalDialog class="structure-trigger-modal-dialog" (click)="onDialogBackdropClick($event)">
     <section class="structure-trigger-modal" role="dialog" aria-modal="true" [attr.aria-label]="title"
         (click)="$event.stopPropagation()">
         <header class="structure-trigger-modal-header">
@@ -25,9 +23,8 @@
             <button type="button" class="structure-trigger-close" (click)="closeModal()">Close</button>
         </header>
 
-        <app-smiles-structure-preview [title]="title" [smiles]="smiles" [svg]="svg" layout="detail"
+        <app-smiles-structure-preview title="" [smiles]="smiles" [svg]="svg" layout="detail"
             [showSmilesText]="showSmilesText" [showAtomCount]="true"
             [emptyLabel]="emptyLabel"></app-smiles-structure-preview>
     </section>
-</div>
-}
+</dialog>
