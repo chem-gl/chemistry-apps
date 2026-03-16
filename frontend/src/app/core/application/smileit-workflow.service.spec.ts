@@ -204,6 +204,7 @@ describe('SmileitWorkflowService', () => {
     listSmileitCategories: ReturnType<typeof vi.fn>;
     listSmileitPatterns: ReturnType<typeof vi.fn>;
     inspectSmileitStructure: ReturnType<typeof vi.fn>;
+    createSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     updateSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     dispatchSmileitJob: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
@@ -222,6 +223,9 @@ describe('SmileitWorkflowService', () => {
       listSmileitCategories: vi.fn((): Observable<SmileitCategoryView[]> => of([makeCategory()])),
       listSmileitPatterns: vi.fn((): Observable<SmileitPatternEntryView[]> => of([makePattern()])),
       inspectSmileitStructure: vi.fn(),
+      createSmileitCatalogEntry: vi.fn(
+        (): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()]),
+      ),
       updateSmileitCatalogEntry: vi.fn(),
       dispatchSmileitJob: vi.fn((): Observable<SmileitJobResponseView> => of(makeSmileitJob())),
       streamJobEvents: vi.fn(),
@@ -357,6 +361,15 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.assignmentBlocks()[1].siteAtomIndices).toEqual([1, 2]);
   });
 
+  it('initializes manual draft anchors as empty in newly created blocks', () => {
+    workflowService.selectedAtomIndices.set([1, 2]);
+
+    workflowService.addAssignmentBlock();
+
+    expect(workflowService.assignmentBlocks()).toHaveLength(1);
+    expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('');
+  });
+
   it('updates editable catalog entries using versioned endpoint', () => {
     const editableEntry: SmileitCatalogEntryView = makeEditableCatalogEntry();
     const updatedEntry: SmileitCatalogEntryView = {
@@ -395,6 +408,140 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.catalogEntries()[0].version).toBe(2);
   });
 
+  it('loads a catalog molecule into manual draft for visual atom selection', () => {
+    const catalogEntry: SmileitCatalogEntryView = makeCatalogEntry();
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        draftManualName: '',
+        draftManualSmiles: '',
+        draftManualAnchorIndicesText: '',
+        draftManualCategoryKeys: [],
+      },
+    ]);
+
+    workflowService.applyCatalogEntryToManualDraft('block-1', catalogEntry);
+
+    expect(workflowService.assignmentBlocks()[0].draftManualName).toBe(catalogEntry.name);
+    expect(workflowService.assignmentBlocks()[0].draftManualSmiles).toBe(catalogEntry.smiles);
+    expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe(
+      catalogEntry.anchor_atom_indices.join(','),
+    );
+    expect(workflowService.assignmentBlocks()[0].draftManualCategoryKeys).toEqual(
+      catalogEntry.categories,
+    );
+  });
+
+  it('stages catalog SMILES drafts with independent anchors for batch save', () => {
+    workflowService.categories.set([makeCategory()]);
+    workflowService.catalogCreateName.set('Propyl');
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+
+    workflowService.stageCurrentCatalogDraft();
+
+    expect(workflowService.catalogDraftQueue()).toHaveLength(1);
+    expect(workflowService.catalogDraftQueue()[0].smiles).toBe('CCC');
+    expect(workflowService.catalogDraftQueue()[0].anchorAtomIndices).toEqual([0, 2]);
+    expect(workflowService.catalogCreateName()).toBe('Propyl');
+    expect(workflowService.catalogCreateSmiles()).toBe('');
+    expect(workflowService.catalogCreateAnchorIndicesText()).toBe('');
+    expect(workflowService.catalogCreateCategoryKeys()).toEqual(['aromatic']);
+    expect(workflowService.catalogCreateSourceReference()).toBe('local-lab');
+  });
+
+  it('keeps batch defaults after staging so another SMILES can be queued immediately', () => {
+    workflowService.categories.set([makeCategory()]);
+    workflowService.catalogCreateName.set('Propyl');
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+    workflowService.catalogCreateSourceReference.set('local-lab');
+
+    workflowService.stageCurrentCatalogDraft();
+    workflowService.catalogCreateName.set('Nitroso');
+    workflowService.catalogCreateSmiles.set('NON');
+    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+
+    expect(workflowService.catalogDraftPreview().isReady).toBe(true);
+  });
+
+  it('saves queued catalog SMILES drafts sequentially', () => {
+    const firstResponse: SmileitCatalogEntryView[] = [makeCatalogEntry()];
+    const secondResponse: SmileitCatalogEntryView[] = [
+      makeCatalogEntry(),
+      {
+        ...makeCatalogEntry(),
+        id: 'catalog-2',
+        stable_id: 'propyl',
+        name: 'Propyl',
+        smiles: 'CCC',
+        anchor_atom_indices: [0, 2],
+        version: 1,
+      },
+    ];
+
+    jobsApiServiceMock.createSmileitCatalogEntry
+      .mockReturnValueOnce(of(firstResponse))
+      .mockReturnValueOnce(of(secondResponse));
+
+    workflowService.catalogDraftQueue.set([
+      {
+        id: 'catalog-draft-1',
+        name: 'Ethyl',
+        smiles: 'CC',
+        anchorAtomIndices: [0],
+        categoryKeys: ['aromatic'],
+        categoryNames: ['Aromatic'],
+        sourceReference: 'local-lab',
+      },
+    ]);
+    workflowService.catalogCreateName.set('Propyl');
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+    workflowService.catalogCreateSourceReference.set('local-lab');
+
+    workflowService.createCatalogEntry();
+
+    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledTimes(2);
+    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenNthCalledWith(1, {
+      name: 'Ethyl',
+      smiles: 'CC',
+      anchorAtomIndices: [0],
+      categoryKeys: ['aromatic'],
+      sourceReference: 'local-lab',
+      provenanceMetadata: {},
+    });
+    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenNthCalledWith(2, {
+      name: 'Propyl',
+      smiles: 'CCC',
+      anchorAtomIndices: [0, 2],
+      categoryKeys: ['aromatic'],
+      sourceReference: 'local-lab',
+      provenanceMetadata: {},
+    });
+    expect(workflowService.catalogDraftQueue()).toEqual([]);
+    expect(workflowService.catalogEntries()).toEqual(secondResponse);
+  });
+
+  it('builds deduplicated selectable catalog candidates for a block', () => {
+    const catalogEntry: SmileitCatalogEntryView = makeCatalogEntry();
+    workflowService.catalogEntries.set([catalogEntry]);
+
+    const blockDraft: SmileitAssignmentBlockDraft = {
+      ...makeAssignmentBlock(),
+      catalogRefs: [catalogEntry],
+      categoryKeys: ['aromatic'],
+    };
+
+    const selectableEntries = workflowService.getSelectableCatalogEntriesForBlock(blockDraft);
+
+    expect(selectableEntries).toHaveLength(1);
+    expect(selectableEntries[0].stable_id).toBe(catalogEntry.stable_id);
+  });
+
   it('warns when catalog draft looks like SMARTS instead of SMILES', () => {
     workflowService.catalogCreateName.set('Potential SMARTS Draft');
     workflowService.catalogCreateSmiles.set('[#6]-[*]');
@@ -408,14 +555,38 @@ describe('SmileitWorkflowService', () => {
     expect(catalogPreview.warnings[0]).toContain('SMILES');
   });
 
-  it('builds collapsed summary with selected sites and smiles previews', () => {
+  it('builds collapsed summary with selected sites and rendered structure counters', () => {
     const summary = workflowService.getBlockCollapsedSummary(makeAssignmentBlock());
 
     expect(summary.selectedSitesLabel).toBe('1');
     expect(summary.categoriesLabel).toContain('aromatic');
-    expect(summary.catalogSmilesLabel).toContain('[NH2]c1ccccc1');
-    expect(summary.manualSmilesLabel).toContain('[NH2]');
+    expect(summary.catalogSmilesLabel).toBe('1 rendered structure');
+    expect(summary.manualSmilesLabel).toBe('1 rendered structure');
     expect(summary.sourceCount).toBe(3);
+  });
+
+  it('adds manual substituents using block categories when draft categories are empty', () => {
+    workflowService.categories.set([makeCategory()]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        manualSubstituents: [],
+        categoryKeys: ['aromatic'],
+        draftManualName: 'Current amino',
+        draftManualSmiles: 'CCNO',
+        draftManualAnchorIndicesText: '0',
+        draftManualCategoryKeys: [],
+      },
+    ]);
+
+    workflowService.addManualSubstituentToBlock('block-1');
+
+    expect(workflowService.assignmentBlocks()[0].manualSubstituents).toHaveLength(1);
+    expect(workflowService.assignmentBlocks()[0].manualSubstituents[0].categories).toEqual([
+      'aromatic',
+    ]);
+    expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('');
+    expect(workflowService.errorMessage()).toBeNull();
   });
 
   it('restores legacy historical jobs even when assignment blocks are missing', () => {

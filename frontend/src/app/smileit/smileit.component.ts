@@ -1,7 +1,18 @@
 // smileit.component.ts: Pantalla principal de Smile-it con bloques de asignación, análisis medicinal y exportes reproducibles.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Injector,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -11,23 +22,14 @@ import {
   JobLogEntryView,
   JobsApiService,
   ScientificJobView,
+  SmileitCatalogEntryView,
+  SmileitStructureInspectionView,
 } from '../core/api/jobs-api.service';
 import {
   SmileitAssignmentBlockDraft,
   SmileitGeneratedStructureView,
   SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
-
-type SmilesHoverPreviewStatus = 'loading' | 'ready' | 'error';
-
-interface SmilesHoverPreviewState {
-  name: string;
-  smiles: string;
-  svg: string | null;
-  status: SmilesHoverPreviewStatus;
-  x: number;
-  y: number;
-}
 
 @Component({
   selector: 'app-smileit',
@@ -38,20 +40,35 @@ interface SmilesHoverPreviewState {
 })
 export class SmileitComponent implements OnInit, OnDestroy {
   readonly workflow = inject(SmileitWorkflowService);
+  private readonly injector = inject(Injector);
   private readonly jobsApiService = inject(JobsApiService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private routeSubscription: Subscription | null = null;
-  private smilesPreviewSubscription: Subscription | null = null;
-  private readonly smilesPreviewSvgCache: Map<string, string> = new Map();
-  private smilesPreviewRequestToken: number = 0;
+  private catalogDraftInspectionSubscription: Subscription | null = null;
+  private readonly manualDraftInspectionSubscriptions = new Map<string, Subscription>();
+  readonly isCatalogPanelCollapsed = signal<boolean>(true);
   readonly isLibraryPanelCollapsed = signal<boolean>(false);
   readonly isPatternCatalogCollapsed = signal<boolean>(false);
   readonly isGeneratedStructuresCollapsed = signal<boolean>(false);
   readonly isLogsCollapsed = signal<boolean>(false);
+  readonly isAdvancedSectionCollapsed = signal<boolean>(true);
   readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
-  readonly smilesHoverPreview = signal<SmilesHoverPreviewState | null>(null);
+  readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
+  readonly catalogDraftInspectionError = signal<string | null>(null);
+  readonly manualDraftInspections = signal<Record<string, SmileitStructureInspectionView | null>>(
+    {},
+  );
+  readonly manualDraftInspectionErrors = signal<Record<string, string | null>>({});
+  private readonly manualDraftInspectionSyncEffect = effect(
+    () => {
+      this.syncManualDraftInspectionState();
+    },
+    { injector: this.injector },
+  );
+  @ViewChild('catalogStudioDialog')
+  private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
@@ -74,8 +91,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.manualDraftInspectionSyncEffect.destroy();
     this.routeSubscription?.unsubscribe();
-    this.smilesPreviewSubscription?.unsubscribe();
+    this.catalogDraftInspectionSubscription?.unsubscribe();
+    this.manualDraftInspectionSubscriptions.forEach((subscription: Subscription) => {
+      subscription.unsubscribe();
+    });
+    this.manualDraftInspectionSubscriptions.clear();
   }
 
   inspectPrincipalStructure(): void {
@@ -98,6 +120,10 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.workflow.addAssignmentBlock();
   }
 
+  toggleCatalogPanelCollapse(): void {
+    this.isCatalogPanelCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
   toggleLibraryPanelCollapse(): void {
     this.isLibraryPanelCollapsed.update((currentValue: boolean) => !currentValue);
   }
@@ -112,6 +138,170 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   toggleLogsCollapse(): void {
     this.isLogsCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
+  toggleAdvancedSectionCollapse(): void {
+    this.isAdvancedSectionCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
+  openCatalogStudioModal(): void {
+    const catalogStudioDialog: HTMLDialogElement | undefined =
+      this.catalogStudioDialogRef?.nativeElement;
+    if (catalogStudioDialog === undefined || catalogStudioDialog.open) {
+      return;
+    }
+
+    catalogStudioDialog.showModal();
+    this.refreshCatalogDraftInspection();
+  }
+
+  beginCatalogEntryEdition(catalogEntry: SmileitCatalogEntryView): void {
+    this.workflow.beginCatalogEntryEdition(catalogEntry);
+    this.openCatalogStudioModal();
+  }
+
+  onCatalogDraftSmilesChange(nextValue: string): void {
+    this.workflow.catalogCreateSmiles.set(nextValue);
+    this.refreshCatalogDraftInspection();
+  }
+
+  stageCurrentCatalogDraft(): void {
+    this.workflow.stageCurrentCatalogDraft();
+    this.refreshCatalogDraftInspection();
+  }
+
+  loadQueuedCatalogDraft(queueDraftId: string): void {
+    this.workflow.loadQueuedCatalogDraft(queueDraftId);
+    this.refreshCatalogDraftInspection();
+  }
+
+  removeQueuedCatalogDraft(queueDraftId: string): void {
+    this.workflow.removeQueuedCatalogDraft(queueDraftId);
+  }
+
+  onBlockManualDraftSmilesChange(blockId: string, nextValue: string): void {
+    this.workflow.updateBlockManualDraftSmiles(blockId, nextValue);
+    this.refreshManualDraftInspection(blockId);
+  }
+
+  addManualSubstituentToBlock(blockId: string): void {
+    this.workflow.addManualSubstituentToBlock(blockId);
+    this.refreshManualDraftInspection(blockId);
+  }
+
+  selectCatalogEntryForManualDraft(blockId: string, catalogEntry: SmileitCatalogEntryView): void {
+    this.workflow.applyCatalogEntryToManualDraft(blockId, catalogEntry);
+    this.refreshManualDraftInspection(blockId);
+  }
+
+  isCatalogEntryLoadedInManualDraft(
+    block: SmileitAssignmentBlockDraft,
+    catalogEntry: SmileitCatalogEntryView,
+  ): boolean {
+    return (
+      block.draftManualSmiles.trim() === catalogEntry.smiles.trim() &&
+      block.draftManualName.trim() === catalogEntry.name.trim()
+    );
+  }
+
+  selectedManualDraftLabel(block: SmileitAssignmentBlockDraft): string {
+    const normalizedName: string = block.draftManualName.trim();
+    if (normalizedName !== '') {
+      return normalizedName;
+    }
+
+    const normalizedSmiles: string = block.draftManualSmiles.trim();
+    return normalizedSmiles !== '' ? normalizedSmiles : 'No substituent molecule selected';
+  }
+
+  toTrustedAnchorSelectionSvg(rawSvgMarkup: string, selectedAtomIndices: number[]): SafeHtml {
+    const decoratedSvgMarkup: string = this.decorateInspectionSvg(
+      rawSvgMarkup,
+      selectedAtomIndices,
+      [],
+    );
+    return this.sanitizer.bypassSecurityTrustHtml(decoratedSvgMarkup);
+  }
+
+  catalogDraftAnchorIndices(): number[] {
+    return this.parseAtomIndicesInput(this.workflow.catalogCreateAnchorIndicesText());
+  }
+
+  manualDraftAnchorIndices(block: SmileitAssignmentBlockDraft): number[] {
+    return this.parseAtomIndicesInput(block.draftManualAnchorIndicesText);
+  }
+
+  manualDraftInspection(blockId: string): SmileitStructureInspectionView | null {
+    return this.manualDraftInspections()[blockId] ?? null;
+  }
+
+  manualDraftInspectionError(blockId: string): string | null {
+    return this.manualDraftInspectionErrors()[blockId] ?? null;
+  }
+
+  toggleCatalogDraftAnchor(atomIndex: number): void {
+    const nextAnchorIndices: number[] = this.toggleAtomSelection(
+      this.catalogDraftAnchorIndices(),
+      atomIndex,
+    );
+    this.workflow.catalogCreateAnchorIndicesText.set(this.formatAtomIndices(nextAnchorIndices));
+  }
+
+  toggleManualDraftAnchor(blockId: string, atomIndex: number): void {
+    const blockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
+      .assignmentBlocks()
+      .find((block: SmileitAssignmentBlockDraft) => block.id === blockId);
+    if (blockDraft === undefined) {
+      return;
+    }
+
+    const nextAnchorIndices: number[] = this.toggleAtomSelection(
+      this.manualDraftAnchorIndices(blockDraft),
+      atomIndex,
+    );
+    this.workflow.updateBlockManualDraftAnchors(blockId, this.formatAtomIndices(nextAnchorIndices));
+  }
+
+  onCatalogDraftSvgClick(mouseEvent: MouseEvent): void {
+    if (this.workflow.isProcessing()) {
+      return;
+    }
+
+    const atomIndex: number | null = this.resolveAtomIndexFromPointer(mouseEvent);
+    if (atomIndex === null) {
+      return;
+    }
+
+    this.toggleCatalogDraftAnchor(atomIndex);
+  }
+
+  onManualDraftSvgClick(mouseEvent: MouseEvent, blockId: string): void {
+    if (this.workflow.isProcessing()) {
+      return;
+    }
+
+    const atomIndex: number | null = this.resolveAtomIndexFromPointer(mouseEvent);
+    if (atomIndex === null) {
+      return;
+    }
+
+    this.toggleManualDraftAnchor(blockId, atomIndex);
+  }
+
+  closeCatalogStudioModal(): void {
+    this.catalogStudioDialogRef?.nativeElement.close();
+  }
+
+  onCatalogStudioDialogClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined = this.catalogStudioDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    const eventTarget: EventTarget | null = mouseEvent.target;
+    if (eventTarget === dialogElement) {
+      this.closeCatalogStudioModal();
+    }
   }
 
   toggleBlockCollapse(blockId: string): void {
@@ -218,116 +408,283 @@ export class SmileitComponent implements OnInit, OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(this.decoratedInspectionSvg());
   }
 
-  showSmilesPreview(name: string, smiles: string, mouseEvent: MouseEvent): void {
-    const normalizedSmiles: string = smiles.trim();
-    if (normalizedSmiles === '') {
-      return;
-    }
-
-    const previewPosition = this.buildPreviewPosition(mouseEvent);
-    const cachedSvg: string | undefined = this.smilesPreviewSvgCache.get(normalizedSmiles);
-
-    if (cachedSvg !== undefined) {
-      this.smilesHoverPreview.set({
-        name,
-        smiles: normalizedSmiles,
-        svg: cachedSvg,
-        status: 'ready',
-        ...previewPosition,
-      });
-      return;
-    }
-
-    this.smilesHoverPreview.set({
-      name,
-      smiles: normalizedSmiles,
-      svg: null,
-      status: 'loading',
-      ...previewPosition,
-    });
-
-    this.smilesPreviewSubscription?.unsubscribe();
-    const requestToken: number = ++this.smilesPreviewRequestToken;
-
-    this.smilesPreviewSubscription = this.jobsApiService
-      .inspectSmileitStructure(normalizedSmiles)
-      .subscribe({
-        next: (inspectionResult) => {
-          this.smilesPreviewSvgCache.set(normalizedSmiles, inspectionResult.svg);
-          if (requestToken !== this.smilesPreviewRequestToken) {
-            return;
-          }
-
-          const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-          if (currentPreview === null || currentPreview.smiles !== normalizedSmiles) {
-            return;
-          }
-
-          this.smilesHoverPreview.set({
-            ...currentPreview,
-            svg: inspectionResult.svg,
-            status: 'ready',
-          });
-        },
-        error: () => {
-          if (requestToken !== this.smilesPreviewRequestToken) {
-            return;
-          }
-
-          const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-          if (currentPreview === null || currentPreview.smiles !== normalizedSmiles) {
-            return;
-          }
-
-          this.smilesHoverPreview.set({
-            ...currentPreview,
-            status: 'error',
-          });
-        },
-      });
-  }
-
-  moveSmilesPreview(mouseEvent: MouseEvent): void {
-    const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-    if (currentPreview === null) {
-      return;
-    }
-
-    this.smilesHoverPreview.set({
-      ...currentPreview,
-      ...this.buildPreviewPosition(mouseEvent),
-    });
-  }
-
-  hideSmilesPreview(): void {
-    this.smilesHoverPreview.set(null);
-    this.smilesPreviewSubscription?.unsubscribe();
-    this.smilesPreviewSubscription = null;
-  }
-
   onInspectionSvgClick(mouseEvent: MouseEvent): void {
     if (this.workflow.isProcessing()) {
       return;
     }
 
+    const atomIndexFromPointer: number | null = this.resolveAtomIndexFromPointer(mouseEvent);
+    if (atomIndexFromPointer !== null) {
+      this.workflow.toggleSelectedAtom(atomIndexFromPointer);
+      return;
+    }
+  }
+
+  private syncManualDraftInspectionState(): void {
+    const currentBlocks: SmileitAssignmentBlockDraft[] = this.workflow.assignmentBlocks();
+    const currentBlockIds: Set<string> = new Set(
+      currentBlocks.map((block: SmileitAssignmentBlockDraft) => block.id),
+    );
+
+    this.manualDraftInspectionSubscriptions.forEach(
+      (subscription: Subscription, blockId: string) => {
+        if (!currentBlockIds.has(blockId)) {
+          subscription.unsubscribe();
+          this.manualDraftInspectionSubscriptions.delete(blockId);
+          this.manualDraftInspections.update(
+            (currentState: Record<string, SmileitStructureInspectionView | null>) => {
+              const { [blockId]: _ignored, ...nextState } = currentState;
+              return nextState;
+            },
+          );
+          this.manualDraftInspectionErrors.update((currentState: Record<string, string | null>) => {
+            const { [blockId]: _ignored, ...nextState } = currentState;
+            return nextState;
+          });
+        }
+      },
+    );
+
+    currentBlocks.forEach((block: SmileitAssignmentBlockDraft) => {
+      if (block.draftManualSmiles.trim() === '') {
+        this.setManualDraftInspection(block.id, null);
+        this.setManualDraftInspectionError(block.id, null);
+      }
+    });
+  }
+
+  private resolveAtomIndexFromPointer(mouseEvent: MouseEvent): number | null {
     const atomIndexFromTarget: number | null = this.extractAtomIndexFromEvent(mouseEvent);
     if (atomIndexFromTarget !== null) {
-      this.workflow.toggleSelectedAtom(atomIndexFromTarget);
-      return;
+      return atomIndexFromTarget;
     }
 
     const eventTarget: EventTarget | null = mouseEvent.target;
     if (!(eventTarget instanceof Element)) {
+      return null;
+    }
+
+    return this.findNearestAtomIndexByCoordinates(eventTarget, mouseEvent);
+  }
+
+  private refreshCatalogDraftInspection(): void {
+    const catalogDraftSmiles: string = this.workflow.catalogCreateSmiles().trim();
+    this.catalogDraftInspectionSubscription?.unsubscribe();
+    this.catalogDraftInspectionSubscription = null;
+
+    if (catalogDraftSmiles === '') {
+      this.catalogDraftInspection.set(null);
+      this.catalogDraftInspectionError.set(null);
       return;
     }
 
-    const nearestAtomIndex: number | null = this.findNearestAtomIndexByCoordinates(
-      eventTarget,
-      mouseEvent,
-    );
-    if (nearestAtomIndex !== null) {
-      this.workflow.toggleSelectedAtom(nearestAtomIndex);
+    this.catalogDraftInspectionError.set(null);
+    this.catalogDraftInspectionSubscription = this.jobsApiService
+      .inspectSmileitStructure(catalogDraftSmiles)
+      .subscribe({
+        next: (inspectionResult: SmileitStructureInspectionView) => {
+          if (this.workflow.catalogCreateSmiles().trim() !== catalogDraftSmiles) {
+            return;
+          }
+
+          this.catalogDraftInspection.set(inspectionResult);
+          this.ensureCatalogDefaultAnchorSelection(inspectionResult);
+        },
+        error: (requestError: Error) => {
+          if (this.workflow.catalogCreateSmiles().trim() !== catalogDraftSmiles) {
+            return;
+          }
+
+          this.catalogDraftInspection.set(null);
+          this.catalogDraftInspectionError.set(
+            `Unable to inspect substituent draft: ${requestError.message}`,
+          );
+        },
+      });
+  }
+
+  private refreshManualDraftInspection(blockId: string): void {
+    const blockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
+      .assignmentBlocks()
+      .find((block: SmileitAssignmentBlockDraft) => block.id === blockId);
+    if (blockDraft === undefined) {
+      return;
     }
+
+    const manualDraftSmiles: string = blockDraft.draftManualSmiles.trim();
+    this.manualDraftInspectionSubscriptions.get(blockId)?.unsubscribe();
+    this.manualDraftInspectionSubscriptions.delete(blockId);
+
+    if (manualDraftSmiles === '') {
+      this.setManualDraftInspection(blockId, null);
+      this.setManualDraftInspectionError(blockId, null);
+      return;
+    }
+
+    this.setManualDraftInspectionError(blockId, null);
+    const inspectionSubscription: Subscription = this.jobsApiService
+      .inspectSmileitStructure(manualDraftSmiles)
+      .subscribe({
+        next: (inspectionResult: SmileitStructureInspectionView) => {
+          const currentBlockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
+            .assignmentBlocks()
+            .find((block: SmileitAssignmentBlockDraft) => block.id === blockId);
+          if (
+            currentBlockDraft === undefined ||
+            currentBlockDraft.draftManualSmiles.trim() !== manualDraftSmiles
+          ) {
+            return;
+          }
+
+          this.setManualDraftInspection(blockId, inspectionResult);
+          this.ensureManualDefaultAnchorSelection(blockId, inspectionResult);
+        },
+        error: (requestError: Error) => {
+          const currentBlockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
+            .assignmentBlocks()
+            .find((block: SmileitAssignmentBlockDraft) => block.id === blockId);
+          if (
+            currentBlockDraft === undefined ||
+            currentBlockDraft.draftManualSmiles.trim() !== manualDraftSmiles
+          ) {
+            return;
+          }
+
+          this.setManualDraftInspection(blockId, null);
+          this.setManualDraftInspectionError(
+            blockId,
+            `Unable to inspect manual substituent draft: ${requestError.message}`,
+          );
+        },
+      });
+
+    this.manualDraftInspectionSubscriptions.set(blockId, inspectionSubscription);
+  }
+
+  private ensureCatalogDefaultAnchorSelection(
+    inspectionResult: SmileitStructureInspectionView,
+  ): void {
+    const currentAnchorIndices: number[] = this.catalogDraftAnchorIndices();
+    const nextAnchorIndices: number[] = this.resolveValidAnchorSelection(
+      currentAnchorIndices,
+      inspectionResult,
+    );
+
+    if (this.hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
+      return;
+    }
+
+    this.workflow.catalogCreateAnchorIndicesText.set(this.formatAtomIndices(nextAnchorIndices));
+  }
+
+  private ensureManualDefaultAnchorSelection(
+    blockId: string,
+    inspectionResult: SmileitStructureInspectionView,
+  ): void {
+    const blockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
+      .assignmentBlocks()
+      .find((block: SmileitAssignmentBlockDraft) => block.id === blockId);
+    if (blockDraft === undefined) {
+      return;
+    }
+
+    const currentAnchorIndices: number[] = this.manualDraftAnchorIndices(blockDraft);
+    const nextAnchorIndices: number[] = this.resolveValidAnchorSelection(
+      currentAnchorIndices,
+      inspectionResult,
+    );
+
+    if (this.hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
+      return;
+    }
+
+    this.workflow.updateBlockManualDraftAnchors(blockId, this.formatAtomIndices(nextAnchorIndices));
+  }
+
+  private resolveValidAnchorSelection(
+    currentAnchorIndices: number[],
+    inspectionResult: SmileitStructureInspectionView,
+  ): number[] {
+    const validAnchorIndices: number[] = this.normalizeAnchorIndices(
+      currentAnchorIndices.filter(
+        (atomIndex: number) => atomIndex >= 0 && atomIndex < inspectionResult.atomCount,
+      ),
+    );
+
+    if (validAnchorIndices.length > 0) {
+      return validAnchorIndices;
+    }
+
+    return this.resolveDefaultAnchorIndices(inspectionResult);
+  }
+
+  private resolveDefaultAnchorIndices(inspectionResult: SmileitStructureInspectionView): number[] {
+    const preferredAtomIndices: number[] = inspectionResult.atoms
+      .filter((atom) => atom.symbol.trim().toUpperCase() !== 'H')
+      .map((atom) => atom.index);
+
+    if (preferredAtomIndices.length > 0) {
+      return this.normalizeAnchorIndices(preferredAtomIndices);
+    }
+
+    return this.normalizeAnchorIndices(inspectionResult.atoms.map((atom) => atom.index));
+  }
+
+  private toggleAtomSelection(currentSelection: number[], atomIndex: number): number[] {
+    const isAlreadySelected: boolean = currentSelection.includes(atomIndex);
+    if (isAlreadySelected) {
+      return this.normalizeAnchorIndices(
+        currentSelection.filter((selectedAtomIndex: number) => selectedAtomIndex !== atomIndex),
+      );
+    }
+
+    return this.normalizeAnchorIndices([...currentSelection, atomIndex]);
+  }
+
+  private parseAtomIndicesInput(rawText: string): number[] {
+    const parsedValues: number[] = rawText
+      .split(',')
+      .map((part: string) => part.trim())
+      .filter((part: string) => part !== '')
+      .map((part: string) => Number(part))
+      .filter((value: number) => Number.isInteger(value) && value >= 0);
+
+    return this.normalizeAnchorIndices(parsedValues);
+  }
+
+  private normalizeAnchorIndices(anchorIndices: number[]): number[] {
+    return Array.from(new Set(anchorIndices)).sort((left: number, right: number) => left - right);
+  }
+
+  private formatAtomIndices(anchorIndices: number[]): string {
+    return anchorIndices.join(',');
+  }
+
+  private hasSameNumberSet(firstValues: number[], secondValues: number[]): boolean {
+    if (firstValues.length !== secondValues.length) {
+      return false;
+    }
+
+    return firstValues.every((value: number, index: number) => value === secondValues[index]);
+  }
+
+  private setManualDraftInspection(
+    blockId: string,
+    inspectionResult: SmileitStructureInspectionView | null,
+  ): void {
+    this.manualDraftInspections.update(
+      (currentState: Record<string, SmileitStructureInspectionView | null>) => ({
+        ...currentState,
+        [blockId]: inspectionResult,
+      }),
+    );
+  }
+
+  private setManualDraftInspectionError(blockId: string, errorMessage: string | null): void {
+    this.manualDraftInspectionErrors.update((currentState: Record<string, string | null>) => ({
+      ...currentState,
+      [blockId]: errorMessage,
+    }));
   }
 
   openGeneratedStructureModal(generatedStructure: SmileitGeneratedStructureView): void {
@@ -788,11 +1145,5 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
     URL.revokeObjectURL(objectUrl);
   }
-
-  private buildPreviewPosition(mouseEvent: MouseEvent): { x: number; y: number } {
-    return {
-      x: mouseEvent.clientX + 18,
-      y: mouseEvent.clientY + 18,
-    };
-  }
 }
+
