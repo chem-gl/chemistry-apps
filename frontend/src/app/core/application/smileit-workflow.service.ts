@@ -1,7 +1,17 @@
 // smileit-workflow.service.ts: Orquesta el flujo profesional de Smile-it con bloques, catálogo persistente y trazabilidad.
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Observable, Subscription, catchError, finalize, forkJoin, throwError } from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  catchError,
+  concatMap,
+  finalize,
+  forkJoin,
+  from,
+  last,
+  throwError,
+} from 'rxjs';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../api/generated';
 import {
     DownloadedReportFile,
@@ -88,6 +98,16 @@ export interface SmileitCatalogDraftPreview {
   isReady: boolean;
 }
 
+export interface SmileitCatalogQueuedDraft {
+  id: string;
+  name: string;
+  smiles: string;
+  anchorAtomIndices: number[];
+  categoryKeys: string[];
+  categoryNames: string[];
+  sourceReference: string;
+}
+
 export interface SmileitBlockCollapsedSummary {
   selectedSitesLabel: string;
   categoriesLabel: string;
@@ -117,6 +137,7 @@ export class SmileitWorkflowService implements OnDestroy {
   private progressSubscription: Subscription | null = null;
   private logsSubscription: Subscription | null = null;
   private blockSequence: number = 0;
+  private catalogDraftSequence: number = 0;
 
   readonly principalSmiles = signal<string>('c1ccccc1');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
@@ -129,10 +150,11 @@ export class SmileitWorkflowService implements OnDestroy {
 
   readonly catalogCreateName = signal<string>('');
   readonly catalogCreateSmiles = signal<string>('');
-  readonly catalogCreateAnchorIndicesText = signal<string>('0');
+  readonly catalogCreateAnchorIndicesText = signal<string>('');
   readonly catalogCreateCategoryKeys = signal<string[]>([]);
   readonly catalogCreateSourceReference = signal<string>('local-lab');
   readonly catalogEditingStableId = signal<string | null>(null);
+  readonly catalogDraftQueue = signal<SmileitCatalogQueuedDraft[]>([]);
 
   readonly patternCreateName = signal<string>('');
   readonly patternCreateSmarts = signal<string>('');
@@ -196,6 +218,7 @@ export class SmileitWorkflowService implements OnDestroy {
     );
   });
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
+  readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
   readonly catalogGroups = computed<SmileitCatalogGroupView[]>(() =>
     this.buildCatalogGroups(this.catalogEntries(), this.categories()),
   );
@@ -405,6 +428,19 @@ export class SmileitWorkflowService implements OnDestroy {
     }));
   }
 
+  applyCatalogEntryToManualDraft(blockId: string, catalogEntry: SmileitCatalogEntryView): void {
+    const normalizedDraftCategoryKeys: string[] = [...(catalogEntry.categories ?? [])];
+
+    this.updateBlock(blockId, (block: SmileitAssignmentBlockDraft) => ({
+      ...block,
+      draftManualName: catalogEntry.name,
+      draftManualSmiles: catalogEntry.smiles,
+      draftManualAnchorIndicesText: catalogEntry.anchor_atom_indices.join(','),
+      draftManualSourceReference: `catalog:${catalogEntry.stable_id}:v${catalogEntry.version}`,
+      draftManualCategoryKeys: normalizedDraftCategoryKeys,
+    }));
+  }
+
   updateBlockManualDraftName(blockId: string, nextValue: string): void {
     this.updateBlock(blockId, (block: SmileitAssignmentBlockDraft) => ({
       ...block,
@@ -464,7 +500,14 @@ export class SmileitWorkflowService implements OnDestroy {
       return;
     }
 
-    if (blockDraft.draftManualCategoryKeys.length === 0) {
+    const resolvedCategoryKeys: string[] =
+      blockDraft.draftManualCategoryKeys.length > 0
+        ? [...blockDraft.draftManualCategoryKeys]
+        : blockDraft.categoryKeys.length > 0
+          ? [...blockDraft.categoryKeys]
+          : this.categories().map((category: SmileitCategoryView) => category.key);
+
+    if (resolvedCategoryKeys.length === 0) {
       this.errorMessage.set('Manual substituent requires at least one chemistry category.');
       return;
     }
@@ -473,7 +516,7 @@ export class SmileitWorkflowService implements OnDestroy {
       name: manualName,
       smiles: manualSmiles,
       anchorAtomIndices,
-      categories: [...blockDraft.draftManualCategoryKeys],
+      categories: resolvedCategoryKeys,
       sourceReference: blockDraft.draftManualSourceReference.trim() || 'manual-ui',
       provenanceMetadata: {},
     };
@@ -492,7 +535,7 @@ export class SmileitWorkflowService implements OnDestroy {
         manualSubstituents: [...block.manualSubstituents, nextManual],
         draftManualName: '',
         draftManualSmiles: '',
-        draftManualAnchorIndicesText: '0',
+        draftManualAnchorIndicesText: '',
         draftManualSourceReference: 'manual-ui',
         draftManualCategoryKeys: [],
       };
@@ -515,42 +558,151 @@ export class SmileitWorkflowService implements OnDestroy {
     );
   }
 
-  createCatalogEntry(): void {
-    const entryName: string = this.catalogCreateName().trim();
-    const entrySmiles: string = this.catalogCreateSmiles().trim();
-    const anchorAtomIndices: number[] = this.parseAtomIndicesInput(
-      this.catalogCreateAnchorIndicesText(),
-    );
+  stageCurrentCatalogDraft(): void {
+    if (this.isCatalogEditing()) {
+      this.errorMessage.set(
+        'Finish the current catalog edition before staging multiple new SMILES entries.',
+      );
+      return;
+    }
 
-    if (entryName === '' || entrySmiles === '') {
+    const catalogPreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+    if (!catalogPreview.isReady) {
+      this.errorMessage.set(
+        catalogPreview.warnings[0] ??
+          'Complete the current catalog SMILES before adding it with +.',
+      );
+      return;
+    }
+
+    this.catalogDraftSequence += 1;
+    const nextQueuedDraft: SmileitCatalogQueuedDraft = {
+      id: `catalog-draft-${this.catalogDraftSequence}`,
+      name: catalogPreview.name,
+      smiles: catalogPreview.smiles,
+      anchorAtomIndices: [...catalogPreview.anchorAtomIndices],
+      categoryKeys: [...catalogPreview.categoryKeys],
+      categoryNames: [...catalogPreview.categoryNames],
+      sourceReference: catalogPreview.sourceReference,
+    };
+
+    this.catalogDraftQueue.update((currentQueue: SmileitCatalogQueuedDraft[]) => [
+      ...currentQueue,
+      nextQueuedDraft,
+    ]);
+    this.resetCatalogDraftAfterStage();
+    this.errorMessage.set(null);
+  }
+
+  loadQueuedCatalogDraft(queueDraftId: string): void {
+    const queuedDraft: SmileitCatalogQueuedDraft | undefined = this.catalogDraftQueue().find(
+      (draft: SmileitCatalogQueuedDraft) => draft.id === queueDraftId,
+    );
+    if (queuedDraft === undefined) {
+      return;
+    }
+
+    this.catalogCreateName.set(queuedDraft.name);
+    this.catalogCreateSmiles.set(queuedDraft.smiles);
+    this.catalogCreateAnchorIndicesText.set(queuedDraft.anchorAtomIndices.join(','));
+    this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
+    this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
+    this.removeQueuedCatalogDraft(queueDraftId);
+    this.errorMessage.set(null);
+  }
+
+  removeQueuedCatalogDraft(queueDraftId: string): void {
+    this.catalogDraftQueue.update((currentQueue: SmileitCatalogQueuedDraft[]) =>
+      currentQueue.filter((draft: SmileitCatalogQueuedDraft) => draft.id !== queueDraftId),
+    );
+  }
+
+  createCatalogEntry(): void {
+    const editingStableId: string | null = this.catalogEditingStableId();
+    const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+
+    if (editingStableId === null) {
+      const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+      const activePayload: SmileitCatalogEntryCreateParams | null = activePreview.isReady
+        ? {
+            name: activePreview.name,
+            smiles: activePreview.smiles,
+            anchorAtomIndices: [...activePreview.anchorAtomIndices],
+            categoryKeys: [...activePreview.categoryKeys],
+            sourceReference: activePreview.sourceReference,
+            provenanceMetadata: {},
+          }
+        : null;
+      const queuedPayloads: SmileitCatalogEntryCreateParams[] = this.catalogDraftQueue().map(
+        (queuedDraft: SmileitCatalogQueuedDraft) => ({
+          name: queuedDraft.name,
+          smiles: queuedDraft.smiles,
+          anchorAtomIndices: [...queuedDraft.anchorAtomIndices],
+          categoryKeys: [...queuedDraft.categoryKeys],
+          sourceReference: queuedDraft.sourceReference,
+          provenanceMetadata: {},
+        }),
+      );
+      const payloadsToCreate: SmileitCatalogEntryCreateParams[] =
+        activePayload === null ? queuedPayloads : [...queuedPayloads, activePayload];
+
+      if (payloadsToCreate.length === 0) {
+        this.errorMessage.set(
+          activePreview.warnings[0] ?? 'Add at least one valid catalog SMILES before saving.',
+        );
+        return;
+      }
+
+      from(payloadsToCreate)
+        .pipe(
+          concatMap((payload: SmileitCatalogEntryCreateParams) =>
+            this.jobsApiService.createSmileitCatalogEntry(payload),
+          ),
+          last(),
+        )
+        .subscribe({
+          next: (catalogEntries: SmileitCatalogEntryView[]) => {
+            this.catalogEntries.set(catalogEntries);
+            this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
+            this.catalogDraftQueue.set([]);
+            if (activePayload !== null) {
+              this.resetCatalogForm();
+            }
+            this.errorMessage.set(null);
+          },
+          error: (requestError: Error) => {
+            this.errorMessage.set(`Unable to create catalog entry: ${requestError.message}`);
+          },
+        });
+      return;
+    }
+
+    if (activePreview.name === '' || activePreview.smiles === '') {
       this.errorMessage.set('Persistent catalog entry requires both name and SMILES.');
       return;
     }
 
-    if (anchorAtomIndices.length === 0) {
+    if (activePreview.anchorAtomIndices.length === 0) {
       this.errorMessage.set('Persistent catalog entry requires at least one anchor atom index.');
       return;
     }
 
-    if (this.catalogCreateCategoryKeys().length === 0) {
+    if (activePreview.categoryKeys.length === 0) {
       this.errorMessage.set('Persistent catalog entry requires at least one chemistry category.');
       return;
     }
 
     const requestPayload: SmileitCatalogEntryCreateParams = {
-      name: entryName,
-      smiles: entrySmiles,
-      anchorAtomIndices,
-      categoryKeys: this.catalogCreateCategoryKeys(),
-      sourceReference: this.catalogCreateSourceReference().trim() || 'local-lab',
+      name: activePreview.name,
+      smiles: activePreview.smiles,
+      anchorAtomIndices: [...activePreview.anchorAtomIndices],
+      categoryKeys: [...activePreview.categoryKeys],
+      sourceReference: activePreview.sourceReference,
       provenanceMetadata: {},
     };
 
-    const editingStableId: string | null = this.catalogEditingStableId();
     const saveRequest: Observable<SmileitCatalogEntryView[]> =
-      editingStableId === null
-        ? this.jobsApiService.createSmileitCatalogEntry(requestPayload)
-        : this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
+      this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
 
     saveRequest.subscribe({
       next: (catalogEntries: SmileitCatalogEntryView[]) => {
@@ -623,6 +775,26 @@ export class SmileitWorkflowService implements OnDestroy {
     );
 
     return [...matchedEntries].sort(
+      (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
+        left.name.localeCompare(right.name),
+    );
+  }
+
+  getSelectableCatalogEntriesForBlock(
+    block: SmileitAssignmentBlockDraft,
+  ): SmileitCatalogEntryView[] {
+    const dedupedEntries: Map<string, SmileitCatalogEntryView> = new Map();
+
+    [...block.catalogRefs, ...this.getAutoCatalogEntriesForBlock(block)].forEach(
+      (entry: SmileitCatalogEntryView) => {
+        const dedupeKey: string = `${entry.stable_id}::${entry.version}`;
+        if (!dedupedEntries.has(dedupeKey)) {
+          dedupedEntries.set(dedupeKey, entry);
+        }
+      },
+    );
+
+    return [...dedupedEntries.values()].sort(
       (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
         left.name.localeCompare(right.name),
     );
@@ -1089,9 +1261,15 @@ export class SmileitWorkflowService implements OnDestroy {
   private resetCatalogForm(): void {
     this.catalogCreateName.set('');
     this.catalogCreateSmiles.set('');
-    this.catalogCreateAnchorIndicesText.set('0');
+    this.catalogCreateAnchorIndicesText.set('');
     this.catalogCreateCategoryKeys.set([]);
     this.catalogCreateSourceReference.set('local-lab');
+    this.catalogEditingStableId.set(null);
+  }
+
+  private resetCatalogDraftAfterStage(): void {
+    this.catalogCreateSmiles.set('');
+    this.catalogCreateAnchorIndicesText.set('');
     this.catalogEditingStableId.set(null);
   }
 
@@ -1185,7 +1363,7 @@ export class SmileitWorkflowService implements OnDestroy {
       manualSubstituents: [],
       draftManualName: '',
       draftManualSmiles: '',
-      draftManualAnchorIndicesText: '0',
+      draftManualAnchorIndicesText: '',
       draftManualSourceReference: 'manual-ui',
       draftManualCategoryKeys: [],
     };

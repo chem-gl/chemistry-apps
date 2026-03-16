@@ -32,6 +32,281 @@
     </article>
 </section>
 
+<section class="catalog-panel" aria-label="Step 1 substituent catalogs">
+    <article class="catalog-card">
+        <div class="catalog-card-header">
+            <div>
+                <h3>1. Persistent substituent catalog</h3>
+                <p class="panel-caption">
+                    Build and curate substituent catalogs first. These entries are then reused in the block assignment
+                    step.
+                </p>
+            </div>
+            <div class="catalog-card-header-actions">
+                <div class="catalog-card-badge">SMILES only</div>
+                <button class="btn-secondary" type="button" (click)="toggleCatalogPanelCollapse()">
+                    {{ isCatalogPanelCollapsed() ? 'Expand section' : 'Minimize section' }}
+                </button>
+                <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
+                    Open catalog studio
+                </button>
+            </div>
+        </div>
+
+        @if (isCatalogPanelCollapsed()) {
+        <article class="collapsed-panel-card" aria-label="Catalog section collapsed summary">
+            <div class="metadata-grid">
+                <p><strong>Stored entries:</strong> {{ workflow.catalogEntries().length }}</p>
+                <p><strong>Catalog groups:</strong> {{ workflow.catalogGroups().length }}</p>
+                <p><strong>Validated categories:</strong> {{ workflow.categories().length }}</p>
+            </div>
+        </article>
+        } @else {
+        <p class="hint catalog-editor-summary">
+            Catalog creation and edition are isolated in Catalog studio to keep the main workflow clean.
+        </p>
+
+        <section class="catalog-browser-panel" aria-label="Stored substituent catalog">
+            <div class="subsection-header">
+                <div>
+                    <h4>Stored substituents</h4>
+                    <p class="hint">Browse grouped entries and edit only user-managed records.</p>
+                </div>
+            </div>
+
+            <div class="catalog-group-grid manager-catalog-groups">
+                @for (group of workflow.catalogGroups(); track group.key) {
+                <article class="catalog-group-card">
+                    <header class="catalog-group-header">
+                        <h5>{{ group.name }}</h5>
+                        <small>{{ group.entries.length }} molecules</small>
+                    </header>
+                    <div class="catalog-grid grouped-catalog-grid">
+                        @for (entry of group.entries; track entry.id) {
+                        <article class="catalog-item">
+                            <div>
+                                <p class="catalog-name">{{ entry.name }}</p>
+                                <p class="catalog-smiles mono">{{ entry.smiles }}</p>
+                                <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
+                                <small>{{ entry.source_reference || 'no-source' }} · stable_id {{ entry.stable_id }} ·
+                                    v{{ entry.version }}</small>
+                            </div>
+                            @if (workflow.isCatalogEntryEditable(entry)) {
+                            <button class="catalog-add" (click)="beginCatalogEntryEdition(entry)"
+                                [disabled]="workflow.isProcessing()">
+                                Edit
+                            </button>
+                            }
+                        </article>
+                        }
+                    </div>
+                </article>
+                }
+            </div>
+        </section>
+        }
+
+        <dialog #catalogStudioDialog class="catalog-studio-dialog" (click)="onCatalogStudioDialogClick($event)">
+            <section class="catalog-studio-modal" role="dialog" aria-modal="true" aria-label="Catalog studio"
+                (click)="$event.stopPropagation()">
+                <header class="catalog-studio-header">
+                    <div>
+                        <h4>Catalog studio</h4>
+                        <p class="hint">Create or edit substituents without mixing this flow with block mapping.</p>
+                    </div>
+                    <button type="button" class="btn-secondary" (click)="closeCatalogStudioModal()">Close</button>
+                </header>
+
+                <div class="catalog-editor-layout">
+                    <section class="catalog-editor-form" aria-label="Catalog editor">
+                        <div class="catalog-upper-section">
+                            <div class="subsection-header">
+                                <div>
+                                    <h4>Entry metadata</h4>
+                                    <p class="hint">Configure top-level values first. Then add each SMILES below.</p>
+                                </div>
+                            </div>
+                            <div class="catalog-form-grid catalog-metadata-grid">
+                                <label>
+                                    Name
+                                    <input type="text" [ngModel]="workflow.catalogCreateName()"
+                                        (ngModelChange)="workflow.catalogCreateName.set($event)" />
+                                </label>
+                                <label>
+                                    Source reference
+                                    <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
+                                        (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="catalog-category-panel catalog-category-panel-inline">
+                            <div class="subsection-header">
+                                <div>
+                                    <h4>Chemistry categories</h4>
+                                    <p class="hint">Select one or more categories to classify the substituent.</p>
+                                </div>
+                            </div>
+                            <div class="chip-grid compact-chip-grid">
+                                @for (category of workflow.categories(); track category.id) {
+                                <button type="button" class="filter-chip"
+                                    [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
+                                    (click)="workflow.toggleCatalogCreateCategory(category.key)">
+                                    {{ category.name }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="catalog-smiles-section">
+                            <div class="subsection-header">
+                                <div>
+                                    <h4>Add SMILES</h4>
+                                    <p class="hint">Add a draft with <strong>+</strong>. After adding, the SMILES fields
+                                        are cleared for the next one.</p>
+                                </div>
+                            </div>
+                            <div class="catalog-form-grid catalog-smiles-grid">
+                                <label class="catalog-field-full">
+                                    SMILES
+                                    <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
+                                        (ngModelChange)="onCatalogDraftSmilesChange($event)" placeholder="CC(=O)N" />
+                                </label>
+                                <label>
+                                    Anchor indices
+                                    <input type="text" [ngModel]="workflow.catalogCreateAnchorIndicesText()"
+                                        (ngModelChange)="workflow.catalogCreateAnchorIndicesText.set($event)"
+                                        placeholder="0,1" />
+                                </label>
+                            </div>
+                            <div class="catalog-batch-toolbar">
+                                <p class="hint">Add each SMILES with <strong>+</strong>, select its anchor atoms, and
+                                    then
+                                    save the full batch.</p>
+                                <button type="button" class="btn-secondary" (click)="stageCurrentCatalogDraft()"
+                                    [disabled]="workflow.isProcessing() || workflow.isCatalogEditing()">
+                                    + Add current SMILES
+                                </button>
+                            </div>
+                            @if (!workflow.catalogDraftPreview().isReady) {
+                            <p class="hint catalog-ready-hint">Complete name, source, category, SMILES and anchor
+                                indices to queue the draft.</p>
+                            }
+                        </div>
+
+                        <p class="catalog-smiles mono">{{ workflow.catalogCreateSmiles() || 'Catalog SMILES draft
+                            pending' }}</p>
+
+                        @if (catalogDraftInspection(); as catalogInspection) {
+                        <div class="anchor-selection-panel" aria-label="Catalog draft anchor selector">
+                            <div class="subsection-header">
+                                <div>
+                                    <h4>Visual anchor selection</h4>
+                                    <p class="hint">Click atoms in the structure preview to update anchor indices. By
+                                        default, all valid non-hydrogen atoms are selected.</p>
+                                </div>
+                            </div>
+                            <div class="svg-preview inspectable compact-anchor-svg"
+                                (click)="onCatalogDraftSvgClick($event)"
+                                [innerHTML]="toTrustedAnchorSelectionSvg(catalogInspection.svg, catalogDraftAnchorIndices())">
+                            </div>
+                            <div class="atom-grid compact-grid anchor-grid">
+                                @for (atom of catalogInspection.atoms; track atom.index) {
+                                <button type="button" class="atom-chip compact"
+                                    [class.selected]="catalogDraftAnchorIndices().includes(atom.index)"
+                                    (click)="toggleCatalogDraftAnchor(atom.index)" [disabled]="workflow.isProcessing()">
+                                    #{{ atom.index }} {{ atom.symbol }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+
+                        @if (catalogDraftInspectionError(); as catalogInspectionErrorMessage) {
+                        <p class="warning-message" role="alert">{{ catalogInspectionErrorMessage }}</p>
+                        }
+
+                        <div class="action-row compact-actions catalog-editor-actions">
+                            <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
+                                [disabled]="workflow.isProcessing() || (!workflow.catalogDraftPreview().isReady && !workflow.hasQueuedCatalogDrafts())">
+                                {{ workflow.isCatalogEditing() ? 'Update catalog entry' :
+                                (workflow.hasQueuedCatalogDrafts() ? 'Save queued SMILES' : 'Save catalog entry') }}
+                            </button>
+                            @if (workflow.isCatalogEditing()) {
+                            <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()"
+                                [disabled]="workflow.isProcessing()">
+                                Cancel edition
+                            </button>
+                            }
+                        </div>
+
+                        @if (workflow.catalogDraftQueue().length > 0) {
+                        <div class="queued-catalog-drafts">
+                            <div class="subsection-header">
+                                <div>
+                                    <h4>Queued SMILES</h4>
+                                    <p class="hint">Each queued molecule keeps its own anchor selection and will be
+                                        saved as an independent catalog entry.</p>
+                                </div>
+                            </div>
+                            <div class="queued-catalog-grid">
+                                @for (queuedDraft of workflow.catalogDraftQueue(); track queuedDraft.id) {
+                                <article class="queued-catalog-card">
+                                    <div>
+                                        <p class="catalog-name">{{ queuedDraft.name }}</p>
+                                        <p class="catalog-smiles mono">{{ queuedDraft.smiles }}</p>
+                                        <p class="catalog-description">Anchors {{ queuedDraft.anchorAtomIndices.join(',
+                                            ') }}</p>
+                                        <small>{{ queuedDraft.categoryNames.join(', ') || 'No categories' }}</small>
+                                    </div>
+                                    <div class="queued-catalog-actions">
+                                        <button type="button" class="btn-secondary small"
+                                            (click)="loadQueuedCatalogDraft(queuedDraft.id)"
+                                            [disabled]="workflow.isProcessing()">
+                                            Edit
+                                        </button>
+                                        <button type="button" class="remove-btn small"
+                                            (click)="removeQueuedCatalogDraft(queuedDraft.id)"
+                                            [disabled]="workflow.isProcessing()">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </article>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </section>
+
+                    @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
+                    <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
+                        <h5>Catalog draft preview</h5>
+                        <div class="catalog-preview-metadata">
+                            <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
+                            <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}
+                            </p>
+                            <p><strong>Anchors:</strong> {{ catalogDraftPreview.anchorAtomIndices.join(', ') ||
+                                'Pending' }}</p>
+                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending'
+                                }}</p>
+                            <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
+                        </div>
+                        <p class="catalog-smiles mono">{{ catalogDraftPreview.smiles || 'Pending catalog SMILES' }}</p>
+                        @if (catalogDraftPreview.warnings.length > 0) {
+                        <div class="catalog-preview-warnings">
+                            @for (warningText of catalogDraftPreview.warnings; track warningText) {
+                            <p class="warning-message preview-warning">{{ warningText }}</p>
+                            }
+                        </div>
+                        }
+                    </aside>
+                    }
+                </div>
+            </section>
+        </dialog>
+    </article>
+</section>
+
 <div class="workspace-grid">
     <section class="entry-panel" aria-label="Input parameters">
     <div class="panel-header-row">
@@ -53,9 +328,7 @@
             [disabled]="workflow.isProcessing()" placeholder="c1ccccc1" />
         </label>
 
-    <app-smiles-structure-trigger class="input-structure-preview" [smiles]="workflow.principalSmiles()"
-        title="Principal scaffold preview" layout="detail" [showAtomCount]="true">
-    </app-smiles-structure-trigger>
+    <p class="catalog-smiles mono">{{ workflow.principalSmiles() || 'Pending principal SMILES' }}</p>
 
     @if (workflow.inspection(); as inspectionResult) {
     <div class="inspection-card">
@@ -64,9 +337,7 @@
             <p><strong>Patterns matched:</strong> {{ inspectionResult.activePatternRefs.length }}</p>
             </div>
 
-            <app-smiles-structure-trigger class="inspection-inline-structure" [smiles]="inspectionResult.canonicalSmiles"
-                [svg]="inspectionResult.svg" title="Canonical scaffold" layout="compact" [showAtomCount]="true">
-            </app-smiles-structure-trigger>
+            <p class="catalog-smiles mono">Canonical: {{ inspectionResult.canonicalSmiles }}</p>
 
             @if (workflow.quickProperties(); as quickProperties) {
             <div class="property-grid" aria-label="Quick physicochemical properties">
@@ -120,7 +391,7 @@
 
         <div class="site-toolbar">
             <div>
-                <h4>3. Select substitution sites on the scaffold</h4>
+                <h4>Select substitution sites on the scaffold</h4>
                 <p class="hint">Click atoms in the visual preview to mark where later substitutions may be placed.</p>
             </div>
             <div class="site-toolbar-summary">
@@ -148,77 +419,14 @@
 </div>
 }
 
-    <article class="generation-card">
-        <div class="subsection-header">
-            <div>
-                <h4>5. Generate derivative set</h4>
-                <p class="hint">Run generation only after block molecules and scaffold positions are fully mapped.</p>
-            </div>
-            <span class="workflow-step-state" [class.generation-ready]="workflow.canDispatch()">
-                {{ workflow.canDispatch() ? 'Ready to run' : 'Waiting for mapping' }}
-            </span>
-        </div>
-
-        <div class="options-grid compact">
-            <label>
-                Export base name
-                <input type="text" [ngModel]="workflow.exportNameBase()"
-                    (ngModelChange)="workflow.exportNameBase.set($event)" [disabled]="workflow.isProcessing()"
-                    placeholder="smileit_run" />
-            </label>
-
-            <label>
-                Export padding
-                <input type="number" min="2" max="8" [ngModel]="workflow.exportPadding()"
-                    (ngModelChange)="workflow.setExportPadding(toNumber($event))" [disabled]="workflow.isProcessing()" />
-            </label>
-
-            <label>
-                Overlap policy
-                <select [ngModel]="workflow.siteOverlapPolicy()" (ngModelChange)="workflow.siteOverlapPolicy.set($event)"
-                    [disabled]="workflow.isProcessing()">
-                    <option value="last_block_wins">Last block wins</option>
-                </select>
-            </label>
-        </div>
-
-        <div class="options-grid">
-            <label>
-                R substitutes
-                <input type="number" min="1" max="10" [ngModel]="workflow.rSubstitutes()"
-                    (ngModelChange)="workflow.setRSubstitutes(toNumber($event))" [disabled]="workflow.isProcessing()" />
-            </label>
-
-            <label>
-                Max bond order
-                <input type="number" min="1" max="3" [ngModel]="workflow.numBonds()"
-                    (ngModelChange)="workflow.setNumBonds(toNumber($event))" [disabled]="workflow.isProcessing()" />
-            </label>
-
-            <label class="toggle-label">
-                <input type="checkbox" [ngModel]="workflow.allowRepeated()" (ngModelChange)="workflow.allowRepeated.set($event)"
-                    [disabled]="workflow.isProcessing()" />
-                Allow repeated SMILES
-            </label>
-        </div>
-
-        <div class="action-row">
-            <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing() || !workflow.canDispatch()"
-                [title]="workflow.canDispatch() ? '' : 'Complete scaffold mapping before generating structures.'">
-                {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
-            </button>
-            <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">Reset</button>
-            </div>
-    </article>
     </section>
 
     <section class="library-panel" aria-label="Blocks and catalogs">
         <div class="panel-header-row">
             <div>
-                <h3>1. Block generation and substituent selection</h3>
+                <h3>3. Block assignment by location</h3>
                 <p class="panel-caption">
-                    Start by creating block shells, choose the molecules each block can use, and only then
-                    assign those block molecules to the scaffold positions.
+                    Choose block-level sources and map each block to selected scaffold locations.
                 </p>
             </div>
             <div class="panel-header-actions">
@@ -248,70 +456,6 @@
                     </div>
                 </article>
                 } @else {
-                <article class="workflow-step-guide" aria-label="Recommended step order for block assignment">
-                    <h4>Recommended order for new users</h4>
-                    <ol class="workflow-step-list">
-                        <li class="workflow-step-item" [class.is-done]="workflow.assignmentBlocks().length > 0"
-                            [class.is-active]="workflow.assignmentBlocks().length === 0">
-                            <span class="workflow-step-index">1</span>
-                            <div>
-                                <strong>Create one or more blocks</strong>
-                                <p class="hint">Blocks act as reusable containers for the substituent molecules you will prepare.</p>
-                            </div>
-                            <span class="workflow-step-state">
-                                {{ workflow.assignmentBlocks().length > 0 ? 'Done' : 'Pending' }}
-                            </span>
-                        </li>
-                        <li class="workflow-step-item" [class.is-done]="workflow.inspection() !== null"
-                            [class.is-active]="workflow.assignmentBlocks().length > 0 && workflow.inspection() === null">
-                            <span class="workflow-step-index">2</span>
-                            <div>
-                                <strong>Inspect the principal SMILES</strong>
-                                <p class="hint">Confirm the scaffold visually before deciding where substitutions can be placed.</p>
-                            </div>
-                            <span class="workflow-step-state">
-                                {{ workflow.inspection() !== null ? 'Done' : 'Pending' }}
-                            </span>
-                        </li>
-                        <li class="workflow-step-item" [class.is-done]="workflow.selectedAtomIndices().length > 0"
-                            [class.is-active]="workflow.inspection() !== null && workflow.selectedAtomIndices().length === 0">
-                            <span class="workflow-step-index">3</span>
-                            <div>
-                                <strong>Select substitution sites on the scaffold</strong>
-                                <p class="hint">Pick the exact atom positions that can receive one of your block molecules.</p>
-                            </div>
-                            <span class="workflow-step-state">
-                                {{ workflow.selectedAtomIndices().length > 0 ? 'Done' : 'Pending' }}
-                            </span>
-                        </li>
-                        <li class="workflow-step-item"
-                            [class.is-done]="workflow.selectedSiteCoverage().length > 0 && workflow.uncoveredSelectedSites().length === 0"
-                            [class.is-active]="workflow.selectedAtomIndices().length > 0 && workflow.uncoveredSelectedSites().length > 0">
-                            <span class="workflow-step-index">4</span>
-                            <div>
-                                <strong>Choose block molecules and assign them to positions</strong>
-                                <p class="hint">First choose substituent sources inside each block, then map each block to the selected
-                                    scaffold sites.</p>
-                            </div>
-                            <span class="workflow-step-state">
-                                {{ workflow.selectedSiteCoverage().length > 0 && workflow.uncoveredSelectedSites().length === 0 ? 'Done'
-                                : 'Pending' }}
-                            </span>
-                        </li>
-                        <li class="workflow-step-item" [class.is-done]="workflow.canDispatch()"
-                            [class.is-active]="!workflow.canDispatch() && workflow.assignmentBlocks().length > 0">
-                            <span class="workflow-step-index">5</span>
-                            <div>
-                                <strong>Generate structures</strong>
-                                <p class="hint">The final run unlocks only when every selected scaffold site has an owning block.</p>
-                            </div>
-                            <span class="workflow-step-state">
-                                {{ workflow.canDispatch() ? 'Ready' : 'Locked' }}
-                            </span>
-                        </li>
-                    </ol>
-                </article>
-
                 <div class="subsection-header block-stack-header">
                     <div>
                         <h4>Block stack controls</h4>
@@ -370,7 +514,7 @@
                 } @else {
                 <div class="block-section">
                     <div class="subsection-header">
-                        <h4>3. Filter substituent categories</h4>
+                        <h4>Filter substituent categories</h4>
                         <div class="chip-actions">
                             <button class="btn-secondary small" (click)="workflow.setAllCategoriesForBlock(block.id)"
                                 [disabled]="workflow.isProcessing()">
@@ -402,8 +546,7 @@
                         <article class="tag-card">
                             <div>
                                 <strong>{{ entry.name }}</strong>
-                                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
-                                    layout="inline"></app-smiles-structure-trigger>
+                                <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                                 <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                             </div>
                             <button class="remove-btn small"
@@ -425,8 +568,7 @@
         <article class="tag-card auto-tag-card">
             <div>
                 <strong>{{ entry.name }}</strong>
-                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles" layout="inline">
-                </app-smiles-structure-trigger>
+                <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                 <small>{{ (entry.categories ?? []).join(', ') }}</small>
             </div>
         </article>
@@ -447,15 +589,20 @@
             <article class="catalog-item">
                 <div>
                     <p class="catalog-name">{{ entry.name }}</p>
-                    <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles" layout="inline">
-                    </app-smiles-structure-trigger>
+                    <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                     <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
                                         <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                                         </div>
-                                        <button class="catalog-add" (click)="workflow.addCatalogReferenceToBlock(block.id, entry)"
-                                        [disabled]="workflow.isProcessing() || workflow.isCatalogEntryReferenced(block, entry)">
-                                        {{ workflow.isCatalogEntryReferenced(block, entry) ? 'Added' : 'Add' }}
-                                    </button>
+                                        <div class="catalog-item-actions">
+                                            <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
+                                                [disabled]="workflow.isProcessing()" [class.active]="isCatalogEntryLoadedInManualDraft(block, entry)">
+                                                {{ isCatalogEntryLoadedInManualDraft(block, entry) ? 'Molecule selected' : 'Select molecule' }}
+                                            </button>
+                                            <button class="catalog-add" (click)="workflow.addCatalogReferenceToBlock(block.id, entry)"
+                                                [disabled]="workflow.isProcessing() || workflow.isCatalogEntryReferenced(block, entry)">
+                                                {{ workflow.isCatalogEntryReferenced(block, entry) ? 'Added' : 'Add' }}
+                                            </button>
+                                        </div>
                                 </article>
                                 }
                             </div>
@@ -466,6 +613,41 @@
 
                 <div class="block-section">
                     <h4>Manual substituents</h4>
+                    <p class="hint">Use the substituent workspace below to choose a molecule and then mark its anchor atoms visually, just
+                        like in the principal structure.</p>
+                    
+                    <div class="substituent-workspace-card">
+                        <div class="subsection-header">
+                            <div>
+                                <h5>Substituent selection workspace</h5>
+                                <p class="hint">Step 1: choose a molecule candidate. Step 2: inspect the structure and select anchor atoms.
+                                </p>
+                            </div>
+                        </div>
+                    
+                        @if (workflow.getSelectableCatalogEntriesForBlock(block).length === 0) {
+                        <p class="hint">No catalog candidates available for this block yet. Add or match molecules above, or type a manual
+                            SMILES below.</p>
+                        } @else {
+                        <div class="substituent-candidate-grid">
+                            @for (entry of workflow.getSelectableCatalogEntriesForBlock(block); track entry.id) {
+                            <button type="button" class="substituent-candidate-card"
+                                [class.selected]="isCatalogEntryLoadedInManualDraft(block, entry)"
+                                (click)="selectCatalogEntryForManualDraft(block.id, entry)" [disabled]="workflow.isProcessing()">
+                                <strong>{{ entry.name }}</strong>
+                                <span class="mono">{{ entry.smiles }}</span>
+                                <small>Anchors {{ entry.anchor_atom_indices.join(', ') }}</small>
+                            </button>
+                            }
+                        </div>
+                        }
+                    
+                        <div class="selected-substituent-summary">
+                            <p><strong>Selected molecule:</strong> {{ selectedManualDraftLabel(block) }}</p>
+                            <p><strong>Current anchors:</strong> {{ block.draftManualAnchorIndicesText || 'Pending visual selection' }}</p>
+                        </div>
+                    </div>
+
                     <div class="options-grid compact">
                         <label>
                             Name
@@ -476,7 +658,7 @@
                         <label>
                             SMILES
                             <input type="text" [ngModel]="block.draftManualSmiles"
-                                (ngModelChange)="workflow.updateBlockManualDraftSmiles(block.id, $event)"
+                                (ngModelChange)="onBlockManualDraftSmilesChange(block.id, $event)"
                                 [disabled]="workflow.isProcessing()" />
                         </label>
                         <label>
@@ -492,8 +674,36 @@
                                 [disabled]="workflow.isProcessing()" placeholder="manual-ui" />
                         </label>
                     </div>
-                    <app-smiles-structure-trigger class="input-structure-preview" [smiles]="block.draftManualSmiles"
-                        title="Manual substituent preview" layout="compact"></app-smiles-structure-trigger>
+                    <p class="catalog-smiles mono">{{ block.draftManualSmiles || 'Manual SMILES draft pending' }}</p>
+                    
+                    @if (manualDraftInspection(block.id); as manualInspection) {
+                    <div class="anchor-selection-panel" aria-label="Manual draft anchor selector">
+                        <div class="subsection-header">
+                            <div>
+                                <h4>Visual anchor selection</h4>
+                                <p class="hint">Click atoms to update anchor indices for this manual substituent. By default, all valid
+                                    non-hydrogen atoms are selected.</p>
+                            </div>
+                        </div>
+                        <div class="svg-preview inspectable compact-anchor-svg" (click)="onManualDraftSvgClick($event, block.id)"
+                            [innerHTML]="toTrustedAnchorSelectionSvg(manualInspection.svg, manualDraftAnchorIndices(block))">
+                        </div>
+                        <div class="atom-grid compact-grid anchor-grid">
+                            @for (atom of manualInspection.atoms; track atom.index) {
+                            <button type="button" class="atom-chip compact"
+                                [class.selected]="manualDraftAnchorIndices(block).includes(atom.index)"
+                                (click)="toggleManualDraftAnchor(block.id, atom.index)" [disabled]="workflow.isProcessing()">
+                                #{{ atom.index }} {{ atom.symbol }}
+                            </button>
+                            }
+                        </div>
+                    </div>
+                    }
+                    
+                    @if (manualDraftInspectionError(block.id); as manualInspectionErrorMessage) {
+                    <p class="warning-message" role="alert">{{ manualInspectionErrorMessage }}</p>
+                    }
+
                     <div class="chip-grid compact-chip-grid">
                         @for (category of workflow.categories(); track category.id) {
                         <button type="button" class="filter-chip" [class.active]="block.draftManualCategoryKeys.includes(category.key)"
@@ -504,7 +714,7 @@
                         }
                     </div>
                     <div class="action-row compact-actions">
-                        <button class="btn-secondary" (click)="workflow.addManualSubstituentToBlock(block.id)"
+                        <button class="btn-secondary" (click)="addManualSubstituentToBlock(block.id)"
                             [disabled]="workflow.isProcessing()">
                             Add manual substituent
                         </button>
@@ -516,8 +726,7 @@
                         <article class="tag-card">
                             <div>
                                 <strong>{{ entry.name }}</strong>
-                                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
-                                    layout="inline"></app-smiles-structure-trigger>
+                                <p class="catalog-smiles mono">{{ entry.smiles }}</p>
                                 <small>Anchors {{ entry.anchorAtomIndices.join(', ') }} · {{ entry.categories.join(', ') }}</small>
                             </div>
                             <button class="remove-btn small" (click)="workflow.removeManualSubstituent(block.id, $index)"
@@ -530,7 +739,7 @@
                     }
                 </div>
 <div class="block-section block-placement-section">
-    <h4>4. Assign this block to scaffold positions</h4>
+    <h4>Assign this block to scaffold positions</h4>
     @if (workflow.selectedAtomIndices().length === 0) {
     <p class="hint">Inspect the principal molecule and select target atoms before assigning this block to positions.</p>
     } @else {
@@ -557,234 +766,80 @@
         </div>
         }
 
-        <div class="catalog-management-grid">
-            <article class="catalog-card">
-                <div class="catalog-card-header">
-                    <div>
-                        <h3>Persistent substituent catalog</h3>
-                        <p class="panel-caption">
-                            Register validated substituents once and reuse them by immutable stable ID + version.
-                            Use SMILES notation here. SMARTS strings should be registered in Structural pattern catalog.
-                        </p>
-                    </div>
-                    <div class="catalog-card-badge">SMILES only</div>
-                    </div>
 
-                    <div class="catalog-editor-layout">
-                        <section class="catalog-editor-form" aria-label="Catalog editor">
-                            <div class="catalog-form-grid">
-                                <label class="catalog-field-full">
-                                    Name
-                                    <input type="text" [ngModel]="workflow.catalogCreateName()"
-                                        (ngModelChange)="workflow.catalogCreateName.set($event)" />
-                                </label>
-                                <label class="catalog-field-full">
-                                    SMILES
-                                    <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
-                                        (ngModelChange)="workflow.catalogCreateSmiles.set($event)" placeholder="CC(=O)N" />
-                                </label>
-                                <label>
-                                    Anchor indices
-                                    <input type="text" [ngModel]="workflow.catalogCreateAnchorIndicesText()"
-                                        (ngModelChange)="workflow.catalogCreateAnchorIndicesText.set($event)" placeholder="0,1" />
-                                </label>
-                                <label>
-                                    Source reference
-                                    <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
-                                        (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
-                                </label>
-                                </div>
-<app-smiles-structure-trigger class="input-structure-preview" [smiles]="workflow.catalogCreateSmiles()"
-    title="Catalog draft structure" layout="compact"></app-smiles-structure-trigger>
-<div class="catalog-category-panel">
-    <div class="subsection-header">
-        <div>
-            <h4>Chemistry categories</h4>
-            <p class="hint">Select one or more categories to classify the substituent.</p>
-        </div>
-    </div>
-                            <div class="chip-grid compact-chip-grid">
-                                @for (category of workflow.categories(); track category.id) {
-                                <button type="button" class="filter-chip"
-                                    [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
-                                    (click)="workflow.toggleCatalogCreateCategory(category.key)">
-                                    {{ category.name }}
-                                </button>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="action-row compact-actions catalog-editor-actions">
-                            <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
-                                [disabled]="workflow.isProcessing() || !workflow.catalogDraftPreview().isReady">
-                                {{ workflow.isCatalogEditing() ? 'Update catalog entry' : 'Save catalog entry' }}
-                            </button>
-                            @if (workflow.isCatalogEditing()) {
-                            <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()" [disabled]="workflow.isProcessing()">
-                                Cancel edition
-                            </button>
-                            }
-                        </div>
-                        </section>
-
-                    @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
-                    <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
-                        <h5>Catalog draft preview</h5>
-                        <div class="catalog-preview-metadata">
-                            <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
-                            <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}</p>
-                            <p><strong>Anchors:</strong> {{ catalogDraftPreview.anchorAtomIndices.join(', ') || 'Pending' }}</p>
-                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending' }}</p>
-                            <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
-                        </div>
-                        <app-smiles-structure-trigger class="catalog-preview-structure" [smiles]="catalogDraftPreview.smiles"
-                            title="Catalog molecule" layout="compact">
-                        </app-smiles-structure-trigger>
-                        @if (catalogDraftPreview.warnings.length > 0) {
-                        <div class="catalog-preview-warnings">
-                            @for (warningText of catalogDraftPreview.warnings; track warningText) {
-                            <p class="warning-message preview-warning">{{ warningText }}</p>
-                            }
-                        </div>
-                        }
-                    </aside>
-                    }
-                </div>
-
-                <section class="catalog-browser-panel" aria-label="Stored substituent catalog">
-                    <div class="subsection-header">
-                        <div>
-                            <h4>Stored substituents</h4>
-                            <p class="hint">Browse grouped entries and edit only user-managed records.</p>
-                        </div>
-                    </div>
-
-                    <div class="catalog-group-grid manager-catalog-groups">
-                        @for (group of workflow.catalogGroups(); track group.key) {
-                        <article class="catalog-group-card">
-                            <header class="catalog-group-header">
-                                <h5>{{ group.name }}</h5>
-                                <small>{{ group.entries.length }} molecules</small>
-                            </header>
-                            <div class="catalog-grid grouped-catalog-grid">
-                                @for (entry of group.entries; track entry.id) {
-                                <article class="catalog-item">
-                                    <div>
-                                        <p class="catalog-name">{{ entry.name }}</p>
-                                        <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
-                                            layout="inline"></app-smiles-structure-trigger>
-                                        <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
-                                        <small>{{ entry.source_reference || 'no-source' }} · stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
-                                    </div>
-                                    @if (workflow.isCatalogEntryEditable(entry)) {
-                                    <button class="catalog-add" (click)="workflow.beginCatalogEntryEdition(entry)"
-                                        [disabled]="workflow.isProcessing()">
-                                        Edit
-                                    </button>
-                                    }
-                                </article>
-                                }
-                            </div>
-                            </article>
-                            }
-                            </div>
-                    </section>
-                </article>
-
-        </div>
         }
         </section>
 
-        <section class="pattern-panel" aria-label="Structural pattern catalog">
-        <article class="catalog-card">
-            <div class="subsection-header">
-                <div>
-                    <h3>Structural pattern catalog</h3>
-                    <p class="panel-caption">
-                        Versioned SMARTS rules used during inspection. Matches appear in "Patterns matched",
-                        SVG overlays, and annotation legends in the left panel.
-                    </p>
-                </div>
-                <button class="btn-secondary small" (click)="togglePatternCatalogCollapse()"
-                    [disabled]="workflow.isProcessing()">
-                    {{ isPatternCatalogCollapsed() ? 'Expand section' : 'Minimize section' }}
-                </button>
-            </div>
-
-            @if (isPatternCatalogCollapsed()) {
-            <div class="block-collapsed-summary">
-                <p><strong>Stored patterns:</strong> {{ workflow.patterns().length }}</p>
-                <p><strong>Usage reference:</strong> Left inspection panel annotations and pattern counters.</p>
-            </div>
-            } @else {
-            <article class="pattern-reference-card">
-                <h5>Where this section is referenced</h5>
-                <p>1. Principal inspection summary ("Patterns matched").</p>
-                <p>2. Annotation legend cards with type, caption and atom indices.</p>
-                <p>3. SVG overlays for visual medicinal-chemistry review.</p>
-            </article>
-
-            <div class="options-grid compact">
-                <label>
-                    Name
-                    <input type="text" [ngModel]="workflow.patternCreateName()"
-                        (ngModelChange)="workflow.patternCreateName.set($event)" />
-                </label>
-                <label>
-                    SMARTS
-                    <input type="text" [ngModel]="workflow.patternCreateSmarts()"
-                        (ngModelChange)="workflow.patternCreateSmarts.set($event)" placeholder="[N+](=O)[O-]" />
-                </label>
-                <label>
-                    Pattern type
-                    <select [ngModel]="workflow.patternCreateType()" (ngModelChange)="workflow.patternCreateType.set($event)">
-                        <option value="toxicophore">Toxicophore</option>
-                        <option value="privileged">Privileged scaffold</option>
-                    </select>
-                </label>
-                <label>
-                    Source reference
-                    <input type="text" [ngModel]="workflow.patternCreateSourceReference()"
-                        (ngModelChange)="workflow.patternCreateSourceReference.set($event)" />
-                </label>
-            </div>
-            <label>
-                Caption
-                <input type="text" [ngModel]="workflow.patternCreateCaption()"
-                    (ngModelChange)="workflow.patternCreateCaption.set($event)" />
-            </label>
-            <div class="action-row compact-actions">
-                <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
-                    Save structural pattern
-                </button>
-            </div>
-            <div class="pattern-list">
-                @for (pattern of workflow.patterns(); track pattern.id) {
-                <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
-                    [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
-                    <div>
-                        <p class="catalog-name">{{ pattern.name }}</p>
-                        <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
-                        <p class="catalog-description">{{ pattern.caption }}</p>
-                        <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id {{ pattern.stable_id }} · v{{
-                            pattern.version }}</small>
-                    </div>
-                </article>
-                }
-            </div>
-            }
-            </article>
-    </section>
         </div>
 
 <section class="result-panel" aria-label="Result and progress panel">
     <div class="panel-header-row">
         <div>
-            <h3>Execution and exports</h3>
-            <p class="panel-caption">Monitor asynchronous progress, inspect generated structures, and export reproducible
-                datasets.</p>
+            <h3>4. Continuous generation and outputs</h3>
+            <p class="panel-caption">Configure generation, run continuously, and inspect/export resulting structures.</p>
+            </div>
+            </div>
+
+    <article class="generation-card">
+        <div class="subsection-header">
+            <div>
+                <h4>Generation setup</h4>
+                <p class="hint">Run generation only after block molecules and scaffold positions are fully mapped.</p>
+                </div>
+            <span class="workflow-step-state" [class.generation-ready]="workflow.canDispatch()">
+                {{ workflow.canDispatch() ? 'Ready to run' : 'Waiting for mapping' }}
+            </span>
+            </div>
+
+        <div class="options-grid compact">
+            <label>
+                Export base name
+                <input type="text" [ngModel]="workflow.exportNameBase()" (ngModelChange)="workflow.exportNameBase.set($event)"
+                    [disabled]="workflow.isProcessing()" placeholder="smileit_run" />
+                </label>
+
+            <label>
+                Export padding
+                <input type="number" min="2" max="8" [ngModel]="workflow.exportPadding()"
+                    (ngModelChange)="workflow.setExportPadding(toNumber($event))" [disabled]="workflow.isProcessing()" />
+                </label>
+
+            <label>
+                Overlap policy
+                <select [ngModel]="workflow.siteOverlapPolicy()" (ngModelChange)="workflow.siteOverlapPolicy.set($event)"
+                    [disabled]="workflow.isProcessing()">
+                    <option value="last_block_wins">Last block wins</option>
+                </select>
+                </label>
         </div>
-    </div>
+        
+        <div class="options-grid">
+            <label>
+                R substitutes
+                <input type="number" min="1" max="10" [ngModel]="workflow.rSubstitutes()"
+                    (ngModelChange)="workflow.setRSubstitutes(toNumber($event))" [disabled]="workflow.isProcessing()" />
+                </label>
+
+            <label>
+                Max bond order
+                <input type="number" min="1" max="3" [ngModel]="workflow.numBonds()"
+                    (ngModelChange)="workflow.setNumBonds(toNumber($event))" [disabled]="workflow.isProcessing()" />
+            </label>
+<label class="toggle-label">
+    <input type="checkbox" [ngModel]="workflow.allowRepeated()" (ngModelChange)="workflow.allowRepeated.set($event)"
+        [disabled]="workflow.isProcessing()" />
+    Allow repeated SMILES
+</label>
+</div>
+
+<div class="action-row">
+    <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing() || !workflow.canDispatch()"
+        [title]="workflow.canDispatch() ? '' : 'Complete scaffold mapping before generating structures.'">
+        {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
+    </button>
+            <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">Reset</button>
+            </div>
+            </article>
 
     @if (workflow.activeSection() === 'dispatching') {
     <p class="status-message">Dispatching Smileit job...</p>
@@ -817,8 +872,7 @@
         <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
     </div>
 
-    <app-smiles-structure-trigger class="result-principal-preview" [smiles]="resultData.principalSmiles"
-        title="Principal structure" layout="compact"></app-smiles-structure-trigger>
+    <p class="catalog-smiles mono">Principal SMILES: {{ resultData.principalSmiles }}</p>
 
     <div class="action-row export-row">
         <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">CSV</button>
@@ -857,8 +911,7 @@
                 <button type="button" class="structure-name-button" (click)="openGeneratedStructureModal(structureItem)">
                 {{ structureItem.name }}
                 </button>
-                <app-smiles-structure-trigger class="structure-list-preview" [smiles]="structureItem.smiles" [svg]="structureItem.svg"
-                    layout="inline"></app-smiles-structure-trigger>
+                <p class="catalog-smiles mono">{{ structureItem.smiles }}</p>
                 <small>{{ structureItem.traceability.length }} trace events</small>
             </li>
             }
@@ -906,64 +959,120 @@
     }
     </section>
 
-@if (selectedGeneratedStructure(); as selectedStructure) {
-    <div class="structure-modal-backdrop" role="presentation" tabindex="0"
-        (click)="onGeneratedStructureDialogBackdropClick($event)" (keydown)="onGeneratedStructureDialogKeydown($event)">
-        <section class="structure-modal" role="dialog" aria-modal="true" aria-label="Generated molecule preview"
-            (click)="$event.stopPropagation()">
-            <header class="structure-modal-header">
+<section class="advanced-panel" aria-label="Advanced analysis and diagnostics">
+    <div class="panel-header-row">
         <div>
-            <h4>{{ selectedStructure.name }}</h4>
-            </div>
-        <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
-        </header>
+            <h3>Advanced analysis and diagnostics</h3>
+            <p class="panel-caption">
+                Keep optional workflows here: structural patterns, execution logs, and historical job access.
+            </p>
+        </div>
+        <button class="btn-secondary" type="button" (click)="toggleAdvancedSectionCollapse()">
+            {{ isAdvancedSectionCollapsed() ? 'Expand advanced section' : 'Hide advanced section' }}
+        </button>
+    </div>
 
-        <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
-<section class="traceability-card compact-traceability" aria-label="Per-structure traceability">
-    <h4>Per-structure traceability</h4>
-    <div class="table-wrap">
-        <table class="history-table traceability-table">
-            <thead>
-                <tr>
-                    <th>Round</th>
-                    <th>Site</th>
-                    <th>Block</th>
-                    <th>Substituent</th>
-                    <th>Version</th>
-                    <th>Source</th>
-                    <th>Bond</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (traceEvent of selectedStructure.traceability; track traceEvent.site_atom_index + '-' + $index) {
-                <tr>
-                    <td>{{ traceEvent.round_index }}</td>
-                    <td>{{ traceEvent.site_atom_index }}</td>
-                    <td>{{ traceEvent.block_label }}</td>
-                    <td>{{ traceEvent.substituent_name }}</td>
-                    <td>{{ traceEvent.substituent_stable_id }} · v{{ traceEvent.substituent_version }}</td>
-                    <td>{{ traceEvent.source_kind }}</td>
-                    <td>{{ traceEvent.bond_order }}</td>
-                </tr>
+    @if (isAdvancedSectionCollapsed()) {
+    <article class="collapsed-panel-card" aria-label="Advanced section collapsed summary">
+        <div class="metadata-grid">
+            <p><strong>Pattern entries:</strong> {{ workflow.patterns().length }}</p>
+            <p><strong>Stored logs:</strong> {{ workflow.jobLogs().length }}</p>
+            <p><strong>Historical jobs:</strong> {{ workflow.historyJobs().length }}</p>
+        </div>
+    </article>
+    } @else {
+    <div class="advanced-grid">
+        <section class="pattern-panel" aria-label="Structural pattern catalog">
+            <article class="catalog-card">
+                <div class="subsection-header">
+                    <div>
+                        <h3>Structural pattern catalog</h3>
+                        <p class="panel-caption">
+                            Versioned SMARTS rules used during inspection. Matches appear in pattern counters,
+                            SVG overlays, and annotation legends.
+                        </p>
+                        </div>
+                        <button class="btn-secondary small" (click)="togglePatternCatalogCollapse()" [disabled]="workflow.isProcessing()">
+                            {{ isPatternCatalogCollapsed() ? 'Expand section' : 'Minimize section' }}
+                        </button>
+                        </div>
+                        
+                        @if (isPatternCatalogCollapsed()) {
+                        <div class="block-collapsed-summary">
+                            <p><strong>Stored patterns:</strong> {{ workflow.patterns().length }}</p>
+                            <p><strong>Usage reference:</strong> Scaffold inspection counters and annotation overlays.</p>
+                        </div>
+                } @else {
+                <article class="pattern-reference-card">
+                    <h5>Where this section is referenced</h5>
+                    <p>1. Principal inspection summary ("Patterns matched").</p>
+                    <p>2. Annotation legend cards with type, caption and atom indices.</p>
+                    <p>3. SVG overlays for medicinal-chemistry review.</p>
+                </article>
+
+                <div class="options-grid compact">
+                    <label>
+                        Name
+                        <input type="text" [ngModel]="workflow.patternCreateName()"
+                            (ngModelChange)="workflow.patternCreateName.set($event)" />
+                    </label>
+                    <label>
+                        SMARTS
+                        <input type="text" [ngModel]="workflow.patternCreateSmarts()"
+                            (ngModelChange)="workflow.patternCreateSmarts.set($event)" placeholder="[N+](=O)[O-]" />
+                    </label>
+                    <label>
+                        Pattern type
+                        <select [ngModel]="workflow.patternCreateType()" (ngModelChange)="workflow.patternCreateType.set($event)">
+                            <option value="toxicophore">Toxicophore</option>
+                            <option value="privileged">Privileged scaffold</option>
+                        </select>
+                    </label>
+                    <label>
+                        Source reference
+                        <input type="text" [ngModel]="workflow.patternCreateSourceReference()"
+                            (ngModelChange)="workflow.patternCreateSourceReference.set($event)" />
+                    </label>
+                </div>
+                <label>
+                    Caption
+                    <input type="text" [ngModel]="workflow.patternCreateCaption()"
+                        (ngModelChange)="workflow.patternCreateCaption.set($event)" />
+                </label>
+                <div class="action-row compact-actions">
+                    <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
+                        Save structural pattern
+                    </button>
+                </div>
+                <div class="pattern-list">
+                    @for (pattern of workflow.patterns(); track pattern.id) {
+                    <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
+                        [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
+                        <div>
+                            <p class="catalog-name">{{ pattern.name }}</p>
+                            <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
+                            <p class="catalog-description">{{ pattern.caption }}</p>
+                            <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id {{ pattern.stable_id }} · v{{
+                                pattern.version }}</small>
+                        </div>
+                    </article>
+                    }
+                </div>
                 }
-            </tbody>
-        </table>
-    </div>
-</section>
-</section>
-    </div>
-}
+            </article>
+            </section>
 
-@if (workflow.jobLogs().length > 0) {
-    <section class="logs-card" aria-label="Execution logs">
-    <div class="subsection-header">
-        <div>
-            <h3>Execution logs</h3>
-            <p class="hint">Review runtime progress messages, warnings, payload snapshots, and execution diagnostics.</p>
-            </div>
-            <button class="btn-secondary small" type="button" (click)="toggleLogsCollapse()">
-                {{ isLogsCollapsed() ? 'Expand section' : 'Minimize section' }}
-            </button>
+        @if (workflow.jobLogs().length > 0) {
+        <section class="logs-card" aria-label="Execution logs">
+            <div class="subsection-header">
+                <div>
+                    <h3>Execution logs</h3>
+                    <p class="hint">Review runtime progress messages, warnings, payload snapshots, and execution diagnostics.
+                    </p>
+                    </div>
+                    <button class="btn-secondary small" type="button" (click)="toggleLogsCollapse()">
+                        {{ isLogsCollapsed() ? 'Expand section' : 'Minimize section' }}
+                    </button>
             </div>
             @if (isLogsCollapsed()) {
             <div class="block-collapsed-summary">
@@ -971,68 +1080,120 @@
                 <p><strong>Latest event:</strong> #{{ workflow.jobLogs()[workflow.jobLogs().length - 1].eventIndex }}</p>
             </div>
             } @else {
-    <div class="logs-list">
-        @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
-        <article class="log-item">
-            <header class="log-header">
-                <span class="log-level" [class]="logLevelClass(logEntry.level)">
-                    {{ logEntry.level }}
-                </span>
-                <span class="log-source">{{ logEntry.source }}</span>
-                <span class="log-index">#{{ logEntry.eventIndex }}</span>
-            </header>
-            <p class="log-message">{{ logEntry.message }}</p>
-            @if (hasPayload(logEntry)) {
-            <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-            }
-        </article>
-        }
-    </div>
-    }
-    </section>
-}
-
-<section class="history-card" aria-label="Historical Smileit jobs">
-    <div class="history-header">
-        <h3>Historical jobs</h3>
-        <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-            {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-        </button>
-    </div>
-
-    @if (workflow.historyJobs().length === 0) {
-    <p class="status-message">No historical Smileit jobs yet.</p>
-    } @else {
-    <div class="table-wrap">
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Job ID</th>
-                    <th>Status</th>
-                    <th>Progress</th>
-                    <th>Updated</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-                <tr>
-                    <td class="mono">{{ historyJob.id }}</td>
-                    <td>
-                        <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-                    </td>
-                    <td>{{ historyJob.progress_percentage }}%</td>
-                    <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                    <td>
-                        <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                            Open
-                        </button>
-                    </td>
-                </tr>
+            <div class="logs-list">
+                @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+                <article class="log-item">
+                    <header class="log-header">
+                        <span class="log-level" [class]="logLevelClass(logEntry.level)">
+                            {{ logEntry.level }}
+                        </span>
+                        <span class="log-source">{{ logEntry.source }}</span>
+                        <span class="log-index">#{{ logEntry.eventIndex }}</span>
+                    </header>
+                    <p class="log-message">{{ logEntry.message }}</p>
+                    @if (hasPayload(logEntry)) {
+                    <pre class="log-payload">{{ logEntry.payload | json }}</pre>
+                    }
+                </article>
                 }
-            </tbody>
-        </table>
+            </div>
+            }
+            </section>
+            }
+
+        <section class="history-card" aria-label="Historical Smileit jobs">
+            <div class="history-header">
+                <h3>Historical jobs</h3>
+                <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+                    {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+                </button>
+            </div>
+
+            @if (workflow.historyJobs().length === 0) {
+            <p class="status-message">No historical Smileit jobs yet.</p>
+            } @else {
+            <div class="table-wrap">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Updated</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+                        <tr>
+                            <td class="mono">{{ historyJob.id }}</td>
+                            <td>
+                                <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
+                            </td>
+                            <td>{{ historyJob.progress_percentage }}%</td>
+                            <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                            <td>
+                                <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                                    Open
+                                </button>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            }
+            </section>
     </div>
     }
     </section>
+    
+    @if (selectedGeneratedStructure(); as selectedStructure) {
+    <div class="structure-modal-backdrop" role="presentation" tabindex="0"
+        (click)="onGeneratedStructureDialogBackdropClick($event)" (keydown)="onGeneratedStructureDialogKeydown($event)">
+        <section class="structure-modal" role="dialog" aria-modal="true" aria-label="Generated molecule preview"
+            (click)="$event.stopPropagation()">
+            <header class="structure-modal-header">
+                <div>
+                    <h4>{{ selectedStructure.name }}</h4>
+                </div>
+                <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
+            </header>
+    
+            <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+            <section class="traceability-card compact-traceability" aria-label="Per-structure traceability">
+                <h4>Per-structure traceability</h4>
+                <div class="table-wrap">
+                    <table class="history-table traceability-table">
+                        <thead>
+                            <tr>
+                                <th>Round</th>
+                                <th>Site</th>
+                                <th>Block</th>
+                                <th>Substituent</th>
+                                <th>Version</th>
+                                <th>Source</th>
+                                <th>Bond</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (traceEvent of selectedStructure.traceability; track traceEvent.site_atom_index + '-' +
+                            $index) {
+                            <tr>
+                                <td>{{ traceEvent.round_index }}</td>
+                                <td>{{ traceEvent.site_atom_index }}</td>
+                                <td>{{ traceEvent.block_label }}</td>
+                                <td>{{ traceEvent.substituent_name }}</td>
+                                <td>{{ traceEvent.substituent_stable_id }} · v{{ traceEvent.substituent_version }}</td>
+                                <td>{{ traceEvent.source_kind }}</td>
+                                <td>{{ traceEvent.bond_order }}</td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </div>
+    }
 </section>
