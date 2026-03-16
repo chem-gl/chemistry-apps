@@ -53,13 +53,20 @@
             [disabled]="workflow.isProcessing()" placeholder="c1ccccc1" />
         </label>
 
+    <app-smiles-structure-trigger class="input-structure-preview" [smiles]="workflow.principalSmiles()"
+        title="Principal scaffold preview" layout="detail" [showAtomCount]="true">
+    </app-smiles-structure-trigger>
+
     @if (workflow.inspection(); as inspectionResult) {
     <div class="inspection-card">
         <div class="inspection-metadata">
-            <p><strong>Canonical:</strong> <span class="mono">{{ inspectionResult.canonicalSmiles }}</span></p>
             <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
             <p><strong>Patterns matched:</strong> {{ inspectionResult.activePatternRefs.length }}</p>
             </div>
+
+            <app-smiles-structure-trigger class="inspection-inline-structure" [smiles]="inspectionResult.canonicalSmiles"
+                [svg]="inspectionResult.svg" title="Canonical scaffold" layout="compact" [showAtomCount]="true">
+            </app-smiles-structure-trigger>
 
             @if (workflow.quickProperties(); as quickProperties) {
             <div class="property-grid" aria-label="Quick physicochemical properties">
@@ -151,7 +158,7 @@
                 {{ workflow.canDispatch() ? 'Ready to run' : 'Waiting for mapping' }}
             </span>
         </div>
-    
+
         <div class="options-grid compact">
             <label>
                 Export base name
@@ -159,13 +166,13 @@
                     (ngModelChange)="workflow.exportNameBase.set($event)" [disabled]="workflow.isProcessing()"
                     placeholder="smileit_run" />
             </label>
-    
+
             <label>
                 Export padding
                 <input type="number" min="2" max="8" [ngModel]="workflow.exportPadding()"
                     (ngModelChange)="workflow.setExportPadding(toNumber($event))" [disabled]="workflow.isProcessing()" />
             </label>
-    
+
             <label>
                 Overlap policy
                 <select [ngModel]="workflow.siteOverlapPolicy()" (ngModelChange)="workflow.siteOverlapPolicy.set($event)"
@@ -356,8 +363,8 @@
                 <div class="block-collapsed-summary" aria-label="Collapsed block summary">
                     <p><strong>Sites:</strong> {{ blockSummary(block).selectedSitesLabel }}</p>
                     <p><strong>Categories:</strong> {{ blockSummary(block).categoriesLabel }}</p>
-                    <p><strong>Catalog SMILES:</strong> {{ blockSummary(block).catalogSmilesLabel }}</p>
-                    <p><strong>Manual SMILES:</strong> {{ blockSummary(block).manualSmilesLabel }}</p>
+                    <p><strong>Catalog structures:</strong> {{ blockSummary(block).catalogSmilesLabel }}</p>
+                    <p><strong>Manual structures:</strong> {{ blockSummary(block).manualSmilesLabel }}</p>
                     <p><strong>Total block sources:</strong> {{ blockSummary(block).sourceCount }}</p>
                 </div>
                 } @else {
@@ -395,10 +402,8 @@
                         <article class="tag-card">
                             <div>
                                 <strong>{{ entry.name }}</strong>
-                                <p class="mono smiles-hover-target" (mouseenter)="showSmilesPreview(entry.name, entry.smiles, $event)"
-                                    (mousemove)="moveSmilesPreview($event)" (mouseleave)="hideSmilesPreview()">
-                                    {{ entry.smiles }}
-                                </p>
+                                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
+                                    layout="inline"></app-smiles-structure-trigger>
                                 <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                             </div>
                             <button class="remove-btn small"
@@ -420,10 +425,8 @@
         <article class="tag-card auto-tag-card">
             <div>
                 <strong>{{ entry.name }}</strong>
-                <p class="mono smiles-hover-target" (mouseenter)="showSmilesPreview(entry.name, entry.smiles, $event)"
-                    (mousemove)="moveSmilesPreview($event)" (mouseleave)="hideSmilesPreview()">
-                    {{ entry.smiles }}
-                </p>
+                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles" layout="inline">
+                </app-smiles-structure-trigger>
                 <small>{{ (entry.categories ?? []).join(', ') }}</small>
             </div>
         </article>
@@ -444,10 +447,8 @@
             <article class="catalog-item">
                 <div>
                     <p class="catalog-name">{{ entry.name }}</p>
-                    <p class="catalog-smiles mono smiles-hover-target" (mouseenter)="showSmilesPreview(entry.name, entry.smiles, $event)"
-                        (mousemove)="moveSmilesPreview($event)" (mouseleave)="hideSmilesPreview()">
-                        {{ entry.smiles }}
-                    </p>
+                    <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles" layout="inline">
+                    </app-smiles-structure-trigger>
                     <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
                                         <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                                         </div>
@@ -491,6 +492,8 @@
                                 [disabled]="workflow.isProcessing()" placeholder="manual-ui" />
                         </label>
                     </div>
+                    <app-smiles-structure-trigger class="input-structure-preview" [smiles]="block.draftManualSmiles"
+                        title="Manual substituent preview" layout="compact"></app-smiles-structure-trigger>
                     <div class="chip-grid compact-chip-grid">
                         @for (category of workflow.categories(); track category.id) {
                         <button type="button" class="filter-chip" [class.active]="block.draftManualCategoryKeys.includes(category.key)"
@@ -513,10 +516,8 @@
                         <article class="tag-card">
                             <div>
                                 <strong>{{ entry.name }}</strong>
-                                <p class="mono smiles-hover-target" (mouseenter)="showSmilesPreview(entry.name, entry.smiles, $event)"
-                                    (mousemove)="moveSmilesPreview($event)" (mouseleave)="hideSmilesPreview()">
-                                    {{ entry.smiles }}
-                                </p>
+                                <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
+                                    layout="inline"></app-smiles-structure-trigger>
                                 <small>Anchors {{ entry.anchorAtomIndices.join(', ') }} · {{ entry.categories.join(', ') }}</small>
                             </div>
                             <button class="remove-btn small" (click)="workflow.removeManualSubstituent(block.id, $index)"
@@ -593,6 +594,8 @@
                                         (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
                                 </label>
                                 </div>
+<app-smiles-structure-trigger class="input-structure-preview" [smiles]="workflow.catalogCreateSmiles()"
+    title="Catalog draft structure" layout="compact"></app-smiles-structure-trigger>
 <div class="catalog-category-panel">
     <div class="subsection-header">
         <div>
@@ -630,11 +633,13 @@
                         <div class="catalog-preview-metadata">
                             <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
                             <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}</p>
-                            <p><strong>SMILES:</strong> <span class="mono">{{ catalogDraftPreview.smiles || 'Pending' }}</span></p>
                             <p><strong>Anchors:</strong> {{ catalogDraftPreview.anchorAtomIndices.join(', ') || 'Pending' }}</p>
                             <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending' }}</p>
                             <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
                         </div>
+                        <app-smiles-structure-trigger class="catalog-preview-structure" [smiles]="catalogDraftPreview.smiles"
+                            title="Catalog molecule" layout="compact">
+                        </app-smiles-structure-trigger>
                         @if (catalogDraftPreview.warnings.length > 0) {
                         <div class="catalog-preview-warnings">
                             @for (warningText of catalogDraftPreview.warnings; track warningText) {
@@ -666,10 +671,8 @@
                                 <article class="catalog-item">
                                     <div>
                                         <p class="catalog-name">{{ entry.name }}</p>
-                                        <p class="catalog-smiles mono smiles-hover-target" (mouseenter)="showSmilesPreview(entry.name, entry.smiles, $event)"
-                                            (mousemove)="moveSmilesPreview($event)" (mouseleave)="hideSmilesPreview()">
-                                            {{ entry.smiles }}
-                                        </p>
+                                        <app-smiles-structure-trigger class="embedded-structure-preview" [smiles]="entry.smiles"
+                                            layout="inline"></app-smiles-structure-trigger>
                                         <p class="catalog-description">Anchors {{ entry.anchor_atom_indices.join(', ') }}</p>
                                         <small>{{ entry.source_reference || 'no-source' }} · stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
                                     </div>
@@ -807,13 +810,15 @@
     <div class="metadata-grid enriched-grid">
         <p><strong>Total generated:</strong> {{ resultData.totalGenerated }}</p>
         <p><strong>Truncated:</strong> {{ resultData.truncated ? 'Yes' : 'No' }}</p>
-        <p><strong>Principal:</strong> <span class="mono">{{ resultData.principalSmiles }}</span></p>
         <p><strong>Selected atoms:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
         <p><strong>Export base:</strong> {{ resultData.exportNameBase }}</p>
         <p><strong>Padding:</strong> {{ resultData.exportPadding }}</p>
         <p><strong>Traceability rows:</strong> {{ resultData.traceabilityRows.length }}</p>
         <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
     </div>
+
+    <app-smiles-structure-trigger class="result-principal-preview" [smiles]="resultData.principalSmiles"
+        title="Principal structure" layout="compact"></app-smiles-structure-trigger>
 
     <div class="action-row export-row">
         <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">CSV</button>
@@ -852,7 +857,8 @@
                 <button type="button" class="structure-name-button" (click)="openGeneratedStructureModal(structureItem)">
                 {{ structureItem.name }}
                 </button>
-                <p class="structure-smiles mono">{{ structureItem.smiles }}</p>
+                <app-smiles-structure-trigger class="structure-list-preview" [smiles]="structureItem.smiles" [svg]="structureItem.svg"
+                    layout="inline"></app-smiles-structure-trigger>
                 <small>{{ structureItem.traceability.length }} trace events</small>
             </li>
             }
@@ -900,23 +906,6 @@
     }
     </section>
 
-@if (smilesHoverPreview(); as hoveredSmilesPreview) {
-<aside class="smiles-hover-preview" [style.left.px]="hoveredSmilesPreview.x" [style.top.px]="hoveredSmilesPreview.y"
-    aria-label="SMILES hover preview">
-    <p class="smiles-hover-kicker">Substituent preview</p>
-    <strong>{{ hoveredSmilesPreview.name }}</strong>
-    <p class="mono">{{ hoveredSmilesPreview.smiles }}</p>
-
-    @if (hoveredSmilesPreview.status === 'loading') {
-    <p class="hint">Loading molecular preview...</p>
-    } @else if (hoveredSmilesPreview.status === 'error') {
-    <p class="warning-message preview-warning">Preview unavailable for this SMILES.</p>
-    } @else if (hoveredSmilesPreview.svg !== null) {
-    <div class="smiles-hover-svg" [innerHTML]="toTrustedSvg(hoveredSmilesPreview.svg)"></div>
-    }
-</aside>
-}
-
 @if (selectedGeneratedStructure(); as selectedStructure) {
     <div class="structure-modal-backdrop" role="presentation" tabindex="0"
         (click)="onGeneratedStructureDialogBackdropClick($event)" (keydown)="onGeneratedStructureDialogKeydown($event)">
@@ -925,7 +914,6 @@
             <header class="structure-modal-header">
         <div>
             <h4>{{ selectedStructure.name }}</h4>
-            <p class="structure-smiles mono">{{ selectedStructure.smiles }}</p>
             </div>
         <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
         </header>

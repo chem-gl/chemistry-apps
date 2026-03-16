@@ -1,0 +1,32 @@
+<!-- smiles-structure-preview.component.html: Renderizado compacto de estructuras químicas para cualquier SMILES visible en Smile-it. -->
+<article class="smiles-structure-card" [class.layout-inline]="layout === 'inline'"
+    [class.layout-compact]="layout === 'compact'" [class.layout-detail]="layout === 'detail'">
+    @if (title !== '') {
+    <header class="structure-card-header">
+        <strong>{{ title }}</strong>
+        @if (showAtomCount && state().preview !== null && state().preview!.atomCount > 0) {
+        <small>{{ state().preview!.atomCount }} atoms</small>
+        }
+    </header>
+    }
+
+    @if (!hasRenderableSmiles()) {
+    <div class="structure-empty-state">
+        <span>{{ emptyLabel }}</span>
+    </div>
+    } @else if (state().status === 'loading') {
+    <div class="structure-empty-state">
+        <span>Loading structure...</span>
+    </div>
+    } @else if (state().status === 'error') {
+    <div class="structure-error-state">
+        <span>Structure preview unavailable</span>
+    </div>
+    } @else if (trustedSvg() !== null) {
+    <div class="structure-svg" [innerHTML]="trustedSvg()"></div>
+    }
+
+    @if (showSmilesText && hasRenderableSmiles()) {
+    <p class="structure-smiles-code">{{ smiles.trim() }}</p>
+    }
+</article>

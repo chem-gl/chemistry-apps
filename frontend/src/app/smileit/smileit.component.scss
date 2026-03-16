@@ -554,6 +554,15 @@ select:focus {
   color: #245f3c;
 }
 
+.input-structure-preview,
+.inspection-inline-structure,
+.embedded-structure-preview,
+.catalog-preview-structure,
+.result-principal-preview,
+.structure-list-preview {
+  margin-top: 0.65rem;
+}
+
 .guidance-hint {
   margin-top: 0.7rem;
 }
@@ -562,47 +571,6 @@ select:focus {
   background: rgba(244, 249, 245, 0.72);
   border-radius: 14px;
   padding: 0.95rem 0 0;
-}
-
-.smiles-hover-target {
-  cursor: zoom-in;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 0.18rem;
-}
-
-.smiles-hover-preview {
-  position: fixed;
-  z-index: 90;
-  width: min(320px, calc(100vw - 1.5rem));
-  pointer-events: none;
-  border: 1px solid #d7e6dd;
-  border-radius: 18px;
-  background: rgba(255, 253, 250, 0.98);
-  box-shadow: 0 22px 46px rgba(29, 54, 40, 0.16);
-  padding: 0.8rem;
-}
-
-.smiles-hover-preview strong {
-  color: #244537;
-}
-
-.smiles-hover-kicker {
-  margin: 0 0 0.3rem;
-  color: #2f7353;
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.smiles-hover-svg {
-  margin-top: 0.55rem;
-  border: 1px solid #dce9df;
-  border-radius: 14px;
-  background: #fff;
-  padding: 0.5rem;
-  overflow: auto;
 }
 
 .collapsed-panel-card,

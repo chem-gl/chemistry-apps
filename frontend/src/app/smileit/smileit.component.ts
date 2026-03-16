@@ -9,7 +9,6 @@ import { Subscription } from 'rxjs';
 import {
   DownloadedReportFile,
   JobLogEntryView,
-  JobsApiService,
   ScientificJobView,
 } from '../core/api/jobs-api.service';
 import {
@@ -17,41 +16,26 @@ import {
   SmileitGeneratedStructureView,
   SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
-
-type SmilesHoverPreviewStatus = 'loading' | 'ready' | 'error';
-
-interface SmilesHoverPreviewState {
-  name: string;
-  smiles: string;
-  svg: string | null;
-  status: SmilesHoverPreviewStatus;
-  x: number;
-  y: number;
-}
+import { SmilesStructureTriggerComponent } from './components/smiles-structure-trigger/smiles-structure-trigger.component';
 
 @Component({
   selector: 'app-smileit',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SmilesStructureTriggerComponent],
   providers: [SmileitWorkflowService],
   templateUrl: './smileit.component.html',
   styleUrl: './smileit.component.scss',
 })
 export class SmileitComponent implements OnInit, OnDestroy {
   readonly workflow = inject(SmileitWorkflowService);
-  private readonly jobsApiService = inject(JobsApiService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private routeSubscription: Subscription | null = null;
-  private smilesPreviewSubscription: Subscription | null = null;
-  private readonly smilesPreviewSvgCache: Map<string, string> = new Map();
-  private smilesPreviewRequestToken: number = 0;
   readonly isLibraryPanelCollapsed = signal<boolean>(false);
   readonly isPatternCatalogCollapsed = signal<boolean>(false);
   readonly isGeneratedStructuresCollapsed = signal<boolean>(false);
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
-  readonly smilesHoverPreview = signal<SmilesHoverPreviewState | null>(null);
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
@@ -75,7 +59,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
-    this.smilesPreviewSubscription?.unsubscribe();
   }
 
   inspectPrincipalStructure(): void {
@@ -216,93 +199,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   toTrustedInspectionSvg(): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(this.decoratedInspectionSvg());
-  }
-
-  showSmilesPreview(name: string, smiles: string, mouseEvent: MouseEvent): void {
-    const normalizedSmiles: string = smiles.trim();
-    if (normalizedSmiles === '') {
-      return;
-    }
-
-    const previewPosition = this.buildPreviewPosition(mouseEvent);
-    const cachedSvg: string | undefined = this.smilesPreviewSvgCache.get(normalizedSmiles);
-
-    if (cachedSvg !== undefined) {
-      this.smilesHoverPreview.set({
-        name,
-        smiles: normalizedSmiles,
-        svg: cachedSvg,
-        status: 'ready',
-        ...previewPosition,
-      });
-      return;
-    }
-
-    this.smilesHoverPreview.set({
-      name,
-      smiles: normalizedSmiles,
-      svg: null,
-      status: 'loading',
-      ...previewPosition,
-    });
-
-    this.smilesPreviewSubscription?.unsubscribe();
-    const requestToken: number = ++this.smilesPreviewRequestToken;
-
-    this.smilesPreviewSubscription = this.jobsApiService
-      .inspectSmileitStructure(normalizedSmiles)
-      .subscribe({
-        next: (inspectionResult) => {
-          this.smilesPreviewSvgCache.set(normalizedSmiles, inspectionResult.svg);
-          if (requestToken !== this.smilesPreviewRequestToken) {
-            return;
-          }
-
-          const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-          if (currentPreview === null || currentPreview.smiles !== normalizedSmiles) {
-            return;
-          }
-
-          this.smilesHoverPreview.set({
-            ...currentPreview,
-            svg: inspectionResult.svg,
-            status: 'ready',
-          });
-        },
-        error: () => {
-          if (requestToken !== this.smilesPreviewRequestToken) {
-            return;
-          }
-
-          const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-          if (currentPreview === null || currentPreview.smiles !== normalizedSmiles) {
-            return;
-          }
-
-          this.smilesHoverPreview.set({
-            ...currentPreview,
-            status: 'error',
-          });
-        },
-      });
-  }
-
-  moveSmilesPreview(mouseEvent: MouseEvent): void {
-    const currentPreview: SmilesHoverPreviewState | null = this.smilesHoverPreview();
-    if (currentPreview === null) {
-      return;
-    }
-
-    this.smilesHoverPreview.set({
-      ...currentPreview,
-      ...this.buildPreviewPosition(mouseEvent),
-    });
-  }
-
-  hideSmilesPreview(): void {
-    this.smilesHoverPreview.set(null);
-    this.smilesPreviewSubscription?.unsubscribe();
-    this.smilesPreviewSubscription = null;
   }
 
   onInspectionSvgClick(mouseEvent: MouseEvent): void {
@@ -788,11 +684,5 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
     URL.revokeObjectURL(objectUrl);
   }
-
-  private buildPreviewPosition(mouseEvent: MouseEvent): { x: number; y: number } {
-    return {
-      x: mouseEvent.clientX + 18,
-      y: mouseEvent.clientY + 18,
-    };
-  }
 }
+

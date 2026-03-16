@@ -408,13 +408,13 @@ describe('SmileitWorkflowService', () => {
     expect(catalogPreview.warnings[0]).toContain('SMILES');
   });
 
-  it('builds collapsed summary with selected sites and smiles previews', () => {
+  it('builds collapsed summary with selected sites and rendered structure counters', () => {
     const summary = workflowService.getBlockCollapsedSummary(makeAssignmentBlock());
 
     expect(summary.selectedSitesLabel).toBe('1');
     expect(summary.categoriesLabel).toContain('aromatic');
-    expect(summary.catalogSmilesLabel).toContain('[NH2]c1ccccc1');
-    expect(summary.manualSmilesLabel).toContain('[NH2]');
+    expect(summary.catalogSmilesLabel).toBe('1 rendered structure');
+    expect(summary.manualSmilesLabel).toBe('1 rendered structure');
     expect(summary.sourceCount).toBe(3);
   });
 

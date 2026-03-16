@@ -1,0 +1,87 @@
+/* smiles-structure-preview.component.scss: Estilos compactos para renderizar previsualizaciones químicas reutilizables. */
+.smiles-structure-card {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid #dbe7de;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcf9 100%);
+  padding: 0.65rem;
+}
+
+.smiles-structure-card.layout-inline {
+  padding: 0.55rem;
+}
+
+.smiles-structure-card.layout-compact {
+  max-width: 100%;
+}
+
+.smiles-structure-card.layout-detail {
+  padding: 0.85rem;
+}
+
+.structure-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.structure-card-header strong {
+  color: #234437;
+  font-size: 0.88rem;
+}
+
+.structure-card-header small {
+  margin: 0;
+  color: #567261;
+  font-size: 0.75rem;
+}
+
+.structure-svg,
+.structure-empty-state,
+.structure-error-state {
+  min-height: 108px;
+  border: 1px solid #dce8df;
+  border-radius: 14px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 0.45rem;
+}
+
+.layout-inline .structure-svg,
+.layout-inline .structure-empty-state,
+.layout-inline .structure-error-state {
+  min-height: 82px;
+}
+
+.layout-detail .structure-svg,
+.layout-detail .structure-empty-state,
+.layout-detail .structure-error-state {
+  min-height: 160px;
+}
+
+.structure-empty-state span,
+.structure-error-state span {
+  color: #5c7566;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.structure-error-state {
+  background: #fff4f2;
+  border-color: #e6beb8;
+}
+
+.structure-error-state span {
+  color: #8d3c31;
+}
+
+.structure-smiles-code {
+  margin: 0;
+  color: #406150;
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', 'Fira Code', 'Consolas', monospace;
+  word-break: break-word;
+}

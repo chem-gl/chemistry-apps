@@ -649,11 +649,11 @@ export class SmileitWorkflowService implements OnDestroy {
         block.categoryKeys.length > 0 ? block.categoryKeys.join(', ') : 'No category filters',
       catalogSmilesLabel:
         catalogSmilesPreview.length > 0
-          ? catalogSmilesPreview.slice(0, 3).join(' | ')
+          ? `${catalogSmilesPreview.length} rendered structure${catalogSmilesPreview.length === 1 ? '' : 's'}`
           : 'No catalog references',
       manualSmilesLabel:
         manualSmilesPreview.length > 0
-          ? manualSmilesPreview.slice(0, 3).join(' | ')
+          ? `${manualSmilesPreview.length} rendered structure${manualSmilesPreview.length === 1 ? '' : 's'}`
           : 'No manual substituents',
       sourceCount:
         block.categoryKeys.length + block.catalogRefs.length + block.manualSubstituents.length,
