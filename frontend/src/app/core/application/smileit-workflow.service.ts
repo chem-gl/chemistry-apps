@@ -14,25 +14,25 @@ import {
 } from 'rxjs';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../api/generated';
 import {
-    DownloadedReportFile,
-    JobLogEntryView,
-    JobLogsPageView,
-    JobProgressSnapshotView,
-    JobsApiService,
-    ScientificJobView,
-    SmileitAssignmentBlockParams,
-    SmileitCatalogEntryCreateParams,
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitGenerationParams,
-    SmileitJobResponseView,
-    SmileitManualSubstituentParams,
-    SmileitPatternEntryCreateParams,
-    SmileitPatternEntryView,
-    SmileitQuickPropertiesView,
-    SmileitResolvedAssignmentBlockView,
-    SmileitStructureInspectionView,
-    SmileitTraceabilityRowView,
+  DownloadedReportFile,
+  JobLogEntryView,
+  JobLogsPageView,
+  JobProgressSnapshotView,
+  JobsApiService,
+  ScientificJobView,
+  SmileitAssignmentBlockParams,
+  SmileitCatalogEntryCreateParams,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitGenerationParams,
+  SmileitJobResponseView,
+  SmileitManualSubstituentParams,
+  SmileitPatternEntryCreateParams,
+  SmileitPatternEntryView,
+  SmileitQuickPropertiesView,
+  SmileitResolvedAssignmentBlockView,
+  SmileitStructureInspectionView,
+  SmileitTraceabilityRowView,
 } from '../api/jobs-api.service';
 
 type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -139,7 +139,7 @@ export class SmileitWorkflowService implements OnDestroy {
   private blockSequence: number = 0;
   private catalogDraftSequence: number = 0;
 
-  readonly principalSmiles = signal<string>('c1ccccc1');
+  readonly principalSmiles = signal<string>('c1ccc2[nH]ccc2c1NCCC=C');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
   readonly selectedAtomIndices = signal<number[]>([]);
 
@@ -275,13 +275,15 @@ export class SmileitWorkflowService implements OnDestroy {
       patterns: this.jobsApiService.listSmileitPatterns(),
     }).subscribe({
       next: ({ catalog, categories, patterns }) => {
-        this.catalogEntries.set(catalog);
+        this.catalogEntries.set(this.normalizeCatalogEntries(catalog));
         this.categories.set(categories);
-        this.patterns.set(patterns);
-        this.refreshBlockCatalogRefsToLatestEntries(catalog);
+        this.patterns.set(this.normalizePatternEntries(patterns));
+        this.refreshBlockCatalogRefsToLatestEntries(this.normalizeCatalogEntries(catalog));
       },
-      error: (requestError: Error) => {
-        this.errorMessage.set(`Unable to load Smileit reference data: ${requestError.message}`);
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to load Smileit reference data: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
   }
@@ -663,17 +665,30 @@ export class SmileitWorkflowService implements OnDestroy {
           last(),
         )
         .subscribe({
-          next: (catalogEntries: SmileitCatalogEntryView[]) => {
-            this.catalogEntries.set(catalogEntries);
-            this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
-            this.catalogDraftQueue.set([]);
-            if (activePayload !== null) {
-              this.resetCatalogForm();
-            }
-            this.errorMessage.set(null);
+          next: () => {
+            this.jobsApiService.listSmileitCatalog().subscribe({
+              next: (catalogEntries: SmileitCatalogEntryView[]) => {
+                const normalizedCatalogEntries: SmileitCatalogEntryView[] =
+                  this.normalizeCatalogEntries(catalogEntries);
+                this.catalogEntries.set(normalizedCatalogEntries);
+                this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
+                this.catalogDraftQueue.set([]);
+                if (activePayload !== null) {
+                  this.resetCatalogForm();
+                }
+                this.errorMessage.set(null);
+              },
+              error: (requestError: unknown) => {
+                this.errorMessage.set(
+                  `Unable to refresh catalog entries: ${this.extractRequestErrorMessage(requestError)}`,
+                );
+              },
+            });
           },
-          error: (requestError: Error) => {
-            this.errorMessage.set(`Unable to create catalog entry: ${requestError.message}`);
+          error: (requestError: unknown) => {
+            this.errorMessage.set(
+              `Unable to create catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+            );
           },
         });
       return;
@@ -708,14 +723,18 @@ export class SmileitWorkflowService implements OnDestroy {
 
     saveRequest.subscribe({
       next: (catalogEntries: SmileitCatalogEntryView[]) => {
-        this.catalogEntries.set(catalogEntries);
-        this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
+        const normalizedCatalogEntries: SmileitCatalogEntryView[] =
+          this.normalizeCatalogEntries(catalogEntries);
+        this.catalogEntries.set(normalizedCatalogEntries);
+        this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
         this.resetCatalogForm();
         this.errorMessage.set(null);
       },
-      error: (requestError: Error) => {
+      error: (requestError: unknown) => {
         const actionLabel: string = editingStableId === null ? 'create' : 'update';
-        this.errorMessage.set(`Unable to ${actionLabel} catalog entry: ${requestError.message}`);
+        this.errorMessage.set(
+          `Unable to ${actionLabel} catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
   }
@@ -853,20 +872,122 @@ export class SmileitWorkflowService implements OnDestroy {
       provenanceMetadata: {},
     };
 
+    this.errorMessage.set(null);
+
     this.jobsApiService.createSmileitPatternEntry(requestPayload).subscribe({
-      next: (patterns: SmileitPatternEntryView[]) => {
-        this.patterns.set(patterns);
-        this.patternCreateName.set('');
-        this.patternCreateSmarts.set('');
-        this.patternCreateCaption.set('');
-        this.patternCreateType.set(PatternTypeEnum.Toxicophore);
-        this.patternCreateSourceReference.set('local-lab');
-        this.errorMessage.set(null);
+      next: () => {
+        this.jobsApiService.listSmileitPatterns().subscribe({
+          next: (patterns: SmileitPatternEntryView[]) => {
+            {
+              this.patterns.set(this.normalizePatternEntries(patterns));
+              this.patternCreateName.set('');
+              this.patternCreateSmarts.set('');
+              this.patternCreateCaption.set('');
+              this.patternCreateType.set(PatternTypeEnum.Toxicophore);
+              this.patternCreateSourceReference.set('local-lab');
+              this.errorMessage.set(null);
+
+              // Reinspecciona para reflejar de inmediato los nuevos matches SMARTS en el scaffold.
+              if (this.principalSmiles().trim() !== '') {
+                this.inspectPrincipalStructure();
+              }
+            }
+          },
+          error: (requestError: unknown) => {
+            this.errorMessage.set(
+              `Unable to refresh structural patterns: ${this.extractRequestErrorMessage(requestError)}`,
+            );
+          },
+        });
       },
-      error: (requestError: Error) => {
-        this.errorMessage.set(`Unable to create structural pattern: ${requestError.message}`);
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to create structural pattern: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
+  }
+
+  private normalizeCatalogEntries(rawCatalogEntries: unknown): SmileitCatalogEntryView[] {
+    if (!Array.isArray(rawCatalogEntries)) {
+      return [];
+    }
+
+    return this.dedupeVersionedEntries(rawCatalogEntries as SmileitCatalogEntryView[]);
+  }
+
+  private normalizePatternEntries(rawPatterns: unknown): SmileitPatternEntryView[] {
+    if (!Array.isArray(rawPatterns)) {
+      return [];
+    }
+
+    return this.dedupeVersionedEntries(rawPatterns as SmileitPatternEntryView[]);
+  }
+
+  private dedupeVersionedEntries<T extends { stable_id: string; version: number }>(
+    entries: T[],
+  ): T[] {
+    const dedupedEntries: T[] = [];
+    const seenKeys: Set<string> = new Set();
+
+    entries.forEach((entry: T) => {
+      const entryKey: string = `${entry.stable_id}:${entry.version}`;
+      if (seenKeys.has(entryKey)) {
+        return;
+      }
+      seenKeys.add(entryKey);
+      dedupedEntries.push(entry);
+    });
+
+    return dedupedEntries;
+  }
+
+  private extractRequestErrorMessage(requestError: unknown): string {
+    if (requestError instanceof Error && requestError.message.trim() !== '') {
+      return requestError.message;
+    }
+
+    if (typeof requestError === 'object' && requestError !== null) {
+      const errorContainer: Record<string, unknown> = requestError as Record<string, unknown>;
+      const nestedError: unknown = errorContainer['error'];
+
+      if (typeof nestedError === 'string' && nestedError.trim() !== '') {
+        return nestedError;
+      }
+
+      if (Array.isArray(nestedError)) {
+        const flattenedMessage: string = nestedError
+          .filter((entry: unknown) => typeof entry === 'string' && entry.trim() !== '')
+          .join(' ');
+        if (flattenedMessage !== '') {
+          return flattenedMessage;
+        }
+      }
+
+      if (typeof nestedError === 'object' && nestedError !== null) {
+        const nestedEntries: string[] = Object.values(
+          nestedError as Record<string, unknown>,
+        ).flatMap((entry: unknown) => {
+          if (typeof entry === 'string' && entry.trim() !== '') {
+            return [entry];
+          }
+
+          if (Array.isArray(entry)) {
+            return entry.filter(
+              (message: unknown) => typeof message === 'string' && message.trim() !== '',
+            ) as string[];
+          }
+
+          return [];
+        });
+
+        if (nestedEntries.length > 0) {
+          return nestedEntries.join(' ');
+        }
+      }
+    }
+
+    return 'Unexpected request failure.';
   }
 
   setRSubstitutes(rawValue: number): void {

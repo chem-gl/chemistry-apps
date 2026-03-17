@@ -23,6 +23,7 @@ import {
   JobsApiService,
   ScientificJobView,
   SmileitCatalogEntryView,
+  SmileitPatternEntryView,
   SmileitStructureInspectionView,
 } from '../core/api/jobs-api.service';
 import {
@@ -49,12 +50,15 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly manualDraftInspectionSubscriptions = new Map<string, Subscription>();
   readonly isCatalogPanelCollapsed = signal<boolean>(true);
   readonly isLibraryPanelCollapsed = signal<boolean>(false);
-  readonly isPatternCatalogCollapsed = signal<boolean>(false);
   readonly isGeneratedStructuresCollapsed = signal<boolean>(false);
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
+  /** Nivel de zoom del visor principal de la molécula (1–4) */
+  readonly principalZoomLevel = signal<number>(1);
   readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
+  readonly selectedPatternForDetail = signal<SmileitPatternEntryView | null>(null);
+  readonly patternEnabledState = signal<Record<string, boolean>>({});
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
   readonly selectedLibraryGroupKey = signal<string>('aromatic');
@@ -107,6 +111,18 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly manualDraftInspections = signal<Record<string, SmileitStructureInspectionView | null>>(
     {},
   );
+  readonly visibleInspectionAnnotations = computed(() => {
+    const inspectionResult: SmileitStructureInspectionView | null = this.workflow.inspection();
+    if (inspectionResult === null) {
+      return [];
+    }
+
+    const enabledState: Record<string, boolean> = this.patternEnabledState();
+    return inspectionResult.annotations.filter((annotation) => {
+      const isEnabled: boolean = enabledState[annotation.pattern_stable_id] ?? true;
+      return isEnabled;
+    });
+  });
   readonly manualDraftInspectionErrors = signal<Record<string, string | null>>({});
   private readonly libraryEntryPreviewSubscriptions = new Map<string, Subscription>();
   private readonly libraryPreviewSyncEffect = effect(
@@ -121,8 +137,41 @@ export class SmileitComponent implements OnInit, OnDestroy {
     },
     { injector: this.injector },
   );
+  private readonly patternEnabledStateSyncEffect = effect(
+    () => {
+      const availablePatterns: SmileitPatternEntryView[] = this.patternEntries();
+      const knownPatternStableIds: Set<string> = new Set(
+        availablePatterns.map((pattern: SmileitPatternEntryView) => pattern.stable_id),
+      );
+      const currentState: Record<string, boolean> = this.patternEnabledState();
+      let mustUpdateState: boolean = false;
+      const nextState: Record<string, boolean> = {};
+
+      Object.entries(currentState).forEach(([stableId, isEnabled]) => {
+        if (knownPatternStableIds.has(stableId)) {
+          nextState[stableId] = isEnabled;
+          return;
+        }
+        mustUpdateState = true;
+      });
+
+      if (mustUpdateState) {
+        this.patternEnabledState.set(nextState);
+      }
+    },
+    { injector: this.injector },
+  );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('patternCatalogDialog')
+  private patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('patternDetailDialog')
+  private patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
+
+  readonly patternEntries = computed<SmileitPatternEntryView[]>(() => {
+    const rawPatterns: unknown = this.workflow.patterns() as unknown;
+    return Array.isArray(rawPatterns) ? (rawPatterns as SmileitPatternEntryView[]) : [];
+  });
   @ViewChild('libraryEntryDetailDialog')
   private libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('generatedStructureDialog')
@@ -131,7 +180,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
       this.workflow.selectedAtomIndices(),
-      this.workflow.inspection()?.annotations ?? [],
+      this.visibleInspectionAnnotations(),
     ),
   );
 
@@ -151,6 +200,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.libraryPreviewSyncEffect.destroy();
     this.manualDraftInspectionSyncEffect.destroy();
+    this.patternEnabledStateSyncEffect.destroy();
     this.routeSubscription?.unsubscribe();
     this.catalogDraftInspectionSubscription?.unsubscribe();
     this.libraryEntryPreviewSubscriptions.forEach((subscription: Subscription) => {
@@ -191,10 +241,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.isLibraryPanelCollapsed.update((currentValue: boolean) => !currentValue);
   }
 
-  togglePatternCatalogCollapse(): void {
-    this.isPatternCatalogCollapsed.update((currentValue: boolean) => !currentValue);
-  }
-
   toggleGeneratedStructuresCollapse(): void {
     this.isGeneratedStructuresCollapsed.update((currentValue: boolean) => !currentValue);
   }
@@ -216,6 +262,97 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
     catalogStudioDialog.showModal();
     this.refreshCatalogDraftInspection();
+  }
+
+  openPatternCatalogModal(): void {
+    const patternCatalogDialog: HTMLDialogElement | undefined =
+      this.patternCatalogDialogRef?.nativeElement;
+    if (patternCatalogDialog === undefined) {
+      return;
+    }
+
+    if (patternCatalogDialog.open) {
+      patternCatalogDialog.close();
+    }
+
+    try {
+      patternCatalogDialog.showModal();
+    } catch {
+      patternCatalogDialog.setAttribute('open', 'true');
+    }
+  }
+
+  closePatternCatalogModal(): void {
+    const patternCatalogDialog: HTMLDialogElement | undefined =
+      this.patternCatalogDialogRef?.nativeElement;
+    if (patternCatalogDialog !== undefined && patternCatalogDialog.open) {
+      patternCatalogDialog.close();
+    }
+  }
+
+  onPatternCatalogDialogClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined =
+      this.patternCatalogDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    if (mouseEvent.target === dialogElement) {
+      this.closePatternCatalogModal();
+    }
+  }
+
+  openPatternDetail(pattern: SmileitPatternEntryView): void {
+    this.selectedPatternForDetail.set(pattern);
+    const patternDetailDialog: HTMLDialogElement | undefined =
+      this.patternDetailDialogRef?.nativeElement;
+    if (patternDetailDialog === undefined) {
+      return;
+    }
+
+    if (patternDetailDialog.open) {
+      patternDetailDialog.close();
+    }
+
+    try {
+      patternDetailDialog.showModal();
+    } catch {
+      patternDetailDialog.setAttribute('open', 'true');
+    }
+  }
+
+  closePatternDetail(): void {
+    const patternDetailDialog: HTMLDialogElement | undefined =
+      this.patternDetailDialogRef?.nativeElement;
+    if (patternDetailDialog !== undefined && patternDetailDialog.open) {
+      patternDetailDialog.close();
+    }
+    this.selectedPatternForDetail.set(null);
+  }
+
+  onPatternDetailDialogClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined = this.patternDetailDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    if (mouseEvent.target === dialogElement) {
+      this.closePatternDetail();
+    }
+  }
+
+  isPatternEnabled(pattern: SmileitPatternEntryView): boolean {
+    return this.patternEnabledState()[pattern.stable_id] ?? true;
+  }
+
+  togglePatternEnabled(patternStableId: string): void {
+    this.patternEnabledState.update((currentState: Record<string, boolean>) => {
+      const currentValue: boolean = currentState[patternStableId] ?? true;
+      return {
+        ...currentState,
+        [patternStableId]: !currentValue,
+      };
+    });
   }
 
   beginCatalogEntryEdition(catalogEntry: SmileitCatalogEntryView): void {
@@ -402,6 +539,16 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.libraryDetailZoomLevel.update((level: number) => Math.max(level - 1, 1));
     this.libraryDetailPanX.set(0);
     this.libraryDetailPanY.set(0);
+  }
+
+  /** Aumenta el zoom del visor principal de la molécula */
+  zoomInPrincipal(): void {
+    this.principalZoomLevel.update((level: number) => Math.min(level + 1, 4));
+  }
+
+  /** Disminuye el zoom del visor principal de la molécula */
+  zoomOutPrincipal(): void {
+    this.principalZoomLevel.update((level: number) => Math.max(level - 1, 1));
   }
 
   onLibraryDetailPanStart(event: MouseEvent): void {
@@ -711,12 +858,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return atomIndexFromTarget;
     }
 
-    const eventTarget: EventTarget | null = mouseEvent.target;
-    if (!(eventTarget instanceof Element)) {
-      return null;
-    }
-
-    return this.findNearestAtomIndexByCoordinates(eventTarget, mouseEvent);
+    return null;
   }
 
   private refreshCatalogDraftInspection(): void {
@@ -1138,6 +1280,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private extractAtomIndexFromElement(svgElement: Element): number | null {
     let currentElement: Element | null = svgElement;
     while (currentElement !== null) {
+      if (!this.isExplicitAtomSelectionTarget(currentElement)) {
+        currentElement = currentElement.parentElement;
+        continue;
+      }
+
       const atomIndices: number[] = this.readAtomIndicesFromElement(currentElement);
       if (atomIndices.length > 0) {
         return atomIndices[0];
@@ -1146,6 +1293,27 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  private isExplicitAtomSelectionTarget(svgElement: Element): boolean {
+    if (svgElement.hasAttribute('data-atom-index')) {
+      return true;
+    }
+
+    const normalizedClassText: string = this.normalizeClassText(svgElement.className);
+    const rawId: string = svgElement.getAttribute('id') ?? '';
+    const combinedIdentity: string = `${normalizedClassText} ${rawId}`.trim();
+    if (combinedIdentity === '') {
+      return false;
+    }
+
+    if (combinedIdentity.includes('bond-')) {
+      return false;
+    }
+
+    return /(^|\s)smileit-atom-hit-zone(\s|$)|(^|\s)smileit-atom-selected-vertex(\s|$)|atom-\d+/.test(
+      combinedIdentity,
+    );
   }
 
   private findNearestAtomIndexByCoordinates(
@@ -1244,6 +1412,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     rawSvgMarkup: string,
     selectedAtomIndices: number[],
     annotations: Array<{
+      pattern_stable_id: string;
       atom_indices: number[];
       color: string;
       caption: string;
@@ -1275,6 +1444,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     rootSvg: SVGSVGElement,
     parsedDocument: Document,
     annotations: Array<{
+      pattern_stable_id: string;
       atom_indices: number[];
       color: string;
       caption: string;
@@ -1293,51 +1463,120 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const bondSegments: Array<{
+      atomA: number;
+      atomB: number;
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+      pathData: string;
+    }> = this.extractBondSegmentsFromSvg(rootSvg);
+
     const svgNamespace: string = 'http://www.w3.org/2000/svg';
     const overlayGroup: SVGGElement = parsedDocument.createElementNS(
       svgNamespace,
       'g',
     ) as SVGGElement;
     overlayGroup.setAttribute('data-smileit-annotation-overlay', 'true');
-    const radiusOffsets: Map<number, number> = new Map();
 
+    // Filtro de difuminado suave para cada anotación (estilo RDKit highlights).
+    const defsElement: SVGDefsElement = parsedDocument.createElementNS(
+      svgNamespace,
+      'defs',
+    ) as SVGDefsElement;
+
+    const filterIds: Map<string, string> = new Map();
+    annotations.forEach((annotation, annotationIndex: number) => {
+      const filterId: string = `smileit-highlight-${annotationIndex}`;
+      filterIds.set(annotation.pattern_stable_id, filterId);
+
+      const highlightFilter: SVGFilterElement = parsedDocument.createElementNS(
+        svgNamespace,
+        'filter',
+      ) as SVGFilterElement;
+      highlightFilter.setAttribute('id', filterId);
+      highlightFilter.setAttribute('x', '-60%');
+      highlightFilter.setAttribute('y', '-60%');
+      highlightFilter.setAttribute('width', '220%');
+      highlightFilter.setAttribute('height', '220%');
+
+      // Difuminar ligeramente para bordes suaves (no demasiado para que se vea).
+      const blurElement: SVGFEGaussianBlurElement = parsedDocument.createElementNS(
+        svgNamespace,
+        'feGaussianBlur',
+      ) as SVGFEGaussianBlurElement;
+      blurElement.setAttribute('in', 'SourceGraphic');
+      blurElement.setAttribute('stdDeviation', '2.2');
+      highlightFilter.appendChild(blurElement);
+      defsElement.appendChild(highlightFilter);
+    });
+    overlayGroup.appendChild(defsElement);
+
+    // Dibujar highlights detrás de la molécula.
     annotations.forEach((annotation) => {
+      const annotationAtomSet: Set<number> = new Set(annotation.atom_indices);
+      const filterId: string = filterIds.get(annotation.pattern_stable_id) ?? '';
+
+      // Highlight sobre enlaces del patrón: trazo amplio con color de anotación.
+      bondSegments.forEach((bondSegment) => {
+        if (
+          !annotationAtomSet.has(bondSegment.atomA) ||
+          !annotationAtomSet.has(bondSegment.atomB)
+        ) {
+          return;
+        }
+
+        const bondHighlight: SVGPathElement = parsedDocument.createElementNS(
+          svgNamespace,
+          'path',
+        ) as SVGPathElement;
+        bondHighlight.setAttribute('d', bondSegment.pathData);
+        bondHighlight.setAttribute('fill', 'none');
+        bondHighlight.setAttribute('stroke', annotation.color);
+        bondHighlight.setAttribute('stroke-width', '12');
+        bondHighlight.setAttribute('stroke-linecap', 'round');
+        bondHighlight.setAttribute('stroke-linejoin', 'round');
+        bondHighlight.setAttribute('stroke-opacity', '0.55');
+        bondHighlight.setAttribute('filter', `url(#${filterId})`);
+        bondHighlight.setAttribute('data-smileit-hit-zone', 'true');
+        bondHighlight.setAttribute('style', 'pointer-events: none;');
+        overlayGroup.appendChild(bondHighlight);
+      });
+
+      // Highlight sobre átomos: disco con color y opacidad alta para que sean visibles.
       annotation.atom_indices.forEach((atomIndex: number) => {
         const atomPosition = atomPositions.get(atomIndex);
         if (atomPosition === undefined) {
           return;
         }
 
-        const radiusOffset: number = radiusOffsets.get(atomIndex) ?? 0;
-        const ringRadius: number = 13 + radiusOffset * 4;
-        radiusOffsets.set(atomIndex, radiusOffset + 1);
-
-        const annotationCircle: SVGCircleElement = parsedDocument.createElementNS(
+        const atomHighlight: SVGCircleElement = parsedDocument.createElementNS(
           svgNamespace,
           'circle',
         ) as SVGCircleElement;
-        annotationCircle.setAttribute('cx', atomPosition.x.toFixed(2));
-        annotationCircle.setAttribute('cy', atomPosition.y.toFixed(2));
-        annotationCircle.setAttribute('r', ringRadius.toFixed(2));
-        annotationCircle.setAttribute('fill', annotation.color);
-        annotationCircle.setAttribute('fill-opacity', '0.08');
-        annotationCircle.setAttribute('stroke', annotation.color);
-        annotationCircle.setAttribute('stroke-width', '2');
-        annotationCircle.setAttribute('class', `smileit-annotation-ring atom-${atomIndex}`);
-        annotationCircle.setAttribute('data-atom-index', String(atomIndex));
-        annotationCircle.setAttribute('data-smileit-hit-zone', 'true');
-        annotationCircle.setAttribute('style', 'cursor: crosshair;');
-
-        const titleNode: SVGTitleElement = parsedDocument.createElementNS(
-          svgNamespace,
-          'title',
-        ) as SVGTitleElement;
-        titleNode.textContent = `${this.patternTypeLabel(annotation.pattern_type)} · ${annotation.name}: ${annotation.caption}`;
-        annotationCircle.appendChild(titleNode);
-        overlayGroup.appendChild(annotationCircle);
+        atomHighlight.setAttribute('cx', atomPosition.x.toFixed(2));
+        atomHighlight.setAttribute('cy', atomPosition.y.toFixed(2));
+        atomHighlight.setAttribute('r', '8');
+        atomHighlight.setAttribute('fill', annotation.color);
+        atomHighlight.setAttribute('fill-opacity', '0.50');
+        atomHighlight.setAttribute('stroke', 'none');
+        atomHighlight.setAttribute('filter', `url(#${filterId})`);
+        atomHighlight.setAttribute('data-smileit-hit-zone', 'true');
+        atomHighlight.setAttribute('style', 'pointer-events: none;');
+        overlayGroup.appendChild(atomHighlight);
       });
     });
 
+    // Insertar el overlay ANTES del primer bond para mantener los colores originales
+    // y a la vez evitar que quede oculto por el rectángulo de fondo del SVG.
+    const firstBondNode: Element | null = rootSvg.querySelector(
+      'path[class*="bond-"], line[class*="bond-"]',
+    );
+    if (firstBondNode !== null && firstBondNode.parentNode === rootSvg) {
+      rootSvg.insertBefore(overlayGroup, firstBondNode);
+      return;
+    }
+
+    // Fallback para SVGs que no tengan clases bond-*.
     rootSvg.appendChild(overlayGroup);
   }
 
@@ -1405,30 +1644,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
       atomB: number;
       start: { x: number; y: number };
       end: { x: number; y: number };
-    }> = [];
-
-    rootSvg.querySelectorAll('path[class*="bond-"]').forEach((bondElement: Element) => {
-      const classNameText: string = this.normalizeClassText(
-        bondElement.getAttribute('class') ?? '',
-      );
-      const atomIndices: number[] = this.parseAtomIndices(classNameText);
-      if (atomIndices.length < 2) {
-        return;
-      }
-
-      const pathData: string = bondElement.getAttribute('d') ?? '';
-      const endpoints = this.parseBondEndpoints(pathData);
-      if (endpoints === null) {
-        return;
-      }
-
-      bondSegments.push({
-        atomA: atomIndices[0],
-        atomB: atomIndices[1],
-        start: endpoints.start,
-        end: endpoints.end,
-      });
-    });
+      pathData: string;
+    }> = this.extractBondSegmentsFromSvg(rootSvg);
 
     const atomPositions: Map<number, { x: number; y: number }> = new Map();
     if (bondSegments.length === 0) {
@@ -1471,6 +1688,48 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     return atomPositions;
+  }
+
+  private extractBondSegmentsFromSvg(rootSvg: SVGSVGElement): Array<{
+    atomA: number;
+    atomB: number;
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+    pathData: string;
+  }> {
+    const bondSegments: Array<{
+      atomA: number;
+      atomB: number;
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+      pathData: string;
+    }> = [];
+
+    rootSvg.querySelectorAll('path[class*="bond-"]').forEach((bondElement: Element) => {
+      const classNameText: string = this.normalizeClassText(
+        bondElement.getAttribute('class') ?? '',
+      );
+      const atomIndices: number[] = this.parseAtomIndices(classNameText);
+      if (atomIndices.length < 2) {
+        return;
+      }
+
+      const pathData: string = bondElement.getAttribute('d') ?? '';
+      const endpoints = this.parseBondEndpoints(pathData);
+      if (endpoints === null) {
+        return;
+      }
+
+      bondSegments.push({
+        atomA: atomIndices[0],
+        atomB: atomIndices[1],
+        start: endpoints.start,
+        end: endpoints.end,
+        pathData,
+      });
+    });
+
+    return bondSegments;
   }
 
   private parseBondEndpoints(pathData: string): {

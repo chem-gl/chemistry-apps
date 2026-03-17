@@ -165,6 +165,19 @@
   justify-content: flex-end;
 }
 
+.principal-pattern-action {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.3rem;
+  justify-items: start;
+}
+
+.principal-pattern-action .hint {
+  margin: 0;
+  max-width: 42ch;
+  text-align: left;
+}
+
 .guided-action {
   display: flex;
   flex-direction: column;
@@ -404,6 +417,29 @@ select:focus {
 
 .svg-preview.inspectable {
   cursor: crosshair;
+}
+
+/* ── Visor principal de la molécula con padding y zoom ── */
+.principal-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.principal-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.principal-svg-viewport {
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #d9e6db;
+  border-radius: 20px;
+  overflow: auto;
+  transform-origin: top left;
+  transition: transform 0.2s ease;
 }
 
 .site-toolbar {
@@ -940,6 +976,96 @@ select:focus {
 
 .catalog-studio-dialog::backdrop {
   background: rgba(17, 34, 26, 0.64);
+}
+
+.pattern-catalog-dialog,
+.pattern-detail-dialog {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pattern-catalog-dialog[open],
+.pattern-detail-dialog[open] {
+  position: fixed;
+  inset: 0;
+  z-index: 63;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 1rem;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.pattern-catalog-dialog::backdrop,
+.pattern-detail-dialog::backdrop {
+  background: rgba(17, 34, 26, 0.64);
+}
+
+.pattern-catalog-modal {
+  width: min(980px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid #c7d9cb;
+  border-radius: 24px;
+  background: #fffdfa;
+  padding: 1.1rem;
+}
+
+.pattern-detail-modal {
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid #c7d9cb;
+  border-radius: 24px;
+  background: #fffdfa;
+  padding: 1.1rem;
+}
+
+.pattern-modal-list {
+  margin-top: 0.8rem;
+}
+
+.pattern-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.pattern-item-content {
+  min-width: 0;
+}
+
+.pattern-item-toggle {
+  flex-shrink: 0;
+}
+
+.pattern-toggle-label {
+  align-self: start;
+  white-space: nowrap;
+}
+
+.pattern-name-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #1f4033;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pattern-name-link:hover {
+  text-decoration: underline;
 }
 
 .catalog-studio-modal {

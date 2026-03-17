@@ -220,6 +220,10 @@
                             }
                         </div>
 
+                        @if (workflow.errorMessage(); as catalogErrorMessage) {
+                        <p class="error-message" role="alert">{{ catalogErrorMessage }}</p>
+                        }
+
                         @if (workflow.catalogDraftQueue().length > 0) {
                         <div class="queued-catalog-drafts">
                             <div class="subsection-header">
@@ -302,7 +306,7 @@
     <label>
         Principal SMILES
         <input type="text" [ngModel]="workflow.principalSmiles()" (ngModelChange)="workflow.principalSmiles.set($event)"
-            [disabled]="workflow.isProcessing()" placeholder="c1ccccc1" />
+            [disabled]="workflow.isProcessing()" placeholder="c1ccc2[nH]ccc2c1" />
         </label>
 
     <div class="principal-inspect-action">
@@ -317,7 +321,7 @@
     <div class="inspection-card">
         <div class="inspection-metadata">
             <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
-            <p><strong>Patterns matched:</strong> {{ inspectionResult.activePatternRefs.length }}</p>
+            <p><strong>Patterns visible:</strong> {{ visibleInspectionAnnotations().length }}</p>
             </div>
 
             <p class="catalog-smiles mono">Canonical: {{ inspectionResult.canonicalSmiles }}</p>
@@ -355,22 +359,45 @@
             </div>
             }
 
-            @if (inspectionResult.annotations.length > 0) {
-            <div class="annotation-legend" aria-label="Structural annotations">
-                @for (annotation of inspectionResult.annotations; track annotation.pattern_stable_id + '-' + $index) {
-                <article class="annotation-chip" [style.--annotation-color]="annotation.color">
-                    <span class="annotation-type">{{ patternTypeLabel(annotation.pattern_type) }}</span>
-                    <strong>{{ annotation.name }}</strong>
-                    <p>{{ annotation.caption }}</p>
-                    <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
-                </article>
-                }
-            </div>
-            }
-
         <p class="hint">Tip: click directly on the molecule image to select atoms with the mouse.</p>
-        <div class="svg-preview inspectable" (click)="onInspectionSvgClick($event)" [innerHTML]="toTrustedInspectionSvg()">
+        <div class="principal-preview-wrap">
+            <div class="principal-zoom-controls">
+                <button type="button" class="zoom-btn" (click)="zoomOutPrincipal()" [disabled]="principalZoomLevel() === 1"
+                    aria-label="Zoom out">－</button>
+                <span class="zoom-label">{{ principalZoomLevel() }}×</span>
+                <button type="button" class="zoom-btn" (click)="zoomInPrincipal()" [disabled]="principalZoomLevel() === 4"
+                    aria-label="Zoom in">＋</button>
+            </div>
+            <div class="principal-svg-viewport" [style.transform]="'scale(' + principalZoomLevel() + ')'">
+                <div class="svg-preview inspectable" (click)="onInspectionSvgClick($event)"
+                    [innerHTML]="toTrustedInspectionSvg()">
+                </div>
+            </div>
         </div>
+        
+        <div class="principal-pattern-action">
+            <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
+                [disabled]="workflow.isProcessing()">
+                Structural patterns
+            </button>
+            <p class="hint">Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal
+                molecule.</p>
+        </div>
+        
+        @if (visibleInspectionAnnotations().length > 0) {
+        <div class="annotation-legend" aria-label="Structural annotations">
+            @for (annotation of visibleInspectionAnnotations(); track annotation.pattern_stable_id + '-' + $index) {
+            <article class="annotation-chip" [style.--annotation-color]="annotation.color">
+                <span class="annotation-type">{{ patternTypeLabel(annotation.pattern_type) }}</span>
+                <strong>{{ annotation.name }}</strong>
+                <p>{{ annotation.caption }}</p>
+                <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
+            </article>
+            }
+            </div>
+        } @else if (inspectionResult.annotations.length > 0) {
+        <p class="hint">All pattern highlights are currently hidden. Open Structural patterns and enable at least one rule.</p>
+        }
 
         <div class="site-toolbar">
             <div>
@@ -450,7 +477,6 @@
                         <p><strong>Covered sites:</strong> {{ workflow.selectedSiteCoverage().length }}</p>
                         <p><strong>Uncovered sites:</strong> {{ workflow.uncoveredSelectedSites().length }}</p>
                         <p><strong>Catalog entries:</strong> {{ workflow.catalogEntries().length }}</p>
-                        <p><strong>Pattern entries:</strong> {{ workflow.patterns().length }}</p>
                     </div>
                 </article>
                 } @else {
@@ -688,7 +714,7 @@
                 generation.</p>
         </div>
         }
-        
+
         <fieldset class="generation-fieldset" [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()">
 
         <div class="options-grid compact">
@@ -859,7 +885,7 @@
         <div>
             <h3>Advanced analysis and diagnostics</h3>
             <p class="panel-caption">
-                Keep optional workflows here: structural patterns, execution logs, and historical job access.
+                Keep optional workflows here: execution logs and historical job access.
             </p>
         </div>
         <button class="btn-secondary" type="button" (click)="toggleAdvancedSectionCollapse()">
@@ -870,93 +896,12 @@
     @if (isAdvancedSectionCollapsed()) {
     <article class="collapsed-panel-card" aria-label="Advanced section collapsed summary">
         <div class="metadata-grid">
-            <p><strong>Pattern entries:</strong> {{ workflow.patterns().length }}</p>
             <p><strong>Stored logs:</strong> {{ workflow.jobLogs().length }}</p>
             <p><strong>Historical jobs:</strong> {{ workflow.historyJobs().length }}</p>
         </div>
     </article>
     } @else {
     <div class="advanced-grid">
-        <section class="pattern-panel" aria-label="Structural pattern catalog">
-            <article class="catalog-card">
-                <div class="subsection-header">
-                    <div>
-                        <h3>Structural pattern catalog</h3>
-                        <p class="panel-caption">
-                            Versioned SMARTS rules used during inspection. Matches appear in pattern counters,
-                            SVG overlays, and annotation legends.
-                        </p>
-                        </div>
-                        <button class="btn-secondary small" (click)="togglePatternCatalogCollapse()" [disabled]="workflow.isProcessing()">
-                            {{ isPatternCatalogCollapsed() ? 'Expand section' : 'Minimize section' }}
-                        </button>
-                        </div>
-
-                        @if (isPatternCatalogCollapsed()) {
-                        <div class="block-collapsed-summary">
-                            <p><strong>Stored patterns:</strong> {{ workflow.patterns().length }}</p>
-                            <p><strong>Usage reference:</strong> Scaffold inspection counters and annotation overlays.</p>
-                        </div>
-                } @else {
-                <article class="pattern-reference-card">
-                    <h5>Where this section is referenced</h5>
-                    <p>1. Principal inspection summary ("Patterns matched").</p>
-                    <p>2. Annotation legend cards with type, caption and atom indices.</p>
-                    <p>3. SVG overlays for medicinal-chemistry review.</p>
-                </article>
-
-                <div class="options-grid compact">
-                    <label>
-                        Name
-                        <input type="text" [ngModel]="workflow.patternCreateName()"
-                            (ngModelChange)="workflow.patternCreateName.set($event)" />
-                    </label>
-                    <label>
-                        SMARTS
-                        <input type="text" [ngModel]="workflow.patternCreateSmarts()"
-                            (ngModelChange)="workflow.patternCreateSmarts.set($event)" placeholder="[N+](=O)[O-]" />
-                    </label>
-                    <label>
-                        Pattern type
-                        <select [ngModel]="workflow.patternCreateType()" (ngModelChange)="workflow.patternCreateType.set($event)">
-                            <option value="toxicophore">Toxicophore</option>
-                            <option value="privileged">Privileged scaffold</option>
-                        </select>
-                    </label>
-                    <label>
-                        Source reference
-                        <input type="text" [ngModel]="workflow.patternCreateSourceReference()"
-                            (ngModelChange)="workflow.patternCreateSourceReference.set($event)" />
-                    </label>
-                </div>
-                <label>
-                    Caption
-                    <input type="text" [ngModel]="workflow.patternCreateCaption()"
-                        (ngModelChange)="workflow.patternCreateCaption.set($event)" />
-                </label>
-                <div class="action-row compact-actions">
-                    <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
-                        Save structural pattern
-                    </button>
-                </div>
-                <div class="pattern-list">
-                    @for (pattern of workflow.patterns(); track pattern.id) {
-                    <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
-                        [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
-                        <div>
-                            <p class="catalog-name">{{ pattern.name }}</p>
-                            <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
-                            <p class="catalog-description">{{ pattern.caption }}</p>
-                            <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id {{ pattern.stable_id }} · v{{
-                                pattern.version }}</small>
-                        </div>
-                    </article>
-                    }
-                </div>
-                }
-            </article>
-            </section>
-
         @if (workflow.jobLogs().length > 0) {
         <section class="logs-card" aria-label="Execution logs">
             <div class="subsection-header">
@@ -1042,6 +987,124 @@
     </div>
     }
     </section>
+
+<dialog #patternCatalogDialog class="pattern-catalog-dialog" (click)="onPatternCatalogDialogClick($event)"
+    (cancel)="closePatternCatalogModal()">
+    <section class="pattern-catalog-modal" role="dialog" aria-modal="true" aria-label="Structural pattern catalog"
+        (click)="$event.stopPropagation()">
+        <header class="catalog-studio-header">
+            <div>
+                <h4>Structural patterns</h4>
+                <p class="hint">Patterns are enabled by default. Toggle each one to show or hide its highlights and
+                    labels on the principal molecule.</p>
+            </div>
+            <button class="btn-secondary" type="button" (click)="closePatternCatalogModal()">Close</button>
+        </header>
+
+        <article class="pattern-reference-card">
+            <h5>How it works</h5>
+            <p>1. Enabled patterns illuminate matching atoms on the principal molecule.</p>
+            <p>2. Pattern names are rendered over the highlighted area in the scaffold preview.</p>
+            <p>3. Click any pattern name below to open complete SMARTS details.</p>
+        </article>
+
+        <div class="options-grid compact">
+            <label>
+                Name
+                <input type="text" [ngModel]="workflow.patternCreateName()"
+                    (ngModelChange)="workflow.patternCreateName.set($event)" />
+            </label>
+            <label>
+                SMARTS
+                <input type="text" [ngModel]="workflow.patternCreateSmarts()"
+                    (ngModelChange)="workflow.patternCreateSmarts.set($event)" placeholder="[N+](=O)[O-]" />
+            </label>
+            <label>
+                Pattern type
+                <select [ngModel]="workflow.patternCreateType()"
+                    (ngModelChange)="workflow.patternCreateType.set($event)">
+                    <option value="toxicophore">Toxicophore</option>
+                    <option value="privileged">Privileged scaffold</option>
+                </select>
+            </label>
+            <label>
+                Source reference
+                <input type="text" [ngModel]="workflow.patternCreateSourceReference()"
+                    (ngModelChange)="workflow.patternCreateSourceReference.set($event)" />
+            </label>
+        </div>
+        <label>
+            Caption
+            <input type="text" [ngModel]="workflow.patternCreateCaption()"
+                (ngModelChange)="workflow.patternCreateCaption.set($event)" />
+        </label>
+        <div class="action-row compact-actions">
+            <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
+                Save structural pattern
+            </button>
+        </div>
+
+        @if (workflow.errorMessage(); as patternErrorMessage) {
+        <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
+        }
+
+        <div class="pattern-list pattern-modal-list">
+            @for (pattern of patternEntries(); track pattern.stable_id + '-' + pattern.version + '-' + $index) {
+            <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
+                [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
+                <div class="pattern-item-content">
+                    <button type="button" class="pattern-name-link" (click)="openPatternDetail(pattern)">
+                        {{ pattern.name }}
+                    </button>
+                    <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
+                    <p class="catalog-description">{{ pattern.caption }}</p>
+                    <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id {{ pattern.stable_id }} · v{{
+                        pattern.version }}</small>
+                </div>
+                <div class="pattern-item-toggle">
+                    <label class="toggle-label pattern-toggle-label">
+                        <input type="checkbox" [checked]="isPatternEnabled(pattern)"
+                            (change)="togglePatternEnabled(pattern.stable_id)" />
+                        {{ isPatternEnabled(pattern) ? 'Active' : 'Hidden' }}
+                    </label>
+                </div>
+            </article>
+            }
+        </div>
+    </section>
+</dialog>
+
+<dialog #patternDetailDialog class="pattern-detail-dialog" (click)="onPatternDetailDialogClick($event)"
+    (cancel)="closePatternDetail()">
+    @if (selectedPatternForDetail(); as detailPattern) {
+    <section class="pattern-detail-modal" role="dialog" aria-modal="true" aria-label="Pattern detail"
+        (click)="$event.stopPropagation()">
+        <header class="library-detail-header">
+            <div class="library-detail-title-row">
+                <h4>{{ detailPattern.name }}</h4>
+                <span class="workflow-step-state" [class.generation-ready]="isPatternEnabled(detailPattern)">
+                    {{ isPatternEnabled(detailPattern) ? 'Active in scaffold' : 'Hidden in scaffold' }}
+                </span>
+            </div>
+            <button type="button" class="btn-secondary" (click)="closePatternDetail()">Close</button>
+        </header>
+        <div class="library-detail-body">
+            <dl class="library-detail-fields">
+                <dt>SMARTS structure</dt>
+                <dd class="mono">{{ detailPattern.smarts }}</dd>
+                <dt>Pattern type</dt>
+                <dd>{{ patternTypeLabel(detailPattern.pattern_type) }}</dd>
+                <dt>Specification</dt>
+                <dd>{{ detailPattern.caption }}</dd>
+                <dt>Source</dt>
+                <dd>{{ detailPattern.source_reference || '—' }}</dd>
+                <dt>ID</dt>
+                <dd>stable_id {{ detailPattern.stable_id }} · v{{ detailPattern.version }}</dd>
+            </dl>
+        </div>
+    </section>
+    }
+</dialog>
 
 <dialog #libraryEntryDetailDialog class="library-entry-detail-dialog" (click)="onLibraryDetailDialogClick($event)">
   @if (selectedLibraryEntryForDetail(); as detailEntry) {
