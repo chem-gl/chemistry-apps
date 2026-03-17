@@ -60,6 +60,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly selectedLibraryGroupKey = signal<string>('aromatic');
   readonly selectedBlockLibraryGroupKeys = signal<Record<string, string>>({});
   readonly selectedLibraryEntryForDetail = signal<SmileitCatalogEntryView | null>(null);
+  readonly libraryDetailOpenContext = signal<'browser' | 'reference'>('browser');
   /** Nivel de zoom del previsualizador en el dialog de detalle (1–4) */
   readonly libraryDetailZoomLevel = signal<number>(1);
   /**
@@ -124,6 +125,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('libraryEntryDetailDialog')
   private libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('generatedStructureDialog')
+  private generatedStructureDialogRef?: ElementRef<HTMLDialogElement>;
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
@@ -284,7 +287,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   catalogDraftAnchorIndices(): number[] {
-    return this.parseAtomIndicesInput(this.workflow.catalogCreateAnchorIndicesText());
+    return this.parseAtomIndicesInput(this.workflow.catalogCreateAnchorIndicesText()).slice(0, 1);
   }
 
   manualDraftAnchorIndices(block: SmileitAssignmentBlockDraft): number[] {
@@ -300,10 +303,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   toggleCatalogDraftAnchor(atomIndex: number): void {
-    const nextAnchorIndices: number[] = this.toggleAtomSelection(
-      this.catalogDraftAnchorIndices(),
-      atomIndex,
-    );
+    const nextAnchorIndices: number[] = [atomIndex];
     this.workflow.catalogCreateAnchorIndicesText.set(this.formatAtomIndices(nextAnchorIndices));
   }
 
@@ -352,8 +352,12 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.catalogStudioDialogRef?.nativeElement.close();
   }
 
-  openLibraryEntryDetail(catalogEntry: SmileitCatalogEntryView): void {
+  openLibraryEntryDetail(
+    catalogEntry: SmileitCatalogEntryView,
+    openContext: 'browser' | 'reference' = 'browser',
+  ): void {
     this.selectedLibraryEntryForDetail.set(catalogEntry);
+    this.libraryDetailOpenContext.set(openContext);
     this.libraryDetailZoomLevel.set(1);
     this.libraryDetailPanX.set(0);
     this.libraryDetailPanY.set(0);
@@ -382,6 +386,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
     detailDialog?.removeAttribute('open');
     this.selectedLibraryEntryForDetail.set(null);
+    this.libraryDetailOpenContext.set('browser');
     this.libraryDetailZoomLevel.set(1);
     this.libraryDetailPanX.set(0);
     this.libraryDetailPanY.set(0);
@@ -487,7 +492,25 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   filteredCatalogEntriesForBlock(block: SmileitAssignmentBlockDraft): SmileitCatalogEntryView[] {
-    return this.filteredCatalogGroupsForBlock(block).flatMap((group) => group.entries);
+    const candidateEntries: SmileitCatalogEntryView[] = this.filteredCatalogGroupsForBlock(
+      block,
+    ).flatMap((group) => group.entries);
+
+    return candidateEntries.filter(
+      (catalogEntry: SmileitCatalogEntryView) =>
+        !this.workflow.isCatalogEntryReferenced(block, catalogEntry),
+    );
+  }
+
+  onBlockCatalogBrowserEntryActivate(
+    block: SmileitAssignmentBlockDraft,
+    catalogEntry: SmileitCatalogEntryView,
+  ): void {
+    if (this.workflow.isProcessing()) {
+      return;
+    }
+
+    this.workflow.addCatalogReferenceToBlock(block.id, catalogEntry);
   }
 
   catalogEntryPreviewSvg(catalogEntry: SmileitCatalogEntryView): SafeHtml | null {
@@ -511,6 +534,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
   catalogEntryPreviewError(catalogEntry: SmileitCatalogEntryView): string | null {
     const previewKey: string = this.buildCatalogEntryPreviewKey(catalogEntry);
     return this.libraryEntryInspectionErrors()[previewKey] ?? null;
+  }
+
+  isReferencedInAnyBlock(catalogEntry: SmileitCatalogEntryView): boolean {
+    return this.workflow
+      .assignmentBlocks()
+      .some((block: SmileitAssignmentBlockDraft) =>
+        this.workflow.isCatalogEntryReferenced(block, catalogEntry),
+      );
   }
 
   onCatalogStudioDialogClick(mouseEvent: MouseEvent): void {
@@ -789,9 +820,12 @@ export class SmileitComponent implements OnInit, OnDestroy {
     const blockCatalogEntries: SmileitCatalogEntryView[] = this.workflow
       .assignmentBlocks()
       .flatMap((block: SmileitAssignmentBlockDraft) => this.filteredCatalogEntriesForBlock(block));
+    const blockReferencedEntries: SmileitCatalogEntryView[] = this.workflow
+      .assignmentBlocks()
+      .flatMap((block: SmileitAssignmentBlockDraft) => block.catalogRefs);
 
     const uniqueEntriesByPreviewKey: Map<string, SmileitCatalogEntryView> = new Map();
-    [...topLibraryEntries, ...blockCatalogEntries].forEach(
+    [...topLibraryEntries, ...blockCatalogEntries, ...blockReferencedEntries].forEach(
       (catalogEntry: SmileitCatalogEntryView) => {
         uniqueEntriesByPreviewKey.set(this.buildCatalogEntryPreviewKey(catalogEntry), catalogEntry);
       },
@@ -884,7 +918,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     inspectionResult: SmileitStructureInspectionView,
   ): void {
     const currentAnchorIndices: number[] = this.catalogDraftAnchorIndices();
-    const nextAnchorIndices: number[] = this.resolveValidAnchorSelection(
+    const nextAnchorIndices: number[] = this.resolveSingleValidAnchorSelection(
       currentAnchorIndices,
       inspectionResult,
     );
@@ -935,6 +969,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     return this.resolveDefaultAnchorIndices(inspectionResult);
+  }
+
+  private resolveSingleValidAnchorSelection(
+    currentAnchorIndices: number[],
+    inspectionResult: SmileitStructureInspectionView,
+  ): number[] {
+    return this.resolveValidAnchorSelection(currentAnchorIndices, inspectionResult).slice(0, 1);
   }
 
   private resolveDefaultAnchorIndices(inspectionResult: SmileitStructureInspectionView): number[] {
@@ -1006,26 +1047,56 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }));
   }
 
+  /**
+   * Extrae los nombres únicos de sustituyentes usados en una estructura generada.
+   * Limita a los primeros 4 para no saturar la tarjeta visualmente.
+   */
+  getUniqueSubstituentsForStructure(structure: SmileitGeneratedStructureView): string[] {
+    const uniqueNames: Set<string> = new Set(
+      structure.traceability.map((traceEntry) => traceEntry.substituent_name),
+    );
+    return [...uniqueNames].slice(0, 4);
+  }
+
+  /**
+   * Construye una etiqueta compuesta con el nombre del scaffold y los sustituyentes:
+   * "Principal · Sus1 · Sus2" para mostrar en la cabecera del modal.
+   */
+  getDerivativeCompositeLabel(structure: SmileitGeneratedStructureView): string {
+    const substituents: string[] = this.getUniqueSubstituentsForStructure(structure);
+    if (substituents.length === 0) {
+      return structure.name;
+    }
+    return `${structure.name}`;
+  }
+
   openGeneratedStructureModal(generatedStructure: SmileitGeneratedStructureView): void {
     this.selectedGeneratedStructure.set(generatedStructure);
-  }
-
-  closeGeneratedStructureModal(): void {
-    this.selectedGeneratedStructure.set(null);
-  }
-
-  onGeneratedStructureDialogBackdropClick(mouseEvent: MouseEvent): void {
-    const eventTarget: EventTarget | null = mouseEvent.target;
-    if (
-      eventTarget instanceof HTMLElement &&
-      eventTarget.classList.contains('structure-modal-backdrop')
-    ) {
-      this.closeGeneratedStructureModal();
+    const dialog: HTMLDialogElement | undefined = this.generatedStructureDialogRef?.nativeElement;
+    if (dialog === undefined) {
+      return;
+    }
+    if (dialog.open) {
+      dialog.close();
+    }
+    try {
+      dialog.showModal();
+    } catch {
+      dialog.setAttribute('open', 'true');
     }
   }
 
-  onGeneratedStructureDialogKeydown(keyboardEvent: KeyboardEvent): void {
-    if (keyboardEvent.key === 'Escape') {
+  closeGeneratedStructureModal(): void {
+    const dialog: HTMLDialogElement | undefined = this.generatedStructureDialogRef?.nativeElement;
+    if (dialog !== undefined && dialog.open) {
+      dialog.close();
+    }
+    this.selectedGeneratedStructure.set(null);
+  }
+
+  onGeneratedStructureDialogClick(mouseEvent: MouseEvent): void {
+    // Cierra al hacer click en el backdrop del dialog (área fuera del contenido)
+    if (mouseEvent.target === this.generatedStructureDialogRef?.nativeElement) {
       this.closeGeneratedStructureModal();
     }
   }

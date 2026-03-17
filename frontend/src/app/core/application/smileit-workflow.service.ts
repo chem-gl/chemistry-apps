@@ -207,15 +207,17 @@ export class SmileitWorkflowService implements OnDestroy {
     );
     return this.selectedAtomIndices().filter((atomIndex: number) => !coveredSites.has(atomIndex));
   });
-  readonly canDispatch = computed(() => {
+  readonly canConfigureGeneration = computed(() => {
     const principal: string = this.principalSmiles().trim();
     return (
       principal.length > 0 &&
       this.selectedAtomIndices().length > 0 &&
       this.assignmentBlocks().length > 0 &&
-      this.uncoveredSelectedSites().length === 0 &&
-      !this.isProcessing()
+      this.uncoveredSelectedSites().length === 0
     );
+  });
+  readonly canDispatch = computed(() => {
+    return this.canConfigureGeneration() && !this.isProcessing();
   });
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
   readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
@@ -224,7 +226,7 @@ export class SmileitWorkflowService implements OnDestroy {
   );
   readonly catalogDraftPreview = computed<SmileitCatalogDraftPreview>(() => {
     const currentSmiles: string = this.catalogCreateSmiles().trim();
-    const parsedAnchorIndices: number[] = this.parseAtomIndicesInput(
+    const parsedAnchorIndices: number[] = this.parseSingleAnchorIndexInput(
       this.catalogCreateAnchorIndicesText(),
     );
     const notationKind: SmileitChemicalNotationKind = this.detectChemicalNotation(currentSmiles);
@@ -240,7 +242,7 @@ export class SmileitWorkflowService implements OnDestroy {
       );
     }
     if (parsedAnchorIndices.length === 0) {
-      warnings.push('At least one anchor atom index is required.');
+      warnings.push('One anchor atom index is required.');
     }
     if (selectedCategoryKeys.length === 0) {
       warnings.push('Select at least one chemistry category.');
@@ -604,7 +606,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.catalogCreateName.set(queuedDraft.name);
     this.catalogCreateSmiles.set(queuedDraft.smiles);
-    this.catalogCreateAnchorIndicesText.set(queuedDraft.anchorAtomIndices.join(','));
+    this.catalogCreateAnchorIndicesText.set(String(queuedDraft.anchorAtomIndices[0] ?? ''));
     this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
     this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
     this.removeQueuedCatalogDraft(queueDraftId);
@@ -683,7 +685,7 @@ export class SmileitWorkflowService implements OnDestroy {
     }
 
     if (activePreview.anchorAtomIndices.length === 0) {
-      this.errorMessage.set('Persistent catalog entry requires at least one anchor atom index.');
+      this.errorMessage.set('Persistent catalog entry requires one anchor atom index.');
       return;
     }
 
@@ -727,7 +729,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.catalogEditingStableId.set(entry.stable_id);
     this.catalogCreateName.set(entry.name);
     this.catalogCreateSmiles.set(entry.smiles);
-    this.catalogCreateAnchorIndicesText.set(entry.anchor_atom_indices.join(','));
+    this.catalogCreateAnchorIndicesText.set(String(entry.anchor_atom_indices[0] ?? ''));
     this.catalogCreateCategoryKeys.set([...(entry.categories ?? [])]);
     this.catalogCreateSourceReference.set(entry.source_reference || 'local-lab');
     this.errorMessage.set(null);
@@ -872,7 +874,8 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setNumBonds(rawValue: number): void {
-    this.numBonds.set(Math.max(1, Math.min(3, Math.trunc(rawValue))));
+    void rawValue;
+    this.numBonds.set(1);
   }
 
   setMaxStructures(rawValue: number): void {
@@ -880,7 +883,8 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setExportPadding(rawValue: number): void {
-    this.exportPadding.set(Math.max(2, Math.min(8, Math.trunc(rawValue))));
+    void rawValue;
+    this.exportPadding.set(5);
   }
 
   dispatch(): void {
@@ -1098,13 +1102,13 @@ export class SmileitWorkflowService implements OnDestroy {
           ),
         }),
       ),
-      siteOverlapPolicy: this.siteOverlapPolicy(),
+      siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
       rSubstitutes: this.rSubstitutes(),
-      numBonds: this.numBonds(),
+      numBonds: 1,
       allowRepeated: this.allowRepeated(),
       maxStructures: this.maxStructures(),
       exportNameBase: this.exportNameBase().trim() || 'smileit_run',
-      exportPadding: this.exportPadding(),
+      exportPadding: 5,
       version: '2.0.0',
     };
   }
@@ -1271,6 +1275,10 @@ export class SmileitWorkflowService implements OnDestroy {
     this.catalogCreateSmiles.set('');
     this.catalogCreateAnchorIndicesText.set('');
     this.catalogEditingStableId.set(null);
+  }
+
+  private parseSingleAnchorIndexInput(rawText: string): number[] {
+    return this.parseAtomIndicesInput(rawText).slice(0, 1);
   }
 
   private refreshBlockCatalogRefsToLatestEntries(
