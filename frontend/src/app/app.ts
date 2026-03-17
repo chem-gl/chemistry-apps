@@ -43,6 +43,6 @@ export class App {
       path: '/smileit',
       hint: 'Combinatorial SMILES generation and substitution workflow',
     },
-    { label: 'Apps', path: '/apps', hint: 'Catalog and future scientific apps' },
+    { label: 'Apps', path: '/apps', hint: 'Library and future scientific apps' },
   ];
 }

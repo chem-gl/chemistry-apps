@@ -57,10 +57,63 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
+  readonly selectedLibraryGroupKey = signal<string>('aromatic');
+  readonly selectedBlockLibraryGroupKeys = signal<Record<string, string>>({});
+  readonly selectedLibraryEntryForDetail = signal<SmileitCatalogEntryView | null>(null);
+  /** Nivel de zoom del previsualizador en el dialog de detalle (1–4) */
+  readonly libraryDetailZoomLevel = signal<number>(1);
+  /**
+   * Tamaño fijo del viewport (ventana visible). Nunca cambia con el zoom.
+   * El SVG siempre supera este valor para que el pan esté siempre activo.
+   */
+  readonly libraryDetailViewportPx = 280;
+  /**
+   * Tamaño del SVG según el nivel de zoom.
+   * Siempre mayor que el viewport para garantizar overflow y pan.
+   * 1×: 380px | 2×: 480px | 3×: 580px | 4×: 680px
+   */
+  readonly libraryDetailPreviewSize = computed<number>(
+    () => 380 + (this.libraryDetailZoomLevel() - 1) * 100,
+  );
+  /** Desplazamiento X (px) del SVG dentro del viewport, para pan con mouse */
+  readonly libraryDetailPanX = signal<number>(0);
+  /** Desplazamiento Y (px) del SVG dentro del viewport, para pan con mouse */
+  readonly libraryDetailPanY = signal<number>(0);
+  /** Indica si el usuario está arrastrando la imagen en este momento */
+  readonly libraryDetailIsDragging = signal<boolean>(false);
+  private _panDragStartX = 0;
+  private _panDragStartY = 0;
+  private _panAnchorX = 0;
+  private _panAnchorY = 0;
+  readonly libraryEntryInspections = signal<Record<string, SmileitStructureInspectionView | null>>(
+    {},
+  );
+  readonly libraryEntryInspectionErrors = signal<Record<string, string | null>>({});
+  readonly filteredLibraryGroups = computed(() => {
+    const selectedGroupKey: string = this.selectedLibraryGroupKey();
+    const availableGroups = this.workflow.catalogGroups();
+
+    if (selectedGroupKey === 'all') {
+      return availableGroups;
+    }
+
+    return availableGroups.filter((group) => group.key === selectedGroupKey);
+  });
+  /** Lista plana de entradas visibles según el filtro de grupo activo */
+  readonly filteredLibraryEntries = computed<SmileitCatalogEntryView[]>(() =>
+    this.filteredLibraryGroups().flatMap((group) => group.entries),
+  );
   readonly manualDraftInspections = signal<Record<string, SmileitStructureInspectionView | null>>(
     {},
   );
   readonly manualDraftInspectionErrors = signal<Record<string, string | null>>({});
+  private readonly libraryEntryPreviewSubscriptions = new Map<string, Subscription>();
+  private readonly libraryPreviewSyncEffect = effect(
+    () => {
+      this.syncVisibleLibraryPreviews();
+    },
+    { injector: this.injector },
+  );
   private readonly manualDraftInspectionSyncEffect = effect(
     () => {
       this.syncManualDraftInspectionState();
@@ -69,6 +122,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('libraryEntryDetailDialog')
+  private libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
@@ -91,9 +146,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.libraryPreviewSyncEffect.destroy();
     this.manualDraftInspectionSyncEffect.destroy();
     this.routeSubscription?.unsubscribe();
     this.catalogDraftInspectionSubscription?.unsubscribe();
+    this.libraryEntryPreviewSubscriptions.forEach((subscription: Subscription) => {
+      subscription.unsubscribe();
+    });
+    this.libraryEntryPreviewSubscriptions.clear();
     this.manualDraftInspectionSubscriptions.forEach((subscription: Subscription) => {
       subscription.unsubscribe();
     });
@@ -290,6 +350,167 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   closeCatalogStudioModal(): void {
     this.catalogStudioDialogRef?.nativeElement.close();
+  }
+
+  openLibraryEntryDetail(catalogEntry: SmileitCatalogEntryView): void {
+    this.selectedLibraryEntryForDetail.set(catalogEntry);
+    this.libraryDetailZoomLevel.set(1);
+    this.libraryDetailPanX.set(0);
+    this.libraryDetailPanY.set(0);
+    const detailDialog: HTMLDialogElement | undefined =
+      this.libraryEntryDetailDialogRef?.nativeElement;
+    if (detailDialog === undefined) {
+      return;
+    }
+
+    if (detailDialog.open) {
+      detailDialog.close();
+    }
+
+    try {
+      detailDialog.showModal();
+    } catch {
+      detailDialog.setAttribute('open', 'true');
+    }
+  }
+
+  closeLibraryEntryDetail(): void {
+    const detailDialog: HTMLDialogElement | undefined =
+      this.libraryEntryDetailDialogRef?.nativeElement;
+    if (detailDialog !== undefined && detailDialog.open) {
+      detailDialog.close();
+    }
+    detailDialog?.removeAttribute('open');
+    this.selectedLibraryEntryForDetail.set(null);
+    this.libraryDetailZoomLevel.set(1);
+    this.libraryDetailPanX.set(0);
+    this.libraryDetailPanY.set(0);
+  }
+
+  zoomInLibraryDetail(): void {
+    this.libraryDetailZoomLevel.update((level: number) => Math.min(level + 1, 4));
+    this.libraryDetailPanX.set(0);
+    this.libraryDetailPanY.set(0);
+  }
+
+  zoomOutLibraryDetail(): void {
+    this.libraryDetailZoomLevel.update((level: number) => Math.max(level - 1, 1));
+    this.libraryDetailPanX.set(0);
+    this.libraryDetailPanY.set(0);
+  }
+
+  onLibraryDetailPanStart(event: MouseEvent): void {
+    this.libraryDetailIsDragging.set(true);
+    this._panDragStartX = event.clientX;
+    this._panDragStartY = event.clientY;
+    this._panAnchorX = this.libraryDetailPanX();
+    this._panAnchorY = this.libraryDetailPanY();
+    event.preventDefault();
+  }
+
+  onLibraryDetailPanMove(event: MouseEvent): void {
+    if (!this.libraryDetailIsDragging()) {
+      return;
+    }
+    const rawX: number = this._panAnchorX + (event.clientX - this._panDragStartX);
+    const rawY: number = this._panAnchorY + (event.clientY - this._panDragStartY);
+    const { x, y } = this.clampLibraryDetailPan(rawX, rawY);
+    this.libraryDetailPanX.set(x);
+    this.libraryDetailPanY.set(y);
+  }
+
+  onLibraryDetailPanEnd(): void {
+    this.libraryDetailIsDragging.set(false);
+  }
+
+  /** Pan con scroll del mouse: stopPropagation evita que el dialog también haga scroll */
+  onLibraryDetailWheel(event: WheelEvent): void {
+    event.stopPropagation();
+    const rawX: number = this.libraryDetailPanX() - event.deltaX * 0.6;
+    const rawY: number = this.libraryDetailPanY() - event.deltaY * 0.6;
+    const { x, y } = this.clampLibraryDetailPan(rawX, rawY);
+    this.libraryDetailPanX.set(x);
+    this.libraryDetailPanY.set(y);
+  }
+
+  private clampLibraryDetailPan(rawX: number, rawY: number): { x: number; y: number } {
+    const halfOverflow: number =
+      (this.libraryDetailPreviewSize() - this.libraryDetailViewportPx) / 2;
+    return {
+      x: Math.max(-halfOverflow, Math.min(halfOverflow, rawX)),
+      y: Math.max(-halfOverflow, Math.min(halfOverflow, rawY)),
+    };
+  }
+
+  onLibraryDetailDialogClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined =
+      this.libraryEntryDetailDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+    if (mouseEvent.target === dialogElement) {
+      this.closeLibraryEntryDetail();
+    }
+  }
+
+  /** Cierra el detalle y abre el editor de la entrada seleccionada */
+  editLibraryEntryFromDetail(catalogEntry: SmileitCatalogEntryView): void {
+    this.closeLibraryEntryDetail();
+    this.beginCatalogEntryEdition(catalogEntry);
+  }
+
+  onLibraryGroupChange(nextGroupKey: string): void {
+    this.selectedLibraryGroupKey.set(nextGroupKey);
+  }
+
+  onBlockLibraryGroupChange(blockId: string, nextGroupKey: string): void {
+    this.selectedBlockLibraryGroupKeys.update((currentState: Record<string, string>) => ({
+      ...currentState,
+      [blockId]: nextGroupKey,
+    }));
+  }
+
+  selectedBlockLibraryGroupKey(blockId: string): string {
+    return this.selectedBlockLibraryGroupKeys()[blockId] ?? 'aromatic';
+  }
+
+  filteredCatalogGroupsForBlock(block: SmileitAssignmentBlockDraft) {
+    const selectedGroupKey: string = this.selectedBlockLibraryGroupKey(block.id);
+    const availableGroups = this.workflow.catalogGroups();
+
+    if (selectedGroupKey === 'all') {
+      return availableGroups;
+    }
+
+    const matchingGroups = availableGroups.filter((group) => group.key === selectedGroupKey);
+    return matchingGroups.length > 0 ? matchingGroups : availableGroups;
+  }
+
+  filteredCatalogEntriesForBlock(block: SmileitAssignmentBlockDraft): SmileitCatalogEntryView[] {
+    return this.filteredCatalogGroupsForBlock(block).flatMap((group) => group.entries);
+  }
+
+  catalogEntryPreviewSvg(catalogEntry: SmileitCatalogEntryView): SafeHtml | null {
+    const previewKey: string = this.buildCatalogEntryPreviewKey(catalogEntry);
+    const inspectionResult: SmileitStructureInspectionView | null =
+      this.libraryEntryInspections()[previewKey] ?? null;
+
+    if (inspectionResult === null) {
+      return null;
+    }
+
+    const decoratedSvgMarkup: string = this.decorateInspectionSvg(
+      inspectionResult.svg,
+      catalogEntry.anchor_atom_indices,
+      [],
+    );
+
+    return this.sanitizer.bypassSecurityTrustHtml(decoratedSvgMarkup);
+  }
+
+  catalogEntryPreviewError(catalogEntry: SmileitCatalogEntryView): string | null {
+    const previewKey: string = this.buildCatalogEntryPreviewKey(catalogEntry);
+    return this.libraryEntryInspectionErrors()[previewKey] ?? null;
   }
 
   onCatalogStudioDialogClick(mouseEvent: MouseEvent): void {
@@ -559,6 +780,104 @@ export class SmileitComponent implements OnInit, OnDestroy {
       });
 
     this.manualDraftInspectionSubscriptions.set(blockId, inspectionSubscription);
+  }
+
+  private syncVisibleLibraryPreviews(): void {
+    const topLibraryEntries: SmileitCatalogEntryView[] = this.filteredLibraryGroups().flatMap(
+      (group) => group.entries,
+    );
+    const blockCatalogEntries: SmileitCatalogEntryView[] = this.workflow
+      .assignmentBlocks()
+      .flatMap((block: SmileitAssignmentBlockDraft) => this.filteredCatalogEntriesForBlock(block));
+
+    const uniqueEntriesByPreviewKey: Map<string, SmileitCatalogEntryView> = new Map();
+    [...topLibraryEntries, ...blockCatalogEntries].forEach(
+      (catalogEntry: SmileitCatalogEntryView) => {
+        uniqueEntriesByPreviewKey.set(this.buildCatalogEntryPreviewKey(catalogEntry), catalogEntry);
+      },
+    );
+
+    const visibleCatalogEntries: SmileitCatalogEntryView[] = [
+      ...uniqueEntriesByPreviewKey.values(),
+    ];
+    const visiblePreviewKeys: Set<string> = new Set(
+      visibleCatalogEntries.map((catalogEntry) => this.buildCatalogEntryPreviewKey(catalogEntry)),
+    );
+
+    this.libraryEntryPreviewSubscriptions.forEach(
+      (subscription: Subscription, previewKey: string) => {
+        if (visiblePreviewKeys.has(previewKey)) {
+          return;
+        }
+
+        subscription.unsubscribe();
+        this.libraryEntryPreviewSubscriptions.delete(previewKey);
+      },
+    );
+
+    visibleCatalogEntries.forEach((catalogEntry: SmileitCatalogEntryView) => {
+      const previewKey: string = this.buildCatalogEntryPreviewKey(catalogEntry);
+      const hasCachedPreview: boolean = this.libraryEntryInspections()[previewKey] !== undefined;
+      const hasCachedError: boolean = this.libraryEntryInspectionErrors()[previewKey] !== undefined;
+      if (
+        hasCachedPreview ||
+        hasCachedError ||
+        this.libraryEntryPreviewSubscriptions.has(previewKey)
+      ) {
+        return;
+      }
+
+      const normalizedSmiles: string = catalogEntry.smiles.trim();
+      if (normalizedSmiles === '') {
+        this.setLibraryEntryInspectionError(previewKey, 'No SMILES available for preview.');
+        return;
+      }
+
+      this.setLibraryEntryInspectionError(previewKey, null);
+
+      const previewSubscription: Subscription = this.jobsApiService
+        .inspectSmileitStructure(normalizedSmiles)
+        .subscribe({
+          next: (inspectionResult: SmileitStructureInspectionView) => {
+            this.setLibraryEntryInspection(previewKey, inspectionResult);
+            this.setLibraryEntryInspectionError(previewKey, null);
+            this.libraryEntryPreviewSubscriptions.delete(previewKey);
+          },
+          error: (requestError: Error) => {
+            this.setLibraryEntryInspection(previewKey, null);
+            this.setLibraryEntryInspectionError(
+              previewKey,
+              `Preview unavailable: ${requestError.message}`,
+            );
+            this.libraryEntryPreviewSubscriptions.delete(previewKey);
+          },
+        });
+
+      this.libraryEntryPreviewSubscriptions.set(previewKey, previewSubscription);
+    });
+  }
+
+  private buildCatalogEntryPreviewKey(catalogEntry: SmileitCatalogEntryView): string {
+    return `${catalogEntry.stable_id}@${catalogEntry.version}`;
+  }
+
+  private setLibraryEntryInspection(
+    previewKey: string,
+    inspectionResult: SmileitStructureInspectionView | null,
+  ): void {
+    this.libraryEntryInspections.update(
+      (currentState: Record<string, SmileitStructureInspectionView | null>) => ({
+        ...currentState,
+        [previewKey]: inspectionResult,
+      }),
+    );
+  }
+
+  private setLibraryEntryInspectionError(previewKey: string, errorMessage: string | null): void {
+    this.libraryEntryInspectionErrors.update((currentState: Record<string, string | null>) => ({
+      ...currentState,
+      [previewKey]: errorMessage,
+    }));
   }
 
   private ensureCatalogDefaultAnchorSelection(
