@@ -624,9 +624,9 @@ export class SmileitWorkflowService implements OnDestroy {
   createCatalogEntry(): void {
     const editingStableId: string | null = this.catalogEditingStableId();
     const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+    this.errorMessage.set(null);
 
     if (editingStableId === null) {
-      const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
       const activePayload: SmileitCatalogEntryCreateParams | null = activePreview.isReady
         ? {
             name: activePreview.name,
@@ -666,24 +666,7 @@ export class SmileitWorkflowService implements OnDestroy {
         )
         .subscribe({
           next: () => {
-            this.jobsApiService.listSmileitCatalog().subscribe({
-              next: (catalogEntries: SmileitCatalogEntryView[]) => {
-                const normalizedCatalogEntries: SmileitCatalogEntryView[] =
-                  this.normalizeCatalogEntries(catalogEntries);
-                this.catalogEntries.set(normalizedCatalogEntries);
-                this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
-                this.catalogDraftQueue.set([]);
-                if (activePayload !== null) {
-                  this.resetCatalogForm();
-                }
-                this.errorMessage.set(null);
-              },
-              error: (requestError: unknown) => {
-                this.errorMessage.set(
-                  `Unable to refresh catalog entries: ${this.extractRequestErrorMessage(requestError)}`,
-                );
-              },
-            });
+            this.refreshCatalogEntriesAfterMutation(activePayload !== null, true);
           },
           error: (requestError: unknown) => {
             this.errorMessage.set(
@@ -722,13 +705,8 @@ export class SmileitWorkflowService implements OnDestroy {
       this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
 
     saveRequest.subscribe({
-      next: (catalogEntries: SmileitCatalogEntryView[]) => {
-        const normalizedCatalogEntries: SmileitCatalogEntryView[] =
-          this.normalizeCatalogEntries(catalogEntries);
-        this.catalogEntries.set(normalizedCatalogEntries);
-        this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
-        this.resetCatalogForm();
-        this.errorMessage.set(null);
+      next: () => {
+        this.refreshCatalogEntriesAfterMutation(true, false);
       },
       error: (requestError: unknown) => {
         const actionLabel: string = editingStableId === null ? 'create' : 'update';
@@ -922,6 +900,35 @@ export class SmileitWorkflowService implements OnDestroy {
     }
 
     return this.dedupeVersionedEntries(rawPatterns as SmileitPatternEntryView[]);
+  }
+
+  private refreshCatalogEntriesAfterMutation(
+    shouldResetForm: boolean,
+    shouldClearQueuedDrafts: boolean,
+  ): void {
+    this.jobsApiService.listSmileitCatalog().subscribe({
+      next: (catalogEntries: SmileitCatalogEntryView[]) => {
+        const normalizedCatalogEntries: SmileitCatalogEntryView[] =
+          this.normalizeCatalogEntries(catalogEntries);
+        this.catalogEntries.set(normalizedCatalogEntries);
+        this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
+
+        if (shouldClearQueuedDrafts) {
+          this.catalogDraftQueue.set([]);
+        }
+
+        if (shouldResetForm) {
+          this.resetCatalogForm();
+        }
+
+        this.errorMessage.set(null);
+      },
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to refresh catalog entries: ${this.extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
   }
 
   private dedupeVersionedEntries<T extends { stable_id: string; version: number }>(

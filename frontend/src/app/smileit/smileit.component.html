@@ -208,7 +208,7 @@
 
                         <div class="action-row compact-actions catalog-editor-actions">
                             <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
-                                [disabled]="workflow.isProcessing() || (!workflow.catalogDraftPreview().isReady && !workflow.hasQueuedCatalogDrafts())">
+                                [disabled]="workflow.isProcessing()">
                                 {{ workflow.isCatalogEditing() ? 'Update catalog entry' :
                                 (workflow.hasQueuedCatalogDrafts() ? 'Save queued SMILES' : 'Save catalog entry') }}
                             </button>
@@ -374,7 +374,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="principal-pattern-action">
             <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
                 [disabled]="workflow.isProcessing()">
@@ -383,7 +383,7 @@
             <p class="hint">Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal
                 molecule.</p>
         </div>
-        
+
         @if (visibleInspectionAnnotations().length > 0) {
         <div class="annotation-legend" aria-label="Structural annotations">
             @for (annotation of visibleInspectionAnnotations(); track annotation.pattern_stable_id + '-' + $index) {
