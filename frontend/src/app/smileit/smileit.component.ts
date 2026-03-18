@@ -1639,52 +1639,67 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private extractAtomPositionsFromBonds(
     rootSvg: SVGSVGElement,
   ): Map<number, { x: number; y: number }> {
-    const bondSegments: Array<{
-      atomA: number;
-      atomB: number;
-      start: { x: number; y: number };
-      end: { x: number; y: number };
-      pathData: string;
-    }> = this.extractBondSegmentsFromSvg(rootSvg);
-
+    // Paso 1: extraer posiciones exactas desde elementos <text class="atom-N">.
+    // RDKit acorta los bonds cuando hay etiquetas de heteroátomos (N, O, S…),
+    // por lo que los endpoints de los paths NO coinciden con el centro real del átomo.
+    // Los elementos <text> sí están posicionados en el centro del símbolo escrito.
     const atomPositions: Map<number, { x: number; y: number }> = new Map();
+
+    rootSvg.querySelectorAll('text').forEach((textElement: Element) => {
+      const classText: string = this.normalizeClassText(textElement.getAttribute('class') ?? '');
+      const atomMatch: RegExpMatchArray | null = classText.match(/\batom-(\d+)\b/);
+      if (atomMatch === null) {
+        return;
+      }
+      const atomIndex: number = parseInt(atomMatch[1], 10);
+      const x: number = parseFloat(textElement.getAttribute('x') ?? '');
+      const y: number = parseFloat(textElement.getAttribute('y') ?? '');
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        atomPositions.set(atomIndex, { x, y });
+      }
+    });
+
+    // Paso 2: centroide de todos los endpoints de bond para átomos sin etiqueta (carbono implícito).
+    //
+    // RDKit dibuja bonds dobles como DOS paths paralelos con la misma clase "bond-X atom-A atom-B".
+    // Cada path está desplazado perpendicularmente desde el eje real del bond, de modo que:
+    //   - path 1: start ≈ atomA + offset1,   end ≈ atomB + offset1
+    //   - path 2: start ≈ atomA + offset2,   end ≈ atomB + offset2
+    // Los offsets son simétricos (opuestos en signo), por lo que el CENTROIDE de todos los
+    // "start" registrados para un átomo cancela el desplazamiento y da la posición real.
+    // Para bonds simples hay un solo path, así que el centroide es trivialmente ese endpoint.
+    //
+    // Convención de RDKit: en un path "bond-X atom-A atom-B", la primera coordenada del path
+    // siempre corresponde a atom-A y la última a atom-B (mismo orden que en el atributo class).
+    const bondSegments = this.extractBondSegmentsFromSvg(rootSvg);
     if (bondSegments.length === 0) {
       return atomPositions;
     }
 
-    const firstSegment = bondSegments[0];
-    atomPositions.set(firstSegment.atomA, firstSegment.start);
-    atomPositions.set(firstSegment.atomB, firstSegment.end);
+    // Acumular endpoints: start → atomA, end → atomB (solo átomos sin posición del paso 1).
+    const endpointAccumulator: Map<number, Array<{ x: number; y: number }>> = new Map();
 
-    let hasProgress: boolean = true;
-    while (hasProgress) {
-      hasProgress = false;
-
-      for (const bondSegment of bondSegments) {
-        const atomAPosition = atomPositions.get(bondSegment.atomA);
-        const atomBPosition = atomPositions.get(bondSegment.atomB);
-
-        if (atomAPosition !== undefined && atomBPosition === undefined) {
-          const distanceToStart: number = this.distanceSquared(atomAPosition, bondSegment.start);
-          const distanceToEnd: number = this.distanceSquared(atomAPosition, bondSegment.end);
-          atomPositions.set(
-            bondSegment.atomB,
-            distanceToStart <= distanceToEnd ? bondSegment.end : bondSegment.start,
-          );
-          hasProgress = true;
-          continue;
-        }
-
-        if (atomBPosition !== undefined && atomAPosition === undefined) {
-          const distanceToStart: number = this.distanceSquared(atomBPosition, bondSegment.start);
-          const distanceToEnd: number = this.distanceSquared(atomBPosition, bondSegment.end);
-          atomPositions.set(
-            bondSegment.atomA,
-            distanceToStart <= distanceToEnd ? bondSegment.end : bondSegment.start,
-          );
-          hasProgress = true;
-        }
+    for (const segment of bondSegments) {
+      if (!atomPositions.has(segment.atomA)) {
+        const list = endpointAccumulator.get(segment.atomA) ?? [];
+        list.push(segment.start);
+        endpointAccumulator.set(segment.atomA, list);
       }
+      if (!atomPositions.has(segment.atomB)) {
+        const list = endpointAccumulator.get(segment.atomB) ?? [];
+        list.push(segment.end);
+        endpointAccumulator.set(segment.atomB, list);
+      }
+    }
+
+    // Calcular centroide por cada átomo acumulado.
+    for (const [atomIndex, endpoints] of endpointAccumulator) {
+      if (endpoints.length === 0) {
+        continue;
+      }
+      const centroidX: number = endpoints.reduce((sum, p) => sum + p.x, 0) / endpoints.length;
+      const centroidY: number = endpoints.reduce((sum, p) => sum + p.y, 0) / endpoints.length;
+      atomPositions.set(atomIndex, { x: centroidX, y: centroidY });
     }
 
     return atomPositions;
