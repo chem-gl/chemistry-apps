@@ -430,6 +430,7 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .principal-svg-viewport {
@@ -438,8 +439,21 @@ select:focus {
   border: 1px solid #d9e6db;
   border-radius: 20px;
   overflow: auto;
+  max-height: min(68vh, 560px);
+}
+
+.principal-zoom-surface {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.principal-svg-stage {
+  width: 420px;
+  height: 420px;
   transform-origin: top left;
   transition: transform 0.2s ease;
+  overflow: visible;
 }
 
 .site-toolbar {

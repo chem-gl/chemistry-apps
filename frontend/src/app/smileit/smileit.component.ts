@@ -55,6 +55,12 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
   /** Nivel de zoom del visor principal de la molécula (1–4) */
   readonly principalZoomLevel = signal<number>(1);
+  /** Tamaño base del canvas principal antes de aplicar zoom */
+  readonly principalBaseCanvasPx = 420;
+  /** Tamaño de la superficie de paneo según zoom actual */
+  readonly principalCanvasSize = computed<number>(
+    () => this.principalBaseCanvasPx * this.principalZoomLevel(),
+  );
   readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
   readonly selectedPatternForDetail = signal<SmileitPatternEntryView | null>(null);
@@ -163,6 +169,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('principalSvgViewport')
+  private principalSvgViewportRef?: ElementRef<HTMLDivElement>;
   @ViewChild('patternCatalogDialog')
   private patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('patternDetailDialog')
@@ -543,12 +551,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   /** Aumenta el zoom del visor principal de la molécula */
   zoomInPrincipal(): void {
-    this.principalZoomLevel.update((level: number) => Math.min(level + 1, 4));
+    const nextZoomLevel: number = Math.min(this.principalZoomLevel() + 1, 4);
+    this.updatePrincipalZoom(nextZoomLevel);
   }
 
   /** Disminuye el zoom del visor principal de la molécula */
   zoomOutPrincipal(): void {
-    this.principalZoomLevel.update((level: number) => Math.max(level - 1, 1));
+    const nextZoomLevel: number = Math.max(this.principalZoomLevel() - 1, 1);
+    this.updatePrincipalZoom(nextZoomLevel);
   }
 
   onLibraryDetailPanStart(event: MouseEvent): void {
@@ -849,6 +859,42 @@ export class SmileitComponent implements OnInit, OnDestroy {
         this.setManualDraftInspection(block.id, null);
         this.setManualDraftInspectionError(block.id, null);
       }
+    });
+  }
+
+  private updatePrincipalZoom(nextZoomLevel: number): void {
+    const currentZoomLevel: number = this.principalZoomLevel();
+    if (nextZoomLevel === currentZoomLevel) {
+      return;
+    }
+
+    const principalViewport: HTMLDivElement | undefined =
+      this.principalSvgViewportRef?.nativeElement;
+    if (principalViewport === undefined) {
+      this.principalZoomLevel.set(nextZoomLevel);
+      return;
+    }
+
+    const anchorX: number =
+      (principalViewport.scrollLeft + principalViewport.clientWidth / 2) / currentZoomLevel;
+    const anchorY: number =
+      (principalViewport.scrollTop + principalViewport.clientHeight / 2) / currentZoomLevel;
+
+    this.principalZoomLevel.set(nextZoomLevel);
+
+    requestAnimationFrame(() => {
+      const rawScrollLeft: number = anchorX * nextZoomLevel - principalViewport.clientWidth / 2;
+      const rawScrollTop: number = anchorY * nextZoomLevel - principalViewport.clientHeight / 2;
+      const maxScrollLeft: number = Math.max(
+        0,
+        principalViewport.scrollWidth - principalViewport.clientWidth,
+      );
+      const maxScrollTop: number = Math.max(
+        0,
+        principalViewport.scrollHeight - principalViewport.clientHeight,
+      );
+      principalViewport.scrollLeft = Math.max(0, Math.min(maxScrollLeft, rawScrollLeft));
+      principalViewport.scrollTop = Math.max(0, Math.min(maxScrollTop, rawScrollTop));
     });
   }
 

@@ -368,9 +368,13 @@
                 <button type="button" class="zoom-btn" (click)="zoomInPrincipal()" [disabled]="principalZoomLevel() === 4"
                     aria-label="Zoom in">＋</button>
             </div>
-            <div class="principal-svg-viewport" [style.transform]="'scale(' + principalZoomLevel() + ')'">
-                <div class="svg-preview inspectable" (click)="onInspectionSvgClick($event)"
-                    [innerHTML]="toTrustedInspectionSvg()">
+            <div #principalSvgViewport class="principal-svg-viewport">
+                <div class="principal-zoom-surface" [style.width.px]="principalCanvasSize()"
+                    [style.height.px]="principalCanvasSize()">
+                    <div class="svg-preview inspectable principal-svg-stage"
+                        [style.transform]="'scale(' + principalZoomLevel() + ')'" (click)="onInspectionSvgClick($event)"
+                        [innerHTML]="toTrustedInspectionSvg()">
+                    </div>
                 </div>
             </div>
         </div>
