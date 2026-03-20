@@ -383,6 +383,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.refreshCatalogDraftInspection();
   }
 
+  cloneQueuedCatalogDraft(queueDraftId: string): void {
+    this.workflow.cloneQueuedCatalogDraft(queueDraftId);
+    this.refreshCatalogDraftInspection();
+  }
+
   removeQueuedCatalogDraft(queueDraftId: string): void {
     this.workflow.removeQueuedCatalogDraft(queueDraftId);
   }
@@ -668,6 +673,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     this.workflow.addCatalogReferenceToBlock(block.id, catalogEntry);
+    this.workflow.applyCatalogEntryToManualDraft(block.id, catalogEntry);
+    this.refreshManualDraftInspection(block.id);
   }
 
   catalogEntryPreviewSvg(catalogEntry: SmileitCatalogEntryView): SafeHtml | null {

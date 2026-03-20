@@ -606,12 +606,20 @@ export class SmileitWorkflowService implements OnDestroy {
       return;
     }
 
-    this.catalogCreateName.set(queuedDraft.name);
-    this.catalogCreateSmiles.set(queuedDraft.smiles);
-    this.catalogCreateAnchorIndicesText.set(String(queuedDraft.anchorAtomIndices[0] ?? ''));
-    this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
-    this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
+    this.hydrateCatalogFormFromQueuedDraft(queuedDraft);
     this.removeQueuedCatalogDraft(queueDraftId);
+    this.errorMessage.set(null);
+  }
+
+  cloneQueuedCatalogDraft(queueDraftId: string): void {
+    const queuedDraft: SmileitCatalogQueuedDraft | undefined = this.catalogDraftQueue().find(
+      (draft: SmileitCatalogQueuedDraft) => draft.id === queueDraftId,
+    );
+    if (queuedDraft === undefined) {
+      return;
+    }
+
+    this.hydrateCatalogFormFromQueuedDraft(queuedDraft);
     this.errorMessage.set(null);
   }
 
@@ -1427,9 +1435,20 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private resetCatalogDraftAfterStage(): void {
+    this.catalogCreateName.set('');
     this.catalogCreateSmiles.set('');
     this.catalogCreateAnchorIndicesText.set('');
+    this.catalogCreateCategoryKeys.set([]);
+    this.catalogCreateSourceReference.set('local-lab');
     this.catalogEditingStableId.set(null);
+  }
+
+  private hydrateCatalogFormFromQueuedDraft(queuedDraft: SmileitCatalogQueuedDraft): void {
+    this.catalogCreateName.set(queuedDraft.name);
+    this.catalogCreateSmiles.set(queuedDraft.smiles);
+    this.catalogCreateAnchorIndicesText.set(String(queuedDraft.anchorAtomIndices[0] ?? ''));
+    this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
+    this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
   }
 
   private parseSingleAnchorIndexInput(rawText: string): number[] {

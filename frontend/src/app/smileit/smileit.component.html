@@ -19,7 +19,7 @@
                     {{ isCatalogPanelCollapsed() ? 'Expand section' : 'Minimize section' }}
                 </button>
                 <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
-                    Open catalog studio
+                    Manage SMILES catalog
                 </button>
             </div>
         </div>
@@ -34,7 +34,7 @@
         </article>
         } @else {
         <p class="hint catalog-editor-summary">
-            Catalog creation and edition are isolated in Catalog studio to keep the main workflow clean.
+            Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.
         </p>
 
         <section class="catalog-browser-panel" aria-label="Stored substituent catalog">
@@ -93,11 +93,11 @@
         }
 
         <dialog #catalogStudioDialog class="catalog-studio-dialog" (click)="onCatalogStudioDialogClick($event)">
-            <section class="catalog-studio-modal" role="dialog" aria-modal="true" aria-label="Catalog studio"
+            <section class="catalog-studio-modal" role="dialog" aria-modal="true" aria-label="SMILES catalog studio"
                 (click)="$event.stopPropagation()">
                 <header class="catalog-studio-header">
                     <div>
-                        <h4>Catalog studio</h4>
+                        <h4>SMILES catalog studio</h4>
                         <p class="hint">Create or edit substituents without mixing this flow with block mapping.</p>
                     </div>
                     <button type="button" class="btn-secondary" (click)="closeCatalogStudioModal()">Close</button>
@@ -108,8 +108,9 @@
                         <div class="catalog-upper-section">
                             <div class="subsection-header">
                                 <div>
-                                    <h4>Entry metadata</h4>
-                                    <p class="hint">Configure top-level values first. Then add each SMILES below.</p>
+                                    <h4>Current SMILES metadata</h4>
+                                    <p class="hint">Set metadata for this SMILES draft. Use Clone in the queue to reuse data and change only the target
+                                        atom.</p>
                                 </div>
                             </div>
                             <div class="catalog-form-grid catalog-metadata-grid">
@@ -169,8 +170,7 @@
                                 </button>
                             </div>
                             @if (!workflow.catalogDraftPreview().isReady) {
-                            <p class="hint catalog-ready-hint">Complete name, source, category, SMILES and anchor
-                                indices to queue the draft.</p>
+                            <p class="hint catalog-ready-hint">Complete metadata, SMILES and one target anchor atom to queue this draft.</p>
                             }
                         </div>
 
@@ -244,6 +244,11 @@
                                         <small>{{ queuedDraft.categoryNames.join(', ') || 'No categories' }}</small>
                                     </div>
                                     <div class="queued-catalog-actions">
+                                        <button type="button" class="btn-secondary small"
+                                            (click)="cloneQueuedCatalogDraft(queuedDraft.id)"
+                                            [disabled]="workflow.isProcessing()">
+                                            Clone
+                                        </button>
                                         <button type="button" class="btn-secondary small"
                                             (click)="loadQueuedCatalogDraft(queuedDraft.id)"
                                             [disabled]="workflow.isProcessing()">
@@ -571,7 +576,7 @@
                                 (keydown)="$event.stopPropagation()">
                                 <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
                                     [disabled]="workflow.isProcessing()" [class.active]="isCatalogEntryLoadedInManualDraft(block, entry)">
-                                    {{ isCatalogEntryLoadedInManualDraft(block, entry) ? 'Molecule selected' : 'Select molecule' }}
+                                    {{ isCatalogEntryLoadedInManualDraft(block, entry) ? 'Loaded in draft' : 'Load to draft' }}
                                 </button>
                                 <button class="remove-btn small"
                                     (click)="workflow.removeCatalogReferenceFromBlock(block.id, entry.stable_id, entry.version)"
@@ -605,7 +610,7 @@
                     <div class="subsection-header block-catalog-tools-row">
                       <div>
                             <h5>Catalog references browser</h5>
-                            <p class="hint">Browse by group, then choose a molecule to use in this block.</p>
+                                                        <p class="hint">Browse by group and add a molecule. It will be loaded in the draft automatically.</p>
                             </div>
                         <label class="library-group-filter block-library-group-filter" aria-label="Filter block catalog by group">
                           Group
@@ -643,13 +648,9 @@
                                 <p class="thumb-smiles mono">{{ entry.smiles }}</p>
                                 </div>
                             <div class="block-thumb-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-                              <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
-                                [disabled]="workflow.isProcessing()" [class.active]="isCatalogEntryLoadedInManualDraft(block, entry)">
-                                {{ isCatalogEntryLoadedInManualDraft(block, entry) ? 'Molecule selected' : 'Select molecule' }}
-                              </button>
-                                <button class="catalog-add small" (click)="workflow.addCatalogReferenceToBlock(block.id, entry)"
+                                                                <button class="catalog-add small" (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
                                                                     [disabled]="workflow.isProcessing()">
-                                                                    Add
+                                                                                                                                        Add and load
                                 </button>
                             </div>
                         </article>

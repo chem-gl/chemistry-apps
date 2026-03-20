@@ -444,14 +444,14 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.catalogDraftQueue()).toHaveLength(1);
     expect(workflowService.catalogDraftQueue()[0].smiles).toBe('CCC');
     expect(workflowService.catalogDraftQueue()[0].anchorAtomIndices).toEqual([2]);
-    expect(workflowService.catalogCreateName()).toBe('Propyl');
+    expect(workflowService.catalogCreateName()).toBe('');
     expect(workflowService.catalogCreateSmiles()).toBe('');
     expect(workflowService.catalogCreateAnchorIndicesText()).toBe('');
-    expect(workflowService.catalogCreateCategoryKeys()).toEqual(['aromatic']);
+    expect(workflowService.catalogCreateCategoryKeys()).toEqual([]);
     expect(workflowService.catalogCreateSourceReference()).toBe('local-lab');
   });
 
-  it('keeps batch defaults after staging so another SMILES can be queued immediately', () => {
+  it('requires metadata for each new SMILES draft after staging', () => {
     workflowService.categories.set([makeCategory()]);
     workflowService.catalogCreateName.set('Propyl');
     workflowService.catalogCreateSmiles.set('CCC');
@@ -460,11 +460,35 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateSourceReference.set('local-lab');
 
     workflowService.stageCurrentCatalogDraft();
-    workflowService.catalogCreateName.set('Nitroso');
     workflowService.catalogCreateSmiles.set('NON');
     workflowService.catalogCreateAnchorIndicesText.set('1');
 
-    expect(workflowService.catalogDraftPreview().isReady).toBe(true);
+    expect(workflowService.catalogDraftPreview().isReady).toBe(false);
+    expect(workflowService.catalogDraftPreview().warnings).toContain(
+      'Select at least one chemistry category.',
+    );
+  });
+
+  it('clones queued metadata to quickly create a new SMILES variant', () => {
+    workflowService.catalogDraftQueue.set([
+      {
+        id: 'catalog-draft-1',
+        name: 'Propyl',
+        smiles: 'CCC',
+        anchorAtomIndices: [2],
+        categoryKeys: ['aromatic'],
+        categoryNames: ['Aromatic'],
+        sourceReference: 'local-lab',
+      },
+    ]);
+
+    workflowService.cloneQueuedCatalogDraft('catalog-draft-1');
+
+    expect(workflowService.catalogDraftQueue()).toHaveLength(1);
+    expect(workflowService.catalogCreateName()).toBe('Propyl');
+    expect(workflowService.catalogCreateSmiles()).toBe('CCC');
+    expect(workflowService.catalogCreateAnchorIndicesText()).toBe('2');
+    expect(workflowService.catalogCreateCategoryKeys()).toEqual(['aromatic']);
   });
 
   it('saves queued catalog SMILES drafts sequentially', () => {
