@@ -65,6 +65,7 @@ export * from './smileitResult';
 export * from './smileitStructuralAnnotation';
 export * from './smileitStructureInspectionRequestRequest';
 export * from './smileitStructureInspectionResponse';
+export * from './smileitSubstituentPreview';
 export * from './smileitSubstituentReferenceInputRequest';
 export * from './smileitSubstitutionTraceEvent';
 export * from './smileitTraceabilityRow';

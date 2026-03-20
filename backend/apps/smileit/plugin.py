@@ -13,6 +13,7 @@ Cómo se usa:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from typing import Final, cast
 
@@ -32,6 +33,7 @@ from .types import (
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
     SmileitResult,
+    SmileitSubstituentPreview,
     SmileitSubstitutionTraceEvent,
     SmileitTraceabilityRow,
 )
@@ -48,20 +50,106 @@ class GeneratedNode:
     traceability: list[SmileitSubstitutionTraceEvent]
 
 
-def _build_effective_site_map(
+@dataclass(frozen=True)
+class SiteOption:
+    """Opción ejecutable por sitio derivada de la unión de bloques activos."""
+
+    site_atom_index: int
+    block_label: str
+    block_priority: int
+    substituent: SmileitResolvedSubstituent
+
+
+def _build_site_option_map(
     selected_atom_indices: list[int],
     assignment_blocks: list[SmileitResolvedAssignmentBlock],
-) -> dict[int, SmileitResolvedAssignmentBlock]:
-    """Construye cobertura efectiva por sitio usando política último bloque gana."""
-    effective_map: dict[int, SmileitResolvedAssignmentBlock] = {}
+) -> dict[int, list[SiteOption]]:
+    """Construye opciones por sitio uniendo sustituyentes de todos los bloques aplicables."""
+    site_option_map: dict[int, list[SiteOption]] = {
+        site_atom_index: [] for site_atom_index in selected_atom_indices
+    }
     selected_set = set(selected_atom_indices)
+    seen_keys_by_site: dict[int, set[tuple[str, int, int, int, str]]] = {
+        site_atom_index: set() for site_atom_index in selected_atom_indices
+    }
 
     for block in assignment_blocks:
         for site_atom_index in block["site_atom_indices"]:
-            if site_atom_index in selected_set:
-                effective_map[site_atom_index] = block
+            if site_atom_index not in selected_set:
+                continue
 
-    return effective_map
+            for substituent in block["resolved_substituents"]:
+                dedupe_key = (
+                    substituent["stable_id"],
+                    substituent["version"],
+                    substituent["selected_atom_index"],
+                    block["priority"],
+                    block["label"],
+                )
+                if dedupe_key in seen_keys_by_site[site_atom_index]:
+                    continue
+                seen_keys_by_site[site_atom_index].add(dedupe_key)
+                site_option_map[site_atom_index].append(
+                    SiteOption(
+                        site_atom_index=site_atom_index,
+                        block_label=block["label"],
+                        block_priority=block["priority"],
+                        substituent=substituent,
+                    )
+                )
+
+    return site_option_map
+
+
+def _tint_svg(raw_svg: str, color_hex: str) -> str:
+    """Aplica un color dominante al SVG para diferenciar roles visuales."""
+    if raw_svg.strip() == "":
+        return raw_svg
+
+    colored_svg = raw_svg
+    replacements: list[tuple[str, str]] = [
+        (r"stroke:\s*#000000", f"stroke:{color_hex}"),
+        (r"stroke:\s*#000", f"stroke:{color_hex}"),
+        (r"fill:\s*#000000", f"fill:{color_hex}"),
+        (r"fill:\s*#000", f"fill:{color_hex}"),
+        (r"stroke=\"#000000\"", f'stroke="{color_hex}"'),
+        (r"stroke=\"#000\"", f'stroke="{color_hex}"'),
+        (r"fill=\"#000000\"", f'fill="{color_hex}"'),
+        (r"fill=\"#000\"", f'fill="{color_hex}"'),
+    ]
+
+    for pattern, replacement in replacements:
+        colored_svg = re.sub(pattern, replacement, colored_svg)
+
+    return colored_svg
+
+
+def _build_substituent_previews(
+    traceability: list[SmileitSubstitutionTraceEvent],
+) -> list[SmileitSubstituentPreview]:
+    """Construye previsualizaciones únicas de sustituyentes aplicados en el derivado."""
+    previews: list[SmileitSubstituentPreview] = []
+    seen_preview_keys: set[tuple[str, str]] = set()
+
+    for event in traceability:
+        substituent_smiles = event["substituent_smiles"].strip()
+        if substituent_smiles == "":
+            continue
+
+        preview_key = (event["substituent_name"], substituent_smiles)
+        if preview_key in seen_preview_keys:
+            continue
+
+        seen_preview_keys.add(preview_key)
+        previews.append(
+            SmileitSubstituentPreview(
+                name=event["substituent_name"],
+                smiles=substituent_smiles,
+                svg=_tint_svg(render_molecule_svg(substituent_smiles), "#2563eb"),
+            )
+        )
+
+    return previews
 
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
@@ -103,6 +191,7 @@ def _append_traceability_rows(
                 block_label=event["block_label"],
                 block_priority=event["block_priority"],
                 substituent_name=event["substituent_name"],
+                substituent_smiles=event["substituent_smiles"],
                 substituent_stable_id=event["substituent_stable_id"],
                 substituent_version=event["substituent_version"],
                 source_kind=event["source_kind"],
@@ -128,7 +217,7 @@ def _build_generation_progress_percentage(
 def _generate_derivatives(
     principal_smiles: str,
     selected_atom_indices: list[int],
-    effective_site_map: dict[int, SmileitResolvedAssignmentBlock],
+    site_option_map: dict[int, list[SiteOption]],
     r_substitutes: int,
     num_bonds: int,
     allow_repeated: bool,
@@ -139,6 +228,7 @@ def _generate_derivatives(
     log_callback: PluginLogCallback | None,
 ) -> tuple[list[SmileitGeneratedStructure], list[SmileitTraceabilityRow], bool]:
     """Genera derivados con trazabilidad por ronda y por sitio."""
+    principal_svg = _tint_svg(render_molecule_svg(principal_smiles), "#2f855a")
     nodes: list[GeneratedNode] = [
         GeneratedNode(smiles=principal_smiles, traceability=[])
     ]
@@ -159,12 +249,13 @@ def _generate_derivatives(
                 node=node,
                 round_index=round_index,
                 selected_atom_indices=selected_atom_indices,
-                effective_site_map=effective_site_map,
+                site_option_map=site_option_map,
                 num_bonds=num_bonds,
                 allow_repeated=allow_repeated,
                 seen_smiles=seen_smiles,
                 export_name_base=export_name_base,
                 export_padding=export_padding,
+                principal_svg=principal_svg,
                 derivative_counter=derivative_counter,
                 generated_structures=generated_structures,
                 derivative_rows=derivative_rows,
@@ -248,12 +339,13 @@ def _expand_derivatives_from_node(
     node: GeneratedNode,
     round_index: int,
     selected_atom_indices: list[int],
-    effective_site_map: dict[int, SmileitResolvedAssignmentBlock],
+    site_option_map: dict[int, list[SiteOption]],
     num_bonds: int,
     allow_repeated: bool,
     seen_smiles: set[str],
     export_name_base: str,
     export_padding: int,
+    principal_svg: str,
     derivative_counter: int,
     generated_structures: list[SmileitGeneratedStructure],
     derivative_rows: list[SmileitTraceabilityRow],
@@ -262,11 +354,12 @@ def _expand_derivatives_from_node(
 ) -> tuple[int, bool]:
     """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
     for site_atom_index in selected_atom_indices:
-        block = effective_site_map.get(site_atom_index)
-        if block is None:
+        site_options = site_option_map.get(site_atom_index, [])
+        if len(site_options) == 0:
             continue
 
-        for substituent in block["resolved_substituents"]:
+        for site_option in site_options:
+            substituent = site_option.substituent
             selected_anchor = int(substituent["selected_atom_index"])
             for bond_order in range(1, num_bonds + 1):
                 fused_smiles = fuse_molecules(
@@ -288,9 +381,10 @@ def _expand_derivatives_from_node(
                 trace_event = SmileitSubstitutionTraceEvent(
                     round_index=round_index,
                     site_atom_index=site_atom_index,
-                    block_label=block["label"],
-                    block_priority=block["priority"],
+                    block_label=site_option.block_label,
+                    block_priority=site_option.block_priority,
                     substituent_name=substituent["name"],
+                    substituent_smiles=substituent["smiles"],
                     substituent_stable_id=substituent["stable_id"],
                     substituent_version=substituent["version"],
                     source_kind=substituent["source_kind"],
@@ -308,7 +402,9 @@ def _expand_derivatives_from_node(
                     SmileitGeneratedStructure(
                         smiles=fused_smiles,
                         name=generated_name,
-                        svg=render_molecule_svg(fused_smiles),
+                        svg=_tint_svg(render_molecule_svg(fused_smiles), "#1d4ed8"),
+                        scaffold_svg=principal_svg,
+                        substituent_svgs=_build_substituent_previews(traceability),
                         traceability=traceability,
                     )
                 )
@@ -457,26 +553,19 @@ def smileit_plugin(
 
     progress_callback(5, "running", "Validando cobertura de bloques para Smile-it.")
 
-    effective_site_map = _build_effective_site_map(
+    site_option_map = _build_site_option_map(
         selected_atom_indices=parsed_input["selected_atom_indices"],
         assignment_blocks=parsed_input["assignment_blocks"],
     )
     missing_sites = [
         site
         for site in parsed_input["selected_atom_indices"]
-        if site not in effective_site_map
+        if len(site_option_map.get(site, [])) == 0
     ]
     if len(missing_sites) > 0:
         raise ValueError(
             f"No se puede ejecutar Smile-it con sitios sin cobertura: {missing_sites}."
         )
-
-    for site_atom_index, block in effective_site_map.items():
-        if len(block["resolved_substituents"]) == 0:
-            raise ValueError(
-                "El sitio seleccionado no tiene sustituyentes efectivos en su bloque: "
-                f"site={site_atom_index}, block={block['label']}."
-            )
 
     _emit_log(
         log_callback,
@@ -486,6 +575,7 @@ def smileit_plugin(
         payload={
             "selected_sites": parsed_input["selected_atom_indices"],
             "blocks": len(parsed_input["assignment_blocks"]),
+            "site_options": sum(len(options) for options in site_option_map.values()),
             "r_substitutes": r_substitutes,
             "num_bonds": num_bonds,
             "max_structures": max_structures,
@@ -497,7 +587,7 @@ def smileit_plugin(
     generated_structures, traceability_rows, truncated = _generate_derivatives(
         principal_smiles=canonical_principal,
         selected_atom_indices=parsed_input["selected_atom_indices"],
-        effective_site_map=effective_site_map,
+        site_option_map=site_option_map,
         r_substitutes=r_substitutes,
         num_bonds=num_bonds,
         allow_repeated=allow_repeated,

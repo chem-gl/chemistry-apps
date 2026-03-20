@@ -2,34 +2,34 @@
 
 import { CommonModule } from '@angular/common';
 import {
-  Component,
-  ElementRef,
-  Injector,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  computed,
-  effect,
-  inject,
-  signal,
+    Component,
+    ElementRef,
+    Injector,
+    OnDestroy,
+    OnInit,
+    ViewChild,
+    computed,
+    effect,
+    inject,
+    signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobsApiService,
-  ScientificJobView,
-  SmileitCatalogEntryView,
-  SmileitPatternEntryView,
-  SmileitStructureInspectionView,
+    DownloadedReportFile,
+    JobLogEntryView,
+    JobsApiService,
+    ScientificJobView,
+    SmileitCatalogEntryView,
+    SmileitPatternEntryView,
+    SmileitStructureInspectionView,
 } from '../core/api/jobs-api.service';
 import {
-  SmileitAssignmentBlockDraft,
-  SmileitGeneratedStructureView,
-  SmileitWorkflowService,
+    SmileitAssignmentBlockDraft,
+    SmileitGeneratedStructureView,
+    SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
 
 @Component({
@@ -383,6 +383,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.refreshCatalogDraftInspection();
   }
 
+  cloneQueuedCatalogDraft(queueDraftId: string): void {
+    this.workflow.cloneQueuedCatalogDraft(queueDraftId);
+    this.refreshCatalogDraftInspection();
+  }
+
   removeQueuedCatalogDraft(queueDraftId: string): void {
     this.workflow.removeQueuedCatalogDraft(queueDraftId);
   }
@@ -668,6 +673,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     this.workflow.addCatalogReferenceToBlock(block.id, catalogEntry);
+    this.workflow.applyCatalogEntryToManualDraft(block.id, catalogEntry);
+    this.refreshManualDraftInspection(block.id);
   }
 
   catalogEntryPreviewSvg(catalogEntry: SmileitCatalogEntryView): SafeHtml | null {
@@ -1244,6 +1251,15 @@ export class SmileitComponent implements OnInit, OnDestroy {
       structure.traceability.map((traceEntry) => traceEntry.substituent_name),
     );
     return [...uniqueNames].slice(0, 4);
+  }
+
+  /**
+   * Limita miniaturas de sustituyentes para mantener compacta la tarjeta de derivados.
+   */
+  getDisplayedSubstituentSvgs(
+    structure: SmileitGeneratedStructureView,
+  ): Array<{ name: string; smiles: string; svg: string }> {
+    return structure.substituentSvgs.slice(0, 3);
   }
 
   /**

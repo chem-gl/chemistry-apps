@@ -295,6 +295,109 @@ class SmileitJobBlockTests(TestCase):
         job_results = job.results or {}
         self.assertGreaterEqual(int(job_results.get("total_generated", 0)), 1)
         self.assertIn("traceability_rows", job_results)
+        generated_structures = job_results.get("generated_structures", [])
+        self.assertGreaterEqual(len(generated_structures), 1)
+        self.assertIn("scaffold_svg", generated_structures[0])
+        self.assertIn("substituent_svgs", generated_structures[0])
+
+    def test_overlapped_blocks_generate_union_permutations_per_site(self) -> None:
+        """Sitio cubierto por múltiples bloques debe combinar todas las opciones efectivas."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "assignment_blocks": [
+                {
+                    "label": "BlockFluoro",
+                    "site_atom_indices": [0],
+                    "category_keys": ["aromatic"],
+                    "substituent_refs": [],
+                    "manual_substituents": [],
+                },
+                {
+                    "label": "BlockChloro",
+                    "site_atom_indices": [0],
+                    "category_keys": ["hbond_donor"],
+                    "substituent_refs": [],
+                    "manual_substituents": [],
+                },
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "allow_repeated": False,
+            "max_structures": 20,
+            "export_name_base": "UNION_OVERLAP",
+            "export_padding": 5,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+
+        result_payload = job.results or {}
+        generated_structures = result_payload.get("generated_structures", [])
+        self.assertGreaterEqual(len(generated_structures), 2)
+
+        traceability_rows = result_payload.get("traceability_rows", [])
+        trace_block_labels = {
+            str(row.get("block_label", "")) for row in traceability_rows
+        }
+        self.assertIn("BlockFluoro", trace_block_labels)
+        self.assertIn("BlockChloro", trace_block_labels)
+
+    def test_r_substitutes_generates_multi_round_combinatorics(self) -> None:
+        """Con múltiples rondas debe existir trazabilidad con round_index mayor a 1."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0, 1],
+            "assignment_blocks": [
+                {
+                    "label": "BlockSite0",
+                    "site_atom_indices": [0],
+                    "category_keys": ["aromatic"],
+                    "substituent_refs": [],
+                    "manual_substituents": [],
+                },
+                {
+                    "label": "BlockSite1",
+                    "site_atom_indices": [1],
+                    "category_keys": ["hbond_donor"],
+                    "substituent_refs": [],
+                    "manual_substituents": [],
+                },
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 2,
+            "num_bonds": 1,
+            "allow_repeated": False,
+            "max_structures": 60,
+            "export_name_base": "MULTIROUND",
+            "export_padding": 5,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+        result_payload = job.results or {}
+        traceability_rows = result_payload.get("traceability_rows", [])
+        self.assertGreaterEqual(len(traceability_rows), 2)
+        self.assertGreaterEqual(
+            max(int(row.get("round_index", 0)) for row in traceability_rows),
+            2,
+        )
+        self.assertTrue(all("substituent_smiles" in row for row in traceability_rows))
 
     def test_create_and_run_job_without_limit_emits_generation_logs(self) -> None:
         """Con max_structures=0 debe ejecutar sin tope y registrar conteos de avance."""
@@ -465,4 +568,11 @@ class SmileitLegacyJobCompatibilityTests(TestCase):
         payload = response.json()
         self.assertEqual(
             payload["results"]["generated_structures"][0]["traceability"], []
+        )
+        self.assertEqual(
+            payload["results"]["generated_structures"][0]["scaffold_svg"], ""
+        )
+        self.assertEqual(
+            payload["results"]["generated_structures"][0]["substituent_svgs"],
+            [],
         )

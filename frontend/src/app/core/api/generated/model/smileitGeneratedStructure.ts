@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { SmileitSubstitutionTraceEvent } from './smileitSubstitutionTraceEvent';
+import { SmileitSubstituentPreview } from './smileitSubstituentPreview';
 
 
 /**
@@ -17,6 +18,8 @@ export interface SmileitGeneratedStructure {
     smiles: string;
     name: string;
     svg: string;
+    scaffold_svg?: string;
+    substituent_svgs?: Array<SmileitSubstituentPreview>;
     traceability?: Array<SmileitSubstitutionTraceEvent>;
 }
 

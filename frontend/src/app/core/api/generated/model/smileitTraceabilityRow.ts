@@ -20,6 +20,7 @@ export interface SmileitTraceabilityRow {
     block_label: string;
     block_priority: number;
     substituent_name: string;
+    substituent_smiles?: string;
     substituent_stable_id: string;
     substituent_version: number;
     source_kind: string;
