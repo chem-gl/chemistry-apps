@@ -2,37 +2,37 @@
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import {
-  Observable,
-  Subscription,
-  catchError,
-  concatMap,
-  finalize,
-  forkJoin,
-  from,
-  last,
-  throwError,
+    Observable,
+    Subscription,
+    catchError,
+    concatMap,
+    finalize,
+    forkJoin,
+    from,
+    last,
+    throwError,
 } from 'rxjs';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../api/generated';
 import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  ScientificJobView,
-  SmileitAssignmentBlockParams,
-  SmileitCatalogEntryCreateParams,
-  SmileitCatalogEntryView,
-  SmileitCategoryView,
-  SmileitGenerationParams,
-  SmileitJobResponseView,
-  SmileitManualSubstituentParams,
-  SmileitPatternEntryCreateParams,
-  SmileitPatternEntryView,
-  SmileitQuickPropertiesView,
-  SmileitResolvedAssignmentBlockView,
-  SmileitStructureInspectionView,
-  SmileitTraceabilityRowView,
+    DownloadedReportFile,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    JobsApiService,
+    ScientificJobView,
+    SmileitAssignmentBlockParams,
+    SmileitCatalogEntryCreateParams,
+    SmileitCatalogEntryView,
+    SmileitCategoryView,
+    SmileitGenerationParams,
+    SmileitJobResponseView,
+    SmileitManualSubstituentParams,
+    SmileitPatternEntryCreateParams,
+    SmileitPatternEntryView,
+    SmileitQuickPropertiesView,
+    SmileitResolvedAssignmentBlockView,
+    SmileitStructureInspectionView,
+    SmileitTraceabilityRowView,
 } from '../api/jobs-api.service';
 
 type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -41,12 +41,19 @@ export interface SmileitGeneratedStructureView {
   name: string;
   smiles: string;
   svg: string;
+  scaffoldSvg: string;
+  substituentSvgs: Array<{
+    name: string;
+    smiles: string;
+    svg: string;
+  }>;
   traceability: Array<{
     round_index: number;
     site_atom_index: number;
     block_label: string;
     block_priority: number;
     substituent_name: string;
+    substituent_smiles?: string;
     substituent_stable_id: string;
     substituent_version: number;
     source_kind: string;
@@ -1380,6 +1387,8 @@ export class SmileitWorkflowService implements OnDestroy {
           name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
           smiles: structureItem.smiles,
           svg: structureItem.svg,
+          scaffoldSvg: structureItem.scaffold_svg ?? '',
+          substituentSvgs: structureItem.substituent_svgs ?? [],
           traceability: structureItem.traceability ?? [],
         };
       }),
@@ -1590,6 +1599,15 @@ export class SmileitWorkflowService implements OnDestroy {
 
       block.siteAtomIndices.forEach((siteAtomIndex: number) => {
         if (!selectedSiteSet.has(siteAtomIndex)) {
+          return;
+        }
+
+        const previousCoverage: SmileitSiteCoverageView | undefined = coverageMap.get(siteAtomIndex);
+        if (previousCoverage !== undefined) {
+          coverageMap.set(siteAtomIndex, {
+            ...previousCoverage,
+            sourceCount: previousCoverage.sourceCount + sourceCount,
+          });
           return;
         }
 

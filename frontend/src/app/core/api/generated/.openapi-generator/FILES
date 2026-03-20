@@ -91,6 +91,7 @@ model/smileitResult.ts
 model/smileitStructuralAnnotation.ts
 model/smileitStructureInspectionRequestRequest.ts
 model/smileitStructureInspectionResponse.ts
+model/smileitSubstituentPreview.ts
 model/smileitSubstituentReferenceInputRequest.ts
 model/smileitSubstitutionTraceEvent.ts
 model/smileitTraceabilityRow.ts

@@ -824,6 +824,17 @@
             <article class="derivative-card" role="button" tabindex="0" (click)="openGeneratedStructureModal(structureItem)"
                 (keydown.enter)="openGeneratedStructureModal(structureItem)"
                 (keydown.space)="openGeneratedStructureModal(structureItem)">
+                @if (structureItem.scaffoldSvg || structureItem.substituentSvgs.length > 0) {
+                <div class="derivative-context-strip" aria-label="Generation context preview">
+                    @if (structureItem.scaffoldSvg) {
+                    <div class="context-preview context-scaffold" [innerHTML]="toTrustedSvg(structureItem.scaffoldSvg)"></div>
+                    }
+                    @for (substituentPreview of getDisplayedSubstituentSvgs(structureItem); track substituentPreview.name + '-' +
+                    substituentPreview.smiles + '-' + $index) {
+                    <div class="context-preview context-substituent" [innerHTML]="toTrustedSvg(substituentPreview.svg)"></div>
+                    }
+                </div>
+                }
                 <div class="derivative-svg-frame">
                     <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
                 </div>
@@ -1192,6 +1203,27 @@
             </header>
 
             <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+            @if (selectedStructure.scaffoldSvg || selectedStructure.substituentSvgs.length > 0) {
+            <section class="derivative-context-panel" aria-label="Scaffold and substituent context">
+                <h4>Generation context</h4>
+                <div class="derivative-context-grid">
+                    @if (selectedStructure.scaffoldSvg) {
+                    <article class="context-card scaffold-card">
+                        <h5>Principal scaffold</h5>
+                        <div class="context-card-svg" [innerHTML]="toTrustedSvg(selectedStructure.scaffoldSvg)"></div>
+                    </article>
+                    }
+                    @for (substituentPreview of selectedStructure.substituentSvgs; track substituentPreview.name + '-' +
+                    substituentPreview.smiles + '-' + $index) {
+                    <article class="context-card substituent-card">
+                        <h5>{{ substituentPreview.name }}</h5>
+                        <div class="context-card-svg" [innerHTML]="toTrustedSvg(substituentPreview.svg)"></div>
+                        <p class="derivative-smiles mono" [title]="substituentPreview.smiles">{{ substituentPreview.smiles }}</p>
+                    </article>
+                    }
+                </div>
+            </section>
+            }
             <section class="traceability-card compact-traceability" aria-label="Per-structure traceability">
                 <h4>Per-structure traceability</h4>
                 <div class="table-wrap">

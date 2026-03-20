@@ -114,7 +114,7 @@ def _build_traceability_csv(job: ScientificJob) -> str:
 
     lines: list[str] = [
         "derivative_name,derivative_smiles,round_index,site_atom_index,"
-        "block_label,block_priority,substituent_name,substituent_stable_id,"
+        "block_label,block_priority,substituent_name,substituent_smiles,substituent_stable_id,"
         "substituent_version,source_kind,bond_order"
     ]
 
@@ -129,6 +129,7 @@ def _build_traceability_csv(job: ScientificJob) -> str:
                     _escape_csv_cell(str(row.get("block_label", ""))),
                     _escape_csv_cell(str(row.get("block_priority", ""))),
                     _escape_csv_cell(str(row.get("substituent_name", ""))),
+                    _escape_csv_cell(str(row.get("substituent_smiles", ""))),
                     _escape_csv_cell(str(row.get("substituent_stable_id", ""))),
                     _escape_csv_cell(str(row.get("substituent_version", ""))),
                     _escape_csv_cell(str(row.get("source_kind", ""))),
@@ -332,22 +333,22 @@ def _validate_effective_coverage(
     selected_sites: list[int],
     resolved_blocks: list[SmileitResolvedAssignmentBlock],
 ) -> list[int]:
-    """Verifica cobertura final de sitios considerando prioridad de bloques."""
+    """Verifica cobertura final de sitios usando unión de bloques por cada átomo."""
     selected_set = set(selected_sites)
-    effective_map: dict[int, SmileitResolvedAssignmentBlock] = {}
+    covered_sites: set[int] = set()
 
     for block in resolved_blocks:
+        if len(block["resolved_substituents"]) == 0:
+            continue
         for site_atom_index in block["site_atom_indices"]:
             if site_atom_index in selected_set:
-                effective_map[site_atom_index] = block
+                covered_sites.add(site_atom_index)
 
-    pending_sites: list[int] = []
-    for site_atom_index in selected_sites:
-        block = effective_map.get(site_atom_index)
-        if block is None or len(block["resolved_substituents"]) == 0:
-            pending_sites.append(site_atom_index)
-
-    return pending_sites
+    return [
+        site_atom_index
+        for site_atom_index in selected_sites
+        if site_atom_index not in covered_sites
+    ]
 
 
 @extend_schema(tags=["Smileit"])

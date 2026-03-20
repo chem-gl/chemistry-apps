@@ -190,10 +190,19 @@ class SmileitSubstitutionTraceEvent(TypedDict):
     block_label: str
     block_priority: int
     substituent_name: str
+    substituent_smiles: str
     substituent_stable_id: str
     substituent_version: int
     source_kind: Literal["catalog", "manual"]
     bond_order: int
+
+
+class SmileitSubstituentPreview(TypedDict):
+    """Previsualización de sustituyente aplicado para contexto visual del derivado."""
+
+    name: str
+    smiles: str
+    svg: str
 
 
 class SmileitGeneratedStructure(TypedDict):
@@ -202,6 +211,8 @@ class SmileitGeneratedStructure(TypedDict):
     smiles: str
     name: str
     svg: str
+    scaffold_svg: str
+    substituent_svgs: list[SmileitSubstituentPreview]
     traceability: list[SmileitSubstitutionTraceEvent]
 
 
@@ -215,6 +226,7 @@ class SmileitTraceabilityRow(TypedDict):
     block_label: str
     block_priority: int
     substituent_name: str
+    substituent_smiles: str
     substituent_stable_id: str
     substituent_version: int
     source_kind: str

@@ -1699,6 +1699,40 @@ select:focus {
   outline: none;
 }
 
+.derivative-context-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  gap: 0.35rem;
+  padding: 0.35rem 0.45rem;
+  background: linear-gradient(90deg, rgba(47, 133, 90, 0.08), rgba(37, 99, 235, 0.08));
+  border-bottom: 1px solid #deebe3;
+}
+
+.context-preview {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid #dbe7e1;
+  background: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+}
+
+.context-preview svg {
+  width: 100%;
+  height: 56px;
+  display: block;
+}
+
+.context-scaffold {
+  border-color: rgba(47, 133, 90, 0.55);
+}
+
+.context-substituent {
+  border-color: rgba(37, 99, 235, 0.45);
+}
+
 /* Marco de la imagen: borde izquierdo verde = contribución scaffold */
 .derivative-svg-frame {
   border-left: 4px solid #2d6b42;
@@ -1820,6 +1854,60 @@ select:focus {
   margin: 0;
   color: #1f4033;
   word-break: break-word;
+}
+
+.derivative-context-panel {
+  border: 1px solid #d9e7df;
+  border-radius: 14px;
+  padding: 0.75rem;
+  background: #f8fcfa;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.derivative-context-panel h4 {
+  margin: 0;
+}
+
+.derivative-context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+
+.context-card {
+  border: 1px solid #dae7df;
+  border-radius: 12px;
+  padding: 0.55rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.context-card h5 {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.context-card-svg {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.context-card-svg svg {
+  width: 100%;
+  height: 118px;
+  display: block;
+}
+
+.scaffold-card {
+  border-color: rgba(47, 133, 90, 0.55);
+}
+
+.substituent-card {
+  border-color: rgba(37, 99, 235, 0.45);
 }
 
 /* Mantener retrocompatibilidad con list view por si acaso */

@@ -513,10 +513,24 @@ class SmileitSubstitutionTraceEventSerializer(serializers.Serializer):
     block_label = serializers.CharField(max_length=120)
     block_priority = serializers.IntegerField(min_value=1)
     substituent_name = serializers.CharField(max_length=MAX_SUBSTITUENT_NAME_LENGTH)
+    substituent_smiles = serializers.CharField(
+        max_length=MAX_SUBSTITUENT_SMILES_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
     substituent_stable_id = serializers.CharField()
     substituent_version = serializers.IntegerField(min_value=1)
     source_kind = serializers.ChoiceField(choices=["catalog", "manual"])
     bond_order = serializers.IntegerField(min_value=1, max_value=3)
+
+
+class SmileitSubstituentPreviewSerializer(serializers.Serializer):
+    """Previsualización SVG de sustituyente aplicado al derivado."""
+
+    name = serializers.CharField(max_length=MAX_SUBSTITUENT_NAME_LENGTH)
+    smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
+    svg = serializers.CharField()
 
 
 class SmileitGeneratedStructureSerializer(serializers.Serializer):
@@ -525,6 +539,12 @@ class SmileitGeneratedStructureSerializer(serializers.Serializer):
     smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
     name = serializers.CharField(max_length=500)
     svg = serializers.CharField()
+    scaffold_svg = serializers.CharField(required=False, allow_blank=True, default="")
+    substituent_svgs = SmileitSubstituentPreviewSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
     traceability = SmileitSubstitutionTraceEventSerializer(
         many=True,
         required=False,
@@ -542,6 +562,12 @@ class SmileitTraceabilityRowSerializer(serializers.Serializer):
     block_label = serializers.CharField(max_length=120)
     block_priority = serializers.IntegerField(min_value=1)
     substituent_name = serializers.CharField(max_length=MAX_SUBSTITUENT_NAME_LENGTH)
+    substituent_smiles = serializers.CharField(
+        max_length=MAX_SUBSTITUENT_SMILES_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
     substituent_stable_id = serializers.CharField()
     substituent_version = serializers.IntegerField(min_value=1)
     source_kind = serializers.CharField(max_length=20)

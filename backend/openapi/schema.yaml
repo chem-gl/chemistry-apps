@@ -4498,6 +4498,13 @@ components:
           maxLength: 500
         svg:
           type: string
+        scaffold_svg:
+          type: string
+          default: ''
+        substituent_svgs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitSubstituentPreview'
         traceability:
           type: array
           items:
@@ -4542,7 +4549,7 @@ components:
           default: 1
         num_bonds:
           type: integer
-          maximum: 3
+          maximum: 1
           minimum: 1
           default: 1
         allow_repeated:
@@ -5045,6 +5052,22 @@ components:
       - canonical_smiles
       - quick_properties
       - svg
+    SmileitSubstituentPreview:
+      type: object
+      description: Previsualización SVG de sustituyente aplicado al derivado.
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        smiles:
+          type: string
+          maxLength: 2000
+        svg:
+          type: string
+      required:
+      - name
+      - smiles
+      - svg
     SmileitSubstituentReferenceInputRequest:
       type: object
       description: Referencia inmutable a sustituyente por stable_id + version.
@@ -5077,6 +5100,10 @@ components:
         substituent_name:
           type: string
           maxLength: 120
+        substituent_smiles:
+          type: string
+          default: ''
+          maxLength: 2000
         substituent_stable_id:
           type: string
         substituent_version:
@@ -5123,6 +5150,10 @@ components:
         substituent_name:
           type: string
           maxLength: 120
+        substituent_smiles:
+          type: string
+          default: ''
+          maxLength: 2000
         substituent_stable_id:
           type: string
         substituent_version:
