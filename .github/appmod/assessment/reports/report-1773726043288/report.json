@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "producer": "Java AppCAT CLI",
+  "metadata": {
+    "analysisStartTime": "2026-03-17T05:40:43.288338062Z",
+    "analysisEndTime": "2026-03-17T05:40:57.068002615Z",
+    "status": "completed",
+    "privacyMode": "Protected",
+    "privacyModeHelpUrl": "https://aka.ms/appcat-privacy-mode",
+    "targetIds": [
+      "azure-aks",
+      "azure-appservice",
+      "azure-container-apps"
+    ],
+    "targetDisplayNames": [
+      "Azure Kubernetes Service",
+      "Azure App Service",
+      "Azure Container Apps"
+    ],
+    "capabilities": [],
+    "os": [],
+    "id": "1773726043288",
+    "name": "Report_202603162340",
+    "domains": [
+      "cloud-readiness",
+      "java-upgrade"
+    ],
+    "mode": "issue-only"
+  },
+  "summary": {
+    "totalProjects": 1,
+    "totalIssues": 0,
+    "totalIncidents": 0,
+    "totalEffort": 0,
+    "charts": {
+      "severity": {
+        "mandatory": 0,
+        "optional": 0,
+        "potential": 0,
+        "information": 0
+      },
+      "category": {}
+    },
+    "security": {}
+  },
+  "projects": [
+    {
+      "path": ".",
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "chemistry-apps",
+        "jdkVersion": "Unknown",
+        "frameworks": [
+          "Django",
+          "React",
+          "Angular"
+        ],
+        "languages": [
+          "Python",
+          "TypeScript",
+          "JavaScript"
+        ],
+        "tools": [
+          "NodeJs"
+        ]
+      },
+      "incidents": []
+    }
+  ],
+  "rules": {},
+  "security": []
+}

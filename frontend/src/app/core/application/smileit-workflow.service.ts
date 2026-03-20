@@ -665,8 +665,12 @@ export class SmileitWorkflowService implements OnDestroy {
           last(),
         )
         .subscribe({
-          next: () => {
-            this.refreshCatalogEntriesAfterMutation(activePayload !== null, true);
+          next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+            this.refreshCatalogEntriesAfterMutation(
+              updatedCatalogEntries,
+              activePayload !== null,
+              true,
+            );
           },
           error: (requestError: unknown) => {
             this.errorMessage.set(
@@ -705,8 +709,8 @@ export class SmileitWorkflowService implements OnDestroy {
       this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
 
     saveRequest.subscribe({
-      next: () => {
-        this.refreshCatalogEntriesAfterMutation(true, false);
+      next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+        this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, false);
       },
       error: (requestError: unknown) => {
         const actionLabel: string = editingStableId === null ? 'create' : 'update';
@@ -903,25 +907,27 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private refreshCatalogEntriesAfterMutation(
+    updatedCatalogEntries: SmileitCatalogEntryView[] | null,
     shouldResetForm: boolean,
     shouldClearQueuedDrafts: boolean,
   ): void {
+    if (updatedCatalogEntries !== null) {
+      this.applyCatalogEntriesAfterMutation(
+        updatedCatalogEntries,
+        shouldResetForm,
+        shouldClearQueuedDrafts,
+      );
+      return;
+    }
+
+    // Fallback defensivo por si algun backend legado no retorna el catalogo actualizado.
     this.jobsApiService.listSmileitCatalog().subscribe({
       next: (catalogEntries: SmileitCatalogEntryView[]) => {
-        const normalizedCatalogEntries: SmileitCatalogEntryView[] =
-          this.normalizeCatalogEntries(catalogEntries);
-        this.catalogEntries.set(normalizedCatalogEntries);
-        this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
-
-        if (shouldClearQueuedDrafts) {
-          this.catalogDraftQueue.set([]);
-        }
-
-        if (shouldResetForm) {
-          this.resetCatalogForm();
-        }
-
-        this.errorMessage.set(null);
+        this.applyCatalogEntriesAfterMutation(
+          catalogEntries,
+          shouldResetForm,
+          shouldClearQueuedDrafts,
+        );
       },
       error: (requestError: unknown) => {
         this.errorMessage.set(
@@ -929,6 +935,27 @@ export class SmileitWorkflowService implements OnDestroy {
         );
       },
     });
+  }
+
+  private applyCatalogEntriesAfterMutation(
+    catalogEntries: SmileitCatalogEntryView[],
+    shouldResetForm: boolean,
+    shouldClearQueuedDrafts: boolean,
+  ): void {
+    const normalizedCatalogEntries: SmileitCatalogEntryView[] =
+      this.normalizeCatalogEntries(catalogEntries);
+    this.catalogEntries.set(normalizedCatalogEntries);
+    this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
+
+    if (shouldClearQueuedDrafts) {
+      this.catalogDraftQueue.set([]);
+    }
+
+    if (shouldResetForm) {
+      this.resetCatalogForm();
+    }
+
+    this.errorMessage.set(null);
   }
 
   private dedupeVersionedEntries<T extends { stable_id: string; version: number }>(
