@@ -14,25 +14,25 @@ import {
 } from 'rxjs';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../api/generated';
 import {
-    DownloadedReportFile,
-    JobLogEntryView,
-    JobLogsPageView,
-    JobProgressSnapshotView,
-    JobsApiService,
-    ScientificJobView,
-    SmileitAssignmentBlockParams,
-    SmileitCatalogEntryCreateParams,
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitGenerationParams,
-    SmileitJobResponseView,
-    SmileitManualSubstituentParams,
-    SmileitPatternEntryCreateParams,
-    SmileitPatternEntryView,
-    SmileitQuickPropertiesView,
-    SmileitResolvedAssignmentBlockView,
-    SmileitStructureInspectionView,
-    SmileitTraceabilityRowView,
+  DownloadedReportFile,
+  JobLogEntryView,
+  JobLogsPageView,
+  JobProgressSnapshotView,
+  JobsApiService,
+  ScientificJobView,
+  SmileitAssignmentBlockParams,
+  SmileitCatalogEntryCreateParams,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitGenerationParams,
+  SmileitJobResponseView,
+  SmileitManualSubstituentParams,
+  SmileitPatternEntryCreateParams,
+  SmileitPatternEntryView,
+  SmileitQuickPropertiesView,
+  SmileitResolvedAssignmentBlockView,
+  SmileitStructureInspectionView,
+  SmileitTraceabilityRowView,
 } from '../api/jobs-api.service';
 
 type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -139,7 +139,7 @@ export class SmileitWorkflowService implements OnDestroy {
   private blockSequence: number = 0;
   private catalogDraftSequence: number = 0;
 
-  readonly principalSmiles = signal<string>('c1ccccc1');
+  readonly principalSmiles = signal<string>('c1ccc2[nH]ccc2c1NCCC=C');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
   readonly selectedAtomIndices = signal<number[]>([]);
 
@@ -207,15 +207,17 @@ export class SmileitWorkflowService implements OnDestroy {
     );
     return this.selectedAtomIndices().filter((atomIndex: number) => !coveredSites.has(atomIndex));
   });
-  readonly canDispatch = computed(() => {
+  readonly canConfigureGeneration = computed(() => {
     const principal: string = this.principalSmiles().trim();
     return (
       principal.length > 0 &&
       this.selectedAtomIndices().length > 0 &&
       this.assignmentBlocks().length > 0 &&
-      this.uncoveredSelectedSites().length === 0 &&
-      !this.isProcessing()
+      this.uncoveredSelectedSites().length === 0
     );
+  });
+  readonly canDispatch = computed(() => {
+    return this.canConfigureGeneration() && !this.isProcessing();
   });
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
   readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
@@ -224,7 +226,7 @@ export class SmileitWorkflowService implements OnDestroy {
   );
   readonly catalogDraftPreview = computed<SmileitCatalogDraftPreview>(() => {
     const currentSmiles: string = this.catalogCreateSmiles().trim();
-    const parsedAnchorIndices: number[] = this.parseAtomIndicesInput(
+    const parsedAnchorIndices: number[] = this.parseSingleAnchorIndexInput(
       this.catalogCreateAnchorIndicesText(),
     );
     const notationKind: SmileitChemicalNotationKind = this.detectChemicalNotation(currentSmiles);
@@ -240,7 +242,7 @@ export class SmileitWorkflowService implements OnDestroy {
       );
     }
     if (parsedAnchorIndices.length === 0) {
-      warnings.push('At least one anchor atom index is required.');
+      warnings.push('One anchor atom index is required.');
     }
     if (selectedCategoryKeys.length === 0) {
       warnings.push('Select at least one chemistry category.');
@@ -273,13 +275,15 @@ export class SmileitWorkflowService implements OnDestroy {
       patterns: this.jobsApiService.listSmileitPatterns(),
     }).subscribe({
       next: ({ catalog, categories, patterns }) => {
-        this.catalogEntries.set(catalog);
+        this.catalogEntries.set(this.normalizeCatalogEntries(catalog));
         this.categories.set(categories);
-        this.patterns.set(patterns);
-        this.refreshBlockCatalogRefsToLatestEntries(catalog);
+        this.patterns.set(this.normalizePatternEntries(patterns));
+        this.refreshBlockCatalogRefsToLatestEntries(this.normalizeCatalogEntries(catalog));
       },
-      error: (requestError: Error) => {
-        this.errorMessage.set(`Unable to load Smileit reference data: ${requestError.message}`);
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to load Smileit reference data: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
   }
@@ -604,7 +608,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.catalogCreateName.set(queuedDraft.name);
     this.catalogCreateSmiles.set(queuedDraft.smiles);
-    this.catalogCreateAnchorIndicesText.set(queuedDraft.anchorAtomIndices.join(','));
+    this.catalogCreateAnchorIndicesText.set(String(queuedDraft.anchorAtomIndices[0] ?? ''));
     this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
     this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
     this.removeQueuedCatalogDraft(queueDraftId);
@@ -620,9 +624,9 @@ export class SmileitWorkflowService implements OnDestroy {
   createCatalogEntry(): void {
     const editingStableId: string | null = this.catalogEditingStableId();
     const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+    this.errorMessage.set(null);
 
     if (editingStableId === null) {
-      const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
       const activePayload: SmileitCatalogEntryCreateParams | null = activePreview.isReady
         ? {
             name: activePreview.name,
@@ -661,17 +665,17 @@ export class SmileitWorkflowService implements OnDestroy {
           last(),
         )
         .subscribe({
-          next: (catalogEntries: SmileitCatalogEntryView[]) => {
-            this.catalogEntries.set(catalogEntries);
-            this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
-            this.catalogDraftQueue.set([]);
-            if (activePayload !== null) {
-              this.resetCatalogForm();
-            }
-            this.errorMessage.set(null);
+          next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+            this.refreshCatalogEntriesAfterMutation(
+              updatedCatalogEntries,
+              activePayload !== null,
+              true,
+            );
           },
-          error: (requestError: Error) => {
-            this.errorMessage.set(`Unable to create catalog entry: ${requestError.message}`);
+          error: (requestError: unknown) => {
+            this.errorMessage.set(
+              `Unable to create catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+            );
           },
         });
       return;
@@ -683,7 +687,7 @@ export class SmileitWorkflowService implements OnDestroy {
     }
 
     if (activePreview.anchorAtomIndices.length === 0) {
-      this.errorMessage.set('Persistent catalog entry requires at least one anchor atom index.');
+      this.errorMessage.set('Persistent catalog entry requires one anchor atom index.');
       return;
     }
 
@@ -705,15 +709,14 @@ export class SmileitWorkflowService implements OnDestroy {
       this.jobsApiService.updateSmileitCatalogEntry(editingStableId, requestPayload);
 
     saveRequest.subscribe({
-      next: (catalogEntries: SmileitCatalogEntryView[]) => {
-        this.catalogEntries.set(catalogEntries);
-        this.refreshBlockCatalogRefsToLatestEntries(catalogEntries);
-        this.resetCatalogForm();
-        this.errorMessage.set(null);
+      next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+        this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, false);
       },
-      error: (requestError: Error) => {
+      error: (requestError: unknown) => {
         const actionLabel: string = editingStableId === null ? 'create' : 'update';
-        this.errorMessage.set(`Unable to ${actionLabel} catalog entry: ${requestError.message}`);
+        this.errorMessage.set(
+          `Unable to ${actionLabel} catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
   }
@@ -727,7 +730,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.catalogEditingStableId.set(entry.stable_id);
     this.catalogCreateName.set(entry.name);
     this.catalogCreateSmiles.set(entry.smiles);
-    this.catalogCreateAnchorIndicesText.set(entry.anchor_atom_indices.join(','));
+    this.catalogCreateAnchorIndicesText.set(String(entry.anchor_atom_indices[0] ?? ''));
     this.catalogCreateCategoryKeys.set([...(entry.categories ?? [])]);
     this.catalogCreateSourceReference.set(entry.source_reference || 'local-lab');
     this.errorMessage.set(null);
@@ -851,20 +854,174 @@ export class SmileitWorkflowService implements OnDestroy {
       provenanceMetadata: {},
     };
 
+    this.errorMessage.set(null);
+
     this.jobsApiService.createSmileitPatternEntry(requestPayload).subscribe({
-      next: (patterns: SmileitPatternEntryView[]) => {
-        this.patterns.set(patterns);
-        this.patternCreateName.set('');
-        this.patternCreateSmarts.set('');
-        this.patternCreateCaption.set('');
-        this.patternCreateType.set(PatternTypeEnum.Toxicophore);
-        this.patternCreateSourceReference.set('local-lab');
-        this.errorMessage.set(null);
+      next: () => {
+        this.jobsApiService.listSmileitPatterns().subscribe({
+          next: (patterns: SmileitPatternEntryView[]) => {
+            {
+              this.patterns.set(this.normalizePatternEntries(patterns));
+              this.patternCreateName.set('');
+              this.patternCreateSmarts.set('');
+              this.patternCreateCaption.set('');
+              this.patternCreateType.set(PatternTypeEnum.Toxicophore);
+              this.patternCreateSourceReference.set('local-lab');
+              this.errorMessage.set(null);
+
+              // Reinspecciona para reflejar de inmediato los nuevos matches SMARTS en el scaffold.
+              if (this.principalSmiles().trim() !== '') {
+                this.inspectPrincipalStructure();
+              }
+            }
+          },
+          error: (requestError: unknown) => {
+            this.errorMessage.set(
+              `Unable to refresh structural patterns: ${this.extractRequestErrorMessage(requestError)}`,
+            );
+          },
+        });
       },
-      error: (requestError: Error) => {
-        this.errorMessage.set(`Unable to create structural pattern: ${requestError.message}`);
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to create structural pattern: ${this.extractRequestErrorMessage(requestError)}`,
+        );
       },
     });
+  }
+
+  private normalizeCatalogEntries(rawCatalogEntries: unknown): SmileitCatalogEntryView[] {
+    if (!Array.isArray(rawCatalogEntries)) {
+      return [];
+    }
+
+    return this.dedupeVersionedEntries(rawCatalogEntries as SmileitCatalogEntryView[]);
+  }
+
+  private normalizePatternEntries(rawPatterns: unknown): SmileitPatternEntryView[] {
+    if (!Array.isArray(rawPatterns)) {
+      return [];
+    }
+
+    return this.dedupeVersionedEntries(rawPatterns as SmileitPatternEntryView[]);
+  }
+
+  private refreshCatalogEntriesAfterMutation(
+    updatedCatalogEntries: SmileitCatalogEntryView[] | null,
+    shouldResetForm: boolean,
+    shouldClearQueuedDrafts: boolean,
+  ): void {
+    if (updatedCatalogEntries !== null) {
+      this.applyCatalogEntriesAfterMutation(
+        updatedCatalogEntries,
+        shouldResetForm,
+        shouldClearQueuedDrafts,
+      );
+      return;
+    }
+
+    // Fallback defensivo por si algun backend legado no retorna el catalogo actualizado.
+    this.jobsApiService.listSmileitCatalog().subscribe({
+      next: (catalogEntries: SmileitCatalogEntryView[]) => {
+        this.applyCatalogEntriesAfterMutation(
+          catalogEntries,
+          shouldResetForm,
+          shouldClearQueuedDrafts,
+        );
+      },
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to refresh catalog entries: ${this.extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
+  }
+
+  private applyCatalogEntriesAfterMutation(
+    catalogEntries: SmileitCatalogEntryView[],
+    shouldResetForm: boolean,
+    shouldClearQueuedDrafts: boolean,
+  ): void {
+    const normalizedCatalogEntries: SmileitCatalogEntryView[] =
+      this.normalizeCatalogEntries(catalogEntries);
+    this.catalogEntries.set(normalizedCatalogEntries);
+    this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalogEntries);
+
+    if (shouldClearQueuedDrafts) {
+      this.catalogDraftQueue.set([]);
+    }
+
+    if (shouldResetForm) {
+      this.resetCatalogForm();
+    }
+
+    this.errorMessage.set(null);
+  }
+
+  private dedupeVersionedEntries<T extends { stable_id: string; version: number }>(
+    entries: T[],
+  ): T[] {
+    const dedupedEntries: T[] = [];
+    const seenKeys: Set<string> = new Set();
+
+    entries.forEach((entry: T) => {
+      const entryKey: string = `${entry.stable_id}:${entry.version}`;
+      if (seenKeys.has(entryKey)) {
+        return;
+      }
+      seenKeys.add(entryKey);
+      dedupedEntries.push(entry);
+    });
+
+    return dedupedEntries;
+  }
+
+  private extractRequestErrorMessage(requestError: unknown): string {
+    if (requestError instanceof Error && requestError.message.trim() !== '') {
+      return requestError.message;
+    }
+
+    if (typeof requestError === 'object' && requestError !== null) {
+      const errorContainer: Record<string, unknown> = requestError as Record<string, unknown>;
+      const nestedError: unknown = errorContainer['error'];
+
+      if (typeof nestedError === 'string' && nestedError.trim() !== '') {
+        return nestedError;
+      }
+
+      if (Array.isArray(nestedError)) {
+        const flattenedMessage: string = nestedError
+          .filter((entry: unknown) => typeof entry === 'string' && entry.trim() !== '')
+          .join(' ');
+        if (flattenedMessage !== '') {
+          return flattenedMessage;
+        }
+      }
+
+      if (typeof nestedError === 'object' && nestedError !== null) {
+        const nestedEntries: string[] = Object.values(
+          nestedError as Record<string, unknown>,
+        ).flatMap((entry: unknown) => {
+          if (typeof entry === 'string' && entry.trim() !== '') {
+            return [entry];
+          }
+
+          if (Array.isArray(entry)) {
+            return entry.filter(
+              (message: unknown) => typeof message === 'string' && message.trim() !== '',
+            ) as string[];
+          }
+
+          return [];
+        });
+
+        if (nestedEntries.length > 0) {
+          return nestedEntries.join(' ');
+        }
+      }
+    }
+
+    return 'Unexpected request failure.';
   }
 
   setRSubstitutes(rawValue: number): void {
@@ -872,7 +1029,8 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setNumBonds(rawValue: number): void {
-    this.numBonds.set(Math.max(1, Math.min(3, Math.trunc(rawValue))));
+    void rawValue;
+    this.numBonds.set(1);
   }
 
   setMaxStructures(rawValue: number): void {
@@ -880,7 +1038,8 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setExportPadding(rawValue: number): void {
-    this.exportPadding.set(Math.max(2, Math.min(8, Math.trunc(rawValue))));
+    void rawValue;
+    this.exportPadding.set(5);
   }
 
   dispatch(): void {
@@ -1098,13 +1257,13 @@ export class SmileitWorkflowService implements OnDestroy {
           ),
         }),
       ),
-      siteOverlapPolicy: this.siteOverlapPolicy(),
+      siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
       rSubstitutes: this.rSubstitutes(),
-      numBonds: this.numBonds(),
+      numBonds: 1,
       allowRepeated: this.allowRepeated(),
       maxStructures: this.maxStructures(),
       exportNameBase: this.exportNameBase().trim() || 'smileit_run',
-      exportPadding: this.exportPadding(),
+      exportPadding: 5,
       version: '2.0.0',
     };
   }
@@ -1271,6 +1430,10 @@ export class SmileitWorkflowService implements OnDestroy {
     this.catalogCreateSmiles.set('');
     this.catalogCreateAnchorIndicesText.set('');
     this.catalogEditingStableId.set(null);
+  }
+
+  private parseSingleAnchorIndexInput(rawText: string): number[] {
+    return this.parseAtomIndicesInput(rawText).slice(0, 1);
   }
 
   private refreshBlockCatalogRefsToLatestEntries(

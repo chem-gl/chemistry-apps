@@ -436,14 +436,14 @@ describe('SmileitWorkflowService', () => {
     workflowService.categories.set([makeCategory()]);
     workflowService.catalogCreateName.set('Propyl');
     workflowService.catalogCreateSmiles.set('CCC');
-    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateAnchorIndicesText.set('2');
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
 
     workflowService.stageCurrentCatalogDraft();
 
     expect(workflowService.catalogDraftQueue()).toHaveLength(1);
     expect(workflowService.catalogDraftQueue()[0].smiles).toBe('CCC');
-    expect(workflowService.catalogDraftQueue()[0].anchorAtomIndices).toEqual([0, 2]);
+    expect(workflowService.catalogDraftQueue()[0].anchorAtomIndices).toEqual([2]);
     expect(workflowService.catalogCreateName()).toBe('Propyl');
     expect(workflowService.catalogCreateSmiles()).toBe('');
     expect(workflowService.catalogCreateAnchorIndicesText()).toBe('');
@@ -455,14 +455,14 @@ describe('SmileitWorkflowService', () => {
     workflowService.categories.set([makeCategory()]);
     workflowService.catalogCreateName.set('Propyl');
     workflowService.catalogCreateSmiles.set('CCC');
-    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateAnchorIndicesText.set('2');
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
     workflowService.stageCurrentCatalogDraft();
     workflowService.catalogCreateName.set('Nitroso');
     workflowService.catalogCreateSmiles.set('NON');
-    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateAnchorIndicesText.set('1');
 
     expect(workflowService.catalogDraftPreview().isReady).toBe(true);
   });
@@ -477,7 +477,7 @@ describe('SmileitWorkflowService', () => {
         stable_id: 'propyl',
         name: 'Propyl',
         smiles: 'CCC',
-        anchor_atom_indices: [0, 2],
+        anchor_atom_indices: [2],
         version: 1,
       },
     ];
@@ -499,7 +499,7 @@ describe('SmileitWorkflowService', () => {
     ]);
     workflowService.catalogCreateName.set('Propyl');
     workflowService.catalogCreateSmiles.set('CCC');
-    workflowService.catalogCreateAnchorIndicesText.set('0,2');
+    workflowService.catalogCreateAnchorIndicesText.set('2');
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
@@ -517,7 +517,7 @@ describe('SmileitWorkflowService', () => {
     expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenNthCalledWith(2, {
       name: 'Propyl',
       smiles: 'CCC',
-      anchorAtomIndices: [0, 2],
+      anchorAtomIndices: [2],
       categoryKeys: ['aromatic'],
       sourceReference: 'local-lab',
       provenanceMetadata: {},
@@ -553,6 +553,19 @@ describe('SmileitWorkflowService', () => {
     expect(catalogPreview.notationKind).toBe('smarts');
     expect(catalogPreview.isReady).toBe(false);
     expect(catalogPreview.warnings[0]).toContain('SMILES');
+  });
+
+  it('keeps only one catalog anchor index even if several are provided in state', () => {
+    workflowService.categories.set([makeCategory()]);
+    workflowService.catalogCreateName.set('Propyl');
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('0,2,5');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+
+    const catalogPreview = workflowService.catalogDraftPreview();
+
+    expect(catalogPreview.anchorAtomIndices).toEqual([0]);
+    expect(catalogPreview.isReady).toBe(true);
   });
 
   it('builds collapsed summary with selected sites and rendered structure counters', () => {
