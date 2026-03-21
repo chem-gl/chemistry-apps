@@ -317,6 +317,10 @@ JOB_RECOVERY_ENABLED = _get_env_bool("JOB_RECOVERY_ENABLED", True)
 JOB_RECOVERY_STALE_SECONDS = max(5, _get_env_int("JOB_RECOVERY_STALE_SECONDS", 60))
 JOB_RECOVERY_MAX_ATTEMPTS = max(1, _get_env_int("JOB_RECOVERY_MAX_ATTEMPTS", 5))
 JOB_RECOVERY_INCLUDE_PENDING = _get_env_bool("JOB_RECOVERY_INCLUDE_PENDING", True)
+JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES = max(
+    1024,
+    _get_env_int("JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES", 8 * 1024 * 1024),
+)
 
 # ---------------------------------------------------------------------------
 # Política de retención de artefactos de entrada (archivos subidos).
