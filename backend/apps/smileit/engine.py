@@ -234,11 +234,18 @@ def render_molecule_svg(smiles: str) -> str:
 def render_molecule_svg_with_atom_labels(
     smiles: str,
     atom_labels: dict[int, str],
+    include_labels: bool = True,
 ) -> str:
     """Renderiza un scaffold con etiquetas personalizadas para sitios reactivos.
 
     Se usa para mostrar placeholders tipo `R1`, `R2`, etc. sobre los átomos
     del principal que recibieron una sustitución en el derivado final.
+
+    Args:
+        smiles: Estructura SMILES de la molécula principal.
+        atom_labels: Mapeo de índice de átomo a etiqueta (ej: {0: 'R1', 2: 'R2'}).
+        include_labels: Si False, renderiza con highlighting pero SIN etiquetas de texto.
+                       Si True (defecto), incluye las etiquetas sobre los átomos.
     """
     try:
         base_molecule = _parse_smiles_cached(smiles)
@@ -258,19 +265,21 @@ def render_molecule_svg_with_atom_labels(
         drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
         drawer.DrawMolecule(mol, highlightAtoms=sorted(valid_labels))
 
+        # Solo generar elementos de texto si include_labels es True
         text_elements: list[str] = []
-        for atom_index, atom_label in valid_labels.items():
-            point = drawer.GetDrawCoords(atom_index)
-            text_elements.append(
-                (
-                    "<text x='{x:.1f}' y='{y:.1f}' "
-                    "text-anchor='middle' dominant-baseline='middle' "
-                    "font-family='Avenir Next, Trebuchet MS, Segoe UI, sans-serif' "
-                    "font-size='18' font-weight='800' fill='#0f172a' "
-                    "stroke='#ffffff' stroke-width='3' paint-order='stroke'>"
-                    "{label}</text>"
-                ).format(x=point.x, y=point.y, label=escape(atom_label))
-            )
+        if include_labels:
+            for atom_index, atom_label in valid_labels.items():
+                point = drawer.GetDrawCoords(atom_index)
+                text_elements.append(
+                    (
+                        "<text x='{x:.1f}' y='{y:.1f}' "
+                        "text-anchor='middle' dominant-baseline='middle' "
+                        "font-family='Avenir Next, Trebuchet MS, Segoe UI, sans-serif' "
+                        "font-size='18' font-weight='800' fill='#0f172a' "
+                        "stroke='#ffffff' stroke-width='3' paint-order='stroke'>"
+                        "{label}</text>"
+                    ).format(x=point.x, y=point.y, label=escape(atom_label))
+                )
 
         drawer.FinishDrawing()
         svg_output = drawer.GetDrawingText()
@@ -284,6 +293,75 @@ def render_molecule_svg_with_atom_labels(
         logger.warning(
             "Error renderizando SVG con placeholders para %r: %s",
             smiles,
+            exc,
+        )
+        return ""
+
+
+def render_derivative_svg_with_substituent_highlighting(
+    principal_smiles: str,
+    derivative_smiles: str,
+    substituent_smiles_list: list[str],
+) -> str:
+    """Renderiza la molécula derivada completa con highlighting en átomos de sustituto.
+
+    La molécula principal se muestra NORMAL (sin highlighting).
+    Los átomos que pertenecen a sustitutos se muestran con HIGHLIGHTING (color verde).
+
+    Args:
+        principal_smiles: SMILES de la molécula principal original.
+        derivative_smiles: SMILES de la molécula derivada (principal + sustitutos combinados).
+        substituent_smiles_list: Lista de SMILES de sustitutos en orden de aplicación.
+                                 Usado para calcular exactamente cuántos átomos agregó cada uno.
+
+    Returns:
+        SVG markup string con la molécula derivada completa renderizada.
+    """
+    try:
+        principal_mol = _parse_smiles_cached(principal_smiles)
+        derivative_mol = _parse_smiles_cached(derivative_smiles)
+
+        if principal_mol is None or derivative_mol is None:
+            return ""
+
+        # Rastrear crecimiento de átomos a través de las fusiones
+        num_principal_atoms: int = principal_mol.GetNumAtoms()
+        current_atom_count: int = num_principal_atoms
+        
+        # Conjunto de índices de átomos que pertenecen a sustitutos
+        substituent_atom_indices: set[int] = set()
+
+        # Para cada sustituto aplicado, calcular qué átomos se agregaron
+        for substituent_smiles in substituent_smiles_list:
+            sub_mol = _parse_smiles_cached(substituent_smiles)
+            if sub_mol is None:
+                continue
+            
+            num_sub_atoms: int = sub_mol.GetNumAtoms()
+            # Los átomos del sustituto son los que se acaban de agregar
+            for atom_idx in range(current_atom_count, current_atom_count + num_sub_atoms):
+                substituent_atom_indices.add(atom_idx)
+            
+            current_atom_count += num_sub_atoms
+
+        if not substituent_atom_indices:
+            # Si no hay sustitutos, renderizar sin highlighting
+            return render_molecule_svg(derivative_smiles)
+
+        # Renderizar la molécula derivada completa con highlighting en sustitutos
+        mol = Chem.Mol(derivative_mol)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
+
+        drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
+        drawer.DrawMolecule(mol, highlightAtoms=sorted(substituent_atom_indices))
+
+        drawer.FinishDrawing()
+        return drawer.GetDrawingText()
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Error renderizando SVG derivado con highlighting de sustituto: %s",
             exc,
         )
         return ""

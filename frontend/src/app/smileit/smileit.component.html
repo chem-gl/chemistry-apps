@@ -734,8 +734,12 @@
         <div class="options-grid">
             <label>
                 R substitutes
-                <input type="number" min="1" max="10" [ngModel]="workflow.rSubstitutes()"
-                    (ngModelChange)="workflow.setRSubstitutes(toNumber($event))" [disabled]="workflow.isProcessing()" />
+                <input type="number" min="1" [max]="workflow.maxRSubstitutesByPositions()" [ngModel]="workflow.rSubstitutes()"
+                    (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
+                    [disabled]="workflow.isProcessing() || workflow.selectedAtomIndices().length === 0" />
+                <small class="hint" *ngIf="workflow.selectedAtomIndices().length > 0">
+                    máx. {{ workflow.maxRSubstitutesByPositions() }} (basado en {{ workflow.selectedAtomIndices().length }} posiciones)
+                </small>
                 </label>
 </div>
 

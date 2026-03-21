@@ -33,6 +33,7 @@ from .engine import (
     clear_smileit_caches,
     fuse_molecules,
     is_fusion_candidate_viable,
+    render_derivative_svg_with_substituent_highlighting,
     render_molecule_svg_with_atom_labels,
 )
 from .types import (
@@ -220,17 +221,30 @@ def _build_placeholder_assignments(
 
 def _build_combined_structure_svg(
     principal_smiles: str,
+    derivative_smiles: str,
     placeholder_assignments: list[SmileitPlaceholderAssignment],
 ) -> str:
-    """Renderiza una sola imagen con scaffold principal y placeholders visibles."""
-    atom_labels: dict[int, str] = {
-        assignment["site_atom_index"]: assignment["placeholder_label"]
+    """Renderiza la molécula derivada completa con highlighting en átomos de sustituto.
+
+    El SVG muestra:
+    - Molécula derivada completa (principal + todos los sustitutos combinados)
+    - Highlighting en los átomos que pertenecen a sustitutos (color verde)
+    - Principal se muestra NORMAL sin highlighting
+    """
+    # Extraer SMILES de sustitutos en orden de la trazabilidad
+    substituent_smiles_list: list[str] = [
+        assignment["substituent_smiles"]
         for assignment in placeholder_assignments
-    }
-    return _tint_svg(
-        render_molecule_svg_with_atom_labels(principal_smiles, atom_labels),
-        "#2f855a",
+    ]
+    
+    # Renderizar derivado completo con highlighting SOLO en átomos de sustituto
+    svg = render_derivative_svg_with_substituent_highlighting(
+        principal_smiles,
+        derivative_smiles,
+        substituent_smiles_list,
     )
+    # Aplicar color verde a los átomos resaltados
+    return _tint_svg(svg, "#2f855a")
 
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
@@ -414,7 +428,8 @@ def _materialize_generated_structures(
                 name=candidate.name,
                 svg=_build_combined_structure_svg(
                     principal_smiles,
-                    placeholder_assignments,
+                    candidate.smiles,  # Pasar molécula derivada completa
+                    placeholder_assignments,  # Pasar assignments para calcular átomos
                 ),
                 placeholder_assignments=placeholder_assignments,
                 traceability=sorted_traceability,

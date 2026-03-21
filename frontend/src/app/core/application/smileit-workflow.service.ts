@@ -225,6 +225,13 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly canDispatch = computed(() => {
     return this.canConfigureGeneration() && !this.isProcessing();
   });
+
+  readonly maxRSubstitutesByPositions = computed<number>(() => {
+    const numSelectedPositions: number = this.selectedAtomIndices().length;
+    const MAX_R_SUBSTITUTES_HARD_LIMIT: number = 10;
+    return Math.min(numSelectedPositions, MAX_R_SUBSTITUTES_HARD_LIMIT);
+  });
+
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
   readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
   readonly catalogGroups = computed<SmileitCatalogGroupView[]>(() =>
@@ -1039,7 +1046,9 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setRSubstitutes(rawValue: number): void {
-    this.rSubstitutes.set(Math.max(1, Math.min(10, Math.trunc(rawValue))));
+    const maxAllowed: number = this.maxRSubstitutesByPositions();
+    const clampedValue: number = Math.max(1, Math.min(maxAllowed, Math.trunc(rawValue)));
+    this.rSubstitutes.set(clampedValue);
   }
 
   setNumBonds(rawValue: number): void {
