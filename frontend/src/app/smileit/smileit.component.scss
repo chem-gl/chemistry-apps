@@ -1699,41 +1699,57 @@ select:focus {
   outline: none;
 }
 
+/* CLASES LEGACY — mantenidas para no romper otros usos */
 .derivative-context-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
-  gap: 0.35rem;
-  padding: 0.35rem 0.45rem;
-  background: linear-gradient(90deg, rgba(47, 133, 90, 0.08), rgba(37, 99, 235, 0.08));
-  border-bottom: 1px solid #deebe3;
+  display: none;
 }
 
 .context-preview {
-  min-height: 58px;
+  display: none;
+}
+
+/* Fila de paginación: contador + botón "Show 100 more" */
+.show-more-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
-  border: 1px solid #dbe7e1;
-  background: rgba(255, 255, 255, 0.88);
-  overflow: hidden;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
-.context-preview svg {
-  width: 100%;
-  height: 56px;
+.show-more-row .hint {
+  margin: 0;
+}
+
+/* Textbox para los logs de ejecución: texto plano con scroll */
+.logs-textbox {
+  max-height: min(320px, 42vh);
+  overflow-y: auto;
+  font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre;
+  word-break: break-all;
+  background: #f3fbf5;
+  border: 1px solid #c9e0d0;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  color: #2a5040;
+  margin-top: 0.75rem;
   display: block;
 }
 
-.context-scaffold {
-  border-color: rgba(47, 133, 90, 0.55);
+/* Botón de descarga ZIP en la fila de exportes */
+.download-zip-btn {
+  border-color: #4a8c6a;
+  color: #1b4a2c;
+  font-weight: 800;
 }
 
-.context-substituent {
-  border-color: rgba(37, 99, 235, 0.45);
+.download-zip-btn:hover:not(:disabled) {
+  background: #eaf5ee;
 }
-
-/* Marco de la imagen: borde izquierdo verde = contribución scaffold */
 .derivative-svg-frame {
   border-left: 4px solid #2d6b42;
   background: #f6fbf7;
@@ -1759,9 +1775,20 @@ select:focus {
 }
 
 .derivative-info {
-  padding: 0.6rem 0.72rem 0.7rem;
+  padding: 0.5rem 0.72rem 0.4rem;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+  border-bottom: 1px solid #e8f1ea;
+  background: linear-gradient(180deg, #f3fbf5 0%, #edf7ef 100%);
+}
+
+/* Metadatos debajo de la imagen: nombre, SMILES y conteo */
+.derivative-meta {
+  padding: 0.5rem 0.72rem 0.65rem;
   display: grid;
-  gap: 0.28rem;
+  gap: 0.22rem;
   flex: 1;
 }
 

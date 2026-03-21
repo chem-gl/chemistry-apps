@@ -16,6 +16,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import JSZip from 'jszip';
 import { Subscription } from 'rxjs';
 import {
     DownloadedReportFile,
@@ -53,6 +54,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly isGeneratedStructuresCollapsed = signal<boolean>(false);
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
+  /** Cuántas estructuras generadas se muestran actualmente en el grid (paginación de 100 en 100) */
+  readonly visibleStructuresCount = signal<number>(100);
   /** Nivel de zoom del visor principal de la molécula (1–4) */
   readonly principalZoomLevel = signal<number>(1);
   /** Tamaño base del canvas principal antes de aplicar zoom */
@@ -143,6 +146,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
     },
     { injector: this.injector },
   );
+  /** Resetea la paginación cada vez que llega un nuevo resultado (job nuevo o histórico) */
+  private readonly visibleStructuresResetEffect = effect(
+    () => {
+      this.workflow.resultData();
+      this.visibleStructuresCount.set(100);
+    },
+    { injector: this.injector },
+  );
   private readonly patternEnabledStateSyncEffect = effect(
     () => {
       const availablePatterns: SmileitPatternEntryView[] = this.patternEntries();
@@ -180,6 +191,35 @@ export class SmileitComponent implements OnInit, OnDestroy {
     const rawPatterns: unknown = this.workflow.patterns() as unknown;
     return Array.isArray(rawPatterns) ? (rawPatterns as SmileitPatternEntryView[]) : [];
   });
+
+  /** Slice paginado de las estructuras generadas (primeras N visibles) */
+  readonly visibleGeneratedStructures = computed<SmileitGeneratedStructureView[]>(() => {
+    const resultData = this.workflow.resultData();
+    if (resultData === null) {
+      return [];
+    }
+    return resultData.generatedStructures.slice(0, this.visibleStructuresCount());
+  });
+
+  /**
+   * Texto plano condensado de todos los logs para mostrar en un textbox con scroll.
+   * Formato: "LEVEL · #idx · source · mensaje"
+   */
+  readonly logsAsText = computed<string>(() => {
+    const entries: JobLogEntryView[] = this.workflow.jobLogs();
+    if (entries.length === 0) {
+      return '';
+    }
+    return entries
+      .map((entry: JobLogEntryView) => {
+        const baseRow = `${entry.level.toUpperCase()} · #${entry.eventIndex} · ${entry.source} · ${entry.message}`;
+        if (Object.keys(entry.payload).length > 0) {
+          return `${baseRow}\n  ${JSON.stringify(entry.payload)}`;
+        }
+        return baseRow;
+      })
+      .join('\n');
+  });
   @ViewChild('libraryEntryDetailDialog')
   private libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('generatedStructureDialog')
@@ -209,6 +249,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.libraryPreviewSyncEffect.destroy();
     this.manualDraftInspectionSyncEffect.destroy();
     this.patternEnabledStateSyncEffect.destroy();
+    this.visibleStructuresResetEffect.destroy();
     this.routeSubscription?.unsubscribe();
     this.catalogDraftInspectionSubscription?.unsubscribe();
     this.libraryEntryPreviewSubscriptions.forEach((subscription: Subscription) => {
@@ -259,6 +300,51 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   toggleAdvancedSectionCollapse(): void {
     this.isAdvancedSectionCollapsed.update((currentValue: boolean) => !currentValue);
+  }
+
+  /** Muestra 100 estructuras adicionales en el grid paginado */
+  showMoreStructures(): void {
+    this.visibleStructuresCount.update((currentValue: number) => currentValue + 100);
+  }
+
+  /**
+   * Descarga las estructuras actualmente visibles empacadas en un ZIP.
+   * Cada estructura genera: {exportBase}_{sus1}_{sus2}.svg + {exportBase}_{sus1}_{sus2}.txt
+   */
+  async downloadVisibleStructuresZip(): Promise<void> {
+    const resultData = this.workflow.resultData();
+    if (resultData === null) {
+      return;
+    }
+    const structures = this.visibleGeneratedStructures();
+    const exportBase = this.sanitizeFilenameSegment(resultData.exportNameBase || 'smileit');
+    const zip = new JSZip();
+
+    for (const structure of structures) {
+      const substituents = this.getUniqueSubstituentsForStructure(structure);
+      const substituentSegment =
+        substituents.length > 0
+          ? substituents.map((name) => this.sanitizeFilenameSegment(name)).join('_')
+          : this.sanitizeFilenameSegment(structure.name);
+      const fileBase = `${exportBase}_${substituentSegment}`;
+
+      if (structure.svg) {
+        zip.file(`${fileBase}.svg`, structure.svg);
+      }
+      zip.file(`${fileBase}.txt`, structure.smiles);
+    }
+
+    const zipBlob: Blob = await zip.generateAsync({ type: 'blob' });
+    this.downloadFile(`${exportBase}_structures.zip`, zipBlob);
+  }
+
+  /** Limpia un segmento de nombre de archivo: no-alfanumérico → "_", colapsa repetidos, trunca a 40 chars */
+  private sanitizeFilenameSegment(name: string): string {
+    return name
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 40) || 'structure';
   }
 
   openCatalogStudioModal(): void {

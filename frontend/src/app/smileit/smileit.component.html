@@ -513,7 +513,7 @@
                 <div class="block-header">
                     <div class="block-title-wrap">
                         <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
-                        <input type="text" class="block-title-input" [ngModel]="block.label"
+                        <input aria-label="" type="text" class="block-title-input" [ngModel]="block.label"
                             (ngModelChange)="workflow.updateBlockLabel(block.id, $event)"
                             [disabled]="workflow.isProcessing()" />
                     </div>
@@ -787,6 +787,11 @@
         <button class="btn-secondary" (click)="exportTraceability()" [disabled]="workflow.isExporting()">Traceability</button>
         <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">LOG</button>
         <button class="btn-secondary" (click)="exportError()" [disabled]="workflow.isExporting()">Error</button>
+        <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()"
+          [disabled]="workflow.isExporting() || visibleGeneratedStructures().length === 0"
+          title="Descarga las estructuras visibles como ZIP. SVG + SMILES por molécula.">
+          ↓ Download SVGs (ZIP)
+        </button>
         </div>
 
     @if (workflow.exportErrorMessage(); as exportErrorMessage) {
@@ -815,24 +820,10 @@
             </div>
             } @else {
             <div class="derivatives-grid">
-            @for (structureItem of resultData.generatedStructures; track structureItem.smiles + $index) {
+            @for (structureItem of visibleGeneratedStructures(); track structureItem.smiles + $index) {
             <article class="derivative-card" role="button" tabindex="0" (click)="openGeneratedStructureModal(structureItem)"
                 (keydown.enter)="openGeneratedStructureModal(structureItem)"
                 (keydown.space)="openGeneratedStructureModal(structureItem)">
-                @if (structureItem.scaffoldSvg || structureItem.substituentSvgs.length > 0) {
-                <div class="derivative-context-strip" aria-label="Generation context preview">
-                    @if (structureItem.scaffoldSvg) {
-                    <div class="context-preview context-scaffold" [innerHTML]="toTrustedSvg(structureItem.scaffoldSvg)"></div>
-                    }
-                    @for (substituentPreview of getDisplayedSubstituentSvgs(structureItem); track substituentPreview.name + '-' +
-                    substituentPreview.smiles + '-' + $index) {
-                    <div class="context-preview context-substituent" [innerHTML]="toTrustedSvg(substituentPreview.svg)"></div>
-                    }
-                </div>
-                }
-                <div class="derivative-svg-frame">
-                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
-                </div>
                 <div class="derivative-info">
                     <div class="derivative-legend">
                         <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
@@ -840,6 +831,11 @@
                         <span class="derivative-legend-pill substituent-pill" [title]="substituentName">{{ substituentName }}</span>
                         }
                     </div>
+                </div>
+                <div class="derivative-svg-frame">
+                  <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
+                </div>
+                <div class="derivative-meta">
                     <p class="derivative-name" [title]="structureItem.name">{{ structureItem.name }}</p>
                     <p class="derivative-smiles mono" [title]="structureItem.smiles">{{ structureItem.smiles }}</p>
                     <small>{{ structureItem.traceability.length }} substitution{{ structureItem.traceability.length !== 1 ? 's' : ''
@@ -848,6 +844,12 @@
             </article>
             }
             </div>
+            @if (visibleStructuresCount() < resultData.generatedStructures.length) { <div class="show-more-row">
+              <p class="hint">Mostrando <strong>{{ visibleStructuresCount() }}</strong> de <strong>{{
+                  resultData.generatedStructures.length }}</strong> estructuras</p>
+              <button class="btn-secondary" type="button" (click)="showMoreStructures()">Show 100 more</button>
+              </div>
+              }
             }
         </section>
 <section class="traceability-card" aria-label="Traceability rows">
@@ -931,23 +933,7 @@
                 <p><strong>Latest event:</strong> #{{ workflow.jobLogs()[workflow.jobLogs().length - 1].eventIndex }}</p>
             </div>
             } @else {
-            <div class="logs-list">
-                @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
-                <article class="log-item">
-                    <header class="log-header">
-                        <span class="log-level" [class]="logLevelClass(logEntry.level)">
-                            {{ logEntry.level }}
-                        </span>
-                        <span class="log-source">{{ logEntry.source }}</span>
-                        <span class="log-index">#{{ logEntry.eventIndex }}</span>
-                    </header>
-                    <p class="log-message">{{ logEntry.message }}</p>
-                    @if (hasPayload(logEntry)) {
-                    <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-                    }
-                </article>
-                }
-            </div>
+            <pre class="logs-textbox" aria-label="Execution logs">{{ logsAsText() }}</pre>
             }
             </section>
             }
@@ -1198,27 +1184,6 @@
             </header>
 
             <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
-            @if (selectedStructure.scaffoldSvg || selectedStructure.substituentSvgs.length > 0) {
-            <section class="derivative-context-panel" aria-label="Scaffold and substituent context">
-                <h4>Generation context</h4>
-                <div class="derivative-context-grid">
-                    @if (selectedStructure.scaffoldSvg) {
-                    <article class="context-card scaffold-card">
-                        <h5>Principal scaffold</h5>
-                        <div class="context-card-svg" [innerHTML]="toTrustedSvg(selectedStructure.scaffoldSvg)"></div>
-                    </article>
-                    }
-                    @for (substituentPreview of selectedStructure.substituentSvgs; track substituentPreview.name + '-' +
-                    substituentPreview.smiles + '-' + $index) {
-                    <article class="context-card substituent-card">
-                        <h5>{{ substituentPreview.name }}</h5>
-                        <div class="context-card-svg" [innerHTML]="toTrustedSvg(substituentPreview.svg)"></div>
-                        <p class="derivative-smiles mono" [title]="substituentPreview.smiles">{{ substituentPreview.smiles }}</p>
-                    </article>
-                    }
-                </div>
-            </section>
-            }
             <section class="traceability-card compact-traceability" aria-label="Per-structure traceability">
                 <h4>Per-structure traceability</h4>
                 <div class="table-wrap">
