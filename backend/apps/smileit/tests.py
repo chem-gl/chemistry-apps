@@ -11,8 +11,9 @@ Cómo se usa:
 from __future__ import annotations
 
 import csv
-from io import StringIO
+from io import BytesIO, StringIO
 from unittest.mock import patch
+from zipfile import ZipFile
 
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -315,11 +316,7 @@ class SmileitJobBlockTests(TestCase):
         self.assertGreaterEqual(len(generated_structures), 1)
         self.assertIn("placeholder_assignments", generated_structures[0])
         self.assertIn("svg", generated_structures[0])
-        self.assertTrue(
-            generated_structures[0]["svg"].startswith("<?xml")
-            or generated_structures[0]["svg"].startswith("<svg")
-        )
-        self.assertIn("R1", generated_structures[0]["svg"])
+        self.assertEqual(generated_structures[0]["svg"], "")
 
     def test_overlapped_blocks_generate_union_permutations_per_site(self) -> None:
         """Sitio cubierto por múltiples bloques debe combinar todas las opciones efectivas."""
@@ -370,6 +367,60 @@ class SmileitJobBlockTests(TestCase):
         }
         self.assertIn("BlockFluoro", trace_block_labels)
         self.assertIn("BlockChloro", trace_block_labels)
+
+    def test_derivations_page_and_svg_on_demand(self) -> None:
+        """Derivaciones paginadas y SVG on-demand deben responder en job completado."""
+        response = self.client.post(
+            APP_API_BASE_PATH, data=self._valid_payload(), format="json"
+        )
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        derivations_response = self.client.get(
+            f"{APP_API_BASE_PATH}{job_id}/derivations/?offset=0&limit=100"
+        )
+        self.assertEqual(derivations_response.status_code, 200)
+        derivations_payload = derivations_response.json()
+        self.assertIn("total_generated", derivations_payload)
+        self.assertIn("items", derivations_payload)
+        self.assertGreaterEqual(len(derivations_payload["items"]), 1)
+        self.assertIn("structure_index", derivations_payload["items"][0])
+
+        structure_index = int(derivations_payload["items"][0]["structure_index"])
+        svg_response = self.client.get(
+            f"{APP_API_BASE_PATH}{job_id}/derivations/{structure_index}/svg/"
+        )
+        self.assertEqual(svg_response.status_code, 200)
+        self.assertIn("image/svg+xml", svg_response["Content-Type"])
+        svg_text = svg_response.content.decode("utf-8")
+        self.assertTrue(svg_text.startswith("<?xml") or svg_text.startswith("<svg"))
+
+        thumb_response = self.client.get(
+            f"{APP_API_BASE_PATH}{job_id}/derivations/{structure_index}/svg/?variant=thumb"
+        )
+        self.assertEqual(thumb_response.status_code, 200)
+        self.assertIn("image/svg+xml", thumb_response["Content-Type"])
+
+    def test_retrieve_returns_summary_without_embedded_generated_structures(
+        self,
+    ) -> None:
+        """Retrieve debe omitir lista pesada de derivados para minimizar payload."""
+        response = self.client.post(
+            APP_API_BASE_PATH, data=self._valid_payload(), format="json"
+        )
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        payload = retrieve_response.json()
+        self.assertIn("results", payload)
+        self.assertIn("generated_structures", payload["results"])
+        self.assertEqual(payload["results"]["generated_structures"], [])
 
     def test_r_substitutes_generates_multi_round_combinatorics(self) -> None:
         """Con múltiples rondas debe existir trazabilidad con round_index mayor a 1."""
@@ -689,6 +740,51 @@ class SmileitPluginOptimizationTests(TestCase):
         self.assertIn("R1", rendered_svg)
         self.assertIn("R2", rendered_svg)
 
+    def test_substituent_highlighting_uses_non_scaffold_atoms(self) -> None:
+        """El highlighting debe marcar átomos del sustituyente, no del scaffold principal."""
+        fused_smiles = smileit_engine.fuse_molecules(
+            principal_smiles="CCCCC",
+            substituent_smiles="c1ccccc1",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertIsNotNone(fused_smiles)
+        if fused_smiles is None:
+            return
+
+        principal_molecule = smileit_engine._parse_smiles_cached("CCCCC")
+        derivative_molecule = smileit_engine._parse_smiles_cached(fused_smiles)
+        self.assertIsNotNone(principal_molecule)
+        self.assertIsNotNone(derivative_molecule)
+        if principal_molecule is None or derivative_molecule is None:
+            return
+
+        highlighted_atoms = smileit_engine._compute_substituent_atom_indices(
+            principal_molecule=principal_molecule,
+            derivative_molecule=derivative_molecule,
+            principal_site_atom_indices=[0],
+        )
+
+        expected_substituent_atoms = (
+            derivative_molecule.GetNumAtoms() - principal_molecule.GetNumAtoms()
+        )
+        self.assertEqual(len(highlighted_atoms), expected_substituent_atoms)
+        self.assertGreater(len(highlighted_atoms), 0)
+        self.assertLess(max(highlighted_atoms), derivative_molecule.GetNumAtoms())
+
+    def test_tint_svg_does_not_corrupt_longer_hex_colors(self) -> None:
+        """Tintado no debe alterar colores válidos como #0000FF por reemplazo parcial."""
+        raw_svg = (
+            '<svg><path style="fill:#0000FF;stroke:#000" />'
+            '<path style="fill:#000;stroke:#000000" /></svg>'
+        )
+        tinted_svg = smileit_engine.tint_svg(raw_svg, "#2f855a")
+
+        self.assertIn("fill:#0000FF", tinted_svg)
+        self.assertNotIn("#2f855a0FF", tinted_svg)
+        self.assertIn("stroke:#2f855a", tinted_svg)
+
 
 class SmileitExportTests(TestCase):
     """Valida exportes reproducibles de SMILES y trazabilidad."""
@@ -774,3 +870,24 @@ class SmileitExportTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("derivative_name,derivative_smiles,round_index", content)
 
+    def test_report_images_zip_returns_svg_bundle(self) -> None:
+        """El endpoint ZIP debe incluir SVGs y archivo de SMILES para export masivo."""
+        job_id = self._create_completed_job()
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{job_id}/report-images-zip/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("application/zip", response["Content-Type"])
+
+        with ZipFile(BytesIO(response.content), mode="r") as zip_file:
+            member_names = zip_file.namelist()
+            smiles_content = zip_file.read("generated_smiles.txt").decode("utf-8")
+            smiles_lines = [
+                line.strip()
+                for line in smiles_content.splitlines()
+                if line.strip() != ""
+            ]
+
+        self.assertIn("generated_smiles.txt", member_names)
+        self.assertTrue(any(name.endswith(".svg") for name in member_names))
+        self.assertGreaterEqual(len(smiles_lines), 1)
+        self.assertEqual(smiles_lines[0], "c1ccccc1")

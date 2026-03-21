@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Final, cast
@@ -33,8 +32,6 @@ from .engine import (
     clear_smileit_caches,
     fuse_molecules,
     is_fusion_candidate_viable,
-    render_derivative_svg_with_substituent_highlighting,
-    render_molecule_svg_with_atom_labels,
 )
 from .types import (
     SmileitGeneratedStructure,
@@ -159,29 +156,6 @@ def _build_site_option_map(
     return site_option_map
 
 
-def _tint_svg(raw_svg: str, color_hex: str) -> str:
-    """Aplica un color dominante al SVG para diferenciar roles visuales."""
-    if raw_svg.strip() == "":
-        return raw_svg
-
-    colored_svg = raw_svg
-    replacements: list[tuple[str, str]] = [
-        (r"stroke:\s*#000000", f"stroke:{color_hex}"),
-        (r"stroke:\s*#000", f"stroke:{color_hex}"),
-        (r"fill:\s*#000000", f"fill:{color_hex}"),
-        (r"fill:\s*#000", f"fill:{color_hex}"),
-        (r"stroke=\"#000000\"", f'stroke="{color_hex}"'),
-        (r"stroke=\"#000\"", f'stroke="{color_hex}"'),
-        (r"fill=\"#000000\"", f'fill="{color_hex}"'),
-        (r"fill=\"#000\"", f'fill="{color_hex}"'),
-    ]
-
-    for pattern, replacement in replacements:
-        colored_svg = re.sub(pattern, replacement, colored_svg)
-
-    return colored_svg
-
-
 def _sort_traceability_events(
     traceability: list[SmileitSubstitutionTraceEvent],
 ) -> list[SmileitSubstitutionTraceEvent]:
@@ -217,34 +191,6 @@ def _build_placeholder_assignments(
         )
 
     return placeholder_assignments
-
-
-def _build_combined_structure_svg(
-    principal_smiles: str,
-    derivative_smiles: str,
-    placeholder_assignments: list[SmileitPlaceholderAssignment],
-) -> str:
-    """Renderiza la molécula derivada completa con highlighting en átomos de sustituto.
-
-    El SVG muestra:
-    - Molécula derivada completa (principal + todos los sustitutos combinados)
-    - Highlighting en los átomos que pertenecen a sustitutos (color verde)
-    - Principal se muestra NORMAL sin highlighting
-    """
-    # Extraer SMILES de sustitutos en orden de la trazabilidad
-    substituent_smiles_list: list[str] = [
-        assignment["substituent_smiles"]
-        for assignment in placeholder_assignments
-    ]
-    
-    # Renderizar derivado completo con highlighting SOLO en átomos de sustituto
-    svg = render_derivative_svg_with_substituent_highlighting(
-        principal_smiles,
-        derivative_smiles,
-        substituent_smiles_list,
-    )
-    # Aplicar color verde a los átomos resaltados
-    return _tint_svg(svg, "#2f855a")
 
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
@@ -416,8 +362,9 @@ def _materialize_generated_structures(
     progress_callback: PluginProgressCallback,
     log_callback: PluginLogCallback | None,
 ) -> list[SmileitGeneratedStructure]:
-    """Construye un SVG único por derivado usando el scaffold principal etiquetado."""
+    """Materializa resultados sin SVG para habilitar renderizado on-demand."""
     generated_structures: list[SmileitGeneratedStructure] = []
+    _ = principal_smiles
 
     for candidate_index, candidate in enumerate(generated_candidates, start=1):
         sorted_traceability = _sort_traceability_events(candidate.traceability)
@@ -426,11 +373,8 @@ def _materialize_generated_structures(
             SmileitGeneratedStructure(
                 smiles=candidate.smiles,
                 name=candidate.name,
-                svg=_build_combined_structure_svg(
-                    principal_smiles,
-                    candidate.smiles,  # Pasar molécula derivada completa
-                    placeholder_assignments,  # Pasar assignments para calcular átomos
-                ),
+                # Se difiere render SVG hasta que frontend lo solicita por endpoint dedicado.
+                svg="",
                 placeholder_assignments=placeholder_assignments,
                 traceability=sorted_traceability,
             )
@@ -443,7 +387,7 @@ def _materialize_generated_structures(
             ),
             "running",
             (
-                "Renderizando estructuras finales de Smile-it. "
+                "Consolidando metadatos finales de Smile-it. "
                 f"Procesadas: {candidate_index}/{len(generated_candidates)}."
             ),
         )
@@ -455,7 +399,7 @@ def _materialize_generated_structures(
         message="Materialización visual Smile-it completada.",
         payload={
             "generated_structures": len(generated_structures),
-            "render_mode": "single-scaffold-highlight",
+            "render_mode": "on-demand-svg",
         },
     )
 

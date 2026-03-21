@@ -363,6 +363,39 @@ export interface SmileitGenerationParams {
   version?: string;
 }
 
+/** Item paginado de derivado Smile-it sin SVG embebido. */
+export interface SmileitDerivationPageItemView {
+  structureIndex: number;
+  name: string;
+  smiles: string;
+  placeholderAssignments: Array<{
+    placeholderLabel: string;
+    siteAtomIndex: number;
+    substituentName: string;
+    substituentSmiles?: string;
+  }>;
+  traceability: Array<{
+    round_index: number;
+    site_atom_index: number;
+    block_label: string;
+    block_priority: number;
+    substituent_name: string;
+    substituent_smiles?: string;
+    substituent_stable_id: string;
+    substituent_version: number;
+    source_kind: string;
+    bond_order: number;
+  }>;
+}
+
+/** Respuesta paginada de derivados Smile-it. */
+export interface SmileitDerivationPageView {
+  totalGenerated: number;
+  offset: number;
+  limit: number;
+  items: SmileitDerivationPageItemView[];
+}
+
 /** Respuesta de job smileit normalizada para componentes. */
 export type SmileitJobResponseView = SmileitJobResponse;
 
@@ -564,6 +597,86 @@ export class JobsApiService {
     return this.smileitClient.smileitJobsRetrieve(jobId);
   }
 
+  /** Lista derivados Smile-it paginados para evitar payload gigante al frontend. */
+  listSmileitDerivations(
+    jobId: string,
+    offset: number,
+    limit: number,
+  ): Observable<SmileitDerivationPageView> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/`;
+    return this.httpClient
+      .get<{
+        total_generated: number;
+        offset: number;
+        limit: number;
+        items: Array<{
+          structure_index: number;
+          name: string;
+          smiles: string;
+          placeholder_assignments: Array<{
+            placeholder_label: string;
+            site_atom_index: number;
+            substituent_name: string;
+            substituent_smiles?: string;
+          }>;
+          traceability: Array<{
+            round_index: number;
+            site_atom_index: number;
+            block_label: string;
+            block_priority: number;
+            substituent_name: string;
+            substituent_smiles?: string;
+            substituent_stable_id: string;
+            substituent_version: number;
+            source_kind: string;
+            bond_order: number;
+          }>;
+        }>;
+      }>(endpointUrl, {
+        params: {
+          offset: String(offset),
+          limit: String(limit),
+        },
+      })
+      .pipe(
+        map((rawPage) => ({
+          totalGenerated: rawPage.total_generated,
+          offset: rawPage.offset,
+          limit: rawPage.limit,
+          items: rawPage.items.map((item) => ({
+            structureIndex: item.structure_index,
+            name: item.name,
+            smiles: item.smiles,
+            placeholderAssignments: item.placeholder_assignments.map((assignment) => ({
+              placeholderLabel: assignment.placeholder_label,
+              siteAtomIndex: assignment.site_atom_index,
+              substituentName: assignment.substituent_name,
+              substituentSmiles: assignment.substituent_smiles ?? '',
+            })),
+            traceability: item.traceability,
+          })),
+        })),
+        shareReplay(1),
+      );
+  }
+
+  /** Obtiene SVG on-demand de un derivado específico para grid/modal. */
+  getSmileitDerivationSvg(
+    jobId: string,
+    structureIndex: number,
+    variant: 'thumb' | 'detail' = 'detail',
+  ): Observable<string> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/${structureIndex}/svg/`;
+    return this.httpClient
+      .get(endpointUrl, {
+        responseType: 'text',
+        params: {
+          variant,
+        },
+      })
+      .pipe(shareReplay(1));
+  }
+
   /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
   downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
     return this.downloadReport(
@@ -601,6 +714,18 @@ export class JobsApiService {
     return this.downloadReport(
       this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response'),
       `smileit_${jobId}_error.txt`,
+    );
+  }
+
+  /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
+  downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/report-images-zip/`;
+    return this.downloadReport(
+      this.httpClient.get(endpointUrl, {
+        observe: 'response',
+        responseType: 'blob',
+      }),
+      `smileit_${jobId}_images.zip`,
     );
   }
 

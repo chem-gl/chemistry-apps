@@ -561,6 +561,25 @@ class SmileitGeneratedStructureSerializer(serializers.Serializer):
     traceability = SmileitSubstitutionTraceEventSerializer(many=True)
 
 
+class SmileitGeneratedStructurePageItemSerializer(serializers.Serializer):
+    """Derivado paginado para UI sin SVG embebido (render on-demand)."""
+
+    structure_index = serializers.IntegerField(min_value=0)
+    smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
+    name = serializers.CharField(max_length=500)
+    placeholder_assignments = SmileitPlaceholderAssignmentSerializer(many=True)
+    traceability = SmileitSubstitutionTraceEventSerializer(many=True)
+
+
+class SmileitGeneratedStructurePageSerializer(serializers.Serializer):
+    """Página de derivados Smile-it para carga incremental en frontend."""
+
+    total_generated = serializers.IntegerField(min_value=0)
+    offset = serializers.IntegerField(min_value=0)
+    limit = serializers.IntegerField(min_value=1)
+    items = SmileitGeneratedStructurePageItemSerializer(many=True)
+
+
 class SmileitTraceabilityRowSerializer(serializers.Serializer):
     """Fila para auditoría de sitio -> sustituyente aplicado por derivado."""
 

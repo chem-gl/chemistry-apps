@@ -59,11 +59,10 @@
             } @else {
             <div class="library-thumbnail-grid">
                 @for (entry of filteredLibraryEntries(); track entry.id) {
-                <article class="library-thumb" role="button" tabindex="0"
-                    [attr.aria-label]="'Open detail for ' + entry.name" (click)="openLibraryEntryDetail(entry)"
-                    (keydown.enter)="openLibraryEntryDetail(entry)"
-                    (keydown.space)="openLibraryEntryDetail(entry); $event.preventDefault()">
-                    <div class="thumb-open-button">
+                <article class="library-thumb">
+                    <div class="thumb-open-button" role="button" tabindex="0" [attr.aria-label]="'Open detail for ' + entry.name"
+                        (click)="openLibraryEntryDetail(entry)" (keydown.enter)="openLibraryEntryDetail(entry)"
+                        (keydown.space)="openLibraryEntryDetail(entry); $event.preventDefault()">
                         <p class="thumb-name">{{ entry.name }}</p>
                         <div class="thumb-preview">
                             @if (catalogEntryPreviewSvg(entry); as thumbSvg) {
@@ -554,11 +553,11 @@
                     <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
                         @for (entry of block.catalogRefs; track entry.id) {
                         <article class="block-library-thumb catalog-ref-thumb"
-                            [class.is-selected]="isCatalogEntryLoadedInManualDraft(block, entry)" role="button" tabindex="0"
-                            [attr.aria-label]="'Open detail for ' + entry.name" (click)="openLibraryEntryDetail(entry, 'reference')"
-                            (keydown.enter)="openLibraryEntryDetail(entry, 'reference')"
-                            (keydown.space)="openLibraryEntryDetail(entry, 'reference'); $event.preventDefault()">
-                            <div class="thumb-open-button">
+                            [class.is-selected]="isCatalogEntryLoadedInManualDraft(block, entry)">
+                            <div class="thumb-open-button" role="button" tabindex="0"
+                                [attr.aria-label]="'Open detail for ' + entry.name" (click)="openLibraryEntryDetail(entry, 'reference')"
+                                (keydown.enter)="openLibraryEntryDetail(entry, 'reference')"
+                                (keydown.space)="openLibraryEntryDetail(entry, 'reference'); $event.preventDefault()">
                                 <p class="thumb-name">{{ entry.name }}</p>
                                 <div class="thumb-preview">
                                     @if (catalogEntryPreviewSvg(entry); as referencedThumbSvg) {
@@ -630,12 +629,12 @@
                     } @else {
                     <div class="library-thumbnail-grid block-library-thumbnail-grid">
                       @for (entry of filteredCatalogEntriesForBlock(block); track entry.id) {
-                                            <article class="block-library-thumb" role="button" tabindex="0"
-                                                [attr.aria-label]="'Add ' + entry.name + ' to catalog references'"
-                                                (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
-                                                (keydown.enter)="onBlockCatalogBrowserEntryActivate(block, entry)"
-                                                (keydown.space)="onBlockCatalogBrowserEntryActivate(block, entry); $event.preventDefault()">
-                        <div class="thumb-open-button">
+                                                                                        <article class="block-library-thumb">
+                                                                                            <div class="thumb-open-button" role="button" tabindex="0"
+                                                                                                [attr.aria-label]="'Add ' + entry.name + ' to catalog references'"
+                                                                                                (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
+                                                                                                (keydown.enter)="onBlockCatalogBrowserEntryActivate(block, entry)"
+                                                                                                (keydown.space)="onBlockCatalogBrowserEntryActivate(block, entry); $event.preventDefault()">
                           <p class="thumb-name">{{ entry.name }}</p>
                           <div class="thumb-preview">
                             @if (catalogEntryPreviewSvg(entry); as blockThumbSvg) {
@@ -796,7 +795,8 @@
 
     @if (workflow.activeSection() === 'progress') {
     <div class="progress-card">
-        <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()" aria-valuemin="0"
+        <div class="progress-track" role="progressbar" aria-label="Smileit job progress"
+            [attr.aria-valuenow]="workflow.progressPercentage()" aria-valuemin="0"
             aria-valuemax="100">
             <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
         </div>
@@ -823,17 +823,25 @@
         <button class="btn-secondary" (click)="exportSmiles()" [disabled]="workflow.isExporting()">SMI/TXT</button>
                 <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">LOG</button>
         <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()"
-                    [disabled]="workflow.isExporting() || resultData.generatedStructures.length === 0"
+                    [disabled]="workflow.isExporting() || isPreparingImagesZip() || resultData.totalGenerated === 0"
                                         title="Download all enumerated structures as ZIP. SVG files + one TXT with derivative SMILES.">
-          ↓ Download SVGs (ZIP)
+        {{ isPreparingImagesZip() ? 'Preparing SVG ZIP...' : '↓ Download SVGs (ZIP)' }}
         </button>
         </div>
+
+    @if (isPreparingImagesZip()) {
+    <div class="status-panel" role="status" aria-live="polite">
+        <p class="hint">Generating all derivative SVGs on-demand for ZIP export. This may take a while.</p>
+        <progress [value]="imagesZipProgress()" max="100"></progress>
+        <small>{{ imagesZipProgress() }}%</small>
+    </div>
+    }
 
     @if (workflow.exportErrorMessage(); as exportErrorMessage) {
         <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
     }
 
-    @if (resultData.generatedStructures.length === 0) {
+    @if (resultData.totalGenerated === 0) {
         <p class="status-message">No generated structures available in this snapshot.</p>
     } @else {
         <section class="structures-list-card" aria-label="Generated derivatives list">
@@ -848,7 +856,8 @@
             </div>
             @if (isGeneratedStructuresCollapsed()) {
             <div class="block-collapsed-summary">
-                <p><strong>Available derivatives:</strong> {{ resultData.generatedStructures.length }}</p>
+                <p><strong>Available derivatives:</strong> {{ resultData.totalGenerated }}</p>
+                <p><strong>Loaded in current view:</strong> {{ visibleGeneratedStructures().length }}</p>
                 <p><strong>Inspection:</strong> Expand this section to review molecular depictions and SMILES.
                 </p>
             </div>
@@ -867,7 +876,7 @@
                     </div>
                 </div>
                                                                 <div class="derivative-svg-frame combined-structure-frame">
-                                                                  <small class="derivative-visual-title">Generated scaffold with placeholders</small>
+                                                                                                                                    <small class="derivative-visual-title">Generated derivative (substituents highlighted)</small>
                                                                   <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
                 </div>
                 <div class="derivative-meta">
@@ -891,10 +900,13 @@
             </article>
             }
             </div>
-            @if (visibleStructuresCount() < resultData.generatedStructures.length) { <div class="show-more-row">
-                            <p class="hint">Showing <strong>{{ visibleStructuresCount() }}</strong> of <strong>{{
-                                resultData.generatedStructures.length }}</strong> derivatives</p>
-              <button class="btn-secondary" type="button" (click)="showMoreStructures()">Show 100 more</button>
+                        @if (hasMoreGeneratedStructures()) { <div class="show-more-row">
+                            <p class="hint">Showing <strong>{{ visibleGeneratedStructures().length }}</strong> of <strong>{{
+                                    resultData.totalGenerated }}</strong> derivatives</p>
+                            <button class="btn-secondary" type="button" (click)="showMoreStructures()"
+                                [disabled]="isLoadingGeneratedStructures()">
+                                {{ isLoadingGeneratedStructures() ? 'Loading...' : 'Show 100 more' }}
+                            </button>
               </div>
               }
             }

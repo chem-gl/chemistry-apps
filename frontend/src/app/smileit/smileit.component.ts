@@ -1,6 +1,7 @@
 // smileit.component.ts: Pantalla principal de Smile-it con bloques de asignación, análisis medicinal y exportes reproducibles.
 
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     Component,
     ElementRef,
@@ -17,15 +18,16 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import JSZip from 'jszip';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import {
-    DownloadedReportFile,
-    JobLogEntryView,
-    JobsApiService,
-    ScientificJobView,
-    SmileitCatalogEntryView,
-    SmileitPatternEntryView,
-    SmileitStructureInspectionView,
+  DownloadedReportFile,
+  JobLogEntryView,
+  JobsApiService,
+  ScientificJobView,
+  SmileitCatalogEntryView,
+  SmileitDerivationPageItemView,
+  SmileitPatternEntryView,
+  SmileitStructureInspectionView,
 } from '../core/api/jobs-api.service';
 import {
     SmileitAssignmentBlockDraft,
@@ -56,6 +58,18 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
   /** Cuántas estructuras generadas se muestran actualmente en el grid (paginación de 100 en 100) */
   readonly visibleStructuresCount = signal<number>(100);
+  /** Estructuras realmente cargadas desde backend vía paginación. */
+  readonly loadedGeneratedStructures = signal<SmileitGeneratedStructureView[]>([]);
+  /** Cursor de paginación (offset absoluto) para pedir el siguiente lote de 100. */
+  readonly generatedStructuresOffset = signal<number>(0);
+  /** Bandera de carga incremental para el botón "Show 100 more". */
+  readonly isLoadingGeneratedStructures = signal<boolean>(false);
+  /** Firma del último resultado procesado para evitar recargar derivaciones en bucle. */
+  readonly lastDerivationsReloadKey = signal<string>('');
+  /** Descarga/armado ZIP de imágenes en progreso (independiente del job principal). */
+  readonly isPreparingImagesZip = signal<boolean>(false);
+  /** Porcentaje de progreso del proceso auxiliar de ZIP de imágenes. */
+  readonly imagesZipProgress = signal<number>(0);
   /** Nivel de zoom del visor principal de la molécula (1–4) */
   readonly principalZoomLevel = signal<number>(1);
   /** Tamaño base del canvas principal antes de aplicar zoom */
@@ -149,9 +163,29 @@ export class SmileitComponent implements OnInit, OnDestroy {
   /** Resetea la paginación cada vez que llega un nuevo resultado (job nuevo o histórico) */
   private readonly visibleStructuresResetEffect = effect(
     () => {
-      this.workflow.resultData();
+      const resultData = this.workflow.resultData();
+      const currentJobId: string | null = this.workflow.currentJobId();
+
+      if (resultData === null || currentJobId === null) {
+        this.lastDerivationsReloadKey.set('');
+        this.visibleStructuresCount.set(100);
+        this.loadedGeneratedStructures.set([]);
+        this.generatedStructuresOffset.set(0);
+        this.isGeneratedStructuresCollapsed.set(true);
+        return;
+      }
+
+      const nextReloadKey = `${currentJobId}:${resultData.totalGenerated}:${resultData.isHistoricalSummary}`;
+      if (this.lastDerivationsReloadKey() === nextReloadKey) {
+        return;
+      }
+
+      this.lastDerivationsReloadKey.set(nextReloadKey);
       this.visibleStructuresCount.set(100);
+      this.loadedGeneratedStructures.set([]);
+      this.generatedStructuresOffset.set(0);
       this.isGeneratedStructuresCollapsed.set(true);
+      this.loadNextGeneratedStructuresPage();
     },
     { injector: this.injector },
   );
@@ -195,11 +229,16 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   /** Slice paginado de las estructuras generadas (primeras N visibles) */
   readonly visibleGeneratedStructures = computed<SmileitGeneratedStructureView[]>(() => {
+    return this.loadedGeneratedStructures();
+  });
+
+  /** Indica si hay más derivados por cargar desde backend. */
+  readonly hasMoreGeneratedStructures = computed<boolean>(() => {
     const resultData = this.workflow.resultData();
     if (resultData === null) {
-      return [];
+      return false;
     }
-    return resultData.generatedStructures.slice(0, this.visibleStructuresCount());
+    return this.loadedGeneratedStructures().length < resultData.totalGenerated;
   });
 
   /**
@@ -305,7 +344,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   /** Muestra 100 estructuras adicionales en el grid paginado */
   showMoreStructures(): void {
-    this.visibleStructuresCount.update((currentValue: number) => currentValue + 100);
+    this.loadNextGeneratedStructuresPage();
   }
 
   /**
@@ -314,16 +353,59 @@ export class SmileitComponent implements OnInit, OnDestroy {
    */
   async downloadVisibleStructuresZip(): Promise<void> {
     const resultData = this.workflow.resultData();
-    if (resultData === null) {
+    const currentJobId: string | null = this.workflow.currentJobId();
+    if (resultData === null || currentJobId === null || this.isPreparingImagesZip()) {
       return;
     }
-    const structures = resultData.generatedStructures;
+
+    this.isPreparingImagesZip.set(true);
+    this.imagesZipProgress.set(0);
+    this.workflow.exportErrorMessage.set(null);
+
+    try {
+      const serverZip = await firstValueFrom(
+        this.jobsApiService.downloadSmileitImagesZipServer(currentJobId),
+      );
+      this.downloadFile(serverZip.filename, serverZip.blob);
+      this.imagesZipProgress.set(100);
+      return;
+    } catch {
+      // Fallback automático: si backend ZIP falla, se vuelve al armado local existente.
+      this.imagesZipProgress.set(5);
+    }
+
+    try {
+      await this.downloadVisibleStructuresZipClientFallback(currentJobId, resultData);
+    } catch {
+      this.workflow.exportErrorMessage.set(
+        'Unable to generate ZIP with all derivative images. Please retry.',
+      );
+    } finally {
+      this.isPreparingImagesZip.set(false);
+    }
+  }
+
+  /** Mantiene el flujo histórico en cliente como respaldo cuando backend ZIP no está disponible. */
+  private async downloadVisibleStructuresZipClientFallback(
+    currentJobId: string,
+    resultData: {
+      totalGenerated: number;
+      exportNameBase: string;
+      principalSmiles: string;
+    },
+  ): Promise<void> {
+    const structures: SmileitGeneratedStructureView[] = await this.loadAllDerivationsForZip(
+      currentJobId,
+      resultData.totalGenerated,
+    );
     const exportBase = this.sanitizeFilenameSegment(resultData.exportNameBase || 'smileit');
     const zip = new JSZip();
-    const smilesLines: string[] = [];
+    const smilesLines: string[] =
+      resultData.principalSmiles.trim() === '' ? [] : [resultData.principalSmiles.trim()];
     const usedNames = new Set<string>();
+    const structureFileNames: string[] = [];
 
-    structures.forEach((structure, index) => {
+    structures.forEach((structure: SmileitGeneratedStructureView, index: number) => {
       smilesLines.push(structure.smiles);
 
       const safeBaseName =
@@ -336,16 +418,318 @@ export class SmileitComponent implements OnInit, OnDestroy {
         suffix += 1;
       }
       usedNames.add(fileBase);
-
-      if (structure.svg) {
-        zip.file(`${fileBase}.svg`, structure.svg);
-      }
+      structureFileNames.push(fileBase);
     });
+
+    // Balance entre velocidad y carga del backend: resolver SVG en lotes pequeños.
+    const ZIP_SVG_CONCURRENCY = 4;
+    let resolvedCount = 0;
+
+    for (let chunkStart = 0; chunkStart < structures.length; chunkStart += ZIP_SVG_CONCURRENCY) {
+      const chunkEnd = Math.min(chunkStart + ZIP_SVG_CONCURRENCY, structures.length);
+      const chunkStructures = structures.slice(chunkStart, chunkEnd);
+      const chunkSvgs = await Promise.all(
+        chunkStructures.map((structure: SmileitGeneratedStructureView) =>
+          this.resolveStructureSvgForZip(currentJobId, structure),
+        ),
+      );
+
+      chunkSvgs.forEach((svgMarkup: string, chunkIndex: number) => {
+        const absoluteIndex = chunkStart + chunkIndex;
+        if (svgMarkup.trim() !== '') {
+          zip.file(`${structureFileNames[absoluteIndex]}.svg`, svgMarkup);
+        }
+      });
+
+      resolvedCount += chunkSvgs.length;
+      const fetchProgress =
+        structures.length === 0 ? 0 : Math.round((resolvedCount / structures.length) * 80);
+      this.imagesZipProgress.set(fetchProgress);
+    }
 
     zip.file('generated_smiles.txt', smilesLines.join('\n'));
 
-    const zipBlob: Blob = await zip.generateAsync({ type: 'blob' });
+    const zipBlob: Blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+      const zipProgress = 80 + Math.round(metadata.percent * 0.2);
+      this.imagesZipProgress.set(Math.min(100, zipProgress));
+    });
     this.downloadFile(`${exportBase}_structures.zip`, zipBlob);
+    this.imagesZipProgress.set(100);
+  }
+
+  /** Carga todas las derivaciones en lotes de 100 para export global de imágenes. */
+  private async loadAllDerivationsForZip(
+    jobId: string,
+    totalGenerated: number,
+  ): Promise<SmileitGeneratedStructureView[]> {
+    const items: SmileitGeneratedStructureView[] = [];
+    let offset = 0;
+    const limit = 100;
+
+    while (offset < totalGenerated) {
+      const cachedPageItems = this.readDerivationsPageFromSessionCache(jobId, offset, limit);
+      const pageResponse =
+        cachedPageItems === null
+          ? await firstValueFrom(this.jobsApiService.listSmileitDerivations(jobId, offset, limit))
+          : {
+              totalGenerated,
+              offset,
+              limit,
+              items: cachedPageItems,
+            };
+
+      if (cachedPageItems === null) {
+        this.storeDerivationsPageInSessionCache(jobId, offset, limit, pageResponse.items);
+      }
+      const mappedItems = pageResponse.items.map((item: SmileitDerivationPageItemView) =>
+        this.mapDerivationItemToView(item),
+      );
+      items.push(...mappedItems);
+      offset += mappedItems.length;
+      if (mappedItems.length === 0) {
+        break;
+      }
+    }
+
+    return items;
+  }
+
+  /** Resuelve SVG para export (cache detalle > cache thumb > fetch on-demand). */
+  private async resolveStructureSvgForZip(
+    jobId: string,
+    structure: SmileitGeneratedStructureView,
+  ): Promise<string> {
+    if (structure.structureIndex === undefined) {
+      return structure.svg;
+    }
+
+    const cachedDetailSvg = this.readSvgFromSessionCache(jobId, structure.structureIndex, 'detail');
+    if (cachedDetailSvg.trim() !== '') {
+      return cachedDetailSvg;
+    }
+
+    const cachedThumbSvg = this.readSvgFromSessionCache(jobId, structure.structureIndex, 'thumb');
+    if (cachedThumbSvg.trim() !== '') {
+      return cachedThumbSvg;
+    }
+
+    const fetchedSvg = await firstValueFrom(
+      this.jobsApiService.getSmileitDerivationSvg(jobId, structure.structureIndex, 'detail'),
+    );
+    this.storeSvgInSessionCache(jobId, structure.structureIndex, 'detail', fetchedSvg);
+    this.storeSvgInSessionCache(jobId, structure.structureIndex, 'thumb', fetchedSvg);
+    return fetchedSvg;
+  }
+
+  /** Carga siguiente página de derivados (100 items) y precalienta SVG en cache de sesión. */
+  private loadNextGeneratedStructuresPage(): void {
+    const currentJobId: string | null = this.workflow.currentJobId();
+    const resultData = this.workflow.resultData();
+    if (currentJobId === null || resultData === null || this.isLoadingGeneratedStructures()) {
+      return;
+    }
+
+    if (resultData.totalGenerated <= 0) {
+      return;
+    }
+
+    if (this.loadedGeneratedStructures().length >= resultData.totalGenerated) {
+      return;
+    }
+
+    const offset = this.generatedStructuresOffset();
+    const limit = 100;
+    this.isLoadingGeneratedStructures.set(true);
+
+    const cachedPageItems = this.readDerivationsPageFromSessionCache(currentJobId, offset, limit);
+    if (cachedPageItems !== null) {
+      const nextItems: SmileitGeneratedStructureView[] = cachedPageItems.map(
+        (item: SmileitDerivationPageItemView) => this.mapDerivationItemToView(item),
+      );
+      this.loadedGeneratedStructures.update((currentItems: SmileitGeneratedStructureView[]) => [
+        ...currentItems,
+        ...nextItems,
+      ]);
+      this.generatedStructuresOffset.set(offset + nextItems.length);
+      this.visibleStructuresCount.set(this.loadedGeneratedStructures().length);
+      this.hydrateThumbnailsForStructures(nextItems);
+      this.isLoadingGeneratedStructures.set(false);
+      return;
+    }
+
+    this.jobsApiService.listSmileitDerivations(currentJobId, offset, limit).subscribe({
+      next: (pageResponse) => {
+        this.storeDerivationsPageInSessionCache(currentJobId, offset, limit, pageResponse.items);
+        const nextItems: SmileitGeneratedStructureView[] = pageResponse.items.map(
+          (item: SmileitDerivationPageItemView) => this.mapDerivationItemToView(item),
+        );
+        this.loadedGeneratedStructures.update((currentItems: SmileitGeneratedStructureView[]) => [
+          ...currentItems,
+          ...nextItems,
+        ]);
+        this.generatedStructuresOffset.set(offset + nextItems.length);
+        this.visibleStructuresCount.set(this.loadedGeneratedStructures().length);
+        this.hydrateThumbnailsForStructures(nextItems);
+        this.isLoadingGeneratedStructures.set(false);
+      },
+      error: (errorResponse: unknown) => {
+        this.isLoadingGeneratedStructures.set(false);
+
+        const httpError = errorResponse as HttpErrorResponse;
+        if (httpError?.status === 404) {
+          // Compatibilidad: si backend no expone derivations, usar snapshot embebido cuando exista.
+          const embeddedStructures = resultData.generatedStructures ?? [];
+          if (embeddedStructures.length > 0) {
+            this.loadedGeneratedStructures.set(embeddedStructures);
+            this.generatedStructuresOffset.set(embeddedStructures.length);
+            this.visibleStructuresCount.set(embeddedStructures.length);
+            return;
+          }
+          // Evita reintentos infinitos si el endpoint no existe en el backend activo.
+          this.generatedStructuresOffset.set(resultData.totalGenerated);
+          this.workflow.errorMessage.set(
+            'Derivations endpoint is not available in backend. Please restart backend with latest changes.',
+          );
+          return;
+        }
+
+        this.workflow.errorMessage.set('Unable to load paginated derivatives.');
+      },
+    });
+  }
+
+  /** Convierte el item paginado del backend al contrato usado por la vista de tarjetas. */
+  private mapDerivationItemToView(
+    item: SmileitDerivationPageItemView,
+  ): SmileitGeneratedStructureView {
+    const normalizedName: string = item.name.trim();
+    const currentJobId: string | null = this.workflow.currentJobId();
+    const cachedSvg =
+      currentJobId === null
+        ? ''
+        : this.readSvgFromSessionCache(currentJobId, item.structureIndex, 'thumb');
+
+    return {
+      structureIndex: item.structureIndex,
+      name:
+        normalizedName === '' ? `Generated molecule ${item.structureIndex + 1}` : normalizedName,
+      smiles: item.smiles,
+      svg: cachedSvg,
+      placeholderAssignments: item.placeholderAssignments,
+      traceability: item.traceability,
+    };
+  }
+
+  /** Precarga SVG thumbnail solo para los nuevos items visibles usando cache por sesión. */
+  private hydrateThumbnailsForStructures(structures: SmileitGeneratedStructureView[]): void {
+    const currentJobId: string | null = this.workflow.currentJobId();
+    if (currentJobId === null) {
+      return;
+    }
+
+    structures.forEach((structureItem: SmileitGeneratedStructureView) => {
+      if (structureItem.svg.trim() !== '' || structureItem.structureIndex === undefined) {
+        return;
+      }
+
+      this.jobsApiService
+        .getSmileitDerivationSvg(currentJobId, structureItem.structureIndex, 'thumb')
+        .subscribe({
+          next: (svgMarkup: string) => {
+            this.storeSvgInSessionCache(
+              currentJobId,
+              structureItem.structureIndex!,
+              'thumb',
+              svgMarkup,
+            );
+            this.patchLoadedStructureSvg(structureItem.structureIndex!, svgMarkup);
+          },
+          error: () => {
+            // Mantener tarjeta usable sin bloquear UX si un thumbnail puntual falla.
+          },
+        });
+    });
+  }
+
+  /** Actualiza el SVG de un derivado ya cargado sin perder orden del grid. */
+  private patchLoadedStructureSvg(structureIndex: number, svgMarkup: string): void {
+    this.loadedGeneratedStructures.update((currentItems: SmileitGeneratedStructureView[]) =>
+      currentItems.map((item: SmileitGeneratedStructureView) => {
+        if (item.structureIndex !== structureIndex) {
+          return item;
+        }
+        return {
+          ...item,
+          svg: svgMarkup,
+        };
+      }),
+    );
+  }
+
+  /** Lee SVG cacheado en sessionStorage para evitar round-trips repetidos. */
+  private readSvgFromSessionCache(
+    jobId: string,
+    structureIndex: number,
+    variant: 'thumb' | 'detail',
+  ): string {
+    try {
+      const cacheKey = `smileit:${jobId}:svg:${variant}:${structureIndex}`;
+      return sessionStorage.getItem(cacheKey) ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  /** Guarda SVG en cache de sesión para reutilización durante la misma pestaña. */
+  private storeSvgInSessionCache(
+    jobId: string,
+    structureIndex: number,
+    variant: 'thumb' | 'detail',
+    svgMarkup: string,
+  ): void {
+    try {
+      const cacheKey = `smileit:${jobId}:svg:${variant}:${structureIndex}`;
+      sessionStorage.setItem(cacheKey, svgMarkup);
+    } catch {
+      // Ignorar quota errors para no interrumpir la interacción.
+    }
+  }
+
+  /** Lee una página de derivados cacheada por sesión para evitar refetch de lotes de 100. */
+  private readDerivationsPageFromSessionCache(
+    jobId: string,
+    offset: number,
+    limit: number,
+  ): SmileitDerivationPageItemView[] | null {
+    try {
+      const cacheKey = `smileit:${jobId}:page:${offset}:${limit}`;
+      const rawValue = sessionStorage.getItem(cacheKey);
+      if (rawValue === null || rawValue.trim() === '') {
+        return null;
+      }
+      const parsedItems = JSON.parse(rawValue);
+      if (!Array.isArray(parsedItems)) {
+        return null;
+      }
+      return parsedItems as SmileitDerivationPageItemView[];
+    } catch {
+      return null;
+    }
+  }
+
+  /** Persiste en sesión una página de derivados para reutilizarla en recargas de la vista. */
+  private storeDerivationsPageInSessionCache(
+    jobId: string,
+    offset: number,
+    limit: number,
+    items: SmileitDerivationPageItemView[],
+  ): void {
+    try {
+      const cacheKey = `smileit:${jobId}:page:${offset}:${limit}`;
+      sessionStorage.setItem(cacheKey, JSON.stringify(items));
+    } catch {
+      // Ignorar quota errors para no interrumpir la UX.
+    }
   }
 
   /** Limpia un segmento de nombre de archivo: no-alfanumérico → "_", colapsa repetidos, trunca a 40 chars */
@@ -1490,7 +1874,42 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   openGeneratedStructureModal(generatedStructure: SmileitGeneratedStructureView): void {
-    this.selectedGeneratedStructure.set(generatedStructure);
+    const currentJobId: string | null = this.workflow.currentJobId();
+    const structureIndex = generatedStructure.structureIndex;
+
+    if (currentJobId !== null && structureIndex !== undefined) {
+      const cachedDetailSvg = this.readSvgFromSessionCache(currentJobId, structureIndex, 'detail');
+      if (cachedDetailSvg.trim() !== '') {
+        const structureWithSvg: SmileitGeneratedStructureView = {
+          ...generatedStructure,
+          svg: cachedDetailSvg,
+        };
+        this.selectedGeneratedStructure.set(structureWithSvg);
+        this.patchLoadedStructureSvg(structureIndex, cachedDetailSvg);
+      } else {
+        this.selectedGeneratedStructure.set(generatedStructure);
+        this.jobsApiService
+          .getSmileitDerivationSvg(currentJobId, structureIndex, 'detail')
+          .subscribe({
+            next: (svgMarkup: string) => {
+              this.storeSvgInSessionCache(currentJobId, structureIndex, 'detail', svgMarkup);
+              this.storeSvgInSessionCache(currentJobId, structureIndex, 'thumb', svgMarkup);
+              const updatedStructure: SmileitGeneratedStructureView = {
+                ...generatedStructure,
+                svg: svgMarkup,
+              };
+              this.selectedGeneratedStructure.set(updatedStructure);
+              this.patchLoadedStructureSvg(structureIndex, svgMarkup);
+            },
+            error: () => {
+              // Mantener modal abierto aun si falla el fetch de SVG.
+            },
+          });
+      }
+    } else {
+      this.selectedGeneratedStructure.set(generatedStructure);
+    }
+
     const dialog: HTMLDialogElement | undefined = this.generatedStructureDialogRef?.nativeElement;
     if (dialog === undefined) {
       return;

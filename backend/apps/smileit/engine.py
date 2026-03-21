@@ -12,6 +12,7 @@ Cómo se usa:
 """
 
 import logging
+import re
 from contextlib import contextmanager
 from functools import lru_cache
 from html import escape
@@ -298,10 +299,99 @@ def render_molecule_svg_with_atom_labels(
         return ""
 
 
+def tint_svg(raw_svg: str, color_hex: str) -> str:
+    """Aplica un color dominante al SVG para diferenciar roles visuales."""
+    if raw_svg.strip() == "":
+        return raw_svg
+
+    # Reemplazo acotado para evitar corrupción de colores como #0000FF.
+    colored_svg = re.sub(
+        r"(?<![0-9a-fA-F])#000000(?![0-9a-fA-F])",
+        color_hex,
+        raw_svg,
+        flags=re.IGNORECASE,
+    )
+    colored_svg = re.sub(
+        r"(?<![0-9a-fA-F])#000(?![0-9a-fA-F])",
+        color_hex,
+        colored_svg,
+        flags=re.IGNORECASE,
+    )
+    return colored_svg
+
+
+def _score_principal_match_for_sites(
+    derivative_molecule: Chem.Mol,
+    principal_match: tuple[int, ...],
+    principal_site_atom_indices: list[int],
+) -> int:
+    """Puntúa un match del scaffold según cuántos sitios conectan con sustituyentes."""
+    principal_match_set: set[int] = set(principal_match)
+    score: int = 0
+
+    for principal_site_index in principal_site_atom_indices:
+        if principal_site_index < 0 or principal_site_index >= len(principal_match):
+            continue
+
+        derivative_site_atom_index = principal_match[principal_site_index]
+        derivative_site_atom = derivative_molecule.GetAtomWithIdx(
+            derivative_site_atom_index
+        )
+        has_external_neighbor = any(
+            neighbor.GetIdx() not in principal_match_set
+            for neighbor in derivative_site_atom.GetNeighbors()
+        )
+        if has_external_neighbor:
+            score += 1
+
+    return score
+
+
+def _compute_substituent_atom_indices(
+    principal_molecule: Chem.Mol,
+    derivative_molecule: Chem.Mol,
+    principal_site_atom_indices: list[int] | None = None,
+) -> set[int]:
+    """Calcula índices de sustituyentes como complemento del mejor match del scaffold."""
+    all_principal_matches = derivative_molecule.GetSubstructMatches(principal_molecule)
+    if len(all_principal_matches) == 0:
+        return set()
+
+    normalized_site_indices: list[int] = principal_site_atom_indices or []
+    best_match = all_principal_matches[0]
+
+    if len(normalized_site_indices) > 0:
+        best_score = _score_principal_match_for_sites(
+            derivative_molecule=derivative_molecule,
+            principal_match=best_match,
+            principal_site_atom_indices=normalized_site_indices,
+        )
+        for candidate_match in all_principal_matches[1:]:
+            candidate_score = _score_principal_match_for_sites(
+                derivative_molecule=derivative_molecule,
+                principal_match=candidate_match,
+                principal_site_atom_indices=normalized_site_indices,
+            )
+            if candidate_score > best_score:
+                best_match = candidate_match
+                best_score = candidate_score
+
+    scaffold_atom_indices: set[int] = set(best_match)
+    derivative_atom_count: int = derivative_molecule.GetNumAtoms()
+    return {
+        atom_index
+        for atom_index in range(derivative_atom_count)
+        if atom_index not in scaffold_atom_indices
+    }
+
+
 def render_derivative_svg_with_substituent_highlighting(
     principal_smiles: str,
     derivative_smiles: str,
     substituent_smiles_list: list[str],
+    principal_site_atom_indices: list[int] | None = None,
+    image_width: int = IMAGE_WIDTH,
+    image_height: int = IMAGE_HEIGHT,
 ) -> str:
     """Renderiza la molécula derivada completa con highlighting en átomos de sustituto.
 
@@ -324,36 +414,35 @@ def render_derivative_svg_with_substituent_highlighting(
         if principal_mol is None or derivative_mol is None:
             return ""
 
-        # Rastrear crecimiento de átomos a través de las fusiones
-        num_principal_atoms: int = principal_mol.GetNumAtoms()
-        current_atom_count: int = num_principal_atoms
-        
-        # Conjunto de índices de átomos que pertenecen a sustitutos
-        substituent_atom_indices: set[int] = set()
+        substituent_atom_indices: set[int] = _compute_substituent_atom_indices(
+            principal_molecule=principal_mol,
+            derivative_molecule=derivative_mol,
+            principal_site_atom_indices=principal_site_atom_indices,
+        )
 
-        # Para cada sustituto aplicado, calcular qué átomos se agregaron
-        for substituent_smiles in substituent_smiles_list:
-            sub_mol = _parse_smiles_cached(substituent_smiles)
-            if sub_mol is None:
-                continue
-            
-            num_sub_atoms: int = sub_mol.GetNumAtoms()
-            # Los átomos del sustituto son los que se acaban de agregar
-            for atom_idx in range(current_atom_count, current_atom_count + num_sub_atoms):
-                substituent_atom_indices.add(atom_idx)
-            
-            current_atom_count += num_sub_atoms
+        # Fallback conservador para casos donde no se pueda mapear scaffold completo.
+        if len(substituent_atom_indices) == 0 and len(substituent_smiles_list) > 0:
+            for substituent_smiles in substituent_smiles_list:
+                substituent_molecule = _parse_smiles_cached(substituent_smiles)
+                if substituent_molecule is None:
+                    continue
+                substitute_matches = derivative_mol.GetSubstructMatches(
+                    substituent_molecule
+                )
+                if len(substitute_matches) == 0:
+                    continue
+                substituent_atom_indices.update(substitute_matches[0])
 
         if not substituent_atom_indices:
             # Si no hay sustitutos, renderizar sin highlighting
             return render_molecule_svg(derivative_smiles)
 
-        # Renderizar la molécula derivada completa con highlighting en sustitutos
+        # Renderizar la molécula derivada completa con highlighting en sustitutos.
         mol = Chem.Mol(derivative_mol)
         with _silence_rdkit_logs():
             AllChem.Compute2DCoords(mol)
 
-        drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
+        drawer = rdMolDraw2D.MolDraw2DSVG(image_width, image_height)
         drawer.DrawMolecule(mol, highlightAtoms=sorted(substituent_atom_indices))
 
         drawer.FinishDrawing()

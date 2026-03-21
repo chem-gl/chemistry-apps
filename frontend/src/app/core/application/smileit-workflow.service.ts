@@ -38,6 +38,7 @@ import {
 type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
 
 export interface SmileitGeneratedStructureView {
+  structureIndex?: number;
   name: string;
   smiles: string;
   svg: string;
@@ -1391,9 +1392,10 @@ export class SmileitWorkflowService implements OnDestroy {
       generatedStructures: (rawResult.generated_structures ?? []).map((structureItem, index) => {
         const normalizedName: string = structureItem.name.trim();
         return {
+          structureIndex: index,
           name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
           smiles: structureItem.smiles,
-          svg: structureItem.svg,
+          svg: structureItem.svg ?? '',
           placeholderAssignments: structureItem.placeholder_assignments.map((assignmentItem) => ({
             placeholderLabel: assignmentItem.placeholder_label,
             siteAtomIndex: assignmentItem.site_atom_index,
