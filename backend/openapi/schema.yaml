@@ -4498,28 +4498,20 @@ components:
           maxLength: 500
         svg:
           type: string
-        scaffold_svg:
-          type: string
-          default: ''
-        placeholder_svg:
-          type: string
-          default: ''
         placeholder_assignments:
           type: array
           items:
             $ref: '#/components/schemas/SmileitPlaceholderAssignment'
-        substituent_svgs:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmileitSubstituentPreview'
         traceability:
           type: array
           items:
             $ref: '#/components/schemas/SmileitSubstitutionTraceEvent'
       required:
       - name
+      - placeholder_assignments
       - smiles
       - svg
+      - traceability
     SmileitJobCreateRequest:
       type: object
       description: Contrato de creación del job Smile-it con asignación flexible por
@@ -5077,22 +5069,6 @@ components:
       - atoms
       - canonical_smiles
       - quick_properties
-      - svg
-    SmileitSubstituentPreview:
-      type: object
-      description: Previsualización SVG de sustituyente aplicado al derivado.
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        smiles:
-          type: string
-          maxLength: 2000
-        svg:
-          type: string
-      required:
-      - name
-      - smiles
       - svg
     SmileitSubstituentReferenceInputRequest:
       type: object

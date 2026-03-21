@@ -624,28 +624,4 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.errorMessage()).toBeNull();
   });
 
-  it('restores legacy historical jobs even when assignment blocks are missing', () => {
-    const legacyJob: SmileitJobResponseView = {
-      ...makeSmileitJob(),
-      status: 'completed',
-      results: null,
-      parameters: {
-        principal_smiles: 'c1ccccc1',
-        selected_atom_indices: [1],
-        r_substitutes: 1,
-        num_bonds: 1,
-        allow_repeated: false,
-        max_structures: 100,
-      } as unknown as SmileitJobResponseView['parameters'],
-    };
-
-    jobsApiServiceMock.getSmileitJobStatus.mockReturnValueOnce(of(legacyJob));
-
-    workflowService.openHistoricalJob('legacy-job-1');
-
-    expect(workflowService.activeSection()).toBe('result');
-    expect(workflowService.resultData()?.assignmentBlocks).toEqual([]);
-    expect(workflowService.resultData()?.exportNameBase).toBe('SMILEIT');
-    expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
-  });
 });

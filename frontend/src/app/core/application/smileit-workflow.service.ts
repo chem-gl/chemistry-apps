@@ -41,18 +41,11 @@ export interface SmileitGeneratedStructureView {
   name: string;
   smiles: string;
   svg: string;
-  scaffoldSvg: string;
-  placeholderSvg: string;
   placeholderAssignments: Array<{
     placeholderLabel: string;
     siteAtomIndex: number;
     substituentName: string;
     substituentSmiles?: string;
-  }>;
-  substituentSvgs: Array<{
-    name: string;
-    smiles: string;
-    svg: string;
   }>;
   traceability: Array<{
     round_index: number;
@@ -1392,18 +1385,13 @@ export class SmileitWorkflowService implements OnDestroy {
           name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
           smiles: structureItem.smiles,
           svg: structureItem.svg,
-          scaffoldSvg: structureItem.scaffold_svg ?? '',
-          placeholderSvg: structureItem.placeholder_svg ?? '',
-          placeholderAssignments: (structureItem.placeholder_assignments ?? []).map(
-            (assignmentItem) => ({
-              placeholderLabel: assignmentItem.placeholder_label,
-              siteAtomIndex: assignmentItem.site_atom_index,
-              substituentName: assignmentItem.substituent_name,
-              substituentSmiles: assignmentItem.substituent_smiles ?? '',
-            }),
-          ),
-          substituentSvgs: structureItem.substituent_svgs ?? [],
-          traceability: structureItem.traceability ?? [],
+          placeholderAssignments: structureItem.placeholder_assignments.map((assignmentItem) => ({
+            placeholderLabel: assignmentItem.placeholder_label,
+            siteAtomIndex: assignmentItem.site_atom_index,
+            substituentName: assignmentItem.substituent_name,
+            substituentSmiles: assignmentItem.substituent_smiles ?? '',
+          })),
+          traceability: structureItem.traceability,
         };
       }),
       truncated: rawResult.truncated ?? false,

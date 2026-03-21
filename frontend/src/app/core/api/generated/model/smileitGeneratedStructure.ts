@@ -9,7 +9,6 @@
  */
 import { SmileitPlaceholderAssignment } from './smileitPlaceholderAssignment';
 import { SmileitSubstitutionTraceEvent } from './smileitSubstitutionTraceEvent';
-import { SmileitSubstituentPreview } from './smileitSubstituentPreview';
 
 
 /**
@@ -19,10 +18,7 @@ export interface SmileitGeneratedStructure {
     smiles: string;
     name: string;
     svg: string;
-    scaffold_svg?: string;
-    placeholder_svg?: string;
-    placeholder_assignments?: Array<SmileitPlaceholderAssignment>;
-    substituent_svgs?: Array<SmileitSubstituentPreview>;
-    traceability?: Array<SmileitSubstitutionTraceEvent>;
+    placeholder_assignments: Array<SmileitPlaceholderAssignment>;
+    traceability: Array<SmileitSubstitutionTraceEvent>;
 }
 

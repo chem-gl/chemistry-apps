@@ -760,7 +760,7 @@
           {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload jobs' }}
         </button>
       </div>
-    
+
       @if (workflow.historyJobs().length === 0) {
       <p class="hint">No previous enumerations available yet.</p>
       } @else {
@@ -836,8 +836,7 @@
             <div class="subsection-header">
                 <div>
                     <h4>Enumerated derivatives</h4>
-                    <p class="hint">Each card compares the principal scaffold with the placeholder view used to identify
-                      applied substituents.</p>
+                    <p class="hint">Each card shows one generated scaffold image with its highlighted substitution sites.</p>
                 </div>
                 <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
                     {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
@@ -863,15 +862,9 @@
                         }
                     </div>
                 </div>
-                                <div class="derivative-visual-grid">
-                                  <div class="derivative-svg-frame scaffold-frame">
-                                    <small class="derivative-visual-title">Principal scaffold</small>
-                                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureScaffoldSvg(structureItem))"></div>
-                                  </div>
-                                  <div class="derivative-svg-frame placeholder-frame">
-                                    <small class="derivative-visual-title">Placeholder map</small>
-                                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structurePlaceholderSvg(structureItem))"></div>
-                                  </div>
+                                                                <div class="derivative-svg-frame combined-structure-frame">
+                                                                  <small class="derivative-visual-title">Generated scaffold with placeholders</small>
+                                                                  <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
                 </div>
                 <div class="derivative-meta">
                                         <p class="derivative-name" [title]="structureDisplayName(structureItem, $index)">{{ structureDisplayName(structureItem,
@@ -1117,16 +1110,10 @@
                 <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
             </header>
 
-            <div class="structure-modal-visual-grid">
-              <div class="structure-modal-svg structure-modal-panel">
-                <h5>Principal scaffold</h5>
-                <div [innerHTML]="toTrustedSvg(structureScaffoldSvg(selectedStructure))"></div>
-              </div>
-              <div class="structure-modal-svg structure-modal-panel">
-                <h5>Applied placeholders</h5>
-                <div [innerHTML]="toTrustedSvg(structurePlaceholderSvg(selectedStructure))"></div>
-              </div>
-            </div>
+                        <div class="structure-modal-svg structure-modal-panel single-structure-panel">
+                          <h5>Generated scaffold with placeholders</h5>
+                          <div [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+                        </div>
         </section>
     }
     </dialog>

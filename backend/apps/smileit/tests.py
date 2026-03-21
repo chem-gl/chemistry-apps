@@ -313,14 +313,13 @@ class SmileitJobBlockTests(TestCase):
         self.assertIn("traceability_rows", job_results)
         generated_structures = job_results.get("generated_structures", [])
         self.assertGreaterEqual(len(generated_structures), 1)
-        self.assertIn("scaffold_svg", generated_structures[0])
-        self.assertIn("placeholder_svg", generated_structures[0])
         self.assertIn("placeholder_assignments", generated_structures[0])
-        self.assertIn("substituent_svgs", generated_structures[0])
+        self.assertIn("svg", generated_structures[0])
         self.assertTrue(
-            generated_structures[0]["placeholder_svg"].startswith("<?xml")
-            or generated_structures[0]["placeholder_svg"].startswith("<svg")
+            generated_structures[0]["svg"].startswith("<?xml")
+            or generated_structures[0]["svg"].startswith("<svg")
         )
+        self.assertIn("R1", generated_structures[0]["svg"])
 
     def test_overlapped_blocks_generate_union_permutations_per_site(self) -> None:
         """Sitio cubierto por múltiples bloques debe combinar todas las opciones efectivas."""
@@ -678,18 +677,17 @@ class SmileitPluginOptimizationTests(TestCase):
         self.assertEqual(mocked_viability.call_count, 1)
         self.assertEqual(mocked_fuse.call_count, 0)
 
-    def test_render_smiles_map_renders_each_unique_smiles_once(self) -> None:
-        """La fase visual debe deduplicar SMILES antes de disparar renderizados."""
-        with patch(
-            "apps.smileit.plugin.render_molecule_svg",
-            side_effect=lambda smiles_value: f"svg:{smiles_value}",
-        ) as mocked_render:
-            rendered_map = smileit_plugin_module._render_smiles_map(
-                ["CCO", "N", "CCO", "", "N", "CCO"]
-            )
+    def test_render_molecule_svg_with_atom_labels_includes_placeholder_text(
+        self,
+    ) -> None:
+        """El SVG combinado debe incluir etiquetas de placeholder visibles en el markup."""
+        rendered_svg = smileit_engine.render_molecule_svg_with_atom_labels(
+            "c1ccccc1",
+            {0: "R1", 2: "R2"},
+        )
 
-        self.assertEqual(rendered_map, {"CCO": "svg:CCO", "N": "svg:N"})
-        self.assertEqual(mocked_render.call_count, 2)
+        self.assertIn("R1", rendered_svg)
+        self.assertIn("R2", rendered_svg)
 
 
 class SmileitExportTests(TestCase):
@@ -776,101 +774,3 @@ class SmileitExportTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("derivative_name,derivative_smiles,round_index", content)
 
-
-class SmileitLegacyJobCompatibilityTests(TestCase):
-    """Valida compatibilidad de lectura para jobs históricos de Smile-it."""
-
-    def setUp(self) -> None:
-        self.client = APIClient()
-
-    def test_retrieve_legacy_job_without_assignment_blocks(self) -> None:
-        """El retrieve debe responder 200 aun si parámetros legacy no traen campos v2."""
-        legacy_job = ScientificJob.objects.create(
-            job_hash="a" * 64,
-            plugin_name="smileit",
-            algorithm_version="1.0.0",
-            status="completed",
-            parameters={
-                "principal_smiles": "c1ccccc1",
-                "selected_atom_indices": [0, 1],
-                "substituents": [
-                    {"name": "Amine", "smiles": "[NH2]", "selected_atom_index": 0}
-                ],
-                "r_substitutes": 1,
-                "num_bonds": 1,
-                "allow_repeated": True,
-                "max_structures": 100,
-            },
-            results={
-                "total_generated": 1,
-                "generated_structures": [],
-                "truncated": False,
-                "principal_smiles": "c1ccccc1",
-                "selected_atom_indices": [0, 1],
-            },
-            progress_percentage=100,
-            progress_stage="completed",
-            progress_message="legacy completed",
-            progress_event_index=12,
-        )
-
-        response = self.client.get(f"{APP_API_BASE_PATH}{legacy_job.id}/")
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(payload["parameters"]["assignment_blocks"], [])
-        self.assertEqual(payload["results"]["traceability_rows"], [])
-
-    def test_retrieve_legacy_job_without_structure_traceability(self) -> None:
-        """El retrieve debe completar trazabilidad vacía si faltan campos por estructura."""
-        legacy_job = ScientificJob.objects.create(
-            job_hash="b" * 64,
-            plugin_name="smileit",
-            algorithm_version="1.0.0",
-            status="completed",
-            parameters={
-                "principal_smiles": "c1ccccc1",
-                "selected_atom_indices": [0],
-                "r_substitutes": 1,
-                "num_bonds": 1,
-                "allow_repeated": False,
-                "max_structures": 50,
-            },
-            results={
-                "total_generated": 1,
-                "generated_structures": [
-                    {
-                        "name": "legacy_00001",
-                        "smiles": "c1ccccc1",
-                        "svg": "<svg></svg>",
-                    }
-                ],
-                "truncated": False,
-                "principal_smiles": "c1ccccc1",
-                "selected_atom_indices": [0],
-            },
-            progress_percentage=100,
-            progress_stage="completed",
-            progress_message="legacy completed",
-            progress_event_index=22,
-        )
-
-        response = self.client.get(f"{APP_API_BASE_PATH}{legacy_job.id}/")
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertEqual(
-            payload["results"]["generated_structures"][0]["traceability"], []
-        )
-        self.assertEqual(
-            payload["results"]["generated_structures"][0]["scaffold_svg"], ""
-        )
-        self.assertEqual(
-            payload["results"]["generated_structures"][0]["placeholder_svg"], ""
-        )
-        self.assertEqual(
-            payload["results"]["generated_structures"][0]["placeholder_assignments"],
-            [],
-        )
-        self.assertEqual(
-            payload["results"]["generated_structures"][0]["substituent_svgs"],
-            [],
-        )

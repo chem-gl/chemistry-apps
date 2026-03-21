@@ -978,41 +978,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
     return trimmedName === '' ? `Derivative ${index + 1}` : trimmedName;
   }
 
-  structureScaffoldSvg(structure: SmileitGeneratedStructureView): string {
-    const scaffoldSvg = structure.scaffoldSvg.trim();
-    return scaffoldSvg !== '' ? scaffoldSvg : structure.svg;
-  }
-
-  structurePlaceholderSvg(structure: SmileitGeneratedStructureView): string {
-    const placeholderSvg = structure.placeholderSvg.trim();
-    return placeholderSvg !== '' ? placeholderSvg : structure.svg;
-  }
-
   placeholderAssignmentsForStructure(structure: SmileitGeneratedStructureView): Array<{
     placeholderLabel: string;
     siteAtomIndex: number;
     substituentName: string;
     substituentSmiles?: string;
   }> {
-    if (structure.placeholderAssignments.length > 0) {
-      return structure.placeholderAssignments;
-    }
-
-    return [...structure.traceability]
-      .sort(
-        (leftEvent, rightEvent) =>
-          leftEvent.site_atom_index - rightEvent.site_atom_index ||
-          leftEvent.round_index - rightEvent.round_index ||
-          leftEvent.block_priority - rightEvent.block_priority ||
-          leftEvent.substituent_name.localeCompare(rightEvent.substituent_name) ||
-          (leftEvent.substituent_smiles ?? '').localeCompare(rightEvent.substituent_smiles ?? ''),
-      )
-      .map((traceabilityEvent, traceabilityIndex) => ({
-        placeholderLabel: `R${traceabilityIndex + 1}`,
-        siteAtomIndex: traceabilityEvent.site_atom_index,
-        substituentName: traceabilityEvent.substituent_name,
-        substituentSmiles: traceabilityEvent.substituent_smiles ?? '',
-      }));
+    return structure.placeholderAssignments;
   }
 
   placeholderAssignmentLabel(
@@ -1503,15 +1475,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
       structure.traceability.map((traceEntry) => traceEntry.substituent_name),
     );
     return [...uniqueNames].slice(0, 4);
-  }
-
-  /**
-   * Limita miniaturas de sustituyentes para mantener compacta la tarjeta de derivados.
-   */
-  getDisplayedSubstituentSvgs(
-    structure: SmileitGeneratedStructureView,
-  ): Array<{ name: string; smiles: string; svg: string }> {
-    return structure.substituentSvgs.slice(0, 3);
   }
 
   /**

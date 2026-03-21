@@ -14,6 +14,7 @@ Cómo se usa:
 import logging
 from contextlib import contextmanager
 from functools import lru_cache
+from html import escape
 from typing import Optional
 
 from rdkit import Chem, RDLogger
@@ -255,13 +256,30 @@ def render_molecule_svg_with_atom_labels(
         }
 
         drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
-        draw_options = drawer.drawOptions()
-        for atom_index, atom_label in valid_labels.items():
-            draw_options.atomLabels[atom_index] = atom_label
-
         drawer.DrawMolecule(mol, highlightAtoms=sorted(valid_labels))
+
+        text_elements: list[str] = []
+        for atom_index, atom_label in valid_labels.items():
+            point = drawer.GetDrawCoords(atom_index)
+            text_elements.append(
+                (
+                    "<text x='{x:.1f}' y='{y:.1f}' "
+                    "text-anchor='middle' dominant-baseline='middle' "
+                    "font-family='Avenir Next, Trebuchet MS, Segoe UI, sans-serif' "
+                    "font-size='18' font-weight='800' fill='#0f172a' "
+                    "stroke='#ffffff' stroke-width='3' paint-order='stroke'>"
+                    "{label}</text>"
+                ).format(x=point.x, y=point.y, label=escape(atom_label))
+            )
+
         drawer.FinishDrawing()
-        return drawer.GetDrawingText()
+        svg_output = drawer.GetDrawingText()
+        if len(text_elements) == 0:
+            return svg_output
+
+        return svg_output.replace(
+            "</svg>", "\n" + "\n".join(text_elements) + "\n</svg>"
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning(
             "Error renderizando SVG con placeholders para %r: %s",

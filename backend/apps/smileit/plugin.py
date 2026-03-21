@@ -33,7 +33,6 @@ from .engine import (
     clear_smileit_caches,
     fuse_molecules,
     is_fusion_candidate_viable,
-    render_molecule_svg,
     render_molecule_svg_with_atom_labels,
 )
 from .types import (
@@ -43,7 +42,6 @@ from .types import (
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
     SmileitResult,
-    SmileitSubstituentPreview,
     SmileitSubstitutionTraceEvent,
     SmileitTraceabilityRow,
 )
@@ -51,11 +49,8 @@ from .types import (
 logger = logging.getLogger(__name__)
 LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
 ATTEMPT_PROGRESS_BATCH_SIZE: Final[int] = 100
-RENDER_PROGRESS_BATCH_SIZE: Final[int] = 25
 GENERATION_CONCURRENCY_MIN_BATCH: Final[int] = 8
-RENDER_CONCURRENCY_MIN_BATCH: Final[int] = 8
 MAX_GENERATION_WORKERS: Final[int] = max(1, min(8, (os.cpu_count() or 2)))
-MAX_RENDER_WORKERS: Final[int] = max(1, min(8, (os.cpu_count() or 2)))
 
 
 @dataclass
@@ -186,40 +181,6 @@ def _tint_svg(raw_svg: str, color_hex: str) -> str:
     return colored_svg
 
 
-def _build_substituent_previews(
-    traceability: list[SmileitSubstitutionTraceEvent],
-    preview_cache: dict[tuple[str, str], SmileitSubstituentPreview],
-    rendered_smiles_map: dict[str, str],
-) -> list[SmileitSubstituentPreview]:
-    """Construye previsualizaciones únicas de sustituyentes aplicados en el derivado."""
-    previews: list[SmileitSubstituentPreview] = []
-    seen_preview_keys: set[tuple[str, str]] = set()
-
-    for event in traceability:
-        substituent_smiles = event["substituent_smiles"].strip()
-        if substituent_smiles == "":
-            continue
-
-        preview_key = (event["substituent_name"], substituent_smiles)
-        if preview_key in seen_preview_keys:
-            continue
-
-        seen_preview_keys.add(preview_key)
-        cached_preview = preview_cache.get(preview_key)
-        if cached_preview is None:
-            cached_preview = SmileitSubstituentPreview(
-                name=event["substituent_name"],
-                smiles=substituent_smiles,
-                svg=_tint_svg(
-                    rendered_smiles_map.get(substituent_smiles, ""), "#2563eb"
-                ),
-            )
-            preview_cache[preview_key] = cached_preview
-        previews.append(cached_preview)
-
-    return previews
-
-
 def _sort_traceability_events(
     traceability: list[SmileitSubstitutionTraceEvent],
 ) -> list[SmileitSubstitutionTraceEvent]:
@@ -257,62 +218,25 @@ def _build_placeholder_assignments(
     return placeholder_assignments
 
 
-def _build_placeholder_svg(
+def _build_combined_structure_svg(
     principal_smiles: str,
     placeholder_assignments: list[SmileitPlaceholderAssignment],
 ) -> str:
-    """Renderiza el principal con placeholders sobre los sitios sustituidos."""
+    """Renderiza una sola imagen con scaffold principal y placeholders visibles."""
     atom_labels: dict[int, str] = {
         assignment["site_atom_index"]: assignment["placeholder_label"]
         for assignment in placeholder_assignments
     }
-    return render_molecule_svg_with_atom_labels(principal_smiles, atom_labels)
+    return _tint_svg(
+        render_molecule_svg_with_atom_labels(principal_smiles, atom_labels),
+        "#2f855a",
+    )
 
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
     """Construye nombre determinista para exportación reproducible."""
     safe_padding = max(1, padding)
     return f"{base_name}_{index_value:0{safe_padding}d}"
-
-
-def _build_ordered_unique_smiles(smiles_values: list[str]) -> list[str]:
-    """Deduplica SMILES preservando orden de aparición."""
-    ordered_unique_smiles: list[str] = []
-    seen_smiles: set[str] = set()
-
-    for smiles_value in smiles_values:
-        normalized_smiles = smiles_value.strip()
-        if normalized_smiles == "" or normalized_smiles in seen_smiles:
-            continue
-        seen_smiles.add(normalized_smiles)
-        ordered_unique_smiles.append(normalized_smiles)
-
-    return ordered_unique_smiles
-
-
-def _render_smiles_map(smiles_values: list[str]) -> dict[str, str]:
-    """Renderiza SMILES únicos con concurrencia controlada y orden estable."""
-    ordered_unique_smiles = _build_ordered_unique_smiles(smiles_values)
-    if len(ordered_unique_smiles) == 0:
-        return {}
-
-    if len(ordered_unique_smiles) < RENDER_CONCURRENCY_MIN_BATCH:
-        return {
-            smiles_value: render_molecule_svg(smiles_value)
-            for smiles_value in ordered_unique_smiles
-        }
-
-    with ThreadPoolExecutor(max_workers=MAX_RENDER_WORKERS) as executor:
-        rendered_svgs = list(executor.map(render_molecule_svg, ordered_unique_smiles))
-
-    return {
-        smiles_value: rendered_svg
-        for smiles_value, rendered_svg in zip(
-            ordered_unique_smiles,
-            rendered_svgs,
-            strict=True,
-        )
-    }
 
 
 def _build_pending_fusion_attempts(
@@ -478,57 +402,36 @@ def _materialize_generated_structures(
     progress_callback: PluginProgressCallback,
     log_callback: PluginLogCallback | None,
 ) -> list[SmileitGeneratedStructure]:
-    """Construye el payload visual una vez terminada la enumeración química.
-
-    Esta fase difiere SVG y previews hasta conocer la lista final de derivados,
-    reduciendo renderizados RDKit innecesarios dentro del bucle combinatorio.
-    """
-    smiles_to_render: list[str] = [principal_smiles]
-    for candidate in generated_candidates:
-        smiles_to_render.append(candidate.smiles)
-        smiles_to_render.extend(
-            event["substituent_smiles"] for event in candidate.traceability
-        )
-
-    rendered_smiles_map = _render_smiles_map(smiles_to_render)
-    principal_svg = _tint_svg(rendered_smiles_map.get(principal_smiles, ""), "#2f855a")
-    preview_cache: dict[tuple[str, str], SmileitSubstituentPreview] = {}
+    """Construye un SVG único por derivado usando el scaffold principal etiquetado."""
     generated_structures: list[SmileitGeneratedStructure] = []
 
     for candidate_index, candidate in enumerate(generated_candidates, start=1):
-        placeholder_assignments = _build_placeholder_assignments(candidate.traceability)
+        sorted_traceability = _sort_traceability_events(candidate.traceability)
+        placeholder_assignments = _build_placeholder_assignments(sorted_traceability)
         generated_structures.append(
             SmileitGeneratedStructure(
                 smiles=candidate.smiles,
                 name=candidate.name,
-                svg=_tint_svg(rendered_smiles_map.get(candidate.smiles, ""), "#1d4ed8"),
-                scaffold_svg=principal_svg,
-                placeholder_svg=_build_placeholder_svg(
+                svg=_build_combined_structure_svg(
                     principal_smiles,
                     placeholder_assignments,
                 ),
                 placeholder_assignments=placeholder_assignments,
-                substituent_svgs=_build_substituent_previews(
-                    candidate.traceability,
-                    preview_cache,
-                    rendered_smiles_map,
-                ),
-                traceability=candidate.traceability,
+                traceability=sorted_traceability,
             )
         )
 
-        if candidate_index % RENDER_PROGRESS_BATCH_SIZE == 0:
-            progress_callback(
-                _build_render_progress_percentage(
-                    item_index=candidate_index,
-                    item_total=len(generated_candidates),
-                ),
-                "running",
-                (
-                    "Renderizando estructuras finales de Smile-it. "
-                    f"Procesadas: {candidate_index}/{len(generated_candidates)}."
-                ),
-            )
+        progress_callback(
+            _build_render_progress_percentage(
+                item_index=candidate_index,
+                item_total=len(generated_candidates),
+            ),
+            "running",
+            (
+                "Renderizando estructuras finales de Smile-it. "
+                f"Procesadas: {candidate_index}/{len(generated_candidates)}."
+            ),
+        )
 
     _emit_log(
         log_callback,
@@ -537,8 +440,7 @@ def _materialize_generated_structures(
         message="Materialización visual Smile-it completada.",
         payload={
             "generated_structures": len(generated_structures),
-            "unique_substituent_previews": len(preview_cache),
-            "unique_rendered_smiles": len(rendered_smiles_map),
+            "render_mode": "single-scaffold-highlight",
         },
     )
 

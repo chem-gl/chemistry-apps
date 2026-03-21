@@ -537,14 +537,6 @@ class SmileitSubstitutionTraceEventSerializer(serializers.Serializer):
     bond_order = serializers.IntegerField(min_value=1, max_value=3)
 
 
-class SmileitSubstituentPreviewSerializer(serializers.Serializer):
-    """Previsualización SVG de sustituyente aplicado al derivado."""
-
-    name = serializers.CharField(max_length=MAX_SUBSTITUENT_NAME_LENGTH)
-    smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
-    svg = serializers.CharField()
-
-
 class SmileitPlaceholderAssignmentSerializer(serializers.Serializer):
     """Relación placeholder -> sustituyente para la lectura química del derivado."""
 
@@ -565,25 +557,8 @@ class SmileitGeneratedStructureSerializer(serializers.Serializer):
     smiles = serializers.CharField(max_length=MAX_SUBSTITUENT_SMILES_LENGTH)
     name = serializers.CharField(max_length=500)
     svg = serializers.CharField()
-    scaffold_svg = serializers.CharField(required=False, allow_blank=True, default="")
-    placeholder_svg = serializers.CharField(
-        required=False, allow_blank=True, default=""
-    )
-    placeholder_assignments = SmileitPlaceholderAssignmentSerializer(
-        many=True,
-        required=False,
-        default=list,
-    )
-    substituent_svgs = SmileitSubstituentPreviewSerializer(
-        many=True,
-        required=False,
-        default=list,
-    )
-    traceability = SmileitSubstitutionTraceEventSerializer(
-        many=True,
-        required=False,
-        default=list,
-    )
+    placeholder_assignments = SmileitPlaceholderAssignmentSerializer(many=True)
+    traceability = SmileitSubstitutionTraceEventSerializer(many=True)
 
 
 class SmileitTraceabilityRowSerializer(serializers.Serializer):

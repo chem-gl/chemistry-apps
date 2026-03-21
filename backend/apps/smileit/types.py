@@ -197,14 +197,6 @@ class SmileitSubstitutionTraceEvent(TypedDict):
     bond_order: int
 
 
-class SmileitSubstituentPreview(TypedDict):
-    """Previsualización de sustituyente aplicado para contexto visual del derivado."""
-
-    name: str
-    smiles: str
-    svg: str
-
-
 class SmileitPlaceholderAssignment(TypedDict):
     """Relación estable placeholder -> sustituyente aplicado en el derivado."""
 
@@ -220,10 +212,7 @@ class SmileitGeneratedStructure(TypedDict):
     smiles: str
     name: str
     svg: str
-    scaffold_svg: str
-    placeholder_svg: str
     placeholder_assignments: list[SmileitPlaceholderAssignment]
-    substituent_svgs: list[SmileitSubstituentPreview]
     traceability: list[SmileitSubstitutionTraceEvent]
 
 
