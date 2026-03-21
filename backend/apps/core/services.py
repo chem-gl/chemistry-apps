@@ -71,12 +71,29 @@ class RuntimeJobService:
         )
         return max(1, configured_max_attempts)
 
-    def _get_result_cache_payload_limit_bytes(self) -> int:
-        """Retorna límite máximo permitido para cachear payloads de resultados."""
-        configured_limit: int = int(
+    def _get_result_cache_payload_limit_bytes(self, plugin_name: str) -> int:
+        """Retorna límite de caché para un plugin con fallback al valor global."""
+        global_limit: int = int(
             getattr(settings, "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES", 8 * 1024 * 1024)
         )
-        return max(1024, configured_limit)
+
+        per_plugin_limits_raw: object = getattr(
+            settings,
+            "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES_BY_PLUGIN",
+            {},
+        )
+        if isinstance(per_plugin_limits_raw, dict):
+            plugin_limit_value: object | None = per_plugin_limits_raw.get(plugin_name)
+            if isinstance(plugin_limit_value, int):
+                return max(1024, plugin_limit_value)
+            if isinstance(plugin_limit_value, str):
+                try:
+                    parsed_plugin_limit: int = int(plugin_limit_value)
+                except ValueError:
+                    parsed_plugin_limit = global_limit
+                return max(1024, parsed_plugin_limit)
+
+        return max(1024, global_limit)
 
     def _estimate_json_payload_size_bytes(
         self,
@@ -529,7 +546,9 @@ class RuntimeJobService:
             message="Persistiendo resultado calculado en caché.",
         )
 
-        payload_limit_bytes: int = self._get_result_cache_payload_limit_bytes()
+        payload_limit_bytes: int = self._get_result_cache_payload_limit_bytes(
+            job.plugin_name
+        )
         estimated_payload_bytes: int = self._estimate_json_payload_size_bytes(
             result_payload,
             payload_limit_bytes,

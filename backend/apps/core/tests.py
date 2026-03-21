@@ -25,7 +25,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -176,6 +176,21 @@ class JobServiceTests(TestCase):
             message="Se omite persistencia en caché por error de almacenamiento.",
         ).exists()
         self.assertTrue(warning_log_exists)
+
+    @override_settings(
+        JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES=8 * 1024 * 1024,
+        JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES_BY_PLUGIN={"smileit": 4096},
+    )
+    def test_get_result_cache_payload_limit_prefers_plugin_specific_value(self) -> None:
+        """Debe priorizar límite por plugin cuando existe configuración específica."""
+        runtime_service = JobService._get_runtime_service()
+        smileit_limit = runtime_service._get_result_cache_payload_limit_bytes("smileit")
+        calculator_limit = runtime_service._get_result_cache_payload_limit_bytes(
+            "calculator"
+        )
+
+        self.assertEqual(smileit_limit, 4096)
+        self.assertEqual(calculator_limit, 8 * 1024 * 1024)
 
     def test_active_recovery_requeues_stale_running_job(self) -> None:
         stale_job: ScientificJob = ScientificJob.objects.create(
