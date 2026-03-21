@@ -230,6 +230,47 @@ def render_molecule_svg(smiles: str) -> str:
         return ""
 
 
+def render_molecule_svg_with_atom_labels(
+    smiles: str,
+    atom_labels: dict[int, str],
+) -> str:
+    """Renderiza un scaffold con etiquetas personalizadas para sitios reactivos.
+
+    Se usa para mostrar placeholders tipo `R1`, `R2`, etc. sobre los átomos
+    del principal que recibieron una sustitución en el derivado final.
+    """
+    try:
+        base_molecule = _parse_smiles_cached(smiles)
+        if base_molecule is None:
+            return ""
+
+        mol = Chem.Mol(base_molecule)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
+
+        valid_labels: dict[int, str] = {
+            atom_index: atom_label
+            for atom_index, atom_label in atom_labels.items()
+            if 0 <= atom_index < mol.GetNumAtoms() and atom_label.strip() != ""
+        }
+
+        drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
+        draw_options = drawer.drawOptions()
+        for atom_index, atom_label in valid_labels.items():
+            draw_options.atomLabels[atom_index] = atom_label
+
+        drawer.DrawMolecule(mol, highlightAtoms=sorted(valid_labels))
+        drawer.FinishDrawing()
+        return drawer.GetDrawingText()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Error renderizando SVG con placeholders para %r: %s",
+            smiles,
+            exc,
+        )
+        return ""
+
+
 @lru_cache(maxsize=32768)
 def is_fusion_candidate_viable(
     principal_smiles: str,

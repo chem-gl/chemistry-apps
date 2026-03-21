@@ -51,7 +51,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly manualDraftInspectionSubscriptions = new Map<string, Subscription>();
   readonly isCatalogPanelCollapsed = signal<boolean>(true);
   readonly isLibraryPanelCollapsed = signal<boolean>(false);
-  readonly isGeneratedStructuresCollapsed = signal<boolean>(false);
+  readonly isGeneratedStructuresCollapsed = signal<boolean>(true);
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
   /** Cuántas estructuras generadas se muestran actualmente en el grid (paginación de 100 en 100) */
@@ -151,6 +151,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     () => {
       this.workflow.resultData();
       this.visibleStructuresCount.set(100);
+      this.isGeneratedStructuresCollapsed.set(true);
     },
     { injector: this.injector },
   );
@@ -308,31 +309,40 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Descarga las estructuras actualmente visibles empacadas en un ZIP.
-   * Cada estructura genera: {exportBase}_{sus1}_{sus2}.svg + {exportBase}_{sus1}_{sus2}.txt
+   * Descarga todas las estructuras generadas en un ZIP.
+   * Incluye un SVG por estructura y un único TXT con todos los SMILES generados.
    */
   async downloadVisibleStructuresZip(): Promise<void> {
     const resultData = this.workflow.resultData();
     if (resultData === null) {
       return;
     }
-    const structures = this.visibleGeneratedStructures();
+    const structures = resultData.generatedStructures;
     const exportBase = this.sanitizeFilenameSegment(resultData.exportNameBase || 'smileit');
     const zip = new JSZip();
+    const smilesLines: string[] = [];
+    const usedNames = new Set<string>();
 
-    for (const structure of structures) {
-      const substituents = this.getUniqueSubstituentsForStructure(structure);
-      const substituentSegment =
-        substituents.length > 0
-          ? substituents.map((name) => this.sanitizeFilenameSegment(name)).join('_')
-          : this.sanitizeFilenameSegment(structure.name);
-      const fileBase = `${exportBase}_${substituentSegment}`;
+    structures.forEach((structure, index) => {
+      smilesLines.push(structure.smiles);
+
+      const safeBaseName =
+        this.sanitizeFilenameSegment(structure.name) ||
+        `structure_${String(index + 1).padStart(5, '0')}`;
+      let fileBase = safeBaseName;
+      let suffix = 2;
+      while (usedNames.has(fileBase)) {
+        fileBase = `${safeBaseName}_${suffix}`;
+        suffix += 1;
+      }
+      usedNames.add(fileBase);
 
       if (structure.svg) {
         zip.file(`${fileBase}.svg`, structure.svg);
       }
-      zip.file(`${fileBase}.txt`, structure.smiles);
-    }
+    });
+
+    zip.file('generated_smiles.txt', smilesLines.join('\n'));
 
     const zipBlob: Blob = await zip.generateAsync({ type: 'blob' });
     this.downloadFile(`${exportBase}_structures.zip`, zipBlob);
@@ -340,11 +350,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   /** Limpia un segmento de nombre de archivo: no-alfanumérico → "_", colapsa repetidos, trunca a 40 chars */
   private sanitizeFilenameSegment(name: string): string {
-    return name
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-      .slice(0, 40) || 'structure';
+    return (
+      name
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 40) || 'structure'
+    );
   }
 
   openCatalogStudioModal(): void {
@@ -849,10 +861,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.downloadReport(this.workflow.downloadLogReport.bind(this.workflow));
   }
 
-  exportError(): void {
-    this.downloadReport(this.workflow.downloadErrorReport.bind(this.workflow));
-  }
-
   toNumber(rawValue: number | string): number {
     return Number(rawValue);
   }
@@ -880,6 +888,164 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
+  }
+
+  historicalJobDisplayName(historyJob: ScientificJobView): string {
+    const jobParameters = historyJob.parameters as Record<string, unknown> | null;
+    const exportBaseName = jobParameters?.['export_name_base'];
+    if (
+      typeof exportBaseName === 'string' &&
+      exportBaseName.trim() !== '' &&
+      exportBaseName.trim().toLowerCase() !== 'smileit_run'
+    ) {
+      return exportBaseName;
+    }
+    return `Enumeration ${historyJob.id.slice(0, 8)}`;
+  }
+
+  historicalJobPrincipalSmiles(historyJob: ScientificJobView): string {
+    const jobParameters = historyJob.parameters as Record<string, unknown> | null;
+    const principalSmiles = jobParameters?.['principal_smiles'];
+    if (typeof principalSmiles === 'string' && principalSmiles.trim() !== '') {
+      return principalSmiles;
+    }
+    return 'Principal SMILES not available';
+  }
+
+  historicalJobBlockSummaries(
+    historyJob: ScientificJobView,
+  ): Array<{ label: string; positions: string; smiles: string }> {
+    const jobParameters = historyJob.parameters as Record<string, unknown> | null;
+    const rawBlocks = jobParameters?.['assignment_blocks'];
+    if (!Array.isArray(rawBlocks)) {
+      return [];
+    }
+
+    return rawBlocks.map((rawBlock: unknown, blockIndex: number) => {
+      const normalizedBlock =
+        rawBlock !== null && typeof rawBlock === 'object'
+          ? (rawBlock as Record<string, unknown>)
+          : ({} as Record<string, unknown>);
+
+      const blockLabel =
+        typeof normalizedBlock['label'] === 'string' && normalizedBlock['label'].trim() !== ''
+          ? normalizedBlock['label']
+          : `Block ${blockIndex + 1}`;
+
+      const rawPositions = normalizedBlock['site_atom_indices'];
+      const positions = Array.isArray(rawPositions)
+        ? rawPositions
+            .map((positionValue: unknown) => String(positionValue))
+            .filter((positionValue: string) => positionValue.trim() !== '')
+            .join(', ')
+        : 'Not assigned';
+
+      const rawResolvedSubstituents = normalizedBlock['resolved_substituents'];
+      const uniqueSmiles = new Set<string>();
+      if (Array.isArray(rawResolvedSubstituents)) {
+        rawResolvedSubstituents.forEach((rawSubstituent: unknown) => {
+          if (rawSubstituent === null || typeof rawSubstituent !== 'object') {
+            return;
+          }
+          const substituentSmiles = (rawSubstituent as Record<string, unknown>)['smiles'];
+          if (typeof substituentSmiles === 'string' && substituentSmiles.trim() !== '') {
+            uniqueSmiles.add(substituentSmiles.trim());
+          }
+        });
+      }
+
+      return {
+        label: blockLabel,
+        positions,
+        smiles: uniqueSmiles.size > 0 ? [...uniqueSmiles].join(' | ') : 'No substituent SMILES',
+      };
+    });
+  }
+
+  structureSubstitutionsLabel(structure: SmileitGeneratedStructureView): string {
+    const substituentNames = this.getUniqueSubstituentsForStructure(structure);
+    if (substituentNames.length === 0) {
+      return 'No explicit substituent assignment';
+    }
+    return substituentNames.join(' | ');
+  }
+
+  structureDisplayName(structure: SmileitGeneratedStructureView, index: number): string {
+    const trimmedName = structure.name.trim();
+    if (/^smileit_run_\d+$/i.test(trimmedName)) {
+      return `Derivative ${index + 1}`;
+    }
+    return trimmedName === '' ? `Derivative ${index + 1}` : trimmedName;
+  }
+
+  structureScaffoldSvg(structure: SmileitGeneratedStructureView): string {
+    const scaffoldSvg = structure.scaffoldSvg.trim();
+    return scaffoldSvg !== '' ? scaffoldSvg : structure.svg;
+  }
+
+  structurePlaceholderSvg(structure: SmileitGeneratedStructureView): string {
+    const placeholderSvg = structure.placeholderSvg.trim();
+    return placeholderSvg !== '' ? placeholderSvg : structure.svg;
+  }
+
+  placeholderAssignmentsForStructure(structure: SmileitGeneratedStructureView): Array<{
+    placeholderLabel: string;
+    siteAtomIndex: number;
+    substituentName: string;
+    substituentSmiles?: string;
+  }> {
+    if (structure.placeholderAssignments.length > 0) {
+      return structure.placeholderAssignments;
+    }
+
+    return [...structure.traceability]
+      .sort(
+        (leftEvent, rightEvent) =>
+          leftEvent.site_atom_index - rightEvent.site_atom_index ||
+          leftEvent.round_index - rightEvent.round_index ||
+          leftEvent.block_priority - rightEvent.block_priority ||
+          leftEvent.substituent_name.localeCompare(rightEvent.substituent_name) ||
+          (leftEvent.substituent_smiles ?? '').localeCompare(rightEvent.substituent_smiles ?? ''),
+      )
+      .map((traceabilityEvent, traceabilityIndex) => ({
+        placeholderLabel: `R${traceabilityIndex + 1}`,
+        siteAtomIndex: traceabilityEvent.site_atom_index,
+        substituentName: traceabilityEvent.substituent_name,
+        substituentSmiles: traceabilityEvent.substituent_smiles ?? '',
+      }));
+  }
+
+  placeholderAssignmentLabel(
+    structure: SmileitGeneratedStructureView,
+    placeholderAssignment: {
+      placeholderLabel: string;
+      siteAtomIndex: number;
+      substituentName: string;
+      substituentSmiles?: string;
+    },
+  ): string {
+    const substituentDescriptor =
+      placeholderAssignment.substituentSmiles?.trim() !== ''
+        ? placeholderAssignment.substituentSmiles?.trim()
+        : placeholderAssignment.substituentName;
+    const duplicateAssignments = this.placeholderAssignmentsForStructure(structure).filter(
+      (assignmentItem) => assignmentItem.siteAtomIndex === placeholderAssignment.siteAtomIndex,
+    );
+    const siteSuffix = duplicateAssignments.length > 1 ? ' (reused site)' : '';
+    return `${placeholderAssignment.placeholderLabel} = ${substituentDescriptor} · site ${placeholderAssignment.siteAtomIndex}${siteSuffix}`;
+  }
+
+  structurePlaceholderSummary(structure: SmileitGeneratedStructureView): string {
+    const placeholderAssignments = this.placeholderAssignmentsForStructure(structure);
+    if (placeholderAssignments.length === 0) {
+      return 'No placeholder assignments available';
+    }
+
+    return placeholderAssignments
+      .map((placeholderAssignment) =>
+        this.placeholderAssignmentLabel(structure, placeholderAssignment),
+      )
+      .join(' | ');
   }
 
   hasPayload(logEntry: JobLogEntryView): boolean {

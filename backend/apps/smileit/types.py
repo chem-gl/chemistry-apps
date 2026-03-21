@@ -205,6 +205,15 @@ class SmileitSubstituentPreview(TypedDict):
     svg: str
 
 
+class SmileitPlaceholderAssignment(TypedDict):
+    """Relación estable placeholder -> sustituyente aplicado en el derivado."""
+
+    placeholder_label: str
+    site_atom_index: int
+    substituent_name: str
+    substituent_smiles: str
+
+
 class SmileitGeneratedStructure(TypedDict):
     """Derivado generado con trazabilidad de sustituciones aplicadas."""
 
@@ -212,6 +221,8 @@ class SmileitGeneratedStructure(TypedDict):
     name: str
     svg: str
     scaffold_svg: str
+    placeholder_svg: str
+    placeholder_assignments: list[SmileitPlaceholderAssignment]
     substituent_svgs: list[SmileitSubstituentPreview]
     traceability: list[SmileitSubstitutionTraceEvent]
 

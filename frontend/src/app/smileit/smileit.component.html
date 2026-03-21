@@ -513,7 +513,8 @@
                 <div class="block-header">
                     <div class="block-title-wrap">
                         <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
-                        <input aria-label="" type="text" class="block-title-input" [ngModel]="block.label"
+                        <input type="text" class="block-title-input" [attr.aria-label]="'Block ' + (blockIndex + 1) + ' label'"
+                          placeholder="Block label" [ngModel]="block.label"
                             (ngModelChange)="workflow.updateBlockLabel(block.id, $event)"
                             [disabled]="workflow.isProcessing()" />
                     </div>
@@ -748,13 +749,49 @@
         </fieldset>
             </article>
 
+    <article class="generation-card" aria-label="Previous enumeration jobs">
+      <div class="subsection-header">
+        <div>
+          <h4>Previous enumerations</h4>
+          <p class="hint">Select a previous job to load its full derivative set on demand.</p>
+        </div>
+        <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
+          [disabled]="workflow.isHistoryLoading()">
+          {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload jobs' }}
+        </button>
+      </div>
+    
+      @if (workflow.historyJobs().length === 0) {
+      <p class="hint">No previous enumerations available yet.</p>
+      } @else {
+      <div class="block-stack">
+        @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+        <button type="button" class="block-card" (click)="openHistoricalJob(historyJob.id)">
+          <div class="block-header">
+            <div class="block-title-wrap">
+              <span class="block-priority">{{ historicalJobDisplayName(historyJob) }}</span>
+              <p class="catalog-smiles mono">{{ historicalJobPrincipalSmiles(historyJob) }}</p>
+            </div>
+            <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
+          </div>
+          <div class="block-collapsed-summary">
+            @for (blockSummary of historicalJobBlockSummaries(historyJob); track blockSummary.label + '-' + $index) {
+            <p><strong>{{ blockSummary.label }}:</strong> sites {{ blockSummary.positions }}</p>
+            <p class="catalog-smiles mono">{{ blockSummary.smiles }}</p>
+            }
+          </div>
+        </button>
+        }
+      </div>
+      }
+    </article>
+
     @if (workflow.activeSection() === 'dispatching') {
     <p class="status-message">Dispatching Smileit job...</p>
     }
 
     @if (workflow.activeSection() === 'progress') {
     <div class="progress-card">
-        <p class="job-id mono">{{ workflow.currentJobId() }}</p>
         <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()" aria-valuemin="0"
             aria-valuemax="100">
             <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
@@ -770,12 +807,8 @@
     }
 
     <div class="metadata-grid enriched-grid">
-        <p><strong>Total generated:</strong> {{ resultData.totalGenerated }}</p>
-        <p><strong>Truncated:</strong> {{ resultData.truncated ? 'Yes' : 'No' }}</p>
-        <p><strong>Selected atoms:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
-        <p><strong>Export base:</strong> {{ resultData.exportNameBase }}</p>
-        <p><strong>Padding:</strong> {{ resultData.exportPadding }}</p>
-        <p><strong>Traceability rows:</strong> {{ resultData.traceabilityRows.length }}</p>
+        <p><strong>Enumerated derivatives:</strong> {{ resultData.totalGenerated }}</p>
+        <p><strong>Reactive sites:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
         <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
     </div>
 
@@ -784,12 +817,10 @@
     <div class="action-row export-row">
         <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">CSV</button>
         <button class="btn-secondary" (click)="exportSmiles()" [disabled]="workflow.isExporting()">SMI/TXT</button>
-        <button class="btn-secondary" (click)="exportTraceability()" [disabled]="workflow.isExporting()">Traceability</button>
-        <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">LOG</button>
-        <button class="btn-secondary" (click)="exportError()" [disabled]="workflow.isExporting()">Error</button>
+                <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">LOG</button>
         <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()"
-          [disabled]="workflow.isExporting() || visibleGeneratedStructures().length === 0"
-          title="Descarga las estructuras visibles como ZIP. SVG + SMILES por molécula.">
+                    [disabled]="workflow.isExporting() || resultData.generatedStructures.length === 0"
+                                        title="Download all enumerated structures as ZIP. SVG files + one TXT with derivative SMILES.">
           ↓ Download SVGs (ZIP)
         </button>
         </div>
@@ -804,9 +835,9 @@
         <section class="structures-list-card" aria-label="Generated derivatives list">
             <div class="subsection-header">
                 <div>
-                    <h4>Generated derivatives</h4>
-                    <p class="hint">Each card shows the full derivative structure. Green&nbsp;= scaffold contribution · Blue&nbsp;=
-                        substituent used. Click any card to inspect the full SVG and traceability.</p>
+                    <h4>Enumerated derivatives</h4>
+                    <p class="hint">Each card compares the principal scaffold with the placeholder view used to identify
+                      applied substituents.</p>
                 </div>
                 <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
                     {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
@@ -814,8 +845,8 @@
             </div>
             @if (isGeneratedStructuresCollapsed()) {
             <div class="block-collapsed-summary">
-                <p><strong>Stored derivatives:</strong> {{ resultData.generatedStructures.length }}</p>
-                <p><strong>How to inspect:</strong> Expand this section to open any generated molecule card and its SVG traceability.
+                <p><strong>Available derivatives:</strong> {{ resultData.generatedStructures.length }}</p>
+                <p><strong>Inspection:</strong> Expand this section to review molecular depictions and SMILES.
                 </p>
             </div>
             } @else {
@@ -832,12 +863,31 @@
                         }
                     </div>
                 </div>
-                <div class="derivative-svg-frame">
-                  <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
+                                <div class="derivative-visual-grid">
+                                  <div class="derivative-svg-frame scaffold-frame">
+                                    <small class="derivative-visual-title">Principal scaffold</small>
+                                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureScaffoldSvg(structureItem))"></div>
+                                  </div>
+                                  <div class="derivative-svg-frame placeholder-frame">
+                                    <small class="derivative-visual-title">Placeholder map</small>
+                                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structurePlaceholderSvg(structureItem))"></div>
+                                  </div>
                 </div>
                 <div class="derivative-meta">
-                    <p class="derivative-name" [title]="structureItem.name">{{ structureItem.name }}</p>
+                                        <p class="derivative-name" [title]="structureDisplayName(structureItem, $index)">{{ structureDisplayName(structureItem,
+                                          $index) }}</p>
                     <p class="derivative-smiles mono" [title]="structureItem.smiles">{{ structureItem.smiles }}</p>
+                                        <small class="derivative-substitutions" [title]="structurePlaceholderSummary(structureItem)">
+                                          Placeholder mapping: {{ structurePlaceholderSummary(structureItem) }}
+                                        </small>
+                                        <div class="placeholder-assignment-list">
+                                          @for (placeholderAssignment of placeholderAssignmentsForStructure(structureItem); track
+                                          placeholderAssignment.placeholderLabel + '-' + placeholderAssignment.siteAtomIndex + '-' + $index) {
+                                          <span class="placeholder-assignment-pill" [title]="placeholderAssignmentLabel(structureItem, placeholderAssignment)">
+                                            {{ placeholderAssignmentLabel(structureItem, placeholderAssignment) }}
+                                          </span>
+                                          }
+                                        </div>
                     <small>{{ structureItem.traceability.length }} substitution{{ structureItem.traceability.length !== 1 ? 's' : ''
                         }}</small>
                 </div>
@@ -845,143 +895,18 @@
             }
             </div>
             @if (visibleStructuresCount() < resultData.generatedStructures.length) { <div class="show-more-row">
-              <p class="hint">Mostrando <strong>{{ visibleStructuresCount() }}</strong> de <strong>{{
-                  resultData.generatedStructures.length }}</strong> estructuras</p>
+                            <p class="hint">Showing <strong>{{ visibleStructuresCount() }}</strong> of <strong>{{
+                                resultData.generatedStructures.length }}</strong> derivatives</p>
               <button class="btn-secondary" type="button" (click)="showMoreStructures()">Show 100 more</button>
               </div>
               }
             }
         </section>
-<section class="traceability-card" aria-label="Traceability rows">
-    <h4>Traceability matrix</h4>
-    <div class="table-wrap">
-        <table class="history-table traceability-table">
-            <thead>
-                <tr>
-                    <th>Derivative</th>
-                    <th>Site</th>
-                    <th>Block</th>
-                    <th>Priority</th>
-                    <th>Substituent</th>
-                    <th>Version</th>
-                    <th>Source</th>
-                    <th>Bond</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (traceRow of resultData.traceabilityRows; track traceRow.derivative_name + '-' + $index) {
-                <tr>
-                    <td>{{ traceRow.derivative_name }}</td>
-                    <td>{{ traceRow.site_atom_index }}</td>
-                    <td>{{ traceRow.block_label }}</td>
-                    <td>{{ traceRow.block_priority }}</td>
-                    <td>{{ traceRow.substituent_name }}</td>
-                    <td>{{ traceRow.substituent_stable_id }} · v{{ traceRow.substituent_version }}</td>
-                    <td>{{ traceRow.source_kind }}</td>
-                    <td>{{ traceRow.bond_order }}</td>
-                </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</section>
     }
     }
 
     @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
     <p class="error-message" role="alert">{{ currentError }}</p>
-    }
-    </section>
-
-<section class="advanced-panel" aria-label="Advanced analysis and diagnostics">
-    <div class="panel-header-row">
-        <div>
-            <h3>Advanced analysis and diagnostics</h3>
-            <p class="panel-caption">
-                Keep optional workflows here: execution logs and historical job access.
-            </p>
-        </div>
-        <button class="btn-secondary" type="button" (click)="toggleAdvancedSectionCollapse()">
-            {{ isAdvancedSectionCollapsed() ? 'Expand advanced section' : 'Hide advanced section' }}
-        </button>
-    </div>
-
-    @if (isAdvancedSectionCollapsed()) {
-    <article class="collapsed-panel-card" aria-label="Advanced section collapsed summary">
-        <div class="metadata-grid">
-            <p><strong>Stored logs:</strong> {{ workflow.jobLogs().length }}</p>
-            <p><strong>Historical jobs:</strong> {{ workflow.historyJobs().length }}</p>
-        </div>
-    </article>
-    } @else {
-    <div class="advanced-grid">
-        @if (workflow.jobLogs().length > 0) {
-        <section class="logs-card" aria-label="Execution logs">
-            <div class="subsection-header">
-                <div>
-                    <h3>Execution logs</h3>
-                    <p class="hint">Review runtime progress messages, warnings, payload snapshots, and execution diagnostics.
-                    </p>
-                    </div>
-                    <button class="btn-secondary small" type="button" (click)="toggleLogsCollapse()">
-                        {{ isLogsCollapsed() ? 'Expand section' : 'Minimize section' }}
-                    </button>
-            </div>
-            @if (isLogsCollapsed()) {
-            <div class="block-collapsed-summary">
-                <p><strong>Stored log entries:</strong> {{ workflow.jobLogs().length }}</p>
-                <p><strong>Latest event:</strong> #{{ workflow.jobLogs()[workflow.jobLogs().length - 1].eventIndex }}</p>
-            </div>
-            } @else {
-            <pre class="logs-textbox" aria-label="Execution logs">{{ logsAsText() }}</pre>
-            }
-            </section>
-            }
-
-        <section class="history-card" aria-label="Historical Smileit jobs">
-            <div class="history-header">
-                <h3>Historical jobs</h3>
-                <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-                    {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-                </button>
-            </div>
-
-            @if (workflow.historyJobs().length === 0) {
-            <p class="status-message">No historical Smileit jobs yet.</p>
-            } @else {
-            <div class="table-wrap">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Job ID</th>
-                            <th>Status</th>
-                            <th>Progress</th>
-                            <th>Updated</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-                        <tr>
-                            <td class="mono">{{ historyJob.id }}</td>
-                            <td>
-                                <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-                            </td>
-                            <td>{{ historyJob.progress_percentage }}%</td>
-                            <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                            <td>
-                                <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                                    Open
-                                </button>
-                            </td>
-                        </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            }
-            </section>
-    </div>
     }
     </section>
 
@@ -1171,7 +1096,7 @@
             (click)="$event.stopPropagation()">
             <header class="structure-modal-header">
                 <div class="structure-modal-title-area">
-                    <h4 class="structure-modal-name">{{ selectedStructure.name }}</h4>
+                    <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>
                     <div class="derivative-legend derivative-legend-modal">
                         <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
                         @for (substituentName of getUniqueSubstituentsForStructure(selectedStructure); track substituentName) {
@@ -1179,43 +1104,29 @@
                         }
                     </div>
                     <p class="derivative-smiles mono" [title]="selectedStructure.smiles">{{ selectedStructure.smiles }}</p>
+                    <div class="placeholder-assignment-list modal-placeholder-list">
+                      @for (placeholderAssignment of placeholderAssignmentsForStructure(selectedStructure); track
+                      placeholderAssignment.placeholderLabel + '-' + placeholderAssignment.siteAtomIndex + '-' + $index) {
+                      <span class="placeholder-assignment-pill"
+                        [title]="placeholderAssignmentLabel(selectedStructure, placeholderAssignment)">
+                        {{ placeholderAssignmentLabel(selectedStructure, placeholderAssignment) }}
+                      </span>
+                      }
+                    </div>
                 </div>
                 <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">Close</button>
             </header>
 
-            <div class="structure-modal-svg" [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
-            <section class="traceability-card compact-traceability" aria-label="Per-structure traceability">
-                <h4>Per-structure traceability</h4>
-                <div class="table-wrap">
-                    <table class="history-table traceability-table">
-                        <thead>
-                            <tr>
-                                <th>Round</th>
-                                <th>Site</th>
-                                <th>Block</th>
-                                <th>Substituent</th>
-                                <th>Version</th>
-                                <th>Source</th>
-                                <th>Bond</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (traceEvent of selectedStructure.traceability; track traceEvent.site_atom_index + '-' +
-                            $index) {
-                            <tr>
-                                <td>{{ traceEvent.round_index }}</td>
-                                <td>{{ traceEvent.site_atom_index }}</td>
-                                <td>{{ traceEvent.block_label }}</td>
-                                <td>{{ traceEvent.substituent_name }}</td>
-                                <td>{{ traceEvent.substituent_stable_id }} · v{{ traceEvent.substituent_version }}</td>
-                                <td>{{ traceEvent.source_kind }}</td>
-                                <td>{{ traceEvent.bond_order }}</td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+            <div class="structure-modal-visual-grid">
+              <div class="structure-modal-svg structure-modal-panel">
+                <h5>Principal scaffold</h5>
+                <div [innerHTML]="toTrustedSvg(structureScaffoldSvg(selectedStructure))"></div>
+              </div>
+              <div class="structure-modal-svg structure-modal-panel">
+                <h5>Applied placeholders</h5>
+                <div [innerHTML]="toTrustedSvg(structurePlaceholderSvg(selectedStructure))"></div>
+              </div>
+            </div>
         </section>
     }
     </dialog>

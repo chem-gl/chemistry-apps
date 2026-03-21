@@ -10,6 +10,8 @@ Cómo se usa:
 
 from __future__ import annotations
 
+import csv
+from io import StringIO
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -312,7 +314,13 @@ class SmileitJobBlockTests(TestCase):
         generated_structures = job_results.get("generated_structures", [])
         self.assertGreaterEqual(len(generated_structures), 1)
         self.assertIn("scaffold_svg", generated_structures[0])
+        self.assertIn("placeholder_svg", generated_structures[0])
+        self.assertIn("placeholder_assignments", generated_structures[0])
         self.assertIn("substituent_svgs", generated_structures[0])
+        self.assertTrue(
+            generated_structures[0]["placeholder_svg"].startswith("<?xml")
+            or generated_structures[0]["placeholder_svg"].startswith("<svg")
+        )
 
     def test_overlapped_blocks_generate_union_permutations_per_site(self) -> None:
         """Sitio cubierto por múltiples bloques debe combinar todas las opciones efectivas."""
@@ -720,16 +728,44 @@ class SmileitExportTests(TestCase):
         JobService.run_job(job_id)
         return str(job_id)
 
-    def test_report_smiles_returns_enumerated_format(self) -> None:
-        """El export principal debe entregar NAME y líneas NAME_XXXXX SMILES."""
+    def test_report_smiles_returns_enumerated_smiles_lines(self) -> None:
+        """El export SMI/TXT debe listar principal primero y luego solo SMILES derivados."""
         job_id = self._create_completed_job()
 
         response = self.client.get(f"{APP_API_BASE_PATH}{job_id}/report-smiles/")
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
+        content_lines = [line for line in content.splitlines() if line.strip() != ""]
 
-        self.assertTrue(content.startswith("SMILEIT_SERIES"))
-        self.assertIn("SMILEIT_SERIES_00001", content)
+        self.assertGreaterEqual(len(content_lines), 2)
+        self.assertEqual(content_lines[0], "c1ccccc1")
+
+    def test_report_csv_returns_compact_chemical_columns(self) -> None:
+        """El CSV principal debe compactar principal, sustituyentes, posiciones y derivado."""
+        job_id = self._create_completed_job()
+
+        response = self.client.get(f"{APP_API_BASE_PATH}{job_id}/report-csv/")
+        self.assertEqual(response.status_code, 200)
+
+        parsed_rows = list(csv.DictReader(StringIO(response.content.decode("utf-8"))))
+        self.assertGreaterEqual(len(parsed_rows), 1)
+
+        first_row = parsed_rows[0]
+        self.assertEqual(
+            list(first_row.keys()),
+            [
+                "compound_name",
+                "principal_smiles",
+                "substituent_smiles",
+                "applied_positions",
+                "generated_smiles",
+            ],
+        )
+        self.assertEqual(first_row["principal_smiles"], "c1ccccc1")
+        self.assertNotEqual(first_row["substituent_smiles"], "")
+        self.assertNotEqual(first_row["applied_positions"], "")
+        self.assertNotEqual(first_row["generated_smiles"], "")
+        self.assertIn(first_row["principal_smiles"], first_row["compound_name"])
 
     def test_report_traceability_returns_csv(self) -> None:
         """Debe exportar trazabilidad tabular para auditoría de sustituciones."""
@@ -826,6 +862,13 @@ class SmileitLegacyJobCompatibilityTests(TestCase):
         )
         self.assertEqual(
             payload["results"]["generated_structures"][0]["scaffold_svg"], ""
+        )
+        self.assertEqual(
+            payload["results"]["generated_structures"][0]["placeholder_svg"], ""
+        )
+        self.assertEqual(
+            payload["results"]["generated_structures"][0]["placeholder_assignments"],
+            [],
         )
         self.assertEqual(
             payload["results"]["generated_structures"][0]["substituent_svgs"],

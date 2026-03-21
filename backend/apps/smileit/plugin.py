@@ -34,10 +34,12 @@ from .engine import (
     fuse_molecules,
     is_fusion_candidate_viable,
     render_molecule_svg,
+    render_molecule_svg_with_atom_labels,
 )
 from .types import (
     SmileitGeneratedStructure,
     SmileitInput,
+    SmileitPlaceholderAssignment,
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
     SmileitResult,
@@ -216,6 +218,55 @@ def _build_substituent_previews(
         previews.append(cached_preview)
 
     return previews
+
+
+def _sort_traceability_events(
+    traceability: list[SmileitSubstitutionTraceEvent],
+) -> list[SmileitSubstitutionTraceEvent]:
+    """Ordena la trazabilidad con una regla estable para UI y exportes químicos."""
+    return sorted(
+        traceability,
+        key=lambda event: (
+            event["site_atom_index"],
+            event["round_index"],
+            event["block_priority"],
+            event["substituent_name"],
+            event["substituent_smiles"],
+        ),
+    )
+
+
+def _build_placeholder_assignments(
+    traceability: list[SmileitSubstitutionTraceEvent],
+) -> list[SmileitPlaceholderAssignment]:
+    """Construye placeholders `R1`, `R2`, ... alineados con la traza química."""
+    placeholder_assignments: list[SmileitPlaceholderAssignment] = []
+
+    for placeholder_index, event in enumerate(
+        _sort_traceability_events(traceability), start=1
+    ):
+        placeholder_assignments.append(
+            SmileitPlaceholderAssignment(
+                placeholder_label=f"R{placeholder_index}",
+                site_atom_index=event["site_atom_index"],
+                substituent_name=event["substituent_name"],
+                substituent_smiles=event["substituent_smiles"],
+            )
+        )
+
+    return placeholder_assignments
+
+
+def _build_placeholder_svg(
+    principal_smiles: str,
+    placeholder_assignments: list[SmileitPlaceholderAssignment],
+) -> str:
+    """Renderiza el principal con placeholders sobre los sitios sustituidos."""
+    atom_labels: dict[int, str] = {
+        assignment["site_atom_index"]: assignment["placeholder_label"]
+        for assignment in placeholder_assignments
+    }
+    return render_molecule_svg_with_atom_labels(principal_smiles, atom_labels)
 
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
@@ -445,12 +496,18 @@ def _materialize_generated_structures(
     generated_structures: list[SmileitGeneratedStructure] = []
 
     for candidate_index, candidate in enumerate(generated_candidates, start=1):
+        placeholder_assignments = _build_placeholder_assignments(candidate.traceability)
         generated_structures.append(
             SmileitGeneratedStructure(
                 smiles=candidate.smiles,
                 name=candidate.name,
                 svg=_tint_svg(rendered_smiles_map.get(candidate.smiles, ""), "#1d4ed8"),
                 scaffold_svg=principal_svg,
+                placeholder_svg=_build_placeholder_svg(
+                    principal_smiles,
+                    placeholder_assignments,
+                ),
+                placeholder_assignments=placeholder_assignments,
                 substituent_svgs=_build_substituent_previews(
                     candidate.traceability,
                     preview_cache,

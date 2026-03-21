@@ -545,6 +545,20 @@ class SmileitSubstituentPreviewSerializer(serializers.Serializer):
     svg = serializers.CharField()
 
 
+class SmileitPlaceholderAssignmentSerializer(serializers.Serializer):
+    """Relación placeholder -> sustituyente para la lectura química del derivado."""
+
+    placeholder_label = serializers.CharField(max_length=20)
+    site_atom_index = serializers.IntegerField(min_value=0)
+    substituent_name = serializers.CharField(max_length=MAX_SUBSTITUENT_NAME_LENGTH)
+    substituent_smiles = serializers.CharField(
+        max_length=MAX_SUBSTITUENT_SMILES_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+
+
 class SmileitGeneratedStructureSerializer(serializers.Serializer):
     """Derivado generado con representación SVG y trazabilidad interna."""
 
@@ -552,6 +566,14 @@ class SmileitGeneratedStructureSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=500)
     svg = serializers.CharField()
     scaffold_svg = serializers.CharField(required=False, allow_blank=True, default="")
+    placeholder_svg = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    placeholder_assignments = SmileitPlaceholderAssignmentSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
     substituent_svgs = SmileitSubstituentPreviewSerializer(
         many=True,
         required=False,

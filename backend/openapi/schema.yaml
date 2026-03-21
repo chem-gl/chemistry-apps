@@ -4501,6 +4501,13 @@ components:
         scaffold_svg:
           type: string
           default: ''
+        placeholder_svg:
+          type: string
+          default: ''
+        placeholder_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitPlaceholderAssignment'
         substituent_svgs:
           type: array
           items:
@@ -4552,9 +4559,6 @@ components:
           maximum: 1
           minimum: 1
           default: 1
-        allow_repeated:
-          type: boolean
-          default: false
         max_structures:
           type: integer
           minimum: 0
@@ -4838,6 +4842,28 @@ components:
       - pattern_type
       - stable_id
       - version
+    SmileitPlaceholderAssignment:
+      type: object
+      description: Relación placeholder -> sustituyente para la lectura química del
+        derivado.
+      properties:
+        placeholder_label:
+          type: string
+          maxLength: 20
+        site_atom_index:
+          type: integer
+          minimum: 0
+        substituent_name:
+          type: string
+          maxLength: 120
+        substituent_smiles:
+          type: string
+          default: ''
+          maxLength: 2000
+      required:
+      - placeholder_label
+      - site_atom_index
+      - substituent_name
     SmileitQuickProperties:
       type: object
       description: Propiedades rápidas para decisiones de química medicinal.

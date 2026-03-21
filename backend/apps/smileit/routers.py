@@ -85,21 +85,69 @@ def _escape_csv_cell(raw_value: str) -> str:
     return escaped_value
 
 
+def _build_pipe_joined_values(raw_values: list[str]) -> str:
+    """Une valores no vacíos con `|` preservando orden y evitando repetición consecutiva."""
+    normalized_values: list[str] = []
+    for raw_value in raw_values:
+        cleaned_value = raw_value.strip()
+        if cleaned_value == "":
+            continue
+        normalized_values.append(cleaned_value)
+    return "|".join(normalized_values)
+
+
+def _build_compound_name(
+    principal_smiles: str,
+    substituent_smiles: str,
+    applied_positions: str,
+) -> str:
+    """Construye un nombre compuesto legible a partir de los SMILES componentes."""
+    if substituent_smiles == "":
+        return principal_smiles
+    if applied_positions == "":
+        return f"{principal_smiles} + {substituent_smiles}"
+    return f"{principal_smiles} + {substituent_smiles} @ {applied_positions}"
+
+
 def _build_structures_csv(job: ScientificJob) -> str:
-    """Construye CSV de estructuras generadas con nombre y SMILES."""
+    """Construye CSV químico compacto con una fila por derivado."""
     results_payload = cast(SmileitResult, job.results)
     structures = results_payload.get("generated_structures", [])
+    principal_smiles = str(results_payload.get("principal_smiles", ""))
 
-    lines: list[str] = ["index,name,smiles,traceability_events"]
-    for index_value, structure in enumerate(structures, start=1):
-        traceability_size = len(structure.get("traceability", []))
+    lines: list[str] = [
+        "compound_name,principal_smiles,substituent_smiles,applied_positions,generated_smiles"
+    ]
+
+    for structure in structures:
+        traceability = sorted(
+            structure.get("traceability", []),
+            key=lambda event: (
+                int(event.get("site_atom_index", 0)),
+                int(event.get("round_index", 0)),
+                int(event.get("block_priority", 0)),
+                str(event.get("substituent_name", "")),
+            ),
+        )
+        substituent_smiles = _build_pipe_joined_values(
+            [str(event.get("substituent_smiles", "")) for event in traceability]
+        )
+        applied_positions = _build_pipe_joined_values(
+            [str(event.get("site_atom_index", "")) for event in traceability]
+        )
+        compound_name = _build_compound_name(
+            principal_smiles=principal_smiles,
+            substituent_smiles=substituent_smiles,
+            applied_positions=applied_positions,
+        )
         lines.append(
             ",".join(
                 [
-                    _escape_csv_cell(str(index_value)),
-                    _escape_csv_cell(structure.get("name", "")),
-                    _escape_csv_cell(structure.get("smiles", "")),
-                    _escape_csv_cell(str(traceability_size)),
+                    _escape_csv_cell(compound_name),
+                    _escape_csv_cell(principal_smiles),
+                    _escape_csv_cell(substituent_smiles),
+                    _escape_csv_cell(applied_positions),
+                    _escape_csv_cell(str(structure.get("smiles", ""))),
                 ]
             )
         )
@@ -142,16 +190,14 @@ def _build_traceability_csv(job: ScientificJob) -> str:
 
 
 def _build_enumerated_smiles_export(job: ScientificJob) -> str:
-    """Construye export principal NAME + NAME_XXXXX SMILES para DataWarrior."""
+    """Construye export SMILES: principal primero y luego solo derivados."""
     results_payload = cast(SmileitResult, job.results)
     structures = results_payload.get("generated_structures", [])
-    export_name_base = str(results_payload.get("export_name_base", "SMILEIT"))
-    export_padding = int(results_payload.get("export_padding", 5))
+    principal_smiles = str(results_payload.get("principal_smiles", ""))
 
-    lines: list[str] = [export_name_base]
-    for index_value, structure in enumerate(structures, start=1):
-        derivative_name = f"{export_name_base}_{index_value:0{export_padding}d}"
-        lines.append(f"{derivative_name} {structure.get('smiles', '')}")
+    lines: list[str] = [principal_smiles]
+    for structure in structures:
+        lines.append(str(structure.get("smiles", "")))
     return "\n".join(lines)
 
 

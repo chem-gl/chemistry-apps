@@ -58,6 +58,7 @@ export * from './smileitParameters';
 export * from './smileitPatternEntry';
 export * from './smileitPatternEntryCreateRequest';
 export * from './smileitPatternReference';
+export * from './smileitPlaceholderAssignment';
 export * from './smileitQuickProperties';
 export * from './smileitResolvedAssignmentBlock';
 export * from './smileitResolvedSubstituent';
