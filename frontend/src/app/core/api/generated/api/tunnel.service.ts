@@ -117,8 +117,8 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
     }
 
     /**
-     * Descargar Reporte CSV de Tunnel
-     * Descarga CSV con entradas del cálculo y salida final (U, Alpha1, Alpha2, G, Kappa). Solo aplica para jobs completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/tunnel/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -168,8 +168,8 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
     }
 
     /**
-     * Descargar Reporte de Error de Tunnel
-     * Descarga reporte de error con parámetros de entrada y traza de fallo. Solo aplica para jobs failed con error_trace persistido.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/tunnel/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -219,8 +219,8 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
     }
 
     /**
-     * Descargar Reporte LOG de Tunnel
-     * Descarga un log técnico con parámetros, resultados y eventos de entrada capturados para auditoría del cálculo Tunnel.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/tunnel/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -270,17 +270,17 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
     }
 
     /**
-     * Consultar Job de Tunnel
+     * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/tunnel/jobs/{id}/
-     * @param id UUID del job de Tunnel.
+     * @param id UUID del job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public tunnelJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TunnelJobResponse>;
-    public tunnelJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TunnelJobResponse>>;
-    public tunnelJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TunnelJobResponse>>;
+    public tunnelJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public tunnelJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public tunnelJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
     public tunnelJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling tunnelJobsRetrieve.');
@@ -318,7 +318,7 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
 
         let localVarPath = `/api/tunnel/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<TunnelJobResponse>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

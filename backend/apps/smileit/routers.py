@@ -1,12 +1,12 @@
-"""routers.py: Endpoints HTTP profesionales para Smile-it.
+"""routers.py: Endpoints HTTP dedicados para Smile-it.
 
-Objetivo del archivo:
-- Exponer CRUD de catálogos/patrones y endpoints de jobs con asignación flexible
-  por bloques, trazabilidad completa y exportes reproducibles.
-
-Cómo se usa:
-- Frontend consume estos endpoints para inspección, configuración y ejecución.
-- El core de jobs mantiene estado/progreso/logs y este router delega ejecución.
+Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
+(retrieve, report-csv, report-log, report-error) y define adicionalmente:
+1. CRUD de catálogos/patrones/categorías para configuración de sustituyentes.
+2. inspect_structure() para inspección rápida de molécula SMILES.
+3. create() con resolución de bloques de asignación y validación de cobertura.
+4. build_csv_content() con CSV químico de estructuras derivadas.
+5. report_smiles() y report_traceability() como exportes adicionales.
 """
 
 from __future__ import annotations
@@ -27,13 +27,13 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.base_router import ScientificAppViewSetMixin
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
 from apps.core.reporting import (
     build_download_filename,
-    build_job_error_report,
-    build_job_log_report,
     build_text_download_response,
+    escape_csv_cell,
     validate_job_for_csv_report,
 )
 from apps.core.schemas import ErrorResponseSerializer
@@ -75,14 +75,6 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _escape_csv_cell(raw_value: str) -> str:
-    """Escapa una celda CSV para exportación segura y reproducible."""
-    escaped_value = raw_value.replace('"', '""')
-    if any(separator in escaped_value for separator in [",", "\n", "\r", '"']):
-        return f'"{escaped_value}"'
-    return escaped_value
 
 
 def _build_pipe_joined_values(raw_values: list[str]) -> str:
@@ -143,11 +135,11 @@ def _build_structures_csv(job: ScientificJob) -> str:
         lines.append(
             ",".join(
                 [
-                    _escape_csv_cell(compound_name),
-                    _escape_csv_cell(principal_smiles),
-                    _escape_csv_cell(substituent_smiles),
-                    _escape_csv_cell(applied_positions),
-                    _escape_csv_cell(str(structure.get("smiles", ""))),
+                    escape_csv_cell(compound_name),
+                    escape_csv_cell(principal_smiles),
+                    escape_csv_cell(substituent_smiles),
+                    escape_csv_cell(applied_positions),
+                    escape_csv_cell(str(structure.get("smiles", ""))),
                 ]
             )
         )
@@ -170,18 +162,18 @@ def _build_traceability_csv(job: ScientificJob) -> str:
         lines.append(
             ",".join(
                 [
-                    _escape_csv_cell(str(row.get("derivative_name", ""))),
-                    _escape_csv_cell(str(row.get("derivative_smiles", ""))),
-                    _escape_csv_cell(str(row.get("round_index", ""))),
-                    _escape_csv_cell(str(row.get("site_atom_index", ""))),
-                    _escape_csv_cell(str(row.get("block_label", ""))),
-                    _escape_csv_cell(str(row.get("block_priority", ""))),
-                    _escape_csv_cell(str(row.get("substituent_name", ""))),
-                    _escape_csv_cell(str(row.get("substituent_smiles", ""))),
-                    _escape_csv_cell(str(row.get("substituent_stable_id", ""))),
-                    _escape_csv_cell(str(row.get("substituent_version", ""))),
-                    _escape_csv_cell(str(row.get("source_kind", ""))),
-                    _escape_csv_cell(str(row.get("bond_order", ""))),
+                    escape_csv_cell(str(row.get("derivative_name", ""))),
+                    escape_csv_cell(str(row.get("derivative_smiles", ""))),
+                    escape_csv_cell(str(row.get("round_index", ""))),
+                    escape_csv_cell(str(row.get("site_atom_index", ""))),
+                    escape_csv_cell(str(row.get("block_label", ""))),
+                    escape_csv_cell(str(row.get("block_priority", ""))),
+                    escape_csv_cell(str(row.get("substituent_name", ""))),
+                    escape_csv_cell(str(row.get("substituent_smiles", ""))),
+                    escape_csv_cell(str(row.get("substituent_stable_id", ""))),
+                    escape_csv_cell(str(row.get("substituent_version", ""))),
+                    escape_csv_cell(str(row.get("source_kind", ""))),
+                    escape_csv_cell(str(row.get("bond_order", ""))),
                 ]
             )
         )
@@ -398,11 +390,18 @@ def _validate_effective_coverage(
 
 
 @extend_schema(tags=["Smileit"])
-class SmileitJobViewSet(viewsets.ViewSet):
-    """Endpoints de Smile-it para inspección, configuración y jobs ejecutables."""
+class SmileitJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
+    """Endpoints de Smile-it. Hereda retrieve y reportes del mixin."""
 
+    plugin_name = PLUGIN_NAME
+    response_serializer_class = SmileitJobResponseSerializer
+    csv_report_suffix = "structures"
     queryset = ScientificJob.objects.filter(plugin_name=PLUGIN_NAME)
     lookup_field = "id"
+
+    def build_csv_content(self, job: ScientificJob) -> str:
+        """Delega a _build_structures_csv para CSV químico por derivado."""
+        return _build_structures_csv(job)
 
     @extend_schema(
         summary="Listar Categorías Químicas de Smile-it",
@@ -638,60 +637,6 @@ class SmileitJobViewSet(viewsets.ViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        summary="Consultar Job Smile-it",
-        parameters=[
-            OpenApiParameter(
-                name="id",
-                type=str,
-                location=OpenApiParameter.PATH,
-                description="UUID del job Smile-it.",
-            )
-        ],
-        responses={
-            200: SmileitJobResponseSerializer,
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    def retrieve(self, request: Request, id: str | None = None) -> Response:
-        """Recupera estado/resultados de un job Smile-it."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        response_serializer = SmileitJobResponseSerializer(job)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        summary="Descargar CSV de Estructuras Smile-it",
-        responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY),
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-            409: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-csv")
-    def report_csv(
-        self, request: Request, id: str | None = None
-    ) -> HttpResponse | Response:
-        """Descarga CSV de estructuras derivadas para análisis tabular."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        validation_error = validate_job_for_csv_report(job)
-        if validation_error is not None:
-            return Response(
-                {"detail": validation_error}, status=status.HTTP_409_CONFLICT
-            )
-
-        content = _build_structures_csv(job)
-        filename = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="structures",
-            extension="csv",
-        )
-        return build_text_download_response(
-            content=content,
-            filename=filename,
-            content_type="text/csv; charset=utf-8",
-        )
-
-    @extend_schema(
         summary="Descargar Export Principal SMILES Enumerado",
         responses={
             200: OpenApiResponse(response=OpenApiTypes.BINARY),
@@ -757,66 +702,4 @@ class SmileitJobViewSet(viewsets.ViewSet):
             content=content,
             filename=filename,
             content_type="text/csv; charset=utf-8",
-        )
-
-    @extend_schema(
-        summary="Descargar Reporte LOG de Smile-it",
-        responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY),
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-log")
-    def report_log(self, request: Request, id: str | None = None) -> HttpResponse:
-        """Descarga reporte técnico completo con logs y resumen de resultados."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-
-        csv_content: str | None = None
-        if validate_job_for_csv_report(job) is None:
-            csv_content = _build_structures_csv(job)
-
-        report_content = build_job_log_report(job=job, csv_content=csv_content)
-        filename = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="report",
-            extension="log",
-        )
-        return build_text_download_response(
-            content=report_content,
-            filename=filename,
-            content_type="text/plain; charset=utf-8",
-        )
-
-    @extend_schema(
-        summary="Descargar Reporte de Error Smile-it",
-        responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY),
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-            409: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-error")
-    def report_error(
-        self, request: Request, id: str | None = None
-    ) -> HttpResponse | Response:
-        """Descarga reporte de error cuando el job Smile-it falla."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        error_content = build_job_error_report(job)
-        if error_content is None:
-            return Response(
-                {"detail": "El job no tiene un error exportable o no ha fallado."},
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        filename = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="error",
-            extension="log",
-        )
-        return build_text_download_response(
-            content=error_content,
-            filename=filename,
-            content_type="text/plain; charset=utf-8",
         )

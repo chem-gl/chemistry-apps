@@ -33,35 +33,35 @@ export interface CalculatorServiceInterface {
     calculatorJobsCreate(calculatorJobCreateRequest: CalculatorJobCreateRequest, extraHttpRequestParams?: any): Observable<CalculatorJobResponse>;
 
     /**
-     * Descargar Reporte CSV de Calculadora
-     * Descarga un CSV con operación usada, operandos y resultado final. Solo aplica para jobs en estado completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/calculator/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     calculatorJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error de Calculadora
-     * Descarga un reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/calculator/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
     calculatorJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Calculadora
-     * Descarga un log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/calculator/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
     calculatorJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job de Calculadora
-     * Devuelve estado y resultado del job de calculadora por UUID.
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/calculator/jobs/{id}/
-     * @param id UUID del job de calculadora.
+     * @param id UUID del job.
      */
-    calculatorJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<CalculatorJobResponse>;
+    calculatorJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }

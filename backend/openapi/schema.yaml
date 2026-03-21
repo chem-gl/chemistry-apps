@@ -94,14 +94,14 @@ paths:
   /api/calculator/jobs/{id}/:
     get:
       operationId: calculator_jobs_retrieve
-      description: Devuelve estado y resultado del job de calculadora por UUID.
-      summary: Consultar Job de Calculadora
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job de calculadora.
+        description: UUID del job.
         required: true
       tags:
       - Calculator
@@ -111,23 +111,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CalculatorJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de calculadora no encontrado.
+          description: ''
   /api/calculator/jobs/{id}/report-csv/:
     get:
       operationId: calculator_jobs_report_csv_retrieve
-      description: Descarga un CSV con operación usada, operandos y resultado final.
-        Solo aplica para jobs en estado completed.
-      summary: Descargar Reporte CSV de Calculadora
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -149,25 +144,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV construido desde resultados del job.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de calculadora no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/calculator/jobs/{id}/report-error/:
     get:
       operationId: calculator_jobs_report_error_retrieve
-      description: Descarga un reporte de error para jobs failed con error_trace.
-        Incluye parámetros de entrada y detalle del fallo.
-      summary: Descargar Reporte de Error de Calculadora
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -189,25 +184,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con contexto del error.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de calculadora no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/calculator/jobs/{id}/report-log/:
     get:
       operationId: calculator_jobs_report_log_retrieve
-      description: Descarga un log técnico con parámetros de entrada, estado, resultados
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
         y eventos de ejecución.
-      summary: Descargar Reporte LOG de Calculadora
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -229,13 +224,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad del job.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de calculadora no encontrado.
+          description: ''
   /api/easy-rate/jobs/:
     post:
       operationId: easy_rate_jobs_create
@@ -280,13 +275,13 @@ paths:
     get:
       operationId: easy_rate_jobs_retrieve
       description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job Easy-rate
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job Easy-rate.
+        description: UUID del job.
         required: true
       tags:
       - EasyRate
@@ -296,23 +291,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasyRateJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Easy-rate no encontrado.
+          description: ''
   /api/easy-rate/jobs/{id}/report-csv/:
     get:
       operationId: easy_rate_jobs_report_csv_retrieve
-      description: Descarga CSV con parámetros clave y resultados principales. Solo
-        aplica para jobs completed.
-      summary: Descargar Reporte CSV de Easy-rate
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -334,24 +324,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV generado a partir del job Easy-rate.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Easy-rate no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/easy-rate/jobs/{id}/report-error/:
     get:
       operationId: easy_rate_jobs_report_error_retrieve
-      description: Descarga reporte de error con parámetros y traza de fallo.
-      summary: Descargar Reporte de Error de Easy-rate
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -373,19 +364,19 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con detalle del fallo del job.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Easy-rate no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/easy-rate/jobs/{id}/report-inputs/:
     get:
       operationId: easy_rate_jobs_report_inputs_retrieve
@@ -429,8 +420,9 @@ paths:
   /api/easy-rate/jobs/{id}/report-log/:
     get:
       operationId: easy_rate_jobs_report_log_retrieve
-      description: Descarga log técnico con parámetros, resultados y eventos persistidos.
-      summary: Descargar Reporte LOG de Easy-rate
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -452,13 +444,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad completa del job.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Easy-rate no encontrado.
+          description: ''
   /api/easy-rate/jobs/inspect-input/:
     post:
       operationId: easy_rate_jobs_inspect_input_create
@@ -992,13 +984,13 @@ paths:
     get:
       operationId: marcus_jobs_retrieve
       description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job Marcus
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job Marcus.
+        description: UUID del job.
         required: true
       tags:
       - Marcus
@@ -1008,22 +1000,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarcusJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Marcus no encontrado.
+          description: ''
   /api/marcus/jobs/{id}/report-csv/:
     get:
       operationId: marcus_jobs_report_csv_retrieve
-      description: Descarga CSV de resultados principales para jobs completed.
-      summary: Descargar Reporte CSV de Marcus
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -1045,24 +1033,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV generado a partir del job Marcus.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Marcus no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/marcus/jobs/{id}/report-error/:
     get:
       operationId: marcus_jobs_report_error_retrieve
-      description: Descarga reporte de error para jobs failed con traza persistida.
-      summary: Descargar Reporte de Error de Marcus
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -1084,19 +1073,19 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con detalle del fallo del job.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Marcus no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/marcus/jobs/{id}/report-inputs/:
     get:
       operationId: marcus_jobs_report_inputs_retrieve
@@ -1140,8 +1129,9 @@ paths:
   /api/marcus/jobs/{id}/report-log/:
     get:
       operationId: marcus_jobs_report_log_retrieve
-      description: Descarga log técnico de parámetros, resultados y eventos.
-      summary: Descargar Reporte LOG de Marcus
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -1163,13 +1153,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad completa del job.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Marcus no encontrado.
+          description: ''
   /api/molar-fractions/jobs/:
     post:
       operationId: molar_fractions_jobs_create
@@ -1241,13 +1231,13 @@ paths:
     get:
       operationId: molar_fractions_jobs_retrieve
       description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job de Molar Fractions
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job de molar_fractions.
+        description: UUID del job.
         required: true
       tags:
       - MolarFractions
@@ -1257,23 +1247,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MolarFractionsJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de molar_fractions no encontrado.
+          description: ''
   /api/molar-fractions/jobs/{id}/report-csv/:
     get:
       operationId: molar_fractions_jobs_report_csv_retrieve
-      description: Descarga un CSV con filas de pH, columnas f0..fn y sum_fraction.
-        Solo aplica para jobs en estado completed.
-      summary: Descargar Reporte CSV de Molar Fractions
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -1295,25 +1280,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV generado a partir de resultados del job.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de molar_fractions no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/molar-fractions/jobs/{id}/report-error/:
     get:
       operationId: molar_fractions_jobs_report_error_retrieve
-      description: Descarga un reporte de error con parámetros de entrada y traza
-        de fallo. Solo aplica para jobs en estado failed con error_trace persistido.
-      summary: Descargar Reporte de Error de Molar Fractions
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -1335,26 +1320,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con detalle del fallo del job.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de molar_fractions no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/molar-fractions/jobs/{id}/report-log/:
     get:
       operationId: molar_fractions_jobs_report_log_retrieve
-      description: Descarga un log técnico con metadata del job, parámetros de entrada,
-        snapshot de resultados y eventos persistidos. Si el job está completed, incluye
-        además un bloque CSV embebido.
-      summary: Descargar Reporte LOG de Molar Fractions
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -1376,13 +1360,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad completa del job.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de molar_fractions no encontrado.
+          description: ''
   /api/random-numbers/jobs/:
     post:
       operationId: random_numbers_jobs_create
@@ -1440,14 +1424,14 @@ paths:
   /api/random-numbers/jobs/{id}/:
     get:
       operationId: random_numbers_jobs_retrieve
-      description: Devuelve estado y resultado de random_numbers por UUID.
-      summary: Consultar Job de Números Aleatorios
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job random_numbers.
+        description: UUID del job.
         required: true
       tags:
       - RandomNumbers
@@ -1457,23 +1441,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RandomNumbersJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job random_numbers no encontrado.
+          description: ''
   /api/random-numbers/jobs/{id}/report-csv/:
     get:
       operationId: random_numbers_jobs_report_csv_retrieve
-      description: Descarga un CSV con índice secuencial y números generados. Solo
-        aplica para jobs en estado completed.
-      summary: Descargar Reporte CSV de Random Numbers
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -1495,25 +1474,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV construido desde resultados del job.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job random_numbers no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/random-numbers/jobs/{id}/report-error/:
     get:
       operationId: random_numbers_jobs_report_error_retrieve
-      description: Descarga un reporte de error para jobs failed con error_trace.
-        Incluye parámetros de entrada y traza de fallo.
-      summary: Descargar Reporte de Error de Random Numbers
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -1535,25 +1514,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con detalle del error del job.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job random_numbers no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/random-numbers/jobs/{id}/report-log/:
     get:
       operationId: random_numbers_jobs_report_log_retrieve
-      description: Descarga un log técnico con parámetros, resultados, eventos y CSV
-        embebido cuando el job ya está completed.
-      summary: Descargar Reporte LOG de Random Numbers
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -1575,13 +1554,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad del job.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job random_numbers no encontrado.
+          description: ''
   /api/smileit/jobs/:
     post:
       operationId: smileit_jobs_create
@@ -1681,14 +1660,14 @@ paths:
   /api/smileit/jobs/{id}/:
     get:
       operationId: smileit_jobs_retrieve
-      description: Recupera estado/resultados de un job Smile-it.
-      summary: Consultar Job Smile-it
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job Smile-it.
+        description: UUID del job.
         required: true
       tags:
       - Smileit
@@ -1698,11 +1677,7 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SmileitJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
@@ -1712,8 +1687,8 @@ paths:
   /api/smileit/jobs/{id}/report-csv/:
     get:
       operationId: smileit_jobs_report_csv_retrieve
-      description: Descarga CSV de estructuras derivadas para análisis tabular.
-      summary: Descargar CSV de Estructuras Smile-it
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -1735,7 +1710,7 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: ''
+          description: Archivo CSV.
         '404':
           content:
             application/json:
@@ -1751,8 +1726,9 @@ paths:
   /api/smileit/jobs/{id}/report-error/:
     get:
       operationId: smileit_jobs_report_error_retrieve
-      description: Descarga reporte de error cuando el job Smile-it falla.
-      summary: Descargar Reporte de Error Smile-it
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -1774,7 +1750,7 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: ''
+          description: Reporte de error.
         '404':
           content:
             application/json:
@@ -1790,8 +1766,9 @@ paths:
   /api/smileit/jobs/{id}/report-log/:
     get:
       operationId: smileit_jobs_report_log_retrieve
-      description: Descarga reporte técnico completo con logs y resumen de resultados.
-      summary: Descargar Reporte LOG de Smile-it
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -1813,7 +1790,7 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: ''
+          description: Log de auditoría.
         '404':
           content:
             application/json:
@@ -2270,13 +2247,13 @@ paths:
     get:
       operationId: tunnel_jobs_retrieve
       description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job de Tunnel
+      summary: Consultar Job
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job de Tunnel.
+        description: UUID del job.
         required: true
       tags:
       - Tunnel
@@ -2286,23 +2263,18 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TunnelJobResponse'
-          description: ''
+          description: No response body
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de Tunnel no encontrado.
+          description: ''
   /api/tunnel/jobs/{id}/report-csv/:
     get:
       operationId: tunnel_jobs_report_csv_retrieve
-      description: Descarga CSV con entradas del cálculo y salida final (U, Alpha1,
-        Alpha2, G, Kappa). Solo aplica para jobs completed.
-      summary: Descargar Reporte CSV de Tunnel
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
       parameters:
       - in: path
         name: id
@@ -2324,25 +2296,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV generado a partir del job Tunnel.
+          description: Archivo CSV.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de Tunnel no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El estado del job no permite exportación CSV.
+          description: ''
   /api/tunnel/jobs/{id}/report-error/:
     get:
       operationId: tunnel_jobs_report_error_retrieve
-      description: Descarga reporte de error con parámetros de entrada y traza de
-        fallo. Solo aplica para jobs failed con error_trace persistido.
-      summary: Descargar Reporte de Error de Tunnel
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
       parameters:
       - in: path
         name: id
@@ -2364,25 +2336,25 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con detalle del fallo del job.
+          description: Reporte de error.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de Tunnel no encontrado.
+          description: ''
         '409':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: El job no tiene un error exportable.
+          description: ''
   /api/tunnel/jobs/{id}/report-log/:
     get:
       operationId: tunnel_jobs_report_log_retrieve
-      description: Descarga un log técnico con parámetros, resultados y eventos de
-        entrada capturados para auditoría del cálculo Tunnel.
-      summary: Descargar Reporte LOG de Tunnel
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
       parameters:
       - in: path
         name: id
@@ -2404,13 +2376,13 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo de texto con trazabilidad completa del job Tunnel.
+          description: Log de auditoría.
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job de Tunnel no encontrado.
+          description: ''
 components:
   schemas:
     BlankEnum:
