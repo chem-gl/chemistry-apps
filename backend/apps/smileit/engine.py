@@ -12,9 +12,11 @@ Cómo se usa:
 """
 
 import logging
+from contextlib import contextmanager
+from functools import lru_cache
 from typing import Optional
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -31,9 +33,38 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
+@contextmanager
+def _silence_rdkit_logs():
+    """Silencia logs nativos de RDKit en caminos donde un rechazo es esperado.
+
+    Smile-it prueba muchas fusiones candidatas que pueden ser químicamente
+    inválidas. En esos casos el rechazo es parte normal del algoritmo y no debe
+    inundar stderr con mensajes repetitivos del core C++ de RDKit.
+    Usa RDLogger (Python-level) para garantizar silenciamiento en workers fork,
+    a diferencia de rdBase.BlockLogs que depende del destructor C++ y no es
+    confiable en procesos Celery con prefork.
+    """
+    RDLogger.DisableLog("rdApp.*")
+    try:
+        yield
+    finally:
+        RDLogger.EnableLog("rdApp.*")
+
+
+@lru_cache(maxsize=8192)
+def _parse_smiles_cached(smiles: str) -> Optional[Chem.Mol]:
+    """Cachea el parseo RDKit para evitar reconstruir grafos idénticos.
+
+    RDKit devuelve objetos mutables, por lo que los callers que modifiquen la
+    molécula deben clonar el resultado con `Chem.Mol(...)` antes de usarlo.
+    """
+    with _silence_rdkit_logs():
+        return Chem.MolFromSmiles(smiles)
+
+
 def canonicalize_smiles(smiles: str) -> Optional[str]:
     """Retorna el SMILES canónico o None si el SMILES es inválido."""
-    mol = Chem.MolFromSmiles(smiles)
+    mol = _parse_smiles_cached(smiles)
     if mol is None:
         return None
     return Chem.MolToSmiles(mol, isomericSmiles=True)
@@ -53,7 +84,7 @@ def canonicalize_substituent(smiles: str, anchor_idx: int) -> Optional[tuple[str
     Returns:
         Tupla (canonical_smiles, new_anchor_idx) o None si el SMILES es inválido.
     """
-    mol = Chem.MolFromSmiles(smiles)
+    mol = _parse_smiles_cached(smiles)
     if mol is None:
         return None
     n_atoms: int = mol.GetNumAtoms()
@@ -72,7 +103,7 @@ def canonicalize_substituent(smiles: str, anchor_idx: int) -> Optional[tuple[str
 
 def validate_smiles(smiles: str) -> bool:
     """Retorna True si el SMILES es parseable por RDKit."""
-    return Chem.MolFromSmiles(smiles) is not None
+    return _parse_smiles_cached(smiles) is not None
 
 
 def get_implicit_hydrogens(atom: Chem.Atom) -> int:
@@ -173,6 +204,7 @@ def _render_molecule_svg_with_indices(mol: Chem.Mol) -> str:
     return drawer.GetDrawingText()
 
 
+@lru_cache(maxsize=4096)
 def render_molecule_svg(smiles: str) -> str:
     """Renderiza un SMILES como SVG limpio (sin índices visibles en el SVG de resultado).
 
@@ -183,10 +215,12 @@ def render_molecule_svg(smiles: str) -> str:
         Cadena SVG. Si falla, retorna una cadena vacía y logea el error.
     """
     try:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
+        base_molecule = _parse_smiles_cached(smiles)
+        if base_molecule is None:
             return ""
-        AllChem.Compute2DCoords(mol)
+        mol = Chem.Mol(base_molecule)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
         drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
         drawer.DrawMolecule(mol)
         drawer.FinishDrawing()
@@ -196,6 +230,7 @@ def render_molecule_svg(smiles: str) -> str:
         return ""
 
 
+@lru_cache(maxsize=16384)
 def fuse_molecules(
     principal_smiles: str,
     substituent_smiles: str,
@@ -221,10 +256,14 @@ def fuse_molecules(
     Returns:
         SMILES canónico de la molécula fusionada, o None si la fusión no es válida.
     """
-    mol_p = Chem.MolFromSmiles(principal_smiles)
-    mol_s = Chem.MolFromSmiles(substituent_smiles)
-    if mol_p is None or mol_s is None:
+    principal_base = _parse_smiles_cached(principal_smiles)
+    substituent_base = _parse_smiles_cached(substituent_smiles)
+    if principal_base is None or substituent_base is None:
         return None
+
+    # Clonar desde la caché para que cada intento de fusión mantenga aislamiento.
+    mol_p = Chem.Mol(principal_base)
+    mol_s = Chem.Mol(substituent_base)
 
     # Resolver índices de átomos de unión
     p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
@@ -262,7 +301,8 @@ def fuse_molecules(
     combo.AddBond(p_idx, s_idx + offset, bond_type)
 
     try:
-        Chem.SanitizeMol(combo)
+        with _silence_rdkit_logs():
+            Chem.SanitizeMol(combo)
     except Exception as exc:  # noqa: BLE001
         logger.debug(
             "Sanitización fallida para fusión %r + %r: %s",
@@ -273,7 +313,8 @@ def fuse_molecules(
         return None
 
     try:
-        return Chem.MolToSmiles(combo, isomericSmiles=True)
+        with _silence_rdkit_logs():
+            return Chem.MolToSmiles(combo, isomericSmiles=True)
     except Exception as exc:  # noqa: BLE001
         logger.debug("Error generando SMILES: %s", exc)
         return None
@@ -302,11 +343,11 @@ def _fuse_with_wildcard_anchor(
     principal_atom = principal_molecule.GetAtomWithIdx(principal_atom_idx)
 
     bond_order = int(wildcard_bond.GetBondTypeAsDouble())
-    if not _has_enough_implicit_hydrogens(
-        principal_atom,
-        substituent_neighbor,
-        bond_order,
-    ):
+    # Solo verificar el átomo del principal: la valencia del vecino del comodín
+    # no cambia porque el enlace con '*' es reemplazado por el enlace con el
+    # principal usando el mismo orden (misma bond_order), dejando la valencia
+    # neta del vecino invariante tras la remoción del wildcard.
+    if not _has_free_valence(principal_atom, bond_order):
         return None
 
     editable_substituent = Chem.RWMol(substituent_molecule)
@@ -326,7 +367,8 @@ def _fuse_with_wildcard_anchor(
     )
 
     try:
-        Chem.SanitizeMol(combo)
+        with _silence_rdkit_logs():
+            Chem.SanitizeMol(combo)
     except Exception as exc:  # noqa: BLE001
         logger.debug(
             "Sanitización fallida para wildcard %r + %r: %s",
@@ -337,30 +379,36 @@ def _fuse_with_wildcard_anchor(
         return None
 
     try:
-        return Chem.MolToSmiles(combo, isomericSmiles=True)
+        with _silence_rdkit_logs():
+            return Chem.MolToSmiles(combo, isomericSmiles=True)
     except Exception as exc:  # noqa: BLE001
         logger.debug("Error generando SMILES con wildcard: %s", exc)
         return None
 
 
+def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
+    """Retorna True si el átomo tiene valencia libre para un enlace adicional.
+
+    Suma hidrógenos implícitos (calculados por RDKit según la valencia estándar
+    del elemento) y explícitos (notación de corchete como [CH2] o [NH3+]).
+    Funciona para cualquier tipo de átomo: C, N, O, S, etc.
+    """
+    return (get_implicit_hydrogens(atom) + atom.GetNumExplicitHs()) >= bond_order
+
+
 def _has_enough_implicit_hydrogens(
     atom_p: Chem.Atom, atom_s: Chem.Atom, bond_order: int
 ) -> bool:
-    """Verifica si los dos átomos tienen suficientes hidrógenos disponibles para el enlace.
+    """Verifica que ambos átomos de unión tengan valencia libre para el nuevo enlace.
 
-    Refleja la lógica `haveEnoughImplicitHydrogens` del legado Java.
-    Si cualquiera de los dos no es carbono, siempre se permite (heteroátomos
-    tienen semántica especial de valencia flexible).
-
-    Para carbonos se comprueba la suma de H implícitos + H explícitos porque
-    sustituyentes como [CH2]Cl o [CH]=O especifican sus H vía notación de
-    corchete (implícitos=0, explícitos>0) pero aún poseen valencia libre.
+    Aplica la comprobación a todos los tipos de átomo (no solo C) para detectar
+    tempranamente fusiones inviables en heteroátomos con valencia plena (p.ej.
+    O ya con 2 enlaces, N ya con 3), evitando llamadas costosas a SanitizeMol
+    que siempre fallarían y generarían ruido en los logs de RDKit.
     """
-    if atom_p.GetSymbol() != "C" or atom_s.GetSymbol() != "C":
-        return True
-    h_p: int = get_implicit_hydrogens(atom_p) + atom_p.GetNumExplicitHs()
-    h_s: int = get_implicit_hydrogens(atom_s) + atom_s.GetNumExplicitHs()
-    return h_p >= bond_order and h_s >= bond_order
+    return _has_free_valence(atom_p, bond_order) and _has_free_valence(
+        atom_s, bond_order
+    )
 
 
 def _bond_order_to_type(order: int) -> Chem.rdchem.BondType:

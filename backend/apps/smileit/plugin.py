@@ -40,6 +40,8 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
+ATTEMPT_PROGRESS_BATCH_SIZE: Final[int] = 100
+RENDER_PROGRESS_BATCH_SIZE: Final[int] = 25
 
 
 @dataclass
@@ -48,6 +50,26 @@ class GeneratedNode:
 
     smiles: str
     traceability: list[SmileitSubstitutionTraceEvent]
+
+
+@dataclass(slots=True)
+class GeneratedCandidate:
+    """Candidato generado antes de materializar SVG y previews visuales."""
+
+    smiles: str
+    name: str
+    traceability: list[SmileitSubstitutionTraceEvent]
+
+
+@dataclass(slots=True)
+class ExpansionSummary:
+    """Resumen incremental para controlar progreso y poda sin trabajo redundante."""
+
+    derivative_counter: int
+    attempts_processed: int
+    rejected_fusions: int
+    duplicate_structures: int
+    reached_limit: bool
 
 
 @dataclass(frozen=True)
@@ -126,6 +148,7 @@ def _tint_svg(raw_svg: str, color_hex: str) -> str:
 
 def _build_substituent_previews(
     traceability: list[SmileitSubstitutionTraceEvent],
+    preview_cache: dict[tuple[str, str], SmileitSubstituentPreview],
 ) -> list[SmileitSubstituentPreview]:
     """Construye previsualizaciones únicas de sustituyentes aplicados en el derivado."""
     previews: list[SmileitSubstituentPreview] = []
@@ -141,13 +164,15 @@ def _build_substituent_previews(
             continue
 
         seen_preview_keys.add(preview_key)
-        previews.append(
-            SmileitSubstituentPreview(
+        cached_preview = preview_cache.get(preview_key)
+        if cached_preview is None:
+            cached_preview = SmileitSubstituentPreview(
                 name=event["substituent_name"],
                 smiles=substituent_smiles,
                 svg=_tint_svg(render_molecule_svg(substituent_smiles), "#2563eb"),
             )
-        )
+            preview_cache[preview_key] = cached_preview
+        previews.append(cached_preview)
 
     return previews
 
@@ -214,57 +239,132 @@ def _build_generation_progress_percentage(
     return max(20, min(80, raw_percentage))
 
 
+def _build_render_progress_percentage(item_index: int, item_total: int) -> int:
+    """Calcula porcentaje para la fase de materialización visual final."""
+    safe_total = max(1, item_total)
+    raw_percentage = 86 + int((item_index / safe_total) * 13)
+    return max(86, min(99, raw_percentage))
+
+
+def _materialize_generated_structures(
+    principal_smiles: str,
+    generated_candidates: list[GeneratedCandidate],
+    progress_callback: PluginProgressCallback,
+    log_callback: PluginLogCallback | None,
+) -> list[SmileitGeneratedStructure]:
+    """Construye el payload visual una vez terminada la enumeración química.
+
+    Esta fase difiere SVG y previews hasta conocer la lista final de derivados,
+    reduciendo renderizados RDKit innecesarios dentro del bucle combinatorio.
+    """
+    principal_svg = _tint_svg(render_molecule_svg(principal_smiles), "#2f855a")
+    preview_cache: dict[tuple[str, str], SmileitSubstituentPreview] = {}
+    generated_structures: list[SmileitGeneratedStructure] = []
+
+    for candidate_index, candidate in enumerate(generated_candidates, start=1):
+        generated_structures.append(
+            SmileitGeneratedStructure(
+                smiles=candidate.smiles,
+                name=candidate.name,
+                svg=_tint_svg(render_molecule_svg(candidate.smiles), "#1d4ed8"),
+                scaffold_svg=principal_svg,
+                substituent_svgs=_build_substituent_previews(
+                    candidate.traceability,
+                    preview_cache,
+                ),
+                traceability=candidate.traceability,
+            )
+        )
+
+        if candidate_index % RENDER_PROGRESS_BATCH_SIZE == 0:
+            progress_callback(
+                _build_render_progress_percentage(
+                    item_index=candidate_index,
+                    item_total=len(generated_candidates),
+                ),
+                "running",
+                (
+                    "Renderizando estructuras finales de Smile-it. "
+                    f"Procesadas: {candidate_index}/{len(generated_candidates)}."
+                ),
+            )
+
+    _emit_log(
+        log_callback,
+        level="info",
+        source="smileit.plugin",
+        message="Materialización visual Smile-it completada.",
+        payload={
+            "generated_structures": len(generated_structures),
+            "unique_substituent_previews": len(preview_cache),
+        },
+    )
+
+    return generated_structures
+
+
 def _generate_derivatives(
     principal_smiles: str,
     selected_atom_indices: list[int],
     site_option_map: dict[int, list[SiteOption]],
     r_substitutes: int,
     num_bonds: int,
-    allow_repeated: bool,
     max_structures: int | None,
     export_name_base: str,
     export_padding: int,
     progress_callback: PluginProgressCallback,
     log_callback: PluginLogCallback | None,
-) -> tuple[list[SmileitGeneratedStructure], list[SmileitTraceabilityRow], bool]:
+) -> tuple[list[GeneratedCandidate], list[SmileitTraceabilityRow], bool]:
     """Genera derivados con trazabilidad por ronda y por sitio."""
-    principal_svg = _tint_svg(render_molecule_svg(principal_smiles), "#2f855a")
     nodes: list[GeneratedNode] = [
         GeneratedNode(smiles=principal_smiles, traceability=[])
     ]
     seen_smiles: set[str] = {principal_smiles}
 
     derivative_rows: list[SmileitTraceabilityRow] = []
-    generated_structures: list[SmileitGeneratedStructure] = []
+    generated_candidates: list[GeneratedCandidate] = []
     truncated = False
     derivative_counter = 1
     last_reported_generated = 0
+    last_reported_attempts = 0
+    attempts_processed = 0
+    rejected_fusions = 0
+    duplicate_structures = 0
 
     for round_index in range(1, r_substitutes + 1):
         snapshot = list(nodes)
         new_nodes: list[GeneratedNode] = []
 
         for node_index, node in enumerate(snapshot, start=1):
-            derivative_counter, reached_limit = _expand_derivatives_from_node(
+            expansion_summary = _expand_derivatives_from_node(
                 node=node,
                 round_index=round_index,
                 selected_atom_indices=selected_atom_indices,
                 site_option_map=site_option_map,
                 num_bonds=num_bonds,
-                allow_repeated=allow_repeated,
                 seen_smiles=seen_smiles,
                 export_name_base=export_name_base,
                 export_padding=export_padding,
-                principal_svg=principal_svg,
                 derivative_counter=derivative_counter,
-                generated_structures=generated_structures,
+                generated_candidates=generated_candidates,
                 derivative_rows=derivative_rows,
                 new_nodes=new_nodes,
                 max_structures=max_structures,
             )
+            derivative_counter = expansion_summary.derivative_counter
+            attempts_processed += expansion_summary.attempts_processed
+            rejected_fusions += expansion_summary.rejected_fusions
+            duplicate_structures += expansion_summary.duplicate_structures
 
-            current_generated = len(generated_structures)
-            if current_generated - last_reported_generated >= LOG_PROGRESS_BATCH_SIZE:
+            current_generated = len(generated_candidates)
+            should_report_generated = (
+                current_generated - last_reported_generated >= LOG_PROGRESS_BATCH_SIZE
+            )
+            should_report_attempts = (
+                attempts_processed - last_reported_attempts
+                >= ATTEMPT_PROGRESS_BATCH_SIZE
+            )
+            if should_report_generated or should_report_attempts:
                 progress_percentage = _build_generation_progress_percentage(
                     round_index=round_index,
                     total_rounds=r_substitutes,
@@ -276,6 +376,7 @@ def _generate_derivatives(
                     "running",
                     (
                         "Generando derivados por bloques de asignación. "
+                        f"Intentos procesados: {attempts_processed}. "
                         f"Estructuras acumuladas: {current_generated}."
                     ),
                 )
@@ -285,27 +386,33 @@ def _generate_derivatives(
                     source="smileit.plugin",
                     message="Avance de generación Smile-it.",
                     payload={
+                        "attempts_processed": attempts_processed,
                         "generated_structures": current_generated,
+                        "rejected_fusions": rejected_fusions,
+                        "duplicate_structures": duplicate_structures,
                         "round_index": round_index,
                         "processed_nodes": node_index,
                         "round_nodes": len(snapshot),
                     },
                 )
                 last_reported_generated = current_generated
+                last_reported_attempts = attempts_processed
 
-            if reached_limit:
+            if expansion_summary.reached_limit:
                 _emit_log(
                     log_callback,
                     level="warning",
                     source="smileit.plugin",
                     message="Se alcanzó el límite configurado de estructuras para Smile-it.",
                     payload={
-                        "generated_structures": len(generated_structures),
+                        "attempts_processed": attempts_processed,
+                        "generated_structures": len(generated_candidates),
+                        "rejected_fusions": rejected_fusions,
                         "max_structures": max_structures,
                     },
                 )
                 truncated = True
-                return generated_structures, derivative_rows, truncated
+                return generated_candidates, derivative_rows, truncated
 
         if len(new_nodes) == 0:
             break
@@ -317,7 +424,8 @@ def _generate_derivatives(
             "running",
             (
                 f"Ronda {round_index}/{r_substitutes} completada. "
-                f"Estructuras acumuladas: {len(generated_structures)}."
+                f"Intentos procesados: {attempts_processed}. "
+                f"Estructuras acumuladas: {len(generated_candidates)}."
             ),
         )
         _emit_log(
@@ -326,13 +434,16 @@ def _generate_derivatives(
             source="smileit.plugin",
             message="Ronda de generación completada.",
             payload={
+                "attempts_processed": attempts_processed,
                 "round_index": round_index,
                 "total_rounds": r_substitutes,
-                "generated_structures": len(generated_structures),
+                "generated_structures": len(generated_candidates),
+                "rejected_fusions": rejected_fusions,
+                "duplicate_structures": duplicate_structures,
             },
         )
 
-    return generated_structures, derivative_rows, truncated
+    return generated_candidates, derivative_rows, truncated
 
 
 def _expand_derivatives_from_node(
@@ -341,18 +452,20 @@ def _expand_derivatives_from_node(
     selected_atom_indices: list[int],
     site_option_map: dict[int, list[SiteOption]],
     num_bonds: int,
-    allow_repeated: bool,
     seen_smiles: set[str],
     export_name_base: str,
     export_padding: int,
-    principal_svg: str,
     derivative_counter: int,
-    generated_structures: list[SmileitGeneratedStructure],
+    generated_candidates: list[GeneratedCandidate],
     derivative_rows: list[SmileitTraceabilityRow],
     new_nodes: list[GeneratedNode],
     max_structures: int | None,
-) -> tuple[int, bool]:
+) -> ExpansionSummary:
     """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
+    attempts_processed = 0
+    rejected_fusions = 0
+    duplicate_structures = 0
+
     for site_atom_index in selected_atom_indices:
         site_options = site_option_map.get(site_atom_index, [])
         if len(site_options) == 0:
@@ -362,6 +475,7 @@ def _expand_derivatives_from_node(
             substituent = site_option.substituent
             selected_anchor = int(substituent["selected_atom_index"])
             for bond_order in range(1, num_bonds + 1):
+                attempts_processed += 1
                 fused_smiles = fuse_molecules(
                     principal_smiles=node.smiles,
                     substituent_smiles=substituent["smiles"],
@@ -370,13 +484,14 @@ def _expand_derivatives_from_node(
                     bond_order=bond_order,
                 )
                 if fused_smiles is None:
+                    rejected_fusions += 1
                     continue
 
-                if not allow_repeated and fused_smiles in seen_smiles:
+                if fused_smiles in seen_smiles:
+                    duplicate_structures += 1
                     continue
 
-                if not allow_repeated:
-                    seen_smiles.add(fused_smiles)
+                seen_smiles.add(fused_smiles)
 
                 trace_event = SmileitSubstitutionTraceEvent(
                     round_index=round_index,
@@ -398,13 +513,10 @@ def _expand_derivatives_from_node(
                 )
                 derivative_counter += 1
 
-                generated_structures.append(
-                    SmileitGeneratedStructure(
+                generated_candidates.append(
+                    GeneratedCandidate(
                         smiles=fused_smiles,
                         name=generated_name,
-                        svg=_tint_svg(render_molecule_svg(fused_smiles), "#1d4ed8"),
-                        scaffold_svg=principal_svg,
-                        substituent_svgs=_build_substituent_previews(traceability),
                         traceability=traceability,
                     )
                 )
@@ -423,11 +535,23 @@ def _expand_derivatives_from_node(
 
                 if (
                     max_structures is not None
-                    and len(generated_structures) >= max_structures
+                    and len(generated_candidates) >= max_structures
                 ):
-                    return derivative_counter, True
+                    return ExpansionSummary(
+                        derivative_counter=derivative_counter,
+                        attempts_processed=attempts_processed,
+                        rejected_fusions=rejected_fusions,
+                        duplicate_structures=duplicate_structures,
+                        reached_limit=True,
+                    )
 
-    return derivative_counter, False
+    return ExpansionSummary(
+        derivative_counter=derivative_counter,
+        attempts_processed=attempts_processed,
+        rejected_fusions=rejected_fusions,
+        duplicate_structures=duplicate_structures,
+        reached_limit=False,
+    )
 
 
 def _normalize_resolved_substituent(
@@ -547,7 +671,6 @@ def smileit_plugin(
     num_bonds = max(1, min(int(options["num_bonds"]), MAX_NUM_BONDS))
     max_structures_raw = int(options["max_structures"])
     max_structures = max_structures_raw if max_structures_raw > 0 else None
-    allow_repeated = bool(options["allow_repeated"])
     export_name_base = options["export_name_base"].strip() or "SMILEIT"
     export_padding = int(options["export_padding"])
 
@@ -584,13 +707,12 @@ def smileit_plugin(
 
     progress_callback(20, "running", "Generando derivados por bloques de asignación.")
 
-    generated_structures, traceability_rows, truncated = _generate_derivatives(
+    generated_candidates, traceability_rows, truncated = _generate_derivatives(
         principal_smiles=canonical_principal,
         selected_atom_indices=parsed_input["selected_atom_indices"],
         site_option_map=site_option_map,
         r_substitutes=r_substitutes,
         num_bonds=num_bonds,
-        allow_repeated=allow_repeated,
         max_structures=max_structures,
         export_name_base=export_name_base,
         export_padding=export_padding,
@@ -599,7 +721,14 @@ def smileit_plugin(
     )
 
     progress_callback(
-        85, "running", "Consolidando resultado y trazabilidad de Smile-it."
+        85, "running", "Consolidando y renderizando resultado final de Smile-it."
+    )
+
+    generated_structures = _materialize_generated_structures(
+        principal_smiles=canonical_principal,
+        generated_candidates=generated_candidates,
+        progress_callback=progress_callback,
+        log_callback=log_callback,
     )
 
     result = SmileitResult(

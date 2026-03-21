@@ -355,7 +355,6 @@ export interface SmileitGenerationParams {
   siteOverlapPolicy?: SiteOverlapPolicyEnum;
   rSubstitutes?: number;
   numBonds?: number;
-  allowRepeated?: boolean;
   maxStructures?: number;
   exportNameBase?: string;
   exportPadding?: number;
@@ -552,7 +551,6 @@ export class JobsApiService {
       site_overlap_policy: params.siteOverlapPolicy,
       r_substitutes: params.rSubstitutes,
       num_bonds: params.numBonds,
-      allow_repeated: params.allowRepeated,
       max_structures: params.maxStructures,
       export_name_base: params.exportNameBase,
       export_padding: params.exportPadding,

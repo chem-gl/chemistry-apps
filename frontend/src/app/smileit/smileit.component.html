@@ -736,11 +736,6 @@
                 <input type="number" min="1" max="10" [ngModel]="workflow.rSubstitutes()"
                     (ngModelChange)="workflow.setRSubstitutes(toNumber($event))" [disabled]="workflow.isProcessing()" />
                 </label>
-<label class="toggle-label">
-    <input type="checkbox" [ngModel]="workflow.allowRepeated()" (ngModelChange)="workflow.allowRepeated.set($event)"
-        [disabled]="workflow.isProcessing()" />
-    Allow repeated SMILES
-</label>
 </div>
 
 <div class="action-row">

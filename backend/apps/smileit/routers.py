@@ -554,7 +554,7 @@ class SmileitJobViewSet(viewsets.ViewSet):
             "assignment_blocks": cast(list[dict[str, object]], list(resolved_blocks)),
             "r_substitutes": payload["r_substitutes"],
             "num_bonds": payload["num_bonds"],
-            "allow_repeated": payload["allow_repeated"],
+            "allow_repeated": False,
             "max_structures": payload["max_structures"],
             "site_overlap_policy": payload["site_overlap_policy"],
             "export_name_base": payload["export_name_base"],

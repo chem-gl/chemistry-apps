@@ -393,7 +393,6 @@ class SmileitJobCreateSerializer(serializers.Serializer):
     num_bonds = serializers.IntegerField(
         min_value=1, max_value=MAX_NUM_BONDS, default=1
     )
-    allow_repeated = serializers.BooleanField(default=False)
     max_structures = serializers.IntegerField(
         min_value=0,
         default=0,
@@ -417,6 +416,19 @@ class SmileitJobCreateSerializer(serializers.Serializer):
             )
 
         attrs["selected_atom_indices"] = selected_sites
+
+        # r_substitutes no puede superar la cantidad de sitios de sustitución disponibles
+        r_substitutes = attrs.get("r_substitutes", 1)
+        num_sites = len(selected_sites)
+        if r_substitutes > num_sites:
+            raise serializers.ValidationError(
+                {
+                    "r_substitutes": (
+                        f"r_substitutes ({r_substitutes}) no puede ser mayor que el número "
+                        f"de sitios de sustitución seleccionados ({num_sites})."
+                    )
+                }
+            )
 
         block_entries: list[dict] = attrs.get("assignment_blocks", [])
         covered_sites: set[int] = set()

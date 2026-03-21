@@ -10,12 +10,15 @@ Cómo se usa:
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 
+from . import engine as smileit_engine
 from .catalog import list_active_patterns
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION
 from .engine import inspect_smiles_structure_with_patterns
@@ -264,7 +267,6 @@ class SmileitJobBlockTests(TestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 1,
             "num_bonds": 1,
-            "allow_repeated": False,
             "max_structures": 60,
             "export_name_base": "BENZENE_SERIES",
             "export_padding": 5,
@@ -277,6 +279,17 @@ class SmileitJobBlockTests(TestCase):
 
         response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
         self.assertEqual(response.status_code, 400)
+
+    def test_create_job_rejects_r_substitutes_exceeding_site_count(self) -> None:
+        """r_substitutes mayor que el número de sitios seleccionados debe rechazar el job."""
+        payload = self._valid_payload()
+        # _valid_payload tiene 2 sitios; r_substitutes=3 supera ese límite
+        payload["r_substitutes"] = 3
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        error_detail = response.json()
+        self.assertIn("r_substitutes", error_detail)
 
     def test_create_and_run_job_generates_traceability(self) -> None:
         """Job válido debe ejecutarse y generar trazabilidad por derivado."""
@@ -325,7 +338,6 @@ class SmileitJobBlockTests(TestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 1,
             "num_bonds": 1,
-            "allow_repeated": False,
             "max_structures": 20,
             "export_name_base": "UNION_OVERLAP",
             "export_padding": 5,
@@ -376,7 +388,6 @@ class SmileitJobBlockTests(TestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 2,
             "num_bonds": 1,
-            "allow_repeated": False,
             "max_structures": 60,
             "export_name_base": "MULTIROUND",
             "export_padding": 5,
@@ -426,6 +437,56 @@ class SmileitJobBlockTests(TestCase):
         self.assertIsNotNone(round_log)
         assert round_log is not None
         self.assertIn("generated_structures", round_log.payload)
+        self.assertIn("attempts_processed", round_log.payload)
+
+
+class SmileitEngineOptimizationTests(TestCase):
+    """Valida caches internas para reducir trabajo redundante en RDKit."""
+
+    def tearDown(self) -> None:
+        smileit_engine._parse_smiles_cached.cache_clear()
+        smileit_engine.render_molecule_svg.cache_clear()
+        smileit_engine.fuse_molecules.cache_clear()
+
+    def test_render_molecule_svg_reuses_cache_for_same_smiles(self) -> None:
+        """El render repetido del mismo SMILES no debe recalcular coordenadas 2D."""
+        smileit_engine.render_molecule_svg.cache_clear()
+
+        with patch(
+            "apps.smileit.engine.AllChem.Compute2DCoords",
+            wraps=smileit_engine.AllChem.Compute2DCoords,
+        ) as mocked_compute_coords:
+            first_svg = smileit_engine.render_molecule_svg("CCO")
+            second_svg = smileit_engine.render_molecule_svg("CCO")
+
+        self.assertEqual(first_svg, second_svg)
+        self.assertEqual(mocked_compute_coords.call_count, 1)
+
+    def test_fuse_molecules_reuses_cache_for_same_signature(self) -> None:
+        """La misma fusión repetida debe resolverse desde caché en memoria."""
+        smileit_engine.fuse_molecules.cache_clear()
+
+        first_result = smileit_engine.fuse_molecules("c1ccccc1", "F", 0, 0, 1)
+        second_result = smileit_engine.fuse_molecules("c1ccccc1", "F", 0, 0, 1)
+        cache_info = smileit_engine.fuse_molecules.cache_info()
+
+        self.assertEqual(first_result, second_result)
+        self.assertGreaterEqual(cache_info.hits, 1)
+
+    def test_parse_smiles_cache_reuses_rdkit_parser(self) -> None:
+        """El parseo repetido del mismo SMILES debe reutilizar la caché interna."""
+        smileit_engine._parse_smiles_cached.cache_clear()
+
+        with patch(
+            "apps.smileit.engine.Chem.MolFromSmiles",
+            wraps=smileit_engine.Chem.MolFromSmiles,
+        ) as mocked_parser:
+            first_molecule = smileit_engine._parse_smiles_cached("CCO")
+            second_molecule = smileit_engine._parse_smiles_cached("CCO")
+
+        self.assertIsNotNone(first_molecule)
+        self.assertIs(first_molecule, second_molecule)
+        self.assertEqual(mocked_parser.call_count, 1)
 
 
 class SmileitExportTests(TestCase):
@@ -451,7 +512,6 @@ class SmileitExportTests(TestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 1,
             "num_bonds": 1,
-            "allow_repeated": False,
             "max_structures": 40,
             "export_name_base": "SMILEIT_SERIES",
             "export_padding": 5,

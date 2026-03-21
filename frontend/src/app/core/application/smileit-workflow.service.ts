@@ -172,7 +172,6 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly siteOverlapPolicy = signal<SiteOverlapPolicyEnum>(SiteOverlapPolicyEnum.LastBlockWins);
   readonly rSubstitutes = signal<number>(1);
   readonly numBonds = signal<number>(1);
-  readonly allowRepeated = signal<boolean>(false);
   readonly maxStructures = signal<number>(0);
   readonly exportNameBase = signal<string>('smileit_run');
   readonly exportPadding = signal<number>(5);
@@ -1275,7 +1274,6 @@ export class SmileitWorkflowService implements OnDestroy {
       siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
       rSubstitutes: this.rSubstitutes(),
       numBonds: 1,
-      allowRepeated: this.allowRepeated(),
       maxStructures: this.maxStructures(),
       exportNameBase: this.exportNameBase().trim() || 'smileit_run',
       exportPadding: 5,
@@ -1602,7 +1600,8 @@ export class SmileitWorkflowService implements OnDestroy {
           return;
         }
 
-        const previousCoverage: SmileitSiteCoverageView | undefined = coverageMap.get(siteAtomIndex);
+        const previousCoverage: SmileitSiteCoverageView | undefined =
+          coverageMap.get(siteAtomIndex);
         if (previousCoverage !== undefined) {
           coverageMap.set(siteAtomIndex, {
             ...previousCoverage,
