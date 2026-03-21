@@ -19,6 +19,7 @@ from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 
 from . import engine as smileit_engine
+from . import plugin as smileit_plugin_module
 from .catalog import list_active_patterns
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION
 from .engine import inspect_smiles_structure_with_patterns
@@ -446,6 +447,7 @@ class SmileitEngineOptimizationTests(TestCase):
     def tearDown(self) -> None:
         smileit_engine._parse_smiles_cached.cache_clear()
         smileit_engine.render_molecule_svg.cache_clear()
+        smileit_engine.is_fusion_candidate_viable.cache_clear()
         smileit_engine.fuse_molecules.cache_clear()
 
     def test_render_molecule_svg_reuses_cache_for_same_smiles(self) -> None:
@@ -487,6 +489,199 @@ class SmileitEngineOptimizationTests(TestCase):
         self.assertIsNotNone(first_molecule)
         self.assertIs(first_molecule, second_molecule)
         self.assertEqual(mocked_parser.call_count, 1)
+
+
+class SmileitPluginOptimizationTests(TestCase):
+    """Valida optimizaciones de búsqueda exacta dentro del plugin Smile-it."""
+
+    def _build_site_option_map_with_single_option(
+        self,
+    ) -> dict[int, list[smileit_plugin_module.SiteOption]]:
+        return {
+            0: [
+                smileit_plugin_module.SiteOption(
+                    site_atom_index=0,
+                    block_label="BlockA",
+                    block_priority=1,
+                    substituent={
+                        "source_kind": "catalog",
+                        "stable_id": "sub-a",
+                        "version": 1,
+                        "name": "A",
+                        "smiles": "A",
+                        "selected_atom_index": 0,
+                        "categories": [],
+                    },
+                )
+            ]
+        }
+
+    def test_generate_derivatives_expands_only_current_frontier(self) -> None:
+        """Cada ronda debe expandir solo nodos nuevos, no todo el histórico acumulado."""
+        progress_updates: list[tuple[int, str, str]] = []
+
+        def progress_callback(percentage: int, stage: str, message: str) -> None:
+            progress_updates.append((percentage, stage, message))
+
+        def fake_fuse(
+            principal_smiles: str,
+            substituent_smiles: str,
+            principal_atom_idx: int | None,
+            substituent_atom_idx: int | None,
+            bond_order: int,
+        ) -> str | None:
+            del substituent_smiles, principal_atom_idx, substituent_atom_idx, bond_order
+            mapping: dict[str, str] = {
+                "P": "PA",
+                "PA": "PAA",
+            }
+            return mapping.get(principal_smiles)
+
+        with (
+            patch(
+                "apps.smileit.plugin.is_fusion_candidate_viable",
+                return_value=True,
+            ),
+            patch(
+                "apps.smileit.plugin.fuse_molecules",
+                side_effect=fake_fuse,
+            ) as mocked_fuse,
+        ):
+            generated_candidates, traceability_rows, truncated = (
+                smileit_plugin_module._generate_derivatives(
+                    principal_smiles="P",
+                    selected_atom_indices=[0],
+                    site_option_map=self._build_site_option_map_with_single_option(),
+                    r_substitutes=2,
+                    num_bonds=1,
+                    max_structures=None,
+                    export_name_base="SERIES",
+                    export_padding=3,
+                    progress_callback=progress_callback,
+                    log_callback=None,
+                )
+            )
+
+        self.assertFalse(truncated)
+        self.assertEqual(
+            [candidate.smiles for candidate in generated_candidates], ["PA", "PAA"]
+        )
+        self.assertEqual(mocked_fuse.call_count, 2)
+        self.assertEqual(len(traceability_rows), 3)
+        self.assertGreaterEqual(len(progress_updates), 1)
+
+    def test_generate_derivatives_reuses_intra_job_fusion_attempt_cache(self) -> None:
+        """Dos bloques que intentan la misma fusión exacta no deben recalcular RDKit."""
+
+        duplicated_site_option_map: dict[
+            int, list[smileit_plugin_module.SiteOption]
+        ] = {
+            0: [
+                smileit_plugin_module.SiteOption(
+                    site_atom_index=0,
+                    block_label="BlockA",
+                    block_priority=1,
+                    substituent={
+                        "source_kind": "catalog",
+                        "stable_id": "sub-a",
+                        "version": 1,
+                        "name": "A",
+                        "smiles": "A",
+                        "selected_atom_index": 0,
+                        "categories": [],
+                    },
+                ),
+                smileit_plugin_module.SiteOption(
+                    site_atom_index=0,
+                    block_label="BlockB",
+                    block_priority=2,
+                    substituent={
+                        "source_kind": "catalog",
+                        "stable_id": "sub-a",
+                        "version": 1,
+                        "name": "A",
+                        "smiles": "A",
+                        "selected_atom_index": 0,
+                        "categories": [],
+                    },
+                ),
+            ]
+        }
+
+        with (
+            patch(
+                "apps.smileit.plugin.is_fusion_candidate_viable",
+                return_value=True,
+            ),
+            patch(
+                "apps.smileit.plugin.fuse_molecules",
+                return_value="PA",
+            ) as mocked_fuse,
+        ):
+            generated_candidates, _traceability_rows, truncated = (
+                smileit_plugin_module._generate_derivatives(
+                    principal_smiles="P",
+                    selected_atom_indices=[0],
+                    site_option_map=duplicated_site_option_map,
+                    r_substitutes=1,
+                    num_bonds=1,
+                    max_structures=None,
+                    export_name_base="SERIES",
+                    export_padding=3,
+                    progress_callback=lambda _percentage, _stage, _message: None,
+                    log_callback=None,
+                )
+            )
+
+        self.assertFalse(truncated)
+        self.assertEqual(len(generated_candidates), 1)
+        self.assertEqual(generated_candidates[0].smiles, "PA")
+        self.assertEqual(mocked_fuse.call_count, 1)
+
+    def test_generate_derivatives_skips_non_viable_fusions_before_rdkit(self) -> None:
+        """La poda previa debe evitar entrar a RDKit cuando la firma ya es inviable."""
+        with (
+            patch(
+                "apps.smileit.plugin.is_fusion_candidate_viable",
+                return_value=False,
+            ) as mocked_viability,
+            patch(
+                "apps.smileit.plugin.fuse_molecules",
+            ) as mocked_fuse,
+        ):
+            generated_candidates, traceability_rows, truncated = (
+                smileit_plugin_module._generate_derivatives(
+                    principal_smiles="P",
+                    selected_atom_indices=[0],
+                    site_option_map=self._build_site_option_map_with_single_option(),
+                    r_substitutes=1,
+                    num_bonds=1,
+                    max_structures=None,
+                    export_name_base="SERIES",
+                    export_padding=3,
+                    progress_callback=lambda _percentage, _stage, _message: None,
+                    log_callback=None,
+                )
+            )
+
+        self.assertFalse(truncated)
+        self.assertEqual(generated_candidates, [])
+        self.assertEqual(traceability_rows, [])
+        self.assertEqual(mocked_viability.call_count, 1)
+        self.assertEqual(mocked_fuse.call_count, 0)
+
+    def test_render_smiles_map_renders_each_unique_smiles_once(self) -> None:
+        """La fase visual debe deduplicar SMILES antes de disparar renderizados."""
+        with patch(
+            "apps.smileit.plugin.render_molecule_svg",
+            side_effect=lambda smiles_value: f"svg:{smiles_value}",
+        ) as mocked_render:
+            rendered_map = smileit_plugin_module._render_smiles_map(
+                ["CCO", "N", "CCO", "", "N", "CCO"]
+            )
+
+        self.assertEqual(rendered_map, {"CCO": "svg:CCO", "N": "svg:N"})
+        self.assertEqual(mocked_render.call_count, 2)
 
 
 class SmileitExportTests(TestCase):

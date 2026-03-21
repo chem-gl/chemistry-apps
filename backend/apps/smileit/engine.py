@@ -230,6 +230,45 @@ def render_molecule_svg(smiles: str) -> str:
         return ""
 
 
+@lru_cache(maxsize=32768)
+def is_fusion_candidate_viable(
+    principal_smiles: str,
+    substituent_smiles: str,
+    principal_atom_idx: Optional[int],
+    substituent_atom_idx: Optional[int],
+    bond_order: int,
+) -> bool:
+    """Valida de forma exacta si una firma de fusión merece entrar a RDKit pesado.
+
+    Esta comprobación usa solo parseo cacheado y lectura de átomos para descartar
+    temprano combinaciones imposibles antes de clonar moléculas, combinarlas y
+    sanitizarlas. No cambia la semántica del resultado: únicamente evita trabajo
+    cuando ya puede demostrarse que la fusión fallará.
+    """
+    principal_base = _parse_smiles_cached(principal_smiles)
+    substituent_base = _parse_smiles_cached(substituent_smiles)
+    if principal_base is None or substituent_base is None:
+        return False
+
+    p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
+    s_idx: int = substituent_atom_idx if substituent_atom_idx is not None else 0
+
+    if p_idx >= principal_base.GetNumAtoms() or s_idx >= substituent_base.GetNumAtoms():
+        return False
+
+    principal_atom = principal_base.GetAtomWithIdx(p_idx)
+    substituent_atom = substituent_base.GetAtomWithIdx(s_idx)
+
+    if substituent_atom.GetAtomicNum() == 0 or substituent_atom.GetSymbol() == "*":
+        return _is_wildcard_fusion_candidate_viable(
+            principal_atom=principal_atom,
+            substituent_molecule=substituent_base,
+            wildcard_atom_idx=s_idx,
+        )
+
+    return _has_enough_implicit_hydrogens(principal_atom, substituent_atom, bond_order)
+
+
 @lru_cache(maxsize=16384)
 def fuse_molecules(
     principal_smiles: str,
@@ -320,6 +359,19 @@ def fuse_molecules(
         return None
 
 
+def clear_smileit_caches() -> None:
+    """Limpia todos los cachés LRU para evitar que persistan en workers.
+
+    En workers Celery con prefork, los cachés LRU pueden crecer indefinidamente
+    consumiendo memoria si no se limpian periódicamente. Esta función debe
+    llamarse al finalizar cada job para liberar la memoria.
+    """
+    _parse_smiles_cached.cache_clear()
+    render_molecule_svg.cache_clear()
+    is_fusion_candidate_viable.cache_clear()
+    fuse_molecules.cache_clear()
+
+
 def _fuse_with_wildcard_anchor(
     principal_molecule: Chem.Mol,
     substituent_molecule: Chem.Mol,
@@ -339,7 +391,6 @@ def _fuse_with_wildcard_anchor(
 
     wildcard_bond = wildcard_atom.GetBonds()[0]
     substituent_neighbor_idx: int = wildcard_bond.GetOtherAtomIdx(wildcard_atom_idx)
-    substituent_neighbor = substituent_molecule.GetAtomWithIdx(substituent_neighbor_idx)
     principal_atom = principal_molecule.GetAtomWithIdx(principal_atom_idx)
 
     bond_order = int(wildcard_bond.GetBondTypeAsDouble())
@@ -384,6 +435,24 @@ def _fuse_with_wildcard_anchor(
     except Exception as exc:  # noqa: BLE001
         logger.debug("Error generando SMILES con wildcard: %s", exc)
         return None
+
+
+def _is_wildcard_fusion_candidate_viable(
+    principal_atom: Chem.Atom,
+    substituent_molecule: Chem.Mol,
+    wildcard_atom_idx: int,
+) -> bool:
+    """Evalúa si una fusión por wildcard es viable sin construir la molécula final."""
+    if wildcard_atom_idx >= substituent_molecule.GetNumAtoms():
+        return False
+
+    wildcard_atom = substituent_molecule.GetAtomWithIdx(wildcard_atom_idx)
+    if wildcard_atom.GetDegree() != 1:
+        return False
+
+    wildcard_bond = wildcard_atom.GetBonds()[0]
+    bond_order = int(wildcard_bond.GetBondTypeAsDouble())
+    return _has_free_valence(principal_atom, bond_order)
 
 
 def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
