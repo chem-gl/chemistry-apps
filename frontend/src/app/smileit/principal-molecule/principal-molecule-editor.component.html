@@ -1,0 +1,15 @@
+<!-- principal-molecule-editor.component.html: Entrada de SMILES principal y acción de inspección del scaffold. -->
+
+<label>
+  Principal SMILES
+  <input type="text" [ngModel]="principalSmiles" (ngModelChange)="onPrincipalSmilesChange($event)"
+    [disabled]="isProcessing" placeholder="c1ccc2[nH]ccc2c1" />
+</label>
+
+<div class="principal-inspect-action">
+  <button class="btn-secondary" (click)="requestInspect()" [disabled]="isProcessing">
+    {{ isInspecting ? 'Inspecting...' : 'Inspect structure' }}
+  </button>
+</div>
+
+<p class="catalog-smiles mono">{{ principalSmiles || 'Pending principal SMILES' }}</p>

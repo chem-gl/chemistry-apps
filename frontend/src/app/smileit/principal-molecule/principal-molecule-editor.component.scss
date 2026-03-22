@@ -1,0 +1,63 @@
+/* principal-molecule-editor.component.scss: Estilos locales para la edición textual de la molécula principal. */
+
+:host {
+  display: block;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #224438;
+}
+
+input {
+  border: 1px solid #c2d7c9;
+  border-radius: 14px;
+  padding: 0.62rem 0.78rem;
+  font-size: 0.94rem;
+  background: #fff;
+  color: #244537;
+}
+
+input:focus {
+  outline: 2px solid rgba(90, 150, 114, 0.25);
+  border-color: #5a9672;
+}
+
+.principal-inspect-action {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.52rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+  border: 1px solid #7ea38a;
+  color: #245741;
+  background: #fff;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.catalog-smiles {
+  margin-top: 0.45rem;
+}
+
+.mono,
+.catalog-smiles {
+  font-family: 'IBM Plex Mono', 'Fira Code', 'Consolas', monospace;
+  word-break: break-word;
+}

@@ -307,19 +307,10 @@
         </div>
     </div>
 
-    <label>
-        Principal SMILES
-        <input type="text" [ngModel]="workflow.principalSmiles()" (ngModelChange)="workflow.principalSmiles.set($event)"
-            [disabled]="workflow.isProcessing()" placeholder="c1ccc2[nH]ccc2c1" />
-        </label>
-
-    <div class="principal-inspect-action">
-        <button class="btn-secondary" (click)="inspectPrincipalStructure()" [disabled]="workflow.isProcessing()">
-            {{ workflow.activeSection() === 'inspecting' ? 'Inspecting...' : 'Inspect structure' }}
-        </button>
-    </div>
-
-    <p class="catalog-smiles mono">{{ workflow.principalSmiles() || 'Pending principal SMILES' }}</p>
+    <app-principal-molecule-editor [principalSmiles]="workflow.principalSmiles()" [isProcessing]="workflow.isProcessing()"
+      [isInspecting]="workflow.activeSection() === 'inspecting'" (principalSmilesChange)="onPrincipalSmilesChange($event)"
+      (inspectRequested)="inspectPrincipalStructure()">
+    </app-principal-molecule-editor>
 
     @if (workflow.inspection(); as inspectionResult) {
     <div class="inspection-card">
@@ -364,24 +355,9 @@
             }
 
         <p class="hint">Tip: click directly on the molecule image to select atoms with the mouse.</p>
-        <div class="principal-preview-wrap">
-            <div class="principal-zoom-controls">
-                <button type="button" class="zoom-btn" (click)="zoomOutPrincipal()" [disabled]="principalZoomLevel() === 1"
-                    aria-label="Zoom out">－</button>
-                <span class="zoom-label">{{ principalZoomLevel() }}×</span>
-                <button type="button" class="zoom-btn" (click)="zoomInPrincipal()" [disabled]="principalZoomLevel() === 4"
-                    aria-label="Zoom in">＋</button>
-            </div>
-            <div #principalSvgViewport class="principal-svg-viewport">
-                <div class="principal-zoom-surface" [style.width.px]="principalCanvasSize()"
-                    [style.height.px]="principalCanvasSize()">
-                    <div class="svg-preview inspectable principal-svg-stage"
-                        [style.transform]="'scale(' + principalZoomLevel() + ')'" (click)="onInspectionSvgClick($event)"
-                        [innerHTML]="toTrustedInspectionSvg()">
-                    </div>
-                </div>
-            </div>
-        </div>
+        <app-principal-svg-viewer [inspectionSvg]="toTrustedInspectionSvg()" [isProcessing]="workflow.isProcessing()"
+          (inspectionSvgClicked)="onInspectionSvgClick($event)">
+        </app-principal-svg-viewer>
 
         <div class="principal-pattern-action">
             <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
@@ -574,10 +550,12 @@
                             </div>
                             <div class="block-thumb-actions block-ref-actions" (click)="$event.stopPropagation()"
                                 (keydown)="$event.stopPropagation()">
+                                @if (!isCatalogEntryLoadedInManualDraft(block, entry)) {
                                 <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
-                                    [disabled]="workflow.isProcessing()" [class.active]="isCatalogEntryLoadedInManualDraft(block, entry)">
-                                    Add
+                                    [disabled]="workflow.isProcessing()">
+                                    Load
                                 </button>
+                                }
                                 <button class="remove-btn small"
                                     (click)="workflow.removeCatalogReferenceFromBlock(block.id, entry.stable_id, entry.version)"
                                     [disabled]="workflow.isProcessing()">

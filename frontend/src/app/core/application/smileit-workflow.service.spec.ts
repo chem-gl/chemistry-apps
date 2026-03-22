@@ -142,6 +142,7 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
           name: 'smileit_run_00001',
           smiles: 'Nc1ccccc1',
           svg: '<svg></svg>',
+          placeholder_assignments: [],
           traceability: [
             {
               round_index: 1,

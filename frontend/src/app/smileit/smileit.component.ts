@@ -3,16 +3,16 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-    Component,
-    ElementRef,
-    Injector,
-    OnDestroy,
-    OnInit,
-    ViewChild,
-    computed,
-    effect,
-    inject,
-    signal,
+  Component,
+  ElementRef,
+  Injector,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  effect,
+  inject,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -30,14 +30,17 @@ import {
   SmileitStructureInspectionView,
 } from '../core/api/jobs-api.service';
 import {
-    SmileitAssignmentBlockDraft,
-    SmileitGeneratedStructureView,
-    SmileitWorkflowService,
+  SmileitAssignmentBlockDraft,
+  SmileitGeneratedStructureView,
+  SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
+import { PrincipalMoleculeEditorModule } from './principal-molecule/principal-molecule-editor.module';
+import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-viewer.module';
 
 @Component({
   selector: 'app-smileit',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, PrincipalMoleculeEditorModule, PrincipalSvgViewerModule],
   providers: [SmileitWorkflowService],
   templateUrl: './smileit.component.html',
   styleUrl: './smileit.component.scss',
@@ -70,14 +73,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly isPreparingImagesZip = signal<boolean>(false);
   /** Porcentaje de progreso del proceso auxiliar de ZIP de imágenes. */
   readonly imagesZipProgress = signal<number>(0);
-  /** Nivel de zoom del visor principal de la molécula (1–4) */
-  readonly principalZoomLevel = signal<number>(1);
-  /** Tamaño base del canvas principal antes de aplicar zoom */
-  readonly principalBaseCanvasPx = 420;
-  /** Tamaño de la superficie de paneo según zoom actual */
-  readonly principalCanvasSize = computed<number>(
-    () => this.principalBaseCanvasPx * this.principalZoomLevel(),
-  );
   readonly collapsedBlockMap = signal<Record<string, boolean>>({});
   readonly selectedGeneratedStructure = signal<SmileitGeneratedStructureView | null>(null);
   readonly selectedPatternForDetail = signal<SmileitPatternEntryView | null>(null);
@@ -215,8 +210,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
   );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
-  @ViewChild('principalSvgViewport')
-  private principalSvgViewportRef?: ElementRef<HTMLDivElement>;
   @ViewChild('patternCatalogDialog')
   private patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('patternDetailDialog')
@@ -304,6 +297,10 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   inspectPrincipalStructure(): void {
     this.workflow.inspectPrincipalStructure();
+  }
+
+  onPrincipalSmilesChange(nextPrincipalSmiles: string): void {
+    this.workflow.principalSmiles.set(nextPrincipalSmiles);
   }
 
   dispatch(): void {
@@ -1036,18 +1033,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.libraryDetailPanY.set(0);
   }
 
-  /** Aumenta el zoom del visor principal de la molécula */
-  zoomInPrincipal(): void {
-    const nextZoomLevel: number = Math.min(this.principalZoomLevel() + 1, 4);
-    this.updatePrincipalZoom(nextZoomLevel);
-  }
-
-  /** Disminuye el zoom del visor principal de la molécula */
-  zoomOutPrincipal(): void {
-    const nextZoomLevel: number = Math.max(this.principalZoomLevel() - 1, 1);
-    this.updatePrincipalZoom(nextZoomLevel);
-  }
-
   onLibraryDetailPanStart(event: MouseEvent): void {
     this.libraryDetailIsDragging.set(true);
     this._panDragStartX = event.clientX;
@@ -1474,42 +1459,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
         this.setManualDraftInspection(block.id, null);
         this.setManualDraftInspectionError(block.id, null);
       }
-    });
-  }
-
-  private updatePrincipalZoom(nextZoomLevel: number): void {
-    const currentZoomLevel: number = this.principalZoomLevel();
-    if (nextZoomLevel === currentZoomLevel) {
-      return;
-    }
-
-    const principalViewport: HTMLDivElement | undefined =
-      this.principalSvgViewportRef?.nativeElement;
-    if (principalViewport === undefined) {
-      this.principalZoomLevel.set(nextZoomLevel);
-      return;
-    }
-
-    const anchorX: number =
-      (principalViewport.scrollLeft + principalViewport.clientWidth / 2) / currentZoomLevel;
-    const anchorY: number =
-      (principalViewport.scrollTop + principalViewport.clientHeight / 2) / currentZoomLevel;
-
-    this.principalZoomLevel.set(nextZoomLevel);
-
-    requestAnimationFrame(() => {
-      const rawScrollLeft: number = anchorX * nextZoomLevel - principalViewport.clientWidth / 2;
-      const rawScrollTop: number = anchorY * nextZoomLevel - principalViewport.clientHeight / 2;
-      const maxScrollLeft: number = Math.max(
-        0,
-        principalViewport.scrollWidth - principalViewport.clientWidth,
-      );
-      const maxScrollTop: number = Math.max(
-        0,
-        principalViewport.scrollHeight - principalViewport.clientHeight,
-      );
-      principalViewport.scrollLeft = Math.max(0, Math.min(maxScrollLeft, rawScrollLeft));
-      principalViewport.scrollTop = Math.max(0, Math.min(maxScrollTop, rawScrollTop));
     });
   }
 
