@@ -540,15 +540,15 @@
                 <div class="block-collapsed-summary" aria-label="Collapsed block summary">
                     <p><strong>Sites:</strong> {{ blockSummary(block).selectedSitesLabel }}</p>
                     <p><strong>Categories:</strong> {{ blockSummary(block).categoriesLabel }}</p>
-                    <p><strong>Catalog structures:</strong> {{ blockSummary(block).catalogSmilesLabel }}</p>
-                    <p><strong>Manual structures:</strong> {{ blockSummary(block).manualSmilesLabel }}</p>
+                    <p><strong>Catalog substituents:</strong> {{ blockSummary(block).catalogSmilesLabel }}</p>
+                    <p><strong>Manual substituents:</strong> {{ blockSummary(block).manualSmilesLabel }}</p>
                     <p><strong>Total block sources:</strong> {{ blockSummary(block).sourceCount }}</p>
                 </div>
                 } @else {
                 <div class="block-section">
-                    <h4>Catalog references</h4>
+                    <h4>Substituents added</h4>
                     @if (block.catalogRefs.length === 0) {
-                    <p class="hint">No persistent references attached to this block yet.</p>
+                    <p class="hint">No substituents added to this block yet.</p>
                     } @else {
                     <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
                         @for (entry of block.catalogRefs; track entry.id) {
@@ -576,7 +576,7 @@
                                 (keydown)="$event.stopPropagation()">
                                 <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
                                     [disabled]="workflow.isProcessing()" [class.active]="isCatalogEntryLoadedInManualDraft(block, entry)">
-                                    {{ isCatalogEntryLoadedInManualDraft(block, entry) ? 'Loaded in draft' : 'Load to draft' }}
+                                    Add
                                 </button>
                                 <button class="remove-btn small"
                                     (click)="workflow.removeCatalogReferenceFromBlock(block.id, entry.stable_id, entry.version)"
@@ -609,8 +609,8 @@
 
                     <div class="subsection-header block-catalog-tools-row">
                       <div>
-                            <h5>Catalog references browser</h5>
-                                                        <p class="hint">Browse by group and add a molecule. It will be loaded in the draft automatically.</p>
+                                                        <h5>Substituent library</h5>
+                                                        <p class="hint">Browse by group and add a substituent directly to this block.</p>
                             </div>
                         <label class="library-group-filter block-library-group-filter" aria-label="Filter block catalog by group">
                           Group
@@ -631,7 +631,7 @@
                       @for (entry of filteredCatalogEntriesForBlock(block); track entry.id) {
                                                                                         <article class="block-library-thumb">
                                                                                             <div class="thumb-open-button" role="button" tabindex="0"
-                                                                                                [attr.aria-label]="'Add ' + entry.name + ' to catalog references'"
+                                                                                                [attr.aria-label]="'Add ' + entry.name + ' to this block'"
                                                                                                 (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
                                                                                                 (keydown.enter)="onBlockCatalogBrowserEntryActivate(block, entry)"
                                                                                                 (keydown.space)="onBlockCatalogBrowserEntryActivate(block, entry); $event.preventDefault()">
@@ -650,7 +650,7 @@
                             <div class="block-thumb-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                                                                 <button class="catalog-add small" (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
                                                                     [disabled]="workflow.isProcessing()">
-                                                                                                                                        Add and load
+                                                                                                                                        Add
                                 </button>
                             </div>
                         </article>
@@ -737,7 +737,7 @@
                     (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
                     [disabled]="workflow.isProcessing() || workflow.selectedAtomIndices().length === 0" />
                 <small class="hint" *ngIf="workflow.selectedAtomIndices().length > 0">
-                    máx. {{ workflow.maxRSubstitutesByPositions() }} (basado en {{ workflow.selectedAtomIndices().length }} posiciones)
+                    max {{ workflow.maxRSubstitutesByPositions() }} (based on {{ workflow.selectedAtomIndices().length }} selected sites)
                 </small>
                 </label>
 </div>
@@ -824,7 +824,7 @@
                 <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">LOG</button>
         <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()"
                     [disabled]="workflow.isExporting() || isPreparingImagesZip() || resultData.totalGenerated === 0"
-                                        title="Download all enumerated structures as ZIP. SVG files + one TXT with derivative SMILES.">
+                                        title="Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after.">
         {{ isPreparingImagesZip() ? 'Preparing SVG ZIP...' : '↓ Download SVGs (ZIP)' }}
         </button>
         </div>
@@ -1045,7 +1045,7 @@
             <div class="library-detail-title-row">
                 <h4>{{ detailEntry.name }}</h4>
                 @if (libraryDetailOpenContext() === 'reference' || isReferencedInAnyBlock(detailEntry)) {
-                <span class="library-detail-badge">Agregado</span>
+                <span class="library-detail-badge">Added</span>
                 }
                 </div>
       <button type="button" class="btn-secondary" (click)="closeLibraryEntryDetail()">Close</button>
@@ -1127,7 +1127,7 @@
             </header>
 
                         <div class="structure-modal-svg structure-modal-panel single-structure-panel">
-                          <h5>Generated scaffold with placeholders</h5>
+                                                    <h5>Generated derivative (substituent highlighted)</h5>
                           <div [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
                         </div>
         </section>
