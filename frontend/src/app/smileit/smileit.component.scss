@@ -845,6 +845,13 @@ select:focus {
   max-width: 46ch;
 }
 
+.catalog-batch-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .catalog-ready-hint {
   margin: 0.3rem 0 0;
 }
@@ -1008,6 +1015,52 @@ select:focus {
 
 .catalog-studio-dialog::backdrop {
   background: rgba(17, 34, 26, 0.64);
+}
+
+.catalog-smiles-sketch-dialog {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: auto;
+  width: min(1040px, 96vw);
+  max-height: 94vh;
+  overflow: visible;
+}
+
+.catalog-smiles-sketch-dialog::backdrop {
+  background: rgba(17, 34, 26, 0.64);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.catalog-smiles-sketch-modal {
+  width: min(1040px, 100%);
+  max-height: 94vh;
+  overflow: auto;
+  border: 1px solid #c7d9cb;
+  border-radius: 24px;
+  background: #fffdfa;
+  padding: 1.1rem;
+}
+
+.catalog-ketcher-frame-wrap {
+  margin-top: 0.75rem;
+  border: 1px solid #d3e2d7;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.catalog-ketcher-frame {
+  width: 100%;
+  min-height: 420px;
+  height: clamp(420px, 56vh, 620px);
+  border: 0;
+  display: block;
+}
+
+.catalog-smiles-sketch-modal textarea {
+  margin-top: 0.45rem;
 }
 
 .pattern-catalog-dialog,

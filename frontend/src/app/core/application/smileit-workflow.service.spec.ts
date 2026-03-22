@@ -463,9 +463,21 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateAnchorIndicesText.set('1');
 
     expect(workflowService.catalogDraftPreview().isReady).toBe(false);
-    expect(workflowService.catalogDraftPreview().warnings).toContain(
+    expect(workflowService.catalogDraftPreview().warnings).not.toContain(
       'Select at least one chemistry category.',
     );
+  });
+
+  it('allows saving catalog draft without selecting a chemistry category', () => {
+    workflowService.catalogCreateName.set('No category substituent');
+    workflowService.catalogCreateSmiles.set('CCO');
+    workflowService.catalogCreateAnchorIndicesText.set('1');
+
+    const currentPreview = workflowService.catalogDraftPreview();
+
+    expect(currentPreview.isReady).toBe(true);
+    expect(currentPreview.categoryKeys).toEqual([]);
+    expect(currentPreview.categoryNames).toEqual(['Uncategorized']);
   });
 
   it('clones queued metadata to quickly create a new SMILES variant', () => {

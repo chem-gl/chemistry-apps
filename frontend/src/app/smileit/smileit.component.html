@@ -130,7 +130,7 @@
                             <div class="subsection-header">
                                 <div>
                                     <h4>Chemistry categories</h4>
-                                    <p class="hint">Select one or more categories to classify the substituent.</p>
+                                    <p class="hint">Select categories to classify the substituent (optional).</p>
                                 </div>
                             </div>
                             <div class="chip-grid compact-chip-grid">
@@ -163,10 +163,16 @@
                                 <p class="hint">Add each SMILES with <strong>+</strong>, select one anchor atom, and
                                     then
                                     save the full batch.</p>
-                                <button type="button" class="btn-secondary" (click)="stageCurrentCatalogDraft()"
-                                    [disabled]="workflow.isProcessing() || workflow.isCatalogEditing()">
-                                    + Add current SMILES
-                                </button>
+                                <div class="catalog-batch-actions">
+                                  <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()"
+                                    [disabled]="workflow.isProcessing()">
+                                    Sketch SMILES
+                                  </button>
+                                    <button type="button" class="btn-secondary" (click)="stageCurrentCatalogDraft()"
+                                      [disabled]="workflow.isProcessing() || workflow.isCatalogEditing()">
+                                      + Add current SMILES
+                                    </button>
+                                    </div>
                             </div>
                             @if (!workflow.catalogDraftPreview().isReady) {
                             <p class="hint catalog-ready-hint">Complete metadata, SMILES and one target anchor atom to queue this draft.</p>
@@ -275,7 +281,7 @@
                             </p>
                             <p><strong>Anchor:</strong> {{ catalogDraftPreview.anchorAtomIndices.length > 0 ?
                                 catalogDraftPreview.anchorAtomIndices[0] : 'Pending' }}</p>
-                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Pending'
+                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Uncategorized'
                                 }}</p>
                             <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
                         </div>
@@ -292,6 +298,41 @@
                 </div>
             </section>
         </dialog>
+<dialog #catalogSmilesSketchDialog class="catalog-smiles-sketch-dialog"
+  (click)="onCatalogSmilesSketchDialogClick($event)">
+  <section class="catalog-smiles-sketch-modal" role="dialog" aria-modal="true" aria-label="Catalog SMILES sketcher"
+    (click)="$event.stopPropagation()">
+    <header class="catalog-studio-header">
+      <div>
+        <h4>Catalog SMILES sketcher</h4>
+        <p class="hint">Draw the substituent in Ketcher and apply it to the current SMILES draft.</p>
+      </div>
+      <button type="button" class="btn-secondary" (click)="closeCatalogSmilesSketcher()">Close</button>
+    </header>
+
+    <div class="catalog-ketcher-frame-wrap" aria-label="Ketcher sketcher frame">
+      <iframe #catalogSmilesKetcherFrame class="catalog-ketcher-frame" [src]="catalogSmilesKetcherUrl"
+        title="Catalog SMILES sketcher" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
+    </div>
+
+    <label class="catalog-field-full">
+      SMILES draft (manual fallback)
+      <textarea [ngModel]="workflow.catalogCreateSmiles()" (ngModelChange)="onCatalogDraftSmilesChange($event)"
+        [disabled]="workflow.isProcessing()" rows="3"></textarea>
+    </label>
+
+    <div class="action-row compact-actions catalog-editor-actions">
+      <button type="button" class="btn-secondary" (click)="closeCatalogSmilesSketcher()"
+        [disabled]="workflow.isProcessing()">
+        Cancel
+      </button>
+      <button type="button" class="btn-secondary" (click)="applyCatalogSmilesFromSketcher()"
+        [disabled]="workflow.isProcessing()">
+        Apply to draft
+      </button>
+    </div>
+  </section>
+</dialog>
     </article>
 </section>
 
@@ -607,12 +648,12 @@
                     } @else {
                     <div class="library-thumbnail-grid block-library-thumbnail-grid">
                       @for (entry of filteredCatalogEntriesForBlock(block); track entry.id) {
-                                                                                        <article class="block-library-thumb">
+                                                                                        <article class="block-library-thumb" [class.is-referenced]="workflow.isCatalogEntryReferenced(block, entry)">
                                                                                             <div class="thumb-open-button" role="button" tabindex="0"
-                                                                                                [attr.aria-label]="'Add ' + entry.name + ' to this block'"
-                                                                                                (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
-                                                                                                (keydown.enter)="onBlockCatalogBrowserEntryActivate(block, entry)"
-                                                                                                (keydown.space)="onBlockCatalogBrowserEntryActivate(block, entry); $event.preventDefault()">
+                                                                                                [attr.aria-label]="workflow.isCatalogEntryReferenced(block, entry) ? (entry.name + ' already added to this block') : ('Add ' + entry.name + ' to this block')"
+                                                                                                (click)="onBlockCatalogEntryCardActivate(block, entry)"
+                                                                                                (keydown.enter)="onBlockCatalogEntryCardActivate(block, entry)"
+                                                                                                (keydown.space)="onBlockCatalogEntryCardActivate(block, entry); $event.preventDefault()">
                           <p class="thumb-name">{{ entry.name }}</p>
                           <div class="thumb-preview">
                             @if (catalogEntryPreviewSvg(entry); as blockThumbSvg) {
@@ -626,10 +667,16 @@
                                 <p class="thumb-smiles mono">{{ entry.smiles }}</p>
                                 </div>
                             <div class="block-thumb-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                                                                @if (workflow.isCatalogEntryReferenced(block, entry)) {
+                                                                <button class="btn-secondary small" type="button" disabled>
+                                                                  Added
+                                                                </button>
+                                                                } @else {
                                                                 <button class="catalog-add small" (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
                                                                     [disabled]="workflow.isProcessing()">
                                                                                                                                         Add
                                 </button>
+                                                                }
                             </div>
                         </article>
                         }

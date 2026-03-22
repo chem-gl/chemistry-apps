@@ -15,7 +15,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import JSZip from 'jszip';
 import { Subscription, firstValueFrom } from 'rxjs';
@@ -80,6 +80,9 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
   readonly selectedLibraryGroupKey = signal<string>('aromatic');
+  readonly isCatalogSmilesSketcherReady = signal<boolean>(false);
+  readonly catalogSmilesKetcherUrl: SafeResourceUrl =
+    this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
   readonly selectedBlockLibraryGroupKeys = signal<Record<string, string>>({});
   readonly selectedLibraryEntryForDetail = signal<SmileitCatalogEntryView | null>(null);
   readonly libraryDetailOpenContext = signal<'browser' | 'reference'>('browser');
@@ -210,6 +213,10 @@ export class SmileitComponent implements OnInit, OnDestroy {
   );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('catalogSmilesSketchDialog')
+  private catalogSmilesSketchDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('catalogSmilesKetcherFrame')
+  private catalogSmilesKetcherFrameRef?: ElementRef<HTMLIFrameElement>;
   @ViewChild('patternCatalogDialog')
   private patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('patternDetailDialog')
@@ -852,6 +859,80 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.refreshCatalogDraftInspection();
   }
 
+  openCatalogSmilesSketcher(): void {
+    if (this.workflow.isProcessing()) {
+      return;
+    }
+
+    const dialogElement: HTMLDialogElement | undefined =
+      this.catalogSmilesSketchDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    if (dialogElement.open) {
+      if (typeof dialogElement.close === 'function') {
+        dialogElement.close();
+      } else {
+        dialogElement.removeAttribute('open');
+      }
+    }
+
+    if (typeof dialogElement.showModal === 'function') {
+      try {
+        dialogElement.showModal();
+      } catch {
+        dialogElement.setAttribute('open', 'true');
+      }
+    } else {
+      dialogElement.setAttribute('open', 'true');
+    }
+
+    void this.pushCatalogSmilesToKetcher();
+  }
+
+  closeCatalogSmilesSketcher(): void {
+    const dialogElement: HTMLDialogElement | undefined =
+      this.catalogSmilesSketchDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    if (dialogElement.open) {
+      if (typeof dialogElement.close === 'function') {
+        dialogElement.close();
+      } else {
+        dialogElement.removeAttribute('open');
+      }
+      return;
+    }
+
+    dialogElement.removeAttribute('open');
+  }
+
+  onCatalogSmilesSketchDialogClick(mouseEvent: MouseEvent): void {
+    const dialogElement: HTMLDialogElement | undefined =
+      this.catalogSmilesSketchDialogRef?.nativeElement;
+    if (dialogElement === undefined) {
+      return;
+    }
+
+    if (mouseEvent.target === dialogElement) {
+      this.closeCatalogSmilesSketcher();
+    }
+  }
+
+  onCatalogSmilesKetcherLoaded(): void {
+    this.isCatalogSmilesSketcherReady.set(true);
+    void this.pushCatalogSmilesToKetcher();
+  }
+
+  async applyCatalogSmilesFromSketcher(): Promise<void> {
+    await this.pullCatalogSmilesFromKetcher();
+    this.refreshCatalogDraftInspection();
+    this.closeCatalogSmilesSketcher();
+  }
+
   stageCurrentCatalogDraft(): void {
     this.workflow.stageCurrentCatalogDraft();
     this.refreshCatalogDraftInspection();
@@ -1121,14 +1202,18 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   filteredCatalogEntriesForBlock(block: SmileitAssignmentBlockDraft): SmileitCatalogEntryView[] {
-    const candidateEntries: SmileitCatalogEntryView[] = this.filteredCatalogGroupsForBlock(
-      block,
-    ).flatMap((group) => group.entries);
+    return this.filteredCatalogGroupsForBlock(block).flatMap((group) => group.entries);
+  }
 
-    return candidateEntries.filter(
-      (catalogEntry: SmileitCatalogEntryView) =>
-        !this.workflow.isCatalogEntryReferenced(block, catalogEntry),
-    );
+  onBlockCatalogEntryCardActivate(
+    block: SmileitAssignmentBlockDraft,
+    catalogEntry: SmileitCatalogEntryView,
+  ): void {
+    if (this.workflow.isCatalogEntryReferenced(block, catalogEntry)) {
+      return;
+    }
+
+    this.onBlockCatalogBrowserEntryActivate(block, catalogEntry);
   }
 
   onBlockCatalogBrowserEntryActivate(
@@ -1184,6 +1269,57 @@ export class SmileitComponent implements OnInit, OnDestroy {
     const eventTarget: EventTarget | null = mouseEvent.target;
     if (eventTarget === dialogElement) {
       this.closeCatalogStudioModal();
+    }
+  }
+
+  private resolveCatalogKetcherApi(): CatalogKetcherApi | null {
+    if (!this.isCatalogSmilesSketcherReady()) {
+      return null;
+    }
+
+    const frameElement: HTMLIFrameElement | undefined =
+      this.catalogSmilesKetcherFrameRef?.nativeElement;
+    const frameWindow: (Window & { ketcher?: unknown }) | null | undefined =
+      frameElement?.contentWindow as (Window & { ketcher?: unknown }) | null | undefined;
+    const maybeKetcherApi: unknown = frameWindow?.ketcher;
+    if (
+      typeof maybeKetcherApi !== 'object' ||
+      maybeKetcherApi === null ||
+      !('getSmiles' in maybeKetcherApi) ||
+      !('setMolecule' in maybeKetcherApi)
+    ) {
+      return null;
+    }
+
+    return maybeKetcherApi as CatalogKetcherApi;
+  }
+
+  private async pushCatalogSmilesToKetcher(): Promise<void> {
+    const ketcherApi: CatalogKetcherApi | null = this.resolveCatalogKetcherApi();
+    if (ketcherApi === null) {
+      return;
+    }
+
+    try {
+      await ketcherApi.setMolecule(this.workflow.catalogCreateSmiles().trim());
+    } catch {
+      // Si Ketcher no acepta el contenido, se mantiene entrada manual como fallback.
+    }
+  }
+
+  private async pullCatalogSmilesFromKetcher(): Promise<void> {
+    const ketcherApi: CatalogKetcherApi | null = this.resolveCatalogKetcherApi();
+    if (ketcherApi === null) {
+      return;
+    }
+
+    try {
+      const nextSmiles: string = await ketcherApi.getSmiles();
+      if (typeof nextSmiles === 'string' && nextSmiles.trim() !== '') {
+        this.workflow.catalogCreateSmiles.set(nextSmiles.trim());
+      }
+    } catch {
+      // Si Ketcher no responde, se mantiene el valor manual vigente.
     }
   }
 
@@ -2455,4 +2591,9 @@ export class SmileitComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(objectUrl);
   }
 }
+
+type CatalogKetcherApi = {
+  getSmiles: () => Promise<string>;
+  setMolecule: (molecule: string) => Promise<void>;
+};
 

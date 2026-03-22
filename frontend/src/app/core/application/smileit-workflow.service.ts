@@ -258,9 +258,12 @@ export class SmileitWorkflowService implements OnDestroy {
     if (parsedAnchorIndices.length === 0) {
       warnings.push('One anchor atom index is required.');
     }
-    if (selectedCategoryKeys.length === 0) {
-      warnings.push('Select at least one chemistry category.');
-    }
+    const resolvedCategoryNames: string[] =
+      selectedCategoryKeys.length > 0
+        ? selectedCategoryKeys.map(
+            (categoryKey: string) => categoryNameByKey.get(categoryKey) ?? categoryKey,
+          )
+        : ['Uncategorized'];
 
     return {
       name: this.catalogCreateName().trim(),
@@ -268,17 +271,14 @@ export class SmileitWorkflowService implements OnDestroy {
       sourceReference: this.catalogCreateSourceReference().trim() || 'local-lab',
       anchorAtomIndices: parsedAnchorIndices,
       categoryKeys: selectedCategoryKeys,
-      categoryNames: selectedCategoryKeys.map(
-        (categoryKey: string) => categoryNameByKey.get(categoryKey) ?? categoryKey,
-      ),
+      categoryNames: resolvedCategoryNames,
       notationKind,
       warnings,
       isReady:
         this.catalogCreateName().trim() !== '' &&
         currentSmiles !== '' &&
         notationKind !== 'smarts' &&
-        parsedAnchorIndices.length > 0 &&
-        selectedCategoryKeys.length > 0,
+        parsedAnchorIndices.length > 0,
     };
   });
 
@@ -710,11 +710,6 @@ export class SmileitWorkflowService implements OnDestroy {
 
     if (activePreview.anchorAtomIndices.length === 0) {
       this.errorMessage.set('Persistent catalog entry requires one anchor atom index.');
-      return;
-    }
-
-    if (activePreview.categoryKeys.length === 0) {
-      this.errorMessage.set('Persistent catalog entry requires at least one chemistry category.');
       return;
     }
 
