@@ -6,10 +6,39 @@
     [disabled]="isProcessing" placeholder="c1ccc2[nH]ccc2c1" />
 </label>
 
-<div class="principal-inspect-action">
-  <button class="btn-secondary" (click)="requestInspect()" [disabled]="isProcessing">
+<div class="principal-actions-row">
+  <button class="btn-secondary" type="button" (click)="openSketchModifier()">
+    Open sketch modifier
+  </button>
+  <button class="btn-secondary" type="button" (click)="requestInspect()" [disabled]="isProcessing">
     {{ isInspecting ? 'Inspecting...' : 'Inspect structure' }}
   </button>
 </div>
 
 <p class="catalog-smiles mono">{{ principalSmiles || 'Pending principal SMILES' }}</p>
+<dialog #sketchModifierDialog class="sketch-modifier-dialog" (click)="onSketchModifierDialogClick($event)">
+  <section class="sketch-modifier-modal" role="document" aria-label="Principal sketch modifier">
+    <h4>Principal sketch modifier</h4>
+    <p class="hint">Use the sketcher below. If it fails to load, the SMILES textarea still works as fallback.</p>
+
+    <div class="ketcher-frame-wrap" aria-label="Principal molecule sketcher">
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher principal sketcher"
+        (load)="onKetcherFrameLoaded()"></iframe>
+    </div>
+
+    <label>
+      Principal SMILES draft (fallback/manual)
+      <textarea [ngModel]="sketchDraftSmiles" (ngModelChange)="onSketchDraftSmilesChange($event)"
+        [disabled]="isProcessing" rows="4"></textarea>
+    </label>
+
+    <div class="sketch-modifier-actions">
+      <button class="btn-secondary" type="button" (click)="closeSketchModifier()" [disabled]="isProcessing">
+        Cancel
+      </button>
+      <button class="btn-secondary" type="button" (click)="applySketchModifier()" [disabled]="isProcessing">
+        Apply
+      </button>
+    </div>
+  </section>
+</dialog>

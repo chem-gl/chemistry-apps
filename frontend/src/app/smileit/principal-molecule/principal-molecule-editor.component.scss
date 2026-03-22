@@ -26,9 +26,10 @@ input:focus {
   border-color: #5a9672;
 }
 
-.principal-inspect-action {
+.principal-actions-row {
   margin-top: 0.55rem;
   display: flex;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
 
@@ -54,6 +55,72 @@ input:focus {
 
 .catalog-smiles {
   margin-top: 0.45rem;
+}
+
+.sketch-modifier-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(620px, calc(100vw - 2rem));
+  max-width: 620px;
+}
+
+.sketch-modifier-dialog::backdrop {
+  background: rgba(13, 26, 22, 0.42);
+}
+
+.sketch-modifier-modal {
+  width: min(620px, 100%);
+  background: #fff;
+  border: 1px solid #d0e2d6;
+  border-radius: 16px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sketch-modifier-modal .hint {
+  margin: 0;
+  color: #4b6f60;
+  font-size: 0.84rem;
+}
+
+.ketcher-frame-wrap {
+  border: 1px solid #d0e2d6;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ketcher-frame {
+  width: 100%;
+  min-height: 360px;
+  height: clamp(360px, 48vh, 520px);
+  border: 0;
+  display: block;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #c2d7c9;
+  border-radius: 12px;
+  padding: 0.65rem;
+  resize: vertical;
+  min-height: 90px;
+  font-size: 0.93rem;
+  color: #244537;
+  background: #fff;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(90, 150, 114, 0.25);
+  border-color: #5a9672;
+}
+
+.sketch-modifier-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .mono,

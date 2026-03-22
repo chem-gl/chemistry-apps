@@ -37,12 +37,60 @@ describe('PrincipalMoleculeEditorComponent', () => {
 
   it('should emit inspectRequested when inspect button is clicked', () => {
     const emitSpy = vi.spyOn(component.inspectRequested, 'emit');
-    const inspectButton: HTMLButtonElement = fixture.debugElement.query(
-      By.css('button'),
-    ).nativeElement;
+    const actionButtons: HTMLButtonElement[] = fixture.debugElement
+      .queryAll(By.css('.principal-actions-row button'))
+      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
+    const inspectButton: HTMLButtonElement = actionButtons[1];
 
     inspectButton.click();
 
     expect(emitSpy).toHaveBeenCalled();
+  });
+
+  it('should open sketch modifier modal when sketch button is clicked', () => {
+    const actionButtons: HTMLButtonElement[] = fixture.debugElement
+      .queryAll(By.css('.principal-actions-row button'))
+      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
+    const openSketchButton: HTMLButtonElement = actionButtons[0];
+
+    openSketchButton.click();
+    fixture.detectChanges();
+
+    const dialogElement: HTMLDialogElement = fixture.debugElement.query(
+      By.css('.sketch-modifier-dialog'),
+    ).nativeElement;
+    expect(dialogElement.hasAttribute('open')).toBe(true);
+
+    const ketcherFrameElement: HTMLIFrameElement | null = fixture.debugElement.query(
+      By.css('.ketcher-frame'),
+    )?.nativeElement;
+    expect(ketcherFrameElement).not.toBeNull();
+  });
+
+  it('should emit principalSmilesChange when applying sketch modifier', async () => {
+    const emitSpy = vi.spyOn(component.principalSmilesChange, 'emit');
+    const actionButtons: HTMLButtonElement[] = fixture.debugElement
+      .queryAll(By.css('.principal-actions-row button'))
+      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
+    const openSketchButton: HTMLButtonElement = actionButtons[0];
+
+    openSketchButton.click();
+    fixture.detectChanges();
+
+    const textareaElement: HTMLTextAreaElement = fixture.debugElement.query(
+      By.css('textarea'),
+    ).nativeElement;
+    textareaElement.value = 'c1ncccc1';
+    textareaElement.dispatchEvent(new Event('input'));
+
+    const modalButtons: HTMLButtonElement[] = fixture.debugElement
+      .queryAll(By.css('.sketch-modifier-actions button'))
+      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
+    const applyButton: HTMLButtonElement = modalButtons[1];
+
+    applyButton.click();
+    await fixture.whenStable();
+
+    expect(emitSpy).toHaveBeenCalledWith('c1ncccc1');
   });
 });
