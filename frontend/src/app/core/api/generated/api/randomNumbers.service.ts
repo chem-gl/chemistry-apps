@@ -117,8 +117,8 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
     }
 
     /**
-     * Descargar Reporte CSV de Random Numbers
-     * Descarga un CSV con índice secuencial y números generados. Solo aplica para jobs en estado completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/random-numbers/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -168,8 +168,8 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
     }
 
     /**
-     * Descargar Reporte de Error de Random Numbers
-     * Descarga un reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y traza de fallo.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/random-numbers/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -219,8 +219,8 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
     }
 
     /**
-     * Descargar Reporte LOG de Random Numbers
-     * Descarga un log técnico con parámetros, resultados, eventos y CSV embebido cuando el job ya está completed.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/random-numbers/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -270,17 +270,17 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
     }
 
     /**
-     * Consultar Job de Números Aleatorios
-     * Devuelve estado y resultado de random_numbers por UUID.
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/random-numbers/jobs/{id}/
-     * @param id UUID del job random_numbers.
+     * @param id UUID del job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public randomNumbersJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RandomNumbersJobResponse>;
-    public randomNumbersJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RandomNumbersJobResponse>>;
-    public randomNumbersJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RandomNumbersJobResponse>>;
+    public randomNumbersJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public randomNumbersJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public randomNumbersJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
     public randomNumbersJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling randomNumbersJobsRetrieve.');
@@ -318,7 +318,7 @@ export class RandomNumbersService extends BaseService implements RandomNumbersSe
 
         let localVarPath = `/api/random-numbers/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<RandomNumbersJobResponse>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

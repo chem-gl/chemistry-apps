@@ -1,0 +1,89 @@
+/* principal-svg-viewer.component.scss: Estilos del visor principal para zoom y navegación del SVG del scaffold. */
+
+:host {
+  display: block;
+}
+
+.svg-preview {
+  border: 1px solid #d9e6db;
+  border-radius: 20px;
+  background: #fff;
+  padding: 0.5rem;
+  overflow: auto;
+}
+
+.svg-preview.inspectable {
+  cursor: crosshair;
+}
+
+.principal-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.principal-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.principal-svg-viewport {
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #d9e6db;
+  border-radius: 20px;
+  overflow: auto;
+  max-height: min(68vh, 560px);
+}
+
+.principal-zoom-surface {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.principal-svg-stage {
+  width: 420px;
+  height: 420px;
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+  overflow: visible;
+}
+
+.zoom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #b8d4c2;
+  border-radius: 8px;
+  background: #f3f9f4;
+  color: #2a5e40;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background: #d9eee3;
+  border-color: #4caf7d;
+}
+
+.zoom-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.zoom-label {
+  font-size: 0.75rem;
+  color: #5a8570;
+  min-width: 46px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

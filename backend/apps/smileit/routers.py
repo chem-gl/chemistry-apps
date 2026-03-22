@@ -1,18 +1,21 @@
-"""routers.py: Endpoints HTTP profesionales para Smile-it.
+"""routers.py: Endpoints HTTP dedicados para Smile-it.
 
-Objetivo del archivo:
-- Exponer CRUD de catálogos/patrones y endpoints de jobs con asignación flexible
-  por bloques, trazabilidad completa y exportes reproducibles.
-
-Cómo se usa:
-- Frontend consume estos endpoints para inspección, configuración y ejecución.
-- El core de jobs mantiene estado/progreso/logs y este router delega ejecución.
+Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
+(retrieve, report-csv, report-log, report-error) y define adicionalmente:
+1. CRUD de catálogos/patrones/categorías para configuración de sustituyentes.
+2. inspect_structure() para inspección rápida de molécula SMILES.
+3. create() con resolución de bloques de asignación y validación de cobertura.
+4. build_csv_content() con CSV químico de estructuras derivadas.
+5. report_smiles() y report_traceability() como exportes adicionales.
 """
 
 from __future__ import annotations
 
 import logging
+import re
+from io import BytesIO
 from typing import cast
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -27,13 +30,13 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.base_router import ScientificAppViewSetMixin
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
 from apps.core.reporting import (
     build_download_filename,
-    build_job_error_report,
-    build_job_log_report,
     build_text_download_response,
+    escape_csv_cell,
     validate_job_for_csv_report,
 )
 from apps.core.schemas import ErrorResponseSerializer
@@ -52,11 +55,16 @@ from .catalog import (
     update_catalog_substituent,
 )
 from .definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
-from .engine import inspect_smiles_structure_with_patterns
+from .engine import (
+    inspect_smiles_structure_with_patterns,
+    render_derivative_svg_with_substituent_highlighting,
+    tint_svg,
+)
 from .schemas import (
     SmileitCatalogEntryCreateSerializer,
     SmileitCatalogEntrySerializer,
     SmileitCategorySerializer,
+    SmileitGeneratedStructurePageSerializer,
     SmileitJobCreateSerializer,
     SmileitJobResponseSerializer,
     SmileitPatternEntryCreateSerializer,
@@ -67,6 +75,7 @@ from .schemas import (
 from .types import (
     SmileitAssignmentBlockInput,
     SmileitCatalogEntry,
+    SmileitGeneratedStructure,
     SmileitJobCreatePayload,
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
@@ -77,29 +86,69 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
-def _escape_csv_cell(raw_value: str) -> str:
-    """Escapa una celda CSV para exportación segura y reproducible."""
-    escaped_value = raw_value.replace('"', '""')
-    if any(separator in escaped_value for separator in [",", "\n", "\r", '"']):
-        return f'"{escaped_value}"'
-    return escaped_value
+def _build_pipe_joined_values(raw_values: list[str]) -> str:
+    """Une valores no vacíos con `|` preservando orden y evitando repetición consecutiva."""
+    normalized_values: list[str] = []
+    for raw_value in raw_values:
+        cleaned_value = raw_value.strip()
+        if cleaned_value == "":
+            continue
+        normalized_values.append(cleaned_value)
+    return "|".join(normalized_values)
+
+
+def _build_compound_name(
+    principal_smiles: str,
+    substituent_smiles: str,
+    applied_positions: str,
+) -> str:
+    """Construye un nombre compuesto legible a partir de los SMILES componentes."""
+    if substituent_smiles == "":
+        return principal_smiles
+    if applied_positions == "":
+        return f"{principal_smiles} + {substituent_smiles}"
+    return f"{principal_smiles} + {substituent_smiles} @ {applied_positions}"
 
 
 def _build_structures_csv(job: ScientificJob) -> str:
-    """Construye CSV de estructuras generadas con nombre y SMILES."""
+    """Construye CSV químico compacto con una fila por derivado."""
     results_payload = cast(SmileitResult, job.results)
     structures = results_payload.get("generated_structures", [])
+    principal_smiles = str(results_payload.get("principal_smiles", ""))
 
-    lines: list[str] = ["index,name,smiles,traceability_events"]
-    for index_value, structure in enumerate(structures, start=1):
-        traceability_size = len(structure.get("traceability", []))
+    lines: list[str] = [
+        "compound_name,principal_smiles,substituent_smiles,applied_positions,generated_smiles"
+    ]
+
+    for structure in structures:
+        traceability = sorted(
+            structure.get("traceability", []),
+            key=lambda event: (
+                int(event.get("site_atom_index", 0)),
+                int(event.get("round_index", 0)),
+                int(event.get("block_priority", 0)),
+                str(event.get("substituent_name", "")),
+            ),
+        )
+        substituent_smiles = _build_pipe_joined_values(
+            [str(event.get("substituent_smiles", "")) for event in traceability]
+        )
+        applied_positions = _build_pipe_joined_values(
+            [str(event.get("site_atom_index", "")) for event in traceability]
+        )
+        compound_name = _build_compound_name(
+            principal_smiles=principal_smiles,
+            substituent_smiles=substituent_smiles,
+            applied_positions=applied_positions,
+        )
         lines.append(
             ",".join(
                 [
-                    _escape_csv_cell(str(index_value)),
-                    _escape_csv_cell(structure.get("name", "")),
-                    _escape_csv_cell(structure.get("smiles", "")),
-                    _escape_csv_cell(str(traceability_size)),
+                    escape_csv_cell(compound_name),
+                    escape_csv_cell(principal_smiles),
+                    escape_csv_cell(substituent_smiles),
+                    escape_csv_cell(applied_positions),
+                    escape_csv_cell(str(structure.get("smiles", ""))),
                 ]
             )
         )
@@ -122,18 +171,18 @@ def _build_traceability_csv(job: ScientificJob) -> str:
         lines.append(
             ",".join(
                 [
-                    _escape_csv_cell(str(row.get("derivative_name", ""))),
-                    _escape_csv_cell(str(row.get("derivative_smiles", ""))),
-                    _escape_csv_cell(str(row.get("round_index", ""))),
-                    _escape_csv_cell(str(row.get("site_atom_index", ""))),
-                    _escape_csv_cell(str(row.get("block_label", ""))),
-                    _escape_csv_cell(str(row.get("block_priority", ""))),
-                    _escape_csv_cell(str(row.get("substituent_name", ""))),
-                    _escape_csv_cell(str(row.get("substituent_smiles", ""))),
-                    _escape_csv_cell(str(row.get("substituent_stable_id", ""))),
-                    _escape_csv_cell(str(row.get("substituent_version", ""))),
-                    _escape_csv_cell(str(row.get("source_kind", ""))),
-                    _escape_csv_cell(str(row.get("bond_order", ""))),
+                    escape_csv_cell(str(row.get("derivative_name", ""))),
+                    escape_csv_cell(str(row.get("derivative_smiles", ""))),
+                    escape_csv_cell(str(row.get("round_index", ""))),
+                    escape_csv_cell(str(row.get("site_atom_index", ""))),
+                    escape_csv_cell(str(row.get("block_label", ""))),
+                    escape_csv_cell(str(row.get("block_priority", ""))),
+                    escape_csv_cell(str(row.get("substituent_name", ""))),
+                    escape_csv_cell(str(row.get("substituent_smiles", ""))),
+                    escape_csv_cell(str(row.get("substituent_stable_id", ""))),
+                    escape_csv_cell(str(row.get("substituent_version", ""))),
+                    escape_csv_cell(str(row.get("source_kind", ""))),
+                    escape_csv_cell(str(row.get("bond_order", ""))),
                 ]
             )
         )
@@ -142,17 +191,118 @@ def _build_traceability_csv(job: ScientificJob) -> str:
 
 
 def _build_enumerated_smiles_export(job: ScientificJob) -> str:
-    """Construye export principal NAME + NAME_XXXXX SMILES para DataWarrior."""
+    """Construye export SMILES: principal primero y luego solo derivados."""
     results_payload = cast(SmileitResult, job.results)
     structures = results_payload.get("generated_structures", [])
-    export_name_base = str(results_payload.get("export_name_base", "SMILEIT"))
-    export_padding = int(results_payload.get("export_padding", 5))
+    principal_smiles = str(results_payload.get("principal_smiles", ""))
 
-    lines: list[str] = [export_name_base]
-    for index_value, structure in enumerate(structures, start=1):
-        derivative_name = f"{export_name_base}_{index_value:0{export_padding}d}"
-        lines.append(f"{derivative_name} {structure.get('smiles', '')}")
+    lines: list[str] = [principal_smiles]
+    for structure in structures:
+        lines.append(str(structure.get("smiles", "")))
     return "\n".join(lines)
+
+
+def _sanitize_zip_entry_base(raw_name: str, fallback_name: str) -> str:
+    """Normaliza nombre de archivo para entradas ZIP evitando caracteres inválidos."""
+    cleaned_name = re.sub(r"[^A-Za-z0-9]+", "_", raw_name).strip("_")
+    if cleaned_name == "":
+        cleaned_name = fallback_name
+    return cleaned_name[:64]
+
+
+def _build_derivations_images_zip(job: ScientificJob) -> bytes:
+    """Construye ZIP server-side con SVG por derivado y un TXT con SMILES generados."""
+    results_payload = cast(SmileitResult, job.results)
+    principal_smiles = str(results_payload.get("principal_smiles", ""))
+    structures = results_payload.get("generated_structures", [])
+
+    output_buffer = BytesIO()
+    used_file_bases: set[str] = set()
+    smiles_lines: list[str] = (
+        [principal_smiles] if principal_smiles.strip() != "" else []
+    )
+
+    with ZipFile(output_buffer, mode="w", compression=ZIP_DEFLATED) as zip_file:
+        for index, structure in enumerate(structures):
+            derivative_smiles = str(structure.get("smiles", "")).strip()
+            if derivative_smiles == "":
+                continue
+
+            smiles_lines.append(derivative_smiles)
+            fallback_name = f"structure_{str(index + 1).zfill(5)}"
+            raw_name = str(structure.get("name", ""))
+            file_base = _sanitize_zip_entry_base(raw_name, fallback_name)
+
+            if file_base in used_file_bases:
+                suffix = 2
+                while f"{file_base}_{suffix}" in used_file_bases:
+                    suffix += 1
+                file_base = f"{file_base}_{suffix}"
+            used_file_bases.add(file_base)
+
+            placeholder_assignments = cast(
+                list[dict[str, str | int]],
+                structure.get("placeholder_assignments", []),
+            )
+            substituent_smiles_list = [
+                str(assignment.get("substituent_smiles", ""))
+                for assignment in placeholder_assignments
+                if str(assignment.get("substituent_smiles", "")) != ""
+            ]
+            principal_site_atom_indices = [
+                int(assignment.get("site_atom_index", -1))
+                for assignment in placeholder_assignments
+                if int(assignment.get("site_atom_index", -1)) >= 0
+            ]
+
+            rendered_svg = render_derivative_svg_with_substituent_highlighting(
+                principal_smiles=principal_smiles,
+                derivative_smiles=derivative_smiles,
+                substituent_smiles_list=substituent_smiles_list,
+                principal_site_atom_indices=principal_site_atom_indices,
+                image_width=400,
+                image_height=400,
+            )
+            tinted_svg = tint_svg(rendered_svg, "#2f855a")
+            if tinted_svg.strip() == "":
+                continue
+
+            zip_file.writestr(f"{file_base}.svg", tinted_svg)
+
+        zip_file.writestr("generated_smiles.txt", "\n".join(smiles_lines))
+
+    output_buffer.seek(0)
+    return output_buffer.getvalue()
+
+
+def _build_smileit_summary_payload(job: ScientificJob) -> JSONMap:
+    """Genera respuesta de retrieve sin estructuras completas para evitar payload masivo."""
+    serialized_payload = SmileitJobResponseSerializer(job).data
+    payload = cast(JSONMap, dict(serialized_payload))
+    raw_results = payload.get("results")
+    if not isinstance(raw_results, dict):
+        return payload
+
+    normalized_results = cast(JSONMap, dict(raw_results))
+    normalized_results["generated_structures"] = []
+    payload["results"] = normalized_results
+    return payload
+
+
+def _resolve_job_structure_by_index(
+    job: ScientificJob,
+    structure_index: int,
+) -> SmileitGeneratedStructure | None:
+    """Resuelve un derivado por índice absoluto dentro de resultados persistidos."""
+    results_payload = cast(SmileitResult | None, job.results)
+    if results_payload is None:
+        return None
+
+    structures = results_payload.get("generated_structures", [])
+    if structure_index < 0 or structure_index >= len(structures):
+        return None
+
+    return cast(SmileitGeneratedStructure, structures[structure_index])
 
 
 def _expand_catalog_entry_to_resolved(
@@ -352,11 +502,197 @@ def _validate_effective_coverage(
 
 
 @extend_schema(tags=["Smileit"])
-class SmileitJobViewSet(viewsets.ViewSet):
-    """Endpoints de Smile-it para inspección, configuración y jobs ejecutables."""
+class SmileitJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
+    """Endpoints de Smile-it. Hereda retrieve y reportes del mixin."""
 
+    plugin_name = PLUGIN_NAME
+    response_serializer_class = SmileitJobResponseSerializer
+    csv_report_suffix = "structures"
     queryset = ScientificJob.objects.filter(plugin_name=PLUGIN_NAME)
     lookup_field = "id"
+
+    def build_csv_content(self, job: ScientificJob) -> str:
+        """Delega a _build_structures_csv para CSV químico por derivado."""
+        return _build_structures_csv(job)
+
+    @extend_schema(
+        summary="Obtener Job Smile-it (resumen optimizado)",
+        responses={200: SmileitJobResponseSerializer},
+    )
+    def retrieve(self, request: Request, id: str | None = None) -> Response:
+        """Retorna estado del job sin lista completa de derivados para reducir payload."""
+        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        return Response(_build_smileit_summary_payload(job), status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Listar derivados Smile-it paginados",
+        parameters=[
+            OpenApiParameter(
+                name="offset",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Índice inicial absoluto (0-based).",
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Tamaño de página (máximo 100).",
+            ),
+        ],
+        responses={
+            200: SmileitGeneratedStructurePageSerializer,
+            404: OpenApiResponse(response=ErrorResponseSerializer),
+            409: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    @action(detail=True, methods=["get"], url_path="derivations")
+    def derivations(self, request: Request, id: str | None = None) -> Response:
+        """Entrega derivados por páginas para evitar respuestas gigantes en frontend."""
+        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        validation_error = validate_job_for_csv_report(job)
+        if validation_error is not None:
+            return Response(
+                {"detail": validation_error}, status=status.HTTP_409_CONFLICT
+            )
+
+        raw_offset = request.query_params.get("offset", "0")
+        raw_limit = request.query_params.get("limit", "100")
+
+        try:
+            offset = max(0, int(raw_offset))
+            limit = max(1, min(100, int(raw_limit)))
+        except ValueError:
+            return Response(
+                {"detail": "offset y limit deben ser enteros válidos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results_payload = cast(SmileitResult, job.results)
+        structures = results_payload.get("generated_structures", [])
+        paged_structures = structures[offset : offset + limit]
+
+        items: list[JSONMap] = []
+        for relative_index, structure in enumerate(paged_structures):
+            absolute_index = offset + relative_index
+            items.append(
+                {
+                    "structure_index": absolute_index,
+                    "smiles": str(structure.get("smiles", "")),
+                    "name": str(structure.get("name", "")),
+                    "placeholder_assignments": list(
+                        structure.get("placeholder_assignments", [])
+                    ),
+                    "traceability": list(structure.get("traceability", [])),
+                }
+            )
+
+        response_payload: JSONMap = {
+            "total_generated": len(structures),
+            "offset": offset,
+            "limit": limit,
+            "items": items,
+        }
+        serializer = SmileitGeneratedStructurePageSerializer(response_payload)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Renderizar SVG de un derivado Smile-it bajo demanda",
+        parameters=[
+            OpenApiParameter(
+                name="structure_index",
+                type=int,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="Índice absoluto del derivado dentro del job.",
+            ),
+            OpenApiParameter(
+                name="variant",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Variante de renderizado: 'thumb' para grid o 'detail' para modal/export.",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(response=OpenApiTypes.BINARY),
+            404: OpenApiResponse(response=ErrorResponseSerializer),
+            409: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path=r"derivations/(?P<structure_index>\d+)/svg",
+    )
+    def derivation_svg(
+        self,
+        request: Request,
+        id: str | None = None,
+        structure_index: str | None = None,
+    ) -> HttpResponse | Response:
+        """Genera SVG del derivado solicitado únicamente cuando frontend lo necesita."""
+        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        validation_error = validate_job_for_csv_report(job)
+        if validation_error is not None:
+            return Response(
+                {"detail": validation_error}, status=status.HTTP_409_CONFLICT
+            )
+
+        try:
+            resolved_index = int(structure_index or "")
+        except ValueError:
+            return Response(
+                {"detail": "structure_index debe ser entero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        structure = _resolve_job_structure_by_index(job, resolved_index)
+        if structure is None:
+            return Response(
+                {"detail": "No existe derivado para structure_index solicitado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        results_payload = cast(SmileitResult, job.results)
+        principal_smiles = str(results_payload.get("principal_smiles", ""))
+        derivative_smiles = str(structure.get("smiles", ""))
+        placeholder_assignments = cast(
+            list[dict[str, str | int]],
+            structure.get("placeholder_assignments", []),
+        )
+        substituent_smiles_list = [
+            str(assignment.get("substituent_smiles", ""))
+            for assignment in placeholder_assignments
+            if str(assignment.get("substituent_smiles", "")) != ""
+        ]
+        principal_site_atom_indices = [
+            int(assignment.get("site_atom_index", -1))
+            for assignment in placeholder_assignments
+            if int(assignment.get("site_atom_index", -1)) >= 0
+        ]
+
+        variant = str(request.query_params.get("variant", "detail")).strip().lower()
+        is_thumb = variant == "thumb"
+
+        raw_svg = render_derivative_svg_with_substituent_highlighting(
+            principal_smiles=principal_smiles,
+            derivative_smiles=derivative_smiles,
+            substituent_smiles_list=substituent_smiles_list,
+            principal_site_atom_indices=principal_site_atom_indices,
+            image_width=280 if is_thumb else 400,
+            image_height=280 if is_thumb else 400,
+        )
+        svg = tint_svg(raw_svg, "#2f855a")
+        if svg.strip() == "":
+            return Response(
+                {"detail": "No se pudo renderizar SVG para el derivado solicitado."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
 
     @extend_schema(
         summary="Listar Categorías Químicas de Smile-it",
@@ -554,7 +890,7 @@ class SmileitJobViewSet(viewsets.ViewSet):
             "assignment_blocks": cast(list[dict[str, object]], list(resolved_blocks)),
             "r_substitutes": payload["r_substitutes"],
             "num_bonds": payload["num_bonds"],
-            "allow_repeated": payload["allow_repeated"],
+            "allow_repeated": False,
             "max_structures": payload["max_structures"],
             "site_overlap_policy": payload["site_overlap_policy"],
             "export_name_base": payload["export_name_base"],
@@ -590,60 +926,6 @@ class SmileitJobViewSet(viewsets.ViewSet):
         )
         response_serializer = SmileitJobResponseSerializer(job)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(
-        summary="Consultar Job Smile-it",
-        parameters=[
-            OpenApiParameter(
-                name="id",
-                type=str,
-                location=OpenApiParameter.PATH,
-                description="UUID del job Smile-it.",
-            )
-        ],
-        responses={
-            200: SmileitJobResponseSerializer,
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    def retrieve(self, request: Request, id: str | None = None) -> Response:
-        """Recupera estado/resultados de un job Smile-it."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        response_serializer = SmileitJobResponseSerializer(job)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        summary="Descargar CSV de Estructuras Smile-it",
-        responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY),
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-            409: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-csv")
-    def report_csv(
-        self, request: Request, id: str | None = None
-    ) -> HttpResponse | Response:
-        """Descarga CSV de estructuras derivadas para análisis tabular."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        validation_error = validate_job_for_csv_report(job)
-        if validation_error is not None:
-            return Response(
-                {"detail": validation_error}, status=status.HTTP_409_CONFLICT
-            )
-
-        content = _build_structures_csv(job)
-        filename = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="structures",
-            extension="csv",
-        )
-        return build_text_download_response(
-            content=content,
-            filename=filename,
-            content_type="text/csv; charset=utf-8",
-        )
 
     @extend_schema(
         summary="Descargar Export Principal SMILES Enumerado",
@@ -714,63 +996,34 @@ class SmileitJobViewSet(viewsets.ViewSet):
         )
 
     @extend_schema(
-        summary="Descargar Reporte LOG de Smile-it",
-        responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY),
-            404: OpenApiResponse(response=ErrorResponseSerializer),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-log")
-    def report_log(self, request: Request, id: str | None = None) -> HttpResponse:
-        """Descarga reporte técnico completo con logs y resumen de resultados."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-
-        csv_content: str | None = None
-        if validate_job_for_csv_report(job) is None:
-            csv_content = _build_structures_csv(job)
-
-        report_content = build_job_log_report(job=job, csv_content=csv_content)
-        filename = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="report",
-            extension="log",
-        )
-        return build_text_download_response(
-            content=report_content,
-            filename=filename,
-            content_type="text/plain; charset=utf-8",
-        )
-
-    @extend_schema(
-        summary="Descargar Reporte de Error Smile-it",
+        summary="Descargar ZIP de imágenes SVG de derivados Smile-it",
         responses={
             200: OpenApiResponse(response=OpenApiTypes.BINARY),
             404: OpenApiResponse(response=ErrorResponseSerializer),
             409: OpenApiResponse(response=ErrorResponseSerializer),
         },
     )
-    @action(detail=True, methods=["get"], url_path="report-error")
-    def report_error(
-        self, request: Request, id: str | None = None
+    @action(detail=True, methods=["get"], url_path="report-images-zip")
+    def report_images_zip(
+        self,
+        request: Request,
+        id: str | None = None,
     ) -> HttpResponse | Response:
-        """Descarga reporte de error cuando el job Smile-it falla."""
+        """Entrega ZIP de imágenes por backend para jobs extremadamente grandes."""
         job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
-        error_content = build_job_error_report(job)
-        if error_content is None:
+        validation_error = validate_job_for_csv_report(job)
+        if validation_error is not None:
             return Response(
-                {"detail": "El job no tiene un error exportable o no ha fallado."},
-                status=status.HTTP_409_CONFLICT,
+                {"detail": validation_error}, status=status.HTTP_409_CONFLICT
             )
 
+        zip_content = _build_derivations_images_zip(job)
         filename = build_download_filename(
             plugin_name=PLUGIN_NAME,
             job_id=str(job.id),
-            report_suffix="error",
-            extension="log",
+            report_suffix="images",
+            extension="zip",
         )
-        return build_text_download_response(
-            content=error_content,
-            filename=filename,
-            content_type="text/plain; charset=utf-8",
-        )
+        response = HttpResponse(zip_content, content_type="application/zip")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response

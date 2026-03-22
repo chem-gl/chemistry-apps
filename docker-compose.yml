@@ -87,6 +87,12 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+
+      # Runtime tools científicos (JRE/JAR)
+      RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
+      RUNTIME_TOOLS_STRICT_CHECK: "True"
+      RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
+      RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS: ${RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS:-5}
     healthcheck:
       test:
         [
@@ -97,8 +103,8 @@ services:
         ]
       interval: 10s
       timeout: 5s
-      retries: 18
-      start_period: 120s
+      retries: 60
+      start_period: 900s
 
   frontend:
     image: chemistry-frontend:${IMAGE_TAG:-latest}
@@ -115,7 +121,12 @@ services:
     image: chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
-    command: ["python", "-m", "celery", "-A", "config", "worker", "-l", "info"]
+    command:
+      [
+        "sh",
+        "-c",
+        "RUNTIME_TOOLS_STRICT_CHECK=false python manage.py ensure_runtime_tools && exec python -m celery -A config worker -l info",
+      ]
     networks:
       - chemistry-apps-network
     depends_on:
@@ -140,3 +151,9 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://redis:6379/0"
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+
+      # Runtime tools científicos (JRE/JAR)
+      RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
+      RUNTIME_TOOLS_STRICT_CHECK: "True"
+      RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
+      RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS: ${RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS:-5}

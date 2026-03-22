@@ -117,8 +117,8 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
     }
 
     /**
-     * Descargar Reporte CSV de Calculadora
-     * Descarga un CSV con operación usada, operandos y resultado final. Solo aplica para jobs en estado completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/calculator/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -168,8 +168,8 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
     }
 
     /**
-     * Descargar Reporte de Error de Calculadora
-     * Descarga un reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/calculator/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -219,8 +219,8 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
     }
 
     /**
-     * Descargar Reporte LOG de Calculadora
-     * Descarga un log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/calculator/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -270,17 +270,17 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
     }
 
     /**
-     * Consultar Job de Calculadora
-     * Devuelve estado y resultado del job de calculadora por UUID.
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/calculator/jobs/{id}/
-     * @param id UUID del job de calculadora.
+     * @param id UUID del job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public calculatorJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CalculatorJobResponse>;
-    public calculatorJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CalculatorJobResponse>>;
-    public calculatorJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CalculatorJobResponse>>;
+    public calculatorJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public calculatorJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public calculatorJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
     public calculatorJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling calculatorJobsRetrieve.');
@@ -318,7 +318,7 @@ export class CalculatorService extends BaseService implements CalculatorServiceI
 
         let localVarPath = `/api/calculator/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<CalculatorJobResponse>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

@@ -6,7 +6,22 @@ pero habilita registro, ejecución y trazabilidad para todos los plugins que
 las apps hijas publiquen.
 """
 
+import os
+
 from django.apps import AppConfig
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
+from .runtime_tools import RuntimeToolsError, assert_runtime_tools_ready
+
+
+def _is_runtime_tools_strict_check_enabled() -> bool:
+    """Resuelve si el chequeo estricto de runtime tools debe ejecutarse al arrancar."""
+    raw_value: str = os.getenv("RUNTIME_TOOLS_STRICT_CHECK", "").strip().lower()
+    if raw_value == "":
+        return not settings.DEBUG
+
+    return raw_value in {"1", "true", "yes", "on"}
 
 
 class CoreConfig(AppConfig):
@@ -19,3 +34,13 @@ class CoreConfig(AppConfig):
 
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.core"
+
+    def ready(self) -> None:
+        """Valida dependencias de runtime críticas durante el arranque del backend."""
+        if not _is_runtime_tools_strict_check_enabled():
+            return
+
+        try:
+            assert_runtime_tools_ready()
+        except RuntimeToolsError as exc:
+            raise ImproperlyConfigured(str(exc)) from exc

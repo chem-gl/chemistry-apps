@@ -25,7 +25,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -122,6 +122,75 @@ class JobServiceTests(TestCase):
         self.assertEqual(cached_job.status, "completed")
         self.assertTrue(cached_job.cache_hit)
         self.assertFalse(cached_job.cache_miss)
+
+    def test_run_job_skips_cache_when_result_payload_exceeds_limit(self) -> None:
+        """Un resultado demasiado grande debe completar el job sin persistir cache."""
+        payload: JSONMap = {"op": "mul", "a": 3, "b": 7}
+        job: ScientificJob = JobService.create_job("calculator", "1.0.0", payload)
+
+        with (
+            patch(
+                "apps.core.services.RuntimeJobService._get_result_cache_payload_limit_bytes",
+                return_value=1024,
+            ),
+            patch(
+                "apps.core.services.RuntimeJobService._estimate_json_payload_size_bytes",
+                return_value=2048,
+            ),
+        ):
+            JobService.run_job(str(job.id))
+
+        refreshed_job: ScientificJob = ScientificJob.objects.get(id=job.id)
+        self.assertEqual(refreshed_job.status, "completed")
+        cache_entry_exists: bool = ScientificCacheEntry.objects.filter(
+            job_hash=refreshed_job.job_hash,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+        ).exists()
+        self.assertFalse(cache_entry_exists)
+
+        warning_log_exists: bool = ScientificJobLogEvent.objects.filter(
+            job=refreshed_job,
+            source="core.cache",
+            message="Se omite persistencia en caché por tamaño de resultado excesivo.",
+        ).exists()
+        self.assertTrue(warning_log_exists)
+
+    def test_run_job_completes_when_cache_storage_raises_overflow(self) -> None:
+        """Errores de almacenamiento de cache no deben tumbar la ejecución del job."""
+        payload: JSONMap = {"op": "add", "a": 1, "b": 2}
+        job: ScientificJob = JobService.create_job("calculator", "1.0.0", payload)
+
+        with patch(
+            "apps.core.adapters.DjangoCacheRepositoryAdapter.store_cached_result",
+            side_effect=OverflowError("string longer than INT_MAX bytes"),
+        ):
+            JobService.run_job(str(job.id))
+
+        refreshed_job: ScientificJob = ScientificJob.objects.get(id=job.id)
+        self.assertEqual(refreshed_job.status, "completed")
+
+        warning_log_exists: bool = ScientificJobLogEvent.objects.filter(
+            job=refreshed_job,
+            source="core.cache",
+            message="Se omite persistencia en caché por error de almacenamiento.",
+        ).exists()
+        self.assertTrue(warning_log_exists)
+
+    @override_settings(
+        JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES=8 * 1024 * 1024,
+        JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES_BY_PLUGIN={"smileit": 4096},
+    )
+    def test_get_result_cache_payload_limit_prefers_plugin_specific_value(self) -> None:
+        """Debe priorizar límite por plugin cuando existe configuración específica."""
+        runtime_service = JobService._get_runtime_service()
+        smileit_limit = runtime_service._get_result_cache_payload_limit_bytes("smileit")
+        calculator_limit = runtime_service._get_result_cache_payload_limit_bytes(
+            "calculator"
+        )
+
+        self.assertEqual(smileit_limit, 4096)
+        self.assertEqual(calculator_limit, 8 * 1024 * 1024)
 
     def test_active_recovery_requeues_stale_running_job(self) -> None:
         stale_job: ScientificJob = ScientificJob.objects.create(

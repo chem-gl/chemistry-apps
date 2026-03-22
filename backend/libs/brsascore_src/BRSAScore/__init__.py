@@ -1,0 +1,7 @@
+"""BRSAScore initialization."""
+
+__name__ = "BRSAScore"
+__version__ = "0.1.2"
+from .BRSAScore import SAScorer
+
+__all__ = ["BRSAScore"]

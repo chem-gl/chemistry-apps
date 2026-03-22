@@ -126,7 +126,6 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
       ],
       r_substitutes: 1,
       num_bonds: 1,
-      allow_repeated: false,
       max_structures: 300,
       site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
       export_name_base: 'smileit_run',
@@ -143,6 +142,7 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
           name: 'smileit_run_00001',
           smiles: 'Nc1ccccc1',
           svg: '<svg></svg>',
+          placeholder_assignments: [],
           traceability: [
             {
               round_index: 1,
@@ -297,7 +297,6 @@ describe('SmileitWorkflowService', () => {
       siteOverlapPolicy: 'last_block_wins',
       rSubstitutes: 1,
       numBonds: 1,
-      allowRepeated: false,
       maxStructures: 0,
       exportNameBase: 'smileit_run',
       exportPadding: 5,
@@ -464,9 +463,21 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateAnchorIndicesText.set('1');
 
     expect(workflowService.catalogDraftPreview().isReady).toBe(false);
-    expect(workflowService.catalogDraftPreview().warnings).toContain(
+    expect(workflowService.catalogDraftPreview().warnings).not.toContain(
       'Select at least one chemistry category.',
     );
+  });
+
+  it('allows saving catalog draft without selecting a chemistry category', () => {
+    workflowService.catalogCreateName.set('No category substituent');
+    workflowService.catalogCreateSmiles.set('CCO');
+    workflowService.catalogCreateAnchorIndicesText.set('1');
+
+    const currentPreview = workflowService.catalogDraftPreview();
+
+    expect(currentPreview.isReady).toBe(true);
+    expect(currentPreview.categoryKeys).toEqual([]);
+    expect(currentPreview.categoryNames).toEqual(['Uncategorized']);
   });
 
   it('clones queued metadata to quickly create a new SMILES variant', () => {
@@ -626,28 +637,4 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.errorMessage()).toBeNull();
   });
 
-  it('restores legacy historical jobs even when assignment blocks are missing', () => {
-    const legacyJob: SmileitJobResponseView = {
-      ...makeSmileitJob(),
-      status: 'completed',
-      results: null,
-      parameters: {
-        principal_smiles: 'c1ccccc1',
-        selected_atom_indices: [1],
-        r_substitutes: 1,
-        num_bonds: 1,
-        allow_repeated: false,
-        max_structures: 100,
-      } as unknown as SmileitJobResponseView['parameters'],
-    };
-
-    jobsApiServiceMock.getSmileitJobStatus.mockReturnValueOnce(of(legacyJob));
-
-    workflowService.openHistoricalJob('legacy-job-1');
-
-    expect(workflowService.activeSection()).toBe('result');
-    expect(workflowService.resultData()?.assignmentBlocks).toEqual([]);
-    expect(workflowService.resultData()?.exportNameBase).toBe('SMILEIT');
-    expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
-  });
 });

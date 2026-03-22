@@ -43,16 +43,16 @@ export interface MarcusServiceInterface {
     marcusJobsCreate(reactant1File: Blob, reactant2File: Blob, product1AdiabaticFile: Blob, product2AdiabaticFile: Blob, product1VerticalFile: Blob, product2VerticalFile: Blob, version?: string, title?: string, diffusion?: boolean, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, extraHttpRequestParams?: any): Observable<MarcusJobResponse>;
 
     /**
-     * Descargar Reporte CSV de Marcus
-     * Descarga CSV de resultados principales para jobs completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/marcus/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     marcusJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error de Marcus
-     * Descarga reporte de error para jobs failed con traza persistida.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/marcus/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
@@ -67,19 +67,19 @@ export interface MarcusServiceInterface {
     marcusJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Marcus
-     * Descarga log técnico de parámetros, resultados y eventos.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/marcus/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
     marcusJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job Marcus
+     * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/marcus/jobs/{id}/
-     * @param id UUID del job Marcus.
+     * @param id UUID del job.
      */
-    marcusJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<MarcusJobResponse>;
+    marcusJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }

@@ -33,35 +33,35 @@ export interface TunnelServiceInterface {
     tunnelJobsCreate(tunnelJobCreateRequest: TunnelJobCreateRequest, extraHttpRequestParams?: any): Observable<TunnelJobResponse>;
 
     /**
-     * Descargar Reporte CSV de Tunnel
-     * Descarga CSV con entradas del cálculo y salida final (U, Alpha1, Alpha2, G, Kappa). Solo aplica para jobs completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/tunnel/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     tunnelJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error de Tunnel
-     * Descarga reporte de error con parámetros de entrada y traza de fallo. Solo aplica para jobs failed con error_trace persistido.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/tunnel/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
     tunnelJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Tunnel
-     * Descarga un log técnico con parámetros, resultados y eventos de entrada capturados para auditoría del cálculo Tunnel.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/tunnel/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
     tunnelJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job de Tunnel
+     * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/tunnel/jobs/{id}/
-     * @param id UUID del job de Tunnel.
+     * @param id UUID del job.
      */
-    tunnelJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<TunnelJobResponse>;
+    tunnelJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }

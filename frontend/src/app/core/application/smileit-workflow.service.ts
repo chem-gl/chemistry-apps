@@ -38,14 +38,15 @@ import {
 type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
 
 export interface SmileitGeneratedStructureView {
+  structureIndex?: number;
   name: string;
   smiles: string;
   svg: string;
-  scaffoldSvg: string;
-  substituentSvgs: Array<{
-    name: string;
-    smiles: string;
-    svg: string;
+  placeholderAssignments: Array<{
+    placeholderLabel: string;
+    siteAtomIndex: number;
+    substituentName: string;
+    substituentSmiles?: string;
   }>;
   traceability: Array<{
     round_index: number;
@@ -172,7 +173,6 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly siteOverlapPolicy = signal<SiteOverlapPolicyEnum>(SiteOverlapPolicyEnum.LastBlockWins);
   readonly rSubstitutes = signal<number>(1);
   readonly numBonds = signal<number>(1);
-  readonly allowRepeated = signal<boolean>(false);
   readonly maxStructures = signal<number>(0);
   readonly exportNameBase = signal<string>('smileit_run');
   readonly exportPadding = signal<number>(5);
@@ -226,6 +226,13 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly canDispatch = computed(() => {
     return this.canConfigureGeneration() && !this.isProcessing();
   });
+
+  readonly maxRSubstitutesByPositions = computed<number>(() => {
+    const numSelectedPositions: number = this.selectedAtomIndices().length;
+    const MAX_R_SUBSTITUTES_HARD_LIMIT: number = 10;
+    return Math.min(numSelectedPositions, MAX_R_SUBSTITUTES_HARD_LIMIT);
+  });
+
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
   readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
   readonly catalogGroups = computed<SmileitCatalogGroupView[]>(() =>
@@ -251,9 +258,12 @@ export class SmileitWorkflowService implements OnDestroy {
     if (parsedAnchorIndices.length === 0) {
       warnings.push('One anchor atom index is required.');
     }
-    if (selectedCategoryKeys.length === 0) {
-      warnings.push('Select at least one chemistry category.');
-    }
+    const resolvedCategoryNames: string[] =
+      selectedCategoryKeys.length > 0
+        ? selectedCategoryKeys.map(
+            (categoryKey: string) => categoryNameByKey.get(categoryKey) ?? categoryKey,
+          )
+        : ['Uncategorized'];
 
     return {
       name: this.catalogCreateName().trim(),
@@ -261,17 +271,14 @@ export class SmileitWorkflowService implements OnDestroy {
       sourceReference: this.catalogCreateSourceReference().trim() || 'local-lab',
       anchorAtomIndices: parsedAnchorIndices,
       categoryKeys: selectedCategoryKeys,
-      categoryNames: selectedCategoryKeys.map(
-        (categoryKey: string) => categoryNameByKey.get(categoryKey) ?? categoryKey,
-      ),
+      categoryNames: resolvedCategoryNames,
       notationKind,
       warnings,
       isReady:
         this.catalogCreateName().trim() !== '' &&
         currentSmiles !== '' &&
         notationKind !== 'smarts' &&
-        parsedAnchorIndices.length > 0 &&
-        selectedCategoryKeys.length > 0,
+        parsedAnchorIndices.length > 0,
     };
   });
 
@@ -706,11 +713,6 @@ export class SmileitWorkflowService implements OnDestroy {
       return;
     }
 
-    if (activePreview.categoryKeys.length === 0) {
-      this.errorMessage.set('Persistent catalog entry requires at least one chemistry category.');
-      return;
-    }
-
     const requestPayload: SmileitCatalogEntryCreateParams = {
       name: activePreview.name,
       smiles: activePreview.smiles,
@@ -1040,7 +1042,9 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   setRSubstitutes(rawValue: number): void {
-    this.rSubstitutes.set(Math.max(1, Math.min(10, Math.trunc(rawValue))));
+    const maxAllowed: number = this.maxRSubstitutesByPositions();
+    const clampedValue: number = Math.max(1, Math.min(maxAllowed, Math.trunc(rawValue)));
+    this.rSubstitutes.set(clampedValue);
   }
 
   setNumBonds(rawValue: number): void {
@@ -1275,7 +1279,6 @@ export class SmileitWorkflowService implements OnDestroy {
       siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
       rSubstitutes: this.rSubstitutes(),
       numBonds: 1,
-      allowRepeated: this.allowRepeated(),
       maxStructures: this.maxStructures(),
       exportNameBase: this.exportNameBase().trim() || 'smileit_run',
       exportPadding: 5,
@@ -1384,12 +1387,17 @@ export class SmileitWorkflowService implements OnDestroy {
       generatedStructures: (rawResult.generated_structures ?? []).map((structureItem, index) => {
         const normalizedName: string = structureItem.name.trim();
         return {
+          structureIndex: index,
           name: normalizedName === '' ? `Generated molecule ${index + 1}` : normalizedName,
           smiles: structureItem.smiles,
-          svg: structureItem.svg,
-          scaffoldSvg: structureItem.scaffold_svg ?? '',
-          substituentSvgs: structureItem.substituent_svgs ?? [],
-          traceability: structureItem.traceability ?? [],
+          svg: structureItem.svg ?? '',
+          placeholderAssignments: structureItem.placeholder_assignments.map((assignmentItem) => ({
+            placeholderLabel: assignmentItem.placeholder_label,
+            siteAtomIndex: assignmentItem.site_atom_index,
+            substituentName: assignmentItem.substituent_name,
+            substituentSmiles: assignmentItem.substituent_smiles ?? '',
+          })),
+          traceability: structureItem.traceability,
         };
       }),
       truncated: rawResult.truncated ?? false,
@@ -1602,7 +1610,8 @@ export class SmileitWorkflowService implements OnDestroy {
           return;
         }
 
-        const previousCoverage: SmileitSiteCoverageView | undefined = coverageMap.get(siteAtomIndex);
+        const previousCoverage: SmileitSiteCoverageView | undefined =
+          coverageMap.get(siteAtomIndex);
         if (previousCoverage !== undefined) {
           coverageMap.set(siteAtomIndex, {
             ...previousCoverage,

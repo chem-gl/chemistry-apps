@@ -21,6 +21,7 @@ import {
   MarcusJobResponse,
   MarcusService,
   MolarFractionsService,
+  PatchedSmileitCatalogEntryCreateRequest,
   PatternTypeEnum,
   ScientificJob,
   SiteOverlapPolicyEnum,
@@ -42,6 +43,7 @@ import {
   SmileitStructureInspectionResponse,
   SmileitSubstituentReferenceInputRequest,
   SmileitTraceabilityRow,
+  TunnelService,
 } from './generated';
 
 /**
@@ -355,11 +357,43 @@ export interface SmileitGenerationParams {
   siteOverlapPolicy?: SiteOverlapPolicyEnum;
   rSubstitutes?: number;
   numBonds?: number;
-  allowRepeated?: boolean;
   maxStructures?: number;
   exportNameBase?: string;
   exportPadding?: number;
   version?: string;
+}
+
+/** Item paginado de derivado Smile-it sin SVG embebido. */
+export interface SmileitDerivationPageItemView {
+  structureIndex: number;
+  name: string;
+  smiles: string;
+  placeholderAssignments: Array<{
+    placeholderLabel: string;
+    siteAtomIndex: number;
+    substituentName: string;
+    substituentSmiles?: string;
+  }>;
+  traceability: Array<{
+    round_index: number;
+    site_atom_index: number;
+    block_label: string;
+    block_priority: number;
+    substituent_name: string;
+    substituent_smiles?: string;
+    substituent_stable_id: string;
+    substituent_version: number;
+    source_kind: string;
+    bond_order: number;
+  }>;
+}
+
+/** Respuesta paginada de derivados Smile-it. */
+export interface SmileitDerivationPageView {
+  totalGenerated: number;
+  offset: number;
+  limit: number;
+  items: SmileitDerivationPageItemView[];
 }
 
 /** Respuesta de job smileit normalizada para componentes. */
@@ -411,6 +445,7 @@ export class JobsApiService {
   private readonly marcusClient = inject(MarcusService);
   private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
+  private readonly tunnelClient = inject(TunnelService);
   private readonly jobsClient = inject(JobsService);
 
   // ---------------------------------------------------------------------------
@@ -456,7 +491,7 @@ export class JobsApiService {
     stableId: string,
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
-    const payload: SmileitCatalogEntryCreateRequest = {
+    const payload: PatchedSmileitCatalogEntryCreateRequest = {
       name: params.name,
       smiles: params.smiles,
       anchor_atom_indices: params.anchorAtomIndices,
@@ -465,10 +500,8 @@ export class JobsApiService {
       provenance_metadata: params.provenanceMetadata,
     };
 
-    return this.httpClient
-      .patch<
-        SmileitCatalogEntryView[]
-      >(`${API_BASE_URL}/smileit/jobs/catalog/${encodeURIComponent(stableId)}/`, payload)
+    return this.smileitClient
+      .smileitJobsCatalogPartialUpdate(stableId, payload)
       .pipe(shareReplay(1));
   }
 
@@ -552,7 +585,6 @@ export class JobsApiService {
       site_overlap_policy: params.siteOverlapPolicy,
       r_substitutes: params.rSubstitutes,
       num_bonds: params.numBonds,
-      allow_repeated: params.allowRepeated,
       max_structures: params.maxStructures,
       export_name_base: params.exportNameBase,
       export_padding: params.exportPadding,
@@ -565,53 +597,135 @@ export class JobsApiService {
     return this.smileitClient.smileitJobsRetrieve(jobId);
   }
 
+  /** Lista derivados Smile-it paginados para evitar payload gigante al frontend. */
+  listSmileitDerivations(
+    jobId: string,
+    offset: number,
+    limit: number,
+  ): Observable<SmileitDerivationPageView> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/`;
+    return this.httpClient
+      .get<{
+        total_generated: number;
+        offset: number;
+        limit: number;
+        items: Array<{
+          structure_index: number;
+          name: string;
+          smiles: string;
+          placeholder_assignments: Array<{
+            placeholder_label: string;
+            site_atom_index: number;
+            substituent_name: string;
+            substituent_smiles?: string;
+          }>;
+          traceability: Array<{
+            round_index: number;
+            site_atom_index: number;
+            block_label: string;
+            block_priority: number;
+            substituent_name: string;
+            substituent_smiles?: string;
+            substituent_stable_id: string;
+            substituent_version: number;
+            source_kind: string;
+            bond_order: number;
+          }>;
+        }>;
+      }>(endpointUrl, {
+        params: {
+          offset: String(offset),
+          limit: String(limit),
+        },
+      })
+      .pipe(
+        map((rawPage) => ({
+          totalGenerated: rawPage.total_generated,
+          offset: rawPage.offset,
+          limit: rawPage.limit,
+          items: rawPage.items.map((item) => ({
+            structureIndex: item.structure_index,
+            name: item.name,
+            smiles: item.smiles,
+            placeholderAssignments: item.placeholder_assignments.map((assignment) => ({
+              placeholderLabel: assignment.placeholder_label,
+              siteAtomIndex: assignment.site_atom_index,
+              substituentName: assignment.substituent_name,
+              substituentSmiles: assignment.substituent_smiles ?? '',
+            })),
+            traceability: item.traceability,
+          })),
+        })),
+        shareReplay(1),
+      );
+  }
+
+  /** Obtiene SVG on-demand de un derivado específico para grid/modal. */
+  getSmileitDerivationSvg(
+    jobId: string,
+    structureIndex: number,
+    variant: 'thumb' | 'detail' = 'detail',
+  ): Observable<string> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/${structureIndex}/svg/`;
+    return this.httpClient
+      .get(endpointUrl, {
+        responseType: 'text',
+        params: {
+          variant,
+        },
+      })
+      .pipe(shareReplay(1));
+  }
+
   /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
   downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.csv`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response'),
+      `smileit_${jobId}_report.csv`,
     );
   }
 
   /** Descarga el archivo enumerado de SMILES listo para DataWarrior u otros flujos. */
   downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `smileit_${jobId}_structures.smi`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response'),
+      `smileit_${jobId}_structures.smi`,
     );
   }
 
   /** Descarga el reporte tabular de trazabilidad sitio -> sustituyente por derivado. */
   downloadSmileitTraceabilityReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `smileit_${jobId}_traceability.csv`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response'),
+      `smileit_${jobId}_traceability.csv`,
     );
   }
 
   /** Descarga el reporte LOG de smileit (descripción de la generación). */
   downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `smileit_${jobId}_report.log`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response'),
+      `smileit_${jobId}_report.log`,
     );
   }
 
   /** Descarga el reporte de error de smileit cuando el job falla. */
   downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `smileit_${jobId}_error.txt`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response'),
+      `smileit_${jobId}_error.txt`,
+    );
+  }
+
+  /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
+  downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
+    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/report-images-zip/`;
+    return this.downloadReport(
+      this.httpClient.get(endpointUrl, {
+        observe: 'response',
+        responseType: 'blob',
+      }),
+      `smileit_${jobId}_images.zip`,
     );
   }
 
@@ -647,6 +761,22 @@ export class JobsApiService {
       filename,
       blob: responseBlob,
     };
+  }
+
+  /**
+   * Helper centralizado para descargar reportes desde cualquier endpoint generado.
+   * Elimina la duplicación del patrón pipe(map → normalizeDownloadedReport, shareReplay).
+   */
+  private downloadReport(
+    source$: Observable<HttpResponse<Blob>>,
+    fallbackFilename: string,
+  ): Observable<DownloadedReportFile> {
+    return source$.pipe(
+      map((response: HttpResponse<Blob>) =>
+        this.normalizeDownloadedReport(response, fallbackFilename),
+      ),
+      shareReplay(1),
+    );
   }
 
   private extractFilenameFromHeader(
@@ -937,52 +1067,42 @@ export class JobsApiService {
 
   /** Descarga el reporte CSV de molar fractions directamente desde backend */
   downloadMolarFractionsCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.molarFractionsClient.molarFractionsJobsReportCsvRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `molar_fractions_${jobId}_report.csv`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.molarFractionsClient.molarFractionsJobsReportCsvRetrieve(jobId, 'response'),
+      `molar_fractions_${jobId}_report.csv`,
     );
   }
 
   /** Descarga el reporte LOG de molar fractions directamente desde backend */
   downloadMolarFractionsLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.molarFractionsClient.molarFractionsJobsReportLogRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `molar_fractions_${jobId}_report.log`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.molarFractionsClient.molarFractionsJobsReportLogRetrieve(jobId, 'response'),
+      `molar_fractions_${jobId}_report.log`,
     );
   }
 
   /** Descarga el reporte CSV de Tunnel directamente desde backend */
   downloadTunnelCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.httpClient
-      .get(`${API_BASE_URL}/api/tunnel/jobs/${jobId}/report-csv/`, {
-        observe: 'response',
-        responseType: 'blob',
-      })
-      .pipe(
-        map((response: HttpResponse<Blob>) =>
-          this.normalizeDownloadedReport(response, `tunnel_effect_${jobId}_report.csv`),
-        ),
-        shareReplay(1),
-      );
+    return this.downloadReport(
+      this.tunnelClient.tunnelJobsReportCsvRetrieve(jobId, 'response'),
+      `tunnel_effect_${jobId}_report.csv`,
+    );
   }
 
   /** Descarga el reporte LOG de Tunnel directamente desde backend */
   downloadTunnelLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.httpClient
-      .get(`${API_BASE_URL}/api/tunnel/jobs/${jobId}/report-log/`, {
-        observe: 'response',
-        responseType: 'blob',
-      })
-      .pipe(
-        map((response: HttpResponse<Blob>) =>
-          this.normalizeDownloadedReport(response, `tunnel_effect_${jobId}_report.log`),
-        ),
-        shareReplay(1),
-      );
+    return this.downloadReport(
+      this.tunnelClient.tunnelJobsReportLogRetrieve(jobId, 'response'),
+      `tunnel_effect_${jobId}_report.log`,
+    );
+  }
+
+  /** Descarga el reporte de error de Tunnel cuando el job falla */
+  downloadTunnelErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.tunnelClient.tunnelJobsReportErrorRetrieve(jobId, 'response'),
+      `tunnel_effect_${jobId}_error.txt`,
+    );
   }
 
   /** Consulta historial de logs por job con cursor incremental */
@@ -1311,41 +1431,33 @@ export class JobsApiService {
 
   /** Descarga reporte CSV de Easy-rate */
   downloadEasyRateCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.easyRateClient.easyRateJobsReportCsvRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_report.csv`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.easyRateClient.easyRateJobsReportCsvRetrieve(jobId, 'response'),
+      `easy_rate_${jobId}_report.csv`,
     );
   }
 
   /** Descarga reporte LOG de Easy-rate */
   downloadEasyRateLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.easyRateClient.easyRateJobsReportLogRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_report.log`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.easyRateClient.easyRateJobsReportLogRetrieve(jobId, 'response'),
+      `easy_rate_${jobId}_report.log`,
     );
   }
 
   /** Descarga reporte de error de Easy-rate */
   downloadEasyRateErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.easyRateClient.easyRateJobsReportErrorRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_error.txt`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.easyRateClient.easyRateJobsReportErrorRetrieve(jobId, 'response'),
+      `easy_rate_${jobId}_error.txt`,
     );
   }
 
   /** Descarga ZIP de archivos de entrada originales de Easy-rate */
   downloadEasyRateInputsZip(jobId: string): Observable<DownloadedReportFile> {
-    return this.easyRateClient.easyRateJobsReportInputsRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `easy_rate_${jobId}_inputs.zip`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.easyRateClient.easyRateJobsReportInputsRetrieve(jobId, 'response'),
+      `easy_rate_${jobId}_inputs.zip`,
     );
   }
 
@@ -1376,41 +1488,33 @@ export class JobsApiService {
 
   /** Descarga reporte CSV de Marcus */
   downloadMarcusCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.marcusClient.marcusJobsReportCsvRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `marcus_${jobId}_report.csv`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.marcusClient.marcusJobsReportCsvRetrieve(jobId, 'response'),
+      `marcus_${jobId}_report.csv`,
     );
   }
 
   /** Descarga reporte LOG de Marcus */
   downloadMarcusLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.marcusClient.marcusJobsReportLogRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `marcus_${jobId}_report.log`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.marcusClient.marcusJobsReportLogRetrieve(jobId, 'response'),
+      `marcus_${jobId}_report.log`,
     );
   }
 
   /** Descarga reporte de error de Marcus */
   downloadMarcusErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.marcusClient.marcusJobsReportErrorRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `marcus_${jobId}_error.txt`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.marcusClient.marcusJobsReportErrorRetrieve(jobId, 'response'),
+      `marcus_${jobId}_error.txt`,
     );
   }
 
   /** Descarga ZIP de archivos de entrada originales de Marcus */
   downloadMarcusInputsZip(jobId: string): Observable<DownloadedReportFile> {
-    return this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response').pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, `marcus_${jobId}_inputs.zip`),
-      ),
-      shareReplay(1),
+    return this.downloadReport(
+      this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response'),
+      `marcus_${jobId}_inputs.zip`,
     );
   }
 }

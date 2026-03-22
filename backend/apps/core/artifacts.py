@@ -41,6 +41,52 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Utilidades compartidas para multipart uploads (easy_rate, marcus, etc.)
+# ---------------------------------------------------------------------------
+
+
+def normalize_chunk_to_bytes(chunk: bytes | memoryview | str) -> bytes:
+    """Normaliza chunk multipart en bytes para hashing consistente."""
+    if isinstance(chunk, bytes):
+        return chunk
+    if isinstance(chunk, memoryview):
+        return chunk.tobytes()
+    return chunk.encode("utf-8")
+
+
+def build_file_descriptor(
+    field_name: str, uploaded_file: UploadedFile
+) -> dict[str, str | int]:
+    """Calcula descriptor estable (hash/tamaño/nombre) de un archivo cargado."""
+    hasher = hashlib.sha256()
+    total_size_bytes: int = 0
+
+    for chunk in uploaded_file.chunks():
+        chunk_bytes: bytes = normalize_chunk_to_bytes(chunk)
+        hasher.update(chunk_bytes)
+        total_size_bytes += len(chunk_bytes)
+
+    uploaded_file.seek(0)
+
+    return {
+        "field_name": field_name,
+        "original_filename": str(uploaded_file.name),
+        "content_type": (
+            str(uploaded_file.content_type)
+            if uploaded_file.content_type is not None
+            else "application/octet-stream"
+        ),
+        "sha256": hasher.hexdigest(),
+        "size_bytes": total_size_bytes,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Política de retención de artefactos
+# ---------------------------------------------------------------------------
+
+
 def _get_inline_threshold_bytes() -> int:
     """Retorna el umbral en bytes bajo el cual un artefacto es permanente."""
     threshold_kb: int = int(getattr(settings, "ARTIFACT_INLINE_THRESHOLD_KB", 250))

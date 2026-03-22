@@ -322,8 +322,8 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
-     * Descargar Reporte CSV de Easy-rate
-     * Descarga CSV con parámetros clave y resultados principales. Solo aplica para jobs completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/easy-rate/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -373,8 +373,8 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
-     * Descargar Reporte de Error de Easy-rate
-     * Descarga reporte de error con parámetros y traza de fallo.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/easy-rate/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -475,8 +475,8 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
-     * Descargar Reporte LOG de Easy-rate
-     * Descarga log técnico con parámetros, resultados y eventos persistidos.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/easy-rate/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -526,17 +526,17 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
-     * Consultar Job Easy-rate
+     * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/easy-rate/jobs/{id}/
-     * @param id UUID del job Easy-rate.
+     * @param id UUID del job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public easyRateJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
-    public easyRateJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
-    public easyRateJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
+    public easyRateJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public easyRateJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public easyRateJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
     public easyRateJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling easyRateJobsRetrieve.');
@@ -574,7 +574,7 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
 
         let localVarPath = `/api/easy-rate/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<EasyRateJobResponse>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

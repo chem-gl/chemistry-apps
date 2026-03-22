@@ -63,16 +63,16 @@ export interface EasyRateServiceInterface {
     easyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, extraHttpRequestParams?: any): Observable<EasyRateInspectionResponse>;
 
     /**
-     * Descargar Reporte CSV de Easy-rate
-     * Descarga CSV con parámetros clave y resultados principales. Solo aplica para jobs completed.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/easy-rate/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     easyRateJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error de Easy-rate
-     * Descarga reporte de error con parámetros y traza de fallo.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/easy-rate/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
@@ -87,19 +87,19 @@ export interface EasyRateServiceInterface {
     easyRateJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Easy-rate
-     * Descarga log técnico con parámetros, resultados y eventos persistidos.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/easy-rate/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
     easyRateJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job Easy-rate
+     * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/easy-rate/jobs/{id}/
-     * @param id UUID del job Easy-rate.
+     * @param id UUID del job.
      */
-    easyRateJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
+    easyRateJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }

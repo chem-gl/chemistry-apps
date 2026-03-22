@@ -3,11 +3,13 @@
 Objetivo del archivo:
 - Centralizar construcción de reportes de texto/CSV para evitar duplicación en
   routers de apps científicas.
+- Proveer escape_csv_cell compartido que elimina duplicaciones en cada app.
 
 Cómo se usa:
 - Cada app define solo su constructor de CSV de dominio.
 - Los routers reutilizan estas funciones para validaciones por estado,
   formateo de logs y respuestas HTTP descargables.
+- Importar escape_csv_cell desde aquí en vez de redefinirlo en cada router.
 """
 
 from __future__ import annotations
@@ -19,6 +21,18 @@ from django.http import HttpResponse
 
 from .models import ScientificJob, ScientificJobLogEvent
 from .types import JSONMap, JSONValue
+
+
+def escape_csv_cell(raw_value: str) -> str:
+    """Escapa una celda CSV para preservar estructura al descargar.
+
+    Envuelve en comillas dobles si el valor contiene comas, saltos de línea
+    o comillas. Función compartida por todos los routers de apps científicas.
+    """
+    escaped_value: str = raw_value.replace('"', '""')
+    if any(separator in escaped_value for separator in [",", "\n", "\r", '"']):
+        return f'"{escaped_value}"'
+    return escaped_value
 
 
 def build_download_filename(

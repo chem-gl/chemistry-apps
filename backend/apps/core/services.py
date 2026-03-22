@@ -23,6 +23,7 @@ from typing import cast
 from uuid import UUID
 
 from django.conf import settings
+from django.db import DatabaseError
 from django.utils import timezone
 
 from .app_registry import ScientificAppRegistry
@@ -69,6 +70,85 @@ class RuntimeJobService:
             getattr(settings, "JOB_RECOVERY_MAX_ATTEMPTS", 5)
         )
         return max(1, configured_max_attempts)
+
+    def _get_result_cache_payload_limit_bytes(self, plugin_name: str) -> int:
+        """Retorna límite de caché para un plugin con fallback al valor global."""
+        global_limit: int = int(
+            getattr(settings, "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES", 8 * 1024 * 1024)
+        )
+
+        per_plugin_limits_raw: object = getattr(
+            settings,
+            "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES_BY_PLUGIN",
+            {},
+        )
+        if isinstance(per_plugin_limits_raw, dict):
+            plugin_limit_value: object | None = per_plugin_limits_raw.get(plugin_name)
+            if isinstance(plugin_limit_value, int):
+                return max(1024, plugin_limit_value)
+            if isinstance(plugin_limit_value, str):
+                try:
+                    parsed_plugin_limit: int = int(plugin_limit_value)
+                except ValueError:
+                    parsed_plugin_limit = global_limit
+                return max(1024, parsed_plugin_limit)
+
+        return max(1024, global_limit)
+
+    def _estimate_json_payload_size_bytes(
+        self,
+        payload: object,
+        limit_bytes: int,
+    ) -> int:
+        """Estima tamaño JSON del payload sin serializar el documento completo.
+
+        El cálculo es aproximado pero suficientemente estricto para cortar
+        temprano resultados gigantes y evitar desbordes en SQLite/debug SQL.
+        """
+        total_bytes: int = 0
+        pending_values: list[object] = [payload]
+        visited_containers: set[int] = set()
+
+        while len(pending_values) > 0:
+            current_value = pending_values.pop()
+
+            if isinstance(current_value, dict):
+                container_id = id(current_value)
+                if container_id in visited_containers:
+                    continue
+                visited_containers.add(container_id)
+
+                total_bytes += 2
+                for dict_key, dict_value in current_value.items():
+                    pending_values.append(str(dict_key))
+                    pending_values.append(dict_value)
+            elif isinstance(current_value, (list, tuple, set)):
+                container_id = id(current_value)
+                if container_id in visited_containers:
+                    continue
+                visited_containers.add(container_id)
+
+                total_bytes += 2
+                pending_values.extend(current_value)
+            else:
+                total_bytes += self._estimate_scalar_json_size_bytes(current_value)
+
+            if total_bytes > limit_bytes:
+                return total_bytes
+
+        return total_bytes
+
+    def _estimate_scalar_json_size_bytes(self, value: object) -> int:
+        """Estima el tamaño JSON de un valor escalar o fallback serializable."""
+        if value is None:
+            return 4
+        if isinstance(value, bool):
+            return 4 if value else 5
+        if isinstance(value, (int, float)):
+            return len(str(value))
+        if isinstance(value, str):
+            return len(value.encode("utf-8"))
+        return len(str(value).encode("utf-8"))
 
     def create_job(
         self, plugin_name: str, version: str, parameters: JSONMap
@@ -466,12 +546,50 @@ class RuntimeJobService:
             message="Persistiendo resultado calculado en caché.",
         )
 
-        self.cache_repository.store_cached_result(
-            job_hash=job.job_hash,
-            plugin_name=job.plugin_name,
-            algorithm_version=job.algorithm_version,
-            result_payload=result_payload,
+        payload_limit_bytes: int = self._get_result_cache_payload_limit_bytes(
+            job.plugin_name
         )
+        estimated_payload_bytes: int = self._estimate_json_payload_size_bytes(
+            result_payload,
+            payload_limit_bytes,
+        )
+        if estimated_payload_bytes > payload_limit_bytes:
+            self._publish_job_log(
+                job,
+                level="warning",
+                source="core.cache",
+                message="Se omite persistencia en caché por tamaño de resultado excesivo.",
+                payload={
+                    "estimated_payload_bytes": estimated_payload_bytes,
+                    "payload_limit_bytes": payload_limit_bytes,
+                },
+            )
+            return
+
+        try:
+            self.cache_repository.store_cached_result(
+                job_hash=job.job_hash,
+                plugin_name=job.plugin_name,
+                algorithm_version=job.algorithm_version,
+                result_payload=result_payload,
+            )
+        except (
+            OverflowError,
+            DatabaseError,
+            MemoryError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            self._publish_job_log(
+                job,
+                level="warning",
+                source="core.cache",
+                message="Se omite persistencia en caché por error de almacenamiento.",
+                payload={
+                    "error_type": exc.__class__.__name__,
+                    "error": str(exc),
+                },
+            )
 
     def run_active_recovery(
         self,

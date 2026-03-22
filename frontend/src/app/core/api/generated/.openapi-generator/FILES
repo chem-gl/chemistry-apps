@@ -84,6 +84,7 @@ model/smileitParameters.ts
 model/smileitPatternEntry.ts
 model/smileitPatternEntryCreateRequest.ts
 model/smileitPatternReference.ts
+model/smileitPlaceholderAssignment.ts
 model/smileitQuickProperties.ts
 model/smileitResolvedAssignmentBlock.ts
 model/smileitResolvedSubstituent.ts
@@ -91,7 +92,6 @@ model/smileitResult.ts
 model/smileitStructuralAnnotation.ts
 model/smileitStructureInspectionRequestRequest.ts
 model/smileitStructureInspectionResponse.ts
-model/smileitSubstituentPreview.ts
 model/smileitSubstituentReferenceInputRequest.ts
 model/smileitSubstitutionTraceEvent.ts
 model/smileitTraceabilityRow.ts

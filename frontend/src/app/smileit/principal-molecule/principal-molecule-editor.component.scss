@@ -1,0 +1,130 @@
+/* principal-molecule-editor.component.scss: Estilos locales para la edición textual de la molécula principal. */
+
+:host {
+  display: block;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #224438;
+}
+
+input {
+  border: 1px solid #c2d7c9;
+  border-radius: 14px;
+  padding: 0.62rem 0.78rem;
+  font-size: 0.94rem;
+  background: #fff;
+  color: #244537;
+}
+
+input:focus {
+  outline: 2px solid rgba(90, 150, 114, 0.25);
+  border-color: #5a9672;
+}
+
+.principal-actions-row {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.52rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+  border: 1px solid #7ea38a;
+  color: #245741;
+  background: #fff;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.catalog-smiles {
+  margin-top: 0.45rem;
+}
+
+.sketch-modifier-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(620px, calc(100vw - 2rem));
+  max-width: 620px;
+}
+
+.sketch-modifier-dialog::backdrop {
+  background: rgba(13, 26, 22, 0.42);
+}
+
+.sketch-modifier-modal {
+  width: min(620px, 100%);
+  background: #fff;
+  border: 1px solid #d0e2d6;
+  border-radius: 16px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sketch-modifier-modal .hint {
+  margin: 0;
+  color: #4b6f60;
+  font-size: 0.84rem;
+}
+
+.ketcher-frame-wrap {
+  border: 1px solid #d0e2d6;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ketcher-frame {
+  width: 100%;
+  min-height: 360px;
+  height: clamp(360px, 48vh, 520px);
+  border: 0;
+  display: block;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #c2d7c9;
+  border-radius: 12px;
+  padding: 0.65rem;
+  resize: vertical;
+  min-height: 90px;
+  font-size: 0.93rem;
+  color: #244537;
+  background: #fff;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(90, 150, 114, 0.25);
+  border-color: #5a9672;
+}
+
+.sketch-modifier-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.mono,
+.catalog-smiles {
+  font-family: 'IBM Plex Mono', 'Fira Code', 'Consolas', monospace;
+  word-break: break-word;
+}

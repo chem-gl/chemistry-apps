@@ -1,0 +1,22 @@
+<!-- principal-svg-viewer.component.html: Renderiza el scaffold principal con control de zoom y click sobre SVG. -->
+
+<div class="principal-preview-wrap">
+    <div class="principal-zoom-controls">
+        <button type="button" class="zoom-btn" (click)="zoomOut()" [disabled]="zoomLevel === minZoomLevel"
+            aria-label="Zoom out">
+            －
+        </button>
+        <span class="zoom-label">{{ zoomLevel }}×</span>
+        <button type="button" class="zoom-btn" (click)="zoomIn()" [disabled]="zoomLevel === maxZoomLevel"
+            aria-label="Zoom in">
+            ＋
+        </button>
+    </div>
+    <div #principalSvgViewport class="principal-svg-viewport">
+        <div class="principal-zoom-surface" [style.width.px]="canvasSizePx" [style.height.px]="canvasSizePx">
+            <div class="svg-preview inspectable principal-svg-stage" [style.transform]="'scale(' + zoomLevel + ')'"
+                (click)="onInspectionSvgClick($event)" [innerHTML]="inspectionSvg">
+            </div>
+        </div>
+    </div>
+</div>

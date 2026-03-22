@@ -95,24 +95,24 @@ export interface SmileitServiceInterface {
     smileitJobsPatternsList(extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
 
     /**
-     * Descargar CSV de Estructuras Smile-it
-     * Descarga CSV de estructuras derivadas para análisis tabular.
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
      * @endpoint get /api/smileit/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      */
     smileitJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte de Error Smile-it
-     * Descarga reporte de error cuando el job Smile-it falla.
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
      * @endpoint get /api/smileit/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      */
     smileitJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Reporte LOG de Smile-it
-     * Descarga reporte técnico completo con logs y resumen de resultados.
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/smileit/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      */
@@ -135,11 +135,11 @@ export interface SmileitServiceInterface {
     smileitJobsReportTraceabilityRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Consultar Job Smile-it
-     * Recupera estado/resultados de un job Smile-it.
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/smileit/jobs/{id}/
-     * @param id UUID del job Smile-it.
+     * @param id UUID del job.
      */
-    smileitJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<SmileitJobResponse>;
+    smileitJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }

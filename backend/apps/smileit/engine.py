@@ -12,9 +12,13 @@ Cómo se usa:
 """
 
 import logging
+import re
+from contextlib import contextmanager
+from functools import lru_cache
+from html import escape
 from typing import Optional
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -31,9 +35,38 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
+@contextmanager
+def _silence_rdkit_logs():
+    """Silencia logs nativos de RDKit en caminos donde un rechazo es esperado.
+
+    Smile-it prueba muchas fusiones candidatas que pueden ser químicamente
+    inválidas. En esos casos el rechazo es parte normal del algoritmo y no debe
+    inundar stderr con mensajes repetitivos del core C++ de RDKit.
+    Usa RDLogger (Python-level) para garantizar silenciamiento en workers fork,
+    a diferencia de rdBase.BlockLogs que depende del destructor C++ y no es
+    confiable en procesos Celery con prefork.
+    """
+    RDLogger.DisableLog("rdApp.*")
+    try:
+        yield
+    finally:
+        RDLogger.EnableLog("rdApp.*")
+
+
+@lru_cache(maxsize=8192)
+def _parse_smiles_cached(smiles: str) -> Optional[Chem.Mol]:
+    """Cachea el parseo RDKit para evitar reconstruir grafos idénticos.
+
+    RDKit devuelve objetos mutables, por lo que los callers que modifiquen la
+    molécula deben clonar el resultado con `Chem.Mol(...)` antes de usarlo.
+    """
+    with _silence_rdkit_logs():
+        return Chem.MolFromSmiles(smiles)
+
+
 def canonicalize_smiles(smiles: str) -> Optional[str]:
     """Retorna el SMILES canónico o None si el SMILES es inválido."""
-    mol = Chem.MolFromSmiles(smiles)
+    mol = _parse_smiles_cached(smiles)
     if mol is None:
         return None
     return Chem.MolToSmiles(mol, isomericSmiles=True)
@@ -53,7 +86,7 @@ def canonicalize_substituent(smiles: str, anchor_idx: int) -> Optional[tuple[str
     Returns:
         Tupla (canonical_smiles, new_anchor_idx) o None si el SMILES es inválido.
     """
-    mol = Chem.MolFromSmiles(smiles)
+    mol = _parse_smiles_cached(smiles)
     if mol is None:
         return None
     n_atoms: int = mol.GetNumAtoms()
@@ -72,7 +105,7 @@ def canonicalize_substituent(smiles: str, anchor_idx: int) -> Optional[tuple[str
 
 def validate_smiles(smiles: str) -> bool:
     """Retorna True si el SMILES es parseable por RDKit."""
-    return Chem.MolFromSmiles(smiles) is not None
+    return _parse_smiles_cached(smiles) is not None
 
 
 def get_implicit_hydrogens(atom: Chem.Atom) -> int:
@@ -173,6 +206,7 @@ def _render_molecule_svg_with_indices(mol: Chem.Mol) -> str:
     return drawer.GetDrawingText()
 
 
+@lru_cache(maxsize=4096)
 def render_molecule_svg(smiles: str) -> str:
     """Renderiza un SMILES como SVG limpio (sin índices visibles en el SVG de resultado).
 
@@ -183,10 +217,12 @@ def render_molecule_svg(smiles: str) -> str:
         Cadena SVG. Si falla, retorna una cadena vacía y logea el error.
     """
     try:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
+        base_molecule = _parse_smiles_cached(smiles)
+        if base_molecule is None:
             return ""
-        AllChem.Compute2DCoords(mol)
+        mol = Chem.Mol(base_molecule)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
         drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
         drawer.DrawMolecule(mol)
         drawer.FinishDrawing()
@@ -196,6 +232,270 @@ def render_molecule_svg(smiles: str) -> str:
         return ""
 
 
+def render_molecule_svg_with_atom_labels(
+    smiles: str,
+    atom_labels: dict[int, str],
+    include_labels: bool = True,
+) -> str:
+    """Renderiza un scaffold con etiquetas personalizadas para sitios reactivos.
+
+    Se usa para mostrar placeholders tipo `R1`, `R2`, etc. sobre los átomos
+    del principal que recibieron una sustitución en el derivado final.
+
+    Args:
+        smiles: Estructura SMILES de la molécula principal.
+        atom_labels: Mapeo de índice de átomo a etiqueta (ej: {0: 'R1', 2: 'R2'}).
+        include_labels: Si False, renderiza con highlighting pero SIN etiquetas de texto.
+                       Si True (defecto), incluye las etiquetas sobre los átomos.
+    """
+    try:
+        base_molecule = _parse_smiles_cached(smiles)
+        if base_molecule is None:
+            return ""
+
+        mol = Chem.Mol(base_molecule)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
+
+        valid_labels: dict[int, str] = {
+            atom_index: atom_label
+            for atom_index, atom_label in atom_labels.items()
+            if 0 <= atom_index < mol.GetNumAtoms() and atom_label.strip() != ""
+        }
+
+        drawer = rdMolDraw2D.MolDraw2DSVG(IMAGE_WIDTH, IMAGE_HEIGHT)
+        drawer.DrawMolecule(mol, highlightAtoms=sorted(valid_labels))
+
+        # Solo generar elementos de texto si include_labels es True
+        text_elements: list[str] = []
+        if include_labels:
+            for atom_index, atom_label in valid_labels.items():
+                point = drawer.GetDrawCoords(atom_index)
+                text_elements.append(
+                    (
+                        "<text x='{x:.1f}' y='{y:.1f}' "
+                        "text-anchor='middle' dominant-baseline='middle' "
+                        "font-family='Avenir Next, Trebuchet MS, Segoe UI, sans-serif' "
+                        "font-size='18' font-weight='800' fill='#0f172a' "
+                        "stroke='#ffffff' stroke-width='3' paint-order='stroke'>"
+                        "{label}</text>"
+                    ).format(x=point.x, y=point.y, label=escape(atom_label))
+                )
+
+        drawer.FinishDrawing()
+        svg_output = drawer.GetDrawingText()
+        if len(text_elements) == 0:
+            return svg_output
+
+        return svg_output.replace(
+            "</svg>", "\n" + "\n".join(text_elements) + "\n</svg>"
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Error renderizando SVG con placeholders para %r: %s",
+            smiles,
+            exc,
+        )
+        return ""
+
+
+def tint_svg(raw_svg: str, color_hex: str) -> str:
+    """Aplica un color dominante al SVG para diferenciar roles visuales."""
+    if raw_svg.strip() == "":
+        return raw_svg
+
+    # Reemplazo acotado para evitar corrupción de colores como #0000FF.
+    colored_svg = re.sub(
+        r"(?<![0-9a-fA-F])#000000(?![0-9a-fA-F])",
+        color_hex,
+        raw_svg,
+        flags=re.IGNORECASE,
+    )
+    colored_svg = re.sub(
+        r"(?<![0-9a-fA-F])#000(?![0-9a-fA-F])",
+        color_hex,
+        colored_svg,
+        flags=re.IGNORECASE,
+    )
+    return colored_svg
+
+
+def _score_principal_match_for_sites(
+    derivative_molecule: Chem.Mol,
+    principal_match: tuple[int, ...],
+    principal_site_atom_indices: list[int],
+) -> int:
+    """Puntúa un match del scaffold según cuántos sitios conectan con sustituyentes."""
+    principal_match_set: set[int] = set(principal_match)
+    score: int = 0
+
+    for principal_site_index in principal_site_atom_indices:
+        if principal_site_index < 0 or principal_site_index >= len(principal_match):
+            continue
+
+        derivative_site_atom_index = principal_match[principal_site_index]
+        derivative_site_atom = derivative_molecule.GetAtomWithIdx(
+            derivative_site_atom_index
+        )
+        has_external_neighbor = any(
+            neighbor.GetIdx() not in principal_match_set
+            for neighbor in derivative_site_atom.GetNeighbors()
+        )
+        if has_external_neighbor:
+            score += 1
+
+    return score
+
+
+def _compute_substituent_atom_indices(
+    principal_molecule: Chem.Mol,
+    derivative_molecule: Chem.Mol,
+    principal_site_atom_indices: list[int] | None = None,
+) -> set[int]:
+    """Calcula índices de sustituyentes como complemento del mejor match del scaffold."""
+    all_principal_matches = derivative_molecule.GetSubstructMatches(principal_molecule)
+    if len(all_principal_matches) == 0:
+        return set()
+
+    normalized_site_indices: list[int] = principal_site_atom_indices or []
+    best_match = all_principal_matches[0]
+
+    if len(normalized_site_indices) > 0:
+        best_score = _score_principal_match_for_sites(
+            derivative_molecule=derivative_molecule,
+            principal_match=best_match,
+            principal_site_atom_indices=normalized_site_indices,
+        )
+        for candidate_match in all_principal_matches[1:]:
+            candidate_score = _score_principal_match_for_sites(
+                derivative_molecule=derivative_molecule,
+                principal_match=candidate_match,
+                principal_site_atom_indices=normalized_site_indices,
+            )
+            if candidate_score > best_score:
+                best_match = candidate_match
+                best_score = candidate_score
+
+    scaffold_atom_indices: set[int] = set(best_match)
+    derivative_atom_count: int = derivative_molecule.GetNumAtoms()
+    return {
+        atom_index
+        for atom_index in range(derivative_atom_count)
+        if atom_index not in scaffold_atom_indices
+    }
+
+
+def render_derivative_svg_with_substituent_highlighting(
+    principal_smiles: str,
+    derivative_smiles: str,
+    substituent_smiles_list: list[str],
+    principal_site_atom_indices: list[int] | None = None,
+    image_width: int = IMAGE_WIDTH,
+    image_height: int = IMAGE_HEIGHT,
+) -> str:
+    """Renderiza la molécula derivada completa con highlighting en átomos de sustituto.
+
+    La molécula principal se muestra NORMAL (sin highlighting).
+    Los átomos que pertenecen a sustitutos se muestran con HIGHLIGHTING (color verde).
+
+    Args:
+        principal_smiles: SMILES de la molécula principal original.
+        derivative_smiles: SMILES de la molécula derivada (principal + sustitutos combinados).
+        substituent_smiles_list: Lista de SMILES de sustitutos en orden de aplicación.
+                                 Usado para calcular exactamente cuántos átomos agregó cada uno.
+
+    Returns:
+        SVG markup string con la molécula derivada completa renderizada.
+    """
+    try:
+        principal_mol = _parse_smiles_cached(principal_smiles)
+        derivative_mol = _parse_smiles_cached(derivative_smiles)
+
+        if principal_mol is None or derivative_mol is None:
+            return ""
+
+        substituent_atom_indices: set[int] = _compute_substituent_atom_indices(
+            principal_molecule=principal_mol,
+            derivative_molecule=derivative_mol,
+            principal_site_atom_indices=principal_site_atom_indices,
+        )
+
+        # Fallback conservador para casos donde no se pueda mapear scaffold completo.
+        if len(substituent_atom_indices) == 0 and len(substituent_smiles_list) > 0:
+            for substituent_smiles in substituent_smiles_list:
+                substituent_molecule = _parse_smiles_cached(substituent_smiles)
+                if substituent_molecule is None:
+                    continue
+                substitute_matches = derivative_mol.GetSubstructMatches(
+                    substituent_molecule
+                )
+                if len(substitute_matches) == 0:
+                    continue
+                substituent_atom_indices.update(substitute_matches[0])
+
+        if not substituent_atom_indices:
+            # Si no hay sustitutos, renderizar sin highlighting
+            return render_molecule_svg(derivative_smiles)
+
+        # Renderizar la molécula derivada completa con highlighting en sustitutos.
+        mol = Chem.Mol(derivative_mol)
+        with _silence_rdkit_logs():
+            AllChem.Compute2DCoords(mol)
+
+        drawer = rdMolDraw2D.MolDraw2DSVG(image_width, image_height)
+        drawer.DrawMolecule(mol, highlightAtoms=sorted(substituent_atom_indices))
+
+        drawer.FinishDrawing()
+        return drawer.GetDrawingText()
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Error renderizando SVG derivado con highlighting de sustituto: %s",
+            exc,
+        )
+        return ""
+
+
+@lru_cache(maxsize=32768)
+def is_fusion_candidate_viable(
+    principal_smiles: str,
+    substituent_smiles: str,
+    principal_atom_idx: Optional[int],
+    substituent_atom_idx: Optional[int],
+    bond_order: int,
+) -> bool:
+    """Valida de forma exacta si una firma de fusión merece entrar a RDKit pesado.
+
+    Esta comprobación usa solo parseo cacheado y lectura de átomos para descartar
+    temprano combinaciones imposibles antes de clonar moléculas, combinarlas y
+    sanitizarlas. No cambia la semántica del resultado: únicamente evita trabajo
+    cuando ya puede demostrarse que la fusión fallará.
+    """
+    principal_base = _parse_smiles_cached(principal_smiles)
+    substituent_base = _parse_smiles_cached(substituent_smiles)
+    if principal_base is None or substituent_base is None:
+        return False
+
+    p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
+    s_idx: int = substituent_atom_idx if substituent_atom_idx is not None else 0
+
+    if p_idx >= principal_base.GetNumAtoms() or s_idx >= substituent_base.GetNumAtoms():
+        return False
+
+    principal_atom = principal_base.GetAtomWithIdx(p_idx)
+    substituent_atom = substituent_base.GetAtomWithIdx(s_idx)
+
+    if substituent_atom.GetAtomicNum() == 0 or substituent_atom.GetSymbol() == "*":
+        return _is_wildcard_fusion_candidate_viable(
+            principal_atom=principal_atom,
+            substituent_molecule=substituent_base,
+            wildcard_atom_idx=s_idx,
+        )
+
+    return _has_enough_implicit_hydrogens(principal_atom, substituent_atom, bond_order)
+
+
+@lru_cache(maxsize=16384)
 def fuse_molecules(
     principal_smiles: str,
     substituent_smiles: str,
@@ -221,10 +521,14 @@ def fuse_molecules(
     Returns:
         SMILES canónico de la molécula fusionada, o None si la fusión no es válida.
     """
-    mol_p = Chem.MolFromSmiles(principal_smiles)
-    mol_s = Chem.MolFromSmiles(substituent_smiles)
-    if mol_p is None or mol_s is None:
+    principal_base = _parse_smiles_cached(principal_smiles)
+    substituent_base = _parse_smiles_cached(substituent_smiles)
+    if principal_base is None or substituent_base is None:
         return None
+
+    # Clonar desde la caché para que cada intento de fusión mantenga aislamiento.
+    mol_p = Chem.Mol(principal_base)
+    mol_s = Chem.Mol(substituent_base)
 
     # Resolver índices de átomos de unión
     p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
@@ -262,7 +566,8 @@ def fuse_molecules(
     combo.AddBond(p_idx, s_idx + offset, bond_type)
 
     try:
-        Chem.SanitizeMol(combo)
+        with _silence_rdkit_logs():
+            Chem.SanitizeMol(combo)
     except Exception as exc:  # noqa: BLE001
         logger.debug(
             "Sanitización fallida para fusión %r + %r: %s",
@@ -273,10 +578,24 @@ def fuse_molecules(
         return None
 
     try:
-        return Chem.MolToSmiles(combo, isomericSmiles=True)
+        with _silence_rdkit_logs():
+            return Chem.MolToSmiles(combo, isomericSmiles=True)
     except Exception as exc:  # noqa: BLE001
         logger.debug("Error generando SMILES: %s", exc)
         return None
+
+
+def clear_smileit_caches() -> None:
+    """Limpia todos los cachés LRU para evitar que persistan en workers.
+
+    En workers Celery con prefork, los cachés LRU pueden crecer indefinidamente
+    consumiendo memoria si no se limpian periódicamente. Esta función debe
+    llamarse al finalizar cada job para liberar la memoria.
+    """
+    _parse_smiles_cached.cache_clear()
+    render_molecule_svg.cache_clear()
+    is_fusion_candidate_viable.cache_clear()
+    fuse_molecules.cache_clear()
 
 
 def _fuse_with_wildcard_anchor(
@@ -298,15 +617,14 @@ def _fuse_with_wildcard_anchor(
 
     wildcard_bond = wildcard_atom.GetBonds()[0]
     substituent_neighbor_idx: int = wildcard_bond.GetOtherAtomIdx(wildcard_atom_idx)
-    substituent_neighbor = substituent_molecule.GetAtomWithIdx(substituent_neighbor_idx)
     principal_atom = principal_molecule.GetAtomWithIdx(principal_atom_idx)
 
     bond_order = int(wildcard_bond.GetBondTypeAsDouble())
-    if not _has_enough_implicit_hydrogens(
-        principal_atom,
-        substituent_neighbor,
-        bond_order,
-    ):
+    # Solo verificar el átomo del principal: la valencia del vecino del comodín
+    # no cambia porque el enlace con '*' es reemplazado por el enlace con el
+    # principal usando el mismo orden (misma bond_order), dejando la valencia
+    # neta del vecino invariante tras la remoción del wildcard.
+    if not _has_free_valence(principal_atom, bond_order):
         return None
 
     editable_substituent = Chem.RWMol(substituent_molecule)
@@ -326,7 +644,8 @@ def _fuse_with_wildcard_anchor(
     )
 
     try:
-        Chem.SanitizeMol(combo)
+        with _silence_rdkit_logs():
+            Chem.SanitizeMol(combo)
     except Exception as exc:  # noqa: BLE001
         logger.debug(
             "Sanitización fallida para wildcard %r + %r: %s",
@@ -337,30 +656,54 @@ def _fuse_with_wildcard_anchor(
         return None
 
     try:
-        return Chem.MolToSmiles(combo, isomericSmiles=True)
+        with _silence_rdkit_logs():
+            return Chem.MolToSmiles(combo, isomericSmiles=True)
     except Exception as exc:  # noqa: BLE001
         logger.debug("Error generando SMILES con wildcard: %s", exc)
         return None
 
 
+def _is_wildcard_fusion_candidate_viable(
+    principal_atom: Chem.Atom,
+    substituent_molecule: Chem.Mol,
+    wildcard_atom_idx: int,
+) -> bool:
+    """Evalúa si una fusión por wildcard es viable sin construir la molécula final."""
+    if wildcard_atom_idx >= substituent_molecule.GetNumAtoms():
+        return False
+
+    wildcard_atom = substituent_molecule.GetAtomWithIdx(wildcard_atom_idx)
+    if wildcard_atom.GetDegree() != 1:
+        return False
+
+    wildcard_bond = wildcard_atom.GetBonds()[0]
+    bond_order = int(wildcard_bond.GetBondTypeAsDouble())
+    return _has_free_valence(principal_atom, bond_order)
+
+
+def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
+    """Retorna True si el átomo tiene valencia libre para un enlace adicional.
+
+    Suma hidrógenos implícitos (calculados por RDKit según la valencia estándar
+    del elemento) y explícitos (notación de corchete como [CH2] o [NH3+]).
+    Funciona para cualquier tipo de átomo: C, N, O, S, etc.
+    """
+    return (get_implicit_hydrogens(atom) + atom.GetNumExplicitHs()) >= bond_order
+
+
 def _has_enough_implicit_hydrogens(
     atom_p: Chem.Atom, atom_s: Chem.Atom, bond_order: int
 ) -> bool:
-    """Verifica si los dos átomos tienen suficientes hidrógenos disponibles para el enlace.
+    """Verifica que ambos átomos de unión tengan valencia libre para el nuevo enlace.
 
-    Refleja la lógica `haveEnoughImplicitHydrogens` del legado Java.
-    Si cualquiera de los dos no es carbono, siempre se permite (heteroátomos
-    tienen semántica especial de valencia flexible).
-
-    Para carbonos se comprueba la suma de H implícitos + H explícitos porque
-    sustituyentes como [CH2]Cl o [CH]=O especifican sus H vía notación de
-    corchete (implícitos=0, explícitos>0) pero aún poseen valencia libre.
+    Aplica la comprobación a todos los tipos de átomo (no solo C) para detectar
+    tempranamente fusiones inviables en heteroátomos con valencia plena (p.ej.
+    O ya con 2 enlaces, N ya con 3), evitando llamadas costosas a SanitizeMol
+    que siempre fallarían y generarían ruido en los logs de RDKit.
     """
-    if atom_p.GetSymbol() != "C" or atom_s.GetSymbol() != "C":
-        return True
-    h_p: int = get_implicit_hydrogens(atom_p) + atom_p.GetNumExplicitHs()
-    h_s: int = get_implicit_hydrogens(atom_s) + atom_s.GetNumExplicitHs()
-    return h_p >= bond_order and h_s >= bond_order
+    return _has_free_valence(atom_p, bond_order) and _has_free_valence(
+        atom_s, bond_order
+    )
 
 
 def _bond_order_to_type(order: int) -> Chem.rdchem.BondType:
