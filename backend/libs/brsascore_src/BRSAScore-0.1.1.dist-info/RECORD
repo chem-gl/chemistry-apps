@@ -1,0 +1,10 @@
+BRSAScore/BRSAScore.py,sha256=lnTzxJwIhRgKT2i_6LjV7dII03EXpywycw6hU4yRsyM,7145
+BRSAScore/__init__.py,sha256=I19Hd9qHKrE551I5aoCfHWw0w2bO8wPn6rey2161t5E,133
+BRSAScore/pickle/BRScores_uspto_emolecules.pkl.gz,sha256=Um41G-mCV3RZ5DtXWIcinr4xPayDJmg7I89C47vZxc4,5912121
+BRSAScore/pickle/BScores_emolecules.pkl.gz,sha256=lRsLZubsYVNmaIveo4BBWl57hY6R9pSlB0D6Rz7VjZo,5004732
+BRSAScore/pickle/RScores_uspto.pkl.gz,sha256=zf0WwJtSqgAbtvjvIwtmBgUXvxATpe0wrzdUiB2FGfc,2392616
+BRSAScore-0.1.1.dist-info/LICENSE,sha256=c7PGfCDBGJlIGqOCSlsXWThgywZwMCpFwm8fZiPUcKw,1098
+BRSAScore-0.1.1.dist-info/METADATA,sha256=oTRG25Fra6Rc41pkiqi20-6KXfcV6s6IYmDycuQeTL4,3468
+BRSAScore-0.1.1.dist-info/WHEEL,sha256=G16H4A3IeoQmnOrYV4ueZGKSjhipXx8zc8nu9FGlvMA,92
+BRSAScore-0.1.1.dist-info/top_level.txt,sha256=kw1WSsQM6aeGCaQOotQFdjkSSdY41iOGtsRsijczOeo,10
+BRSAScore-0.1.1.dist-info/RECORD,,

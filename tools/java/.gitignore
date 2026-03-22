@@ -1,0 +1,7 @@
+# Ignore downloaded JREs
+**
+
+# But keep these files for structure/docs
+!.gitignore
+!README.md
+!.gitkeep

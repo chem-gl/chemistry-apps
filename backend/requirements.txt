@@ -16,11 +16,11 @@ redis==7.3.0
 # ── Base de datos (PostgreSQL en producción) ──────────────────────
 psycopg[binary]==3.3.3
 psycopg2-binary==2.9.11
-
 # ── Cómputo científico ────────────────────────────────────────────
 numpy==2.4.3
 rdkit==2025.9.6
-
+matplotlib==3.10.8
+matplotlib-inline==0.2.1
 # ── HTTP ──────────────────────────────────────────────────────────
 requests==2.32.5
 

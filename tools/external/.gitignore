@@ -1,0 +1,12 @@
+# Ignore heavy/binary artifacts in external tools by default
+*.jar
+
+# Allow the lightweight AMBIT SyntheticAccessibility JAR to be versioned
+!ambitSA/SyntheticAccessibilityCli.jar
+
+# Keep folder structure
+!.gitignore
+!README.md
+!ambitSA/
+!test/
+test/*
