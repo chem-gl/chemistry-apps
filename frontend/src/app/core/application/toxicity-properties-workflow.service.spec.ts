@@ -8,6 +8,7 @@ import {
   JobLogsPageView,
   JobsApiService,
   ScientificJobView,
+  SmilesCompatibilityResultView,
   ToxicityJobResponseView,
 } from '../api/jobs-api.service';
 import { ToxicityPropertiesWorkflowService } from './toxicity-properties-workflow.service';
@@ -106,6 +107,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     getJobLogs: ReturnType<typeof vi.fn>;
     listJobs: ReturnType<typeof vi.fn>;
     downloadToxicityPropertiesCsvReport: ReturnType<typeof vi.fn>;
+    validateSmilesCompatibility: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -122,6 +124,9 @@ describe('ToxicityPropertiesWorkflowService', () => {
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
       listJobs: vi.fn((): Observable<ScientificJobView[]> => of([makeScientificJob()])),
       downloadToxicityPropertiesCsvReport: vi.fn(),
+      validateSmilesCompatibility: vi.fn(
+        (): Observable<SmilesCompatibilityResultView> => of({ compatible: true, issues: [] }),
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -142,6 +147,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
 
     workflowService.dispatch();
 
+    expect(jobsApiServiceMock.validateSmilesCompatibility).toHaveBeenCalledWith(['CCO']);
     expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).toHaveBeenCalledWith({
       smiles: ['CCO'],
       version: '1.0.0',
@@ -213,5 +219,21 @@ describe('ToxicityPropertiesWorkflowService', () => {
     expect(jobsApiServiceMock.downloadToxicityPropertiesCsvReport).toHaveBeenCalledWith(
       'tox-export-1',
     );
+  });
+
+  it('blocks dispatch when some smiles are incompatible', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      of({
+        compatible: false,
+        issues: [{ smiles: 'not_a_smiles', reason: 'Unsupported SMILES' }],
+      }),
+    );
+    workflowService.smilesInput.set('CCO\nnot_a_smiles');
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).not.toHaveBeenCalled();
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('not_a_smiles');
   });
 });

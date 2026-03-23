@@ -294,6 +294,16 @@ class ToxicityContractApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("smiles", response.data)
 
+    def test_create_rejects_incompatible_smiles(self) -> None:
+        """Debe rechazar payloads con SMILES no compatibles con RDKit."""
+        response = self.client.post(
+            APP_API_BASE_PATH,
+            {"smiles": ["CCO", "not_a_smiles"]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("smiles", response.data)
+
     def test_report_csv_returns_download_for_completed_job(self) -> None:
         """Debe descargar CSV cuando el job está completado."""
         completed_job = ScientificJob.objects.create(
@@ -385,6 +395,7 @@ class ToxicityContractApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/plain", str(response["Content-Type"]))
         report_content: str = response.content.decode("utf-8")
+        self.assertIn("RuntimeError: ADMET inference failed", report_content)
         self.assertIn("RuntimeError: ADMET inference failed", report_content)
         self.assertIn("RuntimeError: ADMET inference failed", report_content)
         self.assertIn("RuntimeError: ADMET inference failed", report_content)

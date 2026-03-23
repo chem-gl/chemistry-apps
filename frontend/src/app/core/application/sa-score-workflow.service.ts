@@ -13,6 +13,7 @@ import {
   SaScoreMoleculeResultView,
   SaScoreParams,
   ScientificJobView,
+  SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
 
 type SaScoreSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -106,31 +107,50 @@ export class SaScoreWorkflowService implements OnDestroy {
       version: '1.0.0',
     };
 
-    this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
-      next: (jobResponse: SaScoreJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          const immediateResultData: SaScoreResultData | null = this.extractResultData(jobResponse);
-          if (immediateResultData === null) {
-            this.activeSection.set('error');
-            this.errorMessage.set('The completed job payload is invalid for SA score.');
-            return;
-          }
-
-          this.resultData.set(immediateResultData);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
+    this.jobsApiService.validateSmilesCompatibility(normalizedSmiles).subscribe({
+      next: (validationResult: SmilesCompatibilityResultView) => {
+        if (!validationResult.compatible) {
+          this.activeSection.set('error');
+          this.errorMessage.set(
+            this.buildSmilesCompatibilityErrorMessage(validationResult),
+          );
           return;
         }
 
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
+          next: (jobResponse: SaScoreJobResponseView) => {
+            this.currentJobId.set(jobResponse.id);
+
+            if (jobResponse.status === 'completed') {
+              const immediateResultData: SaScoreResultData | null =
+                this.extractResultData(jobResponse);
+              if (immediateResultData === null) {
+                this.activeSection.set('error');
+                this.errorMessage.set('The completed job payload is invalid for SA score.');
+                return;
+              }
+
+              this.resultData.set(immediateResultData);
+              this.loadHistoricalLogs(jobResponse.id);
+              this.activeSection.set('result');
+              this.loadHistory();
+              return;
+            }
+
+            this.activeSection.set('progress');
+            this.startProgressStream(jobResponse.id);
+          },
+          error: (dispatchError: Error) => {
+            this.activeSection.set('error');
+            this.errorMessage.set(`Unable to create SA score job: ${dispatchError.message}`);
+          },
+        });
       },
-      error: (dispatchError: Error) => {
+      error: (validationError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Unable to create SA score job: ${dispatchError.message}`);
+        this.errorMessage.set(
+          `Unable to validate SMILES compatibility: ${validationError.message}`,
+        );
       },
     });
   }
@@ -266,6 +286,18 @@ export class SaScoreWorkflowService implements OnDestroy {
       .split(/\r?\n/)
       .map((smilesItem: string) => smilesItem.trim())
       .filter((smilesItem: string) => smilesItem.length > 0);
+  }
+
+  private buildSmilesCompatibilityErrorMessage(
+    validationResult: SmilesCompatibilityResultView,
+  ): string {
+    const issuePreview: string = validationResult.issues
+      .slice(0, 3)
+      .map((issueItem) => `${issueItem.smiles} (${issueItem.reason})`)
+      .join('; ');
+    const overflowCount: number = Math.max(validationResult.issues.length - 3, 0);
+    const overflowMessage: string = overflowCount > 0 ? `; +${overflowCount} more.` : '.';
+    return `Some SMILES are not compatible and were not sent: ${issuePreview}${overflowMessage}`;
   }
 
   private startProgressStream(jobId: string): void {

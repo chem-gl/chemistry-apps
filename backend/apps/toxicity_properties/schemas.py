@@ -11,6 +11,7 @@ from typing import cast
 from apps.core.models import ScientificJob
 from apps.core.types import JSONMap
 from drf_spectacular.utils import extend_schema_field
+from rdkit import Chem
 from rest_framework import serializers
 
 from .definitions import DEFAULT_ALGORITHM_VERSION
@@ -35,7 +36,7 @@ class ToxicityJobCreateSerializer(serializers.Serializer):
     )
 
     def validate_smiles(self, value: list[str]) -> list[str]:
-        """Normaliza SMILES eliminando vacíos y duplicados, preservando orden."""
+        """Normaliza y valida compatibilidad de SMILES con RDKit."""
         cleaned_smiles: list[str] = []
         seen_smiles: set[str] = set()
 
@@ -45,6 +46,10 @@ class ToxicityJobCreateSerializer(serializers.Serializer):
                 continue
             if normalized_smiles in seen_smiles:
                 continue
+            if Chem.MolFromSmiles(normalized_smiles) is None:
+                raise serializers.ValidationError(
+                    f"SMILES no compatible con RDKit: {normalized_smiles}"
+                )
             seen_smiles.add(normalized_smiles)
             cleaned_smiles.append(normalized_smiles)
 

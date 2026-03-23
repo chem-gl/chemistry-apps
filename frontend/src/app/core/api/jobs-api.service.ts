@@ -4,7 +4,18 @@
 
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  filter,
+  forkJoin,
+  interval,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  take,
+} from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
   CalculatorJobCreateRequest,
@@ -303,6 +314,18 @@ export interface DownloadedReportFile {
   blob: Blob;
 }
 
+/** Resultado de validación de compatibilidad de un SMILES individual. */
+export interface SmilesCompatibilityIssueView {
+  smiles: string;
+  reason: string;
+}
+
+/** Resultado agregado de validación previa de un lote de SMILES. */
+export interface SmilesCompatibilityResultView {
+  compatible: boolean;
+  issues: SmilesCompatibilityIssueView[];
+}
+
 // Tipos de vista exportados por la capa wrapper para evitar dependencias directas
 // desde componentes/facades al cliente OpenAPI autogenerado.
 export type ScientificJobView = ScientificJob;
@@ -585,6 +608,75 @@ export class JobsApiService {
       ),
       shareReplay(1),
     );
+  }
+
+  /**
+   * Verifica compatibilidad estructural de todos los SMILES antes de despachar jobs.
+   *
+   * Implementación:
+   * - Reutiliza el endpoint de inspección de Smileit como validador central.
+   * - Reporta la lista de entradas incompatibles y su motivo para feedback temprano.
+   */
+  validateSmilesCompatibility(smilesList: string[]): Observable<SmilesCompatibilityResultView> {
+    const normalizedSmiles: string[] = smilesList
+      .map((rawSmiles: string) => rawSmiles.trim())
+      .filter((rawSmiles: string) => rawSmiles.length > 0);
+
+    if (normalizedSmiles.length === 0) {
+      return of({ compatible: true, issues: [] });
+    }
+
+    const validationRequests: Array<Observable<SmilesCompatibilityIssueView | null>> =
+      normalizedSmiles.map((smilesValue: string) =>
+        this.inspectSmileitStructure(smilesValue).pipe(
+          map(() => null),
+          catchError((validationError: unknown) =>
+            of({
+              smiles: smilesValue,
+              reason: this.extractErrorMessage(validationError),
+            }),
+          ),
+        ),
+      );
+
+    return forkJoin(validationRequests).pipe(
+      map((issuesOrNull: Array<SmilesCompatibilityIssueView | null>) => {
+        const issues: SmilesCompatibilityIssueView[] = issuesOrNull.filter(
+          (
+            issueItem: SmilesCompatibilityIssueView | null,
+          ): issueItem is SmilesCompatibilityIssueView => issueItem !== null,
+        );
+        return {
+          compatible: issues.length === 0,
+          issues,
+        };
+      }),
+    );
+  }
+
+  private extractErrorMessage(error: unknown): string {
+    if (typeof error === 'string' && error.trim() !== '') {
+      return error;
+    }
+
+    if (error !== null && typeof error === 'object') {
+      const errorRecord: Record<string, unknown> = error as Record<string, unknown>;
+      const directMessage = errorRecord['message'];
+      if (typeof directMessage === 'string' && directMessage.trim() !== '') {
+        return directMessage;
+      }
+
+      const nestedError = errorRecord['error'];
+      if (nestedError !== null && typeof nestedError === 'object') {
+        const nestedRecord: Record<string, unknown> = nestedError as Record<string, unknown>;
+        const detailMessage = nestedRecord['detail'];
+        if (typeof detailMessage === 'string' && detailMessage.trim() !== '') {
+          return detailMessage;
+        }
+      }
+    }
+
+    return 'Unsupported SMILES for chemistry services.';
   }
 
   /**

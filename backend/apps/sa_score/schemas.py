@@ -13,11 +13,11 @@ from __future__ import annotations
 
 from typing import cast
 
-from drf_spectacular.utils import extend_schema_field
-from rest_framework import serializers
-
 from apps.core.models import ScientificJob
 from apps.core.types import JSONMap
+from drf_spectacular.utils import extend_schema_field
+from rdkit import Chem
+from rest_framework import serializers
 
 from .definitions import DEFAULT_ALGORITHM_VERSION, MAX_SMILES_PER_JOB, SA_SCORE_METHODS
 
@@ -55,7 +55,7 @@ class SaScoreJobCreateSerializer(serializers.Serializer):
     )
 
     def validate_smiles(self, value: list[str]) -> list[str]:
-        """Elimina SMILES vacíos y duplicados preservando el orden."""
+        """Elimina duplicados y valida compatibilidad química de cada SMILES."""
         cleaned_smiles: list[str] = []
         seen_smiles: set[str] = set()
         for raw_smiles in value:
@@ -64,6 +64,10 @@ class SaScoreJobCreateSerializer(serializers.Serializer):
                 continue
             if normalized_smiles in seen_smiles:
                 continue
+            if Chem.MolFromSmiles(normalized_smiles) is None:
+                raise serializers.ValidationError(
+                    f"SMILES no compatible con RDKit: {normalized_smiles}"
+                )
             seen_smiles.add(normalized_smiles)
             cleaned_smiles.append(normalized_smiles)
 

@@ -22,6 +22,7 @@ from .plugin import (
     _convert_score,
 )
 from .routers import _build_full_csv, _build_single_method_csv
+from .schemas import SaScoreJobCreateSerializer
 from .types import SaMoleculeResult
 
 
@@ -256,3 +257,19 @@ class BrsaScoreClientRegressionTests(TestCase):
         mock_scorer_instance.calculateScore.assert_called_once_with("CCO")
         self.assertTrue(result.success)
         self.assertAlmostEqual(result.sa_score or 0.0, 3.21, places=2)
+
+
+class SaScoreCreateSerializerValidationTests(TestCase):
+    """Pruebas de validación de payload para creación de job SA score."""
+
+    def test_rejects_incompatible_smiles(self) -> None:
+        """Debe fallar si algún SMILES no es compatible con RDKit."""
+        serializer = SaScoreJobCreateSerializer(
+            data={
+                "smiles": ["CCO", "not_a_smiles"],
+                "methods": ["ambit"],
+            }
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("smiles", serializer.errors)
