@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-# Workflow reutilizable para compilar imágenes, publicar en GHCR y crear release liviana.
+# Workflow reutilizable para compilar imágenes, publicarlas en GHCR y crear una release liviana.
 
 name: Reusable Build
 
@@ -17,6 +17,8 @@ on:
                 value: ${{ jobs.build.outputs.image_tag }}
         secrets:
             BACKEND_PUBLIC_URL:
+                required: false
+            GHCR_PUBLIC_TOKEN:
                 required: false
 
 env:
@@ -41,16 +43,35 @@ jobs:
               run: |
                   echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
+            - name: Resolve image metadata
+              id: image_context
+              env:
+                  REPOSITORY_URL: https://github.com/${{ github.repository }}
+              run: |
+                  echo "repository_url=${REPOSITORY_URL}" >> "$GITHUB_OUTPUT"
+                  echo "backend_image=ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ steps.image_meta.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
+                  echo "frontend_image=ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
+
             - name: Build frontend (production)
+              env:
+                  REPOSITORY_URL: ${{ steps.image_context.outputs.repository_url }}
               run: |
                   docker build \
+                    --label "org.opencontainers.image.source=${REPOSITORY_URL}" \
+                    --label "org.opencontainers.image.revision=${{ github.sha }}" \
+                    --label "org.opencontainers.image.description=Chemistry Apps frontend production image" \
                     --build-arg API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }} \
                     -t chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} \
                     -f frontend/Dockerfile --target prod frontend/
 
             - name: Build backend Docker image (prod)
+              env:
+                  REPOSITORY_URL: ${{ steps.image_context.outputs.repository_url }}
               run: |
                   docker build \
+                    --label "org.opencontainers.image.source=${REPOSITORY_URL}" \
+                    --label "org.opencontainers.image.revision=${{ github.sha }}" \
+                    --label "org.opencontainers.image.description=Chemistry Apps backend production image" \
                     -t chemistry-backend:${{ steps.image_meta.outputs.image_tag }} \
                     -f backend/Dockerfile --target prod backend/
 
@@ -65,14 +86,79 @@ jobs:
             - name: Push backend/frontend images to GHCR
               if: github.event_name == 'push'
               run: |
-                  BACKEND_REMOTE_IMAGE="ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ steps.image_meta.outputs.image_tag }}"
-                  FRONTEND_REMOTE_IMAGE="ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}"
+                  BACKEND_REMOTE_IMAGE="${{ steps.image_context.outputs.backend_image }}"
+                  FRONTEND_REMOTE_IMAGE="${{ steps.image_context.outputs.frontend_image }}"
 
                   docker tag chemistry-backend:${{ steps.image_meta.outputs.image_tag }} "$BACKEND_REMOTE_IMAGE"
                   docker tag chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} "$FRONTEND_REMOTE_IMAGE"
 
                   docker push "$BACKEND_REMOTE_IMAGE"
                   docker push "$FRONTEND_REMOTE_IMAGE"
+
+                  if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+                    docker tag chemistry-backend:${{ steps.image_meta.outputs.image_tag }} "ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest"
+                    docker tag chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} "ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest"
+                    docker push "ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest"
+                    docker push "ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest"
+                  fi
+
+            - name: Promote GHCR packages to public visibility
+              if: github.event_name == 'push' && secrets.GHCR_PUBLIC_TOKEN != ''
+              env:
+                  GHCR_PUBLIC_TOKEN: ${{ secrets.GHCR_PUBLIC_TOKEN }}
+                  OWNER_NAME: ${{ github.repository_owner }}
+                  OWNER_TYPE: ${{ github.event.repository.owner.type }}
+              run: |
+                  set -e
+
+                  if [ "$OWNER_TYPE" = "Organization" ]; then
+                    VISIBILITY_API_BASE="https://api.github.com/orgs/${OWNER_NAME}/packages/container"
+                  else
+                    VISIBILITY_API_BASE="https://api.github.com/user/packages/container"
+                  fi
+
+                  for package_name in chemistry-backend chemistry-frontend; do
+                    status_code=$(curl -sS -o /tmp/ghcr-visibility-response.json -w '%{http_code}' \
+                      -X PATCH \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "Authorization: Bearer ${GHCR_PUBLIC_TOKEN}" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "${VISIBILITY_API_BASE}/${package_name}/visibility" \
+                      -d '{"visibility":"public"}')
+
+                    if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
+                      echo "ERROR: no se pudo cambiar la visibilidad del paquete ${package_name} a publica. HTTP ${status_code}."
+                      cat /tmp/ghcr-visibility-response.json
+                      exit 1
+                    fi
+                  done
+
+            - name: Verify GHCR images allow anonymous pull
+              if: github.event_name == 'push'
+              env:
+                  OWNER_NAME: ${{ github.repository_owner }}
+                  IMAGE_TAG: ${{ steps.image_meta.outputs.image_tag }}
+                  GHCR_PUBLIC_TOKEN: ${{ secrets.GHCR_PUBLIC_TOKEN }}
+              run: |
+                  set -e
+
+                  accept_header='Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
+
+                  for package_name in chemistry-backend chemistry-frontend; do
+                    manifest_url="https://ghcr.io/v2/${OWNER_NAME}/${package_name}/manifests/${IMAGE_TAG}"
+                    status_code=$(curl -sS -o /tmp/ghcr-anonymous-response.json -w '%{http_code}' -I -H "$accept_header" "$manifest_url")
+
+                    if [ "$status_code" != "200" ]; then
+                      echo "ERROR: la imagen ghcr.io/${OWNER_NAME}/${package_name}:${IMAGE_TAG} no permite pull anonimo."
+                      echo "Accion requerida:"
+                      echo "1. Define el secret GHCR_PUBLIC_TOKEN con un PAT classic que tenga permisos de administracion sobre GitHub Packages y read:packages."
+                      echo "2. O cambia manualmente la visibilidad del paquete a Public en GitHub Packages."
+                      if [ -n "$GHCR_PUBLIC_TOKEN" ]; then
+                        echo "El secret GHCR_PUBLIC_TOKEN existe, por lo que el endpoint de visibilidad probablemente no esta habilitado o el token no tiene permisos suficientes."
+                      fi
+                      exit 1
+                    fi
+                  done
 
     release:
         name: Create release
@@ -98,5 +184,7 @@ jobs:
                       Imagenes publicadas en GHCR:
                       - ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ needs.build.outputs.image_tag }}
                       - ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ needs.build.outputs.image_tag }}
+                      - ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest
+                      - ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest
               env:
                   GITHUB_TOKEN: ${{ github.token }}
