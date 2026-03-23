@@ -1,0 +1,125 @@
+// toxicity-properties.component.spec.ts: Pruebas unitarias básicas del componente de Toxicity Properties.
+
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+import { JobsApiService } from '../core/api/jobs-api.service';
+import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
+import { ToxicityPropertiesComponent } from './toxicity-properties.component';
+
+describe('ToxicityPropertiesComponent', () => {
+  const workflowMock = {
+    smilesInput: signal<string>('CCO'),
+    activeSection: signal<'idle' | 'dispatching' | 'progress' | 'result' | 'error'>('idle'),
+    currentJobId: signal<string | null>(null),
+    progressSnapshot: signal(null),
+    jobLogs: signal([]),
+    resultData: signal(null),
+    errorMessage: signal<string | null>(null),
+    exportErrorMessage: signal<string | null>(null),
+    isExporting: signal<boolean>(false),
+    historyJobs: signal([]),
+    isHistoryLoading: signal<boolean>(false),
+    isProcessing: signal<boolean>(false),
+    progressPercentage: signal<number>(0),
+    progressMessage: signal<string>('Preparing toxicity prediction...'),
+    dispatch: vi.fn(),
+    reset: vi.fn(),
+    openHistoricalJob: vi.fn(),
+    loadHistory: vi.fn(),
+    downloadCsvReport: vi.fn(() =>
+      of({
+        filename: 'toxicity_properties_report.csv',
+        blob: new Blob(['smiles,LD50_mgkg'], { type: 'text/csv' }),
+      }),
+    ),
+  };
+
+  const jobsApiMock = {
+    inspectSmileitStructure: vi.fn(() =>
+      of({
+        svg: '<svg></svg>',
+      }),
+    ),
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [ToxicityPropertiesComponent],
+      providers: [
+        {
+          provide: JobsApiService,
+          useValue: jobsApiMock,
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({})),
+          },
+        },
+      ],
+    });
+
+    TestBed.overrideComponent(ToxicityPropertiesComponent, {
+      set: {
+        providers: [
+          {
+            provide: ToxicityPropertiesWorkflowService,
+            useValue: workflowMock,
+          },
+          {
+            provide: JobsApiService,
+            useValue: jobsApiMock,
+          },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              queryParamMap: of(convertToParamMap({})),
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  it('calls loadHistory on init', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    fixture.detectChanges();
+
+    expect(workflowMock.loadHistory).toHaveBeenCalled();
+  });
+
+  it('delegates action methods to workflow service', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    component.dispatch();
+    component.reset();
+    component.openHistoricalJob('tox-job-123');
+
+    expect(workflowMock.dispatch).toHaveBeenCalled();
+    expect(workflowMock.reset).toHaveBeenCalled();
+    expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tox-job-123');
+  });
+
+  it('formats decimals and detects row errors', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    expect(component.formatDecimal(1.23456, 3)).toBe('1.235');
+    expect(component.formatDecimal(null)).toBe('-');
+    expect(
+      component.rowHasError({
+        smiles: 'CCO',
+        LD50_mgkg: null,
+        mutagenicity: null,
+        ames_score: null,
+        DevTox: null,
+        devtox_score: null,
+        error_message: 'invalid molecule',
+      }),
+    ).toBe(true);
+  });
+});

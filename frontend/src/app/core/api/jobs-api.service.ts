@@ -4,7 +4,18 @@
 
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  filter,
+  forkJoin,
+  interval,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  take,
+} from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
   CalculatorJobCreateRequest,
@@ -20,9 +31,14 @@ import {
   JobsService,
   MarcusJobResponse,
   MarcusService,
+  MethodsEnum,
   MolarFractionsService,
   PatchedSmileitCatalogEntryCreateRequest,
   PatternTypeEnum,
+  SAScoreService,
+  SaMoleculeResult,
+  SaScoreJobCreateRequest,
+  SaScoreJobResponse,
   ScientificJob,
   SiteOverlapPolicyEnum,
   SmileitAssignmentBlockInputRequest,
@@ -43,6 +59,10 @@ import {
   SmileitStructureInspectionResponse,
   SmileitSubstituentReferenceInputRequest,
   SmileitTraceabilityRow,
+  ToxicityJobCreateRequest,
+  ToxicityJobResponse,
+  ToxicityMoleculeResult,
+  ToxicityPropertiesService,
   TunnelService,
 } from './generated';
 
@@ -204,6 +224,34 @@ export interface MarcusParams {
   version?: string;
 }
 
+/** Métodos soportados para cálculo SA score en backend. */
+export type SaScoreMethod = MethodsEnum;
+
+/** Payload tipado para crear jobs de SA score desde UI. */
+export interface SaScoreParams {
+  smiles: string[];
+  methods: SaScoreMethod[];
+  version?: string;
+}
+
+/** Payload tipado para crear jobs de Toxicity Properties desde UI. */
+export interface ToxicityPropertiesParams {
+  smiles: string[];
+  version?: string;
+}
+
+/** Fila normalizada para la tabla toxicológica fija (alias del tipo generado). */
+export type ToxicityMoleculeResultView = ToxicityMoleculeResult;
+
+/** Respuesta tipada de job de Toxicity Properties para workflows y componentes. */
+export type ToxicityJobResponseView = ToxicityJobResponse;
+
+/** Fila normalizada para la tabla de resultados de SA score. */
+export type SaScoreMoleculeResultView = SaMoleculeResult;
+
+/** Respuesta tipada de job SA score para workflows y componentes. */
+export type SaScoreJobResponseView = SaScoreJobResponse;
+
 /** Estados válidos para filtrado de jobs en listados globales */
 export type JobListStatusFilter =
   | 'pending'
@@ -264,6 +312,18 @@ export interface JobControlActionResult {
 export interface DownloadedReportFile {
   filename: string;
   blob: Blob;
+}
+
+/** Resultado de validación de compatibilidad de un SMILES individual. */
+export interface SmilesCompatibilityIssueView {
+  smiles: string;
+  reason: string;
+}
+
+/** Resultado agregado de validación previa de un lote de SMILES. */
+export interface SmilesCompatibilityResultView {
+  compatible: boolean;
+  issues: SmilesCompatibilityIssueView[];
 }
 
 // Tipos de vista exportados por la capa wrapper para evitar dependencias directas
@@ -443,10 +503,12 @@ export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
+  private readonly saScoreClient = inject(SAScoreService);
   private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly tunnelClient = inject(TunnelService);
   private readonly jobsClient = inject(JobsService);
+  private readonly toxicityPropertiesClient = inject(ToxicityPropertiesService);
 
   // ---------------------------------------------------------------------------
   // Smileit API
@@ -546,6 +608,75 @@ export class JobsApiService {
       ),
       shareReplay(1),
     );
+  }
+
+  /**
+   * Verifica compatibilidad estructural de todos los SMILES antes de despachar jobs.
+   *
+   * Implementación:
+   * - Reutiliza el endpoint de inspección de Smileit como validador central.
+   * - Reporta la lista de entradas incompatibles y su motivo para feedback temprano.
+   */
+  validateSmilesCompatibility(smilesList: string[]): Observable<SmilesCompatibilityResultView> {
+    const normalizedSmiles: string[] = smilesList
+      .map((rawSmiles: string) => rawSmiles.trim())
+      .filter((rawSmiles: string) => rawSmiles.length > 0);
+
+    if (normalizedSmiles.length === 0) {
+      return of({ compatible: true, issues: [] });
+    }
+
+    const validationRequests: Array<Observable<SmilesCompatibilityIssueView | null>> =
+      normalizedSmiles.map((smilesValue: string) =>
+        this.inspectSmileitStructure(smilesValue).pipe(
+          map(() => null),
+          catchError((validationError: unknown) =>
+            of({
+              smiles: smilesValue,
+              reason: this.extractErrorMessage(validationError),
+            }),
+          ),
+        ),
+      );
+
+    return forkJoin(validationRequests).pipe(
+      map((issuesOrNull: Array<SmilesCompatibilityIssueView | null>) => {
+        const issues: SmilesCompatibilityIssueView[] = issuesOrNull.filter(
+          (
+            issueItem: SmilesCompatibilityIssueView | null,
+          ): issueItem is SmilesCompatibilityIssueView => issueItem !== null,
+        );
+        return {
+          compatible: issues.length === 0,
+          issues,
+        };
+      }),
+    );
+  }
+
+  private extractErrorMessage(error: unknown): string {
+    if (typeof error === 'string' && error.trim() !== '') {
+      return error;
+    }
+
+    if (error !== null && typeof error === 'object') {
+      const errorRecord: Record<string, unknown> = error as Record<string, unknown>;
+      const directMessage = errorRecord['message'];
+      if (typeof directMessage === 'string' && directMessage.trim() !== '') {
+        return directMessage;
+      }
+
+      const nestedError = errorRecord['error'];
+      if (nestedError !== null && typeof nestedError === 'object') {
+        const nestedRecord: Record<string, unknown> = nestedError as Record<string, unknown>;
+        const detailMessage = nestedRecord['detail'];
+        if (typeof detailMessage === 'string' && detailMessage.trim() !== '') {
+          return detailMessage;
+        }
+      }
+    }
+
+    return 'Unsupported SMILES for chemistry services.';
   }
 
   /**
@@ -1515,6 +1646,67 @@ export class JobsApiService {
     return this.downloadReport(
       this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response'),
       `marcus_${jobId}_inputs.zip`,
+    );
+  }
+
+  /** Despacha un job SA score para una lista de SMILES y métodos seleccionados. */
+  dispatchSaScoreJob(params: SaScoreParams): Observable<SaScoreJobResponseView> {
+    const payload: SaScoreJobCreateRequest = {
+      smiles: params.smiles,
+      methods: params.methods,
+      version: params.version ?? '1.0.0',
+    };
+
+    return this.saScoreClient.saScoreJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job SA score por UUID. */
+  getSaScoreJobStatus(jobId: string): Observable<SaScoreJobResponseView> {
+    return this.saScoreClient.saScoreJobsRetrieve(jobId).pipe(shareReplay(1));
+  }
+
+  /** Descarga CSV completo (todas las columnas de métodos solicitados) para SA score. */
+  downloadSaScoreCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.saScoreClient.saScoreJobsReportCsvRetrieve(jobId, 'response'),
+      `sa_score_${jobId}_report.csv`,
+    );
+  }
+
+  /** Descarga CSV de un método específico con formato smiles,sa para SA score. */
+  downloadSaScoreCsvMethodReport(
+    jobId: string,
+    method: SaScoreMethod,
+  ): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.saScoreClient.saScoreJobsReportCsvMethodRetrieve(jobId, method, 'response'),
+      `sa_score_${jobId}_${method}.csv`,
+    );
+  }
+
+  /** Despacha un job de Toxicity Properties para una lista de SMILES. */
+  dispatchToxicityPropertiesJob(
+    params: ToxicityPropertiesParams,
+  ): Observable<ToxicityJobResponseView> {
+    const payload: ToxicityJobCreateRequest = {
+      smiles: params.smiles,
+      version: params.version ?? '1.0.0',
+    };
+    return this.toxicityPropertiesClient.toxicityPropertiesJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job de Toxicity Properties por UUID. */
+  getToxicityPropertiesJobStatus(jobId: string): Observable<ToxicityJobResponseView> {
+    return this.toxicityPropertiesClient
+      .toxicityPropertiesJobsRetrieve(jobId)
+      .pipe(shareReplay(1)) as Observable<ToxicityJobResponseView>;
+  }
+
+  /** Descarga CSV toxicológico (columnas fijas) para un job completado. */
+  downloadToxicityPropertiesCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.toxicityPropertiesClient.toxicityPropertiesJobsReportCsvRetrieve(jobId, 'response'),
+      `toxicity_properties_${jobId}_report.csv`,
     );
   }
 }

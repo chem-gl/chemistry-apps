@@ -1,12 +1,7 @@
-"""urls.py: Enrutamiento principal del backend y exposición de OpenAPI.
+"""
+# urls.py
 
-Objetivo del archivo:
-- Consolidar las rutas HTTP del proyecto: admin, documentación OpenAPI y rutas
-    DRF para jobs core y apps científicas.
-
-Cómo se usa:
-- Registrar aquí cualquier nuevo `ViewSet` de app científica usando el router.
-- Mantener constantes de rutas en cada app (`definitions.py`) evita duplicación.
+Enrutamiento principal del backend y exposición de OpenAPI.
 """
 
 from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
@@ -33,9 +28,19 @@ from apps.random_numbers.definitions import (
     APP_ROUTE_PREFIX as RANDOM_NUMBERS_ROUTE_PREFIX,
 )
 from apps.random_numbers.routers import RandomNumbersJobViewSet
+from apps.sa_score.definitions import APP_ROUTE_BASENAME as SA_SCORE_ROUTE_BASENAME
+from apps.sa_score.definitions import APP_ROUTE_PREFIX as SA_SCORE_ROUTE_PREFIX
+from apps.sa_score.routers import SaScoreJobViewSet
 from apps.smileit.definitions import APP_ROUTE_BASENAME as SMILEIT_ROUTE_BASENAME
 from apps.smileit.definitions import APP_ROUTE_PREFIX as SMILEIT_ROUTE_PREFIX
 from apps.smileit.routers import SmileitJobViewSet
+from apps.toxicity_properties.definitions import (
+    APP_ROUTE_BASENAME as TOXICITY_PROPERTIES_ROUTE_BASENAME,
+)
+from apps.toxicity_properties.definitions import (
+    APP_ROUTE_PREFIX as TOXICITY_PROPERTIES_ROUTE_PREFIX,
+)
+from apps.toxicity_properties.routers import ToxicityPropertiesJobViewSet
 from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
 from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
 from apps.tunnel.routers import TunnelJobViewSet
@@ -82,10 +87,19 @@ router.register(
     SmileitJobViewSet,
     basename=SMILEIT_ROUTE_BASENAME,
 )
+router.register(
+    SA_SCORE_ROUTE_PREFIX,
+    SaScoreJobViewSet,
+    basename=SA_SCORE_ROUTE_BASENAME,
+)
+router.register(
+    TOXICITY_PROPERTIES_ROUTE_PREFIX,
+    ToxicityPropertiesJobViewSet,
+    basename=TOXICITY_PROPERTIES_ROUTE_BASENAME,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # Endpoints de OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/docs/",
@@ -93,6 +107,5 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    # Endpoints de jobs del dominio core
     path("api/", include(router.urls)),
 ]

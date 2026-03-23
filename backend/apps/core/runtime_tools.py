@@ -83,10 +83,6 @@ JAVA_RUNTIMES: tuple[JavaRuntimeDownloadSpec, ...] = (
 AMBIT_JAR_URL: str = (
     "http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar"
 )
-EPA_TEST_ZIP_URL: str = (
-    "https://github.com/CesarGuzmanLopez/test-app-epa/releases/download/"
-    "master/script.zip"
-)
 
 REQUIRED_RUNTIME_TOOLS: tuple[RuntimeToolRequirement, ...] = (
     RuntimeToolRequirement(
@@ -107,11 +103,6 @@ REQUIRED_RUNTIME_TOOLS: tuple[RuntimeToolRequirement, ...] = (
     RuntimeToolRequirement(
         key="ambit_jar",
         relative_path="external/ambitSA/SyntheticAccessibilityCli.jar",
-        must_be_zip_file=True,
-    ),
-    RuntimeToolRequirement(
-        key="webtest_jar",
-        relative_path="external/test/WebTEST.jar",
         must_be_zip_file=True,
     ),
 )
@@ -367,27 +358,10 @@ def _prepare_external_artifacts(runtime_tools_root: Path) -> None:
     ambit_jar_path: Path = (
         runtime_tools_root / "external" / "ambitSA" / "SyntheticAccessibilityCli.jar"
     )
-    webtest_root_path: Path = runtime_tools_root / "external" / "test"
-    webtest_jar_path: Path = webtest_root_path / "WebTEST.jar"
 
     if not _is_valid_zip_file(ambit_jar_path):
         logger.info("Descargando AMBIT SyntheticAccessibilityCli.jar")
         _download_file_with_retry(AMBIT_JAR_URL, ambit_jar_path)
-
-    if _is_valid_zip_file(webtest_jar_path):
-        return
-
-    webtest_root_path.mkdir(parents=True, exist_ok=True)
-    zip_path: Path = webtest_root_path / "script.zip"
-
-    logger.info("Descargando paquete EPA WebTEST")
-    _download_file_with_retry(EPA_TEST_ZIP_URL, zip_path)
-
-    if not zipfile.is_zipfile(zip_path):
-        raise RuntimeToolsError(f"ZIP de EPA WebTEST inválido en {zip_path.as_posix()}")
-
-    with zipfile.ZipFile(zip_path, mode="r") as zip_file:
-        zip_file.extractall(webtest_root_path)
 
 
 def ensure_runtime_tools_ready(runtime_tools_root: Path | None = None) -> None:

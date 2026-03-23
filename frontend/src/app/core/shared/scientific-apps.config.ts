@@ -62,4 +62,20 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/smileit',
     available: true,
   },
+  {
+    key: 'sa-score',
+    title: 'SA Score',
+    description:
+      'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
+    routePath: '/sa-score',
+    available: true,
+  },
+  {
+    key: 'toxicity-properties',
+    title: 'Toxicity Properties',
+    description:
+      'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
+    routePath: '/toxicity-properties',
+    available: true,
+  },
 ];
