@@ -18,8 +18,6 @@ on:
         secrets:
             BACKEND_PUBLIC_URL:
                 required: false
-            GHCR_PUBLIC_TOKEN:
-                required: false
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
@@ -102,48 +100,11 @@ jobs:
                     docker push "ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest"
                   fi
 
-            - name: Promote GHCR packages to public visibility
-              if: github.event_name == 'push'
-              env:
-                  GHCR_PUBLIC_TOKEN: ${{ secrets.GHCR_PUBLIC_TOKEN }}
-                  OWNER_NAME: ${{ github.repository_owner }}
-                  OWNER_TYPE: ${{ github.event.repository.owner.type }}
-              run: |
-                  set -e
-
-                  if [ -z "${GHCR_PUBLIC_TOKEN:-}" ]; then
-                    echo "GHCR_PUBLIC_TOKEN no definido; se omite la promoción automática de visibilidad."
-                    exit 0
-                  fi
-
-                  if [ "$OWNER_TYPE" = "Organization" ]; then
-                    VISIBILITY_API_BASE="https://api.github.com/orgs/${OWNER_NAME}/packages/container"
-                  else
-                    VISIBILITY_API_BASE="https://api.github.com/user/packages/container"
-                  fi
-
-                  for package_name in chemistry-backend chemistry-frontend; do
-                    status_code=$(curl -sS -o /tmp/ghcr-visibility-response.json -w '%{http_code}' \
-                      -X PATCH \
-                      -H "Accept: application/vnd.github+json" \
-                      -H "Authorization: Bearer ${GHCR_PUBLIC_TOKEN}" \
-                      -H "X-GitHub-Api-Version: 2022-11-28" \
-                      "${VISIBILITY_API_BASE}/${package_name}/visibility" \
-                      -d '{"visibility":"public"}')
-
-                    if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
-                      echo "ERROR: no se pudo cambiar la visibilidad del paquete ${package_name} a publica. HTTP ${status_code}."
-                      cat /tmp/ghcr-visibility-response.json
-                      exit 1
-                    fi
-                  done
-
             - name: Verify GHCR images allow anonymous pull
               if: github.event_name == 'push'
               env:
                   OWNER_NAME: ${{ github.repository_owner }}
                   IMAGE_TAG: ${{ steps.image_meta.outputs.image_tag }}
-                  GHCR_PUBLIC_TOKEN: ${{ secrets.GHCR_PUBLIC_TOKEN }}
               run: |
                   set -e
 
@@ -156,11 +117,8 @@ jobs:
                     if [ "$status_code" != "200" ]; then
                       echo "ERROR: la imagen ghcr.io/${OWNER_NAME}/${package_name}:${IMAGE_TAG} no permite pull anonimo."
                       echo "Accion requerida:"
-                      echo "1. Define el secret GHCR_PUBLIC_TOKEN con un PAT classic que tenga permisos de administracion sobre GitHub Packages y read:packages."
-                      echo "2. O cambia manualmente la visibilidad del paquete a Public en GitHub Packages."
-                      if [ -n "$GHCR_PUBLIC_TOKEN" ]; then
-                        echo "El secret GHCR_PUBLIC_TOKEN existe, por lo que el endpoint de visibilidad probablemente no esta habilitado o el token no tiene permisos suficientes."
-                      fi
+                      echo "1. Verifica en GitHub Packages que chemistry-backend y chemistry-frontend sean publicos."
+                      echo "2. Si aplica, revisa permisos de organizacion o politicas de acceso para pulls anonimos."
                       exit 1
                     fi
                   done
