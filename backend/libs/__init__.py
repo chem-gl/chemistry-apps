@@ -6,9 +6,12 @@ Contiene módulos que pueden ser consumidos por diferentes apps.
 """
 
 # Exporta librerías disponibles
-from . import ck_test, gaussian_log_parser
+from . import ambit, brsascore, ck_test, gaussian_log_parser, rdkit_sa
 
 __all__ = [
+    "ambit",
+    "brsascore",
     "ck_test",
     "gaussian_log_parser",
+    "rdkit_sa",
 ]

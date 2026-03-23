@@ -179,6 +179,7 @@ INSTALLED_APPS = [
     "apps.easy_rate.apps.EasyRateConfig",
     "apps.marcus.apps.MarcusConfig",
     "apps.smileit.apps.SmileitConfig",
+    "apps.sa_score.apps.SaScoreConfig",
 ]
 
 if ENABLE_CORS:

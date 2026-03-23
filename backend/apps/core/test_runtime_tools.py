@@ -16,13 +16,12 @@ import stat
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from django.test import SimpleTestCase
-
 from apps.core.runtime_tools import (
     RuntimeToolsError,
     assert_runtime_tools_ready,
     get_missing_runtime_files,
 )
+from django.test import SimpleTestCase
 
 
 class RuntimeToolsValidationTests(SimpleTestCase):
@@ -32,16 +31,13 @@ class RuntimeToolsValidationTests(SimpleTestCase):
         with TemporaryDirectory(prefix="runtime_tools_missing_") as temporary_directory:
             root_path: Path = Path(temporary_directory)
 
-            missing_messages: list[str] = get_missing_runtime_files(root_path)
+            missing_messages = get_missing_runtime_files(root_path)
 
-            self.assertGreaterEqual(len(missing_messages), 5)
+            self.assertGreaterEqual(len(missing_messages), 4)
             self.assertTrue(any("java8" in message for message in missing_messages))
             self.assertTrue(any("java17" in message for message in missing_messages))
             self.assertTrue(any("java21" in message for message in missing_messages))
             self.assertTrue(any("ambit_jar" in message for message in missing_messages))
-            self.assertTrue(
-                any("webtest_jar" in message for message in missing_messages)
-            )
 
     def test_assert_runtime_tools_ready_accepts_valid_structure(self) -> None:
         with TemporaryDirectory(prefix="runtime_tools_valid_") as temporary_directory:
@@ -53,7 +49,6 @@ class RuntimeToolsValidationTests(SimpleTestCase):
             self._create_fake_jar(
                 root_path / "external/ambitSA/SyntheticAccessibilityCli.jar"
             )
-            self._create_fake_jar(root_path / "external/test/WebTEST.jar")
 
             # No debe lanzar excepción cuando todos los artefactos requeridos existen.
             assert_runtime_tools_ready(root_path)
@@ -71,14 +66,15 @@ class RuntimeToolsValidationTests(SimpleTestCase):
             self._create_fake_jar(
                 root_path / "external/ambitSA/SyntheticAccessibilityCli.jar"
             )
-            invalid_webtest_path: Path = root_path / "external/test/WebTEST.jar"
-            invalid_webtest_path.parent.mkdir(parents=True, exist_ok=True)
-            invalid_webtest_path.write_text("not-a-real-jar", encoding="utf-8")
+            invalid_ambit_path: Path = (
+                root_path / "external/ambitSA/SyntheticAccessibilityCli.jar"
+            )
+            invalid_ambit_path.write_text("not-a-real-jar", encoding="utf-8")
 
             with self.assertRaises(RuntimeToolsError) as context:
                 assert_runtime_tools_ready(root_path)
 
-            self.assertIn("webtest_jar", str(context.exception))
+            self.assertIn("ambit_jar", str(context.exception))
 
     @staticmethod
     def _create_fake_executable(executable_path: Path) -> None:
@@ -99,4 +95,5 @@ class RuntimeToolsValidationTests(SimpleTestCase):
         import zipfile
 
         with zipfile.ZipFile(jar_path, mode="w") as archive_file:
+            archive_file.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")
             archive_file.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")

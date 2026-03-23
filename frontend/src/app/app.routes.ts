@@ -43,6 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./smileit/smileit.component').then((m) => m.SmileitComponent),
   },
   {
+    path: 'sa-score',
+    loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

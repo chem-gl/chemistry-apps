@@ -15,6 +15,8 @@ api/molarFractions.service.ts
 api/molarFractions.serviceInterface.ts
 api/randomNumbers.service.ts
 api/randomNumbers.serviceInterface.ts
+api/sAScore.service.ts
+api/sAScore.serviceInterface.ts
 api/smileit.service.ts
 api/smileit.serviceInterface.ts
 api/tunnel.service.ts
@@ -53,6 +55,7 @@ model/marcusResult.ts
 model/marcusResultMetadata.ts
 model/marcusStructureSnapshot.ts
 model/marcusStructures.ts
+model/methodsEnum.ts
 model/models.ts
 model/molarFractionRow.ts
 model/molarFractionsJobCreateRequest.ts
@@ -69,6 +72,10 @@ model/randomNumbersJobResponse.ts
 model/randomNumbersParameters.ts
 model/randomNumbersResult.ts
 model/randomNumbersResultMetadata.ts
+model/saMoleculeResult.ts
+model/saScoreJobCreateRequest.ts
+model/saScoreJobResponse.ts
+model/saScoreResults.ts
 model/scientificJob.ts
 model/siteOverlapPolicyEnum.ts
 model/smileitAssignmentBlockInputRequest.ts
@@ -77,6 +84,8 @@ model/smileitCatalogEntry.ts
 model/smileitCatalogEntryCreateRequest.ts
 model/smileitCategory.ts
 model/smileitGeneratedStructure.ts
+model/smileitGeneratedStructurePage.ts
+model/smileitGeneratedStructurePageItem.ts
 model/smileitJobCreateRequest.ts
 model/smileitJobResponse.ts
 model/smileitManualSubstituentInputRequest.ts

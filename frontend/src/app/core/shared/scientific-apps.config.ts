@@ -62,4 +62,12 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/smileit',
     available: true,
   },
+  {
+    key: 'sa-score',
+    title: 'SA Score',
+    description:
+      'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
+    routePath: '/sa-score',
+    available: true,
+  },
 ];

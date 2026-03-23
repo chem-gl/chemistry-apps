@@ -20,9 +20,14 @@ import {
   JobsService,
   MarcusJobResponse,
   MarcusService,
+  MethodsEnum,
   MolarFractionsService,
   PatchedSmileitCatalogEntryCreateRequest,
   PatternTypeEnum,
+  SAScoreService,
+  SaMoleculeResult,
+  SaScoreJobCreateRequest,
+  SaScoreJobResponse,
   ScientificJob,
   SiteOverlapPolicyEnum,
   SmileitAssignmentBlockInputRequest,
@@ -203,6 +208,22 @@ export interface MarcusParams {
   reactionDistance?: number;
   version?: string;
 }
+
+/** Métodos soportados para cálculo SA score en backend. */
+export type SaScoreMethod = MethodsEnum;
+
+/** Payload tipado para crear jobs de SA score desde UI. */
+export interface SaScoreParams {
+  smiles: string[];
+  methods: SaScoreMethod[];
+  version?: string;
+}
+
+/** Fila normalizada para la tabla de resultados de SA score. */
+export type SaScoreMoleculeResultView = SaMoleculeResult;
+
+/** Respuesta tipada de job SA score para workflows y componentes. */
+export type SaScoreJobResponseView = SaScoreJobResponse;
 
 /** Estados válidos para filtrado de jobs en listados globales */
 export type JobListStatusFilter =
@@ -443,6 +464,7 @@ export class JobsApiService {
   private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
+  private readonly saScoreClient = inject(SAScoreService);
   private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly tunnelClient = inject(TunnelService);
@@ -1515,6 +1537,41 @@ export class JobsApiService {
     return this.downloadReport(
       this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response'),
       `marcus_${jobId}_inputs.zip`,
+    );
+  }
+
+  /** Despacha un job SA score para una lista de SMILES y métodos seleccionados. */
+  dispatchSaScoreJob(params: SaScoreParams): Observable<SaScoreJobResponseView> {
+    const payload: SaScoreJobCreateRequest = {
+      smiles: params.smiles,
+      methods: params.methods,
+      version: params.version ?? '1.0.0',
+    };
+
+    return this.saScoreClient.saScoreJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job SA score por UUID. */
+  getSaScoreJobStatus(jobId: string): Observable<SaScoreJobResponseView> {
+    return this.saScoreClient.saScoreJobsRetrieve(jobId).pipe(shareReplay(1));
+  }
+
+  /** Descarga CSV completo (todas las columnas de métodos solicitados) para SA score. */
+  downloadSaScoreCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.saScoreClient.saScoreJobsReportCsvRetrieve(jobId, 'response'),
+      `sa_score_${jobId}_report.csv`,
+    );
+  }
+
+  /** Descarga CSV de un método específico con formato smiles,sa para SA score. */
+  downloadSaScoreCsvMethodReport(
+    jobId: string,
+    method: SaScoreMethod,
+  ): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.saScoreClient.saScoreJobsReportCsvMethodRetrieve(jobId, method, 'response'),
+      `sa_score_${jobId}_${method}.csv`,
     );
   }
 }

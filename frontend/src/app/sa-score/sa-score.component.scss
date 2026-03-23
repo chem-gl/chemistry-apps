@@ -1,0 +1,387 @@
+/* sa-score.component.scss: Estilos para SA Score con layout de entrada, progreso, tabla y exportes CSV. */
+.sa-score-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.sa-score-header {
+  border: 1px solid #cfe1df;
+  border-radius: 20px;
+  padding: 1.1rem 1.2rem;
+  background:
+    radial-gradient(circle at top right, rgba(36, 122, 112, 0.2), transparent 42%),
+    linear-gradient(135deg, #f6fbfb 0%, #edf7f6 58%, #f9fcfc 100%);
+}
+
+.eyebrow {
+  margin: 0;
+  color: #0f6a61;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.sa-score-header h2 {
+  margin: 0.2rem 0 0.4rem;
+  color: #0e4f49;
+}
+
+.sa-score-header p {
+  margin: 0;
+  color: #356862;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+}
+
+.entry-panel,
+.result-panel,
+.logs-card,
+.history-card {
+  border: 1px solid #d5e7e4;
+  border-radius: 16px;
+  background: #fff;
+  padding: 1rem;
+}
+
+h3 {
+  margin: 0 0 0.7rem;
+  color: #0d4e48;
+}
+
+.smiles-label {
+  display: grid;
+  gap: 0.38rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1a5b54;
+}
+
+textarea,
+input,
+button {
+  font-family: inherit;
+}
+
+textarea {
+  border: 1px solid #bcd6d2;
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
+  min-height: 180px;
+  font-size: 0.94rem;
+  background: #fbfefe;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(15, 106, 97, 0.25);
+  border-color: #0f6a61;
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  color: #527672;
+  font-size: 0.82rem;
+}
+
+.methods-fieldset {
+  margin: 0.9rem 0 0;
+  border: 1px solid #d2e4e2;
+  border-radius: 12px;
+  padding: 0.7rem 0.75rem;
+}
+
+.methods-fieldset legend {
+  padding: 0 0.35rem;
+  color: #23635c;
+  font-weight: 700;
+  font-size: 0.83rem;
+}
+
+.method-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.method-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #1e4f4a;
+  font-size: 0.9rem;
+}
+
+.action-row {
+  margin-top: 0.95rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.history-open-btn {
+  border-radius: 999px;
+  padding: 0.45rem 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border: 1px solid #0f6a61;
+  background: #13877c;
+  color: #fff;
+}
+
+.btn-secondary,
+.history-open-btn {
+  border: 1px solid #0f6a61;
+  background: #fff;
+  color: #0f6a61;
+}
+
+.status-message {
+  margin: 0;
+  color: #4f7873;
+}
+
+.progress-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id,
+.mono {
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.8rem;
+  color: #2b5954;
+  word-break: break-all;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #e3efee;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f8f84, #0f6a61);
+}
+
+.progress-pct {
+  margin: 0;
+  font-weight: 700;
+  color: #145f57;
+}
+
+.progress-message {
+  margin: 0;
+  color: #4d7570;
+}
+
+.metadata-grid {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.metadata-grid p {
+  margin: 0;
+  color: #275a54;
+  font-size: 0.88rem;
+}
+
+.export-row {
+  margin-top: 0.25rem;
+}
+
+.table-wrap {
+  margin-top: 0.7rem;
+  overflow: auto;
+  border: 1px solid #d8e8e5;
+  border-radius: 12px;
+}
+
+.result-table,
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.result-table th,
+.result-table td,
+.history-table th,
+.history-table td {
+  padding: 0.55rem 0.62rem;
+  border-bottom: 1px solid #e7f1f0;
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.result-table th,
+.history-table th {
+  background: #f2f9f8;
+  color: #17554e;
+  font-weight: 800;
+}
+
+.cell-error {
+  display: inline-block;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.error-message {
+  margin: 0.55rem 0 0;
+  border: 1px solid #fbcfe8;
+  border-radius: 10px;
+  background: #fff1f7;
+  color: #9d174d;
+  padding: 0.5rem 0.62rem;
+  font-weight: 700;
+  font-size: 0.83rem;
+}
+
+.logs-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.log-item {
+  border: 1px solid #deecea;
+  border-radius: 10px;
+  background: #fbfefe;
+  padding: 0.48rem 0.6rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+}
+
+.log-level {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.08rem 0.43rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.log-level-debug {
+  color: #374151;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.log-level-info {
+  color: #115e59;
+  background: #ccfbf1;
+  border-color: #99f6e4;
+}
+
+.log-level-warning {
+  color: #854d0e;
+  background: #fef9c3;
+  border-color: #fde68a;
+}
+
+.log-level-error {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.log-source,
+.log-index {
+  color: #5f7875;
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+}
+
+.log-message,
+.log-payload {
+  margin: 0;
+  color: #275a54;
+  font-size: 0.82rem;
+}
+
+.log-payload {
+  border: 1px solid #deecea;
+  border-radius: 8px;
+  padding: 0.35rem;
+  background: #fff;
+  overflow: auto;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.history-status {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.12rem 0.48rem;
+  font-weight: 700;
+  font-size: 0.76rem;
+}
+
+.history-pending,
+.history-running {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.history-completed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.history-failed,
+.history-cancelled {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.history-paused {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+@media (max-width: 980px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-table,
+  .history-table {
+    min-width: 620px;
+  }
+}

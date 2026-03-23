@@ -1561,6 +1561,244 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/sa-score/jobs/:
+    post:
+      operationId: sa_score_jobs_create
+      description: Crea un job asíncrono que calcula accesibilidad sintética para
+        una lista de SMILES usando los métodos seleccionados (ambit, brsa, rdkit).
+      summary: Crear Job de SA Score
+      tags:
+      - SAScore
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaScoreJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato SA score.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
+  /api/sa-score/jobs/{id}/:
+    get:
+      operationId: sa_score_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/sa-score/jobs/{id}/report-csv/:
+    get:
+      operationId: sa_score_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/sa-score/jobs/{id}/report-csv-method/:
+    get:
+      operationId: sa_score_jobs_report_csv_method_retrieve
+      description: Descarga CSV con columnas smiles,sa para un método específico (ambit,
+        brsa o rdkit). Solo aplica para jobs en estado completed.
+      summary: Descargar CSV por método específico
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      - in: query
+        name: method
+        schema:
+          type: string
+          enum:
+          - ambit
+          - brsa
+          - rdkit
+        description: 'Método SA score: ambit, brsa o rdkit.'
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV con columnas smiles,sa.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Método no válido o no fue calculado en este job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/sa-score/jobs/{id}/report-error/:
+    get:
+      operationId: sa_score_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/sa-score/jobs/{id}/report-log/:
+    get:
+      operationId: sa_score_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/smileit/jobs/:
     post:
       operationId: smileit_jobs_create
@@ -1660,14 +1898,16 @@ paths:
   /api/smileit/jobs/{id}/:
     get:
       operationId: smileit_jobs_retrieve
-      description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job
+      description: Retorna estado del job sin lista completa de derivados para reducir
+        payload.
+      summary: Obtener Job Smile-it (resumen optimizado)
       parameters:
       - in: path
         name: id
         schema:
           type: string
-        description: UUID del job.
+          format: uuid
+        description: A UUID string identifying this scientific job.
         required: true
       tags:
       - Smileit
@@ -1677,8 +1917,107 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+  /api/smileit/jobs/{id}/derivations/:
+    get:
+      operationId: smileit_jobs_derivations_retrieve
+      description: Entrega derivados por páginas para evitar respuestas gigantes en
+        frontend.
+      summary: Listar derivados Smile-it paginados
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Tamaño de página (máximo 100).
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Índice inicial absoluto (0-based).
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitGeneratedStructurePage'
+          description: ''
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/smileit/jobs/{id}/derivations/{structure_index}/svg/:
+    get:
+      operationId: smileit_jobs_derivations_svg_retrieve
+      description: Genera SVG del derivado solicitado únicamente cuando frontend lo
+        necesita.
+      summary: Renderizar SVG de un derivado Smile-it bajo demanda
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      - in: path
+        name: structure_index
+        schema:
+          type: integer
+        description: Índice absoluto del derivado dentro del job.
+        required: true
+      - in: query
+        name: variant
+        schema:
+          type: string
+        description: 'Variante de renderizado: ''thumb'' para grid o ''detail'' para
+          modal/export.'
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -1751,6 +2090,45 @@ paths:
                 type: string
                 format: binary
           description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/smileit/jobs/{id}/report-images-zip/:
+    get:
+      operationId: smileit_jobs_report_images_zip_retrieve
+      description: Entrega ZIP de imágenes por backend para jobs extremadamente grandes.
+      summary: Descargar ZIP de imágenes SVG de derivados Smile-it
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
         '404':
           content:
             application/json:
@@ -3692,6 +4070,16 @@ components:
       - product_2_vertical_file
       - reactant_1_file
       - reactant_2_file
+    MethodsEnum:
+      enum:
+      - ambit
+      - brsa
+      - rdkit
+      type: string
+      description: |-
+        * `ambit` - ambit
+        * `brsa` - brsa
+        * `rdkit` - rdkit
     MolarFractionRow:
       type: object
       description: Fila de tabla de fracciones para un pH específico.
@@ -4172,6 +4560,148 @@ components:
       - seed_digest
       - seed_url
       - total_numbers
+    SaMoleculeResult:
+      type: object
+      description: Serializa el resultado de SA score para una molécula individual.
+      properties:
+        smiles:
+          type: string
+          readOnly: true
+        ambit_sa:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        brsa_sa:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        rdkit_sa:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        ambit_error:
+          type: string
+          readOnly: true
+          nullable: true
+        brsa_error:
+          type: string
+          readOnly: true
+          nullable: true
+        rdkit_error:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - ambit_error
+      - ambit_sa
+      - brsa_error
+      - brsa_sa
+      - rdkit_error
+      - rdkit_sa
+      - smiles
+    SaScoreJobCreateRequest:
+      type: object
+      description: |-
+        Valida la creación de un job de SA score.
+
+        Acepta `smiles` como string único o lista de strings.
+        Acepta `methods` como lista de métodos válidos (ambit, brsa, rdkit).
+      properties:
+        smiles:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4096
+          description: Lista de SMILES a evaluar. Máximo 500. Cada elemento debe ser
+            un SMILES válido.
+          maxItems: 500
+          minItems: 1
+        methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/MethodsEnum'
+          default:
+          - ambit
+          - brsa
+          - rdkit
+          description: 'Métodos de SA score a calcular. Opciones: ambit, brsa, rdkit.
+            Por defecto todos.'
+          minItems: 1
+        version:
+          type: string
+          minLength: 1
+          default: 1.0.0
+          description: Versión del algoritmo. Por defecto la versión más reciente.
+          maxLength: 20
+      required:
+      - smiles
+    SaScoreJobResponse:
+      type: object
+      description: Serializa un job de SA score completo incluyendo resultados y estado.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        progress_percentage:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+          maxLength: 40
+        progress_message:
+          type: string
+          description: Mensaje corto y legible del estado de progreso.
+          maxLength: 255
+        parameters: {}
+        results:
+          allOf:
+          - $ref: '#/components/schemas/SaScoreResults'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - results
+      - updated_at
+    SaScoreResults:
+      type: object
+      description: Serializa el bloque completo de resultados de un job de SA score.
+      properties:
+        molecules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaMoleculeResult'
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        requested_methods:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - molecules
+      - requested_methods
+      - total
     ScientificJob:
       type: object
       description: |-
@@ -4483,6 +5013,55 @@ components:
       - placeholder_assignments
       - smiles
       - svg
+      - traceability
+    SmileitGeneratedStructurePage:
+      type: object
+      description: Página de derivados Smile-it para carga incremental en frontend.
+      properties:
+        total_generated:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitGeneratedStructurePageItem'
+      required:
+      - items
+      - limit
+      - offset
+      - total_generated
+    SmileitGeneratedStructurePageItem:
+      type: object
+      description: Derivado paginado para UI sin SVG embebido (render on-demand).
+      properties:
+        structure_index:
+          type: integer
+          minimum: 0
+        smiles:
+          type: string
+          maxLength: 2000
+        name:
+          type: string
+          maxLength: 500
+        placeholder_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitPlaceholderAssignment'
+        traceability:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmileitSubstitutionTraceEvent'
+      required:
+      - name
+      - placeholder_assignments
+      - smiles
+      - structure_index
       - traceability
     SmileitJobCreateRequest:
       type: object
