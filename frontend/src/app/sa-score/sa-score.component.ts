@@ -9,6 +9,7 @@ import {
   OnInit,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -72,9 +73,39 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     { key: 'brsa' as SaScoreMethod, label: 'BRSAScore SA' },
     { key: 'rdkit' as SaScoreMethod, label: 'RDKit SA' },
   ];
+  readonly selectedExportTarget = signal<ExportTarget>('all');
+
+  readonly exportOptions = computed<ReadonlyArray<ExportOption>>(() => {
+    const currentResultData = this.workflow.resultData();
+    if (currentResultData === null) {
+      return [];
+    }
+
+    const methodOptions: ExportOption[] = this.methodItems
+      .filter((methodItem) => currentResultData.requestedMethods.includes(methodItem.key))
+      .map((methodItem) => ({
+        value: methodItem.key,
+        label: `${methodItem.label} CSV`,
+      }));
+
+    return [{ value: 'all', label: 'All methods CSV' }, ...methodOptions];
+  });
 
   constructor() {
     this.ketcherPublicUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
+
+    effect(() => {
+      const availableOptions = this.exportOptions();
+      if (availableOptions.length === 0) {
+        return;
+      }
+
+      const selectedTarget = this.selectedExportTarget();
+      const hasSelectedTarget = availableOptions.some((option) => option.value === selectedTarget);
+      if (!hasSelectedTarget) {
+        this.selectedExportTarget.set('all');
+      }
+    });
   }
 
   readonly lineCount = computed<number>(() => {
@@ -129,6 +160,15 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       },
       error: () => {},
     });
+  }
+
+  exportCsv(): void {
+    const exportTarget: ExportTarget = this.selectedExportTarget();
+    if (exportTarget === 'all') {
+      this.exportAllCsv();
+      return;
+    }
+    this.exportMethodCsv(exportTarget);
   }
 
   hasPayload(logEntry: JobLogEntryView): boolean {
@@ -361,4 +401,11 @@ export class SaScoreComponent implements OnInit, OnDestroy {
 type KetcherApi = {
   getSmiles: () => Promise<string>;
   setMolecule: (molecule: string) => Promise<void>;
+};
+
+type ExportTarget = 'all' | SaScoreMethod;
+
+type ExportOption = {
+  value: ExportTarget;
+  label: string;
 };

@@ -25,7 +25,7 @@
           title="Draw a molecule with Ketcher and add it to the list">
           ✏ Draw SMILES
         </button>
-      
+
         <label class="btn-tool file-upload-label" [class.disabled]="workflow.isProcessing()"
           title="Upload a .smi or .txt file with one SMILES per line">
           ↑ Upload file
@@ -84,16 +84,16 @@
       </div>
 
       <div class="action-row export-row">
-        <button class="btn-secondary" (click)="exportAllCsv()" [disabled]="workflow.isExporting()">
-          {{ workflow.isExporting() ? 'Exporting...' : 'Export all methods CSV' }}
+        <label class="export-select-label" for="export-target-select">Export target</label>
+        <select id="export-target-select" class="export-select" [ngModel]="selectedExportTarget()"
+          (ngModelChange)="selectedExportTarget.set($event)" [disabled]="workflow.isExporting()">
+          @for (exportOption of exportOptions(); track exportOption.value) {
+          <option [ngValue]="exportOption.value">{{ exportOption.label }}</option>
+          }
+        </select>
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+          {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
         </button>
-        @for (methodItem of methodItems; track methodItem.key) {
-        @if (resultData.requestedMethods.includes(methodItem.key)) {
-        <button class="btn-secondary" (click)="exportMethodCsv(methodItem.key)" [disabled]="workflow.isExporting()">
-          Export {{ methodItem.label }} CSV
-        </button>
-        }
-        }
       </div>
 
       @if (workflow.exportErrorMessage(); as exportErrorMessage) {

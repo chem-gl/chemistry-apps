@@ -200,6 +200,28 @@ textarea:focus {
 
 .export-row {
   margin-top: 0.25rem;
+  align-items: center;
+}
+
+.export-select-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e4f4a;
+}
+
+.export-select {
+  border: 1px solid #0f6a61;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f6a61;
+  padding: 0.42rem 0.8rem;
+  min-width: 220px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.export-select:focus {
+  outline: 2px solid rgba(15, 106, 97, 0.2);
 }
 
 .table-wrap {
