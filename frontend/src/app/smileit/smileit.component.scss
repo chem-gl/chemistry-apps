@@ -1044,6 +1044,7 @@ select:focus {
 }
 
 .catalog-ketcher-frame-wrap {
+  position: relative;
   margin-top: 0.75rem;
   border: 1px solid #d3e2d7;
   border-radius: 14px;
@@ -1061,6 +1062,58 @@ select:focus {
 
 .catalog-smiles-sketch-modal textarea {
   margin-top: 0.45rem;
+}
+
+/* Indicador animado de carga mientras Ketcher del catalog studio inicializa */
+.catalog-ketcher-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f7faf9;
+  z-index: 2;
+  gap: 0.75rem;
+}
+
+.catalog-ketcher-loading-bar {
+  width: 200px;
+  height: 4px;
+  background: #d3e2d7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.catalog-ketcher-loading-progress {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: #1a4e48;
+  border-radius: 999px;
+  animation: catalog-ketcher-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes catalog-ketcher-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+.catalog-ketcher-loading-text {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #4a7c6f;
+}
+
+/* Precargador fuera de pantalla: descarga assets de Ketcher al montar Smileit */
+.catalog-ketcher-preloader {
+  position: fixed;
+  top: -2500px;
+  left: -2500px;
+  width: 900px;
+  height: 600px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .pattern-catalog-dialog,

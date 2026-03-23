@@ -215,6 +215,12 @@
     <p class="hint">Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.</p>
 
     <div class="ketcher-frame-wrap">
+      @if (!isKetcherReady) {
+      <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
+        <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
+        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+      </div>
+      }
       <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
         (load)="onKetcherFrameLoaded()"></iframe>
     </div>
@@ -248,3 +254,7 @@
     }
   </section>
 </dialog>
+<!-- Precarga de Ketcher: el iframe inicia la descarga al montar la página para que el sketcher abra al instante -->
+<div class="ketcher-preloader" aria-hidden="true">
+  <iframe [src]="ketcherPublicUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
+</div>

@@ -1,4 +1,4 @@
-// app.ts: Layout principal con navegacion entre monitor, calculadora y catalogo de apps.
+// app.ts: Layout principal con navegacion entre monitor y apps cientificas.
 
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -12,12 +12,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 export class App {
   readonly primaryNavigationItems: ReadonlyArray<{ label: string; path: string; hint: string }> = [
     { label: 'Jobs Monitor', path: '/jobs', hint: 'Track active and completed jobs' },
-    { label: 'Calculator', path: '/calculator', hint: 'Run scientific operations' },
-    {
-      label: 'Random Numbers',
-      path: '/random-numbers',
-      hint: 'Generate random numbers in background',
-    },
     {
       label: 'Molar Fractions',
       path: '/molar-fractions',
@@ -42,6 +36,16 @@ export class App {
       label: 'Smileit',
       path: '/smileit',
       hint: 'Combinatorial SMILES generation and substitution workflow',
+    },
+    {
+      label: 'SA Score',
+      path: '/sa-score',
+      hint: 'Synthetic accessibility scoring for SMILES batches',
+    },
+    {
+      label: 'Toxicity Properties',
+      path: '/toxicity-properties',
+      hint: 'ADMET-AI toxicity predictions from SMILES batches',
     },
     { label: 'Apps', path: '/apps', hint: 'Library and future scientific apps' },
   ];
