@@ -48,11 +48,13 @@ on:
                 required: true
             EXTERNAL_FRONTEND_PORT:
                 required: true
+            GHCR_USERNAME:
+                required: false
+            GHCR_TOKEN:
+                required: false
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
-    BACKEND_IMG_GZ: backend-image.tar.gz
-    FRONTEND_IMG_GZ: frontend-image.tar.gz
     DEPLOY_ENV_FILE: .env.deploy
     DEPLOY_STAGING_DIR: /tmp/chemistry-apps-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
@@ -107,11 +109,8 @@ jobs:
                   fi
                   echo "Todos los secrets requeridos están definidos."
 
-            - name: Download deployment artifacts
-              uses: actions/download-artifact@v8
-              with:
-                  name: deployment-artifacts
-                  path: .
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
             - name: Build .env file for deployment
               env:
@@ -129,6 +128,8 @@ jobs:
                   BACKEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
                   FRONTEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
                   IMAGE_TAG: ${{ inputs.image_tag }}
+                  IMAGE_REGISTRY: ghcr.io
+                  IMAGE_NAMESPACE: ${{ github.repository_owner }}
               run: |
                   cat > "$DEPLOY_ENV_FILE" <<EOF_ENV
                   DEBUG=0
@@ -155,6 +156,8 @@ jobs:
                   BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8000}
                   FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-80}
                   IMAGE_TAG=${IMAGE_TAG}
+                  IMAGE_REGISTRY=${IMAGE_REGISTRY}
+                  IMAGE_NAMESPACE=${IMAGE_NAMESPACE}
                   EOF_ENV
 
             - name: Preflight SSH connectivity
@@ -203,11 +206,11 @@ jobs:
                   fi
 
                   echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
-                                    {
-                                        echo "private_key<<__DEPLOY_KEY__"
-                                        cat "$KEY_FILE"
-                                        echo "__DEPLOY_KEY__"
-                                    } >> "$GITHUB_OUTPUT"
+                  {
+                    echo "private_key<<__DEPLOY_KEY__"
+                    cat "$KEY_FILE"
+                    echo "__DEPLOY_KEY__"
+                  } >> "$GITHUB_OUTPUT"
 
             - name: Validate SSH authentication
               uses: appleboy/ssh-action@v1.2.2
@@ -230,7 +233,7 @@ jobs:
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
+                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
                   timeout: 120s
@@ -247,7 +250,7 @@ jobs:
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.BACKEND_IMG_GZ }},${{ env.FRONTEND_IMG_GZ }},${{ env.DEPLOY_ENV_FILE }}"
+                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.DEPLOY_ENV_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
                   timeout: 120s
@@ -264,17 +267,17 @@ jobs:
               env:
                   VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
                   DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
-                  BACKEND_IMG_GZ: ${{ env.BACKEND_IMG_GZ }}
-                  FRONTEND_IMG_GZ: ${{ env.FRONTEND_IMG_GZ }}
                   DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
                   DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
+                  GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+                  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
               with:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,BACKEND_IMG_GZ,FRONTEND_IMG_GZ,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR
+                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR,GHCR_USERNAME,GHCR_TOKEN
                   script: |
                       set -e
 
@@ -305,20 +308,23 @@ jobs:
                       install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
                       install -m 644 "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" "$DEPLOY_COMPOSE_FILE"
 
-                      gunzip -c "$DEPLOY_STAGING_DIR/$BACKEND_IMG_GZ" | docker load
-                      gunzip -c "$DEPLOY_STAGING_DIR/$FRONTEND_IMG_GZ" | docker load
+                      if [ -n "${GHCR_USERNAME:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
+                        echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+                      else
+                        echo "GHCR credentials not provided; attempting anonymous pull from ghcr.io"
+                      fi
 
-                                            if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
-                                                echo "Deploy failed, collecting compose diagnostics..."
-                                                $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env ps || true
-                                                $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env logs --no-color --tail=200 backend db redis frontend celery-worker || true
-                                                exit 1
-                                            fi
+                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env pull backend frontend celery-worker
+
+                      if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
+                        echo "Deploy failed, collecting compose diagnostics..."
+                        $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env ps || true
+                        $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env logs --no-color --tail=200 backend db redis frontend celery-worker || true
+                        exit 1
+                      fi
 
                       rm -f \
                         "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" \
-                        "$DEPLOY_STAGING_DIR/$BACKEND_IMG_GZ" \
-                        "$DEPLOY_STAGING_DIR/$FRONTEND_IMG_GZ" \
                         "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
                       rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
 

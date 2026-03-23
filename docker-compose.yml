@@ -50,7 +50,7 @@ services:
       retries: 10
 
   backend:
-    image: chemistry-backend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     networks:
@@ -107,7 +107,7 @@ services:
       start_period: 900s
 
   frontend:
-    image: chemistry-frontend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     networks:
       - chemistry-apps-network
@@ -118,7 +118,7 @@ services:
         condition: service_healthy
 
   celery-worker:
-    image: chemistry-backend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     command:

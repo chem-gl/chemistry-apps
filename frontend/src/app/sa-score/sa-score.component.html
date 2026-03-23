@@ -16,7 +16,7 @@
       <label class="smiles-label">
         SMILES list (one per line)
         <textarea rows="10" [ngModel]="workflow.smilesInput()" (ngModelChange)="workflow.smilesInput.set($event)"
-          [disabled]="workflow.isProcessing()" placeholder="CCO&#10;CC(=O)O&#10;c1ccccc1"></textarea>
+          [disabled]="workflow.isProcessing()"></textarea>
       </label>
       <p class="hint">Detected rows: {{ lineCount() }}</p>
 

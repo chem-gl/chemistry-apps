@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-# Workflow reutilizable para compilar imágenes, exponer IMAGE_TAG y publicar artifacts.
+# Workflow reutilizable para compilar imágenes, publicar en GHCR y crear release liviana.
 
 name: Reusable Build
 
@@ -21,17 +21,16 @@ on:
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
-    BACKEND_IMG_GZ: backend-image.tar.gz
-    FRONTEND_IMG_GZ: frontend-image.tar.gz
 
 jobs:
     build:
-        name: Build + artifacts
+        name: Build + push GHCR
         runs-on: ubuntu-latest
         outputs:
             image_tag: ${{ steps.image_meta.outputs.image_tag }}
         permissions:
             contents: read
+            packages: write
 
         steps:
             - name: Checkout repository
@@ -51,22 +50,29 @@ jobs:
 
             - name: Build backend Docker image (prod)
               run: |
-                  docker build -t chemistry-backend:${{ steps.image_meta.outputs.image_tag }} -f backend/Dockerfile --target prod backend/
+                  docker build \
+                    -t chemistry-backend:${{ steps.image_meta.outputs.image_tag }} \
+                    -f backend/Dockerfile --target prod backend/
 
-            - name: Export backend Docker image (compressed)
-              run: docker save chemistry-backend:${{ steps.image_meta.outputs.image_tag }} | gzip -1 > $BACKEND_IMG_GZ
-
-            - name: Export frontend Docker image (compressed)
-              run: docker save chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} | gzip -1 > $FRONTEND_IMG_GZ
-
-            - name: Upload deployment artifacts
-              uses: actions/upload-artifact@v6
+            - name: Login to GHCR
+              if: github.event_name == 'push'
+              uses: docker/login-action@v3
               with:
-                  name: deployment-artifacts
-                  path: |
-                      ${{ env.DEPLOY_COMPOSE_FILE }}
-                      ${{ env.BACKEND_IMG_GZ }}
-                      ${{ env.FRONTEND_IMG_GZ }}
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ github.token }}
+
+            - name: Push backend/frontend images to GHCR
+              if: github.event_name == 'push'
+              run: |
+                  BACKEND_REMOTE_IMAGE="ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ steps.image_meta.outputs.image_tag }}"
+                  FRONTEND_REMOTE_IMAGE="ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}"
+
+                  docker tag chemistry-backend:${{ steps.image_meta.outputs.image_tag }} "$BACKEND_REMOTE_IMAGE"
+                  docker tag chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} "$FRONTEND_REMOTE_IMAGE"
+
+                  docker push "$BACKEND_REMOTE_IMAGE"
+                  docker push "$FRONTEND_REMOTE_IMAGE"
 
     release:
         name: Create release
@@ -77,22 +83,20 @@ jobs:
             contents: write
 
         steps:
-            - name: Download deployment artifacts
-              uses: actions/download-artifact@v8
-              with:
-                  name: deployment-artifacts
-                  path: .
+            - name: Checkout repository
+              uses: actions/checkout@v6
 
             - name: Create GitHub release
               uses: softprops/action-gh-release@v1
               with:
-                  files: |
-                      ${{ env.DEPLOY_COMPOSE_FILE }}
-                      ${{ env.BACKEND_IMG_GZ }}
-                      ${{ env.FRONTEND_IMG_GZ }}
+                  files: ${{ env.DEPLOY_COMPOSE_FILE }}
                   tag_name: main-${{ needs.build.outputs.image_tag }}
                   name: Release main-${{ needs.build.outputs.image_tag }}
                   body: |
                       Automatico: se genero la release main-${{ needs.build.outputs.image_tag }}
+
+                      Imagenes publicadas en GHCR:
+                      - ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ needs.build.outputs.image_tag }}
+                      - ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ needs.build.outputs.image_tag }}
               env:
                   GITHUB_TOKEN: ${{ github.token }}
