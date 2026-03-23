@@ -16,12 +16,13 @@ import stat
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from django.test import SimpleTestCase
+
 from apps.core.runtime_tools import (
     RuntimeToolsError,
     assert_runtime_tools_ready,
     get_missing_runtime_files,
 )
-from django.test import SimpleTestCase
 
 
 class RuntimeToolsValidationTests(SimpleTestCase):
@@ -95,5 +96,4 @@ class RuntimeToolsValidationTests(SimpleTestCase):
         import zipfile
 
         with zipfile.ZipFile(jar_path, mode="w") as archive_file:
-            archive_file.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")
             archive_file.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")

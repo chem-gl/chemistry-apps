@@ -219,11 +219,7 @@
         (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
-    <label class="smiles-label">
-      SMILES (fallback / manual)
-      <textarea [ngModel]="sketchDraftSmiles" (ngModelChange)="onSketchDraftSmilesChange($event)" rows="3"
-        placeholder="Draw above or type here"></textarea>
-    </label>
+
 
     <div class="sketch-modal-actions">
       <button class="btn-secondary" type="button" (click)="closeSketchDialog()">Cancel</button>
