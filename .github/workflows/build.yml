@@ -103,13 +103,18 @@ jobs:
                   fi
 
             - name: Promote GHCR packages to public visibility
-              if: github.event_name == 'push' && secrets.GHCR_PUBLIC_TOKEN != ''
+              if: github.event_name == 'push'
               env:
                   GHCR_PUBLIC_TOKEN: ${{ secrets.GHCR_PUBLIC_TOKEN }}
                   OWNER_NAME: ${{ github.repository_owner }}
                   OWNER_TYPE: ${{ github.event.repository.owner.type }}
               run: |
                   set -e
+
+                  if [ -z "${GHCR_PUBLIC_TOKEN:-}" ]; then
+                    echo "GHCR_PUBLIC_TOKEN no definido; se omite la promoción automática de visibilidad."
+                    exit 0
+                  fi
 
                   if [ "$OWNER_TYPE" = "Organization" ]; then
                     VISIBILITY_API_BASE="https://api.github.com/orgs/${OWNER_NAME}/packages/container"
