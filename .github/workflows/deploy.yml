@@ -326,13 +326,31 @@ jobs:
                         fi
                       fi
 
+                      if [ -z "$PYTHON_BIN" ] && command -v apt-get >/dev/null 2>&1; then
+                        if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+                          echo "Python 3.12 no encontrado. Intentando instalar via apt/deadsnakes..."
+                          sudo apt-get update
+                          sudo apt-get install -y software-properties-common
+                          sudo add-apt-repository -y ppa:deadsnakes/ppa
+                          sudo apt-get update
+                          sudo apt-get install -y python3.12 python3.12-venv
+                        fi
+
+                        if command -v python3.12 >/dev/null 2>&1; then
+                          PYTHON_BIN="python3.12"
+                        fi
+                      fi
+
                       if [ -z "$PYTHON_BIN" ]; then
                         echo "ERROR: Python 3.12+ is required on remote host (Django 6.x)."
+                        echo "No fue posible instalarlo automaticamente."
                         echo "Instala python3.12 y python3.12-venv antes de desplegar."
+                        echo "Ejemplo Ubuntu: add-apt-repository ppa:deadsnakes/ppa && apt install python3.12 python3.12-venv"
                         exit 1
                       fi
 
                       cd "$VM_PROJECT_PATH/backend"
+                      rm -rf venv
                       "$PYTHON_BIN" -m venv venv
                       ./venv/bin/python -m pip install --upgrade pip
                       ./venv/bin/pip install -r requirements.txt
