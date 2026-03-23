@@ -32,7 +32,7 @@ from typing import TypedDict
 
 import matplotlib.cm as cm
 from rdkit import Chem
-from rdkit.Chem import rdDepictor, rdMolDescriptors
+from rdkit.Chem import rdDepictor, rdFingerprintGenerator, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
 
@@ -44,6 +44,12 @@ class DescriptorPayload(TypedDict):
 
 
 DescriptorMap = dict[str, DescriptorPayload]
+
+# Generador Morgan reutilizable para evitar la advertencia de deprecación
+# al usar rdMolDescriptors.GetMorganFingerprint (radio=2, quiralidad activa)
+_MORGAN_GENERATOR = rdFingerprintGenerator.GetMorganGenerator(
+    radius=2, includeChirality=True
+)
 
 
 def numBridgeheadsAndSpiro(mol: Chem.Mol) -> tuple[int, int]:
@@ -110,14 +116,15 @@ class SAScorer:
         sascore: float = 0
         contribution: dict[int, float] = {}
 
-        # fragment score
-        bit_info: dict[int, list[tuple[int, int]]] = {}
-        fingerprint = rdMolDescriptors.GetMorganFingerprint(
+        # fragment score — usa la nueva API MorganGenerator (rdFingerprintGenerator)
+        # para evitar DEPRECATION WARNING de rdMolDescriptors.GetMorganFingerprint
+        _morgan_output = rdFingerprintGenerator.AdditionalOutput()
+        _morgan_output.AllocateBitInfoMap()
+        fingerprint = _MORGAN_GENERATOR.GetSparseCountFingerprint(
             molecule,
-            2,
-            useChirality=True,
-            bitInfo=bit_info,
+            additionalOutput=_morgan_output,
         )
+        bit_info = _morgan_output.GetBitInfoMap()
 
         nonzero_fingerprint_elements: dict[int, int] = fingerprint.GetNonzeroElements()
         fragment_score: float = 0.0

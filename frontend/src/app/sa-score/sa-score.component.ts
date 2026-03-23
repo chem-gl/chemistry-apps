@@ -1,13 +1,25 @@
-// sa-score.component.ts: Pantalla principal de SA Score con entrada de SMILES, ejecución async y exportes CSV.
+// sa-score.component.ts: Pantalla principal de SA Score con entrada de SMILES, sketch molecular,
+// carga de archivos, visualización de imagen de molécula y exportes CSV.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
   DownloadedReportFile,
   JobLogEntryView,
+  JobsApiService,
   SaScoreMethod,
   SaScoreMoleculeResultView,
   ScientificJobView,
@@ -25,13 +37,45 @@ import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.se
 export class SaScoreComponent implements OnInit, OnDestroy {
   readonly workflow = inject(SaScoreWorkflowService);
   private readonly route = inject(ActivatedRoute);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly jobsApi = inject(JobsApiService);
   private routeSubscription: Subscription | null = null;
 
+  // ---------------------------------------------------------------------------
+  // Sketch dialog (Ketcher)
+  // ---------------------------------------------------------------------------
+
+  @ViewChild('sketchDialog')
+  private sketchDialogRef?: ElementRef<HTMLDialogElement>;
+
+  @ViewChild('ketcherFrame')
+  private ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
+
+  readonly ketcherPublicUrl: SafeResourceUrl;
+  sketchDraftSmiles: string = '';
+  isKetcherReady: boolean = false;
+
+  // ---------------------------------------------------------------------------
+  // Molecule image modal
+  // ---------------------------------------------------------------------------
+
+  @ViewChild('moleculeImageDialog')
+  private moleculeImageDialogRef?: ElementRef<HTMLDialogElement>;
+
+  readonly moleculeModalSvg = signal<SafeHtml | null>(null);
+  readonly moleculeModalSmiles = signal<string>('');
+  readonly isLoadingMoleculeImage = signal<boolean>(false);
+  readonly moleculeImageError = signal<string | null>(null);
+
   readonly methodItems = [
-    { key: 'ambit' as SaScoreMethod, label: 'AMBIT SA (0-100)' },
-    { key: 'brsa' as SaScoreMethod, label: 'BRSAScore SA (0-100)' },
-    { key: 'rdkit' as SaScoreMethod, label: 'RDKit SA (0-100)' },
+    { key: 'ambit' as SaScoreMethod, label: 'AMBIT SA' },
+    { key: 'brsa' as SaScoreMethod, label: 'BRSAScore SA' },
+    { key: 'rdkit' as SaScoreMethod, label: 'RDKit SA' },
   ];
+
+  constructor() {
+    this.ketcherPublicUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
+  }
 
   readonly lineCount = computed<number>(() => {
     const normalizedRows: string[] = this.workflow
@@ -74,9 +118,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       next: (downloadedFile: DownloadedReportFile) => {
         this.downloadFile(downloadedFile.filename, downloadedFile.blob);
       },
-      error: () => {
-        // El workflow ya expone el mensaje de error para UI.
-      },
+      error: () => {},
     });
   }
 
@@ -85,9 +127,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       next: (downloadedFile: DownloadedReportFile) => {
         this.downloadFile(downloadedFile.filename, downloadedFile.blob);
       },
-      error: () => {
-        // El workflow ya expone el mensaje de error para UI.
-      },
+      error: () => {},
     });
   }
 
@@ -126,6 +166,186 @@ export class SaScoreComponent implements OnInit, OnDestroy {
         : molecule.rdkit_error;
   }
 
+  // ---------------------------------------------------------------------------
+  // Sketch dialog (Ketcher)
+  // ---------------------------------------------------------------------------
+
+  /** Abre el diálogo del sketcher Ketcher para dibujar un SMILES. */
+  openSketchDialog(): void {
+    this.sketchDraftSmiles = '';
+    // No se resetea isKetcherReady: el iframe carga al montar la página y (load) no
+    // vuelve a disparar en aperturas subsecuentes del diálogo.
+    const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
+    if (dialog !== undefined) {
+      dialog.showModal();
+    }
+  }
+
+  /** Cierra el diálogo del sketcher sin aplicar cambios. */
+  closeSketchDialog(): void {
+    this.sketchDialogRef?.nativeElement.close();
+  }
+
+  /** Cierra el diálogo al hacer click en el backdrop (fuera del modal). */
+  onSketchDialogBackdropClick(event: MouseEvent): void {
+    const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
+    if (dialog === undefined) {
+      return;
+    }
+    const rect: DOMRect = dialog.getBoundingClientRect();
+    const isOutside: boolean =
+      event.clientX < rect.left ||
+      event.clientX > rect.right ||
+      event.clientY < rect.top ||
+      event.clientY > rect.bottom;
+    if (isOutside) {
+      dialog.close();
+    }
+  }
+
+  /** Marca el iframe de Ketcher como listo y carga el SMILES actual si existe. */
+  onKetcherFrameLoaded(): void {
+    this.isKetcherReady = true;
+  }
+
+  onSketchDraftSmilesChange(nextSmiles: string): void {
+    this.sketchDraftSmiles = nextSmiles;
+  }
+
+  /** Aplica el SMILES del sketcher: intenta leerlo de Ketcher (con polling), si no usa el textarea. */
+  async applySketch(): Promise<void> {
+    const api: KetcherApi | null = await this.waitForKetcherApi();
+    if (api !== null) {
+      try {
+        const ketcherSmiles: string = await api.getSmiles();
+        if (ketcherSmiles.trim() !== '') {
+          this.sketchDraftSmiles = ketcherSmiles.trim();
+        }
+      } catch {
+        // fallback al textarea manual si Ketcher falla
+      }
+    }
+
+    const smilesLine: string = this.sketchDraftSmiles.trim();
+    if (smilesLine === '') {
+      this.closeSketchDialog();
+      return;
+    }
+
+    // Agrega el SMILES dibujado al textarea (nueva línea si ya hay contenido)
+    const current: string = this.workflow.smilesInput().trimEnd();
+    const updated: string = current.length > 0 ? `${current}\n${smilesLine}` : smilesLine;
+    this.workflow.smilesInput.set(updated);
+    this.closeSketchDialog();
+  }
+
+  /**
+   * Espera hasta que el objeto `ketcher` esté disponible en el contentWindow del iframe.
+   * Ketcher inicializa de forma asíncrona después del evento load, por lo que se usa
+   * un polling de hasta 20 intentos (1 segundo total) antes de rendirse.
+   */
+  private async waitForKetcherApi(maxAttempts: number = 20): Promise<KetcherApi | null> {
+    const iframe: HTMLIFrameElement | undefined = this.ketcherFrameRef?.nativeElement;
+    if (iframe === undefined) {
+      return null;
+    }
+    for (let attempt: number = 0; attempt < maxAttempts; attempt++) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const win: any = iframe.contentWindow;
+        const api = win?.['ketcher'] as KetcherApi | undefined;
+        if (api !== undefined) {
+          return api;
+        }
+      } catch {
+        // Protección cross-origin: si falla, continuar intentando
+      }
+      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 50));
+    }
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Carga de archivo (.smi / .txt)
+  // ---------------------------------------------------------------------------
+
+  /** Maneja la carga de un archivo .smi o .txt y reemplaza el contenido del textarea. */
+  onFileUpload(event: Event): void {
+    const input: HTMLInputElement = event.target as HTMLInputElement;
+    const file: File | undefined = input.files?.[0];
+    if (file === undefined) {
+      return;
+    }
+
+    const reader: FileReader = new FileReader();
+    reader.onload = (readerEvent: ProgressEvent<FileReader>): void => {
+      const rawContent: string = (readerEvent.target?.result as string) ?? '';
+      // Filtra líneas vacías y comentarios (#) comunes en archivos .smi
+      const smilesLines: string[] = rawContent
+        .split(/\r?\n/)
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0 && !line.startsWith('#'));
+      this.workflow.smilesInput.set(smilesLines.join('\n'));
+    };
+    reader.readAsText(file);
+
+    // Resetea el input para que el mismo archivo pueda volver a cargarse
+    input.value = '';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modal de imagen de molécula
+  // ---------------------------------------------------------------------------
+
+  /** Abre el modal de imagen para un SMILES del resultado. */
+  openMoleculeImageModal(smiles: string): void {
+    if (smiles.trim() === '') {
+      return;
+    }
+    this.moleculeModalSmiles.set(smiles);
+    this.moleculeModalSvg.set(null);
+    this.moleculeImageError.set(null);
+    this.isLoadingMoleculeImage.set(true);
+
+    const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
+    if (dialog !== undefined) {
+      dialog.showModal();
+    }
+
+    this.jobsApi.inspectSmileitStructure(smiles).subscribe({
+      next: (inspection) => {
+        this.moleculeModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
+        this.isLoadingMoleculeImage.set(false);
+      },
+      error: () => {
+        this.moleculeImageError.set('Could not load molecule image.');
+        this.isLoadingMoleculeImage.set(false);
+      },
+    });
+  }
+
+  /** Cierra el modal de imagen de molécula. */
+  closeMoleculeImageModal(): void {
+    this.moleculeImageDialogRef?.nativeElement.close();
+  }
+
+  /** Cierra el modal al hacer click en el backdrop. */
+  onMoleculeImageDialogBackdropClick(event: MouseEvent): void {
+    const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
+    if (dialog === undefined) {
+      return;
+    }
+    const rect: DOMRect = dialog.getBoundingClientRect();
+    const isOutside: boolean =
+      event.clientX < rect.left ||
+      event.clientX > rect.right ||
+      event.clientY < rect.top ||
+      event.clientY > rect.bottom;
+    if (isOutside) {
+      dialog.close();
+    }
+  }
+
   private downloadFile(filename: string, blob: Blob): void {
     const objectUrl: string = URL.createObjectURL(blob);
     const linkElement: HTMLAnchorElement = document.createElement('a');
@@ -137,3 +357,8 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(objectUrl);
   }
 }
+
+type KetcherApi = {
+  getSmiles: () => Promise<string>;
+  setMolecule: (molecule: string) => Promise<void>;
+};

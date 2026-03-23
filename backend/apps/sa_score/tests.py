@@ -10,19 +10,11 @@ Uso:
 
 from __future__ import annotations
 
-import json
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
-from django.urls import reverse
 from libs.brsascore.client import BrsaScoreClient
-from rest_framework import status
-from rest_framework.test import APIClient
 
-from apps.core.models import ScientificJob
-
-from .definitions import PLUGIN_NAME
 from .plugin import (
     _compute_ambit_score,
     _compute_brsa_score,

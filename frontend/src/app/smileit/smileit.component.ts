@@ -1554,9 +1554,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   onInspectionSvgClick(mouseEvent: MouseEvent): void {
-    if (this.workflow.isProcessing()) {
-      return;
-    }
+    if (this.workflow.isProcessing()) return;
+
 
     const atomIndexFromPointer: number | null = this.resolveAtomIndexFromPointer(mouseEvent);
     if (atomIndexFromPointer !== null) {

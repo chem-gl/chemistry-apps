@@ -1,4 +1,5 @@
-<!-- sa-score.component.html: Interfaz de SA Score con tabla multi-método y exportes CSV. -->
+<!-- sa-score.component.html: Interfaz de SA Score con sketch Ketcher, carga de archivos,
+     tabla multi-método, imagen de molécula y exportes CSV. -->
 <section class="sa-score-shell" aria-label="SA score scientific app">
   <header class="sa-score-header">
     <p class="eyebrow">SA Score</p>
@@ -6,7 +7,6 @@
     <p>
       Run AMBIT, BRSAScore and RDKit synthetic accessibility methods over a batch of SMILES
     </p>
-
   </header>
 
   <div class="workspace-grid">
@@ -19,6 +19,20 @@
           [disabled]="workflow.isProcessing()" placeholder="CCO&#10;CC(=O)O&#10;c1ccccc1"></textarea>
       </label>
       <p class="hint">Detected rows: {{ lineCount() }}</p>
+
+      <div class="input-tools-row">
+        <button class="btn-tool" type="button" (click)="openSketchDialog()" [disabled]="workflow.isProcessing()"
+          title="Draw a molecule with Ketcher and add it to the list">
+          ✏ Draw SMILES
+        </button>
+      
+        <label class="btn-tool file-upload-label" [class.disabled]="workflow.isProcessing()"
+          title="Upload a .smi or .txt file with one SMILES per line">
+          ↑ Upload file
+          <input type="file" accept=".smi,.txt" class="file-input-hidden" [disabled]="workflow.isProcessing()"
+            (change)="onFileUpload($event)" />
+        </label>
+      </div>
 
       <fieldset class="methods-fieldset">
         <legend>Methods</legend>
@@ -101,7 +115,12 @@
           <tbody>
             @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
             <tr>
-              <td class="mono">{{ molecule.smiles }}</td>
+              <td>
+                <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
+                  title="Click to view molecule structure">
+                  {{ molecule.smiles }}
+                </button>
+              </td>
               @for (methodItem of methodItems; track methodItem.key) {
               @if (resultData.requestedMethods.includes(methodItem.key)) {
               <td>
@@ -189,3 +208,47 @@
     }
   </section>
 </section>
+<!-- ── Sketch dialog (Ketcher) ─────────────────────────────────────────── -->
+<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)">
+  <section class="sketch-modal" role="document" aria-label="Draw SMILES with Ketcher">
+    <h4>Draw SMILES</h4>
+    <p class="hint">Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.</p>
+
+    <div class="ketcher-frame-wrap">
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
+        (load)="onKetcherFrameLoaded()"></iframe>
+    </div>
+
+    <label class="smiles-label">
+      SMILES (fallback / manual)
+      <textarea [ngModel]="sketchDraftSmiles" (ngModelChange)="onSketchDraftSmilesChange($event)" rows="3"
+        placeholder="Draw above or type here"></textarea>
+    </label>
+
+    <div class="sketch-modal-actions">
+      <button class="btn-secondary" type="button" (click)="closeSketchDialog()">Cancel</button>
+      <button class="btn-primary" type="button" (click)="applySketch()">Add to list</button>
+    </div>
+  </section>
+</dialog>
+
+<!-- ── Molecule image modal ────────────────────────────────────────────── -->
+<dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)">
+  <section class="molecule-image-modal" role="document" aria-label="Molecule structure">
+    <div class="molecule-image-header">
+      <h4>Molecule structure</h4>
+      <button class="close-btn" type="button" (click)="closeMoleculeImageModal()"
+        aria-label="Close molecule image">✕</button>
+    </div>
+
+    <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
+
+    @if (isLoadingMoleculeImage()) {
+    <p class="status-message">Loading structure...</p>
+    } @else if (moleculeImageError(); as imgError) {
+    <p class="error-message" role="alert">{{ imgError }}</p>
+    } @else if (moleculeModalSvg(); as svgContent) {
+    <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
+    }
+  </section>
+</dialog>

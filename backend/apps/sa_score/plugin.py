@@ -19,12 +19,7 @@ import logging
 from typing import cast
 
 from apps.core.processing import PluginRegistry
-from apps.core.types import (
-    JSONMap,
-    JSONValue,
-    PluginLogCallback,
-    PluginProgressCallback,
-)
+from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 from .definitions import (
     PLUGIN_NAME,

@@ -385,3 +385,202 @@ textarea:focus {
     min-width: 620px;
   }
 }
+
+/* ── Herramientas de entrada (sketch / carga de archivo) ──────────────── */
+
+.input-tools-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.38rem 0.78rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #7ea38a;
+  color: #245741;
+  background: #f4fbf6;
+  font-family: inherit;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.btn-tool:hover:not(:disabled) {
+  background: #e2f4e8;
+  border-color: #4caf7d;
+}
+
+.btn-tool:disabled,
+.btn-tool.disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Label disfrazado de botón para el input[type=file] */
+.file-upload-label {
+  cursor: pointer;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+}
+
+/* ── Celda de SMILES clickeable ───────────────────────────────────────── */
+
+.smiles-cell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.82rem;
+  color: #0f6a61;
+  padding: 0;
+  text-align: left;
+  word-break: break-all;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.smiles-cell-btn:hover {
+  color: #0a4d46;
+  text-decoration: underline solid;
+}
+
+/* ── Sketch dialog (Ketcher) ──────────────────────────────────────────── */
+
+.sketch-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(640px, calc(100vw - 2rem));
+  max-width: 640px;
+}
+
+.sketch-dialog::backdrop {
+  background: rgba(13, 26, 22, 0.45);
+}
+
+.sketch-modal {
+  background: #fff;
+  border: 1px solid #d0e2d6;
+  border-radius: 16px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sketch-modal h4 {
+  margin: 0;
+  color: #0d4e48;
+  font-size: 1rem;
+}
+
+.ketcher-frame-wrap {
+  border: 1px solid #d0e2d6;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ketcher-frame {
+  width: 100%;
+  min-height: 380px;
+  height: clamp(380px, 50vh, 540px);
+  border: 0;
+  display: block;
+}
+
+.sketch-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ── Molecule image modal ─────────────────────────────────────────────── */
+
+.molecule-image-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(520px, calc(100vw - 2rem));
+  max-width: 520px;
+}
+
+.molecule-image-dialog::backdrop {
+  background: rgba(13, 26, 22, 0.45);
+}
+
+.molecule-image-modal {
+  background: #fff;
+  border: 1px solid #d0e2d6;
+  border-radius: 16px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.molecule-image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.molecule-image-header h4 {
+  margin: 0;
+  color: #0d4e48;
+  font-size: 1rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #527672;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+
+.close-btn:hover {
+  background: #f0fdf4;
+  color: #0d4e48;
+}
+
+.molecule-modal-smiles {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #337069;
+  word-break: break-all;
+}
+
+.molecule-svg-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid #d5e7e4;
+  border-radius: 12px;
+  background: #f9fefe;
+}
+
+.molecule-svg-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
+
