@@ -4,9 +4,21 @@ FROM python:3.12.11 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    # Variables necesarias para evitar el crash de getpass.getuser() cuando
+    # el UID del host no tiene entrada en /etc/passwd del contenedor.
+    # torch._inductor y matplotlib las leen antes de llamar a pwd.getpwuid().
+    USER=appuser \
+    LOGNAME=appuser \
+    HOME=/app \
+    MPLCONFIGDIR=/tmp/matplotlib-cache \
+    TORCHINDUCTOR_CACHE_DIR=/tmp/torchinductor-cache
 
 WORKDIR /app
+
+# Crear directorios de caché con permisos globales para que cualquier UID pueda escribir
+RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
+    && chmod 1777 /tmp/matplotlib-cache /tmp/torchinductor-cache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
