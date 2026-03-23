@@ -317,13 +317,23 @@ jobs:
 
                       install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
 
-                      if ! command -v python3 >/dev/null 2>&1; then
-                        echo "python3 is required on remote host to create virtualenv"
+                      PYTHON_BIN=""
+                      if command -v python3.12 >/dev/null 2>&1; then
+                        PYTHON_BIN="python3.12"
+                      elif command -v python3 >/dev/null 2>&1; then
+                        if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
+                          PYTHON_BIN="python3"
+                        fi
+                      fi
+
+                      if [ -z "$PYTHON_BIN" ]; then
+                        echo "ERROR: Python 3.12+ is required on remote host (Django 6.x)."
+                        echo "Instala python3.12 y python3.12-venv antes de desplegar."
                         exit 1
                       fi
 
                       cd "$VM_PROJECT_PATH/backend"
-                      python3 -m venv venv
+                      "$PYTHON_BIN" -m venv venv
                       ./venv/bin/python -m pip install --upgrade pip
                       ./venv/bin/pip install -r requirements.txt
                       ./venv/bin/python manage.py migrate --noinput
