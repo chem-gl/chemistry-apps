@@ -350,8 +350,20 @@ jobs:
                       fi
 
                       cd "$VM_PROJECT_PATH/backend"
-                      rm -rf venv
-                      "$PYTHON_BIN" -m venv venv
+                       RECREATE_VENV="1"
+                       if [ -d venv ]; then
+                         if [ -x venv/bin/python ] && ./venv/bin/python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
+                           echo "Entorno virtual existente compatible detectado. Se reutilizara venv."
+                           RECREATE_VENV="0"
+                         else
+                           echo "Entorno virtual existente no compatible con Python 3.12+. Se recreara venv."
+                           rm -rf venv
+                         fi
+                       fi
+
+                       if [ "$RECREATE_VENV" = "1" ]; then
+                         "$PYTHON_BIN" -m venv venv
+                       fi
                       ./venv/bin/python -m pip install --upgrade pip
                       ./venv/bin/pip install -r requirements.txt
                       ./venv/bin/python manage.py migrate --noinput

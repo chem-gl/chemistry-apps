@@ -166,7 +166,7 @@
                                 <div class="catalog-batch-actions">
                                   <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()"
                                     [disabled]="workflow.isProcessing()">
-                                    Sketch SMILES
+                                    ✏ Sketch SMILES
                                   </button>
                                     <button type="button" class="btn-secondary" (click)="stageCurrentCatalogDraft()"
                                       [disabled]="workflow.isProcessing() || workflow.isCatalogEditing()">
@@ -311,6 +311,12 @@
     </header>
 
     <div class="catalog-ketcher-frame-wrap" aria-label="Ketcher sketcher frame">
+    @if (!isCatalogSmilesSketcherReady()) {
+    <div class="catalog-ketcher-loading" role="status" aria-label="Loading molecule sketcher">
+        <div class="catalog-ketcher-loading-bar"><span class="catalog-ketcher-loading-progress"></span></div>
+        <p class="catalog-ketcher-loading-text">Loading molecule sketcher…</p>
+    </div>
+    }
       <iframe #catalogSmilesKetcherFrame class="catalog-ketcher-frame" [src]="catalogSmilesKetcherUrl"
         title="Catalog SMILES sketcher" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
     </div>
@@ -1158,3 +1164,8 @@
         </section>
     }
     </dialog>
+
+<!-- Precarga de Ketcher del catalog studio: inicia descarga al montar la página -->
+<div class="catalog-ketcher-preloader" aria-hidden="true">
+    <iframe [src]="catalogSmilesKetcherUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
+</div>
