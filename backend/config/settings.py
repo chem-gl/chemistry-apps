@@ -180,6 +180,7 @@ INSTALLED_APPS = [
     "apps.marcus.apps.MarcusConfig",
     "apps.smileit.apps.SmileitConfig",
     "apps.sa_score.apps.SaScoreConfig",
+    "apps.toxicity_properties.apps.ToxicityPropertiesConfig",
 ]
 
 if ENABLE_CORS:
@@ -267,6 +268,13 @@ SPECTACULAR_SETTINGS = {
             "description": (
                 "Endpoints para cinética por modelo Marcus con carga multipart "
                 "y persistencia de entradas reproducibles."
+            ),
+        },
+        {
+            "name": "ToxicityProperties",
+            "description": (
+                "Endpoints para predicción toxicológica con ADMET-AI "
+                "(LD50, Ames y DevTox) en jobs asíncronos."
             ),
         },
     ],

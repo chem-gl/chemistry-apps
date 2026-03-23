@@ -48,6 +48,10 @@ import {
   SmileitStructureInspectionResponse,
   SmileitSubstituentReferenceInputRequest,
   SmileitTraceabilityRow,
+  ToxicityJobCreateRequest,
+  ToxicityJobResponse,
+  ToxicityMoleculeResult,
+  ToxicityPropertiesService,
   TunnelService,
 } from './generated';
 
@@ -218,6 +222,18 @@ export interface SaScoreParams {
   methods: SaScoreMethod[];
   version?: string;
 }
+
+/** Payload tipado para crear jobs de Toxicity Properties desde UI. */
+export interface ToxicityPropertiesParams {
+  smiles: string[];
+  version?: string;
+}
+
+/** Fila normalizada para la tabla toxicológica fija (alias del tipo generado). */
+export type ToxicityMoleculeResultView = ToxicityMoleculeResult;
+
+/** Respuesta tipada de job de Toxicity Properties para workflows y componentes. */
+export type ToxicityJobResponseView = ToxicityJobResponse;
 
 /** Fila normalizada para la tabla de resultados de SA score. */
 export type SaScoreMoleculeResultView = SaMoleculeResult;
@@ -469,6 +485,7 @@ export class JobsApiService {
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly tunnelClient = inject(TunnelService);
   private readonly jobsClient = inject(JobsService);
+  private readonly toxicityPropertiesClient = inject(ToxicityPropertiesService);
 
   // ---------------------------------------------------------------------------
   // Smileit API
@@ -1572,6 +1589,32 @@ export class JobsApiService {
     return this.downloadReport(
       this.saScoreClient.saScoreJobsReportCsvMethodRetrieve(jobId, method, 'response'),
       `sa_score_${jobId}_${method}.csv`,
+    );
+  }
+
+  /** Despacha un job de Toxicity Properties para una lista de SMILES. */
+  dispatchToxicityPropertiesJob(
+    params: ToxicityPropertiesParams,
+  ): Observable<ToxicityJobResponseView> {
+    const payload: ToxicityJobCreateRequest = {
+      smiles: params.smiles,
+      version: params.version ?? '1.0.0',
+    };
+    return this.toxicityPropertiesClient.toxicityPropertiesJobsCreate(payload).pipe(shareReplay(1));
+  }
+
+  /** Consulta estado completo de un job de Toxicity Properties por UUID. */
+  getToxicityPropertiesJobStatus(jobId: string): Observable<ToxicityJobResponseView> {
+    return this.toxicityPropertiesClient
+      .toxicityPropertiesJobsRetrieve(jobId)
+      .pipe(shareReplay(1)) as Observable<ToxicityJobResponseView>;
+  }
+
+  /** Descarga CSV toxicológico (columnas fijas) para un job completado. */
+  downloadToxicityPropertiesCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.downloadReport(
+      this.toxicityPropertiesClient.toxicityPropertiesJobsReportCsvRetrieve(jobId, 'response'),
+      `toxicity_properties_${jobId}_report.csv`,
     );
   }
 }

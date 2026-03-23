@@ -70,4 +70,12 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     routePath: '/sa-score',
     available: true,
   },
+  {
+    key: 'toxicity-properties',
+    title: 'Toxicity Properties',
+    description:
+      'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
+    routePath: '/toxicity-properties',
+    available: true,
+  },
 ];

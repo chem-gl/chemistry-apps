@@ -19,6 +19,7 @@ psycopg2-binary==2.9.11
 # ── Cómputo científico ────────────────────────────────────────────
 numpy==2.4.3
 rdkit==2025.9.6
+admet-ai
 matplotlib==3.10.8
 matplotlib-inline==0.2.1
 # ── HTTP ──────────────────────────────────────────────────────────

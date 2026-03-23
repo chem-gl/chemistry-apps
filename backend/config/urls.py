@@ -34,6 +34,13 @@ from apps.sa_score.routers import SaScoreJobViewSet
 from apps.smileit.definitions import APP_ROUTE_BASENAME as SMILEIT_ROUTE_BASENAME
 from apps.smileit.definitions import APP_ROUTE_PREFIX as SMILEIT_ROUTE_PREFIX
 from apps.smileit.routers import SmileitJobViewSet
+from apps.toxicity_properties.definitions import (
+    APP_ROUTE_BASENAME as TOXICITY_PROPERTIES_ROUTE_BASENAME,
+)
+from apps.toxicity_properties.definitions import (
+    APP_ROUTE_PREFIX as TOXICITY_PROPERTIES_ROUTE_PREFIX,
+)
+from apps.toxicity_properties.routers import ToxicityPropertiesJobViewSet
 from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
 from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
 from apps.tunnel.routers import TunnelJobViewSet
@@ -84,6 +91,11 @@ router.register(
     SA_SCORE_ROUTE_PREFIX,
     SaScoreJobViewSet,
     basename=SA_SCORE_ROUTE_BASENAME,
+)
+router.register(
+    TOXICITY_PROPERTIES_ROUTE_PREFIX,
+    ToxicityPropertiesJobViewSet,
+    basename=TOXICITY_PROPERTIES_ROUTE_BASENAME,
 )
 
 urlpatterns = [

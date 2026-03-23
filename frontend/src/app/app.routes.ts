@@ -47,6 +47,13 @@ export const routes: Routes = [
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
+    path: 'toxicity-properties',
+    loadComponent: () =>
+      import('./toxicity-properties/toxicity-properties.component').then(
+        (m) => m.ToxicityPropertiesComponent,
+      ),
+  },
+  {
     path: 'apps',
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },

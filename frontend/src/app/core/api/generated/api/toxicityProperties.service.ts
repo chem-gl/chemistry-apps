@@ -19,44 +19,44 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { ErrorResponse } from '../model/errorResponse';
 // @ts-ignore
-import { SaScoreJobCreateRequest } from '../model/saScoreJobCreateRequest';
+import { ToxicityJobCreateRequest } from '../model/toxicityJobCreateRequest';
 // @ts-ignore
-import { SaScoreJobResponse } from '../model/saScoreJobResponse';
+import { ToxicityJobResponse } from '../model/toxicityJobResponse';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
 import { Configuration }                                     from '../configuration';
 import { BaseService } from '../api.base.service';
 import {
-    SAScoreServiceInterface
-} from './sAScore.serviceInterface';
+    ToxicityPropertiesServiceInterface
+} from './toxicityProperties.serviceInterface';
 
 
 
 @Injectable({
   providedIn: 'root'
 })
-export class SAScoreService extends BaseService implements SAScoreServiceInterface {
+export class ToxicityPropertiesService extends BaseService implements ToxicityPropertiesServiceInterface {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * Crear Job de SA Score
-     * Crea un job asíncrono que calcula accesibilidad sintética para una lista de SMILES usando los métodos seleccionados (ambit, brsa, rdkit).
-     * @endpoint post /api/sa-score/jobs/
-     * @param saScoreJobCreateRequest 
+     * Crear Job de Toxicity Properties
+     * Crea un job asíncrono para predecir LD50, mutagenicidad (Ames) y toxicidad del desarrollo con ADMET-AI para una lista de SMILES.
+     * @endpoint post /api/toxicity-properties/jobs/
+     * @param toxicityJobCreateRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SaScoreJobResponse>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SaScoreJobResponse>>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SaScoreJobResponse>>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (saScoreJobCreateRequest === null || saScoreJobCreateRequest === undefined) {
-            throw new Error('Required parameter saScoreJobCreateRequest was null or undefined when calling saScoreJobsCreate.');
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ToxicityJobResponse>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ToxicityJobResponse>>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ToxicityJobResponse>>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (toxicityJobCreateRequest === null || toxicityJobCreateRequest === undefined) {
+            throw new Error('Required parameter toxicityJobCreateRequest was null or undefined when calling toxicityPropertiesJobsCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -100,80 +100,13 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
             }
         }
 
-        let localVarPath = `/api/sa-score/jobs/`;
+        let localVarPath = `/api/toxicity-properties/jobs/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<SaScoreJobResponse>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ToxicityJobResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: saScoreJobCreateRequest,
+                body: toxicityJobCreateRequest,
                 responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Descargar CSV por método específico
-     * Descarga CSV por método específico. Para AMBIT la columna es smiles,sa_percent (escala 0-100). Para BRSA/RDKit la columna es smiles,sa (escala SA clásica 1-10). Solo aplica para jobs completed.
-     * @endpoint get /api/sa-score/jobs/{id}/report-csv-method/
-     * @param id UUID del job.
-     * @param method Método SA score: ambit, brsa o rdkit.
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public saScoreJobsReportCsvMethodRetrieve(id: string, method: 'ambit' | 'brsa' | 'rdkit', observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
-    public saScoreJobsReportCsvMethodRetrieve(id: string, method: 'ambit' | 'brsa' | 'rdkit', observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
-    public saScoreJobsReportCsvMethodRetrieve(id: string, method: 'ambit' | 'brsa' | 'rdkit', observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
-    public saScoreJobsReportCsvMethodRetrieve(id: string, method: 'ambit' | 'brsa' | 'rdkit', observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling saScoreJobsReportCsvMethodRetrieve.');
-        }
-        if (method === null || method === undefined) {
-            throw new Error('Required parameter method was null or undefined when calling saScoreJobsReportCsvMethodRetrieve.');
-        }
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'method',
-            <any>method,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (basicAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
-
-        // authentication (cookieAuth) required
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let localVarPath = `/api/sa-score/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/report-csv-method/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
-                responseType: "blob",
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
@@ -186,18 +119,18 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
     /**
      * Descargar Reporte CSV
      * Descarga CSV con resultados del job. Solo aplica para estado completed.
-     * @endpoint get /api/sa-score/jobs/{id}/report-csv/
+     * @endpoint get /api/toxicity-properties/jobs/{id}/report-csv/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsReportCsvRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
-    public saScoreJobsReportCsvRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
-    public saScoreJobsReportCsvRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
-    public saScoreJobsReportCsvRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public toxicityPropertiesJobsReportCsvRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public toxicityPropertiesJobsReportCsvRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public toxicityPropertiesJobsReportCsvRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public toxicityPropertiesJobsReportCsvRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling saScoreJobsReportCsvRetrieve.');
+            throw new Error('Required parameter id was null or undefined when calling toxicityPropertiesJobsReportCsvRetrieve.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -219,7 +152,7 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
-        let localVarPath = `/api/sa-score/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-csv/`;
+        let localVarPath = `/api/toxicity-properties/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-csv/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request('get', `${basePath}${localVarPath}`,
             {
@@ -237,18 +170,18 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
     /**
      * Descargar Reporte de Error
      * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
-     * @endpoint get /api/sa-score/jobs/{id}/report-error/
+     * @endpoint get /api/toxicity-properties/jobs/{id}/report-error/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsReportErrorRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
-    public saScoreJobsReportErrorRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
-    public saScoreJobsReportErrorRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
-    public saScoreJobsReportErrorRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public toxicityPropertiesJobsReportErrorRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public toxicityPropertiesJobsReportErrorRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public toxicityPropertiesJobsReportErrorRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public toxicityPropertiesJobsReportErrorRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling saScoreJobsReportErrorRetrieve.');
+            throw new Error('Required parameter id was null or undefined when calling toxicityPropertiesJobsReportErrorRetrieve.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -270,7 +203,7 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
-        let localVarPath = `/api/sa-score/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-error/`;
+        let localVarPath = `/api/toxicity-properties/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-error/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request('get', `${basePath}${localVarPath}`,
             {
@@ -288,18 +221,18 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
     /**
      * Descargar Reporte LOG
      * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
-     * @endpoint get /api/sa-score/jobs/{id}/report-log/
+     * @endpoint get /api/toxicity-properties/jobs/{id}/report-log/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsReportLogRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
-    public saScoreJobsReportLogRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
-    public saScoreJobsReportLogRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
-    public saScoreJobsReportLogRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public toxicityPropertiesJobsReportLogRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public toxicityPropertiesJobsReportLogRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public toxicityPropertiesJobsReportLogRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public toxicityPropertiesJobsReportLogRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling saScoreJobsReportLogRetrieve.');
+            throw new Error('Required parameter id was null or undefined when calling toxicityPropertiesJobsReportLogRetrieve.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -321,7 +254,7 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
-        let localVarPath = `/api/sa-score/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-log/`;
+        let localVarPath = `/api/toxicity-properties/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-log/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request('get', `${basePath}${localVarPath}`,
             {
@@ -339,18 +272,18 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
     /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
-     * @endpoint get /api/sa-score/jobs/{id}/
+     * @endpoint get /api/toxicity-properties/jobs/{id}/
      * @param id UUID del job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public saScoreJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public saScoreJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public saScoreJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public toxicityPropertiesJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public toxicityPropertiesJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public toxicityPropertiesJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public toxicityPropertiesJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling saScoreJobsRetrieve.');
+            throw new Error('Required parameter id was null or undefined when calling toxicityPropertiesJobsRetrieve.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -383,7 +316,7 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
             }
         }
 
-        let localVarPath = `/api/sa-score/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        let localVarPath = `/api/toxicity-properties/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
             {

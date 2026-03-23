@@ -34,7 +34,7 @@ export interface SAScoreServiceInterface {
 
     /**
      * Descargar CSV por método específico
-     * Descarga CSV con columnas smiles,sa para un método específico (ambit, brsa o rdkit). Solo aplica para jobs en estado completed.
+     * Descarga CSV por método específico. Para AMBIT la columna es smiles,sa_percent (escala 0-100). Para BRSA/RDKit la columna es smiles,sa (escala SA clásica 1-10). Solo aplica para jobs completed.
      * @endpoint get /api/sa-score/jobs/{id}/report-csv-method/
      * @param id UUID del job.
      * @param method Método SA score: ambit, brsa o rdkit.

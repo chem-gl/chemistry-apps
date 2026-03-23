@@ -150,6 +150,37 @@ class RuntimeJobService:
             return len(value.encode("utf-8"))
         return len(str(value).encode("utf-8"))
 
+    def _is_cache_payload_usable_for_plugin(
+        self,
+        *,
+        plugin_name: str,
+        payload: JSONMap,
+    ) -> bool:
+        """Valida que un payload cacheado sea reutilizable por plugin.
+
+        Para `toxicity-properties` descartamos entradas degradadas donde todas
+        las filas tienen `error_message`, porque representan ejecuciones
+        fallidas o entornos no saludables que no deben propagarse por caché.
+        """
+        if plugin_name != "toxicity-properties":
+            return True
+
+        molecules_value: object | None = payload.get("molecules")
+        if not isinstance(molecules_value, list) or len(molecules_value) == 0:
+            return False
+
+        total_rows: int = len(molecules_value)
+        rows_with_errors: int = 0
+
+        for row_value in molecules_value:
+            if not isinstance(row_value, dict):
+                return False
+            row_error_message: object | None = row_value.get("error_message")
+            if isinstance(row_error_message, str) and row_error_message.strip() != "":
+                rows_with_errors += 1
+
+        return rows_with_errors < total_rows
+
     def create_job(
         self, plugin_name: str, version: str, parameters: JSONMap
     ) -> ScientificJob:
@@ -161,7 +192,13 @@ class RuntimeJobService:
             algorithm_version=version,
         )
 
-        if cached_result_payload is not None:
+        if (
+            cached_result_payload is not None
+            and self._is_cache_payload_usable_for_plugin(
+                plugin_name=plugin_name,
+                payload=cached_result_payload,
+            )
+        ):
             cached_job: ScientificJob = ScientificJob.objects.create(
                 plugin_name=plugin_name,
                 algorithm_version=version,
@@ -227,6 +264,14 @@ class RuntimeJobService:
                 "cache_hit": False,
             },
         )
+        if cached_result_payload is not None:
+            self._publish_job_log(
+                created_job,
+                level="warning",
+                source="core.cache",
+                message="Cache hit descartado por payload no reutilizable para este plugin.",
+                payload={"plugin_name": plugin_name},
+            )
         broadcast_job_update(created_job)
         return created_job
 
@@ -358,6 +403,19 @@ class RuntimeJobService:
             algorithm_version=job.algorithm_version,
         )
         if cached_result_payload is None:
+            return False
+
+        if not self._is_cache_payload_usable_for_plugin(
+            plugin_name=job.plugin_name,
+            payload=cached_result_payload,
+        ):
+            self._publish_job_log(
+                job,
+                level="warning",
+                source="core.cache",
+                message="Cache hit descartado durante ejecución por payload no reutilizable.",
+                payload={"plugin_name": job.plugin_name},
+            )
             return False
 
         self._publish_job_log(

@@ -1673,8 +1673,9 @@ paths:
   /api/sa-score/jobs/{id}/report-csv-method/:
     get:
       operationId: sa_score_jobs_report_csv_method_retrieve
-      description: Descarga CSV con columnas smiles,sa para un método específico (ambit,
-        brsa o rdkit). Solo aplica para jobs en estado completed.
+      description: Descarga CSV por método específico. Para AMBIT la columna es smiles,sa_percent
+        (escala 0-100). Para BRSA/RDKit la columna es smiles,sa (escala SA clásica
+        1-10). Solo aplica para jobs completed.
       summary: Descargar CSV por método específico
       parameters:
       - in: path
@@ -1706,7 +1707,8 @@ paths:
               schema:
                 type: string
                 format: binary
-          description: Archivo CSV con columnas smiles,sa.
+          description: 'Archivo CSV. AMBIT: smiles,sa_percent (0-100). BRSA/RDKit:
+            smiles,sa (1-10).'
         '400':
           content:
             application/json:
@@ -2553,6 +2555,189 @@ paths:
                 $ref: '#/components/schemas/SmileitPatternEntry'
           description: ''
         '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/toxicity-properties/jobs/:
+    post:
+      operationId: toxicity_properties_jobs_create
+      description: Crea un job asíncrono para predecir LD50, mutagenicidad (Ames)
+        y toxicidad del desarrollo con ADMET-AI para una lista de SMILES.
+      summary: Crear Job de Toxicity Properties
+      tags:
+      - ToxicityProperties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToxicityJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato toxicológico.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job toxicológico.
+  /api/toxicity-properties/jobs/{id}/:
+    get:
+      operationId: toxicity_properties_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/toxicity-properties/jobs/{id}/report-csv/:
+    get:
+      operationId: toxicity_properties_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/toxicity-properties/jobs/{id}/report-error/:
+    get:
+      operationId: toxicity_properties_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/toxicity-properties/jobs/{id}/report-log/:
+    get:
+      operationId: toxicity_properties_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
           content:
             application/json:
               schema:
@@ -4572,16 +4757,19 @@ components:
           format: double
           readOnly: true
           nullable: true
+          description: AMBIT-SA en porcentaje (0-100).
         brsa_sa:
           type: number
           format: double
           readOnly: true
           nullable: true
+          description: BR-SAScore convertido a escala AMBIT-SA (0-100).
         rdkit_sa:
           type: number
           format: double
           readOnly: true
           nullable: true
+          description: RDKit SA score convertido a escala AMBIT-SA (0-100).
         ambit_error:
           type: string
           readOnly: true
@@ -5780,6 +5968,132 @@ components:
         * `completed` - Completed
         * `failed` - Failed
         * `cancelled` - Cancelled
+    ToxicityJobCreateRequest:
+      type: object
+      description: Valida la creación de un job toxicológico por lista de SMILES.
+      properties:
+        smiles:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4096
+          description: Lista de SMILES a evaluar. No se aplica límite de negocio;
+            el procesamiento es por bloques internos.
+          minItems: 1
+        version:
+          type: string
+          minLength: 1
+          default: 1.0.0
+          description: Versión de algoritmo a persistir en el job.
+          maxLength: 20
+      required:
+      - smiles
+    ToxicityJobResponse:
+      type: object
+      description: Serializa un ScientificJob para la app Toxicity Properties.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        progress_percentage:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+          maxLength: 40
+        progress_message:
+          type: string
+          description: Mensaje corto y legible del estado de progreso.
+          maxLength: 255
+        parameters: {}
+        results:
+          allOf:
+          - $ref: '#/components/schemas/ToxicityResults'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - results
+      - updated_at
+    ToxicityMoleculeResult:
+      type: object
+      description: Serializa una fila de la tabla de propiedades toxicológicas.
+      properties:
+        smiles:
+          type: string
+          readOnly: true
+        LD50_mgkg:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        mutagenicity:
+          type: string
+          readOnly: true
+          nullable: true
+        ames_score:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        DevTox:
+          type: string
+          readOnly: true
+          nullable: true
+        devtox_score:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        error_message:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - DevTox
+      - LD50_mgkg
+      - ames_score
+      - devtox_score
+      - error_message
+      - mutagenicity
+      - smiles
+    ToxicityResults:
+      type: object
+      description: Serializa el bloque total de resultados del job toxicológico.
+      properties:
+        molecules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToxicityMoleculeResult'
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        scientific_references:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - molecules
+      - scientific_references
+      - total
     TunnelInputChangeEvent:
       type: object
       description: Evento individual de modificación de entradas.
@@ -6046,3 +6360,6 @@ tags:
 - name: Marcus
   description: Endpoints para cinética por modelo Marcus con carga multipart y persistencia
     de entradas reproducibles.
+- name: ToxicityProperties
+  description: Endpoints para predicción toxicológica con ADMET-AI (LD50, Ames y DevTox)
+    en jobs asíncronos.

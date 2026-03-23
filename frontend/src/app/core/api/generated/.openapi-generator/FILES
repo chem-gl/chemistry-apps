@@ -19,6 +19,8 @@ api/sAScore.service.ts
 api/sAScore.serviceInterface.ts
 api/smileit.service.ts
 api/smileit.serviceInterface.ts
+api/toxicityProperties.service.ts
+api/toxicityProperties.serviceInterface.ts
 api/tunnel.service.ts
 api/tunnel.serviceInterface.ts
 configuration.ts
@@ -108,6 +110,10 @@ model/solventEnum.ts
 model/sourceFieldEnum.ts
 model/sourceKindEnum.ts
 model/statusEnum.ts
+model/toxicityJobCreateRequest.ts
+model/toxicityJobResponse.ts
+model/toxicityMoleculeResult.ts
+model/toxicityResults.ts
 model/tunnelInputChangeEvent.ts
 model/tunnelJobCreateRequest.ts
 model/tunnelJobResponse.ts

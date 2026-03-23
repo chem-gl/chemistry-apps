@@ -14,8 +14,17 @@
  */
 export interface SaMoleculeResult { 
     readonly smiles: string;
+    /**
+     * AMBIT-SA en porcentaje (0-100).
+     */
     readonly ambit_sa: number | null;
+    /**
+     * BR-SAScore convertido a escala AMBIT-SA (0-100).
+     */
     readonly brsa_sa: number | null;
+    /**
+     * RDKit SA score convertido a escala AMBIT-SA (0-100).
+     */
     readonly rdkit_sa: number | null;
     readonly ambit_error: string | null;
     readonly brsa_error: string | null;
