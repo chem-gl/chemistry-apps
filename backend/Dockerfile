@@ -1,6 +1,6 @@
 # backend/Dockerfile: Imagenes Docker para desarrollo y produccion del backend Django.
 
-FROM python:3.12-slim AS base
+FROM python:3.12.11 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
