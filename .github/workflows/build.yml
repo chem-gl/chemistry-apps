@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-# Workflow reutilizable para compilar imágenes, publicarlas en GHCR y crear una release liviana.
+# Workflow reutilizable para validar build local y publicar bundle del proyecto en GitHub Releases.
 
 name: Reusable Build
 
@@ -21,16 +21,16 @@ on:
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
+    DEPLOY_BUNDLE_PREFIX: chemistry-apps
 
 jobs:
     build:
-        name: Build + push GHCR
+        name: Build validation
         runs-on: ubuntu-latest
         outputs:
             image_tag: ${{ steps.image_meta.outputs.image_tag }}
         permissions:
             contents: read
-            packages: write
 
         steps:
             - name: Checkout repository
@@ -41,21 +41,9 @@ jobs:
               run: |
                   echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
-            - name: Resolve image metadata
-              id: image_context
-              env:
-                  REPOSITORY_URL: https://github.com/${{ github.repository }}
-              run: |
-                  echo "repository_url=${REPOSITORY_URL}" >> "$GITHUB_OUTPUT"
-                  echo "backend_image=ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ steps.image_meta.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
-                  echo "frontend_image=ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}" >> "$GITHUB_OUTPUT"
-
             - name: Build frontend (production)
-              env:
-                  REPOSITORY_URL: ${{ steps.image_context.outputs.repository_url }}
               run: |
                   docker build \
-                    --label "org.opencontainers.image.source=${REPOSITORY_URL}" \
                     --label "org.opencontainers.image.revision=${{ github.sha }}" \
                     --label "org.opencontainers.image.description=Chemistry Apps frontend production image" \
                     --build-arg API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }} \
@@ -63,65 +51,12 @@ jobs:
                     -f frontend/Dockerfile --target prod frontend/
 
             - name: Build backend Docker image (prod)
-              env:
-                  REPOSITORY_URL: ${{ steps.image_context.outputs.repository_url }}
               run: |
                   docker build \
-                    --label "org.opencontainers.image.source=${REPOSITORY_URL}" \
                     --label "org.opencontainers.image.revision=${{ github.sha }}" \
                     --label "org.opencontainers.image.description=Chemistry Apps backend production image" \
                     -t chemistry-backend:${{ steps.image_meta.outputs.image_tag }} \
                     -f backend/Dockerfile --target prod backend/
-
-            - name: Login to GHCR
-              if: github.event_name == 'push'
-              uses: docker/login-action@v3
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ github.token }}
-
-            - name: Push backend/frontend images to GHCR
-              if: github.event_name == 'push'
-              run: |
-                  BACKEND_REMOTE_IMAGE="${{ steps.image_context.outputs.backend_image }}"
-                  FRONTEND_REMOTE_IMAGE="${{ steps.image_context.outputs.frontend_image }}"
-
-                  docker tag chemistry-backend:${{ steps.image_meta.outputs.image_tag }} "$BACKEND_REMOTE_IMAGE"
-                  docker tag chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} "$FRONTEND_REMOTE_IMAGE"
-
-                  docker push "$BACKEND_REMOTE_IMAGE"
-                  docker push "$FRONTEND_REMOTE_IMAGE"
-
-                  if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-                    docker tag chemistry-backend:${{ steps.image_meta.outputs.image_tag }} "ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest"
-                    docker tag chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} "ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest"
-                    docker push "ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest"
-                    docker push "ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest"
-                  fi
-
-            - name: Verify GHCR images allow anonymous pull
-              if: github.event_name == 'push'
-              env:
-                  OWNER_NAME: ${{ github.repository_owner }}
-                  IMAGE_TAG: ${{ steps.image_meta.outputs.image_tag }}
-              run: |
-                  set -e
-
-                  accept_header='Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json'
-
-                  for package_name in chemistry-backend chemistry-frontend; do
-                    manifest_url="https://ghcr.io/v2/${OWNER_NAME}/${package_name}/manifests/${IMAGE_TAG}"
-                    status_code=$(curl -sS -o /tmp/ghcr-anonymous-response.json -w '%{http_code}' -I -H "$accept_header" "$manifest_url")
-
-                    if [ "$status_code" != "200" ]; then
-                      echo "ERROR: la imagen ghcr.io/${OWNER_NAME}/${package_name}:${IMAGE_TAG} no permite pull anonimo."
-                      echo "Accion requerida:"
-                      echo "1. Verifica en GitHub Packages que chemistry-backend y chemistry-frontend sean publicos."
-                      echo "2. Si aplica, revisa permisos de organizacion o politicas de acceso para pulls anonimos."
-                      exit 1
-                    fi
-                  done
 
     release:
         name: Create release
@@ -135,19 +70,26 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v6
 
+            - name: Build deploy bundle
+              id: bundle_meta
+              run: |
+                  BUNDLE_NAME="${DEPLOY_BUNDLE_PREFIX}-${{ needs.build.outputs.image_tag }}.tar.gz"
+                  git archive --format=tar.gz --output "$BUNDLE_NAME" "${GITHUB_SHA}"
+                  echo "bundle_name=$BUNDLE_NAME" >> "$GITHUB_OUTPUT"
+
             - name: Create GitHub release
               uses: softprops/action-gh-release@v1
               with:
-                  files: ${{ env.DEPLOY_COMPOSE_FILE }}
+                  files: |
+                      ${{ steps.bundle_meta.outputs.bundle_name }}
+                      ${{ env.DEPLOY_COMPOSE_FILE }}
                   tag_name: main-${{ needs.build.outputs.image_tag }}
                   name: Release main-${{ needs.build.outputs.image_tag }}
                   body: |
                       Automatico: se genero la release main-${{ needs.build.outputs.image_tag }}
 
-                      Imagenes publicadas en GHCR:
-                      - ghcr.io/${{ github.repository_owner }}/chemistry-backend:${{ needs.build.outputs.image_tag }}
-                      - ghcr.io/${{ github.repository_owner }}/chemistry-frontend:${{ needs.build.outputs.image_tag }}
-                      - ghcr.io/${{ github.repository_owner }}/chemistry-backend:latest
-                      - ghcr.io/${{ github.repository_owner }}/chemistry-frontend:latest
+                      Assets de despliegue:
+                      - ${{ steps.bundle_meta.outputs.bundle_name }}
+                      - ${{ env.DEPLOY_COMPOSE_FILE }}
               env:
                   GITHUB_TOKEN: ${{ github.token }}

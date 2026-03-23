@@ -3,13 +3,13 @@
 name: Reusable Deploy
 
 on:
-    workflow_call:
-        inputs:
-            image_tag:
-                description: Tag de imágenes generado en el workflow de build
-                required: true
-                type: string
-        secrets:
+  workflow_call:
+    inputs:
+      image_tag:
+        description: SHA/tag usado para resolver el Release de despliegue
+        required: true
+        type: string
+    secrets:
             VM_HOST:
                 required: true
             VM_PORT:
@@ -48,14 +48,12 @@ on:
                 required: true
             EXTERNAL_FRONTEND_PORT:
                 required: true
-            GHCR_USERNAME:
-                required: false
-            GHCR_TOKEN:
-                required: false
 
 env:
     DEPLOY_COMPOSE_FILE: docker-compose.yml
     DEPLOY_ENV_FILE: .env.deploy
+    DEPLOY_BUNDLE_PREFIX: chemistry-apps
+    DEPLOY_BUNDLE_FILE: deploy-bundle.tar.gz
     DEPLOY_STAGING_DIR: /tmp/chemistry-apps-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
@@ -160,6 +158,17 @@ jobs:
                   IMAGE_NAMESPACE=${IMAGE_NAMESPACE}
                   EOF_ENV
 
+            - name: Download release bundle
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_TAG: main-${{ inputs.image_tag }}
+                  RELEASE_BUNDLE_NAME: ${{ env.DEPLOY_BUNDLE_PREFIX }}-${{ inputs.image_tag }}.tar.gz
+              run: |
+                  gh release download "$RELEASE_TAG" \
+                    --pattern "$RELEASE_BUNDLE_NAME" \
+                    --dir .
+                  mv "$RELEASE_BUNDLE_NAME" "$DEPLOY_BUNDLE_FILE"
+
             - name: Preflight SSH connectivity
               env:
                   VM_HOST: ${{ secrets.VM_HOST }}
@@ -233,7 +242,7 @@ jobs:
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.DEPLOY_ENV_FILE }}"
+                  source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
                   timeout: 120s
@@ -250,7 +259,7 @@ jobs:
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_COMPOSE_FILE }},${{ env.DEPLOY_ENV_FILE }}"
+                  source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
                   target: ${{ env.DEPLOY_STAGING_DIR }}
                   overwrite: true
                   timeout: 120s
@@ -268,16 +277,15 @@ jobs:
                   VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
                   DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
                   DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
+                  DEPLOY_BUNDLE_FILE: ${{ env.DEPLOY_BUNDLE_FILE }}
                   DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
-                  GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-                  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
               with:
                   host: ${{ secrets.VM_HOST }}
                   username: ${{ secrets.VM_USER }}
                   port: ${{ secrets.VM_PORT }}
                   key: ${{ steps.ssh_key.outputs.private_key }}
                   passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_STAGING_DIR,GHCR_USERNAME,GHCR_TOKEN
+                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_BUNDLE_FILE,DEPLOY_STAGING_DIR
                   script: |
                       set -e
 
@@ -298,6 +306,8 @@ jobs:
                       mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
                       cd "$VM_PROJECT_PATH"
 
+                      tar -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
+
                       mkdir -p docker-data/postgres docker-data/redis backend/media
                       chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
                       chmod u+rwX backend/media 2>/dev/null || true
@@ -306,15 +316,20 @@ jobs:
                       export HOST_GID="$(id -g)"
 
                       install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
-                      install -m 644 "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" "$DEPLOY_COMPOSE_FILE"
 
-                      if [ -n "${GHCR_USERNAME:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
-                        echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-                      else
-                        echo "GHCR credentials not provided; attempting anonymous pull from ghcr.io"
+                      if ! command -v python3 >/dev/null 2>&1; then
+                        echo "python3 is required on remote host to create virtualenv"
+                        exit 1
                       fi
 
-                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env pull backend frontend celery-worker
+                      cd "$VM_PROJECT_PATH/backend"
+                      python3 -m venv venv
+                      ./venv/bin/python -m pip install --upgrade pip
+                      ./venv/bin/pip install -r requirements.txt
+                      ./venv/bin/python manage.py migrate --noinput
+                      cd "$VM_PROJECT_PATH"
+
+                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build backend frontend
 
                       if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
                         echo "Deploy failed, collecting compose diagnostics..."
@@ -324,7 +339,7 @@ jobs:
                       fi
 
                       rm -f \
-                        "$DEPLOY_STAGING_DIR/$DEPLOY_COMPOSE_FILE" \
+                        "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" \
                         "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
                       rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
 
