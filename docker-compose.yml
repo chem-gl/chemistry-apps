@@ -97,6 +97,13 @@ services:
       RUNTIME_TOOLS_STRICT_CHECK: "True"
       RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
       RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS: ${RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS:-5}
+
+      # Evita KeyError en getpass.getuser() cuando HOST_UID no tiene entrada en /etc/passwd
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app
+      MPLCONFIGDIR: /tmp/matplotlib-cache
+      TORCHINDUCTOR_CACHE_DIR: /tmp/torchinductor-cache
     healthcheck:
       test:
         [
@@ -167,3 +174,10 @@ services:
       RUNTIME_TOOLS_STRICT_CHECK: "True"
       RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
       RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS: ${RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS:-5}
+
+      # Evita KeyError en getpass.getuser() cuando HOST_UID no tiene entrada en /etc/passwd
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app
+      MPLCONFIGDIR: /tmp/matplotlib-cache
+      TORCHINDUCTOR_CACHE_DIR: /tmp/torchinductor-cache
