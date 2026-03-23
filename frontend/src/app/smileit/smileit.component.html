@@ -311,7 +311,7 @@
     </header>
 
     <div class="catalog-ketcher-frame-wrap" aria-label="Ketcher sketcher frame">
-    @if (!isCatalogSmilesSketcherReady()) {
+            @if (isCatalogSmilesSketchLoading()) {
     <div class="catalog-ketcher-loading" role="status" aria-label="Loading molecule sketcher">
         <div class="catalog-ketcher-loading-bar"><span class="catalog-ketcher-loading-progress"></span></div>
         <p class="catalog-ketcher-loading-text">Loading molecule sketcher…</p>
@@ -1167,5 +1167,6 @@
 
 <!-- Precarga de Ketcher del catalog studio: inicia descarga al montar la página -->
 <div class="catalog-ketcher-preloader" aria-hidden="true">
-    <iframe [src]="catalogSmilesKetcherUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
+    <iframe [src]="catalogSmilesKetcherUrl" title="" tabindex="-1" aria-hidden="true"
+        (load)="onCatalogSmilesKetcherLoaded()"></iframe>
 </div>

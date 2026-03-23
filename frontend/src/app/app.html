@@ -18,4 +18,9 @@
     <main class="content-shell">
         <router-outlet />
     </main>
-    </div>
+</div>
+
+<!-- Precarga global de Ketcher al iniciar la app para reducir espera al abrir cualquier sketcher -->
+<div class="global-ketcher-preloader" aria-hidden="true">
+    <iframe [src]="ketcherGlobalPreloadUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
+</div>

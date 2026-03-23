@@ -1,6 +1,7 @@
 // app.ts: Layout principal con navegacion entre monitor y apps cientificas.
 
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
@@ -10,6 +11,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   styleUrl: './app.scss',
 })
 export class App {
+  private readonly sanitizer = inject(DomSanitizer);
+  readonly ketcherGlobalPreloadUrl: SafeResourceUrl =
+    this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
+
   readonly primaryNavigationItems: ReadonlyArray<{ label: string; path: string; hint: string }> = [
     { label: 'Jobs Monitor', path: '/jobs', hint: 'Track active and completed jobs' },
     {

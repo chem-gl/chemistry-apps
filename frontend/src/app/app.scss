@@ -92,6 +92,16 @@ h1 {
 	min-height: 70vh;
 }
 
+.global-ketcher-preloader {
+	position: fixed;
+	top: -2500px;
+	left: -2500px;
+	width: 900px;
+	height: 600px;
+	visibility: hidden;
+	pointer-events: none;
+}
+
 @media (max-width: 720px) {
 	.app-shell {
 		width: 95vw;

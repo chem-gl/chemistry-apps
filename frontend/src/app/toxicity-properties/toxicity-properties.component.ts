@@ -57,6 +57,8 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
 
   sketchDraftSmiles: string = '';
   isKetcherReady: boolean = false;
+  readonly isSketchDialogLoading = signal<boolean>(false);
+  private hasCompletedFirstSketchLoad: boolean = false;
 
   readonly lineCount = computed<number>(() => {
     const normalizedRows: string[] = this.workflow
@@ -128,6 +130,10 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
 
   openSketchDialog(): void {
     this.sketchDraftSmiles = '';
+    if (!this.hasCompletedFirstSketchLoad) {
+      this.startSketchLoadingPhase();
+    }
+    void this.ensureKetcherReady();
     const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
     if (dialog !== undefined) {
       dialog.showModal();
@@ -135,6 +141,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   closeSketchDialog(): void {
+    this.isSketchDialogLoading.set(false);
     this.sketchDialogRef?.nativeElement.close();
   }
 
@@ -151,12 +158,13 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
       event.clientY < rect.top ||
       event.clientY > rect.bottom;
     if (isOutside) {
-      dialog.close();
+      this.closeSketchDialog();
     }
   }
 
   onKetcherFrameLoaded(): void {
     this.isKetcherReady = true;
+    this.syncSketchLoadingVisibility();
   }
 
   async applySketch(): Promise<void> {
@@ -205,6 +213,32 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  private async ensureKetcherReady(): Promise<void> {
+    if (this.isKetcherReady) {
+      this.syncSketchLoadingVisibility();
+      return;
+    }
+
+    const api: KetcherApi | null = await this.waitForKetcherApi(120);
+    if (api !== null) {
+      this.isKetcherReady = true;
+      this.syncSketchLoadingVisibility();
+    }
+  }
+
+  private startSketchLoadingPhase(): void {
+    this.isSketchDialogLoading.set(!this.isKetcherReady);
+    this.syncSketchLoadingVisibility();
+  }
+
+  private syncSketchLoadingVisibility(): void {
+    const mustKeepLoading: boolean = !this.isKetcherReady;
+    this.isSketchDialogLoading.set(mustKeepLoading);
+    if (!mustKeepLoading) {
+      this.hasCompletedFirstSketchLoad = true;
+    }
   }
 
   onFileUpload(event: Event): void {

@@ -55,6 +55,8 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   readonly ketcherPublicUrl: SafeResourceUrl;
   sketchDraftSmiles: string = '';
   isKetcherReady: boolean = false;
+  readonly isSketchDialogLoading = signal<boolean>(false);
+  private hasCompletedFirstSketchLoad: boolean = false;
 
   // ---------------------------------------------------------------------------
   // Molecule image modal
@@ -213,6 +215,10 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   /** Abre el diálogo del sketcher Ketcher para dibujar un SMILES. */
   openSketchDialog(): void {
     this.sketchDraftSmiles = '';
+    if (!this.hasCompletedFirstSketchLoad) {
+      this.startSketchLoadingPhase();
+    }
+    void this.ensureKetcherReady();
     // No se resetea isKetcherReady: el iframe carga al montar la página y (load) no
     // vuelve a disparar en aperturas subsecuentes del diálogo.
     const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
@@ -223,6 +229,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
 
   /** Cierra el diálogo del sketcher sin aplicar cambios. */
   closeSketchDialog(): void {
+    this.isSketchDialogLoading.set(false);
     this.sketchDialogRef?.nativeElement.close();
   }
 
@@ -239,13 +246,14 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       event.clientY < rect.top ||
       event.clientY > rect.bottom;
     if (isOutside) {
-      dialog.close();
+      this.closeSketchDialog();
     }
   }
 
   /** Marca el iframe de Ketcher como listo y carga el SMILES actual si existe. */
   onKetcherFrameLoaded(): void {
     this.isKetcherReady = true;
+    this.syncSketchLoadingVisibility();
   }
 
   onSketchDraftSmilesChange(nextSmiles: string): void {
@@ -303,6 +311,32 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       await new Promise<void>((resolve: () => void) => setTimeout(resolve, 50));
     }
     return null;
+  }
+
+  private async ensureKetcherReady(): Promise<void> {
+    if (this.isKetcherReady) {
+      this.syncSketchLoadingVisibility();
+      return;
+    }
+
+    const api: KetcherApi | null = await this.waitForKetcherApi(120);
+    if (api !== null) {
+      this.isKetcherReady = true;
+      this.syncSketchLoadingVisibility();
+    }
+  }
+
+  private startSketchLoadingPhase(): void {
+    this.isSketchDialogLoading.set(!this.isKetcherReady);
+    this.syncSketchLoadingVisibility();
+  }
+
+  private syncSketchLoadingVisibility(): void {
+    const mustKeepLoading: boolean = !this.isKetcherReady;
+    this.isSketchDialogLoading.set(mustKeepLoading);
+    if (!mustKeepLoading) {
+      this.hasCompletedFirstSketchLoad = true;
+    }
   }
 
   // ---------------------------------------------------------------------------

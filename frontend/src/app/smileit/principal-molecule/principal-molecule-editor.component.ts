@@ -6,9 +6,11 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
   ViewChild,
   inject,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -20,7 +22,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   templateUrl: './principal-molecule-editor.component.html',
   styleUrl: './principal-molecule-editor.component.scss',
 })
-export class PrincipalMoleculeEditorComponent {
+export class PrincipalMoleculeEditorComponent implements OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
 
   @ViewChild('sketchModifierDialog')
@@ -36,6 +38,8 @@ export class PrincipalMoleculeEditorComponent {
   sketchDraftSmiles: string = '';
   readonly ketcherPublicUrl: SafeResourceUrl;
   isKetcherReady: boolean = false;
+  readonly isSketchModifierLoading = signal<boolean>(false);
+  private hasCompletedFirstSketchLoad: boolean = false;
 
   @Output() readonly principalSmilesChange = new EventEmitter<string>();
   @Output() readonly inspectRequested = new EventEmitter<void>();
@@ -43,6 +47,8 @@ export class PrincipalMoleculeEditorComponent {
   constructor() {
     this.ketcherPublicUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
   }
+
+  ngOnDestroy(): void {}
 
   onPrincipalSmilesChange(nextPrincipalSmiles: string): void {
     this.principalSmilesChange.emit(nextPrincipalSmiles);
@@ -54,6 +60,10 @@ export class PrincipalMoleculeEditorComponent {
 
   openSketchModifier(): void {
     this.sketchDraftSmiles = this.principalSmiles;
+    if (!this.hasCompletedFirstSketchLoad) {
+      this.startSketchLoadingPhase();
+    }
+    void this.ensureKetcherReady();
 
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
@@ -86,6 +96,7 @@ export class PrincipalMoleculeEditorComponent {
   }
 
   closeSketchModifier(): void {
+    this.isSketchModifierLoading.set(false);
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
     if (dialogElement === undefined) {
@@ -119,21 +130,18 @@ export class PrincipalMoleculeEditorComponent {
 
   onKetcherFrameLoaded(): void {
     this.isKetcherReady = true;
+    this.syncSketchLoadingVisibility();
     void this.pushDraftToKetcher();
-  }
-
-  onSketchDraftSmilesChange(nextSmiles: string): void {
-    this.sketchDraftSmiles = nextSmiles;
   }
 
   async applySketchModifier(): Promise<void> {
     await this.pullDraftFromKetcher();
-    this.onPrincipalSmilesChange(this.sketchDraftSmiles);
+    this.onPrincipalSmilesChange(this.sketchDraftSmiles.trim());
     this.closeSketchModifier();
   }
 
   private async pushDraftToKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
+    const ketcherApi: KetcherApi | null = await this.waitForKetcherApi();
     if (ketcherApi === null) {
       return;
     }
@@ -147,7 +155,7 @@ export class PrincipalMoleculeEditorComponent {
   }
 
   private async pullDraftFromKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
+    const ketcherApi: KetcherApi | null = await this.waitForKetcherApi();
     if (ketcherApi === null) {
       return;
     }
@@ -163,10 +171,6 @@ export class PrincipalMoleculeEditorComponent {
   }
 
   private resolveKetcherApi(): KetcherApi | null {
-    if (!this.isKetcherReady) {
-      return null;
-    }
-
     const frameElement: HTMLIFrameElement | undefined = this.ketcherFrameRef?.nativeElement;
     const frameWindow: (Window & { ketcher?: unknown }) | null | undefined =
       frameElement?.contentWindow as (Window & { ketcher?: unknown }) | null | undefined;
@@ -181,6 +185,44 @@ export class PrincipalMoleculeEditorComponent {
     }
 
     return maybeKetcherApi as KetcherApi;
+  }
+
+  private async waitForKetcherApi(maxAttempts: number = 40): Promise<KetcherApi | null> {
+    for (let attempt: number = 0; attempt < maxAttempts; attempt++) {
+      const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
+      if (ketcherApi !== null) {
+        return ketcherApi;
+      }
+      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 50));
+    }
+
+    return null;
+  }
+
+  private async ensureKetcherReady(): Promise<void> {
+    if (this.isKetcherReady) {
+      this.syncSketchLoadingVisibility();
+      return;
+    }
+
+    const api: KetcherApi | null = await this.waitForKetcherApi(120);
+    if (api !== null) {
+      this.isKetcherReady = true;
+      this.syncSketchLoadingVisibility();
+    }
+  }
+
+  private startSketchLoadingPhase(): void {
+    this.isSketchModifierLoading.set(!this.isKetcherReady);
+    this.syncSketchLoadingVisibility();
+  }
+
+  private syncSketchLoadingVisibility(): void {
+    const mustKeepLoading: boolean = !this.isKetcherReady;
+    this.isSketchModifierLoading.set(mustKeepLoading);
+    if (!mustKeepLoading) {
+      this.hasCompletedFirstSketchLoad = true;
+    }
   }
 }
 
