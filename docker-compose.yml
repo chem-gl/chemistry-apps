@@ -50,6 +50,10 @@ services:
       retries: 10
 
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
@@ -107,6 +111,12 @@ services:
       start_period: 900s
 
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        API_BASE_URL: ${BACKEND_PUBLIC_URL}
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     networks:
