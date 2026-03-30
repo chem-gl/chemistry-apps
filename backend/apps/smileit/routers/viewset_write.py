@@ -8,17 +8,18 @@ from __future__ import annotations
 
 from typing import cast
 
-from apps.core.declarative_api import DeclarativeJobAPI
-from apps.core.models import ScientificJob
-from apps.core.schemas import ErrorResponseSerializer
-from apps.core.tasks import dispatch_scientific_job
-from apps.core.types import JSONMap
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from apps.core.declarative_api import DeclarativeJobAPI
+from apps.core.models import ScientificJob
+from apps.core.schemas import ErrorResponseSerializer
+from apps.core.tasks import dispatch_scientific_job
+from apps.core.types import JSONMap
 
 from ..catalog import (
     create_catalog_substituent,

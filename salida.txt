@@ -1,0 +1,42 @@
+author:	Copilot (AI)
+association:	none
+edited:	false
+status:	commented
+--
+## Pull request overview
+
+This PR improves the UX around Ketcher sketcher initialization by introducing explicit “loading” signals/spinners for sketch dialogs and by preloading Ketcher in hidden iframes (including a new global preloader at the app shell level).
+
+**Changes:**
+- Add per-dialog loading state signals and “first load” tracking to control sketcher loading spinners.
+- Add/adjust hidden Ketcher preload iframes to trigger readiness updates.
+- Add a global Ketcher preloader iframe in the root app shell.
+
+### Reviewed changes
+
+Copilot reviewed 11 out of 12 changed files in this pull request and generated 8 comments.
+
+<details>
+<summary>Show a summary per file</summary>
+
+| File | Description |
+| ---- | ----------- |
+| frontend/src/app/toxicity-properties/toxicity-properties.component.ts | Adds sketch dialog loading signal and async readiness polling. |
+| frontend/src/app/toxicity-properties/toxicity-properties.component.html | Switches spinner condition to a loading signal; adds preloader iframe load handler. |
+| frontend/src/app/smileit/smileit.component.ts | Adds catalog sketcher loading signal and readiness polling/sync. |
+| frontend/src/app/smileit/smileit.component.html | Switches catalog sketcher spinner condition; adds preloader iframe load handler. |
+| frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.ts | Adds sketch modifier loading signal and Ketcher API polling. |
+| frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.html | Switches spinner condition; adds preloader iframe load handler; removes manual fallback textarea. |
+| frontend/src/app/sa-score/sa-score.component.ts | Adds sketch dialog loading signal and readiness polling/sync. |
+| frontend/src/app/sa-score/sa-score.component.html | Switches spinner condition; adds preloader iframe load handler. |
+| frontend/src/app/app.ts | Adds globally-preloaded Ketcher URL via DomSanitizer. |
+| frontend/src/app/app.html | Adds global hidden Ketcher preloader iframe to app shell. |
+| frontend/src/app/app.scss | Styles the global hidden preloader container. |
+| backend/dump.rdb | Adds a Valkey/Redis RDB snapshot (should not be committed). |
+</details>
+
+
+
+
+
+--

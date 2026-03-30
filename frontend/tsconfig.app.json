@@ -6,7 +6,6 @@
     "forceConsistentCasingInFileNames": true,
     "rootDir": "./src",
     "outDir": "./out-tsc/app",
-    "module": "ES2020",
     "types": []
   },
   "include": ["src/**/*.ts"],

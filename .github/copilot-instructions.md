@@ -1,0 +1,29 @@
+- Usar comentarios en español
+- No usar código duplicado
+- Preferir funciones pequeñas
+- Generar tests unitarios
+- Explicar lógica compleja
+- funciones y variables en ingles muy descriptivas
+- Evitar dependencias innecesarias
+- Solo crear un README.md
+- No Crear documentacion .md adicional no solicitada
+- poner en todos los archivos un encabezado con el nombre del archivo y una breve descripción de su función
+- Usar nombres de variables y funciones descriptivos
+- Evitar el uso de variables globales
+- Manejar errores de manera adecuada
+- Mantener el código limpio y organizado
+- Seguir las mejores prácticas de programación
+- Evitar el uso de código obsoleto.
+- usar arquitecturas por capas
+- separar responsabilidades en diferentes archivos y carpetas
+- usar patrones de diseño cuando sea apropiado
+- mantener la coherencia en el estilo de codificación
+- usar control de versiones de manera efectiva
+- Solo existira un .md, el README.md y los que estan en la carpeta .github/instructions/ con las instrucciones para copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
+- no crear .md adicionales como para decir cosas de phases o cosas asi, solo se usara el README.md para documentar el proyecto y los archivos .md en la carpeta .github/instructions/ para las instrucciones de copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
+- seguir las convenciones de programacion para codigo de ciencia
+- al ambientarse debe quedar claro que el usuario puede ejecutar el código en su máquina local o en un servidor, y que se pueden usar diferentes IDEs o editores de texto para trabajar con el código
+- No crear archivos .sh (al menos que se pida especificamente) para ejecutar comandos, se deben ejecutar directamente con el entorno virtual o npm scripts, de tal forma que el usuario pueda ejecutar los comandos sin necesidad de usar scripts adicionales, por ejemplo: `./venv/bin/python manage.py test` o `npm run build`
+- se debe verificar que todo este bien conectado y funcionando, continuamente verificar y eliminar cualquier código que no funcione o que no se integre correctamente, para mantener un proyecto limpio y funcional, eliminando cualquier codigo muerto o archivos que no se usen, y asegurando que todo el código que quede sea funcional y esté bien integrado en el proyecto
+
+- Tratar dentro de lo posible que los archivos cualquier archivo no mida mas de 400 lineas, si es necesario dividirlo en varios archivos para mantener la legibilidad y mantenibilidad del código.
