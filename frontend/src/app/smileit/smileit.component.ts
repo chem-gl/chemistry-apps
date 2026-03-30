@@ -79,12 +79,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly patternEnabledState = signal<Record<string, boolean>>({});
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
-  readonly selectedLibraryGroupKey = signal<string>('aromatic');
+  readonly selectedLibraryGroupKey = signal<string>('all');
   readonly isCatalogSmilesSketcherReady = signal<boolean>(false);
   readonly isCatalogSmilesSketchLoading = signal<boolean>(false);
   readonly catalogSmilesKetcherUrl: SafeResourceUrl =
     this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
   private hasCompletedFirstCatalogSketchLoad: boolean = false;
+  /** Error de validación del SMILES en el sketcher del catálogo (molécula vacía o múltiple). */
+  readonly catalogSketchValidationError = signal<string | null>(null);
   readonly selectedBlockLibraryGroupKeys = signal<Record<string, string>>({});
   readonly selectedLibraryEntryForDetail = signal<SmileitCatalogEntryView | null>(null);
   readonly libraryDetailOpenContext = signal<'browser' | 'reference'>('browser');
@@ -125,7 +127,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return availableGroups;
     }
 
-    return availableGroups.filter((group) => group.key === selectedGroupKey);
+    const matchingGroups = availableGroups.filter((group) => group.key === selectedGroupKey);
+    return matchingGroups.length > 0 ? matchingGroups : availableGroups;
   });
   /** Lista plana de entradas visibles según el filtro de grupo activo */
   readonly filteredLibraryEntries = computed<SmileitCatalogEntryView[]>(() =>
@@ -213,6 +216,43 @@ export class SmileitComponent implements OnInit, OnDestroy {
     },
     { injector: this.injector },
   );
+  /** Mantiene filtros de grupos válidos aunque haya recargas parciales/lentas de catálogo. */
+  private readonly catalogGroupSelectionSyncEffect = effect(
+    () => {
+      const availableGroupKeys: Set<string> = new Set(
+        this.workflow.catalogGroups().map((group) => group.key),
+      );
+      const currentBlocks: SmileitAssignmentBlockDraft[] = this.workflow.assignmentBlocks();
+      const currentBlockIds: Set<string> = new Set(currentBlocks.map((block) => block.id));
+
+      const selectedGlobalGroup: string = this.selectedLibraryGroupKey();
+      if (selectedGlobalGroup !== 'all' && !availableGroupKeys.has(selectedGlobalGroup)) {
+        this.selectedLibraryGroupKey.set('all');
+      }
+
+      this.selectedBlockLibraryGroupKeys.update((currentState: Record<string, string>) => {
+        let hasChanges: boolean = false;
+        const nextState: Record<string, string> = {};
+
+        Object.entries(currentState).forEach(([blockId, selectedGroupKey]) => {
+          if (!currentBlockIds.has(blockId)) {
+            hasChanges = true;
+            return;
+          }
+
+          const mustResetGroup: boolean =
+            selectedGroupKey !== 'all' && !availableGroupKeys.has(selectedGroupKey);
+          nextState[blockId] = mustResetGroup ? 'all' : selectedGroupKey;
+          if (mustResetGroup) {
+            hasChanges = true;
+          }
+        });
+
+        return hasChanges ? nextState : currentState;
+      });
+    },
+    { injector: this.injector },
+  );
   @ViewChild('catalogStudioDialog')
   private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('catalogSmilesSketchDialog')
@@ -291,6 +331,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.libraryPreviewSyncEffect.destroy();
     this.manualDraftInspectionSyncEffect.destroy();
     this.patternEnabledStateSyncEffect.destroy();
+    this.catalogGroupSelectionSyncEffect.destroy();
     this.visibleStructuresResetEffect.destroy();
     this.routeSubscription?.unsubscribe();
     this.catalogDraftInspectionSubscription?.unsubscribe();
@@ -756,6 +797,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.workflow.ensureCatalogDraftDefaults();
     catalogStudioDialog.showModal();
     this.refreshCatalogDraftInspection();
   }
@@ -841,6 +883,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
     return this.patternEnabledState()[pattern.stable_id] ?? true;
   }
 
+  /** Verifica si una anotación es visible por su stable_id (para uso directo en template). */
+  isAnnotationEnabled(patternStableId: string): boolean {
+    return (
+      (this.patternEnabledState() as Record<string, boolean | undefined>)[patternStableId] ?? true
+    );
+  }
+
   togglePatternEnabled(patternStableId: string): void {
     this.patternEnabledState.update((currentState: Record<string, boolean>) => {
       const currentValue: boolean = currentState[patternStableId] ?? true;
@@ -900,6 +949,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   closeCatalogSmilesSketcher(): void {
     this.isCatalogSmilesSketchLoading.set(false);
+    this.catalogSketchValidationError.set(null);
     const dialogElement: HTMLDialogElement | undefined =
       this.catalogSmilesSketchDialogRef?.nativeElement;
     if (dialogElement === undefined) {
@@ -938,27 +988,36 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   async applyCatalogSmilesFromSketcher(): Promise<void> {
     await this.pullCatalogSmilesFromKetcher();
+
+    // Validar que el SMILES del catálogo sea una única molécula no vacía.
+    const currentSmiles: string = this.workflow.catalogCreateSmiles().trim();
+    if (currentSmiles === '') {
+      this.catalogSketchValidationError.set('Draw one molecule before applying.');
+      return;
+    }
+    if (currentSmiles.includes('.')) {
+      this.catalogSketchValidationError.set(
+        'Only one molecule is allowed. SMILES contains multiple fragments (".").',
+      );
+      return;
+    }
+
+    this.catalogSketchValidationError.set(null);
     this.refreshCatalogDraftInspection();
     this.closeCatalogSmilesSketcher();
   }
 
-  stageCurrentCatalogDraft(): void {
-    this.workflow.stageCurrentCatalogDraft();
-    this.refreshCatalogDraftInspection();
+  addCatalogDraftAndClose(): void {
+    this.workflow.createCatalogEntry(() => {
+      this.refreshCatalogDraftInspection();
+      this.closeCatalogStudioModal();
+    });
   }
 
-  loadQueuedCatalogDraft(queueDraftId: string): void {
-    this.workflow.loadQueuedCatalogDraft(queueDraftId);
-    this.refreshCatalogDraftInspection();
-  }
-
-  cloneQueuedCatalogDraft(queueDraftId: string): void {
-    this.workflow.cloneQueuedCatalogDraft(queueDraftId);
-    this.refreshCatalogDraftInspection();
-  }
-
-  removeQueuedCatalogDraft(queueDraftId: string): void {
-    this.workflow.removeQueuedCatalogDraft(queueDraftId);
+  addAnotherCatalogDraft(): void {
+    this.workflow.createCatalogEntryAndPrepareNext(() => {
+      this.refreshCatalogDraftInspection();
+    });
   }
 
   onBlockManualDraftSmilesChange(blockId: string, nextValue: string): void {
@@ -1195,7 +1254,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   selectedBlockLibraryGroupKey(blockId: string): string {
-    return this.selectedBlockLibraryGroupKeys()[blockId] ?? 'aromatic';
+    return this.selectedBlockLibraryGroupKeys()[blockId] ?? 'all';
   }
 
   filteredCatalogGroupsForBlock(block: SmileitAssignmentBlockDraft) {
@@ -1676,6 +1735,30 @@ export class SmileitComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Encola automáticamente el draft de catálogo cuando ya está completo.
+   * Evita depender del botón manual "+ Add current SMILES".
+   */
+  private tryAutoStageCatalogDraft(showErrorIfInvalid: boolean = false): void {
+    if (this.workflow.isProcessing() || this.workflow.isCatalogEditing()) {
+      return;
+    }
+
+    const currentPreview = this.workflow.catalogDraftPreview();
+    if (!currentPreview.isReady) {
+      if (showErrorIfInvalid) {
+        this.workflow.errorMessage.set(
+          currentPreview.warnings[0] ??
+            'Complete the current catalog SMILES before adding it with +.',
+        );
+      }
+      return;
+    }
+
+    this.workflow.stageCurrentCatalogDraft();
+    this.refreshCatalogDraftInspection();
+  }
+
   private refreshManualDraftInspection(blockId: string): void {
     const blockDraft: SmileitAssignmentBlockDraft | undefined = this.workflow
       .assignmentBlocks()
@@ -1839,9 +1922,13 @@ export class SmileitComponent implements OnInit, OnDestroy {
     inspectionResult: SmileitStructureInspectionView,
   ): void {
     const currentAnchorIndices: number[] = this.catalogDraftAnchorIndices();
-    const nextAnchorIndices: number[] = this.resolveSingleValidAnchorSelection(
-      currentAnchorIndices,
-      inspectionResult,
+    if (currentAnchorIndices.length === 0) {
+      return;
+    }
+
+    const validAtomIndices: Set<number> = new Set(inspectionResult.atoms.map((atom) => atom.index));
+    const nextAnchorIndices: number[] = currentAnchorIndices.filter((atomIndex: number) =>
+      validAtomIndices.has(atomIndex),
     );
 
     if (this.hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {

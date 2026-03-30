@@ -67,30 +67,62 @@ describe('PrincipalMoleculeEditorComponent', () => {
     expect(ketcherFrameElement).not.toBeNull();
   });
 
-  it('should emit principalSmilesChange when applying sketch modifier', async () => {
+  it('should emit principalSmilesChange when applying a valid sketch modifier', async () => {
     const emitSpy = vi.spyOn(component.principalSmilesChange, 'emit');
-    const actionButtons: HTMLButtonElement[] = fixture.debugElement
-      .queryAll(By.css('.principal-actions-row button'))
-      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
-    const openSketchButton: HTMLButtonElement = actionButtons[0];
 
-    openSketchButton.click();
+    // Simular que Ketcher no está disponible; el draft se toma de sketchDraftSmiles directamente.
+    component.sketchDraftSmiles = 'c1ncccc1';
     fixture.detectChanges();
 
-    const textareaElement: HTMLTextAreaElement = fixture.debugElement.query(
-      By.css('textarea'),
-    ).nativeElement;
-    textareaElement.value = 'c1ncccc1';
-    textareaElement.dispatchEvent(new Event('input'));
-
-    const modalButtons: HTMLButtonElement[] = fixture.debugElement
-      .queryAll(By.css('.sketch-modifier-actions button'))
-      .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
-    const applyButton: HTMLButtonElement = modalButtons[1];
-
-    applyButton.click();
-    await fixture.whenStable();
+    await component.applySketchModifier();
 
     expect(emitSpy).toHaveBeenCalledWith('c1ncccc1');
+  });
+
+  it('should also emit inspectRequested when applying a valid sketch', async () => {
+    const inspectSpy = vi.spyOn(component.inspectRequested, 'emit');
+    component.sketchDraftSmiles = 'c1ccccc1';
+    fixture.detectChanges();
+
+    await component.applySketchModifier();
+
+    expect(inspectSpy).toHaveBeenCalled();
+  });
+
+  it('should set sketchValidationError when SMILES is empty and not emit changes', async () => {
+    const emitSpy = vi.spyOn(component.principalSmilesChange, 'emit');
+    const inspectSpy = vi.spyOn(component.inspectRequested, 'emit');
+    component.sketchDraftSmiles = '';
+    fixture.detectChanges();
+
+    await component.applySketchModifier();
+
+    expect(component.sketchValidationError()).not.toBeNull();
+    expect(emitSpy).not.toHaveBeenCalled();
+    expect(inspectSpy).not.toHaveBeenCalled();
+  });
+
+  it('should set sketchValidationError when SMILES has multiple fragments and not emit changes', async () => {
+    const emitSpy = vi.spyOn(component.principalSmilesChange, 'emit');
+    const inspectSpy = vi.spyOn(component.inspectRequested, 'emit');
+    // SMILES con "." indica múltiples moléculas/fragmentos.
+    component.sketchDraftSmiles = 'CCO.c1ccccc1';
+    fixture.detectChanges();
+
+    await component.applySketchModifier();
+
+    expect(component.sketchValidationError()).not.toBeNull();
+    expect(emitSpy).not.toHaveBeenCalled();
+    expect(inspectSpy).not.toHaveBeenCalled();
+  });
+
+  it('should clear sketchValidationError when closing the sketch modifier', async () => {
+    component.sketchDraftSmiles = '';
+    await component.applySketchModifier();
+    expect(component.sketchValidationError()).not.toBeNull();
+
+    component.closeSketchModifier();
+
+    expect(component.sketchValidationError()).toBeNull();
   });
 });

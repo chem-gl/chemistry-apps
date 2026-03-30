@@ -1,17 +1,7 @@
 // smileit-workflow.service.ts: Orquesta el flujo profesional de Smile-it con bloques, catálogo persistente y trazabilidad.
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import {
-    Observable,
-    Subscription,
-    catchError,
-    concatMap,
-    finalize,
-    forkJoin,
-    from,
-    last,
-    throwError,
-} from 'rxjs';
+import { Observable, Subscription, catchError, finalize, forkJoin, throwError } from 'rxjs';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../api/generated';
 import {
     DownloadedReportFile,
@@ -239,6 +229,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.buildCatalogGroups(this.catalogEntries(), this.categories()),
   );
   readonly catalogDraftPreview = computed<SmileitCatalogDraftPreview>(() => {
+    const currentName: string = this.catalogCreateName().trim();
     const currentSmiles: string = this.catalogCreateSmiles().trim();
     const parsedAnchorIndices: number[] = this.parseSingleAnchorIndexInput(
       this.catalogCreateAnchorIndicesText(),
@@ -249,6 +240,13 @@ export class SmileitWorkflowService implements OnDestroy {
       this.categories().map((category: SmileitCategoryView) => [category.key, category.name]),
     );
     const warnings: string[] = [];
+
+    if (currentName === '') {
+      warnings.push('Substituent name is required.');
+    }
+    if (currentSmiles === '') {
+      warnings.push('SMILES is required.');
+    }
 
     if (notationKind === 'smarts') {
       warnings.push(
@@ -266,7 +264,7 @@ export class SmileitWorkflowService implements OnDestroy {
         : ['Uncategorized'];
 
     return {
-      name: this.catalogCreateName().trim(),
+      name: currentName,
       smiles: currentSmiles,
       sourceReference: this.catalogCreateSourceReference().trim() || 'local-lab',
       anchorAtomIndices: parsedAnchorIndices,
@@ -275,12 +273,28 @@ export class SmileitWorkflowService implements OnDestroy {
       notationKind,
       warnings,
       isReady:
-        this.catalogCreateName().trim() !== '' &&
+        currentName !== '' &&
         currentSmiles !== '' &&
         notationKind !== 'smarts' &&
         parsedAnchorIndices.length > 0,
     };
   });
+
+  ensureCatalogDraftDefaults(): void {
+    if (this.isCatalogEditing()) {
+      return;
+    }
+
+    if (this.catalogCreateName().trim() === '') {
+      this.catalogCreateName.set(
+        this.buildNextSequentialCatalogDraftName('', this.collectUsedCatalogDraftNames()),
+      );
+    }
+
+    if (this.catalogCreateSourceReference().trim() === '') {
+      this.catalogCreateSourceReference.set('local-lab');
+    }
+  }
 
   loadInitialData(): void {
     forkJoin({
@@ -576,12 +590,12 @@ export class SmileitWorkflowService implements OnDestroy {
     );
   }
 
-  stageCurrentCatalogDraft(): void {
+  stageCurrentCatalogDraft(): boolean {
     if (this.isCatalogEditing()) {
       this.errorMessage.set(
         'Finish the current catalog edition before staging multiple new SMILES entries.',
       );
-      return;
+      return false;
     }
 
     const catalogPreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
@@ -590,19 +604,10 @@ export class SmileitWorkflowService implements OnDestroy {
         catalogPreview.warnings[0] ??
           'Complete the current catalog SMILES before adding it with +.',
       );
-      return;
+      return false;
     }
 
-    this.catalogDraftSequence += 1;
-    const nextQueuedDraft: SmileitCatalogQueuedDraft = {
-      id: `catalog-draft-${this.catalogDraftSequence}`,
-      name: catalogPreview.name,
-      smiles: catalogPreview.smiles,
-      anchorAtomIndices: [...catalogPreview.anchorAtomIndices],
-      categoryKeys: [...catalogPreview.categoryKeys],
-      categoryNames: [...catalogPreview.categoryNames],
-      sourceReference: catalogPreview.sourceReference,
-    };
+    const nextQueuedDraft: SmileitCatalogQueuedDraft = this.buildQueuedCatalogDraft(catalogPreview);
 
     this.catalogDraftQueue.update((currentQueue: SmileitCatalogQueuedDraft[]) => [
       ...currentQueue,
@@ -610,6 +615,34 @@ export class SmileitWorkflowService implements OnDestroy {
     ]);
     this.resetCatalogDraftAfterStage();
     this.errorMessage.set(null);
+    return true;
+  }
+
+  stageCurrentCatalogDraftAndPrepareNext(): boolean {
+    if (this.isCatalogEditing()) {
+      this.errorMessage.set(
+        'Finish the current catalog edition before staging multiple new SMILES entries.',
+      );
+      return false;
+    }
+
+    const catalogPreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+    if (!catalogPreview.isReady) {
+      this.errorMessage.set(
+        catalogPreview.warnings[0] ?? 'Complete the current catalog SMILES before adding it.',
+      );
+      return false;
+    }
+
+    const nextQueuedDraft: SmileitCatalogQueuedDraft = this.buildQueuedCatalogDraft(catalogPreview);
+
+    this.catalogDraftQueue.update((currentQueue: SmileitCatalogQueuedDraft[]) => [
+      ...currentQueue,
+      nextQueuedDraft,
+    ]);
+    this.prepareCatalogDraftForAnother(nextQueuedDraft);
+    this.errorMessage.set(null);
+    return true;
   }
 
   loadQueuedCatalogDraft(queueDraftId: string): void {
@@ -633,7 +666,26 @@ export class SmileitWorkflowService implements OnDestroy {
       return;
     }
 
-    this.hydrateCatalogFormFromQueuedDraft(queuedDraft);
+    const existingNames: string[] = this.catalogDraftQueue().map(
+      (draft: SmileitCatalogQueuedDraft) => draft.name,
+    );
+    const nextCloneName: string = this.buildNextCloneDraftName(queuedDraft.name, existingNames);
+
+    this.catalogDraftSequence += 1;
+    const clonedDraft: SmileitCatalogQueuedDraft = {
+      ...queuedDraft,
+      id: `catalog-draft-${this.catalogDraftSequence}`,
+      name: nextCloneName,
+      anchorAtomIndices: [...queuedDraft.anchorAtomIndices],
+      categoryKeys: [...queuedDraft.categoryKeys],
+      categoryNames: [...queuedDraft.categoryNames],
+    };
+
+    this.catalogDraftQueue.update((currentQueue: SmileitCatalogQueuedDraft[]) => [
+      ...currentQueue,
+      clonedDraft,
+    ]);
+    this.hydrateCatalogFormFromQueuedDraft(clonedDraft);
     this.errorMessage.set(null);
   }
 
@@ -643,63 +695,39 @@ export class SmileitWorkflowService implements OnDestroy {
     );
   }
 
-  createCatalogEntry(): void {
+  createCatalogEntry(onSuccess?: () => void): void {
     const editingStableId: string | null = this.catalogEditingStableId();
     const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
     this.errorMessage.set(null);
 
     if (editingStableId === null) {
-      const activePayload: SmileitCatalogEntryCreateParams | null = activePreview.isReady
-        ? {
-            name: activePreview.name,
-            smiles: activePreview.smiles,
-            anchorAtomIndices: [...activePreview.anchorAtomIndices],
-            categoryKeys: [...activePreview.categoryKeys],
-            sourceReference: activePreview.sourceReference,
-            provenanceMetadata: {},
-          }
-        : null;
-      const queuedPayloads: SmileitCatalogEntryCreateParams[] = this.catalogDraftQueue().map(
-        (queuedDraft: SmileitCatalogQueuedDraft) => ({
-          name: queuedDraft.name,
-          smiles: queuedDraft.smiles,
-          anchorAtomIndices: [...queuedDraft.anchorAtomIndices],
-          categoryKeys: [...queuedDraft.categoryKeys],
-          sourceReference: queuedDraft.sourceReference,
-          provenanceMetadata: {},
-        }),
-      );
-      const payloadsToCreate: SmileitCatalogEntryCreateParams[] =
-        activePayload === null ? queuedPayloads : [...queuedPayloads, activePayload];
-
-      if (payloadsToCreate.length === 0) {
+      if (!activePreview.isReady) {
         this.errorMessage.set(
-          activePreview.warnings[0] ?? 'Add at least one valid catalog SMILES before saving.',
+          activePreview.warnings[0] ?? 'Complete the current catalog draft before saving.',
         );
         return;
       }
 
-      from(payloadsToCreate)
-        .pipe(
-          concatMap((payload: SmileitCatalogEntryCreateParams) =>
-            this.jobsApiService.createSmileitCatalogEntry(payload),
-          ),
-          last(),
-        )
-        .subscribe({
-          next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
-            this.refreshCatalogEntriesAfterMutation(
-              updatedCatalogEntries,
-              activePayload !== null,
-              true,
-            );
-          },
-          error: (requestError: unknown) => {
-            this.errorMessage.set(
-              `Unable to create catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
-            );
-          },
-        });
+      const requestPayload: SmileitCatalogEntryCreateParams = {
+        name: activePreview.name,
+        smiles: activePreview.smiles,
+        anchorAtomIndices: [...activePreview.anchorAtomIndices],
+        categoryKeys: [...activePreview.categoryKeys],
+        sourceReference: activePreview.sourceReference,
+        provenanceMetadata: {},
+      };
+
+      this.jobsApiService.createSmileitCatalogEntry(requestPayload).subscribe({
+        next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+          this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, true);
+          onSuccess?.();
+        },
+        error: (requestError: unknown) => {
+          this.errorMessage.set(
+            `Unable to create catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+          );
+        },
+      });
       return;
     }
 
@@ -728,11 +756,58 @@ export class SmileitWorkflowService implements OnDestroy {
     saveRequest.subscribe({
       next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
         this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, false);
+        onSuccess?.();
       },
       error: (requestError: unknown) => {
         const actionLabel: string = editingStableId === null ? 'create' : 'update';
         this.errorMessage.set(
           `Unable to ${actionLabel} catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
+  }
+
+  createCatalogEntryAndPrepareNext(onSuccess?: () => void): void {
+    if (this.isCatalogEditing()) {
+      this.errorMessage.set('Finish catalog edition before using Add another.');
+      return;
+    }
+
+    const activePreview: SmileitCatalogDraftPreview = this.catalogDraftPreview();
+    if (!activePreview.isReady) {
+      this.errorMessage.set(
+        activePreview.warnings[0] ?? 'Complete the current catalog draft before saving.',
+      );
+      return;
+    }
+
+    const requestPayload: SmileitCatalogEntryCreateParams = {
+      name: activePreview.name,
+      smiles: activePreview.smiles,
+      anchorAtomIndices: [...activePreview.anchorAtomIndices],
+      categoryKeys: [...activePreview.categoryKeys],
+      sourceReference: activePreview.sourceReference,
+      provenanceMetadata: {},
+    };
+
+    this.jobsApiService.createSmileitCatalogEntry(requestPayload).subscribe({
+      next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
+        this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, false, true);
+        this.prepareCatalogDraftForAnother({
+          id: 'catalog-draft-preview',
+          name: activePreview.name,
+          smiles: activePreview.smiles,
+          anchorAtomIndices: [...activePreview.anchorAtomIndices],
+          categoryKeys: [...activePreview.categoryKeys],
+          categoryNames: [...activePreview.categoryNames],
+          sourceReference: activePreview.sourceReference,
+        });
+        this.errorMessage.set(null);
+        onSuccess?.();
+      },
+      error: (requestError: unknown) => {
+        this.errorMessage.set(
+          `Unable to create catalog entry: ${this.extractRequestErrorMessage(requestError)}`,
         );
       },
     });
@@ -1443,21 +1518,18 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private resetCatalogForm(): void {
-    this.catalogCreateName.set('');
     this.catalogCreateSmiles.set('');
     this.catalogCreateAnchorIndicesText.set('');
     this.catalogCreateCategoryKeys.set([]);
     this.catalogCreateSourceReference.set('local-lab');
     this.catalogEditingStableId.set(null);
+    this.catalogCreateName.set(
+      this.buildNextSequentialCatalogDraftName('', this.collectUsedCatalogDraftNames()),
+    );
   }
 
   private resetCatalogDraftAfterStage(): void {
-    this.catalogCreateName.set('');
-    this.catalogCreateSmiles.set('');
-    this.catalogCreateAnchorIndicesText.set('');
-    this.catalogCreateCategoryKeys.set([]);
-    this.catalogCreateSourceReference.set('local-lab');
-    this.catalogEditingStableId.set(null);
+    this.resetCatalogForm();
   }
 
   private hydrateCatalogFormFromQueuedDraft(queuedDraft: SmileitCatalogQueuedDraft): void {
@@ -1466,6 +1538,110 @@ export class SmileitWorkflowService implements OnDestroy {
     this.catalogCreateAnchorIndicesText.set(String(queuedDraft.anchorAtomIndices[0] ?? ''));
     this.catalogCreateCategoryKeys.set([...queuedDraft.categoryKeys]);
     this.catalogCreateSourceReference.set(queuedDraft.sourceReference);
+  }
+
+  private buildQueuedCatalogDraft(
+    catalogPreview: SmileitCatalogDraftPreview,
+  ): SmileitCatalogQueuedDraft {
+    this.catalogDraftSequence += 1;
+
+    return {
+      id: `catalog-draft-${this.catalogDraftSequence}`,
+      name: catalogPreview.name,
+      smiles: catalogPreview.smiles,
+      anchorAtomIndices: [...catalogPreview.anchorAtomIndices],
+      categoryKeys: [...catalogPreview.categoryKeys],
+      categoryNames: [...catalogPreview.categoryNames],
+      sourceReference: catalogPreview.sourceReference,
+    };
+  }
+
+  private prepareCatalogDraftForAnother(stagedDraft: SmileitCatalogQueuedDraft): void {
+    this.catalogEditingStableId.set(null);
+    this.catalogCreateName.set(
+      this.buildNextSequentialCatalogDraftName(
+        stagedDraft.name,
+        this.collectUsedCatalogDraftNames(),
+      ),
+    );
+    this.catalogCreateSmiles.set(stagedDraft.smiles);
+    this.catalogCreateAnchorIndicesText.set('');
+    this.catalogCreateCategoryKeys.set([...stagedDraft.categoryKeys]);
+    this.catalogCreateSourceReference.set(stagedDraft.sourceReference || 'local-lab');
+  }
+
+  /**
+   * Genera el siguiente nombre para clon con formato "<base>_susN".
+   * Ejemplo: catecol -> catecol_sus2 -> catecol_sus3.
+   */
+  private buildNextCloneDraftName(sourceName: string, existingNames: string[]): string {
+    const normalizedSourceName: string = sourceName.trim();
+    const sourceMatch = normalizedSourceName.match(/^(.*?)(?:_sus(\d+))?$/i);
+    const rawBaseName: string = (sourceMatch?.[1] ?? normalizedSourceName).trim();
+    const baseName: string = rawBaseName !== '' ? rawBaseName : 'substituent';
+
+    let maxIndex: number = 1;
+    const escapedBaseName: string = this.escapeRegExp(baseName);
+    const suffixPattern: RegExp = new RegExp(`^${escapedBaseName}_sus(\\d+)$`, 'i');
+
+    existingNames.forEach((existingName: string) => {
+      const normalizedExistingName: string = existingName.trim();
+      if (
+        normalizedExistingName.localeCompare(baseName, undefined, { sensitivity: 'accent' }) === 0
+      ) {
+        maxIndex = Math.max(maxIndex, 1);
+        return;
+      }
+
+      const existingMatch: RegExpMatchArray | null = normalizedExistingName.match(suffixPattern);
+      if (existingMatch === null) {
+        return;
+      }
+
+      const parsedIndex: number = Number(existingMatch[1]);
+      if (Number.isFinite(parsedIndex)) {
+        maxIndex = Math.max(maxIndex, parsedIndex);
+      }
+    });
+
+    return `${baseName}_sus${maxIndex + 1}`;
+  }
+
+  private collectUsedCatalogDraftNames(): string[] {
+    return [
+      ...this.catalogEntries().map((catalogEntry: SmileitCatalogEntryView) => catalogEntry.name),
+      ...this.catalogDraftQueue().map((queuedDraft: SmileitCatalogQueuedDraft) => queuedDraft.name),
+    ];
+  }
+
+  private buildNextSequentialCatalogDraftName(sourceName: string, existingNames: string[]): string {
+    const normalizedSourceName: string = sourceName.trim();
+    const sourceMatch: RegExpMatchArray | null = normalizedSourceName.match(/^(.*?)(?:\s+(\d+))?$/);
+    const rawBaseName: string = (sourceMatch?.[1] ?? normalizedSourceName).trim();
+    const baseName: string = rawBaseName !== '' ? rawBaseName : 'Substituent';
+    const escapedBaseName: string = this.escapeRegExp(baseName);
+    const suffixPattern: RegExp = new RegExp(`^${escapedBaseName}(?:\\s+(\\d+))?$`, 'i');
+
+    let highestSuffix: number = 0;
+
+    existingNames.forEach((existingName: string) => {
+      const normalizedExistingName: string = existingName.trim();
+      const existingMatch: RegExpMatchArray | null = normalizedExistingName.match(suffixPattern);
+      if (existingMatch === null) {
+        return;
+      }
+
+      const parsedSuffix: number = existingMatch[1] === undefined ? 1 : Number(existingMatch[1]);
+      if (Number.isFinite(parsedSuffix)) {
+        highestSuffix = Math.max(highestSuffix, parsedSuffix);
+      }
+    });
+
+    return `${baseName} ${Math.max(1, highestSuffix + 1)}`;
+  }
+
+  private escapeRegExp(rawText: string): string {
+    return rawText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private parseSingleAnchorIndexInput(rawText: string): number[] {

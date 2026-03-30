@@ -39,6 +39,8 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
   readonly ketcherPublicUrl: SafeResourceUrl;
   isKetcherReady: boolean = false;
   readonly isSketchModifierLoading = signal<boolean>(false);
+  /** Error de validación del SMILES al aplicar el sketch modifier (molécula vacía o múltiple). */
+  readonly sketchValidationError = signal<string | null>(null);
   private hasCompletedFirstSketchLoad: boolean = false;
 
   @Output() readonly principalSmilesChange = new EventEmitter<string>();
@@ -97,6 +99,7 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
 
   closeSketchModifier(): void {
     this.isSketchModifierLoading.set(false);
+    this.sketchValidationError.set(null);
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
     if (dialogElement === undefined) {
@@ -136,8 +139,36 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
 
   async applySketchModifier(): Promise<void> {
     await this.pullDraftFromKetcher();
+
+    // Validar que el SMILES no esté vacío ni contenga múltiples moléculas.
+    const validationError: string | null = this.validateSingleMoleculeSmiles(
+      this.sketchDraftSmiles,
+    );
+    if (validationError !== null) {
+      this.sketchValidationError.set(validationError);
+      return;
+    }
+
+    this.sketchValidationError.set(null);
     this.onPrincipalSmilesChange(this.sketchDraftSmiles.trim());
+    // Auto-inspect para no requerir clic manual después de dibujar.
+    this.inspectRequested.emit();
     this.closeSketchModifier();
+  }
+
+  /**
+   * Valida que el SMILES sea una única molécula no vacía.
+   * Retorna un mensaje de error o null si es válido.
+   */
+  private validateSingleMoleculeSmiles(smiles: string): string | null {
+    const normalizedSmiles: string = smiles.trim();
+    if (normalizedSmiles === '') {
+      return 'Dibuja una molécula antes de aplicar.';
+    }
+    if (normalizedSmiles.includes('.')) {
+      return 'Solo se permite una molécula. El SMILES contiene múltiples fragmentos (".").';
+    }
+    return null;
   }
 
   private async pushDraftToKetcher(): Promise<void> {

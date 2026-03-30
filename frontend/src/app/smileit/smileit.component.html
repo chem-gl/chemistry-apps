@@ -4,6 +4,11 @@
     <p class="eyebrow">SMILE-IT</p>
     </header>
 
+<div class="floating-workspace-shell">
+
+  <div class="workspace-columns">
+    <div class="workspace-right-column">
+
 <section class="catalog-panel" aria-label="Step 2 substituent catalogs">
     <article class="catalog-card">
         <div class="catalog-card-header">
@@ -91,213 +96,182 @@
         </section>
         }
 
-        <dialog #catalogStudioDialog class="catalog-studio-dialog" (click)="onCatalogStudioDialogClick($event)">
-            <section class="catalog-studio-modal" role="dialog" aria-modal="true" aria-label="SMILES catalog studio"
+            <dialog #catalogStudioDialog class="catalog-studio-dialog" (click)="onCatalogStudioDialogClick($event)">
+              <section class="catalog-studio-modal" role="dialog" aria-modal="true" aria-label="SMILES catalog studio"
                 (click)="$event.stopPropagation()">
                 <header class="catalog-studio-header">
-                    <div>
-                        <h4>SMILES catalog studio</h4>
-                        <p class="hint">Create or edit substituents without mixing this flow with block mapping.</p>
-                    </div>
-                    <button type="button" class="btn-secondary" (click)="closeCatalogStudioModal()">Close</button>
+                  <div>
+                    <h4>SMILES catalog studio</h4>
+                    <p class="hint">Create or edit substituents without mixing this flow with block mapping.</p>
+                  </div>
+                  <button type="button" class="btn-secondary" (click)="closeCatalogStudioModal()">Close</button>
                 </header>
 
-                <div class="catalog-editor-layout">
-                    <section class="catalog-editor-form" aria-label="Catalog editor">
-                        <div class="catalog-upper-section">
-                            <div class="subsection-header">
-                                <div>
-                                    <h4>Current SMILES metadata</h4>
-                                    <p class="hint">Set metadata for this SMILES draft. Use Clone in the queue to reuse data and change only the target
-                                        atom.</p>
-                                </div>
-                            </div>
-                            <div class="catalog-form-grid catalog-metadata-grid">
-                                <label>
-                                    Name
-                                    <input type="text" [ngModel]="workflow.catalogCreateName()"
-                                        (ngModelChange)="workflow.catalogCreateName.set($event)" />
-                                </label>
-                                <label>
-                                    Source reference
-                                    <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
-                                        (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="catalog-category-panel catalog-category-panel-inline">
-                            <div class="subsection-header">
-                                <div>
-                                    <h4>Chemistry categories</h4>
-                                    <p class="hint">Select categories to classify the substituent (optional).</p>
-                                </div>
-                            </div>
-                            <div class="chip-grid compact-chip-grid">
-                                @for (category of workflow.categories(); track category.id) {
-                                <button type="button" class="filter-chip"
-                                    [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
-                                    (click)="workflow.toggleCatalogCreateCategory(category.key)">
-                                    {{ category.name }}
-                                </button>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="catalog-smiles-section">
-                            <div class="subsection-header">
-                                <div>
-                                    <h4>Add SMILES</h4>
-                                    <p class="hint">Add a draft with <strong>+</strong>. After adding, the SMILES fields
-                                        are cleared for the next one.</p>
-                                </div>
-                            </div>
-                            <div class="catalog-form-grid catalog-smiles-grid">
-                                <label class="catalog-field-full">
-                                    SMILES
-                                    <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
-                                        (ngModelChange)="onCatalogDraftSmilesChange($event)" />
-                                </label>
-                            </div>
-                            <div class="catalog-batch-toolbar">
-                                <p class="hint">Add each SMILES with <strong>+</strong>, select one anchor atom, and
-                                    then
-                                    save the full batch.</p>
-                                <div class="catalog-batch-actions">
-                                  <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()"
-                                    [disabled]="workflow.isProcessing()">
-                                    ✏ Sketch SMILES
-                                  </button>
-                                    <button type="button" class="btn-secondary" (click)="stageCurrentCatalogDraft()"
-                                      [disabled]="workflow.isProcessing() || workflow.isCatalogEditing()">
-                                      + Add current SMILES
-                                    </button>
+                    <div class="catalog-editor-layout">
+                      <section class="catalog-editor-form" aria-label="Catalog editor">
+                            <div class="catalog-step-stack">
+                              <section class="catalog-step-card catalog-name-section">
+                                <div class="subsection-header">
+                                  <div>
+                                            <h4>1. Substituent name</h4>
+                                            <p class="hint">A default name is prepared for each new draft. Replace it if you need a custom label.</p>
+                                            </div>
+                                            </div>
+                                    <div class="catalog-form-grid catalog-name-grid">
+                                      <label class="catalog-field-full">
+                                        Name
+                                        <input type="text" [ngModel]="workflow.catalogCreateName()"
+                                          (ngModelChange)="workflow.catalogCreateName.set($event)" />
+                                      </label>
                                     </div>
-                            </div>
-                            @if (!workflow.catalogDraftPreview().isReady) {
-                            <p class="hint catalog-ready-hint">Complete metadata, SMILES and one target anchor atom to queue this draft.</p>
-                            }
-                        </div>
+                                </section>
 
-                        <p class="catalog-smiles mono">{{ workflow.catalogCreateSmiles() || 'Catalog SMILES draft
-                            pending' }}</p>
-
-                        @if (catalogDraftInspection(); as catalogInspection) {
-                        <div class="anchor-selection-panel" aria-label="Catalog draft anchor selector">
-                            <div class="subsection-header">
-                                <div>
-                                    <h4>Visual anchor selection</h4>
-                                    <p class="hint">Click one atom in the structure preview to define the anchor index.
-                                        By default, the first valid non-hydrogen atom is selected.</p>
-                                </div>
-                            </div>
-                            <div class="svg-preview inspectable compact-anchor-svg"
-                                (click)="onCatalogDraftSvgClick($event)"
-                                [innerHTML]="toTrustedAnchorSelectionSvg(catalogInspection.svg, catalogDraftAnchorIndices())">
-                            </div>
-                            <div class="atom-grid compact-grid anchor-grid">
-                                @for (atom of catalogInspection.atoms; track atom.index) {
-                                <button type="button" class="atom-chip compact"
-                                    [class.selected]="catalogDraftAnchorIndices().includes(atom.index)"
-                                    (click)="toggleCatalogDraftAnchor(atom.index)" [disabled]="workflow.isProcessing()">
-                                    #{{ atom.index }} {{ atom.symbol }}
-                                </button>
-                                }
-                            </div>
-                        </div>
-                        }
-
-                        @if (catalogDraftInspectionError(); as catalogInspectionErrorMessage) {
-                        <p class="warning-message" role="alert">{{ catalogInspectionErrorMessage }}</p>
-                        }
-
-                        <div class="action-row compact-actions catalog-editor-actions">
-                            <button class="btn-secondary" (click)="workflow.createCatalogEntry()"
-                                [disabled]="workflow.isProcessing()">
-                                {{ workflow.isCatalogEditing() ? 'Update catalog entry' :
-                                (workflow.hasQueuedCatalogDrafts() ? 'Save queued SMILES' : 'Save catalog entry') }}
-                            </button>
-                            @if (workflow.isCatalogEditing()) {
-                            <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()"
-                                [disabled]="workflow.isProcessing()">
-                                Cancel edition
-                            </button>
-                            }
-                        </div>
-
-                        @if (workflow.errorMessage(); as catalogErrorMessage) {
-                        <p class="error-message" role="alert">{{ catalogErrorMessage }}</p>
-                        }
-
-                        @if (workflow.catalogDraftQueue().length > 0) {
-                        <div class="queued-catalog-drafts">
-                            <div class="subsection-header">
-                                <div>
-                                    <h4>Queued SMILES</h4>
-                                    <p class="hint">Each queued molecule keeps its own anchor selection and will be
-                                        saved as an independent catalog entry.</p>
-                                </div>
-                            </div>
-                            <div class="queued-catalog-grid">
-                                @for (queuedDraft of workflow.catalogDraftQueue(); track queuedDraft.id) {
-                                <article class="queued-catalog-card">
+                                <section class="catalog-step-card catalog-smiles-section">
+                                  <div class="subsection-header catalog-step-header">
                                     <div>
-                                        <p class="catalog-name">{{ queuedDraft.name }}</p>
-                                        <p class="catalog-smiles mono">{{ queuedDraft.smiles }}</p>
-                                        <p class="catalog-description">Anchor {{ queuedDraft.anchorAtomIndices.length > 0 ? queuedDraft.anchorAtomIndices[0] :
-                                            '—' }}</p>
-                                        <small>{{ queuedDraft.categoryNames.join(', ') || 'No categories' }}</small>
-                                    </div>
-                                    <div class="queued-catalog-actions">
-                                        <button type="button" class="btn-secondary small"
-                                            (click)="cloneQueuedCatalogDraft(queuedDraft.id)"
-                                            [disabled]="workflow.isProcessing()">
-                                            Clone
-                                        </button>
-                                        <button type="button" class="btn-secondary small"
-                                            (click)="loadQueuedCatalogDraft(queuedDraft.id)"
-                                            [disabled]="workflow.isProcessing()">
-                                            Edit
-                                        </button>
-                                        <button type="button" class="remove-btn small"
-                                            (click)="removeQueuedCatalogDraft(queuedDraft.id)"
-                                            [disabled]="workflow.isProcessing()">
-                                            Remove
+                                            <h4>2. SMILES</h4>
+                                            <p class="hint">Type a SMILES or use Sketch. The structure preview updates live before you choose the substitution
+                                              point.</p>
+                                            </div>
+                                        <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()" [disabled]="workflow.isProcessing()">
+                                          ✏ Sketch SMILES
                                         </button>
                                     </div>
-                                </article>
-                                }
-                            </div>
-                        </div>
-                        }
-                    </section>
+                                    <div class="catalog-form-grid catalog-smiles-grid">
+                                      <label class="catalog-field-full">
+                                        SMILES
+                                        <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
+                                          (ngModelChange)="onCatalogDraftSmilesChange($event)" />
+                                      </label>
+                                    </div>
+                                    <div class="catalog-live-status">
+                                      <p class="catalog-smiles mono">{{ workflow.catalogCreateSmiles() || 'Pending catalog SMILES' }}</p>
+                                      <p class="hint">Live rendering appears in the next step as soon as the draft can be inspected.</p>
+                                    </div>
+                                </section>
 
-                    @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
-                    <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
-                        <h5>Catalog draft preview</h5>
-                        <div class="catalog-preview-metadata">
+                                <section class="catalog-step-card anchor-selection-panel" aria-label="Catalog draft anchor selector">
+                                  <div class="subsection-header">
+                                    <div>
+                                            <h4>3. Substitution point</h4>
+                                            <p class="hint">Inspect the live structure and click one atom to define the anchor index.</p>
+                                            </div>
+                                            </div>
+                                    @if (catalogDraftInspection(); as catalogInspection) {
+                                    <div class="svg-preview inspectable compact-anchor-svg" (click)="onCatalogDraftSvgClick($event)"
+                                      [innerHTML]="toTrustedAnchorSelectionSvg(catalogInspection.svg, catalogDraftAnchorIndices())">
+                                    </div>
+                                    <div class="atom-grid compact-grid anchor-grid">
+                                      @for (atom of catalogInspection.atoms; track atom.index) {
+                                        <button type="button" class="atom-chip compact" [class.selected]="catalogDraftAnchorIndices().includes(atom.index)"
+                                          (click)="toggleCatalogDraftAnchor(atom.index)" [disabled]="workflow.isProcessing()">
+                                          #{{ atom.index }} {{ atom.symbol }}
+                                        </button>
+                                        }
+                                        </div>
+                                    }
+                                    @if (workflow.catalogCreateSmiles().trim() === '') {
+                                    <p class="hint catalog-empty-step">Enter a SMILES string to unlock the live structure preview.</p>
+                                    }
+                                    @if (catalogDraftInspectionError(); as catalogInspectionErrorMessage) {
+                                    <p class="warning-message" role="alert">{{ catalogInspectionErrorMessage }}</p>
+                                    }
+                                    </section>
+
+                                    <section class="catalog-step-card catalog-category-panel">
+                                      <div class="subsection-header">
+                                        <div>
+                                          <h4>4. Chemistry categories</h4>
+                                          <p class="hint">Select categories to classify the substituent. This step is optional.</p>
+                                        </div>
+                                      </div>
+                                      <div class="chip-grid compact-chip-grid">
+                                        @for (category of workflow.categories(); track category.id) {
+                                        <button type="button" class="filter-chip"
+                                          [class.active]="workflow.catalogCreateCategoryKeys().includes(category.key)"
+                                          (click)="workflow.toggleCatalogCreateCategory(category.key)">
+                                          {{ category.name }}
+                                        </button>
+                                        }
+                                      </div>
+                                    </section>
+
+                                <section class="catalog-step-card catalog-reference-section">
+                                  <div class="subsection-header">
+                                    <div>
+                                            <h4>5. Source reference</h4>
+                                            <p class="hint">Keep a short traceable source for this substituent entry.</p>
+                                            </div>
+                                    </div>
+                                    <div class="catalog-form-grid catalog-reference-grid">
+                                      <label class="catalog-field-full">
+                                        Source reference
+                                        <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
+                                          (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
+                                      </label>
+                                    </div>
+                                    </section>
+                                    
+                                    @if (workflow.catalogDraftPreview().warnings.length > 0) {
+                                    <div class="catalog-inline-warnings" aria-label="Catalog draft validation messages">
+                                      @for (warningText of workflow.catalogDraftPreview().warnings; track warningText) {
+                                      <p class="warning-message preview-warning">{{ warningText }}</p>
+                                      }
+                                    </div>
+                                }
+                                
+                                @if (!workflow.isCatalogEditing()) {
+                                <div class="action-row compact-actions catalog-draft-actions">
+                                  <button type="button" class="btn-secondary" (click)="addAnotherCatalogDraft()" [disabled]="workflow.isProcessing()">
+                                    Add another
+                                  </button>
+                                  <button type="button" class="btn-secondary" (click)="addCatalogDraftAndClose()" [disabled]="workflow.isProcessing()">
+                                    Add and close
+                                        </button>
+                                </div>
+                                }
+                                
+                                @if (workflow.isCatalogEditing()) {
+                                <div class="action-row compact-actions catalog-editor-actions">
+                                  <button class="btn-secondary" (click)="workflow.createCatalogEntry()" [disabled]="workflow.isProcessing()">
+                                    Update catalog entry
+                                  </button>
+                                  <button class="btn-secondary" (click)="workflow.cancelCatalogEdition()" [disabled]="workflow.isProcessing()">
+                                    Cancel edition
+                                  </button>
+                                    </div>
+                                }
+@if (workflow.errorMessage(); as catalogErrorMessage) {
+<p class="error-message" role="alert">{{ catalogErrorMessage }}</p>
+}
+
+                            </div>
+                        </section>
+
+                        @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
+                        <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
+                          <h5>Catalog draft preview</h5>
+                          <div class="catalog-preview-metadata">
                             <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
-                            <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}
-                            </p>
-                            <p><strong>Anchor:</strong> {{ catalogDraftPreview.anchorAtomIndices.length > 0 ?
-                                catalogDraftPreview.anchorAtomIndices[0] : 'Pending' }}</p>
-                            <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Uncategorized'
-                                }}</p>
-                            <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
-                        </div>
-                        <p class="catalog-smiles mono">{{ catalogDraftPreview.smiles || 'Pending catalog SMILES' }}</p>
-                        @if (catalogDraftPreview.warnings.length > 0) {
-                        <div class="catalog-preview-warnings">
-                            @for (warningText of catalogDraftPreview.warnings; track warningText) {
-                            <p class="warning-message preview-warning">{{ warningText }}</p>
-                            }
-                        </div>
-                        }
-                    </aside>
-                    }
-                </div>
-            </section>
-        </dialog>
+                                <p><strong>Notation detected:</strong> {{ catalogDraftPreview.notationKind | uppercase }}</p>
+                                <p><strong>Anchor:</strong> {{ catalogDraftPreview.anchorAtomIndices.length > 0 ?
+                                  catalogDraftPreview.anchorAtomIndices[0] : 'Pending' }}</p>
+                                <p><strong>Categories:</strong> {{ catalogDraftPreview.categoryNames.join(', ') || 'Uncategorized' }}</p>
+                                <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
+                                </div>
+                                <p class="catalog-smiles mono">{{ catalogDraftPreview.smiles || 'Pending catalog SMILES' }}</p>
+                                @if (catalogDraftPreview.warnings.length > 0) {
+                                <div class="catalog-preview-warnings">
+                                  @for (warningText of catalogDraftPreview.warnings; track warningText) {
+                                  <p class="warning-message preview-warning">{{ warningText }}</p>
+                                  }
+                                </div>
+                                }
+                                </aside>
+                                }
+                                </div>
+                                </section>
+                                </dialog>
 <dialog #catalogSmilesSketchDialog class="catalog-smiles-sketch-dialog"
   (click)="onCatalogSmilesSketchDialogClick($event)">
   <section class="catalog-smiles-sketch-modal" role="dialog" aria-modal="true" aria-label="Catalog SMILES sketcher"
@@ -321,13 +295,10 @@
         title="Catalog SMILES sketcher" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
     </div>
 
-    <label class="catalog-field-full">
-      SMILES draft (manual fallback)
-      <textarea [ngModel]="workflow.catalogCreateSmiles()" (ngModelChange)="onCatalogDraftSmilesChange($event)"
-        [disabled]="workflow.isProcessing()" rows="3"></textarea>
-    </label>
-
     <div class="action-row compact-actions catalog-editor-actions">
+    @if (catalogSketchValidationError()) {
+    <p class="catalog-sketch-validation-error error-message" role="alert">{{ catalogSketchValidationError() }}</p>
+    }
       <button type="button" class="btn-secondary" (click)="closeCatalogSmilesSketcher()"
         [disabled]="workflow.isProcessing()">
         Cancel
@@ -342,8 +313,11 @@
     </article>
 </section>
 
-<div class="workspace-grid">
-    <section class="entry-panel" aria-label="Input parameters">
+        </div>
+        
+        <div class="workspace-left-column">
+          <div class="workspace-main-column">
+            <section class="entry-panel" aria-label="Input parameters">
     <div class="panel-header-row">
         <div>
             <h3>1. Principal molecule and scaffold preview</h3>
@@ -359,8 +333,11 @@
       (inspectRequested)="inspectPrincipalStructure()">
     </app-principal-molecule-editor>
 
+        </section>
+
     @if (workflow.inspection(); as inspectionResult) {
-    <div class="inspection-card">
+        <section class="inspection-floating-panel" aria-label="Principal inspection context">
+        <div class="inspection-card">
         <div class="inspection-metadata">
             <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
             <p><strong>Patterns visible:</strong> {{ visibleInspectionAnnotations().length }}</p>
@@ -415,19 +392,25 @@
                 molecule.</p>
         </div>
 
-        @if (visibleInspectionAnnotations().length > 0) {
+        @if (inspectionResult.annotations.length > 0) {
         <div class="annotation-legend" aria-label="Structural annotations">
-            @for (annotation of visibleInspectionAnnotations(); track annotation.pattern_stable_id + '-' + $index) {
-            <article class="annotation-chip" [style.--annotation-color]="annotation.color">
+            @for (annotation of inspectionResult.annotations; track annotation.pattern_stable_id + '-' + $index) {
+            <article class="annotation-chip" [class.annotation-chip-hidden]="!isAnnotationEnabled(annotation.pattern_stable_id)"
+              [style.--annotation-color]="annotation.color">
+              <div class="annotation-chip-header">
                 <span class="annotation-type">{{ patternTypeLabel(annotation.pattern_type) }}</span>
+                    <button type="button" class="annotation-eye-btn" (click)="togglePatternEnabled(annotation.pattern_stable_id)"
+                      [attr.aria-label]="isAnnotationEnabled(annotation.pattern_stable_id) ? 'Hide pattern' : 'Show pattern'"
+                      [attr.title]="isAnnotationEnabled(annotation.pattern_stable_id) ? 'Hide' : 'Show'">
+                      {{ isAnnotationEnabled(annotation.pattern_stable_id) ? '👁' : '👁\u200d🗨' }}
+                    </button>
+                    </div>
                 <strong>{{ annotation.name }}</strong>
                 <p>{{ annotation.caption }}</p>
                 <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
             </article>
             }
-            </div>
-        } @else if (inspectionResult.annotations.length > 0) {
-        <p class="hint">All pattern highlights are currently hidden. Open Structural patterns and enable at least one rule.</p>
+        </div>
         }
 
         <div class="site-toolbar">
@@ -459,12 +442,15 @@
 }
 </div>
 
+</section>
+
 }
 
-    </section>
+    </div>
+    </div>
 
-    <div class="workspace-side-column">
-        <section class="hero-strip workspace-hero-strip" aria-label="Workflow overview">
+        <div class="workspace-right-column">
+          <section class="hero-strip catalog-overview-strip" aria-label="Catalog coverage overview">
             <article class="hero-card">
                 <span class="hero-label">Selected sites</span>
                 <strong>{{ workflow.selectedAtomIndices().length }}</strong>
@@ -477,6 +463,7 @@
             </article>
         </section>
 
+    <div class="workspace-side-column">
     <section class="library-panel" aria-label="Blocks and catalogs">
         <div class="panel-header-row">
             <div>
@@ -722,7 +709,9 @@
         </section>
     </div>
 
-        </div>
+    </div>
+
+</div>
 
 <section class="result-panel" aria-label="Result and progress panel">
     <div class="panel-header-row">

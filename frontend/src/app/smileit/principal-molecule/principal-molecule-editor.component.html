@@ -32,6 +32,10 @@
         (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
+    @if (sketchValidationError()) {
+    <p class="sketch-validation-error" role="alert">{{ sketchValidationError() }}</p>
+    }
+
     <div class="sketch-modifier-actions">
       <button class="btn-secondary" type="button" (click)="closeSketchModifier()" [disabled]="isProcessing">
         Cancel

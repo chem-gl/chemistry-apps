@@ -443,14 +443,32 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.catalogDraftQueue()).toHaveLength(1);
     expect(workflowService.catalogDraftQueue()[0].smiles).toBe('CCC');
     expect(workflowService.catalogDraftQueue()[0].anchorAtomIndices).toEqual([2]);
-    expect(workflowService.catalogCreateName()).toBe('');
+    expect(workflowService.catalogCreateName()).toBe('Substituent 1');
     expect(workflowService.catalogCreateSmiles()).toBe('');
     expect(workflowService.catalogCreateAnchorIndicesText()).toBe('');
     expect(workflowService.catalogCreateCategoryKeys()).toEqual([]);
     expect(workflowService.catalogCreateSourceReference()).toBe('local-lab');
   });
 
-  it('requires metadata for each new SMILES draft after staging', () => {
+  it('keeps smiles metadata and increments the name when staging and preparing another draft', () => {
+    workflowService.catalogCreateName.set('Propyl');
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('2');
+    workflowService.catalogCreateCategoryKeys.set(['aromatic']);
+    workflowService.catalogCreateSourceReference.set('local-lab');
+
+    workflowService.stageCurrentCatalogDraftAndPrepareNext();
+
+    expect(workflowService.catalogDraftQueue()).toHaveLength(1);
+    expect(workflowService.catalogDraftQueue()[0].name).toBe('Propyl');
+    expect(workflowService.catalogCreateName()).toBe('Propyl 2');
+    expect(workflowService.catalogCreateSmiles()).toBe('CCC');
+    expect(workflowService.catalogCreateAnchorIndicesText()).toBe('');
+    expect(workflowService.catalogCreateCategoryKeys()).toEqual(['aromatic']);
+    expect(workflowService.catalogCreateSourceReference()).toBe('local-lab');
+  });
+
+  it('keeps the draft ready when defaults provide the next name after staging', () => {
     workflowService.categories.set([makeCategory()]);
     workflowService.catalogCreateName.set('Propyl');
     workflowService.catalogCreateSmiles.set('CCC');
@@ -462,10 +480,21 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateSmiles.set('NON');
     workflowService.catalogCreateAnchorIndicesText.set('1');
 
-    expect(workflowService.catalogDraftPreview().isReady).toBe(false);
+    expect(workflowService.catalogCreateName()).toBe('Substituent 1');
+    expect(workflowService.catalogDraftPreview().isReady).toBe(true);
     expect(workflowService.catalogDraftPreview().warnings).not.toContain(
       'Select at least one chemistry category.',
     );
+  });
+
+  it('shows missing-name error when staging a substituent without name', () => {
+    workflowService.catalogCreateSmiles.set('CCC');
+    workflowService.catalogCreateAnchorIndicesText.set('2');
+
+    workflowService.stageCurrentCatalogDraft();
+
+    expect(workflowService.errorMessage()).toBe('Substituent name is required.');
+    expect(workflowService.catalogDraftQueue()).toHaveLength(0);
   });
 
   it('allows saving catalog draft without selecting a chemistry category', () => {
@@ -480,7 +509,7 @@ describe('SmileitWorkflowService', () => {
     expect(currentPreview.categoryNames).toEqual(['Uncategorized']);
   });
 
-  it('clones queued metadata to quickly create a new SMILES variant', () => {
+  it('clones queued metadata creating a new queued draft with incremental susN suffix', () => {
     workflowService.catalogDraftQueue.set([
       {
         id: 'catalog-draft-1',
@@ -495,16 +524,45 @@ describe('SmileitWorkflowService', () => {
 
     workflowService.cloneQueuedCatalogDraft('catalog-draft-1');
 
-    expect(workflowService.catalogDraftQueue()).toHaveLength(1);
-    expect(workflowService.catalogCreateName()).toBe('Propyl');
+    expect(workflowService.catalogDraftQueue()).toHaveLength(2);
+    expect(workflowService.catalogDraftQueue()[1].name).toBe('Propyl_sus2');
+    expect(workflowService.catalogCreateName()).toBe('Propyl_sus2');
     expect(workflowService.catalogCreateSmiles()).toBe('CCC');
     expect(workflowService.catalogCreateAnchorIndicesText()).toBe('2');
     expect(workflowService.catalogCreateCategoryKeys()).toEqual(['aromatic']);
   });
 
-  it('saves queued catalog SMILES drafts sequentially', () => {
-    const firstResponse: SmileitCatalogEntryView[] = [makeCatalogEntry()];
-    const secondResponse: SmileitCatalogEntryView[] = [
+  it('increments susN suffix when cloning a draft that already has clone variants', () => {
+    workflowService.catalogDraftQueue.set([
+      {
+        id: 'catalog-draft-1',
+        name: 'Catecol',
+        smiles: 'CCC',
+        anchorAtomIndices: [2],
+        categoryKeys: ['aromatic'],
+        categoryNames: ['Aromatic'],
+        sourceReference: 'local-lab',
+      },
+      {
+        id: 'catalog-draft-2',
+        name: 'Catecol_sus2',
+        smiles: 'CCC',
+        anchorAtomIndices: [3],
+        categoryKeys: ['aromatic'],
+        categoryNames: ['Aromatic'],
+        sourceReference: 'local-lab',
+      },
+    ]);
+
+    workflowService.cloneQueuedCatalogDraft('catalog-draft-2');
+
+    expect(workflowService.catalogDraftQueue()).toHaveLength(3);
+    expect(workflowService.catalogDraftQueue()[2].name).toBe('Catecol_sus3');
+    expect(workflowService.catalogCreateName()).toBe('Catecol_sus3');
+  });
+
+  it('saves only the current catalog draft in immediate-save mode', () => {
+    const creationResponse: SmileitCatalogEntryView[] = [
       makeCatalogEntry(),
       {
         ...makeCatalogEntry(),
@@ -517,9 +575,7 @@ describe('SmileitWorkflowService', () => {
       },
     ];
 
-    jobsApiServiceMock.createSmileitCatalogEntry
-      .mockReturnValueOnce(of(firstResponse))
-      .mockReturnValueOnce(of(secondResponse));
+    jobsApiServiceMock.createSmileitCatalogEntry.mockReturnValueOnce(of(creationResponse));
 
     workflowService.catalogDraftQueue.set([
       {
@@ -540,16 +596,8 @@ describe('SmileitWorkflowService', () => {
 
     workflowService.createCatalogEntry();
 
-    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledTimes(2);
-    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenNthCalledWith(1, {
-      name: 'Ethyl',
-      smiles: 'CC',
-      anchorAtomIndices: [0],
-      categoryKeys: ['aromatic'],
-      sourceReference: 'local-lab',
-      provenanceMetadata: {},
-    });
-    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenNthCalledWith(2, {
+    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledTimes(1);
+    expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledWith({
       name: 'Propyl',
       smiles: 'CCC',
       anchorAtomIndices: [2],
@@ -558,7 +606,7 @@ describe('SmileitWorkflowService', () => {
       provenanceMetadata: {},
     });
     expect(workflowService.catalogDraftQueue()).toEqual([]);
-    expect(workflowService.catalogEntries()).toEqual(secondResponse);
+    expect(workflowService.catalogEntries()).toEqual(creationResponse);
   });
 
   it('builds deduplicated selectable catalog candidates for a block', () => {

@@ -15,8 +15,8 @@
 
         @for (appItem of scientificApps; track appItem.key) {
         <article class="app-card" [class.is-disabled]="!appItem.available">
-            <h2>{{ appItem.title }}</h2>
-            <p>{{ appItem.description }}</p>
+            <h2> {{ appItem.title }} </h2>
+            <p> {{ appItem.description }}</p>
             @if (appItem.available) {
             <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
             } @else {

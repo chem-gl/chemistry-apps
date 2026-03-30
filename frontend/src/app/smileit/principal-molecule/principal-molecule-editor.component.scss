@@ -124,6 +124,17 @@ textarea:focus {
   gap: 0.5rem;
 }
 
+.sketch-validation-error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: #fff3f3;
+  border: 1px solid #f5c2c2;
+  border-radius: 10px;
+  color: #a33030;
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
 /* Indicador animado de carga mientras Ketcher inicializa */
 .ketcher-loading {
   position: absolute;

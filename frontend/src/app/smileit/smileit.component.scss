@@ -43,6 +43,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.catalog-overview-strip {
+  grid-row: auto;
+}
+
 .hero-card,
 .catalog-panel,
 .entry-panel,
@@ -85,31 +89,53 @@
   letter-spacing: 0.08em;
 }
 
-.workspace-grid {
-  grid-row: 2;
+.floating-workspace-shell {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+}
+
+.workspace-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
   align-items: start;
 }
 
-.catalog-panel {
-  grid-row: 3;
+.workspace-left-column,
+.workspace-right-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
 }
 
-.result-panel {
-  grid-row: 4;
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
 }
 
 .workspace-side-column {
   display: grid;
   gap: 1rem;
   align-content: start;
-  order: 1;
+  min-width: 0;
+}
+
+.workspace-main-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.inspection-floating-panel {
+  min-width: 0;
 }
 
 .library-panel {
-  order: 2;
+  order: 0;
 }
 
 .entry-panel {
@@ -385,6 +411,38 @@ select:focus {
   border-radius: 16px;
   background: #fff;
   padding: 0.75rem 0.85rem;
+  transition: opacity 0.18s ease, filter 0.18s ease;
+}
+
+.annotation-chip-hidden {
+  opacity: 0.38;
+  filter: grayscale(0.72);
+}
+
+.annotation-chip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.annotation-eye-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.25rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  border-radius: 6px;
+  opacity: 0.65;
+  transition: opacity 0.14s, background 0.14s;
+}
+
+.annotation-eye-btn:hover {
+  opacity: 1;
+  background: #edf5ef;
 }
 
 .annotation-chip strong,
@@ -395,7 +453,7 @@ select:focus {
 .annotation-type,
 .block-priority {
   display: inline-flex;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0;
   padding: 0.16rem 0.5rem;
   border-radius: 999px;
   background: #ebf4ee;
@@ -404,6 +462,10 @@ select:focus {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.block-priority {
+  margin-bottom: 0.35rem;
 }
 
 .svg-preview,
@@ -768,7 +830,7 @@ select:focus {
 .catalog-editor-layout {
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
   align-items: start;
   margin-top: 0.95rem;
 }
@@ -783,6 +845,55 @@ select:focus {
   border-radius: 18px;
   background: linear-gradient(180deg, #fcfefc 0%, #f7fbf8 100%);
   padding: 0.95rem;
+}
+
+.catalog-step-stack {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.catalog-name-section {
+  order: 1;
+}
+
+.catalog-smiles-section {
+  order: 2;
+}
+
+.anchor-selection-panel {
+  order: 3;
+}
+
+.catalog-category-panel {
+  order: 4;
+}
+
+.catalog-reference-section {
+  order: 5;
+}
+
+.catalog-inline-warnings {
+  order: 6;
+}
+
+.catalog-draft-actions,
+.catalog-editor-actions {
+  order: 7;
+}
+
+.catalog-step-card {
+  border: 1px solid #dfeae2;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.9rem;
+}
+
+.catalog-step-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .catalog-browser-panel {
@@ -800,11 +911,6 @@ select:focus {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.catalog-upper-section {
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid #e3ece5;
-}
-
 .catalog-metadata-grid {
   margin-top: 0.7rem;
 }
@@ -817,39 +923,35 @@ select:focus {
   margin-top: 0.7rem;
 }
 
+.catalog-name-grid,
+.catalog-reference-grid {
+  margin-top: 0.7rem;
+}
+
 .catalog-field-full {
   grid-column: span 2;
 }
 
 .catalog-category-panel {
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid #e3ece5;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
-.catalog-category-panel-inline {
-  margin-top: 0.85rem;
-}
-
-.catalog-batch-toolbar {
+.catalog-live-status {
   margin-top: 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  padding: 0.75rem 0.8rem;
+  border: 1px dashed #cfe0d5;
+  border-radius: 14px;
+  background: #f9fcfa;
 }
 
-.catalog-batch-toolbar .hint {
+.catalog-live-status .hint {
   margin: 0;
-  max-width: 46ch;
 }
 
-.catalog-batch-actions {
-  display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+.catalog-live-status .catalog-smiles {
+  margin: 0 0 0.35rem;
 }
 
 .catalog-ready-hint {
@@ -857,9 +959,12 @@ select:focus {
 }
 
 .anchor-selection-panel {
-  margin-top: 0.9rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid #e3ece5;
+  margin-top: 0;
+  padding-top: 0.9rem;
+}
+
+.catalog-empty-step {
+  margin: 0.7rem 0 0;
 }
 
 .queued-catalog-drafts {
@@ -972,11 +1077,36 @@ select:focus {
 
 .catalog-editor-actions {
   margin-top: 0.9rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.catalog-draft-actions {
+  margin-top: 0.15rem;
+  justify-content: flex-end;
+}
+
+.catalog-persist-actions {
+  margin-top: 0.8rem;
+  justify-content: flex-end;
+}
+
+.catalog-inline-warnings {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.catalog-sketch-validation-error {
+  width: 100%;
+  margin: 0;
+  font-size: 0.83rem;
+  font-weight: 600;
 }
 
 .catalog-preview-sidebar {
   margin-top: 0;
-  position: static;
+  position: sticky;
+  top: 1rem;
 }
 
 .catalog-preview-metadata {
@@ -2196,27 +2326,144 @@ select:focus {
 }
 
 @media (max-width: 1480px) {
-  .workspace-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
   .pattern-panel {
     grid-column: 1 / -1;
   }
 }
 
+@media (min-width: 1221px) {
+  .smileit-shell {
+    display: grid;
+    gap: 1.2rem;
+  }
+
+  .smileit-header {
+    grid-row: 1;
+  }
+
+  .floating-workspace-shell {
+    grid-row: 2;
+    display: grid;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .workspace-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .workspace-left-column {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+
+  .workspace-right-column {
+    grid-column: 2;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .workspace-right-column:first-of-type {
+    grid-row: 1;
+  }
+
+  .workspace-right-column:last-of-type {
+    grid-row: 2;
+  }
+
+  .workspace-side-column {
+    margin: 0;
+  }
+
+  .result-panel {
+    grid-row: 3;
+  }
+
+  .workspace-main-column {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .entry-panel,
+  .inspection-floating-panel {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .inspection-floating-panel {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+
+  .inspection-floating-panel .inspection-card {
+    position: static;
+    top: auto;
+    z-index: auto;
+    margin-top: 0;
+  }
+}
+
 @media (max-width: 1220px) {
+  .floating-workspace-shell {
+    display: grid;
+    gap: 1rem;
+  }
+
   .hero-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .workspace-grid {
+  .workspace-columns {
     grid-template-columns: 1fr;
   }
 
+  .workspace-main-column {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-left-column {
+    order: 1;
+  }
+
+  .workspace-right-column:first-of-type {
+    order: 2;
+  }
+
+  .workspace-right-column:last-of-type {
+    order: 3;
+  }
+
   .entry-panel,
-  .workspace-side-column {
+  .workspace-left-column,
+  .workspace-right-column,
+  .workspace-side-column,
+  .inspection-floating-panel,
+  .workspace-main-column {
     grid-column: auto;
+  }
+
+  .inspection-floating-panel {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+
+  .inspection-floating-panel .inspection-card {
+    position: static;
+    top: auto;
+    z-index: auto;
+    margin-top: 0.9rem;
   }
 }
 
@@ -2224,10 +2471,9 @@ select:focus {
   .hero-strip {
     grid-template-columns: 1fr;
   }
-
+}
 
 @media (max-width: 860px) {
-}
   .guided-action {
     align-items: flex-start;
   }
