@@ -13,7 +13,11 @@ import {
   SmileitJobResponseView,
   SmileitPatternEntryView,
 } from '../api/jobs-api.service';
+import { SmileitApiService } from '../api/smileit-api.service';
 import { SmileitAssignmentBlockDraft, SmileitWorkflowService } from './smileit-workflow.service';
+import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
+import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
+import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 
 function makeCatalogEntry(): SmileitCatalogEntryView {
   return {
@@ -242,6 +246,13 @@ describe('SmileitWorkflowService', () => {
           provide: JobsApiService,
           useValue: jobsApiServiceMock,
         },
+        {
+          provide: SmileitApiService,
+          useValue: jobsApiServiceMock,
+        },
+        SmileitWorkflowState,
+        SmileitCatalogWorkflowService,
+        SmileitBlockWorkflowService,
       ],
     });
 
@@ -309,7 +320,7 @@ describe('SmileitWorkflowService', () => {
   });
 
   it('loads catalog, categories and patterns together for the Smile-it workspace', () => {
-    workflowService.loadInitialData();
+    workflowService.catalog.loadInitialData();
 
     expect(jobsApiServiceMock.listSmileitCatalog).toHaveBeenCalledTimes(1);
     expect(jobsApiServiceMock.listSmileitCategories).toHaveBeenCalledTimes(1);
@@ -353,7 +364,7 @@ describe('SmileitWorkflowService', () => {
       },
     ]);
 
-    workflowService.addAssignmentBlock();
+    workflowService.blocks.addAssignmentBlock();
 
     expect(workflowService.assignmentBlocks()).toHaveLength(2);
     expect(workflowService.assignmentBlocks()[1].label).toBe('Block 2');
@@ -363,7 +374,7 @@ describe('SmileitWorkflowService', () => {
   it('initializes manual draft anchors as empty in newly created blocks', () => {
     workflowService.selectedAtomIndices.set([1, 2]);
 
-    workflowService.addAssignmentBlock();
+    workflowService.blocks.addAssignmentBlock();
 
     expect(workflowService.assignmentBlocks()).toHaveLength(1);
     expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('');
@@ -382,15 +393,15 @@ describe('SmileitWorkflowService', () => {
     jobsApiServiceMock.listSmileitCatalog.mockReturnValueOnce(of([editableEntry]));
     jobsApiServiceMock.updateSmileitCatalogEntry.mockReturnValueOnce(of([updatedEntry]));
 
-    workflowService.loadInitialData();
-    workflowService.beginCatalogEntryEdition(editableEntry);
+    workflowService.catalog.loadInitialData();
+    workflowService.catalog.beginCatalogEntryEdition(editableEntry);
     workflowService.catalogCreateName.set('Editable catalog v2');
     workflowService.catalogCreateSmiles.set('CC1CC1');
     workflowService.catalogCreateAnchorIndicesText.set('0');
     workflowService.catalogCreateCategoryKeys.set(['hydrophobic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
-    workflowService.createCatalogEntry();
+    workflowService.catalog.createCatalogEntry();
 
     expect(jobsApiServiceMock.updateSmileitCatalogEntry).toHaveBeenCalledWith(
       editableEntry.stable_id,
@@ -419,7 +430,7 @@ describe('SmileitWorkflowService', () => {
       },
     ]);
 
-    workflowService.applyCatalogEntryToManualDraft('block-1', catalogEntry);
+    workflowService.blocks.applyCatalogEntryToManualDraft('block-1', catalogEntry);
 
     expect(workflowService.assignmentBlocks()[0].draftManualName).toBe(catalogEntry.name);
     expect(workflowService.assignmentBlocks()[0].draftManualSmiles).toBe(catalogEntry.smiles);
@@ -438,7 +449,7 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateAnchorIndicesText.set('2');
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
 
-    workflowService.stageCurrentCatalogDraft();
+    workflowService.catalog.stageCurrentCatalogDraft();
 
     expect(workflowService.catalogDraftQueue()).toHaveLength(1);
     expect(workflowService.catalogDraftQueue()[0].smiles).toBe('CCC');
@@ -457,7 +468,7 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
-    workflowService.stageCurrentCatalogDraftAndPrepareNext();
+    workflowService.catalog.stageCurrentCatalogDraftAndPrepareNext();
 
     expect(workflowService.catalogDraftQueue()).toHaveLength(1);
     expect(workflowService.catalogDraftQueue()[0].name).toBe('Propyl');
@@ -476,7 +487,7 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
-    workflowService.stageCurrentCatalogDraft();
+    workflowService.catalog.stageCurrentCatalogDraft();
     workflowService.catalogCreateSmiles.set('NON');
     workflowService.catalogCreateAnchorIndicesText.set('1');
 
@@ -491,7 +502,7 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateSmiles.set('CCC');
     workflowService.catalogCreateAnchorIndicesText.set('2');
 
-    workflowService.stageCurrentCatalogDraft();
+    workflowService.catalog.stageCurrentCatalogDraft();
 
     expect(workflowService.errorMessage()).toBe('Substituent name is required.');
     expect(workflowService.catalogDraftQueue()).toHaveLength(0);
@@ -522,7 +533,7 @@ describe('SmileitWorkflowService', () => {
       },
     ]);
 
-    workflowService.cloneQueuedCatalogDraft('catalog-draft-1');
+    workflowService.catalog.cloneQueuedCatalogDraft('catalog-draft-1');
 
     expect(workflowService.catalogDraftQueue()).toHaveLength(2);
     expect(workflowService.catalogDraftQueue()[1].name).toBe('Propyl_sus2');
@@ -554,7 +565,7 @@ describe('SmileitWorkflowService', () => {
       },
     ]);
 
-    workflowService.cloneQueuedCatalogDraft('catalog-draft-2');
+    workflowService.catalog.cloneQueuedCatalogDraft('catalog-draft-2');
 
     expect(workflowService.catalogDraftQueue()).toHaveLength(3);
     expect(workflowService.catalogDraftQueue()[2].name).toBe('Catecol_sus3');
@@ -594,7 +605,7 @@ describe('SmileitWorkflowService', () => {
     workflowService.catalogCreateCategoryKeys.set(['aromatic']);
     workflowService.catalogCreateSourceReference.set('local-lab');
 
-    workflowService.createCatalogEntry();
+    workflowService.catalog.createCatalogEntry();
 
     expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledTimes(1);
     expect(jobsApiServiceMock.createSmileitCatalogEntry).toHaveBeenCalledWith({
@@ -619,7 +630,8 @@ describe('SmileitWorkflowService', () => {
       categoryKeys: ['aromatic'],
     };
 
-    const selectableEntries = workflowService.getSelectableCatalogEntriesForBlock(blockDraft);
+    const selectableEntries =
+      workflowService.blocks.getSelectableCatalogEntriesForBlock(blockDraft);
 
     expect(selectableEntries).toHaveLength(1);
     expect(selectableEntries[0].stable_id).toBe(catalogEntry.stable_id);
@@ -652,7 +664,7 @@ describe('SmileitWorkflowService', () => {
   });
 
   it('builds collapsed summary with selected sites and rendered structure counters', () => {
-    const summary = workflowService.getBlockCollapsedSummary(makeAssignmentBlock());
+    const summary = workflowService.blocks.getBlockCollapsedSummary(makeAssignmentBlock());
 
     expect(summary.selectedSitesLabel).toBe('1');
     expect(summary.categoriesLabel).toContain('aromatic');
@@ -675,7 +687,7 @@ describe('SmileitWorkflowService', () => {
       },
     ]);
 
-    workflowService.addManualSubstituentToBlock('block-1');
+    workflowService.blocks.addManualSubstituentToBlock('block-1');
 
     expect(workflowService.assignmentBlocks()[0].manualSubstituents).toHaveLength(1);
     expect(workflowService.assignmentBlocks()[0].manualSubstituents[0].categories).toEqual([

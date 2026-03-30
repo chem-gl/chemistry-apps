@@ -27,3 +27,6 @@
 - se debe verificar que todo este bien conectado y funcionando, continuamente verificar y eliminar cualquier código que no funcione o que no se integre correctamente, para mantener un proyecto limpio y funcional, eliminando cualquier codigo muerto o archivos que no se usen, y asegurando que todo el código que quede sea funcional y esté bien integrado en el proyecto
 
 - Tratar dentro de lo posible que los archivos cualquier archivo no mida mas de 400 lineas, si es necesario dividirlo en varios archivos para mantener la legibilidad y mantenibilidad del código.
+
+- Tratar como muy importante que los archivos de codigo tengan un tamaño aproximado de 200 - 400 lineas, aunque se necesite dividirlo en varios archivos para mantener la legibilidad y mantenibilidad del código, es importante no crear archivos con menos de 100 lineas, y como maximo 600 lineas, pero esto dedicado a casoso excepcionales, lo ideal es mantener los archivos entre 200 y 400 lineas, para asegurar que el código sea fácil de leer y mantener, los que son demasiado largos tienden a ser scss o html, pero si se puede dividir en componentes mas pequeños, es preferible hacerlo para mantener la claridad y organización del proyecto. pero codigo como python, typescript, etc, es importante mantenerlo entre 200 y 400 lineas para asegurar que sea fácil de leer y mantener.
+NUNCA superar las 600 lineas.
