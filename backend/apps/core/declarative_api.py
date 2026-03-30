@@ -279,9 +279,7 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
                 return Success(None)
             except Exception as exc_value:
                 return Failure(
-                    DomainError(
-                        f"Failed to dispatch job {self.job_id}: {exc_value}"
-                    )
+                    DomainError(f"Failed to dispatch job {self.job_id}: {exc_value}")
                 )
 
         return DeferredTask(dispatch_task)

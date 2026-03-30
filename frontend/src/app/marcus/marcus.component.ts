@@ -6,12 +6,14 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DownloadedReportFile, JobLogEntryView } from '../core/api/jobs-api.service';
+import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-marcus',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',
   styleUrl: './marcus.component.scss',
@@ -139,18 +141,6 @@ export class MarcusComponent implements OnInit, OnDestroy {
   }
 
   // ── Utilidades de plantilla ──────────────────────────────────────
-  logLevelClass(level: string): string {
-    const normalized: string = level.toLowerCase();
-    if (normalized.includes('error')) return 'log-level level-error';
-    if (normalized.includes('warn')) return 'log-level level-warning';
-    if (normalized.includes('debug')) return 'log-level level-debug';
-    return 'log-level level-info';
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return logEntry.payload !== null && logEntry.payload !== undefined;
-  }
-
   historicalStatusClass(status: string): string {
     const normalized: string = status.toLowerCase();
     if (normalized === 'completed') return 'status-completed';

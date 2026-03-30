@@ -564,8 +564,12 @@ textarea:focus {
 }
 
 @keyframes ketcher-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 .ketcher-loading-text {
@@ -658,4 +662,3 @@ textarea:focus {
   max-width: 100%;
   height: auto;
 }
-

@@ -73,9 +73,7 @@ export class ToxicityPropertiesWorkflowService implements OnDestroy {
       next: (validationResult: SmilesCompatibilityResultView) => {
         if (!validationResult.compatible) {
           this.activeSection.set('error');
-          this.errorMessage.set(
-            this.buildSmilesCompatibilityErrorMessage(validationResult),
-          );
+          this.errorMessage.set(this.buildSmilesCompatibilityErrorMessage(validationResult));
           return;
         }
 
@@ -116,7 +114,7 @@ export class ToxicityPropertiesWorkflowService implements OnDestroy {
               );
             },
           });
-        },
+      },
       error: (validationError: Error) => {
         this.activeSection.set('error');
         this.errorMessage.set(

@@ -11,12 +11,13 @@ import {
   EasyRateFileInspectionView,
   EasyRateInputFieldName,
   EasyRateInspectionExecutionView,
-  JobLogEntryView,
 } from '../core/api/jobs-api.service';
 import {
   EasyRateWorkflowService,
   SOLVENT_OPTIONS,
 } from '../core/application/easy-rate-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
@@ -27,7 +28,7 @@ interface EasyRateInputSlotView {
 
 @Component({
   selector: 'app-easy-rate',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [EasyRateWorkflowService],
   templateUrl: './easy-rate.component.html',
   styleUrl: './easy-rate.component.scss',
@@ -218,17 +219,6 @@ export class EasyRateComponent implements OnInit, OnDestroy {
     if (sizeBytes < 1024) return `${sizeBytes} B`;
     if (sizeBytes < 1_048_576) return `${(sizeBytes / 1024).toFixed(1)} KB`;
     return `${(sizeBytes / 1_048_576).toFixed(2)} MB`;
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    if (logLevel === 'error') return 'log-level level-error';
-    if (logLevel === 'warning') return 'log-level level-warning';
-    if (logLevel === 'debug') return 'log-level level-debug';
-    return 'log-level level-info';
   }
 
   historicalStatusClass(jobStatus: string): string {

@@ -1,0 +1,55 @@
+// http-backend-error.interceptor.spec.ts: Pruebas unitarias del interceptor que envía errores HTTP al modal global.
+
+import { HttpErrorResponse, HttpHandler, HttpRequest, HttpResponse } from '@angular/common/http';
+import { firstValueFrom, of, throwError } from 'rxjs';
+import { vi } from 'vitest';
+import { ErrorNotifierPort } from '../../application/errors/error-notifier.port';
+import { HttpBackendErrorInterceptor } from './http-backend-error.interceptor';
+
+describe('HttpBackendErrorInterceptor', () => {
+  it('forwards successful HTTP responses without calling notifier', async () => {
+    const notifier: ErrorNotifierPort = {
+      showError: () => {},
+      showMessage: () => {},
+      showHttpError: () => {},
+      dismiss: () => {},
+    };
+    const showHttpErrorSpy = vi.spyOn(notifier, 'showHttpError');
+
+    const interceptor = new HttpBackendErrorInterceptor(notifier);
+    const request = new HttpRequest('GET', '/api/jobs');
+    const handler: HttpHandler = {
+      handle: () => of(new HttpResponse({ status: 200, body: { ok: true } })),
+    };
+
+    await firstValueFrom(interceptor.intercept(request, handler));
+
+    expect(showHttpErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('sends HttpErrorResponse to notifier and rethrows', async () => {
+    const notifier: ErrorNotifierPort = {
+      showError: () => {},
+      showMessage: () => {},
+      showHttpError: () => {},
+      dismiss: () => {},
+    };
+    const showHttpErrorSpy = vi.spyOn(notifier, 'showHttpError');
+
+    const interceptor = new HttpBackendErrorInterceptor(notifier);
+    const request = new HttpRequest('GET', '/api/jobs');
+    const httpError = new HttpErrorResponse({
+      status: 502,
+      statusText: 'Bad Gateway',
+      error: { detail: 'Gateway timeout' },
+      url: '/api/jobs',
+    });
+
+    const handler: HttpHandler = {
+      handle: () => throwError(() => httpError),
+    };
+
+    await expect(firstValueFrom(interceptor.intercept(request, handler))).rejects.toBe(httpError);
+    expect(showHttpErrorSpy).toHaveBeenCalledWith(httpError);
+  });
+});

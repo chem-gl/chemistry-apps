@@ -15,8 +15,5 @@
     "index.html": "./index.html",
     "serve.json": "./serve.json"
   },
-  "entrypoints": [
-    "static/css/main.de62a271.css",
-    "static/js/main.9c6dddff.js"
-  ]
+  "entrypoints": ["static/css/main.de62a271.css", "static/js/main.9c6dddff.js"]
 }

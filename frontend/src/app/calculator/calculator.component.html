@@ -1,191 +1,193 @@
 <!-- calculator.component.html: Scientific calculator UI with async job lifecycle. -->
 <div class="calc-wrapper">
-    <h2 class="calc-title">Scientific Calculator</h2>
+  <h2 class="calc-title">Scientific Calculator</h2>
 
-    <section class="calc-form" aria-label="Calculation parameters">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="operand-a">Operand A</label>
-                <input id="operand-a" type="number" [ngModel]="firstOperand()"
-                    (ngModelChange)="firstOperand.set($event)" [disabled]="isProcessing()" placeholder="e.g. 5" />
-            </div>
+  <section class="calc-form" aria-label="Calculation parameters">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="operand-a">Operand A</label>
+        <input
+          id="operand-a"
+          type="number"
+          [ngModel]="firstOperand()"
+          (ngModelChange)="firstOperand.set($event)"
+          [disabled]="isProcessing()"
+          placeholder="e.g. 5"
+        />
+      </div>
 
-            <div class="form-group">
-                <label for="operation">Operation</label>
-                <select id="operation" [ngModel]="selectedOperation()" (ngModelChange)="selectedOperation.set($event)"
-                    [disabled]="isProcessing()">
-                    @for (op of operations; track op.value) {
-                    <option [value]="op.value">{{ op.label }}</option>
-                    }
-                </select>
-            </div>
+      <div class="form-group">
+        <label for="operation">Operation</label>
+        <select
+          id="operation"
+          [ngModel]="selectedOperation()"
+          (ngModelChange)="selectedOperation.set($event)"
+          [disabled]="isProcessing()"
+        >
+          @for (op of operations; track op.value) {
+            <option [value]="op.value">{{ op.label }}</option>
+          }
+        </select>
+      </div>
 
-            @if (requiresSecondOperand()) {
-            <div class="form-group">
-                <label for="operand-b">Operand B</label>
-                <input id="operand-b" type="number" [ngModel]="secondOperand()"
-                    (ngModelChange)="secondOperand.set($event)" [disabled]="isProcessing()" placeholder="e.g. 3" />
-            </div>
-            }
+      @if (requiresSecondOperand()) {
+        <div class="form-group">
+          <label for="operand-b">Operand B</label>
+          <input
+            id="operand-b"
+            type="number"
+            [ngModel]="secondOperand()"
+            (ngModelChange)="secondOperand.set($event)"
+            [disabled]="isProcessing()"
+            placeholder="e.g. 3"
+          />
         </div>
+      }
+    </div>
 
-        <button class="btn-primary" (click)="dispatch()" [disabled]="isProcessing()">
-            @if (isProcessing()) {
-            <span class="spinner" aria-hidden="true"></span> Processing...
-            } @else {
-            Calculate
-            }
-        </button>
-    </section>
+    <button class="btn-primary" (click)="dispatch()" [disabled]="isProcessing()">
+      @if (isProcessing()) {
+        <span class="spinner" aria-hidden="true"></span> Processing...
+      } @else {
+        Calculate
+      }
+    </button>
+  </section>
 
-    @if (activeSection() === 'dispatching') {
+  @if (activeSection() === 'dispatching') {
     <section class="calc-section" aria-live="polite">
-        <p class="status-text">Submitting job to server...</p>
+      <p class="status-text">Submitting job to server...</p>
     </section>
-    }
+  }
 
-    @if (jobLogs().length > 0) {
-    <section class="calc-section logs-section" aria-label="Job execution logs">
-        <h3 class="section-title">Execution Logs</h3>
-        <div class="logs-list">
-            @for (logEntry of jobLogs(); track logEntry.eventIndex) {
-            <article class="log-item">
-                <header class="log-header">
-                    <span class="log-level" [class]="logLevelClass(logEntry.level)">
-                        {{ logEntry.level }}
-                    </span>
-                    <span class="log-source">{{ logEntry.source }}</span>
-                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
-                </header>
-                <p class="log-message">{{ logEntry.message }}</p>
-                @if (hasPayload(logEntry)) {
-                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-                }
-            </article>
-            }
-        </div>
-    </section>
-    }
+  <app-job-logs-panel title="Execution Logs" [logs]="jobLogs()"></app-job-logs-panel>
 
-    @if (activeSection() === 'progress') {
+  @if (activeSection() === 'progress') {
     <section class="calc-section progress-section" aria-live="polite" aria-label="Job progress">
-        <h3 class="section-title">Job Progress <span class="job-id-badge">{{ currentJobId() }}</span></h3>
+      <h3 class="section-title">
+        Job Progress <span class="job-id-badge">{{ currentJobId() }}</span>
+      </h3>
 
-        <div class="stage-stepper" role="list">
-            @for (step of stageSteps; track step) {
-            <div class="stage-step" [class.step-done]="isStepDone(step)" [class.step-active]="isStepActive(step)"
-                role="listitem" [attr.aria-current]="isStepActive(step) ? 'step' : null">
-                <div class="step-dot"></div>
-                <span class="step-label">{{ stageLabel(step) }}</span>
-            </div>
-            }
-        </div>
+      <div class="stage-stepper" role="list">
+        @for (step of stageSteps; track step) {
+          <div
+            class="stage-step"
+            [class.step-done]="isStepDone(step)"
+            [class.step-active]="isStepActive(step)"
+            role="listitem"
+            [attr.aria-current]="isStepActive(step) ? 'step' : null"
+          >
+            <div class="step-dot"></div>
+            <span class="step-label">{{ stageLabel(step) }}</span>
+          </div>
+        }
+      </div>
 
-        <div class="progress-bar-container" role="progressbar" [attr.aria-valuenow]="progressPercentage()"
-            aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-bar-fill" [style.width.%]="progressPercentage()"></div>
-        </div>
-        <p class="progress-pct">{{ progressPercentage() }}%</p>
-        <p class="progress-message">{{ progressMessage() }}</p>
+      <app-job-progress-card
+        [jobId]="currentJobId()"
+        [progressPercentage]="progressPercentage()"
+        [progressMessage]="progressMessage()"
+        progressAriaLabel="Calculator job progress"
+      ></app-job-progress-card>
     </section>
-    }
+  }
 
-    @if (activeSection() === 'result') {
+  @if (activeSection() === 'result') {
     @if (lastResult(); as job) {
-    <section class="calc-section result-section" aria-label="Calculation result">
+      <section class="calc-section result-section" aria-label="Calculation result">
         <h3 class="section-title">Result</h3>
 
         <div class="result-value">{{ job.results?.final_result }}</div>
 
         <div class="result-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Operation</span>
+            <span class="meta-value">{{ job.results?.metadata?.operation_used }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Operand A</span>
+            <span class="meta-value">{{ job.results?.metadata?.operand_a }}</span>
+          </div>
+          @if (job.results?.metadata?.operand_b !== null) {
             <div class="meta-item">
-                <span class="meta-label">Operation</span>
-                <span class="meta-value">{{ job.results?.metadata?.operation_used }}</span>
+              <span class="meta-label">Operand B</span>
+              <span class="meta-value">{{ job.results?.metadata?.operand_b }}</span>
             </div>
-            <div class="meta-item">
-                <span class="meta-label">Operand A</span>
-                <span class="meta-value">{{ job.results?.metadata?.operand_a }}</span>
-            </div>
-            @if (job.results?.metadata?.operand_b !== null) {
-            <div class="meta-item">
-                <span class="meta-label">Operand B</span>
-                <span class="meta-value">{{ job.results?.metadata?.operand_b }}</span>
-            </div>
-            }
-            <div class="meta-item">
-                <span class="meta-label">Status</span>
-                <span class="meta-value badge-status">{{ job.status }}</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">Cache</span>
-                <span class="meta-value">{{ job.cache_hit ? 'Hit' : 'Miss' }}</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">Job ID</span>
-                <span class="meta-value mono">{{ job.id }}</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">Version</span>
-                <span class="meta-value mono">{{ job.algorithm_version }}</span>
-            </div>
+          }
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value badge-status">{{ job.status }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Cache</span>
+            <span class="meta-value">{{ job.cache_hit ? 'Hit' : 'Miss' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Job ID</span>
+            <span class="meta-value mono">{{ job.id }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Version</span>
+            <span class="meta-value mono">{{ job.algorithm_version }}</span>
+          </div>
         </div>
 
         <button class="btn-secondary" (click)="reset()">New operation</button>
-    </section>
+      </section>
     }
-    }
+  }
 
-    @if (activeSection() === 'error') {
+  @if (activeSection() === 'error') {
     <section class="calc-section error-section" role="alert" aria-label="Error">
-        <h3 class="section-title error-title">Error</h3>
-        <p class="error-message">{{ errorMessage() }}</p>
-        <button class="btn-secondary" (click)="reset()">Try again</button>
+      <h3 class="section-title error-title">Error</h3>
+      <p class="error-message">{{ errorMessage() }}</p>
+      <button class="btn-secondary" (click)="reset()">Try again</button>
     </section>
+  }
+
+  <section class="calc-section history-section" aria-label="Calculator job history">
+    <div class="history-header">
+      <h3 class="section-title">Result History</h3>
+      <button class="btn-secondary" (click)="loadHistory()" [disabled]="isHistoryLoading()">
+        {{ isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+      </button>
+    </div>
+
+    @if (historyJobs().length === 0) {
+      <p class="history-empty">No historical calculator jobs yet.</p>
+    } @else {
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Status</th>
+              <th>Operation</th>
+              <th>Updated</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (historyJob of historyJobs(); track historyJob.id) {
+              <tr>
+                <td class="meta-value mono">{{ historyJob.id }}</td>
+                <td>
+                  <span [class]="historicalStatusClass(historyJob.status)">
+                    {{ historyJob.status }}
+                  </span>
+                </td>
+                <td>{{ historicalOperationLabel(historyJob) }}</td>
+                <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                <td>
+                  <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                    Open result
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-
-    <section class="calc-section history-section" aria-label="Calculator job history">
-        <div class="history-header">
-            <h3 class="section-title">Result History</h3>
-            <button class="btn-secondary" (click)="loadHistory()" [disabled]="isHistoryLoading()">
-                {{ isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-            </button>
-        </div>
-
-        @if (historyJobs().length === 0) {
-        <p class="history-empty">No historical calculator jobs yet.</p>
-        } @else {
-        <div class="history-table-wrap">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Job ID</th>
-                        <th>Status</th>
-                        <th>Operation</th>
-                        <th>Updated</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (historyJob of historyJobs(); track historyJob.id) {
-                    <tr>
-                        <td class="meta-value mono">{{ historyJob.id }}</td>
-                        <td>
-                            <span [class]="historicalStatusClass(historyJob.status)">
-                                {{ historyJob.status }}
-                            </span>
-                        </td>
-                        <td>{{ historicalOperationLabel(historyJob) }}</td>
-                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                        <td>
-                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                                Open result
-                            </button>
-                        </td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        }
-    </section>
+  </section>
 </div>

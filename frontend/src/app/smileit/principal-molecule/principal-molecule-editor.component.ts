@@ -6,7 +6,6 @@ import {
   ElementRef,
   EventEmitter,
   Input,
-  OnDestroy,
   Output,
   ViewChild,
   inject,
@@ -14,6 +13,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { KetcherFrameService } from '../../core/application/ketcher-frame.service';
 
 @Component({
   selector: 'app-principal-molecule-editor',
@@ -22,8 +22,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   templateUrl: './principal-molecule-editor.component.html',
   styleUrl: './principal-molecule-editor.component.scss',
 })
-export class PrincipalMoleculeEditorComponent implements OnDestroy {
+export class PrincipalMoleculeEditorComponent {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly ketcherFrameService = inject(KetcherFrameService);
 
   @ViewChild('sketchModifierDialog')
   private sketchModifierDialogRef?: ElementRef<HTMLDialogElement>;
@@ -49,8 +50,6 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
   constructor() {
     this.ketcherPublicUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/ketcher/index.html');
   }
-
-  ngOnDestroy(): void {}
 
   onPrincipalSmilesChange(nextPrincipalSmiles: string): void {
     this.principalSmilesChange.emit(nextPrincipalSmiles);
@@ -172,7 +171,10 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
   }
 
   private async pushDraftToKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = await this.waitForKetcherApi();
+    const ketcherApi = await this.ketcherFrameService.waitForApi(
+      this.ketcherFrameRef?.nativeElement,
+      40,
+    );
     if (ketcherApi === null) {
       return;
     }
@@ -186,7 +188,10 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
   }
 
   private async pullDraftFromKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = await this.waitForKetcherApi();
+    const ketcherApi = await this.ketcherFrameService.waitForApi(
+      this.ketcherFrameRef?.nativeElement,
+      40,
+    );
     if (ketcherApi === null) {
       return;
     }
@@ -201,42 +206,13 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
     }
   }
 
-  private resolveKetcherApi(): KetcherApi | null {
-    const frameElement: HTMLIFrameElement | undefined = this.ketcherFrameRef?.nativeElement;
-    const frameWindow: (Window & { ketcher?: unknown }) | null | undefined =
-      frameElement?.contentWindow as (Window & { ketcher?: unknown }) | null | undefined;
-    const maybeKetcherApi: unknown = frameWindow?.ketcher;
-    if (
-      typeof maybeKetcherApi !== 'object' ||
-      maybeKetcherApi === null ||
-      !('getSmiles' in maybeKetcherApi) ||
-      !('setMolecule' in maybeKetcherApi)
-    ) {
-      return null;
-    }
-
-    return maybeKetcherApi as KetcherApi;
-  }
-
-  private async waitForKetcherApi(maxAttempts: number = 40): Promise<KetcherApi | null> {
-    for (let attempt: number = 0; attempt < maxAttempts; attempt++) {
-      const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
-      if (ketcherApi !== null) {
-        return ketcherApi;
-      }
-      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 50));
-    }
-
-    return null;
-  }
-
   private async ensureKetcherReady(): Promise<void> {
     if (this.isKetcherReady) {
       this.syncSketchLoadingVisibility();
       return;
     }
 
-    const api: KetcherApi | null = await this.waitForKetcherApi(120);
+    const api = await this.ketcherFrameService.waitForApi(this.ketcherFrameRef?.nativeElement, 120);
     if (api !== null) {
       this.isKetcherReady = true;
       this.syncSketchLoadingVisibility();
@@ -256,8 +232,3 @@ export class PrincipalMoleculeEditorComponent implements OnDestroy {
     }
   }
 }
-
-type KetcherApi = {
-  getSmiles: () => Promise<string>;
-  setMolecule: (molecule: string) => Promise<void>;
-};

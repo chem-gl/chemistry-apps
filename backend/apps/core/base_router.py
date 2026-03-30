@@ -98,7 +98,9 @@ class ScientificAppViewSetMixin:
         summary="Descargar Reporte CSV",
         description="Descarga CSV con resultados del job. Solo aplica para estado completed.",
         responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY, description="Archivo CSV."),
+            200: OpenApiResponse(
+                response=OpenApiTypes.BINARY, description="Archivo CSV."
+            ),
             404: OpenApiResponse(response=ErrorResponseSerializer),
             409: OpenApiResponse(response=ErrorResponseSerializer),
         },
@@ -137,7 +139,9 @@ class ScientificAppViewSetMixin:
             "resultados y eventos de ejecución."
         ),
         responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY, description="Log de auditoría."),
+            200: OpenApiResponse(
+                response=OpenApiTypes.BINARY, description="Log de auditoría."
+            ),
             404: OpenApiResponse(response=ErrorResponseSerializer),
         },
     )
@@ -170,7 +174,9 @@ class ScientificAppViewSetMixin:
             "Incluye parámetros de entrada y detalle del fallo."
         ),
         responses={
-            200: OpenApiResponse(response=OpenApiTypes.BINARY, description="Reporte de error."),
+            200: OpenApiResponse(
+                response=OpenApiTypes.BINARY, description="Reporte de error."
+            ),
             404: OpenApiResponse(response=ErrorResponseSerializer),
             409: OpenApiResponse(response=ErrorResponseSerializer),
         },

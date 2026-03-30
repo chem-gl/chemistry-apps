@@ -5,12 +5,14 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
+import { ScientificJobView } from '../core/api/jobs-api.service';
 import { RandomNumbersWorkflowService } from '../core/application/random-numbers-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-random-numbers',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [RandomNumbersWorkflowService],
   templateUrl: './random-numbers.component.html',
   styleUrl: './random-numbers.component.scss',
@@ -108,13 +110,5 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
       typeof resultsRecord.metadata === 'object' &&
       !Array.isArray(resultsRecord.metadata)
     );
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
   }
 }

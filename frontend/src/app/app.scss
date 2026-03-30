@@ -1,127 +1,119 @@
 :host {
-	--shell-bg: radial-gradient(circle at 12% 8%, #ffe9c9 0%, #fff6ea 32%, #eefcfa 76%);
-	--ink-strong: #183534;
-	--ink-soft: #476867;
-	--nav-border: #b4dbd6;
-	--nav-active-bg: #0f766e;
-	--nav-active-text: #f7fefc;
-	--surface: rgba(255, 255, 255, 0.82);
-	--surface-border: rgba(175, 214, 209, 0.75);
+  --shell-bg: radial-gradient(circle at 12% 8%, #ffe9c9 0%, #fff6ea 32%, #eefcfa 76%);
+  --ink-strong: #183534;
+  --ink-soft: #476867;
+  --nav-border: #b4dbd6;
+  --nav-active-bg: #0f766e;
+  --nav-active-text: #f7fefc;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-border: rgba(175, 214, 209, 0.75);
 
-	display: block;
-	min-height: 100vh;
-	background: var(--shell-bg);
-	color: var(--ink-strong);
-	font-family: 'Avenir Next', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  display: block;
+  min-height: 100vh;
+  background: var(--shell-bg);
+  color: var(--ink-strong);
+  font-family: 'Avenir Next', 'Trebuchet MS', 'Segoe UI', sans-serif;
 }
 
 .app-shell {
-	width: min(2120px, 94vw);
-	margin: 0 auto;
-	padding: 1rem 0 2rem;
-	display: grid;
-	gap: 1rem;
+  width: min(2120px, 94vw);
+  margin: 0 auto;
+  padding: 1rem 0 2rem;
+  display: grid;
+  gap: 1rem;
 }
 
 .top-bar {
-	border: 1px solid var(--surface-border);
-	border-radius: 18px;
-	padding: 0.9rem 1rem;
-	background: var(--surface);
-	backdrop-filter: blur(8px);
-	display: flex;
-	gap: 1rem;
-	justify-content: space-between;
-	align-items: center;
-	flex-wrap: wrap;
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .brand-kicker {
-	margin: 0;
-	color: #0f766e;
-	text-transform: uppercase;
-	letter-spacing: 0.09em;
-	font-weight: 700;
-	font-size: 0.72rem;
+  margin: 0;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  font-size: 0.72rem;
 }
 
 h1 {
-	margin: 0.15rem 0 0;
-	font-size: clamp(1.05rem, 2.4vw, 1.55rem);
+  margin: 0.15rem 0 0;
+  font-size: clamp(1.05rem, 2.4vw, 1.55rem);
 }
 
 .main-nav {
-	display: flex;
-	gap: 0.45rem;
-	flex-wrap: wrap;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .main-nav a {
-	text-decoration: none;
-	border: 1px solid var(--nav-border);
-	border-radius: 999px;
-	color: var(--ink-soft);
-	background: #fff;
-	padding: 0.42rem 0.82rem;
-	font-weight: 700;
-	font-size: 0.88rem;
-	transition:
-		transform 0.15s ease,
-		background 0.2s ease,
-		color 0.2s ease,
-		border-color 0.2s ease;
+  text-decoration: none;
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: #fff;
+  padding: 0.42rem 0.82rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .main-nav a:hover {
-	transform: translateY(-1px);
-	border-color: #4fa89f;
+  transform: translateY(-1px);
+  border-color: #4fa89f;
 }
 
 .main-nav a.is-active {
-	background: var(--nav-active-bg);
-	border-color: var(--nav-active-bg);
-	color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  border-color: var(--nav-active-bg);
+  color: var(--nav-active-text);
 }
 
 .content-shell {
-	border: 1px solid var(--surface-border);
-	border-radius: 20px;
-	padding: clamp(0.9rem, 2.4vw, 1.35rem);
-	background: var(--surface);
-	backdrop-filter: blur(4px);
-	min-height: 70vh;
-}
-
-.global-ketcher-preloader {
-	position: fixed;
-	top: -2500px;
-	left: -2500px;
-	width: 900px;
-	height: 600px;
-	visibility: hidden;
-	pointer-events: none;
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: clamp(0.9rem, 2.4vw, 1.35rem);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  min-height: 70vh;
 }
 
 @media (max-width: 720px) {
-	.app-shell {
-		width: 95vw;
-	}
+  .app-shell {
+    width: 95vw;
+  }
 
-	.top-bar {
-		border-radius: 14px;
-	}
+  .top-bar {
+    border-radius: 14px;
+  }
 
-	.main-nav {
-		width: 100%;
-	}
+  .main-nav {
+    width: 100%;
+  }
 
-	.main-nav a {
-		flex: 1;
-		text-align: center;
-	}
+  .main-nav a {
+    flex: 1;
+    text-align: center;
+  }
 
-	.content-shell {
-		border-radius: 14px;
-		min-height: 65vh;
-	}
+  .content-shell {
+    border-radius: 14px;
+    min-height: 65vh;
+  }
 }

@@ -21,11 +21,17 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 # módulo que pueda acceder al ORM o a la configuración de la app.
 django_asgi_app = get_asgi_application()
 
-from apps.core.routing import websocket_urlpatterns
+
+def _get_websocket_urlpatterns():
+    # Import tardío para preservar el orden de inicialización de Django/ORM.
+    from apps.core.routing import websocket_urlpatterns
+
+    return websocket_urlpatterns
+
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+        "websocket": AuthMiddlewareStack(URLRouter(_get_websocket_urlpatterns())),
     }
 )

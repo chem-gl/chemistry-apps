@@ -709,9 +709,7 @@ class JobViewSet(viewsets.ViewSet):
         url_path=CORE_JOBS_EVENTS_ROUTE_SUFFIX,
         renderer_classes=[ServerSentEventsRenderer],
     )
-    def events(
-        self, request: Request, id: str | None = None
-    ) -> StreamingHttpResponse:
+    def events(self, request: Request, id: str | None = None) -> StreamingHttpResponse:
         """Expone stream SSE de progreso del job con heartbeats de conexión."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
 

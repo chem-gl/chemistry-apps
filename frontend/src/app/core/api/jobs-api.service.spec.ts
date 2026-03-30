@@ -7,14 +7,14 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-    CalculatorJobResponse,
-    EasyRateJobResponse,
-    JobLogList,
-    JobProgressSnapshot,
-    ProgressStageEnum,
-    ScientificJob,
-    StatusEnum,
-    provideApi,
+  CalculatorJobResponse,
+  EasyRateJobResponse,
+  JobLogList,
+  JobProgressSnapshot,
+  ProgressStageEnum,
+  ScientificJob,
+  StatusEnum,
+  provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 

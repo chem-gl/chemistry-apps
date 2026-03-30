@@ -34,13 +34,27 @@ import {
   SmileitGeneratedStructureView,
   SmileitWorkflowService,
 } from '../core/application/smileit-workflow.service';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { PrincipalMoleculeEditorModule } from './principal-molecule/principal-molecule-editor.module';
 import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-viewer.module';
+import {
+  formatAtomIndices,
+  hasSameNumberSet,
+  parseAtomIndicesInput,
+  resolveValidAnchorSelection,
+  toggleAtomSelection,
+} from './smileit-atom-selection.utils';
 
 @Component({
   selector: 'app-smileit',
   standalone: true,
-  imports: [CommonModule, FormsModule, PrincipalMoleculeEditorModule, PrincipalSvgViewerModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PrincipalMoleculeEditorModule,
+    PrincipalSvgViewerModule,
+    JobProgressCardComponent,
+  ],
   providers: [SmileitWorkflowService],
   templateUrl: './smileit.component.html',
   styleUrl: './smileit.component.scss',
@@ -1065,11 +1079,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   catalogDraftAnchorIndices(): number[] {
-    return this.parseAtomIndicesInput(this.workflow.catalogCreateAnchorIndicesText()).slice(0, 1);
+    return parseAtomIndicesInput(this.workflow.catalogCreateAnchorIndicesText()).slice(0, 1);
   }
 
   manualDraftAnchorIndices(block: SmileitAssignmentBlockDraft): number[] {
-    return this.parseAtomIndicesInput(block.draftManualAnchorIndicesText);
+    return parseAtomIndicesInput(block.draftManualAnchorIndicesText);
   }
 
   manualDraftInspection(blockId: string): SmileitStructureInspectionView | null {
@@ -1082,7 +1096,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   toggleCatalogDraftAnchor(atomIndex: number): void {
     const nextAnchorIndices: number[] = [atomIndex];
-    this.workflow.catalogCreateAnchorIndicesText.set(this.formatAtomIndices(nextAnchorIndices));
+    this.workflow.catalogCreateAnchorIndicesText.set(formatAtomIndices(nextAnchorIndices));
   }
 
   toggleManualDraftAnchor(blockId: string, atomIndex: number): void {
@@ -1093,11 +1107,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const nextAnchorIndices: number[] = this.toggleAtomSelection(
+    const nextAnchorIndices: number[] = toggleAtomSelection(
       this.manualDraftAnchorIndices(blockDraft),
       atomIndex,
     );
-    this.workflow.updateBlockManualDraftAnchors(blockId, this.formatAtomIndices(nextAnchorIndices));
+    this.workflow.updateBlockManualDraftAnchors(blockId, formatAtomIndices(nextAnchorIndices));
   }
 
   onCatalogDraftSvgClick(mouseEvent: MouseEvent): void {
@@ -1619,14 +1633,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
       .join(' | ');
   }
 
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
-  }
-
   patternTypeLabel(patternType: string): string {
     if (patternType === 'toxicophore') {
       return 'Toxicophore';
@@ -1931,11 +1937,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
       validAtomIndices.has(atomIndex),
     );
 
-    if (this.hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
+    if (hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
       return;
     }
 
-    this.workflow.catalogCreateAnchorIndicesText.set(this.formatAtomIndices(nextAnchorIndices));
+    this.workflow.catalogCreateAnchorIndicesText.set(formatAtomIndices(nextAnchorIndices));
   }
 
   private ensureManualDefaultAnchorSelection(
@@ -1950,90 +1956,16 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
 
     const currentAnchorIndices: number[] = this.manualDraftAnchorIndices(blockDraft);
-    const nextAnchorIndices: number[] = this.resolveValidAnchorSelection(
+    const nextAnchorIndices: number[] = resolveValidAnchorSelection(
       currentAnchorIndices,
       inspectionResult,
     );
 
-    if (this.hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
+    if (hasSameNumberSet(currentAnchorIndices, nextAnchorIndices)) {
       return;
     }
 
-    this.workflow.updateBlockManualDraftAnchors(blockId, this.formatAtomIndices(nextAnchorIndices));
-  }
-
-  private resolveValidAnchorSelection(
-    currentAnchorIndices: number[],
-    inspectionResult: SmileitStructureInspectionView,
-  ): number[] {
-    const validAnchorIndices: number[] = this.normalizeAnchorIndices(
-      currentAnchorIndices.filter(
-        (atomIndex: number) => atomIndex >= 0 && atomIndex < inspectionResult.atomCount,
-      ),
-    );
-
-    if (validAnchorIndices.length > 0) {
-      return validAnchorIndices;
-    }
-
-    return this.resolveDefaultAnchorIndices(inspectionResult);
-  }
-
-  private resolveSingleValidAnchorSelection(
-    currentAnchorIndices: number[],
-    inspectionResult: SmileitStructureInspectionView,
-  ): number[] {
-    return this.resolveValidAnchorSelection(currentAnchorIndices, inspectionResult).slice(0, 1);
-  }
-
-  private resolveDefaultAnchorIndices(inspectionResult: SmileitStructureInspectionView): number[] {
-    const preferredAtomIndices: number[] = inspectionResult.atoms
-      .filter((atom) => atom.symbol.trim().toUpperCase() !== 'H')
-      .map((atom) => atom.index);
-
-    if (preferredAtomIndices.length > 0) {
-      return this.normalizeAnchorIndices(preferredAtomIndices);
-    }
-
-    return this.normalizeAnchorIndices(inspectionResult.atoms.map((atom) => atom.index));
-  }
-
-  private toggleAtomSelection(currentSelection: number[], atomIndex: number): number[] {
-    const isAlreadySelected: boolean = currentSelection.includes(atomIndex);
-    if (isAlreadySelected) {
-      return this.normalizeAnchorIndices(
-        currentSelection.filter((selectedAtomIndex: number) => selectedAtomIndex !== atomIndex),
-      );
-    }
-
-    return this.normalizeAnchorIndices([...currentSelection, atomIndex]);
-  }
-
-  private parseAtomIndicesInput(rawText: string): number[] {
-    const parsedValues: number[] = rawText
-      .split(',')
-      .map((part: string) => part.trim())
-      .filter((part: string) => part !== '')
-      .map((part: string) => Number(part))
-      .filter((value: number) => Number.isInteger(value) && value >= 0);
-
-    return this.normalizeAnchorIndices(parsedValues);
-  }
-
-  private normalizeAnchorIndices(anchorIndices: number[]): number[] {
-    return Array.from(new Set(anchorIndices)).sort((left: number, right: number) => left - right);
-  }
-
-  private formatAtomIndices(anchorIndices: number[]): string {
-    return anchorIndices.join(',');
-  }
-
-  private hasSameNumberSet(firstValues: number[], secondValues: number[]): boolean {
-    if (firstValues.length !== secondValues.length) {
-      return false;
-    }
-
-    return firstValues.every((value: number, index: number) => value === secondValues[index]);
+    this.workflow.updateBlockManualDraftAnchors(blockId, formatAtomIndices(nextAnchorIndices));
   }
 
   private setManualDraftInspection(
@@ -2716,4 +2648,3 @@ type CatalogKetcherApi = {
   getSmiles: () => Promise<string>;
   setMolecule: (molecule: string) => Promise<void>;
 };
-

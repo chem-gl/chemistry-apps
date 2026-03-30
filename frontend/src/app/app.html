@@ -1,26 +1,27 @@
 <div class="app-shell">
-    <header class="top-bar">
-        <div class="brand-block">
-            <p class="brand-kicker">Chemistry Apps</p>
-            <h1>Scientific Control Desk</h1>
-        </div>
+  <header class="top-bar">
+    <div class="brand-block">
+      <p class="brand-kicker">Chemistry Apps</p>
+      <h1>Scientific Control Desk</h1>
+    </div>
 
-        <nav class="main-nav" aria-label="Main navigation">
-            @for (navItem of primaryNavigationItems; track navItem.path) {
-            <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
-                [title]="navItem.hint">
-                {{ navItem.label }}
-            </a>
-            }
-        </nav>
-    </header>
+    <nav class="main-nav" aria-label="Main navigation">
+      @for (navItem of primaryNavigationItems; track navItem.path) {
+        <a
+          [routerLink]="navItem.path"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [title]="navItem.hint"
+        >
+          {{ navItem.label }}
+        </a>
+      }
+    </nav>
+  </header>
 
-    <main class="content-shell">
-        <router-outlet />
-    </main>
+  <main class="content-shell">
+    <router-outlet />
+  </main>
 </div>
 
-<!-- Precarga global de Ketcher al iniciar la app para reducir espera al abrir cualquier sketcher -->
-<div class="global-ketcher-preloader" aria-hidden="true">
-    <iframe [src]="ketcherGlobalPreloadUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
-</div>
+<app-global-error-modal />

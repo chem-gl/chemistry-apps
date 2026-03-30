@@ -1,0 +1,183 @@
+"""services/cache_operations.py: Estimación de tamaño y validación de caché.
+
+Funciones para estimar el tamaño de payloads JSON sin serializar,
+verificar la usabilidad de payloads cacheados por plugin, y
+persistir resultados en caché con trazabilidad de errores.
+"""
+
+from __future__ import annotations
+
+import logging
+
+from django.db import DatabaseError
+
+from ..models import ScientificJob
+from ..ports import (
+    CacheRepositoryPort,
+    JobLogPublisherPort,
+    JobProgressPublisherPort,
+    JobProgressUpdate,
+)
+from ..types import JSONMap
+from .config import get_result_cache_payload_limit_bytes
+from .log_helpers import publish_job_log
+
+logger = logging.getLogger(__name__)
+
+
+def estimate_json_payload_size_bytes(
+    payload: object,
+    limit_bytes: int,
+) -> int:
+    """Estima tamaño JSON del payload sin serializar el documento completo.
+
+    El cálculo es aproximado pero suficientemente estricto para cortar
+    temprano resultados gigantes y evitar desbordes en SQLite/debug SQL.
+    """
+    total_bytes: int = 0
+    pending_values: list[object] = [payload]
+    visited_containers: set[int] = set()
+
+    while len(pending_values) > 0:
+        current_value = pending_values.pop()
+
+        if isinstance(current_value, dict):
+            container_id = id(current_value)
+            if container_id in visited_containers:
+                continue
+            visited_containers.add(container_id)
+
+            total_bytes += 2
+            for dict_key, dict_value in current_value.items():
+                pending_values.append(str(dict_key))
+                pending_values.append(dict_value)
+        elif isinstance(current_value, list | tuple | set):
+            container_id = id(current_value)
+            if container_id in visited_containers:
+                continue
+            visited_containers.add(container_id)
+
+            total_bytes += 2
+            pending_values.extend(current_value)
+        else:
+            total_bytes += estimate_scalar_json_size_bytes(current_value)
+
+        if total_bytes > limit_bytes:
+            return total_bytes
+
+    return total_bytes
+
+
+def estimate_scalar_json_size_bytes(value: object) -> int:
+    """Estima el tamaño JSON de un valor escalar o fallback serializable."""
+    if value is None:
+        return 4
+    if isinstance(value, bool):
+        return 4 if value else 5
+    if isinstance(value, int | float):
+        return len(str(value))
+    if isinstance(value, str):
+        return len(value.encode("utf-8"))
+    return len(str(value).encode("utf-8"))
+
+
+def is_cache_payload_usable_for_plugin(
+    *,
+    plugin_name: str,
+    payload: JSONMap,
+) -> bool:
+    """Valida que un payload cacheado sea reutilizable por plugin.
+
+    Para `toxicity-properties` descartamos entradas degradadas donde todas
+    las filas tienen `error_message`, porque representan ejecuciones
+    fallidas o entornos no saludables que no deben propagarse por caché.
+    """
+    if plugin_name != "toxicity-properties":
+        return True
+
+    molecules_value: object | None = payload.get("molecules")
+    if not isinstance(molecules_value, list) or len(molecules_value) == 0:
+        return False
+
+    total_rows: int = len(molecules_value)
+    rows_with_errors: int = 0
+
+    for row_value in molecules_value:
+        if not isinstance(row_value, dict):
+            return False
+        row_error_message: object | None = row_value.get("error_message")
+        if isinstance(row_error_message, str) and row_error_message.strip() != "":
+            rows_with_errors += 1
+
+    return rows_with_errors < total_rows
+
+
+def persist_result_in_cache(
+    *,
+    job: ScientificJob,
+    result_payload: JSONMap,
+    cache_repository: CacheRepositoryPort,
+    progress_publisher: JobProgressPublisherPort,
+    log_publisher: JobLogPublisherPort,
+) -> None:
+    """Persiste el resultado exitoso en caché y publica trazabilidad."""
+    progress_publisher.publish(
+        job,
+        JobProgressUpdate(
+            percentage=80,
+            stage="caching",
+            message="Persistiendo resultado en caché.",
+        ),
+    )
+    publish_job_log(
+        job,
+        level="info",
+        source="core.cache",
+        message="Persistiendo resultado calculado en caché.",
+        log_publisher=log_publisher,
+    )
+
+    payload_limit_bytes: int = get_result_cache_payload_limit_bytes(job.plugin_name)
+    estimated_payload_bytes: int = estimate_json_payload_size_bytes(
+        result_payload,
+        payload_limit_bytes,
+    )
+    if estimated_payload_bytes > payload_limit_bytes:
+        publish_job_log(
+            job,
+            level="warning",
+            source="core.cache",
+            message="Se omite persistencia en caché por tamaño de resultado excesivo.",
+            payload={
+                "estimated_payload_bytes": estimated_payload_bytes,
+                "payload_limit_bytes": payload_limit_bytes,
+            },
+            log_publisher=log_publisher,
+        )
+        return
+
+    try:
+        cache_repository.store_cached_result(
+            job_hash=job.job_hash,
+            plugin_name=job.plugin_name,
+            algorithm_version=job.algorithm_version,
+            result_payload=result_payload,
+        )
+    except (
+        OverflowError,
+        DatabaseError,
+        MemoryError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        publish_job_log(
+            job,
+            level="warning",
+            source="core.cache",
+            message="Se omite persistencia en caché por error de almacenamiento.",
+            payload={
+                "error_type": exc.__class__.__name__,
+                "error": str(exc),
+            },
+            log_publisher=log_publisher,
+        )

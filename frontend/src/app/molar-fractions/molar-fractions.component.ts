@@ -5,19 +5,17 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  ScientificJobView,
-} from '../core/api/jobs-api.service';
+import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
 } from '../core/application/molar-fractions-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-molar-fractions',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
   styleUrl: './molar-fractions.component.scss',
@@ -76,14 +74,6 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
 
     const paramsRecord: { ph_mode?: unknown } = rawParameters as { ph_mode?: unknown };
     return typeof paramsRecord.ph_mode === 'string' ? paramsRecord.ph_mode : '-';
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
   }
 
   formatPh(row: MolarFractionsResultRow): string {

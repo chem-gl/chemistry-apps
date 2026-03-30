@@ -34,8 +34,8 @@ describe('App', () => {
     );
 
     expect(links).toContain('Jobs Monitor');
-    expect(links).toContain('Calculator');
-    expect(links).toContain('Random Numbers');
+    expect(links).toContain('Molar Fractions');
+    expect(links).toContain('Smileit');
     expect(links).toContain('Apps');
   });
 });

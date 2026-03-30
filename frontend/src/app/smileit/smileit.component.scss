@@ -406,12 +406,14 @@ select:focus {
 }
 
 .annotation-chip {
-  border: 1px solid color-mix(in srgb, var(--annotation-color) 40%, #d3dfd7);
+  border: 1px solid #d3dfd7;
   border-left: 6px solid var(--annotation-color);
   border-radius: 16px;
   background: #fff;
   padding: 0.75rem 0.85rem;
-  transition: opacity 0.18s ease, filter 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    filter 0.18s ease;
 }
 
 .annotation-chip-hidden {
@@ -437,7 +439,9 @@ select:focus {
   line-height: 1;
   border-radius: 6px;
   opacity: 0.65;
-  transition: opacity 0.14s, background 0.14s;
+  transition:
+    opacity 0.14s,
+    background 0.14s;
 }
 
 .annotation-eye-btn:hover {
@@ -1225,8 +1229,12 @@ select:focus {
 }
 
 @keyframes catalog-ketcher-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 .catalog-ketcher-loading-text {
@@ -1750,7 +1758,10 @@ select:focus {
   padding: 14px;
   flex-shrink: 0;
   pointer-events: none;
-  transition: width 0.2s, height 0.2s, transform 0.05s;
+  transition:
+    width 0.2s,
+    height 0.2s,
+    transform 0.05s;
 }
 
 .library-detail-svg svg {
@@ -1771,7 +1782,9 @@ select:focus {
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .zoom-btn:hover:not(:disabled) {

@@ -1,0 +1,39 @@
+<!-- global-error-modal.component.html: Modal de error global para fallos de backend o frontend. -->
+@if (errorModalService.currentError(); as errorViewModel) {
+  <div class="error-modal-backdrop" role="presentation" (click)="close()">
+    <section
+      class="error-modal-card"
+      role="alertdialog"
+      aria-modal="true"
+      [attr.aria-label]="errorViewModel.title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="error-modal-header">
+        <h3>{{ errorViewModel.title }}</h3>
+        <button
+          type="button"
+          class="error-modal-close-button"
+          (click)="close()"
+          aria-label="Close error modal"
+        >
+          ×
+        </button>
+      </header>
+
+      <p class="error-modal-message">{{ errorViewModel.message }}</p>
+
+      @if (errorViewModel.details !== null) {
+        <details class="error-modal-details">
+          <summary>View technical details</summary>
+          <pre>{{ errorViewModel.details }}</pre>
+        </details>
+      }
+
+      <footer class="error-modal-footer">
+        <button type="button" class="error-modal-confirm-button" (click)="close()">
+          Understood
+        </button>
+      </footer>
+    </section>
+  </div>
+}

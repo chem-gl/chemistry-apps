@@ -19,18 +19,20 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
   DownloadedReportFile,
-  JobLogEntryView,
   JobsApiService,
   SaScoreMethod,
   SaScoreMoleculeResultView,
   ScientificJobView,
 } from '../core/api/jobs-api.service';
+import { KetcherFrameService } from '../core/application/ketcher-frame.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-sa-score',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [SaScoreWorkflowService],
   templateUrl: './sa-score.component.html',
   styleUrl: './sa-score.component.scss',
@@ -40,6 +42,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly jobsApi = inject(JobsApiService);
+  private readonly ketcherFrameService = inject(KetcherFrameService);
   private routeSubscription: Subscription | null = null;
 
   // ---------------------------------------------------------------------------
@@ -173,14 +176,6 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     this.exportMethodCsv(exportTarget);
   }
 
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
-  }
-
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
   }
@@ -262,7 +257,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
 
   /** Aplica el SMILES del sketcher: intenta leerlo de Ketcher (con polling), si no usa el textarea. */
   async applySketch(): Promise<void> {
-    const api: KetcherApi | null = await this.waitForKetcherApi();
+    const api = await this.ketcherFrameService.waitForApi(this.ketcherFrameRef?.nativeElement);
     if (api !== null) {
       try {
         const ketcherSmiles: string = await api.getSmiles();
@@ -287,39 +282,13 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     this.closeSketchDialog();
   }
 
-  /**
-   * Espera hasta que el objeto `ketcher` esté disponible en el contentWindow del iframe.
-   * Ketcher inicializa de forma asíncrona después del evento load, por lo que se usa
-   * un polling de hasta 20 intentos (1 segundo total) antes de rendirse.
-   */
-  private async waitForKetcherApi(maxAttempts: number = 20): Promise<KetcherApi | null> {
-    const iframe: HTMLIFrameElement | undefined = this.ketcherFrameRef?.nativeElement;
-    if (iframe === undefined) {
-      return null;
-    }
-    for (let attempt: number = 0; attempt < maxAttempts; attempt++) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const win: any = iframe.contentWindow;
-        const api = win?.['ketcher'] as KetcherApi | undefined;
-        if (api !== undefined) {
-          return api;
-        }
-      } catch {
-        // Protección cross-origin: si falla, continuar intentando
-      }
-      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 50));
-    }
-    return null;
-  }
-
   private async ensureKetcherReady(): Promise<void> {
     if (this.isKetcherReady) {
       this.syncSketchLoadingVisibility();
       return;
     }
 
-    const api: KetcherApi | null = await this.waitForKetcherApi(120);
+    const api = await this.ketcherFrameService.waitForApi(this.ketcherFrameRef?.nativeElement, 120);
     if (api !== null) {
       this.isKetcherReady = true;
       this.syncSketchLoadingVisibility();
@@ -431,11 +400,6 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(objectUrl);
   }
 }
-
-type KetcherApi = {
-  getSmiles: () => Promise<string>;
-  setMolecule: (molecule: string) => Promise<void>;
-};
 
 type ExportTarget = 'all' | SaScoreMethod;
 

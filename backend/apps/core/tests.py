@@ -589,7 +589,9 @@ class JobApiTests(TestCase):
             "parameters": {"op": "add", "a": 8, "b": 5},
         }
 
-        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch(
+            "apps.core.routers.viewset.dispatch_scientific_job"
+        ) as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post("/api/jobs/", payload, format="json")
             self.assertEqual(create_response.status_code, 201)
@@ -654,7 +656,9 @@ class JobApiTests(TestCase):
             "parameters": {"op": "add", "a": 1, "b": 2},
         }
 
-        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch(
+            "apps.core.routers.viewset.dispatch_scientific_job"
+        ) as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post("/api/jobs", payload, format="json")
 
@@ -674,7 +678,9 @@ class JobApiTests(TestCase):
             "parameters": {"op": "add", "a": 2, "b": 3},
         }
 
-        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch(
+            "apps.core.routers.viewset.dispatch_scientific_job"
+        ) as dispatch_mock:
             dispatch_mock.return_value = False
             create_response = self.client.post("/api/jobs/", payload, format="json")
 
@@ -842,7 +848,9 @@ class JobApiTests(TestCase):
             progress_event_index=2,
         )
 
-        with patch("apps.core.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch(
+            "apps.core.routers.viewset.dispatch_scientific_job"
+        ) as dispatch_mock:
             dispatch_mock.return_value = True
             response = self.client.post(f"/api/jobs/{job.id}/resume/")
 

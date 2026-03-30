@@ -5,19 +5,17 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  ScientificJobView,
-} from '../core/api/jobs-api.service';
+import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   TunnelResultData,
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',
@@ -56,14 +54,6 @@ export class TunnelComponent implements OnInit, OnDestroy {
 
   openHistoricalJob(jobId: string): void {
     this.workflow.openHistoricalJob(jobId);
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
   }
 
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {

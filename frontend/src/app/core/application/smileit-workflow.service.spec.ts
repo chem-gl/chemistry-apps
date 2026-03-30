@@ -684,5 +684,4 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('');
     expect(workflowService.errorMessage()).toBeNull();
   });
-
 });

@@ -4,45 +4,44 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('smileit', '0001_initial'),
+        ("smileit", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='smileitcategory',
-            new_name='smileit_smi_key_21b494_idx',
-            old_name='smileit_cat_key_latest_idx',
+            model_name="smileitcategory",
+            new_name="smileit_smi_key_21b494_idx",
+            old_name="smileit_cat_key_latest_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitcategory',
-            new_name='smileit_smi_is_acti_d158a2_idx',
-            old_name='smileit_cat_active_idx',
+            model_name="smileitcategory",
+            new_name="smileit_smi_is_acti_d158a2_idx",
+            old_name="smileit_cat_active_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitpattern',
-            new_name='smileit_smi_pattern_ac82b2_idx',
-            old_name='smileit_pat_type_active_idx',
+            model_name="smileitpattern",
+            new_name="smileit_smi_pattern_ac82b2_idx",
+            old_name="smileit_pat_type_active_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitpattern',
-            new_name='smileit_smi_stable__b7616f_idx',
-            old_name='smileit_pat_stable_latest_idx',
+            model_name="smileitpattern",
+            new_name="smileit_smi_stable__b7616f_idx",
+            old_name="smileit_pat_stable_latest_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitsubstituent',
-            new_name='smileit_smi_stable__4c424c_idx',
-            old_name='smileit_sub_stable_latest_idx',
+            model_name="smileitsubstituent",
+            new_name="smileit_smi_stable__4c424c_idx",
+            old_name="smileit_sub_stable_latest_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitsubstituent',
-            new_name='smileit_smi_is_acti_1329c4_idx',
-            old_name='smileit_sub_active_idx',
+            model_name="smileitsubstituent",
+            new_name="smileit_smi_is_acti_1329c4_idx",
+            old_name="smileit_sub_active_idx",
         ),
         migrations.RenameIndex(
-            model_name='smileitsubstituentcategory',
-            new_name='smileit_smi_categor_ed1cde_idx',
-            old_name='smileit_sub_cat_idx',
+            model_name="smileitsubstituentcategory",
+            new_name="smileit_smi_categor_ed1cde_idx",
+            old_name="smileit_sub_cat_idx",
         ),
     ]

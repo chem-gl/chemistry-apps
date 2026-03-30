@@ -110,7 +110,9 @@ def build_job_log_report(
         )
 
     lines.extend(["", "=== LOG EVENTS ==="])
-    job_log_events = ScientificJobLogEvent.objects.filter(job=job).order_by("event_index")
+    job_log_events = ScientificJobLogEvent.objects.filter(job=job).order_by(
+        "event_index"
+    )
     if not job_log_events.exists():
         lines.append("No hay eventos de log persistidos para este job.")
     else:

@@ -1,253 +1,272 @@
 <!-- toxicity-properties.component.html: Interfaz de Toxicity Properties con sketch,
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
 <section class="toxicity-shell" aria-label="Toxicity properties scientific app">
-    <header class="toxicity-header">
-        <p class="eyebrow">Toxicity Properties</p>
-        <h2>Toxicity Properties Table</h2>
-        <p>
-            Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of SMILES
-        </p>
-    </header>
+  <header class="toxicity-header">
+    <p class="eyebrow">Toxicity Properties</p>
+    <h2>Toxicity Properties Table</h2>
+    <p>
+      Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of
+      SMILES
+    </p>
+  </header>
 
-    <div class="workspace-grid">
-        <section class="entry-panel" aria-label="Input parameters">
-            <h3>Input</h3>
+  <div class="workspace-grid">
+    <section class="entry-panel" aria-label="Input parameters">
+      <h3>Input</h3>
 
-            <label class="smiles-label">
-                SMILES list (one per line)
-                <textarea rows="10" [ngModel]="workflow.smilesInput()"
-                    (ngModelChange)="workflow.smilesInput.set($event)" [disabled]="workflow.isProcessing()"
-                    ></textarea>
-            </label>
-            <p class="hint">Detected rows: {{ lineCount() }}</p>
+      <label class="smiles-label">
+        SMILES list (one per line)
+        <textarea
+          rows="10"
+          [ngModel]="workflow.smilesInput()"
+          (ngModelChange)="workflow.smilesInput.set($event)"
+          [disabled]="workflow.isProcessing()"
+        ></textarea>
+      </label>
+      <p class="hint">Detected rows: {{ lineCount() }}</p>
 
-            <div class="input-tools-row">
-                <button class="btn-tool" type="button" (click)="openSketchDialog()" [disabled]="workflow.isProcessing()"
-                    title="Draw a molecule with Ketcher and add it to the list">
-                    ✏ Draw SMILES
-                </button>
+      <div class="input-tools-row">
+        <button
+          class="btn-tool"
+          type="button"
+          (click)="openSketchDialog()"
+          [disabled]="workflow.isProcessing()"
+          title="Draw a molecule with Ketcher and add it to the list"
+        >
+          ✏ Draw SMILES
+        </button>
 
-                <label class="btn-tool file-upload-label" [class.disabled]="workflow.isProcessing()"
-                    title="Upload a .smi or .txt file with one SMILES per line">
-                    ↑ Upload file
-                    <input type="file" accept=".smi,.txt" class="file-input-hidden" [disabled]="workflow.isProcessing()"
-                        (change)="onFileUpload($event)" />
-                </label>
-            </div>
+        <label
+          class="btn-tool file-upload-label"
+          [class.disabled]="workflow.isProcessing()"
+          title="Upload a .smi or .txt file with one SMILES per line"
+        >
+          ↑ Upload file
+          <input
+            type="file"
+            accept=".smi,.txt"
+            class="file-input-hidden"
+            [disabled]="workflow.isProcessing()"
+            (change)="onFileUpload($event)"
+          />
+        </label>
+      </div>
 
-            <div class="action-row">
-                <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
-                    {{ workflow.isProcessing() ? 'Processing...' : 'Run Toxicity Properties' }}
-                </button>
-                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-                    Reset
-                </button>
-            </div>
+      <div class="action-row">
+        <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+          {{ workflow.isProcessing() ? 'Processing...' : 'Run Toxicity Properties' }}
+        </button>
+        <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <section class="result-panel" aria-label="Results and progress">
+      <h3>Results</h3>
+
+      @if (workflow.activeSection() === 'dispatching') {
+        <p class="status-message">Submitting toxicity job to backend...</p>
+      }
+
+      @if (workflow.activeSection() === 'progress') {
+        <app-job-progress-card
+          [jobId]="workflow.currentJobId()"
+          [progressPercentage]="workflow.progressPercentage()"
+          [progressMessage]="workflow.progressMessage()"
+          progressAriaLabel="Toxicity job progress"
+        ></app-job-progress-card>
+      }
+
+      @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+        <div class="metadata-grid">
+          <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
+          <p><strong>Model:</strong> ADMET-AI</p>
+          <p>
+            <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
+          </p>
+        </div>
+
+        <div class="action-row export-row">
+          <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+            {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+          </button>
+        </div>
+
+        @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+          <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+        }
+
+        <div class="table-wrap">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>SMILES</th>
+                <th>LD50_mgkg</th>
+                <th>mutagenicity</th>
+                <th>ames_score</th>
+                <th>DevTox</th>
+                <th>devtox_score</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
+                <tr>
+                  <td>
+                    <button
+                      class="smiles-cell-btn"
+                      type="button"
+                      (click)="openMoleculeImageModal(molecule.smiles)"
+                      title="Click to view molecule structure"
+                    >
+                      {{ molecule.smiles }}
+                    </button>
+                  </td>
+                  <td>{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
+                  <td>{{ molecule.mutagenicity ?? '-' }}</td>
+                  <td>{{ formatDecimal(molecule.ames_score, 4) }}</td>
+                  <td>{{ molecule.DevTox ?? '-' }}</td>
+                  <td>{{ formatDecimal(molecule.devtox_score, 4) }}</td>
+                </tr>
+                @if (rowHasError(molecule)) {
+                  <tr>
+                    <td colspan="6">
+                      <p class="row-error">{{ molecule.error_message }}</p>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <section class="references-card" aria-label="Scientific references">
+          <h4>Scientific references</h4>
+          <div class="references-list">
+            @for (referenceItem of resultData.scientificReferences; track referenceItem) {
+              <p>{{ referenceItem }}</p>
+            }
+          </div>
         </section>
+      }
 
-        <section class="result-panel" aria-label="Results and progress">
-            <h3>Results</h3>
+      @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+        <p class="error-message" role="alert">{{ currentError }}</p>
+      }
+    </section>
+  </div>
 
-            @if (workflow.activeSection() === 'dispatching') {
-            <p class="status-message">Submitting toxicity job to backend...</p>
-            }
+  <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-            @if (workflow.activeSection() === 'progress') {
-            <div class="progress-card" aria-live="polite">
-                <p class="job-id">{{ workflow.currentJobId() }}</p>
-                <div class="progress-track" role="progressbar" aria-label="Toxicity job progress"
-                    [attr.aria-valuenow]="workflow.progressPercentage()" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
-                </div>
-                <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
-                <p class="progress-message">{{ workflow.progressMessage() }}</p>
-            </div>
-            }
-
-            @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-            <div class="metadata-grid">
-                <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
-                <p><strong>Model:</strong> ADMET-AI</p>
-                <p><strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span></p>
-            </div>
-
-            <div class="action-row export-row">
-                <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-                    {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-                </button>
-            </div>
-
-            @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-            <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-            }
-
-            <div class="table-wrap">
-                <table class="result-table">
-                    <thead>
-                        <tr>
-                            <th>SMILES</th>
-                            <th>LD50_mgkg</th>
-                            <th>mutagenicity</th>
-                            <th>ames_score</th>
-                            <th>DevTox</th>
-                            <th>devtox_score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
-                        <tr>
-                            <td>
-                                <button class="smiles-cell-btn" type="button"
-                                    (click)="openMoleculeImageModal(molecule.smiles)"
-                                    title="Click to view molecule structure">
-                                    {{ molecule.smiles }}
-                                </button>
-                            </td>
-                            <td>{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
-                            <td>{{ molecule.mutagenicity ?? '-' }}</td>
-                            <td>{{ formatDecimal(molecule.ames_score, 4) }}</td>
-                            <td>{{ molecule.DevTox ?? '-' }}</td>
-                            <td>{{ formatDecimal(molecule.devtox_score, 4) }}</td>
-                        </tr>
-                        @if (rowHasError(molecule)) {
-                        <tr>
-                            <td colspan="6">
-                                <p class="row-error">{{ molecule.error_message }}</p>
-                            </td>
-                        </tr>
-                        }
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <section class="references-card" aria-label="Scientific references">
-                <h4>Scientific references</h4>
-                <div class="references-list">
-                    @for (referenceItem of resultData.scientificReferences; track referenceItem) {
-                    <p>{{ referenceItem }}</p>
-                    }
-                </div>
-            </section>
-            }
-
-            @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-            <p class="error-message" role="alert">{{ currentError }}</p>
-            }
-        </section>
+  <section class="history-card" aria-label="Historical toxicity jobs">
+    <div class="history-header">
+      <h3>History</h3>
+      <button
+        class="btn-secondary"
+        (click)="workflow.loadHistory()"
+        [disabled]="workflow.isHistoryLoading()"
+      >
+        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+      </button>
     </div>
 
-    @if (workflow.jobLogs().length > 0) {
-    <section class="logs-card" aria-label="Execution logs">
-        <h3>Execution logs</h3>
-        <div class="logs-list">
-            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
-            <article class="log-item">
-                <header class="log-header">
-                    <span class="log-level" [class]="logLevelClass(logEntry.level)">
-                        {{ logEntry.level }}
-                    </span>
-                    <span class="log-source">{{ logEntry.source }}</span>
-                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
-                </header>
-                <p class="log-message">{{ logEntry.message }}</p>
-                @if (hasPayload(logEntry)) {
-                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-                }
-            </article>
+    @if (workflow.historyJobs().length === 0) {
+      <p class="status-message">No historical toxicity jobs yet.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+              <tr>
+                <td class="mono">{{ historyJob.id }}</td>
+                <td>
+                  <span [class]="historicalStatusClass(historyJob.status)">{{
+                    historyJob.status
+                  }}</span>
+                </td>
+                <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                <td>
+                  <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                    Open
+                  </button>
+                </td>
+              </tr>
             }
-        </div>
-    </section>
+          </tbody>
+        </table>
+      </div>
     }
-
-    <section class="history-card" aria-label="Historical toxicity jobs">
-        <div class="history-header">
-            <h3>History</h3>
-            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-            </button>
-        </div>
-
-        @if (workflow.historyJobs().length === 0) {
-        <p class="status-message">No historical toxicity jobs yet.</p>
-        } @else {
-        <div class="table-wrap">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Job ID</th>
-                        <th>Status</th>
-                        <th>Updated</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-                    <tr>
-                        <td class="mono">{{ historyJob.id }}</td>
-                        <td>
-                            <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-                        </td>
-                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                        <td>
-                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                                Open
-                            </button>
-                        </td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        }
-    </section>
+  </section>
 </section>
 
 <dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)">
-    <section class="sketch-modal" role="document" aria-label="Draw SMILES with Ketcher">
-        <h4>Draw SMILES</h4>
-        <p class="hint">Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.</p>
+  <section class="sketch-modal" role="document" aria-label="Draw SMILES with Ketcher">
+    <h4>Draw SMILES</h4>
+    <p class="hint">
+      Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.
+    </p>
 
-        <div class="ketcher-frame-wrap">
-            @if (isSketchDialogLoading()) {
-            <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
-                <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-                <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-            </div>
-            }
-            <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
-                (load)="onKetcherFrameLoaded()"></iframe>
+    <div class="ketcher-frame-wrap">
+      @if (isSketchDialogLoading()) {
+        <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
+          <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
+          <p class="ketcher-loading-text">Loading molecule sketcher…</p>
         </div>
+      }
+      <iframe
+        #ketcherFrame
+        class="ketcher-frame"
+        [src]="ketcherPublicUrl"
+        title="Ketcher SMILES sketcher"
+        (load)="onKetcherFrameLoaded()"
+      ></iframe>
+    </div>
 
-        <div class="sketch-modal-actions">
-            <button class="btn-secondary" type="button" (click)="closeSketchDialog()">Cancel</button>
-            <button class="btn-primary" type="button" (click)="applySketch()">Add to list</button>
-        </div>
-    </section>
+    <div class="sketch-modal-actions">
+      <button class="btn-secondary" type="button" (click)="closeSketchDialog()">Cancel</button>
+      <button class="btn-primary" type="button" (click)="applySketch()">Add to list</button>
+    </div>
+  </section>
 </dialog>
 
-<dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)">
-    <section class="molecule-image-modal" role="document" aria-label="Molecule structure">
-        <div class="molecule-image-header">
-            <h4>Molecule structure</h4>
-            <button class="close-btn" type="button" (click)="closeMoleculeImageModal()"
-                aria-label="Close molecule image">
-                ✕
-            </button>
-        </div>
+<dialog
+  #moleculeImageDialog
+  class="molecule-image-dialog"
+  (click)="onMoleculeImageDialogBackdropClick($event)"
+>
+  <section class="molecule-image-modal" role="document" aria-label="Molecule structure">
+    <div class="molecule-image-header">
+      <h4>Molecule structure</h4>
+      <button
+        class="close-btn"
+        type="button"
+        (click)="closeMoleculeImageModal()"
+        aria-label="Close molecule image"
+      >
+        ✕
+      </button>
+    </div>
 
-        <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
+    <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
 
-        @if (isLoadingMoleculeImage()) {
-        <p class="status-message">Loading structure...</p>
-        } @else if (moleculeImageError(); as imgError) {
-        <p class="error-message" role="alert">{{ imgError }}</p>
-        } @else if (moleculeModalSvg(); as svgContent) {
-        <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
-        }
-    </section>
+    @if (isLoadingMoleculeImage()) {
+      <p class="status-message">Loading structure...</p>
+    } @else if (moleculeImageError(); as imgError) {
+      <p class="error-message" role="alert">{{ imgError }}</p>
+    } @else if (moleculeModalSvg(); as svgContent) {
+      <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
+    }
+  </section>
 </dialog>
 <!-- Precarga de Ketcher: el iframe inicia la descarga al montar la página para que el sketcher abra al instante -->
 <div class="ketcher-preloader" aria-hidden="true">
-    <iframe [src]="ketcherPublicUrl" title="" tabindex="-1" aria-hidden="true" (load)="onKetcherFrameLoaded()"></iframe>
+  <iframe [src]="ketcherPublicUrl" title="" tabindex="-1" aria-hidden="true"></iframe>
 </div>

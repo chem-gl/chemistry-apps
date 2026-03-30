@@ -1,0 +1,37 @@
+/* job-progress-card.component.scss: Estilos compartidos de la tarjeta de progreso. */
+
+.progress-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id {
+  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.8rem;
+  color: #2b5954;
+  word-break: break-all;
+  margin: 0;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #e3efee;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f8f84, #0f6a61);
+}
+
+.progress-pct {
+  margin: 0;
+  font-weight: 700;
+  color: #145f57;
+}
+
+.progress-message {
+  margin: 0;
+  color: #4d7570;
+}
