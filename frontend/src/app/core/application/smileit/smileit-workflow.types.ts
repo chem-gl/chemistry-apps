@@ -38,7 +38,7 @@ export interface SmileitGeneratedStructureView {
 }
 
 /** Borrador de sustituyente manual para un bloque de asignación. */
-export interface SmileitManualSubstituentDraft extends SmileitManualSubstituentParams {}
+export type SmileitManualSubstituentDraft = SmileitManualSubstituentParams;
 
 /** Borrador de un bloque de asignación con sus referencias de catálogo y sustituyentes manuales. */
 export interface SmileitAssignmentBlockDraft {

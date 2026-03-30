@@ -23,7 +23,7 @@ describe('KetcherFrameService', () => {
     const iframeElement = document.createElement('iframe');
     const ketcherApi = {
       getSmiles: async () => 'CCO',
-      setMolecule: async (_molecule: string) => {},
+      setMolecule: async () => {},
     };
 
     Object.defineProperty(iframeElement, 'contentWindow', {
@@ -40,7 +40,7 @@ describe('KetcherFrameService', () => {
     const iframeElement = document.createElement('iframe');
     const ketcherApi = {
       getSmiles: async () => 'NCCO',
-      setMolecule: async (_molecule: string) => {},
+      setMolecule: async () => {},
     };
 
     Object.defineProperty(iframeElement, 'contentWindow', {

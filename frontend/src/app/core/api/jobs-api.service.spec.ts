@@ -181,6 +181,8 @@ describe('JobsApiService', () => {
       onclose: null,
     };
     class MockWebSocket {
+      static latestInstance: MockWebSocket | null = null;
+
       readyState: number = 1;
       close = vi.fn();
       onmessage: ((event: MessageEvent<string>) => void) | null = null;
@@ -189,9 +191,43 @@ describe('JobsApiService', () => {
 
       constructor(url: string) {
         capturedWebSocketUrls.push(url);
-        mockSocketInstance = this;
+        MockWebSocket.latestInstance = this;
       }
     }
+
+    mockSocketInstance = {
+      get readyState(): number {
+        return MockWebSocket.latestInstance?.readyState ?? 1;
+      },
+      close: vi.fn(() => {
+        MockWebSocket.latestInstance?.close();
+      }),
+      get onmessage(): ((event: MessageEvent<string>) => void) | null {
+        return MockWebSocket.latestInstance?.onmessage ?? null;
+      },
+      set onmessage(nextHandler: ((event: MessageEvent<string>) => void) | null) {
+        if (MockWebSocket.latestInstance !== null) {
+          MockWebSocket.latestInstance.onmessage = nextHandler;
+        }
+      },
+      get onerror(): (() => void) | null {
+        return MockWebSocket.latestInstance?.onerror ?? null;
+      },
+      set onerror(nextHandler: (() => void) | null) {
+        if (MockWebSocket.latestInstance !== null) {
+          MockWebSocket.latestInstance.onerror = nextHandler;
+        }
+      },
+      get onclose(): (() => void) | null {
+        return MockWebSocket.latestInstance?.onclose ?? null;
+      },
+      set onclose(nextHandler: (() => void) | null) {
+        if (MockWebSocket.latestInstance !== null) {
+          MockWebSocket.latestInstance.onclose = nextHandler;
+        }
+      },
+    };
+
     Object.defineProperty(globalThis, 'WebSocket', {
       value: MockWebSocket,
       writable: true,

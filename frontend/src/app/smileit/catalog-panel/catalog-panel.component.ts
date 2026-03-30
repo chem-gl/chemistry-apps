@@ -149,7 +149,11 @@ export class CatalogPanelComponent implements OnDestroy {
       return;
     }
     if (dialog.open) {
-      typeof dialog.close === 'function' ? dialog.close() : dialog.removeAttribute('open');
+      if (typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
     }
     if (typeof dialog.showModal === 'function') {
       try {
@@ -171,7 +175,11 @@ export class CatalogPanelComponent implements OnDestroy {
       return;
     }
     if (dialog.open) {
-      typeof dialog.close === 'function' ? dialog.close() : dialog.removeAttribute('open');
+      if (typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
       return;
     }
     dialog.removeAttribute('open');

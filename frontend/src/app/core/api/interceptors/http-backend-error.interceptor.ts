@@ -7,7 +7,7 @@ import {
   HttpInterceptor,
   HttpRequest,
 } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import {
   ERROR_NOTIFIER_PORT,
@@ -16,7 +16,7 @@ import {
 
 @Injectable()
 export class HttpBackendErrorInterceptor implements HttpInterceptor {
-  constructor(@Inject(ERROR_NOTIFIER_PORT) private readonly errorNotifier: ErrorNotifierPort) {}
+  private readonly errorNotifier: ErrorNotifierPort = inject(ERROR_NOTIFIER_PORT);
 
   intercept(httpRequest: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     return next.handle(httpRequest).pipe(
