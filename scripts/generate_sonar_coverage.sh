@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# generate_sonar_coverage.sh: Genera reportes de lint y cobertura para backend/frontend con rutas compatibles con Sonar.
+# Produce artefactos versionables en backend/ y frontend/coverage/ para análisis posterior en SonarQube o SonarCloud.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+BACKEND_DIR="${REPO_ROOT}/backend"
+FRONTEND_DIR="${REPO_ROOT}/frontend"
+
+require_file() {
+  local target_path="$1"
+  if [[ ! -e "${target_path}" ]]; then
+    echo "Falta el recurso requerido: ${target_path}" >&2
+    exit 1
+  fi
+}
+
+require_directory() {
+  local target_path="$1"
+  if [[ ! -d "${target_path}" ]]; then
+    echo "Falta el directorio requerido: ${target_path}" >&2
+    exit 1
+  fi
+}
+
+generate_backend_reports() {
+  echo "[backend] Generando ruff.json y coverage.xml..."
+  require_directory "${BACKEND_DIR}"
+  require_file "${BACKEND_DIR}/venv/bin/python"
+  require_file "${BACKEND_DIR}/venv/bin/ruff"
+
+  pushd "${BACKEND_DIR}" >/dev/null
+  ./venv/bin/python -m pip show pytest-cov >/dev/null 2>&1 || {
+    echo "pytest-cov no está instalado en backend/venv. Ejecuta './venv/bin/python -m pip install pytest-cov' o reinstala requirements." >&2
+    exit 1
+  }
+
+  ./venv/bin/ruff check . --output-format=sarif > ruff.json
+  ./venv/bin/python -m pytest --cov=. --cov-report=xml
+  popd >/dev/null
+}
+
+generate_frontend_reports() {
+  echo "[frontend] Generando eslint.json y cobertura Sonar..."
+  require_directory "${FRONTEND_DIR}"
+  require_file "${FRONTEND_DIR}/package.json"
+  require_directory "${FRONTEND_DIR}/node_modules"
+
+  pushd "${FRONTEND_DIR}" >/dev/null
+  npx eslint . -f json -o eslint.json
+  npm test -- --watch=false --coverage
+  popd >/dev/null
+
+  node "${SCRIPT_DIR}/convert_frontend_coverage_to_sonar.mjs" \
+    "${FRONTEND_DIR}/coverage/frontend/coverage-final.json" \
+    "${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml" \
+    "${REPO_ROOT}"
+}
+
+run_sonar_scanner_if_available() {
+  if command -v sonar-scanner >/dev/null 2>&1; then
+    echo
+    echo "[sonar] Ejecutando sonar-scanner..."
+    # Workaround estable: analizar en un staging temporal para evitar rutas
+    # con permisos restringidos (p. ej. .docker/* gestionado por contenedores).
+    local sonar_staging_dir
+    sonar_staging_dir="$(mktemp -d "${REPO_ROOT}/.sonar-staging.XXXXXX")"
+
+    cleanup_sonar_staging() {
+      rm -rf "${sonar_staging_dir}"
+    }
+
+    trap cleanup_sonar_staging EXIT
+
+    rsync -a \
+      --exclude '.git/' \
+      --exclude '.docker/' \
+      --exclude '.scannerwork/' \
+      --exclude 'backend/venv/' \
+      --exclude 'backend/media/' \
+      --exclude 'frontend/node_modules/' \
+      --exclude 'frontend/dist/' \
+      --exclude 'frontend/coverage/' \
+      --exclude 'backend/__pycache__/' \
+      "${REPO_ROOT}/" "${sonar_staging_dir}/"
+
+    mkdir -p "${sonar_staging_dir}/frontend/coverage/frontend"
+    cp -f "${BACKEND_DIR}/ruff.json" "${sonar_staging_dir}/backend/ruff.json"
+    cp -f "${BACKEND_DIR}/coverage.xml" "${sonar_staging_dir}/backend/coverage.xml"
+    cp -f "${FRONTEND_DIR}/eslint.json" "${sonar_staging_dir}/frontend/eslint.json"
+    cp -f \
+      "${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml" \
+      "${sonar_staging_dir}/frontend/coverage/frontend/sonar-generic-coverage.xml"
+
+    pushd "${sonar_staging_dir}" >/dev/null
+    sonar-scanner
+    popd >/dev/null
+
+    cleanup_sonar_staging
+    trap - EXIT
+    return
+  fi
+
+  echo
+  echo "[sonar] sonar-scanner no está instalado; se omite el análisis automático."
+}
+
+main() {
+  generate_backend_reports
+  generate_frontend_reports
+
+  echo
+  echo "Reportes generados correctamente:"
+  echo "- ${BACKEND_DIR}/ruff.json"
+  echo "- ${BACKEND_DIR}/coverage.xml"
+  echo "- ${FRONTEND_DIR}/eslint.json"
+  echo "- ${FRONTEND_DIR}/coverage/frontend/coverage-final.json"
+  echo "- ${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml"
+
+  run_sonar_scanner_if_available
+}
+
+main "$@"

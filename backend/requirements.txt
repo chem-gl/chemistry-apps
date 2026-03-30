@@ -135,6 +135,7 @@ Pygments==2.19.2
 pyOpenSSL==25.3.0
 pyparsing==3.3.2
 pytest==9.0.2
+pytest-cov==6.2.1
 python-dateutil==2.9.0.post0
 pytokens==0.4.1
 pytorch-lightning==2.6.1

@@ -1,9 +1,13 @@
 // http-backend-error.interceptor.spec.ts: Pruebas unitarias del interceptor que envía errores HTTP al modal global.
 
 import { HttpErrorResponse, HttpHandler, HttpRequest, HttpResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
-import { ErrorNotifierPort } from '../../application/errors/error-notifier.port';
+import {
+  ERROR_NOTIFIER_PORT,
+  ErrorNotifierPort,
+} from '../../application/errors/error-notifier.port';
 import { HttpBackendErrorInterceptor } from './http-backend-error.interceptor';
 
 describe('HttpBackendErrorInterceptor', () => {
@@ -16,7 +20,11 @@ describe('HttpBackendErrorInterceptor', () => {
     };
     const showHttpErrorSpy = vi.spyOn(notifier, 'showHttpError');
 
-    const interceptor = new HttpBackendErrorInterceptor(notifier);
+    TestBed.configureTestingModule({
+      providers: [{ provide: ERROR_NOTIFIER_PORT, useValue: notifier }],
+    });
+
+    const interceptor = TestBed.runInInjectionContext(() => new HttpBackendErrorInterceptor());
     const request = new HttpRequest('GET', '/api/jobs');
     const handler: HttpHandler = {
       handle: () => of(new HttpResponse({ status: 200, body: { ok: true } })),
@@ -36,7 +44,11 @@ describe('HttpBackendErrorInterceptor', () => {
     };
     const showHttpErrorSpy = vi.spyOn(notifier, 'showHttpError');
 
-    const interceptor = new HttpBackendErrorInterceptor(notifier);
+    TestBed.configureTestingModule({
+      providers: [{ provide: ERROR_NOTIFIER_PORT, useValue: notifier }],
+    });
+
+    const interceptor = TestBed.runInInjectionContext(() => new HttpBackendErrorInterceptor());
     const request = new HttpRequest('GET', '/api/jobs');
     const httpError = new HttpErrorResponse({
       status: 502,

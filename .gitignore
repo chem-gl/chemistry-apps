@@ -12,3 +12,6 @@ deprecated/Smile-it/smile-generator/
 # Runtime-generated state files.
 backend/dump.rdb
 backend/celerybeat-schedule
+
+# Sonar local configuration may contain machine/local secrets.
+sonar-project.properties
