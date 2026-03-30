@@ -1,83 +1,292 @@
----
-applyTo: "frontend/src/**/*.{ts,html,scss}"
----
 
-Para el front end es escencial sismpre tener para todos los componetes separada la logica en sus archivos components .ts y la parte visual en sus archivos .html y .scss, esto es para mantener una buena organizacion del codigo y facilitar su mantenimiento. Ademas, es importante seguir las buenas practicas de Angular para asegurar que el codigo sea escalable y facil de entender para otros desarrolladores. asi como sus test de ser necesarios
+## applyTo: "frontend/src/**/*.{ts,html,scss}"
 
-se debe tener todo bien documentado y siempre separar la logica de negocio fuera en una capa de serivios separados de los controladores y componentes, esto es para mantener una buena organizacion del codigo y facilitar su mantenimiento. Ademas, es importante seguir las buenas practicas de Angular para asegurar que el codigo sea escalable y facil de entender para otros desarrolladores. asi como sus test de ser necesarios
-
-# Frontend OpenAPI Integration Instructions
-
-Estas reglas son obligatorias cuando el backend cambie contratos, especialmente al integrar una nueva app científica.
-
-## 1. Ubicación y manejo de código generado
-
-- Los contratos generados desde OpenAPI deben ubicarse exclusivamente en frontend/src/app/core/api/generated/.
-- Bajo ninguna circunstancia se debe editar manualmente el código autogenerado en ese directorio.
-- Cualquier ajuste debe propagarse regenerando desde la fuente OpenAPI del backend.
-
-## 2. Generación y scripts
-
-- Usar scripts npm existentes en frontend/package.json para generación de cliente.
-- Si falta script, agregarlo en package.json (ejemplo: npm run api:generate).
-- No ejecutar flujos manuales dispersos fuera de scripts versionados.
-
-## 3. Wrappers obligatorios
-
-- Proteger el contrato generado con wrappers en frontend/src/app/core/api/.
-- Los componentes visuales y servicios de dominio no deben depender directamente de generated/.
-- Mapear modelos generados a modelos locales cuando ayude a estabilidad semántica.
-
-## 4. Configuración de base URL
-
-- No hardcodear URLs de backend en componentes o servicios.
-- Usar environments y constantes compartidas para API base URL.
-- La URL base debe ser reutilizable tanto por wrappers como por cliente autogenerado.
-
-## 5. Angular moderno y plantillas limpias
-
-- Usar operadores de control de flujo modernos de Angular (@if, @for, etc.) para evitar duplicación.
-- Mantener strict mode de TypeScript y tipado estricto de respuestas OpenAPI.
-- Priorizar compatibilidad con versión actual de Angular.
-
-## 6. Validación después de nueva app científica
-
-Cuando se conecte una nueva app científica en backend:
-
-1. regenerar schema OpenAPI
-2. regenerar cliente frontend
-3. adaptar wrappers de frontend
-4. verificar build/test del frontend
-
-Referencia de proceso backend:
-
-- consultar .github/instructions/scientific-app-onboarding.instructions.md
-
-# 🧠 GUÍA DE ESTILO PARA AGENTE (GENERACIÓN DE CÓDIGO)
+# 🧠 GUÍA INTEGRAL FRONTEND (ANGULAR + TYPESCRIPT MODERNO)
 
 ## 🎯 OBJETIVO
 
-El agente debe generar código que sea:
+El agente debe generar código:
 
-- legible
-- tipado estrictamente
-- consistente
-- mantenible
-- moderno (Angular + TS actual)
+* legible
+* tipado estrictamente
+* consistente
+* mantenible
+* alineado con Angular moderno
 
 ---
 
-# 1. ESTILO GENERAL DE CÓDIGO
+# 1. ARQUITECTURA Y ORGANIZACIÓN
 
-## 1.1 Código SIEMPRE explícito
+## 1.1 Separación de responsabilidades
 
-### ❌ PROHIBIDO
+* Cada componente debe tener:
+
+  * `.ts` → lógica
+  * `.html` → vista
+  * `.scss` → estilos
+
+* PROHIBIDO mezclar lógica en templates
+
+---
+
+## 1.2 Capas obligatorias
+
+* Componentes → UI únicamente
+* Servicios → lógica de negocio
+* API layer → comunicación externa
+
+---
+
+## 1.3 Servicios
+
+* Toda lógica de negocio debe vivir en servicios
+* Los componentes NO deben contener lógica compleja
+* Uso obligatorio de inyección de dependencias
+
+---
+
+## 1.4 Tests
+
+* Agregar tests cuando:
+
+  * haya lógica de negocio
+  * transformación de datos
+  * integración con APIs
+
+---
+
+## 1.5 Documentación
+
+* Funciones públicas deben documentarse
+* El código debe ser autoexplicativo
+
+---
+
+## 1.6 Tamaño de archivos (REGLA ESTRICTA)
+
+* Tamaño ideal: **300–400 líneas**
+* Mínimo recomendado: **100 líneas**
+* Máximo permitido: **600 líneas**
+
+Reglas:
+
+* PROHIBIDO exceder 600 líneas
+* EVITAR archivos menores a 100 líneas (sobre-modularización)
+* Si un archivo crece:
+
+  * dividir en componentes
+  * extraer servicios
+  * crear utilidades reutilizables
+* Si un archivo es demasiado pequeño:
+
+  * evaluar fusión lógica con módulos relacionados
+
+---
+
+# 2. PRINCIPIOS DE DISEÑO
+
+## 2.1 Principio de Liskov (LSP)
+
+* Una clase hija debe poder sustituir a su clase padre sin romper el sistema
+* No alterar contratos esperados
+* No introducir comportamientos inesperados
+
+---
+
+## 2.2 Modularización
+
+El agente debe diseñar sistemas:
+
+* desacoplados
+* cohesivos
+* reutilizables
+
+---
+
+## 2.3 Arquitectura en capas
+
+Separación clara:
+
+* presentación → componentes
+* dominio → servicios
+* infraestructura → API / adaptadores
+
+---
+
+## 2.4 Patrón MVC (adaptado a Angular)
+
+* Model → interfaces / tipos
+* View → templates (.html)
+* Controller → componente (.ts)
+* Services → lógica real (fuera del controller)
+
+---
+
+# 3. INTEGRACIÓN OPENAPI
+
+## 3.1 Código generado
+
+* Ubicación obligatoria:
+
+  ```
+  frontend/src/app/core/api/generated/
+  ```
+
+* PROHIBIDO editar código generado manualmente
+
+---
+
+## 3.2 Generación
+
+* Usar scripts de `package.json`
+
+* Si no existe:
+
+  * crear `npm run api:generate`
+
+* PROHIBIDO procesos manuales fuera de scripts
+
+---
+
+## 3.3 Wrappers
+
+* Ubicación:
+
+  ```
+  frontend/src/app/core/api/
+  ```
+
+* Reglas:
+
+  * Nunca usar `generated/` directamente
+  * Mapear modelos a modelos internos
+
+---
+
+## 3.4 Configuración
+
+* PROHIBIDO hardcodear URLs
+* Usar:
+
+  * environments
+  * constantes compartidas
+
+---
+
+## 3.5 Flujo backend
+
+1. regenerar OpenAPI
+2. regenerar cliente
+3. actualizar wrappers
+4. validar build + tests
+
+---
+
+# 4. ANGULAR MODERNO (2024–2026)
+
+El agente DEBE usar las prácticas modernas:
+
+## 4.1 Standalone-first
+
+* NO usar NgModules en código nuevo
+* Usar standalone components por defecto ([angularreleases.hashnode.dev][1])
+
+---
+
+## 4.2 Signals (reactividad principal)
+
+* Usar `signal`, `computed`, `effect`
+* Evitar estado mutable tradicional
+* Preferir signals sobre RxJS cuando sea posible ([DEV Community][2])
+
+---
+
+## 4.3 Control flow moderno
+
+* Usar:
+
+  * `@if`
+  * `@for`
+  * `@switch`
+
+* Reemplazar:
+
+  * `*ngIf`
+  * `*ngFor` ([geeksforgeeks.org][3])
+
+---
+
+## 4.4 Deferrable views
+
+* Usar `@defer` para lazy rendering
+* Optimizar LCP y performance ([geeksforgeeks.org][3])
+
+---
+
+## 4.5 SSR e hidratación
+
+* Soporte para:
+
+  * SSR moderno
+  * hidratación parcial
+  * render incremental ([angularreleases.hashnode.dev][1])
+
+---
+
+## 4.6 Zoneless (cuando sea posible)
+
+* Reducir dependencia de `zone.js`
+* Mejorar performance
+
+---
+
+## 4.7 Templates más expresivos
+
+* Templates con capacidades cercanas a TypeScript
+* Mejor type-checking en templates ([angularreleases.hashnode.dev][1])
+
+---
+
+# 5. TYPESCRIPT MODERNO (5.x+)
+
+## 5.1 Tipado avanzado obligatorio
+
+Usar:
+
+* `satisfies`
+* `as const`
+* `readonly`
+* `unknown` sobre `any`
+* `never` para exhaustividad
+* discriminated unions
+* template literal types
+* `infer`
+* utility types (`Pick`, `Omit`, `ReturnType`)
+
+---
+
+## 5.2 Mejoras recientes
+
+* mejor análisis de control de flujo
+* type narrowing más preciso
+* enums y literals mejorados
+* mayor seguridad en tipos ([geeksforgeeks.org][3])
+
+---
+
+## 5.3 Ejemplo moderno
 
 ```ts
-let data;
+const config = {
+  apiUrl: '/api',
+} as const satisfies Record<string, string>;
 ```
 
-### ✅ OBLIGATORIO
+---
+
+# 6. ESTILO GENERAL
+
+## 6.1 Tipado estricto
 
 ```ts
 let data: User | null = null;
@@ -85,15 +294,7 @@ let data: User | null = null;
 
 ---
 
-## 1.2 Nombres claros y semánticos
-
-### ❌
-
-```ts
-const x = get();
-```
-
-### ✅
+## 6.2 Nombres claros
 
 ```ts
 const userList = getUsers();
@@ -101,15 +302,7 @@ const userList = getUsers();
 
 ---
 
-## 1.3 Evitar abreviaciones
-
-### ❌
-
-```ts
-(usr, cfg, res);
-```
-
-### ✅
+## 6.3 Sin abreviaciones
 
 ```ts
 (user, config, response);
@@ -117,335 +310,108 @@ const userList = getUsers();
 
 ---
 
-# 2. FUNCIONES
+# 7. FUNCIONES
 
-## 2.1 Siempre tipadas
-
-```ts
-function getUser(id: string): Promise<User> {}
-```
-
----
-
-## 2.2 Funciones pequeñas (máx 20–30 líneas)
-
-Si excede → dividir automáticamente
+* Máx 20–30 líneas
+* Una responsabilidad
+* Tipadas
+* Arrow functions
 
 ---
 
-## 2.3 Una responsabilidad por función
+# 8. VARIABLES
 
-### ❌
-
-```ts
-function processUser() {
-  validate();
-  transform();
-  save();
-}
-```
-
-### ✅
-
-```ts
-function validateUser() {}
-function transformUser() {}
-function saveUser() {}
-```
+* `const` por defecto
+* Tipos explícitos en estructuras complejas
 
 ---
 
-## 2.4 Arrow functions por defecto
+# 9. COMPONENTES
 
-```ts
-const getUser = (id: string): Promise<User> => {};
-```
-
----
-
-# 3. VARIABLES
-
-## 3.1 `const` por defecto
-
-### ❌
-
-```ts
-let user = ...
-```
-
-### ✅
-
-```ts
-const user = ...
-```
+* Sin lógica compleja
+* Solo UI + signals
 
 ---
 
-## 3.2 Tipos complejos definidos
+# 10. TEMPLATES
 
-```ts
-type UserState = {
-  loading: boolean;
-  data: User | null;
-};
-```
+* Sin lógica compleja
+* Usar control flow moderno
 
 ---
 
-# 4. ANGULAR (ESTILO MODERNO)
+# 11. IMPORTS
 
-## 4.1 Componentes limpios
-
-- SIN lógica compleja
-- SOLO UI + signals
-
-```ts
-@Component({...})
-export class UserComponent {
-  user = signal<User | null>(null)
-}
-```
-
----
-
-## 4.2 Signals obligatorios
-
-```ts
-const count = signal<number>(0);
-```
-
----
-
-## 4.3 Computed SIEMPRE para derivados
-
-```ts
-const fullName = computed<string>(() => user()?.name ?? "");
-```
-
----
-
-## 4.4 Effects solo para side effects
-
-```ts
-effect(() => {
-  console.log(user());
-});
-```
-
----
-
-# 5. HTML / TEMPLATES
-
-## 5.1 Usar control flow moderno
-
-### ❌
-
-```html
-<div *ngIf="user"></div>
-```
-
-### ✅
-
-```html
-@if (user) {
-```
-
----
-
-## 5.2 No lógica compleja en HTML
-
-### ❌
-
-```html
-{{ user?.name?.toUpperCase()?.trim() }}
-```
-
-### ✅
-
-```ts
-const userName = computed(() => ...)
-```
-
----
-
-## 5.3 Reutilización obligatoria
-
-Si el HTML se repite → crear componente
-
----
-
-# 6. IMPORTS
-
-## 6.1 Orden obligatorio
+Orden:
 
 1. Angular
-2. librerías externas
-3. internos (app)
+2. externos
+3. internos
 
 ---
 
-## 6.2 Tipos separados
+# 12. FORMATO
 
-```ts
-import type { User } from "./user.model";
-```
-
----
-
-# 7. FORMATO
-
-## 7.1 Indentación
-
-- 2 espacios
+* 2 espacios
+* `'`
+* semicolons consistentes
 
 ---
 
-## 7.2 Comillas
+# 13. ERRORES
 
-- `'` (single quotes)
-
----
-
-## 7.3 Semicolons
-
-- opcionales pero consistentes (preferible sí)
+* Manejo explícito
+* Nunca ignorar
 
 ---
 
-# 8. ERRORES Y VALIDACIÓN
+# 14. COMENTARIOS
 
-## 8.1 Manejo explícito
-
-```ts
-if (!user) {
-  throw new Error("User not found");
-}
-```
+* Solo si agregan valor
+* Documentar APIs públicas
 
 ---
 
-## 8.2 Nunca ignorar errores
+# 15. CONSISTENCIA
 
-### ❌
-
-```ts
-try {
-} catch {}
-```
+* mismo estilo
+* mismos nombres
+* mismas estructuras
 
 ---
 
-# 9. TIPADO AVANZADO
+# 16. LIMPIEZA
 
-## 9.1 Preferir inferencia cuando es clara
-
-```ts
-const users = getUsers(); // TS infiere
-```
+* eliminar código muerto
+* eliminar imports no usados
+* evitar duplicación
 
 ---
 
-## 9.2 Pero tipar en APIs públicas
+# 17. ANTI-PATTERNS
 
-```ts
-function getUsers(): Promise<User[]> {}
-```
-
----
-
-## 9.3 Usar utility types
-
-```ts
-type PartialUser = Partial<User>;
-```
+* `any`
+* lógica en templates
+* clases gigantes
+* funciones largas
+* `subscribe()` innecesario
+* uso directo de `generated/`
+* `new` en servicios
 
 ---
 
-# 10. COMENTARIOS
+# ⚡ RESULTADO ESPERADO
 
-## 10.1 Solo cuando agregan valor
+Código:
 
-### ❌
+* moderno (Angular 17–20+)
+* basado en signals
+* standalone-first
+* completamente tipado
+* modular sin sobre-fragmentación
+* consistente y limpio
+* alineado con mejores prácticas actuales
 
-```ts
-// increment count
-count++;
-```
-
-### ✅
-
-```ts
-// evita race condition en actualizaciones concurrentes
-```
-
----
-
-## 10.2 Documentar funciones públicas
-
-```ts
-/**
- * Obtiene usuario por ID
- */
-function getUser(id: string): Promise<User>;
-```
-
----
-
-# 11. CONSISTENCIA
-
-El agente debe mantener:
-
-- mismo estilo en todo el repo
-- mismos nombres para conceptos iguales
-- misma estructura en archivos similares
-
----
-
-# 12. REGLAS DE LIMPIEZA AUTOMÁTICA
-
-El agente debe:
-
-- eliminar código muerto
-- eliminar imports no usados
-- evitar duplicación
-- simplificar expresiones
-
----
-
-# 13. ANTI-PATTERNS PROHIBIDOS
-
-El agente debe rechazar:
-
-- `any`
-- lógica en templates
-- funciones largas
-- clases gigantes
-- duplicación de código
-- `subscribe()` innecesario
-- `new` en servicios
-
----
-
-# ⚡ RESUMEN PARA COPILOT
-
-Generar código que:
-
-- esté completamente tipado
-- use signals
-- use control flow moderno
-- tenga funciones pequeñas
-- tenga nombres claros
-- evite duplicación
-- sea consistente en todo el proyecto
-
----
-
-# 🧠 RESULTADO ESPERADO
-
-Código que se vea como:
-
-- escrito por un senior
-- fácil de leer
-- fácil de mantener
-- alineado con Angular moderno
-- sin errores ocultos
+[1]: https://angularreleases.hashnode.dev/what-is-angular-latest-angular-releases?utm_source=chatgpt.com "What is Angular? Latest Releases Explained (2025)"
+[2]: https://dev.to/genildocs/angular-17-essential-guide-master-the-revolutionary-changes-that-transformed-modern-development-51ad?utm_source=chatgpt.com "Angular 17+ Essential Guide: Master the Revolutionary Changes That Transformed Modern Development - DEV Community"
+[3]: https://www.geeksforgeeks.org/angular-17-whats-new/?utm_source=chatgpt.com "Angular 17: A Comprehensive Look at What's New - GeeksforGeeks"

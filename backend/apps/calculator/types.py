@@ -5,9 +5,9 @@ serializers y pruebas. Mantenerlos alineados evita inconsistencias entre
 validación HTTP y ejecución real del algoritmo.
 """
 
-from typing import Literal, NotRequired, TypeAlias, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
-CalculatorOperation: TypeAlias = Literal[
+type CalculatorOperation = Literal[
     "add",
     "sub",
     "mul",

@@ -15,3 +15,4 @@ backend/celerybeat-schedule
 
 # Sonar local configuration may contain machine/local secrets.
 sonar-project.properties
+tools/
