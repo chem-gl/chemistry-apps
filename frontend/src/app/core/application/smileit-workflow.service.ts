@@ -50,6 +50,13 @@ export type {
 
 @Injectable()
 export class SmileitWorkflowService implements OnDestroy {
+  // Constantes funcionales de Smileit para evitar duplicación y mantener un único punto de cambio.
+  private readonly FIXED_NUM_BONDS: number = 1;
+  private readonly FIXED_EXPORT_PADDING: number = 5;
+  private readonly FIXED_SITE_OVERLAP_POLICY: SiteOverlapPolicyEnum =
+    SiteOverlapPolicyEnum.LastBlockWins;
+  private readonly FIXED_ALGORITHM_VERSION: string = '2.0.0';
+
   private readonly jobsApiService = inject(JobsApiService);
   private readonly smileitApiService = inject(SmileitApiService);
   private progressSubscription: Subscription | null = null;
@@ -166,7 +173,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
   setNumBonds(rawValue: number): void {
     void rawValue;
-    this.state.numBonds.set(1);
+    this.state.numBonds.set(this.FIXED_NUM_BONDS);
   }
 
   setMaxStructures(rawValue: number): void {
@@ -175,7 +182,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
   setExportPadding(rawValue: number): void {
     void rawValue;
-    this.state.exportPadding.set(5);
+    this.state.exportPadding.set(this.FIXED_EXPORT_PADDING);
   }
 
   // ── Patrones (delegación con re-inspección) ───────────────────────────
@@ -418,13 +425,13 @@ export class SmileitWorkflowService implements OnDestroy {
           ),
         }),
       ),
-      siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
+      siteOverlapPolicy: this.FIXED_SITE_OVERLAP_POLICY,
       rSubstitutes: this.state.rSubstitutes(),
-      numBonds: 1,
+      numBonds: this.FIXED_NUM_BONDS,
       maxStructures: this.state.maxStructures(),
       exportNameBase: this.state.exportNameBase().trim() || 'smileit_run',
-      exportPadding: 5,
-      version: '2.0.0',
+      exportPadding: this.FIXED_EXPORT_PADDING,
+      version: this.FIXED_ALGORITHM_VERSION,
     };
   }
 
