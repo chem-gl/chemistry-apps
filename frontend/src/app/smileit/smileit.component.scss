@@ -2331,7 +2331,7 @@ select:focus {
   }
 }
 
-@media (min-width: 1221px) {
+@media (min-width: 1024px) {
   .smileit-shell {
     display: grid;
     gap: 1.2rem;
@@ -2346,19 +2346,24 @@ select:focus {
     display: grid;
     align-items: flex-start;
     gap: 1rem;
+    overflow: visible;
   }
 
   .workspace-columns {
     display: grid;
     grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
-    align-items: start;
+    align-items: stretch;
     gap: 1rem;
+    overflow: visible;
   }
 
   .workspace-left-column {
     grid-column: 1;
     grid-row: 1 / span 2;
-    align-self: start;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    overflow: visible;
   }
 
   .workspace-right-column {
@@ -2385,36 +2390,25 @@ select:focus {
   }
 
   .workspace-main-column {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    align-items: start;
+    display: block;
+    flex: 1;
+    overflow: visible;
   }
 
-  .entry-panel,
-  .inspection-floating-panel {
-    position: static;
-    top: auto;
-    z-index: auto;
-  }
-}
-
-@media (min-width: 1024px) {
-  .inspection-floating-panel {
-    position: static;
-    top: auto;
-    z-index: auto;
+  .workspace-columns > .workspace-left-column .inspection-floating-panel {
+    position: sticky !important;
+    top: 0.75rem !important;
+    z-index: 3;
+    align-self: start;
+    margin-top: 1rem;
   }
 
-  .inspection-floating-panel .inspection-card {
-    position: static;
-    top: auto;
-    z-index: auto;
-    margin-top: 0;
+  .workspace-columns > .workspace-left-column .inspection-floating-panel .inspection-card {
+    position: static !important;
   }
 }
 
-@media (max-width: 1220px) {
+@media (max-width: 1023px) {
   .floating-workspace-shell {
     display: grid;
     gap: 1rem;
