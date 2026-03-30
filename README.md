@@ -382,6 +382,7 @@ Este flujo:
 ```bash
 cd backend
 ./venv/bin/python manage.py test apps.core apps.easy_rate apps.marcus --verbosity=1
+./venv/bin/black --check .
 ```
 
 ### Frontend

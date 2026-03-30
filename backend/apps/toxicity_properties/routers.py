@@ -38,9 +38,11 @@ def _build_toxicity_csv(molecules: list[ToxicityMoleculeResult]) -> str:
             "" if molecule["mutagenicity"] is None else molecule["mutagenicity"],
             "" if molecule["ames_score"] is None else f"{molecule['ames_score']:.6f}",
             "" if molecule["DevTox"] is None else molecule["DevTox"],
-            ""
-            if molecule["devtox_score"] is None
-            else f"{molecule['devtox_score']:.6f}",
+            (
+                ""
+                if molecule["devtox_score"] is None
+                else f"{molecule['devtox_score']:.6f}"
+            ),
         ]
         data_lines.append(",".join([escape_csv_cell(value) for value in row_values]))
 

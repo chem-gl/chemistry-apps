@@ -13,6 +13,7 @@ Automat==25.4.16
 backcall==0.2.0
 beautifulsoup4==4.14.3
 billiard==4.2.4
+black==26.3.1
 bleach==6.3.0
 cbor2==5.8.0
 celery==5.6.2
@@ -109,6 +110,7 @@ pandas==3.0.1
 pandas-flavor==0.8.1
 pandocfilters==1.5.1
 parso==0.8.6
+pathspec==1.0.4
 pexpect==4.9.0
 pickleshare==0.7.5
 pillow==12.1.1
@@ -134,6 +136,7 @@ pyOpenSSL==25.3.0
 pyparsing==3.3.2
 pytest==9.0.2
 python-dateutil==2.9.0.post0
+pytokens==0.4.1
 pytorch-lightning==2.6.1
 PyYAML==6.0.3
 pyzmq==27.1.0

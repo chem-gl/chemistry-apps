@@ -1,0 +1,17 @@
+# pyproject.toml: Configuracion de herramientas de calidad para el backend Django.
+# Incluye formato automatico con Black para mantener  
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  venv
+  |media
+  |libs
+  |openapi
+  |__pycache__
+  |\.pytest_cache
+  |\.ruff_cache
+)/
+'''

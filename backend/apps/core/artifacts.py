@@ -279,7 +279,9 @@ class ScientificInputArtifactStorageService:
                 }
 
                 if not is_purged:
-                    zip_entry_name: str = f"{artifact.field_name}/{artifact.id}_{artifact.original_filename}"
+                    zip_entry_name: str = (
+                        f"{artifact.field_name}/{artifact.id}_{artifact.original_filename}"
+                    )
                     manifest_entry["zip_entry"] = zip_entry_name
                     with zip_file.open(zip_entry_name, mode="w") as zip_entry:
                         for chunk_bytes in self.iter_artifact_bytes(artifact=artifact):
