@@ -59,52 +59,24 @@ generate_frontend_reports() {
     "${REPO_ROOT}"
 }
 
+# Verifica si sonar-scanner está disponible y si el servidor responde antes de ejecutar
 run_sonar_scanner_if_available() {
-  if command -v sonar-scanner >/dev/null 2>&1; then
-    echo
-    echo "[sonar] Ejecutando sonar-scanner..."
-    # Workaround estable: analizar en un staging temporal para evitar rutas
-    # con permisos restringidos (p. ej. .docker/* gestionado por contenedores).
-    local sonar_staging_dir
-    sonar_staging_dir="$(mktemp -d "${REPO_ROOT}/.sonar-staging.XXXXXX")"
-
-    cleanup_sonar_staging() {
-      rm -rf "${sonar_staging_dir}"
-    }
-
-    trap cleanup_sonar_staging EXIT
-
-    rsync -a \
-      --exclude '.git/' \
-      --exclude '.docker/' \
-      --exclude '.scannerwork/' \
-      --exclude 'backend/venv/' \
-      --exclude 'backend/media/' \
-      --exclude 'frontend/node_modules/' \
-      --exclude 'frontend/dist/' \
-      --exclude 'frontend/coverage/' \
-      --exclude 'backend/__pycache__/' \
-      "${REPO_ROOT}/" "${sonar_staging_dir}/"
-
-    mkdir -p "${sonar_staging_dir}/frontend/coverage/frontend"
-    cp -f "${BACKEND_DIR}/ruff.json" "${sonar_staging_dir}/backend/ruff.json"
-    cp -f "${BACKEND_DIR}/coverage.xml" "${sonar_staging_dir}/backend/coverage.xml"
-    cp -f "${FRONTEND_DIR}/eslint.json" "${sonar_staging_dir}/frontend/eslint.json"
-    cp -f \
-      "${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml" \
-      "${sonar_staging_dir}/frontend/coverage/frontend/sonar-generic-coverage.xml"
-
-    pushd "${sonar_staging_dir}" >/dev/null
-    sonar-scanner
-    popd >/dev/null
-
-    cleanup_sonar_staging
-    trap - EXIT
-    return
+  if ! command -v sonar-scanner >/dev/null 2>&1; then
+    echo "[sonar] sonar-scanner no está instalado; se omite el análisis." >&2
+    return 0
   fi
 
-  echo
-  echo "[sonar] sonar-scanner no está instalado; se omite el análisis automático."
+  local sonar_url
+  sonar_url="$(grep -m1 '^sonar.host.url=' "${REPO_ROOT}/sonar-project.properties" | cut -d= -f2)"
+  if [[ -n "${sonar_url}" ]] && ! curl --silent --fail --max-time 5 "${sonar_url}/api/system/status" >/dev/null 2>&1; then
+    echo "[sonar] El servidor SonarQube (${sonar_url}) no está accesible; se omite el análisis." >&2
+    return 0
+  fi
+
+  echo "[sonar] Ejecutando sonar-scanner desde el directorio raíz del proyecto..."
+  pushd "${REPO_ROOT}" >/dev/null
+  sonar-scanner
+  popd >/dev/null
 }
 
 main() {
