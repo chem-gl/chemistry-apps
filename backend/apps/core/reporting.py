@@ -100,7 +100,7 @@ def build_job_log_report(
         results_text,
     ]
 
-    if job.error_trace is not None and job.error_trace.strip() != "":
+    if job.error_trace.strip() != "":
         lines.extend(
             [
                 "",
@@ -142,7 +142,7 @@ def build_job_error_report(job: ScientificJob) -> str | None:
     if job.status != "failed":
         return None
 
-    if job.error_trace is None or job.error_trace.strip() == "":
+    if job.error_trace.strip() == "":
         return None
 
     parameters_payload: JSONMap = cast(JSONMap, job.parameters)

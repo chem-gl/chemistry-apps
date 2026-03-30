@@ -20,11 +20,13 @@ from ..types import (
     JSONMap,
 )
 
+SSE_MEDIA_TYPE = "text/event-stream"
+
 
 class ServerSentEventsRenderer(BaseRenderer):
     """Renderer DRF para habilitar negociación de contenido text/event-stream."""
 
-    media_type = "text/event-stream"
+    media_type = SSE_MEDIA_TYPE
     format = "sse"
     charset = None
 

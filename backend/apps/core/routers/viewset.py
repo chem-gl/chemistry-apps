@@ -49,6 +49,7 @@ from ..types import (
     JobProgressSnapshot,
 )
 from .helpers import (
+    SSE_MEDIA_TYPE,
     ServerSentEventsRenderer,
     build_job_log_entry,
     build_progress_snapshot,
@@ -550,7 +551,7 @@ class JobViewSet(viewsets.ViewSet):
                 last_event_index=last_event_index,
                 timeout_seconds=timeout_seconds,
             ),
-            content_type="text/event-stream",
+            content_type=SSE_MEDIA_TYPE,
             status=status.HTTP_200_OK,
         )
         response["Cache-Control"] = "no-cache"
@@ -632,7 +633,7 @@ class JobViewSet(viewsets.ViewSet):
                 last_event_index=last_event_index,
                 timeout_seconds=timeout_seconds,
             ),
-            content_type="text/event-stream",
+            content_type=SSE_MEDIA_TYPE,
             status=status.HTTP_200_OK,
         )
         response["Cache-Control"] = "no-cache"

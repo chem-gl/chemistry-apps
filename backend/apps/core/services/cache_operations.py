@@ -24,6 +24,8 @@ from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
 
+CORE_CACHE_LOG_SOURCE = "core.cache"
+
 
 def estimate_json_payload_size_bytes(
     payload: object,
@@ -42,23 +44,17 @@ def estimate_json_payload_size_bytes(
         current_value = pending_values.pop()
 
         if isinstance(current_value, dict):
-            container_id = id(current_value)
-            if container_id in visited_containers:
-                continue
-            visited_containers.add(container_id)
-
-            total_bytes += 2
-            for dict_key, dict_value in current_value.items():
-                pending_values.append(str(dict_key))
-                pending_values.append(dict_value)
+            total_bytes += _enqueue_mapping_values_for_size_estimation(
+                mapping_value=current_value,
+                pending_values=pending_values,
+                visited_containers=visited_containers,
+            )
         elif isinstance(current_value, list | tuple | set):
-            container_id = id(current_value)
-            if container_id in visited_containers:
-                continue
-            visited_containers.add(container_id)
-
-            total_bytes += 2
-            pending_values.extend(current_value)
+            total_bytes += _enqueue_iterable_values_for_size_estimation(
+                iterable_value=current_value,
+                pending_values=pending_values,
+                visited_containers=visited_containers,
+            )
         else:
             total_bytes += estimate_scalar_json_size_bytes(current_value)
 
@@ -79,6 +75,57 @@ def estimate_scalar_json_size_bytes(value: object) -> int:
     if isinstance(value, str):
         return len(value.encode("utf-8"))
     return len(str(value).encode("utf-8"))
+
+
+def _register_container_if_not_seen(
+    *,
+    container_value: object,
+    visited_containers: set[int],
+) -> bool:
+    """Registra contenedores visitados para evitar ciclos infinitos."""
+    container_id = id(container_value)
+    if container_id in visited_containers:
+        return False
+    visited_containers.add(container_id)
+    return True
+
+
+def _enqueue_mapping_values_for_size_estimation(
+    *,
+    mapping_value: dict[object, object],
+    pending_values: list[object],
+    visited_containers: set[int],
+) -> int:
+    """Encola claves/valores de dict y retorna bytes estructurales agregados."""
+    if not _register_container_if_not_seen(
+        container_value=mapping_value,
+        visited_containers=visited_containers,
+    ):
+        return 0
+
+    pending_values.extend(
+        item
+        for dict_key, dict_value in mapping_value.items()
+        for item in (str(dict_key), dict_value)
+    )
+    return 2
+
+
+def _enqueue_iterable_values_for_size_estimation(
+    *,
+    iterable_value: list[object] | tuple[object, ...] | set[object],
+    pending_values: list[object],
+    visited_containers: set[int],
+) -> int:
+    """Encola elementos de listas/tuplas/sets y retorna bytes estructurales."""
+    if not _register_container_if_not_seen(
+        container_value=iterable_value,
+        visited_containers=visited_containers,
+    ):
+        return 0
+
+    pending_values.extend(iterable_value)
+    return 2
 
 
 def is_cache_payload_usable_for_plugin(
@@ -132,7 +179,7 @@ def persist_result_in_cache(
     publish_job_log(
         job,
         level="info",
-        source="core.cache",
+        source=CORE_CACHE_LOG_SOURCE,
         message="Persistiendo resultado calculado en caché.",
         log_publisher=log_publisher,
     )
@@ -146,7 +193,7 @@ def persist_result_in_cache(
         publish_job_log(
             job,
             level="warning",
-            source="core.cache",
+            source=CORE_CACHE_LOG_SOURCE,
             message="Se omite persistencia en caché por tamaño de resultado excesivo.",
             payload={
                 "estimated_payload_bytes": estimated_payload_bytes,
@@ -173,7 +220,7 @@ def persist_result_in_cache(
         publish_job_log(
             job,
             level="warning",
-            source="core.cache",
+            source=CORE_CACHE_LOG_SOURCE,
             message="Se omite persistencia en caché por error de almacenamiento.",
             payload={
                 "error_type": exc.__class__.__name__,

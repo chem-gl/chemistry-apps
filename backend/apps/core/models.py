@@ -43,7 +43,7 @@ class ScientificJob(models.Model):
     # Persistencia simple de parámetros/resultados.
     parameters = models.JSONField(default=dict)
     results = models.JSONField(default=dict, blank=True, null=True)
-    error_trace = models.TextField(blank=True, null=True)
+    error_trace = models.TextField(blank=True, default="")
 
     # Progreso de ejecución para consultas y streaming de eventos SSE.
     progress_percentage = models.PositiveIntegerField(

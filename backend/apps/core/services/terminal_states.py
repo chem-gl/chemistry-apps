@@ -38,7 +38,8 @@ def finish_with_result(
     job.results = result_payload
     job.cache_hit = from_cache
     job.cache_miss = not from_cache
-    job.error_trace = None
+    # Mantener convención Django para strings: ausencia de dato = cadena vacía.
+    job.error_trace = ""
     job.pause_requested = False
     job.runtime_state = {}
     job.progress_percentage = 100
