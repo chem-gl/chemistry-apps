@@ -1,182 +1,67 @@
-// jobs-api.service.ts: Wrapper que encapsula el cliente generado de OpenAPI.
-// Este servicio actua como fachada estable: protege al resto del frontend de cambios en
-// el cliente generado y centraliza la logica de despacho, polling y streaming de progreso.
+// jobs-api.service.ts: Fachada API que envuelve los clientes generados de OpenAPI.
+// Centraliza despacho, polling y reportes; delega streaming a JobsStreamingApiService
+// y operaciones Smileit a SmileitApiService.
 
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import {
-  Observable,
-  catchError,
-  filter,
-  forkJoin,
-  interval,
-  map,
-  of,
-  shareReplay,
-  switchMap,
-  take,
-} from 'rxjs';
-import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
+import { Observable, map, shareReplay } from 'rxjs';
+import { API_BASE_URL } from '../shared/constants';
+import { createReportDownload$ } from './api-download.utils';
 import {
   CalculatorJobCreateRequest,
   CalculatorJobResponse,
-  CalculatorOperationEnum,
   CalculatorService,
   EasyRateJobResponse,
   EasyRateService,
   JobControlActionResponse,
   JobCreateRequest,
-  JobLogList,
   JobProgressSnapshot,
   JobsService,
   MarcusJobResponse,
   MarcusService,
-  MethodsEnum,
   MolarFractionsService,
-  PatchedSmileitCatalogEntryCreateRequest,
-  PatternTypeEnum,
   SAScoreService,
-  SaMoleculeResult,
   SaScoreJobCreateRequest,
-  SaScoreJobResponse,
   ScientificJob,
-  SiteOverlapPolicyEnum,
-  SmileitAssignmentBlockInputRequest,
-  SmileitCatalogEntry,
-  SmileitCatalogEntryCreateRequest,
-  SmileitCategory,
-  SmileitJobCreateRequest,
-  SmileitJobResponse,
-  SmileitManualSubstituentInputRequest,
-  SmileitPatternEntry,
-  SmileitPatternEntryCreateRequest,
-  SmileitPatternReference,
-  SmileitQuickProperties,
-  SmileitResolvedAssignmentBlock,
-  SmileitService,
-  SmileitStructuralAnnotation,
-  SmileitStructureInspectionRequestRequest,
-  SmileitStructureInspectionResponse,
-  SmileitSubstituentReferenceInputRequest,
-  SmileitTraceabilityRow,
   ToxicityJobCreateRequest,
-  ToxicityJobResponse,
-  ToxicityMoleculeResult,
   ToxicityPropertiesService,
   TunnelService,
 } from './generated';
+import { JobsStreamingApiService } from './jobs-streaming-api.service';
+import { SmileitApiService } from './smileit-api.service';
 
-/**
- * Parámetros de entrada para crear un job de calculadora.
- *
- * - `op`: operación a ejecutar. 'factorial' usa solo `a` e ignora `b`.
- * - `a`: primer operando (base en pow, único en factorial).
- * - `b`: segundo operando; obligatorio para add/sub/mul/div/pow; omitir en factorial.
- *
- * Ejemplos:
- *   `{ op: 'add', a: 5, b: 3 }`       → suma: 5 + 3
- *   `{ op: 'pow', a: 2, b: 10 }`      → potencia: 2^10
- *   `{ op: 'factorial', a: 7 }`        → factorial: 7!
- */
-export interface CalculatorParams {
-  op: CalculatorOperationEnum;
-  a: number;
-  b?: number;
-}
+// Re-exportación de todos los tipos para compatibilidad con imports existentes.
+// Los consumidores pueden importar tipos directamente desde 'core/api/types' o desde aquí.
+export type * from './types';
 
-/** Parámetros de entrada para crear un job de fracciones molares */
-export interface MolarFractionsParams {
-  pkaValues: number[];
-  phMode: 'single' | 'range';
-  phValue?: number;
-  phMin?: number;
-  phMax?: number;
-  phStep?: number;
-  version?: string;
-}
-
-/** Evento de modificación de una entrada de Tunnel capturado en UI */
-export interface TunnelInputChangeEvent {
-  fieldName: string;
-  previousValue: number;
-  newValue: number;
-  changedAt: string;
-}
-
-/** Parámetros de entrada para crear un job de efecto túnel */
-export interface TunnelParams {
-  reactionBarrierZpe: number;
-  imaginaryFrequency: number;
-  reactionEnergyZpe: number;
-  temperature: number;
-  inputChangeEvents: TunnelInputChangeEvent[];
-  version?: string;
-}
-
-/** Parámetros de entrada para crear un job Easy-rate con archivos Gaussian */
-export interface EasyRateParams {
-  transitionStateFile: File;
-  reactant1File: File;
-  reactant2File: File;
-  product1File?: File;
-  product2File?: File;
-  transitionStateExecutionIndex?: number;
-  reactant1ExecutionIndex?: number;
-  reactant2ExecutionIndex?: number;
-  product1ExecutionIndex?: number;
-  product2ExecutionIndex?: number;
-  title?: string;
-  reactionPathDegeneracy?: number;
-  cageEffects?: boolean;
-  diffusion?: boolean;
-  solvent?: string;
-  customViscosity?: number;
-  radiusReactant1?: number;
-  radiusReactant2?: number;
-  reactionDistance?: number;
-  printDataInput?: boolean;
-  version?: string;
-}
-
-/** Campos Gaussian soportados por Easy-rate para inspección y selección. */
-export type EasyRateInputFieldName =
-  | 'transition_state_file'
-  | 'reactant_1_file'
-  | 'reactant_2_file'
-  | 'product_1_file'
-  | 'product_2_file';
-
-/** Resumen normalizado de una ejecución candidata detectada en un archivo Gaussian. */
-export interface EasyRateInspectionExecutionView {
-  sourceField: EasyRateInputFieldName;
-  originalFilename: string | null;
-  executionIndex: number;
-  jobTitle: string | null;
-  checkpointFile: string | null;
-  charge: number;
-  multiplicity: number;
-  freeEnergy: number | null;
-  thermalEnthalpy: number | null;
-  zeroPointEnergy: number | null;
-  scfEnergy: number | null;
-  temperature: number | null;
-  negativeFrequencies: number;
-  imaginaryFrequency: number | null;
-  normalTermination: boolean;
-  isOptFreq: boolean;
-  isValidForRole: boolean;
-  validationErrors: string[];
-}
-
-/** Resultado de inspección previa de un archivo Gaussian en la UI de Easy-rate. */
-export interface EasyRateFileInspectionView {
-  sourceField: EasyRateInputFieldName;
-  originalFilename: string | null;
-  parseErrors: string[];
-  executionCount: number;
-  defaultExecutionIndex: number | null;
-  executions: EasyRateInspectionExecutionView[];
-}
+import type {
+  CalculatorParams,
+  DownloadedReportFile,
+  EasyRateFileInspectionView,
+  EasyRateInputFieldName,
+  EasyRateInspectionExecutionView,
+  EasyRateParams,
+  JobControlActionResult,
+  JobListFilters,
+  JobLogEntryView,
+  JobLogsPageView,
+  JobLogsQuery,
+  JobsRealtimeEvent,
+  JobsRealtimeQuery,
+  MarcusParams,
+  MolarFractionsParams,
+  SaScoreJobResponseView,
+  SaScoreMethod,
+  SaScoreParams,
+  ScientificJobDispatchParams,
+  SmileitDerivationPageView,
+  SmileitStructureInspectionView,
+  SmilesCompatibilityResultView,
+  ToxicityJobResponseView,
+  ToxicityPropertiesParams,
+  TunnelInputChangeEvent,
+  TunnelParams,
+} from './types';
 
 interface EasyRateInspectionExecutionApiResponse {
   source_field: EasyRateInputFieldName;
@@ -208,293 +93,6 @@ interface EasyRateInspectionApiResponse {
   executions: EasyRateInspectionExecutionApiResponse[];
 }
 
-/** Parámetros de entrada para crear un job Marcus con 6 archivos Gaussian */
-export interface MarcusParams {
-  reactant1File: File;
-  reactant2File: File;
-  product1AdiabaticFile: File;
-  product2AdiabaticFile: File;
-  product1VerticalFile: File;
-  product2VerticalFile: File;
-  title?: string;
-  diffusion?: boolean;
-  radiusReactant1?: number;
-  radiusReactant2?: number;
-  reactionDistance?: number;
-  version?: string;
-}
-
-/** Métodos soportados para cálculo SA score en backend. */
-export type SaScoreMethod = MethodsEnum;
-
-/** Payload tipado para crear jobs de SA score desde UI. */
-export interface SaScoreParams {
-  smiles: string[];
-  methods: SaScoreMethod[];
-  version?: string;
-}
-
-/** Payload tipado para crear jobs de Toxicity Properties desde UI. */
-export interface ToxicityPropertiesParams {
-  smiles: string[];
-  version?: string;
-}
-
-/** Fila normalizada para la tabla toxicológica fija (alias del tipo generado). */
-export type ToxicityMoleculeResultView = ToxicityMoleculeResult;
-
-/** Respuesta tipada de job de Toxicity Properties para workflows y componentes. */
-export type ToxicityJobResponseView = ToxicityJobResponse;
-
-/** Fila normalizada para la tabla de resultados de SA score. */
-export type SaScoreMoleculeResultView = SaMoleculeResult;
-
-/** Respuesta tipada de job SA score para workflows y componentes. */
-export type SaScoreJobResponseView = SaScoreJobResponse;
-
-/** Estados válidos para filtrado de jobs en listados globales */
-export type JobListStatusFilter =
-  | 'pending'
-  | 'running'
-  | 'paused'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
-
-/** Filtros opcionales para consultar jobs en el monitor */
-export interface JobListFilters {
-  pluginName?: string;
-  status?: JobListStatusFilter;
-}
-
-/** Parámetros genéricos para despachar jobs de cualquier app científica */
-export interface ScientificJobDispatchParams {
-  pluginName: string;
-  version?: string;
-  parameters: Record<string, unknown>;
-}
-
-/** Severidad de eventos de log por job emitidos por backend */
-export type JobLogLevel = 'debug' | 'info' | 'warning' | 'error';
-
-/** Evento de log normalizado para consumo de componentes/facades */
-export interface JobLogEntryView {
-  jobId: string;
-  eventIndex: number;
-  level: JobLogLevel;
-  source: string;
-  message: string;
-  payload: Record<string, unknown>;
-  createdAt: string;
-}
-
-/** Parámetros de consulta para historial de logs por job */
-export interface JobLogsQuery {
-  afterEventIndex?: number;
-  limit?: number;
-}
-
-/** Página de historial de logs normalizada */
-export interface JobLogsPageView {
-  jobId: string;
-  count: number;
-  nextAfterEventIndex: number;
-  results: JobLogEntryView[];
-}
-
-/** Resultado normalizado de acciones de control de ejecución (pause/resume) */
-export interface JobControlActionResult {
-  detail: string;
-  job: ScientificJob;
-}
-
-/** Representa un archivo descargable retornado por reportes backend */
-export interface DownloadedReportFile {
-  filename: string;
-  blob: Blob;
-}
-
-/** Resultado de validación de compatibilidad de un SMILES individual. */
-export interface SmilesCompatibilityIssueView {
-  smiles: string;
-  reason: string;
-}
-
-/** Resultado agregado de validación previa de un lote de SMILES. */
-export interface SmilesCompatibilityResultView {
-  compatible: boolean;
-  issues: SmilesCompatibilityIssueView[];
-}
-
-// Tipos de vista exportados por la capa wrapper para evitar dependencias directas
-// desde componentes/facades al cliente OpenAPI autogenerado.
-export type ScientificJobView = ScientificJob;
-export type JobProgressSnapshotView = JobProgressSnapshot;
-export type CalculatorJobResponseView = CalculatorJobResponse;
-export type EasyRateJobResponseView = EasyRateJobResponse;
-export type MarcusJobResponseView = MarcusJobResponse;
-export type CalculatorOperationView = CalculatorOperationEnum;
-
-/** Entrada de catálogo de sustituyentes normalizada para la UI. */
-export type SmileitCatalogEntryView = SmileitCatalogEntry;
-export type SmileitCategoryView = SmileitCategory;
-export type SmileitPatternEntryView = SmileitPatternEntry;
-export type SmileitQuickPropertiesView = SmileitQuickProperties;
-export type SmileitStructuralAnnotationView = SmileitStructuralAnnotation;
-export type SmileitPatternReferenceView = SmileitPatternReference;
-export type SmileitTraceabilityRowView = SmileitTraceabilityRow;
-export type SmileitResolvedAssignmentBlockView = SmileitResolvedAssignmentBlock;
-
-/** Información de átomo normalizada para la UI de selección. */
-export interface SmileitAtomInfoView {
-  index: number;
-  symbol: string;
-  implicitHydrogens: number;
-  isAromatic: boolean;
-}
-
-/** Resultado de inspección estructural normalizado para la UI. */
-export interface SmileitStructureInspectionView {
-  canonicalSmiles: string;
-  atomCount: number;
-  atoms: SmileitAtomInfoView[];
-  svg: string;
-  quickProperties: SmileitQuickPropertiesView;
-  annotations: SmileitStructuralAnnotationView[];
-  activePatternRefs: SmileitPatternReferenceView[];
-}
-
-/** Referencia inmutable a un sustituyente persistente. */
-export interface SmileitSubstituentReferenceParams {
-  stableId: string;
-  version: number;
-}
-
-/** Sustituyente manual transportado por la UI. */
-export interface SmileitManualSubstituentParams {
-  name: string;
-  smiles: string;
-  anchorAtomIndices: number[];
-  categories: string[];
-  sourceReference?: string;
-  provenanceMetadata?: Record<string, string>;
-}
-
-/** Bloque de asignación editable desde la UI. */
-export interface SmileitAssignmentBlockParams {
-  label: string;
-  siteAtomIndices: number[];
-  categoryKeys: string[];
-  substituentRefs: SmileitSubstituentReferenceParams[];
-  manualSubstituents: SmileitManualSubstituentParams[];
-}
-
-/** Payload para registrar una nueva entrada persistente del catálogo. */
-export interface SmileitCatalogEntryCreateParams {
-  name: string;
-  smiles: string;
-  anchorAtomIndices: number[];
-  categoryKeys: string[];
-  sourceReference?: string;
-  provenanceMetadata?: Record<string, string>;
-}
-
-/** Payload para registrar un nuevo patrón estructural persistente. */
-export interface SmileitPatternEntryCreateParams {
-  name: string;
-  smarts: string;
-  patternType: PatternTypeEnum;
-  caption: string;
-  sourceReference?: string;
-  provenanceMetadata?: Record<string, string>;
-}
-
-/** Parámetros de creación de un job smileit (vista camelCase). */
-export interface SmileitGenerationParams {
-  principalSmiles: string;
-  selectedAtomIndices: number[];
-  assignmentBlocks: SmileitAssignmentBlockParams[];
-  siteOverlapPolicy?: SiteOverlapPolicyEnum;
-  rSubstitutes?: number;
-  numBonds?: number;
-  maxStructures?: number;
-  exportNameBase?: string;
-  exportPadding?: number;
-  version?: string;
-}
-
-/** Item paginado de derivado Smile-it sin SVG embebido. */
-export interface SmileitDerivationPageItemView {
-  structureIndex: number;
-  name: string;
-  smiles: string;
-  placeholderAssignments: Array<{
-    placeholderLabel: string;
-    siteAtomIndex: number;
-    substituentName: string;
-    substituentSmiles?: string;
-  }>;
-  traceability: Array<{
-    round_index: number;
-    site_atom_index: number;
-    block_label: string;
-    block_priority: number;
-    substituent_name: string;
-    substituent_smiles?: string;
-    substituent_stable_id: string;
-    substituent_version: number;
-    source_kind: string;
-    bond_order: number;
-  }>;
-}
-
-/** Respuesta paginada de derivados Smile-it. */
-export interface SmileitDerivationPageView {
-  totalGenerated: number;
-  offset: number;
-  limit: number;
-  items: SmileitDerivationPageItemView[];
-}
-
-/** Respuesta de job smileit normalizada para componentes. */
-export type SmileitJobResponseView = SmileitJobResponse;
-
-export interface JobsRealtimeQuery {
-  jobId?: string;
-  pluginName?: string;
-  includeLogs?: boolean;
-  includeSnapshot?: boolean;
-  activeOnly?: boolean;
-}
-
-export interface JobsSnapshotRealtimeEvent {
-  event: 'jobs.snapshot';
-  data: {
-    items: ScientificJob[];
-  };
-}
-
-export interface JobUpdatedRealtimeEvent {
-  event: 'job.updated';
-  data: ScientificJob;
-}
-
-export interface JobProgressRealtimeEvent {
-  event: 'job.progress';
-  data: JobProgressSnapshot;
-}
-
-export interface JobLogRealtimeEvent {
-  event: 'job.log';
-  data: JobLogEntryView;
-}
-
-export type JobsRealtimeEvent =
-  | JobsSnapshotRealtimeEvent
-  | JobUpdatedRealtimeEvent
-  | JobProgressRealtimeEvent
-  | JobLogRealtimeEvent;
-
 @Injectable({
   providedIn: 'root',
 })
@@ -504,365 +102,81 @@ export class JobsApiService {
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
   private readonly saScoreClient = inject(SAScoreService);
-  private readonly smileitClient = inject(SmileitService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly tunnelClient = inject(TunnelService);
   private readonly jobsClient = inject(JobsService);
   private readonly toxicityPropertiesClient = inject(ToxicityPropertiesService);
+  private readonly streamingApi = inject(JobsStreamingApiService);
+  private readonly smileitApi = inject(SmileitApiService);
 
-  // ---------------------------------------------------------------------------
-  // Smileit API
-  // ---------------------------------------------------------------------------
+  // --- Delegación a JobsStreamingApiService (compatibilidad con consumidores) ---
 
-  /**
-   * Devuelve el catálogo persistente y versionado de sustituyentes.
-   * Usar para poblar la lista inicial y referencias inmutables por bloque.
-   */
-  listSmileitCatalog(): Observable<SmileitCatalogEntryView[]> {
-    return this.smileitClient.smileitJobsCatalogList().pipe(shareReplay(1));
+  /** Snapshot puntual de progreso para polling manual o reconexión SSE */
+  getJobProgress(jobId: string): Observable<JobProgressSnapshot> {
+    return this.streamingApi.getJobProgress(jobId);
   }
 
-  /** Devuelve las categorías químicas verificables para filtros y validación. */
-  listSmileitCategories(): Observable<SmileitCategoryView[]> {
-    return this.smileitClient.smileitJobsCategoriesList().pipe(shareReplay(1));
+  /** Historial paginado de logs por job con cursor incremental */
+  getJobLogs(jobId: string, query: JobLogsQuery = {}): Observable<JobLogsPageView> {
+    return this.streamingApi.getJobLogs(jobId, query);
   }
 
-  /** Devuelve el catálogo de patrones estructurales activos para anotación visual. */
-  listSmileitPatterns(): Observable<SmileitPatternEntryView[]> {
-    return this.smileitClient.smileitJobsPatternsList().pipe(shareReplay(1));
+  /** Stream SSE de progreso en tiempo real: completa al llegar a estado terminal */
+  streamJobEvents(jobId: string): Observable<JobProgressSnapshot> {
+    return this.streamingApi.streamJobEvents(jobId);
   }
 
-  /** Crea una nueva entrada persistente en el catálogo de sustituyentes. */
-  createSmileitCatalogEntry(
-    params: SmileitCatalogEntryCreateParams,
-  ): Observable<SmileitCatalogEntryView[]> {
-    const payload: SmileitCatalogEntryCreateRequest = {
-      name: params.name,
-      smiles: params.smiles,
-      anchor_atom_indices: params.anchorAtomIndices,
-      category_keys: params.categoryKeys,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
-    return this.smileitClient.smileitJobsCatalogCreate(payload).pipe(shareReplay(1));
+  /** Stream SSE de logs en tiempo real para un job específico */
+  streamJobLogEvents(jobId: string): Observable<JobLogEntryView> {
+    return this.streamingApi.streamJobLogEvents(jobId);
   }
 
-  /** Versiona una entrada editable del catálogo y retorna el catálogo activo actualizado. */
-  updateSmileitCatalogEntry(
-    stableId: string,
-    params: SmileitCatalogEntryCreateParams,
-  ): Observable<SmileitCatalogEntryView[]> {
-    const payload: PatchedSmileitCatalogEntryCreateRequest = {
-      name: params.name,
-      smiles: params.smiles,
-      anchor_atom_indices: params.anchorAtomIndices,
-      category_keys: params.categoryKeys,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
-    return this.smileitClient
-      .smileitJobsCatalogPartialUpdate(stableId, payload)
-      .pipe(shareReplay(1));
+  /** Stream WebSocket global o filtrado para jobs, progreso y logs */
+  streamJobsRealtime(query: JobsRealtimeQuery = {}): Observable<JobsRealtimeEvent> {
+    return this.streamingApi.streamJobsRealtime(query);
   }
 
-  /** Crea un nuevo patrón persistente para anotación estructural. */
-  createSmileitPatternEntry(
-    params: SmileitPatternEntryCreateParams,
-  ): Observable<SmileitPatternEntryView[]> {
-    const payload: SmileitPatternEntryCreateRequest = {
-      name: params.name,
-      smarts: params.smarts,
-      pattern_type: params.patternType,
-      caption: params.caption,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
-    return this.smileitClient.smileitJobsPatternsCreate(payload).pipe(shareReplay(1));
+  /** Polling de progreso periódico hasta estado terminal (fallback robusto sin SSE) */
+  pollJobUntilCompleted(jobId: string, intervalMs: number = 1000): Observable<JobProgressSnapshot> {
+    return this.streamingApi.pollJobUntilCompleted(jobId, intervalMs);
   }
 
-  /**
-   * Inspecciona un SMILES y devuelve la estructura canónica, átomos indexados y SVG.
-   * Usar para que el usuario seleccione los átomos de sustitución antes de despachar el job.
-   */
-  inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
-    const request: SmileitStructureInspectionRequestRequest = { smiles };
-    return this.smileitClient.smileitJobsInspectStructureCreate(request).pipe(
-      map(
-        (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
-          canonicalSmiles: raw.canonical_smiles,
-          atomCount: raw.atom_count,
-          atoms: raw.atoms.map((atom) => ({
-            index: atom.index,
-            symbol: atom.symbol,
-            implicitHydrogens: atom.implicit_hydrogens,
-            isAromatic: atom.is_aromatic,
-          })),
-          svg: raw.svg,
-          quickProperties: raw.quick_properties,
-          annotations: raw.annotations,
-          activePatternRefs: raw.active_pattern_refs,
-        }),
-      ),
-      shareReplay(1),
-    );
-  }
+  // --- Delegación temporal a SmileitApiService (consumidores heredados) ---
 
-  /**
-   * Verifica compatibilidad estructural de todos los SMILES antes de despachar jobs.
-   *
-   * Implementación:
-   * - Reutiliza el endpoint de inspección de Smileit como validador central.
-   * - Reporta la lista de entradas incompatibles y su motivo para feedback temprano.
-   */
+  /** Valida compatibilidad SMILES usando inspección Smileit (usado por SA Score y Toxicity) */
   validateSmilesCompatibility(smilesList: string[]): Observable<SmilesCompatibilityResultView> {
-    const normalizedSmiles: string[] = smilesList
-      .map((rawSmiles: string) => rawSmiles.trim())
-      .filter((rawSmiles: string) => rawSmiles.length > 0);
-
-    if (normalizedSmiles.length === 0) {
-      return of({ compatible: true, issues: [] });
-    }
-
-    const validationRequests: Array<Observable<SmilesCompatibilityIssueView | null>> =
-      normalizedSmiles.map((smilesValue: string) =>
-        this.inspectSmileitStructure(smilesValue).pipe(
-          map(() => null),
-          catchError((validationError: unknown) =>
-            of({
-              smiles: smilesValue,
-              reason: this.extractErrorMessage(validationError),
-            }),
-          ),
-        ),
-      );
-
-    return forkJoin(validationRequests).pipe(
-      map((issuesOrNull: Array<SmilesCompatibilityIssueView | null>) => {
-        const issues: SmilesCompatibilityIssueView[] = issuesOrNull.filter(
-          (
-            issueItem: SmilesCompatibilityIssueView | null,
-          ): issueItem is SmilesCompatibilityIssueView => issueItem !== null,
-        );
-        return {
-          compatible: issues.length === 0,
-          issues,
-        };
-      }),
-    );
+    return this.smileitApi.validateSmilesCompatibility(smilesList);
   }
 
-  private extractErrorMessage(error: unknown): string {
-    if (typeof error === 'string' && error.trim() !== '') {
-      return error;
-    }
-
-    if (error !== null && typeof error === 'object') {
-      const errorRecord: Record<string, unknown> = error as Record<string, unknown>;
-      const directMessage = errorRecord['message'];
-      if (typeof directMessage === 'string' && directMessage.trim() !== '') {
-        return directMessage;
-      }
-
-      const nestedError = errorRecord['error'];
-      if (nestedError !== null && typeof nestedError === 'object') {
-        const nestedRecord: Record<string, unknown> = nestedError as Record<string, unknown>;
-        const detailMessage = nestedRecord['detail'];
-        if (typeof detailMessage === 'string' && detailMessage.trim() !== '') {
-          return detailMessage;
-        }
-      }
-    }
-
-    return 'Unsupported SMILES for chemistry services.';
+  /** Inspecciona estructura SMILES (usado por componentes heredados) */
+  inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
+    return this.smileitApi.inspectSmileitStructure(smiles);
   }
 
-  /**
-   * Despacha un job de generación combinatoria smileit.
-   * Retorna el job creado con status 'pending'; usar streamJobEvents() para progreso.
-   */
-  dispatchSmileitJob(params: SmileitGenerationParams): Observable<SmileitJobResponseView> {
-    const payload: SmileitJobCreateRequest = {
-      version: params.version ?? '2.0.0',
-      principal_smiles: params.principalSmiles,
-      selected_atom_indices: params.selectedAtomIndices,
-      assignment_blocks: params.assignmentBlocks.map(
-        (block: SmileitAssignmentBlockParams): SmileitAssignmentBlockInputRequest => ({
-          label: block.label,
-          site_atom_indices: block.siteAtomIndices,
-          category_keys: block.categoryKeys,
-          substituent_refs: block.substituentRefs.map(
-            (
-              reference: SmileitSubstituentReferenceParams,
-            ): SmileitSubstituentReferenceInputRequest => ({
-              stable_id: reference.stableId,
-              version: reference.version,
-            }),
-          ),
-          manual_substituents: block.manualSubstituents.map(
-            (manual: SmileitManualSubstituentParams): SmileitManualSubstituentInputRequest => ({
-              name: manual.name,
-              smiles: manual.smiles,
-              anchor_atom_indices: manual.anchorAtomIndices,
-              categories: manual.categories,
-              source_reference: manual.sourceReference,
-              provenance_metadata: manual.provenanceMetadata,
-            }),
-          ),
-        }),
-      ),
-      site_overlap_policy: params.siteOverlapPolicy,
-      r_substitutes: params.rSubstitutes,
-      num_bonds: params.numBonds,
-      max_structures: params.maxStructures,
-      export_name_base: params.exportNameBase,
-      export_padding: params.exportPadding,
-    };
-    return this.smileitClient.smileitJobsCreate(payload).pipe(shareReplay(1));
+  /** Descarga ZIP server-side con imágenes SVG de Smileit */
+  downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitApi.downloadSmileitImagesZipServer(jobId);
   }
 
-  /** Consulta estado completo de un job smileit por UUID. */
-  getSmileitJobStatus(jobId: string): Observable<SmileitJobResponseView> {
-    return this.smileitClient.smileitJobsRetrieve(jobId);
-  }
-
-  /** Lista derivados Smile-it paginados para evitar payload gigante al frontend. */
+  /** Lista derivados Smile-it paginados */
   listSmileitDerivations(
     jobId: string,
     offset: number,
     limit: number,
   ): Observable<SmileitDerivationPageView> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/`;
-    return this.httpClient
-      .get<{
-        total_generated: number;
-        offset: number;
-        limit: number;
-        items: Array<{
-          structure_index: number;
-          name: string;
-          smiles: string;
-          placeholder_assignments: Array<{
-            placeholder_label: string;
-            site_atom_index: number;
-            substituent_name: string;
-            substituent_smiles?: string;
-          }>;
-          traceability: Array<{
-            round_index: number;
-            site_atom_index: number;
-            block_label: string;
-            block_priority: number;
-            substituent_name: string;
-            substituent_smiles?: string;
-            substituent_stable_id: string;
-            substituent_version: number;
-            source_kind: string;
-            bond_order: number;
-          }>;
-        }>;
-      }>(endpointUrl, {
-        params: {
-          offset: String(offset),
-          limit: String(limit),
-        },
-      })
-      .pipe(
-        map((rawPage) => ({
-          totalGenerated: rawPage.total_generated,
-          offset: rawPage.offset,
-          limit: rawPage.limit,
-          items: rawPage.items.map((item) => ({
-            structureIndex: item.structure_index,
-            name: item.name,
-            smiles: item.smiles,
-            placeholderAssignments: item.placeholder_assignments.map((assignment) => ({
-              placeholderLabel: assignment.placeholder_label,
-              siteAtomIndex: assignment.site_atom_index,
-              substituentName: assignment.substituent_name,
-              substituentSmiles: assignment.substituent_smiles ?? '',
-            })),
-            traceability: item.traceability,
-          })),
-        })),
-        shareReplay(1),
-      );
+    return this.smileitApi.listSmileitDerivations(jobId, offset, limit);
   }
 
-  /** Obtiene SVG on-demand de un derivado específico para grid/modal. */
+  /** Obtiene SVG on-demand de un derivado específico */
   getSmileitDerivationSvg(
     jobId: string,
     structureIndex: number,
     variant: 'thumb' | 'detail' = 'detail',
   ): Observable<string> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/${structureIndex}/svg/`;
-    return this.httpClient
-      .get(endpointUrl, {
-        responseType: 'text',
-        params: {
-          variant,
-        },
-      })
-      .pipe(shareReplay(1));
+    return this.smileitApi.getSmileitDerivationSvg(jobId, structureIndex, variant);
   }
 
-  /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
-  downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
-      this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response'),
-      `smileit_${jobId}_report.csv`,
-    );
-  }
-
-  /** Descarga el archivo enumerado de SMILES listo para DataWarrior u otros flujos. */
-  downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
-      this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response'),
-      `smileit_${jobId}_structures.smi`,
-    );
-  }
-
-  /** Descarga el reporte tabular de trazabilidad sitio -> sustituyente por derivado. */
-  downloadSmileitTraceabilityReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
-      this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response'),
-      `smileit_${jobId}_traceability.csv`,
-    );
-  }
-
-  /** Descarga el reporte LOG de smileit (descripción de la generación). */
-  downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
-      this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response'),
-      `smileit_${jobId}_report.log`,
-    );
-  }
-
-  /** Descarga el reporte de error de smileit cuando el job falla. */
-  downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
-      this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response'),
-      `smileit_${jobId}_error.txt`,
-    );
-  }
-
-  /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
-  downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/report-images-zip/`;
-    return this.downloadReport(
-      this.httpClient.get(endpointUrl, {
-        observe: 'response',
-        responseType: 'blob',
-      }),
-      `smileit_${jobId}_images.zip`,
-    );
-  }
-
-  private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
-    return rawJob as ScientificJob;
-  }
+  // --- Helpers privados ---
 
   private normalizeControlActionResult(
     rawResponse: JobControlActionResponse,
@@ -870,104 +184,6 @@ export class JobsApiService {
     return {
       detail: rawResponse.detail,
       job: rawResponse.job as ScientificJob,
-    };
-  }
-
-  private normalizeDownloadedReport(
-    response: HttpResponse<Blob>,
-    fallbackFilename: string,
-  ): DownloadedReportFile {
-    const responseBlob: Blob | null = response.body;
-    if (responseBlob === null) {
-      throw new Error('Backend report response is empty.');
-    }
-
-    const contentDispositionHeader: string | null = response.headers.get('content-disposition');
-    const filename: string = this.extractFilenameFromHeader(
-      contentDispositionHeader,
-      fallbackFilename,
-    );
-
-    return {
-      filename,
-      blob: responseBlob,
-    };
-  }
-
-  /**
-   * Helper centralizado para descargar reportes desde cualquier endpoint generado.
-   * Elimina la duplicación del patrón pipe(map → normalizeDownloadedReport, shareReplay).
-   */
-  private downloadReport(
-    source$: Observable<HttpResponse<Blob>>,
-    fallbackFilename: string,
-  ): Observable<DownloadedReportFile> {
-    return source$.pipe(
-      map((response: HttpResponse<Blob>) =>
-        this.normalizeDownloadedReport(response, fallbackFilename),
-      ),
-      shareReplay(1),
-    );
-  }
-
-  private extractFilenameFromHeader(
-    contentDispositionHeader: string | null,
-    fallbackFilename: string,
-  ): string {
-    if (contentDispositionHeader === null) {
-      return fallbackFilename;
-    }
-
-    const utf8Match: RegExpMatchArray | null =
-      contentDispositionHeader.match(/filename\*=UTF-8''([^;]+)/i);
-    if (utf8Match !== null) {
-      const encodedFilename: string | undefined = utf8Match[1];
-      if (encodedFilename !== undefined && encodedFilename.trim() !== '') {
-        return decodeURIComponent(encodedFilename.trim());
-      }
-    }
-
-    const regularMatch: RegExpMatchArray | null =
-      contentDispositionHeader.match(/filename="?([^";]+)"?/i);
-    if (regularMatch !== null) {
-      const rawFilename: string | undefined = regularMatch[1];
-      if (rawFilename !== undefined && rawFilename.trim() !== '') {
-        return rawFilename.trim();
-      }
-    }
-
-    return fallbackFilename;
-  }
-
-  private normalizeLogEntry(rawEvent: {
-    job_id: string;
-    event_index: number;
-    level: string;
-    source: string;
-    message: string;
-    payload: unknown;
-    created_at: string;
-  }): JobLogEntryView {
-    const normalizedPayload: Record<string, unknown> =
-      rawEvent.payload !== null &&
-      typeof rawEvent.payload === 'object' &&
-      !Array.isArray(rawEvent.payload)
-        ? (rawEvent.payload as Record<string, unknown>)
-        : {};
-
-    const normalizedLevel: JobLogLevel =
-      rawEvent.level === 'debug' || rawEvent.level === 'warning' || rawEvent.level === 'error'
-        ? rawEvent.level
-        : 'info';
-
-    return {
-      jobId: rawEvent.job_id,
-      eventIndex: rawEvent.event_index,
-      level: normalizedLevel,
-      source: rawEvent.source,
-      message: rawEvent.message,
-      payload: normalizedPayload,
-      createdAt: rawEvent.created_at,
     };
   }
 
@@ -1011,97 +227,7 @@ export class JobsApiService {
     };
   }
 
-  private buildJobsRealtimeUrl(query: JobsRealtimeQuery = {}): string {
-    const url: URL = new URL(JOBS_WEBSOCKET_URL);
-
-    if (query.jobId !== undefined) {
-      url.searchParams.set('job_id', query.jobId);
-    }
-
-    if (query.pluginName !== undefined) {
-      url.searchParams.set('plugin_name', query.pluginName);
-    }
-
-    if (query.includeLogs !== undefined) {
-      url.searchParams.set('include_logs', String(query.includeLogs));
-    }
-
-    if (query.includeSnapshot !== undefined) {
-      url.searchParams.set('include_snapshot', String(query.includeSnapshot));
-    }
-
-    if (query.activeOnly !== undefined) {
-      url.searchParams.set('active_only', String(query.activeOnly));
-    }
-
-    return url.toString();
-  }
-
-  private normalizeRealtimeEvent(rawEvent: unknown): JobsRealtimeEvent | null {
-    if (rawEvent === null || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) {
-      return null;
-    }
-
-    const candidateEvent: Record<string, unknown> = rawEvent as Record<string, unknown>;
-    const rawEventName: unknown = candidateEvent['event'];
-    const rawData: unknown = candidateEvent['data'];
-
-    if (typeof rawEventName !== 'string' || rawData === null || rawData === undefined) {
-      return null;
-    }
-
-    if (rawEventName === 'jobs.snapshot') {
-      const snapshotContainer: Record<string, unknown> | null =
-        typeof rawData === 'object' && !Array.isArray(rawData)
-          ? (rawData as Record<string, unknown>)
-          : null;
-      const rawItems: unknown[] = Array.isArray(snapshotContainer?.['items'])
-        ? (snapshotContainer?.['items'] as unknown[])
-        : [];
-
-      return {
-        event: 'jobs.snapshot',
-        data: {
-          items: rawItems.map((rawItem: unknown) =>
-            this.normalizeScientificJob(rawItem as ScientificJob),
-          ),
-        },
-      };
-    }
-
-    if (rawEventName === 'job.updated') {
-      return {
-        event: 'job.updated',
-        data: this.normalizeScientificJob(rawData as ScientificJob),
-      };
-    }
-
-    if (rawEventName === 'job.progress') {
-      return {
-        event: 'job.progress',
-        data: rawData as JobProgressSnapshot,
-      };
-    }
-
-    if (rawEventName === 'job.log') {
-      return {
-        event: 'job.log',
-        data: this.normalizeLogEntry(
-          rawData as {
-            job_id: string;
-            event_index: number;
-            level: string;
-            source: string;
-            message: string;
-            payload: unknown;
-            created_at: string;
-          },
-        ),
-      };
-    }
-
-    return null;
-  }
+  // --- Jobs genéricos y despacho ---
 
   /**
    * Lista jobs globales del sistema con filtros opcionales por plugin y estado.
@@ -1198,7 +324,7 @@ export class JobsApiService {
 
   /** Descarga el reporte CSV de molar fractions directamente desde backend */
   downloadMolarFractionsCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.molarFractionsClient.molarFractionsJobsReportCsvRetrieve(jobId, 'response'),
       `molar_fractions_${jobId}_report.csv`,
     );
@@ -1206,7 +332,7 @@ export class JobsApiService {
 
   /** Descarga el reporte LOG de molar fractions directamente desde backend */
   downloadMolarFractionsLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.molarFractionsClient.molarFractionsJobsReportLogRetrieve(jobId, 'response'),
       `molar_fractions_${jobId}_report.log`,
     );
@@ -1214,7 +340,7 @@ export class JobsApiService {
 
   /** Descarga el reporte CSV de Tunnel directamente desde backend */
   downloadTunnelCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.tunnelClient.tunnelJobsReportCsvRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_report.csv`,
     );
@@ -1222,7 +348,7 @@ export class JobsApiService {
 
   /** Descarga el reporte LOG de Tunnel directamente desde backend */
   downloadTunnelLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.tunnelClient.tunnelJobsReportLogRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_report.log`,
     );
@@ -1230,26 +356,13 @@ export class JobsApiService {
 
   /** Descarga el reporte de error de Tunnel cuando el job falla */
   downloadTunnelErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.tunnelClient.tunnelJobsReportErrorRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_error.txt`,
     );
   }
 
-  /** Consulta historial de logs por job con cursor incremental */
-  getJobLogs(jobId: string, query: JobLogsQuery = {}): Observable<JobLogsPageView> {
-    return this.jobsClient.jobsLogsRetrieve(jobId, query.afterEventIndex, query.limit).pipe(
-      map(
-        (rawPage: JobLogList): JobLogsPageView => ({
-          jobId: rawPage.job_id,
-          count: rawPage.count,
-          nextAfterEventIndex: rawPage.next_after_event_index,
-          results: rawPage.results.map((rawEvent) => this.normalizeLogEntry(rawEvent)),
-        }),
-      ),
-      shareReplay(1),
-    );
-  }
+  // --- Control de jobs ---
 
   /** Solicita pausa cooperativa de un job cuando su plugin lo permite */
   pauseJob(jobId: string): Observable<JobControlActionResult> {
@@ -1281,6 +394,8 @@ export class JobsApiService {
     );
   }
 
+  // --- Calculator ---
+
   /**
    * Despacha un job de calculadora al backend.
    * Si existe caché (job_hash conocido), el backend retorna resultado inmediato con status 'completed'.
@@ -1310,150 +425,7 @@ export class JobsApiService {
     return this.calculatorClient.calculatorJobsRetrieve(jobId);
   }
 
-  /**
-   * Obtiene un snapshot puntual del progreso del job: porcentaje, etapa y mensaje legible.
-   * Util para polling manual o para sincronizar estado tras reconexion de stream SSE.
-   *
-   * Ejemplo: `getJobProgress('uuid').subscribe(s => console.log(s.progress_percentage))`.
-   */
-  getJobProgress(jobId: string): Observable<JobProgressSnapshot> {
-    return this.jobsClient.jobsProgressRetrieve(jobId);
-  }
-
-  /**
-   * Abre un stream SSE (Server-Sent Events) para recibir actualizaciones de progreso
-   * en tiempo real. Emite `JobProgressSnapshot` en cada evento `job.progress` del backend.
-   * El Observable completa automáticamente al recibir status 'completed' o 'failed'.
-   * Si la conexión falla, emite error para que el consumidor active el fallback de polling.
-   *
-   * Usa la API nativa `EventSource` del navegador (compatible con todos los navegadores modernos).
-   * El cliente generado por OpenAPI no es apto para SSE porque cierra la conexión al recibir
-   * el primer chunk; por eso este método usa EventSource directamente.
-   *
-   * Ejemplo de uso en componente:
-   * ```typescript
-   * this.jobsApi.streamJobEvents(jobId).subscribe({
-   *   next: snap  => this.progress.set(snap),
-   *   complete: () => this.fetchFinalResult(jobId),
-   *   error:    () => this.startPollingFallback(jobId),
-   * });
-   * ```
-   */
-  streamJobEvents(jobId: string): Observable<JobProgressSnapshot> {
-    return new Observable<JobProgressSnapshot>((observer) => {
-      const url = `${API_BASE_URL}/api/jobs/${jobId}/events/`;
-      const source = new EventSource(url);
-
-      source.addEventListener('job.progress', (rawEvent: Event) => {
-        const messageEvent = rawEvent as MessageEvent<string>;
-        try {
-          const snapshot = JSON.parse(messageEvent.data) as JobProgressSnapshot;
-          observer.next(snapshot);
-          // El stream termina cuando el job llega a estado terminal
-          if (
-            snapshot.status === 'completed' ||
-            snapshot.status === 'failed' ||
-            snapshot.status === 'paused'
-          ) {
-            source.close();
-            observer.complete();
-          }
-        } catch {
-          // Ignorar eventos malformados; el stream continúa con el siguiente evento
-        }
-      });
-
-      source.onerror = () => {
-        source.close();
-        observer.error(new Error('SSE connection error'));
-      };
-
-      // Teardown: el EventSource se cierra al cancelar la suscripcion (ngOnDestroy, etc.)
-      return () => source.close();
-    });
-  }
-
-  /** Abre stream SSE de logs en tiempo real para un job específico */
-  streamJobLogEvents(jobId: string): Observable<JobLogEntryView> {
-    return new Observable<JobLogEntryView>((observer) => {
-      const url = `${API_BASE_URL}/api/jobs/${jobId}/logs/events/`;
-      const source = new EventSource(url);
-
-      source.addEventListener('job.log', (rawEvent: Event) => {
-        const messageEvent = rawEvent as MessageEvent<string>;
-        try {
-          const parsedEvent = JSON.parse(messageEvent.data) as {
-            job_id: string;
-            event_index: number;
-            level: string;
-            source: string;
-            message: string;
-            payload: unknown;
-            created_at: string;
-          };
-          observer.next(this.normalizeLogEntry(parsedEvent));
-        } catch {
-          // Ignorar eventos malformados y continuar escuchando.
-        }
-      });
-
-      source.onerror = () => {
-        source.close();
-        observer.error(new Error('SSE logs connection error'));
-      };
-
-      return () => source.close();
-    });
-  }
-
-  /** Abre stream WebSocket global o filtrado para jobs, progreso y logs. */
-  streamJobsRealtime(query: JobsRealtimeQuery = {}): Observable<JobsRealtimeEvent> {
-    return new Observable<JobsRealtimeEvent>((observer) => {
-      const socket = new WebSocket(this.buildJobsRealtimeUrl(query));
-
-      socket.onmessage = (messageEvent: MessageEvent<string>) => {
-        try {
-          const parsedPayload: unknown = JSON.parse(messageEvent.data);
-          const normalizedEvent: JobsRealtimeEvent | null =
-            this.normalizeRealtimeEvent(parsedPayload);
-          if (normalizedEvent !== null) {
-            observer.next(normalizedEvent);
-          }
-        } catch {
-          // Ignorar frames malformados y continuar escuchando.
-        }
-      };
-
-      socket.onerror = () => {
-        observer.error(new Error('WebSocket jobs stream connection error'));
-      };
-
-      socket.onclose = () => {
-        observer.complete();
-      };
-
-      return () => {
-        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-          socket.close();
-        }
-      };
-    });
-  }
-
-  /**
-   * Polling de progreso mediante snapshots periódicos hasta estado terminal.
-   * Retorna el `JobProgressSnapshot` final (completed o failed).
-   * Alternativa robusta cuando SSE no está disponible o hay problemas de red.
-   *
-   * Ejemplo: `pollJobUntilCompleted('uuid', 1000).subscribe(snap => ...)`.
-   */
-  pollJobUntilCompleted(jobId: string, intervalMs: number = 1000): Observable<JobProgressSnapshot> {
-    return interval(intervalMs).pipe(
-      switchMap(() => this.getJobProgress(jobId)),
-      filter((snap) => snap.status === 'completed' || snap.status === 'failed'),
-      take(1),
-    );
-  }
+  // --- Easy-rate ---
 
   private appendOptionalString(formData: FormData, key: string, value: string | undefined): void {
     if (value === undefined) {
@@ -1562,7 +534,7 @@ export class JobsApiService {
 
   /** Descarga reporte CSV de Easy-rate */
   downloadEasyRateCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.easyRateClient.easyRateJobsReportCsvRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_report.csv`,
     );
@@ -1570,7 +542,7 @@ export class JobsApiService {
 
   /** Descarga reporte LOG de Easy-rate */
   downloadEasyRateLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.easyRateClient.easyRateJobsReportLogRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_report.log`,
     );
@@ -1578,7 +550,7 @@ export class JobsApiService {
 
   /** Descarga reporte de error de Easy-rate */
   downloadEasyRateErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.easyRateClient.easyRateJobsReportErrorRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_error.txt`,
     );
@@ -1586,11 +558,13 @@ export class JobsApiService {
 
   /** Descarga ZIP de archivos de entrada originales de Easy-rate */
   downloadEasyRateInputsZip(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.easyRateClient.easyRateJobsReportInputsRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_inputs.zip`,
     );
   }
+
+  // --- Marcus ---
 
   /** Despacha un job Marcus con 6 archivos Gaussian en multipart */
   dispatchMarcusJob(params: MarcusParams): Observable<MarcusJobResponse> {
@@ -1619,7 +593,7 @@ export class JobsApiService {
 
   /** Descarga reporte CSV de Marcus */
   downloadMarcusCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.marcusClient.marcusJobsReportCsvRetrieve(jobId, 'response'),
       `marcus_${jobId}_report.csv`,
     );
@@ -1627,7 +601,7 @@ export class JobsApiService {
 
   /** Descarga reporte LOG de Marcus */
   downloadMarcusLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.marcusClient.marcusJobsReportLogRetrieve(jobId, 'response'),
       `marcus_${jobId}_report.log`,
     );
@@ -1635,7 +609,7 @@ export class JobsApiService {
 
   /** Descarga reporte de error de Marcus */
   downloadMarcusErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.marcusClient.marcusJobsReportErrorRetrieve(jobId, 'response'),
       `marcus_${jobId}_error.txt`,
     );
@@ -1643,11 +617,13 @@ export class JobsApiService {
 
   /** Descarga ZIP de archivos de entrada originales de Marcus */
   downloadMarcusInputsZip(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response'),
       `marcus_${jobId}_inputs.zip`,
     );
   }
+
+  // --- SA Score ---
 
   /** Despacha un job SA score para una lista de SMILES y métodos seleccionados. */
   dispatchSaScoreJob(params: SaScoreParams): Observable<SaScoreJobResponseView> {
@@ -1667,7 +643,7 @@ export class JobsApiService {
 
   /** Descarga CSV completo (todas las columnas de métodos solicitados) para SA score. */
   downloadSaScoreCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.saScoreClient.saScoreJobsReportCsvRetrieve(jobId, 'response'),
       `sa_score_${jobId}_report.csv`,
     );
@@ -1678,11 +654,13 @@ export class JobsApiService {
     jobId: string,
     method: SaScoreMethod,
   ): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.saScoreClient.saScoreJobsReportCsvMethodRetrieve(jobId, method, 'response'),
       `sa_score_${jobId}_${method}.csv`,
     );
   }
+
+  // --- Toxicity Properties ---
 
   /** Despacha un job de Toxicity Properties para una lista de SMILES. */
   dispatchToxicityPropertiesJob(
@@ -1704,7 +682,7 @@ export class JobsApiService {
 
   /** Descarga CSV toxicológico (columnas fijas) para un job completado. */
   downloadToxicityPropertiesCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return this.downloadReport(
+    return createReportDownload$(
       this.toxicityPropertiesClient.toxicityPropertiesJobsReportCsvRetrieve(jobId, 'response'),
       `toxicity_properties_${jobId}_report.csv`,
     );
