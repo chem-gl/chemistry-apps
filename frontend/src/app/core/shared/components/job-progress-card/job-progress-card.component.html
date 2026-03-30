@@ -1,12 +1,19 @@
 <!-- job-progress-card.component.html: Tarjeta de progreso estandarizada para jobs científicos. -->
 <div class="progress-card" aria-live="polite">
-    @if (jobId !== null && jobId !== '') {
+  @if (jobId !== null && jobId !== '') {
     <p class="job-id">{{ jobId }}</p>
-    }
-    <div class="progress-track" role="progressbar" [attr.aria-label]="progressAriaLabel" title="Scientific job progress"
-        [attr.aria-valuenow]="progressPercentage" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-fill" [style.width.%]="progressPercentage"></div>
-    </div>
-    <p class="progress-pct">{{ progressPercentage }}%</p>
-    <p class="progress-message">{{ progressMessage }}</p>
+  }
+  <div
+    class="progress-track"
+    role="progressbar"
+    [attr.aria-label]="progressAriaLabel"
+    title="Scientific job progress"
+    [attr.aria-valuenow]="progressPercentage"
+    aria-valuemin="0"
+    aria-valuemax="100"
+  >
+    <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+  </div>
+  <p class="progress-pct">{{ progressPercentage }}%</p>
+  <p class="progress-message">{{ progressMessage }}</p>
 </div>
