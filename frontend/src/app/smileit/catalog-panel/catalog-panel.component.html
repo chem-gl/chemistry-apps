@@ -66,27 +66,23 @@
           <div class="library-thumbnail-grid">
             @for (entry of filteredLibraryEntries(); track entry.id) {
               <article class="library-thumb">
-                <div
+                <button type="button"
                   class="thumb-open-button"
-                  role="button"
-                  tabindex="0"
                   [attr.aria-label]="'Open detail for ' + entry.name"
                   (click)="openLibraryEntryDetail(entry)"
-                  (keydown.enter)="openLibraryEntryDetail(entry)"
-                  (keydown.space)="openLibraryEntryDetail(entry); $event.preventDefault()"
                 >
-                  <p class="thumb-name">{{ entry.name }}</p>
-                  <div class="thumb-preview">
+                  <span class="thumb-name">{{ entry.name }}</span>
+                  <span class="thumb-preview">
                     @if (catalogEntryPreviewSvg(entry); as thumbSvg) {
-                      <div class="thumb-svg" [innerHTML]="thumbSvg"></div>
+                      <span class="thumb-svg" [innerHTML]="thumbSvg"></span>
                     } @else if (catalogEntryPreviewError(entry)) {
                       <span class="thumb-state-icon thumb-error" aria-hidden="true">!</span>
                     } @else {
                       <span class="thumb-state-icon thumb-loading" aria-hidden="true">…</span>
                     }
-                  </div>
-                  <p class="thumb-smiles mono">{{ entry.smiles }}</p>
-                </div>
+                  </span>
+                  <span class="thumb-smiles mono">{{ entry.smiles }}</span>
+                  </button>
                 @if (workflow.catalog.isCatalogEntryEditable(entry)) {
                   <div
                     class="library-thumb-actions"
@@ -113,13 +109,13 @@
       #catalogStudioDialog
       class="catalog-studio-dialog"
       (click)="onCatalogStudioDialogClick($event)"
+      (keydown.escape)="closeCatalogStudioModal()"
     >
       <section
         class="catalog-studio-modal"
-        role="dialog"
-        aria-modal="true"
         aria-label="SMILES catalog studio"
         (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
       >
         <header class="catalog-studio-header">
           <div>
@@ -209,7 +205,7 @@
                   </div>
                 </div>
                 @if (catalogDraftInspection(); as catalogInspection) {
-                  <div
+                  <button type="button"
                     class="svg-preview inspectable compact-anchor-svg"
                     (click)="onCatalogDraftSvgClick($event)"
                     [innerHTML]="
@@ -218,7 +214,7 @@
                         catalogDraftAnchorIndices()
                       )
                     "
-                  ></div>
+                  ></button>
                   <div class="atom-grid compact-grid anchor-grid">
                     @for (atom of catalogInspection.atoms; track atom.index) {
                       <button
@@ -385,13 +381,13 @@
       #catalogSmilesSketchDialog
       class="catalog-smiles-sketch-dialog"
       (click)="onCatalogSmilesSketchDialogClick($event)"
+      (keydown.escape)="closeCatalogSmilesSketcher()"
     >
       <section
         class="catalog-smiles-sketch-modal"
-        role="dialog"
-        aria-modal="true"
         aria-label="Catalog SMILES sketcher"
         (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
       >
         <header class="catalog-studio-header">
           <div>

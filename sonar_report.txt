@@ -1,4 +1,789 @@
 Problema 1
+Archivo: chemistry-apps:frontend/src/app/smileit/block-assignment-panel/block-assignment-panel.component.html
+
+Problema:
+Use <button> or <input> instead of the button role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 173
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 2
+Archivo: chemistry-apps:frontend/src/app/smileit/block-assignment-panel/block-assignment-panel.component.html
+
+Problema:
+Use <button> or <input> instead of the button role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 297
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 3
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Use <button> or <input> instead of the button role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 69
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 4
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 112
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 5
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 117
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 6
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 117
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 7
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 212
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 8
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 384
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 9
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 389
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 10
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 389
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 11
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Use <output> instead of the status role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 410
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 12
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Use <button> or <input> instead of the button role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 244
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 13
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Non-interactive elements should not be assigned interactive roles.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6842
+Severidad: MAJOR
+Línea: 244
+
+Cómo solucionarlo:
+Ensure that non-interactive DOM elements do not use interactive ARIA roles.
+
+Noncompliant code example
+
+&lt;li role="button"&gt;Foo&lt;/li&gt; &lt;!--Noncompliant; "li" isn't interactive, but "button" is--&gt;
+
+Compliant solution
+
+&lt;li role="listitem"&gt;Foo&lt;/li&gt;
+
+----------------------------------------
+
+Problema 14
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 341
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 15
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Use <html> instead of the document role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 348
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 16
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 348
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 17
+Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 9
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 18
+Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
+
+Problema:
+Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 9
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 19
+Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+
+Problema:
+Unexpected duplicate selector ".catalog-smiles-section", first used at line 364
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S4666
+Severidad: MAJOR
+Línea: 423
+
+Cómo solucionarlo:
+To fix your code, either remove the duplicated selector or merge all declarations.
+
+Noncompliant code example
+
+p {
+  color: blue;
+  font-size: 16px;
+}
+
+p { /* Noncompliant: duplicated selector 'p', overwrites property 'color' */
+  color: red;
+}
+
+Compliant solution
+
+p {
+  color: red;
+  font-size: 16px;
+}
+
+----------------------------------------
+
+Problema 20
+Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+
+Problema:
+Unexpected duplicate selector ".catalog-category-panel", first used at line 372
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S4666
+Severidad: MAJOR
+Línea: 440
+
+Cómo solucionarlo:
+To fix your code, either remove the duplicated selector or merge all declarations.
+
+Noncompliant code example
+
+p {
+  color: blue;
+  font-size: 16px;
+}
+
+p { /* Noncompliant: duplicated selector 'p', overwrites property 'color' */
+  color: red;
+}
+
+Compliant solution
+
+p {
+  color: red;
+  font-size: 16px;
+}
+
+----------------------------------------
+
+Problema 21
+Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+
+Problema:
+Unexpected duplicate selector ".anchor-selection-panel", first used at line 368
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S4666
+Severidad: MAJOR
+Línea: 466
+
+Cómo solucionarlo:
+To fix your code, either remove the duplicated selector or merge all declarations.
+
+Noncompliant code example
+
+p {
+  color: blue;
+  font-size: 16px;
+}
+
+p { /* Noncompliant: duplicated selector 'p', overwrites property 'color' */
+  color: red;
+}
+
+Compliant solution
+
+p {
+  color: red;
+  font-size: 16px;
+}
+
+----------------------------------------
+
+Problema 22
 Archivo: chemistry-apps:scripts/sonar.py
 
 Problema:
@@ -36,7 +821,7 @@ props.set("sonar_secret", System.getenv("SONAR_SECRET"))
 
 ----------------------------------------
 
-Problema 2
+Problema 23
 Archivo: chemistry-apps:frontend/src/app/core/api/jobs-api.service.ts
 
 Problema:
@@ -94,7 +879,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 3
+Problema 24
 Archivo: chemistry-apps:backend/apps/calculator/plugin.py
 
 Problema:
@@ -137,7 +922,7 @@ def run():
 
 ----------------------------------------
 
-Problema 4
+Problema 25
 Archivo: chemistry-apps:backend/apps/calculator/types.py
 
 Problema:
@@ -169,7 +954,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 5
+Problema 26
 Archivo: chemistry-apps:backend/apps/core/models.py
 
 Problema:
@@ -202,7 +987,7 @@ saving multiple objects with blank values. No issue will be raised in this scena
 
 ----------------------------------------
 
-Problema 6
+Problema 27
 Archivo: chemistry-apps:backend/apps/core/realtime.py
 
 Problema:
@@ -245,7 +1030,7 @@ def run():
 
 ----------------------------------------
 
-Problema 7
+Problema 28
 Archivo: chemistry-apps:backend/apps/core/routers_old_backup.py
 
 Problema:
@@ -288,7 +1073,7 @@ def run():
 
 ----------------------------------------
 
-Problema 8
+Problema 29
 Archivo: chemistry-apps:backend/apps/core/runtime_tools.py
 
 Problema:
@@ -333,7 +1118,7 @@ except RuntimeError:
 
 ----------------------------------------
 
-Problema 9
+Problema 30
 Archivo: chemistry-apps:backend/apps/core/schemas.py
 
 Problema:
@@ -360,7 +1145,7 @@ list(some_list) # Compliant
 
 ----------------------------------------
 
-Problema 10
+Problema 31
 Archivo: chemistry-apps:backend/apps/core/schemas.py
 
 Problema:
@@ -403,7 +1188,7 @@ def run():
 
 ----------------------------------------
 
-Problema 11
+Problema 32
 Archivo: chemistry-apps:backend/apps/core/services/cache_operations.py
 
 Problema:
@@ -526,7 +1311,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 12
+Problema 33
 Archivo: chemistry-apps:backend/apps/core/services/cache_operations.py
 
 Problema:
@@ -569,7 +1354,7 @@ def run():
 
 ----------------------------------------
 
-Problema 13
+Problema 34
 Archivo: chemistry-apps:backend/apps/core/services/execution.py
 
 Problema:
@@ -612,7 +1397,7 @@ def run():
 
 ----------------------------------------
 
-Problema 14
+Problema 35
 Archivo: chemistry-apps:backend/apps/core/services/execution.py
 
 Problema:
@@ -639,7 +1424,7 @@ list(some_list) # Compliant
 
 ----------------------------------------
 
-Problema 15
+Problema 36
 Archivo: chemistry-apps:backend/apps/core/services/job_control.py
 
 Problema:
@@ -667,7 +1452,7 @@ def do_something(a):
 
 ----------------------------------------
 
-Problema 16
+Problema 37
 Archivo: chemistry-apps:backend/apps/core/services/job_control.py
 
 Problema:
@@ -710,7 +1495,7 @@ def run():
 
 ----------------------------------------
 
-Problema 17
+Problema 38
 Archivo: chemistry-apps:backend/apps/core/services/job_control.py
 
 Problema:
@@ -738,7 +1523,7 @@ def do_something(a):
 
 ----------------------------------------
 
-Problema 18
+Problema 39
 Archivo: chemistry-apps:backend/apps/core/services/job_control.py
 
 Problema:
@@ -766,7 +1551,7 @@ def do_something(a):
 
 ----------------------------------------
 
-Problema 19
+Problema 40
 Archivo: chemistry-apps:backend/apps/core/services/runtime.py
 
 Problema:
@@ -809,7 +1594,7 @@ def run():
 
 ----------------------------------------
 
-Problema 20
+Problema 41
 Archivo: chemistry-apps:backend/apps/core/services_old_backup.py
 
 Problema:
@@ -852,7 +1637,7 @@ def run():
 
 ----------------------------------------
 
-Problema 21
+Problema 42
 Archivo: chemistry-apps:backend/apps/core/services_old_backup.py
 
 Problema:
@@ -895,7 +1680,7 @@ def run():
 
 ----------------------------------------
 
-Problema 22
+Problema 43
 Archivo: chemistry-apps:backend/apps/core/services_old_backup.py
 
 Problema:
@@ -922,7 +1707,7 @@ list(some_list) # Compliant
 
 ----------------------------------------
 
-Problema 23
+Problema 44
 Archivo: chemistry-apps:backend/apps/core/services_old_backup.py
 
 Problema:
@@ -1045,7 +1830,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 24
+Problema 45
 Archivo: chemistry-apps:backend/apps/core/services_old_backup.py
 
 Problema:
@@ -1088,674 +1873,674 @@ def run():
 
 ----------------------------------------
 
-Problema 25
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 26
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use the "type" parameter syntax to declare this generic class.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6792
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
-
-Noncompliant code example
-
-from typing import Generic, TypeVar
-
-_T_co = TypeVar("_T_co", covariant=True, bound=str)
-
-class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
-    def method1(self) -&gt; _T_co:
-        ...
-
-Compliant solution
-
-class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
-    def method1(self) -&gt; T:
-        ...
-
-----------------------------------------
-
-Problema 27
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 28
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 29
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 30
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use the "type" parameter syntax to declare this generic class.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6792
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
-
-Noncompliant code example
-
-from typing import Generic, TypeVar
-
-_T_co = TypeVar("_T_co", covariant=True, bound=str)
-
-class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
-    def method1(self) -&gt; _T_co:
-        ...
-
-Compliant solution
-
-class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
-    def method1(self) -&gt; T:
-        ...
-
-----------------------------------------
-
-Problema 31
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 32
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 33
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 34
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use the "type" parameter syntax to declare this generic class.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6792
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
-
-Noncompliant code example
-
-from typing import Generic, TypeVar
-
-_T_co = TypeVar("_T_co", covariant=True, bound=str)
-
-class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
-    def method1(self) -&gt; _T_co:
-        ...
-
-Compliant solution
-
-class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
-    def method1(self) -&gt; T:
-        ...
-
-----------------------------------------
-
-Problema 35
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 36
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 37
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 38
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 39
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 40
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 41
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 42
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 43
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a "type" statement instead of this "TypeAlias".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6794
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-Use a type statement to declare the TypeAlias instead of using a regular assignment.
-
-Noncompliant code example
-
-from typing import TypeAlias
-
-MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
-
-_T = TypeVar("_T")
-MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
-
-Compliant solution
-
-type MyStringAlias = str # Compliant
-
-type MyGenericAlias[T] = list[T]  # Compliant
-
-----------------------------------------
-
-Problema 44
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
-Problema 45
-Archivo: chemistry-apps:backend/apps/core/types.py
-
-Problema:
-Use a generic type parameter for this function instead of a "TypeVar".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: python:S6796
-Severidad: MAJOR
-Línea: N/A
-
-Cómo solucionarlo:
-To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
-
-Noncompliant code example
-
-from typing import TypeVar
-
-_T = TypeVar("_T", bound=str)
-
-def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
-    ...
-
-Compliant solution
-
-def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
-    ...
-
-----------------------------------------
-
 Problema 46
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 47
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use the "type" parameter syntax to declare this generic class.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6792
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
+
+Noncompliant code example
+
+from typing import Generic, TypeVar
+
+_T_co = TypeVar("_T_co", covariant=True, bound=str)
+
+class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
+    def method1(self) -&gt; _T_co:
+        ...
+
+Compliant solution
+
+class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
+    def method1(self) -&gt; T:
+        ...
+
+----------------------------------------
+
+Problema 48
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 49
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 50
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 51
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use the "type" parameter syntax to declare this generic class.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6792
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
+
+Noncompliant code example
+
+from typing import Generic, TypeVar
+
+_T_co = TypeVar("_T_co", covariant=True, bound=str)
+
+class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
+    def method1(self) -&gt; _T_co:
+        ...
+
+Compliant solution
+
+class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
+    def method1(self) -&gt; T:
+        ...
+
+----------------------------------------
+
+Problema 52
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 53
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 54
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 55
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use the "type" parameter syntax to declare this generic class.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6792
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, make sure to use the type parameter syntax whenever defining a generic class.
+
+Noncompliant code example
+
+from typing import Generic, TypeVar
+
+_T_co = TypeVar("_T_co", covariant=True, bound=str)
+
+class ClassA(Generic[_T_co]):  # Noncompliant: Explicit definition of a TypeVar and inheritance from typing.Generic is verbose
+    def method1(self) -&gt; _T_co:
+        ...
+
+Compliant solution
+
+class ClassA[T: str]:  # Compliant: Concise syntax for type parameter is used
+    def method1(self) -&gt; T:
+        ...
+
+----------------------------------------
+
+Problema 56
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 57
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 58
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 59
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 60
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 61
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 62
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 63
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 64
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a "type" statement instead of this "TypeAlias".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6794
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+Use a type statement to declare the TypeAlias instead of using a regular assignment.
+
+Noncompliant code example
+
+from typing import TypeAlias
+
+MyStringAlias: TypeAlias = str # Noncompliant: this TypeAlias can be more concise with the help of the type statement.
+
+_T = TypeVar("_T")
+MyGenericAlias: TypeAlias = list[_T]  # Noncompliant: the type statement can help replace both the TypeVar and the TypeAlias statements.
+
+Compliant solution
+
+type MyStringAlias = str # Compliant
+
+type MyGenericAlias[T] = list[T]  # Compliant
+
+----------------------------------------
+
+Problema 65
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 66
+Archivo: chemistry-apps:backend/apps/core/types.py
+
+Problema:
+Use a generic type parameter for this function instead of a "TypeVar".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S6796
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+To fix this issue, replace the usage of a TypeVar as a parameter type with the generic type parameter syntax.
+
+Noncompliant code example
+
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=str)
+
+def func(a: _T, b: int) -&gt; _T: # Noncompliant: the usage of a TypeVar could be simplified with a generic type parameter.
+    ...
+
+Compliant solution
+
+def func[T: str](a: T, b: int) -&gt; T: # Compliant: the code is clear and concise.
+    ...
+
+----------------------------------------
+
+Problema 67
 Archivo: chemistry-apps:backend/apps/easy_rate/plugin.py
 
 Problema:
@@ -1798,7 +2583,7 @@ def run():
 
 ----------------------------------------
 
-Problema 47
+Problema 68
 Archivo: chemistry-apps:backend/apps/marcus/plugin.py
 
 Problema:
@@ -1836,7 +2621,7 @@ def foo(a, b):
 
 ----------------------------------------
 
-Problema 48
+Problema 69
 Archivo: chemistry-apps:backend/apps/molar_fractions/plugin.py
 
 Problema:
@@ -1879,7 +2664,7 @@ def run():
 
 ----------------------------------------
 
-Problema 49
+Problema 70
 Archivo: chemistry-apps:backend/apps/random_numbers/plugin.py
 
 Problema:
@@ -1922,7 +2707,7 @@ def run():
 
 ----------------------------------------
 
-Problema 50
+Problema 71
 Archivo: chemistry-apps:backend/apps/random_numbers/plugin.py
 
 Problema:
@@ -2045,7 +2830,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 51
+Problema 72
 Archivo: chemistry-apps:backend/apps/sa_score/plugin.py
 
 Problema:
@@ -2168,7 +2953,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 52
+Problema 73
 Archivo: chemistry-apps:backend/apps/smileit/engine/rendering.py
 
 Problema:
@@ -2201,7 +2986,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 53
+Problema 74
 Archivo: chemistry-apps:backend/apps/smileit/engine/rendering.py
 
 Problema:
@@ -2234,7 +3019,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 54
+Problema 75
 Archivo: chemistry-apps:backend/apps/smileit/engine/rendering.py
 
 Problema:
@@ -2267,7 +3052,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 55
+Problema 76
 Archivo: chemistry-apps:backend/apps/smileit/engine/rendering.py
 
 Problema:
@@ -2300,7 +3085,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 56
+Problema 77
 Archivo: chemistry-apps:backend/apps/smileit/engine_old_backup.py
 
 Problema:
@@ -2333,7 +3118,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 57
+Problema 78
 Archivo: chemistry-apps:backend/apps/smileit/engine_old_backup.py
 
 Problema:
@@ -2366,7 +3151,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 58
+Problema 79
 Archivo: chemistry-apps:backend/apps/smileit/engine_old_backup.py
 
 Problema:
@@ -2399,7 +3184,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 59
+Problema 80
 Archivo: chemistry-apps:backend/apps/smileit/engine_old_backup.py
 
 Problema:
@@ -2432,7 +3217,7 @@ r"[0-9.\\-_]"
 
 ----------------------------------------
 
-Problema 60
+Problema 81
 Archivo: chemistry-apps:backend/apps/smileit/plugin.py
 
 Problema:
@@ -2480,7 +3265,7 @@ automatically.
 
 ----------------------------------------
 
-Problema 61
+Problema 82
 Archivo: chemistry-apps:backend/apps/smileit/plugin.py
 
 Problema:
@@ -2523,7 +3308,7 @@ def run():
 
 ----------------------------------------
 
-Problema 62
+Problema 83
 Archivo: chemistry-apps:backend/apps/smileit/plugin.py
 
 Problema:
@@ -2646,7 +3431,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 63
+Problema 84
 Archivo: chemistry-apps:backend/apps/toxicity_properties/plugin.py
 
 Problema:
@@ -2676,7 +3461,7 @@ def fun(a):
 
 ----------------------------------------
 
-Problema 64
+Problema 85
 Archivo: chemistry-apps:backend/apps/tunnel/plugin.py
 
 Problema:
@@ -2719,7 +3504,7 @@ def run():
 
 ----------------------------------------
 
-Problema 65
+Problema 86
 Archivo: chemistry-apps:backend/config/settings.py
 
 Problema:
@@ -2758,7 +3543,7 @@ for key in fruit: # Iterates directly over dictionary (yields keys)
 
 ----------------------------------------
 
-Problema 66
+Problema 87
 Archivo: chemistry-apps:backend/config/settings.py
 
 Problema:
@@ -2794,7 +3579,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 
 ----------------------------------------
 
-Problema 67
+Problema 88
 Archivo: chemistry-apps:backend/libs/ambit/client.py
 
 Problema:
@@ -2841,7 +3626,7 @@ r"a*"
 
 ----------------------------------------
 
-Problema 68
+Problema 89
 Archivo: chemistry-apps:backend/libs/ambit/client.py
 
 Problema:
@@ -2888,7 +3673,7 @@ r"a*"
 
 ----------------------------------------
 
-Problema 69
+Problema 90
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -2917,7 +3702,7 @@ class MyClass:
 
 ----------------------------------------
 
-Problema 70
+Problema 91
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -2949,7 +3734,7 @@ def my_function(a,b):
 
 ----------------------------------------
 
-Problema 71
+Problema 92
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -2980,7 +3765,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 72
+Problema 93
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3011,7 +3796,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 73
+Problema 94
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3042,7 +3827,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 74
+Problema 95
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3073,7 +3858,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 75
+Problema 96
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3104,7 +3889,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 76
+Problema 97
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3135,7 +3920,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 77
+Problema 98
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3166,7 +3951,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 78
+Problema 99
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3195,7 +3980,7 @@ class MyClass:
 
 ----------------------------------------
 
-Problema 79
+Problema 100
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3227,7 +4012,7 @@ def my_function(a,b):
 
 ----------------------------------------
 
-Problema 80
+Problema 101
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3257,7 +4042,7 @@ dict_fromkeys_one = dict.fromkeys(keys, 1)
 
 ----------------------------------------
 
-Problema 81
+Problema 102
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3288,7 +4073,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 82
+Problema 103
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3319,7 +4104,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 83
+Problema 104
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3350,7 +4135,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 84
+Problema 105
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3381,7 +4166,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 85
+Problema 106
 Archivo: chemistry-apps:backend/libs/brsascore_src/BRSAScore/BRSAScore.py
 
 Problema:
@@ -3412,7 +4197,7 @@ def print_something(important_param):
 
 ----------------------------------------
 
-Problema 86
+Problema 107
 Archivo: chemistry-apps:backend/libs/ck_test/models.py
 
 Problema:
@@ -3444,7 +4229,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 87
+Problema 108
 Archivo: chemistry-apps:backend/libs/ck_test/tests.py
 
 Problema:
@@ -3720,7 +4505,7 @@ class SomeTest(unittest.TestCase):
 
 ----------------------------------------
 
-Problema 88
+Problema 109
 Archivo: chemistry-apps:backend/libs/ck_test/types.py
 
 Problema:
@@ -3752,7 +4537,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 89
+Problema 110
 Archivo: chemistry-apps:backend/libs/ck_test/types.py
 
 Problema:
@@ -3784,7 +4569,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 90
+Problema 111
 Archivo: chemistry-apps:backend/libs/ck_test/types.py
 
 Problema:
@@ -3816,7 +4601,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 91
+Problema 112
 Archivo: chemistry-apps:backend/libs/gaussian_log_parser/attributes/gaussian_attributes.py
 
 Problema:
@@ -3842,7 +4627,7 @@ if a != 2 :
 
 ----------------------------------------
 
-Problema 92
+Problema 113
 Archivo: chemistry-apps:backend/libs/gaussian_log_parser/attributes/gaussian_attributes.py
 
 Problema:
@@ -3885,7 +4670,7 @@ The following are ignored:
 
 ----------------------------------------
 
-Problema 93
+Problema 114
 Archivo: chemistry-apps:backend/libs/gaussian_log_parser/models.py
 
 Problema:
@@ -3917,7 +4702,7 @@ type MyGenericAlias[T] = list[T]  # Compliant
 
 ----------------------------------------
 
-Problema 94
+Problema 115
 Archivo: chemistry-apps:backend/libs/gaussian_log_parser/parsers.py
 
 Problema:
@@ -3949,7 +4734,7 @@ if file.isValid() and isFileOrDirectory(file): # Compliant
 
 ----------------------------------------
 
-Problema 95
+Problema 116
 Archivo: chemistry-apps:frontend/src/app/calculator/calculator.component.html
 
 Problema:
@@ -3980,7 +4765,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 96
+Problema 117
 Archivo: chemistry-apps:frontend/src/app/calculator/calculator.component.html
 
 Problema:
@@ -4011,7 +4796,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 97
+Problema 118
 Archivo: chemistry-apps:frontend/src/app/core/api/api-download.utils.ts
 
 Problema:
@@ -4038,7 +4823,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 98
+Problema 119
 Archivo: chemistry-apps:frontend/src/app/core/api/api-download.utils.ts
 
 Problema:
@@ -4065,7 +4850,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 99
+Problema 120
 Archivo: chemistry-apps:frontend/src/app/core/api/jobs-api.service.ts
 
 Problema:
@@ -4128,7 +4913,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 100
+Problema 121
 Archivo: chemistry-apps:frontend/src/app/core/api/jobs-api.service.ts
 
 Problema:
@@ -4198,7 +4983,7 @@ Standards
 
 ----------------------------------------
 
-Problema 101
+Problema 122
 Archivo: chemistry-apps:frontend/src/app/core/api/jobs-api.service.ts
 
 Problema:
@@ -4253,7 +5038,7 @@ list.map((item) =&gt; ({
 
 ----------------------------------------
 
-Problema 102
+Problema 123
 Archivo: chemistry-apps:frontend/src/app/core/api/jobs-streaming-api.service.ts
 
 Problema:
@@ -4263,7 +5048,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S4325
 Severidad: MINOR
-Línea: 238
+Línea: 225
 
 Cómo solucionarlo:
 In TypeScript, casts and non-null assertions are two mechanisms used to inform the TypeScript compiler about the intended types of variables,
@@ -4311,7 +5096,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 103
+Problema 124
 Archivo: chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts
 
 Problema:
@@ -4369,7 +5154,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 104
+Problema 125
 Archivo: chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts
 
 Problema:
@@ -4427,7 +5212,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 105
+Problema 126
 Archivo: chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts
 
 Problema:
@@ -4485,7 +5270,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 106
+Problema 127
 Archivo: chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts
 
 Problema:
@@ -4543,7 +5328,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 107
+Problema 128
 Archivo: chemistry-apps:frontend/src/app/core/application/jobs-monitor.facade.service.ts
 
 Problema:
@@ -4577,7 +5362,7 @@ function foo(obj, arr, fn) {
 
 ----------------------------------------
 
-Problema 108
+Problema 129
 Archivo: chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts
 
 Problema:
@@ -4635,7 +5420,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 109
+Problema 130
 Archivo: chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts
 
 Problema:
@@ -4693,7 +5478,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 110
+Problema 131
 Archivo: chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts
 
 Problema:
@@ -4751,7 +5536,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 111
+Problema 132
 Archivo: chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts
 
 Problema:
@@ -4809,7 +5594,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 112
+Problema 133
 Archivo: chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts
 
 Problema:
@@ -4863,7 +5648,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 113
+Problema 134
 Archivo: chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts
 
 Problema:
@@ -4917,7 +5702,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 114
+Problema 135
 Archivo: chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts
 
 Problema:
@@ -4971,7 +5756,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 115
+Problema 136
 Archivo: chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts
 
 Problema:
@@ -5025,7 +5810,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 116
+Problema 137
 Archivo: chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts
 
 Problema:
@@ -5088,7 +5873,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 117
+Problema 138
 Archivo: chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts
 
 Problema:
@@ -5137,7 +5922,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 118
+Problema 139
 Archivo: chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts
 
 Problema:
@@ -5186,7 +5971,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 119
+Problema 140
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts
 
 Problema:
@@ -5240,7 +6025,7 @@ void runPromise();
 
 ----------------------------------------
 
-Problema 120
+Problema 141
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts
 
 Problema:
@@ -5294,7 +6079,7 @@ void runPromise();
 
 ----------------------------------------
 
-Problema 121
+Problema 142
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-block-workflow.service.ts
 
 Problema:
@@ -5304,7 +6089,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S4043
 Severidad: MAJOR
-Línea: 84
+Línea: 81
 
 Cómo solucionarlo:
 In JavaScript, some Array methods do not mutate the existing array that the method was called on, but instead return a new array.
@@ -5337,7 +6122,7 @@ const sorted = b.slice().sort();
 
 ----------------------------------------
 
-Problema 122
+Problema 143
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-block-workflow.service.ts
 
 Problema:
@@ -5347,7 +6132,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S3358
 Severidad: MAJOR
-Línea: 217
+Línea: 214
 
 Cómo solucionarlo:
 Nested ternaries are hard to read and can make the order of operations complex to understand.
@@ -5400,7 +6185,70 @@ return (
 
 ----------------------------------------
 
-Problema 123
+Problema 144
+Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-block-workflow.service.ts
+
+Problema:
+Extract this nested ternary operation into an independent statement.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S3358
+Severidad: MAJOR
+Línea: 323
+
+Cómo solucionarlo:
+Nested ternaries are hard to read and can make the order of operations complex to understand.
+
+function getReadableStatus(job) {
+  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
+}
+
+Instead, use another line to express the nested operation in a separate statement.
+
+function getReadableStatus(job) {
+  if (job.isRunning()) {
+    return "Running";
+  }
+  return job.hasErrors() ? "Failed" : "Succeeded";
+}
+
+Exceptions
+This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
+JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
+
+return (
+&lt;&gt;
+  {isLoading ? (
+    &lt;Loader active /&gt;
+  ) : (
+    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
+      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
+      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
+    &lt;/Panel&gt;
+  )}
+&lt;/&gt;
+);
+
+If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
+
+function myComponent(condition) {
+  if (condition &lt; 0) {
+    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
+  } else if (condition &gt; 0) {
+    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
+  } else {
+    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
+  }
+}
+
+return (
+  {myComponent(foo)}
+);
+
+----------------------------------------
+
+Problema 145
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-block-workflow.service.ts
 
 Problema:
@@ -5463,70 +6311,7 @@ return (
 
 ----------------------------------------
 
-Problema 124
-Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-block-workflow.service.ts
-
-Problema:
-Extract this nested ternary operation into an independent statement.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: typescript:S3358
-Severidad: MAJOR
-Línea: 331
-
-Cómo solucionarlo:
-Nested ternaries are hard to read and can make the order of operations complex to understand.
-
-function getReadableStatus(job) {
-  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
-}
-
-Instead, use another line to express the nested operation in a separate statement.
-
-function getReadableStatus(job) {
-  if (job.isRunning()) {
-    return "Running";
-  }
-  return job.hasErrors() ? "Failed" : "Succeeded";
-}
-
-Exceptions
-This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
-JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
-
-return (
-&lt;&gt;
-  {isLoading ? (
-    &lt;Loader active /&gt;
-  ) : (
-    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
-      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
-      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
-    &lt;/Panel&gt;
-  )}
-&lt;/&gt;
-);
-
-If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
-
-function myComponent(condition) {
-  if (condition &lt; 0) {
-    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
-  } else if (condition &gt; 0) {
-    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
-  } else {
-    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
-  }
-}
-
-return (
-  {myComponent(foo)}
-);
-
-----------------------------------------
-
-Problema 125
+Problema 146
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5536,7 +6321,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S3776
 Severidad: CRITICAL
-Línea: 44
+Línea: 41
 
 Cómo solucionarlo:
 Reducing cognitive complexity can be challenging. Here are a few suggestions:
@@ -5706,7 +6491,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 126
+Problema 147
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5716,7 +6501,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7780
 Severidad: MINOR
-Línea: 117
+Línea: 114
 
 Cómo solucionarlo:
 String literals with escaped backslashes can be difficult to read and maintain. Each backslash character must be escaped with another backslash,
@@ -5755,7 +6540,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 127
+Problema 148
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5765,7 +6550,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7781
 Severidad: MINOR
-Línea: 117
+Línea: 114
 
 Cómo solucionarlo:
 The String#replaceAll() method was introduced in ES2021 to provide a clearer and safer way to replace all occurrences of a pattern in
@@ -5806,7 +6591,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 128
+Problema 149
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5816,7 +6601,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S6594
 Severidad: MINOR
-Línea: 208
+Línea: 205
 
 Cómo solucionarlo:
 String.match() behaves the same way as RegExp.exec() when the regular expression does not include the global flag
@@ -5833,7 +6618,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 129
+Problema 150
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5843,7 +6628,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7735
 Severidad: MINOR
-Línea: 210
+Línea: 207
 
 Cómo solucionarlo:
 Negated conditions in if-else statements can make code harder to read and understand. When you see if (!condition), your brain has to
@@ -5903,7 +6688,7 @@ Standards
 
 ----------------------------------------
 
-Problema 130
+Problema 151
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5913,7 +6698,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7780
 Severidad: MINOR
-Línea: 214
+Línea: 211
 
 Cómo solucionarlo:
 String literals with escaped backslashes can be difficult to read and maintain. Each backslash character must be escaped with another backslash,
@@ -5952,7 +6737,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 131
+Problema 152
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5962,7 +6747,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S6594
 Severidad: MINOR
-Línea: 225
+Línea: 222
 
 Cómo solucionarlo:
 String.match() behaves the same way as RegExp.exec() when the regular expression does not include the global flag
@@ -5979,7 +6764,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 132
+Problema 153
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -5989,7 +6774,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S6594
 Severidad: MINOR
-Línea: 245
+Línea: 242
 
 Cómo solucionarlo:
 String.match() behaves the same way as RegExp.exec() when the regular expression does not include the global flag
@@ -6006,7 +6791,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 133
+Problema 154
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -6016,7 +6801,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7735
 Severidad: MINOR
-Línea: 247
+Línea: 244
 
 Cómo solucionarlo:
 Negated conditions in if-else statements can make code harder to read and understand. When you see if (!condition), your brain has to
@@ -6076,7 +6861,7 @@ Standards
 
 ----------------------------------------
 
-Problema 134
+Problema 155
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -6086,7 +6871,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S7780
 Severidad: MINOR
-Línea: 249
+Línea: 246
 
 Cómo solucionarlo:
 String literals with escaped backslashes can be difficult to read and maintain. Each backslash character must be escaped with another backslash,
@@ -6125,7 +6910,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 135
+Problema 156
 Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts
 
 Problema:
@@ -6135,7 +6920,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S6594
 Severidad: MINOR
-Línea: 255
+Línea: 252
 
 Cómo solucionarlo:
 String.match() behaves the same way as RegExp.exec() when the regular expression does not include the global flag
@@ -6152,7 +6937,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 136
+Problema 157
 Archivo: chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts
 
 Problema:
@@ -6206,7 +6991,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 137
+Problema 158
 Archivo: chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts
 
 Problema:
@@ -6263,7 +7048,7 @@ Related Rules
 
 ----------------------------------------
 
-Problema 138
+Problema 159
 Archivo: chemistry-apps:frontend/src/app/core/shared/components/global-error-modal/global-error-modal.component.html
 
 Problema:
@@ -6294,7 +7079,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 139
+Problema 160
 Archivo: chemistry-apps:frontend/src/app/core/shared/components/global-error-modal/global-error-modal.component.html
 
 Problema:
@@ -6341,7 +7126,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 140
+Problema 161
 Archivo: chemistry-apps:frontend/src/app/core/shared/components/global-error-modal/global-error-modal.component.html
 
 Problema:
@@ -6388,7 +7173,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 141
+Problema 162
 Archivo: chemistry-apps:frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.html
 
 Problema:
@@ -6419,7 +7204,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 142
+Problema 163
 Archivo: chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.scss
 
 Problema:
@@ -6454,7 +7239,7 @@ p {
 
 ----------------------------------------
 
-Problema 143
+Problema 164
 Archivo: chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.scss
 
 Problema:
@@ -6489,7 +7274,7 @@ p {
 
 ----------------------------------------
 
-Problema 144
+Problema 165
 Archivo: chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts
 
 Problema:
@@ -6540,7 +7325,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 145
+Problema 166
 Archivo: chemistry-apps:frontend/src/app/jobs-monitor/jobs-monitor.component.html
 
 Problema:
@@ -6571,7 +7356,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 146
+Problema 167
 Archivo: chemistry-apps:frontend/src/app/jobs-monitor/jobs-monitor.component.html
 
 Problema:
@@ -6602,7 +7387,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 147
+Problema 168
 Archivo: chemistry-apps:frontend/src/app/jobs-monitor/jobs-monitor.component.html
 
 Problema:
@@ -6649,7 +7434,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 148
+Problema 169
 Archivo: chemistry-apps:frontend/src/app/jobs-monitor/jobs-monitor.component.html
 
 Problema:
@@ -6696,7 +7481,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 149
+Problema 170
 Archivo: chemistry-apps:frontend/src/app/jobs-monitor/jobs-monitor.component.scss
 
 Problema:
@@ -6733,7 +7518,7 @@ p {
 
 ----------------------------------------
 
-Problema 150
+Problema 171
 Archivo: chemistry-apps:frontend/src/app/marcus/marcus.component.ts
 
 Problema:
@@ -6784,7 +7569,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 151
+Problema 172
 Archivo: chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts
 
 Problema:
@@ -6847,7 +7632,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 152
+Problema 173
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.html
 
 Problema:
@@ -6894,7 +7679,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 153
+Problema 174
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.html
 
 Problema:
@@ -6925,7 +7710,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 154
+Problema 175
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.html
 
 Problema:
@@ -6956,7 +7741,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 155
+Problema 176
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.html
 
 Problema:
@@ -7003,7 +7788,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 156
+Problema 177
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.html
 
 Problema:
@@ -7034,7 +7819,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 157
+Problema 178
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.scss
 
 Problema:
@@ -7068,7 +7853,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 158
+Problema 179
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7105,7 +7890,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 159
+Problema 180
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7142,7 +7927,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 160
+Problema 181
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7179,7 +7964,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 161
+Problema 182
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7242,7 +8027,7 @@ return (
 
 ----------------------------------------
 
-Problema 162
+Problema 183
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7305,7 +8090,7 @@ return (
 
 ----------------------------------------
 
-Problema 163
+Problema 184
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts
 
 Problema:
@@ -7364,7 +8149,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 164
+Problema 185
 Archivo: chemistry-apps:frontend/src/app/smileit/block-assignment-panel/block-assignment-panel.component.html
 
 Problema:
@@ -7374,7 +8159,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 148
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -7395,7 +8180,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 165
+Problema 186
 Archivo: chemistry-apps:frontend/src/app/smileit/block-assignment-panel/block-assignment-panel.component.html
 
 Problema:
@@ -7405,7 +8190,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 251
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -7426,7 +8211,179 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 166
+Problema 187
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 188
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 189
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 190
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 191
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
 
 Problema:
@@ -7436,7 +8393,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 64
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -7457,54 +8414,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 167
-Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 94
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 168
+Problema 192
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
 
 Problema:
@@ -7514,7 +8424,7 @@ Razón:
 Tipo: BUG
 Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
 Severidad: MINOR
-Línea: 95
+Línea: N/A
 
 Cómo solucionarlo:
 Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
@@ -7551,7 +8461,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 169
+Problema 193
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
 
 Problema:
@@ -7561,7 +8471,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 95
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -7582,179 +8492,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 170
-Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 174
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 171
-Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 321
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 172
-Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
-
-Problema:
-Use <dialog> instead of the dialog role to ensure accessibility across all devices.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6819
-Severidad: MAJOR
-Línea: 323
-
-Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
-
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
-
-Replace the ARIA role with an appropriate HTML tag.
-
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
-
-----------------------------------------
-
-Problema 173
-Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 323
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 174
+Problema 194
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
 
 Problema:
@@ -7764,7 +8502,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 339
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -7785,7 +8523,54 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 175
+Problema 195
+Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 196
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.ts
 
 Problema:
@@ -7822,7 +8607,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 176
+Problema 197
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.ts
 
 Problema:
@@ -7859,7 +8644,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 177
+Problema 198
 Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.ts
 
 Problema:
@@ -7896,7 +8681,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 178
+Problema 199
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -7923,7 +8708,7 @@ Rewrite the pattern matching from string.match(regex) to regex.exec(string).
 
 ----------------------------------------
 
-Problema 179
+Problema 200
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -7989,7 +8774,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 180
+Problema 201
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8055,7 +8840,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 181
+Problema 202
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8121,7 +8906,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 182
+Problema 203
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8176,7 +8961,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 183
+Problema 204
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8231,7 +9016,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 184
+Problema 205
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8286,7 +9071,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 185
+Problema 206
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8341,7 +9126,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 186
+Problema 207
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8396,7 +9181,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 187
+Problema 208
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8452,7 +9237,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 188
+Problema 209
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8507,7 +9292,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 189
+Problema 210
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8562,7 +9347,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 190
+Problema 211
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8617,7 +9402,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 191
+Problema 212
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8672,7 +9457,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 192
+Problema 213
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8724,7 +9509,7 @@ Related Rules
 
 ----------------------------------------
 
-Problema 193
+Problema 214
 Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
@@ -8779,7 +9564,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 194
+Problema 215
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-data.service.ts
 
 Problema:
@@ -8830,7 +9615,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 195
+Problema 216
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-data.service.ts
 
 Problema:
@@ -8881,7 +9666,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 196
+Problema 217
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-data.service.ts
 
 Problema:
@@ -8932,7 +9717,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 197
+Problema 218
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-data.service.ts
 
 Problema:
@@ -8975,69 +9760,101 @@ const regex = /(?:^a)|b|(?:c$)/;
 
 ----------------------------------------
 
-Problema 198
+Problema 219
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
 
 Problema:
-Use <output> instead of the status role to ensure accessibility across all devices.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6819
-Severidad: MAJOR
-Línea: 26
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
 
 Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
 
-Replace the ARIA role with an appropriate HTML tag.
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
 
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 199
+Problema 220
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
 
 Problema:
-Use <output> instead of the status role to ensure accessibility across all devices.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6819
-Severidad: MAJOR
-Línea: 160
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
 
 Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
 
-Replace the ARIA role with an appropriate HTML tag.
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
 
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 200
+Problema 221
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
 
 Problema:
@@ -9047,7 +9864,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6842
 Severidad: MAJOR
-Línea: 202
+Línea: N/A
 
 Cómo solucionarlo:
 Ensure that non-interactive DOM elements do not use interactive ARIA roles.
@@ -9062,7 +9879,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 201
+Problema 222
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
 
 Problema:
@@ -9072,7 +9889,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 202
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -9093,101 +9910,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 202
-Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <dialog> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 276
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 203
-Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 279
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 204
+Problema 223
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
 
 Problema:
@@ -9197,7 +9920,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 279
+Línea: N/A
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -9218,7 +9941,69 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 205
+Problema 224
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Use <output> instead of the status role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 29
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 225
+Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.html
+
+Problema:
+Use <output> instead of the status role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: 195
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 226
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.scss
 
 Problema:
@@ -9252,7 +10037,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 206
+Problema 227
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.scss
 
 Problema:
@@ -9286,7 +10071,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 207
+Problema 228
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts
 
 Problema:
@@ -9323,7 +10108,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 208
+Problema 229
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts
 
 Problema:
@@ -9386,7 +10171,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 209
+Problema 230
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts
 
 Problema:
@@ -9449,7 +10234,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 210
+Problema 231
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts
 
 Problema:
@@ -9519,7 +10304,7 @@ Standards
 
 ----------------------------------------
 
-Problema 211
+Problema 232
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts
 
 Problema:
@@ -9553,7 +10338,85 @@ function foo(obj, arr, fn) {
 
 ----------------------------------------
 
-Problema 212
+Problema 233
+Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
+
+Problema:
+Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6819
+Severidad: MAJOR
+Línea: N/A
+
+Cómo solucionarlo:
+ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
+However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
+similar functionality, just use that tag instead.
+For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
+button element (&lt;button&gt;Click me&lt;/button&gt;).
+Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
+assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
+JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
+useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+
+&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+
+Replace the ARIA role with an appropriate HTML tag.
+
+&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+
+----------------------------------------
+
+Problema 234
+Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: N/A
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 235
 Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
 
 Problema:
@@ -9600,85 +10463,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 213
-Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
-
-Problema:
-Use <dialog> instead of the dialog role to ensure accessibility across all devices.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6819
-Severidad: MAJOR
-Línea: 5
-
-Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
-
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
-
-Replace the ARIA role with an appropriate HTML tag.
-
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
-
-----------------------------------------
-
-Problema 214
-Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 5
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 215
+Problema 236
 Archivo: chemistry-apps:frontend/src/app/smileit/library-entry-detail-dialog/library-entry-detail-dialog.component.ts
 
 Problema:
@@ -9715,7 +10500,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 216
+Problema 237
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.html
 
 Problema:
@@ -9762,7 +10547,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 217
+Problema 238
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.html
 
 Problema:
@@ -9793,7 +10578,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 218
+Problema 239
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.html
 
 Problema:
@@ -9824,7 +10609,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 219
+Problema 240
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.ts
 
 Problema:
@@ -9861,7 +10646,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 220
+Problema 241
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.ts
 
 Problema:
@@ -9898,7 +10683,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 221
+Problema 242
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.html
 
 Problema:
@@ -9945,7 +10730,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 222
+Problema 243
 Archivo: chemistry-apps:frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.ts
 
 Problema:
@@ -9982,7 +10767,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 223
+Problema 244
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit-atom-selection.utils.ts
 
 Problema:
@@ -10045,7 +10830,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 224
+Problema 245
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10055,7 +10840,7 @@ Razón:
 Tipo: BUG
 Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
 Severidad: MINOR
-Línea: 215
+Línea: 226
 
 Cómo solucionarlo:
 Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
@@ -10092,7 +10877,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 225
+Problema 246
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10102,7 +10887,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 221
+Línea: 232
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -10123,7 +10908,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 226
+Problema 247
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10133,7 +10918,7 @@ Razón:
 Tipo: BUG
 Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
 Severidad: MINOR
-Línea: 221
+Línea: 232
 
 Cómo solucionarlo:
 Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
@@ -10170,7 +10955,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 227
+Problema 248
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10180,7 +10965,7 @@ Razón:
 Tipo: BUG
 Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
 Severidad: MINOR
-Línea: 348
+Línea: 359
 
 Cómo solucionarlo:
 Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
@@ -10217,7 +11002,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 228
+Problema 249
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10227,7 +11012,7 @@ Razón:
 Tipo: BUG
 Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
 Severidad: MINOR
-Línea: 355
+Línea: 366
 
 Cómo solucionarlo:
 Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
@@ -10264,7 +11049,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 229
+Problema 250
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
@@ -10274,7 +11059,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: Web:S6819
 Severidad: MAJOR
-Línea: 355
+Línea: 366
 
 Cómo solucionarlo:
 ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
@@ -10295,7 +11080,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 230
+Problema 251
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10332,7 +11117,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 231
+Problema 252
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10369,7 +11154,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 232
+Problema 253
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10406,7 +11191,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 233
+Problema 254
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10440,7 +11225,7 @@ function foo(obj, arr, fn) {
 
 ----------------------------------------
 
-Problema 234
+Problema 255
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10474,7 +11259,7 @@ function foo(obj, arr, fn) {
 
 ----------------------------------------
 
-Problema 235
+Problema 256
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 
 Problema:
@@ -10516,7 +11301,7 @@ Exceptions
 
 ----------------------------------------
 
-Problema 236
+Problema 257
 Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-responsive.scss
 
 Problema:
@@ -10550,7 +11335,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 237
+Problema 258
 Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-split-02.scss
 
 Problema:
@@ -10585,7 +11370,7 @@ p {
 
 ----------------------------------------
 
-Problema 238
+Problema 259
 Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-split-02.scss
 
 Problema:
@@ -10620,7 +11405,7 @@ p {
 
 ----------------------------------------
 
-Problema 239
+Problema 260
 Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-split-02.scss
 
 Problema:
@@ -10655,7 +11440,7 @@ p {
 
 ----------------------------------------
 
-Problema 240
+Problema 261
 Archivo: chemistry-apps:frontend/src/app/smileit/styles/_smileit-split-05.scss
 
 Problema:
@@ -10689,7 +11474,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 241
+Problema 262
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html
 
 Problema:
@@ -10736,7 +11521,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 242
+Problema 263
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html
 
 Problema:
@@ -10767,7 +11552,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 243
+Problema 264
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html
 
 Problema:
@@ -10798,7 +11583,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 244
+Problema 265
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html
 
 Problema:
@@ -10845,7 +11630,7 @@ role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
-Problema 245
+Problema 266
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html
 
 Problema:
@@ -10876,7 +11661,7 @@ Replace the ARIA role with an appropriate HTML tag.
 
 ----------------------------------------
 
-Problema 246
+Problema 267
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.scss
 
 Problema:
@@ -10910,7 +11695,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 247
+Problema 268
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts
 
 Problema:
@@ -10947,7 +11732,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 248
+Problema 269
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts
 
 Problema:
@@ -10984,7 +11769,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 249
+Problema 270
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts
 
 Problema:
@@ -11021,7 +11806,7 @@ class Person {
 
 ----------------------------------------
 
-Problema 250
+Problema 271
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts
 
 Problema:
@@ -11080,7 +11865,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 251
+Problema 272
 Archivo: chemistry-apps:frontend/src/app/tunnel/tunnel.component.ts
 
 Problema:
@@ -11143,7 +11928,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 252
+Problema 273
 Archivo: chemistry-apps:frontend/src/main.ts
 
 Problema:
@@ -11198,7 +11983,7 @@ Documentation
 
 ----------------------------------------
 
-Problema 253
+Problema 274
 Archivo: chemistry-apps:scripts/create_openapi.py
 
 Problema:
@@ -11241,7 +12026,7 @@ def run():
 
 ----------------------------------------
 
-Problema 254
+Problema 275
 Archivo: chemistry-apps:scripts/create_openapi.py
 
 Problema:

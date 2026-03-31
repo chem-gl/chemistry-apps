@@ -170,21 +170,15 @@
                             class="block-library-thumb catalog-ref-thumb"
                             [class.is-selected]="isCatalogEntryLoadedInManualDraft(block, entry)"
                           >
-                            <div
+                            <button type="button"
                               class="thumb-open-button"
-                              role="button"
-                              tabindex="0"
                               [attr.aria-label]="'Open detail for ' + entry.name"
                               (click)="openLibraryEntryDetail(entry, 'reference')"
-                              (keydown.enter)="openLibraryEntryDetail(entry, 'reference')"
-                              (keydown.space)="
-                                openLibraryEntryDetail(entry, 'reference'); $event.preventDefault()
-                              "
                             >
-                              <p class="thumb-name">{{ entry.name }}</p>
-                              <div class="thumb-preview">
+                              <span class="thumb-name">{{ entry.name }}</span>
+                              <span class="thumb-preview">
                                 @if (catalogEntryPreviewSvg(entry); as referencedThumbSvg) {
-                                  <div class="thumb-svg" [innerHTML]="referencedThumbSvg"></div>
+                                  <span class="thumb-svg" [innerHTML]="referencedThumbSvg"></span>
                                 } @else if (catalogEntryPreviewError(entry)) {
                                   <span class="thumb-state-icon thumb-error" aria-hidden="true"
                                     >!</span
@@ -194,13 +188,13 @@
                                     >…</span
                                   >
                                 }
-                              </div>
-                              <p class="thumb-smiles mono">{{ entry.smiles }}</p>
+                              </span>
+                              <span class="thumb-smiles mono">{{ entry.smiles }}</span>
                               <small class="thumb-anchor"
                                 >Anchor {{ entry.anchor_atom_indices.join(', ') || '—' }}</small
                               >
                               <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
-                            </div>
+                            </button>
                             <div
                               class="block-thumb-actions block-ref-actions"
                               (click)="$event.stopPropagation()"
@@ -294,26 +288,19 @@
                               workflow.catalog.isCatalogEntryReferenced(block, entry)
                             "
                           >
-                            <div
+                            <button type="button"
                               class="thumb-open-button"
-                              role="button"
-                              tabindex="0"
                               [attr.aria-label]="
                                 workflow.catalog.isCatalogEntryReferenced(block, entry)
                                   ? entry.name + ' already added to this block'
                                   : 'Add ' + entry.name + ' to this block'
                               "
                               (click)="onBlockCatalogEntryCardActivate(block, entry)"
-                              (keydown.enter)="onBlockCatalogEntryCardActivate(block, entry)"
-                              (keydown.space)="
-                                onBlockCatalogEntryCardActivate(block, entry);
-                                $event.preventDefault()
-                              "
                             >
-                              <p class="thumb-name">{{ entry.name }}</p>
-                              <div class="thumb-preview">
+                              <span class="thumb-name">{{ entry.name }}</span>
+                              <span class="thumb-preview">
                                 @if (catalogEntryPreviewSvg(entry); as blockThumbSvg) {
-                                  <div class="thumb-svg" [innerHTML]="blockThumbSvg"></div>
+                                  <span class="thumb-svg" [innerHTML]="blockThumbSvg"></span>
                                 } @else if (catalogEntryPreviewError(entry)) {
                                   <span class="thumb-state-icon thumb-error" aria-hidden="true"
                                     >!</span
@@ -323,9 +310,9 @@
                                     >…</span
                                   >
                                 }
-                              </div>
-                              <p class="thumb-smiles mono">{{ entry.smiles }}</p>
-                            </div>
+                              </span>
+                              <span class="thumb-smiles mono">{{ entry.smiles }}</span>
+                              </button>
                             <div
                               class="block-thumb-actions"
                               (click)="$event.stopPropagation()"

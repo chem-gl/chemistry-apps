@@ -12,7 +12,7 @@ SONAR_URL = os.environ.get(
 )
 SONAR_TOKEN = os.environ.get(
     "SONAR_TOKEN",
-    "sqp_bb9823a9a8ba378ce35b2cda061b5f1c158cb543",
+    "sqp_bb9823a9a8ba378ce35b2cda061b5f1c158cb543",  # Se debe ignorar esto solo funciona en local, no se expone a internet. En producción se debe configurar con una variable de entorno real.
 )
 PROJECT_KEY = os.environ.get("SONAR_PROJECT_KEY", "chemistry-apps")
 OUTPUT_FILE = "sonar_report.txt"
