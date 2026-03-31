@@ -232,11 +232,12 @@
     >
       <section
         class="pattern-catalog-modal"
+        role="dialog"
         aria-modal="true"
         aria-label="Structural pattern catalog"
         (click)="$event.stopPropagation()"
       >
-        <header class="catalog-studio-header">
+          <header class="catalog-studio-header">
           <div>
             <h4>Structural patterns</h4>
             <p class="hint">
@@ -366,6 +367,7 @@
       @if (selectedPatternForDetail(); as detailPattern) {
         <section
           class="pattern-detail-modal"
+          role="dialog"
           aria-modal="true"
           aria-label="Pattern detail"
           (click)="$event.stopPropagation()"

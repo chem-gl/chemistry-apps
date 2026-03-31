@@ -51,9 +51,9 @@ function extractFromArrayError(value: unknown): string | null {
     return null;
   }
   const joined: string = value
-    .filter((entry: unknown) => typeof entry === 'string' && (entry as string).trim() !== '')
+    .filter((entry: unknown) => typeof entry === 'string' && entry.trim() !== '')
     .join(' ');
-  return joined !== '' ? joined : null;
+  return joined === '' ? null : joined;
 }
 
 /** Extrae mensajes de error desde los valores string/array de un objeto, null si no aplica. */
@@ -69,7 +69,7 @@ function extractFromObjectError(value: unknown): string | null {
       }
       if (Array.isArray(entry)) {
         return entry.filter(
-          (message: unknown) => typeof message === 'string' && (message as string).trim() !== '',
+          (message: unknown) => typeof message === 'string' && message.trim() !== '',
         ) as string[];
       }
       return [];
