@@ -2,7 +2,7 @@
 
 import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import {
@@ -211,6 +211,11 @@ describe('SmileitWorkflowService', () => {
     createSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     updateSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     dispatchSmileitJob: ReturnType<typeof vi.fn>;
+    downloadSmileitCsvReport: ReturnType<typeof vi.fn>;
+    downloadSmileitSmilesReport: ReturnType<typeof vi.fn>;
+    downloadSmileitTraceabilityReport: ReturnType<typeof vi.fn>;
+    downloadSmileitLogReport: ReturnType<typeof vi.fn>;
+    downloadSmileitErrorReport: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
     streamJobLogEvents: ReturnType<typeof vi.fn>;
     pollJobUntilCompleted: ReturnType<typeof vi.fn>;
@@ -232,6 +237,11 @@ describe('SmileitWorkflowService', () => {
       ),
       updateSmileitCatalogEntry: vi.fn(),
       dispatchSmileitJob: vi.fn((): Observable<SmileitJobResponseView> => of(makeSmileitJob())),
+      downloadSmileitCsvReport: vi.fn(),
+      downloadSmileitSmilesReport: vi.fn(),
+      downloadSmileitTraceabilityReport: vi.fn(),
+      downloadSmileitLogReport: vi.fn(),
+      downloadSmileitErrorReport: vi.fn(),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
@@ -695,5 +705,166 @@ describe('SmileitWorkflowService', () => {
     ]);
     expect(workflowService.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('');
     expect(workflowService.errorMessage()).toBeNull();
+  });
+
+  it('reconstructs a historical summary when the historical Smileit job has no final structures', () => {
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-running-1',
+          status: 'running',
+          results: null,
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('smileit-running-1');
+
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
+    expect(workflowService.resultData()?.summaryMessage).toContain('Historical job status: running');
+    expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('smileit-running-1', {
+      limit: 250,
+    });
+  });
+
+  it('falls back to polling, de-duplicates log events and resolves the final Smileit result', () => {
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
+    const logEvents$ = new Subject<{
+      eventIndex: number;
+      level: 'info' | 'warning' | 'error' | 'debug';
+      message: string;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.dispatchSmileitJob.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-progress-1',
+          status: 'running',
+          results: null,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(
+      of({
+        progress_percentage: 100,
+        progress_message: 'Completed by polling',
+        progress_stage: 'completed',
+        status: 'completed',
+      }),
+    );
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      of(makeSmileitJob({ id: 'smileit-progress-1' })),
+    );
+
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1]);
+    workflowService.assignmentBlocks.set([makeAssignmentBlock()]);
+
+    workflowService.dispatch();
+
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'second log',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 1,
+      level: 'debug',
+      message: 'first log',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'duplicate second log',
+      createdAt: new Date().toISOString(),
+    });
+
+    expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
+
+    progressEvents$.error(new Error('sse offline'));
+
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('smileit-progress-1', 1000);
+    expect(jobsApiServiceMock.getSmileitJobStatus).toHaveBeenCalledWith('smileit-progress-1');
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.generatedStructures).toHaveLength(1);
+    expect(workflowService.progressPercentage()).toBe(100);
+  });
+
+  it('surfaces final result retrieval errors after the Smileit progress stream completes', () => {
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
+
+    jobsApiServiceMock.dispatchSmileitJob.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-progress-error-1',
+          status: 'running',
+          results: null,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1]);
+    workflowService.assignmentBlocks.set([makeAssignmentBlock()]);
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe(
+      'Unable to retrieve Smileit final result: gateway timeout',
+    );
+  });
+
+  it('downloads the Smileit traceability report for the selected job', () => {
+    const downloadedFile = {
+      filename: 'smileit-traceability.csv',
+      blob: new Blob(['traceability'], { type: 'text/csv' }),
+    };
+    jobsApiServiceMock.downloadSmileitTraceabilityReport.mockReturnValue(of(downloadedFile));
+    workflowService.currentJobId.set('smileit-export-1');
+
+    workflowService.downloadTraceabilityReport().subscribe((file) => {
+      expect(file.filename).toBe('smileit-traceability.csv');
+    });
+
+    expect(jobsApiServiceMock.downloadSmileitTraceabilityReport).toHaveBeenCalledWith(
+      'smileit-export-1',
+    );
+    expect(workflowService.exportErrorMessage()).toBeNull();
+    expect(workflowService.isExporting()).toBe(false);
+  });
+
+  it('stores export errors when the Smileit error report download fails', () => {
+    jobsApiServiceMock.downloadSmileitErrorReport.mockReturnValue(
+      throwError(() => new Error('error report forbidden')),
+    );
+    workflowService.currentJobId.set('smileit-export-error-1');
+
+    workflowService.downloadErrorReport().subscribe({
+      error: () => {
+        expect(workflowService.exportErrorMessage()).toBe(
+          'Unable to download error report: error report forbidden',
+        );
+        expect(workflowService.isExporting()).toBe(false);
+      },
+    });
   });
 });

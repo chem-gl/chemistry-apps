@@ -1,7 +1,7 @@
 // toxicity-properties-workflow.service.spec.ts: Pruebas unitarias del workflow de Toxicity Properties.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -281,5 +281,61 @@ describe('ToxicityPropertiesWorkflowService', () => {
 
   it('throws when exporting without selected job', () => {
     expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for CSV export.');
+  });
+
+  it('falls back to polling, de-duplicates logs and resolves the final toxicity result', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const logEvents$ = new Subject<{
+      eventIndex: number;
+      level: 'info' | 'warning' | 'error' | 'debug';
+      message: string;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
+      of(makeToxicityJobResponse({ id: 'tox-progress-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(of({ progress_percentage: 100 }));
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      of(makeToxicityJobResponse({ id: 'tox-progress-1' })),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+    expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
+
+    progressEvents$.error(new Error('sse offline'));
+
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('tox-progress-1');
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.total).toBe(1);
+  });
+
+  it('surfaces final toxicity retrieval errors after progress completes', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+
+    jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
+      of(makeToxicityJobResponse({ id: 'tox-progress-error-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe(
+      'Unable to retrieve final toxicity result: gateway timeout',
+    );
   });
 });

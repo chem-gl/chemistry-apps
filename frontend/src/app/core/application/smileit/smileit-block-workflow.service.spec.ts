@@ -5,6 +5,7 @@ import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { VerificationRuleEnum } from '../../api/generated';
 import type { SmileitCatalogEntryView } from '../../api/jobs-api.service';
 import { SmileitBlockWorkflowService } from './smileit-block-workflow.service';
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
@@ -310,6 +311,175 @@ describe('SmileitBlockWorkflowService', () => {
 
       const blocks = state.assignmentBlocks();
       expect(blocks[1].siteAtomIndices).toEqual([0, 1]);
+    });
+  });
+
+  describe('block mutations', () => {
+    it('removes an assignment block by id', () => {
+      state.assignmentBlocks.set([makeBlock({ id: 'b1' }), makeBlock({ id: 'b2' })]);
+
+      service.removeAssignmentBlock('b1');
+
+      expect(state.assignmentBlocks().map((block) => block.id)).toEqual(['b2']);
+    });
+
+    it('moves a block up or down only when the target position is valid', () => {
+      state.assignmentBlocks.set([
+        makeBlock({ id: 'b1', label: 'Block 1' }),
+        makeBlock({ id: 'b2', label: 'Block 2' }),
+        makeBlock({ id: 'b3', label: 'Block 3' }),
+      ]);
+
+      service.moveAssignmentBlock('b2', -1);
+      expect(state.assignmentBlocks().map((block) => block.id)).toEqual(['b2', 'b1', 'b3']);
+
+      service.moveAssignmentBlock('b2', -1);
+      expect(state.assignmentBlocks().map((block) => block.id)).toEqual(['b2', 'b1', 'b3']);
+
+      service.moveAssignmentBlock('missing', 1);
+      expect(state.assignmentBlocks().map((block) => block.id)).toEqual(['b2', 'b1', 'b3']);
+    });
+
+    it('updates the block label', () => {
+      state.assignmentBlocks.set([makeBlock({ id: 'b1', label: 'Before' })]);
+
+      service.updateBlockLabel('b1', 'After');
+
+      expect(state.assignmentBlocks()[0].label).toBe('After');
+    });
+
+    it('toggles block sites only for globally selected atoms', () => {
+      state.selectedAtomIndices.set([0, 2]);
+      state.assignmentBlocks.set([makeBlock({ id: 'b1', siteAtomIndices: [0] })]);
+
+      service.toggleBlockSite('b1', 2);
+      expect(state.assignmentBlocks()[0].siteAtomIndices).toEqual([0, 2]);
+
+      service.toggleBlockSite('b1', 0);
+      expect(state.assignmentBlocks()[0].siteAtomIndices).toEqual([2]);
+
+      service.toggleBlockSite('b1', 7);
+      expect(state.assignmentBlocks()[0].siteAtomIndices).toEqual([2]);
+    });
+
+    it('toggles, sets and clears chemistry categories for a block', () => {
+      state.categories.set([
+        {
+          id: 'c1',
+          key: 'aromatic',
+          version: 1,
+          name: 'Aromatic',
+          description: '',
+          verification_rule: VerificationRuleEnum.Aromatic,
+          verification_smarts: '',
+        },
+        {
+          id: 'c2',
+          key: 'polar',
+          version: 1,
+          name: 'Polar',
+          description: '',
+          verification_rule: VerificationRuleEnum.Hydrophobic,
+          verification_smarts: '',
+        },
+      ]);
+      state.assignmentBlocks.set([makeBlock({ id: 'b1', categoryKeys: [] })]);
+
+      service.toggleBlockCategory('b1', 'aromatic');
+      expect(state.assignmentBlocks()[0].categoryKeys).toEqual(['aromatic']);
+
+      service.toggleBlockCategory('b1', 'aromatic');
+      expect(state.assignmentBlocks()[0].categoryKeys).toEqual([]);
+
+      service.setAllCategoriesForBlock('b1');
+      expect(state.assignmentBlocks()[0].categoryKeys).toEqual(['aromatic', 'polar']);
+
+      service.clearCategoriesForBlock('b1');
+      expect(state.assignmentBlocks()[0].categoryKeys).toEqual([]);
+    });
+
+    it('adds and removes catalog references without duplicating stable id plus version', () => {
+      const versionOne = makeCatalogEntry({ stable_id: 'aniline', version: 1 });
+      const versionTwo = makeCatalogEntry({ stable_id: 'aniline', version: 2 });
+      state.assignmentBlocks.set([makeBlock({ id: 'b1', catalogRefs: [] })]);
+
+      service.addCatalogReferenceToBlock('b1', versionOne);
+      service.addCatalogReferenceToBlock('b1', versionOne);
+      service.addCatalogReferenceToBlock('b1', versionTwo);
+
+      expect(state.assignmentBlocks()[0].catalogRefs).toHaveLength(2);
+
+      service.removeCatalogReferenceFromBlock('b1', 'aniline', 1);
+      expect(state.assignmentBlocks()[0].catalogRefs).toEqual([versionTwo]);
+    });
+
+    it('updates and removes manual draft data for a block', () => {
+      state.assignmentBlocks.set([makeBlock({ id: 'b1' })]);
+
+      service.updateBlockManualDraftName('b1', 'Manual amino');
+      service.updateBlockManualDraftSmiles('b1', 'NC');
+      service.updateBlockManualDraftAnchors('b1', '0,2');
+      service.updateBlockManualDraftSourceReference('b1', 'lab-note');
+      service.toggleBlockManualDraftCategory('b1', 'polar');
+
+      expect(state.assignmentBlocks()[0].draftManualName).toBe('Manual amino');
+      expect(state.assignmentBlocks()[0].draftManualSmiles).toBe('NC');
+      expect(state.assignmentBlocks()[0].draftManualAnchorIndicesText).toBe('0,2');
+      expect(state.assignmentBlocks()[0].draftManualSourceReference).toBe('lab-note');
+      expect(state.assignmentBlocks()[0].draftManualCategoryKeys).toEqual(['polar']);
+
+      state.assignmentBlocks.set([
+        makeBlock({
+          id: 'b1',
+          manualSubstituents: [
+            { name: 'Manual amino', smiles: 'NC', anchorAtomIndices: [0], categories: ['polar'] },
+            { name: 'Manual hydroxyl', smiles: 'O', anchorAtomIndices: [0], categories: ['polar'] },
+          ],
+        }),
+      ]);
+
+      service.removeManualSubstituent('b1', 0);
+
+      expect(state.assignmentBlocks()[0].manualSubstituents).toHaveLength(1);
+      expect(state.assignmentBlocks()[0].manualSubstituents[0].name).toBe('Manual hydroxyl');
+    });
+
+    it('builds automatic and selectable catalog entries from block categories', () => {
+      const aromatic = makeCatalogEntry({
+        stable_id: 'aniline',
+        name: 'Aniline',
+        categories: ['aromatic'],
+      });
+      const polar = makeCatalogEntry({
+        stable_id: 'glycol',
+        version: 2,
+        name: 'Glycol',
+        categories: ['polar'],
+      });
+      state.catalogEntries.set([polar, aromatic]);
+
+      const block = makeBlock({ id: 'b1', categoryKeys: ['aromatic'], catalogRefs: [polar] });
+
+      expect(service.getAutoCatalogEntriesForBlock(block).map((entry) => entry.name)).toEqual([
+        'Aniline',
+      ]);
+      expect(service.getSelectableCatalogEntriesForBlock(block).map((entry) => entry.name)).toEqual([
+        'Aniline',
+        'Glycol',
+      ]);
+    });
+
+    it('prunes block sites that are no longer globally selected', () => {
+      state.selectedAtomIndices.set([1, 3]);
+      state.assignmentBlocks.set([
+        makeBlock({ id: 'b1', siteAtomIndices: [0, 1, 3] }),
+        makeBlock({ id: 'b2', siteAtomIndices: [2, 3] }),
+      ]);
+
+      service.pruneBlocksToSelectedSites();
+
+      expect(state.assignmentBlocks()[0].siteAtomIndices).toEqual([1, 3]);
+      expect(state.assignmentBlocks()[1].siteAtomIndices).toEqual([3]);
     });
   });
 });

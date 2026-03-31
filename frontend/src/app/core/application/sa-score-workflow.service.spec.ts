@@ -1,7 +1,7 @@
 // sa-score-workflow.service.spec.ts: Pruebas unitarias del workflow SA Score.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -294,5 +294,73 @@ describe('SaScoreWorkflowService', () => {
         expect(workflowService.isExporting()).toBe(false);
       },
     });
+  });
+
+  it('keeps error section when smiles input is empty', () => {
+    workflowService.smilesInput.set('  \n\t ');
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.validateSmilesCompatibility).not.toHaveBeenCalled();
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe('At least one SMILES is required.');
+  });
+
+  it('falls back to polling, de-duplicates logs and resolves the final SA score result', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const logEvents$ = new Subject<{
+      eventIndex: number;
+      level: 'info' | 'warning' | 'error' | 'debug';
+      message: string;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
+      of(makeSaScoreJobResponse({ id: 'sa-progress-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(of({ progress_percentage: 100 }));
+    jobsApiServiceMock.getSaScoreJobStatus.mockReturnValue(
+      of(makeSaScoreJobResponse({ id: 'sa-progress-1' })),
+    );
+    workflowService.smilesInput.set('CCO');
+    workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
+
+    workflowService.dispatch();
+
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+    expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
+
+    progressEvents$.error(new Error('sse offline'));
+
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('sa-progress-1');
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.total).toBe(1);
+  });
+
+  it('surfaces final SA score retrieval errors after progress completes', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+
+    jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
+      of(makeSaScoreJobResponse({ id: 'sa-progress-error-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getSaScoreJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+    workflowService.smilesInput.set('CCO');
+    workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe(
+      'Unable to retrieve final SA score result: gateway timeout',
+    );
   });
 });

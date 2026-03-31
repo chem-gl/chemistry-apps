@@ -1,7 +1,7 @@
 // molar-fractions-workflow.service.spec.ts: Pruebas unitarias del workflow de molar fractions.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -211,5 +211,61 @@ describe('MolarFractionsWorkflowService', () => {
     expect(jobsApiServiceMock.downloadMolarFractionsLogReport).toHaveBeenCalledWith(
       'molar-export-log-1',
     );
+  });
+
+  it('falls back to polling, de-duplicates streamed logs and resolves the final molar fractions result', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const logEvents$ = new Subject<{
+      eventIndex: number;
+      level: 'info' | 'warning' | 'error' | 'debug';
+      message: string;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.dispatchMolarFractionsJob.mockReturnValue(
+      of(makeScientificJob({ id: 'molar-progress-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(
+      of({ progress_percentage: 100, progress_message: 'Completed by polling' }),
+    );
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      of(makeScientificJob({ id: 'molar-progress-1' })),
+    );
+
+    workflowService.dispatch();
+
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+
+    expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
+
+    progressEvents$.error(new Error('sse offline'));
+
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('molar-progress-1', 1000);
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.rows).toHaveLength(1);
+    expect(workflowService.progressPercentage()).toBe(100);
+  });
+
+  it('surfaces final result retrieval errors after molar fractions progress completes', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+
+    jobsApiServiceMock.dispatchMolarFractionsJob.mockReturnValue(
+      of(makeScientificJob({ id: 'molar-progress-error-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe('Unable to get final result: gateway timeout');
   });
 });
