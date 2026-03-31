@@ -1,58 +1,55 @@
 Problema 1
-Archivo: chemistry-apps:frontend/src/app/core/shared/scientific-apps.config.ts
+Archivo: chemistry-apps:frontend/src/app/smileit/core/services/smileit-inspection.service.ts
 
 Problema:
-Unnecessarily cloning an array.
+Prefer `.dataset` over `setAttribute(…)`.
 
 Razón:
 Tipo: CODE_SMELL
-Regla: typescript:S7747
-Severidad: MINOR
-Línea: 94
+Regla: typescript:S7761
+Severidad: MAJOR
+Línea: 466
 
 Cómo solucionarlo:
-The spread operator (…​) is a powerful JavaScript feature for expanding arrays and objects. However, using it unnecessarily can make
-code harder to read and potentially less efficient.
-There are several common patterns where spread syntax adds no value:
+The .dataset property provides a cleaner, more semantic way to work with HTML data attributes compared to generic attribute
+methods.
+Data attributes are a special category of HTML attributes designed to store custom data. The browser provides the .dataset API
+specifically for this purpose, which offers several advantages:
 
-   Spreading literals: When you spread an array literal [item] directly into another array or function call, you can
-  simply write the item directly. 
-   Redundant array conversion: Many JavaScript built-ins like Set, Map, Promise.all(), and
-  Array.from() accept any iterable object, not just arrays. Converting an iterable to an array first using spread syntax is unnecessary.
+   Cleaner syntax: element.dataset.userName is more readable than
+  element.getAttribute('data-user-name') 
+   Automatic name conversion: The API automatically converts between kebab-case HTML attributes (data-user-name) and
+  camelCase JavaScript properties (userName) 
+   Semantic correctness: Using .dataset clearly indicates you’re working with data attributes, making the code’s
+  intent more obvious 
+   Type consistency: .dataset properties are always strings, avoiding potential confusion with other attribute types
   
-   Iteration contexts: Language features like for…​of loops and yield* expressions work directly with
-  iterables, so spreading them into arrays first is redundant. 
 
-These unnecessary uses of spread syntax can:
-
-   Make code more verbose and harder to read 
-   Create unnecessary intermediate arrays, potentially impacting performance 
-   Obscure the intent of the code 
-   Add cognitive overhead for developers reading the code 
-
+Using generic attribute methods for data attributes misses these benefits and can make code less maintainable.
 What is the potential impact?
-Using unnecessary spread syntax makes code less readable and may create performance overhead by creating intermediate arrays when they’re not
-needed. While the performance impact is typically minimal, the readability impact can be significant, especially in codebases with many such
-occurrences.
+Using generic attribute methods instead of .dataset reduces code readability and maintainability. While functionally equivalent, it
+makes the code less expressive about working with data attributes and requires manual handling of name conversions between kebab-case and
+camelCase.
 How to fix?
-Remove unnecessary spread syntax when spreading array literals directly into arrays or function calls.
+Replace getAttribute() calls for data attributes with .dataset property access. The attribute name is automatically
+converted from kebab-case to camelCase.
 Non-compliant code example
 
-const array = [firstElement, ...[secondElement], thirdElement]; // Noncompliant
-foo(firstArgument, ...[secondArgument], thirdArgument); // Noncompliant
+const value = element.getAttribute('data-user-name'); // Noncompliant
 
 Compliant code example
 
-const array = [firstElement, secondElement, thirdElement];
-foo(firstArgument, secondArgument, thirdArgument);
+const value = element.dataset.userName;
+// or with destructuring
+const {userName} = element.dataset;
 
 Documentation
 
-   eslint-plugin-unicorn - Rule no-useless-spread 
-   MDN - Spread syntax - Comprehensive guide
-  to JavaScript spread syntax 
-   MDN - Iteration protocols - Understanding
-  iterables and iterators in JavaScript
+   eslint-plugin-unicorn - Rule prefer-dom-node-dataset 
+   MDN: HTMLElement.dataset - Official documentation for the
+  dataset API 
+   MDN: Using data attributes - Guide on using HTML data
+  attributes effectively
 
 ----------------------------------------
 
