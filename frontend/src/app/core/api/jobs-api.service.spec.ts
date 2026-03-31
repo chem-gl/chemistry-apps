@@ -564,4 +564,169 @@ describe('JobsApiService', () => {
       },
     });
   });
+
+  it('should map pause/resume/cancel control actions to normalized wrapper result', () => {
+    // Verifica el caso de uso de control cooperativo de jobs con respuesta normalizada.
+    const controlledJob = makeScientificJob({ id: 'ctrl-job-1', status: StatusEnum.Paused });
+
+    service.pauseJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('pause');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const pauseReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/pause/`);
+    expect(pauseReq.request.method).toBe('POST');
+    pauseReq.flush({ detail: 'pause requested', job: controlledJob });
+
+    service.resumeJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('resume');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const resumeReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/resume/`);
+    expect(resumeReq.request.method).toBe('POST');
+    resumeReq.flush({ detail: 'resume requested', job: controlledJob });
+
+    service.cancelJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('cancel');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const cancelReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/cancel/`);
+    expect(cancelReq.request.method).toBe('POST');
+    cancelReq.flush({ detail: 'cancel requested', job: controlledJob });
+  });
+
+  it('should validate molar fractions params and throw for invalid pKa or missing range data', () => {
+    // Verifica reglas de dominio mínimas antes de construir payload desacoplado.
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [],
+        phMode: 'single',
+        phValue: 7,
+      }),
+    ).toThrow('molar-fractions requiere entre 1 y 6 valores pKa.');
+
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'range',
+      }),
+    ).toThrow('phMin, phMax y phStep son obligatorios cuando phMode=range.');
+
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [4.5],
+        phMode: 'single',
+      }),
+    ).toThrow('phValue es obligatorio cuando phMode=single.');
+  });
+
+  it('should validate tunnel params and throw for non-positive physical values', () => {
+    // Verifica que el wrapper corta temprano entradas físicamente inválidas.
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 0,
+        imaginaryFrequency: 1000,
+        reactionEnergyZpe: -2,
+        temperature: 300,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('reactionBarrierZpe must be greater than zero.');
+
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 2,
+        imaginaryFrequency: 0,
+        reactionEnergyZpe: -2,
+        temperature: 300,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('imaginaryFrequency must be greater than zero.');
+
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 2,
+        imaginaryFrequency: 1000,
+        reactionEnergyZpe: -2,
+        temperature: 0,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('temperature must be greater than zero.');
+  });
+
+  it('should dispatch SA score and toxicity jobs with default version fallback', () => {
+    // Verifica payload de contratos OpenAPI para dos plugins críticos del frontend.
+    service
+      .dispatchSaScoreJob({
+        smiles: ['CCO', 'N#N'],
+        methods: ['rdkit'],
+      })
+      .subscribe();
+
+    const saReq = httpMock.expectOne((request) => request.url.includes('/api/sa-score/jobs/'));
+    expect(saReq.request.method).toBe('POST');
+    expect(saReq.request.body['version']).toBe('1.0.0');
+    expect(saReq.request.body['smiles']).toEqual(['CCO', 'N#N']);
+    saReq.flush({ id: 'sa-job-1' });
+
+    service
+      .dispatchToxicityPropertiesJob({
+        smiles: ['CCO'],
+      })
+      .subscribe();
+
+    const toxReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/'),
+    );
+    expect(toxReq.request.method).toBe('POST');
+    expect(toxReq.request.body['version']).toBe('1.0.0');
+    expect(toxReq.request.body['smiles']).toEqual(['CCO']);
+    toxReq.flush({ id: 'tox-job-1' });
+  });
+
+  it('should request tunnel and toxicity report files through generated endpoints', () => {
+    // Verifica integración de descargas binarias y nombres de archivo por convención del dominio.
+    service.downloadTunnelCsvReport('tun-1').subscribe((file) => {
+      expect(file.filename).toBe('tunnel_backend.csv');
+    });
+
+    const tunnelCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/tunnel/jobs/tun-1/report-csv/'),
+    );
+    expect(tunnelCsvReq.request.method).toBe('GET');
+    tunnelCsvReq.flush(new Blob(['a,b'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="tunnel_backend.csv"',
+      },
+    });
+
+    service.downloadTunnelErrorReport('tun-1').subscribe((file) => {
+      expect(file.filename).toBe('tunnel_error.txt');
+    });
+
+    const tunnelErrReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/tunnel/jobs/tun-1/report-error/'),
+    );
+    expect(tunnelErrReq.request.method).toBe('GET');
+    tunnelErrReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="tunnel_error.txt"',
+      },
+    });
+
+    service.downloadToxicityPropertiesCsvReport('tox-1').subscribe((file) => {
+      expect(file.filename).toBe('toxicity_backend.csv');
+    });
+
+    const toxCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/report-csv/'),
+    );
+    expect(toxCsvReq.request.method).toBe('GET');
+    toxCsvReq.flush(new Blob(['smiles,ld50'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="toxicity_backend.csv"',
+      },
+    });
+  });
 });

@@ -91,9 +91,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   },
 ];
 
-export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> = [
-  ...SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem),
-];
+export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
 /** Lista filtrada: solo las apps visibles en menus y en el hub. Calculator y Random Numbers quedan excluidas. */
 export const VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =

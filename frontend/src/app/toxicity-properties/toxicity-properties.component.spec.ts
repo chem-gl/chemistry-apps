@@ -15,13 +15,28 @@ describe('ToxicityPropertiesComponent', () => {
     smilesInput: signal<string>('CCO'),
     activeSection: signal<'idle' | 'dispatching' | 'progress' | 'result' | 'error'>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal(null),
-    jobLogs: signal([]),
-    resultData: signal(null),
+    progressSnapshot: signal<unknown | null>(null),
+    jobLogs: signal<unknown[]>([]),
+    resultData: signal<
+      | {
+          total: number;
+          molecules: Array<{
+            smiles: string;
+            LD50_mgkg: number | null;
+            mutagenicity: string | null;
+            ames_score: number | null;
+            DevTox: string | null;
+            devtox_score: number | null;
+            error_message: string | null;
+          }>;
+          scientificReferences: string[];
+        }
+      | null
+    >(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal([]),
+    historyJobs: signal<Array<{ id: string; status: string; updated_at: string }>>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     progressPercentage: signal<number>(0),
@@ -51,6 +66,23 @@ describe('ToxicityPropertiesComponent', () => {
   };
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
+    workflowMock.smilesInput.set('CCO');
+    workflowMock.activeSection.set('idle');
+    workflowMock.currentJobId.set(null);
+    workflowMock.progressSnapshot.set(null);
+    workflowMock.jobLogs.set([]);
+    workflowMock.resultData.set(null);
+    workflowMock.errorMessage.set(null);
+    workflowMock.exportErrorMessage.set(null);
+    workflowMock.isExporting.set(false);
+    workflowMock.historyJobs.set([]);
+    workflowMock.isHistoryLoading.set(false);
+    workflowMock.isProcessing.set(false);
+    workflowMock.progressPercentage.set(0);
+    workflowMock.progressMessage.set('Preparing toxicity prediction...');
+
     TestBed.configureTestingModule({
       imports: [ToxicityPropertiesComponent],
       providers: [
@@ -204,6 +236,7 @@ describe('ToxicityPropertiesComponent', () => {
   });
 
   it('opens the molecule image modal and loads the SVG', () => {
+    // Verifica apertura de modal y render seguro del SVG retornado por inspección.
     const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
     const component = fixture.componentInstance;
     const showModalSpy = vi.fn();
@@ -224,5 +257,90 @@ describe('ToxicityPropertiesComponent', () => {
     expect(component.moleculeModalSmiles()).toBe('CCO');
     expect(component.isLoadingMoleculeImage()).toBe(false);
     expect(component.moleculeModalSvg()).not.toBeNull();
+  });
+
+  it('renders result metadata table and references when workflow has completed data', () => {
+    // Verifica caso de uso principal: tabla toxicológica completa tras finalizar el job.
+    workflowMock.activeSection.set('result');
+    workflowMock.currentJobId.set('tox-job-77');
+    workflowMock.resultData.set({
+      total: 1,
+      molecules: [
+        {
+          smiles: 'CCO',
+          LD50_mgkg: 320.1234,
+          mutagenicity: 'Negative',
+          ames_score: 0.1432,
+          DevTox: 'Low',
+          devtox_score: 0.0201,
+          error_message: null,
+        },
+      ],
+      scientificReferences: ['Paper A', 'Paper B'],
+    });
+
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Total molecules:');
+    expect(host.textContent).toContain('ADMET-AI');
+    expect(host.textContent).toContain('tox-job-77');
+    expect(host.querySelectorAll('table.result-table tbody tr').length).toBeGreaterThan(0);
+    expect(host.textContent).toContain('Paper A');
+    expect(host.textContent).toContain('Paper B');
+  });
+
+  it('renders progress card and dispatching status depending on active section', () => {
+    // Verifica transición visual de dispatching a progress con feedback de ejecución.
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+
+    workflowMock.activeSection.set('dispatching');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Submitting toxicity job to backend...',
+    );
+
+    workflowMock.activeSection.set('progress');
+    workflowMock.currentJobId.set('tox-job-progress');
+    workflowMock.progressPercentage.set(60);
+    workflowMock.progressMessage.set('Predicting molecules');
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-job-progress-card')).not.toBeNull();
+  });
+
+  it('renders error banner and history table states from workflow signals', () => {
+    // Verifica mensajes de error y estado histórico vacío/no-vacío en la UI.
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+
+    workflowMock.activeSection.set('error');
+    workflowMock.errorMessage.set('Compatibility validation failed');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Compatibility validation failed',
+    );
+
+    workflowMock.historyJobs.set([]);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'No historical toxicity jobs yet.',
+    );
+
+    workflowMock.historyJobs.set([
+      {
+        id: 'tox-history-1',
+        status: 'completed',
+        updated_at: '2026-03-31T10:00:00Z',
+      },
+    ]);
+    fixture.detectChanges();
+
+    const openButton = (fixture.nativeElement as HTMLElement).querySelector(
+      'button.history-open-btn',
+    ) as HTMLButtonElement | null;
+    expect(openButton).not.toBeNull();
+    openButton?.click();
+    expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tox-history-1');
   });
 });
