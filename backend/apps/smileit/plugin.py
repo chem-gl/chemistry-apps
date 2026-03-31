@@ -324,7 +324,7 @@ def _emit_log(
 
     typed_level = cast("str", level)
     safe_payload: JSONMap | None = payload if payload is not None else {}
-    log_callback(cast("object", typed_level), source, message, safe_payload)  # type: ignore[arg-type]
+    log_callback(cast("object", typed_level), source, message, safe_payload)
 
 
 def _append_traceability_rows(

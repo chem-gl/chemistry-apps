@@ -75,10 +75,10 @@ class TST:
             for param in [delta_zpe, barrier_zpe, frequency, temperature]
         ):
             self.input_params = TSTInputParams(
-                delta_zpe=delta_zpe,  # type: ignore
-                barrier_zpe=barrier_zpe,  # type: ignore
-                frequency=frequency,  # type: ignore
-                temperature=temperature,  # type: ignore
+                delta_zpe=delta_zpe,
+                barrier_zpe=barrier_zpe,
+                frequency=frequency,
+                temperature=temperature,
             )
             self.result = self.calculate()
 

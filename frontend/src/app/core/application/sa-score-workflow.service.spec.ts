@@ -49,7 +49,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
       total: 1,
       requested_methods: ['ambit'],
     },
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,

@@ -55,7 +55,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
         total_points: 15,
       },
     },
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,

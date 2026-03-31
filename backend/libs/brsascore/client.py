@@ -47,8 +47,8 @@ class BrsaScoreClient:
     def _run_single_smiles(self, smiles_value: str) -> BrsaScoreResult:
         """Ejecuta BRSAScore para un SMILES y retorna el score."""
         try:
-            from BRSAScore import SAScorer  # type: ignore[import]  # vendorizado
-            from rdkit.Chem import MolFromSmiles  # type: ignore[import]
+            from BRSAScore import SAScorer
+            from rdkit.Chem import MolFromSmiles
 
             mol = MolFromSmiles(smiles_value)
             if mol is None:

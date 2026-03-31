@@ -18,9 +18,9 @@ Uso:
 """
 
 from dataclasses import dataclass
-from typing import Optional, TypeAlias
+from typing import Optional
 
-ScalarValue: TypeAlias = str | int | float | bool
+type ScalarValue = str | int | float | bool
 
 
 @dataclass

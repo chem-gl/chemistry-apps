@@ -37,8 +37,8 @@ class RdkitSaClient:
         """Ejecuta RDKit SA_Score para un SMILES y retorna el score."""
         try:
             # rdkit.Contrib.SA_Score está disponible en rdkit >= 2021.03
-            from rdkit.Chem import MolFromSmiles  # type: ignore[import]
-            from rdkit.Contrib.SA_Score import sascorer  # type: ignore[import]
+            from rdkit.Chem import MolFromSmiles
+            from rdkit.Contrib.SA_Score import sascorer
 
             mol = MolFromSmiles(smiles_value)
             if mol is None:

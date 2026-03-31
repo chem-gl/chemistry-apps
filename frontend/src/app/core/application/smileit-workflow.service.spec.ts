@@ -187,7 +187,7 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
         patterns: [],
       },
     },
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,

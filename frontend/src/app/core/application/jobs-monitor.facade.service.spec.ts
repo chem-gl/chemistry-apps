@@ -26,7 +26,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     resumed_at: null,
     parameters: null,
     results: null,
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
