@@ -39,6 +39,7 @@ from .config import get_max_recovery_attempts, get_result_cache_payload_limit_by
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
+CACHE_LOG_SOURCE = "core.cache"
 
 
 @dataclass(slots=True)
@@ -180,7 +181,7 @@ class RuntimeJobService:
             self._publish_job_log(
                 created_job,
                 level="warning",
-                source="core.cache",
+                source=CACHE_LOG_SOURCE,
                 message="Cache hit descartado por payload no reutilizable para este plugin.",
                 payload={"plugin_name": plugin_name},
             )
@@ -394,7 +395,7 @@ class RuntimeJobService:
         self._publish_job_log(
             job,
             level="info",
-            source="core.cache",
+            source=CACHE_LOG_SOURCE,
             message="Persistiendo resultado calculado en caché.",
         )
 
@@ -409,7 +410,7 @@ class RuntimeJobService:
             self._publish_job_log(
                 job,
                 level="warning",
-                source="core.cache",
+                source=CACHE_LOG_SOURCE,
                 message="Se omite persistencia en caché por tamaño de resultado excesivo.",
                 payload={
                     "estimated_payload_bytes": estimated_payload_bytes,
@@ -435,7 +436,7 @@ class RuntimeJobService:
             self._publish_job_log(
                 job,
                 level="warning",
-                source="core.cache",
+                source=CACHE_LOG_SOURCE,
                 message="Se omite persistencia en caché por error de almacenamiento.",
                 payload={
                     "error_type": exc.__class__.__name__,

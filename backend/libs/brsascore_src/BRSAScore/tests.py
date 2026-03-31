@@ -12,7 +12,7 @@ class SAScorerDescriptorTests(unittest.TestCase):
         self.scorer = SAScorer()
 
     def test_calculate_score_keeps_backward_contract(self) -> None:
-        score, contribution = self.scorer.calculateScore("CCO")
+        score, contribution = self.scorer.calculate_score("CCO")
 
         self.assertIsInstance(score, float)
         self.assertGreaterEqual(score, 1.0)
@@ -20,7 +20,7 @@ class SAScorerDescriptorTests(unittest.TestCase):
         self.assertIsInstance(contribution, dict)
 
     def test_calculate_score_with_descriptors_returns_expected_keys(self) -> None:
-        score, contribution, descriptors = self.scorer.calculateScoreWithDescriptors(
+        score, contribution, descriptors = self.scorer.calculate_score_with_descriptors(
             "C[C@H](O)Cl"
         )
 
@@ -50,10 +50,10 @@ class SAScorerDescriptorTests(unittest.TestCase):
 
     def test_invalid_smiles_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):
-            self.scorer.calculateScore("not-a-smiles")
+            self.scorer.calculate_score("not-a-smiles")
 
         with self.assertRaises(ValueError):
-            self.scorer.calculateScoreWithDescriptors("not-a-smiles")
+            self.scorer.calculate_score_with_descriptors("not-a-smiles")
 
 
 if __name__ == "__main__":

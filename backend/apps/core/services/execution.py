@@ -32,6 +32,8 @@ from .log_helpers import publish_job_log
 from .terminal_states import finish_with_failure, finish_with_pause, finish_with_result
 
 logger = logging.getLogger(__name__)
+RUNTIME_LOG_SOURCE = "core.runtime"
+CACHE_LOG_SOURCE = "core.cache"
 
 
 def run_job(
@@ -97,7 +99,7 @@ def _should_skip_execution(
     publish_job_log(
         job,
         level="debug",
-        source="core.runtime",
+        source=RUNTIME_LOG_SOURCE,
         message="Ejecución omitida porque el job ya está finalizado.",
         payload={"status": job.status},
         log_publisher=log_publisher,
@@ -118,9 +120,7 @@ def _prepare_execution_parameters(
         log_publisher=log_publisher,
     )
 
-    execution_parameters: JSONMap = {
-        key: value for key, value in cast(JSONMap, job.parameters).items()
-    }
+    execution_parameters: JSONMap = dict(cast(JSONMap, job.parameters))
     execution_parameters["__job_id"] = str(job.id)
     execution_parameters["__plugin_name"] = job.plugin_name
 
@@ -130,7 +130,7 @@ def _prepare_execution_parameters(
         publish_job_log(
             job,
             level="info",
-            source="core.runtime",
+            source=RUNTIME_LOG_SOURCE,
             message="Reanudando ejecución desde estado persistido.",
             payload={"runtime_state_keys": list(runtime_state_value.keys())},
             log_publisher=log_publisher,
@@ -161,7 +161,7 @@ def _mark_job_as_running(
     publish_job_log(
         job,
         level="info",
-        source="core.runtime",
+        source=RUNTIME_LOG_SOURCE,
         message="Job iniciado en worker asíncrono.",
         log_publisher=log_publisher,
     )
@@ -191,7 +191,7 @@ def _try_finish_job_from_cache(
         publish_job_log(
             job,
             level="warning",
-            source="core.cache",
+            source=CACHE_LOG_SOURCE,
             message="Cache hit descartado durante ejecución por payload no reutilizable.",
             payload={"plugin_name": job.plugin_name},
             log_publisher=log_publisher,
@@ -201,7 +201,7 @@ def _try_finish_job_from_cache(
     publish_job_log(
         job,
         level="info",
-        source="core.cache",
+        source=CACHE_LOG_SOURCE,
         message="Resultado recuperado desde caché durante ejecución.",
         log_publisher=log_publisher,
     )
@@ -234,7 +234,7 @@ def _publish_plugin_execution_start(
     publish_job_log(
         job,
         level="info",
-        source="core.runtime",
+        source=RUNTIME_LOG_SOURCE,
         message="Iniciando ejecución de plugin científico.",
         payload={"plugin_name": job.plugin_name},
         log_publisher=log_publisher,
@@ -288,7 +288,7 @@ def _execute_runtime_plugin_flow(
         publish_job_log(
             job,
             level="error",
-            source="core.runtime",
+            source=RUNTIME_LOG_SOURCE,
             message="Error durante ejecución del job.",
             payload={"error": str(service_error)},
             log_publisher=log_publisher,

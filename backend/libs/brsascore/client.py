@@ -60,8 +60,8 @@ class BrsaScoreClient:
                 )
 
             scorer = SAScorer()
-            # BRSAScore expone calculateScore(smi: str), no acepta RDKit Mol.
-            score, _ = scorer.calculateScore(smiles_value)
+            # BRSAScore recibe SMILES (str); no acepta RDKit Mol como entrada.
+            score, _ = scorer.calculate_score(smiles_value)
 
             return BrsaScoreResult(
                 smiles=smiles_value,

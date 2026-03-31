@@ -45,6 +45,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+SMILEIT_LOG_SOURCE: Final[str] = "smileit.plugin"
 LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
 ATTEMPT_PROGRESS_BATCH_SIZE: Final[int] = 100
 GENERATION_CONCURRENCY_MIN_BATCH: Final[int] = 8
@@ -77,6 +78,23 @@ class ExpansionSummary:
     rejected_fusions: int
     duplicate_structures: int
     reached_limit: bool
+
+
+@dataclass(slots=True)
+class ExpansionContext:
+    """Estado compartido para expansión de nodos sin listas de parámetros largas."""
+
+    selected_atom_indices: list[int]
+    site_option_map: dict[int, list[SiteOption]]
+    num_bonds: int
+    seen_smiles: set[str]
+    attempt_cache: dict[FusionAttemptKey, str | None]
+    export_name_base: str
+    export_padding: int
+    generated_candidates: list[GeneratedCandidate]
+    derivative_rows: list[SmileitTraceabilityRow]
+    next_frontier_nodes: list[GeneratedNode]
+    max_structures: int | None
 
 
 @dataclass(frozen=True)
@@ -356,6 +374,77 @@ def _build_render_progress_percentage(item_index: int, item_total: int) -> int:
     return max(86, min(99, raw_percentage))
 
 
+def _report_generation_progress(
+    *,
+    progress_callback: PluginProgressCallback,
+    log_callback: PluginLogCallback | None,
+    round_index: int,
+    r_substitutes: int,
+    node_index: int,
+    round_frontier_size: int,
+    attempts_processed: int,
+    current_generated: int,
+    rejected_fusions: int,
+    duplicate_structures: int,
+    attempt_cache_size: int,
+) -> None:
+    """Publica avance incremental de generación para reducir complejidad local."""
+    progress_percentage = _build_generation_progress_percentage(
+        round_index=round_index,
+        total_rounds=r_substitutes,
+        node_index=node_index,
+        node_total=round_frontier_size,
+    )
+    progress_callback(
+        progress_percentage,
+        "running",
+        (
+            "Generando derivados por bloques de asignación. "
+            f"Intentos procesados: {attempts_processed}. "
+            f"Estructuras acumuladas: {current_generated}."
+        ),
+    )
+    _emit_log(
+        log_callback,
+        level="info",
+        source=SMILEIT_LOG_SOURCE,
+        message="Avance de generación Smile-it.",
+        payload={
+            "attempts_processed": attempts_processed,
+            "generated_structures": current_generated,
+            "rejected_fusions": rejected_fusions,
+            "duplicate_structures": duplicate_structures,
+            "round_index": round_index,
+            "processed_nodes": node_index,
+            "round_nodes": round_frontier_size,
+            "fusion_attempt_cache_size": attempt_cache_size,
+        },
+    )
+
+
+def _report_generation_limit_reached(
+    *,
+    log_callback: PluginLogCallback | None,
+    attempts_processed: int,
+    generated_count: int,
+    rejected_fusions: int,
+    max_structures: int | None,
+) -> None:
+    """Publica evento único cuando la generación alcanza el límite máximo."""
+    _emit_log(
+        log_callback,
+        level="warning",
+        source=SMILEIT_LOG_SOURCE,
+        message="Se alcanzó el límite configurado de estructuras para Smile-it.",
+        payload={
+            "attempts_processed": attempts_processed,
+            "generated_structures": generated_count,
+            "rejected_fusions": rejected_fusions,
+            "max_structures": max_structures,
+        },
+    )
+
+
 def _materialize_generated_structures(
     principal_smiles: str,
     generated_candidates: list[GeneratedCandidate],
@@ -395,7 +484,7 @@ def _materialize_generated_structures(
     _emit_log(
         log_callback,
         level="info",
-        source="smileit.plugin",
+        source=SMILEIT_LOG_SOURCE,
         message="Materialización visual Smile-it completada.",
         payload={
             "generated_structures": len(generated_structures),
@@ -438,23 +527,26 @@ def _generate_derivatives(
     for round_index in range(1, r_substitutes + 1):
         round_frontier = list(frontier_nodes)
         next_frontier_nodes: list[GeneratedNode] = []
+        expansion_context = ExpansionContext(
+            selected_atom_indices=selected_atom_indices,
+            site_option_map=site_option_map,
+            num_bonds=num_bonds,
+            seen_smiles=seen_smiles,
+            attempt_cache=attempt_cache,
+            export_name_base=export_name_base,
+            export_padding=export_padding,
+            generated_candidates=generated_candidates,
+            derivative_rows=derivative_rows,
+            next_frontier_nodes=next_frontier_nodes,
+            max_structures=max_structures,
+        )
 
         for node_index, node in enumerate(round_frontier, start=1):
             expansion_summary = _expand_derivatives_from_node(
                 node=node,
                 round_index=round_index,
-                selected_atom_indices=selected_atom_indices,
-                site_option_map=site_option_map,
-                num_bonds=num_bonds,
-                seen_smiles=seen_smiles,
-                attempt_cache=attempt_cache,
-                export_name_base=export_name_base,
-                export_padding=export_padding,
                 derivative_counter=derivative_counter,
-                generated_candidates=generated_candidates,
-                derivative_rows=derivative_rows,
-                next_frontier_nodes=next_frontier_nodes,
-                max_structures=max_structures,
+                context=expansion_context,
             )
             derivative_counter = expansion_summary.derivative_counter
             attempts_processed += expansion_summary.attempts_processed
@@ -470,52 +562,29 @@ def _generate_derivatives(
                 >= ATTEMPT_PROGRESS_BATCH_SIZE
             )
             if should_report_generated or should_report_attempts:
-                progress_percentage = _build_generation_progress_percentage(
+                _report_generation_progress(
+                    progress_callback=progress_callback,
+                    log_callback=log_callback,
                     round_index=round_index,
-                    total_rounds=r_substitutes,
+                    r_substitutes=r_substitutes,
                     node_index=node_index,
-                    node_total=len(round_frontier),
-                )
-                progress_callback(
-                    progress_percentage,
-                    "running",
-                    (
-                        "Generando derivados por bloques de asignación. "
-                        f"Intentos procesados: {attempts_processed}. "
-                        f"Estructuras acumuladas: {current_generated}."
-                    ),
-                )
-                _emit_log(
-                    log_callback,
-                    level="info",
-                    source="smileit.plugin",
-                    message="Avance de generación Smile-it.",
-                    payload={
-                        "attempts_processed": attempts_processed,
-                        "generated_structures": current_generated,
-                        "rejected_fusions": rejected_fusions,
-                        "duplicate_structures": duplicate_structures,
-                        "round_index": round_index,
-                        "processed_nodes": node_index,
-                        "round_nodes": len(round_frontier),
-                        "fusion_attempt_cache_size": len(attempt_cache),
-                    },
+                    round_frontier_size=len(round_frontier),
+                    attempts_processed=attempts_processed,
+                    current_generated=current_generated,
+                    rejected_fusions=rejected_fusions,
+                    duplicate_structures=duplicate_structures,
+                    attempt_cache_size=len(attempt_cache),
                 )
                 last_reported_generated = current_generated
                 last_reported_attempts = attempts_processed
 
             if expansion_summary.reached_limit:
-                _emit_log(
-                    log_callback,
-                    level="warning",
-                    source="smileit.plugin",
-                    message="Se alcanzó el límite configurado de estructuras para Smile-it.",
-                    payload={
-                        "attempts_processed": attempts_processed,
-                        "generated_structures": len(generated_candidates),
-                        "rejected_fusions": rejected_fusions,
-                        "max_structures": max_structures,
-                    },
+                _report_generation_limit_reached(
+                    log_callback=log_callback,
+                    attempts_processed=attempts_processed,
+                    generated_count=len(generated_candidates),
+                    rejected_fusions=rejected_fusions,
+                    max_structures=max_structures,
                 )
                 truncated = True
                 return generated_candidates, derivative_rows, truncated
@@ -537,7 +606,7 @@ def _generate_derivatives(
         _emit_log(
             log_callback,
             level="info",
-            source="smileit.plugin",
+            source=SMILEIT_LOG_SOURCE,
             message="Ronda de generación completada.",
             payload={
                 "attempts_processed": attempts_processed,
@@ -557,18 +626,8 @@ def _generate_derivatives(
 def _expand_derivatives_from_node(
     node: GeneratedNode,
     round_index: int,
-    selected_atom_indices: list[int],
-    site_option_map: dict[int, list[SiteOption]],
-    num_bonds: int,
-    seen_smiles: set[str],
-    attempt_cache: dict[FusionAttemptKey, str | None],
-    export_name_base: str,
-    export_padding: int,
     derivative_counter: int,
-    generated_candidates: list[GeneratedCandidate],
-    derivative_rows: list[SmileitTraceabilityRow],
-    next_frontier_nodes: list[GeneratedNode],
-    max_structures: int | None,
+    context: ExpansionContext,
 ) -> ExpansionSummary:
     """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
     attempts_processed = 0
@@ -577,15 +636,15 @@ def _expand_derivatives_from_node(
 
     pending_attempts = _build_pending_fusion_attempts(
         node=node,
-        selected_atom_indices=selected_atom_indices,
-        site_option_map=site_option_map,
-        num_bonds=num_bonds,
+        selected_atom_indices=context.selected_atom_indices,
+        site_option_map=context.site_option_map,
+        num_bonds=context.num_bonds,
     )
 
     attempts_to_resolve: list[PendingFusionAttempt] = []
     for pending_attempt in pending_attempts:
         attempts_processed += 1
-        if pending_attempt.attempt_key in attempt_cache:
+        if pending_attempt.attempt_key in context.attempt_cache:
             continue
 
         if not is_fusion_candidate_viable(
@@ -595,27 +654,27 @@ def _expand_derivatives_from_node(
             substituent_atom_idx=pending_attempt.attempt_key.substituent_anchor,
             bond_order=pending_attempt.attempt_key.bond_order,
         ):
-            attempt_cache[pending_attempt.attempt_key] = None
+            context.attempt_cache[pending_attempt.attempt_key] = None
             continue
 
         attempts_to_resolve.append(pending_attempt)
 
     _resolve_pending_fusion_attempts(
-        attempt_cache=attempt_cache,
+        attempt_cache=context.attempt_cache,
         pending_attempts=attempts_to_resolve,
     )
 
     for pending_attempt in pending_attempts:
-        fused_smiles = attempt_cache.get(pending_attempt.attempt_key)
+        fused_smiles = context.attempt_cache.get(pending_attempt.attempt_key)
         if fused_smiles is None:
             rejected_fusions += 1
             continue
 
-        if fused_smiles in seen_smiles:
+        if fused_smiles in context.seen_smiles:
             duplicate_structures += 1
             continue
 
-        seen_smiles.add(fused_smiles)
+        context.seen_smiles.add(fused_smiles)
 
         substituent = pending_attempt.site_option.substituent
         trace_event = SmileitSubstitutionTraceEvent(
@@ -632,13 +691,13 @@ def _expand_derivatives_from_node(
         )
         traceability = [*node.traceability, trace_event]
         generated_name = _build_structure_name(
-            base_name=export_name_base,
+            base_name=context.export_name_base,
             index_value=derivative_counter,
-            padding=export_padding,
+            padding=context.export_padding,
         )
         derivative_counter += 1
 
-        generated_candidates.append(
+        context.generated_candidates.append(
             GeneratedCandidate(
                 smiles=fused_smiles,
                 name=generated_name,
@@ -646,19 +705,22 @@ def _expand_derivatives_from_node(
             )
         )
         _append_traceability_rows(
-            rows=derivative_rows,
+            rows=context.derivative_rows,
             derivative_name=generated_name,
             derivative_smiles=fused_smiles,
             traceability=traceability,
         )
-        next_frontier_nodes.append(
+        context.next_frontier_nodes.append(
             GeneratedNode(
                 smiles=fused_smiles,
                 traceability=traceability,
             )
         )
 
-        if max_structures is not None and len(generated_candidates) >= max_structures:
+        if (
+            context.max_structures is not None
+            and len(context.generated_candidates) >= context.max_structures
+        ):
             return ExpansionSummary(
                 derivative_counter=derivative_counter,
                 attempts_processed=attempts_processed,
@@ -721,37 +783,63 @@ def _normalize_assignment_block(
     )
 
 
+def _parse_assignment_blocks(
+    raw_blocks: object,
+) -> list[SmileitResolvedAssignmentBlock]:
+    """Convierte bloques crudos en bloques tipados válidos."""
+    if not isinstance(raw_blocks, list):
+        return []
+
+    assignment_blocks: list[SmileitResolvedAssignmentBlock] = []
+    for raw_item in raw_blocks:
+        if isinstance(raw_item, dict):
+            assignment_blocks.append(_normalize_assignment_block(raw_item))
+    return assignment_blocks
+
+
+def _parse_selected_atom_indices(raw_selected: object) -> list[int]:
+    """Normaliza índices de átomos seleccionados desde parámetros serializados."""
+    if not isinstance(raw_selected, list):
+        return []
+    return [int(item) for item in raw_selected]
+
+
+def _parse_references(
+    raw_references: object,
+) -> dict[str, list[dict[str, str | int]]]:
+    """Convierte referencias libres a un mapa tipado y estable."""
+    if not isinstance(raw_references, dict):
+        return {}
+
+    references: dict[str, list[dict[str, str | int]]] = {}
+    for ref_key, ref_value in raw_references.items():
+        if not isinstance(ref_value, list):
+            continue
+
+        typed_rows: list[dict[str, str | int]] = []
+        for row in ref_value:
+            if not isinstance(row, dict):
+                continue
+            typed_rows.append(
+                {
+                    str(key): int(value) if isinstance(value, int) else str(value)
+                    for key, value in row.items()
+                }
+            )
+        references[str(ref_key)] = typed_rows
+
+    return references
+
+
 def _build_smileit_input(parameters: JSONMap) -> SmileitInput:
     """Construye entrada tipada para el plugin desde parámetros serializados."""
-    raw_blocks = parameters.get("assignment_blocks", [])
-    assignment_blocks: list[SmileitResolvedAssignmentBlock] = []
-    if isinstance(raw_blocks, list):
-        for raw_item in raw_blocks:
-            if isinstance(raw_item, dict):
-                assignment_blocks.append(_normalize_assignment_block(raw_item))
-
-    selected_raw = parameters.get("selected_atom_indices", [])
-    selected_atom_indices = (
-        [int(item) for item in selected_raw] if isinstance(selected_raw, list) else []
+    assignment_blocks = _parse_assignment_blocks(
+        parameters.get("assignment_blocks", [])
     )
-
-    references_raw = parameters.get("references", {})
-    references: dict[str, list[dict[str, str | int]]] = {}
-    if isinstance(references_raw, dict):
-        for ref_key, ref_value in references_raw.items():
-            if isinstance(ref_value, list):
-                typed_rows: list[dict[str, str | int]] = []
-                for row in ref_value:
-                    if isinstance(row, dict):
-                        typed_rows.append(
-                            {
-                                str(key): (
-                                    int(value) if isinstance(value, int) else str(value)
-                                )
-                                for key, value in row.items()
-                            }
-                        )
-                references[str(ref_key)] = typed_rows
+    selected_atom_indices = _parse_selected_atom_indices(
+        parameters.get("selected_atom_indices", [])
+    )
+    references = _parse_references(parameters.get("references", {}))
 
     return SmileitInput(
         principal_smiles=str(parameters.get("principal_smiles", "")),
@@ -816,7 +904,7 @@ def smileit_plugin(
         _emit_log(
             log_callback,
             level="info",
-            source="smileit.plugin",
+            source=SMILEIT_LOG_SOURCE,
             message="Cobertura de bloques validada. Iniciando generación combinatoria.",
             payload={
                 "selected_sites": parsed_input["selected_atom_indices"],
@@ -873,7 +961,7 @@ def smileit_plugin(
         _emit_log(
             log_callback,
             level="info",
-            source="smileit.plugin",
+            source=SMILEIT_LOG_SOURCE,
             message="Ejecución Smile-it finalizada.",
             payload={
                 "total_generated": result["total_generated"],

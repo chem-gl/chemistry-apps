@@ -29,6 +29,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+TUNNEL_MATH_LOG_SOURCE = "tunnel.math"
 
 
 def _emit_math_operation_logs(
@@ -60,7 +61,7 @@ def _emit_math_operation_logs(
 
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Operacion matematica: calculo de alpha_1.",
         {
             "formula": "alpha_1 = (2*pi*BARRZPE*CAL)/(AV*H*C*FREQ)",
@@ -81,7 +82,7 @@ def _emit_math_operation_logs(
 
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Operacion matematica: calculo de alpha_2.",
         {
             "formula": "alpha_2 = (2*pi*(BARRZPE-DELZPE)*CAL)/(AV*H*C*FREQ)",
@@ -99,7 +100,7 @@ def _emit_math_operation_logs(
 
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Operacion matematica: calculo de U.",
         {
             "formula": "U = (H*C*FREQ)/(KB*T)",
@@ -112,7 +113,7 @@ def _emit_math_operation_logs(
     baseline_value: float = math.exp(-calc_u)
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Operacion matematica: calculo de baseline clasico exp(-U).",
         {
             "formula": "baseline = exp(-U)",
@@ -124,7 +125,7 @@ def _emit_math_operation_logs(
     kappa_tst: float = calc_g / baseline_value
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Operacion matematica: calculo de kappa_tst.",
         {
             "formula": "kappa_tst = G / exp(-U)",
@@ -136,7 +137,7 @@ def _emit_math_operation_logs(
 
     emit_log(
         "debug",
-        "tunnel.math",
+        TUNNEL_MATH_LOG_SOURCE,
         "Verificacion matematica contra resultado CK_TEST.",
         {
             "u_trace": u_trace,

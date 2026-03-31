@@ -15,6 +15,8 @@ from rest_framework import serializers
 
 from .models import ScientificJob
 
+JOB_ID_HELP_TEXT = "Identificador único del job."
+
 
 @extend_schema_serializer(
     examples=[
@@ -86,7 +88,7 @@ class JobControlActionResponseSerializer(serializers.Serializer):
 class JobProgressSnapshotSerializer(serializers.Serializer):
     """Contrato de progreso de job usado en endpoint snapshot y stream SSE."""
 
-    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    job_id = serializers.UUIDField(help_text=JOB_ID_HELP_TEXT)
     status = serializers.ChoiceField(
         choices=[
             ("pending", "Pending"),
@@ -154,7 +156,7 @@ class JobProgressSnapshotSerializer(serializers.Serializer):
 class JobLogEventSerializer(serializers.Serializer):
     """Contrato de un evento de log persistido para un job."""
 
-    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    job_id = serializers.UUIDField(help_text=JOB_ID_HELP_TEXT)
     event_index = serializers.IntegerField(
         min_value=1,
         help_text="Índice incremental del evento de log dentro del job.",
@@ -215,7 +217,7 @@ class JobLogEventSerializer(serializers.Serializer):
 class JobLogListSerializer(serializers.Serializer):
     """Contrato de respuesta para listado paginado de logs por job."""
 
-    job_id = serializers.UUIDField(help_text="Identificador único del job.")
+    job_id = serializers.UUIDField(help_text=JOB_ID_HELP_TEXT)
     count = serializers.IntegerField(
         min_value=0,
         help_text="Cantidad de eventos en la página de resultados.",
@@ -264,9 +266,7 @@ class ScientificJobSerializer(serializers.ModelSerializer):
         """Normaliza salida terminal para evitar inconsistencias legacy en UI."""
         raw_representation = super().to_representation(instance)
 
-        normalized_representation = {
-            key: value for key, value in raw_representation.items()
-        }
+        normalized_representation = dict(raw_representation)
         job_status_value: str = str(instance.status)
 
         if job_status_value in {"completed", "failed"}:

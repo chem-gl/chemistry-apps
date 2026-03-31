@@ -25,6 +25,7 @@ from .definitions import PLUGIN_NAME, SUPPORTED_OPERATIONS
 from .types import CalculatorInput, CalculatorOperation, CalculatorResult
 
 logger = logging.getLogger(__name__)
+CALCULATOR_LOG_SOURCE = "calculator.plugin"
 
 
 def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
@@ -92,7 +93,7 @@ def calculator_plugin(
 
     emit_log(
         "debug",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Log fantasma: se ejecutará la operación de calculadora solicitada.",
         {
             "operation": operation_name,
@@ -103,7 +104,7 @@ def calculator_plugin(
 
     emit_log(
         "info",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Iniciando operación de calculadora.",
         {
             "operation": operation_name,
@@ -147,7 +148,7 @@ def calculator_plugin(
 
     emit_log(
         "info",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Operación de calculadora completada.",
         {
             "operation": operation_name,

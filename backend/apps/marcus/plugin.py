@@ -30,6 +30,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+REORGANIZATION_ABS_TOLERANCE = 1e-12
 
 HARTREE_TO_KCAL: float = 627.5095
 KB: float = 1.38066e-23
@@ -235,7 +236,11 @@ def _compute_marcus_result(
     )
 
     reorganization_energy: float = vertical_energy - adiabatic_energy_corrected
-    if reorganization_energy == 0.0:
+    if math.isclose(
+        reorganization_energy,
+        0.0,
+        abs_tol=REORGANIZATION_ABS_TOLERANCE,
+    ):
         raise ValueError("No se puede calcular Marcus cuando lambda es cero.")
 
     barrier_kcal_mol: float = (reorganization_energy / 4.0) * (

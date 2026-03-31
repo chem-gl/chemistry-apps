@@ -42,26 +42,40 @@ def estimate_json_payload_size_bytes(
 
     while len(pending_values) > 0:
         current_value = pending_values.pop()
-
-        if isinstance(current_value, dict):
-            total_bytes += _enqueue_mapping_values_for_size_estimation(
-                mapping_value=current_value,
-                pending_values=pending_values,
-                visited_containers=visited_containers,
-            )
-        elif isinstance(current_value, list | tuple | set):
-            total_bytes += _enqueue_iterable_values_for_size_estimation(
-                iterable_value=current_value,
-                pending_values=pending_values,
-                visited_containers=visited_containers,
-            )
-        else:
-            total_bytes += estimate_scalar_json_size_bytes(current_value)
+        total_bytes += _estimate_value_size_and_enqueue(
+            value=current_value,
+            pending_values=pending_values,
+            visited_containers=visited_containers,
+        )
 
         if total_bytes > limit_bytes:
             return total_bytes
 
     return total_bytes
+
+
+def _estimate_value_size_and_enqueue(
+    *,
+    value: object,
+    pending_values: list[object],
+    visited_containers: set[int],
+) -> int:
+    """Estima bytes del valor y encola hijos para recorrido iterativo."""
+    if isinstance(value, dict):
+        return _enqueue_mapping_values_for_size_estimation(
+            mapping_value=value,
+            pending_values=pending_values,
+            visited_containers=visited_containers,
+        )
+
+    if isinstance(value, list | tuple | set):
+        return _enqueue_iterable_values_for_size_estimation(
+            iterable_value=value,
+            pending_values=pending_values,
+            visited_containers=visited_containers,
+        )
+
+    return estimate_scalar_json_size_bytes(value)
 
 
 def estimate_scalar_json_size_bytes(value: object) -> int:

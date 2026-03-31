@@ -18,6 +18,7 @@ from ..definitions import IMAGE_HEIGHT, IMAGE_WIDTH
 from .parsing import parse_smiles_cached, silence_rdkit_logs
 
 logger = logging.getLogger(__name__)
+HEX_BOUNDARY_CLASS = "[0-9A-Fa-f]"
 
 
 def render_molecule_svg_with_indices(mol: Chem.Mol) -> str:
@@ -118,13 +119,13 @@ def tint_svg(raw_svg: str, color_hex: str) -> str:
         return raw_svg
 
     colored_svg = re.sub(
-        r"(?<![0-9a-fA-F])#000000(?![0-9a-fA-F])",
+        rf"(?<!{HEX_BOUNDARY_CLASS})#000000(?!{HEX_BOUNDARY_CLASS})",
         color_hex,
         raw_svg,
         flags=re.IGNORECASE,
     )
     colored_svg = re.sub(
-        r"(?<![0-9a-fA-F])#000(?![0-9a-fA-F])",
+        rf"(?<!{HEX_BOUNDARY_CLASS})#000(?!{HEX_BOUNDARY_CLASS})",
         color_hex,
         colored_svg,
         flags=re.IGNORECASE,

@@ -32,6 +32,65 @@ from .types import SaMoleculeResult, SaScoreJobResult
 logger = logging.getLogger(__name__)
 
 
+def _compute_method_score(
+    method_name: str,
+    smiles_value: str,
+) -> tuple[float | None, str | None]:
+    """Despacha el cálculo por método para aislar ramas condicionales."""
+    if method_name == SA_SCORE_METHOD_AMBIT:
+        return _compute_ambit_score(smiles_value)
+    if method_name == SA_SCORE_METHOD_BRSA:
+        return _compute_brsa_score(smiles_value)
+    if method_name == SA_SCORE_METHOD_RDKIT:
+        return _compute_rdkit_score(smiles_value)
+    return None, f"Método no soportado: {method_name}"
+
+
+def _build_molecule_result(
+    smiles_value: str,
+    requested_methods: list[str],
+    log_callback: PluginLogCallback,
+) -> SaMoleculeResult:
+    """Calcula todos los métodos solicitados para una molécula concreta."""
+    result: SaMoleculeResult = {
+        "smiles": smiles_value,
+        "ambit_sa": None,
+        "brsa_sa": None,
+        "rdkit_sa": None,
+        "ambit_error": None,
+        "brsa_error": None,
+        "rdkit_error": None,
+    }
+    error_source_map: dict[str, str] = {
+        SA_SCORE_METHOD_AMBIT: "ambit",
+        SA_SCORE_METHOD_BRSA: "brsa",
+        SA_SCORE_METHOD_RDKIT: "rdkit",
+    }
+
+    for method_name in requested_methods:
+        score_value, error_message = _compute_method_score(method_name, smiles_value)
+
+        if method_name == SA_SCORE_METHOD_AMBIT:
+            result["ambit_sa"] = score_value
+            result["ambit_error"] = error_message
+        elif method_name == SA_SCORE_METHOD_BRSA:
+            result["brsa_sa"] = score_value
+            result["brsa_error"] = error_message
+        elif method_name == SA_SCORE_METHOD_RDKIT:
+            result["rdkit_sa"] = score_value
+            result["rdkit_error"] = error_message
+
+        if error_message is not None:
+            log_callback(
+                "warning",
+                error_source_map.get(method_name, "sa_score_plugin"),
+                f"{method_name} falló para {smiles_value}: {error_message}",
+                {"smiles": smiles_value},
+            )
+
+    return result
+
+
 def _convert_score(raw_score: float) -> float:
     """Convierte score SA clásico (1-10) a escala AMBIT-SA (0-100).
 
@@ -114,14 +173,6 @@ def sa_score_plugin(
     )
 
     for index, smiles_value in enumerate(smiles_list):
-        # Inicializar scores y errores para esta molécula
-        ambit_sa: float | None = None
-        brsa_sa: float | None = None
-        rdkit_sa: float | None = None
-        ambit_error: str | None = None
-        brsa_error: str | None = None
-        rdkit_error: str | None = None
-
         log_callback(
             "debug",
             "sa_score_plugin",
@@ -129,48 +180,11 @@ def sa_score_plugin(
             {"smiles": smiles_value, "index": index},
         )
 
-        # --- Método AMBIT ---
-        if SA_SCORE_METHOD_AMBIT in requested_methods:
-            ambit_sa, ambit_error = _compute_ambit_score(smiles_value)
-            if ambit_error is not None:
-                log_callback(
-                    "warning",
-                    "ambit",
-                    f"AMBIT falló para {smiles_value}: {ambit_error}",
-                    {"smiles": smiles_value},
-                )
-
-        # --- Método BRSAScore ---
-        if SA_SCORE_METHOD_BRSA in requested_methods:
-            brsa_sa, brsa_error = _compute_brsa_score(smiles_value)
-            if brsa_error is not None:
-                log_callback(
-                    "warning",
-                    "brsa",
-                    f"BRSAScore falló para {smiles_value}: {brsa_error}",
-                    {"smiles": smiles_value},
-                )
-
-        # --- Método RDKit SA Score ---
-        if SA_SCORE_METHOD_RDKIT in requested_methods:
-            rdkit_sa, rdkit_error = _compute_rdkit_score(smiles_value)
-            if rdkit_error is not None:
-                log_callback(
-                    "warning",
-                    "rdkit",
-                    f"RDKit SA Score falló para {smiles_value}: {rdkit_error}",
-                    {"smiles": smiles_value},
-                )
-
-        molecule_result: SaMoleculeResult = {
-            "smiles": smiles_value,
-            "ambit_sa": ambit_sa,
-            "brsa_sa": brsa_sa,
-            "rdkit_sa": rdkit_sa,
-            "ambit_error": ambit_error,
-            "brsa_error": brsa_error,
-            "rdkit_error": rdkit_error,
-        }
+        molecule_result: SaMoleculeResult = _build_molecule_result(
+            smiles_value=smiles_value,
+            requested_methods=requested_methods,
+            log_callback=log_callback,
+        )
         molecule_results.append(molecule_result)
 
         # Reportar progreso: porcentaje basado en moléculas procesadas

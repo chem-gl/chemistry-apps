@@ -183,7 +183,7 @@ export class JobsApiService {
   ): JobControlActionResult {
     return {
       detail: rawResponse.detail,
-      job: rawResponse.job as ScientificJob,
+      job: rawResponse.job,
     };
   }
 
@@ -252,7 +252,7 @@ export class JobsApiService {
 
   /** Despacha un job de molar fractions vía API core desacoplada */
   dispatchMolarFractionsJob(params: MolarFractionsParams): Observable<ScientificJob> {
-    const normalizedPkaValues: number[] = params.pkaValues.map((value) => Number(value));
+    const normalizedPkaValues: number[] = params.pkaValues.map(Number);
     if (normalizedPkaValues.length < 1 || normalizedPkaValues.length > 6) {
       throw new Error('molar-fractions requiere entre 1 y 6 valores pKa.');
     }
@@ -412,7 +412,7 @@ export class JobsApiService {
       op: params.op,
       a: params.a,
       // Omitir b completamente cuando no aplica (factorial)
-      ...(params.b !== undefined ? { b: params.b } : {}),
+      ...(params.b === undefined ? {} : { b: params.b }),
     };
     return this.calculatorClient.calculatorJobsCreate(payload).pipe(shareReplay(1));
   }
@@ -435,13 +435,18 @@ export class JobsApiService {
   }
 
   private appendOptionalNumber(formData: FormData, key: string, value: number | undefined): void {
-    if (value === undefined) {
-      return;
-    }
-    formData.append(key, String(value));
+    this.appendOptionalScalar(formData, key, value);
   }
 
   private appendOptionalBoolean(formData: FormData, key: string, value: boolean | undefined): void {
+    this.appendOptionalScalar(formData, key, value);
+  }
+
+  private appendOptionalScalar(
+    formData: FormData,
+    key: string,
+    value: number | boolean | undefined,
+  ): void {
     if (value === undefined) {
       return;
     }
@@ -675,9 +680,7 @@ export class JobsApiService {
 
   /** Consulta estado completo de un job de Toxicity Properties por UUID. */
   getToxicityPropertiesJobStatus(jobId: string): Observable<ToxicityJobResponseView> {
-    return this.toxicityPropertiesClient
-      .toxicityPropertiesJobsRetrieve(jobId)
-      .pipe(shareReplay(1)) as Observable<ToxicityJobResponseView>;
+    return this.toxicityPropertiesClient.toxicityPropertiesJobsRetrieve(jobId).pipe(shareReplay(1));
   }
 
   /** Descarga CSV toxicológico (columnas fijas) para un job completado. */

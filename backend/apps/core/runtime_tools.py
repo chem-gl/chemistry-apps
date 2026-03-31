@@ -261,7 +261,6 @@ def _download_file_with_retry(
             return
         except (
             urllib.error.URLError,
-            urllib.error.HTTPError,
             TimeoutError,
             socket.timeout,
         ) as exc:

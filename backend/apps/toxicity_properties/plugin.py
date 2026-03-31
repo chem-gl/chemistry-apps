@@ -9,10 +9,11 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from apps.core.processing import PluginRegistry
-from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 from libs.admet_ai.client import AdmetAiClient
 from libs.admet_ai.models import AdmetPredictionResult
+
+from apps.core.processing import PluginRegistry
+from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 from .definitions import (
     AMES_POSITIVE_THRESHOLD,
@@ -239,5 +240,4 @@ def toxicity_properties_plugin(
         "scientific_references": list(SCIENTIFIC_REFERENCES),
     }
 
-    return cast(JSONMap, result_payload)
     return cast(JSONMap, result_payload)

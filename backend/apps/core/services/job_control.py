@@ -16,6 +16,9 @@ from ..realtime import broadcast_job_update
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
+CONTROL_LOG_SOURCE = "core.control"
+PAUSED_PENDING_MESSAGE = "Job pausado antes de iniciar ejecución."
+CANCELLED_MESSAGE = "Job cancelado por el usuario. Operación irreversible."
 
 
 def request_pause(
@@ -26,6 +29,7 @@ def request_pause(
     log_publisher: JobLogPublisherPort,
 ) -> ScientificJob:
     """Solicita pausa cooperativa para un job o lo pausa de inmediato si está pending."""
+    logger.info("Solicitud de pausa recibida para job %s", job_id)
     if not bool(job.supports_pause_resume):
         raise ValueError("El plugin de este job no soporta pausa/reanudación.")
 
@@ -39,7 +43,7 @@ def request_pause(
         job.status = "paused"
         job.pause_requested = False
         job.progress_stage = "paused"
-        job.progress_message = "Job pausado antes de iniciar ejecución."
+        job.progress_message = PAUSED_PENDING_MESSAGE
         job.paused_at = timezone.now()
         job.save(
             update_fields=[
@@ -56,13 +60,13 @@ def request_pause(
             JobProgressUpdate(
                 percentage=int(job.progress_percentage),
                 stage="paused",
-                message="Job pausado antes de iniciar ejecución.",
+                message=PAUSED_PENDING_MESSAGE,
             ),
         )
         publish_job_log(
             job,
             level="warning",
-            source="core.control",
+            source=CONTROL_LOG_SOURCE,
             message="Job pausado manualmente en estado pending.",
             log_publisher=log_publisher,
         )
@@ -75,7 +79,7 @@ def request_pause(
     publish_job_log(
         job,
         level="warning",
-        source="core.control",
+        source=CONTROL_LOG_SOURCE,
         message="Solicitud de pausa registrada para el job en ejecución.",
         log_publisher=log_publisher,
     )
@@ -105,7 +109,7 @@ def cancel_job(
     job.pause_requested = False
     job.progress_percentage = 100
     job.progress_stage = "cancelled"
-    job.progress_message = "Job cancelado por el usuario. Operación irreversible."
+    job.progress_message = CANCELLED_MESSAGE
     job.save(
         update_fields=[
             "status",
@@ -122,13 +126,13 @@ def cancel_job(
         JobProgressUpdate(
             percentage=100,
             stage="cancelled",
-            message="Job cancelado por el usuario. Operación irreversible.",
+            message=CANCELLED_MESSAGE,
         ),
     )
     publish_job_log(
         job,
         level="warning",
-        source="core.control",
+        source=CONTROL_LOG_SOURCE,
         message="Job cancelado manualmente por el usuario.",
         payload={"previous_status": previous_status},
         log_publisher=log_publisher,
@@ -145,6 +149,7 @@ def resume_job(
     log_publisher: JobLogPublisherPort,
 ) -> ScientificJob:
     """Reanuda un job pausado dejándolo listo para reencolado."""
+    logger.info("Solicitud de reanudación recibida para job %s", job_id)
     if not bool(job.supports_pause_resume):
         raise ValueError("El plugin de este job no soporta pausa/reanudación.")
 
@@ -172,10 +177,18 @@ def resume_job(
         ]
     )
     broadcast_job_update(job)
+    progress_publisher.publish(
+        job,
+        JobProgressUpdate(
+            percentage=int(job.progress_percentage),
+            stage="queued",
+            message="Job reanudado y en espera de ejecución.",
+        ),
+    )
     publish_job_log(
         job,
         level="info",
-        source="core.control",
+        source=CONTROL_LOG_SOURCE,
         message="Job marcado como pending para reanudar ejecución.",
         log_publisher=log_publisher,
     )

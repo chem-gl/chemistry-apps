@@ -37,6 +37,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+KCAL_MOL_UNIT = "kcal/mol"
 
 HARTREE_TO_KCAL: float = 627.5095
 R_GAS_KCAL: float = 1.987 / 1000.0
@@ -460,9 +461,9 @@ def _compute_easy_rate(
         "model_name": "Easy Rate (TST + Tunnel + Diffusion)",
         "source_library": "libs.ck_test + libs.gaussian_log_parser",
         "units": {
-            "gibbs": "kcal/mol",
-            "enthalpy": "kcal/mol",
-            "zpe": "kcal/mol",
+            "gibbs": KCAL_MOL_UNIT,
+            "enthalpy": KCAL_MOL_UNIT,
+            "zpe": KCAL_MOL_UNIT,
             "temperature": "K",
             "imaginary_frequency": "cm^-1",
             "rate_constant": "M^-1 s^-1 or s^-1",
