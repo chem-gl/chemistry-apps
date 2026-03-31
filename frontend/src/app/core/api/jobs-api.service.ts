@@ -367,9 +367,7 @@ export class JobsApiService {
   /** Solicita pausa cooperativa de un job cuando su plugin lo permite */
   pauseJob(jobId: string): Observable<JobControlActionResult> {
     return this.jobsClient.jobsPauseCreate(jobId).pipe(
-      map((rawResponse: JobControlActionResponse) =>
-        this.normalizeControlActionResult(rawResponse),
-      ),
+      map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
       shareReplay(1),
     );
   }
@@ -377,9 +375,7 @@ export class JobsApiService {
   /** Reanuda un job pausado y dispara su reencolado */
   resumeJob(jobId: string): Observable<JobControlActionResult> {
     return this.jobsClient.jobsResumeCreate(jobId).pipe(
-      map((rawResponse: JobControlActionResponse) =>
-        this.normalizeControlActionResult(rawResponse),
-      ),
+      map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
       shareReplay(1),
     );
   }
@@ -387,9 +383,7 @@ export class JobsApiService {
   /** Cancela un job de forma irreversible (pending/running/paused -> cancelled) */
   cancelJob(jobId: string): Observable<JobControlActionResult> {
     return this.jobsClient.jobsCancelCreate(jobId).pipe(
-      map((rawResponse: JobControlActionResponse) =>
-        this.normalizeControlActionResult(rawResponse),
-      ),
+      map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
       shareReplay(1),
     );
   }
@@ -517,9 +511,7 @@ export class JobsApiService {
         formData,
       )
       .pipe(
-        map((rawInspection: EasyRateInspectionApiResponse) =>
-          this.normalizeEasyRateInspection(rawInspection),
-        ),
+        map((rawInspection) => this.normalizeEasyRateInspection(rawInspection)),
         shareReplay(1),
       );
   }

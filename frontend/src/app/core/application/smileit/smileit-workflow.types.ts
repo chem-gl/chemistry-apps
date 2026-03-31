@@ -2,14 +2,20 @@
 // Centraliza las definiciones de tipos usados por el estado, servicios de catálogo, bloques y la fachada.
 
 import type {
-    SmileitCatalogEntryView,
-    SmileitManualSubstituentParams,
-    SmileitResolvedAssignmentBlockView,
-    SmileitTraceabilityRowView,
+  SmileitCatalogEntryView,
+  SmileitManualSubstituentParams,
+  SmileitResolvedAssignmentBlockView,
+  SmileitTraceabilityRowView,
 } from '../../api/jobs-api.service';
 
 /** Sección activa del flujo Smileit. */
-export type SmileitSection = 'idle' | 'inspecting' | 'dispatching' | 'progress' | 'result' | 'error';
+export type SmileitSection =
+  | 'idle'
+  | 'inspecting'
+  | 'dispatching'
+  | 'progress'
+  | 'result'
+  | 'error';
 
 /** Vista de una estructura química generada por Smileit. */
 export interface SmileitGeneratedStructureView {

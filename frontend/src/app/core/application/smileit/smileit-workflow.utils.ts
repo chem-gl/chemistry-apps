@@ -1,16 +1,13 @@
 // smileit-workflow.utils.ts: Funciones puras reutilizables por los sub-servicios del workflow Smileit.
 // Contiene lógica de deduplicación, parsing de índices, detección de notación y agrupación de catálogo.
 
-import type {
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-} from '../../api/jobs-api.service';
+import type { SmileitCatalogEntryView, SmileitCategoryView } from '../../api/jobs-api.service';
 
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitCatalogGroupView,
-    SmileitChemicalNotationKind,
-    SmileitSiteCoverageView,
+  SmileitAssignmentBlockDraft,
+  SmileitCatalogGroupView,
+  SmileitChemicalNotationKind,
+  SmileitSiteCoverageView,
 } from './smileit-workflow.types';
 
 // ---------------------------------------------------------------------------
@@ -64,21 +61,21 @@ export function extractRequestErrorMessage(requestError: unknown): string {
     }
 
     if (typeof nestedError === 'object' && nestedError !== null) {
-      const nestedEntries: string[] = Object.values(
-        nestedError as Record<string, unknown>,
-      ).flatMap((entry: unknown) => {
-        if (typeof entry === 'string' && entry.trim() !== '') {
-          return [entry];
-        }
+      const nestedEntries: string[] = Object.values(nestedError as Record<string, unknown>).flatMap(
+        (entry: unknown) => {
+          if (typeof entry === 'string' && entry.trim() !== '') {
+            return [entry];
+          }
 
-        if (Array.isArray(entry)) {
-          return entry.filter(
-            (message: unknown) => typeof message === 'string' && message.trim() !== '',
-          ) as string[];
-        }
+          if (Array.isArray(entry)) {
+            return entry.filter(
+              (message: unknown) => typeof message === 'string' && message.trim() !== '',
+            ) as string[];
+          }
 
-        return [];
-      });
+          return [];
+        },
+      );
 
       if (nestedEntries.length > 0) {
         return nestedEntries.join(' ');
@@ -290,8 +287,7 @@ export function buildEffectiveCoverage(
         return;
       }
 
-      const previousCoverage: SmileitSiteCoverageView | undefined =
-        coverageMap.get(siteAtomIndex);
+      const previousCoverage: SmileitSiteCoverageView | undefined = coverageMap.get(siteAtomIndex);
       if (previousCoverage !== undefined) {
         coverageMap.set(siteAtomIndex, {
           ...previousCoverage,

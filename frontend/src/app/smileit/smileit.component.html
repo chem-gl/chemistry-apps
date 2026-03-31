@@ -7,9 +7,11 @@
   <div class="floating-workspace-shell">
     <div class="workspace-columns">
       <div class="workspace-right-column">
-        <app-catalog-panel [libraryEntryInspections]="libraryEntryInspections()"
+        <app-catalog-panel
+          [libraryEntryInspections]="libraryEntryInspections()"
           [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
-          (libraryEntryDetailRequested)="openLibraryEntryDetail($event)" />
+          (libraryEntryDetailRequested)="openLibraryEntryDetail($event)"
+        />
       </div>
 
       <div class="workspace-left-column">
@@ -195,22 +197,31 @@
         </div>
       </div>
 
-      <app-block-assignment-panel [libraryEntryInspections]="libraryEntryInspections()"
+      <app-block-assignment-panel
+        [libraryEntryInspections]="libraryEntryInspections()"
         [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
         [catalogEntryPreviewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
-        [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)" (libraryEntryDetailRequested)="
-                openLibraryEntryDetail($event.catalogEntry, $event.openContext)
-              " />
-      </div>
+        [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)"
+        (libraryEntryDetailRequested)="
+          openLibraryEntryDetail($event.catalogEntry, $event.openContext)
+        "
+      />
+    </div>
 
     <app-generation-result-panel />
 
-    <app-library-entry-detail-dialog [selectedEntry]="selectedLibraryEntryForDetail()"
-      [openContext]="libraryDetailOpenContext()" [previewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
+    <app-library-entry-detail-dialog
+      [selectedEntry]="selectedLibraryEntryForDetail()"
+      [openContext]="libraryDetailOpenContext()"
+      [previewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
       [isReferencedInAnyBlockResolver]="isReferencedInAnyBlock.bind(this)"
-      [isCatalogEntryEditableResolver]="workflow.catalog.isCatalogEntryEditable.bind(workflow.catalog)"
-      [isProcessing]="workflow.isProcessing()" (closeRequested)="closeLibraryEntryDetail()"
-      (editRequested)="editLibraryEntryFromDetail($event)" />
+      [isCatalogEntryEditableResolver]="
+        workflow.catalog.isCatalogEntryEditable.bind(workflow.catalog)
+      "
+      [isProcessing]="workflow.isProcessing()"
+      (closeRequested)="closeLibraryEntryDetail()"
+      (editRequested)="editLibraryEntryFromDetail($event)"
+    />
 
     <dialog
       #patternCatalogDialog
@@ -390,6 +401,5 @@
         </section>
       }
     </dialog>
-
   </div>
 </section>

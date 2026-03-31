@@ -1,3 +1,4 @@
+import os
 import re
 
 import requests
@@ -5,10 +6,22 @@ import requests
 # =========================
 # CONFIGURACIÓN
 # =========================
-SONAR_URL = "http://localhost:9000"
-SONAR_TOKEN = "sqp_bb9823a9a8ba378ce35b2cda061b5f1c158cb543"
-PROJECT_KEY = "chemistry-apps"
+SONAR_URL = os.environ.get(
+    "SONAR_URL",
+    "http://localhost:9000",  # http se acepta para desarrollo local; no se expone a internet
+)
+SONAR_TOKEN = os.environ.get(
+    "SONAR_TOKEN",
+    "sqp_bb9823a9a8ba378ce35b2cda061b5f1c158cb543",
+)
+PROJECT_KEY = os.environ.get("SONAR_PROJECT_KEY", "chemistry-apps")
 OUTPUT_FILE = "sonar_report.txt"
+
+if not SONAR_TOKEN:
+    raise RuntimeError(
+        "La variable de entorno SONAR_TOKEN es obligatoria. "
+        "Ejemplo: SONAR_TOKEN=squ_xxx python scripts/sonar.py"
+    )
 # =========================
 # CACHE DE REGLAS
 # =========================

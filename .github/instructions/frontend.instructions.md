@@ -1,5 +1,4 @@
-
-## applyTo: "frontend/src/**/*.{ts,html,scss}"
+## applyTo: "frontend/src/\*_/_.{ts,html,scss}"
 
 # 🧠 GUÍA INTEGRAL FRONTEND (ANGULAR + TYPESCRIPT MODERNO)
 
@@ -7,11 +6,11 @@
 
 El agente debe generar código:
 
-* legible
-* tipado estrictamente
-* consistente
-* mantenible
-* alineado con Angular moderno
+- legible
+- tipado estrictamente
+- consistente
+- mantenible
+- alineado con Angular moderno
 
 ---
 
@@ -19,67 +18,64 @@ El agente debe generar código:
 
 ## 1.1 Separación de responsabilidades
 
-* Cada componente debe tener:
+- Cada componente debe tener:
+  - `.ts` → lógica
+  - `.html` → vista
+  - `.scss` → estilos
 
-  * `.ts` → lógica
-  * `.html` → vista
-  * `.scss` → estilos
-
-* PROHIBIDO mezclar lógica en templates
+- PROHIBIDO mezclar lógica en templates
 
 ---
 
 ## 1.2 Capas obligatorias
 
-* Componentes → UI únicamente
-* Servicios → lógica de negocio
-* API layer → comunicación externa
+- Componentes → UI únicamente
+- Servicios → lógica de negocio
+- API layer → comunicación externa
 
 ---
 
 ## 1.3 Servicios
 
-* Toda lógica de negocio debe vivir en servicios
-* Los componentes NO deben contener lógica compleja
-* Uso obligatorio de inyección de dependencias
+- Toda lógica de negocio debe vivir en servicios
+- Los componentes NO deben contener lógica compleja
+- Uso obligatorio de inyección de dependencias
 
 ---
 
 ## 1.4 Tests
 
-* Agregar tests cuando:
-
-  * haya lógica de negocio
-  * transformación de datos
-  * integración con APIs
+- Agregar tests cuando:
+  - haya lógica de negocio
+  - transformación de datos
+  - integración con APIs
 
 ---
 
 ## 1.5 Documentación
 
-* Funciones públicas deben documentarse
-* El código debe ser autoexplicativo
+- Funciones públicas deben documentarse
+- El código debe ser autoexplicativo
 
 ---
 
 ## 1.6 Tamaño de archivos (REGLA ESTRICTA)
 
-* Tamaño ideal: **300–400 líneas**
-* Mínimo recomendado: **100 líneas**
-* Máximo permitido: **600 líneas**
+- Tamaño ideal: **300–400 líneas**
+- Mínimo recomendado: **100 líneas**
+- Máximo permitido: **600 líneas**
 
 Reglas:
 
-* PROHIBIDO exceder 600 líneas
-* EVITAR archivos menores a 100 líneas (sobre-modularización)
-* Si un archivo crece:
+- PROHIBIDO exceder 600 líneas
+- EVITAR archivos menores a 100 líneas (sobre-modularización)
+- Si un archivo crece:
+  - dividir en componentes
+  - extraer servicios
+  - crear utilidades reutilizables
 
-  * dividir en componentes
-  * extraer servicios
-  * crear utilidades reutilizables
-* Si un archivo es demasiado pequeño:
-
-  * evaluar fusión lógica con módulos relacionados
+- Si un archivo es demasiado pequeño:
+  - evaluar fusión lógica con módulos relacionados
 
 ---
 
@@ -87,9 +83,9 @@ Reglas:
 
 ## 2.1 Principio de Liskov (LSP)
 
-* Una clase hija debe poder sustituir a su clase padre sin romper el sistema
-* No alterar contratos esperados
-* No introducir comportamientos inesperados
+- Una clase hija debe poder sustituir a su clase padre sin romper el sistema
+- No alterar contratos esperados
+- No introducir comportamientos inesperados
 
 ---
 
@@ -97,9 +93,9 @@ Reglas:
 
 El agente debe diseñar sistemas:
 
-* desacoplados
-* cohesivos
-* reutilizables
+- desacoplados
+- cohesivos
+- reutilizables
 
 ---
 
@@ -107,18 +103,18 @@ El agente debe diseñar sistemas:
 
 Separación clara:
 
-* presentación → componentes
-* dominio → servicios
-* infraestructura → API / adaptadores
+- presentación → componentes
+- dominio → servicios
+- infraestructura → API / adaptadores
 
 ---
 
 ## 2.4 Patrón MVC (adaptado a Angular)
 
-* Model → interfaces / tipos
-* View → templates (.html)
-* Controller → componente (.ts)
-* Services → lógica real (fuera del controller)
+- Model → interfaces / tipos
+- View → templates (.html)
+- Controller → componente (.ts)
+- Services → lógica real (fuera del controller)
 
 ---
 
@@ -126,50 +122,47 @@ Separación clara:
 
 ## 3.1 Código generado
 
-* Ubicación obligatoria:
+- Ubicación obligatoria:
 
   ```
   frontend/src/app/core/api/generated/
   ```
 
-* PROHIBIDO editar código generado manualmente
+- PROHIBIDO editar código generado manualmente
 
 ---
 
 ## 3.2 Generación
 
-* Usar scripts de `package.json`
+- Usar scripts de `package.json`
 
-* Si no existe:
+- Si no existe:
+  - crear `npm run api:generate`
 
-  * crear `npm run api:generate`
-
-* PROHIBIDO procesos manuales fuera de scripts
+- PROHIBIDO procesos manuales fuera de scripts
 
 ---
 
 ## 3.3 Wrappers
 
-* Ubicación:
+- Ubicación:
 
   ```
   frontend/src/app/core/api/
   ```
 
-* Reglas:
-
-  * Nunca usar `generated/` directamente
-  * Mapear modelos a modelos internos
+- Reglas:
+  - Nunca usar `generated/` directamente
+  - Mapear modelos a modelos internos
 
 ---
 
 ## 3.4 Configuración
 
-* PROHIBIDO hardcodear URLs
-* Usar:
-
-  * environments
-  * constantes compartidas
+- PROHIBIDO hardcodear URLs
+- Usar:
+  - environments
+  - constantes compartidas
 
 ---
 
@@ -188,62 +181,59 @@ El agente DEBE usar las prácticas modernas:
 
 ## 4.1 Standalone-first
 
-* NO usar NgModules en código nuevo
-* Usar standalone components por defecto ([angularreleases.hashnode.dev][1])
+- NO usar NgModules en código nuevo
+- Usar standalone components por defecto ([angularreleases.hashnode.dev][1])
 
 ---
 
 ## 4.2 Signals (reactividad principal)
 
-* Usar `signal`, `computed`, `effect`
-* Evitar estado mutable tradicional
-* Preferir signals sobre RxJS cuando sea posible ([DEV Community][2])
+- Usar `signal`, `computed`, `effect`
+- Evitar estado mutable tradicional
+- Preferir signals sobre RxJS cuando sea posible ([DEV Community][2])
 
 ---
 
 ## 4.3 Control flow moderno
 
-* Usar:
+- Usar:
+  - `@if`
+  - `@for`
+  - `@switch`
 
-  * `@if`
-  * `@for`
-  * `@switch`
-
-* Reemplazar:
-
-  * `*ngIf`
-  * `*ngFor` ([geeksforgeeks.org][3])
+- Reemplazar:
+  - `*ngIf`
+  - `*ngFor` ([geeksforgeeks.org][3])
 
 ---
 
 ## 4.4 Deferrable views
 
-* Usar `@defer` para lazy rendering
-* Optimizar LCP y performance ([geeksforgeeks.org][3])
+- Usar `@defer` para lazy rendering
+- Optimizar LCP y performance ([geeksforgeeks.org][3])
 
 ---
 
 ## 4.5 SSR e hidratación
 
-* Soporte para:
-
-  * SSR moderno
-  * hidratación parcial
-  * render incremental ([angularreleases.hashnode.dev][1])
+- Soporte para:
+  - SSR moderno
+  - hidratación parcial
+  - render incremental ([angularreleases.hashnode.dev][1])
 
 ---
 
 ## 4.6 Zoneless (cuando sea posible)
 
-* Reducir dependencia de `zone.js`
-* Mejorar performance
+- Reducir dependencia de `zone.js`
+- Mejorar performance
 
 ---
 
 ## 4.7 Templates más expresivos
 
-* Templates con capacidades cercanas a TypeScript
-* Mejor type-checking en templates ([angularreleases.hashnode.dev][1])
+- Templates con capacidades cercanas a TypeScript
+- Mejor type-checking en templates ([angularreleases.hashnode.dev][1])
 
 ---
 
@@ -253,24 +243,24 @@ El agente DEBE usar las prácticas modernas:
 
 Usar:
 
-* `satisfies`
-* `as const`
-* `readonly`
-* `unknown` sobre `any`
-* `never` para exhaustividad
-* discriminated unions
-* template literal types
-* `infer`
-* utility types (`Pick`, `Omit`, `ReturnType`)
+- `satisfies`
+- `as const`
+- `readonly`
+- `unknown` sobre `any`
+- `never` para exhaustividad
+- discriminated unions
+- template literal types
+- `infer`
+- utility types (`Pick`, `Omit`, `ReturnType`)
 
 ---
 
 ## 5.2 Mejoras recientes
 
-* mejor análisis de control de flujo
-* type narrowing más preciso
-* enums y literals mejorados
-* mayor seguridad en tipos ([geeksforgeeks.org][3])
+- mejor análisis de control de flujo
+- type narrowing más preciso
+- enums y literals mejorados
+- mayor seguridad en tipos ([geeksforgeeks.org][3])
 
 ---
 
@@ -278,7 +268,7 @@ Usar:
 
 ```ts
 const config = {
-  apiUrl: '/api',
+  apiUrl: "/api",
 } as const satisfies Record<string, string>;
 ```
 
@@ -312,31 +302,31 @@ const userList = getUsers();
 
 # 7. FUNCIONES
 
-* Máx 20–30 líneas
-* Una responsabilidad
-* Tipadas
-* Arrow functions
+- Máx 20–30 líneas
+- Una responsabilidad
+- Tipadas
+- Arrow functions
 
 ---
 
 # 8. VARIABLES
 
-* `const` por defecto
-* Tipos explícitos en estructuras complejas
+- `const` por defecto
+- Tipos explícitos en estructuras complejas
 
 ---
 
 # 9. COMPONENTES
 
-* Sin lógica compleja
-* Solo UI + signals
+- Sin lógica compleja
+- Solo UI + signals
 
 ---
 
 # 10. TEMPLATES
 
-* Sin lógica compleja
-* Usar control flow moderno
+- Sin lógica compleja
+- Usar control flow moderno
 
 ---
 
@@ -352,51 +342,51 @@ Orden:
 
 # 12. FORMATO
 
-* 2 espacios
-* `'`
-* semicolons consistentes
+- 2 espacios
+- `'`
+- semicolons consistentes
 
 ---
 
 # 13. ERRORES
 
-* Manejo explícito
-* Nunca ignorar
+- Manejo explícito
+- Nunca ignorar
 
 ---
 
 # 14. COMENTARIOS
 
-* Solo si agregan valor
-* Documentar APIs públicas
+- Solo si agregan valor
+- Documentar APIs públicas
 
 ---
 
 # 15. CONSISTENCIA
 
-* mismo estilo
-* mismos nombres
-* mismas estructuras
+- mismo estilo
+- mismos nombres
+- mismas estructuras
 
 ---
 
 # 16. LIMPIEZA
 
-* eliminar código muerto
-* eliminar imports no usados
-* evitar duplicación
+- eliminar código muerto
+- eliminar imports no usados
+- evitar duplicación
 
 ---
 
 # 17. ANTI-PATTERNS
 
-* `any`
-* lógica en templates
-* clases gigantes
-* funciones largas
-* `subscribe()` innecesario
-* uso directo de `generated/`
-* `new` en servicios
+- `any`
+- lógica en templates
+- clases gigantes
+- funciones largas
+- `subscribe()` innecesario
+- uso directo de `generated/`
+- `new` en servicios
 
 ---
 
@@ -404,13 +394,13 @@ Orden:
 
 Código:
 
-* moderno (Angular 17–20+)
-* basado en signals
-* standalone-first
-* completamente tipado
-* modular sin sobre-fragmentación
-* consistente y limpio
-* alineado con mejores prácticas actuales
+- moderno (Angular 17–20+)
+- basado en signals
+- standalone-first
+- completamente tipado
+- modular sin sobre-fragmentación
+- consistente y limpio
+- alineado con mejores prácticas actuales
 
 [1]: https://angularreleases.hashnode.dev/what-is-angular-latest-angular-releases?utm_source=chatgpt.com "What is Angular? Latest Releases Explained (2025)"
 [2]: https://dev.to/genildocs/angular-17-essential-guide-master-the-revolutionary-changes-that-transformed-modern-development-51ad?utm_source=chatgpt.com "Angular 17+ Essential Guide: Master the Revolutionary Changes That Transformed Modern Development - DEV Community"

@@ -19,8 +19,8 @@ El agente debe generar código:
 
 # 0. VERSIONES OBLIGATORIAS
 
-* Python: **3.12 o superior**
-* Django: **6.x (última versión estable)**
+- Python: **3.12 o superior**
+- Django: **6.x (última versión estable)**
 
 Django 6 soporta Python 3.12–3.14 y elimina versiones antiguas, por lo que se debe usar siempre stack moderno. ([Django Documentation][1])
 
@@ -35,15 +35,14 @@ Seguir:
 Resumen:
 
 1. estructura completa:
-
-   * apps.py
-   * definitions.py
-   * types.py
-   * schemas.py
-   * plugin.py
-   * routers.py
-   * contract.py
-   * tests.py
+   - apps.py
+   - definitions.py
+   - types.py
+   - schemas.py
+   - plugin.py
+   - routers.py
+   - contract.py
+   - tests.py
 
 2. registrar en `ready()`
 
@@ -63,26 +62,26 @@ Resumen:
 
 El agente DEBE usar:
 
-* dominio independiente
-* puertos (interfaces)
-* adaptadores (implementaciones)
+- dominio independiente
+- puertos (interfaces)
+- adaptadores (implementaciones)
 
 ---
 
 ## 2.2 Capas obligatorias
 
-* domain → entidades puras
-* application/services → lógica
-* ports → interfaces
-* adapters → DB / API
-* presentation → views
+- domain → entidades puras
+- application/services → lógica
+- ports → interfaces
+- adapters → DB / API
+- presentation → views
 
 ---
 
 ## 2.3 Regla clave
 
-* dominio NO depende de Django
-* Django es infraestructura
+- dominio NO depende de Django
+- Django es infraestructura
 
 ---
 
@@ -103,16 +102,16 @@ backend/
 
 ## 2.5 Tamaño de archivos
 
-* Ideal: **300–400 líneas**
-* Mínimo: **100 líneas**
-* Máximo: **600 líneas**
+- Ideal: **300–400 líneas**
+- Mínimo: **100 líneas**
+- Máximo: **600 líneas**
 
 Reglas:
 
-* PROHIBIDO >600 líneas
-* EVITAR <100 líneas
-* dividir por responsabilidad
-* evitar sobre-fragmentación
+- PROHIBIDO >600 líneas
+- EVITAR <100 líneas
+- dividir por responsabilidad
+- evitar sobre-fragmentación
 
 ---
 
@@ -120,9 +119,9 @@ Reglas:
 
 ## 3.1 Liskov (LSP)
 
-* Subclases deben ser sustituibles
-* No romper contratos
-* No cambiar comportamiento esperado
+- Subclases deben ser sustituibles
+- No romper contratos
+- No cambiar comportamiento esperado
 
 ---
 
@@ -130,9 +129,9 @@ Reglas:
 
 El sistema debe ser:
 
-* desacoplado
-* cohesivo
-* reutilizable
+- desacoplado
+- cohesivo
+- reutilizable
 
 ---
 
@@ -140,25 +139,25 @@ El sistema debe ser:
 
 Separar:
 
-* presentación
-* dominio
-* infraestructura
+- presentación
+- dominio
+- infraestructura
 
 ---
 
 ## 3.4 MVC en Django
 
-* Model → models.py
-* View → views.py
-* Controller → delegar en services
+- Model → models.py
+- View → views.py
+- Controller → delegar en services
 
 ---
 
 # 4. TIPADO ESTRICTO (OBLIGATORIO)
 
-* Tipar TODO
-* Prohibido `Any`
-* Colecciones siempre tipadas
+- Tipar TODO
+- Prohibido `Any`
+- Colecciones siempre tipadas
 
 ---
 
@@ -192,15 +191,15 @@ user: User | None
 
 ## 5.1 Features obligatorias
 
-* `X | Y`
-* `type` alias
-* generics (`def f[T]`)
-* `Self`
-* `@override`
-* `TypedDict`
-* `dataclass(slots=True)`
-* `match/case`
-* pattern matching estructural
+- `X | Y`
+- `type` alias
+- generics (`def f[T]`)
+- `Self`
+- `@override`
+- `TypedDict`
+- `dataclass(slots=True)`
+- `match/case`
+- pattern matching estructural
 
 ---
 
@@ -231,11 +230,11 @@ async def get_user(request):
 
 Usar:
 
-* `select_related`
-* `prefetch_related`
-* `annotate`
-* `Subquery`
-* `Exists`
+- `select_related`
+- `prefetch_related`
+- `annotate`
+- `Subquery`
+- `Exists`
 
 ---
 
@@ -243,19 +242,19 @@ Usar:
 
 Django 6 introduce:
 
-* background tasks nativos
-* Content Security Policy (CSP)
-* template partials
-* AsyncPaginator
-* mejoras ORM y seguridad ([Django.wiki][2])
+- background tasks nativos
+- Content Security Policy (CSP)
+- template partials
+- AsyncPaginator
+- mejoras ORM y seguridad ([Django.wiki][2])
 
 ---
 
 ## 6.4 Modelos
 
-* `JSONField`
-* `GeneratedField`
-* `db_default`
+- `JSONField`
+- `GeneratedField`
+- `db_default`
 
 ---
 
@@ -282,9 +281,9 @@ def task():
 
 ## 6.7 Admin
 
-* list_display
-* search_fields
-* list_filter
+- list_display
+- search_fields
+- list_filter
 
 ---
 
@@ -298,16 +297,16 @@ STORAGES = {...}
 
 # 7. BASE DE DATOS
 
-* Producción → Django ORM
-* Desarrollo → SQLite
-* MISMA tecnología (sin mocks)
+- Producción → Django ORM
+- Desarrollo → SQLite
+- MISMA tecnología (sin mocks)
 
 ---
 
 # 8. VALIDACIONES
 
-* DB → constraints
-* services → lógica
+- DB → constraints
+- services → lógica
 
 No duplicar
 
@@ -315,9 +314,9 @@ No duplicar
 
 # 9. FUNCIONES
 
-* Máx 20–30 líneas
-* una responsabilidad
-* tipadas
+- Máx 20–30 líneas
+- una responsabilidad
+- tipadas
 
 ---
 
@@ -336,8 +335,8 @@ def process(data: dict) -> str:
 
 # 11. ERRORES
 
-* usar excepciones específicas
-* PROHIBIDO `except Exception`
+- usar excepciones específicas
+- PROHIBIDO `except Exception`
 
 ---
 
@@ -345,25 +344,25 @@ def process(data: dict) -> str:
 
 Antes de responder, validar:
 
-* ¿Tiene typing completo?
-* ¿Hay duplicación?
-* ¿Está modularizado?
-* ¿Se puede simplificar con `match`?
-* ¿Se separó lógica de negocio?
-* ¿Usa features modernas de Python?
-* ¿Django está actualizado a prácticas modernas?
+- ¿Tiene typing completo?
+- ¿Hay duplicación?
+- ¿Está modularizado?
+- ¿Se puede simplificar con `match`?
+- ¿Se separó lógica de negocio?
+- ¿Usa features modernas de Python?
+- ¿Django está actualizado a prácticas modernas?
 
 ---
 
 # 13. MODO DE GENERACIÓN
 
-* Pensar primero en arquitectura (hexagonal)
-* Definir puertos (interfaces)
-* Definir tipos
-* Implementar lógica
-* Crear adaptadores
-* Organizar módulos
-* Limpiar código
+- Pensar primero en arquitectura (hexagonal)
+- Definir puertos (interfaces)
+- Definir tipos
+- Implementar lógica
+- Crear adaptadores
+- Organizar módulos
+- Limpiar código
 
 ---
 
@@ -371,39 +370,39 @@ Antes de responder, validar:
 
 Cada endpoint debe incluir:
 
-* summary
-* descripción
-* request schema
-* response schema
-* errores
-* ejemplos reales
+- summary
+- descripción
+- request schema
+- response schema
+- errores
+- ejemplos reales
 
 ---
 
 # 15. CONSISTENCIA
 
-* naming consistente
-* contratos consistentes
-* estructuras repetibles
+- naming consistente
+- contratos consistentes
+- estructuras repetibles
 
 ---
 
 # 16. LIMPIEZA
 
-* eliminar duplicación
-* eliminar código muerto
-* simplificar lógica
+- eliminar duplicación
+- eliminar código muerto
+- simplificar lógica
 
 ---
 
 # 17. ANTI-PATTERNS
 
-* `Any`
-* lógica en views
-* duplicación
-* clases gigantes
-* funciones largas
-* acoplamiento fuerte
+- `Any`
+- lógica en views
+- duplicación
+- clases gigantes
+- funciones largas
+- acoplamiento fuerte
 
 ---
 
@@ -411,14 +410,14 @@ Cada endpoint debe incluir:
 
 Código:
 
-* moderno (Python 3.12+, Django 6)
-* arquitectura hexagonal
-* uso de puertos y adaptadores
-* completamente tipado
-* modular sin sobre-fragmentación
-* limpio
-* listo para producción
-* alineado con mejores prácticas actuales
+- moderno (Python 3.12+, Django 6)
+- arquitectura hexagonal
+- uso de puertos y adaptadores
+- completamente tipado
+- modular sin sobre-fragmentación
+- limpio
+- listo para producción
+- alineado con mejores prácticas actuales
 
 [1]: https://django.readthedocs.io/en/latest/releases/6.0.html?utm_source=chatgpt.com "Django 6.0 release notes — Django 6.1.dev20260311170544 documentation"
 [2]: https://django.wiki/articles/django-6-new-features/?utm_source=chatgpt.com "What's New in Django 6.0 Major Features and Changes - Django.wiki"

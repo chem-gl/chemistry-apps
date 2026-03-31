@@ -3,16 +3,13 @@
 // Accede al estado compartido (SmileitWorkflowState) para leer/escribir señales.
 
 import { Injectable, inject } from '@angular/core';
-import type {
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-} from '../../api/jobs-api.service';
+import type { SmileitCatalogEntryView, SmileitCategoryView } from '../../api/jobs-api.service';
 
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitBlockCollapsedSummary,
-    SmileitManualSubstituentDraft,
+  SmileitAssignmentBlockDraft,
+  SmileitBlockCollapsedSummary,
+  SmileitManualSubstituentDraft,
 } from './smileit-workflow.types';
 import { parseAtomIndicesInput, toggleString } from './smileit-workflow.utils';
 
@@ -216,9 +213,7 @@ export class SmileitBlockWorkflowService {
         ? [...blockDraft.draftManualCategoryKeys]
         : blockDraft.categoryKeys.length > 0
           ? [...blockDraft.categoryKeys]
-          : this.state
-              .categories()
-              .map((category: SmileitCategoryView) => category.key);
+          : this.state.categories().map((category: SmileitCategoryView) => category.key);
 
     if (resolvedCategoryKeys.length === 0) {
       this.state.errorMessage.set('Manual substituent requires at least one chemistry category.');
@@ -273,10 +268,11 @@ export class SmileitBlockWorkflowService {
       return [];
     }
     const selectedCategories: Set<string> = new Set(block.categoryKeys);
-    const matchedEntries: SmileitCatalogEntryView[] = this.state.catalogEntries().filter(
-      (entry: SmileitCatalogEntryView) =>
+    const matchedEntries: SmileitCatalogEntryView[] = this.state
+      .catalogEntries()
+      .filter((entry: SmileitCatalogEntryView) =>
         (entry.categories ?? []).some((categoryKey: string) => selectedCategories.has(categoryKey)),
-    );
+      );
     return [...matchedEntries].sort(
       (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
         left.name.localeCompare(right.name),
@@ -352,10 +348,7 @@ export class SmileitBlockWorkflowService {
 
   // ── Helpers privados ──────────────────────────────────────────────────
 
-  private createBlockDraft(
-    label: string,
-    siteAtomIndices: number[],
-  ): SmileitAssignmentBlockDraft {
+  private createBlockDraft(label: string, siteAtomIndices: number[]): SmileitAssignmentBlockDraft {
     this.blockSequence += 1;
     return {
       id: `block-${this.blockSequence}`,

@@ -5,32 +5,32 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../../api/generated';
 import type {
-    JobLogEntryView,
-    JobProgressSnapshotView,
-    ScientificJobView,
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitPatternEntryView,
-    SmileitQuickPropertiesView,
-    SmileitStructureInspectionView,
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitPatternEntryView,
+  SmileitQuickPropertiesView,
+  SmileitStructureInspectionView,
 } from '../../api/jobs-api.service';
 
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitCatalogDraftPreview,
-    SmileitCatalogGroupView,
-    SmileitCatalogQueuedDraft,
-    SmileitChemicalNotationKind,
-    SmileitResultData,
-    SmileitSection,
-    SmileitSiteCoverageView,
+  SmileitAssignmentBlockDraft,
+  SmileitCatalogDraftPreview,
+  SmileitCatalogGroupView,
+  SmileitCatalogQueuedDraft,
+  SmileitChemicalNotationKind,
+  SmileitResultData,
+  SmileitSection,
+  SmileitSiteCoverageView,
 } from './smileit-workflow.types';
 
 import {
-    buildCatalogGroups,
-    buildEffectiveCoverage,
-    detectChemicalNotation,
-    parseSingleAnchorIndexInput,
+  buildCatalogGroups,
+  buildEffectiveCoverage,
+  detectChemicalNotation,
+  parseSingleAnchorIndexInput,
 } from './smileit-workflow.utils';
 
 @Injectable()

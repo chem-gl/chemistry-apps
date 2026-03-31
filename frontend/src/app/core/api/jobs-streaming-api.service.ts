@@ -2,29 +2,16 @@
 // Concentra SSE, WebSocket, polling y consulta de logs para todas las apps científicas.
 
 import { Injectable, inject } from '@angular/core';
-import {
-    Observable,
-    filter,
-    interval,
-    map,
-    shareReplay,
-    switchMap,
-    take,
-} from 'rxjs';
+import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
-import {
-    JobLogList,
-    JobProgressSnapshot,
-    JobsService,
-    ScientificJob,
-} from './generated';
+import { JobLogList, JobProgressSnapshot, JobsService, ScientificJob } from './generated';
 import type {
-    JobLogEntryView,
-    JobLogLevel,
-    JobLogsPageView,
-    JobLogsQuery,
-    JobsRealtimeEvent,
-    JobsRealtimeQuery,
+  JobLogEntryView,
+  JobLogLevel,
+  JobLogsPageView,
+  JobLogsQuery,
+  JobsRealtimeEvent,
+  JobsRealtimeQuery,
 } from './types';
 
 @Injectable({

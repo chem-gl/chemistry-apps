@@ -6,25 +6,25 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin } from 'rxjs';
 import { PatternTypeEnum } from '../../api/generated';
 import type {
-    SmileitCatalogEntryCreateParams,
-    SmileitCatalogEntryView,
-    SmileitPatternEntryCreateParams,
-    SmileitPatternEntryView,
+  SmileitCatalogEntryCreateParams,
+  SmileitCatalogEntryView,
+  SmileitPatternEntryCreateParams,
+  SmileitPatternEntryView,
 } from '../../api/jobs-api.service';
 import { SmileitApiService } from '../../api/smileit-api.service';
 
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitCatalogDraftPreview,
-    SmileitCatalogQueuedDraft,
+  SmileitAssignmentBlockDraft,
+  SmileitCatalogDraftPreview,
+  SmileitCatalogQueuedDraft,
 } from './smileit-workflow.types';
 import {
-    buildNextCloneDraftName,
-    buildNextSequentialCatalogDraftName,
-    dedupeVersionedEntries,
-    extractRequestErrorMessage,
-    toggleString,
+  buildNextCloneDraftName,
+  buildNextSequentialCatalogDraftName,
+  dedupeVersionedEntries,
+  extractRequestErrorMessage,
+  toggleString,
 } from './smileit-workflow.utils';
 
 @Injectable()
@@ -42,19 +42,19 @@ export class SmileitCatalogWorkflowService {
       categories: this.smileitApi.listSmileitCategories(),
       patterns: this.smileitApi.listSmileitPatterns(),
     }).subscribe({
-        next: ({ catalog, categories, patterns }) => {
-          const normalizedCatalog = this.normalizeCatalogEntries(catalog);
-          this.state.catalogEntries.set(normalizedCatalog);
-          this.state.categories.set(categories);
-          this.state.patterns.set(this.normalizePatternEntries(patterns));
-          this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalog);
-        },
-        error: (requestError: unknown) => {
-          this.state.errorMessage.set(
-            `Unable to load Smileit reference data: ${extractRequestErrorMessage(requestError)}`,
-          );
-        },
-      });
+      next: ({ catalog, categories, patterns }) => {
+        const normalizedCatalog = this.normalizeCatalogEntries(catalog);
+        this.state.catalogEntries.set(normalizedCatalog);
+        this.state.categories.set(categories);
+        this.state.patterns.set(this.normalizePatternEntries(patterns));
+        this.refreshBlockCatalogRefsToLatestEntries(normalizedCatalog);
+      },
+      error: (requestError: unknown) => {
+        this.state.errorMessage.set(
+          `Unable to load Smileit reference data: ${extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
   }
 
   // ── Borrador de catálogo ──────────────────────────────────────────────
@@ -201,7 +201,8 @@ export class SmileitCatalogWorkflowService {
         );
         return;
       }
-      const requestPayload: SmileitCatalogEntryCreateParams = this.buildCreatePayload(activePreview);
+      const requestPayload: SmileitCatalogEntryCreateParams =
+        this.buildCreatePayload(activePreview);
       this.smileitApi.createSmileitCatalogEntry(requestPayload).subscribe({
         next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
           this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, true);
@@ -477,9 +478,7 @@ export class SmileitCatalogWorkflowService {
       currentBlocks.map((block: SmileitAssignmentBlockDraft) => {
         const dedupeTracker: Set<string> = new Set();
         const normalizedRefs: SmileitCatalogEntryView[] = block.catalogRefs
-          .map(
-            (entry: SmileitCatalogEntryView) => latestByStableId.get(entry.stable_id) ?? entry,
-          )
+          .map((entry: SmileitCatalogEntryView) => latestByStableId.get(entry.stable_id) ?? entry)
           .filter((entry: SmileitCatalogEntryView) => {
             const dedupeKey: string = `${entry.stable_id}::${entry.version}`;
             if (dedupeTracker.has(dedupeKey)) {

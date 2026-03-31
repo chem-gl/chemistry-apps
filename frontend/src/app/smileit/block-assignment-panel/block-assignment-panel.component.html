@@ -23,300 +23,368 @@
           </p>
         </div>
         <div class="panel-header-actions">
-          <button class="btn-secondary" (click)="toggleLibraryPanelCollapse()" [disabled]="workflow.isProcessing()">
+          <button
+            class="btn-secondary"
+            (click)="toggleLibraryPanelCollapse()"
+            [disabled]="workflow.isProcessing()"
+          >
             {{ isLibraryPanelCollapsed() ? 'Expand right panel' : 'Minimize right panel' }}
           </button>
           @if (!isLibraryPanelCollapsed()) {
-          <div class="guided-action">
-            <button class="btn-secondary" (click)="addAssignmentBlock()" [disabled]="workflow.isProcessing()">
-              + Add block
-            </button>
-            <p class="hint">
-              You can create empty blocks first and map scaffold positions later.
-            </p>
-          </div>
+            <div class="guided-action">
+              <button
+                class="btn-secondary"
+                (click)="addAssignmentBlock()"
+                [disabled]="workflow.isProcessing()"
+              >
+                + Add block
+              </button>
+              <p class="hint">
+                You can create empty blocks first and map scaffold positions later.
+              </p>
+            </div>
           }
         </div>
       </div>
 
       @if (isLibraryPanelCollapsed()) {
-      <article class="collapsed-panel-card" aria-label="Right panel minimized summary">
-        <p class="hint">
-          Right panel minimized. Use "Expand right panel" to continue editing details.
-        </p>
-        <div class="metadata-grid">
-          <p><strong>Blocks:</strong> {{ workflow.assignmentBlocks().length }}</p>
-          <p>
-            <strong>Covered sites:</strong> {{ workflow.selectedSiteCoverage().length }}
+        <article class="collapsed-panel-card" aria-label="Right panel minimized summary">
+          <p class="hint">
+            Right panel minimized. Use "Expand right panel" to continue editing details.
           </p>
-          <p>
-            <strong>Uncovered sites:</strong> {{ workflow.uncoveredSelectedSites().length }}
-          </p>
-          <p><strong>Catalog entries:</strong> {{ workflow.catalogEntries().length }}</p>
-        </div>
-      </article>
-      } @else {
-      <div class="subsection-header block-stack-header">
-        <div>
-          <h4>Block stack controls</h4>
-          <p class="hint">Use collapse controls when the workspace becomes long.</p>
-        </div>
-        <div class="chip-actions">
-          <button class="btn-secondary small" (click)="collapseAllBlocks()" [disabled]="workflow.isProcessing()">
-            Collapse all
-          </button>
-          <button class="btn-secondary small" (click)="expandAllBlocks()" [disabled]="workflow.isProcessing()">
-            Expand all
-          </button>
-        </div>
-      </div>
-
-      @if (workflow.assignmentBlocks().length === 0) {
-      <p class="hint">
-        Create the first block to define which substituent molecules will be available.
-      </p>
-      } @else {
-      <div class="block-stack">
-        @for (
-        block of workflow.assignmentBlocks();
-        track block.id;
-        let blockIndex = $index
-        ) {
-        <article class="block-card">
-          <div class="block-header">
-            <div class="block-title-wrap">
-              <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
-              <input type="text" class="block-title-input" [attr.aria-label]="'Block ' + (blockIndex + 1) + ' label'"
-                placeholder="Block label" [ngModel]="block.label"
-                (ngModelChange)="workflow.blocks.updateBlockLabel(block.id, $event)"
-                [disabled]="workflow.isProcessing()" />
-            </div>
-            <div class="block-actions">
-              <button class="btn-secondary small" (click)="toggleBlockCollapse(block.id)"
-                [disabled]="workflow.isProcessing()">
-                {{ isBlockCollapsed(block.id) ? 'Expand' : 'Minimize' }}
-              </button>
-              <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, -1)"
-                [disabled]="blockIndex === 0 || workflow.isProcessing()">
-                Up
-              </button>
-              <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, 1)" [disabled]="
-                              blockIndex === workflow.assignmentBlocks().length - 1 ||
-                              workflow.isProcessing()
-                            ">
-                Down
-              </button>
-              <button class="remove-btn small" (click)="workflow.blocks.removeAssignmentBlock(block.id)"
-                [disabled]="workflow.isProcessing()">
-                Remove
-              </button>
-            </div>
+          <div class="metadata-grid">
+            <p><strong>Blocks:</strong> {{ workflow.assignmentBlocks().length }}</p>
+            <p><strong>Covered sites:</strong> {{ workflow.selectedSiteCoverage().length }}</p>
+            <p><strong>Uncovered sites:</strong> {{ workflow.uncoveredSelectedSites().length }}</p>
+            <p><strong>Catalog entries:</strong> {{ workflow.catalogEntries().length }}</p>
           </div>
-
-          @if (isBlockCollapsed(block.id)) {
-          <div class="block-collapsed-summary" aria-label="Collapsed block summary">
-            <p>
-              <strong>Sites:</strong> {{ blockSummary(block).selectedSitesLabel }}
-            </p>
-            <p>
-              <strong>Categories:</strong> {{ blockSummary(block).categoriesLabel }}
-            </p>
-            <p>
-              <strong>Catalog substituents:</strong>
-              {{ blockSummary(block).catalogSmilesLabel }}
-            </p>
-            <p>
-              <strong>Manual substituents:</strong>
-              {{ blockSummary(block).manualSmilesLabel }}
-            </p>
-            <p>
-              <strong>Total block sources:</strong>
-              {{ blockSummary(block).sourceCount }}
-            </p>
-          </div>
-          } @else {
-          <div class="block-section">
-            <h4>Substituents added</h4>
-            @if (block.catalogRefs.length === 0) {
-            <p class="hint">No substituents added to this block yet.</p>
-            } @else {
-            <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
-              @for (entry of block.catalogRefs; track entry.id) {
-              <article class="block-library-thumb catalog-ref-thumb" [class.is-selected]="
-                                    isCatalogEntryLoadedInManualDraft(block, entry)
-                                  ">
-                <div class="thumb-open-button" role="button" tabindex="0"
-                  [attr.aria-label]="'Open detail for ' + entry.name"
-                  (click)="openLibraryEntryDetail(entry, 'reference')"
-                  (keydown.enter)="openLibraryEntryDetail(entry, 'reference')" (keydown.space)="
-                                      openLibraryEntryDetail(entry, 'reference');
-                                      $event.preventDefault()
-                                    ">
-                  <p class="thumb-name">{{ entry.name }}</p>
-                  <div class="thumb-preview">
-                    @if (catalogEntryPreviewSvg(entry); as referencedThumbSvg) {
-                    <div class="thumb-svg" [innerHTML]="referencedThumbSvg"></div>
-                    } @else if (catalogEntryPreviewError(entry)) {
-                    <span class="thumb-state-icon thumb-error" aria-hidden="true">!</span>
-                    } @else {
-                    <span class="thumb-state-icon thumb-loading" aria-hidden="true">…</span>
-                    }
-                  </div>
-                  <p class="thumb-smiles mono">{{ entry.smiles }}</p>
-                  <small class="thumb-anchor">Anchor
-                    {{ entry.anchor_atom_indices.join(', ') || '—' }}</small>
-                  <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
-                </div>
-                <div class="block-thumb-actions block-ref-actions" (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()">
-                  @if (!isCatalogEntryLoadedInManualDraft(block, entry)) {
-                  <button class="btn-secondary small" (click)="selectCatalogEntryForManualDraft(block.id, entry)"
-                    [disabled]="workflow.isProcessing()">
-                    Load
-                  </button>
-                  }
-                  <button class="remove-btn small" (click)="
-                                        workflow.blocks.removeCatalogReferenceFromBlock(
-                                          block.id,
-                                          entry.stable_id,
-                                          entry.version
-                                        )
-                                      " [disabled]="workflow.isProcessing()">
-                    Remove
-                  </button>
-                </div>
-              </article>
-              }
-            </div>
-            }
-            @if (workflow.blocks.getAutoCatalogEntriesForBlock(block).length === 0) {
-            <p class="hint">
-              No catalog molecules auto-matched by the selected functional
-              categories.
-            </p>
-            } @else {
-            <div class="auto-catalog-panel">
-              <h5>Auto-matched molecules by functional category</h5>
-              <div class="tag-list">
-                @for (
-                entry of workflow.blocks.getAutoCatalogEntriesForBlock(block);
-                track entry.id
-                ) {
-                <article class="tag-card auto-tag-card">
-                  <div>
-                    <strong>{{ entry.name }}</strong>
-                    <p class="catalog-smiles mono">{{ entry.smiles }}</p>
-                    <small>{{ (entry.categories ?? []).join(', ') }}</small>
-                  </div>
-                </article>
-                }
-              </div>
-            </div>
-            }
-
-            <div class="subsection-header block-catalog-tools-row">
-              <div>
-                <h5>Substituent library</h5>
-                <p class="hint">
-                  Browse by group and add a substituent directly to this block.
-                </p>
-              </div>
-              <label class="library-group-filter block-library-group-filter" aria-label="Filter block catalog by group">
-                Group
-                <select [ngModel]="selectedBlockLibraryGroupKey(block.id)"
-                  (ngModelChange)="onBlockLibraryGroupChange(block.id, $event)">
-                  <option value="all">All groups</option>
-                  @for (group of workflow.catalogGroups(); track group.key) {
-                  <option [value]="group.key">
-                    {{ group.name }} ({{ group.entries.length }})
-                  </option>
-                  }
-                </select>
-              </label>
-            </div>
-
-            @if (filteredCatalogEntriesForBlock(block).length === 0) {
-            <p class="hint">
-              No catalog molecules available for the selected group.
-            </p>
-            } @else {
-            <div class="library-thumbnail-grid block-library-thumbnail-grid">
-              @for (
-              entry of filteredCatalogEntriesForBlock(block);
-              track entry.id
-              ) {
-              <article class="block-library-thumb" [class.is-referenced]="
-                                    workflow.catalog.isCatalogEntryReferenced(block, entry)
-                                  ">
-                <div class="thumb-open-button" role="button" tabindex="0" [attr.aria-label]="
-                                      workflow.catalog.isCatalogEntryReferenced(block, entry)
-                                        ? entry.name + ' already added to this block'
-                                        : 'Add ' + entry.name + ' to this block'
-                                    " (click)="onBlockCatalogEntryCardActivate(block, entry)"
-                  (keydown.enter)="onBlockCatalogEntryCardActivate(block, entry)" (keydown.space)="
-                                      onBlockCatalogEntryCardActivate(block, entry);
-                                      $event.preventDefault()
-                                    ">
-                  <p class="thumb-name">{{ entry.name }}</p>
-                  <div class="thumb-preview">
-                    @if (catalogEntryPreviewSvg(entry); as blockThumbSvg) {
-                    <div class="thumb-svg" [innerHTML]="blockThumbSvg"></div>
-                    } @else if (catalogEntryPreviewError(entry)) {
-                    <span class="thumb-state-icon thumb-error" aria-hidden="true">!</span>
-                    } @else {
-                    <span class="thumb-state-icon thumb-loading" aria-hidden="true">…</span>
-                    }
-                  </div>
-                  <p class="thumb-smiles mono">{{ entry.smiles }}</p>
-                </div>
-                <div class="block-thumb-actions" (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()">
-                  @if (workflow.catalog.isCatalogEntryReferenced(block, entry)) {
-                  <button class="btn-secondary small" type="button" disabled>
-                    Added
-                  </button>
-                  } @else {
-                  <button class="catalog-add small" (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
-                    [disabled]="workflow.isProcessing()">
-                    Add
-                  </button>
-                  }
-                </div>
-              </article>
-              }
-            </div>
-            }
-          </div>
-          <div class="block-section block-placement-section">
-            <h4>Assign this block to scaffold positions</h4>
-            @if (workflow.selectedAtomIndices().length === 0) {
-            <p class="hint">
-              Inspect the principal molecule and select target atoms before
-              assigning this block to positions.
-            </p>
-            } @else {
-            <div class="atom-grid compact-grid">
-              @for (atomIndex of workflow.selectedAtomIndices(); track atomIndex) {
-              <button type="button" class="atom-chip compact" [class.selected]="isBlockSiteSelected(block, atomIndex)"
-                (click)="workflow.blocks.toggleBlockSite(block.id, atomIndex)" [disabled]="workflow.isProcessing()">
-                Site {{ atomIndex }}
-              </button>
-              }
-            </div>
-            }
-
-            @if (block.siteAtomIndices.length === 0) {
-            <p class="hint guidance-hint">
-              This block still has no scaffold positions assigned. Choose the sites
-              that should receive one of this block's molecules.
-            </p>
-            }
-          </div>
-          }
         </article>
+      } @else {
+        <div class="subsection-header block-stack-header">
+          <div>
+            <h4>Block stack controls</h4>
+            <p class="hint">Use collapse controls when the workspace becomes long.</p>
+          </div>
+          <div class="chip-actions">
+            <button
+              class="btn-secondary small"
+              (click)="collapseAllBlocks()"
+              [disabled]="workflow.isProcessing()"
+            >
+              Collapse all
+            </button>
+            <button
+              class="btn-secondary small"
+              (click)="expandAllBlocks()"
+              [disabled]="workflow.isProcessing()"
+            >
+              Expand all
+            </button>
+          </div>
+        </div>
+
+        @if (workflow.assignmentBlocks().length === 0) {
+          <p class="hint">
+            Create the first block to define which substituent molecules will be available.
+          </p>
+        } @else {
+          <div class="block-stack">
+            @for (block of workflow.assignmentBlocks(); track block.id; let blockIndex = $index) {
+              <article class="block-card">
+                <div class="block-header">
+                  <div class="block-title-wrap">
+                    <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
+                    <input
+                      type="text"
+                      class="block-title-input"
+                      [attr.aria-label]="'Block ' + (blockIndex + 1) + ' label'"
+                      placeholder="Block label"
+                      [ngModel]="block.label"
+                      (ngModelChange)="workflow.blocks.updateBlockLabel(block.id, $event)"
+                      [disabled]="workflow.isProcessing()"
+                    />
+                  </div>
+                  <div class="block-actions">
+                    <button
+                      class="btn-secondary small"
+                      (click)="toggleBlockCollapse(block.id)"
+                      [disabled]="workflow.isProcessing()"
+                    >
+                      {{ isBlockCollapsed(block.id) ? 'Expand' : 'Minimize' }}
+                    </button>
+                    <button
+                      class="btn-secondary small"
+                      (click)="workflow.blocks.moveAssignmentBlock(block.id, -1)"
+                      [disabled]="blockIndex === 0 || workflow.isProcessing()"
+                    >
+                      Up
+                    </button>
+                    <button
+                      class="btn-secondary small"
+                      (click)="workflow.blocks.moveAssignmentBlock(block.id, 1)"
+                      [disabled]="
+                        blockIndex === workflow.assignmentBlocks().length - 1 ||
+                        workflow.isProcessing()
+                      "
+                    >
+                      Down
+                    </button>
+                    <button
+                      class="remove-btn small"
+                      (click)="workflow.blocks.removeAssignmentBlock(block.id)"
+                      [disabled]="workflow.isProcessing()"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                @if (isBlockCollapsed(block.id)) {
+                  <div class="block-collapsed-summary" aria-label="Collapsed block summary">
+                    <p><strong>Sites:</strong> {{ blockSummary(block).selectedSitesLabel }}</p>
+                    <p><strong>Categories:</strong> {{ blockSummary(block).categoriesLabel }}</p>
+                    <p>
+                      <strong>Catalog substituents:</strong>
+                      {{ blockSummary(block).catalogSmilesLabel }}
+                    </p>
+                    <p>
+                      <strong>Manual substituents:</strong>
+                      {{ blockSummary(block).manualSmilesLabel }}
+                    </p>
+                    <p>
+                      <strong>Total block sources:</strong>
+                      {{ blockSummary(block).sourceCount }}
+                    </p>
+                  </div>
+                } @else {
+                  <div class="block-section">
+                    <h4>Substituents added</h4>
+                    @if (block.catalogRefs.length === 0) {
+                      <p class="hint">No substituents added to this block yet.</p>
+                    } @else {
+                      <div
+                        class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid"
+                      >
+                        @for (entry of block.catalogRefs; track entry.id) {
+                          <article
+                            class="block-library-thumb catalog-ref-thumb"
+                            [class.is-selected]="isCatalogEntryLoadedInManualDraft(block, entry)"
+                          >
+                            <div
+                              class="thumb-open-button"
+                              role="button"
+                              tabindex="0"
+                              [attr.aria-label]="'Open detail for ' + entry.name"
+                              (click)="openLibraryEntryDetail(entry, 'reference')"
+                              (keydown.enter)="openLibraryEntryDetail(entry, 'reference')"
+                              (keydown.space)="
+                                openLibraryEntryDetail(entry, 'reference'); $event.preventDefault()
+                              "
+                            >
+                              <p class="thumb-name">{{ entry.name }}</p>
+                              <div class="thumb-preview">
+                                @if (catalogEntryPreviewSvg(entry); as referencedThumbSvg) {
+                                  <div class="thumb-svg" [innerHTML]="referencedThumbSvg"></div>
+                                } @else if (catalogEntryPreviewError(entry)) {
+                                  <span class="thumb-state-icon thumb-error" aria-hidden="true"
+                                    >!</span
+                                  >
+                                } @else {
+                                  <span class="thumb-state-icon thumb-loading" aria-hidden="true"
+                                    >…</span
+                                  >
+                                }
+                              </div>
+                              <p class="thumb-smiles mono">{{ entry.smiles }}</p>
+                              <small class="thumb-anchor"
+                                >Anchor {{ entry.anchor_atom_indices.join(', ') || '—' }}</small
+                              >
+                              <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
+                            </div>
+                            <div
+                              class="block-thumb-actions block-ref-actions"
+                              (click)="$event.stopPropagation()"
+                              (keydown)="$event.stopPropagation()"
+                            >
+                              @if (!isCatalogEntryLoadedInManualDraft(block, entry)) {
+                                <button
+                                  class="btn-secondary small"
+                                  (click)="selectCatalogEntryForManualDraft(block.id, entry)"
+                                  [disabled]="workflow.isProcessing()"
+                                >
+                                  Load
+                                </button>
+                              }
+                              <button
+                                class="remove-btn small"
+                                (click)="
+                                  workflow.blocks.removeCatalogReferenceFromBlock(
+                                    block.id,
+                                    entry.stable_id,
+                                    entry.version
+                                  )
+                                "
+                                [disabled]="workflow.isProcessing()"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    }
+                    @if (workflow.blocks.getAutoCatalogEntriesForBlock(block).length === 0) {
+                      <p class="hint">
+                        No catalog molecules auto-matched by the selected functional categories.
+                      </p>
+                    } @else {
+                      <div class="auto-catalog-panel">
+                        <h5>Auto-matched molecules by functional category</h5>
+                        <div class="tag-list">
+                          @for (
+                            entry of workflow.blocks.getAutoCatalogEntriesForBlock(block);
+                            track entry.id
+                          ) {
+                            <article class="tag-card auto-tag-card">
+                              <div>
+                                <strong>{{ entry.name }}</strong>
+                                <p class="catalog-smiles mono">{{ entry.smiles }}</p>
+                                <small>{{ (entry.categories ?? []).join(', ') }}</small>
+                              </div>
+                            </article>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <div class="subsection-header block-catalog-tools-row">
+                      <div>
+                        <h5>Substituent library</h5>
+                        <p class="hint">
+                          Browse by group and add a substituent directly to this block.
+                        </p>
+                      </div>
+                      <label
+                        class="library-group-filter block-library-group-filter"
+                        aria-label="Filter block catalog by group"
+                      >
+                        Group
+                        <select
+                          [ngModel]="selectedBlockLibraryGroupKey(block.id)"
+                          (ngModelChange)="onBlockLibraryGroupChange(block.id, $event)"
+                        >
+                          <option value="all">All groups</option>
+                          @for (group of workflow.catalogGroups(); track group.key) {
+                            <option [value]="group.key">
+                              {{ group.name }} ({{ group.entries.length }})
+                            </option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+
+                    @if (filteredCatalogEntriesForBlock(block).length === 0) {
+                      <p class="hint">No catalog molecules available for the selected group.</p>
+                    } @else {
+                      <div class="library-thumbnail-grid block-library-thumbnail-grid">
+                        @for (entry of filteredCatalogEntriesForBlock(block); track entry.id) {
+                          <article
+                            class="block-library-thumb"
+                            [class.is-referenced]="
+                              workflow.catalog.isCatalogEntryReferenced(block, entry)
+                            "
+                          >
+                            <div
+                              class="thumb-open-button"
+                              role="button"
+                              tabindex="0"
+                              [attr.aria-label]="
+                                workflow.catalog.isCatalogEntryReferenced(block, entry)
+                                  ? entry.name + ' already added to this block'
+                                  : 'Add ' + entry.name + ' to this block'
+                              "
+                              (click)="onBlockCatalogEntryCardActivate(block, entry)"
+                              (keydown.enter)="onBlockCatalogEntryCardActivate(block, entry)"
+                              (keydown.space)="
+                                onBlockCatalogEntryCardActivate(block, entry);
+                                $event.preventDefault()
+                              "
+                            >
+                              <p class="thumb-name">{{ entry.name }}</p>
+                              <div class="thumb-preview">
+                                @if (catalogEntryPreviewSvg(entry); as blockThumbSvg) {
+                                  <div class="thumb-svg" [innerHTML]="blockThumbSvg"></div>
+                                } @else if (catalogEntryPreviewError(entry)) {
+                                  <span class="thumb-state-icon thumb-error" aria-hidden="true"
+                                    >!</span
+                                  >
+                                } @else {
+                                  <span class="thumb-state-icon thumb-loading" aria-hidden="true"
+                                    >…</span
+                                  >
+                                }
+                              </div>
+                              <p class="thumb-smiles mono">{{ entry.smiles }}</p>
+                            </div>
+                            <div
+                              class="block-thumb-actions"
+                              (click)="$event.stopPropagation()"
+                              (keydown)="$event.stopPropagation()"
+                            >
+                              @if (workflow.catalog.isCatalogEntryReferenced(block, entry)) {
+                                <button class="btn-secondary small" type="button" disabled>
+                                  Added
+                                </button>
+                              } @else {
+                                <button
+                                  class="catalog-add small"
+                                  (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
+                                  [disabled]="workflow.isProcessing()"
+                                >
+                                  Add
+                                </button>
+                              }
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="block-section block-placement-section">
+                    <h4>Assign this block to scaffold positions</h4>
+                    @if (workflow.selectedAtomIndices().length === 0) {
+                      <p class="hint">
+                        Inspect the principal molecule and select target atoms before assigning this
+                        block to positions.
+                      </p>
+                    } @else {
+                      <div class="atom-grid compact-grid">
+                        @for (atomIndex of workflow.selectedAtomIndices(); track atomIndex) {
+                          <button
+                            type="button"
+                            class="atom-chip compact"
+                            [class.selected]="isBlockSiteSelected(block, atomIndex)"
+                            (click)="workflow.blocks.toggleBlockSite(block.id, atomIndex)"
+                            [disabled]="workflow.isProcessing()"
+                          >
+                            Site {{ atomIndex }}
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    @if (block.siteAtomIndices.length === 0) {
+                      <p class="hint guidance-hint">
+                        This block still has no scaffold positions assigned. Choose the sites that
+                        should receive one of this block's molecules.
+                      </p>
+                    }
+                  </div>
+                }
+              </article>
+            }
+          </div>
         }
-      </div>
-      }
       }
     </section>
   </div>

@@ -1,324 +1,399 @@
 <!-- generation-result-panel.component.html: Panel de configuración, ejecución e inspección de resultados de generación. -->
 <section class="result-panel" aria-label="Result and progress panel">
-    <div class="panel-header-row">
-        <div>
-            <h3>4. Continuous generation and outputs</h3>
-            <p class="panel-caption">
-                Configure generation, run continuously, and inspect/export resulting structures.
-            </p>
-        </div>
+  <div class="panel-header-row">
+    <div>
+      <h3>4. Continuous generation and outputs</h3>
+      <p class="panel-caption">
+        Configure generation, run continuously, and inspect/export resulting structures.
+      </p>
+    </div>
+  </div>
+
+  <article class="generation-card">
+    <div class="subsection-header">
+      <div>
+        <h4>Generation setup</h4>
+        <p class="hint">
+          Run generation only after block molecules and scaffold positions are fully mapped.
+        </p>
+      </div>
+      <span
+        class="workflow-step-state"
+        [class.generation-ready]="workflow.canConfigureGeneration()"
+      >
+        {{ workflow.canConfigureGeneration() ? 'Enabled' : 'Locked until mapping' }}
+      </span>
     </div>
 
-    <article class="generation-card">
-        <div class="subsection-header">
-            <div>
-                <h4>Generation setup</h4>
-                <p class="hint">
-                    Run generation only after block molecules and scaffold positions are fully mapped.
-                </p>
-            </div>
-            <span class="workflow-step-state" [class.generation-ready]="workflow.canConfigureGeneration()">
-                {{ workflow.canConfigureGeneration() ? 'Enabled' : 'Locked until mapping' }}
-            </span>
-        </div>
+    @if (!workflow.canConfigureGeneration()) {
+      <div class="generation-lock-banner" role="status" aria-live="polite">
+        <strong>Section 4 is locked.</strong>
+        <p class="hint">
+          Select scaffold positions and ensure every selected position is assigned to a block before
+          running generation.
+        </p>
+      </div>
+    }
 
-        @if (!workflow.canConfigureGeneration()) {
-        <div class="generation-lock-banner" role="status" aria-live="polite">
-            <strong>Section 4 is locked.</strong>
-            <p class="hint">
-                Select scaffold positions and ensure every selected position is assigned to a block
-                before running generation.
-            </p>
-        </div>
-        }
+    <fieldset
+      class="generation-fieldset"
+      [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()"
+    >
+      <div class="options-grid compact">
+        <label>
+          Export base name
+          <input
+            type="text"
+            [ngModel]="workflow.exportNameBase()"
+            (ngModelChange)="workflow.exportNameBase.set($event)"
+            [disabled]="workflow.isProcessing()"
+            placeholder="smileit_run"
+          />
+        </label>
+      </div>
 
-        <fieldset class="generation-fieldset"
-            [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()">
-            <div class="options-grid compact">
-                <label>
-                    Export base name
-                    <input type="text" [ngModel]="workflow.exportNameBase()"
-                        (ngModelChange)="workflow.exportNameBase.set($event)" [disabled]="workflow.isProcessing()"
-                        placeholder="smileit_run" />
-                </label>
-            </div>
+      <div class="options-grid">
+        <label>
+          R substitutes
+          <input
+            type="number"
+            min="1"
+            [max]="workflow.maxRSubstitutesByPositions()"
+            [ngModel]="workflow.rSubstitutes()"
+            (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
+            [disabled]="workflow.isProcessing() || workflow.selectedAtomIndices().length === 0"
+          />
+          @if (workflow.selectedAtomIndices().length > 0) {
+            <small class="hint">
+              max {{ workflow.maxRSubstitutesByPositions() }} (based on
+              {{ workflow.selectedAtomIndices().length }}
+              selected sites)
+            </small>
+          }
+        </label>
+      </div>
 
-            <div class="options-grid">
-                <label>
-                    R substitutes
-                    <input type="number" min="1" [max]="workflow.maxRSubstitutesByPositions()"
-                        [ngModel]="workflow.rSubstitutes()" (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
-                        [disabled]="workflow.isProcessing() || workflow.selectedAtomIndices().length === 0" />
-                    @if (workflow.selectedAtomIndices().length > 0) {
-                    <small class="hint">
-                        max {{ workflow.maxRSubstitutesByPositions() }} (based on
-                        {{ workflow.selectedAtomIndices().length }}
-                        selected sites)
-                    </small>
-                    }
-                </label>
-            </div>
-
-            <div class="action-row">
-                <button class="btn-primary" (click)="dispatch()"
-                    [disabled]="workflow.isProcessing() || !workflow.canDispatch()" [title]="
+      <div class="action-row">
+        <button
+          class="btn-primary"
+          (click)="dispatch()"
+          [disabled]="workflow.isProcessing() || !workflow.canDispatch()"
+          [title]="
             workflow.canConfigureGeneration()
               ? ''
               : 'Complete scaffold mapping before generating structures.'
-          ">
-                    {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
-                </button>
-                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-                    Reset
-                </button>
-            </div>
-        </fieldset>
-    </article>
+          "
+        >
+          {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
+        </button>
+        <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+          Reset
+        </button>
+      </div>
+    </fieldset>
+  </article>
 
-    <article class="generation-card" aria-label="Previous enumeration jobs">
-        <div class="subsection-header">
-            <div>
-                <h4>Previous enumerations</h4>
-                <p class="hint">Select a previous job to load its full derivative set on demand.</p>
-            </div>
-            <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
-                [disabled]="workflow.isHistoryLoading()">
-                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload jobs' }}
-            </button>
-        </div>
+  <article class="generation-card" aria-label="Previous enumeration jobs">
+    <div class="subsection-header">
+      <div>
+        <h4>Previous enumerations</h4>
+        <p class="hint">Select a previous job to load its full derivative set on demand.</p>
+      </div>
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="workflow.loadHistory()"
+        [disabled]="workflow.isHistoryLoading()"
+      >
+        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload jobs' }}
+      </button>
+    </div>
 
-        @if (workflow.historyJobs().length === 0) {
-        <p class="hint">No previous enumerations available yet.</p>
-        } @else {
-        <div class="block-stack">
-            @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-            <button type="button" class="block-card" (click)="openHistoricalJob(historyJob.id)">
-                <div class="block-header">
-                    <div class="block-title-wrap">
-                        <span class="block-priority">{{ historicalJobDisplayName(historyJob) }}</span>
-                        <p class="catalog-smiles mono">
-                            {{ historicalJobPrincipalSmiles(historyJob) }}
-                        </p>
-                    </div>
-                    <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-                </div>
-                <div class="block-collapsed-summary">
-                    @for (
-                    blockSummary of historicalJobBlockSummaries(historyJob);
-                    track blockSummary.label + '-' + $index
-                    ) {
-                    <p><strong>{{ blockSummary.label }}:</strong> sites {{ blockSummary.positions }}</p>
-                    <p class="catalog-smiles mono">{{ blockSummary.smiles }}</p>
-                    }
-                </div>
-            </button>
-            }
-        </div>
+    @if (workflow.historyJobs().length === 0) {
+      <p class="hint">No previous enumerations available yet.</p>
+    } @else {
+      <div class="block-stack">
+        @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+          <button type="button" class="block-card" (click)="openHistoricalJob(historyJob.id)">
+            <div class="block-header">
+              <div class="block-title-wrap">
+                <span class="block-priority">{{ historicalJobDisplayName(historyJob) }}</span>
+                <p class="catalog-smiles mono">
+                  {{ historicalJobPrincipalSmiles(historyJob) }}
+                </p>
+              </div>
+              <span [class]="historicalStatusClass(historyJob.status)">{{
+                historyJob.status
+              }}</span>
+            </div>
+            <div class="block-collapsed-summary">
+              @for (
+                blockSummary of historicalJobBlockSummaries(historyJob);
+                track blockSummary.label + '-' + $index
+              ) {
+                <p>
+                  <strong>{{ blockSummary.label }}:</strong> sites {{ blockSummary.positions }}
+                </p>
+                <p class="catalog-smiles mono">{{ blockSummary.smiles }}</p>
+              }
+            </div>
+          </button>
         }
-    </article>
+      </div>
+    }
+  </article>
 
-    @if (workflow.activeSection() === 'dispatching') {
+  @if (workflow.activeSection() === 'dispatching') {
     <p class="status-message">Dispatching Smileit job...</p>
-    }
+  }
 
-    @if (workflow.activeSection() === 'progress') {
-    <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
-        [progressMessage]="workflow.progressMessage()" progressAriaLabel="Smileit job progress"></app-job-progress-card>
-    }
+  @if (workflow.activeSection() === 'progress') {
+    <app-job-progress-card
+      [jobId]="workflow.currentJobId()"
+      [progressPercentage]="workflow.progressPercentage()"
+      [progressMessage]="workflow.progressMessage()"
+      progressAriaLabel="Smileit job progress"
+    ></app-job-progress-card>
+  }
 
-    @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+  @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
     @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-    <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+      <p class="summary-banner">{{ resultData.summaryMessage }}</p>
     }
 
     <div class="metadata-grid enriched-grid">
-        <p><strong>Enumerated derivatives:</strong> {{ resultData.totalGenerated }}</p>
-        <p><strong>Reactive sites:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
-        <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
+      <p><strong>Enumerated derivatives:</strong> {{ resultData.totalGenerated }}</p>
+      <p><strong>Reactive sites:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
+      <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
     </div>
 
     <p class="catalog-smiles mono">Principal SMILES: {{ resultData.principalSmiles }}</p>
 
     <div class="action-row export-row">
-        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-            CSV
-        </button>
-        <button class="btn-secondary" (click)="exportSmiles()" [disabled]="workflow.isExporting()">
-            SMI/TXT
-        </button>
-        <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">
-            LOG
-        </button>
-        <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()"
-            [disabled]="workflow.isExporting() || isPreparingImagesZip() || resultData.totalGenerated === 0"
-            title="Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after.">
-            {{ isPreparingImagesZip() ? 'Preparing SVG ZIP...' : '↓ Download SVGs (ZIP)' }}
-        </button>
+      <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+        CSV
+      </button>
+      <button class="btn-secondary" (click)="exportSmiles()" [disabled]="workflow.isExporting()">
+        SMI/TXT
+      </button>
+      <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">
+        LOG
+      </button>
+      <button
+        class="btn-secondary download-zip-btn"
+        (click)="downloadVisibleStructuresZip()"
+        [disabled]="
+          workflow.isExporting() || isPreparingImagesZip() || resultData.totalGenerated === 0
+        "
+        title="Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after."
+      >
+        {{ isPreparingImagesZip() ? 'Preparing SVG ZIP...' : '↓ Download SVGs (ZIP)' }}
+      </button>
     </div>
 
     @if (isPreparingImagesZip()) {
-    <div class="status-panel" role="status" aria-live="polite">
+      <div class="status-panel" role="status" aria-live="polite">
         <p class="hint">
-            Generating all derivative SVGs on-demand for ZIP export. This may take a while.
+          Generating all derivative SVGs on-demand for ZIP export. This may take a while.
         </p>
         <progress [value]="imagesZipProgress()" max="100"></progress>
         <small>{{ imagesZipProgress() }}%</small>
-    </div>
+      </div>
     }
 
     @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-    <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+      <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
     }
 
     @if (resultData.totalGenerated === 0) {
-    <p class="status-message">No generated structures available in this snapshot.</p>
+      <p class="status-message">No generated structures available in this snapshot.</p>
     } @else {
-    <section class="structures-list-card" aria-label="Generated derivatives list">
+      <section class="structures-list-card" aria-label="Generated derivatives list">
         <div class="subsection-header">
-            <div>
-                <h4>Enumerated derivatives</h4>
-                <p class="hint">
-                    Each card shows one generated scaffold image with its highlighted substitution sites.
-                </p>
-            </div>
-            <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
-                {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
-            </button>
+          <div>
+            <h4>Enumerated derivatives</h4>
+            <p class="hint">
+              Each card shows one generated scaffold image with its highlighted substitution sites.
+            </p>
+          </div>
+          <button
+            class="btn-secondary small"
+            type="button"
+            (click)="toggleGeneratedStructuresCollapse()"
+          >
+            {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
+          </button>
         </div>
         @if (isGeneratedStructuresCollapsed()) {
-        <div class="block-collapsed-summary">
+          <div class="block-collapsed-summary">
             <p><strong>Available derivatives:</strong> {{ resultData.totalGenerated }}</p>
             <p>
-                <strong>Loaded in current view:</strong> {{ visibleGeneratedStructures().length }}
+              <strong>Loaded in current view:</strong> {{ visibleGeneratedStructures().length }}
             </p>
             <p>
-                <strong>Inspection:</strong> Expand this section to review molecular depictions and
-                SMILES.
+              <strong>Inspection:</strong> Expand this section to review molecular depictions and
+              SMILES.
             </p>
-        </div>
+          </div>
         } @else {
-        <div class="derivatives-grid">
-            @for (structureItem of visibleGeneratedStructures(); track structureItem.smiles + $index) {
-            <article class="derivative-card" role="button" tabindex="0"
+          <div class="derivatives-grid">
+            @for (
+              structureItem of visibleGeneratedStructures();
+              track structureItem.smiles + $index
+            ) {
+              <article
+                class="derivative-card"
+                role="button"
+                tabindex="0"
                 (click)="openGeneratedStructureModal(structureItem)"
                 (keydown.enter)="openGeneratedStructureModal(structureItem)"
-                (keydown.space)="openGeneratedStructureModal(structureItem)">
+                (keydown.space)="openGeneratedStructureModal(structureItem)"
+              >
                 <div class="derivative-info">
-                    <div class="derivative-legend">
-                        <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
-                        @for (
-                        substituentName of getUniqueSubstituentsForStructure(structureItem);
-                        track substituentName
-                        ) {
-                        <span class="derivative-legend-pill substituent-pill" [title]="substituentName">
-                            {{ substituentName }}
-                        </span>
-                        }
-                    </div>
+                  <div class="derivative-legend">
+                    <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
+                    @for (
+                      substituentName of getUniqueSubstituentsForStructure(structureItem);
+                      track substituentName
+                    ) {
+                      <span
+                        class="derivative-legend-pill substituent-pill"
+                        [title]="substituentName"
+                      >
+                        {{ substituentName }}
+                      </span>
+                    }
+                  </div>
                 </div>
                 <div class="derivative-svg-frame combined-structure-frame">
-                    <small class="derivative-visual-title">Generated derivative (substituents highlighted)</small>
-                    <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
+                  <small class="derivative-visual-title"
+                    >Generated derivative (substituents highlighted)</small
+                  >
+                  <div
+                    class="derivative-svg-preview"
+                    [innerHTML]="toTrustedSvg(structureItem.svg)"
+                  ></div>
                 </div>
                 <div class="derivative-meta">
-                    <p class="derivative-name" [title]="structureDisplayName(structureItem, $index)">
-                        {{ structureDisplayName(structureItem, $index) }}
-                    </p>
-                    <p class="derivative-smiles mono" [title]="structureItem.smiles">
-                        {{ structureItem.smiles }}
-                    </p>
-                    <small class="derivative-substitutions" [title]="structurePlaceholderSummary(structureItem)">
-                        Placeholder mapping: {{ structurePlaceholderSummary(structureItem) }}
-                    </small>
-                    <div class="placeholder-assignment-list">
-                        @for (
-                        placeholderAssignment of placeholderAssignmentsForStructure(structureItem);
-                        track placeholderAssignment.placeholderLabel +
+                  <p class="derivative-name" [title]="structureDisplayName(structureItem, $index)">
+                    {{ structureDisplayName(structureItem, $index) }}
+                  </p>
+                  <p class="derivative-smiles mono" [title]="structureItem.smiles">
+                    {{ structureItem.smiles }}
+                  </p>
+                  <small
+                    class="derivative-substitutions"
+                    [title]="structurePlaceholderSummary(structureItem)"
+                  >
+                    Placeholder mapping: {{ structurePlaceholderSummary(structureItem) }}
+                  </small>
+                  <div class="placeholder-assignment-list">
+                    @for (
+                      placeholderAssignment of placeholderAssignmentsForStructure(structureItem);
+                      track placeholderAssignment.placeholderLabel +
                         '-' +
                         placeholderAssignment.siteAtomIndex +
                         '-' +
                         $index
-                        ) {
-                        <span class="placeholder-assignment-pill"
-                            [title]="placeholderAssignmentLabel(structureItem, placeholderAssignment)">
-                            {{ placeholderAssignmentLabel(structureItem, placeholderAssignment) }}
-                        </span>
-                        }
-                    </div>
-                    <small>{{ structureItem.traceability.length }} substitution{{
-                        structureItem.traceability.length !== 1 ? 's' : ''
-                        }}</small>
+                    ) {
+                      <span
+                        class="placeholder-assignment-pill"
+                        [title]="placeholderAssignmentLabel(structureItem, placeholderAssignment)"
+                      >
+                        {{ placeholderAssignmentLabel(structureItem, placeholderAssignment) }}
+                      </span>
+                    }
+                  </div>
+                  <small
+                    >{{ structureItem.traceability.length }} substitution{{
+                      structureItem.traceability.length !== 1 ? 's' : ''
+                    }}</small
+                  >
                 </div>
-            </article>
+              </article>
             }
-        </div>
-        @if (hasMoreGeneratedStructures()) {
-        <div class="show-more-row">
-            <p class="hint">
+          </div>
+          @if (hasMoreGeneratedStructures()) {
+            <div class="show-more-row">
+              <p class="hint">
                 Showing <strong>{{ visibleGeneratedStructures().length }}</strong> of
                 <strong>{{ resultData.totalGenerated }}</strong> derivatives
-            </p>
-            <button class="btn-secondary" type="button" (click)="showMoreStructures()"
-                [disabled]="isLoadingGeneratedStructures()">
+              </p>
+              <button
+                class="btn-secondary"
+                type="button"
+                (click)="showMoreStructures()"
+                [disabled]="isLoadingGeneratedStructures()"
+              >
                 {{ isLoadingGeneratedStructures() ? 'Loading...' : 'Show 100 more' }}
-            </button>
-        </div>
-        }
-        }
-    </section>
-    }
-    }
-
-    @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-    <p class="error-message" role="alert">{{ currentError }}</p>
-    }
-
-    <dialog #generatedStructureDialog class="generated-structure-dialog"
-        (click)="onGeneratedStructureDialogClick($event)" (cancel)="closeGeneratedStructureModal()">
-        @if (selectedGeneratedStructure(); as selectedStructure) {
-        <section class="structure-modal" role="document" aria-label="Generated molecule preview"
-            (click)="$event.stopPropagation()">
-            <header class="structure-modal-header">
-                <div class="structure-modal-title-area">
-                    <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>
-                    <div class="derivative-legend derivative-legend-modal">
-                        <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
-                        @for (
-                        substituentName of getUniqueSubstituentsForStructure(selectedStructure);
-                        track substituentName
-                        ) {
-                        <span class="derivative-legend-pill substituent-pill">{{ substituentName }}</span>
-                        }
-                    </div>
-                    <p class="derivative-smiles mono" [title]="selectedStructure.smiles">
-                        {{ selectedStructure.smiles }}
-                    </p>
-                    <div class="placeholder-assignment-list modal-placeholder-list">
-                        @for (
-                        placeholderAssignment of placeholderAssignmentsForStructure(selectedStructure);
-                        track placeholderAssignment.placeholderLabel +
-                        '-' +
-                        placeholderAssignment.siteAtomIndex +
-                        '-' +
-                        $index
-                        ) {
-                        <span class="placeholder-assignment-pill"
-                            [title]="placeholderAssignmentLabel(selectedStructure, placeholderAssignment)">
-                            {{ placeholderAssignmentLabel(selectedStructure, placeholderAssignment) }}
-                        </span>
-                        }
-                    </div>
-                </div>
-                <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">
-                    Close
-                </button>
-            </header>
-
-            <div class="structure-modal-svg structure-modal-panel single-structure-panel">
-                <h5>Generated derivative (substituent highlighted)</h5>
-                <div [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+              </button>
             </div>
-        </section>
+          }
         }
-    </dialog>
+      </section>
+    }
+  }
+
+  @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+    <p class="error-message" role="alert">{{ currentError }}</p>
+  }
+
+  <dialog
+    #generatedStructureDialog
+    class="generated-structure-dialog"
+    (click)="onGeneratedStructureDialogClick($event)"
+    (cancel)="closeGeneratedStructureModal()"
+  >
+    @if (selectedGeneratedStructure(); as selectedStructure) {
+      <section
+        class="structure-modal"
+        role="document"
+        aria-label="Generated molecule preview"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="structure-modal-header">
+          <div class="structure-modal-title-area">
+            <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>
+            <div class="derivative-legend derivative-legend-modal">
+              <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
+              @for (
+                substituentName of getUniqueSubstituentsForStructure(selectedStructure);
+                track substituentName
+              ) {
+                <span class="derivative-legend-pill substituent-pill">{{ substituentName }}</span>
+              }
+            </div>
+            <p class="derivative-smiles mono" [title]="selectedStructure.smiles">
+              {{ selectedStructure.smiles }}
+            </p>
+            <div class="placeholder-assignment-list modal-placeholder-list">
+              @for (
+                placeholderAssignment of placeholderAssignmentsForStructure(selectedStructure);
+                track placeholderAssignment.placeholderLabel +
+                  '-' +
+                  placeholderAssignment.siteAtomIndex +
+                  '-' +
+                  $index
+              ) {
+                <span
+                  class="placeholder-assignment-pill"
+                  [title]="placeholderAssignmentLabel(selectedStructure, placeholderAssignment)"
+                >
+                  {{ placeholderAssignmentLabel(selectedStructure, placeholderAssignment) }}
+                </span>
+              }
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">
+            Close
+          </button>
+        </header>
+
+        <div class="structure-modal-svg structure-modal-panel single-structure-panel">
+          <h5>Generated derivative (substituent highlighted)</h5>
+          <div [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
+        </div>
+      </section>
+    }
+  </dialog>
 </section>
