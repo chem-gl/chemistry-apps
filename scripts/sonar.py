@@ -222,6 +222,107 @@ Cómo solucionarlo:
 """
         lines.append(bloque.strip())
 
+    # =========================
+    # Detectar y listar código duplicado relacionado
+    # =========================
+    # Buscamos issues cuya descripción o regla indique duplicación (p.ej. css:S4666)
+    duplicate_selectors: dict[str, set[str]] = {}
+
+    def _extract_selector_from_message(msg: str) -> str | None:
+        if not msg:
+            return None
+        # patrones comunes que contienen el selector duplicado
+        patterns = [
+            r"duplicate selector\s+[\"']?([^\"'\\,]+)[\"']?",
+            r"Unexpected duplicate selector\s+[\"']?([^\"']+)[\"']?",
+            r"duplicate selector\s+`([^`]+)`",
+        ]
+        for p in patterns:
+            m = re.search(p, msg, re.IGNORECASE)
+            if m:
+                return m.group(1).strip()
+        return None
+
+    def _find_selector_occurrences(selector: str) -> dict[str, list[tuple[int, str]]]:
+        """Busca occurrences del selector en archivos .scss/.css bajo el repo y devuelve
+        {relative_path: [(start_line, snippet), ...], ...}
+        """
+        results: dict[str, list[tuple[int, str]]] = {}
+        # Buscar en frontend estilos y en cualquier archivo .scss/.css del repo
+        for path in REPOSITORY_ROOT.rglob("*.scss"):
+            try:
+                text = path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            if selector not in text:
+                continue
+            lines = text.splitlines()
+            occurrences: list[tuple[int, str]] = []
+            for i, line in enumerate(lines):
+                if selector in line:
+                    # recopilar bloque CSS/SCSS comenzando en esta línea
+                    start = i
+                    # buscar apertura de bloque desde la línea actual
+                    j = start
+                    brace_count = 0
+                    found_open = False
+                    while j < len(lines):
+                        brace_count += lines[j].count("{") - lines[j].count("}")
+                        if "{" in lines[j]:
+                            found_open = True
+                        j += 1
+                        if found_open and brace_count <= 0:
+                            break
+                    end = j if j <= len(lines) else len(lines)
+                    snippet = "\n".join(lines[start:end]).strip()
+                    occurrences.append((start + 1, snippet))
+            if occurrences:
+                results[str(path.relative_to(REPOSITORY_ROOT))] = occurrences
+
+        # También buscar en .css por si hay estilos generados
+        for path in REPOSITORY_ROOT.rglob("*.css"):
+            try:
+                text = path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            if selector not in text:
+                continue
+            lines = text.splitlines()
+            occurrences: list[tuple[int, str]] = []
+            for i, line in enumerate(lines):
+                if selector in line:
+                    # simple: devolver la línea encontrada
+                    occurrences.append((i + 1, line.strip()))
+            if occurrences:
+                results[str(path.relative_to(REPOSITORY_ROOT))] = occurrences
+
+        return results
+
+    for issue in issues:
+        rule_key = issue.get("rule", "") or ""
+        message = issue.get("message", "") or ""
+        if "duplicate" in message.lower() or rule_key.lower().startswith("css:s4666"):
+            sel = _extract_selector_from_message(message)
+            if sel:
+                duplicate_selectors.setdefault(sel, set())
+
+    if duplicate_selectors:
+        dup_lines: list[str] = []
+        dup_lines.append("\n\n=== Duplicate code summary ===\n")
+        for selector in sorted(duplicate_selectors.keys()):
+            dup_lines.append(f"Selector duplicado: {selector}\n")
+            occurrences = _find_selector_occurrences(selector)
+            if not occurrences:
+                dup_lines.append(
+                    "  (No se encontraron archivos con ese selector en el repo)\n"
+                )
+                continue
+            for fpath, occs in occurrences.items():
+                dup_lines.append(f"  Archivo: {fpath}")
+                for lineno, snippet in occs:
+                    dup_lines.append(f"    Línea {lineno}:\n{snippet}\n")
+        lines.append("\n".join(dup_lines))
+
     return "\n\n".join(lines)
 
 

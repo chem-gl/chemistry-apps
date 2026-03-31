@@ -133,3 +133,3599 @@ Compliant solution
 }
 
 ----------------------------------------
+
+=== Duplicate selectors found by local scan ===
+
+Selector: &.diffusion-fields
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 319: &.diffusion-fields {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 213: &.diffusion-fields {
+
+Selector: &.export-row
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 354: &.export-row {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 248: &.export-row {
+
+Selector: &.flag-on
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 505: &.flag-on {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 407: &.flag-on {
+
+Selector: &.flag-warn
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 510: &.flag-warn {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 412: &.flag-warn {
+
+Selector: &.has-file
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 101: &.has-file {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 126: &.has-file {
+
+Selector: &.is-disabled
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 107: &.is-disabled {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 132: &.is-disabled {
+
+Selector: &.level-debug
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 606: &.level-debug {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 508: &.level-debug {
+
+Selector: &.level-error
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 621: &.level-error {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 523: &.level-error {
+
+Selector: &.level-info
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 611: &.level-info {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 513: &.level-info {
+
+Selector: &.level-warning
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 616: &.level-warning {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 518: &.level-warning {
+
+Selector: &.mono
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 484: &.mono {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 386: &.mono {
+
+Selector: &.section-sub
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 54: &.section-sub {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 56: &.section-sub {
+
+Selector: &::before
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 141: &::before {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 166: &::before {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 698: &::before {
+    Línea 723: &::before {
+
+Selector: &:disabled
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 312: &:disabled {
+    Línea 372: &:disabled {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 206: &:disabled {
+    Línea 266: &:disabled {
+
+Selector: &:focus
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 306: &:focus {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 200: &:focus {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 98: &:focus {
+    Línea 300: &:focus {
+
+Selector: &:hover:not(.is-disabled)
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 96: &:hover:not(.is-disabled) {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 121: &:hover:not(.is-disabled) {
+
+Selector: &:hover:not(:disabled)
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 382: &:hover:not(:disabled) {
+    Línea 392: &:hover:not(:disabled) {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 276: &:hover:not(:disabled) {
+    Línea 286: &:hover:not(:disabled) {
+
+Selector: *
+
+  Archivo: frontend/src/styles.scss
+    Línea 3: * {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 454: * {
+
+Selector: .action-row
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 112: .action-row {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 79: .action-row {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 350: .action-row {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 244: .action-row {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 119: .action-row {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 88: .action-row {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 279: .action-row {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 279: .action-row {
+
+Selector: .advanced-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 161: .advanced-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 161: .advanced-grid {
+
+Selector: .anchor-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 78: .anchor-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 78: .anchor-grid {
+
+Selector: .anchor-selection-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 369: .anchor-selection-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 365: .anchor-selection-panel {
+
+Selector: .annotation-chip
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 409: .annotation-chip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 409: .annotation-chip {
+
+Selector: .annotation-chip-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 425: .annotation-chip-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 425: .annotation-chip-header {
+
+Selector: .annotation-chip-hidden
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 420: .annotation-chip-hidden {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 420: .annotation-chip-hidden {
+
+Selector: .annotation-eye-btn
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 433: .annotation-eye-btn {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 433: .annotation-eye-btn {
+
+Selector: .annotation-eye-btn:hover
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 448: .annotation-eye-btn:hover {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 448: .annotation-eye-btn:hover {
+
+Selector: .atom-chip
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 292: .atom-chip {
+    Línea 325: .atom-chip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 66: .atom-chip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 292: .atom-chip {
+    Línea 325: .atom-chip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 66: .atom-chip {
+
+Selector: .atom-chip.compact
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 61: .atom-chip.compact {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 61: .atom-chip.compact {
+
+Selector: .atom-chip:hover
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 311: .atom-chip:hover {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 311: .atom-chip:hover {
+
+Selector: .auto-catalog-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 343: .auto-catalog-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 343: .auto-catalog-panel {
+
+Selector: .auto-catalog-panel h5
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 351: .auto-catalog-panel h5 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 351: .auto-catalog-panel h5 {
+
+Selector: .auto-tag-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 359: .auto-tag-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 359: .auto-tag-card {
+
+Selector: .block-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 348: .block-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 100: .block-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 348: .block-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 100: .block-card {
+
+Selector: .block-catalog-tools-row
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 451: .block-catalog-tools-row {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 451: .block-catalog-tools-row {
+
+Selector: .block-library-group-filter
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 455: .block-library-group-filter {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 455: .block-library-group-filter {
+
+Selector: .block-library-thumb
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 472: .block-library-thumb {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 472: .block-library-thumb {
+
+Selector: .block-library-thumb .thumb-preview
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 8: .block-library-thumb .thumb-preview {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 8: .block-library-thumb .thumb-preview {
+
+Selector: .block-library-thumb .thumb-smiles
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 14: .block-library-thumb .thumb-smiles {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 14: .block-library-thumb .thumb-smiles {
+
+Selector: .block-library-thumb.is-referenced
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 482: .block-library-thumb.is-referenced {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 482: .block-library-thumb.is-referenced {
+
+Selector: .block-library-thumb.is-selected
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 487: .block-library-thumb.is-selected {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 487: .block-library-thumb.is-selected {
+
+Selector: .block-library-thumb:focus-visible
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 493: .block-library-thumb:focus-visible {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 493: .block-library-thumb:focus-visible {
+
+Selector: .block-library-thumbnail-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 467: .block-library-thumbnail-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 467: .block-library-thumbnail-grid {
+
+Selector: .block-placement-section
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 262: .block-placement-section {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 258: .block-placement-section {
+
+Selector: .block-priority
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 459: .block-priority {
+    Línea 472: .block-priority {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 459: .block-priority {
+    Línea 472: .block-priority {
+
+Selector: .block-ref-actions .remove-btn
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 43: .block-ref-actions .remove-btn {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 43: .block-ref-actions .remove-btn {
+
+Selector: .block-section
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 125: .block-section {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 125: .block-section {
+
+Selector: .block-stack-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 131: .block-stack-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 131: .block-stack-header {
+
+Selector: .block-thumb-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 18: .block-thumb-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 18: .block-thumb-actions {
+
+Selector: .block-thumb-actions .catalog-add
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 48: .block-thumb-actions .catalog-add {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 48: .block-thumb-actions .catalog-add {
+
+Selector: .block-title-input
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 113: .block-title-input {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 113: .block-title-input {
+
+Selector: .block-title-wrap
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 106: .block-title-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 106: .block-title-wrap {
+
+Selector: .btn-primary
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 59: .btn-primary {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 77: .btn-primary {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 128: .btn-primary {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 95: .btn-primary {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 378: .btn-primary {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 272: .btn-primary {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 135: .btn-primary {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 104: .btn-primary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 315: .btn-primary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 315: .btn-primary {
+
+Selector: .btn-tool
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 420: .btn-tool {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 374: .btn-tool {
+
+Selector: .btn-tool.disabled
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 444: .btn-tool.disabled {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 390: .btn-tool.disabled {
+
+Selector: .catalog-browser-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 348: .catalog-browser-panel {
+    Línea 410: .catalog-browser-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 344: .catalog-browser-panel {
+    Línea 406: .catalog-browser-panel {
+
+Selector: .catalog-browser-panel .catalog-item
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 433: .catalog-browser-panel .catalog-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 433: .catalog-browser-panel .catalog-item {
+
+Selector: .catalog-card-badge
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 321: .catalog-card-badge {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 317: .catalog-card-badge {
+
+Selector: .catalog-card-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 306: .catalog-card-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 302: .catalog-card-header {
+
+Selector: .catalog-card-header-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 314: .catalog-card-header-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 310: .catalog-card-header-actions {
+
+Selector: .catalog-category-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 375: .catalog-category-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 371: .catalog-category-panel {
+
+Selector: .catalog-draft-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 88: .catalog-draft-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 88: .catalog-draft-actions {
+
+Selector: .catalog-editor-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 391: .catalog-editor-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 82: .catalog-editor-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 387: .catalog-editor-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 82: .catalog-editor-actions {
+
+Selector: .catalog-editor-layout
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 335: .catalog-editor-layout {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 251: .catalog-editor-layout {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 331: .catalog-editor-layout {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 246: .catalog-editor-layout {
+
+Selector: .catalog-editor-summary
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 343: .catalog-editor-summary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 339: .catalog-editor-summary {
+
+Selector: .catalog-empty-step
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 462: .catalog-empty-step {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 454: .catalog-empty-step {
+
+Selector: .catalog-field-full
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 438: .catalog-field-full {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 255: .catalog-field-full {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 434: .catalog-field-full {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 250: .catalog-field-full {
+
+Selector: .catalog-form-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 418: .catalog-form-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 414: .catalog-form-grid {
+
+Selector: .catalog-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 401: .catalog-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 401: .catalog-grid {
+
+Selector: .catalog-group-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 417: .catalog-group-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 417: .catalog-group-card {
+
+Selector: .catalog-group-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 411: .catalog-group-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 411: .catalog-group-grid {
+
+Selector: .catalog-group-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 425: .catalog-group-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 425: .catalog-group-header {
+
+Selector: .catalog-group-header h5
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 337: .catalog-group-header h5 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 337: .catalog-group-header h5 {
+
+Selector: .catalog-inline-warnings
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 386: .catalog-inline-warnings {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 98: .catalog-inline-warnings {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 382: .catalog-inline-warnings {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 98: .catalog-inline-warnings {
+
+Selector: .catalog-item-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 389: .catalog-item-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 389: .catalog-item-actions {
+
+Selector: .catalog-item-actions .btn-secondary.active
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 395: .catalog-item-actions .btn-secondary.active {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 395: .catalog-item-actions .btn-secondary.active {
+
+Selector: .catalog-ketcher-frame
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 189: .catalog-ketcher-frame {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 189: .catalog-ketcher-frame {
+
+Selector: .catalog-ketcher-frame-wrap
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 180: .catalog-ketcher-frame-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 180: .catalog-ketcher-frame-wrap {
+
+Selector: .catalog-ketcher-loading
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 202: .catalog-ketcher-loading {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 202: .catalog-ketcher-loading {
+
+Selector: .catalog-ketcher-loading-bar
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 214: .catalog-ketcher-loading-bar {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 214: .catalog-ketcher-loading-bar {
+
+Selector: .catalog-ketcher-loading-progress
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 222: .catalog-ketcher-loading-progress {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 222: .catalog-ketcher-loading-progress {
+
+Selector: .catalog-ketcher-loading-text
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 240: .catalog-ketcher-loading-text {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 240: .catalog-ketcher-loading-text {
+
+Selector: .catalog-ketcher-preloader
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 247: .catalog-ketcher-preloader {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 247: .catalog-ketcher-preloader {
+
+Selector: .catalog-live-status
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 442: .catalog-live-status {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 438: .catalog-live-status {
+
+Selector: .catalog-live-status .hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 450: .catalog-live-status .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 446: .catalog-live-status .hint {
+
+Selector: .catalog-metadata-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 425: .catalog-metadata-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 421: .catalog-metadata-grid {
+
+Selector: .catalog-name
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 454: .catalog-name {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 454: .catalog-name {
+
+Selector: .catalog-name-section
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 360: .catalog-name-section {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 356: .catalog-name-section {
+
+Selector: .catalog-overview-strip
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 47: .catalog-overview-strip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 47: .catalog-overview-strip {
+
+Selector: .catalog-persist-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 93: .catalog-persist-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 93: .catalog-persist-actions {
+
+Selector: .catalog-preview-metadata
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 116: .catalog-preview-metadata {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 260: .catalog-preview-metadata {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 116: .catalog-preview-metadata {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 255: .catalog-preview-metadata {
+
+Selector: .catalog-preview-metadata p
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 122: .catalog-preview-metadata p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 122: .catalog-preview-metadata p {
+
+Selector: .catalog-preview-sidebar
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 110: .catalog-preview-sidebar {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 110: .catalog-preview-sidebar {
+
+Selector: .catalog-ready-hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 458: .catalog-ready-hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 450: .catalog-ready-hint {
+
+Selector: .catalog-ref-thumb
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 28: .catalog-ref-thumb {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 28: .catalog-ref-thumb {
+
+Selector: .catalog-ref-thumb .thumb-open-button .thumb-anchor
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 38: .catalog-ref-thumb .thumb-open-button .thumb-anchor {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 38: .catalog-ref-thumb .thumb-open-button .thumb-anchor {
+
+Selector: .catalog-ref-thumb .thumb-open-button small
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 32: .catalog-ref-thumb .thumb-open-button small {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 32: .catalog-ref-thumb .thumb-open-button small {
+
+Selector: .catalog-ref-thumbnail-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 24: .catalog-ref-thumbnail-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 24: .catalog-ref-thumbnail-grid {
+
+Selector: .catalog-reference-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 434: .catalog-reference-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 430: .catalog-reference-grid {
+
+Selector: .catalog-reference-section
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 382: .catalog-reference-section {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 378: .catalog-reference-section {
+
+Selector: .catalog-sketch-validation-error
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 103: .catalog-sketch-validation-error {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 103: .catalog-sketch-validation-error {
+
+Selector: .catalog-smiles
+
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 56: .catalog-smiles {
+    Línea 195: .catalog-smiles {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 254: .catalog-smiles {
+
+Selector: .catalog-smiles-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 429: .catalog-smiles-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 425: .catalog-smiles-grid {
+
+Selector: .catalog-smiles-section
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 364: .catalog-smiles-section {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 360: .catalog-smiles-section {
+
+Selector: .catalog-smiles-sketch-dialog
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 154: .catalog-smiles-sketch-dialog {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 154: .catalog-smiles-sketch-dialog {
+
+Selector: .catalog-smiles-sketch-dialog::backdrop
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 164: .catalog-smiles-sketch-dialog::backdrop {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 164: .catalog-smiles-sketch-dialog::backdrop {
+
+Selector: .catalog-smiles-sketch-modal
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 170: .catalog-smiles-sketch-modal {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 170: .catalog-smiles-sketch-modal {
+
+Selector: .catalog-smiles-sketch-modal textarea
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 197: .catalog-smiles-sketch-modal textarea {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 197: .catalog-smiles-sketch-modal textarea {
+
+Selector: .catalog-step-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 395: .catalog-step-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 391: .catalog-step-card {
+
+Selector: .catalog-step-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 402: .catalog-step-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 398: .catalog-step-header {
+
+Selector: .catalog-step-stack
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 355: .catalog-step-stack {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 351: .catalog-step-stack {
+
+Selector: .catalog-studio-dialog
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 126: .catalog-studio-dialog {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 126: .catalog-studio-dialog {
+
+Selector: .catalog-studio-dialog::backdrop
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 150: .catalog-studio-dialog::backdrop {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 150: .catalog-studio-dialog::backdrop {
+
+Selector: .catalog-studio-dialog[open]
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 135: .catalog-studio-dialog[open] {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 135: .catalog-studio-dialog[open] {
+
+Selector: .catalog-studio-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 357: .catalog-studio-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 357: .catalog-studio-header {
+
+Selector: .catalog-studio-header h4
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 365: .catalog-studio-header h4 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 365: .catalog-studio-header h4 {
+
+Selector: .catalog-studio-modal
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 347: .catalog-studio-modal {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 347: .catalog-studio-modal {
+
+Selector: .checkbox-label
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 332: .checkbox-label {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 226: .checkbox-label {
+
+Selector: .checkbox-row
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 326: .checkbox-row {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 220: .checkbox-row {
+
+Selector: .chip-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 119: .chip-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 119: .chip-actions {
+
+Selector: .chip-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 54: .chip-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 54: .chip-grid {
+
+Selector: .close-btn
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 629: .close-btn {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 532: .close-btn {
+
+Selector: .compact-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 375: .compact-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 375: .compact-actions {
+
+Selector: .compact-anchor-svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 73: .compact-anchor-svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 73: .compact-anchor-svg {
+
+Selector: .compact-traceability
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 81: .compact-traceability {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 76: .compact-traceability {
+
+Selector: .custom-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 82: .custom-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 82: .custom-grid {
+
+Selector: .entry-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 142: .entry-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 142: .entry-panel {
+
+Selector: .error-block
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 554: .error-block {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 456: .error-block {
+
+Selector: .error-message
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 297: .error-message {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 244: .error-message {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 247: .error-message {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 560: .error-message {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 462: .error-message {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 269: .error-message {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 216: .error-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 389: .error-message {
+    Línea 401: .error-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 389: .error-message {
+    Línea 401: .error-message {
+
+Selector: .export-row
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 141: .export-row {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 196: .export-row {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 201: .export-row {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 170: .export-row {
+  Archivo: frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.scss
+    Línea 3: .export-row {
+
+Selector: .eyebrow
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 15: .eyebrow {
+  Archivo: frontend/src/app/apps-hub/apps-hub.component.scss
+    Línea 13: .eyebrow {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 12: .eyebrow {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 13: .eyebrow {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 13: .eyebrow {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 20: .eyebrow {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 19: .eyebrow {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 16: .eyebrow {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 16: .eyebrow {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 32: .eyebrow {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 32: .eyebrow {
+
+Selector: .fd-field
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 534: .fd-field {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 436: .fd-field {
+
+Selector: .fd-item
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 524: .fd-item {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 426: .fd-item {
+
+Selector: .fd-name
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 540: .fd-name {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 442: .fd-name {
+
+Selector: .fd-size
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 547: .fd-size {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 449: .fd-size {
+
+Selector: .file-badge
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 130: .file-badge {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 155: .file-badge {
+
+Selector: .file-descriptors-list
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 518: .file-descriptors-list {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 420: .file-descriptors-list {
+
+Selector: .file-grid
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 61: .file-grid {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 88: .file-grid {
+
+Selector: .file-input-hidden
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 455: .file-input-hidden {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 400: .file-input-hidden {
+
+Selector: .file-upload-label
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 451: .file-upload-label {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 396: .file-upload-label {
+
+Selector: .filter-chip.active
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 74: .filter-chip.active {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 74: .filter-chip.active {
+
+Selector: .flag-row
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 493: .flag-row {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 395: .flag-row {
+
+Selector: .flag-tag
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 500: .flag-tag {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 402: .flag-tag {
+
+Selector: .floating-workspace-shell
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 93: .floating-workspace-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 101: .floating-workspace-shell {
+    Línea 169: .floating-workspace-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 93: .floating-workspace-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 96: .floating-workspace-shell {
+    Línea 164: .floating-workspace-shell {
+
+Selector: .generation-fieldset
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 242: .generation-fieldset {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 242: .generation-fieldset {
+
+Selector: .generation-fieldset:disabled
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 250: .generation-fieldset:disabled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 250: .generation-fieldset:disabled {
+
+Selector: .generation-lock-banner
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 226: .generation-lock-banner {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 226: .generation-lock-banner {
+
+Selector: .generation-lock-banner .hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 238: .generation-lock-banner .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 238: .generation-lock-banner .hint {
+
+Selector: .generation-lock-banner strong
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 234: .generation-lock-banner strong {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 234: .generation-lock-banner strong {
+
+Selector: .grouped-catalog-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 407: .grouped-catalog-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 407: .grouped-catalog-grid {
+
+Selector: .guidance-hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 258: .guidance-hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 254: .guidance-hint {
+
+Selector: .guided-action
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 208: .guided-action {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 228: .guided-action {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 208: .guided-action {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 223: .guided-action {
+
+Selector: .guided-action .hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 215: .guided-action .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 232: .guided-action .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 215: .guided-action .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 227: .guided-action .hint {
+
+Selector: .hero-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 66: .hero-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 66: .hero-card {
+
+Selector: .hero-card strong
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 73: .hero-card strong {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 73: .hero-card strong {
+
+Selector: .hero-label
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 81: .hero-label {
+    Línea 86: .hero-label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 81: .hero-label {
+    Línea 86: .hero-label {
+
+Selector: .hero-strip
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 41: .hero-strip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 174: .hero-strip {
+    Línea 222: .hero-strip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 41: .hero-strip {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 169: .hero-strip {
+    Línea 217: .hero-strip {
+
+Selector: .hint
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 86: .hint {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 82: .hint {
+
+Selector: .history-cancelled
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 388: .history-cancelled {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 355: .history-cancelled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 31: .history-cancelled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 26: .history-cancelled {
+
+Selector: .history-card
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 37: .history-card {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 38: .history-card {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 42: .history-card {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 41: .history-card {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 45: .history-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 59: .history-card {
+    Línea 157: .history-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 59: .history-card {
+    Línea 157: .history-card {
+
+Selector: .history-card h3
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 48: .history-card h3 {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 50: .history-card h3 {
+
+Selector: .history-completed
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 343: .history-completed {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 315: .history-completed {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 369: .history-completed {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 381: .history-completed {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 348: .history-completed {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 18: .history-completed {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 13: .history-completed {
+
+Selector: .history-empty
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 98: .history-empty {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 276: .history-empty {
+
+Selector: .history-failed
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 349: .history-failed {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 321: .history-failed {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 375: .history-failed {
+
+Selector: .history-header
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 301: .history-header {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 263: .history-header {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 333: .history-header {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 201: .history-header {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 654: .history-header {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 556: .history-header {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 358: .history-header {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 325: .history-header {
+
+Selector: .history-open-btn
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 53: .history-open-btn {
+    Línea 67: .history-open-btn {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 70: .history-open-btn {
+    Línea 84: .history-open-btn {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 120: .history-open-btn {
+    Línea 135: .history-open-btn {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 87: .history-open-btn {
+    Línea 102: .history-open-btn {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 361: .history-open-btn {
+    Línea 388: .history-open-btn {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 255: .history-open-btn {
+    Línea 282: .history-open-btn {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 128: .history-open-btn {
+    Línea 142: .history-open-btn {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 97: .history-open-btn {
+    Línea 111: .history-open-btn {
+
+Selector: .history-paused
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 367: .history-paused {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 333: .history-paused {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 363: .history-paused {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 394: .history-paused {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 361: .history-paused {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 25: .history-paused {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 20: .history-paused {
+
+Selector: .history-pending
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 361: .history-pending {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 339: .history-pending {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 351: .history-pending {
+
+Selector: .history-running
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 355: .history-running {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 327: .history-running {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 357: .history-running {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 375: .history-running {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 342: .history-running {
+
+Selector: .history-status
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 334: .history-status {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 306: .history-status {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 342: .history-status {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 366: .history-status {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 333: .history-status {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 8: .history-status {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 3: .history-status {
+
+Selector: .history-table
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 315: .history-table {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 287: .history-table {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 221: .history-table {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 224: .history-table {
+    Línea 340: .history-table {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 670: .history-table {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 572: .history-table {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 235: .history-table {
+    Línea 406: .history-table {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 183: .history-table {
+    Línea 570: .history-table {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 477: .history-table {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 292: .history-table {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 477: .history-table {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 287: .history-table {
+
+Selector: .history-table td
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 322: .history-table td {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 294: .history-table td {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 230: .history-table td {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 233: .history-table td {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 244: .history-table td {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 192: .history-table td {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 484: .history-table td {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 484: .history-table td {
+
+Selector: .history-table th
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 329: .history-table th {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 301: .history-table th {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 238: .history-table th {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 241: .history-table th {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 252: .history-table th {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 200: .history-table th {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 491: .history-table th {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 491: .history-table th {
+
+Selector: .history-table-wrap
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 309: .history-table-wrap {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 281: .history-table-wrap {
+
+Selector: .input-tools-row
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 413: .input-tools-row {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 367: .input-tools-row {
+
+Selector: .inspection-floating-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 134: .inspection-floating-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 207: .inspection-floating-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 134: .inspection-floating-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 202: .inspection-floating-panel {
+
+Selector: .inspection-floating-panel .inspection-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 213: .inspection-floating-panel .inspection-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 208: .inspection-floating-panel .inspection-card {
+
+Selector: .job-id
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 408: .job-id {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 302: .job-id {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 8: .job-id {
+
+Selector: .ketcher-frame
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 522: .ketcher-frame {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 455: .ketcher-frame {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 96: .ketcher-frame {
+
+Selector: .ketcher-frame-wrap
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 514: .ketcher-frame-wrap {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 447: .ketcher-frame-wrap {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 88: .ketcher-frame-wrap {
+
+Selector: .ketcher-loading
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 537: .ketcher-loading {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 470: .ketcher-loading {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 139: .ketcher-loading {
+
+Selector: .ketcher-loading-bar
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 549: .ketcher-loading-bar {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 482: .ketcher-loading-bar {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 151: .ketcher-loading-bar {
+
+Selector: .ketcher-loading-progress
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 557: .ketcher-loading-progress {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 490: .ketcher-loading-progress {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 159: .ketcher-loading-progress {
+
+Selector: .ketcher-loading-text
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 575: .ketcher-loading-text {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 508: .ketcher-loading-text {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 177: .ketcher-loading-text {
+
+Selector: .ketcher-preloader
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 582: .ketcher-preloader {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 515: .ketcher-preloader {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 184: .ketcher-preloader {
+
+Selector: .kv-grid
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 468: .kv-grid {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 370: .kv-grid {
+
+Selector: .kv-label
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 475: .kv-label {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 377: .kv-label {
+
+Selector: .kv-value
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 481: .kv-value {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 383: .kv-value {
+
+Selector: .library-detail-badge
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 188: .library-detail-badge {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 188: .library-detail-badge {
+
+Selector: .library-detail-body
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 209: .library-detail-body {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 287: .library-detail-body {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 209: .library-detail-body {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 282: .library-detail-body {
+
+Selector: .library-detail-fields
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 308: .library-detail-fields {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 308: .library-detail-fields {
+
+Selector: .library-detail-fields dd
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 324: .library-detail-fields dd {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 324: .library-detail-fields dd {
+
+Selector: .library-detail-fields dt
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 318: .library-detail-fields dt {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 318: .library-detail-fields dt {
+
+Selector: .library-detail-footer
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 330: .library-detail-footer {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 330: .library-detail-footer {
+
+Selector: .library-detail-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 173: .library-detail-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 173: .library-detail-header {
+
+Selector: .library-detail-header h4
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 202: .library-detail-header h4 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 202: .library-detail-header h4 {
+
+Selector: .library-detail-preview-wrap
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 218: .library-detail-preview-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 218: .library-detail-preview-wrap {
+
+Selector: .library-detail-svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 252: .library-detail-svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 252: .library-detail-svg {
+
+Selector: .library-detail-svg svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 266: .library-detail-svg svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 266: .library-detail-svg svg {
+
+Selector: .library-detail-title-row
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 182: .library-detail-title-row {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 182: .library-detail-title-row {
+
+Selector: .library-detail-viewport
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 226: .library-detail-viewport {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 226: .library-detail-viewport {
+
+Selector: .library-detail-viewport.is-dragging
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 241: .library-detail-viewport.is-dragging {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 241: .library-detail-viewport.is-dragging {
+
+Selector: .library-detail-zoom-controls
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 245: .library-detail-zoom-controls {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 245: .library-detail-zoom-controls {
+
+Selector: .library-entry-detail-dialog
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 150: .library-entry-detail-dialog {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 150: .library-entry-detail-dialog {
+
+Selector: .library-entry-detail-dialog::backdrop
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 160: .library-entry-detail-dialog::backdrop {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 160: .library-entry-detail-dialog::backdrop {
+
+Selector: .library-entry-detail-modal
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 166: .library-entry-detail-modal {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 166: .library-entry-detail-modal {
+
+Selector: .library-group-filter
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 440: .library-group-filter {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 440: .library-group-filter {
+
+Selector: .library-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 138: .library-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 138: .library-panel {
+
+Selector: .library-thumb
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 61: .library-thumb {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 61: .library-thumb {
+
+Selector: .library-thumb-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 52: .library-thumb-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 52: .library-thumb-actions {
+
+Selector: .library-thumb-actions .btn-secondary
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 57: .library-thumb-actions .btn-secondary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 57: .library-thumb-actions .btn-secondary {
+
+Selector: .library-thumb:focus-visible
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 80: .library-thumb:focus-visible {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 80: .library-thumb:focus-visible {
+
+Selector: .library-thumbnail-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 460: .library-thumbnail-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 283: .library-thumbnail-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 460: .library-thumbnail-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 278: .library-thumbnail-grid {
+
+Selector: .log-header
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 119: .log-header {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 149: .log-header {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 267: .log-header {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 270: .log-header {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 590: .log-header {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 492: .log-header {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 296: .log-header {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 263: .log-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 36: .log-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 31: .log-header {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 19: .log-header {
+
+Selector: .log-index
+
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 191: .log-index {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 309: .log-index {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 312: .log-index {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 629: .log-index {
+    Línea 634: .log-index {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 531: .log-index {
+    Línea 536: .log-index {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 338: .log-index {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 305: .log-index {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 383: .log-index {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 383: .log-index {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 61: .log-index {
+
+Selector: .log-item
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 110: .log-item {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 140: .log-item {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 258: .log-item {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 261: .log-item {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 581: .log-item {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 483: .log-item {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 287: .log-item {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 254: .log-item {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 10: .log-item {
+
+Selector: .log-level
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 127: .log-level {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 157: .log-level {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 275: .log-level {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 278: .log-level {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 597: .log-level {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 499: .log-level {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 304: .log-level {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 271: .log-level {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 43: .log-level {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 38: .log-level {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 27: .log-level {
+
+Selector: .log-level-debug
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 135: .log-level-debug {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 166: .log-level-debug {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 284: .log-level-debug {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 287: .log-level-debug {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 313: .log-level-debug {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 280: .log-level-debug {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 68: .log-level-debug {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 63: .log-level-debug {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 36: .log-level-debug {
+
+Selector: .log-level-error
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 153: .log-level-error {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 184: .log-level-error {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 302: .log-level-error {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 305: .log-level-error {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 331: .log-level-error {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 298: .log-level-error {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 63: .log-level-error {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 58: .log-level-error {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 54: .log-level-error {
+
+Selector: .log-level-info
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 141: .log-level-info {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 172: .log-level-info {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 290: .log-level-info {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 293: .log-level-info {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 319: .log-level-info {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 286: .log-level-info {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 53: .log-level-info {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 48: .log-level-info {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 42: .log-level-info {
+
+Selector: .log-level-warning
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 147: .log-level-warning {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 178: .log-level-warning {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 296: .log-level-warning {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 299: .log-level-warning {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 325: .log-level-warning {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 292: .log-level-warning {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 58: .log-level-warning {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 53: .log-level-warning {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 48: .log-level-warning {
+
+Selector: .log-message
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 315: .log-message {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 318: .log-message {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 637: .log-message {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 539: .log-message {
+
+Selector: .log-payload
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 166: .log-payload {
+    Línea 171: .log-payload {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 197: .log-payload {
+    Línea 203: .log-payload {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 321: .log-payload {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 324: .log-payload {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 642: .log-payload {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 544: .log-payload {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 344: .log-payload {
+    Línea 350: .log-payload {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 311: .log-payload {
+    Línea 317: .log-payload {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 73: .log-payload {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 68: .log-payload {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 67: .log-payload {
+    Línea 73: .log-payload {
+
+Selector: .logs-list
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 103: .logs-list {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 133: .logs-list {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 251: .logs-list {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 254: .logs-list {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 574: .logs-list {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 476: .logs-list {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 280: .logs-list {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 247: .logs-list {
+  Archivo: frontend/src/app/core/shared/components/job-logs-panel/job-logs-panel.component.scss
+    Línea 3: .logs-list {
+
+Selector: .logs-textbox
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 434: .logs-textbox {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 434: .logs-textbox {
+
+Selector: .manager-catalog-groups
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 363: .manager-catalog-groups {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 363: .manager-catalog-groups {
+
+Selector: .metadata-grid
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 199: .metadata-grid {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 162: .metadata-grid {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 189: .metadata-grid {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 158: .metadata-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 357: .metadata-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 357: .metadata-grid {
+
+Selector: .metadata-grid p
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 206: .metadata-grid p {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 169: .metadata-grid p {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 195: .metadata-grid p {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 164: .metadata-grid p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 363: .metadata-grid p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 363: .metadata-grid p {
+
+Selector: .molecule-image-dialog
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 594: .molecule-image-dialog {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 423: .molecule-image-dialog {
+
+Selector: .molecule-image-dialog::backdrop
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 602: .molecule-image-dialog::backdrop {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 432: .molecule-image-dialog::backdrop {
+
+Selector: .molecule-image-header
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 616: .molecule-image-header {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 525: .molecule-image-header {
+
+Selector: .molecule-image-modal
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 606: .molecule-image-modal {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 437: .molecule-image-modal {
+
+Selector: .molecule-modal-smiles
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 644: .molecule-modal-smiles {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 542: .molecule-modal-smiles {
+
+Selector: .molecule-svg-wrap
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 651: .molecule-svg-wrap {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 549: .molecule-svg-wrap {
+
+Selector: .molecule-svg-wrap svg
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 661: .molecule-svg-wrap svg {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 559: .molecule-svg-wrap svg {
+
+Selector: .mono
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 161: .mono {
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 226: .mono {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 97: .mono {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 161: .mono {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 124: .mono {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 488: .mono {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 390: .mono {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 159: .mono {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 128: .mono {
+
+Selector: .opt-mark
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 123: .opt-mark {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 148: .opt-mark {
+
+Selector: .options-grid.compact
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 88: .options-grid.compact {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 88: .options-grid.compact {
+
+Selector: .panel-header-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 183: .panel-header-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 183: .panel-header-actions {
+
+Selector: .param-grid
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 284: .param-grid {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 178: .param-grid {
+
+Selector: .pattern-catalog-modal
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 288: .pattern-catalog-modal {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 288: .pattern-catalog-modal {
+
+Selector: .pattern-detail-dialog
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 258: .pattern-detail-dialog {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 258: .pattern-detail-dialog {
+
+Selector: .pattern-detail-dialog::backdrop
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 284: .pattern-detail-dialog::backdrop {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 284: .pattern-detail-dialog::backdrop {
+
+Selector: .pattern-detail-dialog[open]
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 268: .pattern-detail-dialog[open] {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 268: .pattern-detail-dialog[open] {
+
+Selector: .pattern-detail-modal
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 298: .pattern-detail-modal {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 298: .pattern-detail-modal {
+
+Selector: .pattern-item
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 312: .pattern-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 312: .pattern-item {
+
+Selector: .pattern-item-content
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 319: .pattern-item-content {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 319: .pattern-item-content {
+
+Selector: .pattern-item-toggle
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 323: .pattern-item-toggle {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 323: .pattern-item-toggle {
+
+Selector: .pattern-list
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 404: .pattern-list {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 404: .pattern-list {
+
+Selector: .pattern-modal-list
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 308: .pattern-modal-list {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 308: .pattern-modal-list {
+
+Selector: .pattern-name-link
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 332: .pattern-name-link {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 332: .pattern-name-link {
+
+Selector: .pattern-name-link:hover
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 343: .pattern-name-link:hover {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 343: .pattern-name-link:hover {
+
+Selector: .pattern-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 146: .pattern-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 86: .pattern-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 146: .pattern-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 81: .pattern-panel {
+
+Selector: .pattern-panel .catalog-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 167: .pattern-panel .catalog-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 167: .pattern-panel .catalog-card {
+
+Selector: .pattern-privileged
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 371: .pattern-privileged {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 371: .pattern-privileged {
+
+Selector: .pattern-reference-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 271: .pattern-reference-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 267: .pattern-reference-card {
+
+Selector: .pattern-reference-card h5
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 286: .pattern-reference-card h5 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 282: .pattern-reference-card h5 {
+
+Selector: .pattern-reference-card p
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 281: .pattern-reference-card p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 277: .pattern-reference-card p {
+
+Selector: .pattern-toggle-label
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 327: .pattern-toggle-label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 327: .pattern-toggle-label {
+
+Selector: .pattern-toxicophore
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 367: .pattern-toxicophore {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 367: .pattern-toxicophore {
+
+Selector: .preview-warning
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 294: .preview-warning {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 290: .preview-warning {
+
+Selector: .principal-inspect-action
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 189: .principal-inspect-action {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 189: .principal-inspect-action {
+
+Selector: .principal-pattern-action
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 195: .principal-pattern-action {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 195: .principal-pattern-action {
+
+Selector: .principal-pattern-action .hint
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 202: .principal-pattern-action .hint {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 202: .principal-pattern-action .hint {
+
+Selector: .principal-preview-wrap
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 19: .principal-preview-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 8: .principal-preview-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 8: .principal-preview-wrap {
+
+Selector: .principal-svg-stage
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 47: .principal-svg-stage {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 36: .principal-svg-stage {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 36: .principal-svg-stage {
+
+Selector: .principal-svg-viewport
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 32: .principal-svg-viewport {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 21: .principal-svg-viewport {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 21: .principal-svg-viewport {
+
+Selector: .principal-zoom-controls
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 25: .principal-zoom-controls {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 14: .principal-zoom-controls {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 14: .principal-zoom-controls {
+
+Selector: .principal-zoom-surface
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 41: .principal-zoom-surface {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 30: .principal-zoom-surface {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 30: .principal-zoom-surface {
+
+Selector: .progress-card
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 151: .progress-card {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 114: .progress-card {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 399: .progress-card {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 293: .progress-card {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 153: .progress-card {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 122: .progress-card {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 3: .progress-card {
+
+Selector: .progress-fill
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 241: .progress-fill {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 111: .progress-fill {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 176: .progress-fill {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 139: .progress-fill {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 423: .progress-fill {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 317: .progress-fill {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 173: .progress-fill {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 142: .progress-fill {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 422: .progress-fill {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 422: .progress-fill {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 23: .progress-fill {
+
+Selector: .progress-message
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 182: .progress-message {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 145: .progress-message {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 436: .progress-message {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 330: .progress-message {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 184: .progress-message {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 153: .progress-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 429: .progress-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 429: .progress-message {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 34: .progress-message {
+
+Selector: .progress-pct
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 242: .progress-pct {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 116: .progress-pct {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 429: .progress-pct {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 323: .progress-pct {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 178: .progress-pct {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 147: .progress-pct {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 28: .progress-pct {
+
+Selector: .progress-track
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 234: .progress-track {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 104: .progress-track {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 169: .progress-track {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 132: .progress-track {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 416: .progress-track {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 310: .progress-track {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 166: .progress-track {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 135: .progress-track {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 414: .progress-track {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 414: .progress-track {
+  Archivo: frontend/src/app/core/shared/components/job-progress-card/job-progress-card.component.scss
+    Línea 16: .progress-track {
+
+Selector: .property-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 375: .property-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 375: .property-card {
+
+Selector: .property-card span
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 382: .property-card span {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 382: .property-card span {
+
+Selector: .property-card strong
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 391: .property-card strong {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 391: .property-card strong {
+
+Selector: .property-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 368: .property-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 368: .property-grid {
+
+Selector: .queued-catalog-actions
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 489: .queued-catalog-actions {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 481: .queued-catalog-actions {
+
+Selector: .queued-catalog-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 478: .queued-catalog-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 470: .queued-catalog-card {
+
+Selector: .queued-catalog-drafts
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 466: .queued-catalog-drafts {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 458: .queued-catalog-drafts {
+
+Selector: .queued-catalog-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 472: .queued-catalog-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 464: .queued-catalog-grid {
+
+Selector: .remove-btn
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 331: .remove-btn {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 331: .remove-btn {
+
+Selector: .req-mark
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 118: .req-mark {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 143: .req-mark {
+
+Selector: .result-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 145: .result-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 140: .result-panel {
+
+Selector: .result-section
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 248: .result-section {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 454: .result-section {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 356: .result-section {
+
+Selector: .result-title-row
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 237: .result-title-row {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 348: .result-title-row {
+
+Selector: .selected-substituent-summary
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 60: .selected-substituent-summary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 60: .selected-substituent-summary {
+
+Selector: .selected-substituent-summary p
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 68: .selected-substituent-summary p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 68: .selected-substituent-summary p {
+
+Selector: .single-structure-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 499: .single-structure-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 499: .single-structure-panel {
+
+Selector: .site-toolbar
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 44: .site-toolbar {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 44: .site-toolbar {
+
+Selector: .site-toolbar-summary
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 221: .site-toolbar-summary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 237: .site-toolbar-summary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 221: .site-toolbar-summary {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 232: .site-toolbar-summary {
+
+Selector: .site-toolbar-summary strong
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 228: .site-toolbar-summary strong {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 228: .site-toolbar-summary strong {
+
+Selector: .sketch-modal-actions
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 530: .sketch-modal-actions {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 463: .sketch-modal-actions {
+
+Selector: .small
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 337: .small {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 337: .small {
+
+Selector: .smileit-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 9: .smileit-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 97: .smileit-header {
+    Línea 270: .smileit-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 9: .smileit-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 92: .smileit-header {
+    Línea 265: .smileit-header {
+
+Selector: .smileit-header h2
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 19: .smileit-header h2 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 19: .smileit-header h2 {
+
+Selector: .smileit-header p
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 26: .smileit-header p {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 26: .smileit-header p {
+
+Selector: .smileit-shell
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 3: .smileit-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 92: .smileit-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 3: .smileit-shell {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 87: .smileit-shell {
+
+Selector: .smiles-cell-btn
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 465: .smiles-cell-btn {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 408: .smiles-cell-btn {
+
+Selector: .smiles-label
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 57: .smiles-label {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 53: .smiles-label {
+
+Selector: .status-completed
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 207: .status-completed {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 700: .status-completed {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 602: .status-completed {
+
+Selector: .status-failed
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 213: .status-failed {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 704: .status-failed {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 606: .status-failed {
+
+Selector: .status-message
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 145: .status-message {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 108: .status-message {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 567: .status-message {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 469: .status-message {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 148: .status-message {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 117: .status-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 408: .status-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 408: .status-message {
+
+Selector: .status-pending
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 189: .status-pending {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 693: .status-pending {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 595: .status-pending {
+
+Selector: .status-running
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 195: .status-running {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 696: .status-running {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 598: .status-running {
+
+Selector: .structure-modal-header
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 175: .structure-modal-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 279: .structure-modal-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 175: .structure-modal-header {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 274: .structure-modal-header {
+
+Selector: .structure-modal-panel h5
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 485: .structure-modal-panel h5 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 485: .structure-modal-panel h5 {
+
+Selector: .structure-modal-panel svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 493: .structure-modal-panel svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 493: .structure-modal-panel svg {
+
+Selector: .structure-modal-svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 477: .structure-modal-svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 477: .structure-modal-svg {
+
+Selector: .structure-name-button
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 459: .structure-name-button {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 459: .structure-name-button {
+
+Selector: .structure-name-button:hover
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 469: .structure-name-button:hover {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 469: .structure-name-button:hover {
+
+Selector: .structures-list
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 452: .structures-list {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 452: .structures-list {
+
+Selector: .structures-list-item
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 374: .structures-list-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 374: .structures-list-item {
+
+Selector: .substituent-candidate-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 23: .substituent-candidate-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 23: .substituent-candidate-card {
+
+Selector: .substituent-candidate-card small
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 52: .substituent-candidate-card small {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 52: .substituent-candidate-card small {
+
+Selector: .substituent-candidate-card.selected
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 45: .substituent-candidate-card.selected {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 45: .substituent-candidate-card.selected {
+
+Selector: .substituent-candidate-card.selected small
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 56: .substituent-candidate-card.selected small {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 56: .substituent-candidate-card.selected small {
+
+Selector: .substituent-candidate-card:hover
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 40: .substituent-candidate-card:hover {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 40: .substituent-candidate-card:hover {
+
+Selector: .substituent-candidate-grid
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 16: .substituent-candidate-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 16: .substituent-candidate-grid {
+
+Selector: .substituent-workspace-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 3: .substituent-workspace-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 3: .substituent-workspace-card {
+
+Selector: .substituent-workspace-card h5
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 11: .substituent-workspace-card h5 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 11: .substituent-workspace-card h5 {
+
+Selector: .summary-banner
+
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 223: .summary-banner {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 188: .summary-banner {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 151: .summary-banner {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 443: .summary-banner {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 337: .summary-banner {
+
+Selector: .svg-preview.inspectable
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 15: .svg-preview.inspectable {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 3: .svg-preview.inspectable {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 3: .svg-preview.inspectable {
+
+Selector: .table-wrap
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 316: .table-wrap {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 212: .table-wrap {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 215: .table-wrap {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 662: .table-wrap {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 564: .table-wrap {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 227: .table-wrap {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 175: .table-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 473: .table-wrap {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 473: .table-wrap {
+
+Selector: .tag-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 382: .tag-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 382: .tag-card {
+
+Selector: .thumb-error
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 116: .thumb-error {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 116: .thumb-error {
+
+Selector: .thumb-name
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 120: .thumb-name {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 120: .thumb-name {
+
+Selector: .thumb-open-button
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 498: .thumb-open-button {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 498: .thumb-open-button {
+
+Selector: .thumb-open-button:disabled
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 3: .thumb-open-button:disabled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 3: .thumb-open-button:disabled {
+
+Selector: .thumb-preview
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 87: .thumb-preview {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 87: .thumb-preview {
+
+Selector: .thumb-smiles
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 135: .thumb-smiles {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 135: .thumb-smiles {
+
+Selector: .thumb-state-icon
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 111: .thumb-state-icon {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 111: .thumb-state-icon {
+
+Selector: .thumb-svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 98: .thumb-svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 98: .thumb-svg {
+
+Selector: .thumb-svg svg
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 106: .thumb-svg svg {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 106: .thumb-svg svg {
+
+Selector: .toggle-label
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 93: .toggle-label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 93: .toggle-label {
+
+Selector: .traceability-card h4
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 301: .traceability-card h4 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 297: .traceability-card h4 {
+
+Selector: .traceability-table td
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 4: .traceability-table td {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 499: .traceability-table td {
+
+Selector: .upload-hint
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 147: .upload-hint {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 172: .upload-hint {
+
+Selector: .upload-label
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 113: .upload-label {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 138: .upload-label {
+
+Selector: .upload-zone
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 73: .upload-zone {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 98: .upload-zone {
+
+Selector: .warning-message
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 395: .warning-message {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 395: .warning-message {
+
+Selector: .workflow-step-guide
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 135: .workflow-step-guide {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 135: .workflow-step-guide {
+
+Selector: .workflow-step-guide h4
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 143: .workflow-step-guide h4 {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 143: .workflow-step-guide h4 {
+
+Selector: .workflow-step-index
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 181: .workflow-step-index {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 181: .workflow-step-index {
+
+Selector: .workflow-step-item
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 156: .workflow-step-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 242: .workflow-step-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 156: .workflow-step-item {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 237: .workflow-step-item {
+
+Selector: .workflow-step-item strong
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 167: .workflow-step-item strong {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 167: .workflow-step-item strong {
+
+Selector: .workflow-step-item.is-active
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 171: .workflow-step-item.is-active {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 171: .workflow-step-item.is-active {
+
+Selector: .workflow-step-item.is-active .workflow-step-index
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 194: .workflow-step-item.is-active .workflow-step-index {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 194: .workflow-step-item.is-active .workflow-step-index {
+
+Selector: .workflow-step-item.is-active .workflow-step-state
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 211: .workflow-step-item.is-active .workflow-step-state {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 211: .workflow-step-item.is-active .workflow-step-state {
+
+Selector: .workflow-step-item.is-done
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 176: .workflow-step-item.is-done {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 176: .workflow-step-item.is-done {
+
+Selector: .workflow-step-item.is-done .workflow-step-state
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 216: .workflow-step-item.is-done .workflow-step-state {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 216: .workflow-step-item.is-done .workflow-step-state {
+
+Selector: .workflow-step-list
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 148: .workflow-step-list {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 148: .workflow-step-list {
+
+Selector: .workflow-step-state
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 199: .workflow-step-state {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 246: .workflow-step-state {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 199: .workflow-step-state {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 241: .workflow-step-state {
+
+Selector: .workflow-step-state.generation-ready
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-a.scss
+    Línea 221: .workflow-step-state.generation-ready {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-02.scss
+    Línea 221: .workflow-step-state.generation-ready {
+
+Selector: .workspace-columns
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 98: .workspace-columns {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 109: .workspace-columns {
+    Línea 178: .workspace-columns {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 98: .workspace-columns {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 104: .workspace-columns {
+    Línea 173: .workspace-columns {
+
+Selector: .workspace-columns > .workspace-left-column .inspection-floating-panel
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 155: .workspace-columns > .workspace-left-column .inspection-floating-panel {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 150: .workspace-columns > .workspace-left-column .inspection-floating-panel {
+
+Selector: .workspace-columns > .workspace-left-column .inspection-floating-panel .inspection-card
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 163: .workspace-columns > .workspace-left-column .inspection-floating-panel .inspection-card {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 158: .workspace-columns > .workspace-left-column .inspection-floating-panel .inspection-card {
+
+Selector: .workspace-grid
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 27: .workspace-grid {
+    Línea 382: .workspace-grid {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 27: .workspace-grid {
+    Línea 335: .workspace-grid {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 29: .workspace-grid {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 28: .workspace-grid {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 35: .workspace-grid {
+    Línea 401: .workspace-grid {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 30: .workspace-grid {
+    Línea 565: .workspace-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 113: .workspace-grid {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 113: .workspace-grid {
+
+Selector: .workspace-left-column
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 117: .workspace-left-column {
+    Línea 186: .workspace-left-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 112: .workspace-left-column {
+    Línea 181: .workspace-left-column {
+
+Selector: .workspace-main-column
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 127: .workspace-main-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 149: .workspace-main-column {
+    Línea 182: .workspace-main-column {
+    Línea 203: .workspace-main-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 127: .workspace-main-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 144: .workspace-main-column {
+    Línea 177: .workspace-main-column {
+    Línea 198: .workspace-main-column {
+
+Selector: .workspace-right-column
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 106: .workspace-right-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 126: .workspace-right-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 106: .workspace-right-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 121: .workspace-right-column {
+
+Selector: .workspace-right-column:first-of-type
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 133: .workspace-right-column:first-of-type {
+    Línea 190: .workspace-right-column:first-of-type {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 128: .workspace-right-column:first-of-type {
+    Línea 185: .workspace-right-column:first-of-type {
+
+Selector: .workspace-right-column:last-of-type
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 137: .workspace-right-column:last-of-type {
+    Línea 194: .workspace-right-column:last-of-type {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 132: .workspace-right-column:last-of-type {
+    Línea 189: .workspace-right-column:last-of-type {
+
+Selector: .workspace-side-column
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 120: .workspace-side-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 141: .workspace-side-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 120: .workspace-side-column {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 136: .workspace-side-column {
+
+Selector: .zoom-btn
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 55: .zoom-btn {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 271: .zoom-btn {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 271: .zoom-btn {
+
+Selector: .zoom-btn:disabled
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 78: .zoom-btn:disabled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 294: .zoom-btn:disabled {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 294: .zoom-btn:disabled {
+
+Selector: .zoom-btn:hover:not(:disabled)
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 73: .zoom-btn:hover:not(:disabled) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 289: .zoom-btn:hover:not(:disabled) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 289: .zoom-btn:hover:not(:disabled) {
+
+Selector: .zoom-label
+
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 83: .zoom-label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-details.scss
+    Línea 299: .zoom-label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-04.scss
+    Línea 299: .zoom-label {
+
+Selector: 0%
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 567: 0% {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 500: 0% {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 169: 0% {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 232: 0% {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 232: 0% {
+
+Selector: 100%
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 570: 100% {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 503: 100% {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 172: 100% {
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 235: 100% {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 235: 100% {
+
+Selector: :host
+
+  Archivo: frontend/src/app/app.scss
+    Línea 1: :host {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 3: :host {
+  Archivo: frontend/src/app/smileit/principal-visualizer/principal-svg-viewer.component.scss
+    Línea 3: :host {
+
+Selector: @keyframes catalog-ketcher-slide
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-catalog-b.scss
+    Línea 231: @keyframes catalog-ketcher-slide {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-03.scss
+    Línea 231: @keyframes catalog-ketcher-slide {
+
+Selector: @keyframes ketcher-slide
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 566: @keyframes ketcher-slide {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 499: @keyframes ketcher-slide {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 168: @keyframes ketcher-slide {
+
+Selector: @media (max-width: 1023px)
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 168: @media (max-width: 1023px) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 163: @media (max-width: 1023px) {
+
+Selector: @media (max-width: 1480px)
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 85: @media (max-width: 1480px) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 80: @media (max-width: 1480px) {
+
+Selector: @media (max-width: 760px)
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 221: @media (max-width: 760px) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 216: @media (max-width: 760px) {
+
+Selector: @media (max-width: 860px)
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 227: @media (max-width: 860px) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 222: @media (max-width: 860px) {
+
+Selector: @media (max-width: 900px)
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 34: @media (max-width: 900px) {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 33: @media (max-width: 900px) {
+
+Selector: @media (max-width: 980px)
+
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 381: @media (max-width: 980px) {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 400: @media (max-width: 980px) {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 564: @media (max-width: 980px) {
+
+Selector: @media (min-width: 1024px)
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-responsive.scss
+    Línea 91: @media (min-width: 1024px) {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-05.scss
+    Línea 86: @media (min-width: 1024px) {
+
+Selector: body
+
+  Archivo: frontend/src/styles.scss
+    Línea 8: body {
+    Línea 13: body {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 140: body {
+
+Selector: button
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 67: button {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 63: button {
+
+Selector: h1
+
+  Archivo: frontend/src/app/app.scss
+    Línea 49: h1 {
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 24: h1 {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 281: h1 {
+
+Selector: h2
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 8: h2 {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 8: h2 {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 205: h2 {
+    Línea 240: h2 {
+
+Selector: h3
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 49: h3 {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 48: h3 {
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 52: h3 {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 48: h3 {
+
+Selector: h4
+
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 234: h4 {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 458: h4 {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 360: h4 {
+
+Selector: input
+
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 52: input {
+  Archivo: frontend/src/app/molar-fractions/molar-fractions.component.scss
+    Línea 72: input {
+  Archivo: frontend/src/app/tunnel/tunnel.component.scss
+    Línea 70: input {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 15: input {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 692: input {
+
+Selector: input[type='checkbox']
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 341: input[type='checkbox'] {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 235: input[type='checkbox'] {
+
+Selector: input[type='file']
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 87: input[type='file'] {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 112: input[type='file'] {
+
+Selector: label
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 35: label {
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 104: label {
+  Archivo: frontend/src/app/random-numbers/random-numbers.component.scss
+    Línea 44: label {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 289: label {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 183: label {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 7: label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 255: label {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 255: label {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 310: label {
+
+Selector: p
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 13: p {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 13: p {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 157: p {
+    Línea 248: p {
+    Línea 449: p {
+
+Selector: select
+
+  Archivo: frontend/src/app/calculator/calculator.component.scss
+    Línea 44: select {
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 112: select {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 187: select {
+    Línea 297: select {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 191: select {
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 264: select {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 264: select {
+
+Selector: select:focus
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 274: select:focus {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 274: select:focus {
+
+Selector: small
+
+  Archivo: frontend/src/app/smileit/styles/_smileit-layout.scss
+    Línea 240: small {
+    Línea 250: small {
+  Archivo: frontend/src/app/smileit/styles/_smileit-split-01.scss
+    Línea 240: small {
+    Línea 250: small {
+
+Selector: strong
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 168: strong {
+    Línea 242: strong {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 349: strong {
+
+Selector: table
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 323: table {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 162: table {
+
+Selector: td
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 330: td {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 676: td {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 578: td {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 165: td {
+
+Selector: textarea
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 71: textarea {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 67: textarea {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 104: textarea {
+
+Selector: textarea:focus
+
+  Archivo: frontend/src/app/sa-score/sa-score.component.scss
+    Línea 81: textarea:focus {
+  Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.scss
+    Línea 77: textarea:focus {
+  Archivo: frontend/src/app/smileit/principal-molecule/principal-molecule-editor.component.scss
+    Línea 116: textarea:focus {
+
+Selector: th
+
+  Archivo: frontend/src/app/jobs-monitor/jobs-monitor.component.scss
+    Línea 337: th {
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 682: th {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 584: th {
+  Archivo: backend/venv/lib/python3.12/site-packages/coverage/htmlfiles/style.scss
+    Línea 128: th {
+    Línea 769: th {
+    Línea 792: th {
+    Línea 826: th {
+
+Selector: tr:last-child td
+
+  Archivo: frontend/src/app/easy-rate/easy-rate.component.scss
+    Línea 687: tr:last-child td {
+  Archivo: frontend/src/app/marcus/marcus.component.scss
+    Línea 589: tr:last-child td {
