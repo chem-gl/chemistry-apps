@@ -1,39 +1,4 @@
 Problema 1
-Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.scss
-
-Problema:
-Unexpected duplicate selector ".metadata-grid p", first used at line 26
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S4666
-Severidad: MAJOR
-Línea: 171
-
-Cómo solucionarlo:
-To fix your code, either remove the duplicated selector or merge all declarations.
-
-Noncompliant code example
-
-p {
-  color: blue;
-  font-size: 16px;
-}
-
-p { /* Noncompliant: duplicated selector 'p', overwrites property 'color' */
-  color: red;
-}
-
-Compliant solution
-
-p {
-  color: red;
-  font-size: 16px;
-}
-
-----------------------------------------
-
-Problema 2
 Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.scss
 
 Problema:
@@ -67,7 +32,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 3
+Problema 2
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.scss
 
 Problema:
@@ -101,7 +66,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 4
+Problema 3
 Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.scss
 
 Problema:
@@ -135,7 +100,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 5
+Problema 4
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.scss
 
 Problema:
@@ -145,7 +110,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: css:S7924
 Severidad: MAJOR
-Línea: 114
+Línea: 107
 
 Cómo solucionarlo:
 Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
