@@ -2,30 +2,24 @@ Problema 1
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
-Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+"tabIndex" should only be declared on interactive elements.
 
 Razón:
 Tipo: CODE_SMELL
-Regla: Web:S6819
+Regla: Web:S6845
 Severidad: MAJOR
-Línea: 233
+Línea: 234
 
 Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+Simply remove the tabIndex attribute or set it to "-1" to fix the issue.
 
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+Noncompliant code example
 
-Replace the ARIA role with an appropriate HTML tag.
+&lt;div tabIndex="0" /&gt;
 
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+Compliant solution
+
+&lt;div /&gt;
 
 ----------------------------------------
 
@@ -33,30 +27,24 @@ Problema 2
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
-Use <dialog> instead of the dialog role to ensure accessibility across all devices.
+"tabIndex" should only be declared on interactive elements.
 
 Razón:
 Tipo: CODE_SMELL
-Regla: Web:S6819
+Regla: Web:S6845
 Severidad: MAJOR
-Línea: 368
+Línea: 369
 
 Cómo solucionarlo:
-ARIA (Accessible Rich Internet Applications) roles are used to make web content and web applications more accessible to people with disabilities.
-However, you should not use an ARIA role on a generic element (like span or div) if there is a semantic HTML tag with
-similar functionality, just use that tag instead.
-For example, instead of using a div element with a button role (&lt;div role="button"&gt;Click me&lt;/div&gt;), you should just use a
-button element (&lt;button&gt;Click me&lt;/button&gt;).
-Semantic HTML tags are generally preferred over ARIA roles for accessibility due to their built-in functionality, universal support by browsers and
-assistive technologies, simplicity, and maintainability. They come with inherent behaviors and keyboard interactions, reducing the need for additional
-JavaScript. Semantic HTML also enhances SEO by helping search engines better understand the content and structure of web pages. While ARIA roles are
-useful, they should be considered a last resort when no suitable HTML element can provide the required behavior or semantics.
+Simply remove the tabIndex attribute or set it to "-1" to fix the issue.
 
-&lt;div role="button" onClick="myFunction()"&gt;Click me&lt;/div&gt; &lt;!-- Noncompliant --&gt;
+Noncompliant code example
 
-Replace the ARIA role with an appropriate HTML tag.
+&lt;div tabIndex="0" /&gt;
 
-&lt;button onClick="myFunction()"&gt;Click me&lt;/button&gt;
+Compliant solution
+
+&lt;div /&gt;
 
 ----------------------------------------
 
@@ -163,100 +151,6 @@ Compliant solution
 ----------------------------------------
 
 Problema 6
-Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 233
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 7
-Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
-
-Problema:
-Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
-
-Razón:
-Tipo: BUG
-Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
-Severidad: MINOR
-Línea: 368
-
-Cómo solucionarlo:
-Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
-Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
-This rule raises an issue when:
-
-   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
-   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
-   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
-  onKeyUp, onKeyPress. 
-
-Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
-usually used by screen-readers.
-Noncompliant code example
-
-&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
-&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
-&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
-
-Compliant solution
-Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
-
-&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
-&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
-&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
-
-Exceptions
-For the following elements, pressing a key will trigger the onClick
-attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
-&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
-onKeyDown/onKeyUp/onKeyPress.
-An issue will still be raised for elements with the
-role="button" attribute as they don’t behave the same way.
-
-----------------------------------------
-
-Problema 8
 Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.scss
 
 Problema:

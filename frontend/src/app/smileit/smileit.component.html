@@ -233,9 +233,7 @@
     >
       <section
         class="pattern-catalog-modal"
-        tabindex="0"
         (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
       >
           <header class="catalog-studio-header">
           <div>
@@ -368,9 +366,7 @@
       @if (selectedPatternForDetail(); as detailPattern) {
         <section
           class="pattern-detail-modal"
-          tabindex="0"
           (click)="$event.stopPropagation()"
-          (keydown)="$event.stopPropagation()"
         >
           <header class="library-detail-header">
             <div class="library-detail-title-row">
