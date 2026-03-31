@@ -40,3 +40,4 @@
   asi que si se llega a ignorar debe haber razones de peso y una justificacion de porque no ignorarlo
   asi mismo si se llega haber problemas de tipo quizas convenga usar monados como Maybe o Result para manejar errores de manera más elegante y evitar tener que usar `# type: ignore` para ignorar errores de tipado, esto puede ayudar a mantener el código limpio y bien tipado, y a manejar
   En dado caso siempre se ignoran los archivos autogenerados **/generated/**, ya que estos archivos son generados automáticamente por herramientas y no deben ser editados manualmente. asi que se insta a modificar los linters y herramientas de análisis estático para que ignoren cualquier error de estilo o tipado en los archivos dentro de la carpeta **/generated/**, ya que estos archivos son generados automáticamente y no deben ser editados.
+- los test tocan todo el codigo privado y publico a traves de las pruebas a puntos publicos.

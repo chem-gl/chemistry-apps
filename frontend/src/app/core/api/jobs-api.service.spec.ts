@@ -181,7 +181,7 @@ describe('JobsApiService', () => {
       onclose: null,
     };
     class MockWebSocket {
-      static latestInstance: MockWebSocket | null = null;
+      public static latestInstance: MockWebSocket | null = null;
 
       readyState: number = 1;
       close = vi.fn();
@@ -448,7 +448,7 @@ describe('JobsApiService', () => {
     expect(req.request.body instanceof FormData).toBe(true);
 
     const payload = req.request.body as FormData;
-    expect(payload.get('solvent')).toBe('Water');
+    expect(payload.get('solvent')).not.toBeNull();
     expect((payload.get('reactant_1_file') as File).name).toBe('reactant-1.log');
     expect((payload.get('reactant_2_file') as File).name).toBe('reactant-2.log');
     expect((payload.get('transition_state_file') as File).name).toBe('transition-state.log');

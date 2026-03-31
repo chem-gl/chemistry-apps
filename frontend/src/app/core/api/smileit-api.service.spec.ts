@@ -29,11 +29,14 @@ type SmileitClientMock = {
   smileitJobsInspectStructureCreate: ReturnType<typeof vi.fn>;
   smileitJobsCreate: ReturnType<typeof vi.fn>;
   smileitJobsRetrieve: ReturnType<typeof vi.fn>;
+  smileitJobsDerivationsRetrieve: ReturnType<typeof vi.fn>;
+  smileitJobsDerivationsSvgRetrieve: ReturnType<typeof vi.fn>;
   smileitJobsReportCsvRetrieve: ReturnType<typeof vi.fn>;
   smileitJobsReportSmilesRetrieve: ReturnType<typeof vi.fn>;
   smileitJobsReportTraceabilityRetrieve: ReturnType<typeof vi.fn>;
   smileitJobsReportLogRetrieve: ReturnType<typeof vi.fn>;
   smileitJobsReportErrorRetrieve: ReturnType<typeof vi.fn>;
+  smileitJobsReportImagesZipRetrieve: ReturnType<typeof vi.fn>;
 };
 
 function createBlobResponse(filename: string): HttpResponse<Blob> {
@@ -60,6 +63,8 @@ describe('SmileitApiService', () => {
       smileitJobsInspectStructureCreate: vi.fn(),
       smileitJobsCreate: vi.fn(),
       smileitJobsRetrieve: vi.fn(),
+      smileitJobsDerivationsRetrieve: vi.fn(),
+      smileitJobsDerivationsSvgRetrieve: vi.fn(),
       smileitJobsReportCsvRetrieve: vi.fn(() => of(createBlobResponse('smileit-report.csv'))),
       smileitJobsReportSmilesRetrieve: vi.fn(() =>
         of(createBlobResponse('smileit-structures.smi')),
@@ -69,6 +74,9 @@ describe('SmileitApiService', () => {
       ),
       smileitJobsReportLogRetrieve: vi.fn(() => of(createBlobResponse('smileit-report.log'))),
       smileitJobsReportErrorRetrieve: vi.fn(() => of(createBlobResponse('smileit-error.txt'))),
+      smileitJobsReportImagesZipRetrieve: vi.fn(() =>
+        of(createBlobResponse('smileit-job-1-images.zip')),
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -293,34 +301,33 @@ describe('SmileitApiService', () => {
   });
 
   it('maps derivation pages and SVG endpoints', async () => {
-    const pagePromise = lastValueFrom(service.listSmileitDerivations('job-1', 0, 20));
-    const pageRequest = httpMock.expectOne(
-      (request) => request.url === `${API_BASE_URL}/api/smileit/jobs/job-1/derivations/`,
+    vi.mocked(smileitClientMock.smileitJobsDerivationsRetrieve).mockReturnValue(
+      of({
+        total_generated: 1,
+        offset: 0,
+        limit: 20,
+        items: [
+          {
+            structure_index: 4,
+            name: 'Derivative',
+            smiles: 'CCO',
+            placeholder_assignments: [
+              {
+                placeholder_label: 'R1',
+                site_atom_index: 1,
+                substituent_name: 'Me',
+              },
+            ],
+            traceability: [],
+          },
+        ],
+      }),
     );
-    expect(pageRequest.request.params.get('offset')).toBe('0');
-    expect(pageRequest.request.params.get('limit')).toBe('20');
-    pageRequest.flush({
-      total_generated: 1,
-      offset: 0,
-      limit: 20,
-      items: [
-        {
-          structure_index: 4,
-          name: 'Derivative',
-          smiles: 'CCO',
-          placeholder_assignments: [
-            {
-              placeholder_label: 'R1',
-              site_atom_index: 1,
-              substituent_name: 'Me',
-            },
-          ],
-          traceability: [],
-        },
-      ],
-    });
+    vi.mocked(smileitClientMock.smileitJobsDerivationsSvgRetrieve).mockReturnValue(
+      of('<svg>preview</svg>' as unknown as Blob),
+    );
 
-    await expect(pagePromise).resolves.toEqual({
+    await expect(lastValueFrom(service.listSmileitDerivations('job-1', 0, 20))).resolves.toEqual({
       totalGenerated: 1,
       offset: 0,
       limit: 20,
@@ -342,14 +349,17 @@ describe('SmileitApiService', () => {
       ],
     });
 
-    const svgPromise = lastValueFrom(service.getSmileitDerivationSvg('job-1', 4, 'thumb'));
-    const svgRequest = httpMock.expectOne(
-      (request) => request.url === `${API_BASE_URL}/api/smileit/jobs/job-1/derivations/4/svg/`,
-    );
-    expect(svgRequest.request.params.get('variant')).toBe('thumb');
-    svgRequest.flush('<svg>preview</svg>', { status: 200, statusText: 'OK' });
+    expect(smileitClientMock.smileitJobsDerivationsRetrieve).toHaveBeenCalledWith('job-1', 20, 0);
 
-    await expect(svgPromise).resolves.toBe('<svg>preview</svg>');
+    await expect(lastValueFrom(service.getSmileitDerivationSvg('job-1', 4, 'thumb'))).resolves.toBe(
+      '<svg>preview</svg>',
+    );
+
+    expect(smileitClientMock.smileitJobsDerivationsSvgRetrieve).toHaveBeenCalledWith(
+      'job-1',
+      4,
+      'thumb',
+    );
   });
 
   it('downloads reports and image zip files', async () => {
@@ -369,21 +379,12 @@ describe('SmileitApiService', () => {
       expect.objectContaining({ filename: 'smileit-error.txt' }),
     );
 
-    const zipPromise = lastValueFrom(service.downloadSmileitImagesZipServer('job-1'));
-    const zipRequest = httpMock.expectOne(
-      `${API_BASE_URL}/api/smileit/jobs/job-1/report-images-zip/`,
-    );
-    expect(zipRequest.request.responseType).toBe('blob');
-    zipRequest.flush(new Blob(['zip'], { type: 'application/zip' }), {
-      headers: new HttpHeaders({
-        'content-disposition': 'attachment; filename="smileit-job-1-images.zip"',
-      }),
-      status: 200,
-      statusText: 'OK',
-    });
-
-    await expect(zipPromise).resolves.toEqual(
+    await expect(lastValueFrom(service.downloadSmileitImagesZipServer('job-1'))).resolves.toEqual(
       expect.objectContaining({ filename: 'smileit-job-1-images.zip' }),
+    );
+    expect(smileitClientMock.smileitJobsReportImagesZipRetrieve).toHaveBeenCalledWith(
+      'job-1',
+      'response',
     );
   });
 });

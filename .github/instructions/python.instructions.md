@@ -8,7 +8,7 @@
 
 ## 🎯 OBJETIVO
 
-El agente debe generar código:
+El agente debe generar código: 
     * tipado estrictamente
     * modular
     * mantenible

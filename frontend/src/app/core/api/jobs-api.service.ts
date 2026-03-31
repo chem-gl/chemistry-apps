@@ -2,10 +2,8 @@
 // Centraliza despacho, polling y reportes; delega streaming a JobsStreamingApiService
 // y operaciones Smileit a SmileitApiService.
 
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
-import { API_BASE_URL } from '../shared/constants';
 import { createReportDownload$ } from './api-download.utils';
 import {
   CalculatorJobCreateRequest,
@@ -23,6 +21,7 @@ import {
   SAScoreService,
   SaScoreJobCreateRequest,
   ScientificJob,
+  SourceFieldEnum,
   ToxicityJobCreateRequest,
   ToxicityPropertiesService,
   TunnelService,
@@ -64,7 +63,7 @@ import type {
 } from './types';
 
 interface EasyRateInspectionExecutionApiResponse {
-  source_field: EasyRateInputFieldName;
+  source_field: string;
   original_filename: string | null;
   execution_index: number;
   job_title: string | null;
@@ -85,7 +84,7 @@ interface EasyRateInspectionExecutionApiResponse {
 }
 
 interface EasyRateInspectionApiResponse {
-  source_field: EasyRateInputFieldName;
+  source_field: string;
   original_filename: string | null;
   parse_errors: string[];
   execution_count: number;
@@ -97,7 +96,6 @@ interface EasyRateInspectionApiResponse {
   providedIn: 'root',
 })
 export class JobsApiService {
-  private readonly httpClient = inject(HttpClient);
   private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
@@ -191,7 +189,7 @@ export class JobsApiService {
     rawExecution: EasyRateInspectionExecutionApiResponse,
   ): EasyRateInspectionExecutionView {
     return {
-      sourceField: rawExecution.source_field,
+      sourceField: rawExecution.source_field as EasyRateInputFieldName,
       originalFilename: rawExecution.original_filename,
       executionIndex: rawExecution.execution_index,
       jobTitle: rawExecution.job_title,
@@ -216,7 +214,7 @@ export class JobsApiService {
     rawInspection: EasyRateInspectionApiResponse,
   ): EasyRateFileInspectionView {
     return {
-      sourceField: rawInspection.source_field,
+      sourceField: rawInspection.source_field as EasyRateInputFieldName,
       originalFilename: rawInspection.original_filename,
       parseErrors: rawInspection.parse_errors,
       executionCount: rawInspection.execution_count,
@@ -421,95 +419,13 @@ export class JobsApiService {
 
   // --- Easy-rate ---
 
-  private appendOptionalString(formData: FormData, key: string, value: string | undefined): void {
-    if (value === undefined) {
-      return;
-    }
-    formData.append(key, value);
-  }
-
-  private appendOptionalNumber(formData: FormData, key: string, value: number | undefined): void {
-    this.appendOptionalScalar(formData, key, value);
-  }
-
-  private appendOptionalBoolean(formData: FormData, key: string, value: boolean | undefined): void {
-    this.appendOptionalScalar(formData, key, value);
-  }
-
-  private appendOptionalScalar(
-    formData: FormData,
-    key: string,
-    value: number | boolean | undefined,
-  ): void {
-    if (value === undefined) {
-      return;
-    }
-    formData.append(key, String(value));
-  }
-
-  private buildEasyRateMultipartPayload(params: EasyRateParams): FormData {
-    const formData = new FormData();
-
-    // Campos obligatorios del contrato estricto.
-    formData.append('reactant_1_file', params.reactant1File);
-    formData.append('reactant_2_file', params.reactant2File);
-    formData.append('transition_state_file', params.transitionStateFile);
-
-    // Al menos un producto es obligatorio; el workflow lo valida antes de invocar.
-    if (params.product1File !== undefined) {
-      formData.append('product_1_file', params.product1File);
-    }
-    if (params.product2File !== undefined) {
-      formData.append('product_2_file', params.product2File);
-    }
-
-    this.appendOptionalNumber(
-      formData,
-      'reactant_1_execution_index',
-      params.reactant1ExecutionIndex,
-    );
-    this.appendOptionalNumber(
-      formData,
-      'reactant_2_execution_index',
-      params.reactant2ExecutionIndex,
-    );
-    this.appendOptionalNumber(
-      formData,
-      'transition_state_execution_index',
-      params.transitionStateExecutionIndex,
-    );
-    this.appendOptionalNumber(formData, 'product_1_execution_index', params.product1ExecutionIndex);
-    this.appendOptionalNumber(formData, 'product_2_execution_index', params.product2ExecutionIndex);
-
-    this.appendOptionalString(formData, 'version', params.version ?? '2.0.0');
-    this.appendOptionalString(formData, 'title', params.title);
-    this.appendOptionalNumber(formData, 'reaction_path_degeneracy', params.reactionPathDegeneracy);
-    this.appendOptionalBoolean(formData, 'cage_effects', params.cageEffects);
-    this.appendOptionalBoolean(formData, 'diffusion', params.diffusion);
-    this.appendOptionalString(formData, 'solvent', params.solvent);
-    this.appendOptionalNumber(formData, 'custom_viscosity', params.customViscosity);
-    this.appendOptionalNumber(formData, 'radius_reactant_1', params.radiusReactant1);
-    this.appendOptionalNumber(formData, 'radius_reactant_2', params.radiusReactant2);
-    this.appendOptionalNumber(formData, 'reaction_distance', params.reactionDistance);
-    this.appendOptionalBoolean(formData, 'print_data_input', params.printDataInput);
-
-    return formData;
-  }
-
   /** Inspecciona un archivo Gaussian y devuelve ejecuciones candidatas para Easy-rate. */
   inspectEasyRateInput(
     sourceField: EasyRateInputFieldName,
     gaussianFile: File,
   ): Observable<EasyRateFileInspectionView> {
-    const formData = new FormData();
-    formData.append('source_field', sourceField);
-    formData.append('gaussian_file', gaussianFile);
-
-    return this.httpClient
-      .post<EasyRateInspectionApiResponse>(
-        `${API_BASE_URL}/api/easy-rate/jobs/inspect-input/`,
-        formData,
-      )
+    return this.easyRateClient
+      .easyRateJobsInspectInputCreate(sourceField as SourceFieldEnum, gaussianFile)
       .pipe(
         map((rawInspection) => this.normalizeEasyRateInspection(rawInspection)),
         shareReplay(1),
@@ -518,9 +434,30 @@ export class JobsApiService {
 
   /** Despacha un job Easy-rate con archivos Gaussian en multipart */
   dispatchEasyRateJob(params: EasyRateParams): Observable<EasyRateJobResponse> {
-    const payload = this.buildEasyRateMultipartPayload(params);
-    return this.httpClient
-      .post<EasyRateJobResponse>(`${API_BASE_URL}/api/easy-rate/jobs/`, payload)
+    return this.easyRateClient
+      .easyRateJobsCreate(
+        params.reactant1File,
+        params.reactant2File,
+        params.transitionStateFile,
+        params.version ?? '2.0.0',
+        params.title,
+        params.reactionPathDegeneracy,
+        params.cageEffects,
+        params.diffusion,
+        params.solvent,
+        params.customViscosity,
+        params.radiusReactant1,
+        params.radiusReactant2,
+        params.reactionDistance,
+        params.printDataInput,
+        params.reactant1ExecutionIndex,
+        params.reactant2ExecutionIndex,
+        params.transitionStateExecutionIndex,
+        params.product1ExecutionIndex,
+        params.product2ExecutionIndex,
+        params.product1File,
+        params.product2File,
+      )
       .pipe(shareReplay(1));
   }
 

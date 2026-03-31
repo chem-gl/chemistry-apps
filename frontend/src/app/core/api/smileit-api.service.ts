@@ -1,10 +1,9 @@
 // smileit-api.service.ts: Sub-servicio API exclusivo para operaciones Smileit.
 // Encapsula catálogo, inspección estructural, validación, despacho y reportes.
 
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
-import { API_BASE_URL } from '../shared/constants';
+import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
 import { createReportDownload$ } from './api-download.utils';
 import {
   PatchedSmileitCatalogEntryCreateRequest,
@@ -40,7 +39,6 @@ import type {
   providedIn: 'root',
 })
 export class SmileitApiService {
-  private readonly httpClient = inject(HttpClient);
   private readonly smileitClient = inject(SmileitService);
 
   /**
@@ -237,61 +235,26 @@ export class SmileitApiService {
     offset: number,
     limit: number,
   ): Observable<SmileitDerivationPageView> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/`;
-    return this.httpClient
-      .get<{
-        total_generated: number;
-        offset: number;
-        limit: number;
-        items: Array<{
-          structure_index: number;
-          name: string;
-          smiles: string;
-          placeholder_assignments: Array<{
-            placeholder_label: string;
-            site_atom_index: number;
-            substituent_name: string;
-            substituent_smiles?: string;
-          }>;
-          traceability: Array<{
-            round_index: number;
-            site_atom_index: number;
-            block_label: string;
-            block_priority: number;
-            substituent_name: string;
-            substituent_smiles?: string;
-            substituent_stable_id: string;
-            substituent_version: number;
-            source_kind: string;
-            bond_order: number;
-          }>;
-        }>;
-      }>(endpointUrl, {
-        params: {
-          offset: String(offset),
-          limit: String(limit),
-        },
-      })
-      .pipe(
-        map((rawPage) => ({
-          totalGenerated: rawPage.total_generated,
-          offset: rawPage.offset,
-          limit: rawPage.limit,
-          items: rawPage.items.map((item) => ({
-            structureIndex: item.structure_index,
-            name: item.name,
-            smiles: item.smiles,
-            placeholderAssignments: item.placeholder_assignments.map((assignment) => ({
-              placeholderLabel: assignment.placeholder_label,
-              siteAtomIndex: assignment.site_atom_index,
-              substituentName: assignment.substituent_name,
-              substituentSmiles: assignment.substituent_smiles ?? '',
-            })),
-            traceability: item.traceability,
+    return this.smileitClient.smileitJobsDerivationsRetrieve(jobId, limit, offset).pipe(
+      map((rawPage) => ({
+        totalGenerated: rawPage.total_generated,
+        offset: rawPage.offset,
+        limit: rawPage.limit,
+        items: rawPage.items.map((item) => ({
+          structureIndex: item.structure_index,
+          name: item.name,
+          smiles: item.smiles,
+          placeholderAssignments: item.placeholder_assignments.map((assignment) => ({
+            placeholderLabel: assignment.placeholder_label,
+            siteAtomIndex: assignment.site_atom_index,
+            substituentName: assignment.substituent_name,
+            substituentSmiles: assignment.substituent_smiles ?? '',
           })),
+          traceability: item.traceability,
         })),
-        shareReplay(1),
-      );
+      })),
+      shareReplay(1),
+    );
   }
 
   /** Obtiene SVG on-demand de un derivado específico para grid/modal. */
@@ -300,12 +263,26 @@ export class SmileitApiService {
     structureIndex: number,
     variant: 'thumb' | 'detail' = 'detail',
   ): Observable<string> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/derivations/${structureIndex}/svg/`;
-    return this.httpClient
-      .get(endpointUrl, {
-        responseType: 'text',
-        params: { variant },
-      })
+    return this.smileitClient
+      .smileitJobsDerivationsSvgRetrieve(jobId, structureIndex, variant)
+      .pipe(
+        switchMap((svgPayload: Blob | HttpResponse<Blob> | string) => {
+          if (typeof svgPayload === 'string') {
+            return of(svgPayload);
+          }
+
+          if (svgPayload instanceof Blob) {
+            return from(svgPayload.text());
+          }
+
+          const responseBody: Blob | null = svgPayload.body;
+          if (responseBody === null) {
+            return of('');
+          }
+
+          return from(responseBody.text());
+        }),
+      )
       .pipe(shareReplay(1));
   }
 
@@ -351,12 +328,8 @@ export class SmileitApiService {
 
   /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
   downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
-    const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/report-images-zip/`;
     return this.downloadReportFile$(
-      this.httpClient.get(endpointUrl, {
-        observe: 'response',
-        responseType: 'blob',
-      }),
+      this.smileitClient.smileitJobsReportImagesZipRetrieve(jobId, 'response'),
       `smileit_${jobId}_images.zip`,
     );
   }

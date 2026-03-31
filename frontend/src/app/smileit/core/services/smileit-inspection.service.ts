@@ -453,15 +453,17 @@ export class SmileitInspectionService {
   }
 
   private ensureAtomHighlightStyle(rootSvg: SVGSVGElement, parsedDocument: Document): void {
-    const existingStyleNode: HTMLStyleElement | null = parsedDocument.querySelector(
+    const existingStyleNode: Element | null = parsedDocument.querySelector(
       'style[data-smileit-atom-highlight="true"]',
     );
     if (existingStyleNode !== null) {
       return;
     }
 
-    const styleNode: HTMLStyleElement = parsedDocument.createElement('style');
-    styleNode.dataset['smileitAtomHighlight'] = 'true';
+    // Se crea el nodo dentro del documento SVG, por lo que es SVGStyleElement
+    // (no HTMLStyleElement) y no tiene .dataset; usar setAttribute directamente.
+    const styleNode: Element = parsedDocument.createElement('style');
+    styleNode.setAttribute('data-smileit-atom-highlight', 'true');
     styleNode.textContent = `
       .smileit-atom-selected-vertex {
         stroke: #f97316 !important;

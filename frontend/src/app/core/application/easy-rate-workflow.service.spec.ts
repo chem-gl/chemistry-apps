@@ -1,9 +1,10 @@
 // easy-rate-workflow.service.spec.ts: Pruebas unitarias del workflow Easy-rate con inspección previa de Gaussian.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
+  DownloadedReportFile,
   EasyRateFileInspectionView,
   EasyRateInputFieldName,
   EasyRateJobResponseView,
@@ -335,5 +336,107 @@ describe('EasyRateWorkflowService', () => {
       'Transition state must have exactly one imaginary frequency.',
     );
     expect(workflowService.canDispatch()).toBe(false);
+  });
+
+  it('clears diffusion-dependent fields when diffusion is disabled', () => {
+    workflowService.updateDiffusion(true);
+    workflowService.updateRadiusReactant1(1.4);
+    workflowService.updateRadiusReactant2(1.8);
+    workflowService.updateReactionDistance(2.3);
+
+    workflowService.updateDiffusion(false);
+
+    expect(workflowService.diffusion()).toBe(false);
+    expect(workflowService.radiusReactant1()).toBeNull();
+    expect(workflowService.radiusReactant2()).toBeNull();
+    expect(workflowService.reactionDistance()).toBeNull();
+  });
+
+  it('clears custom viscosity when solvent changes from Other to a predefined option', () => {
+    workflowService.updateSolvent('Other');
+    workflowService.updateCustomViscosity(0.0023);
+
+    workflowService.updateSolvent('Water');
+
+    expect(workflowService.solvent()).toBe('Water');
+    expect(workflowService.customViscosity()).toBeNull();
+  });
+
+  it('blocks dispatch when required files are missing and exposes actionable validation error', () => {
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('idle');
+    expect(workflowService.errorMessage()).toBe('Reactant 1 file is required.');
+    expect(jobsApiServiceMock.dispatchEasyRateJob).not.toHaveBeenCalled();
+  });
+
+  it('opens failed historical job and exposes backend trace while loading logs', () => {
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValue(
+      of(
+        makeEasyRateJob({
+          id: 'easy-rate-failed-1',
+          status: 'failed',
+          error_trace: 'gaussian parser crashed',
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('easy-rate-failed-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('gaussian parser crashed');
+    expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('easy-rate-failed-1', {
+      limit: 250,
+    });
+  });
+
+  it('loads history ordered by updated_at descending', () => {
+    jobsApiServiceMock.listJobs.mockReturnValue(
+      of([
+        makeEasyRateJob({ id: 'older-job', updated_at: '2026-03-30T08:00:00.000Z' }),
+        makeEasyRateJob({ id: 'newer-job', updated_at: '2026-03-30T09:00:00.000Z' }),
+      ]),
+    );
+
+    workflowService.loadHistory();
+
+    expect(workflowService.historyJobs()[0]?.id).toBe('newer-job');
+    expect(workflowService.historyJobs()[1]?.id).toBe('older-job');
+    expect(workflowService.isHistoryLoading()).toBe(false);
+  });
+
+  it('stores export error and restores exporting flag when CSV download fails', () => {
+    jobsApiServiceMock.downloadEasyRateCsvReport.mockReturnValue(
+      throwError(() => new Error('forbidden export')),
+    );
+    workflowService.currentJobId.set('easy-rate-export-1');
+
+    workflowService.downloadCsvReport().subscribe({
+      error: () => {
+        expect(workflowService.exportErrorMessage()).toContain('forbidden export');
+        expect(workflowService.isExporting()).toBe(false);
+      },
+    });
+  });
+
+  it('throws when requesting report download without selected job', () => {
+    expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for download.');
+  });
+
+  it('downloads inputs zip through the same guarded export pipeline', () => {
+    const zipFile: DownloadedReportFile = {
+      filename: 'easy_rate_inputs.zip',
+      blob: new Blob(['zip-content'], { type: 'application/zip' }),
+    };
+    jobsApiServiceMock.downloadEasyRateInputsZip.mockReturnValue(of(zipFile));
+    workflowService.currentJobId.set('easy-rate-export-zip-1');
+
+    workflowService.downloadInputsZip().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('easy_rate_inputs.zip');
+    });
+
+    expect(jobsApiServiceMock.downloadEasyRateInputsZip).toHaveBeenCalledWith(
+      'easy-rate-export-zip-1',
+    );
   });
 });
