@@ -1,7 +1,7 @@
 // smileit-api.service.ts: Sub-servicio API exclusivo para operaciones Smileit.
 // Encapsula catálogo, inspección estructural, validación, despacho y reportes.
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../shared/constants';
@@ -65,16 +65,9 @@ export class SmileitApiService {
   createSmileitCatalogEntry(
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
-    const payload: SmileitCatalogEntryCreateRequest = {
-      name: params.name,
-      smiles: params.smiles,
-      anchor_atom_indices: params.anchorAtomIndices,
-      category_keys: params.categoryKeys,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
-    return this.smileitClient.smileitJobsCatalogCreate(payload).pipe(shareReplay(1));
+    return this.smileitClient
+      .smileitJobsCatalogCreate(this.buildCatalogCreateRequest(params))
+      .pipe(shareReplay(1));
   }
 
   /** Versiona una entrada editable del catálogo y retorna el catálogo activo actualizado. */
@@ -82,17 +75,8 @@ export class SmileitApiService {
     stableId: string,
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
-    const payload: PatchedSmileitCatalogEntryCreateRequest = {
-      name: params.name,
-      smiles: params.smiles,
-      anchor_atom_indices: params.anchorAtomIndices,
-      category_keys: params.categoryKeys,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
     return this.smileitClient
-      .smileitJobsCatalogPartialUpdate(stableId, payload)
+      .smileitJobsCatalogPartialUpdate(stableId, this.buildCatalogPatchRequest(params))
       .pipe(shareReplay(1));
   }
 
@@ -100,16 +84,9 @@ export class SmileitApiService {
   createSmileitPatternEntry(
     params: SmileitPatternEntryCreateParams,
   ): Observable<SmileitPatternEntryView[]> {
-    const payload: SmileitPatternEntryCreateRequest = {
-      name: params.name,
-      smarts: params.smarts,
-      pattern_type: params.patternType,
-      caption: params.caption,
-      source_reference: params.sourceReference,
-      provenance_metadata: params.provenanceMetadata,
-    };
-
-    return this.smileitClient.smileitJobsPatternsCreate(payload).pipe(shareReplay(1));
+    return this.smileitClient
+      .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params))
+      .pipe(shareReplay(1));
   }
 
   /**
@@ -334,7 +311,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
   downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response'),
       `smileit_${jobId}_report.csv`,
     );
@@ -342,7 +319,7 @@ export class SmileitApiService {
 
   /** Descarga el archivo enumerado de SMILES listo para DataWarrior u otros flujos. */
   downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response'),
       `smileit_${jobId}_structures.smi`,
     );
@@ -350,7 +327,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte tabular de trazabilidad sitio -> sustituyente por derivado. */
   downloadSmileitTraceabilityReport(jobId: string): Observable<DownloadedReportFile> {
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response'),
       `smileit_${jobId}_traceability.csv`,
     );
@@ -358,7 +335,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte LOG de smileit (descripción de la generación). */
   downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response'),
       `smileit_${jobId}_report.log`,
     );
@@ -366,7 +343,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte de error de smileit cuando el job falla. */
   downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response'),
       `smileit_${jobId}_error.txt`,
     );
@@ -375,12 +352,58 @@ export class SmileitApiService {
   /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
   downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
     const endpointUrl = `${API_BASE_URL}/api/smileit/jobs/${jobId}/report-images-zip/`;
-    return createReportDownload$(
+    return this.downloadReportFile$(
       this.httpClient.get(endpointUrl, {
         observe: 'response',
         responseType: 'blob',
       }),
       `smileit_${jobId}_images.zip`,
     );
+  }
+
+  private buildCatalogCreateRequest(
+    params: SmileitCatalogEntryCreateParams,
+  ): SmileitCatalogEntryCreateRequest {
+    return {
+      name: params.name,
+      smiles: params.smiles,
+      anchor_atom_indices: params.anchorAtomIndices,
+      category_keys: params.categoryKeys,
+      source_reference: params.sourceReference,
+      provenance_metadata: params.provenanceMetadata,
+    };
+  }
+
+  private buildCatalogPatchRequest(
+    params: SmileitCatalogEntryCreateParams,
+  ): PatchedSmileitCatalogEntryCreateRequest {
+    return {
+      anchor_atom_indices: params.anchorAtomIndices,
+      category_keys: params.categoryKeys,
+      provenance_metadata: params.provenanceMetadata,
+      smiles: params.smiles,
+      source_reference: params.sourceReference,
+      name: params.name,
+    };
+  }
+
+  private buildPatternEntryRequest(
+    params: SmileitPatternEntryCreateParams,
+  ): SmileitPatternEntryCreateRequest {
+    return {
+      name: params.name,
+      smarts: params.smarts,
+      pattern_type: params.patternType,
+      caption: params.caption,
+      source_reference: params.sourceReference,
+      provenance_metadata: params.provenanceMetadata,
+    };
+  }
+
+  private downloadReportFile$(
+    report$: Observable<HttpResponse<Blob>>,
+    filename: string,
+  ): Observable<DownloadedReportFile> {
+    return createReportDownload$(report$, filename);
   }
 }

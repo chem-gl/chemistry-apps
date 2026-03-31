@@ -141,23 +141,9 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   onSketchDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    if (!(event instanceof MouseEvent)) {
-      return;
-    }
-    const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
-    if (dialog === undefined) {
-      return;
-    }
-
-    const rect: DOMRect = dialog.getBoundingClientRect();
-    const isOutside: boolean =
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom;
-    if (isOutside) {
+    this.closeDialogWhenClickedOutside(event, this.sketchDialogRef?.nativeElement, () => {
       this.closeSketchDialog();
-    }
+    });
   }
 
   onKetcherFrameLoaded(): void {
@@ -265,22 +251,9 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   onMoleculeImageDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    if (!(event instanceof MouseEvent)) {
-      return;
-    }
-    const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
-    if (dialog === undefined) {
-      return;
-    }
-    const rect: DOMRect = dialog.getBoundingClientRect();
-    const isOutside: boolean =
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom;
-    if (isOutside) {
-      dialog.close();
-    }
+    this.closeDialogWhenClickedOutside(event, this.moleculeImageDialogRef?.nativeElement, () => {
+      this.closeMoleculeImageModal();
+    });
   }
 
   rowHasError(molecule: ToxicityMoleculeResultView): boolean {
@@ -296,5 +269,25 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     linkElement.click();
 
     URL.revokeObjectURL(objectUrl);
+  }
+
+  private closeDialogWhenClickedOutside(
+    event: MouseEvent | KeyboardEvent,
+    dialog: HTMLDialogElement | undefined,
+    closeDialog: () => void,
+  ): void {
+    if (!(event instanceof MouseEvent) || dialog === undefined) {
+      return;
+    }
+
+    const rect: DOMRect = dialog.getBoundingClientRect();
+    const isOutside: boolean =
+      event.clientX < rect.left ||
+      event.clientX > rect.right ||
+      event.clientY < rect.top ||
+      event.clientY > rect.bottom;
+    if (isOutside) {
+      closeDialog();
+    }
   }
 }
