@@ -170,7 +170,8 @@
                             class="block-library-thumb catalog-ref-thumb"
                             [class.is-selected]="isCatalogEntryLoadedInManualDraft(block, entry)"
                           >
-                            <button type="button"
+                            <button
+                              type="button"
                               class="thumb-open-button"
                               [attr.aria-label]="'Open detail for ' + entry.name"
                               (click)="openLibraryEntryDetail(entry, 'reference')"
@@ -288,7 +289,8 @@
                               workflow.catalog.isCatalogEntryReferenced(block, entry)
                             "
                           >
-                            <button type="button"
+                            <button
+                              type="button"
                               class="thumb-open-button"
                               [attr.aria-label]="
                                 workflow.catalog.isCatalogEntryReferenced(block, entry)
@@ -312,7 +314,7 @@
                                 }
                               </span>
                               <span class="thumb-smiles mono">{{ entry.smiles }}</span>
-                              </button>
+                            </button>
                             <div
                               class="block-thumb-actions"
                               (click)="$event.stopPropagation()"

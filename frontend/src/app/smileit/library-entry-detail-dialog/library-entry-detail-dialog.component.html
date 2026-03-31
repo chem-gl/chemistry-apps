@@ -8,10 +8,7 @@
   (cancel)="requestClose()"
 >
   @if (selectedEntry(); as detailEntry) {
-    <section
-      class="library-entry-detail-modal"
-      aria-label="Substituent detail"
-    >
+    <section class="library-entry-detail-modal" aria-label="Substituent detail">
       <header class="library-detail-header">
         <div class="library-detail-title-row">
           <h4>{{ detailEntry.name }}</h4>

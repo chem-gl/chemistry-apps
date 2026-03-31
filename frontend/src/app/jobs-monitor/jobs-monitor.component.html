@@ -313,8 +313,17 @@
   </section>
 
   @if (facade.selectedJobId() !== null) {
-    <section class="details-overlay" aria-label="Job details" (click)="closeJobDetails()" (keydown)="closeJobDetails()">
-      <article class="details-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <section
+      class="details-overlay"
+      aria-label="Job details"
+      (click)="closeJobDetails()"
+      (keydown)="closeJobDetails()"
+    >
+      <article
+        class="details-modal"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      >
         <header class="details-header">
           <h3>Job details</h3>
           <button class="close-details-btn" (click)="closeJobDetails()">Close</button>

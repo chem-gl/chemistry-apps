@@ -223,7 +223,12 @@
   </section>
 </section>
 <!-- ── Sketch dialog (Ketcher) ─────────────────────────────────────────── -->
-<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)" (keydown)="onSketchDialogBackdropClick($event)">
+<dialog
+  #sketchDialog
+  class="sketch-dialog"
+  (click)="onSketchDialogBackdropClick($event)"
+  (keydown)="onSketchDialogBackdropClick($event)"
+>
   <section class="sketch-modal" aria-label="Draw SMILES with Ketcher">
     <h4>Draw SMILES</h4>
     <p class="hint">

@@ -107,6 +107,7 @@ export function extractRequestErrorMessage(requestError: unknown): string {
 export function parseAtomIndicesInput(rawValue: string): number[] {
   return rawValue
     .split(',')
+    .filter((token: string) => token.trim() !== '')
     .map((token: string) => Number(token.trim()))
     .filter((token: number) => Number.isInteger(token) && token >= 0)
     .filter((token: number, index: number, items: number[]) => items.indexOf(token) === index)

@@ -245,7 +245,9 @@
                 class="derivative-card"
                 (click)="openGeneratedStructureModal(structureItem)"
                 (keydown.enter)="openGeneratedStructureModal(structureItem)"
-                (keydown.space)="openGeneratedStructureModal(structureItem); $event.preventDefault()"
+                (keydown.space)="
+                  openGeneratedStructureModal(structureItem); $event.preventDefault()
+                "
               >
                 <div class="derivative-info">
                   <div class="derivative-legend">

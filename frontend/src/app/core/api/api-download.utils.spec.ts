@@ -27,8 +27,7 @@ describe('extractFilenameFromHeader', () => {
   });
 
   it('prefiere el formato UTF-8 sobre el regular cuando ambos están presentes', () => {
-    const header =
-      "attachment; filename=\"plain.csv\"; filename*=UTF-8''encoded%20v2.csv";
+    const header = 'attachment; filename="plain.csv"; filename*=UTF-8\'\'encoded%20v2.csv';
     expect(extractFilenameFromHeader(header, 'fallback.csv')).toBe('encoded v2.csv');
   });
 
