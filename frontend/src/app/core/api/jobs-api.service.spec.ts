@@ -164,7 +164,7 @@ describe('JobsApiService', () => {
   let originalWebSocket: typeof WebSocket | undefined;
   let mockSocketInstance: {
     readyState: number;
-    close: ReturnType<typeof vi.fn>;
+    close: () => void;
     onmessage: ((event: MessageEvent<string>) => void) | null;
     onerror: (() => void) | null;
     onclose: (() => void) | null;
@@ -173,6 +173,20 @@ describe('JobsApiService', () => {
   beforeEach(() => {
     originalWebSocket = globalThis.WebSocket;
     capturedWebSocketUrls = [];
+    type SocketState = {
+      readyState: number;
+      close: () => void;
+      onmessage: ((event: MessageEvent<string>) => void) | null;
+      onerror: (() => void) | null;
+      onclose: (() => void) | null;
+    };
+    let latestSocketInstance: {
+      readyState: number;
+      close: () => void;
+      onmessage: ((event: MessageEvent<string>) => void) | null;
+      onerror: (() => void) | null;
+      onclose: (() => void) | null;
+    } | null = null;
     mockSocketInstance = {
       readyState: 1,
       close: vi.fn(),
@@ -181,49 +195,86 @@ describe('JobsApiService', () => {
       onclose: null,
     };
     class MockWebSocket {
-      public static latestInstance: MockWebSocket | null = null;
-
       readyState: number = 1;
-      close = vi.fn();
+      close: () => void = vi.fn();
       onmessage: ((event: MessageEvent<string>) => void) | null = null;
       onerror: (() => void) | null = null;
       onclose: (() => void) | null = null;
 
       constructor(url: string) {
         capturedWebSocketUrls.push(url);
-        MockWebSocket.latestInstance = this;
+        const currentSocketState: SocketState = {
+          readyState: 1,
+          close: this.close,
+          onmessage: this.onmessage,
+          onerror: this.onerror,
+          onclose: this.onclose,
+        };
+
+        Object.defineProperty(this, 'readyState', {
+          get: () => currentSocketState.readyState,
+          set: (nextValue: number) => {
+            currentSocketState.readyState = nextValue;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onmessage', {
+          get: () => currentSocketState.onmessage,
+          set: (nextHandler: ((event: MessageEvent<string>) => void) | null) => {
+            currentSocketState.onmessage = nextHandler;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onerror', {
+          get: () => currentSocketState.onerror,
+          set: (nextHandler: (() => void) | null) => {
+            currentSocketState.onerror = nextHandler;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onclose', {
+          get: () => currentSocketState.onclose,
+          set: (nextHandler: (() => void) | null) => {
+            currentSocketState.onclose = nextHandler;
+          },
+          configurable: true,
+        });
+
+        latestSocketInstance = currentSocketState;
       }
     }
 
     mockSocketInstance = {
       get readyState(): number {
-        return MockWebSocket.latestInstance?.readyState ?? 1;
+        return latestSocketInstance?.readyState ?? 1;
       },
       close: vi.fn(() => {
-        MockWebSocket.latestInstance?.close();
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.close();
+        }
       }),
       get onmessage(): ((event: MessageEvent<string>) => void) | null {
-        return MockWebSocket.latestInstance?.onmessage ?? null;
+        return latestSocketInstance?.onmessage ?? null;
       },
       set onmessage(nextHandler: ((event: MessageEvent<string>) => void) | null) {
-        if (MockWebSocket.latestInstance !== null) {
-          MockWebSocket.latestInstance.onmessage = nextHandler;
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onmessage = nextHandler;
         }
       },
       get onerror(): (() => void) | null {
-        return MockWebSocket.latestInstance?.onerror ?? null;
+        return latestSocketInstance?.onerror ?? null;
       },
       set onerror(nextHandler: (() => void) | null) {
-        if (MockWebSocket.latestInstance !== null) {
-          MockWebSocket.latestInstance.onerror = nextHandler;
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onerror = nextHandler;
         }
       },
       get onclose(): (() => void) | null {
-        return MockWebSocket.latestInstance?.onclose ?? null;
+        return latestSocketInstance?.onclose ?? null;
       },
       set onclose(nextHandler: (() => void) | null) {
-        if (MockWebSocket.latestInstance !== null) {
-          MockWebSocket.latestInstance.onclose = nextHandler;
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onclose = nextHandler;
         }
       },
     };
