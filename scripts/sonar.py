@@ -251,6 +251,32 @@ def _build_duplication_file_entry(
     }
 
 
+def _get_project_duplication_summary() -> dict[str, str]:
+    """Obtiene las métricas de duplicación del proyecto desde Sonar."""
+    response = _sonar_get(
+        "/api/measures/component",
+        {
+            "component": PROJECT_KEY,
+            "metricKeys": "duplicated_blocks,duplicated_lines,duplicated_lines_density",
+        },
+    )
+
+    if response.status_code != 200:
+        return {}
+
+    component = response.json().get("component", {})
+    measures = {
+        metric.get("metric", ""): metric.get("value", "0")
+        for metric in component.get("measures", [])
+    }
+    return {
+        "duplicated_blocks": measures.get("duplicated_blocks", "0") or "0",
+        "duplicated_lines": measures.get("duplicated_lines", "0") or "0",
+        "duplicated_lines_density": measures.get("duplicated_lines_density", "0")
+        or "0",
+    }
+
+
 def _get_project_files_with_duplication() -> list[dict[str, str]]:
     """Obtiene desde Sonar los archivos con bloques/líneas duplicadas en el proyecto."""
     duplicated_files: list[dict[str, str]] = []
@@ -316,11 +342,25 @@ def _resolve_duplication_block_file(
 def _get_sonar_duplicate_code_section() -> str:
     """Construye una sección de reporte con duplicaciones reales obtenidas desde Sonar."""
     duplicated_files = _get_project_files_with_duplication()
-    if not duplicated_files:
-        return ""
+    project_summary = _get_project_duplication_summary()
 
     section_lines: list[str] = []
     section_lines.append("=== Código duplicado (SonarQube) ===")
+    if project_summary:
+        section_lines.append(
+            "Resumen del proyecto: "
+            f"bloques={project_summary.get('duplicated_blocks', '0')} | "
+            f"líneas={project_summary.get('duplicated_lines', '0')} | "
+            f"densidad={project_summary.get('duplicated_lines_density', '0')}%"
+        )
+    else:
+        section_lines.append("Resumen del proyecto: no disponible desde Sonar.")
+
+    if not duplicated_files:
+        section_lines.append(
+            "No se encontraron archivos con duplicación visible en la respuesta de Sonar."
+        )
+        return "\n".join(section_lines).strip()
 
     for duplicated_file in duplicated_files:
         file_key = duplicated_file.get("key", "")
