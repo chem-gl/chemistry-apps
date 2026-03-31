@@ -234,6 +234,7 @@
       <section
         class="pattern-catalog-modal"
         (click)="$event.stopPropagation()"
+        (keydown)="onPatternModalSectionKeydown($event)"
       >
           <header class="catalog-studio-header">
           <div>
@@ -367,6 +368,7 @@
         <section
           class="pattern-detail-modal"
           (click)="$event.stopPropagation()"
+          (keydown)="onPatternModalSectionKeydown($event)"
         >
           <header class="library-detail-header">
             <div class="library-detail-title-row">

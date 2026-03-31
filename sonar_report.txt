@@ -2,24 +2,46 @@ Problema 1
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
-"tabIndex" should only be declared on interactive elements.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6845
-Severidad: MAJOR
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
 Línea: 234
 
 Cómo solucionarlo:
-Simply remove the tabIndex attribute or set it to "-1" to fix the issue.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
 Noncompliant code example
 
-&lt;div tabIndex="0" /&gt;
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
 
 Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
 
-&lt;div /&gt;
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
@@ -27,24 +49,46 @@ Problema 2
 Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.html
 
 Problema:
-"tabIndex" should only be declared on interactive elements.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <section> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: Web:S6845
-Severidad: MAJOR
-Línea: 369
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 367
 
 Cómo solucionarlo:
-Simply remove the tabIndex attribute or set it to "-1" to fix the issue.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
 Noncompliant code example
 
-&lt;div tabIndex="0" /&gt;
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
 
 Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
 
-&lt;div /&gt;
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 

@@ -252,6 +252,17 @@ export class SmileitComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Evita que pulsaciones de teclado (Enter/Space) dentro del modal 'se propaguen'
+   * y cierren el dialog desde el fondo. Requerido por reglas de accesibilidad.
+   */
+  onPatternModalSectionKeydown(event: KeyboardEvent): void {
+    const key = event.key;
+    if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
+      event.stopPropagation();
+    }
+  }
+
   openPatternDetail(pattern: SmileitPatternEntryView): void {
     this.selectedPatternForDetail.set(pattern);
     const patternDetailDialog: HTMLDialogElement | undefined =
