@@ -4,9 +4,11 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { vi } from 'vitest';
 import {
+  DownloadedReportFile,
   JobLogsPageView,
   JobsApiService,
   SaScoreJobResponseView,
+  SaScoreMethod,
   ScientificJobView,
   SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
@@ -108,6 +110,8 @@ describe('SaScoreWorkflowService', () => {
     getJobLogs: ReturnType<typeof vi.fn>;
     listJobs: ReturnType<typeof vi.fn>;
     validateSmilesCompatibility: ReturnType<typeof vi.fn>;
+    downloadSaScoreCsvReport: ReturnType<typeof vi.fn>;
+    downloadSaScoreCsvMethodReport: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -126,6 +130,8 @@ describe('SaScoreWorkflowService', () => {
       validateSmilesCompatibility: vi.fn(
         (): Observable<SmilesCompatibilityResultView> => of({ compatible: true, issues: [] }),
       ),
+      downloadSaScoreCsvReport: vi.fn(),
+      downloadSaScoreCsvMethodReport: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -171,5 +177,122 @@ describe('SaScoreWorkflowService', () => {
     expect(jobsApiServiceMock.dispatchSaScoreJob).not.toHaveBeenCalled();
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('not_a_smiles');
+  });
+
+  it('blocks dispatch when no methods are enabled', () => {
+    workflowService.smilesInput.set('CCO');
+    workflowService.selectedMethods.set({ ambit: false, brsa: false, rdkit: false });
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.validateSmilesCompatibility).not.toHaveBeenCalled();
+    expect(jobsApiServiceMock.dispatchSaScoreJob).not.toHaveBeenCalled();
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Select at least one SA method');
+  });
+
+  it('toggles methods and updates selectedMethodList', () => {
+    expect(workflowService.selectedMethodList()).toEqual(['ambit', 'brsa', 'rdkit']);
+
+    workflowService.toggleMethod('brsa');
+    workflowService.toggleMethod('rdkit');
+
+    expect(workflowService.selectedMethodList()).toEqual(['ambit']);
+  });
+
+  it('surfaces validation transport errors', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      new Observable<SmilesCompatibilityResultView>((subscriber) => {
+        subscriber.error(new Error('validator unavailable'));
+      }),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('validator unavailable');
+  });
+
+  it('opens historical failed job and exposes generic error state', () => {
+    jobsApiServiceMock.getSaScoreJobStatus.mockReturnValue(
+      of(
+        makeSaScoreJobResponse({
+          id: 'sa-failed-1',
+          status: 'failed',
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('sa-failed-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Historical job ended with error.');
+  });
+
+  it('loads history ordered by updated_at descending', () => {
+    jobsApiServiceMock.listJobs.mockReturnValue(
+      of([
+        makeScientificJob({ id: 'old', updated_at: '2026-03-01T10:00:00.000Z' }),
+        makeScientificJob({ id: 'new', updated_at: '2026-03-02T10:00:00.000Z' }),
+      ]),
+    );
+
+    workflowService.loadHistory();
+
+    expect(workflowService.historyJobs()[0]?.id).toBe('new');
+    expect(workflowService.historyJobs()[1]?.id).toBe('old');
+  });
+
+  it('downloads full CSV report for selected job', () => {
+    const csvFile: DownloadedReportFile = {
+      filename: 'sa-score-report.csv',
+      blob: new Blob(['smiles,ambit_sa'], { type: 'text/csv' }),
+    };
+    jobsApiServiceMock.downloadSaScoreCsvReport.mockReturnValue(of(csvFile));
+    workflowService.currentJobId.set('sa-export-1');
+
+    workflowService.downloadFullCsvReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('sa-score-report.csv');
+    });
+
+    expect(jobsApiServiceMock.downloadSaScoreCsvReport).toHaveBeenCalledWith('sa-export-1');
+  });
+
+  it('downloads method CSV report for selected job', () => {
+    const csvFile: DownloadedReportFile = {
+      filename: 'sa-score-ambit.csv',
+      blob: new Blob(['smiles,ambit_sa'], { type: 'text/csv' }),
+    };
+    jobsApiServiceMock.downloadSaScoreCsvMethodReport.mockReturnValue(of(csvFile));
+    workflowService.currentJobId.set('sa-export-2');
+
+    workflowService
+      .downloadMethodCsvReport('ambit')
+      .subscribe((downloadedFile: DownloadedReportFile) => {
+        expect(downloadedFile.filename).toBe('sa-score-ambit.csv');
+      });
+
+    expect(jobsApiServiceMock.downloadSaScoreCsvMethodReport).toHaveBeenCalledWith(
+      'sa-export-2',
+      'ambit' satisfies SaScoreMethod,
+    );
+  });
+
+  it('stores export error when method CSV download fails', () => {
+    jobsApiServiceMock.downloadSaScoreCsvMethodReport.mockReturnValue(
+      new Observable<DownloadedReportFile>((subscriber) => {
+        subscriber.error(new Error('csv forbidden'));
+      }),
+    );
+    workflowService.currentJobId.set('sa-export-3');
+
+    workflowService.downloadMethodCsvReport('rdkit').subscribe({
+      error: () => {
+        expect(workflowService.exportErrorMessage()).toContain('RDKIT CSV report');
+        expect(workflowService.exportErrorMessage()).toContain('csv forbidden');
+        expect(workflowService.isExporting()).toBe(false);
+      },
+    });
   });
 });

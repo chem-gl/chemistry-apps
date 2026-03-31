@@ -1,7 +1,7 @@
 // toxicity-properties-workflow.service.spec.ts: Pruebas unitarias del workflow de Toxicity Properties.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -235,5 +235,51 @@ describe('ToxicityPropertiesWorkflowService', () => {
     expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).not.toHaveBeenCalled();
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('not_a_smiles');
+  });
+
+  it('surfaces validation transport errors', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      throwError(() => new Error('validator unavailable')),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('validator unavailable');
+  });
+
+  it('keeps error section when historical payload cannot be reconstructed', () => {
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      of(
+        makeToxicityJobResponse({
+          id: 'tox-broken-1',
+          results: undefined,
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('tox-broken-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to reconstruct historical toxicity');
+  });
+
+  it('stores export error when CSV download fails', () => {
+    jobsApiServiceMock.downloadToxicityPropertiesCsvReport.mockReturnValue(
+      throwError(() => new Error('csv forbidden')),
+    );
+    workflowService.currentJobId.set('tox-export-2');
+
+    workflowService.downloadCsvReport().subscribe({
+      error: () => {
+        expect(workflowService.exportErrorMessage()).toContain('csv forbidden');
+        expect(workflowService.isExporting()).toBe(false);
+      },
+    });
+  });
+
+  it('throws when exporting without selected job', () => {
+    expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for CSV export.');
   });
 });
