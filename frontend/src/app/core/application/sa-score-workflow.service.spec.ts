@@ -92,6 +92,14 @@ function makeSaScoreJobResponse(
   };
 }
 
+function makeRunningSaScoreJobResponse(jobId: string): SaScoreJobResponseView {
+  return makeSaScoreJobResponse({
+    id: jobId,
+    status: 'running',
+    results: undefined,
+  });
+}
+
 describe('SaScoreWorkflowService', () => {
   let workflowService: SaScoreWorkflowService;
   const emptyLogsPage: JobLogsPageView = {
@@ -316,7 +324,7 @@ describe('SaScoreWorkflowService', () => {
     }>();
 
     jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
-      of(makeSaScoreJobResponse({ id: 'sa-progress-1', status: 'running', results: null })),
+      of(makeRunningSaScoreJobResponse('sa-progress-1')),
     );
     jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
     jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
@@ -345,7 +353,7 @@ describe('SaScoreWorkflowService', () => {
     const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
 
     jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
-      of(makeSaScoreJobResponse({ id: 'sa-progress-error-1', status: 'running', results: null })),
+      of(makeRunningSaScoreJobResponse('sa-progress-error-1')),
     );
     jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
     jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());

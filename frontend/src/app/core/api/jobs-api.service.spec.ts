@@ -729,4 +729,137 @@ describe('JobsApiService', () => {
       },
     });
   });
+
+  it('should dispatch and retrieve marcus jobs through generated endpoints', () => {
+    const reactant1File = new File(['r1'], 'reactant-1.log', { type: 'text/plain' });
+    const reactant2File = new File(['r2'], 'reactant-2.log', { type: 'text/plain' });
+    const product1AdiabaticFile = new File(['p1a'], 'product-1-adiabatic.log', {
+      type: 'text/plain',
+    });
+    const product2AdiabaticFile = new File(['p2a'], 'product-2-adiabatic.log', {
+      type: 'text/plain',
+    });
+    const product1VerticalFile = new File(['p1v'], 'product-1-vertical.log', {
+      type: 'text/plain',
+    });
+    const product2VerticalFile = new File(['p2v'], 'product-2-vertical.log', {
+      type: 'text/plain',
+    });
+
+    service
+      .dispatchMarcusJob({
+        reactant1File,
+        reactant2File,
+        product1AdiabaticFile,
+        product2AdiabaticFile,
+        product1VerticalFile,
+        product2VerticalFile,
+        title: 'Marcus flow',
+        diffusion: false,
+      })
+      .subscribe((job) => {
+        expect(job.plugin_name).toBe('marcus');
+      });
+
+    const dispatchReq = httpMock.expectOne((request) => request.url.includes('/api/marcus/jobs/'));
+    expect(dispatchReq.request.method).toBe('POST');
+    expect(dispatchReq.request.body instanceof FormData).toBe(true);
+    dispatchReq.flush({
+      id: 'marcus-job-1',
+      plugin_name: 'marcus',
+      status: 'pending',
+      parameters: {},
+      results: null,
+    });
+
+    service.getMarcusJobStatus('marcus-job-1').subscribe((job) => {
+      expect(job.id).toBe('marcus-job-1');
+    });
+
+    const statusReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-job-1/'),
+    );
+    expect(statusReq.request.method).toBe('GET');
+    statusReq.flush({ id: 'marcus-job-1', plugin_name: 'marcus', status: 'completed' });
+  });
+
+  it('should download easy-rate and marcus report artifacts with domain filenames', () => {
+    service.downloadEasyRateLogReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend.log');
+    });
+    const easyLogReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-log/'),
+    );
+    expect(easyLogReq.request.method).toBe('GET');
+    easyLogReq.flush(new Blob(['log'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend.log"',
+      },
+    });
+
+    service.downloadEasyRateErrorReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend_error.txt');
+    });
+    const easyErrorReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-error/'),
+    );
+    expect(easyErrorReq.request.method).toBe('GET');
+    easyErrorReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend_error.txt"',
+      },
+    });
+
+    service.downloadEasyRateInputsZip('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_inputs.zip');
+    });
+    const easyInputsReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-inputs/'),
+    );
+    expect(easyInputsReq.request.method).toBe('GET');
+    easyInputsReq.flush(new Blob(['zip'], { type: 'application/zip' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_inputs.zip"',
+      },
+    });
+
+    service.downloadMarcusLogReport('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_backend.log');
+    });
+    const marcusLogReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-log/'),
+    );
+    expect(marcusLogReq.request.method).toBe('GET');
+    marcusLogReq.flush(new Blob(['log'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_backend.log"',
+      },
+    });
+
+    service.downloadMarcusErrorReport('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_backend_error.txt');
+    });
+    const marcusErrorReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-error/'),
+    );
+    expect(marcusErrorReq.request.method).toBe('GET');
+    marcusErrorReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_backend_error.txt"',
+      },
+    });
+
+    service.downloadMarcusInputsZip('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_inputs.zip');
+    });
+    const marcusInputsReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-inputs/'),
+    );
+    expect(marcusInputsReq.request.method).toBe('GET');
+    marcusInputsReq.flush(new Blob(['zip'], { type: 'application/zip' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_inputs.zip"',
+      },
+    });
+  });
 });

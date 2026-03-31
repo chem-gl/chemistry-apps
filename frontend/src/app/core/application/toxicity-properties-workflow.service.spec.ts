@@ -89,6 +89,14 @@ function makeToxicityJobResponse(
   };
 }
 
+function makeRunningToxicityJobResponse(jobId: string): ToxicityJobResponseView {
+  return makeToxicityJobResponse({
+    id: jobId,
+    status: 'running',
+    results: undefined,
+  });
+}
+
 describe('ToxicityPropertiesWorkflowService', () => {
   let workflowService: ToxicityPropertiesWorkflowService;
   const emptyLogsPage: JobLogsPageView = {
@@ -293,7 +301,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     }>();
 
     jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
-      of(makeToxicityJobResponse({ id: 'tox-progress-1', status: 'running', results: null })),
+      of(makeRunningToxicityJobResponse('tox-progress-1')),
     );
     jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
     jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
@@ -321,7 +329,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
 
     jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
-      of(makeToxicityJobResponse({ id: 'tox-progress-error-1', status: 'running', results: null })),
+      of(makeRunningToxicityJobResponse('tox-progress-error-1')),
     );
     jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
     jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
