@@ -161,7 +161,12 @@ def get_all_issues() -> list[dict]:
     while True:
         response = requests.get(
             f"{SONAR_URL}/api/issues/search",
-            params={"componentKeys": PROJECT_KEY, "ps": page_size, "p": page},
+            params={
+                "componentKeys": PROJECT_KEY,
+                "ps": page_size,
+                "p": page,
+                "resolved": "false",  # solo issues abiertos (no resueltos ni cerrados)
+            },
             auth=(SONAR_TOKEN, ""),
         )
 

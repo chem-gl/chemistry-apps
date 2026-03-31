@@ -75,6 +75,13 @@ run_sonar_scanner_if_available() {
 
   echo "[sonar] Ejecutando sonar-scanner desde el directorio raíz del proyecto..."
   pushd "${REPO_ROOT}" >/dev/null
+  # Cargar .env si existe y SONAR_TOKEN no está definido en el entorno
+  if [[ -z "${SONAR_TOKEN:-}" && -f "${REPO_ROOT}/.env" ]]; then
+    set -o allexport
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/.env"
+    set +o allexport
+  fi
   sonar-scanner
   popd >/dev/null
 }
