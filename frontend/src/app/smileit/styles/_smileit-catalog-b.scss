@@ -1,5 +1,4 @@
 /* smileit-catalog-b.scss: estilos de catálogo y detalle (segmento B). */
-}
 
 .substituent-workspace-card {
   margin-top: 0.8rem;
@@ -499,3 +498,7 @@
 .thumb-open-button {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+}

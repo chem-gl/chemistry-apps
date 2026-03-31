@@ -1,8 +1,4 @@
 /* smileit-details.scss: estilos de miniaturas, dialogs y estados (segmento C). */
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-}
 
 .thumb-open-button:disabled {
   cursor: default;
@@ -451,7 +447,6 @@
   margin-top: 0.75rem;
   display: block;
 }
-
 
 /* Mantener retrocompatibilidad con list view por si acaso */
 .structures-list {
