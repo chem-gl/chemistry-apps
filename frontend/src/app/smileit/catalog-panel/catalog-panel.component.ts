@@ -88,11 +88,11 @@ export class CatalogPanelComponent implements OnDestroy {
 
   // --- ViewChild refs para diálogos nativos ---
   @ViewChild('catalogStudioDialog')
-  private catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly catalogStudioDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('catalogSmilesSketchDialog')
-  private catalogSmilesSketchDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly catalogSmilesSketchDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('catalogSmilesKetcherFrame')
-  private catalogSmilesKetcherFrameRef?: ElementRef<HTMLIFrameElement>;
+  private readonly catalogSmilesKetcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   ngOnDestroy(): void {
     this.catalogDraftInspectionSubscription?.unsubscribe();

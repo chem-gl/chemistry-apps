@@ -24,7 +24,7 @@ def _load_sonar_properties(properties_file_path: Path) -> dict[str, str]:
     return parsed_properties
 
 
-_ENV_REFERENCE_PATTERN = re.compile(r"\$\{env\.([A-Za-z_][A-Za-z0-9_]*)\}")
+_ENV_REFERENCE_PATTERN = re.compile(r"\$\{env\.([A-Za-z_]\w*)\}")
 
 
 def _resolve_property_value(raw_value: str, environment: dict[str, str]) -> str:

@@ -125,9 +125,9 @@ export class SmileitComponent implements OnInit, OnDestroy {
     { injector: this.injector },
   );
   @ViewChild('patternCatalogDialog')
-  private patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
   @ViewChild('patternDetailDialog')
-  private patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly patternEntries = computed<SmileitPatternEntryView[]>(() => {
     const rawPatterns: unknown = this.workflow.patterns() as unknown;
@@ -154,7 +154,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
       .join('\n');
   });
   @ViewChild(CatalogPanelComponent)
-  private catalogPanelComponentRef?: CatalogPanelComponent;
+  private readonly catalogPanelComponentRef?: CatalogPanelComponent;
   private readonly decoratedInspectionSvg = computed<string>(() =>
     this.inspectionService.decorateInspectionSvg(
       this.workflow.inspectionSvg(),
@@ -235,19 +235,19 @@ export class SmileitComponent implements OnInit, OnDestroy {
   closePatternCatalogModal(): void {
     const patternCatalogDialog: HTMLDialogElement | undefined =
       this.patternCatalogDialogRef?.nativeElement;
-    if (patternCatalogDialog !== undefined && patternCatalogDialog.open) {
+    if (patternCatalogDialog?.open) {
       patternCatalogDialog.close();
     }
   }
 
-  onPatternCatalogDialogClick(mouseEvent: MouseEvent): void {
+  onPatternCatalogDialogClick(event: MouseEvent | KeyboardEvent): void {
     const dialogElement: HTMLDialogElement | undefined =
       this.patternCatalogDialogRef?.nativeElement;
     if (dialogElement === undefined) {
       return;
     }
 
-    if (mouseEvent.target === dialogElement) {
+    if (event.target === dialogElement) {
       this.closePatternCatalogModal();
     }
   }
@@ -274,19 +274,19 @@ export class SmileitComponent implements OnInit, OnDestroy {
   closePatternDetail(): void {
     const patternDetailDialog: HTMLDialogElement | undefined =
       this.patternDetailDialogRef?.nativeElement;
-    if (patternDetailDialog !== undefined && patternDetailDialog.open) {
+    if (patternDetailDialog?.open) {
       patternDetailDialog.close();
     }
     this.selectedPatternForDetail.set(null);
   }
 
-  onPatternDetailDialogClick(mouseEvent: MouseEvent): void {
+  onPatternDetailDialogClick(event: MouseEvent | KeyboardEvent): void {
     const dialogElement: HTMLDialogElement | undefined = this.patternDetailDialogRef?.nativeElement;
     if (dialogElement === undefined) {
       return;
     }
 
-    if (mouseEvent.target === dialogElement) {
+    if (event.target === dialogElement) {
       this.closePatternDetail();
     }
   }
@@ -399,7 +399,6 @@ export class SmileitComponent implements OnInit, OnDestroy {
     const atomIndexFromPointer: number | null = this.resolveAtomIndexFromPointer(mouseEvent);
     if (atomIndexFromPointer !== null) {
       this.workflow.toggleSelectedAtom(atomIndexFromPointer);
-      return;
     }
   }
 

@@ -207,8 +207,8 @@
   </section>
 </section>
 
-<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)">
-  <section class="sketch-modal" role="document" aria-label="Draw SMILES with Ketcher">
+<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)" (keydown)="onSketchDialogBackdropClick($event)">
+  <section class="sketch-modal" aria-label="Draw SMILES with Ketcher">
     <h4>Draw SMILES</h4>
     <p class="hint">
       Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.
@@ -216,10 +216,10 @@
 
     <div class="ketcher-frame-wrap">
       @if (isSketchDialogLoading()) {
-        <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
+        <output class="ketcher-loading" aria-label="Loading molecule sketcher">
           <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
           <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-        </div>
+        </output>
       }
       <iframe
         #ketcherFrame
@@ -241,8 +241,9 @@
   #moleculeImageDialog
   class="molecule-image-dialog"
   (click)="onMoleculeImageDialogBackdropClick($event)"
+  (keydown)="onMoleculeImageDialogBackdropClick($event)"
 >
-  <section class="molecule-image-modal" role="document" aria-label="Molecule structure">
+  <section class="molecule-image-modal" aria-label="Molecule structure">
     <div class="molecule-image-header">
       <h4>Molecule structure</h4>
       <button

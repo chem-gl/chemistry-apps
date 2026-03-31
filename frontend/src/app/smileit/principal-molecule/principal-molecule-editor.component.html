@@ -25,17 +25,18 @@
   #sketchModifierDialog
   class="sketch-modifier-dialog"
   (click)="onSketchModifierDialogClick($event)"
+  (keydown)="onSketchModifierDialogClick($event)"
 >
-  <section class="sketch-modifier-modal" role="document" aria-label="Principal sketch modifier">
+  <section class="sketch-modifier-modal" aria-label="Principal sketch modifier">
     <h4>Principal sketch modifier</h4>
     <p class="hint">Use the sketcher below to edit the principal molecule.</p>
 
     <div class="ketcher-frame-wrap" aria-label="Principal molecule sketcher">
       @if (isSketchModifierLoading()) {
-        <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
+        <output class="ketcher-loading" aria-label="Loading molecule sketcher">
           <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
           <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-        </div>
+        </output>
       }
       <iframe
         #ketcherFrame

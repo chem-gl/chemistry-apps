@@ -1,12 +1,13 @@
 <!-- global-error-modal.component.html: Modal de error global para fallos de backend o frontend. -->
 @if (errorModalService.currentError(); as errorViewModel) {
-  <div class="error-modal-backdrop" role="presentation" (click)="close()">
+  <div class="error-modal-backdrop" (click)="close()" (keydown)="close()">
     <section
       class="error-modal-card"
       role="alertdialog"
       aria-modal="true"
       [attr.aria-label]="errorViewModel.title"
       (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
     >
       <header class="error-modal-header">
         <h3>{{ errorViewModel.title }}</h3>

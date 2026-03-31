@@ -110,9 +110,7 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  toNumber(rawValue: number | string): number {
-    return Number(rawValue);
-  }
+  readonly toNumber = Number;
 
   private downloadFile(filename: string, blob: Blob): void {
     const objectUrl: string = URL.createObjectURL(blob);

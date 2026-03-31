@@ -17,8 +17,9 @@ export function extractFilenameFromHeader(
     return fallbackFilename;
   }
 
-  const utf8Match: RegExpMatchArray | null =
-    contentDispositionHeader.match(/filename\*=UTF-8''([^;]+)/i);
+  const utf8Match: RegExpExecArray | null = /filename\*=UTF-8''([^;]+)/i.exec(
+    contentDispositionHeader,
+  );
   if (utf8Match !== null) {
     const encodedFilename: string | undefined = utf8Match[1];
     if (encodedFilename !== undefined && encodedFilename.trim() !== '') {
@@ -26,8 +27,9 @@ export function extractFilenameFromHeader(
     }
   }
 
-  const regularMatch: RegExpMatchArray | null =
-    contentDispositionHeader.match(/filename="?([^";]+)"?/i);
+  const regularMatch: RegExpExecArray | null = /filename="?([^";]+)"?/i.exec(
+    contentDispositionHeader,
+  );
   if (regularMatch !== null) {
     const rawFilename: string | undefined = regularMatch[1];
     if (rawFilename !== undefined && rawFilename.trim() !== '') {

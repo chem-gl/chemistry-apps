@@ -68,20 +68,19 @@
         Job Progress <span class="job-id-badge">{{ currentJobId() }}</span>
       </h3>
 
-      <div class="stage-stepper" role="list">
+      <ul class="stage-stepper">
         @for (step of stageSteps; track step) {
-          <div
+          <li
             class="stage-step"
             [class.step-done]="isStepDone(step)"
             [class.step-active]="isStepActive(step)"
-            role="listitem"
             [attr.aria-current]="isStepActive(step) ? 'step' : null"
           >
             <div class="step-dot"></div>
             <span class="step-label">{{ stageLabel(step) }}</span>
-          </div>
+          </li>
         }
-      </div>
+      </ul>
 
       <app-job-progress-card
         [jobId]="currentJobId()"

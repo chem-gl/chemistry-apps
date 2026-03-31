@@ -222,7 +222,7 @@ export class JobsStreamingApiService {
   }
 
   private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
-    return rawJob as ScientificJob;
+    return rawJob;
   }
 
   private normalizeRealtimeEvent(rawEvent: unknown): JobsRealtimeEvent | null {

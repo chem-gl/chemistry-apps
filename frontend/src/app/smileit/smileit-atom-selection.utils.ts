@@ -11,7 +11,7 @@ export function parseAtomIndicesInput(rawText: string): number[] {
     .split(',')
     .map((part: string) => part.trim())
     .filter((part: string) => part !== '')
-    .map((part: string) => Number(part))
+    .map(Number)
     .filter((value: number) => Number.isInteger(value) && value >= 0);
 
   return normalizeAnchorIndices(parsedValues);

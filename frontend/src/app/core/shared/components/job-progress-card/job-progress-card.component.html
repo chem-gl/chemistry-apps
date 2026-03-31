@@ -3,17 +3,15 @@
   @if (jobId !== null && jobId !== '') {
     <p class="job-id">{{ jobId }}</p>
   }
-  <div
+  <progress
     class="progress-track"
-    role="progressbar"
     [attr.aria-label]="progressAriaLabel"
     title="Scientific job progress"
-    [attr.aria-valuenow]="progressPercentage"
-    aria-valuemin="0"
-    aria-valuemax="100"
+    [value]="progressPercentage"
+    max="100"
   >
     <div class="progress-fill" [style.width.%]="progressPercentage"></div>
-  </div>
+  </progress>
   <p class="progress-pct">{{ progressPercentage }}%</p>
   <p class="progress-message">{{ progressMessage }}</p>
 </div>

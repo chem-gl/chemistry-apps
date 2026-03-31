@@ -48,10 +48,10 @@ export class MolarFractionsWorkflowService implements OnDestroy {
   readonly pkaCount = signal<number>(3);
   readonly pkaValues = signal<number[]>([2.2, 7.2, 12.3, 0, 0, 0]);
   readonly phMode = signal<MolarFractionsPhMode>('range');
-  readonly phValue = signal<number>(7.0);
-  readonly phMin = signal<number>(0.0);
-  readonly phMax = signal<number>(14.0);
-  readonly phStep = signal<number>(1.0);
+  readonly phValue = signal<number>(7);
+  readonly phMin = signal<number>(0);
+  readonly phMax = signal<number>(14);
+  readonly phStep = signal<number>(1);
 
   readonly activeSection = signal<MolarFractionsSection>('idle');
   readonly currentJobId = signal<string | null>(null);
@@ -69,9 +69,7 @@ export class MolarFractionsWorkflowService implements OnDestroy {
   );
 
   readonly activePkaValues = computed<number[]>(() =>
-    this.pkaValues()
-      .slice(0, this.pkaCount())
-      .map((value) => Number(value)),
+    this.pkaValues().slice(0, this.pkaCount()).map(Number),
   );
 
   readonly isProcessing = computed(

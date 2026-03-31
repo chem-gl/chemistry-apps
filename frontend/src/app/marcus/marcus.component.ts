@@ -158,7 +158,7 @@ export class MarcusComponent implements OnInit, OnDestroy {
     anchor.style.display = 'none';
     document.body.appendChild(anchor);
     anchor.click();
-    document.body.removeChild(anchor);
+    anchor.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
   }
 }

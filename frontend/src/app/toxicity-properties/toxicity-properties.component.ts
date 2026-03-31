@@ -44,13 +44,13 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
 
   @ViewChild('sketchDialog')
-  private sketchDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly sketchDialogRef?: ElementRef<HTMLDialogElement>;
 
   @ViewChild('ketcherFrame')
-  private ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
+  private readonly ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   @ViewChild('moleculeImageDialog')
-  private moleculeImageDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly moleculeImageDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly ketcherPublicUrl: SafeResourceUrl;
   readonly moleculeModalSvg = signal<SafeHtml | null>(null);
@@ -140,7 +140,10 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     this.sketchDialogRef?.nativeElement.close();
   }
 
-  onSketchDialogBackdropClick(event: MouseEvent): void {
+  onSketchDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
     const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
     if (dialog === undefined) {
       return;
@@ -220,16 +223,13 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const reader: FileReader = new FileReader();
-    reader.onload = (readerEvent: ProgressEvent<FileReader>): void => {
-      const rawContent: string = (readerEvent.target?.result as string) ?? '';
+    void file.text().then((rawContent: string) => {
       const smilesLines: string[] = rawContent
         .split(/\r?\n/)
         .map((lineValue: string) => lineValue.trim())
         .filter((lineValue: string) => lineValue.length > 0 && !lineValue.startsWith('#'));
       this.workflow.smilesInput.set(smilesLines.join('\n'));
-    };
-    reader.readAsText(file);
+    });
 
     input.value = '';
   }
@@ -264,7 +264,10 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     this.moleculeImageDialogRef?.nativeElement.close();
   }
 
-  onMoleculeImageDialogBackdropClick(event: MouseEvent): void {
+  onMoleculeImageDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
     const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
     if (dialog === undefined) {
       return;

@@ -86,9 +86,7 @@ export class TunnelComponent implements OnInit, OnDestroy {
     });
   }
 
-  toNumber(rawValue: number | string): number {
-    return Number(rawValue);
-  }
+  readonly toNumber = Number;
 
   formatOutputValue(rawValue: number | null): string {
     if (rawValue === null) {

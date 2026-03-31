@@ -37,53 +37,66 @@ export function dedupeVersionedEntries<T extends { stable_id: string; version: n
 // Extracción de mensajes de error de peticiones HTTP
 // ---------------------------------------------------------------------------
 
+/** Extrae mensaje de error si el valor es una cadena no vacía, null en caso contrario. */
+function extractFromStringError(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim() !== '') {
+    return value;
+  }
+  return null;
+}
+
+/** Extrae mensaje de error uniendo las cadenas no vacías de un array, null si no aplica. */
+function extractFromArrayError(value: unknown): string | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const joined: string = value
+    .filter((entry: unknown) => typeof entry === 'string' && (entry as string).trim() !== '')
+    .join(' ');
+  return joined !== '' ? joined : null;
+}
+
+/** Extrae mensajes de error desde los valores string/array de un objeto, null si no aplica. */
+function extractFromObjectError(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const entries: string[] = Object.values(value as Record<string, unknown>).flatMap(
+    (entry: unknown) => {
+      const fromString = extractFromStringError(entry);
+      if (fromString !== null) {
+        return [fromString];
+      }
+      if (Array.isArray(entry)) {
+        return entry.filter(
+          (message: unknown) => typeof message === 'string' && (message as string).trim() !== '',
+        ) as string[];
+      }
+      return [];
+    },
+  );
+  return entries.length > 0 ? entries.join(' ') : null;
+}
+
 /** Extrae un mensaje legible de un error de petición HTTP (HttpErrorResponse u otros). */
 export function extractRequestErrorMessage(requestError: unknown): string {
   if (requestError instanceof Error && requestError.message.trim() !== '') {
     return requestError.message;
   }
 
-  if (typeof requestError === 'object' && requestError !== null) {
-    const errorContainer: Record<string, unknown> = requestError as Record<string, unknown>;
-    const nestedError: unknown = errorContainer['error'];
-
-    if (typeof nestedError === 'string' && nestedError.trim() !== '') {
-      return nestedError;
-    }
-
-    if (Array.isArray(nestedError)) {
-      const flattenedMessage: string = nestedError
-        .filter((entry: unknown) => typeof entry === 'string' && entry.trim() !== '')
-        .join(' ');
-      if (flattenedMessage !== '') {
-        return flattenedMessage;
-      }
-    }
-
-    if (typeof nestedError === 'object' && nestedError !== null) {
-      const nestedEntries: string[] = Object.values(nestedError as Record<string, unknown>).flatMap(
-        (entry: unknown) => {
-          if (typeof entry === 'string' && entry.trim() !== '') {
-            return [entry];
-          }
-
-          if (Array.isArray(entry)) {
-            return entry.filter(
-              (message: unknown) => typeof message === 'string' && message.trim() !== '',
-            ) as string[];
-          }
-
-          return [];
-        },
-      );
-
-      if (nestedEntries.length > 0) {
-        return nestedEntries.join(' ');
-      }
-    }
+  if (typeof requestError !== 'object' || requestError === null) {
+    return 'Unexpected request failure.';
   }
 
-  return 'Unexpected request failure.';
+  const errorContainer: Record<string, unknown> = requestError as Record<string, unknown>;
+  const nestedError: unknown = errorContainer['error'];
+
+  return (
+    extractFromStringError(nestedError) ??
+    extractFromArrayError(nestedError) ??
+    extractFromObjectError(nestedError) ??
+    'Unexpected request failure.'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -111,7 +124,7 @@ export function parseSingleAnchorIndexInput(rawText: string): number[] {
 
 /** Escapa caracteres especiales de regex en un texto plano. */
 export function escapeRegExp(rawText: string): string {
-  return rawText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return rawText.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 /** Alterna la presencia de un valor en un arreglo de strings, manteniendo orden alfabético. */
@@ -202,13 +215,13 @@ export function buildCatalogGroups(
  */
 export function buildNextCloneDraftName(sourceName: string, existingNames: string[]): string {
   const normalizedSourceName: string = sourceName.trim();
-  const sourceMatch = normalizedSourceName.match(/^(.*?)(?:_sus(\d+))?$/i);
+  const sourceMatch = /^(.*?)(?:_sus(\d+))?$/i.exec(normalizedSourceName);
   const rawBaseName: string = (sourceMatch?.[1] ?? normalizedSourceName).trim();
-  const baseName: string = rawBaseName !== '' ? rawBaseName : 'substituent';
+  const baseName: string = rawBaseName === '' ? 'substituent' : rawBaseName;
 
   let maxIndex: number = 1;
   const escapedBaseName: string = escapeRegExp(baseName);
-  const suffixPattern: RegExp = new RegExp(`^${escapedBaseName}_sus(\\d+)$`, 'i');
+  const suffixPattern: RegExp = new RegExp(String.raw`^${escapedBaseName}_sus(\d+)$`, 'i');
 
   existingNames.forEach((existingName: string) => {
     const normalizedExistingName: string = existingName.trim();
@@ -219,7 +232,7 @@ export function buildNextCloneDraftName(sourceName: string, existingNames: strin
       return;
     }
 
-    const existingMatch: RegExpMatchArray | null = normalizedExistingName.match(suffixPattern);
+    const existingMatch: RegExpMatchArray | null = suffixPattern.exec(normalizedExistingName);
     if (existingMatch === null) {
       return;
     }
@@ -239,17 +252,17 @@ export function buildNextSequentialCatalogDraftName(
   existingNames: string[],
 ): string {
   const normalizedSourceName: string = sourceName.trim();
-  const sourceMatch: RegExpMatchArray | null = normalizedSourceName.match(/^(.*?)(?:\s+(\d+))?$/);
+  const sourceMatch: RegExpMatchArray | null = /^(.*?)(?:\s+(\d+))?$/.exec(normalizedSourceName);
   const rawBaseName: string = (sourceMatch?.[1] ?? normalizedSourceName).trim();
-  const baseName: string = rawBaseName !== '' ? rawBaseName : 'Substituent';
+  const baseName: string = rawBaseName === '' ? 'Substituent' : rawBaseName;
   const escapedBaseName: string = escapeRegExp(baseName);
-  const suffixPattern: RegExp = new RegExp(`^${escapedBaseName}(?:\\s+(\\d+))?$`, 'i');
+  const suffixPattern: RegExp = new RegExp(String.raw`^${escapedBaseName}(?:\s+(\d+))?$`, 'i');
 
   let highestSuffix: number = 0;
 
   existingNames.forEach((existingName: string) => {
     const normalizedExistingName: string = existingName.trim();
-    const existingMatch: RegExpMatchArray | null = normalizedExistingName.match(suffixPattern);
+    const existingMatch: RegExpMatchArray | null = suffixPattern.exec(normalizedExistingName);
     if (existingMatch === null) {
       return;
     }

@@ -32,6 +32,7 @@
         class="svg-preview inspectable principal-svg-stage"
         [style.transform]="'scale(' + zoomLevel + ')'"
         (click)="onInspectionSvgClick($event)"
+        (keydown)="onInspectionSvgClick($event)"
         [innerHTML]="inspectionSvg"
       ></div>
     </div>

@@ -27,10 +27,10 @@ export class PrincipalMoleculeEditorComponent {
   private readonly ketcherFrameService = inject(KetcherFrameService);
 
   @ViewChild('sketchModifierDialog')
-  private sketchModifierDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly sketchModifierDialogRef?: ElementRef<HTMLDialogElement>;
 
   @ViewChild('ketcherFrame')
-  private ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
+  private readonly ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   @Input() principalSmiles: string = '';
   @Input() isProcessing: boolean = false;
@@ -118,14 +118,14 @@ export class PrincipalMoleculeEditorComponent {
     dialogElement.removeAttribute('open');
   }
 
-  onSketchModifierDialogClick(mouseEvent: MouseEvent): void {
+  onSketchModifierDialogClick(event: MouseEvent | KeyboardEvent): void {
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
     if (dialogElement === undefined) {
       return;
     }
 
-    if (mouseEvent.target === dialogElement) {
+    if (event.target === dialogElement) {
       this.closeSketchModifier();
     }
   }

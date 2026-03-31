@@ -94,13 +94,13 @@ export class SmileitInspectionService {
     // Paso 1: extraer posiciones desde <text class="atom-N"> (heteroátomos)
     rootSvg.querySelectorAll('text').forEach((textElement: Element) => {
       const classText: string = this.normalizeClassText(textElement.getAttribute('class') ?? '');
-      const atomMatch: RegExpMatchArray | null = classText.match(/\batom-(\d+)\b/);
+      const atomMatch: RegExpExecArray | null = /\batom-(\d+)\b/.exec(classText);
       if (atomMatch === null) {
         return;
       }
-      const atomIndex: number = parseInt(atomMatch[1], 10);
-      const x: number = parseFloat(textElement.getAttribute('x') ?? '');
-      const y: number = parseFloat(textElement.getAttribute('y') ?? '');
+      const atomIndex: number = Number.parseInt(atomMatch[1], 10);
+      const x: number = Number.parseFloat(textElement.getAttribute('x') ?? '');
+      const y: number = Number.parseFloat(textElement.getAttribute('y') ?? '');
       if (Number.isFinite(x) && Number.isFinite(y)) {
         atomPositions.set(atomIndex, { x, y });
       }
@@ -191,7 +191,7 @@ export class SmileitInspectionService {
   }
 
   private isExplicitAtomSelectionTarget(svgElement: Element): boolean {
-    if (svgElement.hasAttribute('data-atom-index')) {
+    if ('atomIndex' in (svgElement as HTMLElement).dataset) {
       return true;
     }
 
@@ -214,7 +214,7 @@ export class SmileitInspectionService {
   private readAtomIndicesFromElement(svgElement: Element): number[] {
     const normalizedClassText: string = this.normalizeClassText(svgElement.className);
     const rawId: string = svgElement.getAttribute('id') ?? '';
-    const rawDataAtomIndex: string = svgElement.getAttribute('data-atom-index') ?? '';
+    const rawDataAtomIndex: string = (svgElement as HTMLElement).dataset['atomIndex'] ?? '';
 
     const atomIndexCandidates: string[] = [
       normalizedClassText,
@@ -251,7 +251,7 @@ export class SmileitInspectionService {
       svgNamespace,
       'g',
     ) as SVGGElement;
-    overlayGroup.setAttribute('data-smileit-annotation-overlay', 'true');
+    (overlayGroup as unknown as HTMLElement).dataset['smileitAnnotationOverlay'] = 'true';
 
     const defsElement: SVGDefsElement = parsedDocument.createElementNS(
       svgNamespace,
@@ -308,7 +308,7 @@ export class SmileitInspectionService {
         bondHighlight.setAttribute('stroke-linejoin', 'round');
         bondHighlight.setAttribute('stroke-opacity', '0.55');
         bondHighlight.setAttribute('filter', `url(#${filterId})`);
-        bondHighlight.setAttribute('data-smileit-hit-zone', 'true');
+        (bondHighlight as unknown as HTMLElement).dataset['smileitHitZone'] = 'true';
         bondHighlight.setAttribute('style', 'pointer-events: none;');
         overlayGroup.appendChild(bondHighlight);
       });
@@ -330,7 +330,7 @@ export class SmileitInspectionService {
         atomHighlight.setAttribute('fill-opacity', '0.50');
         atomHighlight.setAttribute('stroke', 'none');
         atomHighlight.setAttribute('filter', `url(#${filterId})`);
-        atomHighlight.setAttribute('data-smileit-hit-zone', 'true');
+        (atomHighlight as unknown as HTMLElement).dataset['smileitHitZone'] = 'true';
         atomHighlight.setAttribute('style', 'pointer-events: none;');
         overlayGroup.appendChild(atomHighlight);
       });
@@ -340,7 +340,7 @@ export class SmileitInspectionService {
       'path[class*="bond-"], line[class*="bond-"]',
     );
     if (firstBondNode !== null && firstBondNode.parentNode === rootSvg) {
-      rootSvg.insertBefore(overlayGroup, firstBondNode);
+      firstBondNode.before(overlayGroup);
       return;
     }
 
@@ -367,7 +367,7 @@ export class SmileitInspectionService {
       svgNamespace,
       'g',
     ) as SVGGElement;
-    overlayGroup.setAttribute('data-smileit-overlay', 'true');
+    (overlayGroup as unknown as HTMLElement).dataset['smileitOverlay'] = 'true';
 
     for (const [atomIndex, atomPosition] of atomPositions.entries()) {
       const hitZoneCircle: SVGCircleElement = parsedDocument.createElementNS(
@@ -380,8 +380,8 @@ export class SmileitInspectionService {
       hitZoneCircle.setAttribute('fill', 'transparent');
       hitZoneCircle.setAttribute('stroke', 'transparent');
       hitZoneCircle.setAttribute('class', `smileit-atom-hit-zone atom-${atomIndex}`);
-      hitZoneCircle.setAttribute('data-atom-index', String(atomIndex));
-      hitZoneCircle.setAttribute('data-smileit-hit-zone', 'true');
+      (hitZoneCircle as unknown as HTMLElement).dataset['atomIndex'] = String(atomIndex);
+      (hitZoneCircle as unknown as HTMLElement).dataset['smileitHitZone'] = 'true';
       hitZoneCircle.setAttribute('style', 'pointer-events: all; cursor: crosshair;');
       overlayGroup.appendChild(hitZoneCircle);
 
@@ -394,7 +394,7 @@ export class SmileitInspectionService {
         selectedCircle.setAttribute('cy', atomPosition.y.toFixed(2));
         selectedCircle.setAttribute('r', '10');
         selectedCircle.setAttribute('class', `smileit-atom-selected-vertex atom-${atomIndex}`);
-        selectedCircle.setAttribute('data-smileit-selected-vertex', 'true');
+        (selectedCircle as unknown as HTMLElement).dataset['smileitSelectedVertex'] = 'true';
         selectedCircle.setAttribute('style', 'pointer-events: none;');
         overlayGroup.appendChild(selectedCircle);
       }
@@ -448,7 +448,7 @@ export class SmileitInspectionService {
 
     return {
       start: coordinatePairs[0],
-      end: coordinatePairs[coordinatePairs.length - 1],
+      end: coordinatePairs.at(-1)!,
     };
   }
 
@@ -461,7 +461,7 @@ export class SmileitInspectionService {
     }
 
     const styleNode: HTMLStyleElement = parsedDocument.createElement('style');
-    styleNode.setAttribute('data-smileit-atom-highlight', 'true');
+    styleNode.dataset['smileitAtomHighlight'] = 'true';
     styleNode.textContent = `
       .smileit-atom-selected-vertex {
         stroke: #f97316 !important;
@@ -470,6 +470,6 @@ export class SmileitInspectionService {
       }
     `;
 
-    rootSvg.insertBefore(styleNode, rootSvg.firstChild);
+    rootSvg.prepend(styleNode);
   }
 }

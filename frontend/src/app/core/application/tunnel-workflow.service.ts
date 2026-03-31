@@ -38,7 +38,7 @@ export class TunnelWorkflowService implements OnDestroy {
   private logsSubscription: Subscription | null = null;
 
   readonly reactionBarrierZpe = signal<number>(3.5);
-  readonly imaginaryFrequency = signal<number>(625.0);
+  readonly imaginaryFrequency = signal<number>(625);
   readonly reactionEnergyZpe = signal<number>(-8.2);
   readonly temperature = signal<number>(298.15);
 
@@ -280,7 +280,7 @@ export class TunnelWorkflowService implements OnDestroy {
 
     this.inputChangeEvents.update((currentEvents: TunnelInputChangeEvent[]) => {
       const nextEvents: TunnelInputChangeEvent[] = [...currentEvents, nextEvent];
-      return nextEvents.length > 2000 ? nextEvents.slice(nextEvents.length - 2000) : nextEvents;
+      return nextEvents.length > 2000 ? nextEvents.slice(-2000) : nextEvents;
     });
   }
 

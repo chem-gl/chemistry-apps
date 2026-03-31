@@ -50,10 +50,10 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------------------
 
   @ViewChild('sketchDialog')
-  private sketchDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly sketchDialogRef?: ElementRef<HTMLDialogElement>;
 
   @ViewChild('ketcherFrame')
-  private ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
+  private readonly ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   readonly ketcherPublicUrl: SafeResourceUrl;
   sketchDraftSmiles: string = '';
@@ -66,7 +66,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------------------
 
   @ViewChild('moleculeImageDialog')
-  private moleculeImageDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly moleculeImageDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly moleculeModalSvg = signal<SafeHtml | null>(null);
   readonly moleculeModalSmiles = signal<string>('');
@@ -181,12 +181,14 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   }
 
   methodScore(molecule: SaScoreMoleculeResultView, method: SaScoreMethod): string {
-    const rawValue: number | null =
-      method === 'ambit'
-        ? molecule.ambit_sa
-        : method === 'brsa'
-          ? molecule.brsa_sa
-          : molecule.rdkit_sa;
+    let rawValue: number | null;
+    if (method === 'ambit') {
+      rawValue = molecule.ambit_sa;
+    } else if (method === 'brsa') {
+      rawValue = molecule.brsa_sa;
+    } else {
+      rawValue = molecule.rdkit_sa;
+    }
 
     if (rawValue === null) {
       return '-';
@@ -196,11 +198,9 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   }
 
   methodError(molecule: SaScoreMoleculeResultView, method: SaScoreMethod): string | null {
-    return method === 'ambit'
-      ? molecule.ambit_error
-      : method === 'brsa'
-        ? molecule.brsa_error
-        : molecule.rdkit_error;
+    if (method === 'ambit') return molecule.ambit_error;
+    if (method === 'brsa') return molecule.brsa_error;
+    return molecule.rdkit_error;
   }
 
   // ---------------------------------------------------------------------------
@@ -229,7 +229,10 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   }
 
   /** Cierra el diálogo al hacer click en el backdrop (fuera del modal). */
-  onSketchDialogBackdropClick(event: MouseEvent): void {
+  onSketchDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
     const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
     if (dialog === undefined) {
       return;
@@ -320,17 +323,14 @@ export class SaScoreComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const reader: FileReader = new FileReader();
-    reader.onload = (readerEvent: ProgressEvent<FileReader>): void => {
-      const rawContent: string = (readerEvent.target?.result as string) ?? '';
+    void file.text().then((rawContent: string) => {
       // Filtra líneas vacías y comentarios (#) comunes en archivos .smi
       const smilesLines: string[] = rawContent
         .split(/\r?\n/)
         .map((line: string) => line.trim())
         .filter((line: string) => line.length > 0 && !line.startsWith('#'));
       this.workflow.smilesInput.set(smilesLines.join('\n'));
-    };
-    reader.readAsText(file);
+    });
 
     // Resetea el input para que el mismo archivo pueda volver a cargarse
     input.value = '';
@@ -373,7 +373,10 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   }
 
   /** Cierra el modal al hacer click en el backdrop. */
-  onMoleculeImageDialogBackdropClick(event: MouseEvent): void {
+  onMoleculeImageDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
     const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
     if (dialog === undefined) {
       return;

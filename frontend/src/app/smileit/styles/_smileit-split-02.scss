@@ -359,14 +359,20 @@
 
 .catalog-smiles-section {
   order: 2;
+  margin-top: 0.9rem;
 }
 
 .anchor-selection-panel {
   order: 3;
+  margin-top: 0;
+  padding-top: 0.9rem;
 }
 
 .catalog-category-panel {
   order: 4;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .catalog-reference-section {
@@ -416,10 +422,6 @@
   margin-top: 0.7rem;
 }
 
-.catalog-smiles-section {
-  margin-top: 0.9rem;
-}
-
 .catalog-smiles-grid {
   margin-top: 0.7rem;
 }
@@ -431,12 +433,6 @@
 
 .catalog-field-full {
   grid-column: span 2;
-}
-
-.catalog-category-panel {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 .catalog-live-status {
@@ -453,11 +449,6 @@
 
 .catalog-ready-hint {
   margin: 0.3rem 0 0;
-}
-
-.anchor-selection-panel {
-  margin-top: 0;
-  padding-top: 0.9rem;
 }
 
 .catalog-empty-step {

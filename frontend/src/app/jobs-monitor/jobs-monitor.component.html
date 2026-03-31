@@ -107,17 +107,15 @@
 
             <p class="job-id">{{ activeJob.id }}</p>
 
-            <div
+            <progress
               class="progress-track"
-              role="progressbar"
-              [attr.aria-valuenow]="activeJob.progress_percentage"
+              [value]="activeJob.progress_percentage"
               [attr.aria-label]="'Progress for job ' + activeJob.id"
               title="Job progress"
-              aria-valuemin="0"
-              aria-valuemax="100"
+              max="100"
             >
               <div class="progress-fill" [style.width.%]="activeJob.progress_percentage"></div>
-            </div>
+            </progress>
 
             <div class="job-meta">
               <span>{{ activeJob.progress_percentage }}%</span>
@@ -193,17 +191,15 @@
 
             <p class="job-id">{{ pausedJob.id }}</p>
 
-            <div
+            <progress
               class="progress-track"
-              role="progressbar"
-              [attr.aria-valuenow]="pausedJob.progress_percentage"
+              [value]="pausedJob.progress_percentage"
               [attr.aria-label]="'Progress for job ' + pausedJob.id"
               title="Job progress"
-              aria-valuemin="0"
-              aria-valuemax="100"
+              max="100"
             >
               <div class="progress-fill" [style.width.%]="pausedJob.progress_percentage"></div>
-            </div>
+            </progress>
 
             <div class="job-meta">
               <span>{{ pausedJob.progress_percentage }}%</span>
@@ -317,8 +313,8 @@
   </section>
 
   @if (facade.selectedJobId() !== null) {
-    <section class="details-overlay" aria-label="Job details" (click)="closeJobDetails()">
-      <article class="details-modal" (click)="$event.stopPropagation()">
+    <section class="details-overlay" aria-label="Job details" (click)="closeJobDetails()" (keydown)="closeJobDetails()">
+      <article class="details-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <header class="details-header">
           <h3>Job details</h3>
           <button class="close-details-btn" (click)="closeJobDetails()">Close</button>

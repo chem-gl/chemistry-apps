@@ -34,7 +34,7 @@ export class GenerationResultPanelComponent {
   readonly imagesZipProgress = this.resultDataService.imagesZipProgress;
 
   @ViewChild('generatedStructureDialog')
-  private generatedStructureDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly generatedStructureDialogRef?: ElementRef<HTMLDialogElement>;
 
   dispatch(): void {
     this.workflow.dispatch();
@@ -72,9 +72,7 @@ export class GenerationResultPanelComponent {
     this.downloadReport(this.workflow.downloadLogReport.bind(this.workflow));
   }
 
-  toNumber(rawValue: number | string): number {
-    return Number(rawValue);
-  }
+  readonly toNumber = Number;
 
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {
     return `history-status history-${jobStatus}`;
@@ -125,7 +123,7 @@ export class GenerationResultPanelComponent {
       const rawPositions = normalizedBlock['site_atom_indices'];
       const positions = Array.isArray(rawPositions)
         ? rawPositions
-            .map((positionValue: unknown) => String(positionValue))
+            .map(String)
             .filter((positionValue: string) => positionValue.trim() !== '')
             .join(', ')
         : 'Not assigned';
@@ -179,9 +177,9 @@ export class GenerationResultPanelComponent {
     },
   ): string {
     const substituentDescriptor =
-      placeholderAssignment.substituentSmiles?.trim() !== ''
-        ? placeholderAssignment.substituentSmiles?.trim()
-        : placeholderAssignment.substituentName;
+      placeholderAssignment.substituentSmiles?.trim() === ''
+        ? placeholderAssignment.substituentName
+        : placeholderAssignment.substituentSmiles?.trim();
     const duplicateAssignments = this.placeholderAssignmentsForStructure(structure).filter(
       (assignmentItem) => assignmentItem.siteAtomIndex === placeholderAssignment.siteAtomIndex,
     );
@@ -233,7 +231,7 @@ export class GenerationResultPanelComponent {
 
   closeGeneratedStructureModal(): void {
     const dialog: HTMLDialogElement | undefined = this.generatedStructureDialogRef?.nativeElement;
-    if (dialog !== undefined && dialog.open) {
+    if (dialog?.open) {
       dialog.close();
     }
     this.selectedGeneratedStructure.set(null);

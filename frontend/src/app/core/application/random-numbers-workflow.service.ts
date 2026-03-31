@@ -25,7 +25,7 @@ export interface RandomNumbersResultData {
   summaryMessage: string | null;
 }
 
-const SUPPORTED_PROGRESS_STAGES: ReadonlyArray<JobProgressSnapshotView['progress_stage']> = [
+const SUPPORTED_PROGRESS_STAGES = new Set<JobProgressSnapshotView['progress_stage']>([
   'pending',
   'queued',
   'running',
@@ -35,16 +35,16 @@ const SUPPORTED_PROGRESS_STAGES: ReadonlyArray<JobProgressSnapshotView['progress
   'completed',
   'failed',
   'cancelled',
-];
+]);
 
-const SUPPORTED_JOB_STATUSES: ReadonlyArray<ScientificJobView['status']> = [
+const SUPPORTED_JOB_STATUSES = new Set<ScientificJobView['status']>([
   'pending',
   'running',
   'paused',
   'completed',
   'failed',
   'cancelled',
-];
+]);
 
 @Injectable()
 export class RandomNumbersWorkflowService implements OnDestroy {
@@ -94,7 +94,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     rawProgressStage: string,
     fallbackStage: JobProgressSnapshotView['progress_stage'],
   ): JobProgressSnapshotView['progress_stage'] {
-    return SUPPORTED_PROGRESS_STAGES.includes(
+    return SUPPORTED_PROGRESS_STAGES.has(
       rawProgressStage as JobProgressSnapshotView['progress_stage'],
     )
       ? (rawProgressStage as JobProgressSnapshotView['progress_stage'])
@@ -514,7 +514,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   }
 
   private normalizeStatus(rawStatus: string): ScientificJobView['status'] {
-    return SUPPORTED_JOB_STATUSES.includes(rawStatus as ScientificJobView['status'])
+    return SUPPORTED_JOB_STATUSES.has(rawStatus as ScientificJobView['status'])
       ? (rawStatus as ScientificJobView['status'])
       : 'pending';
   }

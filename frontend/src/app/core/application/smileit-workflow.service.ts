@@ -171,8 +171,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.state.rSubstitutes.set(clampedValue);
   }
 
-  setNumBonds(rawValue: number): void {
-    void rawValue;
+  setNumBonds(_rawValue: number): void {
     this.state.numBonds.set(this.FIXED_NUM_BONDS);
   }
 
@@ -180,8 +179,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.state.maxStructures.set(Math.max(0, Math.trunc(rawValue)));
   }
 
-  setExportPadding(rawValue: number): void {
-    void rawValue;
+  setExportPadding(_rawValue: number): void {
     this.state.exportPadding.set(this.FIXED_EXPORT_PADDING);
   }
 

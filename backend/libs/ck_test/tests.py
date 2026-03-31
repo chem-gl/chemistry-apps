@@ -61,7 +61,7 @@ class TestTSTResult(unittest.TestCase):
         )
 
         result_dict = result.to_dict()
-        self.assertEqual(result_dict["success"], True)
+        self.assertTrue(result_dict["success"])
         self.assertAlmostEqual(result_dict["g"], 0.98)
 
     def test_result_error_message(self) -> None:

@@ -78,7 +78,7 @@ export class SmileitBlockWorkflowService {
         : [...block.siteAtomIndices, atomIndex];
       return {
         ...block,
-        siteAtomIndices: nextSites.sort((left: number, right: number) => left - right),
+        siteAtomIndices: [...nextSites].sort((left: number, right: number) => left - right),
       };
     });
   }
@@ -208,12 +208,16 @@ export class SmileitBlockWorkflowService {
       return;
     }
 
-    const resolvedCategoryKeys: string[] =
-      blockDraft.draftManualCategoryKeys.length > 0
-        ? [...blockDraft.draftManualCategoryKeys]
-        : blockDraft.categoryKeys.length > 0
-          ? [...blockDraft.categoryKeys]
-          : this.state.categories().map((category: SmileitCategoryView) => category.key);
+    let resolvedCategoryKeys: string[];
+    if (blockDraft.draftManualCategoryKeys.length > 0) {
+      resolvedCategoryKeys = [...blockDraft.draftManualCategoryKeys];
+    } else if (blockDraft.categoryKeys.length > 0) {
+      resolvedCategoryKeys = [...blockDraft.categoryKeys];
+    } else {
+      resolvedCategoryKeys = this.state
+        .categories()
+        .map((category: SmileitCategoryView) => category.key);
+    }
 
     if (resolvedCategoryKeys.length === 0) {
       this.state.errorMessage.set('Manual substituent requires at least one chemistry category.');
@@ -313,6 +317,9 @@ export class SmileitBlockWorkflowService {
           items.indexOf(smilesValue) === index,
       );
 
+    const catalogSuffix = catalogSmilesPreview.length === 1 ? '' : 's';
+    const manualSuffix = manualSmilesPreview.length === 1 ? '' : 's';
+
     return {
       selectedSitesLabel:
         block.siteAtomIndices.length > 0 ? block.siteAtomIndices.join(', ') : 'No covered sites',
@@ -320,11 +327,11 @@ export class SmileitBlockWorkflowService {
         block.categoryKeys.length > 0 ? block.categoryKeys.join(', ') : 'No category filters',
       catalogSmilesLabel:
         catalogSmilesPreview.length > 0
-          ? `${catalogSmilesPreview.length} rendered structure${catalogSmilesPreview.length === 1 ? '' : 's'}`
+          ? `${catalogSmilesPreview.length} rendered structure${catalogSuffix}`
           : 'No catalog references',
       manualSmilesLabel:
         manualSmilesPreview.length > 0
-          ? `${manualSmilesPreview.length} rendered structure${manualSmilesPreview.length === 1 ? '' : 's'}`
+          ? `${manualSmilesPreview.length} rendered structure${manualSuffix}`
           : 'No manual substituents',
       sourceCount:
         block.categoryKeys.length + block.catalogRefs.length + block.manualSubstituents.length,

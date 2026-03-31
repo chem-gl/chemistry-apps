@@ -13,7 +13,7 @@ import { SafeHtml } from '@angular/platform-browser';
 })
 export class PrincipalSvgViewerComponent {
   @ViewChild('principalSvgViewport')
-  private principalSvgViewportRef?: ElementRef<HTMLDivElement>;
+  private readonly principalSvgViewportRef?: ElementRef<HTMLDivElement>;
 
   @Input() inspectionSvg: SafeHtml | null = null;
   @Input() isProcessing: boolean = false;
@@ -40,11 +40,14 @@ export class PrincipalSvgViewerComponent {
     this.updateZoom(nextZoomLevel);
   }
 
-  onInspectionSvgClick(mouseEvent: MouseEvent): void {
+  onInspectionSvgClick(event: MouseEvent | KeyboardEvent): void {
     if (this.isProcessing) {
       return;
     }
-    this.inspectionSvgClicked.emit(mouseEvent);
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
+    this.inspectionSvgClicked.emit(event);
   }
 
   private updateZoom(nextZoomLevel: number): void {

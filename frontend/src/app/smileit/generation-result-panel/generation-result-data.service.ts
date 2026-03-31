@@ -474,9 +474,10 @@ export class GenerationResultDataService implements OnDestroy {
   private sanitizeFilenameSegment(name: string): string {
     return (
       name
-        .replace(/[^a-zA-Z0-9]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '')
+        .replaceAll(/[^a-zA-Z0-9]/g, '_')
+        .replaceAll(/_+/g, '_')
+        .replace(/^_/, '')
+        .replace(/_$/, '')
         .slice(0, 40) || 'structure'
     );
   }

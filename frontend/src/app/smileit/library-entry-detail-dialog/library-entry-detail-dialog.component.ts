@@ -36,7 +36,7 @@ export class LibraryEntryDetailDialogComponent {
   readonly editRequested = output<SmileitCatalogEntryView>();
 
   @ViewChild('libraryEntryDetailDialog')
-  private libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly libraryEntryDetailDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly libraryDetailZoomLevel = signal<number>(1);
   readonly libraryDetailViewportPx = 280;
