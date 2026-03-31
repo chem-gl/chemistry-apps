@@ -16,3 +16,4 @@ backend/celerybeat-schedule
 
 tools/
 .env
+sonar_report.json
