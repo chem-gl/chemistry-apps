@@ -226,16 +226,16 @@
     <dialog
       #patternCatalogDialog
       class="pattern-catalog-dialog"
+      aria-label="Structural pattern catalog"
       (click)="onPatternCatalogDialogClick($event)"
       (keydown)="onPatternCatalogDialogClick($event)"
       (cancel)="closePatternCatalogModal()"
     >
       <section
         class="pattern-catalog-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Structural pattern catalog"
+        tabindex="0"
         (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
       >
           <header class="catalog-studio-header">
           <div>
@@ -360,6 +360,7 @@
     <dialog
       #patternDetailDialog
       class="pattern-detail-dialog"
+      aria-label="Pattern detail"
       (click)="onPatternDetailDialogClick($event)"
       (keydown)="onPatternDetailDialogClick($event)"
       (cancel)="closePatternDetail()"
@@ -367,10 +368,9 @@
       @if (selectedPatternForDetail(); as detailPattern) {
         <section
           class="pattern-detail-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Pattern detail"
+          tabindex="0"
           (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
         >
           <header class="library-detail-header">
             <div class="library-detail-title-row">
