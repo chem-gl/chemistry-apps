@@ -40,11 +40,23 @@ def _resolve_property_value(raw_value: str, environment: dict[str, str]) -> str:
     return environment.get(referenced_env_var, "").strip()
 
 
-# Pri
+# =========================
+# CARGA DE .env
+# =========================
+def _load_env_file(env_file_path: Path) -> None:
+    """Carga variables del .env en os.environ si no están ya definidas en el entorno."""
+    if not env_file_path.exists():
+        return
+    for key, value in _load_sonar_properties(env_file_path).items():
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 # =========================
 # CONFIGURACIÓN
 # =========================
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+_load_env_file(REPOSITORY_ROOT / ".env")
 SONAR_PROPERTIES_PATH = REPOSITORY_ROOT / "sonar-project.properties"
 SONAR_PROPERTIES = _load_sonar_properties(SONAR_PROPERTIES_PATH)
 
