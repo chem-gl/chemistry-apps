@@ -1,5 +1,39 @@
 # pyproject.toml: Configuracion de herramientas de calidad para el backend Django.
 # Incluye formato automatico con Black para mantener  
+
+[tool.pytest.ini_options]
+# Configuración de pytest: módulo de settings de Django y opciones por defecto.
+DJANGO_SETTINGS_MODULE = "config.settings"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+# Mide cobertura del código fuente, excluyendo código no-testeable:
+# migraciones autogeneradas, comandos de management, código de ejemplo y librerías externas.
+source = ["."]
+omit = [
+    "*/migrations/*.py",
+    "*/management/commands/*.py",
+    "apps/core/declarative_api_usage_examples.py",
+    "libs/**",
+    "conftest.py",
+    "venv/**",
+    "manage.py",
+    "config/wsgi.py",
+    "config/asgi.py",
+    "config/startup_production.py",
+]
+
+[tool.coverage.report]
+# No se cuentan líneas de imports/pass/docstrings puras como no cubiertas.
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    '\\.\\.\\.',
+    "pass",
+    "if __name__ == .__main__.:",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py312']

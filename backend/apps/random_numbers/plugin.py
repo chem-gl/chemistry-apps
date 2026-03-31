@@ -286,7 +286,9 @@ def random_numbers_plugin(
         )
 
         for _ in range(generated_count):
-            random_generator.randint(0, 1_000_000)
+            random_generator.randint(
+                0, 1_000_000
+            )  # NOSONAR - no importante es un ejemplo de uso de random, no se usa para seguridad
 
     while generated_count < total_numbers:
         _raise_pause_if_requested(

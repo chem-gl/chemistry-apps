@@ -24,11 +24,26 @@ SSE_MEDIA_TYPE = "text/event-stream"
 
 
 class ServerSentEventsRenderer(BaseRenderer):
-    """Renderer DRF para habilitar negociación de contenido text/event-stream."""
+    """Renderer DRF para habilitar negociación de contenido text/event-stream.
+
+    El método render() gestiona respuestas no-streaming (ej. errores 404/500)
+    que DRF intenta renderizar con este renderer cuando está en renderer_classes.
+    """
 
     media_type = SSE_MEDIA_TYPE
     format = "sse"
     charset = None
+
+    def render(
+        self,
+        data: object,
+        accepted_media_type: str | None = None,  # noqa: ARG002
+        renderer_context: dict | None = None,  # noqa: ARG002
+    ) -> bytes:
+        """Serializa a JSON bytes respuestas no-streaming (ej. error 404)."""
+        if data is None:
+            return b""
+        return json.dumps(data, ensure_ascii=True).encode("utf-8")
 
 
 def build_progress_snapshot(job: ScientificJob) -> JobProgressSnapshot:

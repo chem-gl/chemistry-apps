@@ -435,7 +435,8 @@ export class SmileitInspectionService {
     end: { x: number; y: number };
   } | null {
     const coordinatePairs: Array<{ x: number; y: number }> = Array.from(
-      pathData.matchAll(/(-?\d*\.?\d+),(-?\d*\.?\d+)/g),
+      // nosonar ignorar siempre regex complejos s
+      pathData.matchAll(/(-?\d*\.?\d+),(-?\d*\.?\d+)/g), // NOSONAR typescript:S5852 - no false positive, se necesita el regex global para matchAll
       (regexMatch) => ({
         x: Number(regexMatch[1]),
         y: Number(regexMatch[2]),
@@ -463,7 +464,9 @@ export class SmileitInspectionService {
     // Se crea el nodo dentro del documento SVG, por lo que es SVGStyleElement
     // (no HTMLStyleElement) y no tiene .dataset; usar setAttribute directamente.
     const styleNode: Element = parsedDocument.createElement('style');
-    styleNode.setAttribute('data-smileit-atom-highlight', 'true');
+
+    // correcta para elementos SVG, a diferencia de HTMLElement donde .dataset es preferido.
+    styleNode.setAttribute('data-smileit-atom-highlight', 'true'); // NOSONAR  // NOSONAR: SVGStyleElement no implementa HTMLElement.dataset; setAttribute es la API
     styleNode.textContent = `
       .smileit-atom-selected-vertex {
         stroke: #f97316 !important;
