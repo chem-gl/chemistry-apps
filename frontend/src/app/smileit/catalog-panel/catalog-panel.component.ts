@@ -118,9 +118,9 @@ export class CatalogPanelComponent implements OnDestroy {
     this.catalogStudioDialogRef?.nativeElement.close();
   }
 
-  onCatalogStudioDialogClick(mouseEvent: MouseEvent): void {
+  onCatalogStudioDialogClick(event: Event): void {
     const dialog = this.catalogStudioDialogRef?.nativeElement;
-    if (dialog !== undefined && mouseEvent.target === dialog) {
+    if (dialog !== undefined && event.target === dialog) {
       this.closeCatalogStudioModal();
     }
   }
@@ -185,9 +185,9 @@ export class CatalogPanelComponent implements OnDestroy {
     dialog.removeAttribute('open');
   }
 
-  onCatalogSmilesSketchDialogClick(mouseEvent: MouseEvent): void {
+  onCatalogSmilesSketchDialogClick(event: Event): void {
     const dialog = this.catalogSmilesSketchDialogRef?.nativeElement;
-    if (dialog !== undefined && mouseEvent.target === dialog) {
+    if (dialog !== undefined && event.target === dialog) {
       this.closeCatalogSmilesSketcher();
     }
   }

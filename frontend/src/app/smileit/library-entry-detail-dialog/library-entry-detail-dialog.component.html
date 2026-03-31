@@ -3,15 +3,14 @@
   #libraryEntryDetailDialog
   class="library-entry-detail-dialog"
   (click)="onLibraryDetailDialogClick($event)"
+  (keydown.enter)="onLibraryDetailDialogClick($event)"
+  (keydown.space)="onLibraryDetailDialogClick($event); $event.preventDefault()"
   (cancel)="requestClose()"
 >
   @if (selectedEntry(); as detailEntry) {
     <section
       class="library-entry-detail-modal"
-      role="dialog"
-      aria-modal="true"
       aria-label="Substituent detail"
-      (click)="$event.stopPropagation()"
     >
       <header class="library-detail-header">
         <div class="library-detail-title-row">

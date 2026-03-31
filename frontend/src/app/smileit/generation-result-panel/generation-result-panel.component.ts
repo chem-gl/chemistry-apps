@@ -239,8 +239,8 @@ export class GenerationResultPanelComponent {
     this.selectedGeneratedStructure.set(null);
   }
 
-  onGeneratedStructureDialogClick(mouseEvent: MouseEvent): void {
-    if (mouseEvent.target === this.generatedStructureDialogRef?.nativeElement) {
+  onGeneratedStructureDialogClick(event: Event): void {
+    if (event.target === this.generatedStructureDialogRef?.nativeElement) {
       this.closeGeneratedStructureModal();
     }
   }

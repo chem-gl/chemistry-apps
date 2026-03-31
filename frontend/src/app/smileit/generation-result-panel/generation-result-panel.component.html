@@ -26,13 +26,13 @@
     </div>
 
     @if (!workflow.canConfigureGeneration()) {
-      <div class="generation-lock-banner" role="status" aria-live="polite">
+      <output class="generation-lock-banner" aria-live="polite">
         <strong>Section 4 is locked.</strong>
         <p class="hint">
           Select scaffold positions and ensure every selected position is assigned to a block before
           running generation.
         </p>
-      </div>
+      </output>
     }
 
     <fieldset
@@ -192,13 +192,13 @@
     </div>
 
     @if (isPreparingImagesZip()) {
-      <div class="status-panel" role="status" aria-live="polite">
+      <output class="status-panel" aria-live="polite">
         <p class="hint">
           Generating all derivative SVGs on-demand for ZIP export. This may take a while.
         </p>
         <progress [value]="imagesZipProgress()" max="100"></progress>
         <small>{{ imagesZipProgress() }}%</small>
-      </div>
+      </output>
     }
 
     @if (workflow.exportErrorMessage(); as exportErrorMessage) {
@@ -243,11 +243,10 @@
             ) {
               <article
                 class="derivative-card"
-                role="button"
                 tabindex="0"
                 (click)="openGeneratedStructureModal(structureItem)"
                 (keydown.enter)="openGeneratedStructureModal(structureItem)"
-                (keydown.space)="openGeneratedStructureModal(structureItem)"
+                (keydown.space)="openGeneratedStructureModal(structureItem); $event.preventDefault()"
               >
                 <div class="derivative-info">
                   <div class="derivative-legend">
@@ -342,15 +341,12 @@
     #generatedStructureDialog
     class="generated-structure-dialog"
     (click)="onGeneratedStructureDialogClick($event)"
+    (keydown.enter)="onGeneratedStructureDialogClick($event)"
+    (keydown.space)="onGeneratedStructureDialogClick($event); $event.preventDefault()"
     (cancel)="closeGeneratedStructureModal()"
   >
     @if (selectedGeneratedStructure(); as selectedStructure) {
-      <section
-        class="structure-modal"
-        role="document"
-        aria-label="Generated molecule preview"
-        (click)="$event.stopPropagation()"
-      >
+      <section class="structure-modal" aria-label="Generated molecule preview">
         <header class="structure-modal-header">
           <div class="structure-modal-title-area">
             <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>

@@ -109,14 +109,11 @@
       #catalogStudioDialog
       class="catalog-studio-dialog"
       (click)="onCatalogStudioDialogClick($event)"
+      (keydown.enter)="onCatalogStudioDialogClick($event)"
+      (keydown.space)="onCatalogStudioDialogClick($event); $event.preventDefault()"
       (keydown.escape)="closeCatalogStudioModal()"
     >
-      <section
-        class="catalog-studio-modal"
-        aria-label="SMILES catalog studio"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-      >
+      <section class="catalog-studio-modal" aria-label="SMILES catalog studio">
         <header class="catalog-studio-header">
           <div>
             <h4>SMILES catalog studio</h4>
@@ -381,14 +378,11 @@
       #catalogSmilesSketchDialog
       class="catalog-smiles-sketch-dialog"
       (click)="onCatalogSmilesSketchDialogClick($event)"
+      (keydown.enter)="onCatalogSmilesSketchDialogClick($event)"
+      (keydown.space)="onCatalogSmilesSketchDialogClick($event); $event.preventDefault()"
       (keydown.escape)="closeCatalogSmilesSketcher()"
     >
-      <section
-        class="catalog-smiles-sketch-modal"
-        aria-label="Catalog SMILES sketcher"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-      >
+      <section class="catalog-smiles-sketch-modal" aria-label="Catalog SMILES sketcher">
         <header class="catalog-studio-header">
           <div>
             <h4>Catalog SMILES sketcher</h4>
@@ -405,7 +399,7 @@
           @if (isCatalogSmilesSketchLoading()) {
             <div
               class="catalog-ketcher-loading"
-              role="status"
+              aria-live="polite"
               aria-label="Loading molecule sketcher"
             >
               <div class="catalog-ketcher-loading-bar">

@@ -125,14 +125,14 @@ export class LibraryEntryDetailDialogComponent {
     this.libraryDetailPanY.set(y);
   }
 
-  onLibraryDetailDialogClick(mouseEvent: MouseEvent): void {
+  onLibraryDetailDialogClick(event: Event): void {
     const dialogElement: HTMLDialogElement | undefined =
       this.libraryEntryDetailDialogRef?.nativeElement;
     if (dialogElement === undefined) {
       return;
     }
 
-    if (mouseEvent.target === dialogElement) {
+    if (event.target === dialogElement) {
       this.requestClose();
     }
   }
