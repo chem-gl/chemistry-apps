@@ -1,18 +1,19 @@
 ---
 
 ## applyTo: "**/*.py"
+## name: "Python Backend Guide - Django Moderno"
+## description: "Guía integral para generar código tipado, modular, mantenible, alineado con Python 3.12+ y Django 6.x usando arquitectura hexagonal"
 
 # 🧠 GUÍA INTEGRAL BACKEND (PYTHON + DJANGO MODERNO)
 
 ## 🎯 OBJETIVO
 
 El agente debe generar código:
-
-* tipado estrictamente
-* modular
-* mantenible
-* alineado con Python moderno (3.12+)
-* alineado con Django moderno (6.x)
+    * tipado estrictamente
+    * modular
+    * mantenible
+    * alineado con Python moderno (3.12+)
+    * alineado con Django moderno (6.x)
 
 ---
 
