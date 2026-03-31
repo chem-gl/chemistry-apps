@@ -253,10 +253,10 @@ class Success[S, E](Result[S, E]):
         return f(self._value)
 
     def recover(self, f: Callable[[E], S]) -> Result[S, E]:
-        return self  # type: ignore
+        return self
 
     def recover_with(self, f: Callable[[E], Result[S, E]]) -> Result[S, E]:
-        return self  # type: ignore
+        return self
 
     def fold[T](self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
         return on_success(self._value)
@@ -278,10 +278,10 @@ class Failure[S, E](Result[S, E]):
         return default_value
 
     def map[T](self, f: Callable[[S], T]) -> Result[T, E]:
-        return Failure(self._error)  # type: ignore
+        return Failure(self._error)
 
     def flat_map[T](self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
-        return Failure(self._error)  # type: ignore
+        return Failure(self._error)
 
     def recover(self, f: Callable[[E], S]) -> Result[S, E]:
         return Success(f(self._error))
@@ -331,7 +331,7 @@ class PureTask[S, E](Task[S, E]):
     def flat_map[T](self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
         def compute() -> Result[T, E]:
             return self._result.fold(
-                on_failure=lambda err: Failure(err),  # type: ignore
+                on_failure=lambda err: Failure(err),
                 on_success=lambda val: f(val).run(),
             )
 

@@ -44,7 +44,7 @@ export interface EasyRateJobResponse {
     readonly progress_event_index: number;
     parameters: EasyRateParameters;
     results?: EasyRateResult | null;
-    readonly error_trace: string | null;
+    readonly error_trace: string;
     readonly created_at: string;
     readonly updated_at: string;
 }

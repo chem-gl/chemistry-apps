@@ -65,8 +65,8 @@ def _find_devtox_key(keys: list[str], excluded_keys: set[str]) -> str | None:
 
 def _ld50_to_mgkg(log_value: float, smiles_value: str) -> float:
     """Convierte LD50 log-scale a mg/kg usando el peso molecular del SMILES."""
-    from rdkit import Chem  # type: ignore[import]
-    from rdkit.Chem import Descriptors  # type: ignore[import]
+    from rdkit import Chem
+    from rdkit.Chem import Descriptors
 
     molecule = Chem.MolFromSmiles(smiles_value)
     if molecule is None:

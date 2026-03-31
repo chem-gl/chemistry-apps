@@ -3031,7 +3031,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -3422,7 +3421,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -4068,7 +4066,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -4388,7 +4385,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -4660,7 +4656,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -4967,7 +4962,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -5362,7 +5356,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -6205,7 +6198,6 @@ components:
         error_trace:
           type: string
           readOnly: true
-          nullable: true
         created_at:
           type: string
           format: date-time

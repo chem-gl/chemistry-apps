@@ -44,7 +44,7 @@ export interface SmileitJobResponse {
     readonly progress_event_index: number;
     parameters: SmileitParameters;
     results?: SmileitResult | null;
-    readonly error_trace: string | null;
+    readonly error_trace: string;
     readonly created_at: string;
     readonly updated_at: string;
 }

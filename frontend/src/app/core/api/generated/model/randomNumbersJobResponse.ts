@@ -44,7 +44,7 @@ export interface RandomNumbersJobResponse {
     readonly progress_event_index: number;
     parameters: RandomNumbersParameters;
     results?: RandomNumbersResult | null;
-    readonly error_trace: string | null;
+    readonly error_trace: string;
     readonly created_at: string;
     readonly updated_at: string;
 }

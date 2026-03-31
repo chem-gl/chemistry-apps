@@ -10,9 +10,9 @@ Uso:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, TypeAlias
+from typing import Optional
 
-GaussianScalarValue: TypeAlias = str | int | float | bool
+type GaussianScalarValue = str | int | float | bool
 
 
 @dataclass

@@ -18,7 +18,7 @@ from ..definitions import IMAGE_HEIGHT, IMAGE_WIDTH
 from .parsing import parse_smiles_cached, silence_rdkit_logs
 
 logger = logging.getLogger(__name__)
-HEX_BOUNDARY_CLASS = "[0-9A-Fa-f]"
+HEX_BOUNDARY_CLASS = "[0-9A-F]"
 
 
 def render_molecule_svg_with_indices(mol: Chem.Mol) -> str:
