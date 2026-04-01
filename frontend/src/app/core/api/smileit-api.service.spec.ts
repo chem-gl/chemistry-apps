@@ -39,6 +39,10 @@ type SmileitClientMock = {
   smileitJobsReportImagesZipRetrieve: ReturnType<typeof vi.fn>;
 };
 
+type SmileitApiServiceTestAccess = {
+  extractErrorMessage: (error: unknown) => string;
+};
+
 function createBlobResponse(filename: string): HttpResponse<Blob> {
   return new HttpResponse({
     body: new Blob(['report'], { type: 'text/plain' }),
@@ -411,26 +415,26 @@ describe('SmileitApiService', () => {
   });
 
   it('extracts error messages from different error formats', () => {
+    const testAccess = service as unknown as SmileitApiServiceTestAccess;
+
     // Test string error
-    expect((service as any).extractErrorMessage('Custom error')).toBe('Custom error');
+    expect(testAccess.extractErrorMessage('Custom error')).toBe('Custom error');
 
     // Test object with message
-    expect((service as any).extractErrorMessage({ message: 'Object error' })).toBe('Object error');
+    expect(testAccess.extractErrorMessage({ message: 'Object error' })).toBe('Object error');
 
     // Test nested error with detail
-    expect((service as any).extractErrorMessage({ error: { detail: 'Nested error' } })).toBe(
+    expect(testAccess.extractErrorMessage({ error: { detail: 'Nested error' } })).toBe(
       'Nested error',
     );
 
     // Test unknown error
-    expect((service as any).extractErrorMessage({ unknown: 'value' })).toBe(
+    expect(testAccess.extractErrorMessage({ unknown: 'value' })).toBe(
       'Unsupported SMILES for chemistry services.',
     );
 
     // Test null
-    expect((service as any).extractErrorMessage(null)).toBe(
-      'Unsupported SMILES for chemistry services.',
-    );
+    expect(testAccess.extractErrorMessage(null)).toBe('Unsupported SMILES for chemistry services.');
   });
 
   it('validates smiles compatibility with empty list', async () => {

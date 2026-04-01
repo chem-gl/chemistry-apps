@@ -312,15 +312,16 @@ describe('SaScoreComponent', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
     const keyEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-    // No lanza error
-    component.onSketchDialogBackdropClick(keyEvent);
+
+    expect(() => component.onSketchDialogBackdropClick(keyEvent)).not.toThrow();
   });
 
   it('onMoleculeImageDialogBackdropClick ignora eventos de teclado', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
     const keyEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-    component.onMoleculeImageDialogBackdropClick(keyEvent);
+
+    expect(() => component.onMoleculeImageDialogBackdropClick(keyEvent)).not.toThrow();
   });
 
   it('ngOnDestroy cancela la suscripción de ruta', () => {
