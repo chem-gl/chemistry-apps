@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 
 from django.test import TestCase
-from django.utils import timezone
 
 from apps.core.definitions import DEFAULT_SSE_TIMEOUT_SECONDS, MAX_SSE_TIMEOUT_SECONDS
 from apps.core.models import ScientificJob, ScientificJobLogEvent

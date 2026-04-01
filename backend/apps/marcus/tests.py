@@ -158,3 +158,22 @@ class MarcusContractApiTests(TestCase):
 
         with ZipFile(BytesIO(response.content), mode="r") as zip_file:
             self.assertIn("manifest.json", zip_file.namelist())
+
+
+class MarcusContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, validate_input, execute y supports_pause_resume."""
+        from .contract import get_marcus_contract
+
+        contract = get_marcus_contract()
+        for key in (
+            "plugin_name",
+            "version",
+            "execute",
+            "supports_pause_resume",
+            "validate_input",
+        ):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

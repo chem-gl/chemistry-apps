@@ -247,14 +247,14 @@ class BrsaScoreClientRegressionTests(TestCase):
     """Pruebas de regresión del cliente BRSAScore usado por SA score."""
 
     def test_brsascore_receives_smiles_string_not_mol(self) -> None:
-        """El cliente debe invocar calculateScore con un SMILES string."""
+        """El cliente debe invocar calculate_score con un SMILES string."""
         with patch("BRSAScore.SAScorer") as MockSAScorer:
             mock_scorer_instance = MockSAScorer.return_value
-            mock_scorer_instance.calculateScore.return_value = (3.21, {})
+            mock_scorer_instance.calculate_score.return_value = (3.21, {})
 
             result = BrsaScoreClient().predict_sa_score("CCO")
 
-        mock_scorer_instance.calculateScore.assert_called_once_with("CCO")
+        mock_scorer_instance.calculate_score.assert_called_once_with("CCO")
         self.assertTrue(result.success)
         self.assertAlmostEqual(result.sa_score or 0.0, 3.21, places=2)
 
@@ -273,3 +273,16 @@ class SaScoreCreateSerializerValidationTests(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("smiles", serializer.errors)
+
+
+class SaScoreContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_sa_score_contract
+
+        contract = get_sa_score_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

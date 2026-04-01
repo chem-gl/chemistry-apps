@@ -27,9 +27,10 @@ from .catalog import list_active_patterns
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION
 from .engine import inspect_smiles_structure_with_patterns
 from .models import SmileitSubstituent
+from .test_seed import SmileitSeedTestCase
 
 
-class SmileitInspectionTests(TestCase):
+class SmileitInspectionTests(SmileitSeedTestCase):
     """Valida inspección molecular enriquecida con propiedades y anotaciones."""
 
     def test_inspection_includes_quick_properties_and_annotations(self) -> None:
@@ -66,7 +67,7 @@ class SmileitInspectionTests(TestCase):
         )
 
 
-class SmileitCatalogCrudTests(TestCase):
+class SmileitCatalogCrudTests(SmileitSeedTestCase):
     """Valida CRUD de catálogo y reglas de validación de categorías."""
 
     def setUp(self) -> None:
@@ -241,7 +242,7 @@ class SmileitPatternCrudTests(TestCase):
         self.assertEqual(body["version"], 1)
 
 
-class SmileitJobBlockTests(TestCase):
+class SmileitJobBlockTests(SmileitSeedTestCase):
     """Valida integridad de cobertura por sitios y ejecución por bloques."""
 
     def setUp(self) -> None:
@@ -786,7 +787,7 @@ class SmileitPluginOptimizationTests(TestCase):
         self.assertIn("stroke:#2f855a", tinted_svg)
 
 
-class SmileitExportTests(TestCase):
+class SmileitExportTests(SmileitSeedTestCase):
     """Valida exportes reproducibles de SMILES y trazabilidad."""
 
     def setUp(self) -> None:

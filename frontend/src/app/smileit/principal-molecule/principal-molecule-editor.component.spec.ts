@@ -125,4 +125,53 @@ describe('PrincipalMoleculeEditorComponent', () => {
 
     expect(component.sketchValidationError()).toBeNull();
   });
+
+  it('onSketchModifierDialogClick closes modifier when clicking on the dialog backdrop', () => {
+    const closeSpy = vi.spyOn(component, 'closeSketchModifier');
+    const dialogElement = {
+      open: false,
+      close: vi.fn(),
+      removeAttribute: vi.fn(),
+    } as unknown as HTMLDialogElement;
+
+    (
+      component as unknown as { sketchModifierDialogRef: { nativeElement: HTMLDialogElement } }
+    ).sketchModifierDialogRef = {
+      nativeElement: dialogElement,
+    };
+
+    // Simula un click cuyo target es el propio diálogo (click fuera del contenido)
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'target', { value: dialogElement });
+    component.onSketchModifierDialogClick(event);
+
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('onSketchModifierDialogClick does not close when clicking inside the dialog content', () => {
+    const closeSpy = vi.spyOn(component, 'closeSketchModifier');
+    const dialogElement = {} as HTMLDialogElement;
+    const innerElement = {} as HTMLElement;
+
+    (
+      component as unknown as { sketchModifierDialogRef: { nativeElement: HTMLDialogElement } }
+    ).sketchModifierDialogRef = {
+      nativeElement: dialogElement,
+    };
+
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'target', { value: innerElement });
+    component.onSketchModifierDialogClick(event);
+
+    expect(closeSpy).not.toHaveBeenCalled();
+  });
+
+  it('onKetcherFrameLoaded marks isKetcherReady as true', () => {
+    expect(component.isKetcherReady).toBe(false);
+
+    component.onKetcherFrameLoaded();
+
+    expect(component.isKetcherReady).toBe(true);
+    expect(component.isSketchModifierLoading()).toBe(false);
+  });
 });

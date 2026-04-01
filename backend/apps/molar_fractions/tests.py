@@ -336,3 +336,16 @@ class MolarFractionsContractApiTests(TestCase):
         self.assertIn(
             "Fallo de prueba en cálculo de fracciones molares.", report_content
         )
+
+
+class MolarFractionsContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_molar_fractions_contract
+
+        contract = get_molar_fractions_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

@@ -9,12 +9,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from apps.core.models import ScientificJob
-from apps.core.services import JobService
 from django.test import TestCase
 from libs.admet_ai.client import AdmetAiClient
 from libs.admet_ai.models import AdmetPredictionResult
 from rest_framework.test import APIClient
+
+from apps.core.models import ScientificJob
+from apps.core.services import JobService
 
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 from .plugin import (
@@ -400,3 +401,16 @@ class ToxicityContractApiTests(TestCase):
         self.assertIn("RuntimeError: ADMET inference failed", report_content)
         self.assertIn("RuntimeError: ADMET inference failed", report_content)
         self.assertIn("RuntimeError: ADMET inference failed", report_content)
+
+
+class ToxicityPropertiesContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_toxicity_properties_contract
+
+        contract = get_toxicity_properties_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

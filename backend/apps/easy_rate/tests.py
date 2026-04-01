@@ -423,3 +423,22 @@ class EasyRateContractApiTests(TestCase):
         self.assertEqual(retrieve_response.status_code, 200)
         self.assertEqual(retrieve_response.data["status"], "failed")
         self.assertIn("corrección Eckart", str(retrieve_response.data["error_trace"]))
+
+
+class EasyRateContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, validate_input, execute y supports_pause_resume."""
+        from .contract import get_easy_rate_contract
+
+        contract = get_easy_rate_contract()
+        for key in (
+            "plugin_name",
+            "version",
+            "execute",
+            "supports_pause_resume",
+            "validate_input",
+        ):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

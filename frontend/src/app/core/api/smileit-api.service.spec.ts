@@ -47,6 +47,28 @@ function createBlobResponse(filename: string): HttpResponse<Blob> {
   });
 }
 
+const inspectionResponse: SmileitStructureInspectionResponse = {
+  canonical_smiles: 'CCO',
+  atom_count: 3,
+  atoms: [
+    { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false },
+    { index: 1, symbol: 'C', implicit_hydrogens: 2, is_aromatic: false },
+    { index: 2, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false },
+  ],
+  svg: '<svg></svg>',
+  quick_properties: {
+    molecular_weight: 46,
+    clogp: -0.1,
+    rotatable_bonds: 0,
+    hbond_donors: 1,
+    hbond_acceptors: 1,
+    tpsa: 20,
+    aromatic_rings: 0,
+  } as SmileitQuickProperties,
+  annotations: [],
+  active_pattern_refs: [],
+};
+
 describe('SmileitApiService', () => {
   let service: SmileitApiService;
   let httpMock: HttpTestingController;
@@ -386,5 +408,86 @@ describe('SmileitApiService', () => {
       'job-1',
       'response',
     );
+  });
+
+  it('extracts error messages from different error formats', () => {
+    // Test string error
+    expect((service as any).extractErrorMessage('Custom error')).toBe('Custom error');
+
+    // Test object with message
+    expect((service as any).extractErrorMessage({ message: 'Object error' })).toBe('Object error');
+
+    // Test nested error with detail
+    expect((service as any).extractErrorMessage({ error: { detail: 'Nested error' } })).toBe(
+      'Nested error',
+    );
+
+    // Test unknown error
+    expect((service as any).extractErrorMessage({ unknown: 'value' })).toBe(
+      'Unsupported SMILES for chemistry services.',
+    );
+
+    // Test null
+    expect((service as any).extractErrorMessage(null)).toBe(
+      'Unsupported SMILES for chemistry services.',
+    );
+  });
+
+  it('validates smiles compatibility with empty list', async () => {
+    await expect(lastValueFrom(service.validateSmilesCompatibility([]))).resolves.toEqual({
+      compatible: true,
+      issues: [],
+    });
+  });
+
+  it('validates smiles compatibility with whitespace and empty strings', async () => {
+    vi.mocked(smileitClientMock.smileitJobsInspectStructureCreate).mockReturnValue(
+      of(inspectionResponse),
+    );
+
+    await expect(
+      lastValueFrom(service.validateSmilesCompatibility(['  CCO  ', '', '   '])),
+    ).resolves.toEqual({
+      compatible: true,
+      issues: [],
+    });
+
+    expect(smileitClientMock.smileitJobsInspectStructureCreate).toHaveBeenCalledWith({
+      smiles: 'CCO',
+    });
+    expect(smileitClientMock.smileitJobsInspectStructureCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles getSmileitDerivationSvg with string response', async () => {
+    vi.mocked(smileitClientMock.smileitJobsDerivationsSvgRetrieve).mockReturnValue(
+      of('string svg'),
+    );
+
+    await expect(lastValueFrom(service.getSmileitDerivationSvg('job-1', 1))).resolves.toBe(
+      'string svg',
+    );
+  });
+
+  it('handles getSmileitDerivationSvg with HttpResponse', async () => {
+    // Se usa un objeto mock en lugar de un Blob real porque JSDOM no expone
+    // Blob.prototype.text como propiedad espíable; el servicio sólo llama .text()
+    const blobMock = { text: vi.fn().mockResolvedValue('<svg></svg>') } as unknown as Blob;
+    const httpResponse = new HttpResponse({ body: blobMock });
+    vi.mocked(smileitClientMock.smileitJobsDerivationsSvgRetrieve).mockReturnValue(
+      of(httpResponse),
+    );
+
+    await expect(lastValueFrom(service.getSmileitDerivationSvg('job-1', 1))).resolves.toBe(
+      '<svg></svg>',
+    );
+  });
+
+  it('handles getSmileitDerivationSvg with null body', async () => {
+    const httpResponse = new HttpResponse({ body: null });
+    vi.mocked(smileitClientMock.smileitJobsDerivationsSvgRetrieve).mockReturnValue(
+      of(httpResponse),
+    );
+
+    await expect(lastValueFrom(service.getSmileitDerivationSvg('job-1', 1))).resolves.toBe('');
   });
 });

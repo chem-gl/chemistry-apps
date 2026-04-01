@@ -41,4 +41,50 @@ describe('GlobalErrorModalService', () => {
     expect(currentError?.message).toBe('Server exploded');
     expect(currentError?.details).toContain('Server exploded');
   });
+
+  it('showError almacena el view model directamente', () => {
+    service.showError({ title: 'Error de red', message: 'Timeout', details: null });
+
+    expect(service.currentError()).toEqual({
+      title: 'Error de red',
+      message: 'Timeout',
+      details: null,
+    });
+  });
+
+  it('extrae el mensaje de un error HTTP con string plano como body', () => {
+    const response = new HttpErrorResponse({
+      status: 400,
+      error: 'Bad SMILES input',
+    });
+
+    service.showHttpError(response);
+
+    expect(service.currentError()?.message).toBe('Bad SMILES input');
+  });
+
+  it('usa httpError.message como fallback cuando error no tiene detalle', () => {
+    const response = new HttpErrorResponse({
+      status: 503,
+      error: null,
+      statusText: 'Service Unavailable',
+    });
+
+    service.showHttpError(response);
+
+    // HttpErrorResponse genera un message por defecto, por eso el fallback debe usarlo
+    expect(service.currentError()?.message).not.toBe('');
+  });
+
+  it('extractHttpDetails retorna null cuando el error no es un objeto', () => {
+    const response = new HttpErrorResponse({
+      status: 400,
+      error: 'plain string error',
+    });
+
+    service.showHttpError(response);
+
+    // El error es un string, no objeto → details debe ser null
+    expect(service.currentError()?.details).toBeNull();
+  });
 });

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from apps.core.models import ScientificJob
 from apps.core.test_utils import ScientificJobTestMixin
 
 from .definitions import APP_API_BASE_PATH, MAX_TOTAL_NUMBERS, PLUGIN_NAME

@@ -97,3 +97,77 @@ class ScientificJobTestMixin(TestCase):
     def get_job_from_db(self, job_id: str) -> ScientificJob:
         """Recupera el objeto ScientificJob directo de base de datos."""
         return ScientificJob.objects.get(id=job_id)
+
+
+class CoreRoutingTests(TestCase):
+    """Valida que los patrones WebSocket del dominio core están configurados."""
+
+    def test_websocket_urlpatterns_are_configured(self) -> None:
+        """El módulo routing debe exportar al menos una ruta WebSocket para el stream."""
+        from apps.core.routing import websocket_urlpatterns
+
+        self.assertGreaterEqual(len(websocket_urlpatterns), 1)
+
+
+class ModelStrRepresentationTests(TestCase):
+    """Valida representaciones legibles de los modelos del dominio core."""
+
+    def test_scientific_job_str_includes_plugin_and_status(self) -> None:
+        """ScientificJob.__str__ debe incluir plugin_name y status."""
+        job = ScientificJob(
+            plugin_name="test-plugin",
+            algorithm_version="1.0.0",
+            job_hash="a" * 64,
+            parameters={},
+            status="pending",
+        )
+        representation = str(job)
+        self.assertIn("test-plugin", representation)
+        self.assertIn("pending", representation)
+
+    def test_scientific_cache_entry_str_includes_plugin_and_version(self) -> None:
+        """ScientificCacheEntry.__str__ debe incluir plugin_name y algorithm_version."""
+        from apps.core.models import ScientificCacheEntry
+
+        entry = ScientificCacheEntry(
+            job_hash="b" * 64,
+            plugin_name="test-plugin",
+            algorithm_version="1.0.0",
+        )
+        representation = str(entry)
+        self.assertIn("test-plugin", representation)
+        self.assertIn("1.0.0", representation)
+
+    def test_scientific_job_log_event_str_includes_level(self) -> None:
+        """ScientificJobLogEvent.__str__ debe incluir el nivel del log."""
+        from apps.core.models import ScientificJobLogEvent
+
+        log = ScientificJobLogEvent(
+            event_index=0,
+            level="info",
+            source="test",
+            message="Test log",
+        )
+        representation = str(log)
+        self.assertIn("info", representation)
+
+    def test_input_artifact_str_includes_field_name(self) -> None:
+        """ScientificJobInputArtifact.__str__ debe incluir field_name."""
+        from apps.core.models import ScientificJobInputArtifact
+
+        artifact = ScientificJobInputArtifact(
+            field_name="input_file",
+            original_filename="test.log",
+            content_type="text/plain",
+            role="input",
+        )
+        representation = str(artifact)
+        self.assertIn("input_file", representation)
+
+    def test_input_artifact_chunk_str_includes_chunk_index(self) -> None:
+        """ScientificJobInputArtifactChunk.__str__ debe incluir chunk_index."""
+        from apps.core.models import ScientificJobInputArtifactChunk
+
+        chunk = ScientificJobInputArtifactChunk(chunk_index=3, chunk_data=b"data")
+        representation = str(chunk)
+        self.assertIn("3", representation)

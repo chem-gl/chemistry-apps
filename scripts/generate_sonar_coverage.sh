@@ -32,18 +32,22 @@ generate_backend_reports() {
   require_file "${BACKEND_DIR}/venv/bin/ruff"
 
   pushd "${BACKEND_DIR}" >/dev/null
-  ./venv/bin/python -m pip show pytest-cov >/dev/null 2>&1 || {
-    echo "pytest-cov no está instalado en backend/venv. Ejecuta './venv/bin/python -m pip install pytest-cov' o reinstala requirements." >&2
+  ./venv/bin/python -m pip show coverage >/dev/null 2>&1 || {
+    echo "coverage no está instalado en backend/venv. Ejecuta './venv/bin/python -m pip install coverage' o reinstala requirements." >&2
     exit 1
   }
 
   ./venv/bin/ruff check . --output-format=sarif > ruff.json
-  ./venv/bin/python -m pytest --cov=. --cov-report=xml
+  # Ejecutamos tests con el runner de Django para usar base de test aislada.
+  # Esto evita bloqueos de sqlite que pueden aparecer al ejecutar pytest sin pytest-django.
+  ./venv/bin/python -m coverage erase
+  ./venv/bin/python -m coverage run --source=apps,config,libs manage.py test
+  ./venv/bin/python -m coverage xml -o coverage.xml
   popd >/dev/null
 }
 
 generate_frontend_reports() {
-  echo "[frontend] Generando eslint.json y cobertura Sonar..."
+  echo "[frontend] Generando eslint.json y cobertura Sonar (lcov)..."
   require_directory "${FRONTEND_DIR}"
   require_file "${FRONTEND_DIR}/package.json"
   require_directory "${FRONTEND_DIR}/node_modules"
@@ -56,17 +60,14 @@ generate_frontend_reports() {
   echo "[frontend] Paso 1/3: eslint.json generado (exit ignorado, puede tener issues)."
 
   echo "[frontend] Paso 2/3: ejecutando ng test con cobertura..."
-  npx ng test --coverage --coverage-reporters=json --watch=false
+  npx ng test --coverage --coverage-reporters=json --coverage-reporters=lcov --watch=false
   echo "[frontend] Paso 2/3: ng test finalizado."
 
   popd >/dev/null
 
-  echo "[frontend] Paso 3/3: convirtiendo coverage-final.json a sonar-generic-coverage.xml..."
-  node "${SCRIPT_DIR}/convert_frontend_coverage_to_sonar.mjs" \
-    "${FRONTEND_DIR}/coverage/frontend/coverage-final.json" \
-    "${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml" \
-    "${REPO_ROOT}"
-  echo "[frontend] Paso 3/3: sonar-generic-coverage.xml generado."
+  echo "[frontend] Paso 3/3: validando generación de lcov.info..."
+  require_file "${FRONTEND_DIR}/coverage/frontend/lcov.info"
+  echo "[frontend] Paso 3/3: lcov.info generado."
 }
 
 # Verifica si sonar-scanner está disponible y si el servidor responde antes de ejecutar
@@ -106,7 +107,7 @@ main() {
   echo "- ${BACKEND_DIR}/coverage.xml"
   echo "- ${FRONTEND_DIR}/eslint.json"
   echo "- ${FRONTEND_DIR}/coverage/frontend/coverage-final.json"
-  echo "- ${FRONTEND_DIR}/coverage/frontend/sonar-generic-coverage.xml"
+  echo "- ${FRONTEND_DIR}/coverage/frontend/lcov.info"
 
   run_sonar_scanner_if_available
 }

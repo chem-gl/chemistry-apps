@@ -3,7 +3,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { JobsApiService } from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
@@ -342,5 +342,101 @@ describe('ToxicityPropertiesComponent', () => {
     expect(openButton).not.toBeNull();
     openButton?.click();
     expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tox-history-1');
+  });
+
+  it('applySketch con draft vacío cierra el diálogo sin actualizar smilesInput', async () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.smilesInput.set('');
+    component.sketchDraftSmiles = '';
+
+    await component.applySketch();
+
+    expect(workflowMock.smilesInput()).toBe('');
+  });
+
+  it('applySketch con draft no vacío actualiza smilesInput', async () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.smilesInput.set('');
+    component.sketchDraftSmiles = 'CCO';
+
+    await component.applySketch();
+
+    expect(workflowMock.smilesInput()).toBe('CCO');
+  });
+
+  it('applySketch agrega SMILES con salto de línea cuando ya hay contenido', async () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.smilesInput.set('N#N');
+    component.sketchDraftSmiles = 'CCO';
+
+    await component.applySketch();
+
+    expect(workflowMock.smilesInput()).toBe('N#N\nCCO');
+  });
+
+  it('onKetcherFrameLoaded marca isKetcherReady como true y actualiza loading', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    expect(component.isKetcherReady).toBe(false);
+    component.onKetcherFrameLoaded();
+
+    expect(component.isKetcherReady).toBe(true);
+    expect(component.isSketchDialogLoading()).toBe(false);
+  });
+
+  it('closeMoleculeImageModal cierra el diálogo cuando la referencia existe', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+    const closeSpy = vi.fn();
+
+    (
+      component as unknown as { moleculeImageDialogRef: { nativeElement: HTMLDialogElement } }
+    ).moleculeImageDialogRef = {
+      nativeElement: { close: closeSpy } as unknown as HTMLDialogElement,
+    };
+
+    component.closeMoleculeImageModal();
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('onMoleculeImageDialogBackdropClick cierra el diálogo al hacer click fuera', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+    const closeSpy = vi.fn();
+
+    (
+      component as unknown as { moleculeImageDialogRef: { nativeElement: HTMLDialogElement } }
+    ).moleculeImageDialogRef = {
+      nativeElement: {
+        close: closeSpy,
+        getBoundingClientRect: () => ({ left: 0, right: 100, top: 0, bottom: 100 }) as DOMRect,
+      } as unknown as HTMLDialogElement,
+    };
+
+    component.onMoleculeImageDialogBackdropClick(
+      new MouseEvent('click', { clientX: 200, clientY: 200 }),
+    );
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('openMoleculeImageModal maneja error de API estableciendo moleculeImageError', () => {
+    jobsApiMock.inspectSmileitStructure.mockReturnValueOnce(
+      throwError(() => new Error('API down')),
+    );
+
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    component.openMoleculeImageModal('CCO');
+
+    expect(component.moleculeImageError()).toBe('Could not load molecule image.');
+    expect(component.isLoadingMoleculeImage()).toBe(false);
   });
 });

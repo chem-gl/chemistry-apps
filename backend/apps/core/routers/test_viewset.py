@@ -10,14 +10,14 @@ Cómo se usa:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.core.definitions import CORE_JOBS_API_BASE_PATH
-from apps.core.models import ScientificJob, ScientificJobLogEvent
+from apps.core.models import ScientificJob
 from apps.core.services import JobService
 
 API = CORE_JOBS_API_BASE_PATH  # "/api/jobs/"

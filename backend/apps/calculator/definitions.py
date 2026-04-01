@@ -22,3 +22,12 @@ DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0"
 SUPPORTED_OPERATIONS: Final[frozenset[str]] = frozenset(
     {"add", "sub", "mul", "div", "pow", "factorial"}
 )
+
+
+def validate_factorial_operand(value: float) -> None:
+    """Valida que el operando para factorial sea un entero no negativo.
+
+    Lanza ValueError si no cumple.
+    """
+    if value < 0 or not value.is_integer():
+        raise ValueError("La operación factorial requiere un entero no negativo en a.")

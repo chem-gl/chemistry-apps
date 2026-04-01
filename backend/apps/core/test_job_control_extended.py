@@ -14,7 +14,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from django.test import TestCase
-from django.utils import timezone
 
 from apps.core.models import ScientificJob
 from apps.core.ports import JobLogPublisherPort, JobProgressPublisherPort

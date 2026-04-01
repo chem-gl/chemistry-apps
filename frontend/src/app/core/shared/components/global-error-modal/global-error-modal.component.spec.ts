@@ -38,4 +38,20 @@ describe('GlobalErrorModalComponent', () => {
 
     expect(service.currentError()).toBeNull();
   });
+
+  it('closes modal when escape key is pressed and error exists', () => {
+    service.showMessage('Escape key test');
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    component.closeOnEscapeKey();
+
+    expect(service.currentError()).toBeNull();
+  });
+
+  it('does not throw when escape key is pressed with no error', () => {
+    service.dismiss(); // Asegura que no hay error
+    const component = fixture.componentInstance;
+    expect(() => component.closeOnEscapeKey()).not.toThrow();
+  });
 });

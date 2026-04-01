@@ -13,12 +13,13 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from django.test import TestCase
 from rest_framework.test import APIClient
 
+from apps.core.models import ScientificJob
 from apps.core.services import JobService
 
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
+from .test_seed import SmileitSeedTestCase
 
 ROUTER_MODULE = "apps.smileit.routers.viewset_write"
 
@@ -47,7 +48,7 @@ def _valid_job_payload() -> dict[str, object]:
     }
 
 
-class SmileitJobLifecycleTests(TestCase):
+class SmileitJobLifecycleTests(SmileitSeedTestCase):
     """Pruebas extendidas de ciclo de vida: cancel, progress, logs, list, 404."""
 
     def setUp(self) -> None:
@@ -123,3 +124,89 @@ class SmileitJobLifecycleTests(TestCase):
         payload["selected_atom_indices"] = [0, 1, 2]  # Más sitios que bloques cubren
         response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
         self.assertEqual(response.status_code, 400)
+
+    def test_create_job_with_manual_substituent(self) -> None:
+        """Job con sustituyente manual debe crearse y ejecutarse generando derivados."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "assignment_blocks": [
+                {
+                    "label": "ManualBlock",
+                    "site_atom_indices": [0],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "Ethyl",
+                            "smiles": "CC",
+                            "anchor_atom_indices": [0],
+                            "categories": ["hydrophobic"],
+                            "source_reference": "unit-test",
+                            "provenance_metadata": {"case": "manual"},
+                        }
+                    ],
+                }
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "max_structures": 20,
+            "export_name_base": "MANUAL_SERIES",
+            "export_padding": 3,
+        }
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = str(response.data["id"])
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+        self.assertGreaterEqual(int((job.results or {}).get("total_generated", 0)), 1)
+
+    def test_create_job_with_invalid_manual_substituent_smiles(self) -> None:
+        """Sustituyente manual con SMILES inválido debe rechazarse con 409."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "assignment_blocks": [
+                {
+                    "label": "ManualBlock",
+                    "site_atom_indices": [0],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "InvalidSub",
+                            "smiles": "[INVALID_SMILES!!!",
+                            "anchor_atom_indices": [0],
+                            "categories": ["hydrophobic"],
+                        }
+                    ],
+                }
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "max_structures": 5,
+            "export_name_base": "BAD_MANUAL",
+            "export_padding": 3,
+        }
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 409)
+
+
+class SmileitContractTests(SmileitSeedTestCase):
+    """Valida que el contrato declarativo de smileit expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_smileit_contract
+
+        contract = get_smileit_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

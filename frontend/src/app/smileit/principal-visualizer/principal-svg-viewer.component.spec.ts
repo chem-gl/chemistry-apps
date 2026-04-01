@@ -58,4 +58,30 @@ describe('PrincipalSvgViewerComponent', () => {
 
     expect(component.zoomLevel).toBe(component.minZoomLevel);
   });
+
+  it('canvasSizePx reflects baseCanvasPx multiplied by current zoom level', () => {
+    component.zoomLevel = 2;
+    expect(component.canvasSizePx).toBe(component.baseCanvasPx * 2);
+  });
+
+  it('zoomIn increments zoom level when not at max', () => {
+    component.zoomLevel = 1;
+    component.zoomIn();
+    expect(component.zoomLevel).toBe(2);
+  });
+
+  it('zoomOut decrements zoom level when not at min', () => {
+    component.zoomLevel = 2;
+    component.zoomOut();
+    expect(component.zoomLevel).toBe(1);
+  });
+
+  it('onInspectionSvgClick ignores keyboard events', () => {
+    const emitSpy = vi.spyOn(component.inspectionSvgClicked, 'emit');
+    const keyEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+
+    component.onInspectionSvgClick(keyEvent);
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
 });

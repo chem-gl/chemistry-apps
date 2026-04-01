@@ -12,16 +12,29 @@ Cómo se usa:
 
 from __future__ import annotations
 
+import os
 import stat
+import tarfile
+import urllib.error
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
 from apps.core.runtime_tools import (
+    RuntimeToolRequirement,
     RuntimeToolsError,
+    _download_file_with_retry,
+    _extract_tarfile_safely,
+    _get_env_positive_int,
+    _is_valid_zip_file,
+    _prepare_external_artifacts,
+    _resolve_requirement_path,
     assert_runtime_tools_ready,
     get_missing_runtime_files,
+    get_runtime_tools_root,
 )
 
 
@@ -97,3 +110,93 @@ class RuntimeToolsValidationTests(SimpleTestCase):
 
         with zipfile.ZipFile(jar_path, mode="w") as archive_file:
             archive_file.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")
+
+
+class RuntimeToolsHelpersTests(SimpleTestCase):
+    """Cubre helpers internos y rutas de error controladas en runtime tools."""
+
+    def test_get_env_positive_int_uses_default_for_invalid_values(self) -> None:
+        with patch.dict(os.environ, {"RUNTIME_TEST_INT": "-5"}, clear=False):
+            self.assertEqual(_get_env_positive_int("RUNTIME_TEST_INT", 8), 8)
+
+        with patch.dict(os.environ, {"RUNTIME_TEST_INT": "abc"}, clear=False):
+            self.assertEqual(_get_env_positive_int("RUNTIME_TEST_INT", 9), 9)
+
+        with patch.dict(os.environ, {"RUNTIME_TEST_INT": "12"}, clear=False):
+            self.assertEqual(_get_env_positive_int("RUNTIME_TEST_INT", 7), 12)
+
+    def test_get_runtime_tools_root_prefers_environment_variable(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"RUNTIME_TOOLS_DIR": "/tmp/custom-runtime-tools"},
+            clear=False,
+        ):
+            resolved_root = get_runtime_tools_root()
+
+        self.assertEqual(resolved_root.as_posix(), "/tmp/custom-runtime-tools")
+
+    def test_resolve_requirement_path_combines_root_and_relative_path(self) -> None:
+        root_path = Path("/tmp/runtime")
+        requirement = RuntimeToolRequirement(
+            key="java8", relative_path="java/jre8/bin/java"
+        )
+        resolved_path = _resolve_requirement_path(requirement, root_path)
+        self.assertEqual(resolved_path.as_posix(), "/tmp/runtime/java/jre8/bin/java")
+
+    def test_is_valid_zip_file_detects_valid_and_invalid_paths(self) -> None:
+        with TemporaryDirectory(prefix="runtime_zip_test_") as temporary_directory:
+            root_path = Path(temporary_directory)
+            valid_zip_path = root_path / "valid.jar"
+            invalid_zip_path = root_path / "invalid.jar"
+
+            RuntimeToolsValidationTests._create_fake_jar(valid_zip_path)
+            invalid_zip_path.write_text("invalid", encoding="utf-8")
+
+            self.assertTrue(_is_valid_zip_file(valid_zip_path))
+            self.assertFalse(_is_valid_zip_file(invalid_zip_path))
+            self.assertFalse(_is_valid_zip_file(root_path / "missing.jar"))
+
+    def test_extract_tarfile_safely_rejects_path_traversal(self) -> None:
+        with TemporaryDirectory(prefix="runtime_tar_safe_") as temporary_directory:
+            destination_dir = Path(temporary_directory)
+            tar_path = destination_dir / "unsafe.tar"
+
+            with tarfile.open(tar_path, mode="w") as archive_file:
+                tar_member = tarfile.TarInfo(name="../outside.txt")
+                payload = b"unsafe"
+                tar_member.size = len(payload)
+                archive_file.addfile(tar_member, BytesIO(payload))
+
+            with tarfile.open(tar_path, mode="r") as archive_file:
+                with self.assertRaises(RuntimeToolsError):
+                    _extract_tarfile_safely(archive_file, destination_dir)
+
+    def test_download_file_with_retry_raises_runtime_error_after_failures(self) -> None:
+        with TemporaryDirectory(prefix="runtime_download_fail_") as temporary_directory:
+            destination_path = Path(temporary_directory) / "downloaded.file"
+
+            with patch(
+                "apps.core.runtime_tools.urllib.request.urlopen",
+                side_effect=urllib.error.URLError("network down"),
+            ):
+                with self.assertRaises(RuntimeToolsError):
+                    _download_file_with_retry(
+                        "https://example.test/file.tar.gz",
+                        destination_path,
+                        max_attempts=1,
+                        timeout_seconds=1,
+                    )
+
+    def test_prepare_external_artifacts_downloads_when_jar_invalid(self) -> None:
+        with TemporaryDirectory(
+            prefix="runtime_external_artifacts_"
+        ) as temporary_directory:
+            root_path = Path(temporary_directory)
+
+            with patch(
+                "apps.core.runtime_tools._download_file_with_retry",
+                return_value=None,
+            ) as mocked_download:
+                _prepare_external_artifacts(root_path)
+
+            mocked_download.assert_called_once()

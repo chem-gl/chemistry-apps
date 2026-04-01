@@ -79,7 +79,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "tsconfig.spec.json",
-            "coverageExclude": ["src/app/core/api/generated/**"]
+            "coverageExclude": ["src/app/core/api/generated/**", "src/**/*.html"]
           }
         }
       }

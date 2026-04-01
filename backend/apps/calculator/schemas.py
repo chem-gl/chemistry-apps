@@ -12,11 +12,12 @@ Cuando se agreguen nuevas operaciones, actualizar en conjunto:
 3. Tipos literales y pruebas de API.
 """
 
-from apps.core.models import ScientificJob
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
-from .definitions import DEFAULT_ALGORITHM_VERSION
+from apps.core.models import ScientificJob
+
+from .definitions import DEFAULT_ALGORITHM_VERSION, validate_factorial_operand
 
 CALCULATOR_OPERATION_CHOICES: list[tuple[str, str]] = [
     ("add", "add"),
@@ -94,10 +95,10 @@ class CalculatorJobCreateSerializer(serializers.Serializer):
                 )
 
             first_operand: float = float(attrs["a"])
-            if first_operand < 0 or not first_operand.is_integer():
-                raise serializers.ValidationError(
-                    {"a": "Para factorial, a debe ser un entero no negativo."}
-                )
+            try:
+                validate_factorial_operand(first_operand)
+            except ValueError as e:
+                raise serializers.ValidationError({"a": str(e)})
             return attrs
 
         if second_operand is None:

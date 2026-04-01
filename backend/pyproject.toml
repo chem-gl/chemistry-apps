@@ -5,6 +5,8 @@
 # Configuración de pytest: módulo de settings de Django y opciones por defecto.
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-v --tb=short"
+# Recolectar también archivos tests.py (Django por convención usa este nombre)
+python_files = "test_*.py tests.py"
 
 [tool.coverage.run]
 # Mide cobertura del código fuente, excluyendo código no-testeable:
