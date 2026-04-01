@@ -1,3 +1,3 @@
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=175 | líneas=2797 | densidad=5.1%
+Resumen del proyecto: bloques=175 | líneas=2797 | densidad=5.5%
 No se encontraron archivos con duplicación visible en la respuesta de Sonar.
