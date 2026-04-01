@@ -590,4 +590,212 @@ describe('EasyRateWorkflowService', () => {
     expect(workflowService.getInspectionError('reactant_1_file')).toBeNull();
     expect(workflowService.getSelectedExecutionIndex('reactant_1_file')).toBeNull();
   });
+
+  it('updates and reads files through field-specific wrapper methods', () => {
+    const reactant1File = createGaussianFile('wrapper-r1.log');
+    const reactant2File = createGaussianFile('wrapper-r2.log');
+    const tsFile = createGaussianFile('wrapper-ts.log');
+    const product1File = createGaussianFile('wrapper-p1.log');
+    const product2File = createGaussianFile('wrapper-p2.log');
+
+    workflowService.updateReactant1File(reactant1File);
+    workflowService.updateReactant2File(reactant2File);
+    workflowService.updateTransitionStateFile(tsFile);
+    workflowService.updateProduct1File(product1File);
+    workflowService.updateProduct2File(product2File);
+
+    expect(workflowService.getInputFile('reactant_1_file')).toBe(reactant1File);
+    expect(workflowService.getInputFile('reactant_2_file')).toBe(reactant2File);
+    expect(workflowService.getInputFile('transition_state_file')).toBe(tsFile);
+    expect(workflowService.getInputFile('product_1_file')).toBe(product1File);
+    expect(workflowService.getInputFile('product_2_file')).toBe(product2File);
+  });
+
+  it('covers validation branches for missing files and uninspected inputs', () => {
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toBe('Reactant 2 file is required.');
+
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toBe('Transition state file is required.');
+
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toBe('At least one product file is required.');
+
+    workflowService.reactant1File.set(createGaussianFile('direct-r1.log'));
+    workflowService.reactant2File.set(createGaussianFile('direct-r2.log'));
+    workflowService.transitionStateFile.set(createGaussianFile('direct-ts.log'));
+    workflowService.product1File.set(createGaussianFile('direct-p1.log'));
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('Product 1 has not been inspected yet.');
+  });
+
+  it('blocks dispatch when an inspection is pending or selected execution is invalid', () => {
+    const pendingInspection$ = new Subject<EasyRateFileInspectionView>();
+    jobsApiServiceMock.inspectEasyRateInput.mockImplementationOnce(() =>
+      pendingInspection$.asObservable(),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('pending-r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+    workflowService.dispatch();
+
+    expect(workflowService.errorMessage()).toContain('Reactant 1 is still being analyzed.');
+
+    pendingInspection$.next(makeInspection('reactant_1_file'));
+    pendingInspection$.complete();
+    workflowService.updateSelectedExecutionIndex('reactant_1_file', null);
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('Select a parsed execution for Reactant 1.');
+
+    workflowService.updateSelectedExecutionIndex('reactant_1_file', 999);
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain(
+      'Selected execution is no longer available for Reactant 1.',
+    );
+  });
+
+  it('downloads log and error reports with guarded export pipeline', () => {
+    jobsApiServiceMock.downloadEasyRateLogReport.mockReturnValue(
+      of({ filename: 'easy-rate.log', blob: new Blob(['log']) }),
+    );
+    jobsApiServiceMock.downloadEasyRateErrorReport.mockReturnValue(
+      of({ filename: 'easy-rate.err', blob: new Blob(['err']) }),
+    );
+    workflowService.currentJobId.set('easy-rate-export-multi-1');
+
+    workflowService.downloadLogReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('easy-rate.log');
+    });
+    workflowService.downloadErrorReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('easy-rate.err');
+    });
+
+    expect(jobsApiServiceMock.downloadEasyRateLogReport).toHaveBeenCalledWith(
+      'easy-rate-export-multi-1',
+    );
+    expect(jobsApiServiceMock.downloadEasyRateErrorReport).toHaveBeenCalledWith(
+      'easy-rate-export-multi-1',
+    );
+    expect(workflowService.exportErrorMessage()).toBeNull();
+  });
+
+  it('resets volatile state and clears all selected files', () => {
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+    workflowService.currentJobId.set('easy-rate-reset-1');
+    workflowService.activeSection.set('progress');
+    workflowService.errorMessage.set('temp error');
+
+    workflowService.reset();
+    expect(workflowService.activeSection()).toBe('idle');
+    expect(workflowService.currentJobId()).toBeNull();
+    expect(workflowService.errorMessage()).toBeNull();
+
+    workflowService.clearFiles();
+    expect(workflowService.reactant1File()).toBeNull();
+    expect(workflowService.reactant2File()).toBeNull();
+    expect(workflowService.transitionStateFile()).toBeNull();
+    expect(workflowService.product1File()).toBeNull();
+    expect(workflowService.product2File()).toBeNull();
+    expect(workflowService.getSelectedExecutionIndex('reactant_1_file')).toBeNull();
+  });
+
+  it('shows progress tracking error when polling fallback also fails', () => {
+    jobsApiServiceMock.dispatchEasyRateJob.mockReturnValue(
+      of(
+        makeEasyRateJob({
+          id: 'easy-rate-poll-fail-1',
+          status: 'running',
+          results: null,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(throwError(() => new Error('sse failed')));
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(
+      throwError(() => new Error('polling failed')),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to track Easy-rate progress');
+  });
+
+  it('handles failed final payload and builds paused/default historical summaries', () => {
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
+
+    jobsApiServiceMock.dispatchEasyRateJob.mockReturnValue(
+      of(
+        makeEasyRateJob({
+          id: 'easy-rate-failed-final-1',
+          status: 'running',
+          results: null,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValueOnce(
+      of(
+        makeEasyRateJob({
+          id: 'easy-rate-failed-final-1',
+          status: 'failed',
+          error_trace: 'backend failed result',
+          results: null,
+        }),
+      ),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('backend failed result');
+
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValueOnce(
+      of(makeEasyRateJob({ id: 'easy-rate-paused-1', status: 'paused', results: null })),
+    );
+    workflowService.openHistoricalJob('easy-rate-paused-1');
+    expect(workflowService.resultData()?.summaryMessage).toBe(
+      'Historical summary: this job is paused.',
+    );
+
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValueOnce(
+      of(makeEasyRateJob({ id: 'easy-rate-cancelled-1', status: 'cancelled', results: null })),
+    );
+    workflowService.openHistoricalJob('easy-rate-cancelled-1');
+    expect(workflowService.resultData()?.summaryMessage).toBe(
+      'Historical summary: no final result payload was available.',
+    );
+  });
+
+  it('runs ngOnDestroy and unsubscribes active inspection subscriptions', () => {
+    const pendingInspection$ = new Subject<EasyRateFileInspectionView>();
+    jobsApiServiceMock.inspectEasyRateInput.mockReturnValueOnce(pendingInspection$.asObservable());
+
+    workflowService.updateReactant1File(createGaussianFile('destroy-r1.log'));
+    expect(pendingInspection$.observed).toBe(true);
+
+    workflowService.ngOnDestroy();
+    expect(pendingInspection$.observed).toBe(false);
+  });
 });
