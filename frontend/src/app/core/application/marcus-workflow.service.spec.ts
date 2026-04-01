@@ -381,4 +381,277 @@ describe('MarcusWorkflowService', () => {
 
     expect(jobsApiServiceMock.downloadMarcusCsvReport).toHaveBeenCalledWith('marcus-job-1');
   });
+
+  it('downloads log, error and inputs zip reports for selected job', () => {
+    jobsApiServiceMock.downloadMarcusLogReport.mockReturnValue(
+      of({ filename: 'marcus.log', blob: new Blob(['log']) }),
+    );
+    jobsApiServiceMock.downloadMarcusErrorReport.mockReturnValue(
+      of({ filename: 'marcus.err', blob: new Blob(['err']) }),
+    );
+    jobsApiServiceMock.downloadMarcusInputsZip.mockReturnValue(
+      of({ filename: 'marcus-inputs.zip', blob: new Blob(['zip']) }),
+    );
+    workflowService.currentJobId.set('marcus-job-downloads-1');
+
+    workflowService.downloadLogReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('marcus.log');
+    });
+    workflowService.downloadErrorReport().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('marcus.err');
+    });
+    workflowService.downloadInputsZip().subscribe((downloadedFile: DownloadedReportFile) => {
+      expect(downloadedFile.filename).toBe('marcus-inputs.zip');
+    });
+
+    expect(jobsApiServiceMock.downloadMarcusLogReport).toHaveBeenCalledWith(
+      'marcus-job-downloads-1',
+    );
+    expect(jobsApiServiceMock.downloadMarcusErrorReport).toHaveBeenCalledWith(
+      'marcus-job-downloads-1',
+    );
+    expect(jobsApiServiceMock.downloadMarcusInputsZip).toHaveBeenCalledWith(
+      'marcus-job-downloads-1',
+    );
+  });
+
+  it('shows dispatch error when backend cannot create Marcus job', () => {
+    jobsApiServiceMock.dispatchMarcusJob.mockReturnValueOnce(
+      throwError(() => new Error('dispatch blocked')),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateProduct1AdiabaticFile(createGaussianFile('p1a.log'));
+    workflowService.updateProduct2AdiabaticFile(createGaussianFile('p2a.log'));
+    workflowService.updateProduct1VerticalFile(createGaussianFile('p1v.log'));
+    workflowService.updateProduct2VerticalFile(createGaussianFile('p2v.log'));
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('dispatch blocked');
+  });
+
+  it('shows polling fallback error when Marcus progress cannot be tracked', () => {
+    jobsApiServiceMock.dispatchMarcusJob.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-poll-fail-1',
+          status: 'running',
+          results: undefined,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValueOnce(
+      throwError(() => new Error('sse unavailable')),
+    );
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValueOnce(of());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValueOnce(
+      throwError(() => new Error('polling unavailable')),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateProduct1AdiabaticFile(createGaussianFile('p1a.log'));
+    workflowService.updateProduct2AdiabaticFile(createGaussianFile('p2a.log'));
+    workflowService.updateProduct1VerticalFile(createGaussianFile('p1v.log'));
+    workflowService.updateProduct2VerticalFile(createGaussianFile('p2v.log'));
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to track Marcus job progress');
+  });
+
+  it('handles historical paused and cancelled summaries plus recover error', () => {
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-paused-1',
+          status: 'paused',
+          results: undefined,
+        }),
+      ),
+    );
+    workflowService.openHistoricalJob('marcus-paused-1');
+    expect(workflowService.resultData()?.summaryMessage).toBe(
+      'Historical summary: this job is paused.',
+    );
+
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-cancelled-1',
+          status: 'cancelled',
+          results: undefined,
+        }),
+      ),
+    );
+    workflowService.openHistoricalJob('marcus-cancelled-1');
+    expect(workflowService.resultData()?.summaryMessage).toBe(
+      'Historical summary: no final result payload was available.',
+    );
+
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      throwError(() => new Error('historical timeout')),
+    );
+    workflowService.openHistoricalJob('marcus-recover-error-1');
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('historical timeout');
+  });
+
+  it('keeps history loading flag consistent when list request fails', () => {
+    jobsApiServiceMock.listJobs.mockReturnValueOnce(throwError(() => new Error('history down')));
+
+    workflowService.loadHistory();
+
+    expect(workflowService.isHistoryLoading()).toBe(false);
+  });
+
+  it('applies simple field updaters and lifecycle cleanup', () => {
+    workflowService.updateTitle('Marcus From Spec');
+    workflowService.updateDiffusion(true);
+    workflowService.updateRadiusReactant1(1.1);
+    workflowService.updateRadiusReactant2(1.2);
+    workflowService.updateReactionDistance(2.1);
+
+    expect(workflowService.title()).toBe('Marcus From Spec');
+    expect(workflowService.showDiffusionFields()).toBe(true);
+    expect(workflowService.radiusReactant1()).toBe(1.1);
+    expect(workflowService.radiusReactant2()).toBe(1.2);
+    expect(workflowService.reactionDistance()).toBe(2.1);
+    expect(() => workflowService.ngOnDestroy()).not.toThrow();
+  });
+
+  it('computes canDispatch, isProcessing and progress message snapshots', () => {
+    expect(workflowService.canDispatch()).toBe(false);
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateProduct1AdiabaticFile(createGaussianFile('p1a.log'));
+    workflowService.updateProduct2AdiabaticFile(createGaussianFile('p2a.log'));
+    workflowService.updateProduct1VerticalFile(createGaussianFile('p1v.log'));
+    workflowService.updateProduct2VerticalFile(createGaussianFile('p2v.log'));
+
+    expect(workflowService.canDispatch()).toBe(true);
+    expect(workflowService.progressMessage()).toBe('Preparing Marcus job...');
+
+    workflowService.activeSection.set('progress');
+    workflowService.progressSnapshot.set({
+      job_id: 'marcus-snapshot-1',
+      status: 'running',
+      progress_percentage: 55,
+      progress_stage: 'running',
+      progress_message: 'processing',
+      progress_event_index: 5,
+      updated_at: new Date().toISOString(),
+    });
+
+    expect(workflowService.isProcessing()).toBe(true);
+    expect(workflowService.canDispatch()).toBe(false);
+    expect(workflowService.progressPercentage()).toBe(55);
+    expect(workflowService.progressMessage()).toBe('processing');
+  });
+
+  it('updates progress snapshots from SSE and resolves final result on completion', () => {
+    const progress$ = new Subject<JobProgressSnapshotView>();
+
+    jobsApiServiceMock.dispatchMarcusJob.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-progress-complete-1',
+          status: 'running',
+          results: undefined,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValueOnce(progress$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValueOnce(of());
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      of(makeMarcusJobResponse({ id: 'marcus-progress-complete-1', status: 'completed' })),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateProduct1AdiabaticFile(createGaussianFile('p1a.log'));
+    workflowService.updateProduct2AdiabaticFile(createGaussianFile('p2a.log'));
+    workflowService.updateProduct1VerticalFile(createGaussianFile('p1v.log'));
+    workflowService.updateProduct2VerticalFile(createGaussianFile('p2v.log'));
+    workflowService.dispatch();
+
+    progress$.next({
+      job_id: 'marcus-progress-complete-1',
+      status: 'running',
+      progress_percentage: 88,
+      progress_stage: 'running',
+      progress_message: 'almost done',
+      progress_event_index: 8,
+      updated_at: new Date().toISOString(),
+    });
+    expect(workflowService.progressPercentage()).toBe(88);
+
+    progress$.complete();
+
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.title).toBe('Marcus Test');
+  });
+
+  it('handles failed and unreachable final status retrieval branches', () => {
+    const failedProgress$ = new Subject<JobProgressSnapshotView>();
+
+    jobsApiServiceMock.dispatchMarcusJob.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-final-failed-1',
+          status: 'running',
+          results: undefined,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValueOnce(failedProgress$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValueOnce(of());
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-final-failed-1',
+          status: 'failed',
+          error_trace: 'final backend failure',
+          results: undefined,
+        }),
+      ),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateProduct1AdiabaticFile(createGaussianFile('p1a.log'));
+    workflowService.updateProduct2AdiabaticFile(createGaussianFile('p2a.log'));
+    workflowService.updateProduct1VerticalFile(createGaussianFile('p1v.log'));
+    workflowService.updateProduct2VerticalFile(createGaussianFile('p2v.log'));
+    workflowService.dispatch();
+    failedProgress$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('final backend failure');
+
+    const erroredProgress$ = new Subject<JobProgressSnapshotView>();
+    jobsApiServiceMock.dispatchMarcusJob.mockReturnValueOnce(
+      of(
+        makeMarcusJobResponse({
+          id: 'marcus-final-error-1',
+          status: 'running',
+          results: undefined,
+        }),
+      ),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValueOnce(erroredProgress$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValueOnce(of());
+    jobsApiServiceMock.getMarcusJobStatus.mockReturnValueOnce(
+      throwError(() => new Error('final status timeout')),
+    );
+
+    workflowService.dispatch();
+    erroredProgress$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to get Marcus final result');
+  });
 });
