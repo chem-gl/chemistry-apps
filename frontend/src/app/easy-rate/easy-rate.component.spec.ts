@@ -259,15 +259,6 @@ describe('EasyRateComponent', () => {
     expect(component.formatBytes(2097152)).toBe('2.00 MB');
   });
 
-  it('historicalStatusClass retorna clases CSS por estado', () => {
-    const fixture = TestBed.createComponent(EasyRateComponent);
-    const component = fixture.componentInstance;
-    expect(component.historicalStatusClass('completed')).toBe('status-completed');
-    expect(component.historicalStatusClass('failed')).toBe('status-failed');
-    expect(component.historicalStatusClass('running')).toBe('status-running');
-    expect(component.historicalStatusClass('pending')).toBe('status-pending');
-  });
-
   it('buildExecutionOptionLabel compone el label con título y métricas', () => {
     const fixture = TestBed.createComponent(EasyRateComponent);
     const component = fixture.componentInstance;

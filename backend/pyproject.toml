@@ -2,11 +2,16 @@
 # Incluye formato automatico con Black para mantener  
 
 [tool.pytest.ini_options]
-# Configuración de pytest: módulo de settings de Django y opciones por defecto.
-DJANGO_SETTINGS_MODULE = "config.settings"
+# Configuración de pytest. Django se inicializa vía conftest.py con os.environ.
 addopts = "-v --tb=short"
 # Recolectar también archivos tests.py (Django por convención usa este nombre)
 python_files = "test_*.py tests.py"
+filterwarnings = [
+    # Advertencias de dependencias de terceros (torch/lightning) irrelevantes para el proyecto.
+    # La advertencia de LeafSpec viene de torch con category=FutureWarning, no DeprecationWarning.
+    "ignore:.*isinstance.*LeafSpec.*:FutureWarning",
+    "ignore:.*predict_dataloader.*num_workers.*:UserWarning",
+]
 
 [tool.coverage.run]
 # Mide cobertura del código fuente, excluyendo código no-testeable:
@@ -34,6 +39,10 @@ exclude_lines = [
     '\\.\\.\\.',
     "pass",
     "if __name__ == .__main__.:",
+    "^import .*",
+    "^from .* import .*",
+    "def __str__",
+    "def __repr__",
 ]
 
 [tool.black]

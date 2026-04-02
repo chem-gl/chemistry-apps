@@ -226,16 +226,6 @@ describe('MarcusComponent', () => {
     expect(component.formatBytes(1572864)).toBe('1.50 MB');
   });
 
-  it('retorna clase CSS de estado histórico para cada caso', () => {
-    const fixture = TestBed.createComponent(MarcusComponent);
-    const component = fixture.componentInstance;
-    expect(component.historicalStatusClass('completed')).toBe('status-completed');
-    expect(component.historicalStatusClass('failed')).toBe('status-failed');
-    expect(component.historicalStatusClass('running')).toBe('status-running');
-    expect(component.historicalStatusClass('processing')).toBe('status-running');
-    expect(component.historicalStatusClass('pending')).toBe('status-pending');
-  });
-
   it('exportCsv llama downloadCsvReport y dispara la descarga', () => {
     const fixture = TestBed.createComponent(MarcusComponent);
     fixture.detectChanges();

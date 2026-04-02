@@ -235,7 +235,7 @@ describe('SaScoreWorkflowService', () => {
     workflowService.openHistoricalJob('sa-failed-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Historical job ended with error.');
+    expect(workflowService.errorMessage()).toContain('Job ended with error.');
   });
 
   it('loads history ordered by updated_at descending', () => {
@@ -344,7 +344,7 @@ describe('SaScoreWorkflowService', () => {
 
     progressEvents$.error(new Error('sse offline'));
 
-    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('sa-progress-1');
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('sa-progress-1', 1000);
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.total).toBe(1);
   });

@@ -118,12 +118,6 @@ describe('TunnelComponent', () => {
     expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tunnel-3');
   });
 
-  it('retorna clase CSS de estado histórico', () => {
-    const fixture = TestBed.createComponent(TunnelComponent);
-    const component = fixture.componentInstance;
-    expect(component.historicalStatusClass('running')).toBe('history-status history-running');
-  });
-
   it('canExportRows retorna false cuando no hay jobId actual', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
     const component = fixture.componentInstance;

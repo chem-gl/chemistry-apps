@@ -268,7 +268,7 @@ describe('TunnelWorkflowService', () => {
   });
 
   it('throws when exporting without selected job', () => {
-    expect(() => workflowService.downloadLogReport()).toThrow('No job selected for LOG export.');
+    expect(() => workflowService.downloadLogReport()).toThrow('No job selected for download.');
   });
 
   it('loads history ordered by updated_at descending', () => {

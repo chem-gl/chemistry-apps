@@ -253,11 +253,11 @@ describe('SaScoreComponent', () => {
     createSpy.mockRestore();
   });
 
-  it('onSketchDraftSmilesChange actualiza sketchDraftSmiles', () => {
+  it('sketchDraftSmiles se puede actualizar a través de la propiedad', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
 
-    component.onSketchDraftSmilesChange('CCO');
+    component.sketchDraftSmiles = 'CCO';
     expect(component.sketchDraftSmiles).toBe('CCO');
   });
 

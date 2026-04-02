@@ -1,18 +1,13 @@
 // tunnel-workflow.service.ts: Orquesta formulario, trazabilidad de entradas, progreso y resultados de Tunnel.
 
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import {
   DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
   ScientificJobView,
   TunnelInputChangeEvent,
 } from '../api/jobs-api.service';
-
-type TunnelSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
+import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 export interface TunnelResultData {
   reactionBarrierZpe: number;
@@ -32,10 +27,10 @@ export interface TunnelResultData {
 }
 
 @Injectable()
-export class TunnelWorkflowService implements OnDestroy {
-  private readonly jobsApiService = inject(JobsApiService);
-  private progressSubscription: Subscription | null = null;
-  private logsSubscription: Subscription | null = null;
+export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultData> {
+  protected override get defaultProgressMessage(): string {
+    return 'Preparing tunnel effect calculation...';
+  }
 
   readonly reactionBarrierZpe = signal<number>(3.5);
   readonly imaginaryFrequency = signal<number>(625);
@@ -43,27 +38,6 @@ export class TunnelWorkflowService implements OnDestroy {
   readonly temperature = signal<number>(298.15);
 
   readonly inputChangeEvents = signal<TunnelInputChangeEvent[]>([]);
-
-  readonly activeSection = signal<TunnelSection>('idle');
-  readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
-  readonly jobLogs = signal<JobLogEntryView[]>([]);
-  readonly resultData = signal<TunnelResultData | null>(null);
-  readonly errorMessage = signal<string | null>(null);
-  readonly exportErrorMessage = signal<string | null>(null);
-  readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJobView[]>([]);
-  readonly isHistoryLoading = signal<boolean>(false);
-
-  readonly isProcessing = computed(
-    () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
-  );
-
-  readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparing tunnel effect calculation...',
-  );
 
   updateReactionBarrierZpe(nextValue: number): void {
     const previousValue: number = this.reactionBarrierZpe();
@@ -93,17 +67,18 @@ export class TunnelWorkflowService implements OnDestroy {
     this.inputChangeEvents.set([]);
   }
 
-  dispatch(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
+  private recordInputChange(fieldName: string, previousValue: number, newValue: number): void {
+    const changeEvent: TunnelInputChangeEvent = {
+      fieldName,
+      previousValue,
+      newValue,
+      changedAt: new Date().toISOString(),
+    };
+    this.inputChangeEvents.update((events) => [...events, changeEvent]);
+  }
 
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
-    this.resultData.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.currentJobId.set(null);
+  override dispatch(): void {
+    this.prepareForDispatch();
 
     this.jobsApiService
       .dispatchTunnelJob({
@@ -144,53 +119,23 @@ export class TunnelWorkflowService implements OnDestroy {
       });
   }
 
-  reset(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-
-    this.activeSection.set('idle');
-    this.currentJobId.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.resultData.set(null);
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
+  override loadHistory(): void {
+    this.loadHistoryForPlugin('tunnel-effect');
   }
 
   openHistoricalJob(jobId: string): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
+    this.prepareForDispatch();
     this.currentJobId.set(jobId);
-    this.jobLogs.set([]);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
-
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(
-            jobResponse.error_trace ?? 'Historical tunnel job ended with error.',
-          );
-          return;
-        }
-
-        const historicalData: TunnelResultData | null =
-          this.extractResultData(jobResponse) ?? this.extractSummaryData(jobResponse);
-        if (historicalData === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('Unable to reconstruct historical tunnel job output.');
-          return;
-        }
-
-        this.resultData.set(historicalData);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
+        this.handleJobOutcome(
+          jobId,
+          jobResponse,
+          (job) => this.extractResultData(job) ?? this.extractSummaryData(job),
+          { loadHistoryAfter: false },
+        );
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -199,167 +144,25 @@ export class TunnelWorkflowService implements OnDestroy {
     });
   }
 
-  loadHistory(): void {
-    this.isHistoryLoading.set(true);
-
-    this.jobsApiService.listJobs({ pluginName: 'tunnel-effect' }).subscribe({
-      next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
-          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
-            new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
-        );
-        this.historyJobs.set(orderedJobs);
-        this.isHistoryLoading.set(false);
-      },
-      error: () => {
-        this.isHistoryLoading.set(false);
-      },
-    });
-  }
-
   downloadCsvReport(): Observable<DownloadedReportFile> {
-    const selectedJobId: string | null = this.currentJobId();
-    if (selectedJobId === null || selectedJobId.trim() === '') {
-      throw new Error('No job selected for CSV export.');
-    }
-
-    this.exportErrorMessage.set(null);
-    this.isExporting.set(true);
-
-    return this.jobsApiService.downloadTunnelCsvReport(selectedJobId).pipe(
-      finalize(() => this.isExporting.set(false)),
-      catchError((requestError: unknown) => {
-        const normalizedErrorMessage: string =
-          requestError instanceof Error
-            ? requestError.message
-            : 'Unknown error while downloading CSV report.';
-        this.exportErrorMessage.set(`Unable to download CSV report: ${normalizedErrorMessage}`);
-        return throwError(() => requestError);
-      }),
+    return this.buildDownloadStream(
+      this.jobsApiService.downloadTunnelCsvReport(this.currentJobId()!),
+      'CSV report',
     );
   }
 
   downloadLogReport(): Observable<DownloadedReportFile> {
-    const selectedJobId: string | null = this.currentJobId();
-    if (selectedJobId === null || selectedJobId.trim() === '') {
-      throw new Error('No job selected for LOG export.');
-    }
-
-    this.exportErrorMessage.set(null);
-    this.isExporting.set(true);
-
-    return this.jobsApiService.downloadTunnelLogReport(selectedJobId).pipe(
-      finalize(() => this.isExporting.set(false)),
-      catchError((requestError: unknown) => {
-        const normalizedErrorMessage: string =
-          requestError instanceof Error
-            ? requestError.message
-            : 'Unknown error while downloading LOG report.';
-        this.exportErrorMessage.set(`Unable to download LOG report: ${normalizedErrorMessage}`);
-        return throwError(() => requestError);
-      }),
+    return this.buildDownloadStream(
+      this.jobsApiService.downloadTunnelLogReport(this.currentJobId()!),
+      'LOG report',
     );
   }
 
-  ngOnDestroy(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-  }
-
-  private recordInputChange(fieldName: string, previousValue: number, newValue: number): void {
-    if (previousValue === newValue) {
-      return;
-    }
-
-    const nextEvent: TunnelInputChangeEvent = {
-      fieldName,
-      previousValue,
-      newValue,
-      changedAt: new Date().toISOString(),
-    };
-
-    this.inputChangeEvents.update((currentEvents: TunnelInputChangeEvent[]) => {
-      const nextEvents: TunnelInputChangeEvent[] = [...currentEvents, nextEvent];
-      return nextEvents.length > 2000 ? nextEvents.slice(-2000) : nextEvents;
-    });
-  }
-
-  private startProgressStream(jobId: string): void {
-    this.startLogsStream(jobId);
-    this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
-      complete: () => this.fetchFinalResult(jobId),
-      error: () => this.startPollingFallback(jobId),
-    });
-  }
-
-  private startLogsStream(jobId: string): void {
-    this.logsSubscription?.unsubscribe();
-    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
-      next: (logEntry: JobLogEntryView) => {
-        this.jobLogs.update((currentLogs: JobLogEntryView[]) => {
-          if (
-            currentLogs.some((item: JobLogEntryView) => item.eventIndex === logEntry.eventIndex)
-          ) {
-            return currentLogs;
-          }
-          return [...currentLogs, logEntry].sort(
-            (leftEntry: JobLogEntryView, rightEntry: JobLogEntryView) =>
-              leftEntry.eventIndex - rightEntry.eventIndex,
-          );
-        });
-      },
-      error: () => {
-        // Mantener funcional la UI aun si el stream SSE de logs falla.
-      },
-    });
-  }
-
-  private loadHistoricalLogs(jobId: string): void {
-    this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
-      next: (logsPage: JobLogsPageView) => this.jobLogs.set(logsPage.results),
-      error: () => {
-        // Mantener vista histórica disponible aun si falla lectura de logs.
-      },
-    });
-  }
-
-  private startPollingFallback(jobId: string): void {
-    this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshotView) => {
-        this.progressSnapshot.set(snapshot);
-        this.fetchFinalResult(jobId);
-      },
-      error: (pollingError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to track tunnel job progress: ${pollingError.message}`);
-      },
-    });
-  }
-
-  private fetchFinalResult(jobId: string): void {
+  protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
-
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Tunnel job failed with no details.');
-          return;
-        }
-
-        const finalResultData: TunnelResultData | null = this.extractResultData(jobResponse);
-        if (finalResultData === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('The final payload is invalid for tunnel effect.');
-          return;
-        }
-
-        this.resultData.set(finalResultData);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
-        this.loadHistory();
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -521,19 +324,6 @@ export class TunnelWorkflowService implements OnDestroy {
     }
 
     return parsedEvents;
-  }
-
-  private buildHistoricalSummaryMessage(jobStatus: ScientificJobView['status']): string {
-    if (jobStatus === 'pending') {
-      return 'Historical summary: this tunnel job is still pending execution.';
-    }
-    if (jobStatus === 'running') {
-      return 'Historical summary: this tunnel job is still running.';
-    }
-    if (jobStatus === 'paused') {
-      return 'Historical summary: this tunnel job is paused.';
-    }
-    return 'Historical summary: no final result payload was available.';
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

@@ -13,6 +13,9 @@ import os
 # Este módulo se carga al iniciar pytest. Debe configurarse antes de usar
 # cualquier funcionalidad de Django que acceda a settings (p.ej. django.db).
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+# Forzar capa de canales en memoria para tests que no necesitan Redis real.
+# Evita ConnectionError en tests que publican logs de job via channel_layer.
+os.environ.setdefault("USE_INMEMORY_CHANNEL_LAYER", "true")
 
 # Importar y configurar Django solo una vez. Si ya se configuró, `django.setup`
 # no hace nada.

@@ -21,6 +21,7 @@ from rest_framework.test import APIClient
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 
+from . import _smileit_builders as smileit_builders_module
 from . import engine as smileit_engine
 from . import plugin as smileit_plugin_module
 from .catalog import list_active_patterns
@@ -555,10 +556,10 @@ class SmileitPluginOptimizationTests(TestCase):
 
     def _build_site_option_map_with_single_option(
         self,
-    ) -> dict[int, list[smileit_plugin_module.SiteOption]]:
+    ) -> dict[int, list[smileit_builders_module.SiteOption]]:
         return {
             0: [
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockA",
                     block_priority=1,
@@ -598,11 +599,11 @@ class SmileitPluginOptimizationTests(TestCase):
 
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=True,
             ),
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
                 side_effect=fake_fuse,
             ) as mocked_fuse,
         ):
@@ -633,10 +634,10 @@ class SmileitPluginOptimizationTests(TestCase):
         """Dos bloques que intentan la misma fusión exacta no deben recalcular RDKit."""
 
         duplicated_site_option_map: dict[
-            int, list[smileit_plugin_module.SiteOption]
+            int, list[smileit_builders_module.SiteOption]
         ] = {
             0: [
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockA",
                     block_priority=1,
@@ -650,7 +651,7 @@ class SmileitPluginOptimizationTests(TestCase):
                         "categories": [],
                     },
                 ),
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockB",
                     block_priority=2,
@@ -669,11 +670,11 @@ class SmileitPluginOptimizationTests(TestCase):
 
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=True,
             ),
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
                 return_value="PA",
             ) as mocked_fuse,
         ):
@@ -701,11 +702,11 @@ class SmileitPluginOptimizationTests(TestCase):
         """La poda previa debe evitar entrar a RDKit cuando la firma ya es inviable."""
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=False,
             ) as mocked_viability,
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
             ) as mocked_fuse,
         ):
             generated_candidates, traceability_rows, truncated = (

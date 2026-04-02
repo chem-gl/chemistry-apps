@@ -12,10 +12,9 @@ import {
   EasyRateInputFieldName,
   EasyRateInspectionExecutionView,
 } from '../core/api/jobs-api.service';
-import {
-  EasyRateWorkflowService,
-  SOLVENT_OPTIONS,
-} from '../core/application/easy-rate-workflow.service';
+import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
+import { SOLVENT_OPTIONS } from '../core/application/easy-rate-workflow.types';
+import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
@@ -28,7 +27,13 @@ interface EasyRateInputSlotView {
 
 @Component({
   selector: 'app-easy-rate',
-  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    JobProgressCardComponent,
+    JobLogsPanelComponent,
+    JobHistoryTableComponent,
+  ],
   providers: [EasyRateWorkflowService],
   templateUrl: './easy-rate.component.html',
   styleUrl: './easy-rate.component.scss',
@@ -219,13 +224,6 @@ export class EasyRateComponent implements OnInit, OnDestroy {
     if (sizeBytes < 1024) return `${sizeBytes} B`;
     if (sizeBytes < 1_048_576) return `${(sizeBytes / 1024).toFixed(1)} KB`;
     return `${(sizeBytes / 1_048_576).toFixed(2)} MB`;
-  }
-
-  historicalStatusClass(jobStatus: string): string {
-    if (jobStatus === 'completed') return 'status-completed';
-    if (jobStatus === 'failed') return 'status-failed';
-    if (jobStatus === 'running') return 'status-running';
-    return 'status-pending';
   }
 
   trackInputSlot(_index: number, slot: EasyRateInputSlotView): EasyRateInputFieldName {

@@ -14,43 +14,9 @@
     <section class="entry-panel" aria-label="Input parameters">
       <h3>Input</h3>
 
-      <label class="smiles-label">
-        SMILES list (one per line)
-        <textarea
-          rows="10"
-          [ngModel]="workflow.smilesInput()"
-          (ngModelChange)="workflow.smilesInput.set($event)"
-          [disabled]="workflow.isProcessing()"
-        ></textarea>
-      </label>
-      <p class="hint">Detected rows: {{ lineCount() }}</p>
-
-      <div class="input-tools-row">
-        <button
-          class="btn-tool"
-          type="button"
-          (click)="openSketchDialog()"
-          [disabled]="workflow.isProcessing()"
-          title="Draw a molecule with Ketcher and add it to the list"
-        >
-          ✏ Draw SMILES
-        </button>
-
-        <label
-          class="btn-tool file-upload-label"
-          [class.disabled]="workflow.isProcessing()"
-          title="Upload a .smi or .txt file with one SMILES per line"
-        >
-          ↑ Upload file
-          <input
-            type="file"
-            accept=".smi,.txt"
-            class="file-input-hidden"
-            [disabled]="workflow.isProcessing()"
-            (change)="onFileUpload($event)"
-          />
-        </label>
-      </div>
+      <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
+        [lineCount]="lineCount()" (smilesChange)="workflow.smilesInput.set($event)" (openSketch)="openSketchDialog()"
+        (fileUpload)="onFileUpload($event)"></app-smiles-batch-input>
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
@@ -158,53 +124,9 @@
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-  <section class="history-card" aria-label="Historical toxicity jobs">
-    <div class="history-header">
-      <h3>History</h3>
-      <button
-        class="btn-secondary"
-        (click)="workflow.loadHistory()"
-        [disabled]="workflow.isHistoryLoading()"
-      >
-        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-      </button>
-    </div>
-
-    @if (workflow.historyJobs().length === 0) {
-      <p class="status-message">No historical toxicity jobs yet.</p>
-    } @else {
-      <div class="table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>Job ID</th>
-              <th>Status</th>
-              <th>Updated</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-              <tr>
-                <td class="mono">{{ historyJob.id }}</td>
-                <td>
-                  <span [class]="historicalStatusClass(historyJob.status)">{{
-                    historyJob.status
-                  }}</span>
-                </td>
-                <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                <td>
-                  <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                    Open
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </section>
+<app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+  emptyMessage="No historical toxicity jobs yet." sectionTitle="History" ariaLabel="Historical toxicity jobs"
+  (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"></app-job-history-table>
 </section>
 
 <dialog

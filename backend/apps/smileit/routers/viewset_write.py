@@ -21,6 +21,15 @@ from apps.core.schemas import ErrorResponseSerializer
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 
+from .._catalog_schemas import (
+    SmileitCatalogEntryCreateSerializer,
+    SmileitCatalogEntrySerializer,
+    SmileitCategorySerializer,
+    SmileitPatternEntryCreateSerializer,
+    SmileitPatternEntrySerializer,
+    SmileitStructureInspectionRequestSerializer,
+    SmileitStructureInspectionResponseSerializer,
+)
 from ..catalog import (
     create_catalog_substituent,
     create_pattern_entry,
@@ -31,17 +40,7 @@ from ..catalog import (
 )
 from ..definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from ..engine import inspect_smiles_structure_with_patterns
-from ..schemas import (
-    SmileitCatalogEntryCreateSerializer,
-    SmileitCatalogEntrySerializer,
-    SmileitCategorySerializer,
-    SmileitJobCreateSerializer,
-    SmileitJobResponseSerializer,
-    SmileitPatternEntryCreateSerializer,
-    SmileitPatternEntrySerializer,
-    SmileitStructureInspectionRequestSerializer,
-    SmileitStructureInspectionResponseSerializer,
-)
+from ..schemas import SmileitJobCreateSerializer, SmileitJobResponseSerializer
 from ..types import SmileitJobCreatePayload, SmileitSubstituentCreatePayload
 from .assignment_resolution import (
     resolve_assignment_blocks,

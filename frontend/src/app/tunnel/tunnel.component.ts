@@ -5,21 +5,28 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
+import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import {
   TunnelResultData,
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
+import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import {
   downloadBlobFile,
   subscribeToRouteHistoricalJob,
 } from '../core/shared/scientific-app-ui.utils';
-import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
-import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    JobProgressCardComponent,
+    JobLogsPanelComponent,
+    JobHistoryTableComponent,
+  ],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',
@@ -51,10 +58,6 @@ export class TunnelComponent implements OnInit, OnDestroy {
 
   openHistoricalJob(jobId: string): void {
     this.workflow.openHistoricalJob(jobId);
-  }
-
-  historicalStatusClass(jobStatus: ScientificJobView['status']): string {
-    return `history-status history-${jobStatus}`;
   }
 
   canExportRows(): boolean {
@@ -101,5 +104,4 @@ export class TunnelComponent implements OnInit, OnDestroy {
       resultData.kappaTst !== null
     );
   }
-
 }

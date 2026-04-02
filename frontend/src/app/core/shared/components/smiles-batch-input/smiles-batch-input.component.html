@@ -1,0 +1,21 @@
+<!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo). -->
+<label class="smiles-label">
+    SMILES list (one per line)
+    <textarea rows="10" [ngModel]="smilesValue" (ngModelChange)="smilesChange.emit($event)"
+        [disabled]="isDisabled"></textarea>
+</label>
+<p class="hint">Detected rows: {{ lineCount }}</p>
+
+<div class="input-tools-row">
+    <button class="btn-tool" type="button" (click)="openSketch.emit()" [disabled]="isDisabled"
+        title="Draw a molecule with Ketcher and add it to the list">
+        ✏ Draw SMILES
+    </button>
+
+    <label class="btn-tool file-upload-label" [class.disabled]="isDisabled"
+        title="Upload a .smi or .txt file with one SMILES per line">
+        ↑ Upload file
+        <input type="file" accept=".smi,.txt" class="file-input-hidden" [disabled]="isDisabled"
+            (change)="fileUpload.emit($event)" />
+    </label>
+</div>

@@ -8,16 +8,23 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import {
   downloadBlobFile,
   subscribeToRouteHistoricalJob,
 } from '../core/shared/scientific-app-ui.utils';
-import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
-import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-marcus',
-  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    JobProgressCardComponent,
+    JobLogsPanelComponent,
+    JobHistoryTableComponent,
+  ],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',
   styleUrl: './marcus.component.scss',
@@ -139,12 +146,4 @@ export class MarcusComponent implements OnInit, OnDestroy {
   }
 
   // ── Utilidades de plantilla ──────────────────────────────────────
-  historicalStatusClass(status: string): string {
-    const normalized: string = status.toLowerCase();
-    if (normalized === 'completed') return 'status-completed';
-    if (normalized === 'failed') return 'status-failed';
-    if (normalized === 'running' || normalized === 'processing') return 'status-running';
-    return 'status-pending';
-  }
-
 }

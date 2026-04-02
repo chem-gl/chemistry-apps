@@ -730,7 +730,7 @@ describe('EasyRateWorkflowService', () => {
     workflowService.dispatch();
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Unable to track Easy-rate progress');
+    expect(workflowService.errorMessage()).toContain('Unable to track progress');
   });
 
   it('handles failed final payload and builds paused/default historical summaries', () => {

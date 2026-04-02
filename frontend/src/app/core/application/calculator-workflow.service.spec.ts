@@ -278,7 +278,7 @@ describe('CalculatorWorkflowService', () => {
 
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('division by zero');
-    expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('calc-failed-1', { limit: 200 });
+    expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('calc-failed-1', { limit: 250 });
   });
 
   it('resets transient state and current job context', () => {

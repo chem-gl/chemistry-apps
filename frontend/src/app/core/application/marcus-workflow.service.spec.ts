@@ -459,7 +459,7 @@ describe('MarcusWorkflowService', () => {
     workflowService.dispatch();
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Unable to track Marcus job progress');
+    expect(workflowService.errorMessage()).toContain('Unable to track progress');
   });
 
   it('handles historical paused and cancelled summaries plus recover error', () => {

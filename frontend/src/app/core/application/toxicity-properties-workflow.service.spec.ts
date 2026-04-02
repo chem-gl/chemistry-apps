@@ -188,7 +188,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     workflowService.openHistoricalJob('tox-failed-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Historical job ended with error.');
+    expect(workflowService.errorMessage()).toContain('Job ended with error.');
   });
 
   it('loads and sorts history by updated_at desc', () => {
@@ -270,7 +270,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     workflowService.openHistoricalJob('tox-broken-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Unable to reconstruct historical toxicity');
+    expect(workflowService.errorMessage()).toContain('Result payload is invalid.');
   });
 
   it('stores export error when CSV download fails', () => {
@@ -288,7 +288,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
   });
 
   it('throws when exporting without selected job', () => {
-    expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for CSV export.');
+    expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for download.');
   });
 
   it('falls back to polling, de-duplicates logs and resolves the final toxicity result', () => {
@@ -320,7 +320,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
 
     progressEvents$.error(new Error('sse offline'));
 
-    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('tox-progress-1');
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('tox-progress-1', 1000);
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.total).toBe(1);
   });

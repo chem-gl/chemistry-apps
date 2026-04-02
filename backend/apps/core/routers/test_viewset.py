@@ -206,7 +206,9 @@ class ResumeJobViewTests(TestCase):
             status="paused",
             supports_pause_resume=True,
         )
-        with patch("apps.core.routers.viewset.dispatch_scientific_job") as mock_d:
+        with patch(
+            "apps.core.routers._job_control_mixin.dispatch_scientific_job"
+        ) as mock_d:
             mock_d.return_value = True
             response = self.client.post(f"{API}{job.id}/resume/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -343,7 +345,7 @@ class SseLogsEventsViewTests(TestCase):
         job = _create_job("calculator", run=True)
         mock_gen = iter(["id: 0\nevent: job.log\ndata: {}\n\n"])
         with patch(
-            "apps.core.routers.viewset.stream_job_log_events",
+            "apps.core.routers._job_stream_mixin.stream_job_log_events",
             return_value=mock_gen,
         ):
             response = self.client.get(f"{API}{job.id}/logs/events/")
@@ -359,7 +361,7 @@ class SseLogsEventsViewTests(TestCase):
         job = _create_job("calculator")
         mock_gen = iter(["id: 0\nevent: job.log\ndata: {}\n\n"])
         with patch(
-            "apps.core.routers.viewset.stream_job_log_events",
+            "apps.core.routers._job_stream_mixin.stream_job_log_events",
             return_value=mock_gen,
         ):
             response = self.client.get(
@@ -378,7 +380,7 @@ class SseEventsViewTests(TestCase):
         job = _create_job("calculator")
         mock_gen = iter(["id: 0\nevent: job.progress\ndata: {}\n\n"])
         with patch(
-            "apps.core.routers.viewset.stream_job_events",
+            "apps.core.routers._job_stream_mixin.stream_job_events",
             return_value=mock_gen,
         ):
             response = self.client.get(f"{API}{job.id}/events/")
@@ -394,7 +396,7 @@ class SseEventsViewTests(TestCase):
         job = _create_job("calculator")
         mock_gen = iter(["id: 5\nevent: job.progress\ndata: {}\n\n"])
         with patch(
-            "apps.core.routers.viewset.stream_job_events",
+            "apps.core.routers._job_stream_mixin.stream_job_events",
             return_value=mock_gen,
         ) as mock_stream:
             self.client.get(
@@ -409,7 +411,7 @@ class SseEventsViewTests(TestCase):
         job = _create_job("calculator")
         mock_gen = iter([])
         with patch(
-            "apps.core.routers.viewset.stream_job_events",
+            "apps.core.routers._job_stream_mixin.stream_job_events",
             return_value=mock_gen,
         ) as mock_stream:
             self.client.get(f"{API}{job.id}/events/", {"timeout_seconds": "60"})

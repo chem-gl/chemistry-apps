@@ -174,7 +174,7 @@ describe('MolarFractionsWorkflowService', () => {
     workflowService.openHistoricalJob('molar-broken-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('reconstruct');
+    expect(workflowService.errorMessage()).toContain('Result payload is invalid.');
   });
 
   it('requests CSV export from backend for current job', () => {

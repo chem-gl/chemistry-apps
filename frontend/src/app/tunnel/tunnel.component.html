@@ -172,51 +172,13 @@
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-  <section class="history-card" aria-label="Historical jobs">
-    <div class="history-header">
-      <h3>Historical jobs</h3>
-      <button
-        class="btn-secondary"
-        (click)="workflow.loadHistory()"
-        [disabled]="workflow.isHistoryLoading()"
-      >
-        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-      </button>
-    </div>
-
-    @if (workflow.historyJobs().length === 0) {
-      <p class="status-message">No historical jobs yet for tunnel effect.</p>
-    } @else {
-      <div class="table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>Job ID</th>
-              <th>Status</th>
-              <th>Updated</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-              <tr>
-                <td class="mono">{{ historyJob.id }}</td>
-                <td>
-                  <span [class]="historicalStatusClass(historyJob.status)">{{
-                    historyJob.status
-                  }}</span>
-                </td>
-                <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                <td>
-                  <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                    Open
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </section>
+  <app-job-history-table
+    [jobs]="workflow.historyJobs()"
+    [isLoading]="workflow.isHistoryLoading()"
+    emptyMessage="No historical tunnel effect jobs yet."
+    sectionTitle="Historical jobs"
+    ariaLabel="Historical tunnel jobs"
+    (reload)="workflow.loadHistory()"
+    (openJob)="openHistoricalJob($event)"
+  ></app-job-history-table>
 </section>

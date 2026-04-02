@@ -20,6 +20,7 @@ import type {
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
+import { mergeLogEntry } from './log-entry-utils';
 
 import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
@@ -445,23 +446,12 @@ export class SmileitWorkflowService implements OnDestroy {
 
   private startLogsStream(jobId: string): void {
     this.logsSubscription?.unsubscribe();
-
     this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
       next: (logEntry: JobLogEntryView) => {
-        this.state.jobLogs.update((currentLogs: JobLogEntryView[]) => {
-          if (
-            currentLogs.some((item: JobLogEntryView) => item.eventIndex === logEntry.eventIndex)
-          ) {
-            return currentLogs;
-          }
-          return [...currentLogs, logEntry].sort(
-            (leftEntry: JobLogEntryView, rightEntry: JobLogEntryView) =>
-              leftEntry.eventIndex - rightEntry.eventIndex,
-          );
-        });
+        this.state.jobLogs.update((current) => mergeLogEntry(current, logEntry));
       },
       error: () => {
-        // Mantener funcional la UI incluso si falla la suscripción SSE de logs.
+        // Mantener UI funcional incluso si falla la suscripción SSE de logs.
       },
     });
   }

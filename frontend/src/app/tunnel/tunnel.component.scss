@@ -34,8 +34,7 @@
 .entry-panel,
 .result-panel,
 .events-card,
-.logs-card,
-.history-card {
+.logs-card {
   border: 1px solid #d9e2ec;
   border-radius: 14px;
   background: #f8fbff;
@@ -46,8 +45,7 @@
 .entry-panel h3,
 .result-panel h3,
 .events-card h3,
-.logs-card h3,
-.history-card h3 {
+.logs-card h3 {
   margin: 0 0 0.8rem;
   color: #102a43;
   font-size: 1rem;
@@ -83,8 +81,7 @@ input {
 }
 
 .btn-primary,
-.btn-secondary,
-.history-open-btn {
+.btn-secondary {
   border-radius: 999px;
   padding: 0.42rem 0.8rem;
   font-weight: 700;
@@ -98,8 +95,7 @@ input {
   background: #0f766e;
 }
 
-.btn-secondary,
-.history-open-btn {
+.btn-secondary {
   border: 1px solid #486581;
   color: #334e68;
   background: #fff;
@@ -118,15 +114,6 @@ input {
   padding: 0.75rem;
   display: grid;
   gap: 0.4rem;
-}
-
-.job-id,
-.mono {
-  margin: 0;
-  word-break: break-all;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
-  font-size: 0.74rem;
-  color: #243b53;
 }
 
 .progress-track {
@@ -197,8 +184,7 @@ input {
   margin-bottom: 0.6rem;
 }
 
-.events-header,
-.history-header {
+.events-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -220,25 +206,21 @@ input {
   max-width: 100%;
 }
 
-.events-table,
-.history-table {
+.events-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 620px;
 }
 
 .events-table th,
-.events-table td,
-.history-table th,
-.history-table td {
+.events-table td {
   text-align: left;
   padding: 0.5rem;
   border-bottom: 1px solid #e4ecf5;
   font-size: 0.78rem;
 }
 
-.events-table th,
-.history-table th {
+.events-table th {
   background: #f0f4f8;
   color: #243b53;
   font-weight: 700;
@@ -336,8 +318,7 @@ input {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .events-table,
-  .history-table {
+  .events-table {
     min-width: 540px;
   }
 }
