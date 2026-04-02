@@ -24,6 +24,12 @@ import {
 } from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
 import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
+import {
+  closeDialogOnBackdropClick,
+  downloadBlobFile,
+  parseSmilesLines,
+  subscribeToRouteHistoricalJob,
+} from '../core/shared/scientific-app-ui.utils';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
@@ -77,14 +83,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {
@@ -106,7 +105,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   exportCsv(): void {
     this.workflow.downloadCsvReport().subscribe({
       next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
       },
       error: () => {},
     });
@@ -141,7 +140,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   onSketchDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    this.closeDialogWhenClickedOutside(event, this.sketchDialogRef?.nativeElement, () => {
+    closeDialogOnBackdropClick(event, this.sketchDialogRef?.nativeElement, () => {
       this.closeSketchDialog();
     });
   }
@@ -210,11 +209,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     }
 
     void file.text().then((rawContent: string) => {
-      const smilesLines: string[] = rawContent
-        .split(/\r?\n/)
-        .map((lineValue: string) => lineValue.trim())
-        .filter((lineValue: string) => lineValue.length > 0 && !lineValue.startsWith('#'));
-      this.workflow.smilesInput.set(smilesLines.join('\n'));
+      this.workflow.smilesInput.set(parseSmilesLines(rawContent));
     });
 
     input.value = '';
@@ -251,7 +246,7 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
   }
 
   onMoleculeImageDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    this.closeDialogWhenClickedOutside(event, this.moleculeImageDialogRef?.nativeElement, () => {
+    closeDialogOnBackdropClick(event, this.moleculeImageDialogRef?.nativeElement, () => {
       this.closeMoleculeImageModal();
     });
   }
@@ -260,34 +255,4 @@ export class ToxicityPropertiesComponent implements OnInit, OnDestroy {
     return molecule.error_message !== null && molecule.error_message.trim() !== '';
   }
 
-  private downloadFile(filename: string, blob: Blob): void {
-    const objectUrl: string = URL.createObjectURL(blob);
-    const linkElement: HTMLAnchorElement = document.createElement('a');
-
-    linkElement.href = objectUrl;
-    linkElement.download = filename;
-    linkElement.click();
-
-    URL.revokeObjectURL(objectUrl);
-  }
-
-  private closeDialogWhenClickedOutside(
-    event: MouseEvent | KeyboardEvent,
-    dialog: HTMLDialogElement | undefined,
-    closeDialog: () => void,
-  ): void {
-    if (!(event instanceof MouseEvent) || dialog === undefined) {
-      return;
-    }
-
-    const rect: DOMRect = dialog.getBoundingClientRect();
-    const isOutside: boolean =
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom;
-    if (isOutside) {
-      closeDialog();
-    }
-  }
 }

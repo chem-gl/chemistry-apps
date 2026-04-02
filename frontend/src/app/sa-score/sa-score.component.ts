@@ -26,6 +26,12 @@ import {
 } from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
+import {
+  closeDialogOnBackdropClick,
+  downloadBlobFile,
+  parseSmilesLines,
+  subscribeToRouteHistoricalJob,
+} from '../core/shared/scientific-app-ui.utils';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
@@ -123,14 +129,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {
@@ -152,7 +151,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   exportAllCsv(): void {
     this.workflow.downloadFullCsvReport().subscribe({
       next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
       },
       error: () => {},
     });
@@ -161,7 +160,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
   exportMethodCsv(method: SaScoreMethod): void {
     this.workflow.downloadMethodCsvReport(method).subscribe({
       next: (downloadedFile: DownloadedReportFile) => {
-        this.downloadFile(downloadedFile.filename, downloadedFile.blob);
+        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
       },
       error: () => {},
     });
@@ -230,22 +229,9 @@ export class SaScoreComponent implements OnInit, OnDestroy {
 
   /** Cierra el diálogo al hacer click en el backdrop (fuera del modal). */
   onSketchDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    if (!(event instanceof MouseEvent)) {
-      return;
-    }
-    const dialog: HTMLDialogElement | undefined = this.sketchDialogRef?.nativeElement;
-    if (dialog === undefined) {
-      return;
-    }
-    const rect: DOMRect = dialog.getBoundingClientRect();
-    const isOutside: boolean =
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom;
-    if (isOutside) {
+    closeDialogOnBackdropClick(event, this.sketchDialogRef?.nativeElement, () => {
       this.closeSketchDialog();
-    }
+    });
   }
 
   /** Marca el iframe de Ketcher como listo y carga el SMILES actual si existe. */
@@ -324,12 +310,7 @@ export class SaScoreComponent implements OnInit, OnDestroy {
     }
 
     void file.text().then((rawContent: string) => {
-      // Filtra líneas vacías y comentarios (#) comunes en archivos .smi
-      const smilesLines: string[] = rawContent
-        .split(/\r?\n/)
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0 && !line.startsWith('#'));
-      this.workflow.smilesInput.set(smilesLines.join('\n'));
+      this.workflow.smilesInput.set(parseSmilesLines(rawContent));
     });
 
     // Resetea el input para que el mismo archivo pueda volver a cargarse
@@ -374,33 +355,9 @@ export class SaScoreComponent implements OnInit, OnDestroy {
 
   /** Cierra el modal al hacer click en el backdrop. */
   onMoleculeImageDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
-    if (!(event instanceof MouseEvent)) {
-      return;
-    }
-    const dialog: HTMLDialogElement | undefined = this.moleculeImageDialogRef?.nativeElement;
-    if (dialog === undefined) {
-      return;
-    }
-    const rect: DOMRect = dialog.getBoundingClientRect();
-    const isOutside: boolean =
-      event.clientX < rect.left ||
-      event.clientX > rect.right ||
-      event.clientY < rect.top ||
-      event.clientY > rect.bottom;
-    if (isOutside) {
-      dialog.close();
-    }
-  }
-
-  private downloadFile(filename: string, blob: Blob): void {
-    const objectUrl: string = URL.createObjectURL(blob);
-    const linkElement: HTMLAnchorElement = document.createElement('a');
-
-    linkElement.href = objectUrl;
-    linkElement.download = filename;
-    linkElement.click();
-
-    URL.revokeObjectURL(objectUrl);
+    closeDialogOnBackdropClick(event, this.moleculeImageDialogRef?.nativeElement, () => {
+      this.closeMoleculeImageModal();
+    });
   }
 }
 

@@ -8,6 +8,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import {
+  downloadBlobFile,
+  subscribeToRouteHistoricalJob,
+} from '../core/shared/scientific-app-ui.utils';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
@@ -24,13 +28,7 @@ export class MarcusComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {
@@ -97,28 +95,28 @@ export class MarcusComponent implements OnInit, OnDestroy {
 
   exportCsv(): void {
     this.workflow.downloadCsvReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportLog(): void {
     this.workflow.downloadLogReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportError(): void {
     this.workflow.downloadErrorReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportInputsZip(): void {
     this.workflow.downloadInputsZip().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
@@ -149,16 +147,4 @@ export class MarcusComponent implements OnInit, OnDestroy {
     return 'status-pending';
   }
 
-  // ── Descarga de archivos ─────────────────────────────────────────
-  private triggerDownload(filename: string, blob: Blob): void {
-    const objectUrl: string = URL.createObjectURL(blob);
-    const anchor: HTMLAnchorElement = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = filename;
-    anchor.style.display = 'none';
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
-  }
 }
