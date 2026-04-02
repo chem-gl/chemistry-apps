@@ -227,19 +227,23 @@ Cómo solucionarlo:
     return bloque.strip()
 
 
-def _parse_duplication_measures(component: dict) -> tuple[float, float]:
-    """Extrae duplicated_blocks y duplicated_lines de un componente de Sonar."""
+DENSITY_THRESHOLD = 3.5
+
+
+def _parse_duplication_measures(component: dict) -> tuple[float, float, float]:
+    """Extrae duplicated_blocks, duplicated_lines y duplicated_lines_density de un componente de Sonar."""
     measures = {
         metric.get("metric", ""): metric.get("value", "0")
         for metric in component.get("measures", [])
     }
     duplicated_blocks = float(measures.get("duplicated_blocks", "0") or "0")
     duplicated_lines = float(measures.get("duplicated_lines", "0") or "0")
-    return duplicated_blocks, duplicated_lines
+    density = float(measures.get("duplicated_lines_density", "0") or "0")
+    return duplicated_blocks, duplicated_lines, density
 
 
 def _build_duplication_file_entry(
-    component: dict, duplicated_blocks: float, duplicated_lines: float
+    component: dict, duplicated_blocks: float, duplicated_lines: float, density: float
 ) -> dict[str, str]:
     """Construye la entrada serializable para un archivo con duplicación."""
     return {
@@ -248,6 +252,7 @@ def _build_duplication_file_entry(
         "path": component.get("path", component.get("key", "")),
         "duplicated_blocks": str(int(duplicated_blocks)),
         "duplicated_lines": str(int(duplicated_lines)),
+        "density": f"{density:.1f}",
     }
 
 
@@ -288,7 +293,7 @@ def _get_project_files_with_duplication() -> list[dict[str, str]]:
             "/api/measures/component_tree",
             {
                 "component": PROJECT_KEY,
-                "metricKeys": "duplicated_lines,duplicated_blocks",
+                "metricKeys": "duplicated_lines,duplicated_blocks,duplicated_lines_density",
                 "qualifiers": "FIL",
                 "ps": page_size,
                 "p": page,
@@ -304,12 +309,14 @@ def _get_project_files_with_duplication() -> list[dict[str, str]]:
             break
 
         for component in components:
-            duplicated_blocks, duplicated_lines = _parse_duplication_measures(component)
+            duplicated_blocks, duplicated_lines, density = _parse_duplication_measures(
+                component
+            )
             if duplicated_blocks <= 0 and duplicated_lines <= 0:
                 continue
             duplicated_files.append(
                 _build_duplication_file_entry(
-                    component, duplicated_blocks, duplicated_lines
+                    component, duplicated_blocks, duplicated_lines, density
                 )
             )
 
@@ -324,18 +331,20 @@ def _get_project_files_with_duplication() -> list[dict[str, str]]:
 
 def _resolve_duplication_block_file(
     current_file_key: str,
-    files_payload: list[dict],
+    files_map: dict[str, dict],
     block: dict,
 ) -> str:
-    """Resuelve el archivo asociado a un bloque de duplicación devuelto por Sonar."""
+    """Resuelve el archivo asociado a un bloque de duplicación.
+
+    La API /api/duplications/show devuelve 'files' como dict keyed por ref string:
+    {"1": {"key": "...", "name": "..."}, "2": {...}}
+    El campo '_ref' del bloque es la clave correspondiente en ese dict.
+    """
     ref = block.get("_ref")
-    if isinstance(ref, int) and 0 <= ref < len(files_payload):
-        referenced = files_payload[ref]
-        return referenced.get("key", referenced.get("name", current_file_key))
-    if isinstance(ref, str):
-        for file_info in files_payload:
-            if file_info.get("uuid") == ref:
-                return file_info.get("key", file_info.get("name", current_file_key))
+    if ref is not None:
+        file_info = files_map.get(str(ref), {})
+        if file_info:
+            return file_info.get("key", file_info.get("name", current_file_key))
     return current_file_key
 
 
@@ -362,15 +371,38 @@ def _get_sonar_duplicate_code_section() -> str:
         )
         return "\n".join(section_lines).strip()
 
+    # Archivos cuya densidad de duplicación supera el umbral definido
+    high_density_files = [
+        f
+        for f in duplicated_files
+        if float(f.get("density", "0") or "0") > DENSITY_THRESHOLD
+    ]
+    if high_density_files:
+        section_lines.append("")
+        section_lines.append(
+            f"Archivos con densidad de duplicación > {DENSITY_THRESHOLD}%:"
+        )
+        for hdf in sorted(
+            high_density_files,
+            key=lambda x: float(x.get("density", "0")),
+            reverse=True,
+        ):
+            section_lines.append(
+                f"  - {hdf['path']} | densidad={hdf['density']}%"
+                f" | líneas={hdf['duplicated_lines']} | bloques={hdf['duplicated_blocks']}"
+            )
+
     for duplicated_file in duplicated_files:
         file_key = duplicated_file.get("key", "")
         file_path = duplicated_file.get("path", file_key)
         duplicated_blocks = duplicated_file.get("duplicated_blocks", "0")
         duplicated_lines = duplicated_file.get("duplicated_lines", "0")
         section_lines.append("")
+        density_val = duplicated_file.get("density", "0")
         section_lines.append(f"Archivo: {file_path}")
         section_lines.append(
             f"Duplicated blocks: {duplicated_blocks} | Duplicated lines: {duplicated_lines}"
+            f" | Density: {density_val}%"
         )
 
         if not file_key:
@@ -386,7 +418,9 @@ def _get_sonar_duplicate_code_section() -> str:
 
         data = response.json()
         duplications: list[dict] = data.get("duplications", [])
-        files_payload: list[dict] = data.get("files", [])
+        # files viene como dict {"1": {"key":...}, "2": {...}} en la API de SonarQube
+        raw_files = data.get("files", {})
+        files_map: dict[str, dict] = raw_files if isinstance(raw_files, dict) else {}
 
         if not duplications:
             section_lines.append(
@@ -398,7 +432,7 @@ def _get_sonar_duplicate_code_section() -> str:
             blocks: list[dict] = duplication.get("blocks", [])
             for block in blocks:
                 origin_file = _resolve_duplication_block_file(
-                    file_key, files_payload, block
+                    file_key, files_map, block
                 )
                 start_line = block.get("from", "N/A")
                 end_line = block.get("to", block.get("from", "N/A"))
@@ -413,6 +447,104 @@ def _get_sonar_duplicate_code_section() -> str:
 
 
 # =========================
+# SECURITY HOTSPOTS
+# =========================
+_HOTSPOT_PROBABILITY_LABEL: dict[str, str] = {
+    "HIGH": "Alta",
+    "MEDIUM": "Media",
+    "LOW": "Baja",
+}
+
+
+def _get_all_hotspots() -> list[dict]:
+    """Obtiene todos los Security Hotspots pendientes de revisión del proyecto desde SonarQube."""
+    hotspots: list[dict] = []
+    page: int = 1
+    page_size: int = 500
+
+    while True:
+        response = _sonar_get(
+            "/api/hotspots/search",
+            {
+                "projectKey": PROJECT_KEY,
+                "status": "TO_REVIEW",
+                "ps": page_size,
+                "p": page,
+            },
+        )
+        if response.status_code != 200:
+            break
+
+        payload = response.json()
+        batch: list[dict] = payload.get("hotspots", [])
+        if not batch:
+            break
+
+        hotspots.extend(batch)
+        paging = payload.get("paging", {})
+        total = int(paging.get("total", 0) or 0)
+        if page * page_size >= total:
+            break
+        page += 1
+
+    return hotspots
+
+
+def _format_hotspot_entry(hotspot: dict) -> str:
+    """Formatea un Security Hotspot individual para el reporte."""
+    component: str = hotspot.get("component", "N/A")
+    message: str = hotspot.get("message", "N/A")
+    category: str = hotspot.get("securityCategory", "N/A")
+    probability: str = _HOTSPOT_PROBABILITY_LABEL.get(
+        hotspot.get("vulnerabilityProbability", ""),
+        hotspot.get("vulnerabilityProbability", "N/A"),
+    )
+    line: int | str = hotspot.get("line", "N/A")
+    text_range: dict = hotspot.get("textRange", {})
+    ubicacion: str = (
+        f"líneas {text_range.get('startLine', line)}-{text_range.get('endLine', line)}"
+        if text_range
+        else f"línea {line}"
+    )
+    return (
+        f"  Archivo: {component} | Ubicación: {ubicacion}\n"
+        f"  Mensaje: {message}\n"
+        f"  Categoría: {category} | Probabilidad: {probability}"
+    )
+
+
+def _get_sonar_security_hotspots_section() -> str:
+    """Construye la sección de Security Hotspots para el reporte."""
+    hotspots = _get_all_hotspots()
+    lines: list[str] = ["=== Security Hotspots (SonarQube) ==="]
+
+    if not hotspots:
+        lines.append("No se encontraron Security Hotspots pendientes de revisión.")
+        return "\n".join(lines).strip()
+
+    lines.append(f"Total de hotspots pendientes de revisión: {len(hotspots)}")
+
+    # Agrupar por probabilidad de vulnerabilidad
+    by_probability: dict[str, list[dict]] = {"HIGH": [], "MEDIUM": [], "LOW": []}
+    for hotspot in hotspots:
+        prob = hotspot.get("vulnerabilityProbability", "LOW")
+        by_probability.setdefault(prob, []).append(hotspot)
+
+    for prob in ("HIGH", "MEDIUM", "LOW"):
+        group = by_probability.get(prob, [])
+        if not group:
+            continue
+        label = _HOTSPOT_PROBABILITY_LABEL.get(prob, prob)
+        lines.append(f"\n--- Probabilidad {label} ({len(group)}) ---")
+        for hotspot in group:
+            lines.append(_format_hotspot_entry(hotspot))
+            lines.append("")
+
+    lines.append("----------------------------------------")
+    return "\n".join(lines).strip()
+
+
+# =========================
 # GENERAR REPORTE
 # =========================
 def generate_report(issues: list[dict]) -> str:
@@ -423,6 +555,10 @@ def generate_report(issues: list[dict]) -> str:
     duplicate_section = _get_sonar_duplicate_code_section()
     if duplicate_section:
         lines.append(duplicate_section)
+
+    hotspots_section = _get_sonar_security_hotspots_section()
+    if hotspots_section:
+        lines.append(hotspots_section)
 
     return "\n\n".join(lines)
 

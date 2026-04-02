@@ -1,3 +1,734 @@
 === Código duplicado (SonarQube) ===
 Resumen del proyecto: bloques=151 | líneas=2556 | densidad=5.0%
-No se encontraron archivos con duplicación visible en la respuesta de Sonar.
+
+Archivos con densidad de duplicación > 3.5%:
+  - frontend/src/app/toxicity-properties/toxicity-properties.component.html | densidad=52.7% | líneas=147 | bloques=3
+  - frontend/src/app/toxicity-properties/toxicity-properties.component.ts | densidad=50.2% | líneas=130 | bloques=2
+  - frontend/src/app/sa-score/sa-score.component.html | densidad=50.0% | líneas=148 | bloques=3
+  - frontend/src/app/core/application/toxicity-properties-workflow.service.ts | densidad=49.3% | líneas=170 | bloques=10
+  - frontend/src/app/core/application/sa-score-workflow.service.ts | densidad=44.9% | líneas=191 | bloques=11
+  - frontend/src/app/core/shared/scientific-apps.config.ts | densidad=44.0% | líneas=44 | bloques=2
+  - frontend/src/app/sa-score/sa-score.component.ts | densidad=42.2% | líneas=156 | bloques=2
+  - frontend/src/app/marcus/marcus.component.html | densidad=35.0% | líneas=145 | bloques=3
+  - frontend/src/app/core/application/tunnel-workflow.service.ts | densidad=34.3% | líneas=186 | bloques=23
+  - backend/apps/marcus/routers.py | densidad=32.7% | líneas=82 | bloques=2
+  - frontend/src/app/core/application/molar-fractions-workflow.service.ts | densidad=31.7% | líneas=174 | bloques=22
+  - frontend/src/app/easy-rate/easy-rate.component.html | densidad=29.2% | líneas=145 | bloques=3
+  - frontend/src/app/core/application/marcus-workflow.service.ts | densidad=29.2% | líneas=147 | bloques=14
+  - frontend/src/app/core/application/calculator-workflow.service.ts | densidad=23.8% | líneas=67 | bloques=6
+  - backend/apps/random_numbers/routers.py | densidad=23.7% | líneas=31 | bloques=3
+  - backend/apps/easy_rate/routers.py | densidad=22.8% | líneas=82 | bloques=2
+  - backend/apps/molar_fractions/routers.py | densidad=21.8% | líneas=31 | bloques=3
+  - frontend/src/app/core/application/random-numbers-workflow.service.ts | densidad=21.1% | líneas=111 | bloques=12
+  - backend/apps/calculator/routers.py | densidad=19.0% | líneas=27 | bloques=2
+  - backend/apps/tunnel/routers.py | densidad=18.4% | líneas=25 | bloques=1
+  - frontend/src/app/molar-fractions/molar-fractions.component.ts | densidad=17.5% | líneas=22 | bloques=2
+  - frontend/src/app/random-numbers/random-numbers.component.ts | densidad=15.7% | líneas=18 | bloques=1
+  - frontend/src/app/core/application/easy-rate-workflow.service.ts | densidad=15.6% | líneas=134 | bloques=11
+  - frontend/src/app/tunnel/tunnel.component.html | densidad=15.2% | líneas=34 | bloques=1
+  - backend/apps/sa_score/routers.py | densidad=9.4% | líneas=27 | bloques=2
+  - frontend/src/app/easy-rate/easy-rate.component.ts | densidad=8.5% | líneas=21 | bloques=2
+  - backend/apps/marcus/plugin.py | densidad=5.4% | líneas=21 | bloques=1
+
+Archivo: frontend/src/app/core/application/calculator-workflow.service.ts
+Duplicated blocks: 6 | Duplicated lines: 67 | Density: 23.8%
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 129-129 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 17
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 274-274 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 472-472 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 186-186 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 189-189 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 228-228 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 219-219 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 290-290 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 314-314 | tamaño 19
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/easy-rate-workflow.service.ts
+Duplicated blocks: 11 | Duplicated lines: 134 | Density: 15.6%
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 344-344 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 464-464 | tamaño 39
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 266-266 | tamaño 39
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 465-465 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 176-176 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 185-185 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 267-267 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 472-472 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 17
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 274-274 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 670-670 | tamaño 74
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 337-337 | tamaño 74
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 278-278 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 712-712 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 379-379 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 724-724 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 391-391 | tamaño 20
+----------------------------------------
+
+Archivo: frontend/src/app/easy-rate/easy-rate.component.html
+Duplicated blocks: 3 | Duplicated lines: 145 | Density: 29.2%
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 223-223 | tamaño 42
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 173-173 | tamaño 42
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 393-393 | tamaño 69
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 310-310 | tamaño 69
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 463-463 | tamaño 34
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 34
+  - chemistry-apps:frontend/src/app/tunnel/tunnel.component.html | líneas 189-189 | tamaño 34
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 34
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 380-380 | tamaño 34
+----------------------------------------
+
+Archivo: frontend/src/app/easy-rate/easy-rate.component.ts
+Duplicated blocks: 2 | Duplicated lines: 21 | Density: 8.5%
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 75-75 | tamaño 17
+  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 75-75 | tamaño 21
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 22
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/marcus-workflow.service.ts
+Duplicated blocks: 14 | Duplicated lines: 147 | Density: 29.2%
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 344-344 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 129-129 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 266-266 | tamaño 39
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 464-464 | tamaño 39
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 267-267 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 176-176 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 185-185 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 465-465 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 274-274 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 17
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 472-472 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 337-337 | tamaño 74
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 670-670 | tamaño 74
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 278-278 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 379-379 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 712-712 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 391-391 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 724-724 | tamaño 20
+----------------------------------------
+
+Archivo: frontend/src/app/marcus/marcus.component.html
+Duplicated blocks: 3 | Duplicated lines: 145 | Density: 35.0%
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 173-173 | tamaño 42
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 223-223 | tamaño 42
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 310-310 | tamaño 69
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 393-393 | tamaño 69
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 380-380 | tamaño 34
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 34
+  - chemistry-apps:frontend/src/app/tunnel/tunnel.component.html | líneas 189-189 | tamaño 34
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 34
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 463-463 | tamaño 34
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/molar-fractions-workflow.service.ts
+Duplicated blocks: 22 | Duplicated lines: 174 | Density: 31.7%
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 33
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 49
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 49
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 124-124 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 129-129 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 175-175 | tamaño 44
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 184-184 | tamaño 44
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 176-176 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 185-185 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 267-267 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 465-465 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 17
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 274-274 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 472-472 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 189-189 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 186-186 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 228-228 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 221-221 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 278-278 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 285-285 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 309-309 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 290-290 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 219-219 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 314-314 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 379-379 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 712-712 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 391-391 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 724-724 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 28
+----------------------------------------
+
+Archivo: frontend/src/app/molar-fractions/molar-fractions.component.ts
+Duplicated blocks: 2 | Duplicated lines: 22 | Density: 17.5%
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
+  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 75-75 | tamaño 17
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 22
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 75-75 | tamaño 21
+----------------------------------------
+
+Archivo: backend/apps/easy_rate/plugin.py
+Duplicated blocks: 1 | Duplicated lines: 21 | Density: 2.3%
+  - chemistry-apps:backend/apps/easy_rate/plugin.py | líneas 768-768 | tamaño 21
+  - chemistry-apps:backend/apps/marcus/plugin.py | líneas 49-49 | tamaño 21
+----------------------------------------
+
+Archivo: backend/apps/marcus/plugin.py
+Duplicated blocks: 1 | Duplicated lines: 21 | Density: 5.4%
+  - chemistry-apps:backend/apps/marcus/plugin.py | líneas 49-49 | tamaño 21
+  - chemistry-apps:backend/apps/easy_rate/plugin.py | líneas 768-768 | tamaño 21
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/random-numbers-workflow.service.ts
+Duplicated blocks: 12 | Duplicated lines: 111 | Density: 21.1%
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 124-124 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 33
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 129-129 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 228-228 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 186-186 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 189-189 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 309-309 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 285-285 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 314-314 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 219-219 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 290-290 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 391-391 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 724-724 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 22
+----------------------------------------
+
+Archivo: frontend/src/app/random-numbers/random-numbers.component.ts
+Duplicated blocks: 1 | Duplicated lines: 18 | Density: 15.7%
+  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 75-75 | tamaño 17
+----------------------------------------
+
+Archivo: backend/apps/molar_fractions/routers.py
+Duplicated blocks: 3 | Duplicated lines: 31 | Density: 21.8%
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 108-108 | tamaño 31
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 97-97 | tamaño 31
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
+  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
+----------------------------------------
+
+Archivo: backend/apps/random_numbers/routers.py
+Duplicated blocks: 3 | Duplicated lines: 31 | Density: 23.7%
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 97-97 | tamaño 31
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 108-108 | tamaño 31
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
+  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
+----------------------------------------
+
+Archivo: backend/apps/calculator/routers.py
+Duplicated blocks: 2 | Duplicated lines: 27 | Density: 19.0%
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 113-113 | tamaño 27
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 163-163 | tamaño 27
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
+----------------------------------------
+
+Archivo: backend/apps/easy_rate/routers.py
+Duplicated blocks: 2 | Duplicated lines: 82 | Density: 22.8%
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 248-248 | tamaño 60
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 140-140 | tamaño 60
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 337-337 | tamaño 22
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 229-229 | tamaño 22
+----------------------------------------
+
+Archivo: backend/apps/marcus/routers.py
+Duplicated blocks: 2 | Duplicated lines: 82 | Density: 32.7%
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 140-140 | tamaño 60
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 248-248 | tamaño 60
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 229-229 | tamaño 22
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 337-337 | tamaño 22
+----------------------------------------
+
+Archivo: backend/apps/tunnel/routers.py
+Duplicated blocks: 1 | Duplicated lines: 25 | Density: 18.4%
+  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
+----------------------------------------
+
+Archivo: backend/apps/sa_score/routers.py
+Duplicated blocks: 2 | Duplicated lines: 27 | Density: 9.4%
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 163-163 | tamaño 27
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 113-113 | tamaño 27
+  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
+  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
+  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
+  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/sa-score-workflow.service.ts
+Duplicated blocks: 11 | Duplicated lines: 191 | Density: 44.9%
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 47-47 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 39-39 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 52-52 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 78-78 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 53-53 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 124-124 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 144-144 | tamaño 24
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 115-115 | tamaño 24
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 29
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 29
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 272-272 | tamaño 69
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 213-213 | tamaño 69
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 407-407 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 327-327 | tamaño 18
+----------------------------------------
+
+Archivo: frontend/src/app/sa-score/sa-score.component.html
+Duplicated blocks: 3 | Duplicated lines: 148 | Density: 50.0%
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 8-8 | tamaño 43
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 11-11 | tamaño 43
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 105
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 104
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 34
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 34
+  - chemistry-apps:frontend/src/app/tunnel/tunnel.component.html | líneas 189-189 | tamaño 34
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 380-380 | tamaño 34
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 463-463 | tamaño 34
+----------------------------------------
+
+Archivo: frontend/src/app/sa-score/sa-score.component.ts
+Duplicated blocks: 2 | Duplicated lines: 156 | Density: 42.2%
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts | líneas 203-203 | tamaño 39
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts | líneas 123-123 | tamaño 29
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts | líneas 245-245 | tamaño 117
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts | líneas 151-151 | tamaño 102
+----------------------------------------
+
+Archivo: frontend/src/app/core/shared/scientific-apps.config.ts
+Duplicated blocks: 2 | Duplicated lines: 44 | Density: 44.0%
+  - chemistry-apps:frontend/src/app/core/shared/scientific-apps.config.ts | líneas 48-48 | tamaño 37
+  - chemistry-apps:frontend/src/app/core/shared/scientific-apps.config.ts | líneas 55-55 | tamaño 37
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/smileit-workflow.service.ts
+Duplicated blocks: 1 | Duplicated lines: 19 | Density: 3.2%
+  - chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts | líneas 452-452 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 301-301 | tamaño 19
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/toxicity-properties-workflow.service.ts
+Duplicated blocks: 10 | Duplicated lines: 170 | Density: 49.3%
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 39-39 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 47-47 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 52-52 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 53-53 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 78-78 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 115-115 | tamaño 24
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 144-144 | tamaño 24
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 29
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 29
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 213-213 | tamaño 69
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 272-272 | tamaño 69
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 327-327 | tamaño 18
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 407-407 | tamaño 18
+----------------------------------------
+
+Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.html
+Duplicated blocks: 3 | Duplicated lines: 147 | Density: 52.7%
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 11-11 | tamaño 43
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 8-8 | tamaño 43
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 104
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 105
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 34
+  - chemistry-apps:frontend/src/app/tunnel/tunnel.component.html | líneas 189-189 | tamaño 34
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 34
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 380-380 | tamaño 34
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 463-463 | tamaño 34
+----------------------------------------
+
+Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.ts
+Duplicated blocks: 2 | Duplicated lines: 130 | Density: 50.2%
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts | líneas 123-123 | tamaño 29
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts | líneas 203-203 | tamaño 39
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts | líneas 151-151 | tamaño 102
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts | líneas 245-245 | tamaño 117
+----------------------------------------
+
+Archivo: frontend/src/app/core/application/tunnel-workflow.service.ts
+Duplicated blocks: 23 | Duplicated lines: 186 | Density: 34.3%
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 52-52 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 39-39 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 47-47 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 124-124 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 49
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 49
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 123-123 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 118-118 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 130-130 | tamaño 33
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 25
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 26
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 129-129 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 138-138 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 131-131 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 126-126 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 204-204 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 184-184 | tamaño 44
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 175-175 | tamaño 44
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 185-185 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 176-176 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 267-267 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 465-465 | tamaño 23
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 28
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 27
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 192-192 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 180-180 | tamaño 17
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 183-183 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 274-274 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 472-472 | tamaño 16
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 198-198 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 186-186 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 189-189 | tamaño 21
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 228-228 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 200-200 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 138-138 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 174-174 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 188-188 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 191-191 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 230-230 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 221-221 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 278-278 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 285-285 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 356-356 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 689-689 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 281-281 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 13
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 12
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 288-288 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/toxicity-properties-workflow.service.ts | líneas 244-244 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 303-303 | tamaño 15
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 359-359 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 692-692 | tamaño 14
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 301-301 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts | líneas 452-452 | tamaño 19
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 379-379 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 712-712 | tamaño 32
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 309-309 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 299-299 | tamaño 34
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 391-391 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 724-724 | tamaño 20
+  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 321-321 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 311-311 | tamaño 22
+  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 335-335 | tamaño 22
+----------------------------------------
+
+Archivo: frontend/src/app/tunnel/tunnel.component.html
+Duplicated blocks: 1 | Duplicated lines: 34 | Density: 15.2%
+  - chemistry-apps:frontend/src/app/tunnel/tunnel.component.html | líneas 189-189 | tamaño 34
+  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 175-175 | tamaño 34
+  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 191-191 | tamaño 34
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 380-380 | tamaño 34
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 463-463 | tamaño 34
+----------------------------------------
+
+=== Security Hotspots (SonarQube) ===
+Total de hotspots pendientes de revisión: 17
+
+--- Probabilidad Alta (8) ---
+  Archivo: chemistry-apps:frontend/src/app/sa-score/sa-score.component.ts | Ubicación: líneas 341-341
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.ts | Ubicación: líneas 256-256
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.component.ts | Ubicación: líneas 280-280
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generation-result-panel.component.ts | Ubicación: líneas 211-211
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts | Ubicación: líneas 360-360
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts | Ubicación: líneas 400-400
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts | Ubicación: líneas 404-404
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+  Archivo: chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.ts | Ubicación: líneas 234-234
+  Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+  Categoría: xss | Probabilidad: Alta
+
+
+--- Probabilidad Media (3) ---
+  Archivo: chemistry-apps:frontend/src/app/core/application/smileit/smileit-workflow.utils.ts | Ubicación: líneas 256-256
+  Mensaje: Make sure the regex used here, which is vulnerable to super-linear runtime due to backtracking, cannot lead to denial of service.
+  Categoría: dos | Probabilidad: Media
+
+  Archivo: chemistry-apps:frontend/src/app/core/shared/constants.ts | Ubicación: líneas 5-5
+  Mensaje: Make sure the regex used here, which is vulnerable to super-linear runtime due to backtracking, cannot lead to denial of service.
+  Categoría: dos | Probabilidad: Media
+
+  Archivo: chemistry-apps:backend/apps/random_numbers/plugin.py | Ubicación: líneas 289-291
+  Mensaje: Make sure that using this pseudorandom number generator is safe here.
+  Categoría: weak-cryptography | Probabilidad: Media
+
+
+--- Probabilidad Baja (6) ---
+  Archivo: chemistry-apps:backend/apps/core/management/commands/up.py | Ubicación: líneas 410-410
+  Mensaje: Using http protocol is insecure. Use https instead
+  Categoría: encrypt-data | Probabilidad: Baja
+
+  Archivo: chemistry-apps:backend/apps/core/management/commands/up.py | Ubicación: líneas 410-410
+  Mensaje: Using http protocol is insecure. Use https instead
+  Categoría: encrypt-data | Probabilidad: Baja
+
+  Archivo: chemistry-apps:backend/apps/core/runtime_tools.py | Ubicación: líneas 84-84
+  Mensaje: Using http protocol is insecure. Use https instead
+  Categoría: encrypt-data | Probabilidad: Baja
+
+  Archivo: chemistry-apps:backend/config/settings.py | Ubicación: líneas 472-472
+  Mensaje: Using http protocol is insecure. Use https instead
+  Categoría: encrypt-data | Probabilidad: Baja
+
+  Archivo: chemistry-apps:backend/config/settings.py | Ubicación: líneas 488-488
+  Mensaje: Using http protocol is insecure. Use https instead
+  Categoría: encrypt-data | Probabilidad: Baja
+
+  Archivo: chemistry-apps:backend/apps/core/runtime_tools.py | Ubicación: líneas 316-316
+  Mensaje: Make sure that expanding this archive file is safe here.
+  Categoría: others | Probabilidad: Baja
+
+----------------------------------------
