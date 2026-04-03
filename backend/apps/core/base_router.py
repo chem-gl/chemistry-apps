@@ -20,8 +20,6 @@ Cómo se usa:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -47,9 +45,6 @@ from .reporting import (
 )
 from .schemas import ErrorResponseSerializer
 from .types import DomainError, JobHandle, JSONMap, Result
-
-if TYPE_CHECKING:
-    pass
 
 
 class ScientificAppViewSetMixin:
