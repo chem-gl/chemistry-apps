@@ -24,15 +24,22 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from apps.core.runtime_tools import (
+    DEFAULT_DOWNLOAD_MAX_ATTEMPTS,
+    DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
     RuntimeToolRequirement,
     RuntimeToolsError,
     _download_file_with_retry,
     _extract_tarfile_safely,
     _get_env_positive_int,
+    _is_executable_file,
     _is_valid_zip_file,
     _prepare_external_artifacts,
     _resolve_requirement_path,
+    _validate_tar_entry_file_size,
+    _validate_tar_entry_path,
     assert_runtime_tools_ready,
+    get_download_max_attempts,
+    get_download_timeout_seconds,
     get_missing_runtime_files,
     get_runtime_tools_root,
 )
@@ -200,3 +207,135 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
                 _prepare_external_artifacts(root_path)
 
             mocked_download.assert_called_once()
+
+
+class GetDownloadConfigTests(SimpleTestCase):
+    """Pruebas de lectura de configuración de descarga desde entorno."""
+
+    def test_get_download_max_attempts_returns_default_when_unset(self) -> None:
+        """Sin variable de entorno se usa DEFAULT_DOWNLOAD_MAX_ATTEMPTS."""
+        env_clean = {
+            k: v
+            for k, v in os.environ.items()
+            if k != "RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS"
+        }
+        with patch.dict(os.environ, env_clean, clear=True):
+            result = get_download_max_attempts()
+        self.assertEqual(result, DEFAULT_DOWNLOAD_MAX_ATTEMPTS)
+
+    def test_get_download_max_attempts_reads_custom_value(self) -> None:
+        """Con variable configurada se usa el valor del entorno."""
+        with patch.dict(
+            os.environ,
+            {"RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS": "12"},
+            clear=False,
+        ):
+            result = get_download_max_attempts()
+        self.assertEqual(result, 12)
+
+    def test_get_download_timeout_seconds_returns_default_when_unset(self) -> None:
+        """Sin variable de entorno se usa DEFAULT_DOWNLOAD_TIMEOUT_SECONDS."""
+        env_clean = {
+            k: v
+            for k, v in os.environ.items()
+            if k != "RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS"
+        }
+        with patch.dict(os.environ, env_clean, clear=True):
+            result = get_download_timeout_seconds()
+        self.assertEqual(result, DEFAULT_DOWNLOAD_TIMEOUT_SECONDS)
+
+    def test_get_download_timeout_seconds_reads_custom_value(self) -> None:
+        """Con variable configurada se usa el valor del entorno."""
+        with patch.dict(
+            os.environ,
+            {"RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS": "600"},
+            clear=False,
+        ):
+            result = get_download_timeout_seconds()
+        self.assertEqual(result, 600)
+
+
+class IsExecutableFileTests(SimpleTestCase):
+    """Pruebas de verificación de archivos ejecutables."""
+
+    def test_returns_true_for_executable_file(self) -> None:
+        """Un archivo con permiso de ejecución debe retornar True."""
+        with TemporaryDirectory(prefix="runtime_exec_") as temp_dir_raw:
+            exec_path = Path(temp_dir_raw) / "binary"
+            exec_path.write_text("#!/bin/sh\n", encoding="utf-8")
+            current_mode = exec_path.stat().st_mode
+            exec_path.chmod(current_mode | stat.S_IXUSR)
+            self.assertTrue(_is_executable_file(exec_path))
+
+    def test_returns_false_for_non_executable_file(self) -> None:
+        """Un archivo sin permiso de ejecución debe retornar False."""
+        with TemporaryDirectory(prefix="runtime_noexec_") as temp_dir_raw:
+            noexec_path = Path(temp_dir_raw) / "data.txt"
+            noexec_path.write_text("data\n", encoding="utf-8")
+            noexec_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+            self.assertFalse(_is_executable_file(noexec_path))
+
+    def test_returns_false_for_missing_file(self) -> None:
+        """Una ruta inexistente retorna False."""
+        self.assertFalse(_is_executable_file(Path("/nonexistent/missing_binary")))
+
+    def test_returns_false_for_directory(self) -> None:
+        """Un directorio no es un archivo ejecutable."""
+        with TemporaryDirectory(prefix="runtime_dir_") as temp_dir_raw:
+            self.assertFalse(_is_executable_file(Path(temp_dir_raw)))
+
+
+class ValidateTarEntryPathTests(SimpleTestCase):
+    """Pruebas de protección contra path traversal en entradas tar."""
+
+    def test_raises_on_path_traversal_outside_dest(self) -> None:
+        """Una entrada que sale del directorio destino debe lanzar RuntimeToolsError."""
+        with TemporaryDirectory(prefix="tar_path_test_") as temp_dir_raw:
+            dest_dir = Path(temp_dir_raw) / "extract"
+            dest_dir.mkdir()
+            dest_dir_resolved = dest_dir.resolve()
+
+            member = tarfile.TarInfo(name="../outside.txt")
+            with self.assertRaises(RuntimeToolsError):
+                _validate_tar_entry_path(member, dest_dir, dest_dir_resolved)
+
+    def test_accepts_valid_nested_path_inside_dest(self) -> None:
+        """Una entrada dentro del directorio destino no debe lanzar excepción."""
+        with TemporaryDirectory(prefix="tar_path_ok_") as temp_dir_raw:
+            dest_dir = Path(temp_dir_raw) / "extract"
+            dest_dir.mkdir()
+            dest_dir_resolved = dest_dir.resolve()
+
+            member = tarfile.TarInfo(name="subdir/file.txt")
+            # No debe lanzar excepción
+            _validate_tar_entry_path(member, dest_dir, dest_dir_resolved)
+
+
+class ValidateTarEntryFileSizeTests(SimpleTestCase):
+    """Pruebas de límites de tamaño y ratio de compresión en entradas tar."""
+
+    def test_returns_updated_total_size(self) -> None:
+        """El total acumulado debe incrementarse con el tamaño descomprimido."""
+        member = tarfile.TarInfo(name="file.txt")
+        member.size = 1000
+
+        new_total = _validate_tar_entry_file_size(
+            member,
+            total_size_bytes=500,
+            max_total_size_bytes=10 * 1024 * 1024 * 1024,
+            max_compression_ratio=50.0,
+        )
+        self.assertEqual(new_total, 1500)
+
+    def test_raises_when_total_exceeds_max_size(self) -> None:
+        """Superar el límite de tamaño total debe lanzar RuntimeToolsError."""
+        member = tarfile.TarInfo(name="huge_file.txt")
+        member.size = 5 * 1024 * 1024 * 1024  # 5 GB
+
+        with self.assertRaises(RuntimeToolsError):
+            _validate_tar_entry_file_size(
+                member,
+                total_size_bytes=0,
+                max_total_size_bytes=2 * 1024 * 1024 * 1024,  # 2 GB límite
+                max_compression_ratio=50.0,
+            )

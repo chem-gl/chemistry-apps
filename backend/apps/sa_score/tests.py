@@ -286,3 +286,126 @@ class SaScoreContractTests(TestCase):
         for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
             self.assertIn(key, contract)
         self.assertIsNotNone(contract["execute"])
+
+
+class SaScoreRouterApiTests(TestCase):
+    """Pruebas de integración HTTP para los endpoints del viewset SA Score."""
+
+    SA_SCORE_URL: str = "/api/sa-score/jobs/"
+
+    def setUp(self) -> None:
+        from rest_framework.test import APIClient
+
+        self.client = APIClient()
+
+    def _make_completed_sa_job(
+        self, methods: list[str] | None = None
+    ) -> "ScientificJob":
+        """Crea un job de SA score en estado completado para tests de reporte."""
+        from uuid import uuid4
+
+        from apps.core.models import ScientificJob
+
+        if methods is None:
+            methods = ["brsa", "rdkit"]
+
+        molecules = [
+            {
+                "smiles": "CCO",
+                "ambit_sa": None,
+                "brsa_sa": 2.34,
+                "rdkit_sa": 3.45,
+                "ambit_error": "not requested",
+                "brsa_error": None,
+                "rdkit_error": None,
+            }
+        ]
+        return ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="sa-score",
+            algorithm_version="1.0.0",
+            status="completed",
+            parameters={"smiles_list": ["CCO"], "methods": methods},
+            results={
+                "molecules": molecules,
+                "requested_methods": methods,
+            },
+        )
+
+    def test_create_sa_score_job_returns_201(self) -> None:
+        """El endpoint create debe retornar 201 con un job pendiente."""
+        payload = {
+            "smiles": ["CCO", "c1ccccc1"],
+            "methods": ["brsa", "rdkit"],
+        }
+
+        with patch("apps.sa_score.routers.dispatch_scientific_job") as mock_dispatch:
+            mock_dispatch.return_value = True
+            response = self.client.post(self.SA_SCORE_URL, payload, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("id", response.data)
+        self.assertIn("status", response.data)
+
+    def test_create_sa_score_job_with_invalid_payload_returns_400(self) -> None:
+        """Payload inválido (sin smiles) debe retornar 400."""
+        payload = {"methods": ["brsa"]}
+
+        response = self.client.post(self.SA_SCORE_URL, payload, format="json")
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_report_csv_by_method_returns_csv_for_valid_method(self) -> None:
+        """Solicitar CSV de un método calculado debe retornar 200 con contenido CSV."""
+        job = self._make_completed_sa_job(methods=["brsa", "rdkit"])
+        url = f"{self.SA_SCORE_URL}{job.id}/report-csv-method/?method=brsa"
+
+        http_response = self.client.get(url)
+
+        self.assertEqual(http_response.status_code, 200)
+        self.assertIn("text/csv", http_response.get("Content-Type", ""))
+        content = http_response.content.decode("utf-8")
+        self.assertIn("smiles,sa", content)
+        self.assertIn("CCO", content)
+
+    def test_report_csv_by_method_returns_400_for_unknown_method(self) -> None:
+        """Un nombre de método desconocido debe retornar 400."""
+        job = self._make_completed_sa_job()
+        url = f"{self.SA_SCORE_URL}{job.id}/report-csv-method/?method=unknown"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("no válido", response.data["detail"])
+
+    def test_report_csv_by_method_returns_400_when_method_not_calculated(
+        self,
+    ) -> None:
+        """Solicitar un método que no fue calculado en el job debe retornar 400."""
+        job = self._make_completed_sa_job(methods=["brsa"])
+        url = f"{self.SA_SCORE_URL}{job.id}/report-csv-method/?method=rdkit"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("no fue calculado", response.data["detail"])
+
+    def test_report_csv_by_method_returns_409_when_job_not_completed(self) -> None:
+        """Un job en estado pending no tiene resultados; debe retornar 409."""
+        from uuid import uuid4
+
+        from apps.core.models import ScientificJob
+
+        pending_job = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="sa-score",
+            algorithm_version="1.0.0",
+            status="pending",
+            parameters={"smiles_list": ["CCO"], "methods": ["brsa"]},
+            results=None,
+        )
+        url = f"{self.SA_SCORE_URL}{pending_job.id}/report-csv-method/?method=brsa"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 409)
