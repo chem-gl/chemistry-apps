@@ -63,7 +63,7 @@ class MarcusExtendedApiTests(TestCase):
 
     def _create_job(self) -> str:
         """Crea job marcus y retorna su ID."""
-        with patch(f"{ROUTER_MODULE}.dispatch_scientific_job") as mock_d:
+        with patch("apps.core.base_router.dispatch_scientific_job") as mock_d:
             mock_d.return_value = True
             response = self.client.post(
                 APP_API_BASE_PATH, _build_valid_payload(), format="multipart"
@@ -73,7 +73,7 @@ class MarcusExtendedApiTests(TestCase):
 
     def test_create_returns_plugin_name(self) -> None:
         """Verifica que el job creado tiene el plugin_name correcto."""
-        with patch(f"{ROUTER_MODULE}.dispatch_scientific_job") as mock_d:
+        with patch("apps.core.base_router.dispatch_scientific_job") as mock_d:
             mock_d.return_value = True
             response = self.client.post(
                 APP_API_BASE_PATH, _build_valid_payload(), format="multipart"

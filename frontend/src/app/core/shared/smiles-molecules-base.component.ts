@@ -253,7 +253,7 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
 
     this.jobsApi.inspectSmileitStructure(smiles).subscribe({
       next: (inspection) => {
-        this.moleculeModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
+        this.moleculeModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg)); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
         this.isLoadingMoleculeImage.set(false);
       },
       error: () => {

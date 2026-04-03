@@ -35,6 +35,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .artifacts import ScientificInputArtifactStorageService
+from .declarative_api import DeclarativeJobAPI
 from .models import ScientificJob
 from .reporting import (
     build_download_filename,
@@ -44,6 +45,7 @@ from .reporting import (
     validate_job_for_csv_report,
 )
 from .schemas import ErrorResponseSerializer
+from .tasks import dispatch_scientific_job
 from .types import DomainError, JobHandle, JSONMap, Result
 
 
@@ -301,6 +303,50 @@ class ScientificAppViewSetMixin:
         # Despachar al broker ahora que los artefactos están persistidos
         job_handle.dispatch_if_pending().run()
         return None
+
+    def prepare_and_dispatch_with_artifacts(
+        self,
+        parameters_payload: JSONMap,
+        version_value: str,
+        uploaded_files: list[tuple[str, UploadedFile]],
+    ) -> Response:
+        """Flujo completo: crear job → persistir artefactos → despachar → responder.
+
+        Centraliza el bloque de 36+ líneas duplicado entre Easy-rate y Marcus.
+        Usa self.plugin_name y self.response_serializer_class definidos en la subclase.
+
+        Retorna 503 si falla la preparación del job, 400 si falla la persistencia de
+        artefactos, o 201 con el job serializado si todo termina exitosamente.
+        """
+        declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
+        prepare_result = declarative_api.prepare_job(
+            plugin=self.plugin_name,
+            version=version_value,
+            parameters=parameters_payload,
+        ).run()
+
+        if prepare_result.is_failure():
+            return Response(
+                {"detail": "No fue posible crear el job."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job_handle = prepare_result.get_or_else(None)
+        created_job: ScientificJob = get_object_or_404(
+            ScientificJob, pk=job_handle.job_id
+        )
+
+        artifact_error = self.persist_artifacts_and_dispatch(
+            created_job=created_job,
+            uploaded_files=uploaded_files,
+            job_handle=job_handle,
+        )
+        if artifact_error is not None:
+            return artifact_error
+
+        created_job.refresh_from_db()
+        response_serializer = self.response_serializer_class(created_job)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="Descargar Entradas Originales ZIP",

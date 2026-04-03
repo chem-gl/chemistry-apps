@@ -117,7 +117,7 @@ class MarcusContractApiTests(TestCase):
         """Crea job Marcus y valida resultado tras ejecución del plugin."""
         payload = self._build_payload()
 
-        with patch("apps.marcus.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -141,7 +141,7 @@ class MarcusContractApiTests(TestCase):
         """Verifica descarga ZIP de artefactos de entrada persistidos."""
         payload = self._build_payload()
 
-        with patch("apps.marcus.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = False
             create_response = self.client.post(
                 APP_API_BASE_PATH,

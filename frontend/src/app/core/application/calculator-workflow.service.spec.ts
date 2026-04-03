@@ -298,4 +298,50 @@ describe('CalculatorWorkflowService', () => {
     expect(workflowService.jobLogs()).toEqual([]);
     expect(workflowService.lastResult()).toBeNull();
   });
+
+  it('returns correct stage labels and detects step done/active states', () => {
+    workflowService.progressSnapshot.set(makeProgressSnapshot({ progress_stage: 'running' }));
+
+    expect(workflowService.stageLabel('running')).toBe('Running');
+    expect(workflowService.stageLabel('completed')).toBe('Completed');
+    expect(workflowService.stageLabel('unknown_stage')).toBe('unknown_stage');
+
+    expect(workflowService.isStepActive('running')).toBe(true);
+    expect(workflowService.isStepActive('pending')).toBe(false);
+
+    expect(workflowService.isStepDone('pending')).toBe(true);
+    expect(workflowService.isStepDone('queued')).toBe(true);
+    expect(workflowService.isStepDone('running')).toBe(false);
+    expect(workflowService.isStepDone('completed')).toBe(false);
+  });
+
+  it('sets error section when openHistoricalJob status call fails', () => {
+    jobsApiServiceMock.getJobStatus.mockReturnValue(throwError(() => new Error('job not found')));
+
+    workflowService.openHistoricalJob('calc-missing-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover historical job');
+    expect(workflowService.errorMessage()).toContain('job not found');
+  });
+
+  it('sets error when fetchFinalResult fails after progress stream completes', () => {
+    const progressEvents$ = new Subject<JobProgressSnapshotView>();
+
+    jobsApiServiceMock.dispatchCalculatorJob.mockReturnValue(
+      of(makeCalculatorJob({ id: 'calc-final-err-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getJobStatus.mockReturnValue(
+      throwError(() => new Error('timeout fetching result')),
+    );
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to load final result');
+    expect(workflowService.errorMessage()).toContain('timeout fetching result');
+  });
 });

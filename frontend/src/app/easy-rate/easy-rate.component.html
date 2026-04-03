@@ -366,25 +366,17 @@
 
       }
 
-      <app-job-artifact-export-panel [fileDescriptors]="workflow.resultData()?.fileDescriptors ?? []"
-        [isExporting]="workflow.isExporting()" [exportErrorMessage]="workflow.exportErrorMessage()"
-        [activeSection]="workflow.activeSection()" [errorMessage]="workflow.errorMessage()"
-        [currentJobId]="workflow.currentJobId()" [canExport]="canExport()" (exportCsv)="exportCsv()" (exportLog)="exportLog()"
-        (exportInputsZip)="exportInputsZip()" (exportError)="exportError()"></app-job-artifact-export-panel>
     </section>
   </div>
 
-  <!-- ── Logs de ejecución ──────────────────────────────────────────── -->
-  <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
-
-  <!-- ── Historial de jobs ──────────────────────────────────────────── -->
-  <app-job-history-table
-    [jobs]="workflow.historyJobs()"
-    [isLoading]="workflow.isHistoryLoading()"
+  <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->
+  <app-job-result-footer [workflow]="workflow" [canExport]="canExport()"
     emptyMessage="No historical Easy-rate jobs yet."
-    sectionTitle="Historical jobs"
     ariaLabel="Historical Easy-rate jobs"
-    (reload)="workflow.loadHistory()"
+    (exportCsv)="exportCsv()"
+    (exportLog)="exportLog()"
+    (exportInputsZip)="exportInputsZip()"
+    (exportError)="exportError()"
     (openJob)="openHistoricalJob($event)"
-  ></app-job-history-table>
+  ></app-job-result-footer>
 </section>

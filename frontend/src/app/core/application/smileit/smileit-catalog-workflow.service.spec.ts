@@ -309,4 +309,189 @@ describe('SmileitCatalogWorkflowService', () => {
     expect(state.patternCreateType()).toBe(PatternTypeEnum.Toxicophore);
     expect(onPatternCreated).toHaveBeenCalledTimes(1);
   });
+
+  it('returns false and sets error from stageCurrentCatalogDraft when editing is in progress', () => {
+    state.catalogEditingStableId.set('aniline');
+    state.catalogCreateName.set('Test');
+    state.catalogCreateSmiles.set('CCO');
+    state.catalogCreateAnchorIndicesText.set('0');
+
+    const result: boolean = service.stageCurrentCatalogDraft();
+
+    expect(result).toBe(false);
+    expect(state.errorMessage()).toContain('Finish the current catalog edition');
+    expect(state.catalogDraftQueue()).toHaveLength(0);
+  });
+
+  it('returns false and sets error from stageCurrentCatalogDraft when draft preview is not ready', () => {
+    state.catalogCreateName.set('');
+    state.catalogCreateSmiles.set('');
+
+    const result: boolean = service.stageCurrentCatalogDraft();
+
+    expect(result).toBe(false);
+    expect(state.errorMessage()).not.toBeNull();
+    expect(state.catalogDraftQueue()).toHaveLength(0);
+  });
+
+  it('returns false from stageCurrentCatalogDraftAndPrepareNext when editing is in progress', () => {
+    state.catalogEditingStableId.set('aniline');
+
+    const result: boolean = service.stageCurrentCatalogDraftAndPrepareNext();
+
+    expect(result).toBe(false);
+    expect(state.errorMessage()).toContain('Finish the current catalog edition');
+  });
+
+  it('returns false from stageCurrentCatalogDraftAndPrepareNext when draft is not ready', () => {
+    state.catalogCreateName.set('');
+    state.catalogCreateSmiles.set('');
+
+    const result: boolean = service.stageCurrentCatalogDraftAndPrepareNext();
+
+    expect(result).toBe(false);
+    expect(state.errorMessage()).not.toBeNull();
+  });
+
+  it('does nothing when loading a queued draft that does not exist', () => {
+    state.catalogDraftQueue.set([
+      {
+        id: 'catalog-draft-1',
+        name: 'Existing draft',
+        smiles: 'CCO',
+        anchorAtomIndices: [0],
+        categoryKeys: [],
+        categoryNames: [],
+        sourceReference: 'local-lab',
+      },
+    ]);
+
+    service.loadQueuedCatalogDraft('non-existent-id');
+
+    expect(state.catalogDraftQueue()).toHaveLength(1);
+    expect(state.catalogCreateName()).toBe('');
+  });
+
+  it('does nothing when cloning a queued draft that does not exist', () => {
+    state.catalogDraftQueue.set([]);
+
+    service.cloneQueuedCatalogDraft('non-existent-id');
+
+    expect(state.catalogDraftQueue()).toHaveLength(0);
+  });
+
+  it('blocks createCatalogEntryAndPrepareNext when catalog editing is in progress', () => {
+    state.catalogEditingStableId.set('aniline');
+
+    service.createCatalogEntryAndPrepareNext();
+
+    expect(smileitApiMock.createSmileitCatalogEntry).not.toHaveBeenCalled();
+    expect(state.errorMessage()).toContain('Finish catalog edition');
+  });
+
+  it('blocks createCatalogEntryAndPrepareNext when draft preview is not ready', () => {
+    state.catalogCreateName.set('');
+    state.catalogCreateSmiles.set('');
+
+    service.createCatalogEntryAndPrepareNext();
+
+    expect(smileitApiMock.createSmileitCatalogEntry).not.toHaveBeenCalled();
+    expect(state.errorMessage()).not.toBeNull();
+  });
+
+  it('creates entry via createCatalogEntryAndPrepareNext and prepares another form with incremented name', () => {
+    const onSuccess = vi.fn();
+    state.catalogCreateName.set('Substituent 1');
+    state.catalogCreateSmiles.set('CCO');
+    state.catalogCreateAnchorIndicesText.set('0');
+    smileitApiMock.createSmileitCatalogEntry.mockReturnValue(of([makeCatalogEntry()]));
+
+    service.createCatalogEntryAndPrepareNext(onSuccess);
+
+    expect(smileitApiMock.createSmileitCatalogEntry).toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets error message when createCatalogEntryAndPrepareNext API call fails', () => {
+    state.catalogCreateName.set('Substituent 1');
+    state.catalogCreateSmiles.set('CCO');
+    state.catalogCreateAnchorIndicesText.set('0');
+    smileitApiMock.createSmileitCatalogEntry.mockReturnValue(
+      throwError(() => new Error('server error')),
+    );
+
+    service.createCatalogEntryAndPrepareNext();
+
+    expect(state.errorMessage()).toContain('Unable to create catalog entry');
+    expect(state.errorMessage()).toContain('server error');
+  });
+
+  it('sets error message when updating an existing catalog entry fails', () => {
+    state.catalogEditingStableId.set('aniline');
+    state.catalogCreateName.set('Aniline');
+    state.catalogCreateSmiles.set('Nc1ccccc1');
+    state.catalogCreateAnchorIndicesText.set('0');
+    smileitApiMock.updateSmileitCatalogEntry.mockReturnValue(
+      throwError(() => new Error('update conflict')),
+    );
+
+    service.createCatalogEntry();
+
+    expect(state.errorMessage()).toContain('Unable to update catalog entry');
+    expect(state.errorMessage()).toContain('update conflict');
+  });
+
+  it('sets error message when createCatalogEntry API call fails for new entry', () => {
+    state.catalogCreateName.set('Propyl');
+    state.catalogCreateSmiles.set('CCC');
+    state.catalogCreateAnchorIndicesText.set('0');
+    smileitApiMock.createSmileitCatalogEntry.mockReturnValue(
+      throwError(() => new Error('duplicate smiles')),
+    );
+
+    service.createCatalogEntry();
+
+    expect(state.errorMessage()).toContain('Unable to create catalog entry');
+    expect(state.errorMessage()).toContain('duplicate smiles');
+  });
+
+  it('calls onSuccess callback after successful catalog entry creation', () => {
+    const onSuccess = vi.fn();
+    state.catalogCreateName.set('Ethanol');
+    state.catalogCreateSmiles.set('CCO');
+    state.catalogCreateAnchorIndicesText.set('0');
+    smileitApiMock.createSmileitCatalogEntry.mockReturnValue(of([makeCatalogEntry()]));
+
+    service.createCatalogEntry(onSuccess);
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets error message when createPatternEntry API call fails', () => {
+    state.patternCreateName.set('Alert');
+    state.patternCreateSmarts.set('[N+](=O)[O-]');
+    state.patternCreateCaption.set('Nitro alert');
+    smileitApiMock.createSmileitPatternEntry.mockReturnValue(
+      throwError(() => new Error('pattern creation failed')),
+    );
+
+    service.createPatternEntry();
+
+    expect(state.errorMessage()).toContain('Unable to create structural pattern');
+    expect(state.errorMessage()).toContain('pattern creation failed');
+  });
+
+  it('sets error message when pattern list refresh fails after successful creation', () => {
+    state.patternCreateName.set('Alert');
+    state.patternCreateSmarts.set('[N+](=O)[O-]');
+    state.patternCreateCaption.set('Nitro alert');
+    smileitApiMock.createSmileitPatternEntry.mockReturnValue(of({ ok: true }));
+    smileitApiMock.listSmileitPatterns.mockReturnValue(
+      throwError(() => new Error('refresh failed')),
+    );
+
+    service.createPatternEntry();
+
+    expect(state.errorMessage()).toContain('Unable to refresh structural patterns');
+  });
 });

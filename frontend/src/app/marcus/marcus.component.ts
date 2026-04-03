@@ -2,21 +2,15 @@
 // Gestiona la carga de los 6 archivos Gaussian requeridos, parámetros de difusión y visualización de resultados.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
 import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
-import { JobArtifactExportPanelComponent } from '../core/shared/components/job-artifact-export-panel/job-artifact-export-panel.component';
-import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
-import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
-import {
-  downloadBlobFile,
-  subscribeToRouteHistoricalJob,
-} from '../core/shared/scientific-app-ui.utils';
+import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
+import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
+import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 
 @Component({
   selector: 'app-marcus',
@@ -24,43 +18,15 @@ import {
     CommonModule,
     FormsModule,
     JobProgressCardComponent,
-    JobLogsPanelComponent,
-    JobHistoryTableComponent,
     DiffusionFieldsComponent,
-    JobArtifactExportPanelComponent,
+    JobResultFooterComponent,
   ],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',
   styleUrl: './marcus.component.scss',
 })
-export class MarcusComponent implements OnInit, OnDestroy {
-  readonly workflow = inject(MarcusWorkflowService);
-  private readonly route = inject(ActivatedRoute);
-  private routeSubscription: Subscription | null = null;
-
-  ngOnInit(): void {
-    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
-  }
-
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-  }
-
-  dispatch(): void {
-    this.workflow.dispatch();
-  }
-
-  reset(): void {
-    this.workflow.reset();
-  }
-
-  clearFiles(): void {
-    this.workflow.clearFiles();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
+export class MarcusComponent extends ScientificFileAppBaseComponent {
+  override readonly workflow = inject(MarcusWorkflowService);
 
   // ── Manejadores de los 6 archivos requeridos ─────────────────────
   onReactant1FileChange(event: Event): void {

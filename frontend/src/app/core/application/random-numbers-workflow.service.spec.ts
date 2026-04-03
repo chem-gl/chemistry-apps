@@ -555,4 +555,128 @@ describe('RandomNumbersWorkflowService', () => {
     expect(workflowService.jobLogs()).toEqual([]);
     expect(workflowService.resultData()).toBeNull();
   });
+
+  it('sets error section when random numbers dispatch request fails', () => {
+    jobsApiServiceMock.dispatchScientificJob.mockReturnValue(
+      throwError(() => new Error('rate limited')),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to create random numbers job');
+    expect(workflowService.errorMessage()).toContain('rate limited');
+  });
+
+  it('evaluates isPaused computed and resets isControlActionLoading on reset', () => {
+    workflowService.progressSnapshot.set(makeProgressSnapshot({ status: 'paused' }));
+    expect(workflowService.isPaused()).toBe(true);
+
+    workflowService.progressSnapshot.set(makeProgressSnapshot({ status: 'running' }));
+    expect(workflowService.isPaused()).toBe(false);
+
+    workflowService.isControlActionLoading.set(true);
+    workflowService.reset();
+    expect(workflowService.isControlActionLoading()).toBe(false);
+  });
+
+  it('pauses current job and updates progress snapshot status on success', () => {
+    workflowService.currentJobId.set('rnd-pause-1');
+    workflowService.progressSnapshot.set(
+      makeProgressSnapshot({ status: 'running', progress_percentage: 40 }),
+    );
+
+    const pauseResult = makeControlResult({
+      job: makeScientificJob({
+        id: 'rnd-pause-1',
+        status: 'paused',
+        progress_percentage: 40,
+        progress_stage: 'running',
+        progress_message: 'Paused',
+      }),
+    });
+    jobsApiServiceMock.pauseJob.mockReturnValue(of(pauseResult));
+
+    workflowService.pauseCurrentJob();
+
+    expect(workflowService.progressSnapshot()?.status).toBe('paused');
+    expect(workflowService.isControlActionLoading()).toBe(false);
+  });
+
+  it('sets error when pause request fails', () => {
+    workflowService.currentJobId.set('rnd-pause-err-1');
+    jobsApiServiceMock.pauseJob.mockReturnValue(throwError(() => new Error('pause conflict')));
+
+    workflowService.pauseCurrentJob();
+
+    expect(workflowService.errorMessage()).toContain('Unable to pause job');
+    expect(workflowService.isControlActionLoading()).toBe(false);
+  });
+
+  it('resumes current job and starts progress stream on success', () => {
+    workflowService.currentJobId.set('rnd-resume-1');
+
+    const resumeResult = makeControlResult({
+      job: makeScientificJob({
+        id: 'rnd-resume-1',
+        status: 'running',
+        progress_percentage: 50,
+        progress_stage: 'running',
+        progress_message: 'Resumed',
+      }),
+    });
+    jobsApiServiceMock.resumeJob.mockReturnValue(of(resumeResult));
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(of());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      of(makeScientificJob({ id: 'rnd-resume-1', status: 'completed' })),
+    );
+
+    workflowService.resumeCurrentJob();
+
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.isControlActionLoading()).toBe(false);
+  });
+
+  it('sets error when resume request fails', () => {
+    workflowService.currentJobId.set('rnd-resume-err-1');
+    jobsApiServiceMock.resumeJob.mockReturnValue(throwError(() => new Error('already running')));
+
+    workflowService.resumeCurrentJob();
+
+    expect(workflowService.errorMessage()).toContain('Unable to resume job');
+    expect(workflowService.isControlActionLoading()).toBe(false);
+  });
+
+  it('sets error when openHistoricalJob status request fails', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('not found')),
+    );
+
+    workflowService.openHistoricalJob('rnd-historical-err-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover historical job');
+    expect(workflowService.errorMessage()).toContain('not found');
+  });
+
+  it('sets error when fetchFinalResult fails after stream completes', () => {
+    const progressEvents$ = new Subject<JobProgressSnapshotView>();
+
+    jobsApiServiceMock.dispatchScientificJob.mockReturnValue(
+      of(makeScientificJob({ id: 'rnd-final-err-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('fetch timeout')),
+    );
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover final result');
+    expect(workflowService.errorMessage()).toContain('fetch timeout');
+  });
 });

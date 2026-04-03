@@ -253,7 +253,7 @@ export class CatalogPanelComponent implements OnDestroy {
       selectedAtomIndices,
       [],
     );
-    return this.sanitizer.bypassSecurityTrustHtml(decorated);
+    return this.sanitizer.bypassSecurityTrustHtml(decorated); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
   }
 
   onLibraryGroupChange(nextGroupKey: string): void {
@@ -277,7 +277,7 @@ export class CatalogPanelComponent implements OnDestroy {
       catalogEntry.anchor_atom_indices,
       [],
     );
-    return this.sanitizer.bypassSecurityTrustHtml(decorated);
+    return this.sanitizer.bypassSecurityTrustHtml(decorated); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
   }
 
   /** Error de preview de una entrada de catálogo (carga de inspección fallida). */

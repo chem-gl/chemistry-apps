@@ -268,4 +268,57 @@ describe('MolarFractionsWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toBe('Unable to get final result: gateway timeout');
   });
+
+  it('sets error section when molar fractions dispatch request fails', () => {
+    jobsApiServiceMock.dispatchMolarFractionsJob.mockReturnValue(
+      throwError(() => new Error('service unavailable')),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to create molar fractions job');
+    expect(workflowService.errorMessage()).toContain('service unavailable');
+  });
+
+  it('sets error section when openHistoricalJob request fails', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('network error')),
+    );
+
+    workflowService.openHistoricalJob('molar-error-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover historical job');
+  });
+
+  it('dispatches single pH mode job with phValue instead of range', () => {
+    workflowService.phMode.set('single');
+    workflowService.phValue.set(7.4);
+    workflowService.setPkaCount(2);
+    workflowService.updatePkaValue(0, 4.5);
+    workflowService.updatePkaValue(1, 8.5);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchMolarFractionsJob).toHaveBeenCalledWith({
+      pkaValues: [4.5, 8.5],
+      phMode: 'single',
+      phValue: 7.4,
+    });
+  });
+
+  it('clamps pkaCount between 1 and 6 and pkaInputSlots has correct length', () => {
+    workflowService.setPkaCount(0);
+    expect(workflowService.pkaCount()).toBe(1);
+    expect(workflowService.pkaInputSlots()).toHaveLength(1);
+
+    workflowService.setPkaCount(10);
+    expect(workflowService.pkaCount()).toBe(6);
+    expect(workflowService.pkaInputSlots()).toHaveLength(6);
+
+    workflowService.setPkaCount(3);
+    expect(workflowService.pkaCount()).toBe(3);
+    expect(workflowService.activePkaValues()).toHaveLength(3);
+  });
 });

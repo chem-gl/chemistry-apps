@@ -208,7 +208,7 @@ export class GenerationResultPanelComponent {
   }
 
   toTrustedSvg(svgMarkup: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(svgMarkup);
+    return this.sanitizer.bypassSecurityTrustHtml(svgMarkup); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
   }
 
   openGeneratedStructureModal(generatedStructure: SmileitGeneratedStructureView): void {

@@ -798,4 +798,103 @@ describe('EasyRateWorkflowService', () => {
     workflowService.ngOnDestroy();
     expect(pendingInspection$.observed).toBe(false);
   });
+
+  it('sets error section when Easy-rate dispatch request fails', () => {
+    jobsApiServiceMock.dispatchEasyRateJob.mockReturnValue(
+      throwError(() => new Error('timeout on dispatch')),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to create Easy-rate job');
+    expect(workflowService.errorMessage()).toContain('timeout on dispatch');
+  });
+
+  it('sets error section when openHistoricalJob status request fails', () => {
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValue(
+      throwError(() => new Error('job not found')),
+    );
+
+    workflowService.openHistoricalJob('easy-rate-err-net-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover historical job');
+    expect(workflowService.errorMessage()).toContain('job not found');
+  });
+
+  it('evaluates showDiffusionFields and showCustomViscosity computed signals', () => {
+    workflowService.updateDiffusion(true);
+    expect(workflowService.showDiffusionFields()).toBe(true);
+
+    workflowService.updateDiffusion(false);
+    expect(workflowService.showDiffusionFields()).toBe(false);
+    expect(workflowService.radiusReactant1()).toBeNull();
+    expect(workflowService.radiusReactant2()).toBeNull();
+    expect(workflowService.reactionDistance()).toBeNull();
+
+    workflowService.updateSolvent('Other');
+    expect(workflowService.showCustomViscosity()).toBe(true);
+
+    workflowService.updateSolvent('Water');
+    expect(workflowService.showCustomViscosity()).toBe(false);
+    expect(workflowService.customViscosity()).toBeNull();
+  });
+
+  it('updates calculation parameters via update methods', () => {
+    workflowService.updateTitle('My Reaction');
+    expect(workflowService.title()).toBe('My Reaction');
+
+    workflowService.updateReactionPathDegeneracy(3);
+    expect(workflowService.reactionPathDegeneracy()).toBe(3);
+
+    workflowService.updateCageEffects(true);
+    expect(workflowService.cageEffects()).toBe(true);
+
+    workflowService.updateCustomViscosity(0.89);
+    expect(workflowService.customViscosity()).toBe(0.89);
+
+    workflowService.updateRadiusReactant1(1.5);
+    workflowService.updateRadiusReactant2(2.0);
+    workflowService.updateReactionDistance(3.5);
+    expect(workflowService.radiusReactant1()).toBe(1.5);
+    expect(workflowService.radiusReactant2()).toBe(2.0);
+    expect(workflowService.reactionDistance()).toBe(3.5);
+
+    workflowService.updatePrintDataInput(true);
+    expect(workflowService.printDataInput()).toBe(true);
+  });
+
+  it('sets error when fetchFinalResult fails after progress stream completes', () => {
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
+
+    jobsApiServiceMock.dispatchEasyRateJob.mockReturnValue(
+      of(makeEasyRateJob({ id: 'easy-rate-final-err-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getEasyRateJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+
+    workflowService.updateReactant1File(createGaussianFile('r1.log'));
+    workflowService.updateReactant2File(createGaussianFile('r2.log'));
+    workflowService.updateTransitionStateFile(createGaussianFile('ts.log'));
+    workflowService.updateProduct1File(createGaussianFile('p1.log'));
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to get Easy-rate final result');
+    expect(workflowService.errorMessage()).toContain('gateway timeout');
+  });
 });

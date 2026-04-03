@@ -2,7 +2,7 @@
 // Cubre trazabilidad de inputs, despacho, resumen histórico, exportes y fallback de progreso.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -283,5 +283,66 @@ describe('TunnelWorkflowService', () => {
 
     expect(workflowService.historyJobs()[0]?.id).toBe('new');
     expect(workflowService.historyJobs()[1]?.id).toBe('old');
+  });
+
+  it('records updateImaginaryFrequency and updateReactionEnergyZpe changes in input history', () => {
+    workflowService.imaginaryFrequency.set(200);
+    workflowService.updateImaginaryFrequency(350);
+
+    workflowService.reactionEnergyZpe.set(0.5);
+    workflowService.updateReactionEnergyZpe(1.2);
+
+    const changes = workflowService.inputChangeEvents();
+    const freqChange = changes.find((e) => e.fieldName === 'imaginary_frequency');
+    const energyChange = changes.find((e) => e.fieldName === 'reaction_energy_zpe');
+
+    expect(freqChange?.previousValue).toBe(200);
+    expect(freqChange?.newValue).toBe(350);
+    expect(energyChange?.previousValue).toBe(0.5);
+    expect(energyChange?.newValue).toBe(1.2);
+  });
+
+  it('sets error section when tunnel job dispatch request fails', () => {
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      throwError(() => new Error('connection refused')),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to create tunnel job');
+    expect(workflowService.errorMessage()).toContain('connection refused');
+  });
+
+  it('sets error section when openHistoricalJob status call fails', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('job not found')),
+    );
+
+    workflowService.openHistoricalJob('tunnel-missing-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to recover historical tunnel job');
+    expect(workflowService.errorMessage()).toContain('job not found');
+  });
+
+  it('sets error when fetchFinalResult fails after progress stream completes', () => {
+    const progressEvents$ = new Subject<JobProgressSnapshotView>();
+
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      of(makeScientificJob({ id: 'tunnel-final-err-1', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('internal server error')),
+    );
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Unable to get tunnel final result');
+    expect(workflowService.errorMessage()).toContain('internal server error');
   });
 });

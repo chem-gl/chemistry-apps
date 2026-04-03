@@ -11,19 +11,16 @@ from __future__ import annotations
 from typing import cast
 
 from django.core.files.uploadedfile import UploadedFile
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.core.artifacts import build_file_descriptor
 from apps.core.base_router import ScientificAppViewSetMixin
-from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
 from apps.core.schemas import ErrorResponseSerializer
-from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 
 from .definitions import PLUGIN_NAME
@@ -136,35 +133,9 @@ class MarcusJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         }
 
         version_value: str = str(validated_data["version"])
-
-        # Crear job sin encolar (flujo en dos pasos: crear → artefactos → despachar)
-        declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
-        prepare_result = declarative_api.prepare_job(
-            plugin=PLUGIN_NAME,
-            version=version_value,
-            parameters=parameters_payload,
-        ).run()
-
-        if prepare_result.is_failure():
-            return Response(
-                {"detail": "No fue posible crear el job."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job_handle = prepare_result.get_or_else(None)
-        created_job: ScientificJob = get_object_or_404(
-            ScientificJob, pk=job_handle.job_id
-        )
-
-        # Delegar persistencia de artefactos y despacho al helper del mixin
-        artifact_error = self.persist_artifacts_and_dispatch(
-            created_job=created_job,
+        # Delegar creación, persistencia de artefactos y despacho al helper del mixin
+        return self.prepare_and_dispatch_with_artifacts(
+            parameters_payload=parameters_payload,
+            version_value=version_value,
             uploaded_files=uploaded_files,
-            job_handle=job_handle,
         )
-        if artifact_error is not None:
-            return artifact_error
-
-        created_job.refresh_from_db()
-        response_serializer = MarcusJobResponseSerializer(created_job)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)

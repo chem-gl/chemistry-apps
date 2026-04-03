@@ -82,7 +82,7 @@ class EasyRateExtendedApiTests(TestCase):
     def _create_job(self) -> str:
         """Crea job easy_rate y retorna su ID."""
         payload = _build_valid_multipart_payload()
-        with patch(f"{ROUTER_MODULE}.dispatch_scientific_job") as mock_d:
+        with patch("apps.core.base_router.dispatch_scientific_job") as mock_d:
             mock_d.return_value = True
             response = self.client.post(APP_API_BASE_PATH, payload, format="multipart")
         self.assertEqual(response.status_code, 201)
@@ -91,7 +91,7 @@ class EasyRateExtendedApiTests(TestCase):
     def test_create_returns_plugin_name(self) -> None:
         """Verifica que el job creado tiene el plugin_name correcto."""
         payload = _build_valid_multipart_payload()
-        with patch(f"{ROUTER_MODULE}.dispatch_scientific_job") as mock_d:
+        with patch("apps.core.base_router.dispatch_scientific_job") as mock_d:
             mock_d.return_value = True
             response = self.client.post(APP_API_BASE_PATH, payload, format="multipart")
         self.assertEqual(response.status_code, 201)
