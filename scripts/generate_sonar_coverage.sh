@@ -36,7 +36,7 @@ generate_backend_reports() {
     echo "coverage no está instalado en backend/venv. Ejecuta './venv/bin/python -m pip install coverage' o reinstala requirements." >&2
     exit 1
   }
-
+  ./venv/bin/ruff check . --fix && echo "[backend] ruff check completado sin issues (fix aplicado)." || echo "[backend] ruff check completado con issues (fix aplicado, exit ignorado)."
   ./venv/bin/ruff check . --output-format=sarif > ruff.json
   # Ejecutamos tests con el runner de Django para usar base de test aislada.
   # Esto evita bloqueos de sqlite que pueden aparecer al ejecutar pytest sin pytest-django.

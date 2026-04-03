@@ -5,7 +5,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
 import { MarcusComponent } from './marcus.component';
 
@@ -72,6 +72,8 @@ describe('MarcusComponent', () => {
   function makeFakeFile(name: string, size = 1024): File {
     return new File(['x'.repeat(size)], name, { type: 'text/plain' });
   }
+
+  afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
     vi.restoreAllMocks();

@@ -15,6 +15,8 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from libs.brsascore.client import BrsaScoreClient
 
+from apps.core.models import ScientificJob
+
 from .plugin import (
     _compute_ambit_score,
     _compute_brsa_score,
@@ -298,13 +300,9 @@ class SaScoreRouterApiTests(TestCase):
 
         self.client = APIClient()
 
-    def _make_completed_sa_job(
-        self, methods: list[str] | None = None
-    ) -> "ScientificJob":
+    def _make_completed_sa_job(self, methods: list[str] | None = None) -> ScientificJob:
         """Crea un job de SA score en estado completado para tests de reporte."""
         from uuid import uuid4
-
-        from apps.core.models import ScientificJob
 
         if methods is None:
             methods = ["brsa", "rdkit"]
@@ -393,8 +391,6 @@ class SaScoreRouterApiTests(TestCase):
     def test_report_csv_by_method_returns_409_when_job_not_completed(self) -> None:
         """Un job en estado pending no tiene resultados; debe retornar 409."""
         from uuid import uuid4
-
-        from apps.core.models import ScientificJob
 
         pending_job = ScientificJob.objects.create(
             job_hash=uuid4().hex,

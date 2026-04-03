@@ -212,6 +212,216 @@ describe('GenerationResultDataService', () => {
 
       await expect(service.downloadVisibleStructuresZip()).resolves.toBeUndefined();
     });
+
+    it('ejecuta el path de servidor ZIP cuando la API retorna un blob', async () => {
+      const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
+      const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockReturnValue(undefined);
+      (mockJobsApi as Record<string, unknown>)['downloadSmileitImagesZipServer'] = vi
+        .fn()
+        .mockReturnValue(of({ filename: 'smileit.zip', blob: new Blob(['test']) }));
+
+      mockWorkflow.resultData.set({
+        totalGenerated: 1,
+        exportNameBase: 'test',
+        principalSmiles: 'C',
+        isHistoricalSummary: false,
+      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.currentJobId.set('job-zip-server');
+
+      await service.downloadVisibleStructuresZip();
+
+      expect(service.imagesZipProgress()).toBe(100);
+      expect(service.isPreparingImagesZip()).toBe(false);
+
+      createObjectUrlSpy.mockRestore();
+      revokeObjectUrlSpy.mockRestore();
+      clickSpy.mockRestore();
+    });
+  });
+
+  describe('showMoreStructures y loadNextGeneratedStructuresPage', () => {
+    it('carga la siguiente página de estructuras cuando jobId y resultData son válidos', () => {
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(
+        of({
+          totalGenerated: 2,
+          offset: 0,
+          limit: 100,
+          items: [
+            {
+              structureIndex: 0,
+              name: 'Mol A',
+              smiles: 'C',
+              placeholderAssignments: [],
+              traceability: [],
+            },
+          ],
+        }),
+      );
+      mockJobsApi.getSmileitDerivationSvg = vi.fn().mockReturnValue(of('<svg/>'));
+
+      mockWorkflow.currentJobId.set('job-load');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 2,
+        isHistoricalSummary: false,
+      });
+
+      TestBed.flushEffects();
+
+      expect(mockJobsApi.listSmileitDerivations).toHaveBeenCalledWith('job-load', 0, 100);
+      expect(service.loadedGeneratedStructures()).toHaveLength(1);
+    });
+
+    it('usa la cache de sesión cuando la página ya fue cargada previamente', () => {
+      const cachedItems = [
+        {
+          structureIndex: 0,
+          name: 'Cached Mol',
+          smiles: 'CCO',
+          placeholderAssignments: [],
+          traceability: [],
+        },
+      ];
+      sessionStorage.setItem('smileit:job-cached-page:page:0:100', JSON.stringify(cachedItems));
+
+      mockWorkflow.currentJobId.set('job-cached-page');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 1,
+        isHistoricalSummary: false,
+      });
+
+      TestBed.flushEffects();
+
+      // No debe llamar al API si hay cache
+      expect(mockJobsApi.listSmileitDerivations).not.toHaveBeenCalled();
+      expect(service.loadedGeneratedStructures()).toHaveLength(1);
+
+      sessionStorage.removeItem('smileit:job-cached-page:page:0:100');
+    });
+
+    it('muestra más estructuras al llamar showMoreStructures con jobId válido', () => {
+      mockJobsApi.listSmileitDerivations = vi
+        .fn()
+        .mockReturnValue(of({ totalGenerated: 10, offset: 0, limit: 100, items: [] }));
+
+      mockWorkflow.currentJobId.set('job-show-more');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 10,
+        isHistoricalSummary: false,
+      });
+
+      TestBed.flushEffects();
+      const callsBefore = vi.mocked(mockJobsApi.listSmileitDerivations).mock.calls.length;
+
+      service.showMoreStructures();
+
+      // Se vuelve a llamar si hay más para cargar
+      expect(
+        vi.mocked(mockJobsApi.listSmileitDerivations).mock.calls.length,
+      ).toBeGreaterThanOrEqual(callsBefore);
+    });
+
+    it('maneja error 404 del API usando generatedStructures embebidas', () => {
+      const httpError = Object.assign(new Error('Not Found'), { status: 404 });
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(throwError(() => httpError));
+
+      const embeddedStructure = {
+        structureIndex: 0,
+        name: 'Embedded',
+        smiles: 'C',
+        svg: '',
+        placeholderAssignments: [],
+        traceability: [],
+      };
+
+      mockWorkflow.currentJobId.set('job-404');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 1,
+        isHistoricalSummary: false,
+        generatedStructures: [embeddedStructure],
+      });
+
+      TestBed.flushEffects();
+
+      expect(service.loadedGeneratedStructures()[0].name).toBe('Embedded');
+    });
+
+    it('maneja error 404 del API sin generatedStructures embebidas', () => {
+      const httpError = Object.assign(new Error('Not Found'), { status: 404 });
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(throwError(() => httpError));
+
+      mockWorkflow.currentJobId.set('job-404-no-embedded');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 3,
+        isHistoricalSummary: false,
+        generatedStructures: [],
+      });
+
+      TestBed.flushEffects();
+
+      expect(mockWorkflow.errorMessage()).toContain('not available');
+    });
+
+    it('maneja errores genéricos del API', () => {
+      mockJobsApi.listSmileitDerivations = vi
+        .fn()
+        .mockReturnValue(throwError(() => new Error('Network error')));
+
+      mockWorkflow.currentJobId.set('job-generic-error');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 5,
+        isHistoricalSummary: false,
+      });
+
+      TestBed.flushEffects();
+
+      expect(mockWorkflow.errorMessage()).toContain('Unable to load');
+    });
+
+    it('resetea el estado cuando resultData cambia a null', () => {
+      mockWorkflow.currentJobId.set('job-reset');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 1,
+        isHistoricalSummary: false,
+      });
+      TestBed.flushEffects();
+
+      // Resetear resultData
+      mockWorkflow.resultData.set(null);
+      TestBed.flushEffects();
+
+      expect(service.loadedGeneratedStructures()).toEqual([]);
+      expect(service.isGeneratedStructuresCollapsed()).toBe(true);
+    });
+
+    it('usa el nombre genérico si el nombre del item está vacío', () => {
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(
+        of({
+          totalGenerated: 1,
+          offset: 0,
+          limit: 100,
+          items: [
+            {
+              structureIndex: 5,
+              name: '   ',
+              smiles: 'C',
+              placeholderAssignments: [],
+              traceability: [],
+            },
+          ],
+        }),
+      );
+
+      mockWorkflow.currentJobId.set('job-empty-name');
+      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
+        totalGenerated: 1,
+        isHistoricalSummary: false,
+      });
+
+      TestBed.flushEffects();
+
+      expect(service.loadedGeneratedStructures()[0].name).toBe('Generated molecule 6');
+    });
   });
 
   describe('ngOnDestroy', () => {

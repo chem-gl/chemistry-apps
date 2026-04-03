@@ -6,7 +6,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { JobsApiService, SaScoreMethod } from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
@@ -54,6 +54,8 @@ describe('SaScoreComponent', () => {
   const ketcherServiceMock = {
     waitForApi: vi.fn(() => Promise.resolve(null)),
   };
+
+  afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
     vi.restoreAllMocks();

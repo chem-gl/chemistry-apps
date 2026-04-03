@@ -79,6 +79,7 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "tsconfig.spec.json",
+            "coverageReporters": ["lcov", "text-summary"],
             "coverageExclude": [
               "src/app/core/api/generated/**",
               "src/**/*.html",

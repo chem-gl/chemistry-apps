@@ -5,7 +5,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { EasyRateInputFieldName } from '../core/api/jobs-api.service';
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
 import { EasyRateComponent } from './easy-rate.component';
@@ -77,6 +77,8 @@ describe('EasyRateComponent', () => {
       }),
     ),
   };
+
+  afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
     vi.restoreAllMocks();

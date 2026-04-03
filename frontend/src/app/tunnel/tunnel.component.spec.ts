@@ -5,7 +5,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import {
   TunnelResultData,
   TunnelWorkflowService,
@@ -44,6 +44,8 @@ describe('TunnelComponent', () => {
       of({ filename: 'tunnel.log', blob: new Blob(['log'], { type: 'text/plain' }) }),
     ),
   };
+
+  afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
     vi.restoreAllMocks();

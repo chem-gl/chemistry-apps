@@ -95,6 +95,7 @@ export class GenerationResultDataService implements OnDestroy {
       );
       this.downloadFile(serverZip.filename, serverZip.blob);
       this.imagesZipProgress.set(100);
+      this.isPreparingImagesZip.set(false);
       return;
     } catch {
       // Fallback automático: si backend ZIP falla, se vuelve al armado local existente.

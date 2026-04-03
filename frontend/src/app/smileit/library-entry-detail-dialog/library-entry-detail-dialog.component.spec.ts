@@ -163,7 +163,7 @@ describe('LibraryEntryDetailDialogComponent', () => {
     it('llama al previewSvgResolver con la entrada dada', () => {
       const mockSvg = '<svg>preview</svg>' as unknown as SafeHtml;
       const resolver = vi.fn().mockReturnValue(mockSvg);
-      fixture.componentRef.setInput('previewSvgResolver', () => resolver);
+      fixture.componentRef.setInput('previewSvgResolver', resolver);
       fixture.detectChanges();
 
       const entry = buildMockEntry();
@@ -182,7 +182,7 @@ describe('LibraryEntryDetailDialogComponent', () => {
     it('isEntryAdded delega al resolver cuando el contexto es browser', () => {
       const resolver = vi.fn().mockReturnValue(true);
       fixture.componentRef.setInput('openContext', 'browser');
-      fixture.componentRef.setInput('isReferencedInAnyBlockResolver', () => resolver);
+      fixture.componentRef.setInput('isReferencedInAnyBlockResolver', resolver);
       fixture.detectChanges();
       const entry = buildMockEntry();
       expect(component.isEntryAdded(entry)).toBe(true);
@@ -191,7 +191,7 @@ describe('LibraryEntryDetailDialogComponent', () => {
 
     it('isEntryEditable delega al resolver', () => {
       const resolver = vi.fn().mockReturnValue(false);
-      fixture.componentRef.setInput('isCatalogEntryEditableResolver', () => resolver);
+      fixture.componentRef.setInput('isCatalogEntryEditableResolver', resolver);
       fixture.detectChanges();
       const entry = buildMockEntry();
       expect(component.isEntryEditable(entry)).toBe(false);

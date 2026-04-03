@@ -5,7 +5,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
   MolarFractionsResultRow,
@@ -48,6 +48,8 @@ describe('MolarFractionsComponent', () => {
       of({ filename: 'molar_fractions.log', blob: new Blob(['log line'], { type: 'text/plain' }) }),
     ),
   };
+
+  afterEach(() => vi.unstubAllGlobals());
 
   beforeEach(() => {
     vi.restoreAllMocks();
