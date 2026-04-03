@@ -6,7 +6,10 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsApiService } from '../../core/api/jobs-api.service';
-import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
+import {
+  SmileitGeneratedStructureView,
+  SmileitWorkflowService,
+} from '../../core/application/smileit-workflow.service';
 import { GenerationResultDataService } from './generation-result-data.service';
 
 /** Construye un workflow mock con las señales mínimas que requiere el servicio. */
@@ -238,6 +241,53 @@ describe('GenerationResultDataService', () => {
       revokeObjectUrlSpy.mockRestore();
       clickSpy.mockRestore();
     });
+
+    it('usa el fallback local cuando el ZIP del backend falla', async () => {
+      const serverZipMock = vi
+        .fn()
+        .mockReturnValue(throwError(() => new Error('zip backend unavailable')));
+      const fallbackSpy = vi
+        .spyOn(
+          service as unknown as { downloadVisibleStructuresZipClientFallback: () => Promise<void> },
+          'downloadVisibleStructuresZipClientFallback',
+        )
+        .mockResolvedValue(undefined);
+
+      mockWorkflow.resultData.set({
+        totalGenerated: 1,
+        exportNameBase: 'test',
+        principalSmiles: 'C',
+        isHistoricalSummary: false,
+      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.currentJobId.set('job-zip-fallback');
+      mockJobsApi.downloadSmileitImagesZipServer = serverZipMock as never;
+
+      await service.downloadVisibleStructuresZip();
+
+      expect(fallbackSpy).toHaveBeenCalledWith('job-zip-fallback', expect.any(Object));
+      fallbackSpy.mockRestore();
+    });
+
+    it('registra error visible si el fallback local también falla', async () => {
+      mockWorkflow.resultData.set({
+        totalGenerated: 1,
+        exportNameBase: 'test',
+        principalSmiles: 'C',
+        isHistoricalSummary: false,
+      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.currentJobId.set('job-zip-error');
+      mockJobsApi.downloadSmileitImagesZipServer = vi
+        .fn()
+        .mockReturnValue(throwError(() => new Error('zip backend unavailable')));
+      vi.spyOn(
+        service as unknown as { downloadVisibleStructuresZipClientFallback: () => Promise<void> },
+        'downloadVisibleStructuresZipClientFallback',
+      ).mockRejectedValue(new Error('fallback failed'));
+
+      await service.downloadVisibleStructuresZip();
+
+      expect(mockWorkflow.exportErrorMessage()).toContain('Unable to generate ZIP');
+    });
   });
 
   describe('showMoreStructures y loadNextGeneratedStructuresPage', () => {
@@ -427,6 +477,36 @@ describe('GenerationResultDataService', () => {
   describe('ngOnDestroy', () => {
     it('destruye el effect de reset sin lanzar errores', () => {
       expect(() => service.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('utilidades de nombres y caché', () => {
+    it('sanitiza segmentos de nombre con caracteres inválidos', () => {
+      const sanitized = (
+        service as unknown as { sanitizeFilenameSegment: (value: string) => string }
+      ).sanitizeFilenameSegment('  Molécula #1 / test  ');
+      expect(sanitized).toBe('Mol_cula_1_test');
+    });
+
+    it('devuelve structure.svg cuando no existe structureIndex en resolveStructureSvgForZip', async () => {
+      const structure = {
+        name: 'No index',
+        smiles: 'C',
+        svg: '<svg>inline</svg>',
+        placeholderAssignments: [],
+        traceability: [],
+      } as never;
+
+      const resolved = await (
+        service as unknown as {
+          resolveStructureSvgForZip: (
+            jobId: string,
+            structure: SmileitGeneratedStructureView,
+          ) => Promise<string>;
+        }
+      ).resolveStructureSvgForZip('job-inline', structure);
+
+      expect(resolved).toBe('<svg>inline</svg>');
     });
   });
 });

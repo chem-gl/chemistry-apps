@@ -19,7 +19,7 @@ import urllib.error
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
@@ -339,3 +339,60 @@ class ValidateTarEntryFileSizeTests(SimpleTestCase):
                 max_total_size_bytes=2 * 1024 * 1024 * 1024,  # 2 GB límite
                 max_compression_ratio=50.0,
             )
+
+
+class DownloadAndExtractionTests(SimpleTestCase):
+    """Pruebas de descarga y extracción segura de runtime tools."""
+
+    def test_download_file_with_retry_writes_downloaded_bytes(self) -> None:
+        """Una descarga exitosa debe persistir el contenido en disco."""
+        with TemporaryDirectory(prefix="runtime_download_ok_") as temp_dir_raw:
+            destination_path = Path(temp_dir_raw) / "downloaded.jar"
+            response_stream = BytesIO(b"downloaded-content")
+            mocked_urlopen = MagicMock()
+            mocked_urlopen.return_value.__enter__.return_value = response_stream
+            mocked_urlopen.return_value.__exit__.return_value = False
+
+            with patch(
+                "apps.core.runtime_tools.urllib.request.urlopen", mocked_urlopen
+            ):
+                _download_file_with_retry(
+                    "https://example.test/runtime.jar",
+                    destination_path,
+                    max_attempts=1,
+                    timeout_seconds=1,
+                )
+
+            self.assertEqual(destination_path.read_bytes(), b"downloaded-content")
+
+    def test_extract_tarfile_safely_allows_valid_archive(self) -> None:
+        """Un tar válido debe extraerse sin bloquearse por la protección de seguridad."""
+        with TemporaryDirectory(prefix="runtime_tar_ok_") as temp_dir_raw:
+            destination_dir = Path(temp_dir_raw) / "extract"
+            destination_dir.mkdir()
+            tar_path = destination_dir / "runtime.tar"
+
+            with tarfile.open(tar_path, mode="w") as archive_file:
+                member = tarfile.TarInfo(name="bin/java")
+                payload = b"#!/bin/sh\necho ok\n"
+                member.size = len(payload)
+                archive_file.addfile(member, BytesIO(payload))
+
+            with tarfile.open(tar_path, mode="r") as archive_file:
+                _extract_tarfile_safely(archive_file, destination_dir)
+
+            self.assertTrue((destination_dir / "bin" / "java").exists())
+
+    def test_extract_tarfile_safely_rejects_too_many_entries(self) -> None:
+        """Más de 10.000 entradas debe cortarse como protección contra zip bomb."""
+        archive_file = MagicMock()
+        archive_file.getmembers.return_value = [
+            tarfile.TarInfo(name=f"file_{index}.txt") for index in range(10_001)
+        ]
+
+        with TemporaryDirectory(prefix="runtime_tar_limit_") as temp_dir_raw:
+            destination_dir = Path(temp_dir_raw) / "extract"
+            destination_dir.mkdir()
+
+            with self.assertRaises(RuntimeToolsError):
+                _extract_tarfile_safely(archive_file, destination_dir)

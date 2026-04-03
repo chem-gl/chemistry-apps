@@ -454,6 +454,25 @@ describe('SmileitComponent', () => {
       expect(() => component.openPatternCatalogModal()).not.toThrow();
       expect(() => component.closePatternCatalogModal()).not.toThrow();
     });
+
+    it('abre el dialog cuando el ref existe', () => {
+      const dialogElement = {
+        open: false,
+        showModal: vi.fn(),
+        close: vi.fn(),
+        setAttribute: vi.fn(),
+      } as unknown as HTMLDialogElement;
+
+      (
+        component as unknown as { patternCatalogDialogRef: { nativeElement: HTMLDialogElement } }
+      ).patternCatalogDialogRef = {
+        nativeElement: dialogElement,
+      };
+
+      component.openPatternCatalogModal();
+
+      expect(dialogElement.showModal).toHaveBeenCalledOnce();
+    });
   });
 
   describe('openPatternDetail y closePatternDetail', () => {
@@ -461,6 +480,25 @@ describe('SmileitComponent', () => {
       const pat = buildMockPattern('p-detail');
       component.openPatternDetail(pat);
       expect(component.selectedPatternForDetail()).toBe(pat);
+    });
+
+    it('openPatternDetail abre el dialog cuando el ref existe', () => {
+      const dialogElement = {
+        open: false,
+        showModal: vi.fn(),
+        close: vi.fn(),
+        setAttribute: vi.fn(),
+      } as unknown as HTMLDialogElement;
+
+      (
+        component as unknown as { patternDetailDialogRef: { nativeElement: HTMLDialogElement } }
+      ).patternDetailDialogRef = {
+        nativeElement: dialogElement,
+      };
+
+      component.openPatternDetail(buildMockPattern('p-dialog'));
+
+      expect(dialogElement.showModal).toHaveBeenCalledOnce();
     });
 
     it('closePatternDetail limpia el patrón seleccionado', () => {

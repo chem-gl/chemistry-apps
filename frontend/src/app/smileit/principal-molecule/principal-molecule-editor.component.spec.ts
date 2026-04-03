@@ -67,6 +67,46 @@ describe('PrincipalMoleculeEditorComponent', () => {
     expect(ketcherFrameElement).not.toBeNull();
   });
 
+  it('openSketchModifier uses an existing dialog reference when available', () => {
+    component.isKetcherReady = true;
+    const dialogElement = {
+      open: false,
+      showModal: vi.fn(),
+      close: vi.fn(),
+      removeAttribute: vi.fn(),
+      setAttribute: vi.fn(),
+    } as unknown as HTMLDialogElement;
+
+    (
+      component as unknown as { sketchModifierDialogRef: { nativeElement: HTMLDialogElement } }
+    ).sketchModifierDialogRef = {
+      nativeElement: dialogElement,
+    };
+
+    component.openSketchModifier();
+
+    expect(dialogElement.showModal).toHaveBeenCalledOnce();
+  });
+
+  it('closeSketchModifier closes an open dialog and clears validation state', () => {
+    const dialogElement = {
+      open: true,
+      close: vi.fn(),
+      removeAttribute: vi.fn(),
+    } as unknown as HTMLDialogElement;
+
+    (
+      component as unknown as { sketchModifierDialogRef: { nativeElement: HTMLDialogElement } }
+    ).sketchModifierDialogRef = {
+      nativeElement: dialogElement,
+    };
+
+    component.closeSketchModifier();
+
+    expect(dialogElement.close).toHaveBeenCalledOnce();
+    expect(component.sketchValidationError()).toBeNull();
+  });
+
   it('should emit principalSmilesChange when applying a valid sketch modifier', async () => {
     const emitSpy = vi.spyOn(component.principalSmilesChange, 'emit');
 

@@ -169,6 +169,69 @@ class PluginRegistryValidationTests(TestCase):
             PluginRegistry.register("duplicated-plugin")(second_plugin)
 
 
+class PluginRegistryExecutionTests(TestCase):
+    """Verifica despacho de plugins con distintas firmas de callback."""
+
+    def setUp(self) -> None:
+        self.original_plugins: dict[str, PluginSourceCallable] = dict(
+            PluginRegistry._plugins
+        )
+        self.original_plugin_sources: dict[str, str] = dict(
+            PluginRegistry._plugin_sources
+        )
+        PluginRegistry._plugins.clear()
+        PluginRegistry._plugin_sources.clear()
+
+    def tearDown(self) -> None:
+        PluginRegistry._plugins = self.original_plugins
+        PluginRegistry._plugin_sources = self.original_plugin_sources
+
+    def test_execute_supports_callbacks_and_control_flow(self) -> None:
+        progress_calls: list[tuple[int, str, str]] = []
+        log_calls: list[tuple[str, str, str, JSONMap | None]] = []
+        control_calls: list[str] = []
+
+        @PluginRegistry.register("four-arg-plugin")
+        def four_arg_plugin(
+            parameters: JSONMap,
+            progress_callback,
+            log_callback,
+            control_callback,
+        ) -> JSONMap:
+            progress_callback(50, "running", "Halfway")
+            log_callback("info", "tests.plugin", "Plugin executed", None)
+            control_calls.append(control_callback())
+            return {"echo": parameters, "mode": "four-arg"}
+
+        result = PluginRegistry.execute(
+            "four-arg-plugin",
+            {"sample": True},
+            progress_callback=lambda percentage, stage, message: progress_calls.append(
+                (percentage, stage, message)
+            ),
+            log_callback=lambda level, source, message, payload: log_calls.append(
+                (level, source, message, payload)
+            ),
+            control_callback=lambda: "pause",
+        )
+
+        self.assertEqual(result["mode"], "four-arg")
+        self.assertEqual(progress_calls, [(50, "running", "Halfway")])
+        self.assertEqual(log_calls[0][0], "info")
+        self.assertEqual(control_calls, ["pause"])
+
+    def test_register_same_source_is_idempotent(self) -> None:
+        def echo_plugin(parameters: JSONMap) -> JSONMap:
+            return {"echo": parameters}
+
+        PluginRegistry.register("echo-plugin")(echo_plugin)
+        PluginRegistry.register("echo-plugin")(echo_plugin)
+
+        result = PluginRegistry.execute("echo-plugin", {"value": 1})
+
+        self.assertEqual(result["echo"], {"value": 1})
+
+
 class ScientificAppRegistryValidationTests(TestCase):
     """Verifica unicidad de metadatos de app científica al levantar el sistema."""
 

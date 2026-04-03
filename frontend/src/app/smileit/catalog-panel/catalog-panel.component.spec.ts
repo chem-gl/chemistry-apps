@@ -347,6 +347,26 @@ describe('CatalogPanelComponent', () => {
     it('openCatalogStudioModal no lanza error sin ViewChild', () => {
       expect(() => component.openCatalogStudioModal()).not.toThrow();
     });
+
+    it('openCatalogStudioModal muestra el dialog cuando el ref existe', () => {
+      const dialogElement = {
+        open: false,
+        showModal: vi.fn(),
+        close: vi.fn(),
+        removeAttribute: vi.fn(),
+        setAttribute: vi.fn(),
+      } as unknown as HTMLDialogElement;
+
+      (
+        component as unknown as { catalogStudioDialogRef: { nativeElement: HTMLDialogElement } }
+      ).catalogStudioDialogRef = {
+        nativeElement: dialogElement,
+      };
+
+      component.openCatalogStudioModal();
+
+      expect(dialogElement.showModal).toHaveBeenCalledOnce();
+    });
   });
 
   describe('onCatalogSmilesKetcherLoaded', () => {
@@ -361,6 +381,47 @@ describe('CatalogPanelComponent', () => {
       mockWorkflow.isProcessing.set(true);
       expect(() => component.openCatalogSmilesSketcher()).not.toThrow();
       expect(component.isCatalogSmilesSketchLoading()).toBe(false);
+    });
+
+    it('abre el dialog y sincroniza el SMILES cuando el panel está listo', () => {
+      component.isCatalogSmilesSketcherReady.set(true);
+      const dialogElement = {
+        open: false,
+        showModal: vi.fn(),
+        close: vi.fn(),
+        removeAttribute: vi.fn(),
+        setAttribute: vi.fn(),
+      } as unknown as HTMLDialogElement;
+
+      (
+        component as unknown as {
+          catalogSmilesSketchDialogRef: { nativeElement: HTMLDialogElement };
+        }
+      ).catalogSmilesSketchDialogRef = {
+        nativeElement: dialogElement,
+      };
+
+      component.openCatalogSmilesSketcher();
+
+      expect(dialogElement.showModal).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('applyCatalogSmilesFromSketcher', () => {
+    it('marca error cuando el sketcher queda vacío', async () => {
+      mockWorkflow.catalogCreateSmiles.set('');
+
+      await component.applyCatalogSmilesFromSketcher();
+
+      expect(component.catalogSketchValidationError()).toContain('Draw one molecule');
+    });
+
+    it('marca error cuando el sketcher contiene múltiples fragmentos', async () => {
+      mockWorkflow.catalogCreateSmiles.set('CCO.c1ccccc1');
+
+      await component.applyCatalogSmilesFromSketcher();
+
+      expect(component.catalogSketchValidationError()).toContain('Only one molecule');
     });
   });
 

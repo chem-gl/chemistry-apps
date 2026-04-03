@@ -834,7 +834,65 @@ describe('JobsApiService', () => {
     statusReq.flush({ id: 'marcus-job-1', plugin_name: 'marcus', status: 'completed' });
   });
 
+  it('should inspect easy-rate inputs and normalize the response shape', () => {
+    const gaussianFile = new File(['gaussian'], 'job.log', { type: 'text/plain' });
+
+    service.inspectEasyRateInput('transition_state_file', gaussianFile).subscribe((inspection) => {
+      expect(inspection.sourceField).toBe('transition_state_file');
+      expect(inspection.executionCount).toBe(1);
+      expect(inspection.executions[0].sourceField).toBe('transition_state_file');
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/inspect-input/'),
+    );
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush({
+      source_field: 'transition_state_file',
+      original_filename: 'job.log',
+      parse_errors: [],
+      execution_count: 1,
+      default_execution_index: 0,
+      executions: [
+        {
+          source_field: 'transition_state_file',
+          original_filename: 'job.log',
+          execution_index: 0,
+          job_title: 'Job',
+          checkpoint_file: null,
+          charge: 0,
+          multiplicity: 1,
+          free_energy: null,
+          thermal_enthalpy: null,
+          zero_point_energy: null,
+          scf_energy: null,
+          temperature: null,
+          negative_frequencies: 0,
+          imaginary_frequency: null,
+          normal_termination: true,
+          is_opt_freq: false,
+          is_valid_for_role: true,
+          validation_errors: [],
+        },
+      ],
+    });
+  });
+
   it('should download easy-rate and marcus report artifacts with domain filenames', () => {
+    service.downloadEasyRateCsvReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend.csv');
+    });
+    const easyCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-csv/'),
+    );
+    expect(easyCsvReq.request.method).toBe('GET');
+    easyCsvReq.flush(new Blob(['csv'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend.csv"',
+      },
+    });
+
     service.downloadEasyRateLogReport('easy-1').subscribe((file) => {
       expect(file.filename).toBe('easy_rate_backend.log');
     });
@@ -872,6 +930,58 @@ describe('JobsApiService', () => {
       headers: {
         'content-disposition': 'attachment; filename="easy_rate_inputs.zip"',
       },
+    });
+
+    service.downloadSaScoreCsvReport('sa-1').subscribe((file) => {
+      expect(file.filename).toBe('sa_score_backend.csv');
+    });
+    const saCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/sa-score/jobs/sa-1/report-csv/'),
+    );
+    expect(saCsvReq.request.method).toBe('GET');
+    saCsvReq.flush(new Blob(['smiles,score'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="sa_score_backend.csv"',
+      },
+    });
+
+    service.downloadSaScoreCsvMethodReport('sa-1', 'rdkit').subscribe((file) => {
+      expect(file.filename).toBe('sa_score_backend_rdkit.csv');
+    });
+    const saMethodReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/sa-score/jobs/sa-1/report-csv-method/'),
+    );
+    expect(saMethodReq.request.method).toBe('GET');
+    saMethodReq.flush(new Blob(['smiles,score'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="sa_score_backend_rdkit.csv"',
+      },
+    });
+
+    service.downloadToxicityPropertiesCsvReport('tox-1').subscribe((file) => {
+      expect(file.filename).toBe('toxicity_backend.csv');
+    });
+    const toxCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/report-csv/'),
+    );
+    expect(toxCsvReq.request.method).toBe('GET');
+    toxCsvReq.flush(new Blob(['smiles,ld50'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="toxicity_backend.csv"',
+      },
+    });
+
+    service.getToxicityPropertiesJobStatus('tox-1').subscribe((job) => {
+      expect(job.id).toBe('tox-1');
+    });
+    const toxStatusReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/'),
+    );
+    expect(toxStatusReq.request.method).toBe('GET');
+    toxStatusReq.flush({
+      id: 'tox-1',
+      plugin_name: 'toxicity-properties',
+      status: 'completed',
     });
 
     service.downloadMarcusLogReport('marcus-1').subscribe((file) => {
@@ -912,5 +1022,115 @@ describe('JobsApiService', () => {
         'content-disposition': 'attachment; filename="marcus_inputs.zip"',
       },
     });
+  });
+
+  it('should dispatch molar fractions jobs for single and range modes', () => {
+    service
+      .dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'single',
+        phValue: 7.4,
+      })
+      .subscribe();
+
+    const singleReq = httpMock.expectOne(JOBS_LIST_URL);
+    expect(singleReq.request.method).toBe('POST');
+    expect(singleReq.request.body['plugin_name']).toBe('molar-fractions');
+    expect(singleReq.request.body['parameters']['ph_mode']).toBe('single');
+    expect(singleReq.request.body['parameters']['ph_value']).toBe(7.4);
+    singleReq.flush(makeScientificJob({ plugin_name: 'molar-fractions' }));
+
+    service
+      .dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'range',
+        phMin: 3.0,
+        phMax: 11.0,
+        phStep: 0.5,
+      })
+      .subscribe();
+
+    const rangeReq = httpMock.expectOne(JOBS_LIST_URL);
+    expect(rangeReq.request.method).toBe('POST');
+    expect(rangeReq.request.body['parameters']['ph_mode']).toBe('range');
+    expect(rangeReq.request.body['parameters']['ph_min']).toBe(3);
+    expect(rangeReq.request.body['parameters']['ph_max']).toBe(11);
+    expect(rangeReq.request.body['parameters']['ph_step']).toBe(0.5);
+    rangeReq.flush(makeScientificJob({ plugin_name: 'molar-fractions' }));
+  });
+
+  it('should dispatch tunnel jobs with mapped physical parameters', () => {
+    service
+      .dispatchTunnelJob({
+        reactionBarrierZpe: 12.5,
+        imaginaryFrequency: 1200,
+        reactionEnergyZpe: -3.2,
+        temperature: 298.15,
+        inputChangeEvents: [
+          {
+            fieldName: 'reactionBarrierZpe',
+            previousValue: 11.8,
+            newValue: 12.5,
+            changedAt: '2026-04-03T10:00:00Z',
+          },
+        ],
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne(JOBS_LIST_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body['plugin_name']).toBe('tunnel-effect');
+    expect(req.request.body['parameters']['reaction_barrier_zpe']).toBe(12.5);
+    expect(req.request.body['parameters']['input_change_events']).toHaveLength(1);
+    req.flush(makeScientificJob({ plugin_name: 'tunnel-effect' }));
+  });
+
+  it('should normalize pause, resume and cancel actions for jobs', () => {
+    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'calculator' });
+
+    service.pauseJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const pauseReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/pause/`);
+    pauseReq.flush({ detail: 'paused', job: controlJob });
+
+    service.resumeJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const resumeReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/resume/`);
+    resumeReq.flush({ detail: 'resumed', job: controlJob });
+
+    service.cancelJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const cancelReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/cancel/`);
+    cancelReq.flush({ detail: 'cancelled', job: controlJob });
+  });
+
+  it('should dispatch sa-score and toxicity jobs through generated clients', () => {
+    service
+      .dispatchSaScoreJob({
+        smiles: ['CCO'],
+        methods: ['rdkit'],
+      })
+      .subscribe();
+
+    const saReq = httpMock.expectOne((request) => request.url.includes('/api/sa-score/jobs/'));
+    expect(saReq.request.method).toBe('POST');
+    expect(saReq.request.body['version']).toBe('1.0.0');
+    saReq.flush({ id: 'sa-job' });
+
+    service
+      .dispatchToxicityPropertiesJob({
+        smiles: ['CCO'],
+      })
+      .subscribe();
+
+    const toxReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/'),
+    );
+    expect(toxReq.request.method).toBe('POST');
+    expect(toxReq.request.body['version']).toBe('1.0.0');
+    toxReq.flush({ id: 'tox-job' });
   });
 });
