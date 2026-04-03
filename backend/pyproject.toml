@@ -28,6 +28,8 @@ omit = [
     "config/wsgi.py",
     "config/asgi.py",
     "config/startup_production.py",
+    "config/celery.py",
+    "config/settings.py",
 ]
 
 [tool.coverage.report]
