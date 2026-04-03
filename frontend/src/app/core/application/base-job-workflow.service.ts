@@ -251,4 +251,38 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     this.activeSection.set('result');
     if (loadHistoryAfter) this.loadHistory();
   }
+
+  /**
+   * Patrón común para manejar la respuesta inmediata del dispatch de un job.
+   * Si el job ya está completado, extrae el resultado directamente.
+   * Si no, inicia el stream de progreso SSE.
+   *
+   * @param jobResponse Respuesta del API de creación del job
+   * @param extract     Función que extrae TResultData del jobResponse (null = payload inválido)
+   * @param errorLabel  Etiqueta para el mensaje de error si el payload es inválido
+   */
+  protected handleDispatchJobResponse<T extends { id: string; status?: string }>(
+    jobResponse: T,
+    extract: (job: T) => TResultData | null,
+    errorLabel: string,
+  ): void {
+    this.currentJobId.set(jobResponse.id);
+
+    if (jobResponse.status === 'completed') {
+      const immediateResult = extract(jobResponse);
+      if (immediateResult === null) {
+        this.activeSection.set('error');
+        this.errorMessage.set(`The completed job payload is invalid for ${errorLabel}.`);
+        return;
+      }
+      this.resultData.set(immediateResult);
+      this.loadHistoricalLogs(jobResponse.id);
+      this.activeSection.set('result');
+      this.loadHistory();
+      return;
+    }
+
+    this.activeSection.set('progress');
+    this.startProgressStream(jobResponse.id);
+  }
 }

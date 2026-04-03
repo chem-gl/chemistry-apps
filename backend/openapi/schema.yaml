@@ -197,6 +197,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/calculator/jobs/{id}/report-inputs/:
+    get:
+      operationId: calculator_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Calculator
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/calculator/jobs/{id}/report-log/:
     get:
       operationId: calculator_jobs_report_log_retrieve
@@ -382,7 +422,7 @@ paths:
       operationId: easy_rate_jobs_report_inputs_retrieve
       description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
         para reproducibilidad/reintento.
-      summary: Descargar Entradas Originales de Easy-rate
+      summary: Descargar Entradas Originales ZIP
       parameters:
       - in: path
         name: id
@@ -410,7 +450,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Easy-rate no encontrado.
+          description: Job no encontrado.
         '409':
           content:
             application/json:
@@ -1089,9 +1129,9 @@ paths:
   /api/marcus/jobs/{id}/report-inputs/:
     get:
       operationId: marcus_jobs_report_inputs_retrieve
-      description: Descarga ZIP con artefactos de entrada persistidos y manifest.json
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
         para reproducibilidad/reintento.
-      summary: Descargar Entradas Originales de Marcus
+      summary: Descargar Entradas Originales ZIP
       parameters:
       - in: path
         name: id
@@ -1119,7 +1159,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Job Marcus no encontrado.
+          description: Job no encontrado.
         '409':
           content:
             application/json:
@@ -1333,6 +1373,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/molar-fractions/jobs/{id}/report-inputs/:
+    get:
+      operationId: molar_fractions_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/molar-fractions/jobs/{id}/report-log/:
     get:
       operationId: molar_fractions_jobs_report_log_retrieve
@@ -1527,6 +1607,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/random-numbers/jobs/{id}/report-inputs/:
+    get:
+      operationId: random_numbers_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - RandomNumbers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/random-numbers/jobs/{id}/report-log/:
     get:
       operationId: random_numbers_jobs_report_log_retrieve
@@ -1767,6 +1887,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/sa-score/jobs/{id}/report-inputs/:
+    get:
+      operationId: sa_score_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/sa-score/jobs/{id}/report-log/:
     get:
       operationId: sa_score_jobs_report_log_retrieve
@@ -2143,6 +2303,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/smileit/jobs/{id}/report-inputs/:
+    get:
+      operationId: smileit_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/smileit/jobs/{id}/report-log/:
     get:
       operationId: smileit_jobs_report_log_retrieve
@@ -2709,6 +2909,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/toxicity-properties/jobs/{id}/report-inputs/:
+    get:
+      operationId: toxicity_properties_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/toxicity-properties/jobs/{id}/report-log/:
     get:
       operationId: toxicity_properties_jobs_report_log_retrieve
@@ -2912,6 +3152,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/tunnel/jobs/{id}/report-inputs/:
+    get:
+      operationId: tunnel_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
   /api/tunnel/jobs/{id}/report-log/:
     get:
       operationId: tunnel_jobs_report_log_retrieve

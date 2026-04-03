@@ -1,0 +1,47 @@
+<!-- job-artifact-export-panel.component.html: Panel de exportación de artefactos y mensajes de error de un job científico. -->
+
+@if (activeSection === 'result') {
+@if (fileDescriptors.length > 0) {
+<div class="result-section">
+    <h4>Persisted Input Files</h4>
+    <div class="file-descriptors-list">
+        @for (fd of fileDescriptors; track fd.fieldName) {
+        <div class="fd-item">
+            <span class="fd-field">{{ fd.fieldName }}</span>
+            <span class="fd-name">{{ fd.originalFilename }}</span>
+            <span class="fd-size">{{ formatBytes(fd.sizeBytes) }}</span>
+        </div>
+        }
+    </div>
+</div>
+}
+
+<div class="action-row export-row">
+    <button class="btn-secondary" (click)="exportCsv.emit()" [disabled]="!canExport">
+        {{ isExporting ? 'Exporting...' : 'Export CSV' }}
+    </button>
+    <button class="btn-secondary" (click)="exportLog.emit()" [disabled]="!canExport">
+        Export LOG
+    </button>
+    <button class="btn-secondary" (click)="exportInputsZip.emit()" [disabled]="!canExport">
+        Download Inputs ZIP
+    </button>
+</div>
+
+@if (exportErrorMessage) {
+<p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+}
+}
+
+@if (activeSection === 'error') {
+<div class="error-block">
+    @if (errorMessage) {
+    <p class="error-message" role="alert">{{ errorMessage }}</p>
+    }
+    @if (currentJobId !== null) {
+    <button class="btn-secondary" (click)="exportError.emit()" [disabled]="!canExport">
+        Download Error Report
+    </button>
+    }
+</div>
+}

@@ -140,6 +140,14 @@ export interface SmileitServiceInterface {
     smileitJobsReportImagesZipRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/smileit/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    smileitJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Descargar Reporte LOG
      * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/smileit/jobs/{id}/report-log/

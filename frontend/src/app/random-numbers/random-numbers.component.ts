@@ -9,6 +9,7 @@ import { ScientificJobView } from '../core/api/jobs-api.service';
 import { RandomNumbersWorkflowService } from '../core/application/random-numbers-workflow.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-random-numbers',
@@ -23,14 +24,7 @@ export class RandomNumbersComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {

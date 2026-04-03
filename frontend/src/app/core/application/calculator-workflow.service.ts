@@ -96,18 +96,7 @@ export class CalculatorWorkflowService extends BaseJobWorkflowService<Calculator
 
     this.jobsApiService.dispatchCalculatorJob(jobParams).subscribe({
       next: (jobResponse: CalculatorJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          this.resultData.set(jobResponse);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(jobResponse, (job) => job, 'calculator');
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');

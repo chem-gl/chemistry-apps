@@ -14,9 +14,12 @@ import {
 } from '../core/api/jobs-api.service';
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
 import { SOLVENT_OPTIONS } from '../core/application/easy-rate-workflow.types';
+import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
+import { JobArtifactExportPanelComponent } from '../core/shared/components/job-artifact-export-panel/job-artifact-export-panel.component';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.utils';
 
 interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
@@ -33,6 +36,8 @@ interface EasyRateInputSlotView {
     JobProgressCardComponent,
     JobLogsPanelComponent,
     JobHistoryTableComponent,
+    DiffusionFieldsComponent,
+    JobArtifactExportPanelComponent,
   ],
   providers: [EasyRateWorkflowService],
   templateUrl: './easy-rate.component.html',
@@ -78,13 +83,7 @@ export class EasyRateComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {

@@ -83,26 +83,11 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
 
         this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
           next: (jobResponse: SaScoreJobResponseView) => {
-            this.currentJobId.set(jobResponse.id);
-
-            if (jobResponse.status === 'completed') {
-              const immediateResultData: SaScoreResultData | null =
-                this.extractResultData(jobResponse);
-              if (immediateResultData === null) {
-                this.activeSection.set('error');
-                this.errorMessage.set('The completed job payload is invalid for SA score.');
-                return;
-              }
-
-              this.resultData.set(immediateResultData);
-              this.loadHistoricalLogs(jobResponse.id);
-              this.activeSection.set('result');
-              this.loadHistory();
-              return;
-            }
-
-            this.activeSection.set('progress');
-            this.startProgressStream(jobResponse.id);
+            this.handleDispatchJobResponse(
+              jobResponse,
+              (job) => this.extractResultData(job),
+              'SA score',
+            );
           },
           error: (dispatchError: Error) => {
             this.activeSection.set('error');

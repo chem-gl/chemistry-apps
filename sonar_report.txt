@@ -1,231 +1,197 @@
+Problema 1
+Archivo: chemistry-apps:backend/apps/core/base_router.py
+
+Problema:
+Either remove or fill this block of code.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S108
+Severidad: MAJOR
+Línea: 52
+
+Cómo solucionarlo:
+An empty code block is confusing. It will require some effort from maintainers to determine if it is intentional or indicates the implementation is
+incomplete.
+
+# Noncompliant: is the block empty on purpose, or is code missing?
+for i in range(3):
+    pass
+
+Removing or filling the empty code blocks takes away ambiguity and generally results in a more straightforward and less surprising code.
+Exceptions
+The rule ignores code blocks that contain comments.
+
+----------------------------------------
+
+Problema 2
+Archivo: chemistry-apps:backend/apps/core/runtime_tools.py
+
+Problema:
+Refactor this function to reduce its Cognitive Complexity from 21 to the 15 allowed.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S3776
+Severidad: CRITICAL
+Línea: 340
+
+Cómo solucionarlo:
+Reducing cognitive complexity can be challenging.
+  
+  Here are a few suggestions:
+
+  Extract complex conditions in a new function.
+    
+    Mixed operators in condition will increase complexity. Extracting the condition in a new function with an appropriate name will reduce cognitive
+    load.
+  Break down large functions.
+    
+    Large functions can be hard to understand and maintain. If a function is doing too many things, consider breaking it down into smaller, more
+    manageable functions. Each function should have a single responsibility.
+  Avoid deep nesting by returning early.
+    
+    To avoid the nesting of conditions, process exceptional cases first and return early.
+
+Extraction of a complex condition in a new function.
+Noncompliant code example
+The code is using a complex condition and has a cognitive cost of 5.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if ((user.is_active and    # +1 (if) +1 (nested) +1 (multiple conditions)
+            user.has_profile) or   # +1 (mixed operator)
+            user.age &gt; 18 ):
+            user.process()
+
+Compliant solution
+Even if the cognitive complexity of the whole program did not change, it is easier for a reader to understand the code of the
+process_eligible_users function, which now only has a cognitive cost of 3.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if is_eligible_user(user): # +1 (if) +1 (nested)
+            user.process()
+
+def is_eligible_user(user):
+    return ((user.is_active and user.has_profile) or user.age &gt; 18) # +1 (multiple conditions) +1 (mixed operators)
+
+Break down large functions.
+Noncompliant code example
+Note: The code is simplified here, to illustrate the purpose. Please imagine there is more happening in the process.
+  
+The bellow code has a cognitive complexity score of 8.
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process active user with profile
+        else:                        # +1 (else)
+            ... # process active user without profile
+    else:                            # +1 (else)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process inactive user with profile
+        else:                        # +1 (else)
+            ... # process inactive user without profile
+
+This function could be refactored into smaller functions: The complexity is spread over multiple functions and the breaks in flow are no more
+nested.
+  
+  The process_user has now a complexity score of two.
+Compliant solution
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        process_active_user(user)
+    else:                            # +1 (else)
+        process_inactive_user(user)
+
+def process_active_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process active user with profile
+    else:                            # +1 (else)
+        ... # process active user without profile
+
+def process_inactive_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process inactive user with profile
+    else:                            # +1 (else)
+        ... # process inactive user without profile
+
+Avoid deep nesting by returning early.
+Noncompliant code example
+The below code has a cognitive complexity of 6.
+
+def calculate(data):
+    if data is not None:  # +1 (if)
+        total = 0
+        for item in data: # +1 (for) +1 (nested)
+            if item &gt; 0:  # +1 (if)  +2 (nested)
+                total += item * 2
+        return total
+
+Compliant solution
+Checking for the edge case first flattens the if statements and reduces the cognitive complexity to 4.
+
+def calculate(data):
+    if data is None:      # +1 (if)
+        return None
+    total = 0
+    for item in data:     # +1 (for)
+        if item &gt; 0:      # +1 (if) +1 (nested)
+            total += item * 2
+    return total
+
+Pitfalls
+As this code is complex, ensure that you have unit tests that cover the code before refactoring.
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=41 | líneas=956 | densidad=2.0%
+Resumen del proyecto: bloques=6 | líneas=160 | densidad=0.3%
 
 Archivos con densidad de duplicación > 3.5%:
-  - frontend/src/app/core/shared/scientific-apps.config.ts | densidad=44.0% | líneas=44 | bloques=2
-  - frontend/src/app/toxicity-properties/toxicity-properties.component.html | densidad=35.8% | líneas=72 | bloques=1
-  - frontend/src/app/sa-score/sa-score.component.html | densidad=33.5% | líneas=73 | bloques=1
-  - backend/apps/marcus/routers.py | densidad=32.7% | líneas=82 | bloques=2
-  - frontend/src/app/marcus/marcus.component.html | densidad=26.9% | líneas=101 | bloques=2
-  - backend/apps/random_numbers/routers.py | densidad=23.7% | líneas=31 | bloques=3
-  - backend/apps/easy_rate/routers.py | densidad=22.8% | líneas=82 | bloques=2
-  - frontend/src/app/easy-rate/easy-rate.component.html | densidad=22.0% | líneas=101 | bloques=2
-  - backend/apps/molar_fractions/routers.py | densidad=21.8% | líneas=31 | bloques=3
-  - backend/apps/calculator/routers.py | densidad=19.0% | líneas=27 | bloques=2
-  - backend/apps/tunnel/routers.py | densidad=18.4% | líneas=25 | bloques=1
-  - frontend/src/app/molar-fractions/molar-fractions.component.ts | densidad=17.5% | líneas=22 | bloques=2
-  - frontend/src/app/random-numbers/random-numbers.component.ts | densidad=15.7% | líneas=18 | bloques=1
-  - frontend/src/app/core/application/calculator-workflow.service.ts | densidad=13.2% | líneas=20 | bloques=1
-  - frontend/src/app/core/application/sa-score-workflow.service.ts | densidad=9.9% | líneas=22 | bloques=1
-  - backend/apps/sa_score/routers.py | densidad=9.4% | líneas=27 | bloques=2
-  - frontend/src/app/easy-rate/easy-rate.component.ts | densidad=8.6% | líneas=21 | bloques=2
-  - frontend/src/app/core/application/molar-fractions-workflow.service.ts | densidad=7.6% | líneas=27 | bloques=3
-  - backend/apps/easy_rate/plugin.py | densidad=7.5% | líneas=21 | bloques=1
-  - frontend/src/app/core/application/tunnel-workflow.service.ts | densidad=6.9% | líneas=23 | bloques=2
-  - frontend/src/app/core/application/marcus-workflow.service.ts | densidad=6.6% | líneas=21 | bloques=1
-  - frontend/src/app/core/application/random-numbers-workflow.service.ts | densidad=5.8% | líneas=23 | bloques=2
-  - backend/apps/marcus/plugin.py | densidad=5.4% | líneas=21 | bloques=1
-  - frontend/src/app/core/application/easy-rate-workflow.service.ts | densidad=3.9% | líneas=21 | bloques=1
-
-Archivo: frontend/src/app/core/application/calculator-workflow.service.ts
-Duplicated blocks: 1 | Duplicated lines: 20 | Density: 13.2%
-  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 103-103 | tamaño 20
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 92-92 | tamaño 19
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/easy-rate-workflow.service.ts
-Duplicated blocks: 1 | Duplicated lines: 21 | Density: 3.9%
-  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 243-243 | tamaño 21
-  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 159-159 | tamaño 21
-----------------------------------------
+  - backend/apps/marcus/routers.py | densidad=21.1% | líneas=36 | bloques=1
+  - frontend/src/app/marcus/marcus.component.ts | densidad=14.9% | líneas=23 | bloques=1
+  - backend/apps/easy_rate/routers.py | densidad=12.9% | líneas=36 | bloques=1
+  - frontend/src/app/easy-rate/easy-rate.component.ts | densidad=9.4% | líneas=23 | bloques=1
+  - frontend/src/app/marcus/marcus.component.html | densidad=6.8% | líneas=21 | bloques=1
+  - frontend/src/app/easy-rate/easy-rate.component.html | densidad=5.4% | líneas=21 | bloques=1
 
 Archivo: frontend/src/app/easy-rate/easy-rate.component.html
-Duplicated blocks: 2 | Duplicated lines: 101 | Density: 22.0%
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 223-223 | tamaño 42
-  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 173-173 | tamaño 42
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 393-393 | tamaño 59
-  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 310-310 | tamaño 59
+Duplicated blocks: 1 | Duplicated lines: 21 | Density: 5.4%
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 363-363 | tamaño 21
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 280-280 | tamaño 21
 ----------------------------------------
 
 Archivo: frontend/src/app/easy-rate/easy-rate.component.ts
-Duplicated blocks: 2 | Duplicated lines: 21 | Density: 8.6%
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 80-80 | tamaño 17
-  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 80-80 | tamaño 21
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 22
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/marcus-workflow.service.ts
-Duplicated blocks: 1 | Duplicated lines: 21 | Density: 6.6%
-  - chemistry-apps:frontend/src/app/core/application/marcus-workflow.service.ts | líneas 159-159 | tamaño 21
-  - chemistry-apps:frontend/src/app/core/application/easy-rate-workflow.service.ts | líneas 243-243 | tamaño 21
+Duplicated blocks: 1 | Duplicated lines: 23 | Density: 9.4%
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 85-85 | tamaño 23
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.ts | líneas 41-41 | tamaño 23
 ----------------------------------------
 
 Archivo: frontend/src/app/marcus/marcus.component.html
-Duplicated blocks: 2 | Duplicated lines: 101 | Density: 26.9%
-  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 173-173 | tamaño 42
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 223-223 | tamaño 42
-  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 310-310 | tamaño 59
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 393-393 | tamaño 59
+Duplicated blocks: 1 | Duplicated lines: 21 | Density: 6.8%
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.html | líneas 280-280 | tamaño 21
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.html | líneas 363-363 | tamaño 21
 ----------------------------------------
 
-Archivo: frontend/src/app/core/application/molar-fractions-workflow.service.ts
-Duplicated blocks: 3 | Duplicated lines: 27 | Density: 7.6%
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 90-90 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 92-92 | tamaño 19
-  - chemistry-apps:frontend/src/app/core/application/calculator-workflow.service.ts | líneas 103-103 | tamaño 20
-----------------------------------------
-
-Archivo: frontend/src/app/molar-fractions/molar-fractions.component.ts
-Duplicated blocks: 2 | Duplicated lines: 22 | Density: 17.5%
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 22
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 80-80 | tamaño 21
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
-  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 80-80 | tamaño 17
-----------------------------------------
-
-Archivo: backend/apps/easy_rate/plugin.py
-Duplicated blocks: 1 | Duplicated lines: 21 | Density: 7.5%
-  - chemistry-apps:backend/apps/easy_rate/plugin.py | líneas 138-138 | tamaño 21
-  - chemistry-apps:backend/apps/marcus/plugin.py | líneas 49-49 | tamaño 21
-----------------------------------------
-
-Archivo: backend/apps/marcus/plugin.py
-Duplicated blocks: 1 | Duplicated lines: 21 | Density: 5.4%
-  - chemistry-apps:backend/apps/marcus/plugin.py | líneas 49-49 | tamaño 21
-  - chemistry-apps:backend/apps/easy_rate/plugin.py | líneas 138-138 | tamaño 21
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/random-numbers-workflow.service.ts
-Duplicated blocks: 2 | Duplicated lines: 23 | Density: 5.8%
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 90-90 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 22
-----------------------------------------
-
-Archivo: frontend/src/app/random-numbers/random-numbers.component.ts
-Duplicated blocks: 1 | Duplicated lines: 18 | Density: 15.7%
-  - chemistry-apps:frontend/src/app/random-numbers/random-numbers.component.ts | líneas 25-25 | tamaño 18
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions.component.ts | líneas 30-30 | tamaño 18
-  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 80-80 | tamaño 17
-----------------------------------------
-
-Archivo: backend/apps/molar_fractions/routers.py
-Duplicated blocks: 3 | Duplicated lines: 31 | Density: 21.8%
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 108-108 | tamaño 31
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 97-97 | tamaño 31
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
-  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
-----------------------------------------
-
-Archivo: backend/apps/random_numbers/routers.py
-Duplicated blocks: 3 | Duplicated lines: 31 | Density: 23.7%
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 97-97 | tamaño 31
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 108-108 | tamaño 31
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
-  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
-----------------------------------------
-
-Archivo: backend/apps/calculator/routers.py
-Duplicated blocks: 2 | Duplicated lines: 27 | Density: 19.0%
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 113-113 | tamaño 27
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 163-163 | tamaño 27
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
+Archivo: frontend/src/app/marcus/marcus.component.ts
+Duplicated blocks: 1 | Duplicated lines: 23 | Density: 14.9%
+  - chemistry-apps:frontend/src/app/marcus/marcus.component.ts | líneas 41-41 | tamaño 23
+  - chemistry-apps:frontend/src/app/easy-rate/easy-rate.component.ts | líneas 85-85 | tamaño 23
 ----------------------------------------
 
 Archivo: backend/apps/easy_rate/routers.py
-Duplicated blocks: 2 | Duplicated lines: 82 | Density: 22.8%
-  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 248-248 | tamaño 60
-  - chemistry-apps:backend/apps/marcus/routers.py | líneas 140-140 | tamaño 60
-  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 337-337 | tamaño 22
-  - chemistry-apps:backend/apps/marcus/routers.py | líneas 229-229 | tamaño 22
+Duplicated blocks: 1 | Duplicated lines: 36 | Density: 12.9%
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 241-241 | tamaño 36
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 133-133 | tamaño 36
 ----------------------------------------
 
 Archivo: backend/apps/marcus/routers.py
-Duplicated blocks: 2 | Duplicated lines: 82 | Density: 32.7%
-  - chemistry-apps:backend/apps/marcus/routers.py | líneas 140-140 | tamaño 60
-  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 248-248 | tamaño 60
-  - chemistry-apps:backend/apps/marcus/routers.py | líneas 229-229 | tamaño 22
-  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 337-337 | tamaño 22
-----------------------------------------
-
-Archivo: backend/apps/tunnel/routers.py
-Duplicated blocks: 1 | Duplicated lines: 25 | Density: 18.4%
-  - chemistry-apps:backend/apps/tunnel/routers.py | líneas 108-108 | tamaño 25
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 103-103 | tamaño 25
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 114-114 | tamaño 25
-----------------------------------------
-
-Archivo: backend/apps/sa_score/routers.py
-Duplicated blocks: 2 | Duplicated lines: 27 | Density: 9.4%
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 163-163 | tamaño 27
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 113-113 | tamaño 27
-  - chemistry-apps:backend/apps/sa_score/routers.py | líneas 164-164 | tamaño 24
-  - chemistry-apps:backend/apps/random_numbers/routers.py | líneas 100-100 | tamaño 24
-  - chemistry-apps:backend/apps/molar_fractions/routers.py | líneas 111-111 | tamaño 24
-  - chemistry-apps:backend/apps/calculator/routers.py | líneas 114-114 | tamaño 24
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/sa-score-workflow.service.ts
-Duplicated blocks: 1 | Duplicated lines: 22 | Density: 9.9%
-  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 90-90 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 22
-----------------------------------------
-
-Archivo: frontend/src/app/sa-score/sa-score.component.html
-Duplicated blocks: 1 | Duplicated lines: 73 | Density: 33.5%
-  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 145-145 | tamaño 73
-  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 129-129 | tamaño 72
-----------------------------------------
-
-Archivo: frontend/src/app/core/shared/scientific-apps.config.ts
-Duplicated blocks: 2 | Duplicated lines: 44 | Density: 44.0%
-  - chemistry-apps:frontend/src/app/core/shared/scientific-apps.config.ts | líneas 48-48 | tamaño 37
-  - chemistry-apps:frontend/src/app/core/shared/scientific-apps.config.ts | líneas 55-55 | tamaño 37
-----------------------------------------
-
-Archivo: frontend/src/app/toxicity-properties/toxicity-properties.component.html
-Duplicated blocks: 1 | Duplicated lines: 72 | Density: 35.8%
-  - chemistry-apps:frontend/src/app/toxicity-properties/toxicity-properties.component.html | líneas 129-129 | tamaño 72
-  - chemistry-apps:frontend/src/app/sa-score/sa-score.component.html | líneas 145-145 | tamaño 73
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/tunnel-workflow.service.ts
-Duplicated blocks: 2 | Duplicated lines: 23 | Density: 6.9%
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 23
-  - chemistry-apps:frontend/src/app/core/application/tunnel-workflow.service.ts | líneas 98-98 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/molar-fractions-workflow.service.ts | líneas 84-84 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/sa-score-workflow.service.ts | líneas 90-90 | tamaño 22
-  - chemistry-apps:frontend/src/app/core/application/random-numbers-workflow.service.ts | líneas 100-100 | tamaño 22
+Duplicated blocks: 1 | Duplicated lines: 36 | Density: 21.1%
+  - chemistry-apps:backend/apps/marcus/routers.py | líneas 133-133 | tamaño 36
+  - chemistry-apps:backend/apps/easy_rate/routers.py | líneas 241-241 | tamaño 36
 ----------------------------------------
 
 === Security Hotspots (SonarQube) ===
@@ -235,7 +201,7 @@ Archivo: chemistry-apps:frontend/src/app/core/shared/smiles-molecules-base.compo
 Línea: 256
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -278,7 +244,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.com
 Línea: 256
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -321,7 +287,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/catalog-panel/catalog-panel.com
 Línea: 280
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -364,7 +330,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/generation-result-panel/generat
 Línea: 211
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -407,7 +373,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 Línea: 360
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -450,7 +416,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 Línea: 400
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -493,7 +459,7 @@ Archivo: chemistry-apps:frontend/src/app/smileit/smileit.component.ts
 Línea: 404
 Regla: typescript:S6268
 Probabilidad: Alta
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
    Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
@@ -536,7 +502,7 @@ Archivo: chemistry-apps:backend/apps/random_numbers/plugin.py
 Línea: 289
 Regla: python:S2245
 Probabilidad: Media
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
   Only use random number generators which are recommended by
@@ -563,7 +529,7 @@ Archivo: chemistry-apps:backend/apps/core/runtime_tools.py
 Línea: 316
 Regla: python:S5042
 Probabilidad: Baja
-Estado: TO_REVIEW
+Estado: REVIEWED
 Descripción: Recommended Secure Coding Practices
 
   Define and control the ratio between compressed and uncompressed data, in general the data compression ratio for most of the legit archives is 1

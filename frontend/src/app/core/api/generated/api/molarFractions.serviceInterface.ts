@@ -49,6 +49,14 @@ export interface MolarFractionsServiceInterface {
     molarFractionsJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/molar-fractions/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    molarFractionsJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Descargar Reporte LOG
      * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/molar-fractions/jobs/{id}/report-log/

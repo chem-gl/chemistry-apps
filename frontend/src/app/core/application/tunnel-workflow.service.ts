@@ -90,27 +90,12 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
       })
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
-          this.currentJobId.set(jobResponse.id);
           this.syncInputsFromJobParameters(jobResponse);
-
-          if (jobResponse.status === 'completed') {
-            const immediateResultData: TunnelResultData | null =
-              this.extractResultData(jobResponse);
-            if (immediateResultData === null) {
-              this.activeSection.set('error');
-              this.errorMessage.set('The completed job payload is invalid for tunnel effect.');
-              return;
-            }
-
-            this.resultData.set(immediateResultData);
-            this.loadHistoricalLogs(jobResponse.id);
-            this.activeSection.set('result');
-            this.loadHistory();
-            return;
-          }
-
-          this.activeSection.set('progress');
-          this.startProgressStream(jobResponse.id);
+          this.handleDispatchJobResponse(
+            jobResponse,
+            (job) => this.extractResultData(job),
+            'tunnel effect',
+          );
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');

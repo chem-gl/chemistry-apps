@@ -236,24 +236,11 @@ export class EasyRateWorkflowService extends BaseJobWorkflowService<EasyRateResu
 
     this.jobsApiService.dispatchEasyRateJob(params).subscribe({
       next: (jobResponse: EasyRateJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          const immediateResult: EasyRateResultData | null = extractEasyRateResultData(jobResponse);
-          if (immediateResult === null) {
-            this.activeSection.set('error');
-            this.errorMessage.set('Job completed immediately but payload is invalid.');
-            return;
-          }
-          this.resultData.set(immediateResult);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(
+          jobResponse,
+          (job) => extractEasyRateResultData(job),
+          'Easy-rate',
+        );
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');

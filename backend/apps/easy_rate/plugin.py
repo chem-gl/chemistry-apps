@@ -14,7 +14,10 @@ from typing import cast
 
 from libs.gaussian_log_parser.parsers import GaussianLogParser
 
-from apps.core.artifacts import ScientificInputArtifactStorageService
+from apps.core.artifacts import (
+    ScientificInputArtifactStorageService,
+    normalize_file_descriptors,
+)
 from apps.core.models import ScientificJobInputArtifact
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
@@ -135,24 +138,9 @@ def _load_structures_from_artifacts(
 
 def _build_easy_rate_parameters(parameters: JSONMap) -> EasyRateJobParameters:
     """Normaliza parámetros serializados persistidos del job Easy-rate."""
-    file_descriptors_raw = parameters.get("file_descriptors", [])
-    if not isinstance(file_descriptors_raw, list):
-        raise ValueError("file_descriptors debe ser una lista.")
-
-    normalized_file_descriptors: list[dict[str, str | int]] = []
-    for descriptor in file_descriptors_raw:
-        if not isinstance(descriptor, dict):
-            raise ValueError("Cada descriptor de archivo debe ser un objeto.")
-
-        normalized_file_descriptors.append(
-            {
-                "field_name": str(descriptor.get("field_name", "")),
-                "original_filename": str(descriptor.get("original_filename", "")),
-                "content_type": str(descriptor.get("content_type", "")),
-                "sha256": str(descriptor.get("sha256", "")),
-                "size_bytes": int(descriptor.get("size_bytes", 0)),
-            }
-        )
+    normalized_file_descriptors = normalize_file_descriptors(
+        parameters.get("file_descriptors", [])
+    )
 
     return {
         "title": str(parameters.get("title", "Title")),

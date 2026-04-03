@@ -303,8 +303,8 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
     }
 
     /**
-     * Descargar Entradas Originales de Marcus
-     * Descarga ZIP con artefactos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
      * @endpoint get /api/marcus/jobs/{id}/report-inputs/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

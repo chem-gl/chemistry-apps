@@ -12,6 +12,7 @@ import {
 } from '../core/application/molar-fractions-workflow.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-molar-fractions',
@@ -28,14 +29,7 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
   readonly pkaCountOptions: number[] = [1, 2, 3, 4, 5, 6];
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {

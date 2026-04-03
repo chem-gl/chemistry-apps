@@ -152,24 +152,7 @@ export class MarcusWorkflowService extends BaseJobWorkflowService<MarcusResultDa
 
     this.jobsApiService.dispatchMarcusJob(params).subscribe({
       next: (jobResponse: MarcusJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          const immediateResult: MarcusResultData | null = this.extractResultData(jobResponse);
-          if (immediateResult === null) {
-            this.activeSection.set('error');
-            this.errorMessage.set('Job completed immediately but payload is invalid.');
-            return;
-          }
-          this.resultData.set(immediateResult);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(jobResponse, (job) => this.extractResultData(job), 'Marcus');
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');

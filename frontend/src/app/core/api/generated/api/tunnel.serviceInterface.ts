@@ -49,6 +49,14 @@ export interface TunnelServiceInterface {
     tunnelJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/tunnel/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    tunnelJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Descargar Reporte LOG
      * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
      * @endpoint get /api/tunnel/jobs/{id}/report-log/

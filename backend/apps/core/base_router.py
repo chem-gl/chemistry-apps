@@ -3,6 +3,7 @@
 Objetivo del archivo:
 - Centralizar los endpoints comunes (retrieve, report-csv, report-log, report-error)
   que se repiten idénticamente en TODAS las apps científicas.
+- Proveer helpers para el patrón submit_result, report-inputs y persistencia de artefactos.
 - Reducir cada router de app a solo: create() + build_csv_content() específicos.
 
 Cómo se usa:
@@ -13,10 +14,15 @@ Cómo se usa:
 3. Implementar build_csv_content(job) retornando el CSV como str.
 4. Implementar create() con la lógica de validación y dispatch propia de la app.
 5. Los endpoints retrieve, report-csv, report-log y report-error quedan heredados.
+6. Usar handle_submit_result() para eliminar el patrón duplicado de submit_result.
+7. Apps con artefactos de archivo heredan report_inputs() y usan persist_artifacts_and_dispatch().
 """
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
@@ -30,6 +36,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from .artifacts import ScientificInputArtifactStorageService
 from .models import ScientificJob
 from .reporting import (
     build_download_filename,
@@ -39,6 +46,10 @@ from .reporting import (
     validate_job_for_csv_report,
 )
 from .schemas import ErrorResponseSerializer
+from .types import DomainError, JobHandle, JSONMap, Result
+
+if TYPE_CHECKING:
+    pass
 
 
 class ScientificAppViewSetMixin:
@@ -211,3 +222,136 @@ class ScientificAppViewSetMixin:
             filename=filename,
             content_type="text/plain; charset=utf-8",
         )
+
+    # ── Helpers para eliminar duplicación en routers concretos ────────
+
+    def handle_submit_result(
+        self,
+        submit_result: Result[JobHandle[JSONMap], DomainError],
+        response_serializer_class: type[serializers.Serializer],
+    ) -> Response:
+        """Procesa el resultado de DeclarativeJobAPI.submit_job() y retorna la Response HTTP.
+
+        Elimina el bloque de 24+ líneas duplicado en cada router de app simple.
+        Retorna 503 si falla el submit, 201 con el job serializado si tiene éxito.
+        """
+        if submit_result.is_failure():
+            error_message: str = submit_result.fold(
+                on_failure=lambda error_value: str(error_value),
+                on_success=lambda _: "Error desconocido al crear el job.",
+            )
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job_handle = submit_result.get_or_else(None)
+        if job_handle is None:
+            return Response(
+                {"detail": "No se pudo obtener el handle del job creado."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job: ScientificJob = get_object_or_404(
+            ScientificJob,
+            pk=job_handle.job_id,
+            plugin_name=self.plugin_name,
+        )
+        response_serializer = response_serializer_class(job)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    def persist_artifacts_and_dispatch(
+        self,
+        created_job: ScientificJob,
+        uploaded_files: list[tuple[str, UploadedFile]],
+        job_handle: JobHandle[JSONMap],
+    ) -> Response | None:
+        """Persiste archivos de entrada en DB y despacha el job al broker.
+
+        Retorna None si todo fue correcto.
+        Retorna Response de error 400 si falla la persistencia de artefactos
+        (y marca el job como failed).
+        Elimina el bloque de 60+ líneas duplicado entre easy_rate y marcus.
+        """
+        artifact_storage_service = ScientificInputArtifactStorageService()
+        try:
+            for field_name, uploaded_file in uploaded_files:
+                artifact_storage_service.store_uploaded_file(
+                    job=created_job,
+                    uploaded_file=uploaded_file,
+                    field_name=field_name,
+                    role="input",
+                )
+        except Exception as error_value:
+            created_job.status = "failed"
+            created_job.error_trace = str(error_value)
+            created_job.progress_percentage = 100
+            created_job.progress_stage = "failed"
+            created_job.progress_message = "Error al persistir archivos de entrada."
+            created_job.save(
+                update_fields=[
+                    "status",
+                    "error_trace",
+                    "progress_percentage",
+                    "progress_stage",
+                    "progress_message",
+                    "updated_at",
+                ]
+            )
+            return Response(
+                {"detail": "No fue posible persistir los archivos de entrada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Despachar al broker ahora que los artefactos están persistidos
+        job_handle.dispatch_if_pending().run()
+        return None
+
+    @extend_schema(
+        summary="Descargar Entradas Originales ZIP",
+        description=(
+            "Descarga ZIP con todos los archivos de entrada persistidos y manifest.json "
+            "para reproducibilidad/reintento."
+        ),
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description="Archivo ZIP con entradas persistidas del job.",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+            409: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="No existen artefactos de entrada persistidos.",
+            ),
+        },
+    )
+    @action(detail=True, methods=["get"], url_path="report-inputs")
+    def report_inputs(
+        self, request: Request, id: str | None = None
+    ) -> HttpResponse | Response:
+        """Entrega ZIP de artefactos de entrada asociados al job. Heredado por apps con archivos."""
+        job: ScientificJob = self.get_job_or_404(id)
+
+        artifact_storage_service = ScientificInputArtifactStorageService()
+        if len(artifact_storage_service.list_job_artifacts(job=job)) == 0:
+            return Response(
+                {"detail": "El job no tiene artefactos de entrada persistidos."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        zip_bytes: bytes = artifact_storage_service.build_job_artifacts_zip_bytes(
+            job=job
+        )
+        filename: str = build_download_filename(
+            plugin_name=self.plugin_name,
+            job_id=str(job.id),
+            report_suffix="inputs",
+            extension="zip",
+        )
+
+        response = HttpResponse(zip_bytes, content_type="application/zip")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response

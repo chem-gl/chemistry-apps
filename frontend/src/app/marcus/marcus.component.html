@@ -173,42 +173,12 @@
         </label>
       </div>
 
-      @if (workflow.showDiffusionFields()) {
-        <div class="param-grid diffusion-fields">
-          <label>
-            Radius reactant 1 (Å)
-            <input
-              type="number"
-              step="0.01"
-              [ngModel]="workflow.radiusReactant1()"
-              (ngModelChange)="workflow.updateRadiusReactant1($event)"
-              [disabled]="workflow.isProcessing()"
-            />
-          </label>
-
-          <label>
-            Radius reactant 2 (Å)
-            <input
-              type="number"
-              step="0.01"
-              [ngModel]="workflow.radiusReactant2()"
-              (ngModelChange)="workflow.updateRadiusReactant2($event)"
-              [disabled]="workflow.isProcessing()"
-            />
-          </label>
-
-          <label>
-            Reaction distance (Å)
-            <input
-              type="number"
-              step="0.01"
-              [ngModel]="workflow.reactionDistance()"
-              (ngModelChange)="workflow.updateReactionDistance($event)"
-              [disabled]="workflow.isProcessing()"
-            />
-          </label>
-        </div>
-      }
+      <app-diffusion-fields [showDiffusionFields]="workflow.showDiffusionFields()"
+        [radiusReactant1]="workflow.radiusReactant1()" [radiusReactant2]="workflow.radiusReactant2()"
+        [reactionDistance]="workflow.reactionDistance()" [isProcessing]="workflow.isProcessing()"
+        (radiusReactant1Change)="workflow.updateRadiusReactant1($event)"
+        (radiusReactant2Change)="workflow.updateRadiusReactant2($event)"
+        (reactionDistanceChange)="workflow.updateReactionDistance($event)"></app-diffusion-fields>
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
@@ -311,51 +281,13 @@
           </div>
         </div>
 
-        <!-- Archivos de entrada persistidos -->
-        @if (resultData.fileDescriptors.length > 0) {
-          <div class="result-section">
-            <h4>Persisted Input Files</h4>
-            <div class="file-descriptors-list">
-              @for (fd of resultData.fileDescriptors; track fd.fieldName) {
-                <div class="fd-item">
-                  <span class="fd-field">{{ fd.fieldName }}</span>
-                  <span class="fd-name">{{ fd.originalFilename }}</span>
-                  <span class="fd-size">{{ formatBytes(fd.sizeBytes) }}</span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <div class="action-row export-row">
-          <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExport()">
-            {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-          </button>
-          <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExport()">
-            Export LOG
-          </button>
-          <button class="btn-secondary" (click)="exportInputsZip()" [disabled]="!canExport()">
-            Download Inputs ZIP
-          </button>
-        </div>
-
-        @if (workflow.exportErrorMessage(); as exportError) {
-          <p class="error-message" role="alert">{{ exportError }}</p>
-        }
       }
 
-      @if (workflow.activeSection() === 'error') {
-        <div class="error-block">
-          @if (workflow.errorMessage(); as currentError) {
-            <p class="error-message" role="alert">{{ currentError }}</p>
-          }
-          @if (workflow.currentJobId() !== null) {
-            <button class="btn-secondary" (click)="exportError()" [disabled]="!canExport()">
-              Download Error Report
-            </button>
-          }
-        </div>
-      }
+      <app-job-artifact-export-panel [fileDescriptors]="workflow.resultData()?.fileDescriptors ?? []"
+        [isExporting]="workflow.isExporting()" [exportErrorMessage]="workflow.exportErrorMessage()"
+        [activeSection]="workflow.activeSection()" [errorMessage]="workflow.errorMessage()"
+        [currentJobId]="workflow.currentJobId()" [canExport]="canExport()" (exportCsv)="exportCsv()" (exportLog)="exportLog()"
+        (exportInputsZip)="exportInputsZip()" (exportError)="exportError()"></app-job-artifact-export-panel>
     </section>
   </div>
 

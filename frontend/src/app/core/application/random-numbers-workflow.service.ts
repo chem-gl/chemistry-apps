@@ -93,26 +93,11 @@ export class RandomNumbersWorkflowService extends BaseJobWorkflowService<RandomN
       })
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
-          this.currentJobId.set(jobResponse.id);
-
-          if (jobResponse.status === 'completed') {
-            const immediateResultData: RandomNumbersResultData | null =
-              this.extractResultData(jobResponse);
-            if (immediateResultData === null) {
-              this.activeSection.set('error');
-              this.errorMessage.set('The final payload format is invalid.');
-              return;
-            }
-
-            this.resultData.set(immediateResultData);
-            this.loadHistoricalLogs(jobResponse.id);
-            this.activeSection.set('result');
-            this.loadHistory();
-            return;
-          }
-
-          this.activeSection.set('progress');
-          this.startProgressStream(jobResponse.id);
+          this.handleDispatchJobResponse(
+            jobResponse,
+            (job) => this.extractResultData(job),
+            'random numbers',
+          );
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');

@@ -340,14 +340,56 @@ def _prepare_java_runtime(
 def _extract_tarfile_safely(
     archive_file: tarfile.TarFile, destination_dir: Path
 ) -> None:
-    """Extrae un tar.gz bloqueando rutas fuera del directorio destino."""
+    """Extrae un tar.gz bloqueando rutas fuera del directorio destino y protegiendo contra zip bomb.
+
+    Límites aplicados:
+    - Máximo 10.000 entradas (protección contra inodes exhaustion).
+    - Tamaño total descomprimido máximo 2 GB (protección contra data amplification).
+    - Razón compresión máxima 50:1 por entrada (detección de zip bomb).
+    """
+    # Límites de seguridad contra zip bomb (S5042)
+    max_total_entries: int = 10_000
+    max_total_size_bytes: int = 2 * 1024 * 1024 * 1024  # 2 GB
+    max_compression_ratio: float = 50.0
+
     destination_dir_resolved: Path = destination_dir.resolve()
+    total_size_bytes: int = 0
+    total_entries: int = 0
+
     for member in archive_file.getmembers():
+        # Protección contra path traversal
         target_path: Path = (destination_dir / member.name).resolve()
-        if not str(target_path).startswith(str(destination_dir_resolved)):
+        if not str(target_path).startswith(str(destination_dir_resolved) + os.sep):
+            if str(target_path) != str(destination_dir_resolved):
+                raise RuntimeToolsError(
+                    "El tarball contiene rutas inválidas fuera del destino de extracción."
+                )
+
+        total_entries += 1
+        if total_entries > max_total_entries:
             raise RuntimeToolsError(
-                "El tarball contiene rutas inválidas fuera del destino de extracción."
+                f"El tarball supera el límite de {max_total_entries} entradas (posible zip bomb)."
             )
+
+        if member.isfile():
+            uncompressed_size: int = member.size
+            total_size_bytes += uncompressed_size
+
+            if total_size_bytes > max_total_size_bytes:
+                raise RuntimeToolsError(
+                    f"El tarball supera el límite de {max_total_size_bytes // (1024**3)} GB "
+                    "descomprimidos (posible zip bomb)."
+                )
+
+            # Verificar razón de compresión por entrada
+            compressed_size: int = max(member.size, 1)
+            if uncompressed_size > 0 and compressed_size > 0:
+                ratio: float = uncompressed_size / compressed_size
+                if ratio > max_compression_ratio:
+                    raise RuntimeToolsError(
+                        f"Razón de compresión sospechosa ({ratio:.1f}:1) en "
+                        f"'{member.name}' del tarball (posible zip bomb)."
+                    )
 
     archive_file.extractall(path=destination_dir)
 

@@ -8,9 +8,8 @@ Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
 
 from typing import cast
 
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -117,25 +116,4 @@ class CalculatorJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
             parameters=parameters_payload,
         ).run()
 
-        if submit_result.is_failure():
-            error_message: str = submit_result.fold(
-                on_failure=lambda error_value: str(error_value),
-                on_success=lambda _: "Error desconocido al crear el job.",
-            )
-            return Response(
-                {"detail": error_message},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job_handle = submit_result.get_or_else(None)
-        if job_handle is None:
-            return Response(
-                {"detail": "No se pudo obtener el handle del job creado."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job: ScientificJob = get_object_or_404(
-            ScientificJob, pk=job_handle.job_id, plugin_name=PLUGIN_NAME
-        )
-        response_serializer = CalculatorJobResponseSerializer(job)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return self.handle_submit_result(submit_result, CalculatorJobResponseSerializer)

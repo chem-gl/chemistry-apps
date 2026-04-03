@@ -8,6 +8,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
+import { JobArtifactExportPanelComponent } from '../core/shared/components/job-artifact-export-panel/job-artifact-export-panel.component';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
@@ -24,6 +26,8 @@ import {
     JobProgressCardComponent,
     JobLogsPanelComponent,
     JobHistoryTableComponent,
+    DiffusionFieldsComponent,
+    JobArtifactExportPanelComponent,
   ],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',

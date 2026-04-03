@@ -524,7 +524,9 @@ describe('RandomNumbersWorkflowService', () => {
     workflowService.dispatch();
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('The final payload format is invalid.');
+    expect(workflowService.errorMessage()).toContain(
+      'The completed job payload is invalid for random numbers.',
+    );
   });
 
   it('resets transient state and clears current job context', () => {

@@ -77,26 +77,11 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
     this.jobsApiService.dispatchMolarFractionsJob(dispatchParams).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          const immediateResultData: MolarFractionsResultData | null =
-            this.extractResultData(jobResponse);
-          if (immediateResultData === null) {
-            this.activeSection.set('error');
-            this.errorMessage.set('The completed job payload is invalid for molar fractions.');
-            return;
-          }
-
-          this.resultData.set(immediateResultData);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(
+          jobResponse,
+          (job) => this.extractResultData(job),
+          'molar fractions',
+        );
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');
