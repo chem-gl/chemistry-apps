@@ -321,7 +321,7 @@ class JobApiTests(TestCase):
         )
 
         with patch(
-            "apps.core.routers.viewset.dispatch_scientific_job"
+            "apps.core.routers._job_control_mixin.dispatch_scientific_job"
         ) as dispatch_mock:
             dispatch_mock.return_value = True
             response = self.client.post(f"/api/jobs/{job.id}/resume/")
