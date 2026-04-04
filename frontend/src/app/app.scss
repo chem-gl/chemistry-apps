@@ -1,3 +1,5 @@
+/* app.scss: Estilos del cascaron principal de navegacion y layout global del frontend. */
+
 :host {
   --shell-bg: radial-gradient(circle at 12% 8%, #ffe9c9 0%, #fff6ea 32%, #eefcfa 76%);
   --ink-strong: #183534;
@@ -24,7 +26,6 @@
 }
 
 .top-bar {
-  border: 1px solid var(--surface-border);
   border-radius: 18px;
   padding: 0.9rem 1rem;
   background: var(--surface);
@@ -85,7 +86,6 @@ h1 {
 }
 
 .content-shell {
-  border: 1px solid var(--surface-border);
   border-radius: 20px;
   padding: clamp(0.9rem, 2.4vw, 1.35rem);
   background: var(--surface);

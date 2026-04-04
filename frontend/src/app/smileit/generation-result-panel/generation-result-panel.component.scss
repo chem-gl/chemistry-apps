@@ -61,11 +61,14 @@
 }
 
 .generation-lock-banner {
-  margin-top: 0.55rem;
-  border: 1px dashed #b7cec0;
-  border-radius: 14px;
-  background: transparent;
-  padding: 0.52rem 0.65rem;
+  /* Quita la línea punteada para un aspecto más plano y consistente */
+  display: block;
+  margin-top: 0.4rem;
+  border: none !important;
+  border-radius: 6px;
+  background: transparent !important;
+  padding: 0.28rem 0 !important;
+  color: #2a5442;
 }
 
 .generation-lock-banner strong {

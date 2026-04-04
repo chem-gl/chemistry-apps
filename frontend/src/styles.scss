@@ -13,3 +13,14 @@ body {
 body {
   color: #132524;
 }
+
+/*
+ * Unifica el diseño visual entre apps:
+ * elimina bordes de paneles/tarjetas y conserva los bordes en botones.
+ */
+:where([class*='card'], [class*='panel'], [class*='Card'], [class*='Panel']):not(button):not(
+    [class*='btn']
+  ) {
+  border: none !important;
+  box-shadow: none !important;
+}

@@ -7,11 +7,9 @@
   <div class="floating-workspace-shell">
     <div class="workspace-columns">
       <div class="workspace-right-column">
-        <app-catalog-panel
-          [libraryEntryInspections]="libraryEntryInspections()"
+        <app-catalog-panel [libraryEntryInspections]="libraryEntryInspections()"
           [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
-          (libraryEntryDetailRequested)="openLibraryEntryDetail($event)"
-        />
+          (libraryEntryDetailRequested)="openLibraryEntryDetail($event)" />
       </div>
 
       <div class="workspace-left-column">
@@ -27,215 +25,197 @@
               </div>
             </div>
 
-            <app-principal-molecule-editor
-              [principalSmiles]="workflow.principalSmiles()"
-              [isProcessing]="workflow.isProcessing()"
-              [isInspecting]="workflow.activeSection() === 'inspecting'"
+            <app-principal-molecule-editor [principalSmiles]="workflow.principalSmiles()"
+              [isProcessing]="workflow.isProcessing()" [isInspecting]="workflow.activeSection() === 'inspecting'"
               (principalSmilesChange)="onPrincipalSmilesChange($event)"
-              (inspectRequested)="inspectPrincipalStructure()"
-            >
+              (inspectRequested)="inspectPrincipalStructure()">
             </app-principal-molecule-editor>
           </section>
 
           @if (workflow.inspection(); as inspectionResult) {
-            <section class="inspection-floating-panel" aria-label="Principal inspection context">
-              <div class="inspection-card">
-                <div class="inspection-metadata">
-                  <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
-                  <p>
-                    <strong>Patterns visible:</strong> {{ visibleInspectionAnnotations().length }}
-                  </p>
-                </div>
-
-                <p class="catalog-smiles mono">Canonical: {{ inspectionResult.canonicalSmiles }}</p>
-
-                @if (workflow.quickProperties(); as quickProperties) {
-                  <div class="property-grid" aria-label="Quick physicochemical properties">
-                    <article class="property-card">
-                      <span>MW</span>
-                      <strong>{{ quickProperties.molecular_weight | number: '1.1-1' }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>cLogP</span>
-                      <strong>{{ quickProperties.clogp | number: '1.1-2' }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>TPSA</span>
-                      <strong>{{ quickProperties.tpsa | number: '1.1-1' }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>Rotatable bonds</span>
-                      <strong>{{ quickProperties.rotatable_bonds }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>HBD</span>
-                      <strong>{{ quickProperties.hbond_donors }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>HBA</span>
-                      <strong>{{ quickProperties.hbond_acceptors }}</strong>
-                    </article>
-                    <article class="property-card">
-                      <span>Aromatic rings</span>
-                      <strong>{{ quickProperties.aromatic_rings }}</strong>
-                    </article>
-                  </div>
-                }
-
-                <p class="hint">
-                  Tip: click directly on the molecule image to select atoms with the mouse.
+          <section class="inspection-floating-panel" aria-label="Principal inspection context">
+            <div class="inspection-card">
+              <div class="inspection-metadata">
+                <p><strong>Atoms:</strong> {{ inspectionResult.atomCount }}</p>
+                <p>
+                  <strong>Patterns visible:</strong> {{ visibleInspectionAnnotations().length }}
                 </p>
-                <app-principal-svg-viewer
-                  [inspectionSvg]="toTrustedInspectionSvg()"
-                  [isProcessing]="workflow.isProcessing()"
-                  (inspectionSvgClicked)="onInspectionSvgClick($event)"
-                >
-                </app-principal-svg-viewer>
+              </div>
 
-                <div class="principal-pattern-action">
-                  <button
-                    class="btn-secondary"
-                    type="button"
-                    (click)="openPatternCatalogModal()"
-                    [disabled]="workflow.isProcessing()"
-                  >
-                    Structural patterns
-                  </button>
-                  <p class="hint">
-                    Open the pattern modal to create SMARTS rules and toggle contour highlights on
-                    the principal molecule.
-                  </p>
+              <p class="catalog-smiles mono">Canonical: {{ inspectionResult.canonicalSmiles }}</p>
+
+              @if (workflow.quickProperties(); as quickProperties) {
+              <div class="property-grid" aria-label="Quick physicochemical properties">
+                <div class="property-row">
+                  <label class="property-label" for="property-mw">MW:</label>
+                  <input id="property-mw" class="property-input" type="text"
+                    value="{{ quickProperties.molecular_weight | number: '1.1-1' }}" title="Molecular weight"
+                    placeholder="{{ quickProperties.molecular_weight | number: '1.1-1' }}" aria-label="Molecular weight"
+                    readonly />
                 </div>
 
-                @if (inspectionResult.annotations.length > 0) {
-                  <div class="annotation-legend" aria-label="Structural annotations">
-                    @for (
-                      annotation of inspectionResult.annotations;
-                      track annotation.pattern_stable_id + '-' + $index
-                    ) {
-                      <article
-                        class="annotation-chip"
-                        [class.annotation-chip-hidden]="
+                <div class="property-row">
+                  <label class="property-label" for="property-clogp">cLogP:</label>
+                  <input id="property-clogp" class="property-input" type="text"
+                    value="{{ quickProperties.clogp | number: '1.1-2' }}" title="Calculated logP"
+                    placeholder="{{ quickProperties.clogp | number: '1.1-2' }}" aria-label="Calculated logP" readonly />
+                </div>
+
+                <div class="property-row">
+                  <label class="property-label" for="property-tpsa">TPSA:</label>
+                  <input id="property-tpsa" class="property-input" type="text"
+                    value="{{ quickProperties.tpsa | number: '1.1-1' }}" title="Topological polar surface area"
+                    placeholder="{{ quickProperties.tpsa | number: '1.1-1' }}"
+                    aria-label="Topological polar surface area" readonly />
+                </div>
+
+                <div class="property-row">
+                  <label class="property-label" for="property-rotatable-bonds">Rotatable bonds:</label>
+                  <input id="property-rotatable-bonds" class="property-input" type="text"
+                    value="{{ quickProperties.rotatable_bonds }}" title="Number of rotatable bonds"
+                    placeholder="{{ quickProperties.rotatable_bonds }}" aria-label="Number of rotatable bonds"
+                    readonly />
+                </div>
+
+                <div class="property-row">
+                  <label class="property-label" for="property-hbd">HBD:</label>
+                  <input id="property-hbd" class="property-input" type="text" value="{{ quickProperties.hbond_donors }}"
+                    title="Hydrogen bond donors" placeholder="{{ quickProperties.hbond_donors }}"
+                    aria-label="Hydrogen bond donors" readonly />
+                </div>
+
+                <div class="property-row">
+                  <label class="property-label" for="property-hba">HBA:</label>
+                  <input id="property-hba" class="property-input" type="text"
+                    value="{{ quickProperties.hbond_acceptors }}" title="Hydrogen bond acceptors"
+                    placeholder="{{ quickProperties.hbond_acceptors }}" aria-label="Hydrogen bond acceptors" readonly />
+                </div>
+
+                <div class="property-row">
+                  <label class="property-label" for="property-aromatic-rings">Aromatic rings:</label>
+                  <input id="property-aromatic-rings" class="property-input" type="text"
+                    value="{{ quickProperties.aromatic_rings }}" title="Number of aromatic rings"
+                    placeholder="{{ quickProperties.aromatic_rings }}" aria-label="Number of aromatic rings" readonly />
+                </div>
+              </div>
+              }
+
+              <p class="hint">
+                Tip: click directly on the molecule image to select atoms with the mouse.
+              </p>
+              <app-principal-svg-viewer [inspectionSvg]="toTrustedInspectionSvg()"
+                [isProcessing]="workflow.isProcessing()" (inspectionSvgClicked)="onInspectionSvgClick($event)">
+              </app-principal-svg-viewer>
+
+              <div class="principal-pattern-action">
+                <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
+                  [disabled]="workflow.isProcessing()">
+                  Structural patterns
+                </button>
+                <p class="hint">
+                  Open the pattern modal to create SMARTS rules and toggle contour highlights on
+                  the principal molecule.
+                </p>
+              </div>
+
+              @if (inspectionResult.annotations.length > 0) {
+              <div class="annotation-legend" aria-label="Structural annotations">
+                @for (
+                annotation of inspectionResult.annotations;
+                track annotation.pattern_stable_id + '-' + $index
+                ) {
+                <article class="annotation-chip" [class.annotation-chip-hidden]="
                           !isAnnotationEnabled(annotation.pattern_stable_id)
-                        "
-                        [style.--annotation-color]="annotation.color"
-                      >
-                        <div class="annotation-chip-header">
-                          <span class="annotation-type">{{
-                            patternTypeLabel(annotation.pattern_type)
-                          }}</span>
-                          <button
-                            type="button"
-                            class="annotation-eye-btn"
-                            (click)="togglePatternEnabled(annotation.pattern_stable_id)"
-                            [attr.aria-label]="
+                        " [style.--annotation-color]="annotation.color">
+                  <div class="annotation-chip-header">
+                    <span class="annotation-type">{{
+                      patternTypeLabel(annotation.pattern_type)
+                      }}</span>
+                    <button type="button" class="annotation-eye-btn"
+                      (click)="togglePatternEnabled(annotation.pattern_stable_id)" [attr.aria-label]="
                               isAnnotationEnabled(annotation.pattern_stable_id)
                                 ? 'Hide pattern'
                                 : 'Show pattern'
-                            "
-                            [attr.title]="
+                            " [attr.title]="
                               isAnnotationEnabled(annotation.pattern_stable_id) ? 'Hide' : 'Show'
-                            "
-                          >
-                            {{
-                              isAnnotationEnabled(annotation.pattern_stable_id)
-                                ? '👁'
-                                : '👁\u200d🗨'
-                            }}
-                          </button>
-                        </div>
-                        <strong>{{ annotation.name }}</strong>
-                        <p>{{ annotation.caption }}</p>
-                        <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
-                      </article>
-                    }
-                  </div>
-                }
-
-                <div class="site-toolbar">
-                  <div>
-                    <h4>Select substitution sites on the scaffold</h4>
-                    <p class="hint">
-                      Click atoms in the visual preview to mark where later substitutions may be
-                      placed.
-                    </p>
-                  </div>
-                  <div class="site-toolbar-summary">
-                    <strong>{{ workflow.assignmentBlocks().length }} blocks available</strong>
-                    <p class="hint">
-                      Create blocks first, then map these selected sites to the block that should
-                      own them.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="atom-grid">
-                  @for (atom of inspectionResult.atoms; track atom.index) {
-                    <button
-                      type="button"
-                      class="atom-chip"
-                      [class.selected]="isAtomSelected(atom.index)"
-                      (click)="workflow.toggleSelectedAtom(atom.index)"
-                      [disabled]="workflow.isProcessing()"
-                    >
-                      <span>#{{ atom.index }} {{ atom.symbol }}</span>
-                      @if (coverageLabel(atom.index); as coverage) {
-                        <small>{{ coverage }}</small>
-                      }
+                            ">
+                      {{
+                      isAnnotationEnabled(annotation.pattern_stable_id)
+                      ? '👁'
+                      : '👁\u200d🗨'
+                      }}
                     </button>
-                  }
-                </div>
-                @if (workflow.uncoveredSelectedSites().length > 0) {
-                  <p class="warning-message" role="alert">
-                    Selected sites pending assignment:
-                    {{ workflow.uncoveredSelectedSites().join(', ') }}
-                  </p>
+                  </div>
+                  <strong>{{ annotation.name }}</strong>
+                  <p>{{ annotation.caption }}</p>
+                  <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
+                </article>
                 }
               </div>
-            </section>
+              }
+
+              <div class="site-toolbar">
+                <div>
+                  <h4>Select substitution sites on the scaffold</h4>
+                  <p class="hint">
+                    Click atoms in the visual preview to mark where later substitutions may be
+                    placed.
+                  </p>
+                </div>
+                <div class="site-toolbar-summary">
+                  <strong>{{ workflow.assignmentBlocks().length }} blocks available</strong>
+                  <p class="hint">
+                    Create blocks first, then map these selected sites to the block that should
+                    own them.
+                  </p>
+                </div>
+              </div>
+
+              <div class="atom-grid">
+                @for (atom of inspectionResult.atoms; track atom.index) {
+                <button type="button" class="atom-chip" [class.selected]="isAtomSelected(atom.index)"
+                  (click)="workflow.toggleSelectedAtom(atom.index)" [disabled]="workflow.isProcessing()">
+                  <span>#{{ atom.index }} {{ atom.symbol }}</span>
+                  @if (coverageLabel(atom.index); as coverage) {
+                  <small>{{ coverage }}</small>
+                  }
+                </button>
+                }
+              </div>
+              @if (workflow.uncoveredSelectedSites().length > 0) {
+              <p class="warning-message" role="alert">
+                Selected sites pending assignment:
+                {{ workflow.uncoveredSelectedSites().join(', ') }}
+              </p>
+              }
+            </div>
+          </section>
           }
         </div>
       </div>
 
-      <app-block-assignment-panel
-        [libraryEntryInspections]="libraryEntryInspections()"
+      <app-block-assignment-panel [libraryEntryInspections]="libraryEntryInspections()"
         [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
         [catalogEntryPreviewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
-        [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)"
-        (libraryEntryDetailRequested)="
+        [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)" (libraryEntryDetailRequested)="
           openLibraryEntryDetail($event.catalogEntry, $event.openContext)
-        "
-      />
+        " />
     </div>
 
     <app-generation-result-panel />
 
-    <app-library-entry-detail-dialog
-      [selectedEntry]="selectedLibraryEntryForDetail()"
-      [openContext]="libraryDetailOpenContext()"
-      [previewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
-      [isReferencedInAnyBlockResolver]="isReferencedInAnyBlock.bind(this)"
-      [isCatalogEntryEditableResolver]="
+    <app-library-entry-detail-dialog [selectedEntry]="selectedLibraryEntryForDetail()"
+      [openContext]="libraryDetailOpenContext()" [previewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
+      [isReferencedInAnyBlockResolver]="isReferencedInAnyBlock.bind(this)" [isCatalogEntryEditableResolver]="
         workflow.catalog.isCatalogEntryEditable.bind(workflow.catalog)
-      "
-      [isProcessing]="workflow.isProcessing()"
-      (closeRequested)="closeLibraryEntryDetail()"
-      (editRequested)="editLibraryEntryFromDetail($event)"
-    />
+      " [isProcessing]="workflow.isProcessing()" (closeRequested)="closeLibraryEntryDetail()"
+      (editRequested)="editLibraryEntryFromDetail($event)" />
 
-    <dialog
-      #patternCatalogDialog
-      class="pattern-catalog-dialog"
-      aria-label="Structural pattern catalog"
-      (click)="onPatternCatalogDialogClick($event)"
-      (keydown)="onPatternCatalogDialogClick($event)"
-      (cancel)="closePatternCatalogModal()"
-    >
-      <section
-        class="pattern-catalog-modal"
-        (click)="$event.stopPropagation()"
-        (keydown)="onPatternModalSectionKeydown($event)"
-      >
+    <dialog #patternCatalogDialog class="pattern-catalog-dialog" aria-label="Structural pattern catalog"
+      (click)="onPatternCatalogDialogClick($event)" (keydown)="onPatternCatalogDialogClick($event)"
+      (cancel)="closePatternCatalogModal()">
+      <section class="pattern-catalog-modal" (click)="$event.stopPropagation()"
+        (keydown)="onPatternModalSectionKeydown($event)">
         <header class="catalog-studio-header">
           <div>
             <h4>Structural patterns</h4>
@@ -259,146 +239,103 @@
         <div class="options-grid compact">
           <label>
             Name
-            <input
-              type="text"
-              [ngModel]="workflow.patternCreateName()"
-              (ngModelChange)="workflow.patternCreateName.set($event)"
-            />
+            <input type="text" [ngModel]="workflow.patternCreateName()"
+              (ngModelChange)="workflow.patternCreateName.set($event)" />
           </label>
           <label>
             SMARTS
-            <input
-              type="text"
-              [ngModel]="workflow.patternCreateSmarts()"
-              (ngModelChange)="workflow.patternCreateSmarts.set($event)"
-              placeholder="[N+](=O)[O-]"
-            />
+            <input type="text" [ngModel]="workflow.patternCreateSmarts()"
+              (ngModelChange)="workflow.patternCreateSmarts.set($event)" placeholder="[N+](=O)[O-]" />
           </label>
           <label>
             Pattern type
-            <select
-              [ngModel]="workflow.patternCreateType()"
-              (ngModelChange)="workflow.patternCreateType.set($event)"
-            >
+            <select [ngModel]="workflow.patternCreateType()" (ngModelChange)="workflow.patternCreateType.set($event)">
               <option value="toxicophore">Toxicophore</option>
               <option value="privileged">Privileged scaffold</option>
             </select>
           </label>
           <label>
             Source reference
-            <input
-              type="text"
-              [ngModel]="workflow.patternCreateSourceReference()"
-              (ngModelChange)="workflow.patternCreateSourceReference.set($event)"
-            />
+            <input type="text" [ngModel]="workflow.patternCreateSourceReference()"
+              (ngModelChange)="workflow.patternCreateSourceReference.set($event)" />
           </label>
         </div>
         <label>
           Caption
-          <input
-            type="text"
-            [ngModel]="workflow.patternCreateCaption()"
-            (ngModelChange)="workflow.patternCreateCaption.set($event)"
-          />
+          <input type="text" [ngModel]="workflow.patternCreateCaption()"
+            (ngModelChange)="workflow.patternCreateCaption.set($event)" />
         </label>
         <div class="action-row compact-actions">
-          <button
-            class="btn-secondary"
-            (click)="workflow.createPatternEntry()"
-            [disabled]="workflow.isProcessing()"
-          >
+          <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
             Save structural pattern
           </button>
         </div>
 
         @if (workflow.errorMessage(); as patternErrorMessage) {
-          <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
+        <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
         }
 
         <div class="pattern-list pattern-modal-list">
           @for (
-            pattern of patternEntries();
-            track pattern.stable_id + '-' + pattern.version + '-' + $index
+          pattern of patternEntries();
+          track pattern.stable_id + '-' + pattern.version + '-' + $index
           ) {
-            <article
-              class="pattern-item"
-              [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
-              [class.pattern-privileged]="pattern.pattern_type === 'privileged'"
-            >
-              <div class="pattern-item-content">
-                <button
-                  type="button"
-                  class="pattern-name-link"
-                  (click)="openPatternDetail(pattern)"
-                >
-                  {{ pattern.name }}
-                </button>
-                <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
-                <p class="catalog-description">{{ pattern.caption }}</p>
-                <small
-                  >{{ patternTypeLabel(pattern.pattern_type) }} · stable_id
-                  {{ pattern.stable_id }} · v{{ pattern.version }}</small
-                >
-              </div>
-              <div class="pattern-item-toggle">
-                <label class="toggle-label pattern-toggle-label">
-                  <input
-                    type="checkbox"
-                    [checked]="isPatternEnabled(pattern)"
-                    (change)="togglePatternEnabled(pattern.stable_id)"
-                  />
-                  {{ isPatternEnabled(pattern) ? 'Active' : 'Hidden' }}
-                </label>
-              </div>
-            </article>
+          <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
+            [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
+            <div class="pattern-item-content">
+              <button type="button" class="pattern-name-link" (click)="openPatternDetail(pattern)">
+                {{ pattern.name }}
+              </button>
+              <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
+              <p class="catalog-description">{{ pattern.caption }}</p>
+              <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id
+                {{ pattern.stable_id }} · v{{ pattern.version }}</small>
+            </div>
+            <div class="pattern-item-toggle">
+              <label class="toggle-label pattern-toggle-label">
+                <input type="checkbox" [checked]="isPatternEnabled(pattern)"
+                  (change)="togglePatternEnabled(pattern.stable_id)" />
+                {{ isPatternEnabled(pattern) ? 'Active' : 'Hidden' }}
+              </label>
+            </div>
+          </article>
           }
         </div>
       </section>
     </dialog>
 
-    <dialog
-      #patternDetailDialog
-      class="pattern-detail-dialog"
-      aria-label="Pattern detail"
-      (click)="onPatternDetailDialogClick($event)"
-      (keydown)="onPatternDetailDialogClick($event)"
-      (cancel)="closePatternDetail()"
-    >
+    <dialog #patternDetailDialog class="pattern-detail-dialog" aria-label="Pattern detail"
+      (click)="onPatternDetailDialogClick($event)" (keydown)="onPatternDetailDialogClick($event)"
+      (cancel)="closePatternDetail()">
       @if (selectedPatternForDetail(); as detailPattern) {
-        <section
-          class="pattern-detail-modal"
-          (click)="$event.stopPropagation()"
-          (keydown)="onPatternModalSectionKeydown($event)"
-        >
-          <header class="library-detail-header">
-            <div class="library-detail-title-row">
-              <h4>{{ detailPattern.name }}</h4>
-              <span
-                class="workflow-step-state"
-                [class.generation-ready]="isPatternEnabled(detailPattern)"
-              >
-                {{ isPatternEnabled(detailPattern) ? 'Active in scaffold' : 'Hidden in scaffold' }}
-              </span>
-            </div>
-            <button type="button" class="btn-secondary" (click)="closePatternDetail()">
-              Close
-            </button>
-          </header>
-          <div class="library-detail-body">
-            <dl class="library-detail-fields">
-              <dt>SMARTS structure</dt>
-              <dd class="mono">{{ detailPattern.smarts }}</dd>
-              <dt>Pattern type</dt>
-              <dd>{{ patternTypeLabel(detailPattern.pattern_type) }}</dd>
-              <dt>Specification</dt>
-              <dd>{{ detailPattern.caption }}</dd>
-              <dt>Source</dt>
-              <dd>{{ detailPattern.source_reference || '—' }}</dd>
-              <dt>ID</dt>
-              <dd>stable_id {{ detailPattern.stable_id }} · v{{ detailPattern.version }}</dd>
-            </dl>
+      <section class="pattern-detail-modal" (click)="$event.stopPropagation()"
+        (keydown)="onPatternModalSectionKeydown($event)">
+        <header class="library-detail-header">
+          <div class="library-detail-title-row">
+            <h4>{{ detailPattern.name }}</h4>
+            <span class="workflow-step-state" [class.generation-ready]="isPatternEnabled(detailPattern)">
+              {{ isPatternEnabled(detailPattern) ? 'Active in scaffold' : 'Hidden in scaffold' }}
+            </span>
           </div>
-        </section>
+          <button type="button" class="btn-secondary" (click)="closePatternDetail()">
+            Close
+          </button>
+        </header>
+        <div class="library-detail-body">
+          <dl class="library-detail-fields">
+            <dt>SMARTS structure</dt>
+            <dd class="mono">{{ detailPattern.smarts }}</dd>
+            <dt>Pattern type</dt>
+            <dd>{{ patternTypeLabel(detailPattern.pattern_type) }}</dd>
+            <dt>Specification</dt>
+            <dd>{{ detailPattern.caption }}</dd>
+            <dt>Source</dt>
+            <dd>{{ detailPattern.source_reference || '—' }}</dd>
+            <dt>ID</dt>
+            <dd>stable_id {{ detailPattern.stable_id }} · v{{ detailPattern.version }}</dd>
+          </dl>
+        </div>
+      </section>
       }
     </dialog>
   </div>

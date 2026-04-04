@@ -260,8 +260,8 @@ label {
   color: #224438;
 }
 
-input,
-select {
+input:not(.property-input),
+select:not(.property-input) {
   border: 1px solid #c2d7c9;
   border-radius: 14px;
   padding: 0.62rem 0.78rem;
@@ -270,8 +270,8 @@ select {
   color: #244537;
 }
 
-input:focus,
-select:focus {
+input:not(.property-input):focus,
+select:not(.property-input):focus {
   outline: 2px solid rgba(90, 150, 114, 0.25);
   border-color: #5a9672;
 }
@@ -368,8 +368,9 @@ select:focus {
 .property-grid {
   margin-top: 0.85rem;
   display: grid;
-  gap: 0.7rem;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
 }
 
 .property-card {
