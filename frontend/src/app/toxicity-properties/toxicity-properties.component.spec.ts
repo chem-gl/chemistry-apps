@@ -439,4 +439,25 @@ describe('ToxicityPropertiesComponent', () => {
     expect(component.moleculeImageError()).toBe('Could not load molecule image.');
     expect(component.isLoadingMoleculeImage()).toBe(false);
   });
+
+  it('rowHasError retorna false cuando error_message es null o solo espacios', () => {
+    // Cubre las ramas falsas de la condición compuesta de rowHasError.
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    const baseRow = {
+      smiles: 'CCO',
+      LD50_mgkg: null,
+      mutagenicity: null,
+      ames_score: null,
+      DevTox: null,
+      devtox_score: null,
+    };
+
+    // Rama false: error_message es null → cortocircuito &&.
+    expect(component.rowHasError({ ...baseRow, error_message: null })).toBe(false);
+
+    // Rama false: error_message no es null pero sólo tiene espacios → trim() === ''.
+    expect(component.rowHasError({ ...baseRow, error_message: '   ' })).toBe(false);
+  });
 });

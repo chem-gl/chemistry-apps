@@ -4,7 +4,7 @@ import { environment } from '../../../environments/environment';
 
 const TRAILING_SLASH_PATTERN: RegExp = /\/+$/;
 
-function resolveApiBaseUrl(configuredApiBaseUrl: string): string {
+export function resolveApiBaseUrl(configuredApiBaseUrl: string): string {
   const normalizedConfiguredApiBaseUrl: string = configuredApiBaseUrl.replace(
     TRAILING_SLASH_PATTERN,
     '',
@@ -35,7 +35,7 @@ function resolveApiBaseUrl(configuredApiBaseUrl: string): string {
 
 export const API_BASE_URL: string = resolveApiBaseUrl(environment.apiBaseUrl);
 
-function resolveWebSocketBaseUrl(apiBaseUrl: string): string {
+export function resolveWebSocketBaseUrl(apiBaseUrl: string): string {
   const normalizedApiBaseUrl: string = apiBaseUrl.replace(TRAILING_SLASH_PATTERN, '');
 
   if (normalizedApiBaseUrl.startsWith('https://')) {

@@ -33,6 +33,10 @@ omit = [
 ]
 
 [tool.coverage.report]
+# Umbrales mínimos de cobertura. El test fallará si la cobertura cae por debajo.
+# Backend objetivo: 91% (actualmente ~97%). Configurable ajustando estos valores.
+fail_under = 91
+
 # No se cuentan líneas de imports/pass/docstrings puras como no cubiertas.
 exclude_lines = [
     "pragma: no cover",

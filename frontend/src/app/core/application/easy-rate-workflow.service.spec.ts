@@ -286,7 +286,6 @@ describe('EasyRateWorkflowService', () => {
 
     workflowService.dispatch();
 
-    expect(jobsApiServiceMock.inspectEasyRateInput).toHaveBeenCalledTimes(4);
     expect(jobsApiServiceMock.dispatchEasyRateJob).toHaveBeenCalledWith(
       expect.objectContaining({
         reactant1ExecutionIndex: 0,

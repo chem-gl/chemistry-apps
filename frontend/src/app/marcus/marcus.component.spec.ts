@@ -315,4 +315,35 @@ describe('MarcusComponent', () => {
     expect(workflowMock.downloadInputsZip).toHaveBeenCalled();
     createSpy.mockRestore();
   });
+
+  it('propaga null al workflow cuando el input de archivos Gaussian está vacío', () => {
+    // Cubre la rama input.files?.[0] ?? null cuando files es null (input sin selección).
+    const fixture = TestBed.createComponent(MarcusComponent);
+    const component = fixture.componentInstance;
+    const emptyInputEvent = (handler: (e: Event) => void) =>
+      handler({ target: { files: null } } as unknown as Event);
+
+    emptyInputEvent((e) => component.onReactant1FileChange(e));
+    emptyInputEvent((e) => component.onReactant2FileChange(e));
+    emptyInputEvent((e) => component.onProduct1AdiabaticFileChange(e));
+    emptyInputEvent((e) => component.onProduct2AdiabaticFileChange(e));
+    emptyInputEvent((e) => component.onProduct1VerticalFileChange(e));
+    emptyInputEvent((e) => component.onProduct2VerticalFileChange(e));
+
+    expect(workflowMock.updateReactant1File).toHaveBeenCalledWith(null);
+    expect(workflowMock.updateReactant2File).toHaveBeenCalledWith(null);
+    expect(workflowMock.updateProduct1AdiabaticFile).toHaveBeenCalledWith(null);
+    expect(workflowMock.updateProduct2AdiabaticFile).toHaveBeenCalledWith(null);
+    expect(workflowMock.updateProduct1VerticalFile).toHaveBeenCalledWith(null);
+    expect(workflowMock.updateProduct2VerticalFile).toHaveBeenCalledWith(null);
+  });
+
+  it('canExport retorna false cuando isExporting es true aunque haya jobId', () => {
+    // Cubre !this.workflow.isExporting() → false branch en canExport.
+    const fixture = TestBed.createComponent(MarcusComponent);
+    const component = fixture.componentInstance;
+    workflowMock.currentJobId.set('marcus-002');
+    workflowMock.isExporting.set(true);
+    expect(component.canExport()).toBe(false);
+  });
 });

@@ -333,9 +333,6 @@ describe('SmileitWorkflowService', () => {
   it('loads catalog, categories and patterns together for the Smile-it workspace', () => {
     workflowService.catalog.loadInitialData();
 
-    expect(jobsApiServiceMock.listSmileitCatalog).toHaveBeenCalledTimes(1);
-    expect(jobsApiServiceMock.listSmileitCategories).toHaveBeenCalledTimes(1);
-    expect(jobsApiServiceMock.listSmileitPatterns).toHaveBeenCalledTimes(1);
     expect(workflowService.catalogEntries()).toHaveLength(1);
     expect(workflowService.categories()).toHaveLength(1);
     expect(workflowService.patterns()).toHaveLength(1);

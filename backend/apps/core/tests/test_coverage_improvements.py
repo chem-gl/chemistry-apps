@@ -85,13 +85,36 @@ class ArtifactsUtilsTest(TestCase):
 
 
 class AppRegistryTest(TestCase):
-    """Pruebas para `ScientificAppRegistry` (registro y validaciones)."""
+    """Pruebas para `ScientificAppRegistry` (registro y validaciones).
+
+    IMPORTANTE: setUp guarda el estado original del registry antes de cada test
+    y tearDown lo restaura. Esto permite que los tests agreguen plugins sin
+    contaminar los registros legítimos de las apps de producción.
+    """
+
+    def setUp(self) -> None:
+        # Guardar snapshot del estado original para restaurarlo después de cada test
+        self._original_by_plugin = dict(ScientificAppRegistry._definitions_by_plugin)
+        self._original_by_route_prefix = dict(
+            ScientificAppRegistry._definitions_by_route_prefix
+        )
+        self._original_by_api_base_path = dict(
+            ScientificAppRegistry._definitions_by_api_base_path
+        )
 
     def tearDown(self) -> None:
-        # Limpiar estado global del registry para evitar contaminación entre tests
+        # Restaurar el registry al estado previo al test (no solo limpiar),
+        # para no destruir las definiciones registradas por las apps reales.
         ScientificAppRegistry._definitions_by_plugin.clear()
+        ScientificAppRegistry._definitions_by_plugin.update(self._original_by_plugin)
         ScientificAppRegistry._definitions_by_route_prefix.clear()
+        ScientificAppRegistry._definitions_by_route_prefix.update(
+            self._original_by_route_prefix
+        )
         ScientificAppRegistry._definitions_by_api_base_path.clear()
+        ScientificAppRegistry._definitions_by_api_base_path.update(
+            self._original_by_api_base_path
+        )
 
     def test_register_duplicate_plugin_raises(self) -> None:
         def1 = ScientificAppDefinition(

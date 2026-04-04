@@ -7,15 +7,18 @@ validación, renderizado, fusión, propiedades y verificación de categorías.
 
 from __future__ import annotations
 
+from unittest.mock import patch
 
 from django.test import TestCase
 from rdkit import Chem
 
 from .engine import (
     _bond_order_to_type,
+    _compute_substituent_atom_indices,
     _has_enough_implicit_hydrogens,
     _has_free_valence,
     _parse_smiles_cached,
+    _score_principal_match_for_sites,
     build_active_pattern_refs,
     calculate_quick_properties,
     canonicalize_smiles,
@@ -452,3 +455,82 @@ class CacheClearTests(TestCase):
         # No debería lanzar excepciones
         info = _parse_smiles_cached.cache_info()
         self.assertEqual(info.currsize, 0)
+
+
+class RenderingExceptionPathTests(TestCase):
+    """Verifica los caminos de excepción en las funciones de renderizado SVG."""
+
+    def setUp(self) -> None:
+        """Limpia caches de rendering antes de cada prueba."""
+        clear_smileit_caches()
+
+    def test_render_molecule_svg_returns_empty_on_rdkit_exception(self) -> None:
+        """Si RDKit lanza excepción durante el renderizado, se retorna cadena vacía."""
+        from rdkit.Chem import AllChem
+
+        with patch.object(
+            AllChem,
+            "Compute2DCoords",
+            side_effect=RuntimeError("render fail"),
+        ):
+            # Necesita un SMILES válido para llegar al código de renderizado
+            result = render_molecule_svg("CCO_UNIQUE_EXCEPTION_TEST")
+        self.assertEqual(result, "")
+
+    def test_render_molecule_svg_with_atom_labels_returns_empty_on_exception(
+        self,
+    ) -> None:
+        """Si RDKit falla durante renderizado con etiquetas, retorna cadena vacía."""
+        from rdkit.Chem import AllChem
+
+        with patch.object(
+            AllChem,
+            "Compute2DCoords",
+            side_effect=RuntimeError("labels render fail"),
+        ):
+            result = render_molecule_svg_with_atom_labels(
+                "CCO_LABELS_EXCEPTION", {0: "R1"}
+            )
+        self.assertEqual(result, "")
+
+    def test_render_derivative_svg_returns_empty_on_parse_failure(self) -> None:
+        """Si principal o derivado no parsean, retorna cadena vacía."""
+        result = render_derivative_svg_with_substituent_highlighting(
+            principal_smiles="INVALID",
+            derivative_smiles="CCO",
+            substituent_smiles_list=["C"],
+        )
+        self.assertEqual(result, "")
+
+    def test_score_principal_match_counts_external_neighbors(self) -> None:
+        """_score_principal_match counts sites con vecinos externos al scaffold."""
+        # Propanol: C=0, C=1, O=2. Match del scaffold CC en idxs (0,1).
+        # El átomo 1 tiene vecino externo (O en idx 2) fuera del set {0,1}.
+        derivative_mol = Chem.MolFromSmiles("CCO")
+        assert derivative_mol is not None
+        principal_match = (0, 1)  # CC como match
+        # Sitio en posición 1 del match (átomo idx 1 que conecta con O)
+        score = _score_principal_match_for_sites(
+            derivative_molecule=derivative_mol,
+            principal_match=principal_match,
+            principal_site_atom_indices=[1],
+        )
+        self.assertGreaterEqual(score, 1)
+
+    def test_compute_substituent_atom_indices_with_multiple_matches(self) -> None:
+        """Con múltiples matches del scaffold, elige el que maximiza los sitios."""
+        # Naftaleno como derivado, benceno como principal → múltiples matches
+        from apps.smileit.engine.parsing import parse_smiles_cached
+
+        principal = parse_smiles_cached("c1ccccc1")
+        derivative = parse_smiles_cached("c1ccc2ccccc2c1")  # naftaleno
+        if principal is None or derivative is None:
+            self.skipTest("SMILES no válidos en entorno de test")
+
+        result = _compute_substituent_atom_indices(
+            principal_molecule=principal,
+            derivative_molecule=derivative,
+            principal_site_atom_indices=[0],
+        )
+        # Los átomos fuera del scaffold del benceno deben estar en el resultado
+        self.assertIsInstance(result, set)

@@ -239,20 +239,26 @@ class SmileitSeedTestCase(TestCase):
         caption: str,
     ) -> SmileitPattern:
         """Recupera o crea un patrón semilla evitando duplicación entre clases de test."""
-        pattern, created = SmileitPattern.objects.get_or_create(
-            name=name,
-            version=1,
-            defaults={
-                "stable_id": uuid.uuid4(),
-                "is_latest": True,
-                "is_active": True,
-                "smarts": smarts,
-                "pattern_type": pattern_type,
-                "caption": caption,
-                "source_reference": "seed",
-                "provenance_metadata": {"seed": True},
-            },
+        pattern = (
+            SmileitPattern.objects.filter(name=name, version=1)
+            .order_by("created_at")
+            .first()
         )
+        created = pattern is None
+
+        if pattern is None:
+            pattern = SmileitPattern.objects.create(
+                stable_id=uuid.uuid4(),
+                version=1,
+                is_latest=True,
+                is_active=True,
+                name=name,
+                smarts=smarts,
+                pattern_type=pattern_type,
+                caption=caption,
+                source_reference="seed",
+                provenance_metadata={"seed": True},
+            )
 
         if not created:
             pattern.is_latest = True
@@ -260,8 +266,6 @@ class SmileitSeedTestCase(TestCase):
             pattern.smarts = smarts
             pattern.pattern_type = pattern_type
             pattern.caption = caption
-            pattern.source_reference = "seed"
-            pattern.provenance_metadata = {"seed": True}
             pattern.save(
                 update_fields=[
                     "is_latest",
@@ -269,8 +273,6 @@ class SmileitSeedTestCase(TestCase):
                     "smarts",
                     "pattern_type",
                     "caption",
-                    "source_reference",
-                    "provenance_metadata",
                     "updated_at",
                 ]
             )
