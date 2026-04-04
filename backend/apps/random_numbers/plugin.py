@@ -32,6 +32,73 @@ from .definitions import PLUGIN_NAME
 from .types import RandomNumbersInput, RandomNumbersResult, RandomNumbersRuntimeState
 
 logger = logging.getLogger(__name__)
+PLUGIN_LOG_SOURCE = "random_numbers.plugin"
+
+
+def _raise_pause_if_requested(
+    request_control_action: PluginControlCallback,
+    generated_numbers: list[int],
+    generated_count: int,
+    total_numbers: int,
+) -> None:
+    """Lanza pausa cooperativa cuando el callback de control lo solicita."""
+    if request_control_action() != "pause":
+        return
+    raise JobPauseRequested(
+        checkpoint=_build_pause_checkpoint(
+            generated_numbers,
+            generated_count,
+            total_numbers,
+        )
+    )
+
+
+def _generate_batch_numbers(
+    *,
+    random_generator: random.Random,
+    current_batch_size: int,
+    generated_numbers: list[int],
+    generated_count: int,
+    total_numbers: int,
+    emit_log: PluginLogCallback,
+    request_control_action: PluginControlCallback,
+    progress_callback: PluginProgressCallback,
+) -> tuple[int, list[int]]:
+    """Genera un lote de números y retorna contador actualizado y lote generado."""
+    batch_generated_numbers: list[int] = []
+
+    for _ in range(current_batch_size):
+        next_number: int = random_generator.randint(0, 1_000_000)
+        generated_numbers.append(next_number)
+        batch_generated_numbers.append(next_number)
+        generated_count += 1
+
+        emit_log(
+            "debug",
+            PLUGIN_LOG_SOURCE,
+            "Número generado correctamente.",
+            {
+                "generated_count": generated_count,
+                "generated_number": next_number,
+                "total_numbers": total_numbers,
+            },
+        )
+
+        completion_percentage: int = int((generated_count / total_numbers) * 100)
+        progress_callback(
+            completion_percentage,
+            "running",
+            f"Generados {generated_count}/{total_numbers} números aleatorios.",
+        )
+
+        _raise_pause_if_requested(
+            request_control_action,
+            generated_numbers,
+            generated_count,
+            total_numbers,
+        )
+
+    return generated_count, batch_generated_numbers
 
 
 def _build_random_numbers_input(parameters: JSONMap) -> RandomNumbersInput:
@@ -75,7 +142,7 @@ def _resolve_seed_digest(
             response_content = response.read(4096)
             log_callback(
                 "info",
-                "random_numbers.plugin",
+                PLUGIN_LOG_SOURCE,
                 "Semilla remota leída correctamente.",
                 {
                     "seed_url": seed_url,
@@ -90,7 +157,7 @@ def _resolve_seed_digest(
         )
         log_callback(
             "warning",
-            "random_numbers.plugin",
+            PLUGIN_LOG_SOURCE,
             "Fallo al leer semilla remota; se aplica fallback determinista local.",
             {
                 "seed_url": seed_url,
@@ -171,7 +238,7 @@ def random_numbers_plugin(
 
     emit_log(
         "info",
-        "random_numbers.plugin",
+        PLUGIN_LOG_SOURCE,
         "Iniciando generación de números aleatorios.",
         {
             "seed_url": seed_url,
@@ -186,7 +253,7 @@ def random_numbers_plugin(
     random_generator = random.Random(seed_integer)
     emit_log(
         "info",
-        "random_numbers.plugin",
+        PLUGIN_LOG_SOURCE,
         "Generador pseudoaleatorio inicializado con digest determinista.",
         {
             "seed_url": seed_url,
@@ -210,7 +277,7 @@ def random_numbers_plugin(
         generated_count = int(runtime_state["generated_count"])
         emit_log(
             "info",
-            "random_numbers.plugin",
+            PLUGIN_LOG_SOURCE,
             "Reanudando ejecución desde checkpoint persistido.",
             {
                 "generated_count": generated_count,
@@ -219,24 +286,23 @@ def random_numbers_plugin(
         )
 
         for _ in range(generated_count):
-            random_generator.randint(0, 1_000_000)
+            random_generator.randint(
+                0, 1_000_000
+            )  # NOSONAR - no importante es un ejemplo de uso de random, no se usa para seguridad
 
     while generated_count < total_numbers:
-        if request_control_action() == "pause":
-            raise JobPauseRequested(
-                checkpoint=_build_pause_checkpoint(
-                    generated_numbers,
-                    generated_count,
-                    total_numbers,
-                )
-            )
+        _raise_pause_if_requested(
+            request_control_action,
+            generated_numbers,
+            generated_count,
+            total_numbers,
+        )
 
         remaining_numbers: int = total_numbers - generated_count
         current_batch_size: int = min(numbers_per_batch, remaining_numbers)
-        batch_generated_numbers: list[int] = []
         emit_log(
             "info",
-            "random_numbers.plugin",
+            PLUGIN_LOG_SOURCE,
             "Procesando lote de generación.",
             {
                 "current_batch_size": current_batch_size,
@@ -245,41 +311,20 @@ def random_numbers_plugin(
             },
         )
 
-        for _ in range(current_batch_size):
-            next_number: int = random_generator.randint(0, 1_000_000)
-            generated_numbers.append(next_number)
-            batch_generated_numbers.append(next_number)
-            generated_count += 1
-            emit_log(
-                "debug",
-                "random_numbers.plugin",
-                "Número generado correctamente.",
-                {
-                    "generated_count": generated_count,
-                    "generated_number": next_number,
-                    "total_numbers": total_numbers,
-                },
-            )
-
-            completion_percentage: int = int((generated_count / total_numbers) * 100)
-            progress_callback(
-                completion_percentage,
-                "running",
-                f"Generados {generated_count}/{total_numbers} números aleatorios.",
-            )
-
-            if request_control_action() == "pause":
-                raise JobPauseRequested(
-                    checkpoint=_build_pause_checkpoint(
-                        generated_numbers,
-                        generated_count,
-                        total_numbers,
-                    )
-                )
+        generated_count, batch_generated_numbers = _generate_batch_numbers(
+            random_generator=random_generator,
+            current_batch_size=current_batch_size,
+            generated_numbers=generated_numbers,
+            generated_count=generated_count,
+            total_numbers=total_numbers,
+            emit_log=emit_log,
+            request_control_action=request_control_action,
+            progress_callback=progress_callback,
+        )
 
         emit_log(
             "info",
-            "random_numbers.plugin",
+            PLUGIN_LOG_SOURCE,
             "Lote generado; se publica snapshot acumulado de números generados.",
             {
                 "batch_generated_numbers": batch_generated_numbers,
@@ -290,17 +335,15 @@ def random_numbers_plugin(
         )
 
         if generated_count < total_numbers:
-            if request_control_action() == "pause":
-                raise JobPauseRequested(
-                    checkpoint=_build_pause_checkpoint(
-                        generated_numbers,
-                        generated_count,
-                        total_numbers,
-                    )
-                )
+            _raise_pause_if_requested(
+                request_control_action,
+                generated_numbers,
+                generated_count,
+                total_numbers,
+            )
             emit_log(
                 "info",
-                "random_numbers.plugin",
+                PLUGIN_LOG_SOURCE,
                 "Esperando intervalo antes del siguiente lote.",
                 {
                     "interval_seconds": interval_seconds,
@@ -311,7 +354,7 @@ def random_numbers_plugin(
 
     emit_log(
         "info",
-        "random_numbers.plugin",
+        PLUGIN_LOG_SOURCE,
         "Generación completada exitosamente.",
         {
             "total_numbers": total_numbers,

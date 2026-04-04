@@ -1,327 +1,423 @@
 ---
-applyTo: "**/*.py"
----
 
-# Integración de Nueva App Científica (obligatorio)
+## applyTo: "**/*.py"
+## name: "Python Backend Guide - Django Moderno"
+## description: "Guía integral para generar código tipado, modular, mantenible, alineado con Python 3.12+ y Django 6.x usando arquitectura hexagonal"
 
-Al crear o conectar una nueva app científica en backend se debe seguir el manual:
+# 🧠 GUÍA INTEGRAL BACKEND (PYTHON + DJANGO MODERNO)
 
-- .github/instructions/scientific-app-onboarding.instructions.md
+## 🎯 OBJETIVO
 
-Resumen mínimo esperado:
-
-1. crear app con estructura completa (apps.py, definitions.py, types.py, schemas.py, plugin.py, routers.py, contract.py, tests.py)
-2. registrar ScientificAppDefinition en ready() y publicar plugin en PluginRegistry
-3. tipar estrictamente contratos de entrada/salida sin Any
-4. documentar OpenAPI con serializers y ejemplos realistas
-5. conectar app en settings.py y urls.py
-6. validar con check, tests y regeneración de schema OpenAPI
-
-# Python Strict Typing and API Documentation Instructions
-
-This project requires **strict static typing** and **complete API documentation**.
-
-All generated code must be fully typed and must produce **high-quality OpenAPI documentation**.
-
-Dynamic typing and incomplete documentation are not allowed.
+El agente debe generar código: 
+    * tipado estrictamente
+    * modular
+    * mantenible
+    * alineado con Python moderno (3.12+)
+    * alineado con Django moderno (6.x)
 
 ---
 
-# Python Version
+# 0. VERSIONES OBLIGATORIAS
 
-Use Python **3.11 or newer**.
+- Python: **3.12 o superior**
+- Django: **6.x (última versión estable)**
 
-Prefer modern typing features.
+Django 6 soporta Python 3.12–3.14 y elimina versiones antiguas, por lo que se debe usar siempre stack moderno. ([Django Documentation][1])
 
 ---
 
-# Strict Typing Requirements
+# 1. INTEGRACIÓN DE APP CIENTÍFICA (OBLIGATORIO)
 
-All variables, function arguments, return values, and class attributes MUST have explicit type annotations.
+Seguir:
 
-GOOD
+.github/instructions/scientific-app-onboarding.instructions.md
 
+Resumen:
+
+1. estructura completa:
+   - apps.py
+   - definitions.py
+   - types.py
+   - schemas.py
+   - plugin.py
+   - routers.py
+   - contract.py
+   - tests.py
+
+2. registrar en `ready()`
+
+3. tipado estricto (sin Any)
+
+4. documentación OpenAPI completa
+
+5. registrar en settings y urls
+
+6. validar tests + schema + check
+
+---
+
+# 2. ARQUITECTURA (HEXAGONAL OBLIGATORIA)
+
+## 2.1 Arquitectura hexagonal (ports & adapters)
+
+El agente DEBE usar:
+
+- dominio independiente
+- puertos (interfaces)
+- adaptadores (implementaciones)
+
+---
+
+## 2.2 Capas obligatorias
+
+- domain → entidades puras
+- application/services → lógica
+- ports → interfaces
+- adapters → DB / API
+- presentation → views
+
+---
+
+## 2.3 Regla clave
+
+- dominio NO depende de Django
+- Django es infraestructura
+
+---
+
+## 2.4 Estructura esperada
+
+```
+backend/
+  apps/
+    users/
+      domain/
+      services/
+      ports/
+      adapters/
+      presentation/
+```
+
+---
+
+## 2.5 Tamaño de archivos
+
+- Ideal: **300–400 líneas**
+- Mínimo: **100 líneas**
+- Máximo: **600 líneas**
+
+Reglas:
+
+- PROHIBIDO >600 líneas
+- EVITAR <100 líneas
+- dividir por responsabilidad
+- evitar sobre-fragmentación
+
+---
+
+# 3. PRINCIPIOS DE DISEÑO
+
+## 3.1 Liskov (LSP)
+
+- Subclases deben ser sustituibles
+- No romper contratos
+- No cambiar comportamiento esperado
+
+---
+
+## 3.2 Modularización
+
+El sistema debe ser:
+
+- desacoplado
+- cohesivo
+- reutilizable
+
+---
+
+## 3.3 Arquitectura en capas
+
+Separar:
+
+- presentación
+- dominio
+- infraestructura
+
+---
+
+## 3.4 MVC en Django
+
+- Model → models.py
+- View → views.py
+- Controller → delegar en services
+
+---
+
+# 4. TIPADO ESTRICTO (OBLIGATORIO)
+
+- Tipar TODO
+- Prohibido `Any`
+- Colecciones siempre tipadas
+
+---
+
+## Ejemplo
+
+```python
 def get_user(user_id: int) -> User:
-...
-
-BAD
-
-def get_user(user_id):
-...
+    ...
+```
 
 ---
 
-# Variable Typing
+## Colecciones
 
-All variables must have explicit types.
-
-GOOD
-
-user_count: int = 0
-
-BAD
-
-user_count = 0
-
----
-
-# Forbidden Types
-
-The following types are **strictly forbidden**:
-
-- Any
-- typing.Any
-- object used as fallback
-- untyped lists
-- untyped dictionaries
-- untyped sets
-
-BAD
-
-data: Any
-items: list
-mapping: dict
-
-GOOD
-
-data: UserData
-items: list[str]
+```python
+users: list[User]
 mapping: dict[str, User]
+```
 
 ---
 
-# Generics Must Be Fully Specified
+## Opcionales
 
-Generic types must always specify their type parameters.
-
-BAD
-
-items: list
-mapping: dict
-
-GOOD
-
-items: list[str]
-mapping: dict[str, User]
-
----
-
-# Function Typing
-
-All functions must include:
-
-- typed parameters
-- explicit return types
-
-GOOD
-
-def create_user(email: str) -> User:
-...
-
----
-
-# Optional Types
-
-Optional values must be declared explicitly.
-
-Example:
-
+```python
 user: User | None
+```
 
 ---
 
-# Collections
+# 5. PYTHON MODERNO (3.12+)
 
-Collections must always define element types.
+## 5.1 Features obligatorias
 
-Examples
-
-list[str]
-
-set[int]
-
-dict[str, User]
-
-tuple[int, str]
-
----
-
-# Strongly Typed Data Structures
-
-Prefer strongly typed structures:
-
-- dataclasses
-- Pydantic models
-- typed classes
-
-Example
-
-from dataclasses import dataclass
-
-@dataclass
-class User:
-id: int
-email: str
-active: bool
+- `X | Y`
+- `type` alias
+- generics (`def f[T]`)
+- `Self`
+- `@override`
+- `TypedDict`
+- `dataclass(slots=True)`
+- `match/case`
+- pattern matching estructural
 
 ---
 
-# Static Type Checking
+## 5.2 Ejemplo
 
-All code must pass strict static type checking.
+```python
+type UserId = int
 
-Tools expected:
-
-- mypy
-- pyright
-
----
-
-# No Implicit Typing
-
-Avoid implicit typing when clarity matters.
-
-BAD
-
-items = []
-
-GOOD
-
-items: list[str] = []
+class User(TypedDict):
+    id: UserId
+    name: str
+```
 
 ---
 
-# Logging
+# 6. DJANGO MODERNO (6.x)
 
-Do not use print statements.
+## 6.1 Async-first
 
-Use the logging module.
-
-Example
-
-logger.info("User created")
-
----
-
-# Error Handling
-
-Catch specific exceptions.
-
-BAD
-
-except Exception:
-
-GOOD
-
-except ValueError:
+```python
+async def get_user(request):
+    ...
+```
 
 ---
 
-# API Documentation Requirements (OpenAPI)
+## 6.2 ORM avanzado
 
-All API endpoints MUST include complete OpenAPI documentation.
+Usar:
 
-Documentation must be clear enough for another developer to understand how to use the API without reading the source code.
+- `select_related`
+- `prefetch_related`
+- `annotate`
+- `Subquery`
+- `Exists`
 
-Each endpoint must include:
+---
 
-- clear description
+## 6.3 Features modernas clave
+
+Django 6 introduce:
+
+- background tasks nativos
+- Content Security Policy (CSP)
+- template partials
+- AsyncPaginator
+- mejoras ORM y seguridad ([Django.wiki][2])
+
+---
+
+## 6.4 Modelos
+
+- `JSONField`
+- `GeneratedField`
+- `db_default`
+
+---
+
+## 6.5 Constraints
+
+```python
+UniqueConstraint(...)
+CheckConstraint(...)
+```
+
+---
+
+## 6.6 Background tasks
+
+```python
+from django.core.tasks import background
+
+@background
+def task():
+    ...
+```
+
+---
+
+## 6.7 Admin
+
+- list_display
+- search_fields
+- list_filter
+
+---
+
+## 6.8 Storage moderno
+
+```python
+STORAGES = {...}
+```
+
+---
+
+# 7. BASE DE DATOS
+
+- Producción → Django ORM
+- Desarrollo → SQLite
+- MISMA tecnología (sin mocks)
+
+---
+
+# 8. VALIDACIONES
+
+- DB → constraints
+- services → lógica
+
+No duplicar
+
+---
+
+# 9. FUNCIONES
+
+- Máx 20–30 líneas
+- una responsabilidad
+- tipadas
+
+---
+
+# 10. CONTROL DE FLUJO
+
+```python
+def process(data: dict) -> str:
+    match data:
+        case {"type": "user", "name": name}:
+            return name
+        case _:
+            return "unknown"
+```
+
+---
+
+# 11. ERRORES
+
+- usar excepciones específicas
+- PROHIBIDO `except Exception`
+
+---
+
+# 12. CHECKLIST INTERNO DEL LLM
+
+Antes de responder, validar:
+
+- ¿Tiene typing completo?
+- ¿Hay duplicación?
+- ¿Está modularizado?
+- ¿Se puede simplificar con `match`?
+- ¿Se separó lógica de negocio?
+- ¿Usa features modernas de Python?
+- ¿Django está actualizado a prácticas modernas?
+
+---
+
+# 13. MODO DE GENERACIÓN
+
+- Pensar primero en arquitectura (hexagonal)
+- Definir puertos (interfaces)
+- Definir tipos
+- Implementar lógica
+- Crear adaptadores
+- Organizar módulos
+- Limpiar código
+
+---
+
+# 14. OPENAPI (OBLIGATORIO)
+
+Cada endpoint debe incluir:
+
 - summary
-- request body documentation
+- descripción
+- request schema
 - response schema
-- error responses
-- realistic usage examples
-
-Incomplete API documentation is not allowed.
+- errores
+- ejemplos reales
 
 ---
 
-# OpenAPI Examples
+# 15. CONSISTENCIA
 
-All request and response models must include **realistic examples**.
-
-Examples must reflect real usage of the API and contain meaningful data.
-
-BAD
-
-example:
-{
-"name": "string"
-}
-
-GOOD
-
-example:
-{
-"id": 123,
-"email": "user@example.com",
-"active": true,
-"created_at": "2026-03-09T10:00:00Z"
-}
+- naming consistente
+- contratos consistentes
+- estructuras repetibles
 
 ---
 
-# Endpoint Documentation Quality
+# 16. LIMPIEZA
 
-Each endpoint must document:
-
-Summary  
-Short description of the endpoint.
-
-Detailed description  
-Explain what the endpoint does and when it should be used.
-
-Request parameters  
-All parameters must be documented.
-
-Request body schema  
-Must reference a strongly typed model.
-
-Response schema  
-Must define all returned fields.
-
-Error responses  
-Document possible error cases.
-
-Examples  
-Provide complete example requests and responses.
+- eliminar duplicación
+- eliminar código muerto
+- simplificar lógica
 
 ---
 
-# API Consistency
+# 17. ANTI-PATTERNS
 
-All endpoints must follow consistent conventions:
-
-- consistent naming
-- consistent response format
-- consistent error format
-- clear versioning if applicable
-
----
-
-# Code Quality
-
-All code must:
-
-- follow PEP8
-- be readable
-- avoid dynamic typing
-- prioritize explicit data structures
-- include meaningful docstrings
+- `Any`
+- lógica en views
+- duplicación
+- clases gigantes
+- funciones largas
+- acoplamiento fuerte
 
 ---
 
-# Summary
+# ⚡ RESULTADO ESPERADO
 
-This project enforces:
+Código:
 
-Strict static typing  
-No use of Any  
-Fully typed collections  
-Explicit types everywhere  
-Complete OpenAPI documentation  
-Realistic API examples  
-Consistent API design
-solo se usara o ya sea django para el backen en produccion y sqlite para el desarrollo local nunca se mockeara la base de datos, se usara la misma tecnologia en ambos entornos para evitar problemas de compatibilidad o diferencias en el comportamiento.
-- Se debe usar la ultima version de Django y python de ser necesario buscar en internet las ultimas versiones de Django y python y verificar que se estan usando las ultimas versiones de Django y python, esto ayuda a mantener el código actualizado y aprovechar las mejoras y optimizaciones que se han hecho en las ultimas versiones de Django y python, ademas de usar codigo corto y potente
-la carpeta raiz del codigo python es backen
+- moderno (Python 3.12+, Django 6)
+- arquitectura hexagonal
+- uso de puertos y adaptadores
+- completamente tipado
+- modular sin sobre-fragmentación
+- limpio
+- listo para producción
+- alineado con mejores prácticas actuales
+
+[1]: https://django.readthedocs.io/en/latest/releases/6.0.html?utm_source=chatgpt.com "Django 6.0 release notes — Django 6.1.dev20260311170544 documentation"
+[2]: https://django.wiki/articles/django-6-new-features/?utm_source=chatgpt.com "What's New in Django 6.0 Major Features and Changes - Django.wiki"

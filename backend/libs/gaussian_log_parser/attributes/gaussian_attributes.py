@@ -12,6 +12,8 @@ Uso:
         attr.process(line)
 """
 
+import math
+
 from .base import GaussianAttribute
 
 
@@ -134,7 +136,7 @@ class NegativeFrequenciesAttribute(GaussianAttribute):
     def extract_value(self, line: str) -> float:
         """Extrae el número de frecuencias imaginarias."""
         float_val = self.extract_float(line)
-        return float_val if not (float_val != float_val) else 0.0  # NaN check
+        return 0.0 if math.isnan(float_val) else float_val
 
 
 class ImaginaryFrequencyAttribute(GaussianAttribute):

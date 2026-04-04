@@ -8,3 +8,16 @@ backend/media/
 
 # Legacy nested repository should not be tracked from this monorepo.
 deprecated/Smile-it/smile-generator/
+
+# Runtime-generated state files.
+backend/dump.rdb
+backend/celerybeat-schedule
+
+
+tools/
+.env
+sonar_report.json
+.pytest_cache
+__pycache__/
+**/__pycache__/
+.pytest_cache/

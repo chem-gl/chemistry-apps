@@ -16,7 +16,10 @@ from typing import cast
 from libs.gaussian_log_parser.models import GaussianExecution
 from libs.gaussian_log_parser.parsers import GaussianLogParser
 
-from apps.core.artifacts import ScientificInputArtifactStorageService
+from apps.core.artifacts import (
+    ScientificInputArtifactStorageService,
+    normalize_file_descriptors,
+)
 from apps.core.models import ScientificJobInputArtifact
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
@@ -30,6 +33,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+REORGANIZATION_ABS_TOLERANCE = 1e-12
 
 HARTREE_TO_KCAL: float = 627.5095
 KB: float = 1.38066e-23
@@ -45,24 +49,9 @@ def _is_finite(value: float) -> bool:
 
 def _build_marcus_parameters(parameters: JSONMap) -> MarcusJobParameters:
     """Normaliza parámetros serializados de Marcus a estructura tipada."""
-    file_descriptors_raw = parameters.get("file_descriptors", [])
-    if not isinstance(file_descriptors_raw, list):
-        raise ValueError("file_descriptors debe ser una lista.")
-
-    normalized_file_descriptors: list[dict[str, str | int]] = []
-    for descriptor in file_descriptors_raw:
-        if not isinstance(descriptor, dict):
-            raise ValueError("Cada descriptor de archivo debe ser un objeto.")
-
-        normalized_file_descriptors.append(
-            {
-                "field_name": str(descriptor.get("field_name", "")),
-                "original_filename": str(descriptor.get("original_filename", "")),
-                "content_type": str(descriptor.get("content_type", "")),
-                "sha256": str(descriptor.get("sha256", "")),
-                "size_bytes": int(descriptor.get("size_bytes", 0)),
-            }
-        )
+    normalized_file_descriptors = normalize_file_descriptors(
+        parameters.get("file_descriptors", [])
+    )
 
     return {
         "title": str(parameters.get("title", "Title")),
@@ -235,7 +224,11 @@ def _compute_marcus_result(
     )
 
     reorganization_energy: float = vertical_energy - adiabatic_energy_corrected
-    if reorganization_energy == 0.0:
+    if math.isclose(
+        reorganization_energy,
+        0.0,
+        abs_tol=REORGANIZATION_ABS_TOLERANCE,
+    ):
         raise ValueError("No se puede calcular Marcus cuando lambda es cero.")
 
     barrier_kcal_mol: float = (reorganization_energy / 4.0) * (

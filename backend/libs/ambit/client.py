@@ -143,7 +143,7 @@ class AmbitClient:
     def _extract_sa_score(raw_output: str) -> float | None:
         """Extrae SA score desde salida textual de Ambit con tolerancia decimal."""
         # Ambit imprime típicamente: "SA = 99,467"
-        match = re.search(r"SA\s*=\s*([0-9]+(?:[\.,][0-9]+)?)", raw_output)
+        match = re.search(r"SA\s*=\s*(\d+(?:[\.,]\d+)?)", raw_output)
         if match is None:
             return None
 

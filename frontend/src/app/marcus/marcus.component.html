@@ -1,369 +1,299 @@
 <!-- marcus.component.html: UI de Marcus para cálculo de energías y constantes de velocidad por teoría de Marcus. -->
 <section class="marcus-shell" aria-label="Marcus theory scientific app">
-    <header class="marcus-header">
-        <p class="eyebrow">Kinetics — Marcus Theory</p>
-        <h2>Marcus Rate Calculator</h2>
-        <p>
-            Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute
-            Marcus energies, reorganization energy, barriers, and rate constants.
-        </p>
-    </header>
+  <header class="marcus-header">
+    <p class="eyebrow">Kinetics — Marcus Theory</p>
+    <h2>Marcus Rate Calculator</h2>
+    <p>
+      Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute
+      Marcus energies, reorganization energy, barriers, and rate constants.
+    </p>
+  </header>
 
-    <div class="workspace-grid">
-        <!-- ── Panel de entrada ─────────────────────────────────────────── -->
-        <section class="entry-panel" aria-label="Input files and parameters">
-            <h3>
-                Required Input Files
-                <span class="all-required-badge">All 6 required</span>
-            </h3>
+  <div class="workspace-grid">
+    <!-- ── Panel de entrada ─────────────────────────────────────────── -->
+    <section class="entry-panel" aria-label="Input files and parameters">
+      <h3>
+        Required Input Files
+        <span class="all-required-badge">All 6 required</span>
+      </h3>
 
-            <div class="file-group">
-                <h4 class="file-group-title">Reactants</h4>
-                <div class="file-grid">
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.reactant1File() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Reactant 1 <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onReactant1FileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.reactant1File(); as r1File) {
-                            <span class="file-badge">{{ r1File.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.reactant2File() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Reactant 2 <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onReactant2FileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.reactant2File(); as r2File) {
-                            <span class="file-badge">{{ r2File.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-                </div>
-            </div>
-
-            <div class="file-group">
-                <h4 class="file-group-title">Adiabatic Products</h4>
-                <div class="file-grid">
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.product1AdiabaticFile() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Product 1 Adiabatic <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onProduct1AdiabaticFileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.product1AdiabaticFile(); as p1aFile) {
-                            <span class="file-badge">{{ p1aFile.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.product2AdiabaticFile() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Product 2 Adiabatic <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onProduct2AdiabaticFileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.product2AdiabaticFile(); as p2aFile) {
-                            <span class="file-badge">{{ p2aFile.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-                </div>
-            </div>
-
-            <div class="file-group">
-                <h4 class="file-group-title">Vertical Products</h4>
-                <div class="file-grid">
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.product1VerticalFile() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Product 1 Vertical <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onProduct1VerticalFileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.product1VerticalFile(); as p1vFile) {
-                            <span class="file-badge">{{ p1vFile.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-
-                    <label class="upload-zone"
-                        [class.has-file]="workflow.product2VerticalFile() !== null"
-                        [class.is-disabled]="workflow.isProcessing()">
-                        <span class="upload-label">Product 2 Vertical <span class="req-mark">*</span></span>
-                        <input type="file" accept=".log,.out,.txt" (change)="onProduct2VerticalFileChange($event)"
-                            [disabled]="workflow.isProcessing()" />
-                        @if (workflow.product2VerticalFile(); as p2vFile) {
-                            <span class="file-badge">{{ p2vFile.name }}</span>
-                        } @else {
-                            <span class="upload-hint">Browse .log / .out / .txt</span>
-                        }
-                    </label>
-                </div>
-            </div>
-
-            <h3 class="section-sub">Parameters</h3>
-
-            <div class="param-grid">
-                <label>
-                    Title
-                    <input type="text" [ngModel]="workflow.title()" (ngModelChange)="workflow.updateTitle($event)"
-                        [disabled]="workflow.isProcessing()" placeholder="Optional reaction label" />
-                </label>
-            </div>
-
-            <div class="checkbox-row">
-                <label class="checkbox-label">
-                    <input type="checkbox" [checked]="workflow.diffusion()" (change)="onDiffusionChange($event)"
-                        [disabled]="workflow.isProcessing()" />
-                    Diffusion correction
-                </label>
-            </div>
-
-            @if (workflow.showDiffusionFields()) {
-            <div class="param-grid diffusion-fields">
-                <label>
-                    Radius reactant 1 (Å)
-                    <input type="number" step="0.01" [ngModel]="workflow.radiusReactant1()"
-                        (ngModelChange)="workflow.updateRadiusReactant1($event)" [disabled]="workflow.isProcessing()" />
-                </label>
-
-                <label>
-                    Radius reactant 2 (Å)
-                    <input type="number" step="0.01" [ngModel]="workflow.radiusReactant2()"
-                        (ngModelChange)="workflow.updateRadiusReactant2($event)" [disabled]="workflow.isProcessing()" />
-                </label>
-
-                <label>
-                    Reaction distance (Å)
-                    <input type="number" step="0.01" [ngModel]="workflow.reactionDistance()"
-                        (ngModelChange)="workflow.updateReactionDistance($event)"
-                        [disabled]="workflow.isProcessing()" />
-                </label>
-            </div>
+      <div class="file-group">
+        <h4 class="file-group-title">Reactants</h4>
+        <div class="file-grid">
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.reactant1File() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Reactant 1 <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onReactant1FileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.reactant1File(); as r1File) {
+              <span class="file-badge">{{ r1File.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
             }
+          </label>
 
-            <div class="action-row">
-                <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
-                    {{ workflow.isProcessing() ? 'Processing...' : 'Run Marcus' }}
-                </button>
-                <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-                    Reset
-                </button>
-                <button class="btn-secondary" (click)="clearFiles()" [disabled]="workflow.isProcessing()">
-                    Clear files
-                </button>
-            </div>
-        </section>
-
-        <!-- ── Panel de resultado ──────────────────────────────────────── -->
-        <section class="result-panel" aria-label="Results and progress">
-            <h3>Output</h3>
-
-            @if (workflow.activeSection() === 'dispatching') {
-            <p class="status-message">Submitting Marcus job to backend...</p>
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.reactant2File() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Reactant 2 <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onReactant2FileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.reactant2File(); as r2File) {
+              <span class="file-badge">{{ r2File.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
             }
-
-            @if (workflow.activeSection() === 'progress') {
-            <div class="progress-card">
-                <p class="job-id">{{ workflow.currentJobId() }}</p>
-                <div class="progress-track" role="progressbar" [attr.aria-valuenow]="workflow.progressPercentage()"
-                    aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-fill" [style.width.%]="workflow.progressPercentage()">
-                    </div>
-                </div>
-                <p class="progress-pct">{{ workflow.progressPercentage() }}%</p>
-                <p class="progress-message">{{ workflow.progressMessage() }}</p>
-            </div>
-            }
-
-            @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-            @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-            <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-            }
-
-            <div class="result-title-row">
-                <strong>{{ resultData.title || 'Marcus result' }}</strong>
-            </div>
-
-            <!-- Energías -->
-            <div class="result-section">
-                <h4>Marcus Energies</h4>
-                <div class="kv-grid">
-                    <span class="kv-label">ΔE adiabatic (kcal/mol)</span>
-                    <span class="kv-value mono">{{
-                        formatKcalMol(resultData.adiabaticEnergyKcalMol) }}</span>
-                    <span class="kv-label">ΔE adiabatic corr. (kcal/mol)</span>
-                    <span class="kv-value mono">{{
-                        formatKcalMol(resultData.adiabaticEnergyCorrectedKcalMol) }}</span>
-                    <span class="kv-label">ΔE vertical (kcal/mol)</span>
-                    <span class="kv-value mono">{{
-                        formatKcalMol(resultData.verticalEnergyKcalMol) }}</span>
-                    <span class="kv-label">λ (reorganization, kcal/mol)</span>
-                    <span class="kv-value mono">{{
-                        formatKcalMol(resultData.reorganizationEnergyKcalMol) }}</span>
-                    <span class="kv-label">ΔG‡ (barrier, kcal/mol)</span>
-                    <span class="kv-value mono">{{ formatKcalMol(resultData.barrierKcalMol) }}</span>
-                </div>
-            </div>
-
-            <!-- Constantes de velocidad -->
-            <div class="result-section">
-                <h4>Rate Constants</h4>
-                <div class="kv-grid">
-                    <span class="kv-label">k (TST)</span>
-                    <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }}
-                        L·mol⁻¹·s⁻¹</span>
-                    <span class="kv-label">k (final)</span>
-                    <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }}
-                        L·mol⁻¹·s⁻¹</span>
-                    @if (resultData.diffusionApplied && resultData.kDiff !== null) {
-                    <span class="kv-label">k_diff</span>
-                    <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }}
-                        L·mol⁻¹·s⁻¹</span>
-                    }
-                </div>
-            </div>
-
-            <!-- Condiciones -->
-            <div class="result-section">
-                <h4>Conditions</h4>
-                <div class="kv-grid">
-                    <span class="kv-label">Temperature</span>
-                    <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
-                    @if (resultData.viscosityPaS !== null) {
-                    <span class="kv-label">Viscosity</span>
-                    <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }}
-                        Pa·s</span>
-                    }
-                </div>
-                <div class="flag-row">
-                    @if (resultData.diffusionApplied) {
-                    <span class="flag-tag flag-on">Diffusion</span>
-                    }
-                </div>
-            </div>
-
-            <!-- Archivos de entrada persistidos -->
-            @if (resultData.fileDescriptors.length > 0) {
-            <div class="result-section">
-                <h4>Persisted Input Files</h4>
-                <div class="file-descriptors-list">
-                    @for (fd of resultData.fileDescriptors; track fd.fieldName) {
-                    <div class="fd-item">
-                        <span class="fd-field">{{ fd.fieldName }}</span>
-                        <span class="fd-name">{{ fd.originalFilename }}</span>
-                        <span class="fd-size">{{ formatBytes(fd.sizeBytes) }}</span>
-                    </div>
-                    }
-                </div>
-            </div>
-            }
-
-            <div class="action-row export-row">
-                <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExport()">
-                    {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-                </button>
-                <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExport()">
-                    Export LOG
-                </button>
-                <button class="btn-secondary" (click)="exportInputsZip()" [disabled]="!canExport()">
-                    Download Inputs ZIP
-                </button>
-            </div>
-
-            @if (workflow.exportErrorMessage(); as exportError) {
-            <p class="error-message" role="alert">{{ exportError }}</p>
-            }
-            }
-
-            @if (workflow.activeSection() === 'error') {
-            <div class="error-block">
-                @if (workflow.errorMessage(); as currentError) {
-                <p class="error-message" role="alert">{{ currentError }}</p>
-                }
-                @if (workflow.currentJobId() !== null) {
-                <button class="btn-secondary" (click)="exportError()" [disabled]="!canExport()">
-                    Download Error Report
-                </button>
-                }
-            </div>
-            }
-        </section>
-    </div>
-
-    <!-- ── Logs de ejecución ──────────────────────────────────────────── -->
-    @if (workflow.jobLogs().length > 0) {
-    <section class="logs-card" aria-label="Execution logs">
-        <h3>Execution logs</h3>
-        <div class="logs-list">
-            @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
-            <article class="log-item">
-                <header class="log-header">
-                    <span class="log-level" [class]="logLevelClass(logEntry.level)">{{
-                        logEntry.level }}</span>
-                    <span class="log-source">{{ logEntry.source }}</span>
-                    <span class="log-index">#{{ logEntry.eventIndex }}</span>
-                </header>
-                <p class="log-message">{{ logEntry.message }}</p>
-                @if (hasPayload(logEntry)) {
-                <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-                }
-            </article>
-            }
+          </label>
         </div>
+      </div>
+
+      <div class="file-group">
+        <h4 class="file-group-title">Adiabatic Products</h4>
+        <div class="file-grid">
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.product1AdiabaticFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Product 1 Adiabatic <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onProduct1AdiabaticFileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.product1AdiabaticFile(); as p1aFile) {
+              <span class="file-badge">{{ p1aFile.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
+            }
+          </label>
+
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.product2AdiabaticFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Product 2 Adiabatic <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onProduct2AdiabaticFileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.product2AdiabaticFile(); as p2aFile) {
+              <span class="file-badge">{{ p2aFile.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
+            }
+          </label>
+        </div>
+      </div>
+
+      <div class="file-group">
+        <h4 class="file-group-title">Vertical Products</h4>
+        <div class="file-grid">
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.product1VerticalFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Product 1 Vertical <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onProduct1VerticalFileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.product1VerticalFile(); as p1vFile) {
+              <span class="file-badge">{{ p1vFile.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
+            }
+          </label>
+
+          <label
+            class="upload-zone"
+            [class.has-file]="workflow.product2VerticalFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()"
+          >
+            <span class="upload-label">Product 2 Vertical <span class="req-mark">*</span></span>
+            <input
+              type="file"
+              accept=".log,.out,.txt"
+              (change)="onProduct2VerticalFileChange($event)"
+              [disabled]="workflow.isProcessing()"
+            />
+            @if (workflow.product2VerticalFile(); as p2vFile) {
+              <span class="file-badge">{{ p2vFile.name }}</span>
+            } @else {
+              <span class="upload-hint">Browse .log / .out / .txt</span>
+            }
+          </label>
+        </div>
+      </div>
+
+      <h3 class="section-sub">Parameters</h3>
+
+      <div class="param-grid">
+        <label>
+          Title
+          <input
+            type="text"
+            [ngModel]="workflow.title()"
+            (ngModelChange)="workflow.updateTitle($event)"
+            [disabled]="workflow.isProcessing()"
+            placeholder="Optional reaction label"
+          />
+        </label>
+      </div>
+
+      <div class="checkbox-row">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="workflow.diffusion()"
+            (change)="onDiffusionChange($event)"
+            [disabled]="workflow.isProcessing()"
+          />
+          Diffusion correction
+        </label>
+      </div>
+
+      <app-diffusion-fields [showDiffusionFields]="workflow.showDiffusionFields()"
+        [radiusReactant1]="workflow.radiusReactant1()" [radiusReactant2]="workflow.radiusReactant2()"
+        [reactionDistance]="workflow.reactionDistance()" [isProcessing]="workflow.isProcessing()"
+        (radiusReactant1Change)="workflow.updateRadiusReactant1($event)"
+        (radiusReactant2Change)="workflow.updateRadiusReactant2($event)"
+        (reactionDistanceChange)="workflow.updateReactionDistance($event)"></app-diffusion-fields>
+
+      <div class="action-row">
+        <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
+          {{ workflow.isProcessing() ? 'Processing...' : 'Run Marcus' }}
+        </button>
+        <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+          Reset
+        </button>
+        <button class="btn-secondary" (click)="clearFiles()" [disabled]="workflow.isProcessing()">
+          Clear files
+        </button>
+      </div>
     </section>
-    }
 
-    <!-- ── Historial de jobs ──────────────────────────────────────────── -->
-    <section class="history-card" aria-label="Historical jobs">
-        <div class="history-header">
-            <h3>Historical jobs</h3>
-            <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-                {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
-            </button>
-        </div>
+    <!-- ── Panel de resultado ──────────────────────────────────────── -->
+    <section class="result-panel" aria-label="Results and progress">
+      <h3>Output</h3>
 
-        @if (workflow.historyJobs().length === 0) {
-        <p class="status-message">No historical Marcus jobs yet.</p>
-        } @else {
-        <div class="table-wrap">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Job ID</th>
-                        <th>Status</th>
-                        <th>Updated</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-                    <tr>
-                        <td class="mono">{{ historyJob.id }}</td>
-                        <td>
-                            <span [class]="historicalStatusClass(historyJob.status)">{{
-                                historyJob.status }}</span>
-                        </td>
-                        <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                        <td>
-                            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                                Open
-                            </button>
-                        </td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+      @if (workflow.activeSection() === 'dispatching') {
+        <p class="status-message">Submitting Marcus job to backend...</p>
+      }
+
+      @if (workflow.activeSection() === 'progress') {
+        <app-job-progress-card
+          [jobId]="workflow.currentJobId()"
+          [progressPercentage]="workflow.progressPercentage()"
+          [progressMessage]="workflow.progressMessage()"
+          progressAriaLabel="Marcus job progress"
+        ></app-job-progress-card>
+      }
+
+      @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+          <p class="summary-banner">{{ resultData.summaryMessage }}</p>
         }
+
+        <div class="result-title-row">
+          <strong>{{ resultData.title || 'Marcus result' }}</strong>
+        </div>
+
+        <!-- Energías -->
+        <div class="result-section">
+          <h4>Marcus Energies</h4>
+          <div class="kv-grid">
+            <span class="kv-label">ΔE adiabatic (kcal/mol)</span>
+            <span class="kv-value mono">{{
+              formatKcalMol(resultData.adiabaticEnergyKcalMol)
+            }}</span>
+            <span class="kv-label">ΔE adiabatic corr. (kcal/mol)</span>
+            <span class="kv-value mono">{{
+              formatKcalMol(resultData.adiabaticEnergyCorrectedKcalMol)
+            }}</span>
+            <span class="kv-label">ΔE vertical (kcal/mol)</span>
+            <span class="kv-value mono">{{ formatKcalMol(resultData.verticalEnergyKcalMol) }}</span>
+            <span class="kv-label">λ (reorganization, kcal/mol)</span>
+            <span class="kv-value mono">{{
+              formatKcalMol(resultData.reorganizationEnergyKcalMol)
+            }}</span>
+            <span class="kv-label">ΔG‡ (barrier, kcal/mol)</span>
+            <span class="kv-value mono">{{ formatKcalMol(resultData.barrierKcalMol) }}</span>
+          </div>
+        </div>
+
+        <!-- Constantes de velocidad -->
+        <div class="result-section">
+          <h4>Rate Constants</h4>
+          <div class="kv-grid">
+            <span class="kv-label">k (TST)</span>
+            <span class="kv-value mono"
+              >{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span
+            >
+            <span class="kv-label">k (final)</span>
+            <span class="kv-value mono"
+              >{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span
+            >
+            @if (resultData.diffusionApplied && resultData.kDiff !== null) {
+              <span class="kv-label">k_diff</span>
+              <span class="kv-value mono"
+                >{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span
+              >
+            }
+          </div>
+        </div>
+
+        <!-- Condiciones -->
+        <div class="result-section">
+          <h4>Conditions</h4>
+          <div class="kv-grid">
+            <span class="kv-label">Temperature</span>
+            <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
+            @if (resultData.viscosityPaS !== null) {
+              <span class="kv-label">Viscosity</span>
+              <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
+            }
+          </div>
+          <div class="flag-row">
+            @if (resultData.diffusionApplied) {
+              <span class="flag-tag flag-on">Diffusion</span>
+            }
+          </div>
+        </div>
+
+      }
+
     </section>
+  </div>
+
+  <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->
+  <app-job-result-footer [workflow]="workflow" [canExport]="canExport()"
+    emptyMessage="No historical Marcus jobs yet."
+    ariaLabel="Historical Marcus jobs"
+    (exportCsv)="exportCsv()"
+    (exportLog)="exportLog()"
+    (exportInputsZip)="exportInputsZip()"
+    (exportError)="exportError()"
+    (openJob)="openHistoricalJob($event)"
+  ></app-job-result-footer>
 </section>

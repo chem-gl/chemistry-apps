@@ -10,379 +10,379 @@ on:
         required: true
         type: string
     secrets:
-            VM_HOST:
-                required: true
-            VM_PORT:
-                required: true
-            VM_USER:
-                required: true
-            VM_SSH_KEY:
-                required: true
-            VM_SSH_KEY_BASE64:
-                required: false
-            VM_SSH_PASSPHRASE:
-                required: false
-            VM_PROJECT_PATH:
-                required: true
-            DJANGO_SECRET_KEY:
-                required: true
-            DB_NAME:
-                required: true
-            DB_USER:
-                required: true
-            DB_PASSWORD:
-                required: true
-            DB_PORT:
-                required: true
-            ALLOWED_HOSTS:
-                required: true
-            CORS_ALLOWED_ORIGINS:
-                required: true
-            CSRF_TRUSTED_ORIGINS:
-                required: true
-            BACKEND_PUBLIC_URL:
-                required: true
-            REDIS_PORT:
-                required: false
-            EXTERNAL_BACKEND_PORT:
-                required: true
-            EXTERNAL_FRONTEND_PORT:
-                required: true
+      VM_HOST:
+        required: true
+      VM_PORT:
+        required: true
+      VM_USER:
+        required: true
+      VM_SSH_KEY:
+        required: true
+      VM_SSH_KEY_BASE64:
+        required: false
+      VM_SSH_PASSPHRASE:
+        required: false
+      VM_PROJECT_PATH:
+        required: true
+      DJANGO_SECRET_KEY:
+        required: true
+      DB_NAME:
+        required: true
+      DB_USER:
+        required: true
+      DB_PASSWORD:
+        required: true
+      DB_PORT:
+        required: true
+      ALLOWED_HOSTS:
+        required: true
+      CORS_ALLOWED_ORIGINS:
+        required: true
+      CSRF_TRUSTED_ORIGINS:
+        required: true
+      BACKEND_PUBLIC_URL:
+        required: true
+      REDIS_PORT:
+        required: false
+      EXTERNAL_BACKEND_PORT:
+        required: true
+      EXTERNAL_FRONTEND_PORT:
+        required: true
 
 env:
-    DEPLOY_COMPOSE_FILE: docker-compose.yml
-    DEPLOY_ENV_FILE: .env.deploy
-    DEPLOY_BUNDLE_PREFIX: chemistry-apps
-    DEPLOY_BUNDLE_FILE: deploy-bundle.tar.gz
-    DEPLOY_STAGING_DIR: /tmp/chemistry-apps-deploy-${{ github.run_id }}-${{ github.run_attempt }}
+  DEPLOY_COMPOSE_FILE: docker-compose.yml
+  DEPLOY_ENV_FILE: .env.deploy
+  DEPLOY_BUNDLE_PREFIX: chemistry-apps
+  DEPLOY_BUNDLE_FILE: deploy-bundle.tar.gz
+  DEPLOY_STAGING_DIR: /tmp/chemistry-apps-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
-    deploy:
-        name: Deploy on remote host
-        runs-on: ubuntu-latest
+  deploy:
+    name: Deploy on remote host
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Validate required secrets
-              env:
-                  _VM_HOST: ${{ secrets.VM_HOST }}
-                  _VM_PORT: ${{ secrets.VM_PORT }}
-                  _VM_USER: ${{ secrets.VM_USER }}
-                  _VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
-                  _VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
-                  _VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
-                  _DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-                  _DB_NAME: ${{ secrets.DB_NAME }}
-                  _DB_USER: ${{ secrets.DB_USER }}
-                  _DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-                  _DB_PORT: ${{ secrets.DB_PORT }}
-                  _ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-                  _CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
-                  _CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
-                  _BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
-                  _EXTERNAL_BACKEND_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
-                  _EXTERNAL_FRONTEND_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
-              run: |
-                  missing=()
-                  [ -z "$_VM_HOST" ] && missing+=(VM_HOST)
-                  [ -z "$_VM_PORT" ] && missing+=(VM_PORT)
-                  [ -z "$_VM_USER" ] && missing+=(VM_USER)
-                  if [ -z "$_VM_SSH_KEY" ] && [ -z "$_VM_SSH_KEY_BASE64" ]; then
-                    missing+=(VM_SSH_KEY-or-VM_SSH_KEY_BASE64)
-                  fi
-                  [ -z "$_VM_PROJECT_PATH" ] && missing+=(VM_PROJECT_PATH)
-                  [ -z "$_DJANGO_SECRET_KEY" ] && missing+=(DJANGO_SECRET_KEY)
-                  [ -z "$_DB_NAME" ] && missing+=(DB_NAME)
-                  [ -z "$_DB_USER" ] && missing+=(DB_USER)
-                  [ -z "$_DB_PASSWORD" ] && missing+=(DB_PASSWORD)
-                  [ -z "$_DB_PORT" ] && missing+=(DB_PORT)
-                  [ -z "$_ALLOWED_HOSTS" ] && missing+=(ALLOWED_HOSTS)
-                  [ -z "$_CORS_ALLOWED_ORIGINS" ] && missing+=(CORS_ALLOWED_ORIGINS)
-                  [ -z "$_CSRF_TRUSTED_ORIGINS" ] && missing+=(CSRF_TRUSTED_ORIGINS)
-                  [ -z "$_BACKEND_PUBLIC_URL" ] && missing+=(BACKEND_PUBLIC_URL)
-                  [ -z "$_EXTERNAL_BACKEND_PORT" ] && missing+=(EXTERNAL_BACKEND_PORT)
-                  [ -z "$_EXTERNAL_FRONTEND_PORT" ] && missing+=(EXTERNAL_FRONTEND_PORT)
-                  if [ ${#missing[@]} -gt 0 ]; then
-                    echo "ERROR: faltan los siguientes secrets: ${missing[*]}"
-                    exit 1
-                  fi
-                  echo "Todos los secrets requeridos están definidos."
+    steps:
+      - name: Validate required secrets
+        env:
+          _VM_HOST: ${{ secrets.VM_HOST }}
+          _VM_PORT: ${{ secrets.VM_PORT }}
+          _VM_USER: ${{ secrets.VM_USER }}
+          _VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          _VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
+          _VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
+          _DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          _DB_NAME: ${{ secrets.DB_NAME }}
+          _DB_USER: ${{ secrets.DB_USER }}
+          _DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          _DB_PORT: ${{ secrets.DB_PORT }}
+          _ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          _CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          _CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+          _BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
+          _EXTERNAL_BACKEND_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
+          _EXTERNAL_FRONTEND_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
+        run: |
+          missing=()
+          [ -z "$_VM_HOST" ] && missing+=(VM_HOST)
+          [ -z "$_VM_PORT" ] && missing+=(VM_PORT)
+          [ -z "$_VM_USER" ] && missing+=(VM_USER)
+          if [ -z "$_VM_SSH_KEY" ] && [ -z "$_VM_SSH_KEY_BASE64" ]; then
+            missing+=(VM_SSH_KEY-or-VM_SSH_KEY_BASE64)
+          fi
+          [ -z "$_VM_PROJECT_PATH" ] && missing+=(VM_PROJECT_PATH)
+          [ -z "$_DJANGO_SECRET_KEY" ] && missing+=(DJANGO_SECRET_KEY)
+          [ -z "$_DB_NAME" ] && missing+=(DB_NAME)
+          [ -z "$_DB_USER" ] && missing+=(DB_USER)
+          [ -z "$_DB_PASSWORD" ] && missing+=(DB_PASSWORD)
+          [ -z "$_DB_PORT" ] && missing+=(DB_PORT)
+          [ -z "$_ALLOWED_HOSTS" ] && missing+=(ALLOWED_HOSTS)
+          [ -z "$_CORS_ALLOWED_ORIGINS" ] && missing+=(CORS_ALLOWED_ORIGINS)
+          [ -z "$_CSRF_TRUSTED_ORIGINS" ] && missing+=(CSRF_TRUSTED_ORIGINS)
+          [ -z "$_BACKEND_PUBLIC_URL" ] && missing+=(BACKEND_PUBLIC_URL)
+          [ -z "$_EXTERNAL_BACKEND_PORT" ] && missing+=(EXTERNAL_BACKEND_PORT)
+          [ -z "$_EXTERNAL_FRONTEND_PORT" ] && missing+=(EXTERNAL_FRONTEND_PORT)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "ERROR: faltan los siguientes secrets: ${missing[*]}"
+            exit 1
+          fi
+          echo "Todos los secrets requeridos están definidos."
 
-            - name: Checkout repository
-              uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-            - name: Build .env file for deployment
-              env:
-                  SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-                  DB_NAME: ${{ secrets.DB_NAME }}
-                  DB_USER: ${{ secrets.DB_USER }}
-                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-                  DB_HOST: ${{ secrets.DB_HOST }}
-                  DB_PORT: ${{ secrets.DB_PORT }}
-                  ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-                  CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
-                  CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
-                  BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
-                  REDIS_PORT: ${{ secrets.REDIS_PORT }}
-                  BACKEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
-                  FRONTEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
-                  IMAGE_TAG: ${{ inputs.image_tag }}
-                  IMAGE_REGISTRY: ghcr.io
-                  IMAGE_NAMESPACE: ${{ github.repository_owner }}
-              run: |
-                  cat > "$DEPLOY_ENV_FILE" <<EOF_ENV
-                  DEBUG=0
-                  SECRET_KEY=${SECRET_KEY}
-                  DB_NAME=${DB_NAME}
-                  DB_USER=${DB_USER}
-                  DB_PASSWORD=${DB_PASSWORD}
-                  DB_HOST=${DB_HOST:-db}
-                  DB_PORT=${DB_PORT:-5432}
-                  POSTGRES_DB=${DB_NAME}
-                  POSTGRES_USER=${DB_USER}
-                  POSTGRES_PASSWORD=${DB_PASSWORD}
-                  POSTGRES_PORT=${DB_PORT:-5432}
-                  POSTGRES_HOST=db
-                  REDIS_HOST=redis
-                  REDIS_PORT=${REDIS_PORT:-6379}
-                  CELERY_BROKER_URL=redis://redis:6379/0
-                  CELERY_RESULT_BACKEND=redis://redis:6379/1
-                  ALLOWED_HOSTS=${ALLOWED_HOSTS}
-                  DJANGO_ALLOWED_HOSTS=${ALLOWED_HOSTS}
-                  CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
-                  CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
-                  BACKEND_PUBLIC_URL=${BACKEND_PUBLIC_URL}
-                  BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8000}
-                  FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-80}
-                  IMAGE_TAG=${IMAGE_TAG}
-                  IMAGE_REGISTRY=${IMAGE_REGISTRY}
-                  IMAGE_NAMESPACE=${IMAGE_NAMESPACE}
-                  EOF_ENV
+      - name: Build .env file for deployment
+        env:
+          SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+          BACKEND_PUBLIC_URL: ${{ secrets.BACKEND_PUBLIC_URL }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          BACKEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
+          FRONTEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_REGISTRY: ghcr.io
+          IMAGE_NAMESPACE: ${{ github.repository_owner }}
+        run: |
+          cat > "$DEPLOY_ENV_FILE" <<EOF_ENV
+          DEBUG=0
+          SECRET_KEY=${SECRET_KEY}
+          DB_NAME=${DB_NAME}
+          DB_USER=${DB_USER}
+          DB_PASSWORD=${DB_PASSWORD}
+          DB_HOST=${DB_HOST:-db}
+          DB_PORT=${DB_PORT:-5432}
+          POSTGRES_DB=${DB_NAME}
+          POSTGRES_USER=${DB_USER}
+          POSTGRES_PASSWORD=${DB_PASSWORD}
+          POSTGRES_PORT=${DB_PORT:-5432}
+          POSTGRES_HOST=db
+          REDIS_HOST=redis
+          REDIS_PORT=${REDIS_PORT:-6379}
+          CELERY_BROKER_URL=redis://redis:6379/0
+          CELERY_RESULT_BACKEND=redis://redis:6379/1
+          ALLOWED_HOSTS=${ALLOWED_HOSTS}
+          DJANGO_ALLOWED_HOSTS=${ALLOWED_HOSTS}
+          CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+          CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
+          BACKEND_PUBLIC_URL=${BACKEND_PUBLIC_URL}
+          BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8000}
+          FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-80}
+          IMAGE_TAG=${IMAGE_TAG}
+          IMAGE_REGISTRY=${IMAGE_REGISTRY}
+          IMAGE_NAMESPACE=${IMAGE_NAMESPACE}
+          EOF_ENV
 
-            - name: Download release bundle
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  RELEASE_TAG: main-${{ inputs.image_tag }}
-                  RELEASE_BUNDLE_NAME: ${{ env.DEPLOY_BUNDLE_PREFIX }}-${{ inputs.image_tag }}.tar.gz
-              run: |
-                  gh release download "$RELEASE_TAG" \
-                    --pattern "$RELEASE_BUNDLE_NAME" \
-                    --dir .
-                  mv "$RELEASE_BUNDLE_NAME" "$DEPLOY_BUNDLE_FILE"
+      - name: Download release bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: main-${{ inputs.image_tag }}
+          RELEASE_BUNDLE_NAME: ${{ env.DEPLOY_BUNDLE_PREFIX }}-${{ inputs.image_tag }}.tar.gz
+        run: |
+          gh release download "$RELEASE_TAG" \
+            --pattern "$RELEASE_BUNDLE_NAME" \
+            --dir .
+          mv "$RELEASE_BUNDLE_NAME" "$DEPLOY_BUNDLE_FILE"
 
-            - name: Preflight SSH connectivity
-              env:
-                  VM_HOST: ${{ secrets.VM_HOST }}
-                  VM_PORT: ${{ secrets.VM_PORT }}
-              run: |
-                  for attempt in 1 2 3; do
-                    if timeout 10 bash -lc "cat < /dev/null > /dev/tcp/${VM_HOST}/${VM_PORT}" 2>/dev/null; then
-                      echo "Conectividad TCP OK contra ${VM_HOST}:${VM_PORT}"
-                      exit 0
-                    fi
-                    echo "Intento ${attempt}/3 sin conectividad a ${VM_HOST}:${VM_PORT}."
-                    sleep 5
-                  done
-                  echo "ERROR: no hay conectividad TCP hacia ${VM_HOST}:${VM_PORT}."
-                  echo "Revisar firewall/NAT/seguridad de red antes de subir artefactos."
-                  exit 1
+      - name: Preflight SSH connectivity
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 10 bash -lc "cat < /dev/null > /dev/tcp/${VM_HOST}/${VM_PORT}" 2>/dev/null; then
+              echo "Conectividad TCP OK contra ${VM_HOST}:${VM_PORT}"
+              exit 0
+            fi
+            echo "Intento ${attempt}/3 sin conectividad a ${VM_HOST}:${VM_PORT}."
+            sleep 5
+          done
+          echo "ERROR: no hay conectividad TCP hacia ${VM_HOST}:${VM_PORT}."
+          echo "Revisar firewall/NAT/seguridad de red antes de subir artefactos."
+          exit 1
 
-            - name: Prepare SSH private key
-              id: ssh_key
-              env:
-                  VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
-                  VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
-                  VM_SSH_PASSPHRASE: ${{ secrets.VM_SSH_PASSPHRASE }}
-              run: |
-                  set -e
-                  KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
-                  KEY_FILE="$KEY_DIR/deploy_key"
+      - name: Prepare SSH private key
+        id: ssh_key
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_SSH_KEY_BASE64: ${{ secrets.VM_SSH_KEY_BASE64 }}
+          VM_SSH_PASSPHRASE: ${{ secrets.VM_SSH_PASSPHRASE }}
+        run: |
+          set -e
+          KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
+          KEY_FILE="$KEY_DIR/deploy_key"
 
-                  mkdir -p "$KEY_DIR"
+          mkdir -p "$KEY_DIR"
 
-                  if [ -n "${VM_SSH_KEY_BASE64:-}" ]; then
-                    printf '%s' "$VM_SSH_KEY_BASE64" | base64 -d > "$KEY_FILE"
-                  else
-                    printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
-                  fi
+          if [ -n "${VM_SSH_KEY_BASE64:-}" ]; then
+            printf '%s' "$VM_SSH_KEY_BASE64" | base64 -d > "$KEY_FILE"
+          else
+            printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          fi
 
-                  chmod 600 "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
 
-                  if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
-                    echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
-                    echo "Verifica que el secret contenga la llave privada completa (BEGIN/END) o usa VM_SSH_KEY_BASE64."
-                    echo "Si la llave está cifrada, define VM_SSH_PASSPHRASE."
-                    exit 1
-                  fi
+          if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
+            echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
+            echo "Verifica que el secret contenga la llave privada completa (BEGIN/END) o usa VM_SSH_KEY_BASE64."
+            echo "Si la llave está cifrada, define VM_SSH_PASSPHRASE."
+            exit 1
+          fi
 
-                  echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
-                  {
-                    echo "private_key<<__DEPLOY_KEY__"
-                    cat "$KEY_FILE"
-                    echo "__DEPLOY_KEY__"
-                  } >> "$GITHUB_OUTPUT"
+          echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
+          {
+            echo "private_key<<__DEPLOY_KEY__"
+            cat "$KEY_FILE"
+            echo "__DEPLOY_KEY__"
+          } >> "$GITHUB_OUTPUT"
 
-            - name: Validate SSH authentication
-              uses: appleboy/ssh-action@v1.2.2
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ steps.ssh_key.outputs.private_key }}
-                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  script: |
-                      echo "SSH authentication OK on $(hostname)"
+      - name: Validate SSH authentication
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          port: ${{ secrets.VM_PORT }}
+          key: ${{ steps.ssh_key.outputs.private_key }}
+          passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
+          script: |
+            echo "SSH authentication OK on $(hostname)"
 
-            - name: Upload bundle to host (attempt 1)
-              id: scp_upload_first
-              continue-on-error: true
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ steps.ssh_key.outputs.private_key }}
-                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
-                  target: ${{ env.DEPLOY_STAGING_DIR }}
-                  overwrite: true
-                  timeout: 120s
-                  command_timeout: 20m
+      - name: Upload bundle to host (attempt 1)
+        id: scp_upload_first
+        continue-on-error: true
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          port: ${{ secrets.VM_PORT }}
+          key: ${{ steps.ssh_key.outputs.private_key }}
+          passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
+          source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
+          target: ${{ env.DEPLOY_STAGING_DIR }}
+          overwrite: true
+          timeout: 120s
+          command_timeout: 20m
 
-            - name: Upload bundle to host (attempt 2)
-              id: scp_upload_retry
-              if: ${{ steps.scp_upload_first.outcome == 'failure' }}
-              continue-on-error: true
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ steps.ssh_key.outputs.private_key }}
-                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
-                  target: ${{ env.DEPLOY_STAGING_DIR }}
-                  overwrite: true
-                  timeout: 120s
-                  command_timeout: 20m
+      - name: Upload bundle to host (attempt 2)
+        id: scp_upload_retry
+        if: ${{ steps.scp_upload_first.outcome == 'failure' }}
+        continue-on-error: true
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          port: ${{ secrets.VM_PORT }}
+          key: ${{ steps.ssh_key.outputs.private_key }}
+          passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
+          source: "${{ env.DEPLOY_ENV_FILE }},${{ env.DEPLOY_BUNDLE_FILE }}"
+          target: ${{ env.DEPLOY_STAGING_DIR }}
+          overwrite: true
+          timeout: 120s
+          command_timeout: 20m
 
-            - name: Validate SCP upload result
-              if: ${{ steps.scp_upload_first.outcome == 'failure' && steps.scp_upload_retry.outcome == 'failure' }}
-              run: |
-                  echo "ERROR: fallaron ambos intentos de subida por SCP."
-                  exit 1
+      - name: Validate SCP upload result
+        if: ${{ steps.scp_upload_first.outcome == 'failure' && steps.scp_upload_retry.outcome == 'failure' }}
+        run: |
+          echo "ERROR: fallaron ambos intentos de subida por SCP."
+          exit 1
 
-            - name: Deploy on remote host
-              uses: appleboy/ssh-action@v1.2.2
-              env:
-                  VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
-                  DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
-                  DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
-                  DEPLOY_BUNDLE_FILE: ${{ env.DEPLOY_BUNDLE_FILE }}
-                  DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
-              with:
-                  host: ${{ secrets.VM_HOST }}
-                  username: ${{ secrets.VM_USER }}
-                  port: ${{ secrets.VM_PORT }}
-                  key: ${{ steps.ssh_key.outputs.private_key }}
-                  passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-                  envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_BUNDLE_FILE,DEPLOY_STAGING_DIR
-                  script: |
-                      set -e
+      - name: Deploy on remote host
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          VM_PROJECT_PATH: ${{ secrets.VM_PROJECT_PATH }}
+          DEPLOY_COMPOSE_FILE: ${{ env.DEPLOY_COMPOSE_FILE }}
+          DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
+          DEPLOY_BUNDLE_FILE: ${{ env.DEPLOY_BUNDLE_FILE }}
+          DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          port: ${{ secrets.VM_PORT }}
+          key: ${{ steps.ssh_key.outputs.private_key }}
+          passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
+          envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_BUNDLE_FILE,DEPLOY_STAGING_DIR
+          script: |
+            set -e
 
-                      if ! command -v docker >/dev/null 2>&1; then
-                        echo "docker is not installed on remote host"
-                        exit 1
-                      fi
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "docker is not installed on remote host"
+              exit 1
+            fi
 
-                      if docker compose version >/dev/null 2>&1; then
-                        COMPOSE_CMD="docker compose"
-                      elif command -v docker-compose >/dev/null 2>&1; then
-                        COMPOSE_CMD="docker-compose"
-                      else
-                        echo "docker compose plugin (or docker-compose) is required on remote host"
-                        exit 1
-                      fi
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE_CMD="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_CMD="docker-compose"
+            else
+              echo "docker compose plugin (or docker-compose) is required on remote host"
+              exit 1
+            fi
 
-                      mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
-                      cd "$VM_PROJECT_PATH"
+            mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
+            cd "$VM_PROJECT_PATH"
 
-                      tar -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
+            tar -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
 
-                      mkdir -p docker-data/postgres docker-data/redis backend/media
-                      chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
-                      chmod u+rwX backend/media 2>/dev/null || true
-                      chmod u+rwX docker-data/redis 2>/dev/null || true
-                      export HOST_UID="$(id -u)"
-                      export HOST_GID="$(id -g)"
+            mkdir -p docker-data/postgres docker-data/redis backend/media
+            chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
+            chmod u+rwX backend/media 2>/dev/null || true
+            chmod u+rwX docker-data/redis 2>/dev/null || true
+            export HOST_UID="$(id -u)"
+            export HOST_GID="$(id -g)"
 
-                      install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
+            install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
 
-                      PYTHON_BIN=""
-                      if command -v python3.12 >/dev/null 2>&1; then
-                        PYTHON_BIN="python3.12"
-                      elif command -v python3 >/dev/null 2>&1; then
-                        if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
-                          PYTHON_BIN="python3"
-                        fi
-                      fi
+            PYTHON_BIN=""
+            if command -v python3.12 >/dev/null 2>&1; then
+              PYTHON_BIN="python3.12"
+            elif command -v python3 >/dev/null 2>&1; then
+              if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
+                PYTHON_BIN="python3"
+              fi
+            fi
 
-                      if [ -z "$PYTHON_BIN" ] && command -v apt-get >/dev/null 2>&1; then
-                        if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-                          echo "Python 3.12 no encontrado. Intentando instalar via apt/deadsnakes..."
-                          sudo apt-get update
-                          sudo apt-get install -y software-properties-common
-                          sudo add-apt-repository -y ppa:deadsnakes/ppa
-                          sudo apt-get update
-                          sudo apt-get install -y python3.12 python3.12-venv
-                        fi
+            if [ -z "$PYTHON_BIN" ] && command -v apt-get >/dev/null 2>&1; then
+              if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+                echo "Python 3.12 no encontrado. Intentando instalar via apt/deadsnakes..."
+                sudo apt-get update
+                sudo apt-get install -y software-properties-common
+                sudo add-apt-repository -y ppa:deadsnakes/ppa
+                sudo apt-get update
+                sudo apt-get install -y python3.12 python3.12-venv
+              fi
 
-                        if command -v python3.12 >/dev/null 2>&1; then
-                          PYTHON_BIN="python3.12"
-                        fi
-                      fi
+              if command -v python3.12 >/dev/null 2>&1; then
+                PYTHON_BIN="python3.12"
+              fi
+            fi
 
-                      if [ -z "$PYTHON_BIN" ]; then
-                        echo "ERROR: Python 3.12+ is required on remote host (Django 6.x)."
-                        echo "No fue posible instalarlo automaticamente."
-                        echo "Instala python3.12 y python3.12-venv antes de desplegar."
-                        echo "Ejemplo Ubuntu: add-apt-repository ppa:deadsnakes/ppa && apt install python3.12 python3.12-venv"
-                        exit 1
-                      fi
+            if [ -z "$PYTHON_BIN" ]; then
+              echo "ERROR: Python 3.12+ is required on remote host (Django 6.x)."
+              echo "No fue posible instalarlo automaticamente."
+              echo "Instala python3.12 y python3.12-venv antes de desplegar."
+              echo "Ejemplo Ubuntu: add-apt-repository ppa:deadsnakes/ppa && apt install python3.12 python3.12-venv"
+              exit 1
+            fi
 
-                      cd "$VM_PROJECT_PATH/backend"
-                       RECREATE_VENV="1"
-                       if [ -d venv ]; then
-                         if [ -x venv/bin/python ] && ./venv/bin/python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
-                           echo "Entorno virtual existente compatible detectado. Se reutilizara venv."
-                           RECREATE_VENV="0"
-                         else
-                           echo "Entorno virtual existente no compatible con Python 3.12+. Se recreara venv."
-                           rm -rf venv
-                         fi
-                       fi
+            cd "$VM_PROJECT_PATH/backend"
+             RECREATE_VENV="1"
+             if [ -d venv ]; then
+               if [ -x venv/bin/python ] && ./venv/bin/python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
+                 echo "Entorno virtual existente compatible detectado. Se reutilizara venv."
+                 RECREATE_VENV="0"
+               else
+                 echo "Entorno virtual existente no compatible con Python 3.12+. Se recreara venv."
+                 rm -rf venv
+               fi
+             fi
 
-                       if [ "$RECREATE_VENV" = "1" ]; then
-                         "$PYTHON_BIN" -m venv venv
-                       fi
-                      ./venv/bin/python -m pip install --upgrade pip
-                      ./venv/bin/pip install -r requirements.txt
-                      ./venv/bin/python manage.py migrate --noinput
-                      cd "$VM_PROJECT_PATH"
+             if [ "$RECREATE_VENV" = "1" ]; then
+               "$PYTHON_BIN" -m venv venv
+             fi
+            ./venv/bin/python -m pip install --upgrade pip
+            ./venv/bin/pip install -r requirements.txt
+            ./venv/bin/python manage.py migrate --noinput
+            cd "$VM_PROJECT_PATH"
 
-                      $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build backend frontend
+            $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build backend frontend
 
-                      if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
-                        echo "Deploy failed, collecting compose diagnostics..."
-                        $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env ps || true
-                        $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env logs --no-color --tail=200 backend db redis frontend celery-worker || true
-                        exit 1
-                      fi
+            if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
+              echo "Deploy failed, collecting compose diagnostics..."
+              $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env ps || true
+              $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env logs --no-color --tail=200 backend db redis frontend celery-worker || true
+              exit 1
+            fi
 
-                      rm -f \
-                        "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" \
-                        "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
-                      rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
+            rm -f \
+              "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" \
+              "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
+            rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
 
-                      docker image prune -f --filter "until=168h"
-                      rm -rf "$VM_PROJECT_PATH/.github/.tmp-ssh" 2>/dev/null || true
-                      systemctl restart nginx || true
+            docker image prune -f --filter "until=168h"
+            rm -rf "$VM_PROJECT_PATH/.github/.tmp-ssh" 2>/dev/null || true
+            systemctl restart nginx || true

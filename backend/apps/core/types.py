@@ -14,17 +14,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Generic, Literal, TypeAlias, TypedDict, TypeVar
+from typing import Literal, TypedDict
 
-JSONPrimitive: TypeAlias = str | int | float | bool | None
-JSONValue: TypeAlias = JSONPrimitive | list["JSONValue"] | dict[str, "JSONValue"]
-JSONMap: TypeAlias = dict[str, JSONValue]
+type JSONPrimitive = str | int | float | bool | None
+type JSONValue = JSONPrimitive | list[JSONValue] | dict[str, JSONValue]
+type JSONMap = dict[str, JSONValue]
 
 # Monadic types for declarative consumption API
-S = TypeVar("S", covariant=True)
-E = TypeVar("E", covariant=True)
-T = TypeVar("T")
-JobStatus: TypeAlias = Literal[
+type JobStatus = Literal[
     "pending",
     "running",
     "paused",
@@ -32,7 +29,7 @@ JobStatus: TypeAlias = Literal[
     "failed",
     "cancelled",
 ]
-JobProgressStage: TypeAlias = Literal[
+type JobProgressStage = Literal[
     "pending",
     "queued",
     "running",
@@ -43,11 +40,11 @@ JobProgressStage: TypeAlias = Literal[
     "failed",
     "cancelled",
 ]
-PluginProgressCallback: TypeAlias = Callable[[int, JobProgressStage, str], None]
-JobLogLevel: TypeAlias = Literal["debug", "info", "warning", "error"]
-PluginLogCallback: TypeAlias = Callable[[JobLogLevel, str, str, JSONMap | None], None]
-PluginControlAction: TypeAlias = Literal["continue", "pause"]
-PluginControlCallback: TypeAlias = Callable[[], PluginControlAction]
+type PluginProgressCallback = Callable[[int, JobProgressStage, str], None]
+type JobLogLevel = Literal["debug", "info", "warning", "error"]
+type PluginLogCallback = Callable[[JobLogLevel, str, str, JSONMap | None], None]
+type PluginControlAction = Literal["continue", "pause"]
+type PluginControlCallback = Callable[[], PluginControlAction]
 
 
 class JobCreatePayload(TypedDict):
@@ -186,7 +183,7 @@ class JobCancelError(DomainError):
 # === MONADIC TYPES FOR DECLARATIVE CONSUMPTION ===
 
 
-class Result(ABC, Generic[S, E]):
+class Result[S, E](ABC):
     """Monad for success/failure handling without exceptions.
 
     Supports map, flat_map, recover, fold for functional composition.
@@ -209,12 +206,12 @@ class Result(ABC, Generic[S, E]):
         pass
 
     @abstractmethod
-    def map(self, f: Callable[[S], T]) -> Result[T, E]:
+    def map[T](self, f: Callable[[S], T]) -> Result[T, E]:
         """Transform success value; pass failure through."""
         pass
 
     @abstractmethod
-    def flat_map(self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
+    def flat_map[T](self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
         """Chain operations returning Result."""
         pass
 
@@ -229,12 +226,12 @@ class Result(ABC, Generic[S, E]):
         pass
 
     @abstractmethod
-    def fold(self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
+    def fold[T](self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
         """Apply one of two functions based on success/failure."""
         pass
 
 
-class Success(Result[S, E]):
+class Success[S, E](Result[S, E]):
     """Result containing a success value."""
 
     def __init__(self, value: S) -> None:
@@ -249,23 +246,23 @@ class Success(Result[S, E]):
     def get_or_else(self, default_value: S) -> S:
         return self._value
 
-    def map(self, f: Callable[[S], T]) -> Result[T, E]:
+    def map[T](self, f: Callable[[S], T]) -> Result[T, E]:
         return Success(f(self._value))
 
-    def flat_map(self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
+    def flat_map[T](self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
         return f(self._value)
 
     def recover(self, f: Callable[[E], S]) -> Result[S, E]:
-        return self  # type: ignore
+        return self
 
     def recover_with(self, f: Callable[[E], Result[S, E]]) -> Result[S, E]:
-        return self  # type: ignore
+        return self
 
-    def fold(self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
+    def fold[T](self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
         return on_success(self._value)
 
 
-class Failure(Result[S, E]):
+class Failure[S, E](Result[S, E]):
     """Result containing an error value."""
 
     def __init__(self, error: E) -> None:
@@ -280,11 +277,11 @@ class Failure(Result[S, E]):
     def get_or_else(self, default_value: S) -> S:
         return default_value
 
-    def map(self, f: Callable[[S], T]) -> Result[T, E]:
-        return Failure(self._error)  # type: ignore
+    def map[T](self, f: Callable[[S], T]) -> Result[T, E]:
+        return Failure(self._error)
 
-    def flat_map(self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
-        return Failure(self._error)  # type: ignore
+    def flat_map[T](self, f: Callable[[S], Result[T, E]]) -> Result[T, E]:
+        return Failure(self._error)
 
     def recover(self, f: Callable[[E], S]) -> Result[S, E]:
         return Success(f(self._error))
@@ -292,11 +289,11 @@ class Failure(Result[S, E]):
     def recover_with(self, f: Callable[[E], Result[S, E]]) -> Result[S, E]:
         return f(self._error)
 
-    def fold(self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
+    def fold[T](self, on_failure: Callable[[E], T], on_success: Callable[[S], T]) -> T:
         return on_failure(self._error)
 
 
-class Task(ABC, Generic[S, E]):
+class Task[S, E](ABC):
     """Monad for deferred computation with error handling.
 
     Represents a computation that can be composed and run later.
@@ -309,17 +306,17 @@ class Task(ABC, Generic[S, E]):
         pass
 
     @abstractmethod
-    def map(self, f: Callable[[S], T]) -> Task[T, E]:
+    def map[T](self, f: Callable[[S], T]) -> Task[T, E]:
         """Transform success value; defer execution."""
         pass
 
     @abstractmethod
-    def flat_map(self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
+    def flat_map[T](self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
         """Chain operations; defer execution."""
         pass
 
 
-class PureTask(Task[S, E]):
+class PureTask[S, E](Task[S, E]):
     """Task that returns a fixed result without side effects."""
 
     def __init__(self, result: Result[S, E]) -> None:
@@ -328,20 +325,20 @@ class PureTask(Task[S, E]):
     def run(self) -> Result[S, E]:
         return self._result
 
-    def map(self, f: Callable[[S], T]) -> Task[T, E]:
+    def map[T](self, f: Callable[[S], T]) -> Task[T, E]:
         return PureTask(self._result.map(f))
 
-    def flat_map(self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
+    def flat_map[T](self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
         def compute() -> Result[T, E]:
             return self._result.fold(
-                on_failure=lambda err: Failure(err),  # type: ignore
+                on_failure=lambda err: Failure(err),
                 on_success=lambda val: f(val).run(),
             )
 
         return DeferredTask(compute)
 
 
-class DeferredTask(Task[S, E]):
+class DeferredTask[S, E](Task[S, E]):
     """Task that defers computation to run time."""
 
     def __init__(self, computation: Callable[[], Result[S, E]]) -> None:
@@ -350,13 +347,13 @@ class DeferredTask(Task[S, E]):
     def run(self) -> Result[S, E]:
         return self._computation()
 
-    def map(self, f: Callable[[S], T]) -> Task[T, E]:
+    def map[T](self, f: Callable[[S], T]) -> Task[T, E]:
         def mapped_computation() -> Result[T, E]:
             return self._computation().map(f)
 
         return DeferredTask(mapped_computation)
 
-    def flat_map(self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
+    def flat_map[T](self, f: Callable[[S], Task[T, E]]) -> Task[T, E]:
         def chained_computation() -> Result[T, E]:
             result = self._computation()
             match result:
@@ -371,7 +368,7 @@ class DeferredTask(Task[S, E]):
 # === JOB HANDLE FOR CAPABILITY-AWARE OPERATIONS ===
 
 
-class JobHandle(ABC, Generic[S]):
+class JobHandle[S](ABC):
     """Typed handle for safe job operations with capability awareness.
 
     Provides type-safe access to job state, progress, logs, and control operations.

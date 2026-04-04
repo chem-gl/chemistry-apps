@@ -16,6 +16,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
 
 from .cache_policy_general import (
     GENERAL_RESULT_CACHE_MAX_PAYLOAD_BYTES_DEFAULT,
@@ -127,10 +128,7 @@ def _get_env_int(variable_name: str, default_value: int) -> int:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Advertencia de seguridad: en producción usar variables de entorno seguras.
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-2b^*ofb$##@bx3lg!g=_%%b_r^oy7y5z5p@%$&yatoyufa4=()",
-)
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or get_random_secret_key()
 
 # Advertencia de seguridad: desactivar DEBUG en producción.
 DEBUG = _get_env_bool("DJANGO_DEBUG", True)
@@ -538,5 +536,5 @@ JOBS_STORAGE_DIRS = {
     "temporary": MEDIA_ROOT / "temporary",
 }
 
-for _, storage_dir in JOBS_STORAGE_DIRS.items():
+for storage_dir in JOBS_STORAGE_DIRS.values():
     storage_dir.mkdir(parents=True, exist_ok=True)

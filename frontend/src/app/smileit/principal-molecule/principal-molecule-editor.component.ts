@@ -9,9 +9,11 @@ import {
   Output,
   ViewChild,
   inject,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { KetcherFrameService } from '../../core/application/ketcher-frame.service';
 
 @Component({
   selector: 'app-principal-molecule-editor',
@@ -22,12 +24,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class PrincipalMoleculeEditorComponent {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly ketcherFrameService = inject(KetcherFrameService);
 
   @ViewChild('sketchModifierDialog')
-  private sketchModifierDialogRef?: ElementRef<HTMLDialogElement>;
+  private readonly sketchModifierDialogRef?: ElementRef<HTMLDialogElement>;
 
   @ViewChild('ketcherFrame')
-  private ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
+  private readonly ketcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   @Input() principalSmiles: string = '';
   @Input() isProcessing: boolean = false;
@@ -36,6 +39,10 @@ export class PrincipalMoleculeEditorComponent {
   sketchDraftSmiles: string = '';
   readonly ketcherPublicUrl: SafeResourceUrl;
   isKetcherReady: boolean = false;
+  readonly isSketchModifierLoading = signal<boolean>(false);
+  /** Error de validación del SMILES al aplicar el sketch modifier (molécula vacía o múltiple). */
+  readonly sketchValidationError = signal<string | null>(null);
+  private hasCompletedFirstSketchLoad: boolean = false;
 
   @Output() readonly principalSmilesChange = new EventEmitter<string>();
   @Output() readonly inspectRequested = new EventEmitter<void>();
@@ -54,6 +61,10 @@ export class PrincipalMoleculeEditorComponent {
 
   openSketchModifier(): void {
     this.sketchDraftSmiles = this.principalSmiles;
+    if (!this.hasCompletedFirstSketchLoad) {
+      this.startSketchLoadingPhase();
+    }
+    void this.ensureKetcherReady();
 
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
@@ -86,6 +97,8 @@ export class PrincipalMoleculeEditorComponent {
   }
 
   closeSketchModifier(): void {
+    this.isSketchModifierLoading.set(false);
+    this.sketchValidationError.set(null);
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
     if (dialogElement === undefined) {
@@ -105,35 +118,63 @@ export class PrincipalMoleculeEditorComponent {
     dialogElement.removeAttribute('open');
   }
 
-  onSketchModifierDialogClick(mouseEvent: MouseEvent): void {
+  onSketchModifierDialogClick(event: MouseEvent | KeyboardEvent): void {
     const dialogElement: HTMLDialogElement | undefined =
       this.sketchModifierDialogRef?.nativeElement;
     if (dialogElement === undefined) {
       return;
     }
 
-    if (mouseEvent.target === dialogElement) {
+    if (event.target === dialogElement) {
       this.closeSketchModifier();
     }
   }
 
   onKetcherFrameLoaded(): void {
     this.isKetcherReady = true;
+    this.syncSketchLoadingVisibility();
     void this.pushDraftToKetcher();
-  }
-
-  onSketchDraftSmilesChange(nextSmiles: string): void {
-    this.sketchDraftSmiles = nextSmiles;
   }
 
   async applySketchModifier(): Promise<void> {
     await this.pullDraftFromKetcher();
-    this.onPrincipalSmilesChange(this.sketchDraftSmiles);
+
+    // Validar que el SMILES no esté vacío ni contenga múltiples moléculas.
+    const validationError: string | null = this.validateSingleMoleculeSmiles(
+      this.sketchDraftSmiles,
+    );
+    if (validationError !== null) {
+      this.sketchValidationError.set(validationError);
+      return;
+    }
+
+    this.sketchValidationError.set(null);
+    this.onPrincipalSmilesChange(this.sketchDraftSmiles.trim());
+    // Auto-inspect para no requerir clic manual después de dibujar.
+    this.inspectRequested.emit();
     this.closeSketchModifier();
   }
 
+  /**
+   * Valida que el SMILES sea una única molécula no vacía.
+   * Retorna un mensaje de error o null si es válido.
+   */
+  private validateSingleMoleculeSmiles(smiles: string): string | null {
+    const normalizedSmiles: string = smiles.trim();
+    if (normalizedSmiles === '') {
+      return 'Dibuja una molécula antes de aplicar.';
+    }
+    if (normalizedSmiles.includes('.')) {
+      return 'Solo se permite una molécula. El SMILES contiene múltiples fragmentos (".").';
+    }
+    return null;
+  }
+
   private async pushDraftToKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
+    const ketcherApi = await this.ketcherFrameService.waitForApi(
+      this.ketcherFrameRef?.nativeElement,
+      40,
+    );
     if (ketcherApi === null) {
       return;
     }
@@ -147,7 +188,10 @@ export class PrincipalMoleculeEditorComponent {
   }
 
   private async pullDraftFromKetcher(): Promise<void> {
-    const ketcherApi: KetcherApi | null = this.resolveKetcherApi();
+    const ketcherApi = await this.ketcherFrameService.waitForApi(
+      this.ketcherFrameRef?.nativeElement,
+      40,
+    );
     if (ketcherApi === null) {
       return;
     }
@@ -162,29 +206,29 @@ export class PrincipalMoleculeEditorComponent {
     }
   }
 
-  private resolveKetcherApi(): KetcherApi | null {
-    if (!this.isKetcherReady) {
-      return null;
+  private async ensureKetcherReady(): Promise<void> {
+    if (this.isKetcherReady) {
+      this.syncSketchLoadingVisibility();
+      return;
     }
 
-    const frameElement: HTMLIFrameElement | undefined = this.ketcherFrameRef?.nativeElement;
-    const frameWindow: (Window & { ketcher?: unknown }) | null | undefined =
-      frameElement?.contentWindow as (Window & { ketcher?: unknown }) | null | undefined;
-    const maybeKetcherApi: unknown = frameWindow?.ketcher;
-    if (
-      typeof maybeKetcherApi !== 'object' ||
-      maybeKetcherApi === null ||
-      !('getSmiles' in maybeKetcherApi) ||
-      !('setMolecule' in maybeKetcherApi)
-    ) {
-      return null;
+    const api = await this.ketcherFrameService.waitForApi(this.ketcherFrameRef?.nativeElement, 120);
+    if (api !== null) {
+      this.isKetcherReady = true;
+      this.syncSketchLoadingVisibility();
     }
+  }
 
-    return maybeKetcherApi as KetcherApi;
+  private startSketchLoadingPhase(): void {
+    this.isSketchModifierLoading.set(!this.isKetcherReady);
+    this.syncSketchLoadingVisibility();
+  }
+
+  private syncSketchLoadingVisibility(): void {
+    const mustKeepLoading: boolean = !this.isKetcherReady;
+    this.isSketchModifierLoading.set(mustKeepLoading);
+    if (!mustKeepLoading) {
+      this.hasCompletedFirstSketchLoad = true;
+    }
   }
 }
-
-type KetcherApi = {
-  getSmiles: () => Promise<string>;
-  setMolecule: (molecule: string) => Promise<void>;
-};

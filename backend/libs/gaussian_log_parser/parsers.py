@@ -182,10 +182,9 @@ class GaussianLogParser:
             line_num: Número de línea
         """
         for attr in self._attributes:
-            if attr.active:
-                if attr.process(line):
-                    attr.set_line_number(line_num)
-                    self._set_execution_value(execution, attr)
+            if attr.active and attr.process(line):
+                attr.set_line_number(line_num)
+                self._set_execution_value(execution, attr)
 
     def _set_execution_value(
         self, execution: GaussianExecution, attr: GaussianAttribute

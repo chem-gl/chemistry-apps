@@ -424,7 +424,7 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
-     * Descargar Entradas Originales de Easy-rate
+     * Descargar Entradas Originales ZIP
      * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
      * @endpoint get /api/easy-rate/jobs/{id}/report-inputs/
      * @param id A UUID string identifying this scientific job.

@@ -28,7 +28,7 @@ export interface CalculatorJobResponse {
     readonly cache_miss: boolean;
     parameters: CalculatorParameters;
     results?: CalculatorResult | null;
-    readonly error_trace: string | null;
+    readonly error_trace: string;
     readonly created_at: string;
     readonly updated_at: string;
 }

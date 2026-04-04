@@ -12,6 +12,7 @@ Cómo se usa:
 - Es independiente del editor: puede ejecutarse igual desde terminal en VS Code,
   PyCharm, Vim o cualquier IDE/editor.
 """
+
 import os
 import sys
 

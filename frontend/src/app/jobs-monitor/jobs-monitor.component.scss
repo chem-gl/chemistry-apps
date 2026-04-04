@@ -349,11 +349,6 @@ th {
   padding: 0.2rem 0.5rem;
   font-size: 0.76rem;
   font-weight: 700;
-}
-
-.open-result-link,
-.open-logs-btn,
-.close-details-btn {
   border: 1px solid #0f766e;
   color: #0f766e;
   background: #fff;
@@ -437,7 +432,6 @@ th {
 }
 
 .details-header h3,
-.logs-box h4,
 .error-trace-box h4 {
   margin: 0;
   color: #073b3a;
@@ -490,90 +484,4 @@ th {
   padding: 0.5rem;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.logs-box {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.logs-list {
-  display: grid;
-  gap: 0.55rem;
-  max-height: 320px;
-  overflow: auto;
-  padding-right: 0.2rem;
-}
-
-.log-item {
-  border: 1px solid #d4e5e2;
-  border-radius: 9px;
-  padding: 0.55rem;
-  background: #f8fffd;
-  display: grid;
-  gap: 0.28rem;
-}
-
-.log-header {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  font-size: 0.72rem;
-}
-
-.log-level {
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 0.08rem 0.42rem;
-  text-transform: uppercase;
-  font-weight: 800;
-}
-
-.log-level-debug {
-  color: #374151;
-  background: #f3f4f6;
-  border-color: #e5e7eb;
-}
-
-.log-level-info {
-  color: #1d4ed8;
-  background: #dbeafe;
-  border-color: #93c5fd;
-}
-
-.log-level-warning {
-  color: #854d0e;
-  background: #fef9c3;
-  border-color: #fde68a;
-}
-
-.log-level-error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
-}
-
-.log-source,
-.log-index {
-  color: #475569;
-  font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
-  font-size: 0.72rem;
-}
-
-.log-message,
-.log-payload {
-  margin: 0;
-  font-size: 0.82rem;
-  color: #1f2937;
-}
-
-.log-payload {
-  font-size: 0.72rem;
-  font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
-  background: #fff;
-  border: 1px solid #dbe5f1;
-  border-radius: 8px;
-  padding: 0.45rem;
-  overflow: auto;
 }

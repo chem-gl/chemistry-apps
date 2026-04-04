@@ -261,7 +261,6 @@ def _download_file_with_retry(
             return
         except (
             urllib.error.URLError,
-            urllib.error.HTTPError,
             TimeoutError,
             socket.timeout,
         ) as exc:
@@ -338,16 +337,80 @@ def _prepare_java_runtime(
         )
 
 
+def _validate_tar_entry_path(
+    member: tarfile.TarInfo, destination_dir: Path, destination_dir_resolved: Path
+) -> None:
+    """Valida que la entrada del tar no intente salir del directorio destino (path traversal)."""
+    target_path: Path = (destination_dir / member.name).resolve()
+    inside_by_sep: bool = str(target_path).startswith(
+        str(destination_dir_resolved) + os.sep
+    )
+    is_exact_destination: bool = str(target_path) == str(destination_dir_resolved)
+    if not inside_by_sep and not is_exact_destination:
+        raise RuntimeToolsError(
+            "El tarball contiene rutas inválidas fuera del destino de extracción."
+        )
+
+
+def _validate_tar_entry_file_size(
+    member: tarfile.TarInfo,
+    total_size_bytes: int,
+    max_total_size_bytes: int,
+    max_compression_ratio: float,
+) -> int:
+    """Valida tamaño descomprimido y razón de compresión de una entrada. Retorna nuevo total."""
+    uncompressed_size: int = member.size
+    new_total: int = total_size_bytes + uncompressed_size
+
+    if new_total > max_total_size_bytes:
+        raise RuntimeToolsError(
+            f"El tarball supera el límite de {max_total_size_bytes // (1024**3)} GB "
+            "descomprimidos (posible zip bomb)."
+        )
+
+    compressed_size: int = max(member.size, 1)
+    if uncompressed_size > 0 and compressed_size > 0:
+        ratio: float = uncompressed_size / compressed_size
+        if ratio > max_compression_ratio:
+            raise RuntimeToolsError(
+                f"Razón de compresión sospechosa ({ratio:.1f}:1) en "
+                f"'{member.name}' del tarball (posible zip bomb)."
+            )
+
+    return new_total
+
+
 def _extract_tarfile_safely(
     archive_file: tarfile.TarFile, destination_dir: Path
 ) -> None:
-    """Extrae un tar.gz bloqueando rutas fuera del directorio destino."""
+    """Extrae un tar.gz bloqueando rutas fuera del directorio destino y protegiendo contra zip bomb.
+
+    Límites aplicados:
+    - Máximo 10.000 entradas (protección contra inodes exhaustion).
+    - Tamaño total descomprimido máximo 2 GB (protección contra data amplification).
+    - Razón compresión máxima 50:1 por entrada (detección de zip bomb).
+    """
+    # Límites de seguridad contra zip bomb (S5042)
+    max_total_entries: int = 10_000
+    max_total_size_bytes: int = 2 * 1024 * 1024 * 1024  # 2 GB
+    max_compression_ratio: float = 50.0
+
     destination_dir_resolved: Path = destination_dir.resolve()
+    total_size_bytes: int = 0
+    total_entries: int = 0
+
     for member in archive_file.getmembers():
-        target_path: Path = (destination_dir / member.name).resolve()
-        if not str(target_path).startswith(str(destination_dir_resolved)):
+        _validate_tar_entry_path(member, destination_dir, destination_dir_resolved)
+
+        total_entries += 1
+        if total_entries > max_total_entries:
             raise RuntimeToolsError(
-                "El tarball contiene rutas inválidas fuera del destino de extracción."
+                f"El tarball supera el límite de {max_total_entries} entradas (posible zip bomb)."
+            )
+
+        if member.isfile():
+            total_size_bytes = _validate_tar_entry_file_size(
+                member, total_size_bytes, max_total_size_bytes, max_compression_ratio
             )
 
     archive_file.extractall(path=destination_dir)

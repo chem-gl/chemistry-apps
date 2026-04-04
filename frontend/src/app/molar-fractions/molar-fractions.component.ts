@@ -5,19 +5,18 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  ScientificJobView,
-} from '../core/api/jobs-api.service';
+import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
 } from '../core/application/molar-fractions-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-molar-fractions',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
   styleUrl: './molar-fractions.component.scss',
@@ -30,14 +29,7 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
   readonly pkaCountOptions: number[] = [1, 2, 3, 4, 5, 6];
 
   ngOnInit(): void {
-    this.workflow.loadHistory();
-
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
+    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
   }
 
   ngOnDestroy(): void {
@@ -78,14 +70,6 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
     return typeof paramsRecord.ph_mode === 'string' ? paramsRecord.ph_mode : '-';
   }
 
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
-  }
-
   formatPh(row: MolarFractionsResultRow): string {
     return row.ph.toFixed(2);
   }
@@ -120,9 +104,7 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  toNumber(rawValue: number | string): number {
-    return Number(rawValue);
-  }
+  readonly toNumber = Number;
 
   private downloadFile(filename: string, blob: Blob): void {
     const objectUrl: string = URL.createObjectURL(blob);

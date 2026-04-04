@@ -16,14 +16,14 @@ Uso:
     }
 """
 
-from typing import TypeAlias, TypedDict
+from typing import TypedDict
 
 # Tipos de alias para valores escalares
-NumericValue: TypeAlias = float | int
-PhysicalConstant: TypeAlias = float
+type NumericValue = float | int
+type PhysicalConstant = float
 
 # Tipos de entrada para cálculo TST
-TSTCalculationInput: TypeAlias = dict[str, float]
+type TSTCalculationInput = dict[str, float]
 
 TSTCalculationParams = TypedDict(
     "TSTCalculationParams",

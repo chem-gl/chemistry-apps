@@ -2,10 +2,11 @@
 
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { GlobalErrorModalComponent } from './core/shared/components/global-error-modal/global-error-modal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, GlobalErrorModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

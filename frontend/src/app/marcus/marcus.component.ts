@@ -2,54 +2,31 @@
 // Gestiona la carga de los 6 archivos Gaussian requeridos, parámetros de difusión y visualización de resultados.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { DownloadedReportFile, JobLogEntryView } from '../core/api/jobs-api.service';
+import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
+import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
+import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 
 @Component({
   selector: 'app-marcus',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    JobProgressCardComponent,
+    DiffusionFieldsComponent,
+    JobResultFooterComponent,
+  ],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',
   styleUrl: './marcus.component.scss',
 })
-export class MarcusComponent implements OnInit, OnDestroy {
-  readonly workflow = inject(MarcusWorkflowService);
-  private readonly route = inject(ActivatedRoute);
-  private routeSubscription: Subscription | null = null;
-
-  ngOnInit(): void {
-    this.workflow.loadHistory();
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-  }
-
-  dispatch(): void {
-    this.workflow.dispatch();
-  }
-
-  reset(): void {
-    this.workflow.reset();
-  }
-
-  clearFiles(): void {
-    this.workflow.clearFiles();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
+export class MarcusComponent extends ScientificFileAppBaseComponent {
+  override readonly workflow = inject(MarcusWorkflowService);
 
   // ── Manejadores de los 6 archivos requeridos ─────────────────────
   onReactant1FileChange(event: Event): void {
@@ -95,28 +72,28 @@ export class MarcusComponent implements OnInit, OnDestroy {
 
   exportCsv(): void {
     this.workflow.downloadCsvReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportLog(): void {
     this.workflow.downloadLogReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportError(): void {
     this.workflow.downloadErrorReport().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
 
   exportInputsZip(): void {
     this.workflow.downloadInputsZip().subscribe({
-      next: (file: DownloadedReportFile) => this.triggerDownload(file.filename, file.blob),
+      next: (file: DownloadedReportFile) => downloadBlobFile(file.filename, file.blob),
       error: () => {},
     });
   }
@@ -139,36 +116,4 @@ export class MarcusComponent implements OnInit, OnDestroy {
   }
 
   // ── Utilidades de plantilla ──────────────────────────────────────
-  logLevelClass(level: string): string {
-    const normalized: string = level.toLowerCase();
-    if (normalized.includes('error')) return 'log-level level-error';
-    if (normalized.includes('warn')) return 'log-level level-warning';
-    if (normalized.includes('debug')) return 'log-level level-debug';
-    return 'log-level level-info';
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return logEntry.payload !== null && logEntry.payload !== undefined;
-  }
-
-  historicalStatusClass(status: string): string {
-    const normalized: string = status.toLowerCase();
-    if (normalized === 'completed') return 'status-completed';
-    if (normalized === 'failed') return 'status-failed';
-    if (normalized === 'running' || normalized === 'processing') return 'status-running';
-    return 'status-pending';
-  }
-
-  // ── Descarga de archivos ─────────────────────────────────────────
-  private triggerDownload(filename: string, blob: Blob): void {
-    const objectUrl: string = URL.createObjectURL(blob);
-    const anchor: HTMLAnchorElement = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = filename;
-    anchor.style.display = 'none';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
-  }
 }

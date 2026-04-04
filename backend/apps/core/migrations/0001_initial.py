@@ -115,7 +115,7 @@ class Migration(migrations.Migration):
                 # Parámetros de entrada y resultados de ejecución.
                 ("parameters", models.JSONField(default=dict)),
                 ("results", models.JSONField(blank=True, default=dict, null=True)),
-                ("error_trace", models.TextField(blank=True, null=True)),
+                ("error_trace", models.TextField(blank=True, default="")),
                 (
                     "progress_percentage",
                     models.PositiveIntegerField(

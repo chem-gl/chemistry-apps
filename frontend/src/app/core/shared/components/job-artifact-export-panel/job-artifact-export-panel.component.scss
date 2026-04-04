@@ -1,0 +1,71 @@
+// job-artifact-export-panel.component.scss: Estilos para el panel de exportación de artefactos y errores.
+
+.result-section {
+  padding-top: 0.65rem;
+  border-top: 1px solid #e4ecf5;
+
+  h4 {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #486581;
+    margin: 0 0 0.5rem;
+  }
+}
+
+.file-descriptors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fd-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  border: 1px solid #e4ecf5;
+  border-radius: 7px;
+  padding: 0.3rem 0.5rem;
+  background: #fff;
+
+  .fd-field {
+    font-weight: 700;
+    color: #486581;
+    white-space: nowrap;
+    min-width: 110px;
+  }
+
+  .fd-name {
+    color: #243b53;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .fd-size {
+    color: #486581;
+    white-space: nowrap;
+  }
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.error-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-message {
+  margin: 0;
+  color: #9b1c1c;
+  font-weight: 700;
+  font-size: 0.85rem;
+}

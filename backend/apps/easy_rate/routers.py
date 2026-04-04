@@ -1,11 +1,10 @@
 """routers.py: Endpoints HTTP dedicados para la app Easy-rate.
 
 Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
-(retrieve, report-csv, report-log, report-error) y define adicionalmente:
+(retrieve, report-csv, report-log, report-error, report-inputs) y define adicionalmente:
 1. create() multipart con persistencia de artefactos.
 2. build_csv_content() con formato CSV de entradas/salidas Easy-rate.
 3. inspect_input() para parseo previo de archivos Gaussian.
-4. report_inputs() para descarga ZIP de entradas persistidas.
 """
 
 from __future__ import annotations
@@ -13,26 +12,17 @@ from __future__ import annotations
 from typing import cast
 
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.core.artifacts import (
-    ScientificInputArtifactStorageService,
-    build_file_descriptor,
-    normalize_chunk_to_bytes,
-)
+from apps.core.artifacts import build_file_descriptor, normalize_chunk_to_bytes
 from apps.core.base_router import ScientificAppViewSetMixin
-from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
-from apps.core.reporting import build_download_filename
 from apps.core.schemas import ErrorResponseSerializer
-from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 
 from .definitions import PLUGIN_NAME
@@ -127,7 +117,7 @@ class EasyRateJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            from .plugin import inspect_easy_rate_gaussian_blob
+            from ._gaussian_inspector import inspect_easy_rate_gaussian_blob
         except ModuleNotFoundError:
             return Response(
                 {
@@ -251,108 +241,9 @@ class EasyRateJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         }
 
         version_value: str = str(validated_data["version"])
-
-        # Crear job sin encolar (flujo en dos pasos: crear → artefactos → despachar)
-        declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
-        prepare_result = declarative_api.prepare_job(
-            plugin=PLUGIN_NAME,
-            version=version_value,
-            parameters=parameters_payload,
-        ).run()
-
-        if prepare_result.is_failure():
-            return Response(
-                {"detail": "No fue posible crear el job."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job_handle = prepare_result.get_or_else(None)
-        created_job: ScientificJob = get_object_or_404(
-            ScientificJob, pk=job_handle.job_id
+        # Delegar creación, persistencia de artefactos y despacho al helper del mixin
+        return self.prepare_and_dispatch_with_artifacts(
+            parameters_payload=parameters_payload,
+            version_value=version_value,
+            uploaded_files=uploaded_files,
         )
-
-        artifact_storage_service = ScientificInputArtifactStorageService()
-        try:
-            for field_name, uploaded_file in uploaded_files:
-                artifact_storage_service.store_uploaded_file(
-                    job=created_job,
-                    uploaded_file=uploaded_file,
-                    field_name=field_name,
-                    role="input",
-                )
-        except Exception as error_value:
-            created_job.status = "failed"
-            created_job.error_trace = str(error_value)
-            created_job.progress_percentage = 100
-            created_job.progress_stage = "failed"
-            created_job.progress_message = "Error al persistir archivos de entrada."
-            created_job.save(
-                update_fields=[
-                    "status",
-                    "error_trace",
-                    "progress_percentage",
-                    "progress_stage",
-                    "progress_message",
-                    "updated_at",
-                ]
-            )
-            return Response(
-                {"detail": "No fue posible persistir los archivos de entrada."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Despachar al broker ahora que los artefactos están persistidos
-        job_handle.dispatch_if_pending().run()
-
-        created_job.refresh_from_db()
-        response_serializer = EasyRateJobResponseSerializer(created_job)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(
-        summary="Descargar Entradas Originales de Easy-rate",
-        description=(
-            "Descarga ZIP con todos los archivos de entrada persistidos y manifest.json "
-            "para reproducibilidad/reintento."
-        ),
-        responses={
-            200: OpenApiResponse(
-                response=OpenApiTypes.BINARY,
-                description="Archivo ZIP con entradas persistidas del job.",
-            ),
-            404: OpenApiResponse(
-                response=ErrorResponseSerializer,
-                description="Job Easy-rate no encontrado.",
-            ),
-            409: OpenApiResponse(
-                response=ErrorResponseSerializer,
-                description="No existen artefactos de entrada persistidos.",
-            ),
-        },
-    )
-    @action(detail=True, methods=["get"], url_path="report-inputs")
-    def report_inputs(
-        self, request: Request, id: str | None = None
-    ) -> HttpResponse | Response:
-        """Entrega ZIP de artefactos de entrada asociados al job Easy-rate."""
-        job: ScientificJob = self.get_job_or_404(id)
-
-        artifact_storage_service = ScientificInputArtifactStorageService()
-        if len(artifact_storage_service.list_job_artifacts(job=job)) == 0:
-            return Response(
-                {"detail": "El job no tiene artefactos de entrada persistidos."},
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        zip_bytes: bytes = artifact_storage_service.build_job_artifacts_zip_bytes(
-            job=job
-        )
-        filename: str = build_download_filename(
-            plugin_name=PLUGIN_NAME,
-            job_id=str(job.id),
-            report_suffix="inputs",
-            extension="zip",
-        )
-
-        response = HttpResponse(zip_bytes, content_type="application/zip")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response

@@ -4,15 +4,16 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
+import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 
 @Component({
   selector: 'app-jobs-monitor',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, JobLogsPanelComponent],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-monitor.component.html',
   styleUrl: './jobs-monitor.component.scss',
@@ -144,13 +145,5 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       typeof resultRecord.metadata === 'object' &&
       !Array.isArray(resultRecord.metadata)
     );
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
   }
 }

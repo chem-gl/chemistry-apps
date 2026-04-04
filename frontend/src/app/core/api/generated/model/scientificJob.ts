@@ -62,7 +62,7 @@ export interface ScientificJob {
     readonly resumed_at: string | null;
     readonly parameters: any | null;
     readonly results: any | null;
-    readonly error_trace: string | null;
+    readonly error_trace: string;
     readonly created_at: string;
     readonly updated_at: string;
 }

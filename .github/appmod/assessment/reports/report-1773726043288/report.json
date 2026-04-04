@@ -7,11 +7,7 @@
     "status": "completed",
     "privacyMode": "Protected",
     "privacyModeHelpUrl": "https://aka.ms/appcat-privacy-mode",
-    "targetIds": [
-      "azure-aks",
-      "azure-appservice",
-      "azure-container-apps"
-    ],
+    "targetIds": ["azure-aks", "azure-appservice", "azure-container-apps"],
     "targetDisplayNames": [
       "Azure Kubernetes Service",
       "Azure App Service",
@@ -21,10 +17,7 @@
     "os": [],
     "id": "1773726043288",
     "name": "Report_202603162340",
-    "domains": [
-      "cloud-readiness",
-      "java-upgrade"
-    ],
+    "domains": ["cloud-readiness", "java-upgrade"],
     "mode": "issue-only"
   },
   "summary": {
@@ -51,19 +44,9 @@
       "properties": {
         "appName": "chemistry-apps",
         "jdkVersion": "Unknown",
-        "frameworks": [
-          "Django",
-          "React",
-          "Angular"
-        ],
-        "languages": [
-          "Python",
-          "TypeScript",
-          "JavaScript"
-        ],
-        "tools": [
-          "NodeJs"
-        ]
+        "frameworks": ["Django", "React", "Angular"],
+        "languages": ["Python", "TypeScript", "JavaScript"],
+        "tools": ["NodeJs"]
       },
       "incidents": []
     }

@@ -1,7 +1,7 @@
 // jobs-monitor.facade.service.spec.ts: Pruebas unitarias del facade del monitor de jobs.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { JobsApiService, ScientificJobView } from '../api/jobs-api.service';
 import { JobsMonitorFacadeService } from './jobs-monitor.facade.service';
@@ -26,7 +26,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     resumed_at: null,
     parameters: null,
     results: null,
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -43,6 +43,7 @@ describe('JobsMonitorFacadeService', () => {
     streamJobLogEvents: ReturnType<typeof vi.fn>;
     pauseJob: ReturnType<typeof vi.fn>;
     resumeJob: ReturnType<typeof vi.fn>;
+    cancelJob: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -82,6 +83,12 @@ describe('JobsMonitorFacadeService', () => {
         of({
           detail: 'Reanudación solicitada',
           job: makeScientificJob({ id: jobId, status: 'pending', progress_stage: 'queued' }),
+        }),
+      ),
+      cancelJob: vi.fn((jobId: string) =>
+        of({
+          detail: 'Cancelación solicitada',
+          job: makeScientificJob({ id: jobId, status: 'cancelled', progress_stage: 'cancelled' }),
         }),
       ),
     };
@@ -126,6 +133,17 @@ describe('JobsMonitorFacadeService', () => {
     expect(jobsApiServiceMock.listJobs).toHaveBeenCalledWith({
       status: 'completed',
       pluginName: undefined,
+    });
+  });
+
+  it('sends plugin filter when selecting a specific plugin', () => {
+    jobsApiServiceMock.listJobs.mockReturnValue(of([]));
+
+    facadeService.setPluginFilter('calculator');
+
+    expect(jobsApiServiceMock.listJobs).toHaveBeenCalledWith({
+      status: undefined,
+      pluginName: 'calculator',
     });
   });
 
@@ -186,6 +204,176 @@ describe('JobsMonitorFacadeService', () => {
 
     expect(jobsApiServiceMock.resumeJob).toHaveBeenCalledWith('job-1');
     expect(facadeService.selectedJob()?.status).toBe('pending');
+  });
+
+  it('cancels selected job and updates state in monitor detail panel', () => {
+    facadeService.openJobDetails('job-1');
+    facadeService.cancelJob('job-1');
+
+    expect(jobsApiServiceMock.cancelJob).toHaveBeenCalledWith('job-1');
+    expect(facadeService.selectedJob()?.status).toBe('cancelled');
+  });
+
+  it('exposes control running state while pause request is in flight', () => {
+    const pauseSubject = new Subject<{
+      detail: string;
+      job: ScientificJobView;
+    }>();
+    jobsApiServiceMock.pauseJob.mockReturnValueOnce(pauseSubject.asObservable());
+
+    facadeService.pauseJob('job-control-1');
+    expect(facadeService.isControlActionRunning('job-control-1')).toBe(true);
+
+    pauseSubject.next({
+      detail: 'ok',
+      job: makeScientificJob({ id: 'job-control-1', status: 'paused' }),
+    });
+    pauseSubject.complete();
+
+    expect(facadeService.isControlActionRunning('job-control-1')).toBe(false);
+  });
+
+  it('stores control error messages for pause, resume and cancel failures', () => {
+    jobsApiServiceMock.pauseJob.mockReturnValueOnce(
+      throwError(() => new Error('pause denied by backend')),
+    );
+    facadeService.pauseJob('job-err-1');
+    expect(facadeService.controlErrorMessage()).toContain('pause denied by backend');
+
+    jobsApiServiceMock.resumeJob.mockReturnValueOnce(
+      throwError(() => new Error('resume denied by backend')),
+    );
+    facadeService.resumeJob('job-err-1');
+    expect(facadeService.controlErrorMessage()).toContain('resume denied by backend');
+
+    jobsApiServiceMock.cancelJob.mockReturnValueOnce(
+      throwError(() => new Error('cancel denied by backend')),
+    );
+    facadeService.cancelJob('job-err-1');
+    expect(facadeService.controlErrorMessage()).toContain('cancel denied by backend');
+  });
+
+  it('stores monitor loading error when listJobs fails in non-silent mode', () => {
+    jobsApiServiceMock.listJobs.mockReturnValueOnce(
+      throwError(() => new Error('monitor unavailable')),
+    );
+
+    facadeService.loadJobs();
+
+    expect(facadeService.errorMessage()).toContain('monitor unavailable');
+    expect(facadeService.isLoading()).toBe(false);
+  });
+
+  it('keeps silent refresh errors hidden from UI state', () => {
+    jobsApiServiceMock.listJobs.mockReturnValueOnce(throwError(() => new Error('silent failure')));
+
+    facadeService.loadJobs({ silent: true });
+
+    expect(facadeService.errorMessage()).toBeNull();
+    expect(facadeService.isLoading()).toBe(false);
+  });
+
+  it('closes detail view and clears selected state', () => {
+    facadeService.openJobDetails('job-1');
+    facadeService.closeJobDetails();
+
+    expect(facadeService.selectedJobId()).toBeNull();
+    expect(facadeService.selectedJob()).toBeNull();
+    expect(facadeService.selectedJobLogs()).toEqual([]);
+  });
+
+  it('sets detail error when opening job details fails', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValueOnce(
+      throwError(() => new Error('detail timeout')),
+    );
+
+    facadeService.openJobDetails('job-broken-detail');
+
+    expect(facadeService.detailsErrorMessage()).toContain('detail timeout');
+    expect(facadeService.isDetailsLoading()).toBe(false);
+  });
+
+  it('refreshes selected job from progress stream completion for active details', () => {
+    const progress$ = new Subject<{
+      job_id: string;
+      status: ScientificJobView['status'];
+      progress_percentage: number;
+      progress_stage: string;
+      progress_message: string;
+      progress_event_index: number;
+      updated_at: string;
+    }>();
+    const logs$ = new Subject<{
+      jobId: string;
+      eventIndex: number;
+      level: 'debug' | 'info' | 'warning' | 'error';
+      source: string;
+      message: string;
+      payload: object;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.getScientificJobStatus
+      .mockReturnValueOnce(of(makeScientificJob({ id: 'job-stream-1', status: 'running' })))
+      .mockReturnValueOnce(of(makeScientificJob({ id: 'job-stream-1', status: 'completed' })));
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progress$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logs$.asObservable());
+
+    facadeService.openJobDetails('job-stream-1');
+
+    progress$.next({
+      job_id: 'job-stream-1',
+      status: 'running',
+      progress_percentage: 72,
+      progress_stage: 'running',
+      progress_message: 'processing',
+      progress_event_index: 44,
+      updated_at: '2026-03-31T12:00:00.000Z',
+    });
+    logs$.next({
+      jobId: 'job-stream-1',
+      eventIndex: 2,
+      level: 'info',
+      source: 'tests',
+      message: 'streamed log',
+      payload: {},
+      createdAt: '2026-03-31T12:00:00.000Z',
+    });
+
+    expect(facadeService.selectedJob()?.progress_percentage).toBe(72);
+
+    progress$.complete();
+
+    expect(facadeService.selectedJob()?.status).toBe('completed');
+    expect(facadeService.selectedJobLogs().some((entry) => entry.eventIndex === 2)).toBe(true);
+  });
+
+  it('keeps detail modal stable when progress stream errors', () => {
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValueOnce(
+      of(makeScientificJob({ id: 'job-stream-error', status: 'running' })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValueOnce(
+      throwError(() => new Error('sse failed')),
+    );
+
+    facadeService.openJobDetails('job-stream-error');
+
+    expect(facadeService.selectedJobId()).toBe('job-stream-error');
+    expect(facadeService.detailsErrorMessage()).toBeNull();
+  });
+
+  it('toggles auto-refresh off and on without losing state', () => {
+    expect(facadeService.autoRefreshEnabled()).toBe(true);
+
+    facadeService.toggleAutoRefresh();
+    expect(facadeService.autoRefreshEnabled()).toBe(false);
+
+    facadeService.toggleAutoRefresh();
+    expect(facadeService.autoRefreshEnabled()).toBe(true);
+  });
+
+  it('runs ngOnDestroy without throwing and stops subscriptions', () => {
+    expect(() => facadeService.ngOnDestroy()).not.toThrow();
   });
 
   it('keeps lastUpdatedAt unchanged on silent refresh when jobs did not change', () => {

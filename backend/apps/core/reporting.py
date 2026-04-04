@@ -100,7 +100,7 @@ def build_job_log_report(
         results_text,
     ]
 
-    if job.error_trace is not None and job.error_trace.strip() != "":
+    if job.error_trace.strip() != "":
         lines.extend(
             [
                 "",
@@ -110,7 +110,9 @@ def build_job_log_report(
         )
 
     lines.extend(["", "=== LOG EVENTS ==="])
-    job_log_events = ScientificJobLogEvent.objects.filter(job=job).order_by("event_index")
+    job_log_events = ScientificJobLogEvent.objects.filter(job=job).order_by(
+        "event_index"
+    )
     if not job_log_events.exists():
         lines.append("No hay eventos de log persistidos para este job.")
     else:
@@ -140,7 +142,7 @@ def build_job_error_report(job: ScientificJob) -> str | None:
     if job.status != "failed":
         return None
 
-    if job.error_trace is None or job.error_trace.strip() == "":
+    if job.error_trace.strip() == "":
         return None
 
     parameters_payload: JSONMap = cast(JSONMap, job.parameters)

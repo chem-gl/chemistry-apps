@@ -1,16 +1,12 @@
 // calculator-workflow.service.ts: Orquesta el flujo de calculadora y separa la logica de UI.
 
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Injectable, computed, signal } from '@angular/core';
 import {
   CalculatorJobResponseView,
   CalculatorOperationView,
   CalculatorParams,
-  JobLogEntryView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  ScientificJobView,
 } from '../api/jobs-api.service';
+import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 /** Descriptor de visualizacion para cada operacion disponible en el selector */
 export interface OperationOption {
@@ -44,10 +40,13 @@ const STAGE_STEPS: string[] = [
 ];
 
 @Injectable()
-export class CalculatorWorkflowService implements OnDestroy {
-  private readonly jobsApiService = inject(JobsApiService);
-  private progressSubscription: Subscription | null = null;
-  private logsSubscription: Subscription | null = null;
+export class CalculatorWorkflowService extends BaseJobWorkflowService<CalculatorJobResponseView> {
+  protected override get defaultProgressMessage(): string {
+    return 'Preparing execution...';
+  }
+
+  /** Alias para compatibilidad con componentes que referencian lastResult */
+  readonly lastResult = this.resultData;
 
   readonly operations: OperationOption[] = [
     { value: 'add', label: 'Addition (+)', requiresB: true },
@@ -63,29 +62,11 @@ export class CalculatorWorkflowService implements OnDestroy {
   readonly selectedOperation = signal<CalculatorOperationView>('add');
   readonly firstOperand = signal<number>(5);
   readonly secondOperand = signal<number>(3);
-  readonly activeSection = signal<UiSection>('idle');
-  readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
-  readonly jobLogs = signal<JobLogEntryView[]>([]);
-  readonly lastResult = signal<CalculatorJobResponseView | null>(null);
-  readonly errorMessage = signal<string | null>(null);
-  readonly historyJobs = signal<ScientificJobView[]>([]);
-  readonly isHistoryLoading = signal<boolean>(false);
 
   readonly requiresSecondOperand = computed(
     () =>
       this.operations.find((operation) => operation.value === this.selectedOperation())
         ?.requiresB ?? true,
-  );
-
-  readonly isProcessing = computed(
-    () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
-  );
-
-  readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparing execution...',
   );
 
   readonly currentStage = computed(() => this.progressSnapshot()?.progress_stage ?? 'pending');
@@ -104,15 +85,8 @@ export class CalculatorWorkflowService implements OnDestroy {
     return this.currentStage() === stepName;
   }
 
-  dispatch(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.lastResult.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.currentJobId.set(null);
+  override dispatch(): void {
+    this.prepareForDispatch();
 
     const jobParams: CalculatorParams = {
       op: this.selectedOperation(),
@@ -122,18 +96,7 @@ export class CalculatorWorkflowService implements OnDestroy {
 
     this.jobsApiService.dispatchCalculatorJob(jobParams).subscribe({
       next: (jobResponse: CalculatorJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          this.lastResult.set(jobResponse);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(jobResponse, (job) => job, 'calculator');
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');
@@ -142,43 +105,14 @@ export class CalculatorWorkflowService implements OnDestroy {
     });
   }
 
-  reset(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('idle');
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.lastResult.set(null);
-    this.errorMessage.set(null);
-    this.currentJobId.set(null);
-  }
-
-  ngOnDestroy(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-  }
-
   /** Permite cargar un resultado previo de calculadora usando un jobId existente */
   openHistoricalJob(jobId: string): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('dispatching');
+    this.prepareForDispatch();
     this.currentJobId.set(jobId);
-    this.errorMessage.set(null);
-    this.jobLogs.set([]);
 
     this.jobsApiService.getJobStatus(jobId).subscribe({
       next: (jobResponse: CalculatorJobResponseView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Historical job failed.');
-          return;
-        }
-
-        this.lastResult.set(jobResponse);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
+        this.handleJobOutcome(jobId, jobResponse, (job) => job, { loadHistoryAfter: false });
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -188,88 +122,14 @@ export class CalculatorWorkflowService implements OnDestroy {
   }
 
   /** Carga historial de jobs de calculadora para reabrir resultados previos */
-  loadHistory(): void {
-    this.isHistoryLoading.set(true);
-
-    this.jobsApiService.listJobs({ pluginName: 'calculator' }).subscribe({
-      next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
-          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
-            new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
-        );
-        this.historyJobs.set(orderedJobs);
-        this.isHistoryLoading.set(false);
-      },
-      error: () => {
-        this.isHistoryLoading.set(false);
-      },
-    });
+  override loadHistory(): void {
+    this.loadHistoryForPlugin('calculator');
   }
 
-  private startProgressStream(jobId: string): void {
-    this.startLogStream(jobId);
-    this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (jobSnapshot: JobProgressSnapshotView) => this.progressSnapshot.set(jobSnapshot),
-      complete: () => this.fetchFinalResult(jobId),
-      error: () => this.startPollingFallback(jobId),
-    });
-  }
-
-  private startLogStream(jobId: string): void {
-    this.logsSubscription?.unsubscribe();
-    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
-      next: (logEntry: JobLogEntryView) => {
-        this.jobLogs.update((currentLogs) => {
-          if (currentLogs.some((item) => item.eventIndex === logEntry.eventIndex)) {
-            return currentLogs;
-          }
-          return [...currentLogs, logEntry].sort(
-            (leftEntry, rightEntry) => leftEntry.eventIndex - rightEntry.eventIndex,
-          );
-        });
-      },
-      error: () => {
-        // El stream SSE de logs puede cerrarse en reconexiones; no interrumpir flujo principal.
-      },
-    });
-  }
-
-  private loadHistoricalLogs(jobId: string): void {
-    this.jobsApiService.getJobLogs(jobId, { limit: 200 }).subscribe({
-      next: (logsPage) => this.jobLogs.set(logsPage.results),
-      error: () => {
-        // Mantener la UI funcional aunque no se puedan recuperar logs históricos.
-      },
-    });
-  }
-
-  private startPollingFallback(jobId: string): void {
-    this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (jobSnapshot: JobProgressSnapshotView) => {
-        this.progressSnapshot.set(jobSnapshot);
-        this.fetchFinalResult(jobId);
-      },
-      error: (pollingError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to track progress: ${pollingError.message}`);
-      },
-    });
-  }
-
-  private fetchFinalResult(jobId: string): void {
+  protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getJobStatus(jobId).subscribe({
       next: (jobResponse: CalculatorJobResponseView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Job failed with no details available.');
-          return;
-        }
-
-        this.lastResult.set(jobResponse);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
-        this.loadHistory();
+        this.handleJobOutcome(jobId, jobResponse, (job) => job);
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');

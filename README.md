@@ -382,6 +382,7 @@ Este flujo:
 ```bash
 cd backend
 ./venv/bin/python manage.py test apps.core apps.easy_rate apps.marcus --verbosity=1
+./venv/bin/black --check .
 ```
 
 ### Frontend
@@ -643,3 +644,31 @@ npm run build
 ```
 
 El contenido generado en `frontend/dist/frontend/` debe publicarse como estático (Nginx, CDN o hosting estático). La API backend se expone por dominio/ruta del reverse proxy.
+
+## 11) Reportes Para Sonar
+
+Para generar todos los artefactos de lint y cobertura antes de ejecutar Sonar:
+
+```bash
+cd /ruta/al/repositorio
+bash scripts/generate_sonar_coverage.sh
+```
+
+Este flujo genera:
+
+1. `backend/ruff.json`
+2. `backend/coverage.xml`
+3. `frontend/eslint.json`
+4. `frontend/coverage/frontend/coverage-final.json`
+5. `frontend/coverage/frontend/sonar-generic-coverage.xml`
+
+Nota: `backend/ruff.json` se genera en formato SARIF porque la versión actual de Ruff del proyecto no expone salida `sonarqube`; Sonar puede importarlo directamente desde `sonar.sarifReportPaths`.
+
+Si prefieres ejecutarlo dentro de un contenedor aislado:
+
+```bash
+cd /ruta/al/repositorio
+bash scripts/generate_sonar_coverage_docker.sh
+```
+
+La configuración de Sonar queda centralizada en `sonar-project.properties` en la raíz del repositorio, apuntando a esos artefactos ya generados.

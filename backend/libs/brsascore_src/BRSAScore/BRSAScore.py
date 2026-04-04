@@ -1,7 +1,6 @@
 """BRSAScore.py: Calcula BR-SAScore y descriptores de complejidad molecular.
 
-Este modulo conserva la API historica de ``calculateScore`` y agrega
-``calculateScoreWithDescriptors`` para exponer descriptores adicionales
+Este modulo expone una API en snake_case para score y descriptores
 relevantes para analisis de complejidad estructural.
 """
 
@@ -52,23 +51,23 @@ _MORGAN_GENERATOR = rdFingerprintGenerator.GetMorganGenerator(
 )
 
 
-def numBridgeheadsAndSpiro(mol: Chem.Mol) -> tuple[int, int]:
-    nSpiro = rdMolDescriptors.CalcNumSpiroAtoms(mol)
-    nBridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
-    return nBridgehead, nSpiro
+def num_bridgeheads_and_spiro(mol: Chem.Mol) -> tuple[int, int]:
+    n_spiro = rdMolDescriptors.CalcNumSpiroAtoms(mol)
+    n_bridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
+    return n_bridgehead, n_spiro
 
 
-def numMacroAndMulticycle(mol: Chem.Mol, nAtoms: int) -> tuple[int, int]:
+def num_macro_and_multicycle(mol: Chem.Mol, n_atoms: int) -> tuple[int, int]:
     ri = mol.GetRingInfo()
-    nMacrocycles: int = 0
-    multi_ring_atoms: dict[int, int] = {i: 0 for i in range(nAtoms)}
+    n_macrocycles: int = 0
+    multi_ring_atoms: dict[int, int] = dict.fromkeys(range(n_atoms), 0)
     for ring_atoms in ri.AtomRings():
         if len(ring_atoms) > 6:
-            nMacrocycles += 1
+            n_macrocycles += 1
         for atom in ring_atoms:
             multi_ring_atoms[atom] += 1
-    nMultiRingAtoms = sum([v - 1 for _, v in multi_ring_atoms.items() if v > 1])
-    return nMacrocycles, nMultiRingAtoms
+    n_multi_ring_atoms = sum(v - 1 for v in multi_ring_atoms.values() if v > 1)
+    return n_macrocycles, n_multi_ring_atoms
 
 
 class SAScorer:
@@ -129,10 +128,10 @@ class SAScorer:
         nonzero_fingerprint_elements: dict[int, int] = fingerprint.GetNonzeroElements()
         fragment_score: float = 0.0
         negative_fragment_count: int = 0
-        for bitId, vs in bit_info.items():
+        for bit_id, vs in bit_info.items():
             if vs[0][1] != 2:
                 continue
-            fscore = self._fscores.get(bitId, self.frag_penalty)
+            fscore = self._fscores.get(bit_id, self.frag_penalty)
             if fscore < 0:
                 negative_fragment_count += 1
                 fragment_score += fscore
@@ -150,27 +149,27 @@ class SAScorer:
         chiral_center_count: int = len(
             Chem.FindMolChiralCenters(molecule, includeUnassigned=True)
         )
-        bridgehead_count, spiro_count = numBridgeheadsAndSpiro(molecule)
-        macrocycle_count, multicycle_atom_count = numMacroAndMulticycle(
+        bridgehead_count, spiro_count = num_bridgeheads_and_spiro(molecule)
+        macrocycle_count, multicycle_atom_count = num_macro_and_multicycle(
             molecule,
             atom_count,
         )
 
-        sizePenalty = atom_count**1.005 - atom_count
-        stereoPenalty = math.log10(chiral_center_count + 1)
-        spiroPenalty = math.log10(spiro_count + 1)
-        bridgePenalty = math.log10(bridgehead_count + 1)
-        macrocyclePenalty = math.log10(2) if macrocycle_count > 0 else 0
-        multicyclePenalty = math.log10(multicycle_atom_count + 1)
+        size_penalty = atom_count**1.005 - atom_count
+        stereo_penalty = math.log10(chiral_center_count + 1)
+        spiro_penalty = math.log10(spiro_count + 1)
+        bridge_penalty = math.log10(bridgehead_count + 1)
+        macrocycle_penalty = math.log10(2) if macrocycle_count > 0 else 0
+        multicycle_penalty = math.log10(multicycle_atom_count + 1)
 
         score2 = (
             0.0
-            - sizePenalty
-            - stereoPenalty
-            - spiroPenalty
-            - bridgePenalty
-            - macrocyclePenalty
-            - multicyclePenalty
+            - size_penalty
+            - stereo_penalty
+            - spiro_penalty
+            - bridge_penalty
+            - macrocycle_penalty
+            - multicycle_penalty
         )
         sascore += score2
 
@@ -198,7 +197,7 @@ class SAScorer:
             },
             "stereochemical_complexity": {
                 "value": chiral_center_count,
-                "score": stereoPenalty,
+                "score": stereo_penalty,
             },
             "cyclomatic_number": {
                 "value": cyclomatic_number_value,
@@ -213,13 +212,13 @@ class SAScorer:
         scaled_score: float = self._scale_score(sascore)
         return scaled_score, contribution, descriptor_map
 
-    def calculateScore(self, smi: str) -> tuple[float, dict[int, float]]:
-        """Retorna score y contribuciones atomicas (API historica)."""
+    def calculate_score(self, smi: str) -> tuple[float, dict[int, float]]:
+        """Retorna score y contribuciones atómicas."""
         molecule: Chem.Mol = self._build_molecule(smi)
         score, contribution, _ = self._calculate_score_details(molecule)
         return score, contribution
 
-    def calculateScoreWithDescriptors(
+    def calculate_score_with_descriptors(
         self,
         smi: str,
     ) -> tuple[float, dict[int, float], DescriptorMap]:

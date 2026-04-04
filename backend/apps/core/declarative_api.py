@@ -101,14 +101,14 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
         self, after_event_index: int = 0, limit: int = 100
     ) -> JobLogListResponse:
         """Obtiene logs del job de forma paginada."""
-        log_events = self._job.log_events.filter(
+        log_events_queryset = self._job.log_events.filter(
             event_index__gt=after_event_index
         ).order_by("event_index")[:limit]
+        log_events = list(log_events_queryset)
 
         next_index = 0
-        last_event = log_events.last()
-        if last_event is not None:
-            next_index = int(last_event.event_index) + 1
+        if len(log_events) > 0:
+            next_index = int(log_events[-1].event_index) + 1
 
         return {
             "job_id": str(self._job.id),
@@ -279,9 +279,7 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
                 return Success(None)
             except Exception as exc_value:
                 return Failure(
-                    DomainError(
-                        f"Failed to dispatch job {self.job_id}: {exc_value}"
-                    )
+                    DomainError(f"Failed to dispatch job {self.job_id}: {exc_value}")
                 )
 
         return DeferredTask(dispatch_task)

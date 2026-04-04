@@ -117,7 +117,7 @@ class MarcusContractApiTests(TestCase):
         """Crea job Marcus y valida resultado tras ejecución del plugin."""
         payload = self._build_payload()
 
-        with patch("apps.marcus.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -141,7 +141,7 @@ class MarcusContractApiTests(TestCase):
         """Verifica descarga ZIP de artefactos de entrada persistidos."""
         payload = self._build_payload()
 
-        with patch("apps.marcus.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = False
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -158,3 +158,22 @@ class MarcusContractApiTests(TestCase):
 
         with ZipFile(BytesIO(response.content), mode="r") as zip_file:
             self.assertIn("manifest.json", zip_file.namelist())
+
+
+class MarcusContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, validate_input, execute y supports_pause_resume."""
+        from .contract import get_marcus_contract
+
+        contract = get_marcus_contract()
+        for key in (
+            "plugin_name",
+            "version",
+            "execute",
+            "supports_pause_resume",
+            "validate_input",
+        ):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

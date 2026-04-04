@@ -144,7 +144,7 @@ class EasyRateContractApiTests(TestCase):
         """Crea job multipart, ejecuta plugin y valida salida tipada."""
         multipart_payload = self._build_valid_multipart_payload()
 
-        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -226,7 +226,7 @@ class EasyRateContractApiTests(TestCase):
         """Verifica descarga ZIP de entradas persistidas para trazabilidad."""
         multipart_payload = self._build_valid_multipart_payload()
 
-        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = False
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -318,7 +318,7 @@ class EasyRateContractApiTests(TestCase):
         )
         multipart_payload["reactant_1_execution_index"] = "0"
 
-        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
@@ -408,7 +408,7 @@ class EasyRateContractApiTests(TestCase):
             "product_1_file": product_1_file,
         }
 
-        with patch("apps.easy_rate.routers.dispatch_scientific_job") as dispatch_mock:
+        with patch("apps.core.base_router.dispatch_scientific_job") as dispatch_mock:
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH, payload, format="multipart"
@@ -423,3 +423,22 @@ class EasyRateContractApiTests(TestCase):
         self.assertEqual(retrieve_response.status_code, 200)
         self.assertEqual(retrieve_response.data["status"], "failed")
         self.assertIn("corrección Eckart", str(retrieve_response.data["error_trace"]))
+
+
+class EasyRateContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, validate_input, execute y supports_pause_resume."""
+        from .contract import get_easy_rate_contract
+
+        contract = get_easy_rate_contract()
+        for key in (
+            "plugin_name",
+            "version",
+            "execute",
+            "supports_pause_resume",
+            "validate_input",
+        ):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

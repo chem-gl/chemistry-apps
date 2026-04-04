@@ -11,6 +11,7 @@ Uso:
         parameters={"op": "add", "a": 2.0, "b": 3.0},
     )
 """
+
 from .definitions import DEFAULT_ALGORITHM_VERSION
 from .definitions import PLUGIN_NAME as CALC_PLUGIN_NAME
 from .plugin import _build_calculator_input, calculator_plugin

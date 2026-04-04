@@ -21,10 +21,11 @@ from apps.core.types import (
     PluginProgressCallback,
 )
 
-from .definitions import PLUGIN_NAME, SUPPORTED_OPERATIONS
+from .definitions import PLUGIN_NAME, SUPPORTED_OPERATIONS, validate_factorial_operand
 from .types import CalculatorInput, CalculatorOperation, CalculatorResult
 
 logger = logging.getLogger(__name__)
+CALCULATOR_LOG_SOURCE = "calculator.plugin"
 
 
 def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
@@ -48,10 +49,7 @@ def _build_calculator_input(parameters: JSONMap) -> CalculatorInput:
     if raw_operation_value == "factorial":
         if raw_second_operand_value is not None:
             raise ValueError("La operación factorial no admite el parámetro b.")
-        if normalized_first_operand < 0 or not normalized_first_operand.is_integer():
-            raise ValueError(
-                "La operación factorial requiere un entero no negativo en a."
-            )
+        validate_factorial_operand(normalized_first_operand)
         normalized_second_operand = None
     else:
         if raw_second_operand_value is None:
@@ -92,7 +90,7 @@ def calculator_plugin(
 
     emit_log(
         "debug",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Log fantasma: se ejecutará la operación de calculadora solicitada.",
         {
             "operation": operation_name,
@@ -103,7 +101,7 @@ def calculator_plugin(
 
     emit_log(
         "info",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Iniciando operación de calculadora.",
         {
             "operation": operation_name,
@@ -147,7 +145,7 @@ def calculator_plugin(
 
     emit_log(
         "info",
-        "calculator.plugin",
+        CALCULATOR_LOG_SOURCE,
         "Operación de calculadora completada.",
         {
             "operation": operation_name,

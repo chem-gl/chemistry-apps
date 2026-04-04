@@ -319,3 +319,16 @@ class RandomNumbersContractApiTests(TestCase):
         report_content: str = response.content.decode("utf-8")
         self.assertIn("=== JOB ERROR REPORT ===", report_content)
         self.assertIn("Fallo de prueba en generación aleatoria.", report_content)
+
+
+class RandomNumbersContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_random_numbers_contract
+
+        contract = get_random_numbers_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])

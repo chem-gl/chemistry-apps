@@ -1,0 +1,502 @@
+/* _smileit-split-01.scss: fragmento modular de estilos de Smile-it. */
+/* smileit.component.scss: Estilos de la experiencia Smile-it con bloques, catálogos y trazabilidad. */
+.smileit-shell {
+  display: grid;
+  gap: 1.2rem;
+  padding-bottom: 1rem;
+}
+
+.smileit-header {
+  grid-row: 1;
+  padding: 1.4rem;
+  border: 1px solid #d7e6dd;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(120, 180, 150, 0.22), transparent 36%),
+    linear-gradient(135deg, #f8fbf6 0%, #edf5ee 48%, #f7faf8 100%);
+}
+
+.smileit-header h2 {
+  margin: 0.2rem 0 0.45rem;
+  color: #1f4033;
+  font-size: clamp(1.8rem, 2.5vw, 2.8rem);
+  letter-spacing: -0.03em;
+}
+
+.smileit-header p {
+  margin: 0;
+  max-width: 70ch;
+  color: #426252;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #2f7353;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.hero-strip {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-overview-strip {
+  grid-row: auto;
+}
+
+.hero-card,
+.catalog-panel,
+.entry-panel,
+.library-panel,
+.pattern-panel,
+.result-panel,
+.advanced-panel,
+.logs-card,
+.history-card {
+  border: 1px solid #d6e5dc;
+  border-radius: 22px;
+  background: #fffdfa;
+  box-shadow: 0 18px 40px rgba(38, 64, 46, 0.06);
+}
+
+.hero-card {
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 245, 0.98)),
+    linear-gradient(135deg, rgba(76, 136, 102, 0.08), transparent);
+}
+
+.hero-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.5rem;
+  color: #1f4033;
+}
+
+.hero-card p,
+.hero-label {
+  margin: 0;
+  color: #537160;
+}
+
+.hero-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.floating-workspace-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.workspace-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.workspace-left-column,
+.workspace-right-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.workspace-side-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.workspace-main-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.inspection-floating-panel {
+  min-width: 0;
+}
+
+.library-panel {
+  order: 0;
+}
+
+.entry-panel {
+  order: 0;
+}
+
+.pattern-panel {
+  order: 3;
+}
+
+.catalog-panel,
+.entry-panel,
+.library-panel,
+.pattern-panel,
+.result-panel,
+.advanced-panel,
+.logs-card,
+.history-card {
+  padding: 1.1rem;
+}
+
+.advanced-grid {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.pattern-panel .catalog-card {
+  margin-top: 0;
+}
+
+.panel-header-row,
+.subsection-header,
+.block-header,
+.history-header,
+.structure-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.principal-inspect-action {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.principal-pattern-action {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.3rem;
+  justify-items: start;
+}
+
+.principal-pattern-action .hint {
+  margin: 0;
+  max-width: 42ch;
+  text-align: left;
+}
+
+.guided-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.guided-action .hint {
+  margin: 0;
+  max-width: 250px;
+  text-align: right;
+}
+
+.site-toolbar-summary {
+  display: grid;
+  gap: 0.22rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.site-toolbar-summary strong {
+  color: #244537;
+}
+
+.panel-caption,
+.hint,
+.summary-banner,
+.status-message,
+.catalog-description,
+.structure-smiles,
+.log-message,
+.log-payload,
+small {
+  color: #567261;
+}
+
+.panel-caption,
+.hint,
+.catalog-description,
+.structure-smiles,
+.log-message,
+.log-payload,
+small {
+  margin: 0.18rem 0 0;
+  font-size: 0.84rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #224438;
+}
+
+input:not(.property-input),
+select:not(.property-input) {
+  border: 1px solid #c2d7c9;
+  border-radius: 14px;
+  padding: 0.62rem 0.78rem;
+  font-size: 0.94rem;
+  background: #fff;
+  color: #244537;
+}
+
+input:not(.property-input):focus,
+select:not(.property-input):focus {
+  outline: 2px solid rgba(90, 150, 114, 0.25);
+  border-color: #5a9672;
+}
+
+.action-row {
+  margin-top: 0.9rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.catalog-add,
+.remove-btn,
+.history-open-btn,
+.filter-chip,
+.atom-chip {
+  border-radius: 999px;
+  padding: 0.52rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.catalog-add:hover,
+.remove-btn:hover,
+.history-open-btn:hover,
+.filter-chip:hover,
+.atom-chip:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  border: 1px solid #245741;
+  color: #fff;
+  background: linear-gradient(135deg, #245741 0%, #3d6f57 100%);
+}
+
+.btn-secondary,
+.catalog-add,
+.history-open-btn,
+.filter-chip,
+.atom-chip {
+  border: 1px solid #7ea38a;
+  color: #245741;
+  background: #fff;
+}
+
+.remove-btn {
+  border: 1px solid #d87c70;
+  color: #8f3024;
+  background: #fff1ef;
+}
+
+.small {
+  padding: 0.36rem 0.72rem;
+  font-size: 0.78rem;
+}
+
+.inspection-card,
+.catalog-card,
+.generation-card,
+.progress-card,
+.structures-list-card,
+.traceability-card,
+.block-card {
+  border: 1px solid #e1ebe3;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fcfefc 0%, #f5faf6 100%);
+  padding: 0.95rem;
+  margin-top: 0.9rem;
+}
+
+.inspection-metadata,
+.metadata-grid {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.inspection-metadata p,
+.metadata-grid p {
+  margin: 0;
+  color: #355544;
+}
+
+.property-grid {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.6rem 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.property-card {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #d5e4d8;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.property-card span {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #678372;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.property-card strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.15rem;
+  color: #1f4033;
+}
+
+.annotation-legend,
+.block-stack,
+.catalog-management-grid,
+.catalog-grid,
+.tag-list,
+.logs-list,
+.pattern-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.annotation-chip {
+  border: 1px solid #d3dfd7;
+  border-left: 6px solid var(--annotation-color);
+  border-radius: 16px;
+  background: #fff;
+  padding: 0.75rem 0.85rem;
+  transition:
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+.annotation-chip-hidden {
+  opacity: 0.38;
+  filter: grayscale(0.72);
+}
+
+.annotation-chip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.annotation-eye-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.25rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  border-radius: 6px;
+  opacity: 0.65;
+  transition:
+    opacity 0.14s,
+    background 0.14s;
+}
+
+.annotation-eye-btn:hover {
+  opacity: 1;
+  background: #edf5ef;
+}
+
+.annotation-chip strong,
+.catalog-name {
+  color: #234437;
+}
+
+.annotation-type,
+.block-priority {
+  display: inline-flex;
+  margin-bottom: 0;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  background: #ebf4ee;
+  color: #3c5a4b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.block-priority {
+  margin-bottom: 0.35rem;
+}
+
+.svg-preview,
+.structure-modal-svg {
+  border: 1px solid #d9e6db;
+  border-radius: 20px;
+  background: #fff;
+  padding: 0.5rem;
+  overflow: auto;
+}
+
+.structure-modal-panel h5 {
+  margin: 0 0 0.55rem;
+  color: #244537;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.structure-modal-panel svg {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+}
+
+.single-structure-panel {
+  margin-top: 0.9rem;
+}

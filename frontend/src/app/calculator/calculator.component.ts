@@ -5,12 +5,14 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
+import { ScientificJobView } from '../core/api/jobs-api.service';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
+import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 
 @Component({
   selector: 'app-calculator',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
   providers: [CalculatorWorkflowService],
   templateUrl: './calculator.component.html',
   styleUrl: './calculator.component.scss',
@@ -103,13 +105,5 @@ export class CalculatorComponent implements OnInit, OnDestroy {
     };
     const operationUsed: unknown = metadataRecord.operation_used;
     return typeof operationUsed === 'string' ? operationUsed : '-';
-  }
-
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    return `log-level log-level-${logLevel}`;
   }
 }

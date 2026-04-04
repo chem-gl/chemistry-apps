@@ -24,12 +24,12 @@
 
 .sa-score-header h2 {
   margin: 0.2rem 0 0.4rem;
-  color: #0e4f49;
+  color: #0b1f1a;
 }
 
 .sa-score-header p {
   margin: 0;
-  color: #356862;
+  color: #0b1f1a;
 }
 
 .workspace-grid {
@@ -59,7 +59,7 @@ h3 {
   gap: 0.38rem;
   font-size: 0.86rem;
   font-weight: 700;
-  color: #1a5b54;
+  color: #0b1f1a;
 }
 
 textarea,
@@ -85,7 +85,7 @@ textarea:focus {
 
 .hint {
   margin: 0.35rem 0 0;
-  color: #527672;
+  color: #0b1f1a;
   font-size: 0.82rem;
 }
 
@@ -112,7 +112,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: #1e4f4a;
+  color: #0b1f1a;
   font-size: 0.9rem;
 }
 
@@ -134,7 +134,7 @@ textarea:focus {
 
 .btn-primary {
   border: 1px solid #0f6a61;
-  background: #13877c;
+  background: #0f6a61;
   color: #fff;
 }
 
@@ -147,7 +147,7 @@ textarea:focus {
 
 .status-message {
   margin: 0;
-  color: #4f7873;
+  color: #0b1f1a;
 }
 
 .progress-card {
@@ -159,7 +159,7 @@ textarea:focus {
 .mono {
   font-family: 'Consolas', 'Liberation Mono', monospace;
   font-size: 0.8rem;
-  color: #2b5954;
+  color: #0b1f1a;
   word-break: break-all;
 }
 
@@ -183,7 +183,7 @@ textarea:focus {
 
 .progress-message {
   margin: 0;
-  color: #4d7570;
+  color: #0b1f1a;
 }
 
 .metadata-grid {
@@ -194,7 +194,7 @@ textarea:focus {
 
 .metadata-grid p {
   margin: 0;
-  color: #275a54;
+  color: #0b1f1a;
   font-size: 0.88rem;
 }
 
@@ -206,7 +206,7 @@ textarea:focus {
 .export-select-label {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #1e4f4a;
+  color: #0b1f1a;
 }
 
 .export-select {
@@ -251,7 +251,7 @@ textarea:focus {
 .result-table th,
 .history-table th {
   background: #f2f9f8;
-  color: #17554e;
+  color: #0b1f1a;
   font-weight: 800;
 }
 
@@ -343,7 +343,7 @@ textarea:focus {
 .log-message,
 .log-payload {
   margin: 0;
-  color: #275a54;
+  color: #0b1f1a;
   font-size: 0.82rem;
 }
 
@@ -564,8 +564,12 @@ textarea:focus {
 }
 
 @keyframes ketcher-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 .ketcher-loading-text {
@@ -640,7 +644,7 @@ textarea:focus {
 .molecule-modal-smiles {
   margin: 0;
   font-size: 0.78rem;
-  color: #337069;
+  color: #0b1f1a;
   word-break: break-all;
 }
 
@@ -658,4 +662,3 @@ textarea:focus {
   max-width: 100%;
   height: auto;
 }
-

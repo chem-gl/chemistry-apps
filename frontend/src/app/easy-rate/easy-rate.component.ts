@@ -2,21 +2,20 @@
 // Gestiona la carga de archivos Gaussian, parámetros cinéticos y visualización de resultados.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import {
   DownloadedReportFile,
   EasyRateFileInspectionView,
   EasyRateInputFieldName,
   EasyRateInspectionExecutionView,
-  JobLogEntryView,
 } from '../core/api/jobs-api.service';
-import {
-  EasyRateWorkflowService,
-  SOLVENT_OPTIONS,
-} from '../core/application/easy-rate-workflow.service';
+import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
+import { SOLVENT_OPTIONS } from '../core/application/easy-rate-workflow.types';
+import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
+import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
+import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 
 interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
@@ -27,15 +26,19 @@ interface EasyRateInputSlotView {
 
 @Component({
   selector: 'app-easy-rate',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    JobProgressCardComponent,
+    DiffusionFieldsComponent,
+    JobResultFooterComponent,
+  ],
   providers: [EasyRateWorkflowService],
   templateUrl: './easy-rate.component.html',
   styleUrl: './easy-rate.component.scss',
 })
-export class EasyRateComponent implements OnInit, OnDestroy {
-  readonly workflow = inject(EasyRateWorkflowService);
-  private readonly route = inject(ActivatedRoute);
-  private routeSubscription: Subscription | null = null;
+export class EasyRateComponent extends ScientificFileAppBaseComponent {
+  override readonly workflow = inject(EasyRateWorkflowService);
 
   readonly solventOptions: ReadonlyArray<string> = SOLVENT_OPTIONS;
   readonly inputSlots: ReadonlyArray<EasyRateInputSlotView> = [
@@ -70,36 +73,6 @@ export class EasyRateComponent implements OnInit, OnDestroy {
       note: '(at least one product)',
     },
   ];
-
-  ngOnInit(): void {
-    this.workflow.loadHistory();
-    this.routeSubscription = this.route.queryParamMap.subscribe((paramsMap) => {
-      const jobId: string | null = paramsMap.get('jobId');
-      if (jobId !== null && jobId.trim() !== '') {
-        this.workflow.openHistoricalJob(jobId);
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-  }
-
-  dispatch(): void {
-    this.workflow.dispatch();
-  }
-
-  reset(): void {
-    this.workflow.reset();
-  }
-
-  clearFiles(): void {
-    this.workflow.clearFiles();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
 
   // ── Manejadores de archivos ──────────────────────────────────────
   onInputFileChange(fieldName: EasyRateInputFieldName, event: Event): void {
@@ -220,24 +193,6 @@ export class EasyRateComponent implements OnInit, OnDestroy {
     return `${(sizeBytes / 1_048_576).toFixed(2)} MB`;
   }
 
-  hasPayload(logEntry: JobLogEntryView): boolean {
-    return Object.keys(logEntry.payload).length > 0;
-  }
-
-  logLevelClass(logLevel: JobLogEntryView['level']): string {
-    if (logLevel === 'error') return 'log-level level-error';
-    if (logLevel === 'warning') return 'log-level level-warning';
-    if (logLevel === 'debug') return 'log-level level-debug';
-    return 'log-level level-info';
-  }
-
-  historicalStatusClass(jobStatus: string): string {
-    if (jobStatus === 'completed') return 'status-completed';
-    if (jobStatus === 'failed') return 'status-failed';
-    if (jobStatus === 'running') return 'status-running';
-    return 'status-pending';
-  }
-
   trackInputSlot(_index: number, slot: EasyRateInputSlotView): EasyRateInputFieldName {
     return slot.fieldName;
   }
@@ -250,7 +205,7 @@ export class EasyRateComponent implements OnInit, OnDestroy {
     anchor.style.display = 'none';
     document.body.appendChild(anchor);
     anchor.click();
-    document.body.removeChild(anchor);
+    anchor.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
   }
 }

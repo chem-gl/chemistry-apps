@@ -2,8 +2,13 @@
 
 <label>
   Principal SMILES
-  <input type="text" [ngModel]="principalSmiles" (ngModelChange)="onPrincipalSmilesChange($event)"
-    [disabled]="isProcessing" placeholder="c1ccc2[nH]ccc2c1" />
+  <input
+    type="text"
+    [ngModel]="principalSmiles"
+    (ngModelChange)="onPrincipalSmilesChange($event)"
+    [disabled]="isProcessing"
+    placeholder="c1ccc2[nH]ccc2c1"
+  />
 </label>
 
 <div class="principal-actions-row">
@@ -16,33 +21,51 @@
 </div>
 
 <p class="catalog-smiles mono">{{ principalSmiles || 'Pending principal SMILES' }}</p>
-<dialog #sketchModifierDialog class="sketch-modifier-dialog" (click)="onSketchModifierDialogClick($event)">
-  <section class="sketch-modifier-modal" role="document" aria-label="Principal sketch modifier">
+<dialog
+  #sketchModifierDialog
+  class="sketch-modifier-dialog"
+  (click)="onSketchModifierDialogClick($event)"
+  (keydown)="onSketchModifierDialogClick($event)"
+>
+  <section class="sketch-modifier-modal" aria-label="Principal sketch modifier">
     <h4>Principal sketch modifier</h4>
-    <p class="hint">Use the sketcher below. If it fails to load, the SMILES textarea still works as fallback.</p>
+    <p class="hint">Use the sketcher below to edit the principal molecule.</p>
 
     <div class="ketcher-frame-wrap" aria-label="Principal molecule sketcher">
-      @if (!isKetcherReady) {
-      <div class="ketcher-loading" role="status" aria-label="Loading molecule sketcher">
-        <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-      </div>
+      @if (isSketchModifierLoading()) {
+        <output class="ketcher-loading" aria-label="Loading molecule sketcher">
+          <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
+          <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+        </output>
       }
-      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher principal sketcher"
-        (load)="onKetcherFrameLoaded()"></iframe>
+      <iframe
+        #ketcherFrame
+        class="ketcher-frame"
+        [src]="ketcherPublicUrl"
+        title="Ketcher principal sketcher"
+        (load)="onKetcherFrameLoaded()"
+      ></iframe>
     </div>
 
-    <label>
-      Principal SMILES draft (fallback/manual)
-      <textarea [ngModel]="sketchDraftSmiles" (ngModelChange)="onSketchDraftSmilesChange($event)"
-        [disabled]="isProcessing" rows="4"></textarea>
-    </label>
+    @if (sketchValidationError()) {
+      <p class="sketch-validation-error" role="alert">{{ sketchValidationError() }}</p>
+    }
 
     <div class="sketch-modifier-actions">
-      <button class="btn-secondary" type="button" (click)="closeSketchModifier()" [disabled]="isProcessing">
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="closeSketchModifier()"
+        [disabled]="isProcessing"
+      >
         Cancel
       </button>
-      <button class="btn-secondary" type="button" (click)="applySketchModifier()" [disabled]="isProcessing">
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="applySketchModifier()"
+        [disabled]="isProcessing"
+      >
         Apply
       </button>
     </div>

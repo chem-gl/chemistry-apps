@@ -59,8 +59,8 @@ export interface MarcusServiceInterface {
     marcusJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
-     * Descargar Entradas Originales de Marcus
-     * Descarga ZIP con artefactos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
      * @endpoint get /api/marcus/jobs/{id}/report-inputs/
      * @param id A UUID string identifying this scientific job.
      */

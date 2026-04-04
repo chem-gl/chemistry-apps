@@ -32,6 +32,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+PLUGIN_LOG_SOURCE = "molar_fractions.plugin"
 
 
 def _build_molar_fractions_input(parameters: JSONMap) -> MolarFractionsInput:
@@ -172,7 +173,7 @@ def molar_fractions_plugin(
 
     emit_log(
         "info",
-        "molar_fractions.plugin",
+        PLUGIN_LOG_SOURCE,
         "Iniciando validación de parámetros para cálculo de fracciones molares.",
         {
             "received_keys": list(parameters.keys()),
@@ -188,7 +189,7 @@ def molar_fractions_plugin(
 
     emit_log(
         "info",
-        "molar_fractions.plugin",
+        PLUGIN_LOG_SOURCE,
         "Parámetros validados correctamente; se iniciará el cálculo por malla de pH.",
         {
             "pka_values": pka_values,
@@ -205,7 +206,7 @@ def molar_fractions_plugin(
 
     emit_log(
         "info",
-        "molar_fractions.plugin",
+        PLUGIN_LOG_SOURCE,
         "Se construyó la malla de pH y coeficientes beta; iniciando iteración de cálculo.",
         {
             "total_points": len(ph_values),
@@ -226,7 +227,7 @@ def molar_fractions_plugin(
     for point_index, ph_value in enumerate(ph_values, start=1):
         emit_log(
             "debug",
-            "molar_fractions.plugin",
+            PLUGIN_LOG_SOURCE,
             "Se iniciará el cálculo para el punto de pH actual.",
             {
                 "index": point_index,
@@ -240,7 +241,7 @@ def molar_fractions_plugin(
 
         emit_log(
             "debug",
-            "molar_fractions.plugin",
+            PLUGIN_LOG_SOURCE,
             "Cálculo de punto completado correctamente.",
             {
                 "index": point_index,
@@ -272,7 +273,7 @@ def molar_fractions_plugin(
 
     emit_log(
         "info",
-        "molar_fractions.plugin",
+        PLUGIN_LOG_SOURCE,
         "Cálculo global de fracciones molares completado.",
         {
             "total_points": len(rows),

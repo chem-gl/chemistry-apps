@@ -1,0 +1,44 @@
+<!-- job-history-table.component.html: Panel reutilizable de historial de jobs para apps científicas. -->
+<section class="history-card" [attr.aria-label]="ariaLabel">
+    <div class="history-header">
+        <h3>{{ sectionTitle }}</h3>
+        <button class="btn-secondary" (click)="reload.emit()" [disabled]="isLoading">
+            {{ isLoading ? 'Loading...' : 'Reload history' }}
+        </button>
+    </div>
+
+    @if (jobs.length === 0) {
+    <p class="status-message">{{ emptyMessage }}</p>
+    } @else {
+    <div class="table-wrap">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (historyJob of jobs; track historyJob.id) {
+                <tr>
+                    <td class="mono">{{ historyJob.id }}</td>
+                    <td>
+                        <span [class]="statusClass(historyJob.status)">{{
+                            historyJob.status
+                            }}</span>
+                    </td>
+                    <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>
+                        <button class="history-open-btn" (click)="openJob.emit(historyJob.id)">
+                            Open
+                        </button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</section>

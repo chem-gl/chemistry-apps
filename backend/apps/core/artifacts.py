@@ -82,6 +82,30 @@ def build_file_descriptor(
     }
 
 
+def normalize_file_descriptors(raw: object) -> list[dict[str, str | int]]:
+    """Normaliza la lista de descriptores serializados desde la BD.
+
+    Valida que `raw` sea una lista de dicts y convierte cada campo a sus
+    tipos correctos. Compartido entre easy_rate y marcus.
+    """
+    if not isinstance(raw, list):
+        raise ValueError("file_descriptors debe ser una lista.")
+    result: list[dict[str, str | int]] = []
+    for descriptor in raw:
+        if not isinstance(descriptor, dict):
+            raise ValueError("Cada descriptor de archivo debe ser un objeto.")
+        result.append(
+            {
+                "field_name": str(descriptor.get("field_name", "")),
+                "original_filename": str(descriptor.get("original_filename", "")),
+                "content_type": str(descriptor.get("content_type", "")),
+                "sha256": str(descriptor.get("sha256", "")),
+                "size_bytes": int(descriptor.get("size_bytes", 0)),
+            }
+        )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Política de retención de artefactos
 # ---------------------------------------------------------------------------
@@ -279,7 +303,9 @@ class ScientificInputArtifactStorageService:
                 }
 
                 if not is_purged:
-                    zip_entry_name: str = f"{artifact.field_name}/{artifact.id}_{artifact.original_filename}"
+                    zip_entry_name: str = (
+                        f"{artifact.field_name}/{artifact.id}_{artifact.original_filename}"
+                    )
                     manifest_entry["zip_entry"] = zip_entry_name
                     with zip_file.open(zip_entry_name, mode="w") as zip_entry:
                         for chunk_bytes in self.iter_artifact_bytes(artifact=artifact):

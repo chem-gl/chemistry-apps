@@ -279,7 +279,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
     this.detailProgressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (jobSnapshot) => {
         const currentJob: ScientificJobView | null = this.selectedJob();
-        if (currentJob === null || currentJob.id !== jobId) {
+        if (currentJob?.id !== jobId) {
           return;
         }
 

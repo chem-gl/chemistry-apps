@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import cast
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -167,28 +166,7 @@ class SaScoreJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
             parameters=parameters_payload,
         ).run()
 
-        if submit_result.is_failure():
-            error_message: str = submit_result.fold(
-                on_failure=lambda error_value: str(error_value),
-                on_success=lambda _: "Error desconocido al crear el job.",
-            )
-            return Response(
-                {"detail": error_message},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job_handle = submit_result.get_or_else(None)
-        if job_handle is None:
-            return Response(
-                {"detail": "No se pudo obtener el handle del job creado."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-
-        job: ScientificJob = get_object_or_404(
-            ScientificJob, pk=job_handle.job_id, plugin_name=PLUGIN_NAME
-        )
-        response_serializer = SaScoreJobResponseSerializer(job)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return self.handle_submit_result(submit_result, SaScoreJobResponseSerializer)
 
     @extend_schema(
         summary="Descargar CSV por método específico",

@@ -21,15 +21,17 @@ from rest_framework.test import APIClient
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 
+from . import _smileit_builders as smileit_builders_module
 from . import engine as smileit_engine
 from . import plugin as smileit_plugin_module
 from .catalog import list_active_patterns
 from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION
 from .engine import inspect_smiles_structure_with_patterns
 from .models import SmileitSubstituent
+from .test_seed import SmileitSeedTestCase
 
 
-class SmileitInspectionTests(TestCase):
+class SmileitInspectionTests(SmileitSeedTestCase):
     """Valida inspección molecular enriquecida con propiedades y anotaciones."""
 
     def test_inspection_includes_quick_properties_and_annotations(self) -> None:
@@ -66,7 +68,7 @@ class SmileitInspectionTests(TestCase):
         )
 
 
-class SmileitCatalogCrudTests(TestCase):
+class SmileitCatalogCrudTests(SmileitSeedTestCase):
     """Valida CRUD de catálogo y reglas de validación de categorías."""
 
     def setUp(self) -> None:
@@ -241,7 +243,7 @@ class SmileitPatternCrudTests(TestCase):
         self.assertEqual(body["version"], 1)
 
 
-class SmileitJobBlockTests(TestCase):
+class SmileitJobBlockTests(SmileitSeedTestCase):
     """Valida integridad de cobertura por sitios y ejecución por bloques."""
 
     def setUp(self) -> None:
@@ -554,10 +556,10 @@ class SmileitPluginOptimizationTests(TestCase):
 
     def _build_site_option_map_with_single_option(
         self,
-    ) -> dict[int, list[smileit_plugin_module.SiteOption]]:
+    ) -> dict[int, list[smileit_builders_module.SiteOption]]:
         return {
             0: [
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockA",
                     block_priority=1,
@@ -597,11 +599,11 @@ class SmileitPluginOptimizationTests(TestCase):
 
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=True,
             ),
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
                 side_effect=fake_fuse,
             ) as mocked_fuse,
         ):
@@ -632,10 +634,10 @@ class SmileitPluginOptimizationTests(TestCase):
         """Dos bloques que intentan la misma fusión exacta no deben recalcular RDKit."""
 
         duplicated_site_option_map: dict[
-            int, list[smileit_plugin_module.SiteOption]
+            int, list[smileit_builders_module.SiteOption]
         ] = {
             0: [
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockA",
                     block_priority=1,
@@ -649,7 +651,7 @@ class SmileitPluginOptimizationTests(TestCase):
                         "categories": [],
                     },
                 ),
-                smileit_plugin_module.SiteOption(
+                smileit_builders_module.SiteOption(
                     site_atom_index=0,
                     block_label="BlockB",
                     block_priority=2,
@@ -668,11 +670,11 @@ class SmileitPluginOptimizationTests(TestCase):
 
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=True,
             ),
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
                 return_value="PA",
             ) as mocked_fuse,
         ):
@@ -700,11 +702,11 @@ class SmileitPluginOptimizationTests(TestCase):
         """La poda previa debe evitar entrar a RDKit cuando la firma ya es inviable."""
         with (
             patch(
-                "apps.smileit.plugin.is_fusion_candidate_viable",
+                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=False,
             ) as mocked_viability,
             patch(
-                "apps.smileit.plugin.fuse_molecules",
+                "apps.smileit._smileit_builders.fuse_molecules",
             ) as mocked_fuse,
         ):
             generated_candidates, traceability_rows, truncated = (
@@ -786,7 +788,7 @@ class SmileitPluginOptimizationTests(TestCase):
         self.assertIn("stroke:#2f855a", tinted_svg)
 
 
-class SmileitExportTests(TestCase):
+class SmileitExportTests(SmileitSeedTestCase):
     """Valida exportes reproducibles de SMILES y trazabilidad."""
 
     def setUp(self) -> None:

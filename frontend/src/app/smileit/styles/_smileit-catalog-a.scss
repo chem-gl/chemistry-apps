@@ -1,0 +1,493 @@
+/* smileit-catalog-a.scss: estilos de catálogo y bloques (segmento A). */
+
+.svg-preview.inspectable {
+  cursor: crosshair;
+}
+
+/* ── Visor principal de la molécula con padding y zoom ── */
+.principal-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.principal-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.principal-svg-viewport {
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #d9e6db;
+  border-radius: 20px;
+  overflow: auto;
+  max-height: min(68vh, 560px);
+}
+
+.principal-zoom-surface {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.principal-svg-stage {
+  width: 420px;
+  height: 420px;
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+  overflow: visible;
+}
+
+.site-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.atom-grid,
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.compact-grid .atom-chip,
+.atom-chip.compact {
+  padding: 0.36rem 0.64rem;
+  font-size: 0.78rem;
+}
+
+.atom-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+}
+
+.atom-chip.selected,
+.filter-chip.active {
+  border-color: #3a6a53;
+  background: #284c3c;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(40, 76, 60, 0.18);
+}
+
+.options-grid,
+.custom-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.options-grid.compact {
+  margin-top: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.toggle-label {
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.block-card {
+  background:
+    radial-gradient(circle at top right, rgba(91, 142, 108, 0.08), transparent 34%),
+    linear-gradient(180deg, #fdfefd 0%, #f6faf6 100%);
+}
+
+.block-title-wrap {
+  display: grid;
+  gap: 0.3rem;
+  min-width: min(320px, 100%);
+  flex: 1;
+}
+
+.block-title-input {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.block-actions,
+.chip-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.block-section {
+  margin-top: 0.95rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid #e1ebe3;
+}
+
+.block-stack-header {
+  margin-top: 0.75rem;
+}
+
+.workflow-step-guide {
+  border: 1px solid #d9e7dd;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfefc 0%, #f4faf6 100%);
+  padding: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.workflow-step-guide h4 {
+  margin: 0;
+  color: #244537;
+}
+
+.workflow-step-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.workflow-step-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: start;
+  border: 1px solid #dfebe2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.62rem;
+}
+
+.workflow-step-item strong {
+  color: #244537;
+}
+
+.workflow-step-item.is-active {
+  border-color: #9fbfaa;
+  background: #f3f9f4;
+}
+
+.workflow-step-item.is-done {
+  border-color: #c3ddca;
+  background: #f1f8f3;
+}
+
+.workflow-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: #e5efe8;
+  color: #2f5b46;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.workflow-step-item.is-active .workflow-step-index {
+  background: #2f5b46;
+  color: #fff;
+}
+
+.workflow-step-state {
+  display: inline-flex;
+  padding: 0.12rem 0.52rem;
+  border-radius: 999px;
+  background: #edf5f0;
+  color: #2f5b46;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.workflow-step-item.is-active .workflow-step-state {
+  background: #fff3d6;
+  color: #8a6118;
+}
+
+.workflow-step-item.is-done .workflow-step-state {
+  background: #e6f4ea;
+  color: #245f3c;
+}
+
+.workflow-step-state.generation-ready {
+  background: #e6f4ea;
+  color: #245f3c;
+}
+
+.generation-lock-banner {
+  margin-top: 0.8rem;
+  border: 1px dashed #b7cec0;
+  border-radius: 14px;
+  background: #f7fbf8;
+  padding: 0.75rem 0.85rem;
+}
+
+.generation-lock-banner strong {
+  color: #2a5442;
+}
+
+.generation-lock-banner .hint {
+  margin-top: 0.3rem;
+}
+
+.generation-fieldset {
+  border: 0;
+  margin: 0;
+  margin-top: 0.8rem;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.generation-fieldset:disabled {
+  opacity: 0.62;
+}
+
+.catalog-smiles {
+  margin-top: 0.45rem;
+}
+
+.guidance-hint {
+  margin-top: 0.7rem;
+}
+
+.block-placement-section {
+  background: rgba(244, 249, 245, 0.72);
+  border-radius: 14px;
+  padding: 0.95rem 0 0;
+}
+
+.collapsed-panel-card,
+.block-collapsed-summary,
+.catalog-preview-card,
+.pattern-reference-card {
+  border: 1px solid #dce9df;
+  border-radius: 14px;
+  background: #f8fcf9;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.block-collapsed-summary p,
+.catalog-preview-card p,
+.pattern-reference-card p {
+  margin: 0.3rem 0;
+}
+
+.catalog-preview-card h5,
+.pattern-reference-card h5 {
+  margin: 0 0 0.35rem;
+  color: #2b5644;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.preview-warning {
+  margin: 0.4rem 0 0;
+}
+
+.block-section h4,
+.catalog-card h3,
+.structures-list-card h4,
+.traceability-card h4 {
+  margin: 0;
+  color: #244537;
+}
+
+.catalog-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.catalog-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.catalog-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  background: #ebf5ee;
+  border: 1px solid #cfe0d4;
+  color: #2d5d48;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.catalog-editor-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+  align-items: start;
+  margin-top: 0.95rem;
+}
+
+.catalog-editor-summary {
+  margin-top: 0.8rem;
+}
+
+.catalog-editor-form,
+.catalog-browser-panel {
+  border: 1px solid #dbe8de;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fcfefc 0%, #f7fbf8 100%);
+  padding: 0.95rem;
+}
+
+.catalog-step-stack {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.catalog-name-section {
+  order: 1;
+}
+
+.catalog-smiles-section {
+  order: 2;
+  margin-top: 0.9rem;
+}
+
+.anchor-selection-panel {
+  order: 3;
+  margin-top: 0;
+  padding-top: 0.9rem;
+}
+
+.catalog-category-panel {
+  order: 4;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.catalog-reference-section {
+  order: 5;
+}
+
+.catalog-inline-warnings {
+  order: 6;
+}
+
+.catalog-draft-actions,
+.catalog-editor-actions {
+  order: 7;
+}
+
+.catalog-step-card {
+  border: 1px solid #dfeae2;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.9rem;
+}
+
+.catalog-step-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.catalog-browser-panel {
+  margin-top: 0.9rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.catalog-form-grid {
+  margin-top: 0;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-metadata-grid {
+  margin-top: 0.7rem;
+}
+
+.catalog-smiles-grid {
+  margin-top: 0.7rem;
+}
+
+.catalog-name-grid,
+.catalog-reference-grid {
+  margin-top: 0.7rem;
+}
+
+.catalog-field-full {
+  grid-column: span 2;
+}
+
+.catalog-live-status {
+  margin-top: 0.8rem;
+  padding: 0.75rem 0.8rem;
+  border: 1px dashed #cfe0d5;
+  border-radius: 14px;
+  background: #f9fcfa;
+}
+
+.catalog-live-status .hint {
+  margin: 0;
+}
+
+.catalog-live-status .catalog-smiles {
+  margin: 0 0 0.35rem;
+}
+
+.catalog-ready-hint {
+  margin: 0.3rem 0 0;
+}
+
+.catalog-empty-step {
+  margin: 0.7rem 0 0;
+}
+
+.queued-catalog-drafts {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e3ece5;
+}
+
+.queued-catalog-grid {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.queued-catalog-card {
+  border: 1px solid #deeadf;
+  border-radius: 16px;
+  background: #fff;
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.queued-catalog-actions {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: end;
+}

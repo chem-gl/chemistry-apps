@@ -1,7 +1,7 @@
 // toxicity-properties-workflow.service.spec.ts: Pruebas unitarias del workflow de Toxicity Properties.
 
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
   DownloadedReportFile,
@@ -49,7 +49,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
       total: 1,
       scientific_references: ['Ref A'],
     },
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -87,6 +87,14 @@ function makeToxicityJobResponse(
     updated_at: new Date().toISOString(),
     ...overrides,
   };
+}
+
+function makeRunningToxicityJobResponse(jobId: string): ToxicityJobResponseView {
+  return makeToxicityJobResponse({
+    id: jobId,
+    status: 'running',
+    results: undefined,
+  });
 }
 
 describe('ToxicityPropertiesWorkflowService', () => {
@@ -180,7 +188,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     workflowService.openHistoricalJob('tox-failed-1');
 
     expect(workflowService.activeSection()).toBe('error');
-    expect(workflowService.errorMessage()).toContain('Historical job ended with error.');
+    expect(workflowService.errorMessage()).toContain('Job ended with error.');
   });
 
   it('loads and sorts history by updated_at desc', () => {
@@ -235,5 +243,107 @@ describe('ToxicityPropertiesWorkflowService', () => {
     expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).not.toHaveBeenCalled();
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('not_a_smiles');
+  });
+
+  it('surfaces validation transport errors', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      throwError(() => new Error('validator unavailable')),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('validator unavailable');
+  });
+
+  it('keeps error section when historical payload cannot be reconstructed', () => {
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      of(
+        makeToxicityJobResponse({
+          id: 'tox-broken-1',
+          results: undefined,
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('tox-broken-1');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('Result payload is invalid.');
+  });
+
+  it('stores export error when CSV download fails', () => {
+    jobsApiServiceMock.downloadToxicityPropertiesCsvReport.mockReturnValue(
+      throwError(() => new Error('csv forbidden')),
+    );
+    workflowService.currentJobId.set('tox-export-2');
+
+    workflowService.downloadCsvReport().subscribe({
+      error: () => {
+        expect(workflowService.exportErrorMessage()).toContain('csv forbidden');
+        expect(workflowService.isExporting()).toBe(false);
+      },
+    });
+  });
+
+  it('throws when exporting without selected job', () => {
+    expect(() => workflowService.downloadCsvReport()).toThrow('No job selected for download.');
+  });
+
+  it('falls back to polling, de-duplicates logs and resolves the final toxicity result', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const logEvents$ = new Subject<{
+      eventIndex: number;
+      level: 'info' | 'warning' | 'error' | 'debug';
+      message: string;
+      createdAt: string;
+    }>();
+
+    jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
+      of(makeRunningToxicityJobResponse('tox-progress-1')),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(logEvents$.asObservable());
+    jobsApiServiceMock.pollJobUntilCompleted.mockReturnValue(of({ progress_percentage: 100 }));
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      of(makeToxicityJobResponse({ id: 'tox-progress-1' })),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
+    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+    expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
+
+    progressEvents$.error(new Error('sse offline'));
+
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('tox-progress-1', 1000);
+    expect(workflowService.activeSection()).toBe('result');
+    expect(workflowService.resultData()?.total).toBe(1);
+  });
+
+  it('surfaces final toxicity retrieval errors after progress completes', () => {
+    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+
+    jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
+      of(makeRunningToxicityJobResponse('tox-progress-error-1')),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.streamJobLogEvents.mockReturnValue(of());
+    jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
+      throwError(() => new Error('gateway timeout')),
+    );
+    workflowService.smilesInput.set('CCO');
+
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe(
+      'Unable to retrieve final toxicity result: gateway timeout',
+    );
   });
 });

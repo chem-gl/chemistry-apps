@@ -1,17 +1,12 @@
 // random-numbers-workflow.service.ts: Orquesta formulario, progreso y resultado de random numbers.
 
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Injectable, computed, signal } from '@angular/core';
 import {
   JobControlActionResult,
-  JobLogEntryView,
   JobProgressSnapshotView,
-  JobsApiService,
   ScientificJobView,
 } from '../api/jobs-api.service';
-
-/** Secciones de flujo para la UI de random numbers */
-type RandomNumbersSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
+import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 /** Resultado tipado de random numbers para desacoplar UI de payload dinámico */
 export interface RandomNumbersResultData {
@@ -25,7 +20,7 @@ export interface RandomNumbersResultData {
   summaryMessage: string | null;
 }
 
-const SUPPORTED_PROGRESS_STAGES: ReadonlyArray<JobProgressSnapshotView['progress_stage']> = [
+const SUPPORTED_PROGRESS_STAGES = new Set<JobProgressSnapshotView['progress_stage']>([
   'pending',
   'queued',
   'running',
@@ -35,43 +30,29 @@ const SUPPORTED_PROGRESS_STAGES: ReadonlyArray<JobProgressSnapshotView['progress
   'completed',
   'failed',
   'cancelled',
-];
+]);
 
-const SUPPORTED_JOB_STATUSES: ReadonlyArray<ScientificJobView['status']> = [
+const SUPPORTED_JOB_STATUSES = new Set<ScientificJobView['status']>([
   'pending',
   'running',
   'paused',
   'completed',
   'failed',
   'cancelled',
-];
+]);
 
 @Injectable()
-export class RandomNumbersWorkflowService implements OnDestroy {
-  private readonly jobsApiService = inject(JobsApiService);
-  private progressSubscription: Subscription | null = null;
-  private logsSubscription: Subscription | null = null;
+export class RandomNumbersWorkflowService extends BaseJobWorkflowService<RandomNumbersResultData> {
+  protected override get defaultProgressMessage(): string {
+    return 'Preparing generation...';
+  }
 
   readonly seedUrl = signal<string>('https://example.com/seed.txt');
   readonly numbersPerBatch = signal<number>(5);
   readonly intervalSeconds = signal<number>(120);
   readonly totalNumbers = signal<number>(55);
 
-  readonly activeSection = signal<RandomNumbersSection>('idle');
-  readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
-  readonly jobLogs = signal<JobLogEntryView[]>([]);
-  readonly resultData = signal<RandomNumbersResultData | null>(null);
-  readonly errorMessage = signal<string | null>(null);
-  readonly historyJobs = signal<ScientificJobView[]>([]);
-  readonly isHistoryLoading = signal<boolean>(false);
   readonly isControlActionLoading = signal<boolean>(false);
-
-  readonly isProcessing = computed(
-    () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
-  );
-
-  readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
 
   readonly isPaused = computed(() => this.progressSnapshot()?.status === 'paused');
 
@@ -86,30 +67,19 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     );
   });
 
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparing generation...',
-  );
-
   private normalizeProgressStage(
     rawProgressStage: string,
     fallbackStage: JobProgressSnapshotView['progress_stage'],
   ): JobProgressSnapshotView['progress_stage'] {
-    return SUPPORTED_PROGRESS_STAGES.includes(
+    return SUPPORTED_PROGRESS_STAGES.has(
       rawProgressStage as JobProgressSnapshotView['progress_stage'],
     )
       ? (rawProgressStage as JobProgressSnapshotView['progress_stage'])
       : fallbackStage;
   }
 
-  dispatch(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.resultData.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.currentJobId.set(null);
+  override dispatch(): void {
+    this.prepareForDispatch();
 
     this.jobsApiService
       .dispatchScientificJob({
@@ -123,26 +93,11 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       })
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
-          this.currentJobId.set(jobResponse.id);
-
-          if (jobResponse.status === 'completed') {
-            const immediateResultData: RandomNumbersResultData | null =
-              this.extractResultData(jobResponse);
-            if (immediateResultData === null) {
-              this.activeSection.set('error');
-              this.errorMessage.set('The final payload format is invalid.');
-              return;
-            }
-
-            this.resultData.set(immediateResultData);
-            this.loadHistoricalLogs(jobResponse.id);
-            this.activeSection.set('result');
-            this.loadHistory();
-            return;
-          }
-
-          this.activeSection.set('progress');
-          this.startProgressStream(jobResponse.id);
+          this.handleDispatchJobResponse(
+            jobResponse,
+            (job) => this.extractResultData(job),
+            'random numbers',
+          );
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');
@@ -151,15 +106,8 @@ export class RandomNumbersWorkflowService implements OnDestroy {
       });
   }
 
-  reset(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('idle');
-    this.currentJobId.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.resultData.set(null);
-    this.errorMessage.set(null);
+  override reset(): void {
+    super.reset();
     this.isControlActionLoading.set(false);
   }
 
@@ -229,56 +177,27 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     });
   }
 
-  /** Carga historial de jobs random-numbers para reabrir resultados pasados */
-  loadHistory(): void {
-    this.isHistoryLoading.set(true);
-
-    this.jobsApiService.listJobs({ pluginName: 'random-numbers' }).subscribe({
-      next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
-          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
-            new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
-        );
-        this.historyJobs.set(orderedJobs);
-        this.isHistoryLoading.set(false);
-      },
-      error: () => {
-        this.isHistoryLoading.set(false);
-      },
-    });
+  override loadHistory(): void {
+    this.loadHistoryForPlugin('random-numbers');
   }
 
   /** Reabre un job histórico por id para visualizar su resultado en la app */
   openHistoricalJob(jobId: string): void {
-    this.logsSubscription?.unsubscribe();
-    this.progressSubscription?.unsubscribe();
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
+    this.prepareForDispatch();
     this.currentJobId.set(jobId);
-    this.jobLogs.set([]);
-    this.progressSnapshot.set(null);
 
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Historical job failed.');
-          return;
-        }
-
-        const historicalResultData: RandomNumbersResultData | null =
-          this.extractResultData(jobResponse) ?? this.extractSummaryData(jobResponse);
-        if (historicalResultData === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('Unable to reconstruct result or historical summary for this job.');
-          return;
-        }
-
-        this.resultData.set(historicalResultData);
-        this.syncProgressSnapshotFromJob(jobResponse);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
+        this.handleJobOutcome(
+          jobId,
+          jobResponse,
+          (job) => {
+            const result = this.extractResultData(job) ?? this.extractSummaryData(job);
+            if (result !== null) this.syncProgressSnapshotFromJob(job);
+            return result;
+          },
+          { loadHistoryAfter: false },
+        );
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -287,12 +206,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-  }
-
-  private startProgressStream(jobId: string): void {
+  protected override startProgressStream(jobId: string): void {
     this.progressSubscription?.unsubscribe();
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
@@ -310,68 +224,10 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     });
   }
 
-  private startLogsStream(jobId: string): void {
-    this.logsSubscription?.unsubscribe();
-    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
-      next: (logEntry: JobLogEntryView) => {
-        this.jobLogs.update((currentLogs) => {
-          if (currentLogs.some((item) => item.eventIndex === logEntry.eventIndex)) {
-            return currentLogs;
-          }
-          return [...currentLogs, logEntry].sort(
-            (leftEntry, rightEntry) => leftEntry.eventIndex - rightEntry.eventIndex,
-          );
-        });
-      },
-      error: () => {
-        // Mantener flujo de progreso aun cuando falle stream SSE de logs.
-      },
-    });
-  }
-
-  private loadHistoricalLogs(jobId: string): void {
-    this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
-      next: (logsPage) => this.jobLogs.set(logsPage.results),
-      error: () => {
-        // No bloquear render de resultados si falla la consulta de logs históricos.
-      },
-    });
-  }
-
-  private startPollingFallback(jobId: string): void {
-    this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshotView) => {
-        this.progressSnapshot.set(snapshot);
-        this.fetchFinalResult(jobId);
-      },
-      error: (pollingError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to track progress: ${pollingError.message}`);
-      },
-    });
-  }
-
-  private fetchFinalResult(jobId: string): void {
+  protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Job failed with no details.');
-          return;
-        }
-
-        const finalResultData: RandomNumbersResultData | null = this.extractResultData(jobResponse);
-        if (finalResultData === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('The final payload format is invalid.');
-          return;
-        }
-
-        this.resultData.set(finalResultData);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
-        this.loadHistory();
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -446,7 +302,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
 
     const rawRuntimeState: unknown = jobResponse.runtime_state;
     const generatedNumbers: number[] = this.extractGeneratedNumbersFromRuntime(rawRuntimeState);
-    const summaryMessage: string = this.buildHistoricalSummaryMessage(
+    const summaryMessage: string = this.buildPartialSummaryMessage(
       jobResponse.status,
       generatedNumbers.length,
       totalNumbers,
@@ -479,7 +335,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
     );
   }
 
-  private buildHistoricalSummaryMessage(
+  private buildPartialSummaryMessage(
     jobStatus: ScientificJobView['status'],
     generatedCount: number,
     totalNumbers: number,
@@ -514,7 +370,7 @@ export class RandomNumbersWorkflowService implements OnDestroy {
   }
 
   private normalizeStatus(rawStatus: string): ScientificJobView['status'] {
-    return SUPPORTED_JOB_STATUSES.includes(rawStatus as ScientificJobView['status'])
+    return SUPPORTED_JOB_STATUSES.has(rawStatus as ScientificJobView['status'])
       ? (rawStatus as ScientificJobView['status'])
       : 'pending';
   }

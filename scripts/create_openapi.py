@@ -12,6 +12,10 @@ from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).resolve()
 
+# Literales reutilizadas para rutas de proyecto
+MANAGE_PY = "manage.py"
+PACKAGE_JSON = "package.json"
+
 
 @dataclass(frozen=True)
 class ProjectPaths:
@@ -33,9 +37,9 @@ def _resolve_project_root() -> Path:
     candidate_directories: list[Path] = [script_directory, script_directory.parent]
 
     for candidate_directory in candidate_directories:
-        backend_manage_py_path: Path = candidate_directory / "backend" / "manage.py"
+        backend_manage_py_path: Path = candidate_directory / "backend" / MANAGE_PY
         frontend_package_json_path: Path = (
-            candidate_directory / "frontend" / "package.json"
+            candidate_directory / "frontend" / PACKAGE_JSON
         )
         if backend_manage_py_path.exists() and frontend_package_json_path.exists():
             return candidate_directory
@@ -55,18 +59,18 @@ def _build_project_paths(project_root: Path) -> ProjectPaths:
         project_root=project_root,
         backend_path=backend_path,
         frontend_path=frontend_path,
-        manage_py_path=backend_path / "manage.py",
+        manage_py_path=backend_path / MANAGE_PY,
         openapi_schema_path=backend_path / "openapi" / "schema.yaml",
-        frontend_package_json_path=frontend_path / "package.json",
+        frontend_package_json_path=frontend_path / PACKAGE_JSON,
         angular_cli_path=(
-            frontend_path / "node_modules" / "@angular" / "cli" / "package.json"
+            frontend_path / "node_modules" / "@angular" / "cli" / PACKAGE_JSON
         ),
         openapi_generator_cli_path=(
             frontend_path
             / "node_modules"
             / "@openapitools"
             / "openapi-generator-cli"
-            / "package.json"
+            / PACKAGE_JSON
         ),
     )
 
@@ -100,7 +104,7 @@ def _ensure_python_environment_is_ready(project_paths: ProjectPaths) -> None:
 
     if not project_paths.manage_py_path.exists():
         raise RuntimeError(
-            f"No se encontro manage.py en: {project_paths.manage_py_path}"
+            f"No se encontro {MANAGE_PY} en: {project_paths.manage_py_path}"
         )
 
     try:
@@ -115,8 +119,7 @@ def _ensure_frontend_environment_is_ready(project_paths: ProjectPaths) -> None:
     """Valida que Node/npm y Angular esten disponibles para autogenerar cliente."""
     if not project_paths.frontend_package_json_path.exists():
         raise RuntimeError(
-            "No se encontro package.json del frontend en: "
-            f"{project_paths.frontend_package_json_path}"
+            f"No se encontro {PACKAGE_JSON} del frontend en: {project_paths.frontend_package_json_path}"
         )
 
     npm_binary_path: str | None = shutil.which("npm")

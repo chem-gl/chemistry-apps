@@ -1,28 +1,28 @@
 <!-- apps-hub.component.html: Hub screen for scientific app navigation. -->
 <section class="apps-shell" aria-label="Scientific apps library">
-    <header class="apps-header">
-        <p class="eyebrow">Modular Ecosystem</p>
-        <h1>Scientific Apps</h1>
-        <p>Access each module from one place and scale with new apps over time.</p>
-    </header>
+  <header class="apps-header">
+    <p class="eyebrow">Modular Ecosystem</p>
+    <h1>Scientific Apps</h1>
+    <p>Access each module from one place and scale with new apps over time.</p>
+  </header>
 
-    <div class="apps-grid">
-        <article class="app-card monitor-card">
-            <h2>Jobs Monitor</h2>
-            <p>Cross-app view for active, paused, completed and failed jobs.</p>
-            <a routerLink="/jobs" class="app-link">Open monitor</a>
-        </article>
+  <div class="apps-grid">
+    <article class="app-card monitor-card">
+      <h2>Jobs Monitor</h2>
+      <p>Cross-app view for active, paused, completed and failed jobs.</p>
+      <a routerLink="/jobs" class="app-link">Open monitor</a>
+    </article>
 
-        @for (appItem of scientificApps; track appItem.key) {
-        <article class="app-card" [class.is-disabled]="!appItem.available">
-            <h2>{{ appItem.title }}</h2>
-            <p>{{ appItem.description }}</p>
-            @if (appItem.available) {
-            <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
-            } @else {
-            <span class="coming-soon">Coming soon</span>
-            }
-        </article>
+    @for (appItem of scientificApps; track appItem.key) {
+      <article class="app-card" [class.is-disabled]="!appItem.available">
+        <h2>{{ appItem.title }}</h2>
+        <p>{{ appItem.description }}</p>
+        @if (appItem.available) {
+          <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
+        } @else {
+          <span class="coming-soon">Coming soon</span>
         }
-    </div>
+      </article>
+    }
+  </div>
 </section>

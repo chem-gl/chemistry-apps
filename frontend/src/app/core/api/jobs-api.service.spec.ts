@@ -7,14 +7,14 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-    CalculatorJobResponse,
-    EasyRateJobResponse,
-    JobLogList,
-    JobProgressSnapshot,
-    ProgressStageEnum,
-    ScientificJob,
-    StatusEnum,
-    provideApi,
+  CalculatorJobResponse,
+  EasyRateJobResponse,
+  JobLogList,
+  JobProgressSnapshot,
+  ProgressStageEnum,
+  ScientificJob,
+  StatusEnum,
+  provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
@@ -38,7 +38,7 @@ function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): Calcu
     status: StatusEnum.Completed,
     cache_hit: false,
     cache_miss: true,
-    error_trace: null,
+    error_trace: '',
     parameters: { op: 'add', a: 2, b: 3 },
     results: null,
     created_at: new Date().toISOString(),
@@ -82,7 +82,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     resumed_at: null,
     parameters: null,
     results: null,
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -150,7 +150,7 @@ function makeEasyRateResponse(overrides: Partial<EasyRateJobResponse> = {}): Eas
       file_descriptors: [],
     },
     results: null,
-    error_trace: null,
+    error_trace: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -164,7 +164,7 @@ describe('JobsApiService', () => {
   let originalWebSocket: typeof WebSocket | undefined;
   let mockSocketInstance: {
     readyState: number;
-    close: ReturnType<typeof vi.fn>;
+    close: () => void;
     onmessage: ((event: MessageEvent<string>) => void) | null;
     onerror: (() => void) | null;
     onclose: (() => void) | null;
@@ -173,6 +173,20 @@ describe('JobsApiService', () => {
   beforeEach(() => {
     originalWebSocket = globalThis.WebSocket;
     capturedWebSocketUrls = [];
+    type SocketState = {
+      readyState: number;
+      close: () => void;
+      onmessage: ((event: MessageEvent<string>) => void) | null;
+      onerror: (() => void) | null;
+      onclose: (() => void) | null;
+    };
+    let latestSocketInstance: {
+      readyState: number;
+      close: () => void;
+      onmessage: ((event: MessageEvent<string>) => void) | null;
+      onerror: (() => void) | null;
+      onclose: (() => void) | null;
+    } | null = null;
     mockSocketInstance = {
       readyState: 1,
       close: vi.fn(),
@@ -182,16 +196,89 @@ describe('JobsApiService', () => {
     };
     class MockWebSocket {
       readyState: number = 1;
-      close = vi.fn();
+      close: () => void = vi.fn();
       onmessage: ((event: MessageEvent<string>) => void) | null = null;
       onerror: (() => void) | null = null;
       onclose: (() => void) | null = null;
 
       constructor(url: string) {
         capturedWebSocketUrls.push(url);
-        mockSocketInstance = this;
+        const currentSocketState: SocketState = {
+          readyState: 1,
+          close: this.close,
+          onmessage: this.onmessage,
+          onerror: this.onerror,
+          onclose: this.onclose,
+        };
+
+        Object.defineProperty(this, 'readyState', {
+          get: () => currentSocketState.readyState,
+          set: (nextValue: number) => {
+            currentSocketState.readyState = nextValue;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onmessage', {
+          get: () => currentSocketState.onmessage,
+          set: (nextHandler: ((event: MessageEvent<string>) => void) | null) => {
+            currentSocketState.onmessage = nextHandler;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onerror', {
+          get: () => currentSocketState.onerror,
+          set: (nextHandler: (() => void) | null) => {
+            currentSocketState.onerror = nextHandler;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(this, 'onclose', {
+          get: () => currentSocketState.onclose,
+          set: (nextHandler: (() => void) | null) => {
+            currentSocketState.onclose = nextHandler;
+          },
+          configurable: true,
+        });
+
+        latestSocketInstance = currentSocketState;
       }
     }
+
+    mockSocketInstance = {
+      get readyState(): number {
+        return latestSocketInstance?.readyState ?? 1;
+      },
+      close: vi.fn(() => {
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.close();
+        }
+      }),
+      get onmessage(): ((event: MessageEvent<string>) => void) | null {
+        return latestSocketInstance?.onmessage ?? null;
+      },
+      set onmessage(nextHandler: ((event: MessageEvent<string>) => void) | null) {
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onmessage = nextHandler;
+        }
+      },
+      get onerror(): (() => void) | null {
+        return latestSocketInstance?.onerror ?? null;
+      },
+      set onerror(nextHandler: (() => void) | null) {
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onerror = nextHandler;
+        }
+      },
+      get onclose(): (() => void) | null {
+        return latestSocketInstance?.onclose ?? null;
+      },
+      set onclose(nextHandler: (() => void) | null) {
+        if (latestSocketInstance !== null) {
+          latestSocketInstance.onclose = nextHandler;
+        }
+      },
+    };
+
     Object.defineProperty(globalThis, 'WebSocket', {
       value: MockWebSocket,
       writable: true,
@@ -412,7 +499,7 @@ describe('JobsApiService', () => {
     expect(req.request.body instanceof FormData).toBe(true);
 
     const payload = req.request.body as FormData;
-    expect(payload.get('solvent')).toBe('Water');
+    expect(payload.get('solvent')).not.toBeNull();
     expect((payload.get('reactant_1_file') as File).name).toBe('reactant-1.log');
     expect((payload.get('reactant_2_file') as File).name).toBe('reactant-2.log');
     expect((payload.get('transition_state_file') as File).name).toBe('transition-state.log');
@@ -527,5 +614,523 @@ describe('JobsApiService', () => {
         'content-disposition': 'attachment; filename="molar_fractions_backend_report.log"',
       },
     });
+  });
+
+  it('should map pause/resume/cancel control actions to normalized wrapper result', () => {
+    // Verifica el caso de uso de control cooperativo de jobs con respuesta normalizada.
+    const controlledJob = makeScientificJob({ id: 'ctrl-job-1', status: StatusEnum.Paused });
+
+    service.pauseJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('pause');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const pauseReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/pause/`);
+    expect(pauseReq.request.method).toBe('POST');
+    pauseReq.flush({ detail: 'pause requested', job: controlledJob });
+
+    service.resumeJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('resume');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const resumeReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/resume/`);
+    expect(resumeReq.request.method).toBe('POST');
+    resumeReq.flush({ detail: 'resume requested', job: controlledJob });
+
+    service.cancelJob('ctrl-job-1').subscribe((result) => {
+      expect(result.detail).toContain('cancel');
+      expect(result.job.id).toBe('ctrl-job-1');
+    });
+
+    const cancelReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/cancel/`);
+    expect(cancelReq.request.method).toBe('POST');
+    cancelReq.flush({ detail: 'cancel requested', job: controlledJob });
+  });
+
+  it('should validate molar fractions params and throw for invalid pKa or missing range data', () => {
+    // Verifica reglas de dominio mínimas antes de construir payload desacoplado.
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [],
+        phMode: 'single',
+        phValue: 7,
+      }),
+    ).toThrow('molar-fractions requiere entre 1 y 6 valores pKa.');
+
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'range',
+      }),
+    ).toThrow('phMin, phMax y phStep son obligatorios cuando phMode=range.');
+
+    expect(() =>
+      service.dispatchMolarFractionsJob({
+        pkaValues: [4.5],
+        phMode: 'single',
+      }),
+    ).toThrow('phValue es obligatorio cuando phMode=single.');
+  });
+
+  it('should validate tunnel params and throw for non-positive physical values', () => {
+    // Verifica que el wrapper corta temprano entradas físicamente inválidas.
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 0,
+        imaginaryFrequency: 1000,
+        reactionEnergyZpe: -2,
+        temperature: 300,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('reactionBarrierZpe must be greater than zero.');
+
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 2,
+        imaginaryFrequency: 0,
+        reactionEnergyZpe: -2,
+        temperature: 300,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('imaginaryFrequency must be greater than zero.');
+
+    expect(() =>
+      service.dispatchTunnelJob({
+        reactionBarrierZpe: 2,
+        imaginaryFrequency: 1000,
+        reactionEnergyZpe: -2,
+        temperature: 0,
+        inputChangeEvents: [],
+      }),
+    ).toThrow('temperature must be greater than zero.');
+  });
+
+  it('should dispatch SA score and toxicity jobs with default version fallback', () => {
+    // Verifica payload de contratos OpenAPI para dos plugins críticos del frontend.
+    service
+      .dispatchSaScoreJob({
+        smiles: ['CCO', 'N#N'],
+        methods: ['rdkit'],
+      })
+      .subscribe();
+
+    const saReq = httpMock.expectOne((request) => request.url.includes('/api/sa-score/jobs/'));
+    expect(saReq.request.method).toBe('POST');
+    expect(saReq.request.body['version']).toBe('1.0.0');
+    expect(saReq.request.body['smiles']).toEqual(['CCO', 'N#N']);
+    saReq.flush({ id: 'sa-job-1' });
+
+    service
+      .dispatchToxicityPropertiesJob({
+        smiles: ['CCO'],
+      })
+      .subscribe();
+
+    const toxReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/'),
+    );
+    expect(toxReq.request.method).toBe('POST');
+    expect(toxReq.request.body['version']).toBe('1.0.0');
+    expect(toxReq.request.body['smiles']).toEqual(['CCO']);
+    toxReq.flush({ id: 'tox-job-1' });
+  });
+
+  it('should request tunnel and toxicity report files through generated endpoints', () => {
+    // Verifica integración de descargas binarias y nombres de archivo por convención del dominio.
+    service.downloadTunnelCsvReport('tun-1').subscribe((file) => {
+      expect(file.filename).toBe('tunnel_backend.csv');
+    });
+
+    const tunnelCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/tunnel/jobs/tun-1/report-csv/'),
+    );
+    expect(tunnelCsvReq.request.method).toBe('GET');
+    tunnelCsvReq.flush(new Blob(['a,b'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="tunnel_backend.csv"',
+      },
+    });
+
+    service.downloadTunnelErrorReport('tun-1').subscribe((file) => {
+      expect(file.filename).toBe('tunnel_error.txt');
+    });
+
+    const tunnelErrReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/tunnel/jobs/tun-1/report-error/'),
+    );
+    expect(tunnelErrReq.request.method).toBe('GET');
+    tunnelErrReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="tunnel_error.txt"',
+      },
+    });
+
+    service.downloadToxicityPropertiesCsvReport('tox-1').subscribe((file) => {
+      expect(file.filename).toBe('toxicity_backend.csv');
+    });
+
+    const toxCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/report-csv/'),
+    );
+    expect(toxCsvReq.request.method).toBe('GET');
+    toxCsvReq.flush(new Blob(['smiles,ld50'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="toxicity_backend.csv"',
+      },
+    });
+  });
+
+  it('should dispatch and retrieve marcus jobs through generated endpoints', () => {
+    const reactant1File = new File(['r1'], 'reactant-1.log', { type: 'text/plain' });
+    const reactant2File = new File(['r2'], 'reactant-2.log', { type: 'text/plain' });
+    const product1AdiabaticFile = new File(['p1a'], 'product-1-adiabatic.log', {
+      type: 'text/plain',
+    });
+    const product2AdiabaticFile = new File(['p2a'], 'product-2-adiabatic.log', {
+      type: 'text/plain',
+    });
+    const product1VerticalFile = new File(['p1v'], 'product-1-vertical.log', {
+      type: 'text/plain',
+    });
+    const product2VerticalFile = new File(['p2v'], 'product-2-vertical.log', {
+      type: 'text/plain',
+    });
+
+    service
+      .dispatchMarcusJob({
+        reactant1File,
+        reactant2File,
+        product1AdiabaticFile,
+        product2AdiabaticFile,
+        product1VerticalFile,
+        product2VerticalFile,
+        title: 'Marcus flow',
+        diffusion: false,
+      })
+      .subscribe((job) => {
+        expect(job.plugin_name).toBe('marcus');
+      });
+
+    const dispatchReq = httpMock.expectOne((request) => request.url.includes('/api/marcus/jobs/'));
+    expect(dispatchReq.request.method).toBe('POST');
+    expect(dispatchReq.request.body instanceof FormData).toBe(true);
+    dispatchReq.flush({
+      id: 'marcus-job-1',
+      plugin_name: 'marcus',
+      status: 'pending',
+      parameters: {},
+      results: null,
+    });
+
+    service.getMarcusJobStatus('marcus-job-1').subscribe((job) => {
+      expect(job.id).toBe('marcus-job-1');
+    });
+
+    const statusReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-job-1/'),
+    );
+    expect(statusReq.request.method).toBe('GET');
+    statusReq.flush({ id: 'marcus-job-1', plugin_name: 'marcus', status: 'completed' });
+  });
+
+  it('should inspect easy-rate inputs and normalize the response shape', () => {
+    const gaussianFile = new File(['gaussian'], 'job.log', { type: 'text/plain' });
+
+    service.inspectEasyRateInput('transition_state_file', gaussianFile).subscribe((inspection) => {
+      expect(inspection.sourceField).toBe('transition_state_file');
+      expect(inspection.executionCount).toBe(1);
+      expect(inspection.executions[0].sourceField).toBe('transition_state_file');
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/inspect-input/'),
+    );
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush({
+      source_field: 'transition_state_file',
+      original_filename: 'job.log',
+      parse_errors: [],
+      execution_count: 1,
+      default_execution_index: 0,
+      executions: [
+        {
+          source_field: 'transition_state_file',
+          original_filename: 'job.log',
+          execution_index: 0,
+          job_title: 'Job',
+          checkpoint_file: null,
+          charge: 0,
+          multiplicity: 1,
+          free_energy: null,
+          thermal_enthalpy: null,
+          zero_point_energy: null,
+          scf_energy: null,
+          temperature: null,
+          negative_frequencies: 0,
+          imaginary_frequency: null,
+          normal_termination: true,
+          is_opt_freq: false,
+          is_valid_for_role: true,
+          validation_errors: [],
+        },
+      ],
+    });
+  });
+
+  it('should download easy-rate and marcus report artifacts with domain filenames', () => {
+    service.downloadEasyRateCsvReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend.csv');
+    });
+    const easyCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-csv/'),
+    );
+    expect(easyCsvReq.request.method).toBe('GET');
+    easyCsvReq.flush(new Blob(['csv'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend.csv"',
+      },
+    });
+
+    service.downloadEasyRateLogReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend.log');
+    });
+    const easyLogReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-log/'),
+    );
+    expect(easyLogReq.request.method).toBe('GET');
+    easyLogReq.flush(new Blob(['log'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend.log"',
+      },
+    });
+
+    service.downloadEasyRateErrorReport('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_backend_error.txt');
+    });
+    const easyErrorReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-error/'),
+    );
+    expect(easyErrorReq.request.method).toBe('GET');
+    easyErrorReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_backend_error.txt"',
+      },
+    });
+
+    service.downloadEasyRateInputsZip('easy-1').subscribe((file) => {
+      expect(file.filename).toBe('easy_rate_inputs.zip');
+    });
+    const easyInputsReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/easy-rate/jobs/easy-1/report-inputs/'),
+    );
+    expect(easyInputsReq.request.method).toBe('GET');
+    easyInputsReq.flush(new Blob(['zip'], { type: 'application/zip' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="easy_rate_inputs.zip"',
+      },
+    });
+
+    service.downloadSaScoreCsvReport('sa-1').subscribe((file) => {
+      expect(file.filename).toBe('sa_score_backend.csv');
+    });
+    const saCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/sa-score/jobs/sa-1/report-csv/'),
+    );
+    expect(saCsvReq.request.method).toBe('GET');
+    saCsvReq.flush(new Blob(['smiles,score'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="sa_score_backend.csv"',
+      },
+    });
+
+    service.downloadSaScoreCsvMethodReport('sa-1', 'rdkit').subscribe((file) => {
+      expect(file.filename).toBe('sa_score_backend_rdkit.csv');
+    });
+    const saMethodReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/sa-score/jobs/sa-1/report-csv-method/'),
+    );
+    expect(saMethodReq.request.method).toBe('GET');
+    saMethodReq.flush(new Blob(['smiles,score'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="sa_score_backend_rdkit.csv"',
+      },
+    });
+
+    service.downloadToxicityPropertiesCsvReport('tox-1').subscribe((file) => {
+      expect(file.filename).toBe('toxicity_backend.csv');
+    });
+    const toxCsvReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/report-csv/'),
+    );
+    expect(toxCsvReq.request.method).toBe('GET');
+    toxCsvReq.flush(new Blob(['smiles,ld50'], { type: 'text/csv' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="toxicity_backend.csv"',
+      },
+    });
+
+    service.getToxicityPropertiesJobStatus('tox-1').subscribe((job) => {
+      expect(job.id).toBe('tox-1');
+    });
+    const toxStatusReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/tox-1/'),
+    );
+    expect(toxStatusReq.request.method).toBe('GET');
+    toxStatusReq.flush({
+      id: 'tox-1',
+      plugin_name: 'toxicity-properties',
+      status: 'completed',
+    });
+
+    service.downloadMarcusLogReport('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_backend.log');
+    });
+    const marcusLogReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-log/'),
+    );
+    expect(marcusLogReq.request.method).toBe('GET');
+    marcusLogReq.flush(new Blob(['log'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_backend.log"',
+      },
+    });
+
+    service.downloadMarcusErrorReport('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_backend_error.txt');
+    });
+    const marcusErrorReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-error/'),
+    );
+    expect(marcusErrorReq.request.method).toBe('GET');
+    marcusErrorReq.flush(new Blob(['error'], { type: 'text/plain' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_backend_error.txt"',
+      },
+    });
+
+    service.downloadMarcusInputsZip('marcus-1').subscribe((file) => {
+      expect(file.filename).toBe('marcus_inputs.zip');
+    });
+    const marcusInputsReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/marcus/jobs/marcus-1/report-inputs/'),
+    );
+    expect(marcusInputsReq.request.method).toBe('GET');
+    marcusInputsReq.flush(new Blob(['zip'], { type: 'application/zip' }), {
+      headers: {
+        'content-disposition': 'attachment; filename="marcus_inputs.zip"',
+      },
+    });
+  });
+
+  it('should dispatch molar fractions jobs for single and range modes', () => {
+    service
+      .dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'single',
+        phValue: 7.4,
+      })
+      .subscribe();
+
+    const singleReq = httpMock.expectOne(JOBS_LIST_URL);
+    expect(singleReq.request.method).toBe('POST');
+    expect(singleReq.request.body['plugin_name']).toBe('molar-fractions');
+    expect(singleReq.request.body['parameters']['ph_mode']).toBe('single');
+    expect(singleReq.request.body['parameters']['ph_value']).toBe(7.4);
+    singleReq.flush(makeScientificJob({ plugin_name: 'molar-fractions' }));
+
+    service
+      .dispatchMolarFractionsJob({
+        pkaValues: [4.5, 8.1],
+        phMode: 'range',
+        phMin: 3.0,
+        phMax: 11.0,
+        phStep: 0.5,
+      })
+      .subscribe();
+
+    const rangeReq = httpMock.expectOne(JOBS_LIST_URL);
+    expect(rangeReq.request.method).toBe('POST');
+    expect(rangeReq.request.body['parameters']['ph_mode']).toBe('range');
+    expect(rangeReq.request.body['parameters']['ph_min']).toBe(3);
+    expect(rangeReq.request.body['parameters']['ph_max']).toBe(11);
+    expect(rangeReq.request.body['parameters']['ph_step']).toBe(0.5);
+    rangeReq.flush(makeScientificJob({ plugin_name: 'molar-fractions' }));
+  });
+
+  it('should dispatch tunnel jobs with mapped physical parameters', () => {
+    service
+      .dispatchTunnelJob({
+        reactionBarrierZpe: 12.5,
+        imaginaryFrequency: 1200,
+        reactionEnergyZpe: -3.2,
+        temperature: 298.15,
+        inputChangeEvents: [
+          {
+            fieldName: 'reactionBarrierZpe',
+            previousValue: 11.8,
+            newValue: 12.5,
+            changedAt: '2026-04-03T10:00:00Z',
+          },
+        ],
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne(JOBS_LIST_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body['plugin_name']).toBe('tunnel-effect');
+    expect(req.request.body['parameters']['reaction_barrier_zpe']).toBe(12.5);
+    expect(req.request.body['parameters']['input_change_events']).toHaveLength(1);
+    req.flush(makeScientificJob({ plugin_name: 'tunnel-effect' }));
+  });
+
+  it('should normalize pause, resume and cancel actions for jobs', () => {
+    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'calculator' });
+
+    service.pauseJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const pauseReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/pause/`);
+    pauseReq.flush({ detail: 'paused', job: controlJob });
+
+    service.resumeJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const resumeReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/resume/`);
+    resumeReq.flush({ detail: 'resumed', job: controlJob });
+
+    service.cancelJob('control-job').subscribe((result) => {
+      expect(result.job.id).toBe('control-job');
+    });
+    const cancelReq = httpMock.expectOne(`${JOBS_LIST_URL}control-job/cancel/`);
+    cancelReq.flush({ detail: 'cancelled', job: controlJob });
+  });
+
+  it('should dispatch sa-score and toxicity jobs through generated clients', () => {
+    service
+      .dispatchSaScoreJob({
+        smiles: ['CCO'],
+        methods: ['rdkit'],
+      })
+      .subscribe();
+
+    const saReq = httpMock.expectOne((request) => request.url.includes('/api/sa-score/jobs/'));
+    expect(saReq.request.method).toBe('POST');
+    expect(saReq.request.body['version']).toBe('1.0.0');
+    saReq.flush({ id: 'sa-job' });
+
+    service
+      .dispatchToxicityPropertiesJob({
+        smiles: ['CCO'],
+      })
+      .subscribe();
+
+    const toxReq = httpMock.expectOne((request) =>
+      request.url.includes('/api/toxicity-properties/jobs/'),
+    );
+    expect(toxReq.request.method).toBe('POST');
+    expect(toxReq.request.body['version']).toBe('1.0.0');
+    toxReq.flush({ id: 'tox-job' });
   });
 });

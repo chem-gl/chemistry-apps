@@ -1,21 +1,10 @@
 // marcus-workflow.service.ts: Orquesta formulario multipart, progreso y resultados de la app Marcus.
 // Gestiona los 6 archivos Gaussian requeridos, parámetros de difusión y el ciclo de vida del job.
 
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
-import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  MarcusJobResponseView,
-  MarcusParams,
-  ScientificJobView,
-} from '../api/jobs-api.service';
-
-/** Secciones de pantalla activas durante el ciclo de vida del job Marcus */
-type MarcusSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
+import { Injectable, computed, signal } from '@angular/core';
+import { Observable } from 'rxjs';
+import { DownloadedReportFile, MarcusJobResponseView, MarcusParams } from '../api/jobs-api.service';
+import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 /** Descriptor compacto de archivo de entrada para presentación en UI */
 export interface MarcusFileDescriptor {
@@ -49,10 +38,10 @@ export interface MarcusResultData {
 }
 
 @Injectable()
-export class MarcusWorkflowService implements OnDestroy {
-  private readonly jobsApiService = inject(JobsApiService);
-  private progressSubscription: Subscription | null = null;
-  private logsSubscription: Subscription | null = null;
+export class MarcusWorkflowService extends BaseJobWorkflowService<MarcusResultData> {
+  protected override get defaultProgressMessage(): string {
+    return 'Preparing Marcus job...';
+  }
 
   // ── Señales de los 6 archivos Gaussian requeridos ─────────────────
   readonly reactant1File = signal<File | null>(null);
@@ -69,22 +58,7 @@ export class MarcusWorkflowService implements OnDestroy {
   readonly radiusReactant2 = signal<number | null>(null);
   readonly reactionDistance = signal<number | null>(null);
 
-  // ── Estado del flujo ──────────────────────────────────────────────
-  readonly activeSection = signal<MarcusSection>('idle');
-  readonly currentJobId = signal<string | null>(null);
-  readonly progressSnapshot = signal<JobProgressSnapshotView | null>(null);
-  readonly jobLogs = signal<JobLogEntryView[]>([]);
-  readonly resultData = signal<MarcusResultData | null>(null);
-  readonly errorMessage = signal<string | null>(null);
-  readonly exportErrorMessage = signal<string | null>(null);
-  readonly isExporting = signal<boolean>(false);
-  readonly historyJobs = signal<ScientificJobView[]>([]);
-  readonly isHistoryLoading = signal<boolean>(false);
-
   // ── Señales derivadas ─────────────────────────────────────────────
-  readonly isProcessing = computed(
-    () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
-  );
   readonly canDispatch = computed(
     () =>
       this.reactant1File() !== null &&
@@ -94,10 +68,6 @@ export class MarcusWorkflowService implements OnDestroy {
       this.product1VerticalFile() !== null &&
       this.product2VerticalFile() !== null &&
       !this.isProcessing(),
-  );
-  readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparing Marcus job...',
   );
   readonly showDiffusionFields = computed(() => this.diffusion());
 
@@ -144,7 +114,7 @@ export class MarcusWorkflowService implements OnDestroy {
   }
 
   /** Despacha el job Marcus al backend usando los 6 archivos y parámetros actuales */
-  dispatch(): void {
+  override dispatch(): void {
     const r1 = this.reactant1File();
     const r2 = this.reactant2File();
     const p1a = this.product1AdiabaticFile();
@@ -164,16 +134,7 @@ export class MarcusWorkflowService implements OnDestroy {
       return;
     }
 
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
-    this.resultData.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.currentJobId.set(null);
+    this.prepareForDispatch();
 
     const params: MarcusParams = {
       reactant1File: r1,
@@ -191,43 +152,13 @@ export class MarcusWorkflowService implements OnDestroy {
 
     this.jobsApiService.dispatchMarcusJob(params).subscribe({
       next: (jobResponse: MarcusJobResponseView) => {
-        this.currentJobId.set(jobResponse.id);
-
-        if (jobResponse.status === 'completed') {
-          const immediateResult: MarcusResultData | null = this.extractResultData(jobResponse);
-          if (immediateResult === null) {
-            this.activeSection.set('error');
-            this.errorMessage.set('Job completed immediately but payload is invalid.');
-            return;
-          }
-          this.resultData.set(immediateResult);
-          this.loadHistoricalLogs(jobResponse.id);
-          this.activeSection.set('result');
-          this.loadHistory();
-          return;
-        }
-
-        this.activeSection.set('progress');
-        this.startProgressStream(jobResponse.id);
+        this.handleDispatchJobResponse(jobResponse, (job) => this.extractResultData(job), 'Marcus');
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');
         this.errorMessage.set(`Unable to create Marcus job: ${dispatchError.message}`);
       },
     });
-  }
-
-  /** Resetea el flujo de ejecución sin borrar archivos cargados */
-  reset(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-    this.activeSection.set('idle');
-    this.currentJobId.set(null);
-    this.progressSnapshot.set(null);
-    this.jobLogs.set([]);
-    this.resultData.set(null);
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
   }
 
   /** Limpia todos los archivos seleccionados */
@@ -242,37 +173,17 @@ export class MarcusWorkflowService implements OnDestroy {
 
   /** Abre y reconstruye la vista de un job Marcus histórico por UUID */
   openHistoricalJob(jobId: string): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-
-    this.activeSection.set('dispatching');
-    this.errorMessage.set(null);
-    this.exportErrorMessage.set(null);
+    this.prepareForDispatch();
     this.currentJobId.set(jobId);
-    this.jobLogs.set([]);
 
     this.jobsApiService.getMarcusJobStatus(jobId).subscribe({
       next: (jobResponse: MarcusJobResponseView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(
-            jobResponse.error_trace ?? 'Historical Marcus job ended with error.',
-          );
-          return;
-        }
-
-        const historicalData: MarcusResultData | null =
-          this.extractResultData(jobResponse) ?? this.buildSummaryData(jobResponse);
-        if (historicalData === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('Unable to reconstruct historical Marcus job output.');
-          return;
-        }
-
-        this.resultData.set(historicalData);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
+        this.handleJobOutcome(
+          jobId,
+          jobResponse,
+          (job) => this.extractResultData(job) ?? this.buildSummaryData(job),
+          { loadHistoryAfter: false },
+        );
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -281,22 +192,8 @@ export class MarcusWorkflowService implements OnDestroy {
     });
   }
 
-  /** Recarga el historial de jobs Marcus del servidor */
-  loadHistory(): void {
-    this.isHistoryLoading.set(true);
-    this.jobsApiService.listJobs({ pluginName: 'marcus' }).subscribe({
-      next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
-          (a: ScientificJobView, b: ScientificJobView) =>
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-        );
-        this.historyJobs.set(orderedJobs);
-        this.isHistoryLoading.set(false);
-      },
-      error: () => {
-        this.isHistoryLoading.set(false);
-      },
-    });
+  override loadHistory(): void {
+    this.loadHistoryForPlugin('marcus');
   }
 
   /** Descarga el reporte CSV del job activo */
@@ -331,103 +228,10 @@ export class MarcusWorkflowService implements OnDestroy {
     );
   }
 
-  ngOnDestroy(): void {
-    this.progressSubscription?.unsubscribe();
-    this.logsSubscription?.unsubscribe();
-  }
-
-  private buildDownloadStream(
-    source: Observable<DownloadedReportFile>,
-    label: string,
-  ): Observable<DownloadedReportFile> {
-    if (this.currentJobId() === null) {
-      throw new Error('No job selected for download.');
-    }
-    this.exportErrorMessage.set(null);
-    this.isExporting.set(true);
-    return source.pipe(
-      finalize(() => this.isExporting.set(false)),
-      catchError((requestError: unknown) => {
-        const msg: string = requestError instanceof Error ? requestError.message : 'Unknown error.';
-        this.exportErrorMessage.set(`Unable to download ${label}: ${msg}`);
-        return throwError(() => requestError);
-      }),
-    );
-  }
-
-  private startProgressStream(jobId: string): void {
-    this.startLogsStream(jobId);
-    this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
-      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
-      complete: () => this.fetchFinalResult(jobId),
-      error: () => this.startPollingFallback(jobId),
-    });
-  }
-
-  private startLogsStream(jobId: string): void {
-    this.logsSubscription?.unsubscribe();
-    this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
-      next: (logEntry: JobLogEntryView) => {
-        this.jobLogs.update((currentLogs: JobLogEntryView[]) => {
-          if (
-            currentLogs.some((item: JobLogEntryView) => item.eventIndex === logEntry.eventIndex)
-          ) {
-            return currentLogs;
-          }
-          return [...currentLogs, logEntry].sort(
-            (a: JobLogEntryView, b: JobLogEntryView) => a.eventIndex - b.eventIndex,
-          );
-        });
-      },
-      error: () => {
-        // Mantener UI funcional si el SSE de logs falla.
-      },
-    });
-  }
-
-  private loadHistoricalLogs(jobId: string): void {
-    this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
-      next: (logsPage: JobLogsPageView) => this.jobLogs.set(logsPage.results),
-      error: () => {
-        // Vista histórica disponible sin logs si falla la consulta.
-      },
-    });
-  }
-
-  private startPollingFallback(jobId: string): void {
-    this.progressSubscription = this.jobsApiService.pollJobUntilCompleted(jobId, 1000).subscribe({
-      next: (snapshot: JobProgressSnapshotView) => {
-        this.progressSnapshot.set(snapshot);
-        this.fetchFinalResult(jobId);
-      },
-      error: (pollingError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to track Marcus job progress: ${pollingError.message}`);
-      },
-    });
-  }
-
-  private fetchFinalResult(jobId: string): void {
+  protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getMarcusJobStatus(jobId).subscribe({
       next: (jobResponse: MarcusJobResponseView) => {
-        if (jobResponse.status === 'failed') {
-          this.loadHistoricalLogs(jobId);
-          this.activeSection.set('error');
-          this.errorMessage.set(jobResponse.error_trace ?? 'Marcus job failed with no details.');
-          return;
-        }
-
-        const finalResult: MarcusResultData | null = this.extractResultData(jobResponse);
-        if (finalResult === null) {
-          this.activeSection.set('error');
-          this.errorMessage.set('The final payload is invalid for Marcus.');
-          return;
-        }
-
-        this.resultData.set(finalResult);
-        this.loadHistoricalLogs(jobId);
-        this.activeSection.set('result');
-        this.loadHistory();
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -491,12 +295,5 @@ export class MarcusWorkflowService implements OnDestroy {
       isHistoricalSummary: true,
       summaryMessage: this.buildHistoricalSummaryMessage(jobResponse.status),
     };
-  }
-
-  private buildHistoricalSummaryMessage(status: string): string {
-    if (status === 'pending') return 'Historical summary: this job is still pending execution.';
-    if (status === 'running') return 'Historical summary: this job is still running.';
-    if (status === 'paused') return 'Historical summary: this job is paused.';
-    return 'Historical summary: no final result payload was available.';
   }
 }

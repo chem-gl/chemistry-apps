@@ -9,10 +9,11 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from apps.core.processing import PluginRegistry
-from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 from libs.admet_ai.client import AdmetAiClient
 from libs.admet_ai.models import AdmetPredictionResult
+
+from apps.core.processing import PluginRegistry
+from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 from .definitions import (
     AMES_POSITIVE_THRESHOLD,
@@ -64,8 +65,8 @@ def _find_devtox_key(keys: list[str], excluded_keys: set[str]) -> str | None:
 
 def _ld50_to_mgkg(log_value: float, smiles_value: str) -> float:
     """Convierte LD50 log-scale a mg/kg usando el peso molecular del SMILES."""
-    from rdkit import Chem  # type: ignore[import]
-    from rdkit.Chem import Descriptors  # type: ignore[import]
+    from rdkit import Chem
+    from rdkit.Chem import Descriptors
 
     molecule = Chem.MolFromSmiles(smiles_value)
     if molecule is None:
@@ -239,5 +240,4 @@ def toxicity_properties_plugin(
         "scientific_references": list(SCIENTIFIC_REFERENCES),
     }
 
-    return cast(JSONMap, result_payload)
     return cast(JSONMap, result_payload)

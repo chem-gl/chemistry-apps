@@ -19,6 +19,9 @@ from channels.layers import get_channel_layer
 from .models import ScientificJob, ScientificJobLogEvent
 from .types import JobLogEntry, JobProgressSnapshot, JobStatus, JSONMap
 
+UTC_OFFSET_SUFFIX = "+00:00"
+UTC_SUFFIX = "Z"
+
 
 def _normalize_group_segment(raw_value: str) -> str:
     """Normaliza identificadores para nombres de grupo compatibles con Channels."""
@@ -59,7 +62,7 @@ def build_job_progress_snapshot(job: ScientificJob) -> JobProgressSnapshot:
         "progress_stage": str(job.progress_stage),
         "progress_message": str(job.progress_message),
         "progress_event_index": int(job.progress_event_index),
-        "updated_at": job.updated_at.isoformat().replace("+00:00", "Z"),
+        "updated_at": job.updated_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX),
     }
 
 
@@ -72,7 +75,9 @@ def build_job_log_entry(log_event: ScientificJobLogEvent) -> JobLogEntry:
         "source": str(log_event.source),
         "message": str(log_event.message),
         "payload": dict(log_event.payload),
-        "created_at": log_event.created_at.isoformat().replace("+00:00", "Z"),
+        "created_at": log_event.created_at.isoformat().replace(
+            UTC_OFFSET_SUFFIX, UTC_SUFFIX
+        ),
     }
 
 
@@ -107,20 +112,20 @@ def build_scientific_job_payload(job: ScientificJob) -> JSONMap:
         "pause_requested": bool(job.pause_requested),
         "runtime_state": dict(job.runtime_state),
         "paused_at": (
-            job.paused_at.isoformat().replace("+00:00", "Z")
+            job.paused_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX)
             if job.paused_at is not None
             else None
         ),
         "resumed_at": (
-            job.resumed_at.isoformat().replace("+00:00", "Z")
+            job.resumed_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX)
             if job.resumed_at is not None
             else None
         ),
         "parameters": dict(job.parameters),
         "results": dict(job.results) if job.results is not None else None,
         "error_trace": job.error_trace,
-        "created_at": job.created_at.isoformat().replace("+00:00", "Z"),
-        "updated_at": job.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": job.created_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX),
+        "updated_at": job.updated_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX),
     }
 
 

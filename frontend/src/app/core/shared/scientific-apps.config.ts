@@ -10,29 +10,41 @@ export interface ScientificAppRouteItem {
   visibleInMenus: boolean;
 }
 
-export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> = [
+interface ScientificAppDefinition {
+  key: string;
+  title: string;
+  description: string;
+  visibleInMenus: boolean;
+}
+
+function createScientificAppRouteItem(definition: ScientificAppDefinition): ScientificAppRouteItem {
+  return {
+    key: definition.key,
+    title: definition.title,
+    description: definition.description,
+    routePath: `/${definition.key}`,
+    available: true,
+    visibleInMenus: definition.visibleInMenus,
+  };
+}
+
+const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   {
     key: 'calculator',
     title: 'Calculator',
     description: 'Arithmetic operations with asynchronous execution and cache support.',
-    routePath: '/calculator',
-    available: true,
     visibleInMenus: false,
   },
   {
     key: 'random-numbers',
     title: 'Random Numbers',
     description: 'Batch random number generation with URL seed and progress tracking.',
-    routePath: '/random-numbers',
-    available: true,
     visibleInMenus: false,
   },
   {
     key: 'molar-fractions',
     title: 'Molar Fractions',
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
-    routePath: '/molar-fractions',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -40,8 +52,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'Tunnel Effect',
     description:
       'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
-    routePath: '/tunnel',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -49,8 +59,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'Easy-rate',
     description:
       'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
-    routePath: '/easy-rate',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -58,8 +66,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'Marcus Theory',
     description:
       'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
-    routePath: '/marcus',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -67,8 +73,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'Smileit',
     description:
       'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
-    routePath: '/smileit',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -76,8 +80,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'SA Score',
     description:
       'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
-    routePath: '/sa-score',
-    available: true,
     visibleInMenus: true,
   },
   {
@@ -85,11 +87,12 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
     title: 'Toxicity Properties',
     description:
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
-    routePath: '/toxicity-properties',
-    available: true,
     visibleInMenus: true,
   },
 ];
+
+export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
 /** Lista filtrada: solo las apps visibles en menus y en el hub. Calculator y Random Numbers quedan excluidas. */
 export const VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =

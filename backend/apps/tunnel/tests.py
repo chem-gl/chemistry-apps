@@ -193,3 +193,16 @@ class TunnelContractApiTests(TestCase):
         csv_content: str = response.content.decode("utf-8")
         self.assertIn("reaction_barrier_zpe", csv_content)
         self.assertIn("kappa_tst", csv_content)
+
+
+class TunnelContractTests(TestCase):
+    """Valida que el contrato declarativo expone la interfaz esperada."""
+
+    def test_contract_exposes_required_interface(self) -> None:
+        """El contrato debe tener plugin_name, execute y supports_pause_resume."""
+        from .contract import get_tunnel_contract
+
+        contract = get_tunnel_contract()
+        for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
+            self.assertIn(key, contract)
+        self.assertIsNotNone(contract["execute"])
