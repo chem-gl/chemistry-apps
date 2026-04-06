@@ -7,8 +7,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import {
-  BlockAssignmentPanelComponent,
-  BlockPanelLibraryDetailRequest,
+    BlockAssignmentPanelComponent,
+    BlockPanelLibraryDetailRequest,
 } from './block-assignment-panel.component';
 
 /** Construye un mock mínimo del WorkflowService para el panel de asignación. */
@@ -237,6 +237,25 @@ describe('BlockAssignmentPanelComponent', () => {
       const block = { id: 'b1' } as never;
       const entries = component.filteredCatalogEntriesForBlock(block);
       expect(entries).toHaveLength(2);
+    });
+
+    it('excluye entradas ya referenciadas en el bloque', () => {
+      const referencedEntry = { id: 'e-1', smiles: 'C', name: 'methane' };
+      const availableEntry = { id: 'e-2', smiles: 'CC', name: 'ethane' };
+      mockWorkflow.catalogGroups.set([
+        {
+          key: 'all',
+          entries: [referencedEntry, availableEntry],
+        },
+      ]);
+
+      vi.mocked(mockWorkflow.catalog.isCatalogEntryReferenced).mockImplementation(
+        (_block, entry) => entry === referencedEntry,
+      );
+
+      const block = { id: 'b1' } as never;
+      const entries = component.filteredCatalogEntriesForBlock(block);
+      expect(entries).toEqual([availableEntry]);
     });
   });
 

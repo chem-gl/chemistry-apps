@@ -5,13 +5,13 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { SafeHtml } from '@angular/platform-browser';
 import {
-  SmileitCatalogEntryView,
-  SmileitStructureInspectionView,
+    SmileitCatalogEntryView,
+    SmileitStructureInspectionView,
 } from '../../core/api/jobs-api.service';
 import {
-  SmileitAssignmentBlockDraft,
-  SmileitBlockCollapsedSummary,
-  SmileitWorkflowService,
+    SmileitAssignmentBlockDraft,
+    SmileitBlockCollapsedSummary,
+    SmileitWorkflowService,
 } from '../../core/application/smileit-workflow.service';
 
 export type BlockPanelLibraryDetailRequest = {
@@ -105,7 +105,12 @@ export class BlockAssignmentPanelComponent {
   }
 
   filteredCatalogEntriesForBlock(block: SmileitAssignmentBlockDraft): SmileitCatalogEntryView[] {
-    return this.filteredCatalogGroupsForBlock(block).flatMap((group) => group.entries);
+    return this.filteredCatalogGroupsForBlock(block)
+      .flatMap((group) => group.entries)
+      .filter(
+        (catalogEntry: SmileitCatalogEntryView) =>
+          !this.workflow.catalog.isCatalogEntryReferenced(block, catalogEntry),
+      );
   }
 
   onBlockCatalogEntryCardActivate(
