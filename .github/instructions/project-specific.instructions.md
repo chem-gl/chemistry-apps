@@ -186,16 +186,16 @@ Nunca parchar el código generado directamente: se sobreescribe en la siguiente 
 - **`create_openapi.py`**: Genera `backend/openapi/schema.yaml` desde Django y regenera el cliente TypeScript en `frontend/src/app/core/api/generated/`. Ejecutar desde la raíz del repositorio con el entorno virtual activado:
   ```bash
   source backend/venv/bin/activate
-  python scripts/create_openapi.py && echo listo
+  python scripts/create_openapi.py && echo listo || echo error
   ```
 
 - **`generate_sonar_coverage.sh`**: Genera todos los artefactos para análisis SonarQube: cobertura Python (XML), cobertura Angular (lcov), reporte Ruff y reporte ESLint. Ejecutar desde la raíz:
   ```bash
-  bash scripts/generate_sonar_coverage.sh && echo listo
+  bash scripts/generate_sonar_coverage.sh && echo listo || echo error
   ```
   Salida esperada: `backend/ruff.json`, `backend/coverage.xml`, `frontend/eslint.json`, `frontend/coverage/frontend/lcov.info`.
 
-Nota: añadir `&& echo listo` al final de cualquier comando de generación es buena práctica para confirmar que terminó correctamente, especialmente en comandos que no siempre muestran salida al completarse con éxito.
+Nota: añadir `&& echo listo || echo error` al final de cualquier comando de generación es buena práctica para confirmar que terminó correctamente, especialmente en comandos que no siempre muestran salida al completarse con éxito.
 
 ## Estilo de codificación
 

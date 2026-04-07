@@ -761,6 +761,18 @@ sequenceDiagram
 
 ### Comando de regeneración
 
+### Prerrequisitos
+
+Antes de regenerar el contrato y el cliente, asegúrate de tener instaladas las dependencias del frontend:
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+Si `node_modules` no existe o está incompleto, `scripts/create_openapi.py` intentará ejecutar `npm install` automáticamente.
+
 ```bash
 # Desde la raíz del repositorio con el entorno virtual activado
 source backend/venv/bin/activate
@@ -769,7 +781,7 @@ python scripts/create_openapi.py
 
 El script ejecuta secuencialmente:
 1. `manage.py spectacular --file backend/openapi/schema.yaml` para generar el spec.
-2. `npx openapi-generator-cli generate` con la configuración en `frontend/openapitools.json` para regenerar el cliente.
+2. `npm run api:generate` con la configuración en `frontend/openapitools.json` para regenerar el cliente.
 
 ### Reglas de uso del cliente generado
 
