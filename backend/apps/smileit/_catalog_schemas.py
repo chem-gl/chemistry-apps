@@ -90,7 +90,9 @@ class SmileitCatalogEntryCreateSerializer(serializers.Serializer):
     )
     category_keys = serializers.ListField(
         child=serializers.SlugField(max_length=80),
-        min_length=1,
+        required=False,
+        default=list,
+        max_length=MAX_CATEGORIES_PER_BLOCK,
     )
     source_reference = serializers.CharField(max_length=200, required=False, default="")
     provenance_metadata = serializers.DictField(
@@ -236,7 +238,8 @@ class SmileitManualSubstituentInputSerializer(serializers.Serializer):
     )
     categories = serializers.ListField(
         child=serializers.SlugField(max_length=80),
-        min_length=1,
+        required=False,
+        default=list,
         max_length=MAX_CATEGORIES_PER_BLOCK,
     )
     source_reference = serializers.CharField(

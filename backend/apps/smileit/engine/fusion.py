@@ -15,6 +15,22 @@ from .parsing import get_implicit_hydrogens, parse_smiles_cached, silence_rdkit_
 logger = logging.getLogger(__name__)
 
 
+def _resolve_principal_atom_index(
+    principal_molecule: Chem.Mol,
+    principal_atom_idx: int | None,
+) -> int:
+    """Resuelve índice efectivo de la principal usando atom map cuando existe."""
+    if principal_atom_idx is None:
+        return 0
+
+    target_map_number = principal_atom_idx + 1
+    for principal_atom in principal_molecule.GetAtoms():
+        if principal_atom.GetAtomMapNum() == target_map_number:
+            return principal_atom.GetIdx()
+
+    return principal_atom_idx
+
+
 def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
     """Retorna True si el átomo tiene valencia libre para un enlace adicional."""
     return (get_implicit_hydrogens(atom) + atom.GetNumExplicitHs()) >= bond_order
@@ -137,7 +153,7 @@ def is_fusion_candidate_viable(
     if principal_base is None or substituent_base is None:
         return False
 
-    p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
+    p_idx: int = _resolve_principal_atom_index(principal_base, principal_atom_idx)
     s_idx: int = substituent_atom_idx if substituent_atom_idx is not None else 0
 
     if p_idx >= principal_base.GetNumAtoms() or s_idx >= substituent_base.GetNumAtoms():
@@ -180,7 +196,7 @@ def fuse_molecules(
     mol_p = Chem.Mol(principal_base)
     mol_s = Chem.Mol(substituent_base)
 
-    p_idx: int = principal_atom_idx if principal_atom_idx is not None else 0
+    p_idx: int = _resolve_principal_atom_index(mol_p, principal_atom_idx)
     s_idx: int = substituent_atom_idx if substituent_atom_idx is not None else 0
 
     if p_idx >= mol_p.GetNumAtoms() or s_idx >= mol_s.GetNumAtoms():

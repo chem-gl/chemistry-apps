@@ -122,6 +122,28 @@ class SmileitCatalogCrudTests(SmileitSeedTestCase):
         self.assertEqual(body["name"], payload["name"])
         self.assertEqual(body["version"], 1)
 
+    def test_create_catalog_accepts_uncategorized_substituent(self) -> None:
+        """Debe permitir alta de sustituyente sin categorías explícitas."""
+        payload = {
+            "name": "CyclopropylUncategorized",
+            "smiles": "C1CC1",
+            "anchor_atom_indices": [0],
+            "category_keys": [],
+            "source_reference": "unit-test",
+            "provenance_metadata": {"case": "accept-uncategorized"},
+        }
+
+        response = self.client.post(
+            f"{APP_API_BASE_PATH}catalog/",
+            data=payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        body = response.json()
+        self.assertEqual(body["name"], payload["name"])
+        self.assertEqual(body["categories"], [])
+
     def test_update_user_catalog_creates_new_latest_version(self) -> None:
         """Editar una entrada de usuario debe crear una versión nueva con mismo stable_id."""
         create_payload = {
@@ -320,6 +342,39 @@ class SmileitJobBlockTests(SmileitSeedTestCase):
         self.assertIn("svg", generated_structures[0])
         self.assertEqual(generated_structures[0]["svg"], "")
 
+    def test_create_job_accepts_manual_substituent_without_categories(self) -> None:
+        """Debe aceptar sustituyente manual sin categorías dentro del bloque."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0],
+            "assignment_blocks": [
+                {
+                    "label": "ManualWithoutCategories",
+                    "site_atom_indices": [0],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "NoCategorySubstituent",
+                            "smiles": "C",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        }
+                    ],
+                }
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 1,
+            "num_bonds": 1,
+            "max_structures": 20,
+            "export_name_base": "UNCAT",
+            "export_padding": 4,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
     def test_overlapped_blocks_generate_union_permutations_per_site(self) -> None:
         """Sitio cubierto por múltiples bloques debe combinar todas las opciones efectivas."""
         payload = {
@@ -471,6 +526,15 @@ class SmileitJobBlockTests(SmileitSeedTestCase):
         )
         self.assertTrue(all("substituent_smiles" in row for row in traceability_rows))
 
+        generated_structures = result_payload.get("generated_structures", [])
+        for generated_structure in generated_structures:
+            traceability_events = generated_structure.get("traceability", [])
+            used_sites = {
+                int(event.get("site_atom_index", -1)) for event in traceability_events
+            }
+            # Cada derivado debe usar sitios distintos de la principal sin reusar el mismo.
+            self.assertEqual(len(used_sites), len(traceability_events))
+
     def test_create_and_run_job_without_limit_emits_generation_logs(self) -> None:
         """Con max_structures=0 debe ejecutar sin tope y registrar conteos de avance."""
         payload = self._valid_payload()
@@ -499,6 +563,133 @@ class SmileitJobBlockTests(SmileitSeedTestCase):
         assert round_log is not None
         self.assertIn("generated_structures", round_log.payload)
         self.assertIn("attempts_processed", round_log.payload)
+
+    def test_prevents_known_chained_substitution_derivatives(self) -> None:
+        """No debe generar derivados conocidos por encadenar sobre sustituyentes."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccc2[nH]ccc2c1NCCC=C",
+            "selected_atom_indices": [0, 1, 2],
+            "assignment_blocks": [
+                {
+                    "label": "Block 1",
+                    "site_atom_indices": [0, 1, 2],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "segundo",
+                            "smiles": "CCCCCCC",
+                            "anchor_atom_indices": [0],
+                            "categories": ["hydrophobic"],
+                        }
+                    ],
+                }
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 3,
+            "num_bonds": 1,
+            "max_structures": 0,
+            "export_name_base": "smileit_run",
+            "export_padding": 5,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+
+        generated_smiles = {
+            str(item.get("smiles", ""))
+            for item in (job.results or {}).get("generated_structures", [])
+        }
+
+        # Derivados reportados por el usuario como inválidos (sustituyente-sobre-sustituyente).
+        forbidden_derivatives = {
+            "CCCCCC(C)C(CC)CCC(C)CCCCCC(C)C=CCCNc1cccc2[nH]ccc12",
+            "CCCCCC(C)C(=CC(C)CCC(CC)C(C)CCCCC)CCNc1cccc2[nH]ccc12",
+            "CCCCCC(C)C(C)CCCC(C)C=CC(CNc1cccc2[nH]ccc12)C(C)CCCCC",
+            "CCCCCC(C)C(C=CC(C)CCC(CC)C(C)CCCCC)CNc1cccc2[nH]ccc12",
+        }
+        for forbidden_smiles in forbidden_derivatives:
+            self.assertNotIn(forbidden_smiles, generated_smiles)
+
+    def test_allows_site_reuse_across_derivatives_without_simultaneous_conflicts(
+        self,
+    ) -> None:
+        """Permite reutilizar un sitio entre derivados, pero no duplicarlo en el mismo."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1ccccc1",
+            "selected_atom_indices": [0, 1, 2],
+            "assignment_blocks": [
+                {
+                    "label": "ReusableSites",
+                    "site_atom_indices": [0, 1, 2],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "a",
+                            "smiles": "C",
+                            "anchor_atom_indices": [0],
+                            "categories": ["hydrophobic"],
+                        },
+                        {
+                            "name": "b",
+                            "smiles": "CC",
+                            "anchor_atom_indices": [0],
+                            "categories": ["hydrophobic"],
+                        },
+                    ],
+                }
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 2,
+            "num_bonds": 1,
+            "max_structures": 0,
+            "export_name_base": "reuse_sites",
+            "export_padding": 4,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+        results = job.results or {}
+        traceability_rows = results.get("traceability_rows", [])
+        self.assertGreaterEqual(len(traceability_rows), 1)
+
+        # Reuso permitido: el sitio 0 debe aparecer con sustituyentes distintos en derivados diferentes.
+        site_zero_rows = [
+            row for row in traceability_rows if int(row.get("site_atom_index", -1)) == 0
+        ]
+        self.assertGreaterEqual(len(site_zero_rows), 2)
+        site_zero_substituents = {
+            str(row.get("substituent_name", "")) for row in site_zero_rows
+        }
+        self.assertIn("a", site_zero_substituents)
+        self.assertIn("b", site_zero_substituents)
+
+        # No simultaneidad: dentro de un mismo derivado no puede repetirse el mismo sitio.
+        rows_by_derivative: dict[str, list[dict]] = {}
+        for row in traceability_rows:
+            derivative_name = str(row.get("derivative_name", ""))
+            rows_by_derivative.setdefault(derivative_name, []).append(row)
+
+        for derivative_rows in rows_by_derivative.values():
+            used_sites = {
+                int(row.get("site_atom_index", -1)) for row in derivative_rows
+            }
+            self.assertEqual(len(used_sites), len(derivative_rows))
 
 
 class SmileitEngineOptimizationTests(TestCase):
@@ -577,7 +768,7 @@ class SmileitPluginOptimizationTests(TestCase):
         }
 
     def test_generate_derivatives_expands_only_current_frontier(self) -> None:
-        """Cada ronda debe expandir solo nodos nuevos, no todo el histórico acumulado."""
+        """Cada ronda expande solo frontier actual respetando no-reuso de sitio."""
         progress_updates: list[tuple[int, str, str]] = []
 
         def progress_callback(percentage: int, stage: str, message: str) -> None:
@@ -590,10 +781,12 @@ class SmileitPluginOptimizationTests(TestCase):
             substituent_atom_idx: int | None,
             bond_order: int,
         ) -> str | None:
-            del substituent_smiles, principal_atom_idx, substituent_atom_idx, bond_order
+            del substituent_smiles, substituent_atom_idx, bond_order
+            if principal_smiles == "CC":
+                return "CCC" if principal_atom_idx == 0 else "CCN"
             mapping: dict[str, str] = {
-                "P": "PA",
-                "PA": "PAA",
+                "CCC": "CCCC",
+                "CCN": "CCNC",
             }
             return mapping.get(principal_smiles)
 
@@ -609,9 +802,12 @@ class SmileitPluginOptimizationTests(TestCase):
         ):
             generated_candidates, traceability_rows, truncated = (
                 smileit_plugin_module._generate_derivatives(
-                    principal_smiles="P",
-                    selected_atom_indices=[0],
-                    site_option_map=self._build_site_option_map_with_single_option(),
+                    principal_smiles="CC",
+                    selected_atom_indices=[0, 1],
+                    site_option_map={
+                        0: self._build_site_option_map_with_single_option()[0],
+                        1: self._build_site_option_map_with_single_option()[0],
+                    },
                     r_substitutes=2,
                     num_bonds=1,
                     max_structures=None,
@@ -624,10 +820,11 @@ class SmileitPluginOptimizationTests(TestCase):
 
         self.assertFalse(truncated)
         self.assertEqual(
-            [candidate.smiles for candidate in generated_candidates], ["PA", "PAA"]
+            [candidate.smiles for candidate in generated_candidates],
+            ["CCC", "CCN", "CCCC", "CCNC"],
         )
-        self.assertEqual(mocked_fuse.call_count, 2)
-        self.assertEqual(len(traceability_rows), 3)
+        self.assertEqual(mocked_fuse.call_count, 4)
+        self.assertEqual(len(traceability_rows), 6)
         self.assertGreaterEqual(len(progress_updates), 1)
 
     def test_generate_derivatives_reuses_intra_job_fusion_attempt_cache(self) -> None:

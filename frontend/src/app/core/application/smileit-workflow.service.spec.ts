@@ -6,13 +6,13 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import {
-  JobLogsPageView,
-  JobsApiService,
-  SmileitCatalogEntryView,
-  SmileitCategoryView,
-  SmileitJobResponseView,
-  SmileitPatternEntryView,
-  SmileitStructureInspectionView,
+    JobLogsPageView,
+    JobsApiService,
+    SmileitCatalogEntryView,
+    SmileitCategoryView,
+    SmileitJobResponseView,
+    SmileitPatternEntryView,
+    SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
 import { SmileitAssignmentBlockDraft, SmileitWorkflowService } from './smileit-workflow.service';
@@ -1122,6 +1122,37 @@ describe('SmileitWorkflowService', () => {
 
     expect(workflowService.historyJobs()[0]?.id).toBe('smileit-new');
     expect(workflowService.historyJobs()[1]?.id).toBe('smileit-old');
+    expect(workflowService.isHistoryLoading()).toBe(false);
+  });
+
+  it('deduplicates history jobs by id and keeps the latest snapshot', () => {
+    jobsApiServiceMock.listJobs.mockReturnValue(
+      of([
+        makeSmileitJob({
+          id: 'smileit-dup',
+          status: 'running',
+          updated_at: '2024-06-01T00:00:00.000Z',
+        }),
+        makeSmileitJob({
+          id: 'smileit-dup',
+          status: 'completed',
+          updated_at: '2024-07-01T00:00:00.000Z',
+        }),
+        makeSmileitJob({
+          id: 'smileit-other',
+          updated_at: '2024-05-01T00:00:00.000Z',
+        }),
+      ]),
+    );
+
+    workflowService.loadHistory();
+
+    expect(workflowService.historyJobs().length).toBe(2);
+    expect(workflowService.historyJobs().map((job) => job.id)).toEqual([
+      'smileit-dup',
+      'smileit-other',
+    ]);
+    expect(workflowService.historyJobs()[0]?.status).toBe('completed');
     expect(workflowService.isHistoryLoading()).toBe(false);
   });
 

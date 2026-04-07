@@ -20,6 +20,7 @@ import type {
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
+import { deduplicateJobsKeepingLatestSnapshot } from './job-history-utils';
 import { mergeLogEntry } from './log-entry-utils';
 
 import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
@@ -46,7 +47,7 @@ export type {
   SmileitManualSubstituentDraft,
   SmileitResultData,
   SmileitSection,
-  SmileitSiteCoverageView,
+  SmileitSiteCoverageView
 } from './smileit/smileit-workflow.types';
 
 @Injectable()
@@ -313,10 +314,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.jobsApiService.listJobs({ pluginName: 'smileit' }).subscribe({
       next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
-          (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
-            new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
-        );
+        const orderedJobs: ScientificJobView[] = this.deduplicateHistoryJobs(jobItems);
         this.state.historyJobs.set(orderedJobs);
         this.state.isHistoryLoading.set(false);
       },
@@ -324,6 +322,10 @@ export class SmileitWorkflowService implements OnDestroy {
         this.state.isHistoryLoading.set(false);
       },
     });
+  }
+
+  private deduplicateHistoryJobs(jobItems: ScientificJobView[]): ScientificJobView[] {
+    return deduplicateJobsKeepingLatestSnapshot(jobItems);
   }
 
   // ── Descarga de reportes ──────────────────────────────────────────────

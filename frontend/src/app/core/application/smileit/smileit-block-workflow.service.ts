@@ -7,9 +7,9 @@ import type { SmileitCatalogEntryView, SmileitCategoryView } from '../../api/job
 
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 import type {
-  SmileitAssignmentBlockDraft,
-  SmileitBlockCollapsedSummary,
-  SmileitManualSubstituentDraft,
+    SmileitAssignmentBlockDraft,
+    SmileitBlockCollapsedSummary,
+    SmileitManualSubstituentDraft,
 } from './smileit-workflow.types';
 import { parseAtomIndicesInput, toggleString } from './smileit-workflow.utils';
 
@@ -277,7 +277,16 @@ export class SmileitBlockWorkflowService {
       .filter((entry: SmileitCatalogEntryView) =>
         (entry.categories ?? []).some((categoryKey: string) => selectedCategories.has(categoryKey)),
       );
-    return [...matchedEntries].sort(
+    const deduplicatedEntriesByKey: Map<string, SmileitCatalogEntryView> = new Map();
+
+    matchedEntries.forEach((entry: SmileitCatalogEntryView) => {
+      const dedupeKey: string = `${entry.stable_id}::${entry.version}::${entry.id}`;
+      if (!deduplicatedEntriesByKey.has(dedupeKey)) {
+        deduplicatedEntriesByKey.set(dedupeKey, entry);
+      }
+    });
+
+    return [...deduplicatedEntriesByKey.values()].sort(
       (left: SmileitCatalogEntryView, right: SmileitCatalogEntryView) =>
         left.name.localeCompare(right.name),
     );

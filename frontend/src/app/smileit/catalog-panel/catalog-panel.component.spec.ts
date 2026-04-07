@@ -148,10 +148,29 @@ describe('CatalogPanelComponent', () => {
 
   describe('filteredLibraryEntries computed', () => {
     it('retorna lista plana de entradas visibles', () => {
-      const entryA = { smiles: 'C', name: 'methane' };
-      const entryB = { smiles: 'CC', name: 'ethane' };
+      const entryA = { id: 'e-1', stable_id: 'methane', version: 1, smiles: 'C', name: 'methane' };
+      const entryB = { id: 'e-2', stable_id: 'ethane', version: 1, smiles: 'CC', name: 'ethane' };
       mockWorkflow.catalogGroups.set([{ key: 'all', entries: [entryA, entryB] }]);
       expect(component.filteredLibraryEntries()).toHaveLength(2);
+    });
+
+    it('deduplica entradas repetidas cuando una molécula aparece en múltiples grupos', () => {
+      const duplicatedEntry = {
+        id: 'e-1',
+        stable_id: 'methane',
+        version: 1,
+        smiles: 'C',
+        name: 'methane',
+      };
+
+      mockWorkflow.catalogGroups.set([
+        { key: 'group-a', entries: [duplicatedEntry] },
+        { key: 'group-b', entries: [duplicatedEntry] },
+      ]);
+
+      const entries = component.filteredLibraryEntries();
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toEqual(duplicatedEntry);
     });
 
     it('retorna lista vacía cuando no hay grupos', () => {

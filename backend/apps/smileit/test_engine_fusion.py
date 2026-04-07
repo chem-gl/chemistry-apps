@@ -142,6 +142,19 @@ class IsFusionCandidateViableEdgeCaseTests(TestCase):
         # importante es que no lanza excepción y retorna booleano.
         self.assertIsInstance(result, bool)
 
+    def test_uses_principal_atom_map_number_when_available(self) -> None:
+        """Si existen atom maps, el sitio se resuelve por identidad de principal."""
+        # El átomo con map 2 (primero) está saturado; map 1 (último) sí acepta enlace.
+        # Si se usa índice posicional 0 sin map resolution, esta prueba fallaría.
+        result = is_fusion_candidate_viable(
+            principal_smiles="[N+:2](C)(C)(C)C[CH2:1]",
+            substituent_smiles="C",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertTrue(result)
+
 
 class FuseMoleculesEdgeCaseTests(TestCase):
     """Pruebas para fuse_molecules: índices fuera de rango, wildcard y excepciones."""
@@ -222,6 +235,19 @@ class FuseMoleculesEdgeCaseTests(TestCase):
         )
         self.assertIsNotNone(result)
         self.assertIsInstance(result, str)
+
+    def test_fuses_using_principal_atom_map_number_when_available(self) -> None:
+        """La fusión debe respetar atom maps para mantener sitio de la principal."""
+        # Map 2 (primer átomo) está saturado; map 1 (último átomo) es el sitio válido.
+        # Si el motor usara índice posicional 0, la fusión retornaría None.
+        result = fuse_molecules(
+            principal_smiles="[N+:2](C)(C)(C)C[CH2:1]",
+            substituent_smiles="C",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertIsNotNone(result)
 
 
 class FuseWithWildcardAnchorTests(TestCase):

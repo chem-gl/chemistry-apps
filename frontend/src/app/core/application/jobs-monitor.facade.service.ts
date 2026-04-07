@@ -10,6 +10,7 @@ import {
   JobsApiService,
   ScientificJobView,
 } from '../api/jobs-api.service';
+import { deduplicateJobsKeepingLatestSnapshot } from './job-history-utils';
 
 /** Estado de filtro para UI (incluye opcion all para monitor global) */
 export type JobStatusFilterOption = JobListStatusFilter | 'all';
@@ -90,16 +91,17 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
     this.jobsApiService.listJobs(listFilters).subscribe({
       next: (jobItems: ScientificJobView[]) => {
-        const hasMeaningfulChanges: boolean = this.detectJobsChanges(jobItems);
+        const normalizedJobs: ScientificJobView[] = this.deduplicateJobsById(jobItems);
+        const hasMeaningfulChanges: boolean = this.detectJobsChanges(normalizedJobs);
         const shouldApplyStateUpdate: boolean =
           !shouldUpdateOnlyOnChange || hasMeaningfulChanges || this.jobs().length === 0;
 
         if (shouldApplyStateUpdate) {
-          this.jobs.set(jobItems);
+          this.jobs.set(normalizedJobs);
 
           const selectedJobIdValue: string | null = this.selectedJobId();
           if (selectedJobIdValue !== null) {
-            const refreshedSelectedJob: ScientificJobView | undefined = jobItems.find(
+            const refreshedSelectedJob: ScientificJobView | undefined = normalizedJobs.find(
               (jobItem: ScientificJobView) => jobItem.id === selectedJobIdValue,
             );
             if (refreshedSelectedJob !== undefined) {
@@ -385,6 +387,10 @@ export class JobsMonitorFacadeService implements OnDestroy {
         pluginFilterValue === 'all' || jobItem.plugin_name === pluginFilterValue;
       return matchesStatus && matchesPlugin;
     });
+  }
+
+  private deduplicateJobsById(jobItems: ScientificJobView[]): ScientificJobView[] {
+    return deduplicateJobsKeepingLatestSnapshot(jobItems);
   }
 
   private detectJobsChanges(jobItems: ScientificJobView[]): boolean {

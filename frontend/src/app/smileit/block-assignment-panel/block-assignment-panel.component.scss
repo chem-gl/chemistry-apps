@@ -1,1 +1,12 @@
 /* block-assignment-panel.component.scss: estilos específicos del panel de asignación de bloques. */
+
+:host {
+	display: block;
+	min-width: 0;
+	align-self: start;
+}
+
+.workspace-right-column,
+.workspace-side-column {
+	align-items: start;
+}

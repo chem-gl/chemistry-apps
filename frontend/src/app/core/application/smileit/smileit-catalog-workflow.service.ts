@@ -6,25 +6,25 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin } from 'rxjs';
 import { PatternTypeEnum } from '../../api/generated';
 import type {
-  SmileitCatalogEntryCreateParams,
-  SmileitCatalogEntryView,
-  SmileitPatternEntryCreateParams,
-  SmileitPatternEntryView,
+    SmileitCatalogEntryCreateParams,
+    SmileitCatalogEntryView,
+    SmileitPatternEntryCreateParams,
+    SmileitPatternEntryView,
 } from '../../api/jobs-api.service';
 import { SmileitApiService } from '../../api/smileit-api.service';
 
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 import type {
-  SmileitAssignmentBlockDraft,
-  SmileitCatalogDraftPreview,
-  SmileitCatalogQueuedDraft,
+    SmileitAssignmentBlockDraft,
+    SmileitCatalogDraftPreview,
+    SmileitCatalogQueuedDraft,
 } from './smileit-workflow.types';
 import {
-  buildNextCloneDraftName,
-  buildNextSequentialCatalogDraftName,
-  dedupeVersionedEntries,
-  extractRequestErrorMessage,
-  toggleString,
+    buildNextCloneDraftName,
+    buildNextSequentialCatalogDraftName,
+    dedupeVersionedEntries,
+    extractRequestErrorMessage,
+    toggleString,
 } from './smileit-workflow.utils';
 
 @Injectable()
@@ -204,8 +204,12 @@ export class SmileitCatalogWorkflowService {
       const requestPayload: SmileitCatalogEntryCreateParams =
         this.buildCreatePayload(activePreview);
       this.smileitApi.createSmileitCatalogEntry(requestPayload).subscribe({
-        next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
-          this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, true);
+        next: (updatedCatalogEntries: unknown) => {
+          this.refreshCatalogEntriesAfterMutation(
+            this.resolveCatalogMutationResult(updatedCatalogEntries),
+            true,
+            true,
+          );
           onSuccess?.();
         },
         error: (requestError: unknown) => {
@@ -231,8 +235,12 @@ export class SmileitCatalogWorkflowService {
       this.smileitApi.updateSmileitCatalogEntry(editingStableId, requestPayload);
 
     saveRequest.subscribe({
-      next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
-        this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, true, false);
+      next: (updatedCatalogEntries: unknown) => {
+        this.refreshCatalogEntriesAfterMutation(
+          this.resolveCatalogMutationResult(updatedCatalogEntries),
+          true,
+          false,
+        );
         onSuccess?.();
       },
       error: (requestError: unknown) => {
@@ -261,8 +269,12 @@ export class SmileitCatalogWorkflowService {
     const requestPayload: SmileitCatalogEntryCreateParams = this.buildCreatePayload(activePreview);
 
     this.smileitApi.createSmileitCatalogEntry(requestPayload).subscribe({
-      next: (updatedCatalogEntries: SmileitCatalogEntryView[]) => {
-        this.refreshCatalogEntriesAfterMutation(updatedCatalogEntries, false, true);
+      next: (updatedCatalogEntries: unknown) => {
+        this.refreshCatalogEntriesAfterMutation(
+          this.resolveCatalogMutationResult(updatedCatalogEntries),
+          false,
+          true,
+        );
         this.prepareCatalogDraftForAnother({
           id: 'catalog-draft-preview',
           name: activePreview.name,
@@ -414,6 +426,14 @@ export class SmileitCatalogWorkflowService {
       return [];
     }
     return dedupeVersionedEntries(rawPatterns as SmileitPatternEntryView[]);
+  }
+
+  private resolveCatalogMutationResult(rawCatalogMutationResult: unknown): SmileitCatalogEntryView[] | null {
+    if (!Array.isArray(rawCatalogMutationResult)) {
+      return null;
+    }
+
+    return this.normalizeCatalogEntries(rawCatalogMutationResult);
   }
 
   private refreshCatalogEntriesAfterMutation(

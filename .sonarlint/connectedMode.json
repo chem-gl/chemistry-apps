@@ -1,4 +1,4 @@
 {
-    "sonarQubeUri": "http://localhost:9000",
+    "sonarQubeUri": "http://100.72.72.91:9000",
     "projectKey": "chemistry-apps"
 }

@@ -7,8 +7,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import {
-  BlockAssignmentPanelComponent,
-  BlockPanelLibraryDetailRequest,
+    BlockAssignmentPanelComponent,
+    BlockPanelLibraryDetailRequest,
 } from './block-assignment-panel.component';
 
 /** Construye un mock mínimo del WorkflowService para el panel de asignación. */
@@ -228,8 +228,8 @@ describe('BlockAssignmentPanelComponent', () => {
         {
           key: 'all',
           entries: [
-            { smiles: 'C', name: 'methane' },
-            { smiles: 'CC', name: 'ethane' },
+            { id: 'e-1', stable_id: 'methane', version: 1, smiles: 'C', name: 'methane' },
+            { id: 'e-2', stable_id: 'ethane', version: 1, smiles: 'CC', name: 'ethane' },
           ],
         },
       ];
@@ -237,6 +237,58 @@ describe('BlockAssignmentPanelComponent', () => {
       const block = { id: 'b1' } as never;
       const entries = component.filteredCatalogEntriesForBlock(block);
       expect(entries).toHaveLength(2);
+    });
+
+    it('deduplica entradas repetidas cuando aparecen en múltiples grupos', () => {
+      const duplicatedEntry = {
+        id: 'e-1',
+        stable_id: 'methane',
+        version: 1,
+        smiles: 'C',
+        name: 'methane',
+      };
+
+      mockWorkflow.catalogGroups.set([
+        { key: 'group-a', entries: [duplicatedEntry] },
+        { key: 'group-b', entries: [duplicatedEntry] },
+      ]);
+
+      const block = { id: 'b1' } as never;
+      const entries = component.filteredCatalogEntriesForBlock(block);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toEqual(duplicatedEntry);
+    });
+
+    it('excluye entradas ya referenciadas en el bloque', () => {
+      const referencedEntry = {
+        id: 'e-1',
+        stable_id: 'methane',
+        version: 1,
+        smiles: 'C',
+        name: 'methane',
+      };
+      const availableEntry = {
+        id: 'e-2',
+        stable_id: 'ethane',
+        version: 1,
+        smiles: 'CC',
+        name: 'ethane',
+      };
+      mockWorkflow.catalogGroups.set([
+        {
+          key: 'all',
+          entries: [referencedEntry, availableEntry],
+        },
+      ]);
+
+      vi.mocked(mockWorkflow.catalog.isCatalogEntryReferenced).mockImplementation(
+        (_block, entry) => entry === referencedEntry,
+      );
+
+      const block = { id: 'b1' } as never;
+      const entries = component.filteredCatalogEntriesForBlock(block);
+      expect(entries).toEqual([availableEntry]);
     });
   });
 
