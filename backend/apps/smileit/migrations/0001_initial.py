@@ -1,8 +1,10 @@
-"""0001_initial.py: Esquema inicial de persistencia Smile-it con datos semilla.
+"""0001_initial.py: Migración inicial de Smile-it.
 
-Objetivo:
-- Crear tablas para categorías, sustituyentes versionados y patrones SMARTS.
-- Precargar categorías verificables y catálogo base de sustituyentes/patrones.
+Modelos que crea:
+  SmileitCategory              — categorías de grupos funcionales químicos.
+  SmileitSubstituent           — fragmentos químicos nombrados y versionados.
+  SmileitPattern               — patrones SMARTS para toxicóforos y motivos privilegiados.
+  SmileitSubstituentCategory   — tabla de unión many-to-many con verificación.
 """
 
 from __future__ import annotations
@@ -137,34 +139,41 @@ def seed_smileit_reference_data(apps, schema_editor) -> None:
 
     pattern_data = [
         {
-            "name": "Nitro Aromatic Alert",
-            "smarts": "[NX3+](=O)[O-]",
-            "pattern_type": "toxicophore",
-            "caption": "Nitro group can be associated with toxicological alerts in medicinal chemistry.",
-        },
-        {
-            "name": "Catechol Alert",
-            "smarts": "c1ccc(c(c1)O)O",
-            "pattern_type": "toxicophore",
-            "caption": "Catechol-like motifs can undergo redox cycling and reactive metabolism.",
-        },
-        {
+            "stable_id": uuid.UUID("bee090e8-b983-4775-b564-74565f34c66a"),
             "name": "Indole Privileged",
             "smarts": "c1ccc2[nH]ccc2c1",
             "pattern_type": "privileged",
             "caption": "Indole scaffold is a privileged motif in ligand design.",
         },
         {
+            "stable_id": uuid.UUID("a2034040-41bc-4dad-9d8d-8acd1a117093"),
             "name": "Piperazine Privileged",
             "smarts": "N1CCNCC1",
             "pattern_type": "privileged",
             "caption": "Piperazine is frequently used to tune ADME and binding interactions.",
         },
+        {
+            "stable_id": uuid.UUID("c8e17fd9-76dd-4ccb-8cb3-367aa4f38ebe"),
+            "name": "Catechol Alert",
+            "smarts": "c1ccc(c(c1)O)O",
+            "pattern_type": "toxicophore",
+            "caption": "Catechol-like motifs can undergo redox cycling and reactive metabolism.",
+        },
+        {
+            "stable_id": uuid.UUID("967a0246-200a-4b68-b75e-7a3e77ee77d9"),
+            "name": "Nitro Aromatic Alert",
+            "smarts": "[NX3+](=O)[O-]",
+            "pattern_type": "toxicophore",
+            "caption": (
+                "Nitro group can be associated with toxicological alerts in "
+                "medicinal chemistry."
+            ),
+        },
     ]
 
     for item in pattern_data:
         pattern_model.objects.create(
-            stable_id=uuid.uuid4(),
+            stable_id=item["stable_id"],
             version=1,
             is_latest=True,
             is_active=True,
@@ -173,7 +182,7 @@ def seed_smileit_reference_data(apps, schema_editor) -> None:
             pattern_type=item["pattern_type"],
             caption=item["caption"],
             source_reference="smileit-seed",
-            provenance_metadata={"seed": True},
+            provenance_metadata={"seed": True, "canonical_seed": True},
         )
 
 
@@ -375,39 +384,45 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="smileitcategory",
             index=models.Index(
-                fields=["key", "is_latest"], name="smileit_cat_key_latest_idx"
+                fields=["key", "is_latest"], name="smileit_smi_key_21b494_idx"
             ),
         ),
         migrations.AddIndex(
             model_name="smileitcategory",
-            index=models.Index(fields=["is_active"], name="smileit_cat_active_idx"),
-        ),
-        migrations.AddIndex(
-            model_name="smileitsubstituent",
             index=models.Index(
-                fields=["stable_id", "is_latest"], name="smileit_sub_stable_latest_idx"
+                fields=["is_active"], name="smileit_smi_is_acti_d158a2_idx"
             ),
         ),
         migrations.AddIndex(
             model_name="smileitsubstituent",
-            index=models.Index(fields=["is_active"], name="smileit_sub_active_idx"),
+            index=models.Index(
+                fields=["stable_id", "is_latest"], name="smileit_smi_stable__4c424c_idx"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="smileitsubstituent",
+            index=models.Index(
+                fields=["is_active"], name="smileit_smi_is_acti_1329c4_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="smileitsubstituentcategory",
             index=models.Index(
-                fields=["category", "substituent"], name="smileit_sub_cat_idx"
+                fields=["category", "substituent"],
+                name="smileit_smi_categor_ed1cde_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="smileitpattern",
             index=models.Index(
-                fields=["pattern_type", "is_active"], name="smileit_pat_type_active_idx"
+                fields=["pattern_type", "is_active"],
+                name="smileit_smi_pattern_ac82b2_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="smileitpattern",
             index=models.Index(
-                fields=["stable_id", "is_latest"], name="smileit_pat_stable_latest_idx"
+                fields=["stable_id", "is_latest"], name="smileit_smi_stable__b7616f_idx"
             ),
         ),
         migrations.RunPython(seed_smileit_reference_data, migrations.RunPython.noop),

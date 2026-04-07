@@ -643,3 +643,4 @@ Una app nueva se considera completamente integrada cuando:
 - [ ] `npm run build` pasa sin errores ni advertencias de tipo.
 - [ ] App añadida a `scientific-apps.config.ts` con `key`, `title`, `description` y `visibleInMenus`.
 - [ ] Ruta añadida en `app.routes.ts` con lazy loading al componente standalone.
+La base de datos de desarrollo es descartable. y se puede regenerar las veces que sea necesario
