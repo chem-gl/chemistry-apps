@@ -691,6 +691,182 @@ class SmileitJobBlockTests(SmileitSeedTestCase):
             }
             self.assertEqual(len(used_sites), len(derivative_rows))
 
+    def test_group_membership_matrix_generates_all_valid_combinations(self) -> None:
+        """Debe generar la matriz completa A(a) y B(b,c) con pertenencia estricta."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "CCCO",
+            "selected_atom_indices": [0, 1, 2],
+            "assignment_blocks": [
+                {
+                    "label": "GroupA",
+                    "site_atom_indices": [0],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "a",
+                            "smiles": "F",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        }
+                    ],
+                },
+                {
+                    "label": "GroupB",
+                    "site_atom_indices": [1, 2],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "b",
+                            "smiles": "Cl",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        },
+                        {
+                            "name": "c",
+                            "smiles": "Br",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        },
+                    ],
+                },
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 3,
+            "num_bonds": 1,
+            "max_structures": 0,
+            "export_name_base": "GROUP_MATRIX",
+            "export_padding": 4,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+
+        generated_structures = (job.results or {}).get("generated_structures", [])
+
+        actual_signatures = {
+            tuple(
+                sorted(
+                    (
+                        int(event.get("site_atom_index", -1)),
+                        str(event.get("substituent_name", "")),
+                    )
+                    for event in structure.get("traceability", [])
+                )
+            )
+            for structure in generated_structures
+        }
+
+        expected_signatures = {
+            ((0, "a"),),
+            ((1, "b"),),
+            ((1, "c"),),
+            ((2, "b"),),
+            ((2, "c"),),
+            ((1, "b"), (2, "b")),
+            ((1, "b"), (2, "c")),
+            ((1, "c"), (2, "b")),
+            ((1, "c"), (2, "c")),
+            ((0, "a"), (1, "b")),
+            ((0, "a"), (1, "c")),
+            ((0, "a"), (2, "b")),
+            ((0, "a"), (2, "c")),
+            ((0, "a"), (1, "b"), (2, "b")),
+            ((0, "a"), (1, "b"), (2, "c")),
+            ((0, "a"), (1, "c"), (2, "b")),
+            ((0, "a"), (1, "c"), (2, "c")),
+        }
+
+        # Verifica completitud de la matriz y ausencia de mezclas inválidas entre grupos.
+        self.assertEqual(actual_signatures, expected_signatures)
+
+    def test_single_site_cl_block_is_permuted_with_and_without_cl(self) -> None:
+        """Un bloque con único Cl en sitio fijo debe combinarse con el resto."""
+        payload = {
+            "version": DEFAULT_ALGORITHM_VERSION,
+            "principal_smiles": "c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O",
+            "selected_atom_indices": [0, 1, 2, 3, 7],
+            "assignment_blocks": [
+                {
+                    "label": "Block 1",
+                    "site_atom_indices": [0, 1, 2, 3],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "Benzene",
+                            "smiles": "c1ccccc1",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        },
+                        {
+                            "name": "Alcohol",
+                            "smiles": "[OH]",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        },
+                    ],
+                },
+                {
+                    "label": "Block 2",
+                    "site_atom_indices": [7],
+                    "category_keys": [],
+                    "substituent_refs": [],
+                    "manual_substituents": [
+                        {
+                            "name": "Cl",
+                            "smiles": "Cl",
+                            "anchor_atom_indices": [0],
+                            "categories": [],
+                        }
+                    ],
+                },
+            ],
+            "site_overlap_policy": "last_block_wins",
+            "r_substitutes": 3,
+            "num_bonds": 1,
+            "max_structures": 0,
+            "export_name_base": "CL_MATRIX",
+            "export_padding": 4,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, data=payload, format="json")
+        self.assertEqual(response.status_code, 201)
+
+        job_id = response.json()["id"]
+        JobService.run_job(job_id)
+
+        job = ScientificJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, "completed")
+
+        generated_structures = (job.results or {}).get("generated_structures", [])
+        with_cl = 0
+        without_cl = 0
+        for structure in generated_structures:
+            names = {
+                str(event.get("substituent_name", ""))
+                for event in structure.get("traceability", [])
+            }
+            if "Cl" in names:
+                with_cl += 1
+            else:
+                without_cl += 1
+
+        # Total esperado para r_substitutes=3: 64 sin Cl + 33 con Cl.
+        self.assertEqual(len(generated_structures), 97)
+        # Debe existir matriz con Cl (Block 2 activo).
+        self.assertEqual(with_cl, 33)
+        # Debe existir matriz sin Cl (Block 2 opcional).
+        self.assertEqual(without_cl, 64)
+
 
 class SmileitEngineOptimizationTests(TestCase):
     """Valida caches internas para reducir trabajo redundante en RDKit."""

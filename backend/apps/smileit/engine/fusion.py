@@ -32,8 +32,29 @@ def _resolve_principal_atom_index(
 
 
 def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
-    """Retorna True si el átomo tiene valencia libre para un enlace adicional."""
-    return (get_implicit_hydrogens(atom) + atom.GetNumExplicitHs()) >= bond_order
+    """Retorna True si el átomo tiene valencia libre para un enlace adicional.
+
+    La validación prioriza la sustitución de hidrógenos (implícitos/explicítos) y,
+    cuando no hay hidrógenos removibles, usa las valencias permitidas por tabla
+    periódica para no descartar casos válidos como `[F]`.
+    """
+    available_hydrogen_slots = get_implicit_hydrogens(atom) + atom.GetNumExplicitHs()
+    if available_hydrogen_slots >= bond_order:
+        return True
+
+    atomic_number = atom.GetAtomicNum()
+    if atomic_number <= 0:
+        return False
+
+    total_valence = int(atom.GetTotalValence())
+    periodic_table = Chem.GetPeriodicTable()
+    allowed_valences = periodic_table.GetValenceList(atomic_number)
+    for allowed_valence in allowed_valences:
+        if int(allowed_valence) < 0:
+            continue
+        if total_valence + bond_order <= int(allowed_valence):
+            return True
+    return False
 
 
 def _has_enough_implicit_hydrogens(
@@ -224,6 +245,15 @@ def fuse_molecules(
     combo = Chem.RWMol(Chem.CombineMols(mol_p, mol_s))
     offset: int = mol_p.GetNumAtoms()
     bond_type = _bond_order_to_type(bond_order)
+
+    # Ajustar hidrógeno explícito en sustituyente antes de añadir nuevo enlace
+    # Si el átomo de anclaje tiene H explícito, reducirlo para permitir sanitización
+    atom_s_in_combo = combo.GetAtomWithIdx(s_idx + offset)
+    if atom_s_in_combo.GetNumExplicitHs() > 0:
+        current_explicit_h = atom_s_in_combo.GetNumExplicitHs()
+        new_explicit_h = max(0, current_explicit_h - bond_order)
+        atom_s_in_combo.SetNumExplicitHs(new_explicit_h)
+
     combo.AddBond(p_idx, s_idx + offset, bond_type)
 
     try:

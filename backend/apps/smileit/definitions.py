@@ -20,7 +20,7 @@ APP_API_BASE_PATH: Final[str] = "/api/smileit/jobs/"
 
 # --- Plugin ---
 PLUGIN_NAME: Final[str] = "smileit"
-DEFAULT_ALGORITHM_VERSION: Final[str] = "2.0.0"
+DEFAULT_ALGORITHM_VERSION: Final[str] = "2.0.1"
 
 # --- Políticas de asignación por bloques ---
 SITE_OVERLAP_POLICY_LAST_BLOCK_WINS: Final[str] = "last_block_wins"

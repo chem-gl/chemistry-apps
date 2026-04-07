@@ -5,38 +5,38 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../../api/generated';
 import type {
-  JobLogEntryView,
-  JobProgressSnapshotView,
-  ScientificJobView,
-  SmileitCatalogEntryView,
-  SmileitCategoryView,
-  SmileitPatternEntryView,
-  SmileitQuickPropertiesView,
-  SmileitStructureInspectionView,
+    JobLogEntryView,
+    JobProgressSnapshotView,
+    ScientificJobView,
+    SmileitCatalogEntryView,
+    SmileitCategoryView,
+    SmileitPatternEntryView,
+    SmileitQuickPropertiesView,
+    SmileitStructureInspectionView,
 } from '../../api/jobs-api.service';
 
 import type {
-  SmileitAssignmentBlockDraft,
-  SmileitCatalogDraftPreview,
-  SmileitCatalogGroupView,
-  SmileitCatalogQueuedDraft,
-  SmileitChemicalNotationKind,
-  SmileitResultData,
-  SmileitSection,
-  SmileitSiteCoverageView,
+    SmileitAssignmentBlockDraft,
+    SmileitCatalogDraftPreview,
+    SmileitCatalogGroupView,
+    SmileitCatalogQueuedDraft,
+    SmileitChemicalNotationKind,
+    SmileitResultData,
+    SmileitSection,
+    SmileitSiteCoverageView,
 } from './smileit-workflow.types';
 
 import {
-  buildCatalogGroups,
-  buildEffectiveCoverage,
-  detectChemicalNotation,
-  parseSingleAnchorIndexInput,
+    buildCatalogGroups,
+    buildEffectiveCoverage,
+    detectChemicalNotation,
+    parseSingleAnchorIndexInput,
 } from './smileit-workflow.utils';
 
 @Injectable()
 export class SmileitWorkflowState {
   // ── Estructura principal ──────────────────────────────────────────────
-  readonly principalSmiles = signal<string>('c1ccc2[nH]ccc2c1NCCC=C');
+  readonly principalSmiles = signal<string>('c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
   readonly selectedAtomIndices = signal<number[]>([]);
 

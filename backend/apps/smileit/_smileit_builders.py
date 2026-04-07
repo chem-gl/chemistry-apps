@@ -65,6 +65,7 @@ class ExpansionContext:
     principal_smiles: str
     selected_atom_indices: list[int]
     site_option_map: dict[int, list[SiteOption]]
+    allowed_signatures_by_site: dict[int, set[SiteOptionSignature]]
     num_bonds: int
     seen_smiles: set[str]
     attempt_cache: dict[FusionAttemptKey, str | None]
@@ -84,6 +85,9 @@ class SiteOption:
     block_label: str
     block_priority: int
     substituent: SmileitResolvedSubstituent
+
+
+type SiteOptionSignature = tuple[str, str, int, str, int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +161,29 @@ def _build_site_option_map(
                 )
 
     return site_option_map
+
+
+def _build_allowed_signatures_by_site(
+    site_option_map: dict[int, list[SiteOption]],
+) -> dict[int, set[SiteOptionSignature]]:
+    """Construye firma permitida por sitio para validar pertenencia de bloque."""
+    allowed_signatures_by_site: dict[int, set[SiteOptionSignature]] = {}
+
+    for site_atom_index, site_options in site_option_map.items():
+        signatures_for_site: set[SiteOptionSignature] = set()
+        for site_option in site_options:
+            signatures_for_site.add(
+                (
+                    site_option.block_label,
+                    site_option.substituent["stable_id"],
+                    site_option.substituent["version"],
+                    site_option.substituent["smiles"],
+                    site_option.substituent["selected_atom_index"],
+                )
+            )
+        allowed_signatures_by_site[site_atom_index] = signatures_for_site
+
+    return allowed_signatures_by_site
 
 
 def _sort_traceability_events(

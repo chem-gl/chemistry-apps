@@ -155,6 +155,17 @@ class IsFusionCandidateViableEdgeCaseTests(TestCase):
         )
         self.assertTrue(result)
 
+    def test_accepts_halogen_with_available_valence(self) -> None:
+        """[F] sin enlaces previos debe considerarse viable para enlace simple."""
+        result = is_fusion_candidate_viable(
+            principal_smiles="CC",
+            substituent_smiles="[F]",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertTrue(result)
+
 
 class FuseMoleculesEdgeCaseTests(TestCase):
     """Pruebas para fuse_molecules: índices fuera de rango, wildcard y excepciones."""
@@ -248,6 +259,28 @@ class FuseMoleculesEdgeCaseTests(TestCase):
             bond_order=1,
         )
         self.assertIsNotNone(result)
+
+    def test_fuses_halogen_substituent_into_valid_structure(self) -> None:
+        """[F] debe fusionarse cuando el sitio principal tiene valencia disponible."""
+        result = fuse_molecules(
+            principal_smiles="CC",
+            substituent_smiles="[F]",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertIsNotNone(result)
+
+    def test_rejects_fusion_when_substituent_valence_is_saturated(self) -> None:
+        """Un ancla saturada en sustituyente debe rechazarse para mantener validez química."""
+        result = fuse_molecules(
+            principal_smiles="CC",
+            substituent_smiles="[N+](C)(C)(C)C",
+            principal_atom_idx=0,
+            substituent_atom_idx=0,
+            bond_order=1,
+        )
+        self.assertIsNone(result)
 
 
 class FuseWithWildcardAnchorTests(TestCase):
