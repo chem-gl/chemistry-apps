@@ -129,7 +129,7 @@
             <p class="hint">No substituents added to this block yet.</p>
             } @else {
             <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
-              @for (entry of block.catalogRefs; track entry.id) {
+              @for (entry of block.catalogRefs; track entry.stable_id + '-' + entry.version + '-' + entry.id) {
               <article class="block-library-thumb catalog-ref-thumb">
                 <button type="button" class="thumb-open-button" [attr.aria-label]="'Open detail for ' + entry.name"
                   (click)="openLibraryEntryDetail(entry, 'reference')">
@@ -173,7 +173,7 @@
               <div class="tag-list">
                 @for (
                 entry of workflow.blocks.getAutoCatalogEntriesForBlock(block);
-                track entry.id
+                track entry.stable_id + '-' + entry.version + '-' + entry.id
                 ) {
                 <article class="tag-card auto-tag-card">
                   <div>
@@ -212,7 +212,8 @@
             <p class="hint">No catalog molecules available for the selected group.</p>
             } @else {
             <div class="library-thumbnail-grid block-library-thumbnail-grid">
-              @for (entry of filteredCatalogEntriesForBlock(block); track entry.id) {
+              @for (entry of filteredCatalogEntriesForBlock(block); track entry.stable_id + '-' + entry.version + '-' +
+              entry.id) {
               <article class="block-library-thumb">
                 <button type="button" class="thumb-open-button"
                   [attr.aria-label]="'Add ' + entry.name + ' to this block'"

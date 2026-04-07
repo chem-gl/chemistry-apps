@@ -5,30 +5,30 @@
 
 import { CommonModule } from '@angular/common';
 import {
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
+    Component,
+    ElementRef,
+    OnDestroy,
+    ViewChild,
+    computed,
+    inject,
+    input,
+    output,
+    signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import {
-  JobsApiService,
-  SmileitCatalogEntryView,
-  SmileitStructureInspectionView,
+    JobsApiService,
+    SmileitCatalogEntryView,
+    SmileitStructureInspectionView,
 } from '../../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import { SmileitInspectionService } from '../core/services/smileit-inspection.service';
 import {
-  formatAtomIndices,
-  hasSameNumberSet,
-  parseAtomIndicesInput,
+    formatAtomIndices,
+    hasSameNumberSet,
+    parseAtomIndicesInput,
 } from '../smileit-atom-selection.utils';
 
 @Component({
@@ -82,9 +82,21 @@ export class CatalogPanelComponent implements OnDestroy {
   });
 
   /** Lista plana de entradas visibles según el filtro de grupo activo. */
-  readonly filteredLibraryEntries = computed<SmileitCatalogEntryView[]>(() =>
-    this.filteredLibraryGroups().flatMap((group) => group.entries),
-  );
+  readonly filteredLibraryEntries = computed<SmileitCatalogEntryView[]>(() => {
+    const deduplicatedEntriesByKey: Map<string, SmileitCatalogEntryView> = new Map();
+
+    this.filteredLibraryGroups()
+      .flatMap((group) => group.entries)
+      .forEach((catalogEntry: SmileitCatalogEntryView) => {
+        const dedupeKey: string =
+          `${catalogEntry.stable_id}-${catalogEntry.version}-${catalogEntry.id}`;
+        if (!deduplicatedEntriesByKey.has(dedupeKey)) {
+          deduplicatedEntriesByKey.set(dedupeKey, catalogEntry);
+        }
+      });
+
+    return [...deduplicatedEntriesByKey.values()];
+  });
 
   // --- ViewChild refs para diálogos nativos ---
   @ViewChild('catalogStudioDialog')

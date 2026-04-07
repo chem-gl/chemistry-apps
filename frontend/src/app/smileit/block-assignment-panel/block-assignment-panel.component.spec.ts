@@ -228,8 +228,8 @@ describe('BlockAssignmentPanelComponent', () => {
         {
           key: 'all',
           entries: [
-            { smiles: 'C', name: 'methane' },
-            { smiles: 'CC', name: 'ethane' },
+            { id: 'e-1', stable_id: 'methane', version: 1, smiles: 'C', name: 'methane' },
+            { id: 'e-2', stable_id: 'ethane', version: 1, smiles: 'CC', name: 'ethane' },
           ],
         },
       ];
@@ -239,9 +239,42 @@ describe('BlockAssignmentPanelComponent', () => {
       expect(entries).toHaveLength(2);
     });
 
+    it('deduplica entradas repetidas cuando aparecen en múltiples grupos', () => {
+      const duplicatedEntry = {
+        id: 'e-1',
+        stable_id: 'methane',
+        version: 1,
+        smiles: 'C',
+        name: 'methane',
+      };
+
+      mockWorkflow.catalogGroups.set([
+        { key: 'group-a', entries: [duplicatedEntry] },
+        { key: 'group-b', entries: [duplicatedEntry] },
+      ]);
+
+      const block = { id: 'b1' } as never;
+      const entries = component.filteredCatalogEntriesForBlock(block);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toEqual(duplicatedEntry);
+    });
+
     it('excluye entradas ya referenciadas en el bloque', () => {
-      const referencedEntry = { id: 'e-1', smiles: 'C', name: 'methane' };
-      const availableEntry = { id: 'e-2', smiles: 'CC', name: 'ethane' };
+      const referencedEntry = {
+        id: 'e-1',
+        stable_id: 'methane',
+        version: 1,
+        smiles: 'C',
+        name: 'methane',
+      };
+      const availableEntry = {
+        id: 'e-2',
+        stable_id: 'ethane',
+        version: 1,
+        smiles: 'CC',
+        name: 'ethane',
+      };
       mockWorkflow.catalogGroups.set([
         {
           key: 'all',

@@ -469,6 +469,23 @@ describe('SmileitBlockWorkflowService', () => {
       ]);
     });
 
+    it('deduplicates automatic catalog entries when duplicates exist in state', () => {
+      const duplicatedEntry = makeCatalogEntry({
+        id: 'dup-1',
+        stable_id: 'aniline',
+        version: 1,
+        name: 'Aniline',
+        categories: ['aromatic'],
+      });
+
+      state.catalogEntries.set([duplicatedEntry, { ...duplicatedEntry }]);
+      const block = makeBlock({ id: 'b1', categoryKeys: ['aromatic'] });
+
+      const autoEntries = service.getAutoCatalogEntriesForBlock(block);
+      expect(autoEntries).toHaveLength(1);
+      expect(autoEntries[0].name).toBe('Aniline');
+    });
+
     it('prunes block sites that are no longer globally selected', () => {
       state.selectedAtomIndices.set([1, 3]);
       state.assignmentBlocks.set([

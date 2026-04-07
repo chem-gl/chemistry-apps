@@ -125,6 +125,39 @@ describe('JobsMonitorFacadeService', () => {
     expect(facadeService.isLoading()).toBe(false);
   });
 
+  it('deduplicates jobs with repeated ids by keeping the latest updated_at snapshot', () => {
+    jobsApiServiceMock.listJobs.mockReturnValue(
+      of([
+        makeScientificJob({
+          id: 'dup-job-1',
+          status: 'running',
+          progress_percentage: 55,
+          updated_at: '2026-03-11T12:00:01Z',
+        }),
+        makeScientificJob({
+          id: 'dup-job-1',
+          status: 'completed',
+          progress_percentage: 100,
+          progress_stage: 'completed',
+          updated_at: '2026-03-11T12:00:03Z',
+        }),
+        makeScientificJob({
+          id: 'dup-job-2',
+          status: 'failed',
+          updated_at: '2026-03-11T12:00:02Z',
+        }),
+      ]),
+    );
+
+    facadeService.loadJobs();
+
+    expect(facadeService.jobs().length).toBe(2);
+    expect(facadeService.jobs().map((job) => job.id)).toEqual(['dup-job-1', 'dup-job-2']);
+    expect(facadeService.finishedJobs().length).toBe(2);
+    expect(facadeService.finishedJobs().map((job) => job.id)).toEqual(['dup-job-1', 'dup-job-2']);
+    expect(facadeService.jobs()[0].status).toBe('completed');
+  });
+
   it('sends status filter when selecting a specific status', () => {
     jobsApiServiceMock.listJobs.mockReturnValue(of([]));
 

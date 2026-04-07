@@ -7,16 +7,16 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import type {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  ScientificJobView,
-  SmileitAssignmentBlockParams,
-  SmileitGenerationParams,
-  SmileitJobResponseView,
-  SmileitManualSubstituentParams,
-  SmileitStructureInspectionView,
+    DownloadedReportFile,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    ScientificJobView,
+    SmileitAssignmentBlockParams,
+    SmileitGenerationParams,
+    SmileitJobResponseView,
+    SmileitManualSubstituentParams,
+    SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
@@ -26,9 +26,9 @@ import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 import type {
-  SmileitAssignmentBlockDraft,
-  SmileitManualSubstituentDraft,
-  SmileitResultData,
+    SmileitAssignmentBlockDraft,
+    SmileitManualSubstituentDraft,
+    SmileitResultData,
 } from './smileit/smileit-workflow.types';
 
 // Re-exportar tipos públicos para que los consumidores existentes no cambien sus import paths.
@@ -36,17 +36,17 @@ export { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 export { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 export { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 export type {
-  SmileitAssignmentBlockDraft,
-  SmileitBlockCollapsedSummary,
-  SmileitCatalogDraftPreview,
-  SmileitCatalogGroupView,
-  SmileitCatalogQueuedDraft,
-  SmileitChemicalNotationKind,
-  SmileitGeneratedStructureView,
-  SmileitManualSubstituentDraft,
-  SmileitResultData,
-  SmileitSection,
-  SmileitSiteCoverageView,
+    SmileitAssignmentBlockDraft,
+    SmileitBlockCollapsedSummary,
+    SmileitCatalogDraftPreview,
+    SmileitCatalogGroupView,
+    SmileitCatalogQueuedDraft,
+    SmileitChemicalNotationKind,
+    SmileitGeneratedStructureView,
+    SmileitManualSubstituentDraft,
+    SmileitResultData,
+    SmileitSection,
+    SmileitSiteCoverageView
 } from './smileit/smileit-workflow.types';
 
 @Injectable()
@@ -313,7 +313,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.jobsApiService.listJobs({ pluginName: 'smileit' }).subscribe({
       next: (jobItems: ScientificJobView[]) => {
-        const orderedJobs: ScientificJobView[] = [...jobItems].sort(
+        const orderedJobs: ScientificJobView[] = this.deduplicateHistoryJobs(jobItems).sort(
           (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
             new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
         );
@@ -324,6 +324,30 @@ export class SmileitWorkflowService implements OnDestroy {
         this.state.isHistoryLoading.set(false);
       },
     });
+  }
+
+  private deduplicateHistoryJobs(jobItems: ScientificJobView[]): ScientificJobView[] {
+    const jobsById: Map<string, ScientificJobView> = new Map<string, ScientificJobView>();
+
+    jobItems.forEach((jobItem: ScientificJobView) => {
+      const currentJob: ScientificJobView | undefined = jobsById.get(jobItem.id);
+      if (currentJob === undefined) {
+        jobsById.set(jobItem.id, jobItem);
+        return;
+      }
+
+      const currentUpdatedAt: number = new Date(currentJob.updated_at).getTime();
+      const nextUpdatedAt: number = new Date(jobItem.updated_at).getTime();
+      const shouldReplaceCurrent: boolean =
+        Number.isFinite(nextUpdatedAt) &&
+        (!Number.isFinite(currentUpdatedAt) || nextUpdatedAt >= currentUpdatedAt);
+
+      if (shouldReplaceCurrent) {
+        jobsById.set(jobItem.id, jobItem);
+      }
+    });
+
+    return [...jobsById.values()];
   }
 
   // ── Descarga de reportes ──────────────────────────────────────────────

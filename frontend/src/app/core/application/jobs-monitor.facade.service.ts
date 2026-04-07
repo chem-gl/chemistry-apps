@@ -3,12 +3,12 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import {
-  JobControlActionResult,
-  JobListFilters,
-  JobListStatusFilter,
-  JobLogEntryView,
-  JobsApiService,
-  ScientificJobView,
+    JobControlActionResult,
+    JobListFilters,
+    JobListStatusFilter,
+    JobLogEntryView,
+    JobsApiService,
+    ScientificJobView,
 } from '../api/jobs-api.service';
 
 /** Estado de filtro para UI (incluye opcion all para monitor global) */
@@ -90,16 +90,17 @@ export class JobsMonitorFacadeService implements OnDestroy {
 
     this.jobsApiService.listJobs(listFilters).subscribe({
       next: (jobItems: ScientificJobView[]) => {
-        const hasMeaningfulChanges: boolean = this.detectJobsChanges(jobItems);
+        const normalizedJobs: ScientificJobView[] = this.deduplicateJobsById(jobItems);
+        const hasMeaningfulChanges: boolean = this.detectJobsChanges(normalizedJobs);
         const shouldApplyStateUpdate: boolean =
           !shouldUpdateOnlyOnChange || hasMeaningfulChanges || this.jobs().length === 0;
 
         if (shouldApplyStateUpdate) {
-          this.jobs.set(jobItems);
+          this.jobs.set(normalizedJobs);
 
           const selectedJobIdValue: string | null = this.selectedJobId();
           if (selectedJobIdValue !== null) {
-            const refreshedSelectedJob: ScientificJobView | undefined = jobItems.find(
+            const refreshedSelectedJob: ScientificJobView | undefined = normalizedJobs.find(
               (jobItem: ScientificJobView) => jobItem.id === selectedJobIdValue,
             );
             if (refreshedSelectedJob !== undefined) {
@@ -385,6 +386,33 @@ export class JobsMonitorFacadeService implements OnDestroy {
         pluginFilterValue === 'all' || jobItem.plugin_name === pluginFilterValue;
       return matchesStatus && matchesPlugin;
     });
+  }
+
+  private deduplicateJobsById(jobItems: ScientificJobView[]): ScientificJobView[] {
+    const jobsById: Map<string, ScientificJobView> = new Map<string, ScientificJobView>();
+
+    jobItems.forEach((jobItem: ScientificJobView) => {
+      const currentJob: ScientificJobView | undefined = jobsById.get(jobItem.id);
+      if (currentJob === undefined) {
+        jobsById.set(jobItem.id, jobItem);
+        return;
+      }
+
+      const currentUpdatedAt: number = new Date(currentJob.updated_at).getTime();
+      const nextUpdatedAt: number = new Date(jobItem.updated_at).getTime();
+      const shouldReplaceCurrent: boolean =
+        Number.isFinite(nextUpdatedAt) &&
+        (!Number.isFinite(currentUpdatedAt) || nextUpdatedAt >= currentUpdatedAt);
+
+      if (shouldReplaceCurrent) {
+        jobsById.set(jobItem.id, jobItem);
+      }
+    });
+
+    return [...jobsById.values()].sort(
+      (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
+        new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
+    );
   }
 
   private detectJobsChanges(jobItems: ScientificJobView[]): boolean {
