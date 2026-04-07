@@ -3,13 +3,14 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import {
-    JobControlActionResult,
-    JobListFilters,
-    JobListStatusFilter,
-    JobLogEntryView,
-    JobsApiService,
-    ScientificJobView,
+  JobControlActionResult,
+  JobListFilters,
+  JobListStatusFilter,
+  JobLogEntryView,
+  JobsApiService,
+  ScientificJobView,
 } from '../api/jobs-api.service';
+import { deduplicateJobsKeepingLatestSnapshot } from './job-history-utils';
 
 /** Estado de filtro para UI (incluye opcion all para monitor global) */
 export type JobStatusFilterOption = JobListStatusFilter | 'all';
@@ -389,30 +390,7 @@ export class JobsMonitorFacadeService implements OnDestroy {
   }
 
   private deduplicateJobsById(jobItems: ScientificJobView[]): ScientificJobView[] {
-    const jobsById: Map<string, ScientificJobView> = new Map<string, ScientificJobView>();
-
-    jobItems.forEach((jobItem: ScientificJobView) => {
-      const currentJob: ScientificJobView | undefined = jobsById.get(jobItem.id);
-      if (currentJob === undefined) {
-        jobsById.set(jobItem.id, jobItem);
-        return;
-      }
-
-      const currentUpdatedAt: number = new Date(currentJob.updated_at).getTime();
-      const nextUpdatedAt: number = new Date(jobItem.updated_at).getTime();
-      const shouldReplaceCurrent: boolean =
-        Number.isFinite(nextUpdatedAt) &&
-        (!Number.isFinite(currentUpdatedAt) || nextUpdatedAt >= currentUpdatedAt);
-
-      if (shouldReplaceCurrent) {
-        jobsById.set(jobItem.id, jobItem);
-      }
-    });
-
-    return [...jobsById.values()].sort(
-      (leftJob: ScientificJobView, rightJob: ScientificJobView) =>
-        new Date(rightJob.updated_at).getTime() - new Date(leftJob.updated_at).getTime(),
-    );
+    return deduplicateJobsKeepingLatestSnapshot(jobItems);
   }
 
   private detectJobsChanges(jobItems: ScientificJobView[]): boolean {

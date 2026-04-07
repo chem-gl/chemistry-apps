@@ -224,6 +224,24 @@ describe('SmileitCatalogWorkflowService', () => {
     expect(state.catalogEditingStableId()).toBeNull();
   });
 
+  it('falls back to catalog reload when create returns a single entry object', () => {
+    smileitApiMock.createSmileitCatalogEntry.mockReturnValue(
+      of(makeCatalogEntry({ id: 'catalog-single', stable_id: 'single', name: 'Single result' }) as never),
+    );
+    smileitApiMock.listSmileitCatalog.mockReturnValue(
+      of([makeCatalogEntry({ id: 'catalog-3', stable_id: 'uncat', name: 'Uncategorized entry' })]),
+    );
+    state.catalogCreateName.set('Uncategorized entry');
+    state.catalogCreateSmiles.set('CCC');
+    state.catalogCreateAnchorIndicesText.set('0');
+    state.catalogCreateCategoryKeys.set([]);
+
+    service.createCatalogEntry();
+
+    expect(smileitApiMock.listSmileitCatalog).toHaveBeenCalled();
+    expect(state.catalogEntries()[0].name).toBe('Uncategorized entry');
+  });
+
   it('validates anchor indices before updating an existing persistent catalog entry', () => {
     state.catalogEditingStableId.set('aniline');
     state.catalogCreateName.set('Aniline');

@@ -62,6 +62,7 @@ class ExpansionSummary:
 class ExpansionContext:
     """Estado compartido para expansión de nodos sin listas de parámetros largas."""
 
+    principal_smiles: str
     selected_atom_indices: list[int]
     site_option_map: dict[int, list[SiteOption]]
     num_bonds: int
@@ -104,7 +105,8 @@ class FusionAttemptKey:
 class PendingFusionAttempt:
     """Representa un intento ordenado de fusión antes de resolverlo."""
 
-    site_atom_index: int
+    principal_site_atom_index: int
+    resolved_site_atom_index: int
     site_option: SiteOption
     selected_anchor: int
     bond_order: int
@@ -204,6 +206,7 @@ def _build_pending_fusion_attempts(
     node: GeneratedNode,
     selected_atom_indices: list[int],
     site_option_map: dict[int, list[SiteOption]],
+    resolved_site_indices: dict[int, int],
     num_bonds: int,
 ) -> list[PendingFusionAttempt]:
     """Construye intentos ordenados priorizando sitios con menor branching."""
@@ -217,6 +220,10 @@ def _build_pending_fusion_attempts(
     pending_attempts: list[PendingFusionAttempt] = []
 
     for site_atom_index in ordered_site_indices:
+        resolved_site_atom_index = resolved_site_indices.get(site_atom_index)
+        if resolved_site_atom_index is None:
+            continue
+
         site_options = sorted(
             site_option_map.get(site_atom_index, []),
             key=lambda site_option: (
@@ -232,13 +239,14 @@ def _build_pending_fusion_attempts(
             for bond_order in range(1, num_bonds + 1):
                 pending_attempts.append(
                     PendingFusionAttempt(
-                        site_atom_index=site_atom_index,
+                        principal_site_atom_index=site_atom_index,
+                        resolved_site_atom_index=resolved_site_atom_index,
                         site_option=site_option,
                         selected_anchor=selected_anchor,
                         bond_order=bond_order,
                         attempt_key=FusionAttemptKey(
                             principal_smiles=node.smiles,
-                            site_atom_index=site_atom_index,
+                            site_atom_index=resolved_site_atom_index,
                             substituent_smiles=site_option.substituent["smiles"],
                             substituent_anchor=selected_anchor,
                             bond_order=bond_order,

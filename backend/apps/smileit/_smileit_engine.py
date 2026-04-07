@@ -25,7 +25,11 @@ from ._smileit_builders import (
     _resolve_pending_fusion_attempts,
     _sort_traceability_events,
 )
-from .engine import is_fusion_candidate_viable
+from .engine import (
+    _score_principal_match_for_sites,
+    is_fusion_candidate_viable,
+    parse_smiles_cached,
+)
 from .types import (
     SmileitGeneratedStructure,
     SmileitSubstitutionTraceEvent,
@@ -35,6 +39,46 @@ from .types import (
 SMILEIT_LOG_SOURCE: Final[str] = "smileit.plugin"
 LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
 ATTEMPT_PROGRESS_BATCH_SIZE: Final[int] = 100
+
+
+def _resolve_principal_site_indices_for_node(
+    principal_smiles: str,
+    derivative_smiles: str,
+    selected_atom_indices: list[int],
+) -> dict[int, int]:
+    """Resuelve índices de sitio de la principal sobre el nodo derivado actual."""
+    principal_molecule = parse_smiles_cached(principal_smiles)
+    derivative_molecule = parse_smiles_cached(derivative_smiles)
+    if principal_molecule is None or derivative_molecule is None:
+        return {}
+
+    all_principal_matches = derivative_molecule.GetSubstructMatches(principal_molecule)
+    if len(all_principal_matches) == 0:
+        return {}
+
+    best_match = all_principal_matches[0]
+    if len(selected_atom_indices) > 0:
+        best_score = _score_principal_match_for_sites(
+            derivative_molecule=derivative_molecule,
+            principal_match=best_match,
+            principal_site_atom_indices=selected_atom_indices,
+        )
+        for candidate_match in all_principal_matches[1:]:
+            candidate_score = _score_principal_match_for_sites(
+                derivative_molecule=derivative_molecule,
+                principal_match=candidate_match,
+                principal_site_atom_indices=selected_atom_indices,
+            )
+            if candidate_score > best_score:
+                best_match = candidate_match
+                best_score = candidate_score
+
+    resolved_site_indices: dict[int, int] = {}
+    for site_atom_index in selected_atom_indices:
+        if site_atom_index < len(best_match):
+            resolved_site_indices[site_atom_index] = int(best_match[site_atom_index])
+
+    return resolved_site_indices
 
 
 # =========================
@@ -246,13 +290,27 @@ def _expand_derivatives_from_node(
     attempts_processed = 0
     rejected_fusions = 0
     duplicate_structures = 0
+    resolved_site_indices = _resolve_principal_site_indices_for_node(
+        principal_smiles=context.principal_smiles,
+        derivative_smiles=node.smiles,
+        selected_atom_indices=context.selected_atom_indices,
+    )
+    used_principal_sites = {
+        int(trace_event["site_atom_index"]) for trace_event in node.traceability
+    }
 
     pending_attempts = _build_pending_fusion_attempts(
         node=node,
         selected_atom_indices=context.selected_atom_indices,
         site_option_map=context.site_option_map,
+        resolved_site_indices=resolved_site_indices,
         num_bonds=context.num_bonds,
     )
+    pending_attempts = [
+        pending_attempt
+        for pending_attempt in pending_attempts
+        if pending_attempt.principal_site_atom_index not in used_principal_sites
+    ]
 
     attempts_to_resolve: list[PendingFusionAttempt] = []
     for pending_attempt in pending_attempts:
@@ -292,7 +350,7 @@ def _expand_derivatives_from_node(
         substituent = pending_attempt.site_option.substituent
         trace_event = SmileitSubstitutionTraceEvent(
             round_index=round_index,
-            site_atom_index=pending_attempt.site_atom_index,
+            site_atom_index=pending_attempt.principal_site_atom_index,
             block_label=pending_attempt.site_option.block_label,
             block_priority=pending_attempt.site_option.block_priority,
             substituent_name=substituent["name"],
@@ -384,6 +442,7 @@ def _generate_derivatives(
         round_frontier = list(frontier_nodes)
         next_frontier_nodes: list[GeneratedNode] = []
         expansion_context = ExpansionContext(
+            principal_smiles=principal_smiles,
             selected_atom_indices=selected_atom_indices,
             site_option_map=site_option_map,
             num_bonds=num_bonds,
