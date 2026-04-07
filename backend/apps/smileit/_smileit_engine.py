@@ -18,7 +18,9 @@ from ._smileit_builders import (
     GeneratedCandidate,
     GeneratedNode,
     PendingFusionAttempt,
+    SiteOptionSignature,
     SiteOption,
+    _build_allowed_signatures_by_site,
     _build_pending_fusion_attempts,
     _build_placeholder_assignments,
     _build_structure_name,
@@ -126,6 +128,44 @@ def _append_traceability_rows(
                 bond_order=event["bond_order"],
             )
         )
+
+
+def _is_traceability_sequence_valid(
+    traceability: list[SmileitSubstitutionTraceEvent],
+    allowed_signatures_by_site: dict[int, set[SiteOptionSignature]],
+) -> bool:
+    """Valida reglas duras: un sitio por derivado y pertenencia por bloque/sitio."""
+    used_sites: set[int] = set()
+
+    for event in traceability:
+        site_atom_index = int(event["site_atom_index"])
+        if site_atom_index in used_sites:
+            return False
+        used_sites.add(site_atom_index)
+
+        expected_signature = (
+            event["block_label"],
+            event["substituent_stable_id"],
+            event["substituent_version"],
+            event["substituent_smiles"],
+            0,
+        )
+        valid_signatures_for_site = allowed_signatures_by_site.get(site_atom_index, set())
+
+        # El ancla se ignora en esta validación para no acoplarla a cómo se serializa el evento.
+        is_signature_allowed = any(
+            (
+                signature[0] == expected_signature[0]
+                and signature[1] == expected_signature[1]
+                and signature[2] == expected_signature[2]
+                and signature[3] == expected_signature[3]
+            )
+            for signature in valid_signatures_for_site
+        )
+        if not is_signature_allowed:
+            return False
+
+    return True
 
 
 # =========================
@@ -361,6 +401,13 @@ def _expand_derivatives_from_node(
             bond_order=pending_attempt.bond_order,
         )
         traceability = [*node.traceability, trace_event]
+        if not _is_traceability_sequence_valid(
+            traceability=traceability,
+            allowed_signatures_by_site=context.allowed_signatures_by_site,
+        ):
+            rejected_fusions += 1
+            continue
+
         generated_name = _build_structure_name(
             base_name=context.export_name_base,
             index_value=derivative_counter,
@@ -445,6 +492,7 @@ def _generate_derivatives(
             principal_smiles=principal_smiles,
             selected_atom_indices=selected_atom_indices,
             site_option_map=site_option_map,
+            allowed_signatures_by_site=_build_allowed_signatures_by_site(site_option_map),
             num_bonds=num_bonds,
             seen_smiles=seen_smiles,
             attempt_cache=attempt_cache,

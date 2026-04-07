@@ -7,16 +7,16 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import type {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  ScientificJobView,
-  SmileitAssignmentBlockParams,
-  SmileitGenerationParams,
-  SmileitJobResponseView,
-  SmileitManualSubstituentParams,
-  SmileitStructureInspectionView,
+    DownloadedReportFile,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    ScientificJobView,
+    SmileitAssignmentBlockParams,
+    SmileitGenerationParams,
+    SmileitJobResponseView,
+    SmileitManualSubstituentParams,
+    SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
@@ -27,9 +27,9 @@ import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 import type {
-  SmileitAssignmentBlockDraft,
-  SmileitManualSubstituentDraft,
-  SmileitResultData,
+    SmileitAssignmentBlockDraft,
+    SmileitManualSubstituentDraft,
+    SmileitResultData,
 } from './smileit/smileit-workflow.types';
 
 // Re-exportar tipos públicos para que los consumidores existentes no cambien sus import paths.
@@ -37,17 +37,17 @@ export { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 export { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 export { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 export type {
-  SmileitAssignmentBlockDraft,
-  SmileitBlockCollapsedSummary,
-  SmileitCatalogDraftPreview,
-  SmileitCatalogGroupView,
-  SmileitCatalogQueuedDraft,
-  SmileitChemicalNotationKind,
-  SmileitGeneratedStructureView,
-  SmileitManualSubstituentDraft,
-  SmileitResultData,
-  SmileitSection,
-  SmileitSiteCoverageView
+    SmileitAssignmentBlockDraft,
+    SmileitBlockCollapsedSummary,
+    SmileitCatalogDraftPreview,
+    SmileitCatalogGroupView,
+    SmileitCatalogQueuedDraft,
+    SmileitChemicalNotationKind,
+    SmileitGeneratedStructureView,
+    SmileitManualSubstituentDraft,
+    SmileitResultData,
+    SmileitSection,
+    SmileitSiteCoverageView
 } from './smileit/smileit-workflow.types';
 
 @Injectable()
@@ -57,7 +57,7 @@ export class SmileitWorkflowService implements OnDestroy {
   private readonly FIXED_EXPORT_PADDING: number = 5;
   private readonly FIXED_SITE_OVERLAP_POLICY: SiteOverlapPolicyEnum =
     SiteOverlapPolicyEnum.LastBlockWins;
-  private readonly FIXED_ALGORITHM_VERSION: string = '2.0.0';
+  private readonly FIXED_ALGORITHM_VERSION: string = '2.0.1';
 
   private readonly jobsApiService = inject(JobsApiService);
   private readonly smileitApiService = inject(SmileitApiService);

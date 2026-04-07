@@ -322,7 +322,7 @@ describe('SmileitWorkflowService', () => {
       maxStructures: 0,
       exportNameBase: 'smileit_run',
       exportPadding: 5,
-      version: '2.0.0',
+      version: '2.0.1',
     });
 
     expect(workflowService.activeSection()).toBe('result');

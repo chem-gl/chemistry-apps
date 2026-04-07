@@ -1,20 +1,6 @@
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=2 | líneas=38 | densidad=0.1%
-
-Archivos con densidad de duplicación > 3.5%:
-  - frontend/src/app/core/application/jobs-monitor.facade.service.ts | densidad=4.3% | líneas=19 | bloques=1
-
-Archivo: frontend/src/app/core/application/jobs-monitor.facade.service.ts
-Duplicated blocks: 1 | Duplicated lines: 19 | Density: 4.3%
-  - chemistry-apps:frontend/src/app/core/application/jobs-monitor.facade.service.ts | líneas 392-392 | tamaño 19
-  - chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts | líneas 330-330 | tamaño 19
-----------------------------------------
-
-Archivo: frontend/src/app/core/application/smileit-workflow.service.ts
-Duplicated blocks: 1 | Duplicated lines: 19 | Density: 3.1%
-  - chemistry-apps:frontend/src/app/core/application/smileit-workflow.service.ts | líneas 330-330 | tamaño 19
-  - chemistry-apps:frontend/src/app/core/application/jobs-monitor.facade.service.ts | líneas 392-392 | tamaño 19
-----------------------------------------
+Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
+No se encontraron archivos con duplicación visible en la respuesta de Sonar.
 
 === Security Hotspots (SonarQube) ===
 Total: 2 hotspot(s) encontrado(s).
