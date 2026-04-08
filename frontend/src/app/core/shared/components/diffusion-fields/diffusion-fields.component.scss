@@ -1,4 +1,4 @@
-// diffusion-fields.component.scss: Estilos para los campos de difusión (grid de parámetros).
+// diffusion-fields.component.scss: Campos de difusión — App Chemistry Sense.
 
 .param-grid {
   display: grid;
@@ -8,34 +8,14 @@
   label {
     display: grid;
     gap: 0.3rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #243b53;
-
-    input {
-      border: 1px solid #bcccdc;
-      border-radius: 9px;
-      padding: 0.46rem 0.6rem;
-      font-size: 0.9rem;
-      background: #fff;
-      width: 100%;
-      transition: border-color 0.14s;
-
-      &:focus {
-        outline: none;
-        border-color: #0f766e;
-        box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
-      }
-
-      &:disabled {
-        background: #f0f4f8;
-        opacity: 0.65;
-      }
-    }
+    font-size: var(--chem-text-sm);
+    font-weight: 600;
+    color: var(--chem-ink-secondary);
+    font-family: var(--chem-font-label);
   }
 
   &.diffusion-fields {
     padding-top: 0.65rem;
-    border-top: 1px dashed #d9e2ec;
+    border-top: 1px dashed var(--chem-border);
   }
 }

@@ -1,4 +1,5 @@
-/* jobs-monitor.component.scss: Styles for global jobs monitoring screen. */
+/* jobs-monitor.component.scss: Monitor de jobs — App Chemistry Sense. */
+
 .monitor-shell {
   display: grid;
   gap: 1.25rem;
@@ -15,21 +16,23 @@
 .eyebrow {
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  color: #0f766e;
+  letter-spacing: 0.1em;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
   font-weight: 700;
+  font-family: var(--chem-font-label);
 }
 
 h1 {
   margin: 0.2rem 0;
   font-size: clamp(1.3rem, 2.6vw, 1.9rem);
-  color: #073b3a;
+  font-family: var(--chem-font-heading);
+  color: var(--chem-ink);
 }
 
 .subtitle {
   margin: 0;
-  color: #315b5a;
+  color: var(--chem-ink-secondary);
 }
 
 .header-actions {
@@ -39,23 +42,37 @@ h1 {
 }
 
 .btn {
-  border: 1px solid #0f766e;
-  color: #0f766e;
-  background: #d9fbf3;
-  padding: 0.5rem 0.8rem;
-  border-radius: 10px;
-  font-weight: 700;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface-elevated);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--chem-radius);
+  font-weight: 600;
+  font-family: var(--chem-font-label);
   cursor: pointer;
+  transition: all var(--chem-transition);
+}
+
+.btn:hover {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
 }
 
 .btn-ghost {
-  background: #fff;
+  background: transparent;
 }
 
 .btn-on {
-  background: #0f766e;
+  background: var(--chem-primary);
+  border-color: var(--chem-primary);
   color: #fff;
 }
+
+.btn-on:hover {
+  background: var(--chem-primary-dark);
+}
+
+/* --- KPI Grid --- */
 
 .kpi-grid {
   display: grid;
@@ -64,90 +81,105 @@ h1 {
 }
 
 .kpi-card {
-  border: 1px solid #8edbd0;
-  background: linear-gradient(180deg, #effefb, #d8fbf4);
-  border-radius: 12px;
-  padding: 0.8rem;
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  border-radius: var(--chem-radius-lg);
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--chem-accent);
+  transition: transform var(--chem-transition), box-shadow var(--chem-transition);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--chem-shadow);
 }
 
 .kpi-label {
   margin: 0;
-  font-size: 0.8rem;
-  color: #0f766e;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink-secondary);
   font-weight: 600;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .kpi-value {
   margin: 0.2rem 0 0;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #052f2d;
+  font-size: var(--chem-text-2xl);
+  font-weight: 700;
+  font-family: var(--chem-font-heading);
+  color: var(--chem-ink);
 }
 
 .kpi-time-value {
   margin: 0.2rem 0 0;
-  font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
+  font-family: var(--chem-font-mono);
   font-weight: 700;
-  color: #052f2d;
+  color: var(--chem-ink);
 }
+
+/* --- Filtros --- */
 
 .filters {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  border: 1px solid #d8f1ee;
-  border-radius: 12px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   padding: 0.8rem;
-  background: #fff;
+  background: var(--chem-surface-elevated);
 }
 
 label {
   display: grid;
   gap: 0.35rem;
-  color: #2a4d4c;
-  font-weight: 700;
-  font-size: 0.85rem;
+  color: var(--chem-ink-secondary);
+  font-weight: 600;
+  font-size: var(--chem-text-sm);
+  font-family: var(--chem-font-label);
 }
 
 select {
   min-width: 170px;
-  border: 1px solid #b4d9d4;
-  border-radius: 8px;
-  padding: 0.45rem 0.6rem;
-  background: #fff;
 }
+
+/* --- Estados de carga / error --- */
 
 .state {
   padding: 0.75rem;
-  border-radius: 10px;
+  border-radius: var(--chem-radius);
   font-weight: 600;
 }
 
 .state-loading {
-  background: #f0f9ff;
-  color: #075985;
-  border: 1px solid #bae6fd;
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  border: 1px solid rgba(2, 119, 189, 0.2);
 }
 
 .state-error {
-  background: #fff1f2;
-  color: #9f1239;
-  border: 1px solid #fecdd3;
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border: 1px solid rgba(211, 47, 47, 0.2);
 }
+
+/* --- Secciones de jobs --- */
 
 .jobs-section h2 {
   margin: 0 0 0.75rem;
-  color: #073b3a;
-  font-size: 1rem;
+  font-family: var(--chem-font-heading);
+  color: var(--chem-ink);
+  font-size: var(--chem-text-lg);
 }
 
 .empty-state {
   margin: 0;
   padding: 0.85rem;
-  border: 1px dashed #9ecfca;
-  border-radius: 10px;
-  color: #436a69;
-  background: #fbfffe;
+  border: 1px dashed var(--chem-border);
+  border-radius: var(--chem-radius);
+  color: var(--chem-ink-soft);
+  background: transparent;
 }
 
 .jobs-grid {
@@ -157,12 +189,18 @@ select {
 }
 
 .job-card {
-  border: 1px solid #caece8;
-  border-radius: 12px;
-  background: #fff;
-  padding: 0.8rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+  padding: 0.85rem;
   display: grid;
   gap: 0.6rem;
+  transition: transform var(--chem-transition), box-shadow var(--chem-transition);
+}
+
+.job-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--chem-shadow);
 }
 
 .job-card-header {
@@ -174,8 +212,11 @@ select {
 
 .job-plugin {
   font-weight: 700;
-  color: #134e4a;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
 }
+
+/* --- Badges de estado (jobs) --- */
 
 .job-status {
   padding: 0.2rem 0.45rem;
@@ -184,78 +225,81 @@ select {
   font-weight: 800;
   text-transform: uppercase;
   border: 1px solid transparent;
+  font-family: var(--chem-font-label);
 }
 
 .status-pending {
-  background: #fef9c3;
-  color: #854d0e;
-  border-color: #fde68a;
+  background: var(--chem-status-pending-bg);
+  color: var(--chem-status-pending);
 }
 
 .status-running {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #93c5fd;
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
 }
 
 .status-paused {
-  background: #ede9fe;
-  color: #5b21b6;
-  border-color: #c4b5fd;
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
 }
 
 .status-completed {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
 .status-failed {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
 }
 
 .status-cancelled {
-  background: #f3f4f6;
-  color: #374151;
-  border-color: #d1d5db;
+  background: var(--chem-status-cancelled-bg);
+  color: var(--chem-status-cancelled);
 }
+
+/* --- ID y mono --- */
 
 .job-id,
 .mono {
   margin: 0;
-  font-family: 'IBM Plex Mono', 'Fira Mono', monospace;
+  font-family: var(--chem-font-mono);
   font-size: 0.73rem;
-  color: #2f4f4d;
+  color: var(--chem-ink-secondary);
   word-break: break-all;
 }
+
+/* --- Barra de progreso --- */
 
 .progress-track {
   height: 8px;
   border-radius: 999px;
-  background: #d8f6f1;
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #14b8a6, #0f766e);
+  background: var(--chem-gradient-header);
 }
+
+/* --- Metadata del job --- */
 
 .job-meta {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #23615f;
+  color: var(--chem-ink-secondary);
   font-weight: 600;
 }
 
 .job-message {
   margin: 0;
   font-size: 0.84rem;
-  color: #315b5a;
+  color: var(--chem-ink-soft);
 }
+
+/* --- Píldoras de stage --- */
 
 .stage-pill {
   border-radius: 999px;
@@ -264,60 +308,56 @@ select {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  background: #f1f5f9;
-  color: #334155;
-  border-color: #dbe4ee;
+  font-family: var(--chem-font-label);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink-soft);
+  border-color: var(--chem-border-subtle);
 }
 
 .stage-pending,
 .stage-queued {
-  background: #fef9c3;
-  color: #854d0e;
-  border-color: #fde68a;
+  background: var(--chem-status-pending-bg);
+  color: var(--chem-status-pending);
 }
 
 .stage-running {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #93c5fd;
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
 }
 
 .stage-paused,
 .stage-recovering {
-  background: #ede9fe;
-  color: #5b21b6;
-  border-color: #c4b5fd;
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
 }
 
 .stage-caching {
-  background: #cffafe;
-  color: #155e75;
-  border-color: #67e8f9;
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
 }
 
 .stage-completed {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
 .stage-failed {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
 }
 
 .stage-cancelled {
-  background: #f3f4f6;
-  color: #374151;
-  border-color: #d1d5db;
+  background: var(--chem-status-cancelled-bg);
+  color: var(--chem-status-cancelled);
 }
+
+/* --- Tabla de resultados --- */
 
 .table-wrap {
   overflow: auto;
-  border: 1px solid #cfe6e2;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
 }
 
 table {
@@ -330,15 +370,21 @@ th,
 td {
   text-align: left;
   padding: 0.62rem;
-  border-bottom: 1px solid #ebf5f3;
+  border-bottom: 1px solid var(--chem-border-subtle);
   font-size: 0.84rem;
 }
 
 th {
-  background: #f5fcfa;
-  color: #245a56;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink-secondary);
   font-weight: 700;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
 }
+
+/* --- Botones de acción --- */
 
 .open-result-link,
 .open-logs-btn,
@@ -349,14 +395,22 @@ th {
   padding: 0.2rem 0.5rem;
   font-size: 0.76rem;
   font-weight: 700;
-  border: 1px solid #0f766e;
-  color: #0f766e;
-  background: #fff;
+  border: 1px solid var(--chem-primary);
+  color: var(--chem-primary);
+  background: var(--chem-surface);
+  transition: background var(--chem-transition), color var(--chem-transition);
+}
+
+.open-result-link:hover,
+.open-logs-btn:hover,
+.close-details-btn:hover {
+  background: var(--chem-primary);
+  color: var(--chem-surface);
 }
 
 .open-result-disabled {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--chem-ink-soft);
   font-weight: 600;
 }
 
@@ -374,53 +428,60 @@ th {
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: filter var(--chem-transition);
+}
+
+.control-btn:hover {
+  filter: brightness(0.92);
 }
 
 .pause-btn {
-  color: #7c2d12;
-  background: #ffedd5;
-  border-color: #fdba74;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
 }
 
 .resume-btn {
-  color: #5b21b6;
-  background: #ede9fe;
-  border-color: #c4b5fd;
+  color: var(--chem-accent);
+  background: rgba(123, 90, 158, 0.12);
 }
 
 .cancel-btn {
-  color: #9a3412;
-  background: #ffedd5;
-  border-color: #fdba74;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
 }
 
 .pause-hint {
   margin: 0;
   font-size: 0.76rem;
-  color: #7c2d12;
+  color: var(--chem-warning);
   font-weight: 700;
 }
+
+/* --- Modal de detalles --- */
 
 .details-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.5);
+  background: rgba(44, 37, 51, 0.5);
+  backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
   padding: 1rem;
-  z-index: 80;
+  z-index: var(--z-backdrop);
 }
 
 .details-modal {
   width: min(900px, 100%);
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  border-radius: 12px;
-  border: 1px solid #d8e7e3;
-  background: #fff;
+  border-radius: var(--chem-radius);
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-glass-heavy);
+  backdrop-filter: blur(16px);
   padding: 1rem;
   display: grid;
   gap: 0.9rem;
+  z-index: var(--z-modal);
 }
 
 .details-header {
@@ -434,22 +495,23 @@ th {
 .details-header h3,
 .error-trace-box h4 {
   margin: 0;
-  color: #073b3a;
-  font-size: 1rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: var(--chem-text-lg);
 }
 
 .details-loading {
   margin: 0;
-  color: #1d4ed8;
+  color: var(--chem-info);
   font-weight: 700;
 }
 
 .details-error {
   margin: 0;
-  color: #9f1239;
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 10px;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
+  border: 1px solid rgba(211, 47, 47, 0.2);
+  border-radius: var(--chem-radius);
   padding: 0.55rem;
   font-weight: 700;
 }
@@ -463,13 +525,15 @@ th {
 .details-meta-grid p,
 .details-empty {
   margin: 0;
-  color: #285b57;
+  color: var(--chem-ink-secondary);
 }
 
+/* --- Traza de errores --- */
+
 .error-trace-box {
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  background: #fff5f5;
+  border: 1px solid rgba(211, 47, 47, 0.25);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
   padding: 0.7rem;
   display: grid;
   gap: 0.45rem;
@@ -478,9 +542,10 @@ th {
 .error-trace-box pre {
   margin: 0;
   font-size: 0.73rem;
-  background: #fff;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  font-family: var(--chem-font-mono);
+  background: var(--chem-surface);
+  border: 1px solid rgba(211, 47, 47, 0.15);
+  border-radius: var(--chem-radius);
   padding: 0.5rem;
   white-space: pre-wrap;
   word-break: break-word;

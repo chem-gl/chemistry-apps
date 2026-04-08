@@ -21,14 +21,14 @@
 .panel-header-row h3,
 .subsection-header h4 {
   margin: 0;
-  color: #1f4033;
+  color: var(--chem-ink);
 }
 
 .panel-caption,
 .hint,
 .status-message {
   margin: 0.12rem 0 0;
-  color: #567261;
+  color: var(--chem-ink-secondary);
   font-size: 0.84rem;
 }
 
@@ -36,7 +36,7 @@
 .structures-list-card,
 .traceability-card,
 .block-card {
-  border: 1px solid #dce9df;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 18px;
   background: transparent;
   padding: 0.7rem;
@@ -47,8 +47,8 @@
   align-items: center;
   padding: 0.12rem 0.56rem;
   border-radius: 999px;
-  background: #edf5f0;
-  color: #2f5b46;
+  background: var(--chem-surface-inset);
+  color: var(--chem-accent);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -56,8 +56,8 @@
 }
 
 .workflow-step-state.generation-ready {
-  background: #e6f4ea;
-  color: #245f3c;
+  background: rgba(123, 90, 158, 0.12);
+  color: var(--chem-accent);
 }
 
 .generation-lock-banner {
@@ -68,12 +68,12 @@
   border-radius: 6px;
   background: transparent !important;
   padding: 0.28rem 0 !important;
-  color: #2a5442;
+  color: var(--chem-ink);
 }
 
 .generation-lock-banner strong {
   display: block;
-  color: #2a5442;
+  color: var(--chem-ink);
 }
 
 .generation-lock-banner .hint {
@@ -112,24 +112,24 @@ label {
   gap: 0.35rem;
   font-size: 0.84rem;
   font-weight: 700;
-  color: #224438;
+  color: var(--chem-ink);
 }
 
 input,
 select {
   width: 100%;
-  border: 1px solid #c2d7c9;
+  border: 1px solid var(--chem-border);
   border-radius: 14px;
   padding: 0.62rem 0.78rem;
   font-size: 0.94rem;
-  background: #fff;
-  color: #244537;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
 }
 
 input:focus,
 select:focus {
-  outline: 2px solid rgba(90, 150, 114, 0.25);
-  border-color: #5a9672;
+  outline: var(--chem-focus-ring);
+  border-color: var(--chem-accent);
 }
 
 .action-row {
@@ -159,15 +159,15 @@ select:focus {
 }
 
 .btn-primary {
-  border: 1px solid #245741;
-  color: #fff;
-  background: linear-gradient(135deg, #245741 0%, #3d6f57 100%);
+  border: 1px solid var(--chem-ink);
+  color: var(--chem-surface-elevated);
+  background: linear-gradient(135deg, var(--chem-ink) 0%, var(--chem-accent) 100%);
 }
 
 .btn-secondary {
-  border: 1px solid #7ea38a;
-  color: #245741;
-  background: #fff;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
 }
 
 .block-stack {
@@ -195,13 +195,13 @@ select:focus {
 
 .block-priority {
   display: inline-flex;
-  color: #2d5b49;
+  color: var(--chem-ink-secondary);
   font-weight: 800;
 }
 
 .block-collapsed-summary {
   margin-top: 0.42rem;
-  border: 1px solid #dce9df;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 14px;
   background: transparent;
   padding: 0.52rem;
@@ -235,9 +235,9 @@ select:focus {
 }
 
 .derivative-card {
-  border: 1px solid #cfe0d4;
+  border: 1px solid var(--chem-border);
   border-radius: 18px;
-  background: #fff;
+  background: var(--chem-surface-elevated);
   cursor: pointer;
   overflow: hidden;
   display: flex;
@@ -253,8 +253,8 @@ select:focus {
 .derivative-card:hover,
 .derivative-card:focus-visible {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(40, 76, 60, 0.13);
-  border-color: #7fb59a;
+  box-shadow: 0 12px 28px rgba(44, 37, 51, 0.13);
+  border-color: var(--chem-accent);
   outline: none;
 }
 
@@ -272,18 +272,18 @@ select:focus {
 }
 
 .download-zip-btn {
-  border-color: #4a8c6a;
-  color: #0b1f1a;
+  border-color: var(--chem-accent);
+  color: var(--chem-ink);
   font-weight: 800;
 }
 
 .download-zip-btn:hover:not(:disabled) {
-  background: #eaf5ee;
+  background: var(--chem-surface-inset);
 }
 
 .derivative-svg-frame {
   background: transparent;
-  border-bottom: 1px solid #e1ebe3;
+  border-bottom: 1px solid var(--chem-border-subtle);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -293,13 +293,13 @@ select:focus {
 }
 
 .combined-structure-frame {
-  border-left: 4px solid #2d6b42;
+  border-left: 4px solid var(--chem-accent);
 }
 
 .derivative-visual-title {
   width: 100%;
   margin-bottom: 0.35rem;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -326,7 +326,7 @@ select:focus {
   gap: 0.25rem;
   flex-wrap: wrap;
   align-items: center;
-  border-bottom: 1px solid #e8f1ea;
+  border-bottom: 1px solid var(--chem-border-subtle);
   background: transparent;
 }
 
@@ -363,9 +363,9 @@ select:focus {
   align-items: center;
   padding: 0.16rem 0.55rem;
   border-radius: 999px;
-  background: #eef4ff;
-  border: 1px solid #c9d9ff;
-  color: #1d3d7c;
+  background: var(--chem-surface-inset);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-accent);
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.35;
@@ -398,30 +398,30 @@ select:focus {
 }
 
 .derivative-legend-pill.scaffold-pill {
-  background: #2d6b42;
-  border-color: #2d6b42;
-  color: #fff;
+  background: var(--chem-accent);
+  border-color: var(--chem-accent);
+  color: var(--chem-surface-elevated);
 }
 
 .derivative-legend-pill.scaffold-pill::before {
-  background: #2d6b42;
+  background: var(--chem-accent);
 }
 
 .derivative-legend-pill.substituent-pill {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
+  background: var(--chem-primary);
+  border-color: var(--chem-primary);
+  color: var(--chem-surface-elevated);
 }
 
 .derivative-legend-pill.substituent-pill::before {
-  background: #2563eb;
+  background: var(--chem-primary);
 }
 
 .derivative-name {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   word-break: break-word;
   line-height: 1.35;
 }
@@ -429,7 +429,7 @@ select:focus {
 .derivative-smiles {
   margin: 0;
   font-size: 0.72rem;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -445,7 +445,7 @@ select:focus {
 
 .structure-modal-name {
   margin: 0;
-  color: #1f4033;
+  color: var(--chem-ink);
   word-break: break-word;
 }
 
@@ -460,7 +460,7 @@ select:focus {
 }
 
 .generated-structure-dialog::backdrop {
-  background: rgba(17, 34, 26, 0.64);
+  background: rgba(44, 37, 51, 0.64);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
@@ -469,8 +469,8 @@ select:focus {
   width: min(980px, 100%);
   max-height: 92vh;
   overflow: auto;
-  border: 1px solid #c7d9cb;
+  border: 1px solid var(--chem-border);
   border-radius: 24px;
-  background: #fffdfa;
+  background: var(--chem-surface-elevated);
   padding: 1.1rem;
 }

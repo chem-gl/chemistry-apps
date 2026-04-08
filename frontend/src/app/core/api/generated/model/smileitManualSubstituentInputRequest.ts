@@ -16,7 +16,7 @@ export interface SmileitManualSubstituentInputRequest {
     name: string;
     smiles: string;
     anchor_atom_indices: Array<number>;
-    categories: Array<string>;
+    categories?: Array<string>;
     source_reference?: string;
     provenance_metadata?: { [key: string]: string; };
 }

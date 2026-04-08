@@ -10,6 +10,8 @@ Cómo se usa:
 
 from __future__ import annotations
 
+from typing import Callable, Iterator
+
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
@@ -30,6 +32,7 @@ from ..definitions import (
     CORE_JOBS_LOGS_ROUTE_SUFFIX,
     DEFAULT_SSE_TIMEOUT_SECONDS,
 )
+from ..identity.services import AuthorizationService
 from ..models import ScientificJob, ScientificJobLogEvent
 from ..schemas import ErrorResponseSerializer, JobLogListSerializer
 from ..types import JobLogEntry, JobLogListResponse
@@ -45,6 +48,48 @@ from .streaming import stream_job_events, stream_job_log_events
 
 class JobStreamActionsMixin:
     """Mixin con acciones de consulta de logs y streaming SSE para jobs."""
+
+    type JobSSEStreamFactory = Callable[..., Iterator[str]]
+
+    def _resolve_last_event_index(self, request: Request) -> int:
+        """Normaliza Last-Event-ID del request a índice entero no negativo."""
+        last_event_id_header: str | None = request.headers.get("Last-Event-ID")
+        if last_event_id_header is None or not last_event_id_header.isdigit():
+            return 0
+        return int(last_event_id_header)
+
+    def _build_sse_response(
+        self,
+        *,
+        request: Request,
+        id: str | None,
+        stream_factory: JobSSEStreamFactory,
+    ) -> StreamingHttpResponse:
+        """Construye respuesta SSE reutilizable para logs y progreso de jobs."""
+        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return StreamingHttpResponse(status=status.HTTP_403_FORBIDDEN)
+
+        last_event_index: int = self._resolve_last_event_index(request)
+        timeout_seconds: int = parse_timeout_seconds(
+            request.query_params.get("timeout_seconds")
+        )
+
+        response: StreamingHttpResponse = StreamingHttpResponse(
+            stream_factory(
+                job_id=str(job.id),
+                last_event_index=last_event_index,
+                timeout_seconds=timeout_seconds,
+            ),
+            content_type=SSE_MEDIA_TYPE,
+            status=status.HTTP_200_OK,
+        )
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response
 
     @extend_schema(
         summary="Consultar historial de logs de un Job",
@@ -84,6 +129,15 @@ class JobStreamActionsMixin:
     def logs(self, request: Request, id: str | None = None) -> Response:
         """Lista logs persistidos por job para diagnóstico y auditoría."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para ver los logs de este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         after_event_index: int = parse_non_negative_int(
             request.query_params.get("after_event_index"),
             default_value=0,
@@ -175,30 +229,11 @@ class JobStreamActionsMixin:
         self, request: Request, id: str | None = None
     ) -> StreamingHttpResponse:
         """Expone stream SSE de logs de job para observabilidad en tiempo real."""
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
-
-        last_event_id_header: str | None = request.headers.get("Last-Event-ID")
-        last_event_index: int = (
-            int(last_event_id_header)
-            if last_event_id_header is not None and last_event_id_header.isdigit()
-            else 0
+        return self._build_sse_response(
+            request=request,
+            id=id,
+            stream_factory=stream_job_log_events,
         )
-        timeout_seconds: int = parse_timeout_seconds(
-            request.query_params.get("timeout_seconds")
-        )
-
-        response: StreamingHttpResponse = StreamingHttpResponse(
-            stream_job_log_events(
-                job_id=str(job.id),
-                last_event_index=last_event_index,
-                timeout_seconds=timeout_seconds,
-            ),
-            content_type=SSE_MEDIA_TYPE,
-            status=status.HTTP_200_OK,
-        )
-        response["Cache-Control"] = "no-cache"
-        response["X-Accel-Buffering"] = "no"
-        return response
 
     @extend_schema(
         summary="Suscribirse a eventos de progreso de un Job (SSE)",
@@ -257,27 +292,8 @@ class JobStreamActionsMixin:
     )
     def events(self, request: Request, id: str | None = None) -> StreamingHttpResponse:
         """Expone stream SSE de progreso del job con heartbeats de conexión."""
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
-
-        last_event_id_header: str | None = request.headers.get("Last-Event-ID")
-        last_event_index: int = (
-            int(last_event_id_header)
-            if last_event_id_header is not None and last_event_id_header.isdigit()
-            else 0
+        return self._build_sse_response(
+            request=request,
+            id=id,
+            stream_factory=stream_job_events,
         )
-        timeout_seconds: int = parse_timeout_seconds(
-            request.query_params.get("timeout_seconds")
-        )
-
-        response: StreamingHttpResponse = StreamingHttpResponse(
-            stream_job_events(
-                job_id=str(job.id),
-                last_event_index=last_event_index,
-                timeout_seconds=timeout_seconds,
-            ),
-            content_type=SSE_MEDIA_TYPE,
-            status=status.HTTP_200_OK,
-        )
-        response["Cache-Control"] = "no-cache"
-        response["X-Accel-Buffering"] = "no"
-        return response

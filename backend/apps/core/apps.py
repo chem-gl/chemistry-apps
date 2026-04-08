@@ -36,7 +36,10 @@ class CoreConfig(AppConfig):
     name = "apps.core"
 
     def ready(self) -> None:
-        """Valida dependencias de runtime críticas durante el arranque del backend."""
+        """Valida runtime tools e inicializa hooks del dominio transversal."""
+        # Importa señales de startup del dominio de identidad (post_migrate).
+        from .identity import startup as _identity_startup  # noqa: F401
+
         if not _is_runtime_tools_strict_check_enabled():
             return
 

@@ -32,11 +32,11 @@
 .catalog-ref-thumb .thumb-open-button small {
   margin-top: 0.2rem;
   font-size: 0.68rem;
-  color: #5c7c69;
+  color: var(--chem-ink-soft);
 }
 
 .catalog-ref-thumb .thumb-open-button .thumb-anchor {
-  color: #2f6149;
+  color: var(--chem-ink);
   font-weight: 700;
 }
 
@@ -64,9 +64,9 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.35rem 0.3rem 0.4rem;
-  border: 1px solid #dbe8de;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--chem-surface-elevated);
   cursor: pointer;
   transition:
     border-color 0.15s,
@@ -78,9 +78,9 @@
 
 .library-thumb:hover,
 .library-thumb:focus-visible {
-  border-color: #4caf7d;
-  background: #f3f9f4;
-  box-shadow: 0 2px 8px rgba(74, 175, 125, 0.18);
+  border-color: var(--chem-accent);
+  background: var(--chem-surface-inset);
+  box-shadow: 0 2px 8px rgba(123, 90, 158, 0.18);
   outline: none;
 }
 
@@ -92,7 +92,7 @@
   justify-content: center;
   border-radius: 8px;
   overflow: hidden;
-  background: #f7fbf8;
+  background: var(--chem-surface);
 }
 
 .thumb-svg {
@@ -110,17 +110,17 @@
 
 .thumb-state-icon {
   font-size: 1.3rem;
-  color: #9ab8a5;
+  color: var(--chem-ink-soft);
 }
 
 .thumb-error {
-  color: #d9534f;
+  color: var(--chem-error);
 }
 
 .thumb-name {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #1e4530;
+  color: var(--chem-ink);
   margin: 0 0 0.18rem;
   line-height: 1.2;
   text-align: center;
@@ -134,7 +134,7 @@
 
 .thumb-smiles {
   font-size: 0.58rem;
-  color: #6b9a7e;
+  color: var(--chem-ink-soft);
   margin: 0.15rem 0 0;
   line-height: 1.2;
   word-break: break-all;
@@ -154,11 +154,11 @@
   width: min(560px, 94vw);
   max-height: 92vh;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(36, 69, 55, 0.22);
+  box-shadow: var(--chem-shadow-lg);
 }
 
 .library-entry-detail-dialog::backdrop {
-  background: rgba(20, 40, 28, 0.45);
+  background: rgba(44, 37, 51, 0.45);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
@@ -176,7 +176,7 @@
   align-items: center;
   gap: 0.8rem;
   padding: 1rem 1.2rem 0.6rem;
-  border-bottom: 1px solid #dbe8de;
+  border-bottom: 1px solid var(--chem-border-subtle);
 }
 
 .library-detail-title-row {
@@ -190,9 +190,9 @@
   align-items: center;
   padding: 0.14rem 0.56rem;
   border-radius: 999px;
-  border: 1px solid #b8d4c2;
-  background: #eef8f1;
-  color: #2f6149;
+  border: 1px solid var(--chem-border);
+  background: var(--chem-accent-light);
+  color: var(--chem-ink);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -201,7 +201,7 @@
 
 .library-detail-header h4 {
   margin: 0;
-  color: #193e2c;
+  color: var(--chem-ink);
   font-size: 1.1rem;
 }
 
@@ -225,9 +225,9 @@
 /* Ventana de visualización con clipping y soporte de pan/drag */
 .library-detail-viewport {
   overflow: hidden;
-  border: 1px solid #deeadf;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
-  background: #f7fbf8;
+  background: var(--chem-surface);
   cursor: grab;
   position: relative;
   display: flex;
@@ -252,7 +252,7 @@
 .library-detail-svg {
   border: none;
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--chem-surface-elevated);
   /* Padding interno para que la molécula nunca quede pegada al borde del viewport */
   padding: 14px;
   flex-shrink: 0;
@@ -274,10 +274,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #b8d4c2;
+  border: 1px solid var(--chem-border);
   border-radius: 8px;
-  background: #f3f9f4;
-  color: #2a5e40;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
@@ -287,8 +287,8 @@
 }
 
 .zoom-btn:hover:not(:disabled) {
-  background: #d9eee3;
-  border-color: #4caf7d;
+  background: var(--chem-surface-inset);
+  border-color: var(--chem-accent);
 }
 
 .zoom-btn:disabled {
@@ -298,7 +298,7 @@
 
 .zoom-label {
   font-size: 0.75rem;
-  color: #5a8570;
+  color: var(--chem-ink-secondary);
   min-width: 46px;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -317,47 +317,47 @@
 
 .library-detail-fields dt {
   font-weight: 700;
-  color: #355544;
+  color: var(--chem-ink-secondary);
   white-space: nowrap;
 }
 
 .library-detail-fields dd {
-  color: #1a3a28;
+  color: var(--chem-ink);
   margin: 0;
   word-break: break-word;
 }
 
 .library-detail-footer {
   padding: 0.7rem 1.2rem 1rem;
-  border-top: 1px solid #dbe8de;
+  border-top: 1px solid var(--chem-border-subtle);
   display: flex;
   justify-content: flex-end;
 }
 
 .catalog-group-header h5 {
   margin: 0;
-  color: #244537;
+  color: var(--chem-ink);
   font-size: 0.9rem;
 }
 
 .auto-catalog-panel {
   margin-top: 0.8rem;
-  border: 1px dashed #c9dccf;
+  border: 1px dashed var(--chem-border);
   border-radius: 14px;
-  background: #f3f9f4;
+  background: var(--chem-surface-inset);
   padding: 0.7rem;
 }
 
 .auto-catalog-panel h5 {
   margin: 0 0 0.45rem;
-  color: #2b5644;
+  color: var(--chem-ink);
   font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .auto-tag-card {
-  background: #fbfffc;
+  background: var(--chem-surface-elevated);
 }
 
 .manager-catalog-groups {
@@ -365,11 +365,11 @@
 }
 
 .pattern-toxicophore {
-  border-left: 5px solid #d64545;
+  border-left: 5px solid var(--chem-error);
 }
 
 .pattern-privileged {
-  border-left: 5px solid #2d8f57;
+  border-left: 5px solid var(--chem-status-completed);
 }
 
 .compact-actions {
@@ -393,36 +393,36 @@
 }
 
 .warning-message {
-  border: 1px solid #d8a74d;
-  background: #fff6df;
-  color: #855b12;
+  border: 1px solid var(--chem-warning);
+  background: var(--chem-warning-bg);
+  color: var(--chem-warning);
 }
 
 .error-message {
-  border: 1px solid #dc8e82;
-  background: #fff1ef;
-  color: #892b20;
+  border: 1px solid var(--chem-error);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
 }
 
 .summary-banner,
 .status-message {
   padding: 0.72rem 0.85rem;
   border-radius: 14px;
-  background: #eff5f0;
+  background: var(--chem-surface-inset);
 }
 
 .progress-track {
   margin-top: 0.7rem;
   height: 12px;
   border-radius: 999px;
-  background: #e3ece5;
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #2e6448 0%, #6ea67d 100%);
+  background: linear-gradient(90deg, var(--chem-accent) 0%, var(--chem-primary) 100%);
 }
 
 .progress-pct,
@@ -434,16 +434,16 @@
 .logs-textbox {
   max-height: min(320px, 42vh);
   overflow-y: auto;
-  font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+  font-family: var(--chem-font-mono);
   font-size: 0.8rem;
   line-height: 1.55;
   white-space: pre;
   word-break: break-all;
-  background: #f3fbf5;
-  border: 1px solid #c9e0d0;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
   border-radius: 12px;
   padding: 0.7rem 0.9rem;
-  color: #2a5040;
+  color: var(--chem-ink);
   margin-top: 0.75rem;
   display: block;
 }
@@ -460,7 +460,7 @@
   border: 0;
   background: transparent;
   padding: 0;
-  color: #245741;
+  color: var(--chem-ink);
   font-weight: 800;
   cursor: pointer;
   text-align: left;
@@ -483,13 +483,13 @@
 .history-table th,
 .history-table td {
   padding: 0.72rem 0.7rem;
-  border-bottom: 1px solid #e4ece6;
+  border-bottom: 1px solid var(--chem-border-subtle);
   text-align: left;
   vertical-align: top;
 }
 
 .history-table th {
-  color: #496756;
+  color: var(--chem-ink-secondary);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;

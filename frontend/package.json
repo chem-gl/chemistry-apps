@@ -10,7 +10,7 @@
     "test:coverage:ci": "ng test --watch=false --coverage",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "api:generate": "openapi-generator-cli generate -i ../backend/openapi/schema.yaml -g typescript-angular -o src/app/core/api/generated --additional-properties=ngVersion=21,supportsES6=true,withInterfaces=true && rm -f src/app/core/api/generated/README.md src/app/core/api/generated/git_push.sh",
+    "api:generate": "openapi-generator generate -i ../backend/openapi/schema.yaml -g typescript-angular -o src/app/core/api/generated --additional-properties=ngVersion=21,supportsES6=true,withInterfaces=true && rm -f src/app/core/api/generated/README.md src/app/core/api/generated/git_push.sh",
     "api:generate:local": "cd ../backend && ./venv/bin/python manage.py spectacular --file openapi/schema.yaml && cd ../frontend && npm run api:generate"
   },
   "prettier": {

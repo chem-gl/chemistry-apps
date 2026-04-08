@@ -42,6 +42,7 @@ dill==0.4.1
 Django==6.0.3
 django-cors-headers==4.9.0
 djangorestframework==3.16.1
+djangorestframework-simplejwt==5.5.1
 docopt==0.6.2
 docstring_parser==0.17.0
 drf-spectacular==0.29.0

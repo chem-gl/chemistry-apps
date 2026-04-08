@@ -1,17 +1,17 @@
 // http-backend-error.interceptor.ts: Interceptor DI que enruta errores HTTP al modal global reutilizable.
 
 import {
-  HttpErrorResponse,
-  HttpEvent,
-  HttpHandler,
-  HttpInterceptor,
-  HttpRequest,
+    HttpErrorResponse,
+    HttpEvent,
+    HttpHandler,
+    HttpInterceptor,
+    HttpRequest,
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import {
-  ERROR_NOTIFIER_PORT,
-  ErrorNotifierPort,
+    ERROR_NOTIFIER_PORT,
+    ErrorNotifierPort,
 } from '../../application/errors/error-notifier.port';
 
 @Injectable()
@@ -21,6 +21,11 @@ export class HttpBackendErrorInterceptor implements HttpInterceptor {
   intercept(httpRequest: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     return next.handle(httpRequest).pipe(
       catchError((httpError: HttpErrorResponse) => {
+        // Los 401 los gestiona HttpAuthTokenInterceptor con refresh automático.
+        if (httpError.status === 401) {
+          return throwError(() => httpError);
+        }
+
         this.errorNotifier.showHttpError(httpError);
         return throwError(() => httpError);
       }),

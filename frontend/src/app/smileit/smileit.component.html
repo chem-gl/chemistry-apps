@@ -2,6 +2,8 @@
 <section class="smileit-shell" aria-label="Smileit scientific app">
   <header class="smileit-header">
     <p class="eyebrow">SMILE-IT</p>
+    <h2>Combinatorial Structure Designer</h2>
+    <p>Inspect scaffolds, assign substitution blocks and generate derivative libraries from SMILES notation.</p>
   </header>
 
   <div class="floating-workspace-shell">
@@ -10,6 +12,13 @@
         <app-catalog-panel [libraryEntryInspections]="libraryEntryInspections()"
           [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
           (libraryEntryDetailRequested)="openLibraryEntryDetail($event)" />
+
+        <app-block-assignment-panel [libraryEntryInspections]="libraryEntryInspections()"
+          [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
+          [catalogEntryPreviewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
+          [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)" (libraryEntryDetailRequested)="
+            openLibraryEntryDetail($event.catalogEntry, $event.openContext)
+          " />
       </div>
 
       <div class="workspace-left-column">
@@ -107,6 +116,44 @@
                 [isProcessing]="workflow.isProcessing()" (inspectionSvgClicked)="onInspectionSvgClick($event)">
               </app-principal-svg-viewer>
 
+              <!-- Selección de átomos: bloque visual unido al visor SVG -->
+              <div class="atom-selection-sticky">
+                <div class="site-toolbar">
+                  <div>
+                    <h4>Select substitution sites on the scaffold</h4>
+                    <p class="hint">
+                      Click atoms in the visual preview to mark where later substitutions may be
+                      placed.
+                    </p>
+                  </div>
+                  <div class="site-toolbar-summary">
+                    <strong>{{ workflow.assignmentBlocks().length }} blocks available</strong>
+                    <p class="hint">
+                      Create blocks first, then map these selected sites to the block that should
+                      own them.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="atom-grid">
+                  @for (atom of inspectionResult.atoms; track atom.index) {
+                  <button type="button" class="atom-chip" [class.selected]="isAtomSelected(atom.index)"
+                    (click)="workflow.toggleSelectedAtom(atom.index)" [disabled]="workflow.isProcessing()">
+                    <span>#{{ atom.index }} {{ atom.symbol }}</span>
+                    @if (coverageLabel(atom.index); as coverage) {
+                    <small>{{ coverage }}</small>
+                    }
+                  </button>
+                  }
+                </div>
+                @if (workflow.uncoveredSelectedSites().length > 0) {
+                <p class="warning-message" role="alert">
+                  Selected sites pending assignment:
+                  {{ workflow.uncoveredSelectedSites().join(', ') }}
+                </p>
+                }
+              </div>
+
               <div class="principal-pattern-action">
                 <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
                   [disabled]="workflow.isProcessing()">
@@ -153,53 +200,13 @@
                 }
               </div>
               }
-
-              <div class="site-toolbar">
-                <div>
-                  <h4>Select substitution sites on the scaffold</h4>
-                  <p class="hint">
-                    Click atoms in the visual preview to mark where later substitutions may be
-                    placed.
-                  </p>
-                </div>
-                <div class="site-toolbar-summary">
-                  <strong>{{ workflow.assignmentBlocks().length }} blocks available</strong>
-                  <p class="hint">
-                    Create blocks first, then map these selected sites to the block that should
-                    own them.
-                  </p>
-                </div>
-              </div>
-
-              <div class="atom-grid">
-                @for (atom of inspectionResult.atoms; track atom.index) {
-                <button type="button" class="atom-chip" [class.selected]="isAtomSelected(atom.index)"
-                  (click)="workflow.toggleSelectedAtom(atom.index)" [disabled]="workflow.isProcessing()">
-                  <span>#{{ atom.index }} {{ atom.symbol }}</span>
-                  @if (coverageLabel(atom.index); as coverage) {
-                  <small>{{ coverage }}</small>
-                  }
-                </button>
-                }
-              </div>
-              @if (workflow.uncoveredSelectedSites().length > 0) {
-              <p class="warning-message" role="alert">
-                Selected sites pending assignment:
-                {{ workflow.uncoveredSelectedSites().join(', ') }}
-              </p>
-              }
             </div>
           </section>
           }
         </div>
+
       </div>
 
-      <app-block-assignment-panel [libraryEntryInspections]="libraryEntryInspections()"
-        [libraryEntryInspectionErrors]="libraryEntryInspectionErrors()"
-        [catalogEntryPreviewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
-        [catalogEntryPreviewErrorResolver]="catalogEntryPreviewError.bind(this)" (libraryEntryDetailRequested)="
-          openLibraryEntryDetail($event.catalogEntry, $event.openContext)
-        " />
     </div>
 
     <app-generation-result-panel />

@@ -14,7 +14,9 @@ from __future__ import annotations
 
 import uuid
 
+from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class SmileitCategory(models.Model):
@@ -45,6 +47,13 @@ class SmileitCategory(models.Model):
         max_length=30, choices=VERIFICATION_RULE_CHOICES
     )
     verification_smarts = models.CharField(max_length=2000, blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="smileit_categories",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -54,7 +63,12 @@ class SmileitCategory(models.Model):
             models.UniqueConstraint(
                 fields=["key", "version"],
                 name="unique_smileit_category_key_version",
-            )
+            ),
+            models.CheckConstraint(
+                condition=(Q(verification_rule="smarts") & ~Q(verification_smarts=""))
+                | (~Q(verification_rule="smarts") & Q(verification_smarts="")),
+                name="smileit_category_smarts_rule_consistency",
+            ),
         ]
         indexes = [
             models.Index(fields=["key", "is_latest"]),
@@ -80,6 +94,13 @@ class SmileitSubstituent(models.Model):
     anchor_atom_indices = models.JSONField(default=list)
     source_reference = models.CharField(max_length=200, blank=True, default="")
     provenance_metadata = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="smileit_substituents",
+    )
 
     categories = models.ManyToManyField(
         SmileitCategory,

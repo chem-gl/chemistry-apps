@@ -9,21 +9,21 @@ label {
   gap: 0.35rem;
   font-size: 0.84rem;
   font-weight: 700;
-  color: #224438;
+  color: var(--chem-ink);
 }
 
 input {
-  border: 1px solid #c2d7c9;
+  border: 1px solid var(--chem-border);
   border-radius: 14px;
   padding: 0.62rem 0.78rem;
   font-size: 0.94rem;
-  background: #fff;
-  color: #244537;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
 }
 
 input:focus {
-  outline: 2px solid rgba(90, 150, 114, 0.25);
-  border-color: #5a9672;
+  outline: var(--chem-focus-ring);
+  border-color: var(--chem-accent);
 }
 
 .principal-actions-row {
@@ -44,9 +44,9 @@ input:focus {
     background-color 120ms ease,
     color 120ms ease,
     border-color 120ms ease;
-  border: 1px solid #7ea38a;
-  color: #245741;
-  background: #fff;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
 }
 
 .btn-secondary:hover {
@@ -66,13 +66,13 @@ input:focus {
 }
 
 .sketch-modifier-dialog::backdrop {
-  background: rgba(13, 26, 22, 0.42);
+  background: rgba(44, 37, 51, 0.42);
 }
 
 .sketch-modifier-modal {
   width: min(620px, 100%);
-  background: #fff;
-  border: 1px solid #d0e2d6;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
   padding: 1rem;
   display: grid;
@@ -81,16 +81,16 @@ input:focus {
 
 .sketch-modifier-modal .hint {
   margin: 0;
-  color: #4b6f60;
+  color: var(--chem-ink-secondary);
   font-size: 0.84rem;
 }
 
 .ketcher-frame-wrap {
   position: relative;
-  border: 1px solid #d0e2d6;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--chem-surface-elevated);
 }
 
 .ketcher-frame {
@@ -103,19 +103,19 @@ input:focus {
 
 textarea {
   width: 100%;
-  border: 1px solid #c2d7c9;
+  border: 1px solid var(--chem-border);
   border-radius: 12px;
   padding: 0.65rem;
   resize: vertical;
   min-height: 90px;
   font-size: 0.93rem;
-  color: #244537;
-  background: #fff;
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
 }
 
 textarea:focus {
-  outline: 2px solid rgba(90, 150, 114, 0.25);
-  border-color: #5a9672;
+  outline: var(--chem-focus-ring);
+  border-color: var(--chem-accent);
 }
 
 .sketch-modifier-actions {
@@ -127,10 +127,10 @@ textarea:focus {
 .sketch-validation-error {
   margin: 0;
   padding: 0.5rem 0.75rem;
-  background: #fff3f3;
-  border: 1px solid #f5c2c2;
+  background: rgba(211, 47, 47, 0.06);
+  border: 1px solid rgba(211, 47, 47, 0.2);
   border-radius: 10px;
-  color: #a33030;
+  color: var(--chem-primary);
   font-size: 0.83rem;
   font-weight: 600;
 }
@@ -143,7 +143,7 @@ textarea:focus {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f7faf9;
+  background: var(--chem-surface-elevated);
   z-index: 2;
   gap: 0.75rem;
 }
@@ -151,7 +151,7 @@ textarea:focus {
 .ketcher-loading-bar {
   width: 200px;
   height: 4px;
-  background: #d0e2d6;
+  background: var(--chem-border-subtle);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -160,7 +160,7 @@ textarea:focus {
   display: block;
   height: 100%;
   width: 40%;
-  background: #0d4e48;
+  background: var(--chem-accent);
   border-radius: 999px;
   animation: ketcher-slide 1.4s ease-in-out infinite;
 }
@@ -177,7 +177,7 @@ textarea:focus {
 .ketcher-loading-text {
   margin: 0;
   font-size: 0.82rem;
-  color: #4a7c6f;
+  color: var(--chem-ink-secondary);
 }
 
 /* Precargador fuera de pantalla */

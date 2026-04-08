@@ -28,6 +28,7 @@ from ..definitions import (
     CORE_JOBS_PROGRESS_ROUTE_SUFFIX,
     CORE_JOBS_RESUME_ROUTE_SUFFIX,
 )
+from ..identity.services import AuthorizationService
 from ..models import ScientificJob
 from ..schemas import (
     ErrorResponseSerializer,
@@ -75,8 +76,15 @@ class JobControlActionsMixin:
     @action(detail=True, methods=["post"], url_path=CORE_JOBS_PAUSE_ROUTE_SUFFIX)
     def pause(self, request: Request, id: str | None = None) -> Response:
         """Solicita pausa cooperativa para un job con soporte explícito."""
-        del request
-        get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        job = get_object_or_404(ScientificJob, pk=id)
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para pausar este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             updated_job: ScientificJob = JobService.request_pause(str(id))
@@ -125,8 +133,15 @@ class JobControlActionsMixin:
     @action(detail=True, methods=["post"], url_path=CORE_JOBS_RESUME_ROUTE_SUFFIX)
     def resume(self, request: Request, id: str | None = None) -> Response:
         """Reanuda un job pausado y reintenta su encolado de ejecución."""
-        del request
-        get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        job = get_object_or_404(ScientificJob, pk=id)
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para reanudar este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             resumed_job: ScientificJob = JobService.resume_job(str(id))
@@ -193,8 +208,15 @@ class JobControlActionsMixin:
     @action(detail=True, methods=["post"], url_path=CORE_JOBS_CANCEL_ROUTE_SUFFIX)
     def cancel(self, request: Request, id: str | None = None) -> Response:
         """Cancela un job de forma irreversible si se encuentra en estado activo."""
-        del request
-        get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        job = get_object_or_404(ScientificJob, pk=id)
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para cancelar este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             cancelled_job: ScientificJob = JobService.cancel_job(str(id))
@@ -238,8 +260,15 @@ class JobControlActionsMixin:
     @action(detail=True, methods=["get"], url_path=CORE_JOBS_PROGRESS_ROUTE_SUFFIX)
     def progress(self, request: Request, id: str | None = None) -> Response:
         """Retorna el progreso actual del job en un contrato tipado y estable."""
-        del request
+        actor = request.user
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para ver el progreso de este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         snapshot: JobProgressSnapshot = build_progress_snapshot(job)
         serializer = JobProgressSnapshotSerializer(snapshot)
         return Response(serializer.data, status=status.HTTP_200_OK)

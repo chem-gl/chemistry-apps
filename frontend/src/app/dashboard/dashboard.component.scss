@@ -1,0 +1,272 @@
+/* dashboard.component.scss: Vista principal multirol con métricas y resumen de actividad. */
+
+.dashboard-shell {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.dashboard-header,
+.panel-card,
+.metric-card,
+.state-card {
+  background: rgba(237, 233, 240, 0.72);
+  background-image: var(--chem-gradient-subtle);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--chem-shadow);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  border-left: 3px solid var(--chem-accent);
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+}
+
+h1,
+h2,
+.subtitle,
+.metric-label,
+.metric-value,
+.job-app,
+.job-meta,
+.summary-list {
+  margin: 0;
+}
+
+h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+h1 {
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.2rem, 2.6vw, 1.8rem);
+}
+
+.subtitle {
+  margin-top: 0.35rem;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.outline-action,
+.solid-action,
+.app-chip {
+  text-decoration: none;
+  border-radius: var(--chem-radius-pill);
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  font-size: var(--chem-text-sm);
+  font-family: var(--chem-font-label);
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.outline-action {
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: rgba(245, 244, 240, 0.7);
+}
+
+.outline-action:hover {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  transform: translateY(-1px);
+}
+
+.solid-action {
+  border: none;
+  background: var(--chem-primary);
+  color: #fff;
+}
+
+.solid-action:hover {
+  background: var(--chem-primary-dark);
+  transform: translateY(-1px);
+}
+
+.metrics-grid,
+.dashboard-grid,
+.chip-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.metric-card {
+  border-top: 3px solid var(--chem-accent);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(123, 90, 158, 0.07), transparent 35%);
+  pointer-events: none;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--chem-shadow-lg);
+}
+
+.metric-card.is-running {
+  border-top-color: var(--chem-primary);
+}
+
+.metric-card.is-paused {
+  border-top-color: var(--chem-coral);
+}
+
+.metric-card.is-completed {
+  border-top-color: var(--chem-success);
+}
+
+.metric-card.is-apps {
+  border-top-color: var(--chem-accent);
+}
+
+.metric-card.is-users {
+  border-top-color: var(--chem-info);
+}
+
+.metric-card.is-groups {
+  border-top-color: var(--chem-border-strong);
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.wide-panel {
+  grid-column: span 2;
+}
+
+.metric-label {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  font-family: var(--chem-font-label);
+}
+
+.metric-value {
+  margin-top: 0.4rem;
+  font-size: clamp(1.7rem, 3.8vw, 2.05rem);
+  font-weight: 800;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.chip-grid {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+}
+
+.app-chip {
+  border: 1px solid var(--chem-border);
+  background: rgba(245, 244, 240, 0.7);
+  color: var(--chem-ink-secondary);
+  text-align: center;
+}
+
+.app-chip:hover {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+.recent-jobs-list,
+.summary-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.job-row,
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--chem-border);
+}
+
+.job-row:last-child,
+.summary-list li:last-child {
+  border-bottom: none;
+}
+
+.job-app {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.job-meta,
+.summary-list span,
+.empty-state {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-sm);
+}
+
+.job-status {
+  text-transform: uppercase;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-primary-light);
+  color: var(--chem-primary-dark);
+  font-family: var(--chem-font-label);
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+}
+
+.error-card {
+  color: var(--chem-error);
+  background: linear-gradient(145deg, rgba(255, 235, 238, 0.9), rgba(253, 236, 234, 0.95));
+}
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wide-panel {
+    grid-column: span 1;
+  }
+}

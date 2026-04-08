@@ -1,0 +1,132 @@
+/* profile.component.scss: Gestión de perfil personal con identidad visual Chemistry Apps. */
+
+.profile-shell {
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+}
+
+.metallic-card {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-surface);
+  box-shadow: var(--chem-shadow-sm);
+}
+
+.profile-header {
+  padding: 1.25rem;
+  border-left: 3px solid var(--chem-primary);
+}
+
+.profile-card {
+  padding: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--chem-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--chem-ink-secondary);
+}
+
+.wide-field,
+.error-message,
+.success-message,
+.action-row {
+  grid-column: 1 / -1;
+}
+
+input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  transition: border-color var(--chem-transition);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--chem-primary);
+  box-shadow: 0 0 0 3px rgba(123, 90, 158, 0.12);
+}
+
+.error-message {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.88rem;
+}
+
+.success-message {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--chem-success-bg);
+  color: var(--chem-success);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.88rem;
+}
+
+.action-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+.primary-button {
+  border: none;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-primary);
+  color: #fff;
+  padding: 0.65rem 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--chem-transition);
+}
+
+.primary-button:hover {
+  background: var(--chem-primary-dark);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (max-width: 760px) {
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
+}

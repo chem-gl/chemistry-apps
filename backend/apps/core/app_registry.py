@@ -84,6 +84,14 @@ class ScientificAppRegistry:
         return cls._definitions_by_plugin.get(plugin_name)
 
     @classmethod
+    def list_definitions(cls) -> list[ScientificAppDefinition]:
+        """Lista definiciones registradas de forma estable para consumo transversal."""
+        return sorted(
+            cls._definitions_by_plugin.values(),
+            key=lambda definition: definition.api_route_prefix,
+        )
+
+    @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:
         existing_definition: ScientificAppDefinition | None = (
             cls._definitions_by_plugin.get(definition.plugin_name)

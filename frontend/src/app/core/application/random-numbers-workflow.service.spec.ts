@@ -5,12 +5,12 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-  JobControlActionResult,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  ScientificJobView,
+    JobControlActionResult,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    JobsApiService,
+    ScientificJobView,
 } from '../api/jobs-api.service';
 import { RandomNumbersWorkflowService } from './random-numbers-workflow.service';
 
@@ -52,7 +52,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 function makeProgressSnapshot(

@@ -1,0 +1,41 @@
+<!-- login.component.html: Inicio de sesión para operadores y administradores. -->
+<section class="login-shell" aria-label="Sign in">
+    <article class="login-hero" aria-label="Brand message">
+        <p class="hero-kicker">App Chemistry Sense</p>
+        <h1 class="hero-title">Designing Scientific Workflows with Clarity</h1>
+        <p class="hero-copy">
+            Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure
+            access controls from a single command surface.
+        </p>
+    </article>
+
+    <article class="login-panel">
+        <p class="eyebrow">Identity Gateway</p>
+        <h2>Scientific Access</h2>
+        <p class="lead">
+            Sign in to load your role, group access, app visibility rules and personalized workspace.
+        </p>
+
+        <form class="login-form" (ngSubmit)="submit()">
+            <label>
+                Username
+                <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
+                    autocomplete="username" required />
+            </label>
+
+            <label>
+                Password
+                <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
+                    autocomplete="current-password" required />
+            </label>
+
+            @if (localErrorMessage() ?? sessionService.lastAuthenticationError(); as errorMessage) {
+            <p class="error-message" role="alert">{{ errorMessage }}</p>
+            }
+
+            <button class="submit-button" type="submit" [disabled]="sessionService.isLoading()">
+                {{ sessionService.isLoading() ? 'Signing in...' : 'Sign in' }}
+            </button>
+        </form>
+    </article>
+</section>

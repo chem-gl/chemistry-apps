@@ -16,7 +16,7 @@ export interface SmileitCatalogEntryCreateRequest {
     name: string;
     smiles: string;
     anchor_atom_indices: Array<number>;
-    category_keys: Array<string>;
+    category_keys?: Array<string>;
     source_reference?: string;
     provenance_metadata?: { [key: string]: string; };
 }

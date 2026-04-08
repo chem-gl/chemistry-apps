@@ -1,30 +1,29 @@
-/* toxicity-properties.component.scss: Estilos de la pantalla Toxicity Properties. */
+/* toxicity-properties.component.scss: Estilos con tokens --chem-*. */
 .toxicity-shell {
   display: grid;
   gap: 1rem;
 }
 
 .toxicity-header {
-  border: 1px solid #cfe1df;
-  border-radius: 20px;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
   padding: 1.1rem 1.2rem;
-  background:
-    radial-gradient(circle at top right, rgba(36, 122, 112, 0.2), transparent 42%),
-    linear-gradient(135deg, #f6fbfb 0%, #edf7f6 58%, #f9fcfc 100%);
+  background: var(--chem-surface-elevated);
 }
 
 .eyebrow {
   margin: 0;
-  color: #0f6a61;
+  color: var(--chem-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.74rem;
+  font-size: var(--chem-text-xs);
   font-weight: 800;
+  font-family: var(--chem-font-label);
 }
 
 .toxicity-header p {
   margin: 0;
-  color: #0b1f1a;
+  color: var(--chem-ink);
 }
 
 .workspace-grid {
@@ -39,15 +38,16 @@
 .logs-card,
 .history-card,
 .references-card {
-  border: 1px solid #d5e7e4;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 1rem;
 }
 
 h3 {
   margin: 0 0 0.7rem;
-  color: #0d4e48;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
 }
 
 .smiles-label {
@@ -55,7 +55,7 @@ h3 {
   gap: 0.38rem;
   font-size: 0.86rem;
   font-weight: 700;
-  color: #1a5b54;
+  color: var(--chem-ink);
 }
 
 textarea,
@@ -65,24 +65,24 @@ button {
 }
 
 textarea {
-  border: 1px solid #bcd6d2;
-  border-radius: 12px;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
   padding: 0.65rem 0.75rem;
   resize: vertical;
   min-height: 180px;
   font-size: 0.94rem;
-  background: #fbfefe;
+  background: var(--chem-surface-elevated);
 }
 
 textarea:focus {
-  outline: 2px solid rgba(15, 106, 97, 0.25);
-  border-color: #0f6a61;
+  outline: 2px solid rgba(123, 90, 158, 0.25);
+  border-color: var(--chem-accent);
 }
 
 .hint {
   margin: 0.35rem 0 0;
-  color: #0b1f1a;
-  font-size: 0.82rem;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
 }
 
 .action-row {
@@ -99,24 +99,31 @@ textarea:focus {
   padding: 0.45rem 0.88rem;
   font-weight: 700;
   cursor: pointer;
+  transition: opacity var(--chem-transition), background var(--chem-transition);
 }
 
 .btn-primary {
-  border: 1px solid #0f6a61;
-  background: #0f6a61;
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-primary);
   color: #fff;
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
 }
 
 .btn-secondary,
 .history-open-btn {
-  border: 1px solid #0f6a61;
-  background: #fff;
-  color: #0f6a61;
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  &:hover:not(:disabled) {
+    background: var(--chem-surface-elevated);
+  }
 }
 
 .status-message {
   margin: 0;
-  color: #0b1f1a;
+  color: var(--chem-ink);
 }
 
 .progress-card {
@@ -126,33 +133,33 @@ textarea:focus {
 
 .job-id,
 .mono {
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-family: var(--chem-font-mono);
   font-size: 0.8rem;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   word-break: break-all;
 }
 
 .progress-track {
   height: 10px;
   border-radius: 999px;
-  background: #e3efee;
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2f8f84, #0f6a61);
+  background: var(--chem-gradient-header);
 }
 
 .progress-pct {
   margin: 0;
   font-weight: 700;
-  color: #145f57;
+  color: var(--chem-primary);
 }
 
 .progress-message {
   margin: 0;
-  color: #4d7570;
+  color: var(--chem-ink-soft);
 }
 
 .metadata-grid {
@@ -163,7 +170,7 @@ textarea:focus {
 
 .metadata-grid p {
   margin: 0;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   font-size: 0.88rem;
 }
 
@@ -175,8 +182,8 @@ textarea:focus {
 .table-wrap {
   margin-top: 0.7rem;
   overflow: auto;
-  border: 1px solid #d8e8e5;
-  border-radius: 12px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
 }
 
 .result-table,
@@ -191,34 +198,38 @@ textarea:focus {
 .history-table th,
 .history-table td {
   padding: 0.55rem 0.62rem;
-  border-bottom: 1px solid #e7f1f0;
+  border-bottom: 1px solid var(--chem-border-subtle);
   text-align: left;
   font-size: 0.86rem;
 }
 
 .result-table th,
 .history-table th {
-  background: #f2f9f8;
-  color: #17554e;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
   font-weight: 800;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--chem-text-xs);
 }
 
 .row-error {
   margin: 0;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-  border-radius: 8px;
+  border: 1px solid var(--chem-error);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius);
   padding: 0.4rem 0.5rem;
   font-size: 0.8rem;
 }
 
 .error-message {
   margin: 0.55rem 0 0;
-  border: 1px solid #fbcfe8;
-  border-radius: 10px;
-  background: #fff1f7;
-  color: #9d174d;
+  border: 1px solid var(--chem-error);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
   padding: 0.5rem 0.62rem;
   font-weight: 700;
   font-size: 0.83rem;
@@ -230,7 +241,8 @@ textarea:focus {
 
 .references-card h4 {
   margin: 0 0 0.45rem;
-  color: #145f57;
+  color: var(--chem-primary);
+  font-family: var(--chem-font-heading);
 }
 
 .references-list {
@@ -240,7 +252,7 @@ textarea:focus {
 
 .references-list p {
   margin: 0;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   font-size: 0.84rem;
 }
 
@@ -252,9 +264,9 @@ textarea:focus {
 }
 
 .log-item {
-  border: 1px solid #deecea;
-  border-radius: 10px;
-  background: #fbfefe;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
   padding: 0.48rem 0.6rem;
   display: grid;
   gap: 0.25rem;
@@ -265,7 +277,7 @@ textarea:focus {
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
-  font-size: 0.72rem;
+  font-size: var(--chem-text-xs);
 }
 
 .log-level {
@@ -275,51 +287,49 @@ textarea:focus {
   text-transform: uppercase;
   font-weight: 800;
   letter-spacing: 0.04em;
+  font-family: var(--chem-font-label);
 }
 
 .log-level-debug {
-  color: #374151;
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-elevated);
 }
 
 .log-level-info {
-  color: #115e59;
-  background: #ccfbf1;
-  border-color: #99f6e4;
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
 }
 
 .log-level-warning {
-  color: #854d0e;
-  background: #fef9c3;
-  border-color: #fde68a;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
 }
 
 .log-level-error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
 }
 
 .log-source,
 .log-index {
-  color: #5f7875;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
 }
 
 .log-message,
 .log-payload {
   margin: 0;
-  color: #0b1f1a;
-  font-size: 0.82rem;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
 }
 
 .log-payload {
-  border: 1px solid #deecea;
-  border-radius: 8px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   padding: 0.35rem;
-  background: #fff;
+  background: var(--chem-surface);
   overflow: auto;
+  font-family: var(--chem-font-mono);
 }
 
 .history-header {
@@ -340,28 +350,24 @@ textarea:focus {
 
 .history-pending,
 .history-running {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
 }
 
 .history-completed {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
 .history-failed,
 .history-cancelled {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
 }
 
 .history-paused {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
 }
 
 .input-tools-row {
@@ -380,10 +386,11 @@ textarea:focus {
   font-size: 0.83rem;
   font-weight: 700;
   cursor: pointer;
-  border: 1px solid #7ea38a;
-  color: #245741;
-  background: #f4fbf6;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
   font-family: inherit;
+  transition: background var(--chem-transition), border-color var(--chem-transition);
 }
 
 .btn-tool:disabled,
@@ -409,9 +416,9 @@ textarea:focus {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
-  font-size: 0.82rem;
-  color: #0f6a61;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-primary);
   padding: 0;
   text-align: left;
   word-break: break-all;
@@ -430,14 +437,14 @@ textarea:focus {
 
 .sketch-dialog::backdrop,
 .molecule-image-dialog::backdrop {
-  background: rgba(13, 26, 22, 0.45);
+  background: rgba(44, 37, 51, 0.45);
 }
 
 .sketch-modal,
 .molecule-image-modal {
-  background: #fff;
-  border: 1px solid #d0e2d6;
-  border-radius: 16px;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -446,10 +453,10 @@ textarea:focus {
 
 .ketcher-frame-wrap {
   position: relative;
-  border: 1px solid #d0e2d6;
-  border-radius: 12px;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
   overflow: hidden;
-  background: #fff;
+  background: var(--chem-surface);
 }
 
 .ketcher-frame {
@@ -466,7 +473,7 @@ textarea:focus {
   gap: 0.5rem;
 }
 
-/* Indicador animado de carga mientras Ketcher inicializa dentro del dialog */
+/* Indicador animado de carga mientras Ketcher inicializa */
 .ketcher-loading {
   position: absolute;
   inset: 0;
@@ -474,15 +481,15 @@ textarea:focus {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f7faf9;
-  z-index: 2;
+  background: var(--chem-surface);
+  z-index: var(--z-sticky);
   gap: 0.75rem;
 }
 
 .ketcher-loading-bar {
   width: 200px;
   height: 4px;
-  background: #d0e2d6;
+  background: var(--chem-border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -491,7 +498,7 @@ textarea:focus {
   display: block;
   height: 100%;
   width: 40%;
-  background: #0d4e48;
+  background: var(--chem-primary);
   border-radius: 999px;
   animation: ketcher-slide 1.4s ease-in-out infinite;
 }
@@ -507,11 +514,11 @@ textarea:focus {
 
 .ketcher-loading-text {
   margin: 0;
-  font-size: 0.82rem;
-  color: #4a7c6f;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-soft);
 }
 
-/* Precargador fuera de pantalla: descarga los assets de Ketcher al montar la página */
+/* Precargador fuera de pantalla */
 .ketcher-preloader {
   position: fixed;
   top: -2500px;
@@ -534,16 +541,17 @@ textarea:focus {
   border: none;
   cursor: pointer;
   font-size: 1rem;
-  color: #527672;
+  color: var(--chem-ink-soft);
   padding: 0.2rem 0.4rem;
-  border-radius: 6px;
+  border-radius: var(--chem-radius);
 }
 
 .molecule-modal-smiles {
   margin: 0;
   font-size: 0.78rem;
-  color: #0b1f1a;
+  color: var(--chem-ink);
   word-break: break-all;
+  font-family: var(--chem-font-mono);
 }
 
 .molecule-svg-wrap {
@@ -551,9 +559,9 @@ textarea:focus {
   justify-content: center;
   align-items: center;
   padding: 0.5rem;
-  border: 1px solid #d5e7e4;
-  border-radius: 12px;
-  background: #f9fefe;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
 }
 
 .molecule-svg-wrap svg {

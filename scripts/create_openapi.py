@@ -7,6 +7,8 @@ import os
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,8 +29,13 @@ class ProjectPaths:
     manage_py_path: Path
     openapi_schema_path: Path
     frontend_package_json_path: Path
-    angular_cli_path: Path
-    openapi_generator_cli_path: Path
+    frontend_openapitools_config_path: Path
+    node_modules_path: Path
+    node_modules_bin_path: Path
+    angular_cli_package_json_path: Path
+    openapi_generator_package_json_path: Path
+    openapi_generator_binary_path: Path
+    openapi_generator_jar_path: Path
 
 
 def _resolve_project_root() -> Path:
@@ -62,15 +69,29 @@ def _build_project_paths(project_root: Path) -> ProjectPaths:
         manage_py_path=backend_path / MANAGE_PY,
         openapi_schema_path=backend_path / "openapi" / "schema.yaml",
         frontend_package_json_path=frontend_path / PACKAGE_JSON,
-        angular_cli_path=(
+        frontend_openapitools_config_path=frontend_path / "openapitools.json",
+        node_modules_path=frontend_path / "node_modules",
+        node_modules_bin_path=frontend_path / "node_modules" / ".bin",
+        angular_cli_package_json_path=(
             frontend_path / "node_modules" / "@angular" / "cli" / PACKAGE_JSON
         ),
-        openapi_generator_cli_path=(
+        openapi_generator_package_json_path=(
             frontend_path
             / "node_modules"
             / "@openapitools"
             / "openapi-generator-cli"
             / PACKAGE_JSON
+        ),
+        openapi_generator_binary_path=(
+            frontend_path / "node_modules" / ".bin" / "openapi-generator"
+        ),
+        openapi_generator_jar_path=(
+            frontend_path
+            / "node_modules"
+            / "@openapitools"
+            / "openapi-generator-cli"
+            / "bin"
+            / "openapi-generator.jar"
         ),
     )
 
@@ -126,17 +147,27 @@ def _ensure_frontend_environment_is_ready(project_paths: ProjectPaths) -> None:
     if npm_binary_path is None:
         raise RuntimeError("No se encontro npm instalado en el sistema.")
 
-    if not project_paths.angular_cli_path.exists():
+    _ensure_frontend_dependencies_installed(project_paths)
+
+    if not project_paths.angular_cli_package_json_path.exists():
         raise RuntimeError(
-            "No se detecta Angular CLI instalado en frontend/node_modules. "
-            "Ejecuta 'cd frontend && npm install'."
+            "Angular CLI no esta disponible tras instalar dependencias. "
+            "Revisa frontend/package.json y ejecuta 'cd frontend && npm install'."
         )
 
-    if not project_paths.openapi_generator_cli_path.exists():
+    if not project_paths.openapi_generator_package_json_path.exists():
         raise RuntimeError(
-            "No se detecta OpenAPI Generator CLI instalado. "
-            "Ejecuta 'cd frontend && npm install'."
+            "No se detecta el paquete @openapitools/openapi-generator-cli tras instalar dependencias. "
+            "Revisa frontend/package.json y ejecuta 'cd frontend && npm install'."
         )
+
+    if not project_paths.openapi_generator_binary_path.exists():
+        raise RuntimeError(
+            "No se detecta el binario openapi-generator en frontend/node_modules/.bin. "
+            "Reinstala dependencias con 'cd frontend && npm install'."
+        )
+
+    _ensure_openapi_generator_jar_available(project_paths)
 
     package_data: dict[str, object]
     with project_paths.frontend_package_json_path.open(
@@ -156,6 +187,77 @@ def _ensure_frontend_environment_is_ready(project_paths: ProjectPaths) -> None:
         )
 
 
+def _ensure_frontend_dependencies_installed(project_paths: ProjectPaths) -> None:
+    """Instala dependencias frontend solo cuando faltan binarios esenciales."""
+    has_openapi_generator_binary: bool = (
+        project_paths.openapi_generator_binary_path.exists()
+    )
+    has_angular_cli_package: bool = project_paths.angular_cli_package_json_path.exists()
+
+    if has_openapi_generator_binary and has_angular_cli_package:
+        return
+
+    _print_info(
+        "No se detectaron dependencias frontend completas. Ejecutando npm install..."
+    )
+    _run_command(["npm", "install"], working_directory=project_paths.frontend_path)
+
+
+def _get_openapi_generator_version(project_paths: ProjectPaths) -> str:
+    """Obtiene version de openapi-generator desde openapitools.json."""
+    default_version: str = "7.20.0"
+    if not project_paths.frontend_openapitools_config_path.exists():
+        return default_version
+
+    try:
+        with project_paths.frontend_openapitools_config_path.open(
+            "r", encoding="utf-8"
+        ) as openapi_tools_file:
+            openapi_tools_data: dict[str, object] = json.load(openapi_tools_file)
+    except (OSError, json.JSONDecodeError):
+        return default_version
+
+    generator_config: object = openapi_tools_data.get("generator-cli")
+    if not isinstance(generator_config, dict):
+        return default_version
+
+    configured_version: object = generator_config.get("version")
+    if not isinstance(configured_version, str) or not configured_version.strip():
+        return default_version
+
+    return configured_version.strip()
+
+
+def _ensure_openapi_generator_jar_available(project_paths: ProjectPaths) -> None:
+    """Descarga el JAR del generador cuando el paquete npm no lo incluye."""
+    if project_paths.openapi_generator_jar_path.exists():
+        return
+
+    generator_version: str = _get_openapi_generator_version(project_paths)
+    jar_download_url: str = (
+        "https://repo1.maven.org/maven2/org/openapitools/"
+        f"openapi-generator-cli/{generator_version}/"
+        f"openapi-generator-cli-{generator_version}.jar"
+    )
+
+    project_paths.openapi_generator_jar_path.parent.mkdir(parents=True, exist_ok=True)
+    _print_info(
+        "No se detecto openapi-generator.jar en node_modules. "
+        f"Descargando version {generator_version}..."
+    )
+
+    try:
+        with urllib.request.urlopen(jar_download_url) as response:
+            jar_content: bytes = response.read()
+        with project_paths.openapi_generator_jar_path.open("wb") as jar_file:
+            jar_file.write(jar_content)
+    except OSError as download_error:
+        raise RuntimeError(
+            "No se pudo descargar openapi-generator.jar automaticamente. "
+            "Verifica conectividad a Maven Central o reinstala dependencias frontend."
+        ) from download_error
+
+
 def _run_command(command: list[str], working_directory: Path) -> None:
     """Ejecuta comando de sistema y falla con mensaje claro ante errores."""
     _print_info(f"Ejecutando: {' '.join(command)}")
@@ -164,7 +266,23 @@ def _run_command(command: list[str], working_directory: Path) -> None:
         cwd=working_directory,
         check=False,
         text=True,
+        capture_output=True,
     )
+
+    if completed_process.stdout:
+        print(completed_process.stdout, end="")
+    if completed_process.stderr:
+        print(completed_process.stderr, end="", file=sys.stderr)
+
+    combined_output: str = (
+        (completed_process.stdout or "") + "\n" + (completed_process.stderr or "")
+    ).lower()
+    if "unable to access jarfile" in combined_output:
+        raise RuntimeError(
+            "El generador OpenAPI reporto un error de JAR inaccesible. "
+            "Verifica la descarga de openapi-generator.jar o la conectividad de red."
+        )
+
     if completed_process.returncode != 0:
         raise RuntimeError(
             f"Fallo el comando: {' '.join(command)} (codigo {completed_process.returncode})"

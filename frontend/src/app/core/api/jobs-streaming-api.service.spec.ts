@@ -24,7 +24,7 @@ interface MockSseEvent {
 type EventListener = (event: Event) => void;
 
 class MockEventSource {
-  static instances: MockEventSource[] = [];
+  static readonly instances: MockEventSource[] = [];
 
   readonly url: string;
   readonly close = vi.fn();
@@ -116,7 +116,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJob;
 }
 
 describe('JobsStreamingApiService', () => {
@@ -136,7 +136,7 @@ describe('JobsStreamingApiService', () => {
   beforeEach(() => {
     originalEventSource = globalThis.EventSource;
     originalWebSocket = globalThis.WebSocket;
-    MockEventSource.instances = [];
+    MockEventSource.instances.length = 0;
 
     globalThis.EventSource = MockEventSource as unknown as typeof EventSource;
 
@@ -174,8 +174,8 @@ describe('JobsStreamingApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    globalThis.EventSource = originalEventSource ?? (globalThis.EventSource as typeof EventSource);
-    globalThis.WebSocket = originalWebSocket ?? (globalThis.WebSocket as typeof WebSocket);
+    globalThis.EventSource = originalEventSource ?? globalThis.EventSource;
+    globalThis.WebSocket = originalWebSocket ?? globalThis.WebSocket;
     vi.useRealTimers();
   });
 

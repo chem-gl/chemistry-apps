@@ -4,13 +4,13 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-  DownloadedReportFile,
-  JobLogsPageView,
-  JobsApiService,
-  SaScoreJobResponseView,
-  SaScoreMethod,
-  ScientificJobView,
-  SmilesCompatibilityResultView,
+    DownloadedReportFile,
+    JobLogsPageView,
+    JobsApiService,
+    SaScoreJobResponseView,
+    SaScoreMethod,
+    ScientificJobView,
+    SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
 import { SaScoreWorkflowService } from './sa-score-workflow.service';
 
@@ -55,7 +55,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 function makeSaScoreJobResponse(

@@ -1,36 +1,46 @@
+Problema 1
+Archivo: chemistry-apps:frontend/src/app/core/api/interceptors/http-auth-token.interceptor.ts
+
+Problema:
+Member 'refreshedToken$' is never reassigned; mark it as `readonly`.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S2933
+Severidad: MAJOR
+Línea: 22
+
+Cómo solucionarlo:
+Mark the given field with the readonly modifier.
+
+Noncompliant code example
+
+class Person {
+  private birthYear: number; // Noncompliant
+
+  constructor(birthYear: number) {
+    this.birthYear = birthYear;
+  }
+}
+
+Compliant solution
+
+class Person {
+  private readonly birthYear: number;
+
+  constructor(birthYear: number) {
+    this.birthYear = birthYear;
+  }
+}
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
 Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
 No se encontraron archivos con duplicación visible en la respuesta de Sonar.
 
 === Security Hotspots (SonarQube) ===
 Total: 2 hotspot(s) encontrado(s).
-
-Archivo: chemistry-apps:backend/apps/random_numbers/plugin.py
-Línea: 289
-Regla: python:S2245
-Probabilidad: Media
-Estado: REVIEWED
-Descripción: Recommended Secure Coding Practices
-
-  Only use random number generators which are recommended by
-  OWASP or any other trusted organization.
-  Use the generated random values only once.
-  You should not expose the generated random value. If you have to store it, make sure that the database or file is secure.
-
-See
-
-  OWASP - Secure
-  Random Number Generation Cheat Sheet
-  OWASP - Top 10 2021 Category A2 - Cryptographic Failures
-  OWASP - Top 10 2017 Category A3 - Sensitive Data
-  Exposure
-  CWE - CWE-338 - Use of Cryptographically Weak Pseudo-Random Number Generator
-  (PRNG)
-  CWE - CWE-330 - Use of Insufficiently Random Values
-  CWE - CWE-326 - Inadequate Encryption Strength
-  CWE - CWE-1241 - Use of Predictable Algorithm in Random Number Generator
-Mensaje: Make sure that using this pseudorandom number generator is safe here.
-----------------------------------------
 
 Archivo: chemistry-apps:backend/apps/core/runtime_tools.py
 Línea: 316
@@ -134,4 +144,40 @@ See
   CWE - CWE-409 - Improper Handling of Highly Compressed Data (Data Amplification)
   bamsoftware.com - A better Zip Bomb
 Mensaje: Make sure that expanding this archive file is safe here.
+----------------------------------------
+
+Archivo: chemistry-apps:frontend/src/index.html
+Línea: 11
+Regla: Web:S5725
+Probabilidad: Baja
+Estado: TO_REVIEW
+Descripción: Recommended Secure Coding Practices
+To check the integrity of a remote artifact, hash verification is the most reliable solution. It does ensure that the file has not been modified
+since the fingerprint was computed.
+In this case, the artifact’s hash must:
+
+   Be computed with a secure hash algorithm such as SHA512, SHA384 or SHA256. 
+   Be compared with a secure hash that was not downloaded from the same source. 
+
+To do so, the best option is to add the hash in the code explicitly, by following Mozilla’s official documentation on
+how to generate integrity strings.
+Note: Use this fix together with version binding on the remote file. Avoid downloading files named "latest" or similar, so that the
+front-end pages do not break when the code of the latest remote artifact changes.
+Compliant Solution
+
+&lt;script
+    src="https://cdn.example.com/v5.3.6/script.js"
+    integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"
+&gt;&lt;/script&gt;
+
+See
+
+   OWASP - Top 10 2021 Category A8 - Software and Data Integrity
+  Failures 
+   CWE - CWE-353 - Missing Support for Integrity Check 
+   OWASP - Top 10 2017 Category A6 - Security
+  Misconfiguration 
+   developer.mozilla.org - Subresource Integrity 
+   Wikipedia, Watering Hole Attacks
+Mensaje: Make sure not using resource integrity feature is safe here.
 ----------------------------------------

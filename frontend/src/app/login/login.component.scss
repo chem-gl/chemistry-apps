@@ -1,0 +1,163 @@
+/* login.component.scss: Pantalla de autenticacion con layout dividido y estilo App Chemistry Sense. */
+
+.login-shell {
+  min-height: calc(100vh - 8rem);
+  display: grid;
+  grid-template-columns: minmax(18rem, 1.3fr) minmax(18rem, 1fr);
+  gap: 1rem;
+  padding: clamp(1rem, 2.5vw, 2.2rem);
+  align-items: stretch;
+  background: linear-gradient(142deg, rgba(245, 244, 240, 0.75), rgba(237, 233, 240, 0.92));
+  border-radius: var(--chem-radius-lg);
+  border: 1px solid rgba(168, 161, 176, 0.38);
+}
+
+.login-hero {
+  border-radius: var(--chem-radius-lg);
+  padding: clamp(1.5rem, 3vw, 2.4rem);
+  border: 1px solid rgba(123, 90, 158, 0.2);
+  background: linear-gradient(160deg, rgba(123, 90, 158, 0.14), rgba(44, 37, 51, 0.08));
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+}
+
+.hero-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
+  font-weight: 700;
+}
+
+.hero-title {
+  margin: 0;
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.06;
+  color: var(--chem-ink);
+}
+
+.hero-copy {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--chem-ink-secondary);
+  font-size: 0.95rem;
+  line-height: 1.68;
+}
+
+.login-panel {
+  width: min(29rem, 100%);
+  justify-self: end;
+  padding: 2.1rem 1.9rem;
+  border-radius: var(--chem-radius-lg);
+  border: 1px solid var(--chem-glass-border);
+  border-top: 3px solid var(--chem-primary);
+  background: rgba(245, 244, 240, 0.64);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--chem-shadow-lg);
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2.05rem);
+  font-weight: 700;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.lead {
+  margin: 0.75rem 0 1.5rem;
+  color: var(--chem-ink-secondary);
+  line-height: 1.6;
+  font-size: var(--chem-text-sm);
+}
+
+.login-form {
+  display: grid;
+  gap: 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--chem-ink-secondary);
+  font-weight: 600;
+  font-size: var(--chem-text-sm);
+  font-family: var(--chem-font-label);
+}
+
+input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: rgba(237, 233, 240, 0.7);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  transition:
+    border-color var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+  box-shadow: 0 0 0 3px rgba(123, 90, 158, 0.17);
+}
+
+.error-message {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.88rem;
+}
+
+.submit-button {
+  border: none;
+  border-radius: var(--chem-radius-pill);
+  width: 100%;
+  padding: 0.86rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: var(--chem-primary);
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+.submit-button:hover {
+  background: var(--chem-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(211, 47, 47, 0.23);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (max-width: 860px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-panel {
+    justify-self: stretch;
+  }
+}

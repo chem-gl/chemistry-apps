@@ -1,4 +1,5 @@
-/* calculator.component.scss: Styles for calculator view. */
+/* calculator.component.scss: Estilos para la vista de calculadora científica. */
+
 .calc-wrapper {
   max-width: 760px;
   margin: 1.5rem auto;
@@ -9,14 +10,15 @@
 .calc-title {
   margin: 0;
   font-size: 1.45rem;
-  color: #123a6a;
+  font-family: var(--chem-font-heading);
+  color: var(--chem-ink);
 }
 
 .calc-form,
 .calc-section {
-  border: 1px solid #dbe7f7;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 1rem;
 }
 
@@ -33,19 +35,12 @@
 }
 
 label {
-  font-size: 0.78rem;
+  font-size: var(--chem-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 700;
-  color: #4b5e80;
-}
-
-input,
-select {
-  border: 1px solid #c4d5ef;
-  border-radius: 8px;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.95rem;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
 }
 
 .btn-primary,
@@ -54,21 +49,32 @@ select {
   border-radius: 999px;
   font-weight: 700;
   cursor: pointer;
+  transition: background var(--chem-transition), color var(--chem-transition);
 }
 
 .btn-primary {
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: #fff;
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-primary);
+  color: var(--chem-surface);
   padding: 0.48rem 0.9rem;
+}
+
+.btn-primary:hover {
+  filter: brightness(0.9);
 }
 
 .btn-secondary,
 .history-open-btn {
-  border: 1px solid #2563eb;
-  background: #fff;
-  color: #1d4ed8;
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-surface);
+  color: var(--chem-primary);
   padding: 0.42rem 0.82rem;
+}
+
+.btn-secondary:hover,
+.history-open-btn:hover {
+  background: var(--chem-primary);
+  color: var(--chem-surface);
 }
 
 .spinner {
@@ -76,7 +82,7 @@ select {
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.45);
-  border-top-color: #fff;
+  border-top-color: var(--chem-surface);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -89,15 +95,16 @@ select {
 
 .section-title {
   margin: 0 0 0.7rem;
-  color: #29446a;
-  font-size: 1rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: var(--chem-text-lg);
 }
 
 .status-text,
 .progress-message,
 .history-empty {
   margin: 0;
-  color: #4b5e80;
+  color: var(--chem-ink-secondary);
 }
 
 .logs-list {
@@ -108,9 +115,9 @@ select {
 }
 
 .log-item {
-  border: 1px solid #e5edf9;
-  border-radius: 8px;
-  background: #f9fbff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
   padding: 0.5rem;
   display: grid;
   gap: 0.3rem;
@@ -130,36 +137,33 @@ select {
   padding: 0.08rem 0.42rem;
   text-transform: uppercase;
   font-weight: 800;
+  font-family: var(--chem-font-label);
 }
 
 .log-level-debug {
-  color: #374151;
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-elevated);
 }
 
 .log-level-info {
-  color: #1d4ed8;
-  background: #dbeafe;
-  border-color: #93c5fd;
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
 }
 
 .log-level-warning {
-  color: #854d0e;
-  background: #fef9c3;
-  border-color: #fde68a;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
 }
 
 .log-level-error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
 }
 
 .log-source,
 .log-index,
 .mono {
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-family: var(--chem-font-mono);
 }
 
 .log-message,
@@ -169,21 +173,22 @@ select {
 }
 
 .log-payload {
-  border: 1px solid #dbe7f7;
-  border-radius: 6px;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.4rem;
   overflow: auto;
 }
 
 .progress-section {
-  background: #f3f8ff;
+  background: var(--chem-surface-elevated);
 }
 
 .job-id-badge {
   font-size: 0.72rem;
-  background: #dbeafe;
-  color: #1d4ed8;
+  font-family: var(--chem-font-mono);
+  background: rgba(211, 47, 47, 0.08);
+  color: var(--chem-primary);
   border-radius: 6px;
   padding: 0.1rem 0.4rem;
 }
@@ -196,7 +201,7 @@ select {
 }
 
 .stage-step {
-  border: 1px solid #dbe7f7;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 999px;
   padding: 0.2rem 0.45rem;
   display: inline-flex;
@@ -208,22 +213,23 @@ select {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--chem-border);
 }
 
 .step-label {
   font-size: 0.7rem;
-  color: #5b6f8f;
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-label);
 }
 
 .step-done .step-dot,
 .step-active .step-dot {
-  background: #2563eb;
+  background: var(--chem-primary);
 }
 
 .step-done .step-label,
 .step-active .step-label {
-  color: #1d4ed8;
+  color: var(--chem-primary);
   font-weight: 700;
 }
 
@@ -231,31 +237,35 @@ select {
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
-  background: #dbe7f7;
+  background: var(--chem-surface-inset);
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  background: var(--chem-gradient-header);
 }
 
 .progress-pct {
   margin: 0.45rem 0;
-  color: #1d4ed8;
+  color: var(--chem-primary);
   font-weight: 700;
+  font-family: var(--chem-font-mono);
 }
 
+/* --- Resultados --- */
+
 .result-section {
-  background: #f0fff7;
-  border-color: #c8f0d8;
+  background: var(--chem-status-completed-bg);
+  border-color: rgba(46, 125, 50, 0.2);
 }
 
 .result-value {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #166534;
+  color: var(--chem-status-completed);
   text-align: center;
   margin: 0.2rem 0 1rem;
+  font-family: var(--chem-font-mono);
 }
 
 .result-meta-grid {
@@ -265,38 +275,43 @@ select {
 }
 
 .meta-item {
-  border: 1px solid #d1fae5;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.45rem 0.6rem;
 }
 
 .meta-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: var(--chem-text-xs);
   font-weight: 700;
-  color: #4b5e80;
+  color: var(--chem-ink-secondary);
   text-transform: uppercase;
+  font-family: var(--chem-font-label);
 }
 
 .badge-status {
   display: inline-flex;
   border-radius: 999px;
-  background: #dcfce7;
-  color: #166534;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
   padding: 0.1rem 0.45rem;
   font-size: 0.78rem;
 }
 
+/* --- Errores --- */
+
 .error-section {
-  border-color: #fecaca;
-  background: #fff1f2;
+  border-color: rgba(211, 47, 47, 0.2);
+  background: var(--chem-error-bg);
 }
 
 .error-title,
 .error-message {
-  color: #be123c;
+  color: var(--chem-error);
 }
+
+/* --- Historial --- */
 
 .history-header {
   display: flex;
@@ -308,8 +323,8 @@ select {
 
 .history-table-wrap {
   overflow: auto;
-  border: 1px solid #dbe7f7;
-  border-radius: 10px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
 }
 
 .history-table {
@@ -322,13 +337,17 @@ select {
 .history-table td {
   text-align: left;
   padding: 0.52rem;
-  border-bottom: 1px solid #ecf1f9;
+  border-bottom: 1px solid var(--chem-border-subtle);
   font-size: 0.82rem;
 }
 
 .history-table th {
-  color: #1e40af;
-  background: #f8fbff;
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface-elevated);
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
 }
 
 .history-status {
@@ -338,34 +357,30 @@ select {
   text-transform: uppercase;
   font-size: 0.7rem;
   font-weight: 800;
+  font-family: var(--chem-font-label);
 }
 
 .history-completed {
-  color: #166534;
-  background: #dcfce7;
-  border-color: #86efac;
+  color: var(--chem-status-completed);
+  background: var(--chem-status-completed-bg);
 }
 
 .history-failed {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
+  color: var(--chem-status-failed);
+  background: var(--chem-status-failed-bg);
 }
 
 .history-running {
-  color: #1d4ed8;
-  background: #dbeafe;
-  border-color: #93c5fd;
+  color: var(--chem-status-running);
+  background: var(--chem-status-running-bg);
 }
 
 .history-pending {
-  color: #854d0e;
-  background: #fef9c3;
-  border-color: #fde68a;
+  color: var(--chem-status-pending);
+  background: var(--chem-status-pending-bg);
 }
 
 .history-paused {
-  color: #9a3412;
-  background: #ffedd5;
-  border-color: #fdba74;
+  color: var(--chem-status-paused);
+  background: var(--chem-status-paused-bg);
 }

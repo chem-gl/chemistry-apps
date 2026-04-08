@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import random
 from time import sleep
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -55,7 +54,7 @@ def _raise_pause_if_requested(
 
 def _generate_batch_numbers(
     *,
-    random_generator: random.Random,
+    seed_digest: str,
     current_batch_size: int,
     generated_numbers: list[int],
     generated_count: int,
@@ -68,7 +67,10 @@ def _generate_batch_numbers(
     batch_generated_numbers: list[int] = []
 
     for _ in range(current_batch_size):
-        next_number: int = random_generator.randint(0, 1_000_000)
+        next_number: int = _build_deterministic_number(
+            seed_digest=seed_digest,
+            sequence_index=generated_count,
+        )
         generated_numbers.append(next_number)
         batch_generated_numbers.append(next_number)
         generated_count += 1
@@ -99,6 +101,14 @@ def _generate_batch_numbers(
         )
 
     return generated_count, batch_generated_numbers
+
+
+def _build_deterministic_number(*, seed_digest: str, sequence_index: int) -> int:
+    """Genera un entero determinista en rango [0, 1_000_000] usando SHA-256."""
+    digest_source: bytes = f"{seed_digest}:{sequence_index}".encode("utf-8")
+    digest_bytes: bytes = hashlib.sha256(digest_source).digest()
+    raw_integer: int = int.from_bytes(digest_bytes[:8], byteorder="big", signed=False)
+    return raw_integer % 1_000_001
 
 
 def _build_random_numbers_input(parameters: JSONMap) -> RandomNumbersInput:
@@ -249,12 +259,10 @@ def random_numbers_plugin(
     )
 
     seed_digest: str = _resolve_seed_digest(seed_url, emit_log)
-    seed_integer: int = int(seed_digest[:16], 16)
-    random_generator = random.Random(seed_integer)
     emit_log(
         "info",
         PLUGIN_LOG_SOURCE,
-        "Generador pseudoaleatorio inicializado con digest determinista.",
+        "Generador determinista basado en SHA-256 inicializado.",
         {
             "seed_url": seed_url,
             "seed_digest_prefix": seed_digest[:12],
@@ -285,11 +293,6 @@ def random_numbers_plugin(
             },
         )
 
-        for _ in range(generated_count):
-            random_generator.randint(
-                0, 1_000_000
-            )  # NOSONAR - no importante es un ejemplo de uso de random, no se usa para seguridad
-
     while generated_count < total_numbers:
         _raise_pause_if_requested(
             request_control_action,
@@ -312,7 +315,7 @@ def random_numbers_plugin(
         )
 
         generated_count, batch_generated_numbers = _generate_batch_numbers(
-            random_generator=random_generator,
+            seed_digest=seed_digest,
             current_batch_size=current_batch_size,
             generated_numbers=generated_numbers,
             generated_count=generated_count,

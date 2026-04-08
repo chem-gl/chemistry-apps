@@ -1,22 +1,31 @@
 <div class="app-shell">
-  <header class="top-bar">
+  <header class="top-bar" [class.is-scrolled]="isScrolled()">
     <div class="brand-block">
       <p class="brand-kicker">Chemistry Apps</p>
       <h1>Scientific Control Desk</h1>
     </div>
 
     <nav class="main-nav" aria-label="Main navigation">
-      @for (navItem of primaryNavigationItems; track navItem.path) {
-        <a
-          [routerLink]="navItem.path"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          [title]="navItem.hint"
-        >
-          {{ navItem.label }}
-        </a>
+      @for (navItem of primaryNavigationItems(); track navItem.path) {
+      <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
+        [title]="navItem.hint">
+        {{ navItem.label }}
+      </a>
       }
     </nav>
+
+    <div class="session-panel">
+      @if (sessionService.isAuthenticated()) {
+      <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
+      <div class="session-copy">
+        <strong>{{ sessionService.displayName() }}</strong>
+        <span>{{ sessionService.currentRole() }}</span>
+      </div>
+      <button class="session-button" type="button" (click)="logout()">Sign out</button>
+      } @else {
+      <a class="session-button" routerLink="/login">Sign in</a>
+      }
+    </div>
   </header>
 
   <main class="content-shell">

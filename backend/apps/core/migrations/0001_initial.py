@@ -1,8 +1,4 @@
-"""0001_initial.py: Migración inicial unificada del core científico.
-
-Objetivo:
-- Crear todas las tablas del dominio core en una sola migración limpia.
-- Unifica lo que antes eran 0001_initial + 0002_input_artifacts + 0003_artifact_retention.
+"""0001_initial.py: Migración inicial del core científico.
 
 Modelos que crea:
   ScientificCacheEntry          — caché de resultados por hash SHA-256.
@@ -13,11 +9,9 @@ Modelos que crea:
   ScientificJobInputArtifactChunk — contenido binario chunked de cada artefacto.
 
 Política de retención de artefactos:
-  - expires_at = None           → archivo permanente (tamaño ≤ umbral configurado).
-  - expires_at = <datetime>     → los chunks se eliminan pasada esa fecha.
-  - chunks_purged_at = <datetime> → registro de cuándo se realizó la purga.
-  Los metadatos (sha256, tamaño, nombre) y el resultado del job se conservan
-  siempre; sólo el binario crudo es eliminable.
+  - expires_at = None  → archivo permanente.
+  - expires_at = <dt>  → chunks eliminables pasada esa fecha.
+  - chunks_purged_at   → registro de cuándo se ejecutó la purga.
 """
 
 import uuid
@@ -89,7 +83,7 @@ class Migration(migrations.Migration):
                     "job_hash",
                     models.CharField(
                         db_index=True,
-                        help_text="Hash SHA-256 para detección de caché hit.",
+                        help_text="Hash SHA-256 for caching",
                         max_length=64,
                     ),
                 ),
@@ -104,6 +98,7 @@ class Migration(migrations.Migration):
                             ("paused", "Paused"),
                             ("completed", "Completed"),
                             ("failed", "Failed"),
+                            ("cancelled", "Cancelled"),
                         ],
                         default="pending",
                         max_length=20,
@@ -246,7 +241,7 @@ class Migration(migrations.Migration):
                 (
                     "event_index",
                     models.PositiveIntegerField(
-                        help_text="Índice incremental de evento dentro del job.",
+                        help_text="Indice incremental de evento dentro del job.",
                     ),
                 ),
                 (
@@ -267,14 +262,14 @@ class Migration(migrations.Migration):
                     "source",
                     models.CharField(
                         default="core.runtime",
-                        help_text="Origen del evento de log para diagnóstico.",
+                        help_text="Origen del evento de log para diagnostico.",
                         max_length=80,
                     ),
                 ),
                 (
                     "message",
                     models.CharField(
-                        help_text="Mensaje de log legible para diagnóstico de ejecución.",
+                        help_text="Mensaje de log legible para diagnostico de ejecucion.",
                         max_length=255,
                     ),
                 ),
@@ -458,12 +453,12 @@ class Migration(migrations.Migration):
                     # Tarea de purga: busca artefactos con expires_at <= ahora.
                     models.Index(
                         fields=["expires_at"],
-                        name="core_artifac_expires_idx",
+                        name="core_scient_expires_57f930_idx",
                     ),
                     # Filtro rápido para detectar artefactos no purgados (NULL).
                     models.Index(
                         fields=["chunks_purged_at"],
-                        name="core_artifac_purged_idx",
+                        name="core_scient_chunks__0d32fb_idx",
                     ),
                 ],
             },

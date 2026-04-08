@@ -66,5 +66,8 @@ export interface DownloadedReportFile {
 }
 
 // Re-exports de tipos generados para evitar dependencias directas al cliente OpenAPI autogenerado
-export type ScientificJobView = ScientificJob;
+export type ScientificJobView = ScientificJob & {
+  owner_username?: string | null;
+  group_name?: string | null;
+};
 export type JobProgressSnapshotView = JobProgressSnapshot;

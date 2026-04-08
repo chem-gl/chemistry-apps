@@ -4,10 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-  DownloadedReportFile,
-  JobLogsPageView,
-  JobsApiService,
-  ScientificJobView,
+    DownloadedReportFile,
+    JobLogsPageView,
+    JobsApiService,
+    ScientificJobView,
 } from '../api/jobs-api.service';
 import { MolarFractionsWorkflowService } from './molar-fractions-workflow.service';
 
@@ -59,7 +59,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 describe('MolarFractionsWorkflowService', () => {

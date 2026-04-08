@@ -356,9 +356,10 @@ def _validate_tar_entry_file_size(
     member: tarfile.TarInfo,
     total_size_bytes: int,
     max_total_size_bytes: int,
-    max_compression_ratio: float,
+    max_compression_ratio: float | None = None,
 ) -> int:
-    """Valida tamaño descomprimido y razón de compresión de una entrada. Retorna nuevo total."""
+    """Valida tamaño descomprimido acumulado por entrada de archivo. Retorna nuevo total."""
+    del max_compression_ratio
     uncompressed_size: int = member.size
     new_total: int = total_size_bytes + uncompressed_size
 
@@ -367,15 +368,6 @@ def _validate_tar_entry_file_size(
             f"El tarball supera el límite de {max_total_size_bytes // (1024**3)} GB "
             "descomprimidos (posible zip bomb)."
         )
-
-    compressed_size: int = max(member.size, 1)
-    if uncompressed_size > 0 and compressed_size > 0:
-        ratio: float = uncompressed_size / compressed_size
-        if ratio > max_compression_ratio:
-            raise RuntimeToolsError(
-                f"Razón de compresión sospechosa ({ratio:.1f}:1) en "
-                f"'{member.name}' del tarball (posible zip bomb)."
-            )
 
     return new_total
 
@@ -388,12 +380,11 @@ def _extract_tarfile_safely(
     Límites aplicados:
     - Máximo 10.000 entradas (protección contra inodes exhaustion).
     - Tamaño total descomprimido máximo 2 GB (protección contra data amplification).
-    - Razón compresión máxima 50:1 por entrada (detección de zip bomb).
+    - Extracción individual por entrada para evitar descompresión masiva sin control.
     """
     # Límites de seguridad contra zip bomb (S5042)
     max_total_entries: int = 10_000
     max_total_size_bytes: int = 2 * 1024 * 1024 * 1024  # 2 GB
-    max_compression_ratio: float = 50.0
 
     destination_dir_resolved: Path = destination_dir.resolve()
     total_size_bytes: int = 0
@@ -410,10 +401,66 @@ def _extract_tarfile_safely(
 
         if member.isfile():
             total_size_bytes = _validate_tar_entry_file_size(
-                member, total_size_bytes, max_total_size_bytes, max_compression_ratio
+                member, total_size_bytes, max_total_size_bytes
             )
 
-    archive_file.extractall(path=destination_dir)
+        _extract_tar_member_safely(archive_file, member, destination_dir)
+
+
+def _extract_tar_member_safely(
+    archive_file: tarfile.TarFile, member: tarfile.TarInfo, destination_dir: Path
+) -> None:
+    """Extrae una entrada permitiendo solo directorios, archivos y symlinks internos."""
+    target_path: Path = destination_dir / member.name
+
+    if member.isdir():
+        target_path.mkdir(parents=True, exist_ok=True)
+        target_path.chmod(0o755)
+        return
+
+    if member.isfile():
+        extracted_file = archive_file.extractfile(member)
+        if extracted_file is None:
+            raise RuntimeToolsError(
+                f"No fue posible leer la entrada {member.name!r} del tarball."
+            )
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with extracted_file, target_path.open("wb") as destination_file:
+            shutil.copyfileobj(
+                extracted_file,
+                destination_file,
+                length=DEFAULT_DOWNLOAD_CHUNK_SIZE_BYTES,
+            )
+
+        target_mode: int = 0o755 if member.mode & 0o111 else 0o644
+        target_path.chmod(target_mode)
+        return
+
+    if member.issym():
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        link_target: Path = Path(member.linkname)
+        resolved_link_target: Path = (target_path.parent / link_target).resolve()
+        destination_dir_resolved: Path = destination_dir.resolve()
+        if (
+            not str(resolved_link_target).startswith(
+                str(destination_dir_resolved) + os.sep
+            )
+            and resolved_link_target != destination_dir_resolved
+        ):
+            raise RuntimeToolsError(
+                "El tarball contiene enlaces simbólicos fuera del destino de extracción."
+            )
+
+        if target_path.exists() or target_path.is_symlink():
+            target_path.unlink()
+
+        os.symlink(member.linkname, target_path)
+        return
+
+    raise RuntimeToolsError(
+        f"El tarball contiene una entrada no soportada: {member.name!r}."
+    )
 
 
 def _prepare_external_artifacts(runtime_tools_root: Path) -> None:

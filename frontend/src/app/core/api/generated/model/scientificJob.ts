@@ -15,6 +15,10 @@ import { StatusEnum } from './statusEnum';
  */
 export interface ScientificJob { 
     readonly id: string;
+    readonly owner: number | null;
+    readonly owner_username: string;
+    readonly group: number | null;
+    readonly group_name: string;
     /**
      * Hash SHA-256 for caching
      */

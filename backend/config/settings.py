@@ -169,6 +169,8 @@ INSTALLED_APPS = [
     "channels",
     "rest_framework",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",
+    "apps.accounts.apps.AccountsConfig",
     "apps.core",
     "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
@@ -181,11 +183,34 @@ INSTALLED_APPS = [
     "apps.toxicity_properties.apps.ToxicityPropertiesConfig",
 ]
 
+AUTH_USER_MODEL = "accounts.UserAccount"
+
 if ENABLE_CORS:
     INSTALLED_APPS.insert(0, "corsheaders")
 
+ROOT_USERNAME: str = os.getenv("ROOT_USERNAME", "admin")
+ROOT_PASSWORD: str = os.getenv("ROOT_PASSWORD", "admin123")
+ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.local")
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+}
+
+# Configuración de tiempos para tokens JWT.
+# ACCESS_TOKEN_LIFETIME corto por seguridad; el frontend renueva automáticamente.
+from datetime import timedelta  # noqa: E402
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
 }
 
 DEFAULT_OPENAPI_SERVER_URLS: list[str] = [

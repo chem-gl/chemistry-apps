@@ -1,17 +1,20 @@
-/* job-logs-panel.component.scss: Estilos compartidos del panel de logs de ejecución. */
+/* job-logs-panel.component.scss: Panel de logs — App Chemistry Sense. */
 
 .logs-list {
   display: grid;
-  gap: 0.5rem;
-  max-height: 280px;
+  gap: 0.35rem;
+  max-height: 300px;
   overflow: auto;
+  background: var(--chem-surface-inset);
+  border-radius: var(--chem-radius);
+  padding: 0.5rem;
 }
 
 .log-item {
-  border: 1px solid #deecea;
-  border-radius: 10px;
-  background: #fbfefe;
-  padding: 0.48rem 0.6rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-surface-elevated);
+  padding: 0.5rem 0.75rem;
   display: grid;
   gap: 0.25rem;
 }
@@ -21,59 +24,64 @@
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
-  font-size: 0.72rem;
+  font-size: var(--chem-text-xs);
 }
 
 .log-level {
-  border-radius: 999px;
+  border-radius: var(--chem-radius-sm);
   border: 1px solid transparent;
-  padding: 0.08rem 0.43rem;
+  padding: 0.1rem 0.45rem;
   text-transform: uppercase;
-  font-weight: 800;
+  font-family: var(--chem-font-mono);
+  font-weight: 700;
+  font-size: var(--chem-text-xs);
   letter-spacing: 0.04em;
 }
 
 .log-level-debug {
-  color: #374151;
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-alt);
+  border-color: var(--chem-border-subtle);
 }
 
 .log-level-info {
-  color: #115e59;
-  background: #ccfbf1;
-  border-color: #99f6e4;
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
+  border-color: rgba(2, 119, 189, 0.2);
 }
 
 .log-level-warning {
-  color: #854d0e;
-  background: #fef9c3;
-  border-color: #fde68a;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
+  border-color: rgba(239, 108, 0, 0.2);
 }
 
 .log-level-error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
+  border-color: rgba(211, 47, 47, 0.2);
 }
 
 .log-source,
 .log-index {
-  color: #5f7875;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
 }
 
-.log-message,
+.log-message {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
 .log-payload {
   margin: 0;
-  color: #275a54;
-  font-size: 0.82rem;
-}
-
-.log-payload {
-  border: 1px solid #deecea;
-  border-radius: 8px;
-  padding: 0.35rem;
-  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 0.5rem;
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
   overflow: auto;
 }

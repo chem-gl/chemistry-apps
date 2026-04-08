@@ -5,9 +5,9 @@
 }
 
 .svg-preview {
-  border: 1px solid #d9e6db;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 20px;
-  background: #fff;
+  background: var(--chem-surface-elevated);
   padding: 0.5rem;
   overflow: auto;
 }
@@ -31,8 +31,8 @@
 
 .principal-svg-viewport {
   padding: 1.25rem;
-  background: #ffffff;
-  border: 1px solid #d9e6db;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 20px;
   overflow: auto;
   max-height: min(68vh, 560px);
@@ -58,10 +58,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #b8d4c2;
+  border: 1px solid var(--chem-border);
   border-radius: 8px;
-  background: #f3f9f4;
-  color: #2a5e40;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
@@ -71,8 +71,8 @@
 }
 
 .zoom-btn:hover:not(:disabled) {
-  background: #d9eee3;
-  border-color: #4caf7d;
+  background: var(--chem-surface-inset);
+  border-color: var(--chem-accent);
 }
 
 .zoom-btn:disabled {
@@ -82,7 +82,7 @@
 
 .zoom-label {
   font-size: 0.75rem;
-  color: #5a8570;
+  color: var(--chem-ink-secondary);
   min-width: 46px;
   text-align: center;
   font-variant-numeric: tabular-nums;

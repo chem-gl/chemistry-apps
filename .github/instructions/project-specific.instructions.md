@@ -4,10 +4,32 @@ Estas instrucciones están diseñadas para estandarizar el desarrollo y mantenim
 
 ## Estructura del proyecto
 
-- **Backend**: Contiene la lógica del servidor, organizada en aplicaciones Django dentro de `backend/apps/`.
-- **Frontend**: Implementado en Angular, ubicado en `frontend/`.
-- **Scripts**: Scripts útiles para tareas específicas, como `create_openapi.py`.
-- **Legacy**: Código antiguo o en desuso, ubicado en `legacy/`.
+- **Backend**: Django 6 + DRF + Celery + Django Channels. Toda la lógica del servidor vive en `backend/apps/`, dividida en `apps/core/` (infraestructura transversal) y una carpeta por app científica. La configuración centralizada está en `backend/config/`.
+- **Frontend**: Angular 21 con componentes standalone y lazy loading. Ubicado en `frontend/`. El cliente HTTP se genera automáticamente desde el contrato OpenAPI del backend.
+- **Scripts**: Automatizaciones en `scripts/`. El más importante es `create_openapi.py`, que genera `backend/openapi/schema.yaml` y regenera el cliente TypeScript en `frontend/src/app/core/api/generated/`.
+- **Deprecated**: Código histórico fuera de uso activo, ubicado en `deprecated/`. No editar ni recuperar código de esta carpeta sin revisión explícita. En documentación anterior puede aparecer como `legacy/`.
+- **Tools**: Runtimes Java externos para librerías científicas (`tools/java/`). No se modifican manualmente.
+- **Libs**: Librerías científicas internas en `backend/libs/` (`gaussian_log_parser`, `admet_ai`, `ambit`, `brsascore`, `rdkit_sa`). El código compartido entre apps que no pertenece a ninguna app específica va aquí.
+
+### Organización interna del backend
+
+```
+backend/apps/core/        # Infraestructura transversal: jobs, plugins, realtime, caché
+backend/apps/<app>/       # Una carpeta por app científica con estructura estándar
+backend/config/           # settings.py, urls.py, celery.py, asgi.py, wsgi.py
+backend/libs/             # Librerías científicas internas compartidas
+```
+
+Regla fundamental: el core nunca importa de las apps científicas específicas. Las apps importan del core. Los imports entre apps distintas están prohibidos: si se necesita código compartido entre dos apps, moverlo a `backend/libs/`.
+
+### Organización interna del frontend
+
+```
+frontend/src/app/core/api/generated/   # NO EDITAR. Código generado por openapi-generator-cli
+frontend/src/app/core/api/             # Wrappers estables: jobs-api.service.ts, tipos propios
+frontend/src/app/core/shared/          # Constantes, configuración y utilidades compartidas
+frontend/src/app/<nombre>/             # Un directorio por app científica (componente standalone)
+```
 
 ## Convenciones de desarrollo
 
@@ -25,78 +47,232 @@ Estas instrucciones están diseñadas para estandarizar el desarrollo y mantenim
    - Evitar el uso de código obsoleto.
 
 4. **Pruebas**:
-   - Escribir pruebas unitarias para cada nueva funcionalidad.
+   - Escribir pruebas unitarias para cada nueva funcionalidad antes de dar la tarea por terminada.
    - Ubicar las pruebas en archivos `tests.py` dentro de cada aplicación o módulo.
+   - Cada test debe tener un comentario que explique exactamente qué se está verificando y por qué es importante.
+   - Los tests no son pruebas de reacción de código. Cada prueba debe tener un objetivo concreto: validar una precondición, verificar una postcondición o confirmar el comportamiento ante un input inválido.
+   - En el backend, los tests del plugin se escriben llamando directamente a la función del plugin con callbacks mock, sin pasar por el ciclo HTTP.
+   - En el frontend, los tests de servicios y componentes se escriben con `TestBed` e inputs controlados, verificando el estado resultante, no los detalles de implementación.
 
 5. **Errores**:
-   - Manejar errores de manera adecuada.
-   - Evitar el uso de variables globales.
+   - Manejar errores en la capa correcta: validación de contrato en serializers, errores de dominio en el plugin, errores de infraestructura en adaptadores.
+   - No usar variables globales. Las dependencias se pasan por parámetro o por inyección.
+   - En plugins, los errores de validación de parámetros de entrada lanzan `ValueError` con mensaje descriptivo. Los errores de ejecución inesperados dejan que burbujeen como `RuntimeError` para que el core los registre en `error_trace`.
+   - En el frontend, los errores de HTTP se manejan en los servicios wrapper, nunca en los componentes directamente.
 
 ## Backend
 
-- **Framework**: Django.
-- **Base de datos**: SQLite (en desarrollo, cambiar a PostgreSQL en producción).
-- **Ejecución**:
-  ```bash
-  ./venv/bin/python manage.py runserver
-  ```
-- **Pruebas**:
-  ```bash
-  ./venv/bin/python manage.py test
-  ```
+- **Framework**: Django 6 + Django REST Framework + drf-spectacular para OpenAPI.
+- **Base de datos**: SQLite en desarrollo, PostgreSQL en producción (configurar en `backend/config/settings.py`).
+- **Servidor ASGI**: Daphne. En desarrollo el comando `up` lo gestiona automáticamente junto con el worker Celery.
+
+**Ejecución en desarrollo** (arranca API ASGI + worker Celery con auto-reload):
+```bash
+cd backend
+./venv/bin/python manage.py migrate
+./venv/bin/python manage.py up
+```
+
+**Solo API HTTP sin worker** (cuando no se necesita Redis ni procesamiento asíncrono):
+```bash
+cd backend
+./venv/bin/python manage.py up --without-celery
+```
+En este modo los jobs quedan en estado `pending` hasta que se levante un worker. Útil para desarrollar routers y serializers sin tener Redis activo.
+
+**Pruebas con cobertura**:
+```bash
+cd backend
+./venv/bin/python manage.py test apps.core apps.<nombre_app> --verbosity=2 && echo listo
+# Con reporte de cobertura:
+./venv/bin/pytest --cov=apps --cov-report=xml:coverage.xml && echo listo
+```
+
+**Lint**:
+```bash
+cd backend
+./venv/bin/ruff check . && echo listo
+```
+
+**Verificar integridad de configuración Django**:
+```bash
+cd backend
+./venv/bin/python manage.py check && echo listo
+```
+
+**Generar y aplicar migraciones**:
+```bash
+cd backend
+./venv/bin/python manage.py makemigrations
+./venv/bin/python manage.py migrate
+```
+
+### Registro de apps científicas en Django
+
+Cada nueva app científica requiere tres pasos de configuración:
+1. Añadir su `AppConfig` en `INSTALLED_APPS` en `backend/config/settings.py`.
+2. Registrar su `ViewSet` en el `DefaultRouter` en `backend/config/urls.py`.
+3. El `AppConfig.ready()` debe importar el módulo `plugin` para activar `@PluginRegistry.register(...)` y llamar a `ScientificAppRegistry.register(definition)`.
+
+### Celery y ejecución asíncrona
+
+Los jobs científicos se ejecutan en workers Celery. En desarrollo, `manage.py up` arranca el worker automáticamente. En producción se necesita un proceso separado por cada rol:
+```bash
+# Worker de tareas
+./venv/bin/python -m celery -A config worker -l info --concurrency 4
+# Scheduler de tareas periódicas (recuperación activa, purga de artefactos)
+./venv/bin/python -m celery -A config beat -l info
+```
+El broker y backend de resultados es Redis. Si Redis no está disponible al encolar, `dispatch_scientific_job` captura el error sin romper la API: el job queda en `pending` y la tarea periódica `run_active_recovery` lo re-encola cuando el broker vuelve.
 
 ## Frontend
 
-- **Framework**: Angular.
-- **Ejecución**:
-  ```bash
-  npm start
-  ```
-- **Pruebas**:
-  ```bash
-  npm test
-  ```
+- **Framework**: Angular 21 con componentes standalone, Reactive Forms, RxJS 7 y Signals.
+- **Testing**: Vitest con `@angular/core/testing`.
+- **Generación de cliente**: `openapi-generator-cli` 7.x leyendo `backend/openapi/schema.yaml`.
+
+**Ejecución en desarrollo** (proxy hacia backend en localhost:8000):
+```bash
+cd frontend
+npm install
+npm start
+```
+
+**Build de producción**:
+```bash
+cd frontend
+npm ci
+npm run build && echo listo
+```
+
+**Pruebas con cobertura**:
+```bash
+cd frontend
+npm run test:coverage && echo listo
+```
+
+**Lint**:
+```bash
+cd frontend
+npx eslint . --format json > eslint.json && echo listo
+```
+
+### Separación de responsabilidades en el frontend
+
+Los componentes de app científica no llaman directamente al código generado en `generated/`. El flujo correcto es:
+
+```
+Componente → jobs-api.service.ts (wrapper) → generated/ → HTTP
+```
+
+`jobs-api.service.ts` centraliza todas las operaciones sobre jobs: crear, listar, cancelar, pausar, reanudar, descargar reportes, hacer polling y streaming. Los componentes reciben datos ya mapeados a tipos de vista definidos en `core/api/types/`.
+
+`jobs-streaming-api.service.ts` encapsula tres patrones de observabilidad:
+- **SSE** (`streamJobEvents`): `EventSource` nativo hacia `/api/jobs/{id}/events/`.
+- **WebSocket** (`connectToJobsStream`): conecta a `ws/jobs/stream/` con query params de filtro.
+- **Polling** (`pollJobProgress`): `interval` RxJS + `switchMap` para casos que prefieren polling explícito.
+
+### Código generado
+
+El directorio `frontend/src/app/core/api/generated/` es código autogenerado. **No se edita manualmente**. Si cambia un serializer en el backend, el flujo correcto es:
+1. Actualizar el serializer en Django.
+2. Regenerar schema y cliente: `python scripts/create_openapi.py`.
+3. Adaptar el wrapper en `core/api/` si la firma cambió.
+
+Nunca parchar el código generado directamente: se sobreescribe en la siguiente regeneración.
 
 ## Scripts
 
-- **Generación de OpenAPI**:
-  - Ubicado en `scripts/create_openapi.py`.
-  - Ejecutar con:
-    ```bash
-    ./venv/bin/python scripts/create_openapi.py
-    ```
+- **`create_openapi.py`**: Genera `backend/openapi/schema.yaml` desde Django y regenera el cliente TypeScript en `frontend/src/app/core/api/generated/`. Ejecutar desde la raíz del repositorio con el entorno virtual activado:
+  ```bash
+  source backend/venv/bin/activate
+  python scripts/create_openapi.py && echo listo || echo error
+  ```
+
+- **`generate_sonar_coverage.sh`**: Genera todos los artefactos para análisis SonarQube: cobertura Python (XML), cobertura Angular (lcov), reporte Ruff y reporte ESLint. Ejecutar desde la raíz:
+  ```bash
+  bash scripts/generate_sonar_coverage.sh && echo listo || echo error
+  ```
+  Salida esperada: `backend/ruff.json`, `backend/coverage.xml`, `frontend/eslint.json`, `frontend/coverage/frontend/lcov.info`.
+
+Nota: añadir `&& echo listo || echo error` al final de cualquier comando de generación es buena práctica para confirmar que terminó correctamente, especialmente en comandos que no siempre muestran salida al completarse con éxito.
 
 ## Estilo de codificación
 
-- Seguir las convenciones de PEP 8 para Python.
-- Usar Prettier y ESLint para el frontend.
+### Python (backend)
+- Ruff como linter y formateador. Configurado en `pyproject.toml`. Ejecutar `ruff check .` antes de cada commit.
+- Tipado estricto obligatorio: sin `# type: ignore` salvo justificación explícita en el mismo comentario que explique por qué no se puede resolver con tipos propios.
+- Docstrings en español en todos los módulos con: objetivo del archivo, forma de uso y relación con el flujo general.
+- Nombres de funciones y variables en inglés descriptivos. Evitar abreviaturas crípticas.
+- Archivos entre 200 y 400 líneas. Dividir en módulos especializados si crece más. Máximo absoluto: 600 líneas.
+- Los helpers internos (no parte de la API pública del módulo) tienen prefijo `_`.
+
+### TypeScript (frontend)
+- ESLint configurado en `eslint.config.mjs`. Ejecutar antes de PR.
+- TypeScript en strict mode. Sin `@ts-ignore` ni `as any` salvo justificación documentada en comentario.
+- Comentarios en español para lógica compleja. Nombres de variables y funciones en inglés.
+- Componentes standalone únicamente. Sin NgModules.
+- Todo lo visual en inglés (textos, labels, atributos Angular). La lógica de negocio y comentarios en español.
 
 ## Control de versiones
 
-- Usar ramas descriptivas para nuevas funcionalidades o correcciones.
-- Asegurarse de que el código pase todas las pruebas antes de hacer un merge a `main`.
+- Usar ramas descriptivas: `feature/nombre-funcionalidad`, `fix/descripcion-error`, `refactor/descripcion`.
+- La rama `main` es producción. La rama `dev` es integración. No hacer push directo a `main`.
+- Antes de abrir un PR hacia `main` verificar localmente:
+  1. `./venv/bin/python manage.py check`
+  2. `./venv/bin/python manage.py test`
+  3. `cd frontend && npm run build`
+  4. `cd frontend && npm test`
+- El pipeline CI ejecuta automáticamente tests de backend y frontend en cada push a `main`/`dev` y en PRs hacia `main`.
 
 ## Notas adicionales
 
-- Mantener el archivo `README.md` actualizado con información relevante del proyecto.
-- Eliminar código muerto o archivos no utilizados para mantener el proyecto limpio.
+- El `README.md` es la documentación principal del proyecto. Actualizarlo cuando cambien arquitectura, comandos o el catálogo de apps.
+- Eliminar código muerto y archivos no utilizados. Si se elimina una funcionalidad completa, eliminar también todos sus archivos relacionados.
+- Los jobs en estado `pending` durante el arranque son normales si Redis no estaba disponible. La recuperación activa (`run_active_recovery`) los re-encola automáticamente cuando el broker vuelve.
+- El directorio `frontend/src/app/core/api/generated/` es volátil: se sobreescribe con cada ejecución de `create_openapi.py`. No commitear cambios manuales en esos archivos.
+- En `backend/libs/gaussian_log_parser/fixtures/` se almacenan logs Gaussian reales para pruebas. Al añadir un nuevo caso de test para `easy_rate` o `marcus`, agregar el fixture correspondiente en lugar de inventar datos inline.
 
 # frontend
 
-- Mantener la lógica de negocio en servicios separados de los componentes.
-- Documentar cada componente y servicio con comentarios claros.
-- Seguir las buenas prácticas de Angular para asegurar escalabilidad y mantenibilidad.
+- Mantener la lógica de negocio en servicios separados de los componentes (patrón wrapper → servicio → componente).
+- Todo lo visual debe estar en inglés (textos, labels, aria-labels, atributos Angular). La lógica de negocio y los comentarios pueden estar en español. Las variables y funciones siempre en inglés.
 - Asegurarse de que los componentes visuales no dependan directamente del código generado por
-  Todo lo visual debe estar en ingles, pero la logica de negocio y los comentarios pueden estar en español para facilitar la comprensión del equipo. pero las variables y funciones deben estar en ingles para mantener una buena práctica de programación y facilitar la colaboración con otros desarrolladores que puedan no hablar español.
   OpenAPI, usando wrappers para proteger el contrato generado.
 - Configurar la base URL del backend de manera centralizada usando environments y constantes compartidas.
 - Usar operadores de control de flujo modernos de Angular para evitar duplicación en plantillas.
 - Mantener strict mode de TypeScript y tipado estricto de respuestas OpenAPI.
-- Priorizar compatibilidad con la versión actual de Angular.
-- Al integrar una nueva app científica en el backend, seguir el proceso de verificación técnica para asegurar que el frontend se actualiza correctamente y que los endpoints de la nueva app están disponibles y documentados en la UI de OpenAPI.
-- Todo endpoint del backend, si es consumido por HTTP/HTTPS, debe ser consumido a través de los contratos generados por OpenAPI, y no debe ser consumido directamente, para asegurar que el contrato se mantiene consistente y que cualquier cambio en el backend se refleja correctamente en el frontend, evitando así problemas de integración o errores de consumo de endpoints que no estén actualizados; clara excepcion a esto en los archivos spec de pruebas unitarias, donde se pueden consumir directamente los endpoints para probar su funcionalidad e inclusive conseguir trazabilidad completa de las pruebas, pero fuera de los archivos de pruebas unitarias, cualquier consumo de endpoints debe hacerse a través de los contratos generados por OpenAPI, para mantener la consistencia y la integridad del proyecto.
+- Priorizar compatibilidad con la versión actual de Angular (21).
+- Al integrar una nueva app científica, regenerar el cliente con `python scripts/create_openapi.py` y verificar que el frontend compila sin errores antes de dar la app por integrada.
+- Todo endpoint del backend debe consumirse a través del cliente generado por OpenAPI y sus wrappers, nunca directamente desde los componentes. Excepción: los archivos `*.spec.ts` de pruebas unitarias pueden consumir directamente para lograr trazabilidad completa del test.
+- Configurar la base URL del backend de manera centralizada en `frontend/src/app/core/shared/constants.ts` usando valores de `environments/`. Nunca hardcodear URLs en componentes ni servicios.
+- Usar operadores de control de flujo modernos de Angular (`@if`, `@for`, `@switch`) en lugar de `*ngIf`, `*ngFor`, `[ngSwitch]`.
 
-los test no deben ser pruebas de reaccion de codigo, se debe pensar claramente en cada test que se va a probar, y escribir pruebas unitarias que prueben la funcionalidad específica de cada componente o servicio, evitando pruebas que simplemente reaccionen a cambios en el código sin un objetivo claro, es importante que cada prueba tenga un propósito específico y que pruebe una funcionalidad concreta, para asegurar que las pruebas sean efectivas y útiles para mantener la calidad del código, y para evitar tener pruebas que no aporten valor o que simplemente reaccionen a cambios sin un objetivo claro.
-los test deben tener comentarios cada uno explicando claramente lo que se esta probando, y el objetivo de cada prueba, para asegurar que las pruebas sean fáciles de entender y mantener, y para facilitar la colaboración entre desarrolladores, es importante que cada prueba tenga un comentario claro que explique lo que se esta probando y el objetivo de la prueba, para asegurar que las pruebas sean efectivas y útiles para mantener la calidad del código, y para evitar tener pruebas que no aporten valor o que simplemente reaccionen a cambios sin un objetivo claro, tambien ayuda a saber que debe hacer el codigo y se puede llegar a entender si el codigo cumple con lo que se espera que haga, y si no es así, se puede identificar claramente que parte del codigo no esta cumpliendo con lo que se espera, y se puede corregir de manera efectiva, por eso es importante que cada prueba tenga un comentario claro que explique lo que se esta probando y el objetivo de la prueba, para asegurar que las pruebas sean efectivas y útiles para mantener la calidad del código, y para evitar tener pruebas que no aporten valor o que simplemente reaccionen a cambios sin un objetivo claro.
-El backend se encuentra en la carpeta `backend/` y el frontend en `frontend/`. El backend está implementado en Django, mientras que el frontend utiliza Angular. Es importante mantener una clara separación entre ambos para facilitar el desarrollo y mantenimiento del proyecto. Cualquier cambio en el backend que afecte a los endpoints debe ser reflejado en el frontend a través de los contratos generados por OpenAPI, para asegurar la consistencia y la integridad del proyecto.
-el backend tiene su entorno virtual en `backend/venv/` y el frontend utiliza npm para la gestión de dependencias, con los comandos `npm install`, `npm start` y `npm test` para instalar dependencias, iniciar el servidor de desarrollo y ejecutar las pruebas, respectivamente. Es importante seguir estas convenciones para asegurar un desarrollo fluido y consistente en todo el equipo.
+## Convenciones de pruebas en el frontend
+
+- Cada test tiene un nombre descriptivo que explica el escenario y la expectativa esperada.
+- Los tests de servicios verifican el estado resultante (qué valor emite el Observable o Signal), no los detalles de implementación internos.
+- Los tests de componentes usan inputs controlados y verifican qué se renderiza o qué métodos del servicio se invocan.
+- No escribir tests que solo verifiquen que el componente se instancia sin errores: eso no aporta valor.
+- Cada `describe` e `it` tiene su comentario o descripción que explica claramente qué se está probando y por qué importa.
+
+## Convenciones de pruebas en el backend
+
+- Los tests del plugin llaman directamente la función del plugin con callbacks mock, sin pasar por HTTP ni ORM.
+- Los tests de router usan el cliente de test de Django para verificar códigos de estado, estructura de respuesta y efectos secundarios en la base de datos.
+- Cubrir siempre: payload válido → job creado, payload inválido → 400 con mensaje, ejecución del plugin → resultado correcto, logs y progreso emitidos.
+- Cada método de test tiene un nombre descriptivo: `test_create_job_with_valid_payload_returns_202`, no `test_create`.
+
+## Integración de una nueva app científica: pasos mínimos
+
+1. Crear `backend/apps/<nombre>/` con los archivos estándar: `apps.py`, `definitions.py`, `types.py`, `schemas.py`, `plugin.py`, `routers.py`, `contract.py`, `tests.py`.
+2. Registrar `AppConfig` en `INSTALLED_APPS` en `backend/config/settings.py`.
+3. Registrar `ViewSet` en `DefaultRouter` en `backend/config/urls.py`.
+4. El `AppConfig.ready()` debe importar el módulo `plugin` y registrar la `ScientificAppDefinition`.
+5. Verificar: `./venv/bin/python manage.py check && echo listo`.
+6. Ejecutar tests: `./venv/bin/python manage.py test apps.<nombre> apps.core --verbosity=2`.
+7. Regenerar contrato: `python scripts/create_openapi.py && echo listo`.
+8. Verificar compilación del frontend: `cd frontend && npm run build && echo listo`.
+9. Registrar la app en `frontend/src/app/core/shared/scientific-apps.config.ts`.
+10. Añadir ruta con lazy loading en `frontend/src/app/app.routes.ts`.
+El backend tiene su entorno virtual en `backend/venv/`. Siempre activarlo antes de ejecutar comandos Python: `source backend/venv/bin/activate`.

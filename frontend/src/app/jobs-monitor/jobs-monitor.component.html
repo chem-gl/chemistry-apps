@@ -9,11 +9,7 @@
 
     <div class="header-actions">
       <button class="btn btn-ghost" (click)="refreshNow()">Refresh</button>
-      <button
-        class="btn"
-        [class.btn-on]="facade.autoRefreshEnabled()"
-        (click)="toggleAutoRefresh()"
-      >
+      <button class="btn" [class.btn-on]="facade.autoRefreshEnabled()" (click)="toggleAutoRefresh()">
         Auto refresh: {{ facade.autoRefreshEnabled() ? 'ON' : 'OFF' }}
       </button>
     </div>
@@ -58,364 +54,313 @@
       Status
       <select [ngModel]="facade.selectedStatus()" (ngModelChange)="onStatusFilterChanged($event)">
         @for (statusOption of statusOptions; track statusOption.value) {
-          <option [value]="statusOption.value">{{ statusOption.label }}</option>
+        <option [value]="statusOption.value">{{ statusOption.label }}</option>
         }
       </select>
     </label>
 
     <label>
       App
-      <select
-        [ngModel]="facade.selectedPluginName()"
-        (ngModelChange)="onPluginFilterChanged($event)"
-      >
+      <select [ngModel]="facade.selectedPluginName()" (ngModelChange)="onPluginFilterChanged($event)">
         @for (pluginOption of facade.pluginOptions(); track pluginOption) {
-          <option [value]="pluginOption">
-            {{ pluginOption === 'all' ? 'All' : pluginOption }}
-          </option>
+        <option [value]="pluginOption">
+          {{ pluginOption === 'all' ? 'All' : pluginOption }}
+        </option>
         }
       </select>
     </label>
   </section>
 
   @if (facade.isLoading()) {
-    <section class="state state-loading" aria-live="polite">Loading jobs...</section>
+  <section class="state state-loading" aria-live="polite">Loading jobs...</section>
   }
 
   @if (facade.errorMessage(); as currentError) {
-    <section class="state state-error" role="alert">{{ currentError }}</section>
+  <section class="state state-error" role="alert">{{ currentError }}</section>
   }
 
   @if (facade.controlErrorMessage(); as controlError) {
-    <section class="state state-error" role="alert">{{ controlError }}</section>
+  <section class="state state-error" role="alert">{{ controlError }}</section>
   }
 
   <section class="jobs-section" aria-label="Active jobs">
     <h2>Running</h2>
     @if (facade.activeJobs().length === 0) {
-      <p class="empty-state">No active jobs for the selected filters.</p>
+    <p class="empty-state">No active jobs for the selected filters.</p>
     } @else {
-      <div class="jobs-grid">
-        @for (activeJob of facade.activeJobs(); track activeJob.id) {
-          <article class="job-card">
-            <header class="job-card-header">
-              <span class="job-plugin">{{ activeJob.plugin_name }}</span>
-              <span class="job-status" [class]="statusClassName(activeJob.status)">{{
-                activeJob.status
-              }}</span>
-            </header>
+    <div class="jobs-grid">
+      @for (activeJob of facade.activeJobs(); track activeJob.id) {
+      <article class="job-card">
+        <header class="job-card-header">
+          <span class="job-plugin">{{ activeJob.plugin_name }}</span>
+          <span class="job-status" [class]="statusClassName(activeJob.status)">{{
+            activeJob.status
+            }}</span>
+        </header>
 
-            <p class="job-id">{{ activeJob.id }}</p>
+        <p class="job-id">{{ activeJob.id }}</p>
+        <p class="job-owner">{{ ownerGroupLabel(activeJob) }}</p>
 
-            <progress
-              class="progress-track"
-              [value]="activeJob.progress_percentage"
-              [attr.aria-label]="'Progress for job ' + activeJob.id"
-              title="Job progress"
-              max="100"
-            >
-              <div class="progress-fill" [style.width.%]="activeJob.progress_percentage"></div>
-            </progress>
+        <progress class="progress-track" [value]="activeJob.progress_percentage"
+          [attr.aria-label]="'Progress for job ' + activeJob.id" title="Job progress" max="100">
+          <div class="progress-fill" [style.width.%]="activeJob.progress_percentage"></div>
+        </progress>
 
-            <div class="job-meta">
-              <span>{{ activeJob.progress_percentage }}%</span>
-              <span class="stage-pill" [class]="stageClassName(activeJob.progress_stage)">{{
-                activeJob.progress_stage
-              }}</span>
-            </div>
+        <div class="job-meta">
+          <span>{{ activeJob.progress_percentage }}%</span>
+          <span class="stage-pill" [class]="stageClassName(activeJob.progress_stage)">{{
+            activeJob.progress_stage
+            }}</span>
+        </div>
 
-            <p class="job-message">{{ activeJob.progress_message }}</p>
+        <p class="job-message">{{ activeJob.progress_message }}</p>
 
-            <div class="actions-cell">
-              <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
-                Open live logs
-              </button>
+        <div class="actions-cell">
+          <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
+            Open live logs
+          </button>
 
-              @if (appRouteForJob(activeJob); as appRoutePath) {
-                <a
-                  class="open-result-link"
-                  [routerLink]="appRoutePath"
-                  [queryParams]="{ jobId: activeJob.id }"
-                >
-                  {{ resultActionLabel(activeJob) }}
-                </a>
-              }
+          @if (appRouteForJob(activeJob); as appRoutePath) {
+          <a class="open-result-link" [routerLink]="appRoutePath" [queryParams]="{ jobId: activeJob.id }">
+            {{ resultActionLabel(activeJob) }}
+          </a>
+          }
 
-              @if (activeJob.supports_pause_resume) {
-                <button
-                  class="control-btn pause-btn"
-                  (click)="pauseJob(activeJob.id)"
-                  [disabled]="
+          @if (canManageJob(activeJob) && activeJob.supports_pause_resume) {
+          <button class="control-btn pause-btn" (click)="pauseJob(activeJob.id)" [disabled]="
                     facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
-                  "
-                >
-                  @if (activeJob.pause_requested) {
-                    Pause requested...
-                  } @else {
-                    {{ facade.isControlActionRunning(activeJob.id) ? 'Pausing...' : 'Pause' }}
-                  }
-                </button>
-              }
-              <button
-                class="control-btn cancel-btn"
-                (click)="cancelJob(activeJob.id)"
-                [disabled]="facade.isControlActionRunning(activeJob.id)"
-              >
-                {{ facade.isControlActionRunning(activeJob.id) ? 'Cancelling...' : 'Cancel' }}
-              </button>
-            </div>
-
-            @if (activeJob.pause_requested && activeJob.status !== 'paused') {
-              <p class="pause-hint">A cooperative pause request was registered.</p>
+                  ">
+            @if (activeJob.pause_requested) {
+            Pause requested...
+            } @else {
+            {{ facade.isControlActionRunning(activeJob.id) ? 'Pausing...' : 'Pause' }}
             }
-          </article>
+          </button>
+          }
+          @if (canManageJob(activeJob)) {
+          <button class="control-btn cancel-btn" (click)="cancelJob(activeJob.id)"
+            [disabled]="facade.isControlActionRunning(activeJob.id)">
+            {{ facade.isControlActionRunning(activeJob.id) ? 'Cancelling...' : 'Cancel' }}
+          </button>
+          }
+        </div>
+
+        @if (activeJob.pause_requested && activeJob.status !== 'paused') {
+        <p class="pause-hint">A cooperative pause request was registered.</p>
         }
-      </div>
+      </article>
+      }
+    </div>
     }
   </section>
 
   <section class="jobs-section" aria-label="Paused jobs">
     <h2>Paused</h2>
     @if (facade.pausedJobs().length === 0) {
-      <p class="empty-state">No paused jobs for the selected filters.</p>
+    <p class="empty-state">No paused jobs for the selected filters.</p>
     } @else {
-      <div class="jobs-grid">
-        @for (pausedJob of facade.pausedJobs(); track pausedJob.id) {
-          <article class="job-card">
-            <header class="job-card-header">
-              <span class="job-plugin">{{ pausedJob.plugin_name }}</span>
-              <span class="job-status" [class]="statusClassName(pausedJob.status)">{{
-                pausedJob.status
-              }}</span>
-            </header>
+    <div class="jobs-grid">
+      @for (pausedJob of facade.pausedJobs(); track pausedJob.id) {
+      <article class="job-card">
+        <header class="job-card-header">
+          <span class="job-plugin">{{ pausedJob.plugin_name }}</span>
+          <span class="job-status" [class]="statusClassName(pausedJob.status)">{{
+            pausedJob.status
+            }}</span>
+        </header>
 
-            <p class="job-id">{{ pausedJob.id }}</p>
+        <p class="job-id">{{ pausedJob.id }}</p>
+        <p class="job-owner">{{ ownerGroupLabel(pausedJob) }}</p>
 
-            <progress
-              class="progress-track"
-              [value]="pausedJob.progress_percentage"
-              [attr.aria-label]="'Progress for job ' + pausedJob.id"
-              title="Job progress"
-              max="100"
-            >
-              <div class="progress-fill" [style.width.%]="pausedJob.progress_percentage"></div>
-            </progress>
+        <progress class="progress-track" [value]="pausedJob.progress_percentage"
+          [attr.aria-label]="'Progress for job ' + pausedJob.id" title="Job progress" max="100">
+          <div class="progress-fill" [style.width.%]="pausedJob.progress_percentage"></div>
+        </progress>
 
-            <div class="job-meta">
-              <span>{{ pausedJob.progress_percentage }}%</span>
-              <span class="stage-pill" [class]="stageClassName(pausedJob.progress_stage)">{{
-                pausedJob.progress_stage
-              }}</span>
-            </div>
+        <div class="job-meta">
+          <span>{{ pausedJob.progress_percentage }}%</span>
+          <span class="stage-pill" [class]="stageClassName(pausedJob.progress_stage)">{{
+            pausedJob.progress_stage
+            }}</span>
+        </div>
 
-            <p class="job-message">{{ pausedJob.progress_message }}</p>
+        <p class="job-message">{{ pausedJob.progress_message }}</p>
 
-            <div class="actions-cell">
-              <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">
-                Open logs
-              </button>
+        <div class="actions-cell">
+          <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">
+            Open logs
+          </button>
 
-              @if (appRouteForJob(pausedJob); as appRoutePath) {
-                <a
-                  class="open-result-link"
-                  [routerLink]="appRoutePath"
-                  [queryParams]="{ jobId: pausedJob.id }"
-                >
-                  {{ resultActionLabel(pausedJob) }}
-                </a>
-              }
+          @if (appRouteForJob(pausedJob); as appRoutePath) {
+          <a class="open-result-link" [routerLink]="appRoutePath" [queryParams]="{ jobId: pausedJob.id }">
+            {{ resultActionLabel(pausedJob) }}
+          </a>
+          }
 
-              @if (pausedJob.supports_pause_resume) {
-                <button
-                  class="control-btn resume-btn"
-                  (click)="resumeJob(pausedJob.id)"
-                  [disabled]="facade.isControlActionRunning(pausedJob.id)"
-                >
-                  {{ facade.isControlActionRunning(pausedJob.id) ? 'Resuming...' : 'Resume' }}
-                </button>
-              }
-              <button
-                class="control-btn cancel-btn"
-                (click)="cancelJob(pausedJob.id)"
-                [disabled]="facade.isControlActionRunning(pausedJob.id)"
-              >
-                {{ facade.isControlActionRunning(pausedJob.id) ? 'Cancelling...' : 'Cancel' }}
-              </button>
-            </div>
-          </article>
-        }
-      </div>
+          @if (canManageJob(pausedJob) && pausedJob.supports_pause_resume) {
+          <button class="control-btn resume-btn" (click)="resumeJob(pausedJob.id)"
+            [disabled]="facade.isControlActionRunning(pausedJob.id)">
+            {{ facade.isControlActionRunning(pausedJob.id) ? 'Resuming...' : 'Resume' }}
+          </button>
+          }
+          @if (canManageJob(pausedJob)) {
+          <button class="control-btn cancel-btn" (click)="cancelJob(pausedJob.id)"
+            [disabled]="facade.isControlActionRunning(pausedJob.id)">
+            {{ facade.isControlActionRunning(pausedJob.id) ? 'Cancelling...' : 'Cancel' }}
+          </button>
+          }
+        </div>
+      </article>
+      }
+    </div>
     }
   </section>
 
   <section class="jobs-section" aria-label="Finished jobs">
     <h2>Completed, failed and cancelled</h2>
     @if (facade.finishedJobs().length === 0) {
-      <p class="empty-state">No terminal jobs for this filter yet.</p>
+    <p class="empty-state">No terminal jobs for this filter yet.</p>
     } @else {
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Job</th>
-              <th>App</th>
-              <th>Status</th>
-              <th>Progress</th>
-              <th>Stage</th>
-              <th>Cache</th>
-              <th>Updated</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (finishedJob of facade.finishedJobs(); track finishedJob.id) {
-              <tr>
-                <td class="mono">{{ finishedJob.id }}</td>
-                <td>{{ finishedJob.plugin_name }}</td>
-                <td>
-                  <span class="job-status" [class]="statusClassName(finishedJob.status)">{{
-                    finishedJob.status
-                  }}</span>
-                </td>
-                <td>{{ finishedJob.progress_percentage }}%</td>
-                <td>
-                  <span class="stage-pill" [class]="stageClassName(finishedJob.progress_stage)">{{
-                    finishedJob.progress_stage
-                  }}</span>
-                </td>
-                <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
-                <td>{{ finishedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                <td>
-                  <div class="actions-cell">
-                    <button class="open-logs-btn" (click)="openJobDetails(finishedJob.id)">
-                      Open logs
-                    </button>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Job</th>
+            <th>App</th>
+            <th>Owner / Group</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Stage</th>
+            <th>Cache</th>
+            <th>Updated</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (finishedJob of facade.finishedJobs(); track finishedJob.id) {
+          <tr>
+            <td class="mono">{{ finishedJob.id }}</td>
+            <td>{{ finishedJob.plugin_name }}</td>
+            <td>{{ ownerGroupLabel(finishedJob) }}</td>
+            <td>
+              <span class="job-status" [class]="statusClassName(finishedJob.status)">{{
+                finishedJob.status
+                }}</span>
+            </td>
+            <td>{{ finishedJob.progress_percentage }}%</td>
+            <td>
+              <span class="stage-pill" [class]="stageClassName(finishedJob.progress_stage)">{{
+                finishedJob.progress_stage
+                }}</span>
+            </td>
+            <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
+            <td>{{ finishedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+            <td>
+              <div class="actions-cell">
+                <button class="open-logs-btn" (click)="openJobDetails(finishedJob.id)">
+                  Open logs
+                </button>
 
-                    @if (appRouteForJob(finishedJob); as appRoutePath) {
-                      <a
-                        class="open-result-link"
-                        [routerLink]="appRoutePath"
-                        [queryParams]="{ jobId: finishedJob.id }"
-                      >
-                        {{ resultActionLabel(finishedJob) }}
-                      </a>
-                    } @else {
-                      <span class="open-result-disabled">No viewer</span>
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                @if (appRouteForJob(finishedJob); as appRoutePath) {
+                <a class="open-result-link" [routerLink]="appRoutePath" [queryParams]="{ jobId: finishedJob.id }">
+                  {{ resultActionLabel(finishedJob) }}
+                </a>
+                } @else {
+                <span class="open-result-disabled">No viewer</span>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     }
   </section>
 
   @if (facade.selectedJobId() !== null) {
-    <section
-      class="details-overlay"
-      aria-label="Job details"
-      (click)="closeJobDetails()"
-      (keydown)="closeJobDetails()"
-    >
-      <article
-        class="details-modal"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-      >
-        <header class="details-header">
-          <h3>Job details</h3>
-          <button class="close-details-btn" (click)="closeJobDetails()">Close</button>
-        </header>
+  <section class="details-overlay" aria-label="Job details" (click)="closeJobDetails()" (keydown)="closeJobDetails()">
+    <article class="details-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <header class="details-header">
+        <h3>Job details</h3>
+        <button class="close-details-btn" (click)="closeJobDetails()">Close</button>
+      </header>
 
-        @if (facade.isDetailsLoading()) {
-          <p class="details-loading">Loading details and logs...</p>
-        } @else {
-          @if (facade.detailsErrorMessage(); as detailsError) {
-            <p class="details-error">{{ detailsError }}</p>
-          }
+      @if (facade.isDetailsLoading()) {
+      <p class="details-loading">Loading details and logs...</p>
+      } @else {
+      @if (facade.detailsErrorMessage(); as detailsError) {
+      <p class="details-error">{{ detailsError }}</p>
+      }
 
-          @if (facade.selectedJob(); as selectedJob) {
-            <div class="details-meta-grid">
-              <p>
-                <strong>ID:</strong> <span class="mono">{{ selectedJob.id }}</span>
-              </p>
-              <p><strong>App:</strong> {{ selectedJob.plugin_name }}</p>
-              <p><strong>Status:</strong> {{ selectedJob.status }}</p>
-              <p><strong>Stage:</strong> {{ selectedJob.progress_stage }}</p>
-              <p><strong>Progress:</strong> {{ selectedJob.progress_percentage }}%</p>
-              <p><strong>Message:</strong> {{ selectedJob.progress_message }}</p>
-              <p>
-                <strong>Updated:</strong> {{ selectedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}
-              </p>
-            </div>
+      @if (facade.selectedJob(); as selectedJob) {
+      <div class="details-meta-grid">
+        <p>
+          <strong>ID:</strong> <span class="mono">{{ selectedJob.id }}</span>
+        </p>
+        <p><strong>App:</strong> {{ selectedJob.plugin_name }}</p>
+        <p><strong>Owner / Group:</strong> {{ ownerGroupLabel(selectedJob) }}</p>
+        <p><strong>Status:</strong> {{ selectedJob.status }}</p>
+        <p><strong>Stage:</strong> {{ selectedJob.progress_stage }}</p>
+        <p><strong>Progress:</strong> {{ selectedJob.progress_percentage }}%</p>
+        <p><strong>Message:</strong> {{ selectedJob.progress_message }}</p>
+        <p>
+          <strong>Updated:</strong> {{ selectedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}
+        </p>
+      </div>
 
-            @if (selectedJob.supports_pause_resume) {
-              <div class="actions-cell">
-                @if (selectedJob.status === 'paused') {
-                  <button
-                    class="control-btn resume-btn"
-                    (click)="resumeJob(selectedJob.id)"
-                    [disabled]="facade.isControlActionRunning(selectedJob.id)"
-                  >
-                    {{
-                      facade.isControlActionRunning(selectedJob.id) ? 'Resuming...' : 'Resume job'
-                    }}
-                  </button>
-                } @else if (selectedJob.status === 'running' || selectedJob.status === 'pending') {
-                  <button
-                    class="control-btn pause-btn"
-                    (click)="pauseJob(selectedJob.id)"
-                    [disabled]="
+      @if (canManageJob(selectedJob) && selectedJob.supports_pause_resume) {
+      <div class="actions-cell">
+        @if (selectedJob.status === 'paused') {
+        <button class="control-btn resume-btn" (click)="resumeJob(selectedJob.id)"
+          [disabled]="facade.isControlActionRunning(selectedJob.id)">
+          {{
+          facade.isControlActionRunning(selectedJob.id) ? 'Resuming...' : 'Resume job'
+          }}
+        </button>
+        } @else if (selectedJob.status === 'running' || selectedJob.status === 'pending') {
+        <button class="control-btn pause-btn" (click)="pauseJob(selectedJob.id)" [disabled]="
                       facade.isControlActionRunning(selectedJob.id) || selectedJob.pause_requested
-                    "
-                  >
-                    @if (selectedJob.pause_requested) {
-                      Pause requested...
-                    } @else {
-                      {{
-                        facade.isControlActionRunning(selectedJob.id) ? 'Pausing...' : 'Pause job'
-                      }}
-                    }
-                  </button>
-                }
-                @if (
-                  selectedJob.status === 'pending' ||
-                  selectedJob.status === 'running' ||
-                  selectedJob.status === 'paused'
-                ) {
-                  <button
-                    class="control-btn cancel-btn"
-                    (click)="cancelJob(selectedJob.id)"
-                    [disabled]="facade.isControlActionRunning(selectedJob.id)"
-                  >
-                    {{
-                      facade.isControlActionRunning(selectedJob.id) ? 'Cancelling...' : 'Cancel job'
-                    }}
-                  </button>
-                }
-              </div>
-            }
-
-            @if (selectedJob.error_trace !== null && selectedJob.error_trace !== '') {
-              <section class="error-trace-box" aria-label="Job error trace">
-                <h4>Error trace</h4>
-                <pre>{{ selectedJob.error_trace }}</pre>
-              </section>
-            }
-          }
-
-          @if (facade.selectedJobLogs().length === 0) {
-            <p class="details-empty">No logs available for this job.</p>
+                    ">
+          @if (selectedJob.pause_requested) {
+          Pause requested...
           } @else {
-            <app-job-logs-panel
-              [title]="'Logs'"
-              [logs]="facade.selectedJobLogs()"
-            ></app-job-logs-panel>
+          {{
+          facade.isControlActionRunning(selectedJob.id) ? 'Pausing...' : 'Pause job'
+          }}
           }
+        </button>
         }
-      </article>
-    </section>
+        @if (
+        selectedJob.status === 'pending' ||
+        selectedJob.status === 'running' ||
+        selectedJob.status === 'paused'
+        ) {
+        <button class="control-btn cancel-btn" (click)="cancelJob(selectedJob.id)"
+          [disabled]="facade.isControlActionRunning(selectedJob.id)">
+          {{
+          facade.isControlActionRunning(selectedJob.id) ? 'Cancelling...' : 'Cancel job'
+          }}
+        </button>
+        }
+      </div>
+      }
+
+      @if (selectedJob.error_trace !== null && selectedJob.error_trace !== '') {
+      <section class="error-trace-box" aria-label="Job error trace">
+        <h4>Error trace</h4>
+        <pre>{{ selectedJob.error_trace }}</pre>
+      </section>
+      }
+      }
+
+      @if (facade.selectedJobLogs().length === 0) {
+      <p class="details-empty">No logs available for this job.</p>
+      } @else {
+      <app-job-logs-panel [title]="'Logs'" [logs]="facade.selectedJobLogs()"></app-job-logs-panel>
+      }
+      }
+    </article>
+  </section>
   }
 </section>

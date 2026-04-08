@@ -100,6 +100,18 @@ def _serialize_substituent(substituent: SmileitSubstituent) -> SmileitCatalogEnt
     )
 
 
+def _resolve_substituent_owner_user_id(substituent: SmileitSubstituent) -> int | None:
+    """Obtiene owner_user_id desde metadata cuando existe y es válido."""
+    raw_owner_user_id = substituent.provenance_metadata.get("owner_user_id")
+    if raw_owner_user_id is None:
+        return None
+
+    try:
+        return int(str(raw_owner_user_id).strip())
+    except ValueError:
+        return None
+
+
 def _serialize_pattern(pattern: SmileitPattern) -> SmileitPatternEntry:
     """Convierte patrón persistido a contrato tipado de salida."""
     metadata: dict[str, str] = {
@@ -127,14 +139,29 @@ def list_active_categories() -> list[SmileitCategoryType]:
     return [_serialize_category(entry) for entry in categories]
 
 
-def list_active_catalog_entries() -> list[SmileitCatalogEntry]:
-    """Lista sustituyentes activos y vigentes para selección en UI/API."""
+def list_active_catalog_entries(
+    actor_user_id: int | None = None,
+) -> list[SmileitCatalogEntry]:
+    """Lista sustituyentes activos, aislando entradas de usuario por actor."""
     entries = (
         SmileitSubstituent.objects.filter(is_latest=True, is_active=True)
         .prefetch_related("categories")
         .order_by("name", "stable_id")
     )
-    return [_serialize_substituent(entry) for entry in entries]
+
+    if actor_user_id is None:
+        return [_serialize_substituent(entry) for entry in entries]
+
+    visible_entries: list[SmileitCatalogEntry] = []
+    for entry in entries:
+        if not _is_substituent_user_editable(entry):
+            visible_entries.append(_serialize_substituent(entry))
+            continue
+
+        if _resolve_substituent_owner_user_id(entry) == actor_user_id:
+            visible_entries.append(_serialize_substituent(entry))
+
+    return visible_entries
 
 
 def list_active_patterns() -> list[SmileitPatternEntry]:
@@ -254,6 +281,8 @@ def _validate_substituent_categories_or_raise(
 
 def _resolve_latest_user_substituent_for_update(
     stable_id: str,
+    *,
+    actor_user_id: int | None = None,
 ) -> tuple[uuid.UUID, SmileitSubstituent]:
     """Obtiene el registro vigente editable para realizar una actualización."""
     try:
@@ -278,11 +307,21 @@ def _resolve_latest_user_substituent_for_update(
             "Solo se pueden editar catálogos creados por usuario; los seed son inmutables."
         )
 
+    if actor_user_id is not None:
+        owner_user_id = _resolve_substituent_owner_user_id(current_substituent)
+        if owner_user_id != actor_user_id:
+            raise ValueError(
+                "No tienes permisos para editar este sustituyente de otro usuario."
+            )
+
     return stable_uuid, current_substituent
 
 
 def create_catalog_substituent(
     payload: SmileitSubstituentCreatePayload,
+    *,
+    actor_user_id: int | None = None,
+    actor_username: str = "",
 ) -> SmileitCatalogEntry:
     """Crea un nuevo sustituyente persistente si pasa validaciones químicas."""
     canonical_smiles = canonicalize_smiles(payload["smiles"])
@@ -300,6 +339,11 @@ def create_catalog_substituent(
         category_map,
     )
 
+    normalized_metadata = _normalize_metadata(payload["provenance_metadata"])
+    if actor_user_id is not None:
+        normalized_metadata["owner_user_id"] = str(actor_user_id)
+        normalized_metadata["owner_username"] = actor_username.strip()
+
     substituent = SmileitSubstituent.objects.create(
         stable_id=uuid.uuid4(),
         version=1,
@@ -310,7 +354,7 @@ def create_catalog_substituent(
         smiles_canonical=canonical_smiles,
         anchor_atom_indices=anchor_indices,
         source_reference=payload["source_reference"].strip(),
-        provenance_metadata=_normalize_metadata(payload["provenance_metadata"]),
+        provenance_metadata=normalized_metadata,
     )
 
     for validation in validations:
@@ -328,10 +372,14 @@ def create_catalog_substituent(
 def update_catalog_substituent(
     stable_id: str,
     payload: SmileitSubstituentCreatePayload,
+    *,
+    actor_user_id: int | None = None,
+    actor_username: str = "",
 ) -> SmileitCatalogEntry:
     """Crea una nueva versión editable de un sustituyente de usuario."""
     stable_uuid, current_substituent = _resolve_latest_user_substituent_for_update(
-        stable_id
+        stable_id,
+        actor_user_id=actor_user_id,
     )
 
     canonical_smiles = canonicalize_smiles(payload["smiles"])
@@ -359,6 +407,10 @@ def update_catalog_substituent(
             str(meta_key): str(meta_value)
             for meta_key, meta_value in current_substituent.provenance_metadata.items()
         }
+
+    if actor_user_id is not None:
+        normalized_metadata["owner_user_id"] = str(actor_user_id)
+        normalized_metadata["owner_username"] = actor_username.strip()
 
     source_reference = payload["source_reference"].strip()
     if source_reference == "":

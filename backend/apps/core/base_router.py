@@ -36,6 +36,7 @@ from rest_framework.response import Response
 
 from .artifacts import ScientificInputArtifactStorageService
 from .declarative_api import DeclarativeJobAPI
+from .identity.services import AuthorizationService
 from .models import ScientificJob
 from .reporting import (
     build_download_filename,
@@ -66,16 +67,37 @@ class ScientificAppViewSetMixin:
     csv_report_suffix: str = "report"
 
     def get_job_queryset(self) -> "viewsets.ViewSet.queryset":
-        """Devuelve el queryset base filtrado por plugin."""
-        return ScientificJob.objects.filter(plugin_name=self.plugin_name)
+        """Devuelve queryset por plugin y alcance de visibilidad del actor."""
+        base_queryset = ScientificJob.objects.filter(plugin_name=self.plugin_name)
+        request_obj = getattr(self, "request", None)
+        actor = getattr(request_obj, "user", None)
+
+        if bool(getattr(actor, "is_authenticated", False)):
+            actor_visible_ids = AuthorizationService.get_visible_jobs(
+                actor=actor
+            ).values_list("id", flat=True)
+            return base_queryset.filter(id__in=actor_visible_ids)
+
+        return base_queryset
 
     def get_job_or_404(self, job_id: str | None) -> ScientificJob:
-        """Obtiene un job filtrando por plugin_name o lanza 404."""
-        return get_object_or_404(
+        """Obtiene un job del plugin validando permisos cuando hay actor autenticado."""
+        job = get_object_or_404(
             ScientificJob,
             pk=job_id,
             plugin_name=self.plugin_name,
         )
+        request_obj = getattr(self, "request", None)
+        actor = getattr(request_obj, "user", None)
+
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            from django.http import Http404
+
+            raise Http404("Job no encontrado.")
+
+        return job
 
     def build_csv_content(self, job: ScientificJob) -> str:
         """Construye el CSV específico de la app. Debe ser implementado por subclases."""

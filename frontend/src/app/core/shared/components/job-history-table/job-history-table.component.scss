@@ -1,14 +1,12 @@
-/* job-history-table.component.scss: Estilos para la tabla reutilizable de historial de jobs. */
+/* job-history-table.component.scss: Tabla de historial — App Chemistry Sense. */
 
 :host {
   display: block;
 }
 
 .history-card {
-  border: 1px solid #d5e7e4;
-  border-radius: 16px;
-  background: #fff;
-  padding: 1rem;
+  background: transparent;
+  padding: 0;
 }
 
 .history-header {
@@ -22,120 +20,125 @@
 
 .history-header h3 {
   margin: 0;
-  color: #0d4e48;
+  font-family: var(--chem-font-heading);
+  color: var(--chem-ink);
 }
 
 .status-message {
   margin: 0;
-  color: #0b1f1a;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
 }
 
 .table-wrap {
   margin-top: 0.7rem;
   overflow: auto;
-  border: 1px solid #d8e8e5;
-  border-radius: 12px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
 }
 
 .history-table {
-  width: 100%;
-  border-collapse: collapse;
   min-width: 420px;
 }
 
-.history-table th,
-.history-table td {
-  padding: 0.55rem 0.62rem;
-  border-bottom: 1px solid #e7f1f0;
-  text-align: left;
-  font-size: 0.86rem;
-}
-
-.history-table tr:last-child td {
-  border-bottom: none;
-}
-
-.history-table th {
-  background: #f2f9f8;
-  color: #0b1f1a;
-  font-weight: 800;
-}
-
 .mono {
-  font-family: 'Consolas', 'Liberation Mono', monospace;
-  font-size: 0.8rem;
-  color: #0b1f1a;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink);
   word-break: break-all;
 }
 
 .history-open-btn {
-  border-radius: 999px;
+  border-radius: var(--chem-radius-pill);
   padding: 0.35rem 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  border: 1px solid #0f6a61;
-  background: #fff;
-  color: #0f6a61;
-  font-family: inherit;
+  border: 1px solid var(--chem-border);
+  background: transparent;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  transition: all var(--chem-transition);
 }
 
 .history-open-btn:hover {
-  background: #f0fdf4;
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  background: var(--chem-accent-light);
 }
 
 /* ── Badges de estado ─────────────────────────────────────────────────── */
 
+/* ── Badges de estado ── */
+
 .history-status {
-  border-radius: 999px;
+  border-radius: var(--chem-radius-pill);
   border: 1px solid transparent;
   padding: 0.12rem 0.48rem;
   font-weight: 700;
-  font-size: 0.76rem;
+  font-size: var(--chem-text-xs);
+  font-family: var(--chem-font-label);
 }
 
-.history-pending,
+.history-pending {
+  border-color: rgba(123, 90, 158, 0.25);
+  background: var(--chem-status-pending-bg);
+  color: var(--chem-status-pending);
+}
+
 .history-running {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: rgba(211, 47, 47, 0.25);
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
 }
 
 .history-completed {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  border-color: rgba(46, 125, 50, 0.25);
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
-.history-failed,
+.history-failed {
+  border-color: rgba(183, 28, 28, 0.25);
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
+}
+
 .history-cancelled {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: rgba(168, 161, 176, 0.3);
+  background: var(--chem-status-cancelled-bg);
+  color: var(--chem-status-cancelled);
 }
 
 .history-paused {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: rgba(244, 162, 97, 0.3);
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
 }
 
 .history-unknown {
-  border-color: #e5e7eb;
-  background: #f9fafb;
-  color: #6b7280;
+  border-color: var(--chem-border-subtle);
+  background: var(--chem-surface-alt);
+  color: var(--chem-ink-soft);
 }
 
-/* ── Reload button ────────────────────────────────────────────────────── */
+/* ── Reload button ── */
 
 .btn-secondary {
-  border-radius: 999px;
+  border-radius: var(--chem-radius-pill);
   padding: 0.45rem 0.88rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  border: 1px solid #0f6a61;
-  background: #fff;
-  color: #0f6a61;
-  font-family: inherit;
+  border: 1px solid var(--chem-border);
+  background: transparent;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
+  transition: all var(--chem-transition);
+}
+
+.btn-secondary:hover {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
 }
 
 .btn-secondary:disabled {
