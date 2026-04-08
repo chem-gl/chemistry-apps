@@ -32,6 +32,13 @@ def dispatch_scientific_job(job_id: str) -> bool:
     Retorna `True` si el broker aceptó el encolado y `False` en caso contrario.
     El caller debe registrar ese resultado para reflejar estado de progreso.
     """
+    if not bool(getattr(settings, "JOB_DISPATCH_ENABLED", True)):
+        logger.debug(
+            "Despacho de Celery deshabilitado por configuración para job %s.",
+            job_id,
+        )
+        return False
+
     try:
         execute_scientific_job.delay(job_id)
         return True

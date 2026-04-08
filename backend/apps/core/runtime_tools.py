@@ -22,6 +22,7 @@ import socket
 import tarfile
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from dataclasses import dataclass
@@ -32,6 +33,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_DOWNLOAD_MAX_ATTEMPTS: int = 5
 DEFAULT_DOWNLOAD_TIMEOUT_SECONDS: int = 900
 DEFAULT_DOWNLOAD_CHUNK_SIZE_BYTES: int = 4 * 1024 * 1024
+DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO: float = 25.0
+AMBIT_JAR_DOWNLOAD_URL_ENV_VAR: str = "AMBIT_JAR_DOWNLOAD_URL"
 
 
 @dataclass(frozen=True)
@@ -78,10 +81,6 @@ JAVA_RUNTIMES: tuple[JavaRuntimeDownloadSpec, ...] = (
             "jdk-21.0.2+13/OpenJDK21U-jre_x64_linux_hotspot_21.0.2_13.tar.gz"
         ),
     ),
-)
-
-AMBIT_JAR_URL: str = (
-    "http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar"
 )
 
 REQUIRED_RUNTIME_TOOLS: tuple[RuntimeToolRequirement, ...] = (
@@ -140,6 +139,31 @@ def get_download_timeout_seconds() -> int:
         "RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS",
         DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
     )
+
+
+def get_ambit_jar_download_url() -> str | None:
+    """Resuelve una URL HTTPS confiable para descargar el JAR de AMBIT.
+
+    Se exige HTTPS porque el JAR se ejecuta localmente tras la descarga, por lo que
+    aceptar una URL insegura expondría al backend a artefactos manipulados en tránsito.
+    """
+    configured_url: str = os.getenv(AMBIT_JAR_DOWNLOAD_URL_ENV_VAR, "").strip()
+    if configured_url == "":
+        return None
+
+    parsed_url = urllib.parse.urlparse(configured_url)
+    if parsed_url.scheme != "https":
+        raise RuntimeToolsError(
+            "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS para descargar "
+            "SyntheticAccessibilityCli.jar de forma segura."
+        )
+
+    if parsed_url.netloc == "":
+        raise RuntimeToolsError(
+            "La variable AMBIT_JAR_DOWNLOAD_URL no contiene un host válido."
+        )
+
+    return configured_url
 
 
 def get_runtime_tools_root() -> Path:
@@ -312,9 +336,16 @@ def _prepare_java_runtime(
             runtime_spec.download_url,
         )
         _download_file_with_retry(runtime_spec.download_url, tarball_path)
+        compressed_tarball_size_bytes: int = tarball_path.stat().st_size
 
-        with tarfile.open(tarball_path, mode="r:gz") as archive_file:
-            _extract_tarfile_safely(archive_file, temporary_dir)
+        # Validación explícita previa de tamaño, cantidad de entradas y ratio para
+        # evitar zip bombs antes de escribir cualquier archivo en disco.
+        with tarfile.open(tarball_path, mode="r:gz") as archive_file:  # NOSONAR
+            _extract_tarfile_safely(
+                archive_file,
+                temporary_dir,
+                compressed_archive_size_bytes=compressed_tarball_size_bytes,
+            )
 
         extracted_directories: list[Path] = [
             child_path for child_path in temporary_dir.iterdir() if child_path.is_dir()
@@ -372,8 +403,42 @@ def _validate_tar_entry_file_size(
     return new_total
 
 
+def _validate_tar_archive_compression_ratio(
+    archive_members: list[tarfile.TarInfo],
+    compressed_archive_size_bytes: int,
+    max_total_size_bytes: int,
+    max_compression_ratio: float,
+) -> None:
+    """Valida el ratio global entre tamaño comprimido y descomprimido del tar."""
+    total_uncompressed_size_bytes: int = sum(
+        member.size for member in archive_members if member.isfile()
+    )
+
+    if total_uncompressed_size_bytes > max_total_size_bytes:
+        raise RuntimeToolsError(
+            f"El tarball supera el límite de {max_total_size_bytes // (1024**3)} GB "
+            "descomprimidos (posible zip bomb)."
+        )
+
+    if compressed_archive_size_bytes <= 0:
+        raise RuntimeToolsError(
+            "El tarball descargado no tiene un tamaño comprimido válido."
+        )
+
+    compression_ratio: float = (
+        total_uncompressed_size_bytes / compressed_archive_size_bytes
+    )
+    if compression_ratio > max_compression_ratio:
+        raise RuntimeToolsError(
+            "El tarball supera el ratio máximo de compresión permitido "
+            f"({compression_ratio:.2f} > {max_compression_ratio:.2f})."
+        )
+
+
 def _extract_tarfile_safely(
-    archive_file: tarfile.TarFile, destination_dir: Path
+    archive_file: tarfile.TarFile,
+    destination_dir: Path,
+    compressed_archive_size_bytes: int | None = None,
 ) -> None:
     """Extrae un tar.gz bloqueando rutas fuera del directorio destino y protegiendo contra zip bomb.
 
@@ -385,12 +450,27 @@ def _extract_tarfile_safely(
     # Límites de seguridad contra zip bomb (S5042)
     max_total_entries: int = 10_000
     max_total_size_bytes: int = 2 * 1024 * 1024 * 1024  # 2 GB
+    max_compression_ratio: float = DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO
 
     destination_dir_resolved: Path = destination_dir.resolve()
     total_size_bytes: int = 0
     total_entries: int = 0
+    archive_members: list[tarfile.TarInfo] = archive_file.getmembers()
 
-    for member in archive_file.getmembers():
+    if len(archive_members) > max_total_entries:
+        raise RuntimeToolsError(
+            f"El tarball supera el límite de {max_total_entries} entradas (posible zip bomb)."
+        )
+
+    if compressed_archive_size_bytes is not None:
+        _validate_tar_archive_compression_ratio(
+            archive_members,
+            compressed_archive_size_bytes,
+            max_total_size_bytes,
+            max_compression_ratio,
+        )
+
+    for member in archive_members:
         _validate_tar_entry_path(member, destination_dir, destination_dir_resolved)
 
         total_entries += 1
@@ -470,8 +550,16 @@ def _prepare_external_artifacts(runtime_tools_root: Path) -> None:
     )
 
     if not _is_valid_zip_file(ambit_jar_path):
+        ambit_jar_download_url = get_ambit_jar_download_url()
+        if ambit_jar_download_url is None:
+            raise RuntimeToolsError(
+                "Falta SyntheticAccessibilityCli.jar y no hay una URL HTTPS configurada. "
+                "Defina AMBIT_JAR_DOWNLOAD_URL con un mirror confiable o copie el JAR "
+                "manualmente en tools/external/ambitSA/."
+            )
+
         logger.info("Descargando AMBIT SyntheticAccessibilityCli.jar")
-        _download_file_with_retry(AMBIT_JAR_URL, ambit_jar_path)
+        _download_file_with_retry(ambit_jar_download_url, ambit_jar_path)
 
 
 def ensure_runtime_tools_ready(runtime_tools_root: Path | None = None) -> None:
