@@ -6,11 +6,15 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
-    JobStatusFilterOption,
-    JobsMonitorFacadeService,
+  JobStatusFilterOption,
+  JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import {
+  resolveScientificJobRouteKey,
+  resolveScientificJobRoutePath,
+} from '../core/shared/scientific-apps.config';
 
 @Component({
   selector: 'app-jobs-monitor',
@@ -87,12 +91,12 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   }
 
   appRouteForJob(jobItem: ScientificJobView): string | null {
-    const routeKey = this.routeKeyForJob(jobItem);
+    const routeKey = resolveScientificJobRouteKey(jobItem.plugin_name);
     if (routeKey === null || !this.sessionService.canAccessRoute(routeKey)) {
       return null;
     }
 
-    return `/${routeKey}`;
+    return resolveScientificJobRoutePath(jobItem.plugin_name);
   }
 
   canManageJob(jobItem: ScientificJobView): boolean {
@@ -137,24 +141,5 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       typeof resultRecord.metadata === 'object' &&
       !Array.isArray(resultRecord.metadata)
     );
-  }
-
-  private routeKeyForJob(jobItem: ScientificJobView): string | null {
-    if (jobItem.plugin_name === 'tunnel-effect') {
-      return 'tunnel';
-    }
-
-    const pluginToRouteMap: Record<string, string> = {
-      calculator: 'calculator',
-      'random-numbers': 'random-numbers',
-      'molar-fractions': 'molar-fractions',
-      'easy-rate': 'easy-rate',
-      marcus: 'marcus',
-      smileit: 'smileit',
-      'sa-score': 'sa-score',
-      'toxicity-properties': 'toxicity-properties',
-    };
-
-    return pluginToRouteMap[jobItem.plugin_name] ?? null;
   }
 }
