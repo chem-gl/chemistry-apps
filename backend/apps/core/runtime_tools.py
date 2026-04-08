@@ -35,6 +35,7 @@ DEFAULT_DOWNLOAD_TIMEOUT_SECONDS: int = 900
 DEFAULT_DOWNLOAD_CHUNK_SIZE_BYTES: int = 4 * 1024 * 1024
 DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO: float = 25.0
 AMBIT_JAR_DOWNLOAD_URL_ENV_VAR: str = "AMBIT_JAR_DOWNLOAD_URL"
+DEFAULT_AMBIT_JAR_DOWNLOAD_URL: str = "http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar"  # NOSONAR
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class RuntimeToolRequirement:
     relative_path: str
     must_be_executable: bool = False
     must_be_zip_file: bool = False
+    optional_when_non_strict: bool = False
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,7 @@ REQUIRED_RUNTIME_TOOLS: tuple[RuntimeToolRequirement, ...] = (
         key="ambit_jar",
         relative_path="external/ambitSA/SyntheticAccessibilityCli.jar",
         must_be_zip_file=True,
+        optional_when_non_strict=True,
     ),
 )
 
@@ -141,29 +144,47 @@ def get_download_timeout_seconds() -> int:
     )
 
 
-def get_ambit_jar_download_url() -> str | None:
-    """Resuelve una URL HTTPS confiable para descargar el JAR de AMBIT.
+def is_runtime_tools_strict_check_enabled() -> bool:
+    """Indica si la validación de runtime tools debe ser bloqueante."""
+    raw_value: str = os.getenv("RUNTIME_TOOLS_STRICT_CHECK", "").strip().lower()
+    if raw_value == "":
+        return True
 
-    Se exige HTTPS porque el JAR se ejecuta localmente tras la descarga, por lo que
-    aceptar una URL insegura expondría al backend a artefactos manipulados en tránsito.
+    return raw_value in {"1", "true", "yes", "on"}
+
+
+def get_ambit_jar_download_url() -> str | None:
+    """Resuelve la URL autorizada para descargar el JAR de AMBIT.
+
+    Regla de seguridad aplicada:
+    - Se aceptan URLs HTTPS arbitrarias configuradas por entorno.
+    - Se acepta una única excepción HTTP para el mirror histórico de Uni Plovdiv,
+      porque el proyecto depende operativamente de esa URL y el equipo no controla
+      ese servidor ni su disponibilidad TLS.
+    - Se rechaza cualquier otra URL HTTP para no abrir una excepción genérica.
     """
     configured_url: str = os.getenv(AMBIT_JAR_DOWNLOAD_URL_ENV_VAR, "").strip()
-    if configured_url == "":
-        return None
+    effective_url: str = configured_url or DEFAULT_AMBIT_JAR_DOWNLOAD_URL
 
-    parsed_url = urllib.parse.urlparse(configured_url)
-    if parsed_url.scheme != "https":
-        raise RuntimeToolsError(
-            "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS para descargar "
-            "SyntheticAccessibilityCli.jar de forma segura."
-        )
-
+    parsed_url = urllib.parse.urlparse(effective_url)
     if parsed_url.netloc == "":
         raise RuntimeToolsError(
             "La variable AMBIT_JAR_DOWNLOAD_URL no contiene un host válido."
         )
 
-    return configured_url
+    if parsed_url.scheme == "https" or effective_url == DEFAULT_AMBIT_JAR_DOWNLOAD_URL:
+        return effective_url
+
+    if parsed_url.scheme != "http":
+        raise RuntimeToolsError(
+            "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS o coincidir con el "
+            "mirror HTTP permitido de SyntheticAccessibilityCli.jar."
+        )
+
+    raise RuntimeToolsError(
+        "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS o coincidir exactamente "
+        "con http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar."
+    )
 
 
 def get_runtime_tools_root() -> Path:
@@ -202,12 +223,24 @@ def _is_executable_file(file_path: Path) -> bool:
     return file_path.exists() and file_path.is_file() and os.access(file_path, os.X_OK)
 
 
-def get_missing_runtime_files(runtime_tools_root: Path | None = None) -> list[str]:
+def get_missing_runtime_files(
+    runtime_tools_root: Path | None = None,
+    *,
+    strict_check: bool | None = None,
+) -> list[str]:
     """Lista faltantes o inválidos de runtime tools requeridos por el backend."""
     resolved_root: Path = runtime_tools_root or get_runtime_tools_root()
+    effective_strict_check: bool = (
+        is_runtime_tools_strict_check_enabled()
+        if strict_check is None
+        else strict_check
+    )
     missing_messages: list[str] = []
 
     for requirement in REQUIRED_RUNTIME_TOOLS:
+        if requirement.optional_when_non_strict and not effective_strict_check:
+            continue
+
         requirement_path: Path = _resolve_requirement_path(requirement, resolved_root)
         if not requirement_path.exists():
             missing_messages.append(
@@ -228,10 +261,17 @@ def get_missing_runtime_files(runtime_tools_root: Path | None = None) -> list[st
     return missing_messages
 
 
-def assert_runtime_tools_ready(runtime_tools_root: Path | None = None) -> None:
+def assert_runtime_tools_ready(
+    runtime_tools_root: Path | None = None,
+    *,
+    strict_check: bool | None = None,
+) -> None:
     """Falla con excepción si falta algún artefacto de runtime obligatorio."""
     resolved_root: Path = runtime_tools_root or get_runtime_tools_root()
-    missing_messages: list[str] = get_missing_runtime_files(resolved_root)
+    missing_messages: list[str] = get_missing_runtime_files(
+        resolved_root,
+        strict_check=strict_check,
+    )
 
     if len(missing_messages) == 0:
         return
@@ -543,33 +583,69 @@ def _extract_tar_member_safely(
     )
 
 
-def _prepare_external_artifacts(runtime_tools_root: Path) -> None:
+def _prepare_external_artifacts(
+    runtime_tools_root: Path,
+    *,
+    strict_check: bool | None = None,
+) -> None:
     """Descarga artefactos JAR externos obligatorios para el backend."""
+    effective_strict_check: bool = (
+        is_runtime_tools_strict_check_enabled()
+        if strict_check is None
+        else strict_check
+    )
     ambit_jar_path: Path = (
         runtime_tools_root / "external" / "ambitSA" / "SyntheticAccessibilityCli.jar"
     )
 
     if not _is_valid_zip_file(ambit_jar_path):
-        ambit_jar_download_url = get_ambit_jar_download_url()
+        try:
+            ambit_jar_download_url = get_ambit_jar_download_url()
+        except RuntimeToolsError as exc:
+            if not effective_strict_check:
+                logger.warning(
+                    "Se omite descarga automática de AMBIT en modo no estricto: %s",
+                    exc,
+                )
+                return
+            raise
+
         if ambit_jar_download_url is None:
+            if not effective_strict_check:
+                logger.warning(
+                    "No se encontró SyntheticAccessibilityCli.jar ni mirror disponible. "
+                    "El backend continuará en modo no estricto; las rutas que dependan "
+                    "de AMBIT fallarán hasta instalar el JAR."
+                )
+                return
+
             raise RuntimeToolsError(
-                "Falta SyntheticAccessibilityCli.jar y no hay una URL HTTPS configurada. "
-                "Defina AMBIT_JAR_DOWNLOAD_URL con un mirror confiable o copie el JAR "
-                "manualmente en tools/external/ambitSA/."
+                "Falta SyntheticAccessibilityCli.jar y no hay un mirror utilizable configurado. "
+                "Defina AMBIT_JAR_DOWNLOAD_URL con una URL HTTPS o use exactamente el mirror "
+                "HTTP permitido de Uni Plovdiv, o copie el JAR manualmente en tools/external/ambitSA/."
             )
 
         logger.info("Descargando AMBIT SyntheticAccessibilityCli.jar")
         _download_file_with_retry(ambit_jar_download_url, ambit_jar_path)
 
 
-def ensure_runtime_tools_ready(runtime_tools_root: Path | None = None) -> None:
+def ensure_runtime_tools_ready(
+    runtime_tools_root: Path | None = None,
+    *,
+    strict_check: bool | None = None,
+) -> None:
     """Garantiza disponibilidad de runtime tools descargando faltantes cuando aplique."""
     resolved_root: Path = runtime_tools_root or get_runtime_tools_root()
+    effective_strict_check: bool = (
+        is_runtime_tools_strict_check_enabled()
+        if strict_check is None
+        else strict_check
+    )
     resolved_root.mkdir(parents=True, exist_ok=True)
 
     for runtime_spec in JAVA_RUNTIMES:
         _prepare_java_runtime(resolved_root, runtime_spec)
 
-    _prepare_external_artifacts(resolved_root)
+    _prepare_external_artifacts(resolved_root, strict_check=effective_strict_check)
 
-    assert_runtime_tools_ready(resolved_root)
+    assert_runtime_tools_ready(resolved_root, strict_check=effective_strict_check)
