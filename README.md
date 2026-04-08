@@ -29,14 +29,14 @@ Repositorio monolítico para aplicaciones científicas de química. El backend e
 
 ## 1) Requisitos del sistema
 
-| Herramienta | Versión mínima | Uso |
-|---|---|---|
-| Python | 3.12 | Runtime del backend |
-| Django | 6.x | Framework web y ORM |
-| Node.js | 20 | Compilación y servidor de desarrollo frontend |
-| npm | 11 | Gestión de paquetes frontend |
-| Redis | 7 | Broker de Celery y backend de resultados |
-| Daphne | — | Servidor ASGI para HTTP + WebSocket en producción |
+| Herramienta | Versión mínima | Uso                                               |
+| ----------- | -------------- | ------------------------------------------------- |
+| Python      | 3.12           | Runtime del backend                               |
+| Django      | 6.x            | Framework web y ORM                               |
+| Node.js     | 20             | Compilación y servidor de desarrollo frontend     |
+| npm         | 11             | Gestión de paquetes frontend                      |
+| Redis       | 7              | Broker de Celery y backend de resultados          |
+| Daphne      | —              | Servidor ASGI para HTTP + WebSocket en producción |
 
 En desarrollo local se pueden levantar todos los servicios con Docker Compose o bien de forma nativa con un Redis externo.
 
@@ -187,14 +187,14 @@ sequenceDiagram
 
 ### Estados del job
 
-| Estado | Descripción |
-|---|---|
-| `pending` | Job creado, esperando ser encolado |
-| `running` | Worker ejecutando el plugin |
-| `paused` | Plugin pausado por solicitud cooperativa |
-| `completed` | Ejecución terminada con resultados |
-| `failed` | Error durante la ejecución del plugin |
-| `cancelled` | Cancelado manualmente desde la UI |
+| Estado      | Descripción                              |
+| ----------- | ---------------------------------------- |
+| `pending`   | Job creado, esperando ser encolado       |
+| `running`   | Worker ejecutando el plugin              |
+| `paused`    | Plugin pausado por solicitud cooperativa |
+| `completed` | Ejecución terminada con resultados       |
+| `failed`    | Error durante la ejecución del plugin    |
+| `cancelled` | Cancelado manualmente desde la UI        |
 
 ### Resiliencia ante fallos del broker
 
@@ -307,12 +307,12 @@ classDiagram
 
 `RuntimeJobService` no depende directamente del ORM ni de Celery. Recibe puertos (Protocols de Python) e inyecta adaptadores concretos en el factory:
 
-| Puerto | Adaptador | Responsabilidad |
-|---|---|---|
-| `CacheRepositoryPort` | `DjangoCacheRepositoryAdapter` | Lee y escribe `ScientificCacheEntry` |
-| `PluginExecutionPort` | `DjangoPluginExecutionAdapter` | Ejecuta función del `PluginRegistry` |
-| `JobProgressPublisherPort` | `DjangoJobProgressPublisherAdapter` | Persiste y broadcast progreso |
-| `JobLogPublisherPort` | `DjangoJobLogPublisherAdapter` | Persiste y broadcast log events |
+| Puerto                     | Adaptador                           | Responsabilidad                      |
+| -------------------------- | ----------------------------------- | ------------------------------------ |
+| `CacheRepositoryPort`      | `DjangoCacheRepositoryAdapter`      | Lee y escribe `ScientificCacheEntry` |
+| `PluginExecutionPort`      | `DjangoPluginExecutionAdapter`      | Ejecuta función del `PluginRegistry` |
+| `JobProgressPublisherPort` | `DjangoJobProgressPublisherAdapter` | Persiste y broadcast progreso        |
+| `JobLogPublisherPort`      | `DjangoJobLogPublisherAdapter`      | Persiste y broadcast log events      |
 
 Esta separación permite reemplazar cualquier adaptador en pruebas sin necesidad de mockear ORM ni Celery directamente.
 
@@ -322,27 +322,27 @@ Esta separación permite reemplazar cualquier adaptador en pruebas sin necesidad
 
 ### Mapa de archivos del core
 
-| Archivo | Responsabilidad |
-|---|---|
-| `models.py` | Entidades persistentes: `ScientificJob`, `ScientificJobLogEvent`, artefactos |
-| `ports.py` | Interfaces Protocol para todos los adaptadores |
-| `processing.py` | `PluginRegistry`: registro y despacho de funciones de plugin |
-| `services/facade.py` | `JobService`: fachada estática para consumidores externos |
-| `services/runtime.py` | `RuntimeJobService`: orquestación completa del ciclo de vida |
-| `factory.py` | Composición de servicio con adaptadores por defecto |
-| `adapters.py` | Implementaciones concretas de los puertos para Django |
-| `cache.py` | `generate_job_hash()`: hash SHA-256 determinista para caché |
-| `tasks.py` | Tareas Celery: `execute_scientific_job`, `run_active_recovery`, `purge_expired_artifact_chunks` |
-| `realtime.py` | Construcción y broadcasting de eventos por Django Channels |
-| `consumers.py` | `JobsStreamConsumer`: WebSocket consumer con filtros |
-| `routing.py` | Mapa de rutas WebSocket |
-| `app_registry.py` | `ScientificAppRegistry`: valida unicidad de plugins y rutas en startup |
-| `base_router.py` | `ScientificAppViewSetMixin`: mixin con endpoints comunes para todas las apps |
-| `artifacts.py` | `ScientificInputArtifactStorageService`: persistencia chunked de archivos |
-| `exceptions.py` | `JobPauseRequested`: señal de control para pausa cooperativa |
-| `reporting.py` | Generadores de reportes CSV y log para descarga |
-| `declarative_api.py` | `DeclarativeJobAPI`: helpers para contratos declarativos en routers |
-| `management/commands/up.py` | Comando dev que arranca API + worker con auto-reload |
+| Archivo                     | Responsabilidad                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `models.py`                 | Entidades persistentes: `ScientificJob`, `ScientificJobLogEvent`, artefactos                    |
+| `ports.py`                  | Interfaces Protocol para todos los adaptadores                                                  |
+| `processing.py`             | `PluginRegistry`: registro y despacho de funciones de plugin                                    |
+| `services/facade.py`        | `JobService`: fachada estática para consumidores externos                                       |
+| `services/runtime.py`       | `RuntimeJobService`: orquestación completa del ciclo de vida                                    |
+| `factory.py`                | Composición de servicio con adaptadores por defecto                                             |
+| `adapters.py`               | Implementaciones concretas de los puertos para Django                                           |
+| `cache.py`                  | `generate_job_hash()`: hash SHA-256 determinista para caché                                     |
+| `tasks.py`                  | Tareas Celery: `execute_scientific_job`, `run_active_recovery`, `purge_expired_artifact_chunks` |
+| `realtime.py`               | Construcción y broadcasting de eventos por Django Channels                                      |
+| `consumers.py`              | `JobsStreamConsumer`: WebSocket consumer con filtros                                            |
+| `routing.py`                | Mapa de rutas WebSocket                                                                         |
+| `app_registry.py`           | `ScientificAppRegistry`: valida unicidad de plugins y rutas en startup                          |
+| `base_router.py`            | `ScientificAppViewSetMixin`: mixin con endpoints comunes para todas las apps                    |
+| `artifacts.py`              | `ScientificInputArtifactStorageService`: persistencia chunked de archivos                       |
+| `exceptions.py`             | `JobPauseRequested`: señal de control para pausa cooperativa                                    |
+| `reporting.py`              | Generadores de reportes CSV y log para descarga                                                 |
+| `declarative_api.py`        | `DeclarativeJobAPI`: helpers para contratos declarativos en routers                             |
+| `management/commands/up.py` | Comando dev que arranca API + worker con auto-reload                                            |
 
 ---
 
@@ -371,11 +371,11 @@ El `PluginRegistry` acepta funciones con uno, dos, tres o cuatro argumentos (int
 
 ### Callbacks disponibles
 
-| Callback | Firma | Uso |
-|---|---|---|
-| `PluginProgressCallback` | `(percentage: int, stage: str, message: str) -> None` | Reporta avance al frontend |
-| `PluginLogCallback` | `(level: str, source: str, message: str, payload: dict) -> None` | Emite eventos de log trazables |
-| `PluginControlCallback` | `() -> str` | Consulta señal de control: `"continue"` o `"pause"` |
+| Callback                 | Firma                                                            | Uso                                                 |
+| ------------------------ | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `PluginProgressCallback` | `(percentage: int, stage: str, message: str) -> None`            | Reporta avance al frontend                          |
+| `PluginLogCallback`      | `(level: str, source: str, message: str, payload: dict) -> None` | Emite eventos de log trazables                      |
+| `PluginControlCallback`  | `() -> str`                                                      | Consulta señal de control: `"continue"` o `"pause"` |
 
 ### Pausa cooperativa
 
@@ -407,17 +407,17 @@ Cada app tiene un `AppConfig` en su `apps.py` que llama `ScientificAppRegistry.r
 
 ### Catálogo completo
 
-| App | Plugin | Descripción científica |
-|---|---|---|
-| `calculator` | `calculator` | Operaciones aritméticas (add, sub, mul, div, pow, factorial) con trazabilidad completa de job. App de referencia para onboarding. |
-| `random_numbers` | `random_numbers` | Generación por lotes con semilla determinista desde URL remota, progreso incremental y pausa cooperativa con checkpoint. |
-| `molar_fractions` | `molar_fractions` | Fracciones molares ácido-base f0..fn. Parámetros: lista de pKa, pH en modo puntual (`single`) o rango (`range`). Retorna tabla por pH con todas las fracciones. |
-| `tunnel` | `tunnel` | Corrección de efecto túnel asimétrica de Eckart. Registra traza completa de modificaciones a los parámetros de entrada y los logs de ajuste. |
-| `easy_rate` | `easy_rate` | Constantes de velocidad TST + corrección Eckart + difusión opcional. Entrada: archivos de log Gaussian. Produce tabla de k por temperatura. |
-| `marcus` | `marcus` | Energía de reorganización, barrera de activación y constantes cinéticas por teoría de Marcus. Requiere seis archivos de log Gaussian (R, P, TS, R+, P+, TS+). |
-| `smileit` | `smileit` | Generación combinatoria de estructuras SMILES con bloques de asignación y catálogo de sustituyentes. Exporta CSV y reporte de derivados. |
-| `sa_score` | `sa_score` | Puntuación de accesibilidad sintética para lotes de SMILES usando AMBIT, BRSAScore y RDKit como métodos configurables. |
-| `toxicity_properties` | `toxicity_properties` | Predicciones ADMET-AI (LD50, Ames, DevTox y más) para lotes de moléculas desde SMILES. |
+| App                   | Plugin                | Descripción científica                                                                                                                                          |
+| --------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `calculator`          | `calculator`          | Operaciones aritméticas (add, sub, mul, div, pow, factorial) con trazabilidad completa de job. App de referencia para onboarding.                               |
+| `random_numbers`      | `random_numbers`      | Generación por lotes con semilla determinista desde URL remota, progreso incremental y pausa cooperativa con checkpoint.                                        |
+| `molar_fractions`     | `molar_fractions`     | Fracciones molares ácido-base f0..fn. Parámetros: lista de pKa, pH en modo puntual (`single`) o rango (`range`). Retorna tabla por pH con todas las fracciones. |
+| `tunnel`              | `tunnel`              | Corrección de efecto túnel asimétrica de Eckart. Registra traza completa de modificaciones a los parámetros de entrada y los logs de ajuste.                    |
+| `easy_rate`           | `easy_rate`           | Constantes de velocidad TST + corrección Eckart + difusión opcional. Entrada: archivos de log Gaussian. Produce tabla de k por temperatura.                     |
+| `marcus`              | `marcus`              | Energía de reorganización, barrera de activación y constantes cinéticas por teoría de Marcus. Requiere seis archivos de log Gaussian (R, P, TS, R+, P+, TS+).   |
+| `smileit`             | `smileit`             | Generación combinatoria de estructuras SMILES con bloques de asignación y catálogo de sustituyentes. Exporta CSV y reporte de derivados.                        |
+| `sa_score`            | `sa_score`            | Puntuación de accesibilidad sintética para lotes de SMILES usando AMBIT, BRSAScore y RDKit como métodos configurables.                                          |
+| `toxicity_properties` | `toxicity_properties` | Predicciones ADMET-AI (LD50, Ames, DevTox y más) para lotes de moléculas desde SMILES.                                                                          |
 
 ### Estructura interna de cada app
 
@@ -519,20 +519,20 @@ Ambas apps procesan lotes de SMILES:
 
 ### Rutas de la aplicación
 
-| Ruta | Componente | Descripción |
-|---|---|---|
-| `/` | → `/jobs` | Redirección por defecto |
-| `/jobs` | `JobsMonitorComponent` | Monitor global de todos los jobs |
-| `/apps` | `AppsHubComponent` | Catálogo navegable de apps disponibles |
-| `/calculator` | `CalculatorComponent` | Interfaz de calculadora |
-| `/random-numbers` | `RandomNumbersComponent` | Generación de números aleatorios |
-| `/molar-fractions` | `MolarFractionsComponent` | Fracciones molares |
-| `/tunnel` | `TunnelComponent` | Corrección efecto túnel |
-| `/easy-rate` | `EasyRateComponent` | Cinética TST + Eckart |
-| `/marcus` | `MarcusComponent` | Marcus Theory |
-| `/smileit` | `SmileitComponent` | Generador SMILES combinatorio |
-| `/sa-score` | `SaScoreComponent` | SA Score |
-| `/toxicity-properties` | `ToxicityPropertiesComponent` | ADMET-AI |
+| Ruta                   | Componente                    | Descripción                            |
+| ---------------------- | ----------------------------- | -------------------------------------- |
+| `/`                    | → `/jobs`                     | Redirección por defecto                |
+| `/jobs`                | `JobsMonitorComponent`        | Monitor global de todos los jobs       |
+| `/apps`                | `AppsHubComponent`            | Catálogo navegable de apps disponibles |
+| `/calculator`          | `CalculatorComponent`         | Interfaz de calculadora                |
+| `/random-numbers`      | `RandomNumbersComponent`      | Generación de números aleatorios       |
+| `/molar-fractions`     | `MolarFractionsComponent`     | Fracciones molares                     |
+| `/tunnel`              | `TunnelComponent`             | Corrección efecto túnel                |
+| `/easy-rate`           | `EasyRateComponent`           | Cinética TST + Eckart                  |
+| `/marcus`              | `MarcusComponent`             | Marcus Theory                          |
+| `/smileit`             | `SmileitComponent`            | Generador SMILES combinatorio          |
+| `/sa-score`            | `SaScoreComponent`            | SA Score                               |
+| `/toxicity-properties` | `ToxicityPropertiesComponent` | ADMET-AI                               |
 
 Las rutas `calculator` y `random-numbers` tienen `visibleInMenus: false` en la configuración de apps: existen y funcionan pero no aparecen en el menú ni en el hub. Son útiles como apps de demostración para onboarding.
 
@@ -587,34 +587,34 @@ Todos los query params son opcionales. El comportamiento por defecto (sin params
 
 ### Query params del consumer
 
-| Parámetro | Tipo | Default | Descripción |
-|---|---|---|---|
-| `job_id` | string | — | Filtra por un job específico |
-| `plugin_name` | string | — | Filtra por tipo de app científica |
-| `include_logs` | bool | `true` | Incluye eventos `job.log` en el stream |
-| `include_snapshot` | bool | `true` | Envía snapshot inicial de jobs al conectar |
-| `active_only` | bool | `false` | Solo incluye jobs en estado activo en el snapshot |
+| Parámetro          | Tipo   | Default | Descripción                                       |
+| ------------------ | ------ | ------- | ------------------------------------------------- |
+| `job_id`           | string | —       | Filtra por un job específico                      |
+| `plugin_name`      | string | —       | Filtra por tipo de app científica                 |
+| `include_logs`     | bool   | `true`  | Incluye eventos `job.log` en el stream            |
+| `include_snapshot` | bool   | `true`  | Envía snapshot inicial de jobs al conectar        |
+| `active_only`      | bool   | `false` | Solo incluye jobs en estado activo en el snapshot |
 
 ### Grupos de Channel Layers
 
 `realtime.py` publica en tres grupos simultáneamente según el tipo de broadcast:
 
-| Grupo | Nombre | Cuándo se usa |
-|---|---|---|
-| Global | `jobs.global` | Todos los eventos de todos los jobs |
+| Grupo      | Nombre                      | Cuándo se usa                            |
+| ---------- | --------------------------- | ---------------------------------------- |
+| Global     | `jobs.global`               | Todos los eventos de todos los jobs      |
 | Por plugin | `jobs.plugin.<plugin_name>` | Eventos de una app científica específica |
-| Por job | `jobs.job.<job_id>` | Eventos de un job particular |
+| Por job    | `jobs.job.<job_id>`         | Eventos de un job particular             |
 
 Los nombres de grupo normalizan el identificador: reemplazan `_` por `-` y eliminan caracteres especiales para compatibilidad con Django Channels.
 
 ### Tipos de eventos
 
-| Evento | Cuándo se emite | Payload |
-|---|---|---|
-| `jobs.snapshot` | Al conectar el WebSocket | Lista de jobs con su estado actual |
-| `job.updated` | Cambio de estado del job | `ScientificJob` serializado completo |
-| `job.progress` | Actualización de progreso | `JobProgressSnapshot` con porcentaje/etapa/mensaje |
-| `job.log` | Nuevo evento de log | `JobLogEntry` con nivel, fuente, mensaje y payload |
+| Evento          | Cuándo se emite           | Payload                                            |
+| --------------- | ------------------------- | -------------------------------------------------- |
+| `jobs.snapshot` | Al conectar el WebSocket  | Lista de jobs con su estado actual                 |
+| `job.updated`   | Cambio de estado del job  | `ScientificJob` serializado completo               |
+| `job.progress`  | Actualización de progreso | `JobProgressSnapshot` con porcentaje/etapa/mensaje |
+| `job.log`       | Nuevo evento de log       | `JobLogEntry` con nivel, fuente, mensaje y payload |
 
 ### SSE como alternativa al WebSocket
 
@@ -726,15 +726,17 @@ El archivo `docker-compose.dev.yml` levanta el entorno completo con cinco servic
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-| Servicio | Imagen | Descripción |
-|---|---|---|
-| `redis` | `redis:7-alpine` | Broker y backend de resultados Celery |
-| `backend` | Dockerfile backend | Django con `--without-celery`, ejecuta `migrate` al arrancar |
-| `celery-worker` | Dockerfile backend | Worker Celery conectado al broker Redis |
-| `celery-beat` | Dockerfile backend | Scheduler de tareas periódicas |
-| `frontend` | Dockerfile frontend | `npm install && npm start` con hot reload |
+| Servicio        | Imagen              | Descripción                                                  |
+| --------------- | ------------------- | ------------------------------------------------------------ |
+| `redis`         | `redis:7-alpine`    | Broker y backend de resultados Celery                        |
+| `backend`       | Dockerfile backend  | Django con `--without-celery`, ejecuta `migrate` al arrancar |
+| `celery-worker` | Dockerfile backend  | Worker Celery conectado al broker Redis                      |
+| `celery-beat`   | Dockerfile backend  | Scheduler de tareas periódicas                               |
+| `frontend`      | Dockerfile frontend | `npm install && npm start` con hot reload                    |
 
 En producción existe `docker-compose.yml` sin hot reload, con variables de entorno en lugar de configuración de desarrollo.
+
+Si falta `tools/external/ambitSA/SyntheticAccessibilityCli.jar`, el backend ya no intenta descargarlo desde una URL HTTP insegura. Para permitir bootstrap automático, configure `AMBIT_JAR_DOWNLOAD_URL` con un mirror HTTPS confiable; si no, copie el JAR manualmente en `tools/external/ambitSA/`.
 
 ---
 
@@ -780,6 +782,7 @@ python scripts/create_openapi.py
 ```
 
 El script ejecuta secuencialmente:
+
 1. `manage.py spectacular --file backend/openapi/schema.yaml` para generar el spec.
 2. `npm run api:generate` con la configuración en `frontend/openapitools.json` para regenerar el cliente.
 
@@ -802,17 +805,20 @@ Cada ViewSet usa decoradores `@extend_schema` de `drf-spectacular` para document
 El directorio `.github/workflows/` define tres workflows:
 
 **`ci-deploy.yml`** — orquestador principal:
+
 - Se activa en push a `main`/`dev` y en PRs hacia `main`.
 - Ejecuta matriz de tests: backend (Python + Django) y frontend (Vitest).
 - En push a `main`: llama a `build.yml` para construir imágenes y crear release, luego a `deploy.yml` para desplegar.
 
 **`build.yml`** — build y release:
+
 - Construye la imagen Docker del backend.
 - Construye la imagen Docker del frontend con `BACKEND_PUBLIC_URL` como build-arg para incrustar la URL en el cliente Angular.
 - Empaqueta ambas imágenes en un bundle `tar.gz`.
 - Crea un release en GitHub con el bundle como asset adjunto.
 
 **`deploy.yml`** — despliegue remoto:
+
 - Valida que los secrets requeridos estén presentes.
 - Genera el archivo `.env` en el servidor desde los secrets.
 - Copia el bundle al servidor remoto con SCP.
@@ -820,21 +826,21 @@ El directorio `.github/workflows/` define tres workflows:
 
 ### Secrets requeridos para deploy
 
-| Secret | Descripción |
-|---|---|
-| `VM_HOST` | IP o hostname del servidor |
-| `VM_PORT` | Puerto SSH |
-| `VM_USER` | Usuario SSH |
-| `VM_SSH_KEY` | Clave privada SSH (o `VM_SSH_KEY_BASE64`) |
-| `VM_PROJECT_PATH` | Ruta en el servidor donde se despliega |
-| `DJANGO_SECRET_KEY` | Clave secreta de Django |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` | Credenciales PostgreSQL |
-| `ALLOWED_HOSTS` | Hosts permitidos por Django |
-| `CORS_ALLOWED_ORIGINS` | Orígenes CORS permitidos |
-| `CSRF_TRUSTED_ORIGINS` | Orígenes de confianza para CSRF |
-| `BACKEND_PUBLIC_URL` | URL pública del backend (usada en build del frontend) |
-| `EXTERNAL_BACKEND_PORT` | Puerto externo del backend |
-| `EXTERNAL_FRONTEND_PORT` | Puerto externo del frontend |
+| Secret                                         | Descripción                                           |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `VM_HOST`                                      | IP o hostname del servidor                            |
+| `VM_PORT`                                      | Puerto SSH                                            |
+| `VM_USER`                                      | Usuario SSH                                           |
+| `VM_SSH_KEY`                                   | Clave privada SSH (o `VM_SSH_KEY_BASE64`)             |
+| `VM_PROJECT_PATH`                              | Ruta en el servidor donde se despliega                |
+| `DJANGO_SECRET_KEY`                            | Clave secreta de Django                               |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` | Credenciales PostgreSQL                               |
+| `ALLOWED_HOSTS`                                | Hosts permitidos por Django                           |
+| `CORS_ALLOWED_ORIGINS`                         | Orígenes CORS permitidos                              |
+| `CSRF_TRUSTED_ORIGINS`                         | Orígenes de confianza para CSRF                       |
+| `BACKEND_PUBLIC_URL`                           | URL pública del backend (usada en build del frontend) |
+| `EXTERNAL_BACKEND_PORT`                        | Puerto externo del backend                            |
+| `EXTERNAL_FRONTEND_PORT`                       | Puerto externo del frontend                           |
 
 ### Despliegue manual en producción
 
@@ -870,13 +876,13 @@ bash scripts/generate_sonar_coverage.sh && echo listo
 
 El script genera:
 
-| Artefacto | Descripción |
-|---|---|
-| `backend/ruff.json` | Reporte de linting Ruff en formato JSON |
-| `backend/coverage.xml` | Cobertura de pruebas Python en formato Cobertura XML |
-| `frontend/eslint.json` | Reporte ESLint en formato JSON |
-| `frontend/coverage/frontend/lcov.info` | Cobertura de pruebas Angular en formato lcov |
-| `frontend/coverage/frontend/coverage-final.json` | Cobertura en formato JSON para SonarQube |
+| Artefacto                                        | Descripción                                          |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| `backend/ruff.json`                              | Reporte de linting Ruff en formato JSON              |
+| `backend/coverage.xml`                           | Cobertura de pruebas Python en formato Cobertura XML |
+| `frontend/eslint.json`                           | Reporte ESLint en formato JSON                       |
+| `frontend/coverage/frontend/lcov.info`           | Cobertura de pruebas Angular en formato lcov         |
+| `frontend/coverage/frontend/coverage-final.json` | Cobertura en formato JSON para SonarQube             |
 
 ### Configuración central
 
@@ -958,6 +964,7 @@ class NuevaAppConfig(AppConfig):
 ### 3. Registrar en `INSTALLED_APPS` y en `urls.py`
 
 En `backend/config/settings.py`:
+
 ```python
 INSTALLED_APPS = [
     ...
@@ -966,6 +973,7 @@ INSTALLED_APPS = [
 ```
 
 En `backend/config/urls.py`:
+
 ```python
 from apps.nueva_app.routers import NuevaAppViewSet
 router.register("nueva-app", NuevaAppViewSet, basename="nueva-app")
