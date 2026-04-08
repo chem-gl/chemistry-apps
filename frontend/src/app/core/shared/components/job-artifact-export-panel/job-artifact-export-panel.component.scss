@@ -1,15 +1,16 @@
-// job-artifact-export-panel.component.scss: Estilos para el panel de exportación de artefactos y errores.
+// job-artifact-export-panel.component.scss: Panel de exportación — App Chemistry Sense.
 
 .result-section {
   padding-top: 0.65rem;
-  border-top: 1px solid #e4ecf5;
+  border-top: 1px solid var(--chem-border-subtle);
 
   h4 {
-    font-size: 0.72rem;
-    font-weight: 800;
+    font-size: var(--chem-text-xs);
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #486581;
+    letter-spacing: 0.06em;
+    color: var(--chem-ink-secondary);
+    font-family: var(--chem-font-label);
     margin: 0 0 0.5rem;
   }
 }
@@ -24,21 +25,27 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.78rem;
-  border: 1px solid #e4ecf5;
-  border-radius: 7px;
-  padding: 0.3rem 0.5rem;
-  background: #fff;
+  font-size: var(--chem-text-sm);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  padding: 0.35rem 0.55rem;
+  background: var(--chem-surface-elevated);
+  transition: background var(--chem-transition);
+
+  &:hover {
+    background: var(--chem-surface-alt);
+  }
 
   .fd-field {
     font-weight: 700;
-    color: #486581;
+    color: var(--chem-ink-secondary);
     white-space: nowrap;
     min-width: 110px;
+    font-family: var(--chem-font-label);
   }
 
   .fd-name {
-    color: #243b53;
+    color: var(--chem-ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -46,8 +53,9 @@
   }
 
   .fd-size {
-    color: #486581;
+    color: var(--chem-ink-soft);
     white-space: nowrap;
+    font-family: var(--chem-font-mono);
   }
 }
 
@@ -65,7 +73,7 @@
 
 .error-message {
   margin: 0;
-  color: #9b1c1c;
+  color: var(--chem-error);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: var(--chem-text-sm);
 }

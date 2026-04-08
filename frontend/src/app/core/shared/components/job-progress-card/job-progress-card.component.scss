@@ -1,37 +1,45 @@
-/* job-progress-card.component.scss: Estilos compartidos de la tarjeta de progreso. */
+/* job-progress-card.component.scss: Tarjeta de progreso compartida — App Chemistry Sense. */
 
 .progress-card {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  padding: 1rem 1.25rem;
 }
 
 .job-id {
-  font-family: 'Consolas', 'Liberation Mono', monospace;
-  font-size: 0.8rem;
-  color: #2b5954;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
   word-break: break-all;
   margin: 0;
 }
 
 .progress-track {
-  height: 10px;
-  border-radius: 999px;
-  background: #e3efee;
+  height: 8px;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2f8f84, #0f6a61);
+  border-radius: var(--chem-radius-pill);
+  background: linear-gradient(90deg, var(--chem-primary), var(--chem-accent));
+  transition: width 0.4s ease;
 }
 
 .progress-pct {
   margin: 0;
+  font-family: var(--chem-font-heading);
   font-weight: 700;
-  color: #145f57;
+  color: var(--chem-ink);
 }
 
 .progress-message {
   margin: 0;
-  color: #4d7570;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
 }

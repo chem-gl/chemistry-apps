@@ -102,11 +102,11 @@ h1 {
   }
 
   &.danger {
-    color: #c53030;
-    border-color: #feb2b2;
+    color: var(--chem-error);
+    border-color: var(--chem-error);
 
     &:hover {
-      background: #fff5f5;
+      background: var(--chem-error-bg);
     }
   }
 
@@ -130,15 +130,15 @@ h1 {
   background: var(--chem-surface);
 
   &.error {
-    color: #c53030;
-    border-color: #feb2b2;
-    background: #fff5f5;
+    color: var(--chem-error);
+    border-color: var(--chem-error);
+    background: var(--chem-error-bg);
   }
 
   &.success {
-    color: var(--chem-accent);
-    border-color: #c6f6d5;
-    background: #f0fff4;
+    color: var(--chem-status-completed);
+    border-color: var(--chem-status-completed);
+    background: var(--chem-status-completed-bg);
   }
 }
 
@@ -210,9 +210,9 @@ td {
   }
 
   &.badge-admin {
-    background: #f0fff4;
+    background: var(--chem-status-completed-bg);
     color: var(--chem-accent);
-    border-color: #c6f6d5;
+    border-color: var(--chem-status-completed);
   }
 }
 
@@ -222,7 +222,7 @@ td {
   height: 8px;
   border-radius: 50%;
   margin-right: 0.45rem;
-  background: #cbd5e0;
+  background: var(--chem-border);
   vertical-align: middle;
 
   &.active {

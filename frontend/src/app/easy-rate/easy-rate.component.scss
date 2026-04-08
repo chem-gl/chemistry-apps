@@ -1,4 +1,4 @@
-/* easy-rate.component.scss: Estilos del módulo Easy-rate. Sistema visual alineado con tunnel.component.scss. */
+/* easy-rate.component.scss: Estilos del módulo Easy-rate con sistema de tokens --chem-*. */
 .easy-rate-shell {
   display: grid;
   gap: 1rem;
@@ -7,12 +7,13 @@
 .easy-rate-header {
   h2 {
     margin: 0.2rem 0;
-    color: #102a43;
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
     font-size: clamp(1.2rem, 2.5vw, 1.8rem);
   }
   p {
     margin: 0;
-    color: #334e68;
+    color: var(--chem-ink-secondary);
     max-width: 62ch;
   }
 }
@@ -21,9 +22,10 @@
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  color: #0f766e;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-primary);
   font-weight: 700;
+  font-family: var(--chem-font-label);
 }
 
 .workspace-grid {
@@ -39,15 +41,16 @@
 .entry-panel,
 .result-panel,
 .logs-card {
-  border: 1px solid #d9e2ec;
-  border-radius: 14px;
-  background: #f8fbff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
   padding: 1rem;
   min-width: 0;
 
   h3 {
     margin: 0 0 0.8rem;
-    color: #102a43;
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
     font-size: 1rem;
     font-weight: 700;
     &.section-sub {
@@ -68,19 +71,17 @@
   gap: 0.45rem;
 }
 
-/* ── Zona de carga de archivos ─────────────────────────────────────────── */
+/* Zona de carga de archivos */
 .upload-zone {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   padding: 0.6rem 0.7rem;
-  border: 1.5px dashed #bcccdc;
-  border-radius: 10px;
-  background: #fff;
+  border: 1.5px dashed var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   cursor: pointer;
-  transition:
-    border-color 0.14s,
-    background 0.14s;
+  transition: border-color var(--chem-transition), background var(--chem-transition);
 
   // Oculta el input nativo pero lo mantiene funcional via el label clicleable
   input[type='file'] {
@@ -93,14 +94,14 @@
   }
 
   &:hover:not(.is-disabled) {
-    border-color: #0f766e;
-    background: #f0fdfa;
+    border-color: var(--chem-primary);
+    background: var(--chem-surface-elevated);
   }
 
   &.has-file {
-    border-color: #0f766e;
+    border-color: var(--chem-primary);
     border-style: solid;
-    background: #f0fdf4;
+    background: var(--chem-surface-elevated);
   }
 
   &.is-disabled {
@@ -110,18 +111,18 @@
 }
 
 .upload-label {
-  font-size: 0.82rem;
+  font-size: var(--chem-text-sm);
   font-weight: 700;
-  color: #243b53;
+  color: var(--chem-ink);
 
   .req-mark {
-    color: #b91c1c;
+    color: var(--chem-error);
     margin-left: 0.1rem;
   }
 
   .opt-mark {
     font-weight: 500;
-    color: #486581;
+    color: var(--chem-ink-soft);
     margin-left: 0.1rem;
   }
 }
@@ -132,7 +133,7 @@
   gap: 0.25rem;
   font-size: 0.74rem;
   font-weight: 600;
-  color: #0f766e;
+  color: var(--chem-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -145,15 +146,15 @@
 
 .upload-hint {
   font-size: 0.74rem;
-  color: #486581;
+  color: var(--chem-ink-soft);
 }
 
 .inspection-card {
   display: grid;
   gap: 0.55rem;
-  border: 1px solid #d9e2ec;
-  border-radius: 10px;
-  background: #ffffff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.65rem 0.75rem;
 }
 
@@ -165,14 +166,14 @@
   flex-wrap: wrap;
 
   strong {
-    color: #102a43;
-    font-size: 0.82rem;
+    color: var(--chem-ink);
+    font-size: var(--chem-text-sm);
   }
 }
 
 .inspection-meta {
   margin: 0.15rem 0 0;
-  color: #486581;
+  color: var(--chem-ink-soft);
   font-size: 0.74rem;
 }
 
@@ -181,15 +182,10 @@
   gap: 0.25rem;
   font-size: 0.76rem;
   font-weight: 700;
-  color: #243b53;
+  color: var(--chem-ink);
 
   select {
     min-width: min(100%, 320px);
-    border: 1px solid #bcccdc;
-    border-radius: 8px;
-    padding: 0.35rem 0.45rem;
-    font-size: 0.82rem;
-    background: #fff;
   }
 }
 
@@ -201,16 +197,16 @@
 }
 
 .inspection-status {
-  color: #0f766e;
+  color: var(--chem-primary);
   font-weight: 700;
 }
 
 .inspection-warning {
-  color: #92400e;
+  color: var(--chem-warning);
 }
 
 .inspection-error {
-  color: #9b1c1c;
+  color: var(--chem-error);
   font-weight: 700;
 }
 
@@ -221,18 +217,19 @@
 }
 
 .preview-label {
-  color: #486581;
+  color: var(--chem-ink-soft);
   font-size: 0.76rem;
   font-weight: 700;
+  font-family: var(--chem-font-label);
   white-space: nowrap;
 }
 
 .preview-value {
-  color: #102a43;
+  color: var(--chem-ink);
   font-size: 0.78rem;
 }
 
-/* ── Solvent tag ─────────────────────────────────────────────────────────── */
+/* Solvent tag */
 .result-title-row {
   display: flex;
   align-items: center;
@@ -241,45 +238,46 @@
   strong {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #102a43;
+    color: var(--chem-ink);
   }
 }
 
 .solvent-tag {
-  font-size: 0.72rem;
+  font-size: var(--chem-text-xs);
   font-weight: 700;
-  background: #ccfbf1;
-  color: #0f766e;
-  border: 1px solid #5eead4;
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  border: 1px solid var(--chem-info);
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
 }
 
-/* ── Tabla termodinámica ─────────────────────────────────────────────────── */
+/* Tabla termodinámica */
 .thermo-grid {
   display: grid;
   grid-template-columns: max-content 1fr 1fr;
   gap: 0.25rem 0.85rem;
-  font-size: 0.82rem;
+  font-size: var(--chem-text-sm);
 
   .thermo-header {
     font-weight: 700;
-    color: #486581;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
     text-align: right;
   }
   .thermo-row-label {
     font-weight: 600;
-    color: #334e68;
+    color: var(--chem-ink-secondary);
     white-space: nowrap;
   }
   span:not(.thermo-header):not(.thermo-row-label) {
     text-align: right;
-    font-family: 'Consolas', 'Liberation Mono', monospace;
-    color: #102a43;
+    font-family: var(--chem-font-mono);
+    color: var(--chem-ink);
   }
 }
 
-/* ── Cuadrícula de parámetros ─────────────────────────────────────────────── */
+/* Cuadrícula de parámetros */
 .param-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
@@ -288,40 +286,19 @@
   label {
     display: grid;
     gap: 0.3rem;
-    font-size: 0.82rem;
+    font-size: var(--chem-text-sm);
     font-weight: 700;
-    color: #243b53;
-
-    input,
-    select {
-      border: 1px solid #bcccdc;
-      border-radius: 9px;
-      padding: 0.46rem 0.6rem;
-      font-size: 0.9rem;
-      background: #fff;
-      width: 100%;
-      transition: border-color 0.14s;
-
-      &:focus {
-        outline: none;
-        border-color: #0f766e;
-        box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
-      }
-
-      &:disabled {
-        background: #f0f4f8;
-        opacity: 0.65;
-      }
-    }
+    color: var(--chem-ink);
+    font-family: var(--chem-font-label);
   }
 
   &.diffusion-fields {
     padding-top: 0.65rem;
-    border-top: 1px dashed #d9e2ec;
+    border-top: 1px dashed var(--chem-border-subtle);
   }
 }
 
-/* ── Checkboxes ───────────────────────────────────────────────────────────── */
+/* Checkboxes */
 .checkbox-row {
   display: flex;
   flex-wrap: wrap;
@@ -334,18 +311,18 @@
   gap: 0.4rem;
   font-size: 0.86rem;
   font-weight: 600;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
   cursor: pointer;
 
   input[type='checkbox'] {
     width: 1rem;
     height: 1rem;
-    accent-color: #0f766e;
+    accent-color: var(--chem-accent);
     cursor: pointer;
   }
 }
 
-/* ── Botones ─────────────────────────────────────────────────────────────── */
+/* Botones */
 .action-row {
   display: flex;
   flex-wrap: wrap;
@@ -360,13 +337,9 @@
   border-radius: 999px;
   padding: 0.42rem 0.9rem;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: var(--chem-text-sm);
   cursor: pointer;
-  transition:
-    opacity 0.14s,
-    background 0.14s,
-    border-color 0.14s,
-    color 0.14s;
+  transition: opacity var(--chem-transition), background var(--chem-transition), border-color var(--chem-transition), color var(--chem-transition);
   &:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -374,29 +347,29 @@
 }
 
 .btn-primary {
-  background: #0f766e;
-  border: 1px solid #0f766e;
+  background: var(--chem-primary);
+  border: 1px solid var(--chem-primary);
   color: #fff;
   &:hover:not(:disabled) {
-    background: #0d6a62;
+    opacity: 0.88;
   }
 }
 
 .btn-secondary {
-  background: #fff;
-  border: 1px solid #486581;
-  color: #334e68;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink-secondary);
   &:hover:not(:disabled) {
-    border-color: #0f766e;
-    color: #0f766e;
+    border-color: var(--chem-primary);
+    color: var(--chem-primary);
   }
 }
 
-/* ── Progreso ─────────────────────────────────────────────────────────────── */
+/* Progreso */
 .progress-card {
-  border: 1px solid #cbd2d9;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.75rem;
   display: grid;
   gap: 0.4rem;
@@ -405,44 +378,44 @@
 .job-id {
   margin: 0;
   word-break: break-all;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-family: var(--chem-font-mono);
   font-size: 0.74rem;
-  color: #486581;
+  color: var(--chem-ink-soft);
 }
 
 .progress-track {
   height: 10px;
   border-radius: 999px;
-  background: #d9e2ec;
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0f766e, #0ea5a1);
+  background: var(--chem-gradient-header);
   transition: width 0.3s ease;
 }
 
 .progress-pct {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--chem-text-sm);
   font-weight: 700;
-  color: #0f766e;
+  color: var(--chem-primary);
 }
 
 .progress-message {
   margin: 0;
-  font-size: 0.82rem;
-  color: #334e68;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-secondary);
 }
 
-/* ── Resultado ────────────────────────────────────────────────────────────── */
+/* Resultado */
 .summary-banner {
   margin: 0;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border: 1px solid var(--chem-info);
+  border-radius: var(--chem-radius);
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
   padding: 0.5rem 0.6rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -450,14 +423,15 @@
 
 .result-section {
   padding-top: 0.65rem;
-  border-top: 1px solid #e4ecf5;
+  border-top: 1px solid var(--chem-border-subtle);
 
   h4 {
-    font-size: 0.72rem;
+    font-size: var(--chem-text-xs);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #486581;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
     margin: 0 0 0.5rem;
   }
 }
@@ -472,21 +446,21 @@
 .kv-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
   white-space: nowrap;
 }
 .kv-value {
-  font-size: 0.82rem;
-  color: #102a43;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink);
   &.mono {
-    font-family: 'Consolas', 'Liberation Mono', monospace;
+    font-family: var(--chem-font-mono);
   }
 }
 .mono {
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  font-family: var(--chem-font-mono);
 }
 
-/* ── Flags ────────────────────────────────────────────────────────────────── */
+/* Flags */
 .flag-row {
   display: flex;
   flex-wrap: wrap;
@@ -500,18 +474,18 @@
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
   &.flag-on {
-    background: #ccfbf1;
-    color: #0f766e;
-    border: 1px solid #5eead4;
+    background: var(--chem-info-bg);
+    color: var(--chem-info);
+    border: 1px solid var(--chem-info);
   }
   &.flag-warn {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
+    background: var(--chem-warning-bg);
+    color: var(--chem-warning);
+    border: 1px solid var(--chem-warning);
   }
 }
 
-/* ── Descriptores de archivos ────────────────────────────────────────────── */
+/* Descriptores de archivos */
 .file-descriptors-list {
   display: flex;
   flex-direction: column;
@@ -523,31 +497,32 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.78rem;
-  border: 1px solid #e4ecf5;
-  border-radius: 7px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   padding: 0.3rem 0.5rem;
-  background: #fff;
+  background: var(--chem-surface);
 
   .fd-field {
     font-weight: 700;
-    color: #486581;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
     white-space: nowrap;
     min-width: 110px;
   }
   .fd-name {
-    color: #243b53;
+    color: var(--chem-ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
   }
   .fd-size {
-    color: #486581;
+    color: var(--chem-ink-soft);
     white-space: nowrap;
   }
 }
 
-/* ── Error y estados ─────────────────────────────────────────────────────── */
+/* Error y estados */
 .error-block {
   display: flex;
   flex-direction: column;
@@ -556,18 +531,18 @@
 
 .error-message {
   margin: 0;
-  color: #9b1c1c;
+  color: var(--chem-error);
   font-weight: 700;
   font-size: 0.85rem;
 }
 
 .status-message {
   margin: 0;
-  color: #486581;
+  color: var(--chem-ink-soft);
   font-size: 0.86rem;
 }
 
-/* ── Logs ─────────────────────────────────────────────────────────────────── */
+/* Logs */
 .logs-list {
   display: grid;
   gap: 0.5rem;
@@ -576,10 +551,10 @@
 }
 
 .log-item {
-  border: 1px solid #d9e2ec;
-  border-radius: 9px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   padding: 0.5rem;
-  background: #fff;
+  background: var(--chem-surface);
   display: grid;
   gap: 0.3rem;
 }
@@ -599,52 +574,50 @@
   letter-spacing: 0.04em;
   font-size: 0.7rem;
   border: 1px solid transparent;
+  font-family: var(--chem-font-label);
 
   &.level-debug {
-    color: #334155;
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    color: var(--chem-ink-soft);
+    background: var(--chem-surface-elevated);
   }
   &.level-info {
-    color: #0f766e;
-    background: #ccfbf1;
-    border-color: #5eead4;
+    color: var(--chem-info);
+    background: var(--chem-info-bg);
   }
   &.level-warning {
-    color: #92400e;
-    background: #fef3c7;
-    border-color: #fcd34d;
+    color: var(--chem-warning);
+    background: var(--chem-warning-bg);
   }
   &.level-error {
-    color: #991b1b;
-    background: #fee2e2;
-    border-color: #fecaca;
+    color: var(--chem-error);
+    background: var(--chem-error-bg);
   }
 }
 
 .log-source,
 .log-index {
-  color: #486581;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
-  font-size: 0.72rem;
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
 }
 .log-index {
   margin-left: auto;
 }
 .log-message {
   margin: 0;
-  color: #243b53;
+  color: var(--chem-ink);
   font-size: 0.8rem;
 }
 .log-payload {
   margin: 0;
-  border: 1px solid #d9e2ec;
-  background: #f8fbff;
-  border-radius: 8px;
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  border-radius: var(--chem-radius);
   padding: 0.45rem;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
   font-size: 0.74rem;
   white-space: pre-wrap;
+  font-family: var(--chem-font-mono);
 }
 
 

@@ -201,6 +201,18 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
 }
 
+# Configuración de tiempos para tokens JWT.
+# ACCESS_TOKEN_LIFETIME corto por seguridad; el frontend renueva automáticamente.
+from datetime import timedelta  # noqa: E402
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+}
+
 DEFAULT_OPENAPI_SERVER_URLS: list[str] = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",

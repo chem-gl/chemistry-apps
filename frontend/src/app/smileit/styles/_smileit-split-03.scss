@@ -2,15 +2,15 @@
 
 .substituent-workspace-card {
   margin-top: 0.8rem;
-  border: 1px solid #dce9df;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
-  background: linear-gradient(180deg, #fbfefc 0%, #f4faf6 100%);
+  background: linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
   padding: 0.85rem;
 }
 
 .substituent-workspace-card h5 {
   margin: 0;
-  color: #244537;
+  color: var(--chem-ink);
 }
 
 .substituent-candidate-grid {
@@ -21,10 +21,10 @@
 }
 
 .substituent-candidate-card {
-  border: 1px solid #cfe0d4;
+  border: 1px solid var(--chem-border);
   border-radius: 14px;
-  background: #fff;
-  color: #244537;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
   text-align: left;
   padding: 0.75rem;
   display: grid;
@@ -39,14 +39,14 @@
 
 .substituent-candidate-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(40, 76, 60, 0.1);
+  box-shadow: 0 10px 24px rgba(123, 90, 158, 0.1);
 }
 
 .substituent-candidate-card.selected {
-  border-color: #3a6a53;
-  background: #284c3c;
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(40, 76, 60, 0.18);
+  border-color: var(--chem-accent);
+  background: var(--chem-ink);
+  color: var(--chem-surface-elevated);
+  box-shadow: 0 10px 24px rgba(123, 90, 158, 0.18);
 }
 
 .substituent-candidate-card small {
@@ -54,20 +54,20 @@
 }
 
 .substituent-candidate-card.selected small {
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(250, 248, 252, 0.82);
 }
 
 .selected-substituent-summary {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #e3ece5;
+  border-top: 1px solid var(--chem-border-subtle);
   display: grid;
   gap: 0.3rem;
 }
 
 .selected-substituent-summary p {
   margin: 0;
-  color: #355544;
+  color: var(--chem-ink-secondary);
 }
 
 .compact-anchor-svg {
@@ -148,7 +148,7 @@
 }
 
 .catalog-studio-dialog::backdrop {
-  background: rgba(17, 34, 26, 0.64);
+  background: rgba(44, 37, 51, 0.64);
 }
 
 .catalog-smiles-sketch-dialog {
@@ -162,7 +162,7 @@
 }
 
 .catalog-smiles-sketch-dialog::backdrop {
-  background: rgba(17, 34, 26, 0.64);
+  background: rgba(44, 37, 51, 0.64);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
@@ -171,19 +171,19 @@
   width: min(1040px, 100%);
   max-height: 94vh;
   overflow: auto;
-  border: 1px solid #c7d9cb;
+  border: 1px solid var(--chem-border);
   border-radius: 24px;
-  background: #fffdfa;
+  background: var(--chem-surface-elevated);
   padding: 1.1rem;
 }
 
 .catalog-ketcher-frame-wrap {
   position: relative;
   margin-top: 0.75rem;
-  border: 1px solid #d3e2d7;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 14px;
   overflow: hidden;
-  background: #fff;
+  background: var(--chem-surface-elevated);
 }
 
 .catalog-ketcher-frame {
@@ -206,7 +206,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f7faf9;
+  background: var(--chem-surface);
   z-index: 2;
   gap: 0.75rem;
 }
@@ -214,7 +214,7 @@
 .catalog-ketcher-loading-bar {
   width: 200px;
   height: 4px;
-  background: #d3e2d7;
+  background: var(--chem-border-subtle);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -223,7 +223,7 @@
   display: block;
   height: 100%;
   width: 40%;
-  background: #1a4e48;
+  background: var(--chem-accent);
   border-radius: 999px;
   animation: catalog-ketcher-slide 1.4s ease-in-out infinite;
 }
@@ -240,7 +240,7 @@
 .catalog-ketcher-loading-text {
   margin: 0;
   font-size: 0.82rem;
-  color: #4a7c6f;
+  color: var(--chem-ink-secondary);
 }
 
 /* Precargador fuera de pantalla: descarga assets de Ketcher al montar Smileit */
@@ -282,16 +282,16 @@
 
 .pattern-catalog-dialog::backdrop,
 .pattern-detail-dialog::backdrop {
-  background: rgba(17, 34, 26, 0.64);
+  background: rgba(44, 37, 51, 0.64);
 }
 
 .pattern-catalog-modal {
   width: min(980px, 100%);
   max-height: 92vh;
   overflow: auto;
-  border: 1px solid #c7d9cb;
+  border: 1px solid var(--chem-border);
   border-radius: 24px;
-  background: #fffdfa;
+  background: var(--chem-surface-elevated);
   padding: 1.1rem;
 }
 
@@ -299,9 +299,9 @@
   width: min(720px, 100%);
   max-height: 92vh;
   overflow: auto;
-  border: 1px solid #c7d9cb;
+  border: 1px solid var(--chem-border);
   border-radius: 24px;
-  background: #fffdfa;
+  background: var(--chem-surface-elevated);
   padding: 1.1rem;
 }
 
@@ -333,7 +333,7 @@
   border: 0;
   background: transparent;
   padding: 0;
-  color: #1f4033;
+  color: var(--chem-ink);
   font-size: 0.98rem;
   font-weight: 800;
   cursor: pointer;
@@ -348,9 +348,9 @@
   width: min(980px, 100%);
   max-height: 92vh;
   overflow: auto;
-  border: 1px solid #c7d9cb;
+  border: 1px solid var(--chem-border);
   border-radius: 24px;
-  background: #fffdfa;
+  background: var(--chem-surface-elevated);
   padding: 1.1rem;
 }
 
@@ -364,7 +364,7 @@
 
 .catalog-studio-header h4 {
   margin: 0;
-  color: #244537;
+  color: var(--chem-ink);
 }
 
 .catalog-item,
@@ -372,9 +372,9 @@
 .pattern-item,
 .log-item,
 .structures-list-item {
-  border: 1px solid #deeadf;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
-  background: #fff;
+  background: var(--chem-surface-elevated);
   padding: 0.8rem;
 }
 
@@ -393,9 +393,9 @@
 }
 
 .catalog-item-actions .btn-secondary.active {
-  border-color: #3a6a53;
-  background: #284c3c;
-  color: #fff;
+  border-color: var(--chem-accent);
+  background: var(--chem-ink);
+  color: var(--chem-surface-elevated);
 }
 
 .catalog-grid {
@@ -416,7 +416,7 @@
 
 .catalog-group-card {
   border: 0;
-  border-top: 1px solid #dbe8de;
+  border-top: 1px solid var(--chem-border-subtle);
   border-radius: 0;
   background: transparent;
   padding: 0.55rem 0;
@@ -431,9 +431,9 @@
 }
 
 .catalog-browser-panel .catalog-item {
-  border: 1px solid #e2ebe5;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--chem-surface-elevated);
   padding: 0.58rem;
 }
 
@@ -442,7 +442,7 @@
   gap: 0.2rem;
   min-width: 220px;
   margin: 0;
-  color: #355544;
+  color: var(--chem-ink-secondary);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -470,9 +470,9 @@
 }
 
 .block-library-thumb {
-  border: 1px solid #dbe8de;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--chem-surface-elevated);
   padding: 0.42rem;
   display: grid;
   gap: 0.4rem;
@@ -480,18 +480,18 @@
 }
 
 .block-library-thumb.is-referenced {
-  border-color: #6aa07f;
-  box-shadow: inset 0 0 0 1px rgba(106, 160, 127, 0.25);
+  border-color: var(--chem-accent);
+  box-shadow: inset 0 0 0 1px rgba(123, 90, 158, 0.25);
 }
 
 .block-library-thumb.is-selected {
-  border-color: #3a6a53;
-  box-shadow: inset 0 0 0 1px rgba(58, 106, 83, 0.28);
-  background: #f7fcf8;
+  border-color: var(--chem-accent);
+  box-shadow: inset 0 0 0 1px rgba(123, 90, 158, 0.28);
+  background: var(--chem-surface);
 }
 
 .block-library-thumb:focus-visible {
-  outline: 2px solid #4caf7d;
+  outline: 2px solid var(--chem-accent);
   outline-offset: 2px;
 }
 

@@ -1,83 +1,127 @@
 /* apps-hub.component.scss: Styles for scientific apps hub. */
 .apps-shell {
   display: grid;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
 .apps-header h1 {
   margin: 0.25rem 0;
   font-size: clamp(1.3rem, 3vw, 2rem);
-  color: #3f1a09;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
 }
 
 .eyebrow {
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  color: #92400e;
+  letter-spacing: 0.12em;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
   font-weight: 700;
+  font-family: var(--chem-font-label);
 }
 
 .apps-header p {
   margin: 0;
-  color: #6c4e3f;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
 }
 
 .apps-grid {
   display: grid;
-  gap: 0.85rem;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .app-card {
-  border-radius: 14px;
-  border: 1px solid #f1d7be;
-  background: linear-gradient(140deg, #fffaf4, #ffe8d4);
-  padding: 1rem;
+  border-radius: var(--chem-radius-lg);
+  border: 1px solid var(--chem-border);
+  border-left: 3px solid var(--chem-primary);
+  background: rgba(237, 233, 240, 0.74);
+  background-image: var(--chem-gradient-subtle);
+  padding: 1.05rem;
   display: grid;
   gap: 0.55rem;
+  transition:
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition),
+    border-color var(--chem-transition);
+}
+
+.app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--chem-shadow-lg);
+  border-color: var(--chem-primary);
+}
+
+.card-kicker {
+  margin: 0;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
 }
 
 .app-card h2 {
   margin: 0;
-  font-size: 1.05rem;
-  color: #5c2e0f;
+  font-size: 1.06rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
 }
 
 .app-card p {
   margin: 0;
-  color: #7a4b2a;
-  font-size: 0.9rem;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
 }
 
 .monitor-card {
-  border-color: #f6b784;
-  background: linear-gradient(140deg, #fff7ed, #ffe7cf);
+  border-left-color: var(--chem-accent);
+  background: linear-gradient(132deg, rgba(44, 37, 51, 0.09), rgba(123, 90, 158, 0.14));
 }
 
 .app-link {
   display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   width: fit-content;
   text-decoration: none;
-  border: 1px solid #b45309;
+  border: 1px solid var(--chem-primary);
   border-radius: 999px;
-  color: #9a3412;
-  background: #fff;
-  padding: 0.35rem 0.72rem;
-  font-size: 0.85rem;
+  color: var(--chem-primary-dark);
+  background: rgba(253, 236, 234, 0.85);
+  padding: 0.36rem 0.78rem;
+  font-size: var(--chem-text-sm);
   font-weight: 700;
+  font-family: var(--chem-font-label);
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.app-link::after {
+  content: '→';
+  font-size: 0.95em;
+}
+
+.app-link:hover {
+  background: var(--chem-primary);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .is-disabled {
-  opacity: 0.75;
-  filter: grayscale(0.15);
+  opacity: 0.72;
+  filter: grayscale(0.22);
 }
 
 .coming-soon {
-  color: #7c2d12;
-  font-size: 0.8rem;
+  color: var(--chem-coral);
+  font-size: var(--chem-text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  font-family: var(--chem-font-label);
 }

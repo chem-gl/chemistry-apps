@@ -20,8 +20,8 @@
 
 .principal-svg-viewport {
   padding: 1.25rem;
-  background: #ffffff;
-  border: 1px solid #d9e6db;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 20px;
   overflow: auto;
   max-height: min(68vh, 560px);
@@ -72,10 +72,10 @@
 
 .atom-chip.selected,
 .filter-chip.active {
-  border-color: #3a6a53;
-  background: #284c3c;
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(40, 76, 60, 0.18);
+  border-color: var(--chem-accent);
+  background: var(--chem-ink);
+  color: var(--chem-surface-elevated);
+  box-shadow: 0 10px 24px rgba(123, 90, 158, 0.18);
 }
 
 .options-grid,
@@ -99,8 +99,8 @@
 
 .block-card {
   background:
-    radial-gradient(circle at top right, rgba(91, 142, 108, 0.08), transparent 34%),
-    linear-gradient(180deg, #fdfefd 0%, #f6faf6 100%);
+    radial-gradient(circle at top right, rgba(123, 90, 158, 0.08), transparent 34%),
+    linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
 }
 
 .block-title-wrap {
@@ -125,7 +125,7 @@
 .block-section {
   margin-top: 0.95rem;
   padding-top: 0.95rem;
-  border-top: 1px solid #e1ebe3;
+  border-top: 1px solid var(--chem-border-subtle);
 }
 
 .block-stack-header {
@@ -133,16 +133,16 @@
 }
 
 .workflow-step-guide {
-  border: 1px solid #d9e7dd;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
-  background: linear-gradient(180deg, #fbfefc 0%, #f4faf6 100%);
+  background: linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
   padding: 0.85rem;
   margin-top: 0.75rem;
 }
 
 .workflow-step-guide h4 {
   margin: 0;
-  color: #244537;
+  color: var(--chem-ink);
 }
 
 .workflow-step-list {
@@ -158,24 +158,24 @@
   grid-template-columns: auto 1fr auto;
   gap: 0.65rem;
   align-items: start;
-  border: 1px solid #dfebe2;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
-  background: #fff;
+  background: var(--chem-surface-elevated);
   padding: 0.62rem;
 }
 
 .workflow-step-item strong {
-  color: #244537;
+  color: var(--chem-ink);
 }
 
 .workflow-step-item.is-active {
-  border-color: #9fbfaa;
-  background: #f3f9f4;
+  border-color: var(--chem-border);
+  background: var(--chem-surface-inset);
 }
 
 .workflow-step-item.is-done {
-  border-color: #c3ddca;
-  background: #f1f8f3;
+  border-color: var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
 }
 
 .workflow-step-index {
@@ -185,23 +185,23 @@
   width: 1.4rem;
   height: 1.4rem;
   border-radius: 999px;
-  background: #e5efe8;
-  color: #2f5b46;
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink);
   font-size: 0.78rem;
   font-weight: 800;
 }
 
 .workflow-step-item.is-active .workflow-step-index {
-  background: #2f5b46;
-  color: #fff;
+  background: var(--chem-ink);
+  color: var(--chem-surface-elevated);
 }
 
 .workflow-step-state {
   display: inline-flex;
   padding: 0.12rem 0.52rem;
   border-radius: 999px;
-  background: #edf5f0;
-  color: #2f5b46;
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -209,30 +209,30 @@
 }
 
 .workflow-step-item.is-active .workflow-step-state {
-  background: #fff3d6;
-  color: #8a6118;
+  background: var(--chem-warning-bg);
+  color: var(--chem-warning);
 }
 
 .workflow-step-item.is-done .workflow-step-state {
-  background: #e6f4ea;
-  color: #245f3c;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
 .workflow-step-state.generation-ready {
-  background: #e6f4ea;
-  color: #245f3c;
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
 }
 
 .generation-lock-banner {
   margin-top: 0.8rem;
-  border: 1px dashed #b7cec0;
+  border: 1px dashed var(--chem-border);
   border-radius: 14px;
-  background: #f7fbf8;
+  background: var(--chem-surface-elevated);
   padding: 0.75rem 0.85rem;
 }
 
 .generation-lock-banner strong {
-  color: #2a5442;
+  color: var(--chem-ink);
 }
 
 .generation-lock-banner .hint {
@@ -256,7 +256,7 @@
 }
 
 .block-placement-section {
-  background: rgba(244, 249, 245, 0.72);
+  background: rgba(237, 233, 240, 0.72);
   border-radius: 14px;
   padding: 0.95rem 0 0;
 }
@@ -265,9 +265,9 @@
 .block-collapsed-summary,
 .catalog-preview-card,
 .pattern-reference-card {
-  border: 1px solid #dce9df;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 14px;
-  background: #f8fcf9;
+  background: var(--chem-surface-elevated);
   padding: 0.75rem;
   margin-top: 0.75rem;
 }
@@ -281,7 +281,7 @@
 .catalog-preview-card h5,
 .pattern-reference-card h5 {
   margin: 0 0 0.35rem;
-  color: #2b5644;
+  color: var(--chem-ink);
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -296,7 +296,7 @@
 .structures-list-card h4,
 .traceability-card h4 {
   margin: 0;
-  color: #244537;
+  color: var(--chem-ink);
 }
 
 .catalog-card-header {
@@ -319,9 +319,9 @@
   align-items: center;
   padding: 0.32rem 0.72rem;
   border-radius: 999px;
-  background: #ebf5ee;
-  border: 1px solid #cfe0d4;
-  color: #2d5d48;
+  background: var(--chem-accent-light);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
   font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -342,9 +342,9 @@
 
 .catalog-editor-form,
 .catalog-browser-panel {
-  border: 1px solid #dbe8de;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 18px;
-  background: linear-gradient(180deg, #fcfefc 0%, #f7fbf8 100%);
+  background: linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
   padding: 0.95rem;
 }
 
@@ -389,9 +389,9 @@
 }
 
 .catalog-step-card {
-  border: 1px solid #dfeae2;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(250, 248, 252, 0.9);
   padding: 0.9rem;
 }
 
@@ -438,9 +438,9 @@
 .catalog-live-status {
   margin-top: 0.8rem;
   padding: 0.75rem 0.8rem;
-  border: 1px dashed #cfe0d5;
+  border: 1px dashed var(--chem-border);
   border-radius: 14px;
-  background: #f9fcfa;
+  background: var(--chem-surface-elevated);
 }
 
 .catalog-live-status .hint {
@@ -458,7 +458,7 @@
 .queued-catalog-drafts {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
-  border-top: 1px solid #e3ece5;
+  border-top: 1px solid var(--chem-border-subtle);
 }
 
 .queued-catalog-grid {
@@ -468,9 +468,9 @@
 }
 
 .queued-catalog-card {
-  border: 1px solid #deeadf;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
-  background: #fff;
+  background: var(--chem-surface-elevated);
   padding: 0.8rem;
   display: flex;
   justify-content: space-between;

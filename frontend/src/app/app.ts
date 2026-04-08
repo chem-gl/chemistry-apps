@@ -1,6 +1,6 @@
-// app.ts: Layout principal con navegacion filtrada por sesión y permisos.
+// app.ts: Layout principal con navegacion filtrada por sesion, permisos y estado visual del header.
 
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IdentitySessionService } from './core/auth/identity-session.service';
 import { GlobalErrorModalComponent } from './core/shared/components/global-error-modal/global-error-modal.component';
@@ -14,6 +14,7 @@ import { SCIENTIFIC_APP_ROUTE_ITEMS } from './core/shared/scientific-apps.config
 })
 export class App implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
+  readonly isScrolled = signal(false);
 
   readonly primaryNavigationItems = computed(() => {
     if (!this.sessionService.isAuthenticated()) {
@@ -42,6 +43,12 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.sessionService.initializeSession().subscribe();
+    this.updateScrollState();
+  }
+
+  @HostListener('window:scroll')
+  updateScrollState(): void {
+    this.isScrolled.set(window.scrollY > 8);
   }
 
   logout(): void {

@@ -1,4 +1,5 @@
-/* tunnel.component.scss: Styles for tunnel effect scientific app. */
+/* tunnel.component.scss: Estilos para la app del efecto túnel cuántico. */
+
 .tunnel-shell {
   display: grid;
   gap: 1rem;
@@ -6,7 +7,8 @@
 
 .tunnel-header h2 {
   margin: 0.2rem 0;
-  color: #102a43;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
 }
 
@@ -14,14 +16,15 @@
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  color: #0f766e;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-primary);
   font-weight: 700;
+  font-family: var(--chem-font-label);
 }
 
 .tunnel-header p {
   margin: 0;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
 }
 
 .workspace-grid {
@@ -35,9 +38,9 @@
 .result-panel,
 .events-card,
 .logs-card {
-  border: 1px solid #d9e2ec;
-  border-radius: 14px;
-  background: #f8fbff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
   padding: 1rem;
   min-width: 0;
 }
@@ -47,8 +50,9 @@
 .events-card h3,
 .logs-card h3 {
   margin: 0 0 0.8rem;
-  color: #102a43;
-  font-size: 1rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: var(--chem-text-lg);
 }
 
 .field-grid {
@@ -62,16 +66,8 @@
   gap: 0.3rem;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #243b53;
-}
-
-input {
-  border: 1px solid #bcccdc;
-  border-radius: 9px;
-  padding: 0.46rem 0.6rem;
-  font-size: 0.95rem;
-  background: #fff;
-  width: 100%;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
 }
 
 .action-row {
@@ -87,30 +83,40 @@ input {
   font-weight: 700;
   font-size: 0.82rem;
   cursor: pointer;
+  transition: background var(--chem-transition), color var(--chem-transition);
 }
 
 .btn-primary {
-  border: 1px solid #0f766e;
-  color: #fff;
-  background: #0f766e;
+  border: 1px solid var(--chem-primary);
+  color: var(--chem-surface);
+  background: var(--chem-primary);
+}
+
+.btn-primary:hover {
+  filter: brightness(0.9);
 }
 
 .btn-secondary {
-  border: 1px solid #486581;
-  color: #334e68;
-  background: #fff;
+  border: 1px solid var(--chem-primary);
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface);
+}
+
+.btn-secondary:hover {
+  background: var(--chem-primary);
+  color: var(--chem-surface);
 }
 
 .status-message {
   margin: 0;
-  color: #486581;
+  color: var(--chem-ink-secondary);
   font-size: 0.86rem;
 }
 
 .progress-card {
-  border: 1px solid #cbd2d9;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.75rem;
   display: grid;
   gap: 0.4rem;
@@ -119,28 +125,28 @@ input {
 .progress-track {
   height: 10px;
   border-radius: 999px;
-  background: #d9e2ec;
+  background: var(--chem-surface-inset);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0f766e, #0ea5a1);
+  background: var(--chem-gradient-header);
 }
 
 .progress-pct,
 .progress-message {
   margin: 0;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
   font-size: 0.82rem;
 }
 
 .summary-banner {
   margin: 0 0 0.6rem;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border: 1px solid rgba(2, 119, 189, 0.2);
+  border-radius: var(--chem-radius);
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
   padding: 0.5rem 0.6rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -156,13 +162,13 @@ input {
 .metadata-grid p {
   margin: 0;
   font-size: 0.8rem;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
 }
 
 .output-block {
-  border: 1px solid #cbd2d9;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
   padding: 0.65rem;
   display: grid;
   gap: 0.3rem;
@@ -171,8 +177,8 @@ input {
 
 .output-block p {
   margin: 0;
-  color: #1f2937;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-mono);
   font-size: 0.82rem;
 }
 
@@ -194,15 +200,15 @@ input {
 
 .events-header p {
   margin: 0;
-  color: #486581;
+  color: var(--chem-ink-secondary);
   font-size: 0.8rem;
 }
 
 .table-wrap {
-  border: 1px solid #d9e2ec;
-  border-radius: 10px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   overflow: auto;
-  background: #fff;
+  background: var(--chem-surface);
   max-width: 100%;
 }
 
@@ -216,19 +222,23 @@ input {
 .events-table td {
   text-align: left;
   padding: 0.5rem;
-  border-bottom: 1px solid #e4ecf5;
+  border-bottom: 1px solid var(--chem-border-subtle);
   font-size: 0.78rem;
 }
 
 .events-table th {
-  background: #f0f4f8;
-  color: #243b53;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink-secondary);
   font-weight: 700;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
 }
 
 .error-message {
   margin: 0;
-  color: #9b1c1c;
+  color: var(--chem-error);
   font-weight: 700;
   font-size: 0.85rem;
 }
@@ -241,10 +251,10 @@ input {
 }
 
 .log-item {
-  border: 1px solid #d9e2ec;
-  border-radius: 9px;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
   padding: 0.5rem;
-  background: #fff;
+  background: var(--chem-surface);
   display: grid;
   gap: 0.3rem;
 }
@@ -264,53 +274,51 @@ input {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border: 1px solid transparent;
+  font-family: var(--chem-font-label);
 }
 
 .log-level-debug {
-  color: #334155;
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-elevated);
 }
 
 .log-level-info {
-  color: #0f766e;
-  background: #ccfbf1;
-  border-color: #5eead4;
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
 }
 
 .log-level-warning {
-  color: #92400e;
-  background: #fef3c7;
-  border-color: #fcd34d;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
 }
 
 .log-level-error {
-  color: #991b1b;
-  background: #fee2e2;
-  border-color: #fecaca;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
 }
 
 .log-source,
 .log-index {
-  color: #486581;
-  font-family: 'Consolas', 'Liberation Mono', monospace;
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
   font-size: 0.72rem;
 }
 
 .log-message {
   margin: 0;
-  color: #243b53;
+  color: var(--chem-ink);
   font-size: 0.8rem;
 }
 
 .log-payload {
   margin: 0;
-  border: 1px solid #d9e2ec;
-  background: #f8fbff;
-  border-radius: 8px;
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  border-radius: var(--chem-radius);
   padding: 0.45rem;
-  color: #334e68;
+  color: var(--chem-ink-secondary);
   font-size: 0.74rem;
+  font-family: var(--chem-font-mono);
 }
 
 @media (max-width: 1024px) {

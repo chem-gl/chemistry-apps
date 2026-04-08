@@ -11,21 +11,21 @@
 }
 
 .history-completed {
-  background: #e6f5ea;
-  color: #20633c;
+  background: rgba(123, 90, 158, 0.12);
+  color: var(--chem-accent);
 }
 
 .history-running,
 .history-pending,
 .history-paused {
-  background: #eef3ff;
-  color: #2d4f9d;
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
 }
 
 .history-failed,
 .history-cancelled {
-  background: #fff0ee;
-  color: #9d3325;
+  background: rgba(211, 47, 47, 0.08);
+  color: var(--chem-primary);
 }
 
 .log-header {
@@ -46,30 +46,30 @@
 }
 
 .log-level-info {
-  background: #eef5ef;
-  color: #245741;
+  background: var(--chem-surface-inset);
+  color: var(--chem-accent);
 }
 
 .log-level-warning {
-  background: #fff4dd;
-  color: #7d5000;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
 }
 
 .log-level-error {
-  background: #ffe9e5;
-  color: #a33528;
+  background: rgba(211, 47, 47, 0.08);
+  color: var(--chem-primary);
 }
 
 .log-level-debug {
-  background: #eef0f4;
-  color: #586170;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink-soft);
 }
 
 .log-payload {
   margin-top: 0.55rem;
   padding: 0.7rem;
   border-radius: 12px;
-  background: #f4f7f4;
+  background: var(--chem-surface-inset);
   overflow: auto;
 }
 
@@ -98,39 +98,36 @@
     display: grid;
     align-items: flex-start;
     gap: 1rem;
-    overflow: visible;
   }
 
   .workspace-columns {
     display: grid;
     grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
-    align-items: stretch;
+    align-items: start;
     gap: 1rem;
-    overflow: visible;
   }
 
   .workspace-left-column {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
-    align-self: stretch;
-    overflow: visible;
+    min-width: 0;
   }
 
+  /* Columna derecha: catálogo + bloques, sticky mientras se recorre la inspección */
   .workspace-right-column {
     grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 1rem;
+    align-self: start;
     display: grid;
     gap: 1rem;
     align-content: start;
-  }
-
-  .workspace-right-column:first-of-type {
-    grid-row: 1;
-  }
-
-  .workspace-right-column:last-of-type {
-    grid-row: 2;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
   .workspace-side-column {
@@ -142,21 +139,34 @@
   }
 
   .workspace-main-column {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     flex: 1;
-    overflow: visible;
+    min-width: 0;
   }
 
-  .workspace-columns > .workspace-left-column .inspection-floating-panel {
-    position: sticky !important;
-    top: 0.75rem !important;
-    z-index: 3;
-    align-self: start;
-    margin-top: 1rem;
+  /* Sección 1: fluye normalmente */
+  .entry-panel {
+    position: static;
   }
 
-  .workspace-columns > .workspace-left-column .inspection-floating-panel .inspection-card {
-    position: static !important;
+  /* Panel de inspección (SVG + átomos): sticky para que quede visible al hacer scroll */
+  .inspection-floating-panel {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+  }
+
+  .inspection-floating-panel .inspection-card {
+    position: static;
+  }
+
+  /* Separador visual entre el SVG viewer y la selección de átomos */
+  .atom-selection-sticky {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--chem-border-subtle);
   }
 }
 
@@ -175,19 +185,17 @@
   }
 
   .workspace-main-column {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .workspace-left-column {
     order: 1;
   }
 
-  .workspace-right-column:first-of-type {
+  .workspace-right-column {
     order: 2;
-  }
-
-  .workspace-right-column:last-of-type {
-    order: 3;
   }
 
   .entry-panel,
@@ -197,19 +205,6 @@
   .inspection-floating-panel,
   .workspace-main-column {
     grid-column: auto;
-  }
-
-  .inspection-floating-panel {
-    position: static;
-    top: auto;
-    z-index: auto;
-  }
-
-  .inspection-floating-panel .inspection-card {
-    position: static;
-    top: auto;
-    z-index: auto;
-    margin-top: 0.9rem;
   }
 }
 

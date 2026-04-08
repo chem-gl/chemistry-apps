@@ -29,33 +29,33 @@
     }
 
     <section class="metrics-grid">
-        <article class="metric-card">
+        <article class="metric-card is-running">
             <p class="metric-label">Running jobs</p>
             <p class="metric-value">{{ runningJobsCount() }}</p>
         </article>
 
-        <article class="metric-card">
+        <article class="metric-card is-paused">
             <p class="metric-label">Paused jobs</p>
             <p class="metric-value">{{ pausedJobsCount() }}</p>
         </article>
 
-        <article class="metric-card">
+        <article class="metric-card is-completed">
             <p class="metric-label">Completed jobs</p>
             <p class="metric-value">{{ completedJobsCount() }}</p>
         </article>
 
-        <article class="metric-card">
+        <article class="metric-card is-apps">
             <p class="metric-label">Enabled apps</p>
             <p class="metric-value">{{ enabledApps().length }}</p>
         </article>
 
         @if (sessionService.hasAdminAccess()) {
-        <article class="metric-card">
+        <article class="metric-card is-users">
             <p class="metric-label">Visible users</p>
             <p class="metric-value">{{ visibleUsers().length }}</p>
         </article>
 
-        <article class="metric-card">
+        <article class="metric-card is-groups">
             <p class="metric-label">Visible groups</p>
             <p class="metric-value">{{ visibleGroups().length }}</p>
         </article>
