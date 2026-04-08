@@ -144,6 +144,74 @@ class IdentityUsersView(views.APIView):
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
 
+_ADMIN_ONLY_FIELDS = {
+    "role",
+    "account_status",
+    "primary_group_id",
+    "is_active",
+    "is_staff",
+}
+
+
+def _apply_basic_user_fields(target_user, payload: dict) -> list[str]:
+    """Aplica campos básicos del usuario (email, nombre, contraseña).
+
+    Retorna la lista de campos que requieren update_fields en save().
+    """
+    updated_fields: list[str] = []
+    basic_mapping: dict[str, str] = {
+        "email": "email",
+        "first_name": "first_name",
+        "last_name": "last_name",
+    }
+    for payload_key, model_field in basic_mapping.items():
+        if payload_key in payload:
+            setattr(target_user, model_field, str(payload[payload_key]))
+            updated_fields.append(model_field)
+
+    if "password" in payload:
+        target_user.set_password(str(payload["password"]))
+        updated_fields.append("password")
+
+    return updated_fields
+
+
+def _apply_admin_identity_fields(
+    target_user, profile: UserIdentityProfile, payload: dict
+) -> None:
+    """Aplica campos administrativos de identidad (rol, status, grupo, flags)."""
+    if "role" in payload:
+        role_value = str(payload["role"])
+        profile.role = role_value
+        target_user.is_superuser = role_value == UserIdentityProfile.ROLE_ROOT
+        target_user.is_staff = role_value in {
+            UserIdentityProfile.ROLE_ROOT,
+            UserIdentityProfile.ROLE_ADMIN,
+        }
+
+    if "account_status" in payload:
+        profile.account_status = str(payload["account_status"])
+        target_user.is_active = (
+            profile.account_status == UserIdentityProfile.STATUS_ACTIVE
+        )
+
+    if "primary_group_id" in payload:
+        profile.primary_group_id = payload["primary_group_id"]
+
+    if "is_active" in payload:
+        target_user.is_active = bool(payload["is_active"])
+        profile.account_status = (
+            UserIdentityProfile.STATUS_ACTIVE
+            if target_user.is_active
+            else UserIdentityProfile.STATUS_INACTIVE
+        )
+
+    if "is_staff" in payload:
+        target_user.is_staff = bool(payload["is_staff"])
+        if target_user.is_staff and profile.role == UserIdentityProfile.ROLE_USER:
+            profile.role = UserIdentityProfile.ROLE_ADMIN
+
+
 @extend_schema(tags=["Identity"])
 class IdentityUserDetailView(views.APIView):
     """Actualiza identidad y estado administrativo de un usuario."""
@@ -167,15 +235,8 @@ class IdentityUserDetailView(views.APIView):
         serializer.is_valid(raise_exception=True)
         payload = serializer.validated_data
 
-        admin_only_fields = {
-            "role",
-            "account_status",
-            "primary_group_id",
-            "is_active",
-            "is_staff",
-        }
         if is_self_update and not _require_admin_or_root(actor):
-            requested_admin_fields = admin_only_fields.intersection(payload.keys())
+            requested_admin_fields = _ADMIN_ONLY_FIELDS.intersection(payload.keys())
             if len(requested_admin_fields) > 0:
                 return Response(
                     {
@@ -186,60 +247,14 @@ class IdentityUserDetailView(views.APIView):
 
         profile, _ = UserIdentityProfile.objects.get_or_create(user=target_user)
 
-        target_user_fields_to_update: list[str] = []
-
-        if "email" in payload:
-            target_user.email = str(payload["email"])
-            target_user_fields_to_update.append("email")
-
-        if "first_name" in payload:
-            target_user.first_name = str(payload["first_name"])
-            target_user_fields_to_update.append("first_name")
-
-        if "last_name" in payload:
-            target_user.last_name = str(payload["last_name"])
-            target_user_fields_to_update.append("last_name")
-
-        if "password" in payload:
-            target_user.set_password(str(payload["password"]))
-            target_user_fields_to_update.append("password")
-
-        if "role" in payload:
-            role_value = str(payload["role"])
-            profile.role = role_value
-            target_user.is_superuser = role_value == UserIdentityProfile.ROLE_ROOT
-            target_user.is_staff = role_value in {
-                UserIdentityProfile.ROLE_ROOT,
-                UserIdentityProfile.ROLE_ADMIN,
-            }
-
-        if "account_status" in payload:
-            profile.account_status = str(payload["account_status"])
-            target_user.is_active = (
-                profile.account_status == UserIdentityProfile.STATUS_ACTIVE
-            )
-
-        if "primary_group_id" in payload:
-            profile.primary_group_id = payload["primary_group_id"]
-
-        if "is_active" in payload:
-            target_user.is_active = bool(payload["is_active"])
-            profile.account_status = (
-                UserIdentityProfile.STATUS_ACTIVE
-                if target_user.is_active
-                else UserIdentityProfile.STATUS_INACTIVE
-            )
-
-        if "is_staff" in payload:
-            target_user.is_staff = bool(payload["is_staff"])
-            if target_user.is_staff and profile.role == UserIdentityProfile.ROLE_USER:
-                profile.role = UserIdentityProfile.ROLE_ADMIN
+        basic_updated_fields = _apply_basic_user_fields(target_user, payload)
+        _apply_admin_identity_fields(target_user, profile, payload)
 
         profile.save()
 
         admin_update_fields = ["is_superuser", "is_staff", "is_active"]
         combined_user_update_fields = list(
-            dict.fromkeys([*target_user_fields_to_update, *admin_update_fields])
+            dict.fromkeys([*basic_updated_fields, *admin_update_fields])
         )
         target_user.save(update_fields=combined_user_update_fields)
 

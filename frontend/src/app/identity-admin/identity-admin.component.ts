@@ -88,7 +88,7 @@ export class IdentityAdminComponent implements OnInit {
   readonly groupConfigForm = signal({
     group_id: '',
     app_name: this.availableAppKeys[0] ?? 'molar-fractions',
-    config_json: '{\n  "enabled": true\n}',
+    config_entries: [{ key: 'enabled', value: 'true' }] as Array<{ key: string; value: string }>,
   });
 
   ngOnInit(): void {
@@ -157,10 +157,33 @@ export class IdentityAdminComponent implements OnInit {
   }
 
   setGroupConfigField(
-    fieldName: keyof ReturnType<typeof this.groupConfigForm>,
+    fieldName: 'group_id' | 'app_name',
     value: string,
   ): void {
     this.groupConfigForm.update((currentValue) => ({ ...currentValue, [fieldName]: value }));
+  }
+
+  addConfigEntry(): void {
+    this.groupConfigForm.update((currentValue) => ({
+      ...currentValue,
+      config_entries: [...currentValue.config_entries, { key: '', value: '' }],
+    }));
+  }
+
+  removeConfigEntry(entryIndex: number): void {
+    this.groupConfigForm.update((currentValue) => ({
+      ...currentValue,
+      config_entries: currentValue.config_entries.filter((_, idx) => idx !== entryIndex),
+    }));
+  }
+
+  updateConfigEntry(entryIndex: number, field: 'key' | 'value', nextValue: string): void {
+    this.groupConfigForm.update((currentValue) => ({
+      ...currentValue,
+      config_entries: currentValue.config_entries.map((entry, idx) =>
+        idx === entryIndex ? { ...entry, [field]: nextValue } : entry,
+      ),
+    }));
   }
 
   createUser(): void {
@@ -237,20 +260,21 @@ export class IdentityAdminComponent implements OnInit {
 
   saveGroupConfig(): void {
     const formValue = this.groupConfigForm();
-    let parsedConfig: Record<string, unknown>;
+    const configObject: Record<string, unknown> = {};
 
-    try {
-      parsedConfig = JSON.parse(formValue.config_json) as Record<string, unknown>;
-    } catch {
-      this.errorMessage.set('Group config must be valid JSON.');
-      return;
+    for (const entry of formValue.config_entries) {
+      const trimmedKey = entry.key.trim();
+      if (trimmedKey === '') {
+        continue;
+      }
+      configObject[trimmedKey] = _parseConfigValue(entry.value);
     }
 
     this.runMutation(
       this.identityApiService.updateGroupAppConfig(
         Number(formValue.group_id),
         formValue.app_name,
-        parsedConfig,
+        configObject,
       ),
       'Group app config updated successfully.',
     );
@@ -307,4 +331,16 @@ export class IdentityAdminComponent implements OnInit {
       },
     });
   }
+}
+
+/**
+ * Convierte el valor textual de una entrada de configuración a su tipo primitivo.
+ * "true"/"false" → boolean, cadenas numéricas → number, resto → string.
+ */
+function _parseConfigValue(rawValue: string): unknown {
+  const trimmed = rawValue.trim();
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  if (trimmed !== '' && !Number.isNaN(Number(trimmed))) return Number(trimmed);
+  return trimmed;
 }

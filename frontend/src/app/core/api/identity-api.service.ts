@@ -5,6 +5,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../shared/constants';
 
+/** Roles de identidad disponibles en el dominio transversal. */
+export type IdentityRole = 'root' | 'admin' | 'user';
+
 export interface AccessibleScientificAppView {
   app_name: string;
   route_key: string;
@@ -32,7 +35,7 @@ export interface IdentityUserSummaryView {
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
-  role: 'root' | 'admin' | 'user';
+  role: IdentityRole;
   account_status: 'active' | 'inactive';
   primary_group_id: number | null;
 }
@@ -79,7 +82,7 @@ export interface CreateIdentityUserPayload {
   password: string;
   first_name?: string;
   last_name?: string;
-  role: 'root' | 'admin' | 'user';
+  role: IdentityRole;
   account_status?: 'active' | 'inactive';
   primary_group_id?: number | null;
 }
@@ -89,7 +92,7 @@ export interface UpdateIdentityUserPayload {
   first_name?: string;
   last_name?: string;
   password?: string;
-  role?: 'root' | 'admin' | 'user';
+  role?: IdentityRole;
   account_status?: 'active' | 'inactive';
   primary_group_id?: number | null;
   is_active?: boolean;

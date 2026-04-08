@@ -1,19 +1,19 @@
-/* dashboard.component.scss: Presentación del dashboard principal multirol. */
+/* dashboard.component.scss: Vista principal multirol con métricas y resumen de actividad. */
 
 .dashboard-shell {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .dashboard-header,
 .panel-card,
 .metric-card,
 .state-card {
-  background: var(--pastel-metal-card);
-  border: 1px solid var(--pastel-metal-border);
-  border-radius: 1.4rem;
-  padding: 1.4rem;
-  box-shadow: var(--pastel-metal-shadow);
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--chem-shadow-sm);
 }
 
 .dashboard-header {
@@ -21,14 +21,16 @@
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  border-left: 3px solid var(--chem-primary);
 }
 
 .eyebrow {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.3rem;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.76rem;
-  color: #7c8baa;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--chem-primary);
 }
 
 h1,
@@ -42,14 +44,21 @@ h2,
   margin: 0;
 }
 
+h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
 .subtitle {
-  margin-top: 0.5rem;
-  color: var(--pastel-metal-soft);
+  margin-top: 0.35rem;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
@@ -57,32 +66,49 @@ h2,
 .solid-action,
 .app-chip {
   text-decoration: none;
-  border-radius: 999px;
-  padding: 0.75rem 1rem;
+  border-radius: var(--chem-radius-pill);
+  padding: 0.55rem 0.9rem;
   font-weight: 600;
+  font-size: 0.84rem;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
 }
 
 .outline-action {
-  border: 1px solid #c9d3e9;
-  color: var(--pastel-metal-ink);
-  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface);
+}
+
+.outline-action:hover {
+  border-color: var(--chem-primary);
+  color: var(--chem-primary);
 }
 
 .solid-action {
-  border: 1px solid #b8c4de;
-  background: linear-gradient(145deg, #dce4f6, #cad5ed);
-  color: #2b3a5a;
+  border: none;
+  background: var(--chem-primary);
+  color: #fff;
+}
+
+.solid-action:hover {
+  background: var(--chem-primary-dark);
 }
 
 .metrics-grid,
 .dashboard-grid,
 .chip-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .metrics-grid {
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.metric-card {
+  border-top: 2px solid var(--chem-primary);
 }
 
 .dashboard-grid {
@@ -94,31 +120,39 @@ h2,
 }
 
 .metric-label {
-  color: var(--pastel-metal-soft);
+  color: var(--chem-ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .metric-value {
-  margin-top: 0.5rem;
-  font-size: 2rem;
+  margin-top: 0.4rem;
+  font-size: 1.85rem;
   font-weight: 800;
-  color: var(--pastel-metal-ink);
+  color: var(--chem-ink);
 }
 
 .chip-grid {
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
 }
 
 .app-chip {
-  border: 1px solid #c5d0e8;
-  background: rgba(255, 255, 255, 0.86);
-  color: #43557d;
+  border: 1px solid var(--chem-border);
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
   text-align: center;
+}
+
+.app-chip:hover {
+  border-color: var(--chem-primary);
+  color: var(--chem-primary);
+  background: var(--chem-primary-light);
 }
 
 .recent-jobs-list,
 .summary-list {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.65rem;
 }
 
 .job-row,
@@ -127,19 +161,36 @@ h2,
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--chem-border);
+}
+
+.job-row:last-child,
+.summary-list li:last-child {
+  border-bottom: none;
+}
+
+.job-app {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .job-meta,
 .summary-list span,
 .empty-state {
-  color: var(--pastel-metal-soft);
+  color: var(--chem-ink-soft);
+  font-size: 0.84rem;
 }
 
 .job-status {
   text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  color: #5a6f97;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-primary-light);
+  color: var(--chem-primary-dark);
 }
 
 .summary-list {
@@ -148,7 +199,8 @@ h2,
 }
 
 .error-card {
-  color: #b64a61;
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
 }
 
 @media (max-width: 900px) {

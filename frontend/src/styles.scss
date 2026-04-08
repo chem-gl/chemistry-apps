@@ -1,16 +1,48 @@
-/* styles.scss: Estilos globales base para layout y tipografia de la aplicacion. */
+/* styles.scss: Sistema de diseño global — identidad visual Chemistry Apps. */
 
 :root {
-  --pastel-metal-bg:
-    radial-gradient(circle at 10% 8%, #f9f3ff 0%, transparent 28%),
-    radial-gradient(circle at 90% 12%, #e8f5ff 0%, transparent 34%),
-    radial-gradient(circle at 20% 88%, #e9fff4 0%, transparent 32%),
-    linear-gradient(135deg, #f6f8fd 0%, #eef2f9 55%, #e9edf5 100%);
-  --pastel-metal-card: linear-gradient(160deg, rgba(255, 255, 255, 0.93), rgba(236, 241, 250, 0.9));
-  --pastel-metal-border: rgba(188, 198, 221, 0.72);
-  --pastel-metal-ink: #2a3754;
-  --pastel-metal-soft: #657498;
-  --pastel-metal-shadow: 0 10px 30px rgba(94, 112, 149, 0.15);
+  /* Paleta primaria: verde-teal universitario */
+  --chem-primary: #0d7377;
+  --chem-primary-light: #e0f2f1;
+  --chem-primary-dark: #004d50;
+  --chem-accent: #2e7d32;
+  --chem-accent-light: #e8f5e9;
+
+  /* Superficies y fondos */
+  --chem-bg: #f5f7f6;
+  --chem-surface: #ffffff;
+  --chem-surface-alt: #f0f4f3;
+
+  /* Bordes y sombras */
+  --chem-border: #d5ddd9;
+  --chem-border-strong: #b0bfb8;
+  --chem-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --chem-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --chem-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  /* Tipografía */
+  --chem-ink: #1a2332;
+  --chem-ink-secondary: #4a5568;
+  --chem-ink-soft: #718096;
+
+  /* Estados semánticos */
+  --chem-success: #2e7d32;
+  --chem-success-bg: #e8f5e9;
+  --chem-error: #c62828;
+  --chem-error-bg: #ffebee;
+  --chem-warning: #ef6c00;
+  --chem-warning-bg: #fff3e0;
+  --chem-info: #0277bd;
+  --chem-info-bg: #e1f5fe;
+
+  /* Radios */
+  --chem-radius-sm: 6px;
+  --chem-radius: 10px;
+  --chem-radius-lg: 14px;
+  --chem-radius-pill: 999px;
+
+  /* Transiciones */
+  --chem-transition: 0.18s ease;
 }
 
 * {
@@ -24,19 +56,22 @@ body {
 }
 
 body {
-  color: var(--pastel-metal-ink);
-  background: var(--pastel-metal-bg);
-  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: var(--chem-ink);
+  background: var(--chem-bg);
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 /*
- * Unifica el diseño visual entre apps:
- * elimina bordes de paneles/tarjetas y conserva los bordes en botones.
+ * Uniformiza paneles y tarjetas globales sin afectar botones ni badges.
+ * Cada componente puede sobreescribir estos estilos localmente.
  */
 :where([class*='card'], [class*='panel'], [class*='Card'], [class*='Panel']):not(button):not(
     [class*='btn']
-  ) {
-  border: 1px solid var(--pastel-metal-border) !important;
-  box-shadow: var(--pastel-metal-shadow) !important;
-  background: var(--pastel-metal-card);
+  ):not([class*='badge']) {
+  border: 1px solid var(--chem-border) !important;
+  box-shadow: var(--chem-shadow) !important;
+  background: var(--chem-surface);
+  border-radius: var(--chem-radius-lg);
 }

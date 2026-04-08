@@ -16,6 +16,9 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+# Referencia lazy al modelo WorkGroup para usar en ForeignKey sin importación circular
+WORK_GROUP_MODEL_REF = "core.WorkGroup"
+
 
 class WorkGroup(models.Model):
     """Representa un grupo de trabajo colaborativo para usuarios científicos."""
@@ -73,7 +76,7 @@ class UserIdentityProfile(models.Model):
     avatar = models.TextField(blank=True, default="")
     email_verified = models.BooleanField(default=False)
     primary_group = models.ForeignKey(
-        "core.WorkGroup",
+        WORK_GROUP_MODEL_REF,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -102,7 +105,7 @@ class GroupMembership(models.Model):
         related_name="group_memberships",
     )
     group = models.ForeignKey(
-        "core.WorkGroup",
+        WORK_GROUP_MODEL_REF,
         on_delete=models.CASCADE,
         related_name="memberships",
     )
@@ -127,7 +130,7 @@ class AppPermission(models.Model):
 
     app_name = models.CharField(max_length=80)
     group = models.ForeignKey(
-        "core.WorkGroup",
+        WORK_GROUP_MODEL_REF,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -173,7 +176,7 @@ class GroupAppConfig(models.Model):
     """Configuración personalizada de app para un grupo de trabajo."""
 
     group = models.ForeignKey(
-        "core.WorkGroup",
+        WORK_GROUP_MODEL_REF,
         on_delete=models.CASCADE,
         related_name="app_configs",
     )
@@ -211,7 +214,7 @@ class ScientificJob(models.Model):
         related_name="owned_jobs",
     )
     group = models.ForeignKey(
-        "core.WorkGroup",
+        WORK_GROUP_MODEL_REF,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

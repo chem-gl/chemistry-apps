@@ -1,40 +1,43 @@
-/* login.component.scss: Estilos de acceso para el panel de autenticación. */
+/* login.component.scss: Panel de autenticación con identidad visual Chemistry Apps. */
 
 .login-shell {
   min-height: calc(100vh - 8rem);
   display: grid;
   place-items: center;
   padding: 2rem;
-  background: transparent;
 }
 
 .login-panel {
-  width: min(28rem, 100%);
-  padding: 2rem;
-  border-radius: 1.5rem;
-  border: 1px solid var(--pastel-metal-border);
-  background: var(--pastel-metal-card);
-  box-shadow: var(--pastel-metal-shadow);
+  width: min(26rem, 100%);
+  padding: 2.25rem 2rem;
+  border-radius: var(--chem-radius-lg);
+  border: 1px solid var(--chem-border);
+  border-top: 3px solid var(--chem-primary);
+  background: var(--chem-surface);
+  box-shadow: var(--chem-shadow-lg);
 }
 
 .eyebrow {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.78rem;
-  color: #7f8db0;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--chem-primary);
 }
 
 h1 {
   margin: 0;
-  font-size: 2rem;
-  color: var(--pastel-metal-ink);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--chem-ink);
 }
 
 .lead {
-  margin: 0.9rem 0 1.5rem;
-  color: var(--pastel-metal-soft);
-  line-height: 1.55;
+  margin: 0.75rem 0 1.5rem;
+  color: var(--chem-ink-soft);
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 .login-form {
@@ -44,36 +47,53 @@ h1 {
 
 label {
   display: grid;
-  gap: 0.4rem;
-  color: #3b4b6e;
+  gap: 0.3rem;
+  color: var(--chem-ink-secondary);
   font-weight: 600;
+  font-size: 0.88rem;
 }
 
 input {
-  border: 1px solid #cfd8ed;
-  border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.88);
-  padding: 0.9rem 1rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.75rem 0.9rem;
   font: inherit;
+  transition: border-color var(--chem-transition);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--chem-primary);
+  box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.12);
 }
 
 .error-message {
   margin: 0;
-  color: #b64a61;
+  padding: 0.6rem 0.8rem;
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.88rem;
 }
 
 .submit-button {
-  border: 1px solid #bac5de;
-  border-radius: 999px;
-  padding: 0.95rem 1.2rem;
+  border: none;
+  border-radius: var(--chem-radius-pill);
+  padding: 0.85rem 1.2rem;
   font: inherit;
   font-weight: 700;
-  color: #273452;
-  background: linear-gradient(140deg, #dce4f6 0%, #cdd8ee 100%);
+  color: #fff;
+  background: var(--chem-primary);
   cursor: pointer;
+  transition: background var(--chem-transition);
+}
+
+.submit-button:hover {
+  background: var(--chem-primary-dark);
 }
 
 .submit-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: wait;
 }

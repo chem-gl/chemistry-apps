@@ -1,6 +1,487 @@
+Problema 1
+Archivo: chemistry-apps:frontend/src/app/identity-admin/identity-admin.component.ts
+
+Problema:
+Prefer `Number.isNaN` over `isNaN`.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S7773
+Severidad: MINOR
+Línea: 344
+
+Cómo solucionarlo:
+ECMAScript 2015 introduced static methods and properties on the Number constructor to replace several global functions and values.
+Using these Number equivalents provides several benefits:
+Consistency and Organization: All number-related utilities are grouped under the Number namespace, making the code
+more organized and easier to understand.
+Reduced Global Namespace Pollution: By using Number methods instead of globals, you help keep the global namespace
+cleaner and reduce the risk of naming conflicts.
+Improved Behavior: Some Number methods have better behavior than their global counterparts:
+
+   Number.isNaN() only returns true for actual NaN values, while global isNaN() coerces
+  non-numbers to numbers first, leading to unexpected results 
+   Number.isFinite() only returns true for finite numbers, while global isFinite() coerces non-numbers
+  first 
+
+Modern JavaScript Standards: Using Number methods aligns with modern JavaScript practices and demonstrates
+familiarity with ES2015+ features.
+The global functions still exist for backward compatibility, but the Number equivalents are the recommended approach in modern
+JavaScript development.
+What is the potential impact?
+Using global functions instead of Number methods can lead to:
+
+   Unexpected behavior: Global isNaN() and isFinite() perform type coercion, which can cause bugs when
+  checking non-number values 
+   Code inconsistency: Mixing global and Number methods makes the codebase less uniform 
+   Maintainability issues: Code that doesn’t follow modern standards may be harder for other developers to understand and
+  maintain 
+
+How to fix?
+Replace global parsing functions with their Number equivalents. The behavior is identical, but the Number methods are more explicit and
+organized.
+Non-compliant code example
+
+const num1 = parseInt('42', 10); // Noncompliant
+const num2 = parseFloat('3.14'); // Noncompliant
+
+Compliant code example
+
+const num1 = Number.parseInt('42', 10);
+const num2 = Number.parseFloat('3.14');
+
+Documentation
+
+   eslint-plugin-unicorn - Rule prefer-number-properties 
+   Number.parseInt() - MDN - Documentation for Number.parseInt()
+  method 
+   Number.parseFloat() - MDN - Documentation for Number.parseFloat()
+  method 
+   Number.isNaN() - MDN - Documentation
+  for Number.isNaN() method and its differences from global isNaN() 
+   Number.isFinite() - MDN - Documentation for Number.isFinite() method
+  and its differences from global isFinite()
+
+----------------------------------------
+
+Problema 2
+Archivo: chemistry-apps:backend/apps/core/identity/routers.py
+
+Problema:
+Refactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S3776
+Severidad: CRITICAL
+Línea: 153
+
+Cómo solucionarlo:
+Reducing cognitive complexity can be challenging.
+  
+  Here are a few suggestions:
+
+  Extract complex conditions in a new function.
+    
+    Mixed operators in condition will increase complexity. Extracting the condition in a new function with an appropriate name will reduce cognitive
+    load.
+  Break down large functions.
+    
+    Large functions can be hard to understand and maintain. If a function is doing too many things, consider breaking it down into smaller, more
+    manageable functions. Each function should have a single responsibility.
+  Avoid deep nesting by returning early.
+    
+    To avoid the nesting of conditions, process exceptional cases first and return early.
+
+Extraction of a complex condition in a new function.
+Noncompliant code example
+The code is using a complex condition and has a cognitive cost of 5.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if ((user.is_active and    # +1 (if) +1 (nested) +1 (multiple conditions)
+            user.has_profile) or   # +1 (mixed operator)
+            user.age &gt; 18 ):
+            user.process()
+
+Compliant solution
+Even if the cognitive complexity of the whole program did not change, it is easier for a reader to understand the code of the
+process_eligible_users function, which now only has a cognitive cost of 3.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if is_eligible_user(user): # +1 (if) +1 (nested)
+            user.process()
+
+def is_eligible_user(user):
+    return ((user.is_active and user.has_profile) or user.age &gt; 18) # +1 (multiple conditions) +1 (mixed operators)
+
+Break down large functions.
+Noncompliant code example
+Note: The code is simplified here, to illustrate the purpose. Please imagine there is more happening in the process.
+  
+The bellow code has a cognitive complexity score of 8.
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process active user with profile
+        else:                        # +1 (else)
+            ... # process active user without profile
+    else:                            # +1 (else)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process inactive user with profile
+        else:                        # +1 (else)
+            ... # process inactive user without profile
+
+This function could be refactored into smaller functions: The complexity is spread over multiple functions and the breaks in flow are no more
+nested.
+  
+  The process_user has now a complexity score of two.
+Compliant solution
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        process_active_user(user)
+    else:                            # +1 (else)
+        process_inactive_user(user)
+
+def process_active_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process active user with profile
+    else:                            # +1 (else)
+        ... # process active user without profile
+
+def process_inactive_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process inactive user with profile
+    else:                            # +1 (else)
+        ... # process inactive user without profile
+
+Avoid deep nesting by returning early.
+Noncompliant code example
+The below code has a cognitive complexity of 6.
+
+def calculate(data):
+    if data is not None:  # +1 (if)
+        total = 0
+        for item in data: # +1 (for) +1 (nested)
+            if item &gt; 0:  # +1 (if)  +2 (nested)
+                total += item * 2
+        return total
+
+Compliant solution
+Checking for the edge case first flattens the if statements and reduces the cognitive complexity to 4.
+
+def calculate(data):
+    if data is None:      # +1 (if)
+        return None
+    total = 0
+    for item in data:     # +1 (for)
+        if item &gt; 0:      # +1 (if) +1 (nested)
+            total += item * 2
+    return total
+
+Pitfalls
+As this code is complex, ensure that you have unit tests that cover the code before refactoring.
+
+----------------------------------------
+
+Problema 3
+Archivo: chemistry-apps:backend/apps/core/models.py
+
+Problema:
+Define a constant instead of duplicating this literal "core.WorkGroup" 5 times.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S1192
+Severidad: CRITICAL
+Línea: 76
+
+Cómo solucionarlo:
+Use constants to replace the duplicated string literals. Constants can be referenced from many places, but only need to be updated in a single
+place.
+
+Noncompliant code example
+With the default threshold of 3:
+
+def run():
+    prepare("action1")  # Noncompliant - "action1" is duplicated 3 times
+    execute("action1")
+    release("action1")
+
+@app.route("/api/users/", methods=['GET', 'POST', 'PUT'])
+def users():
+    pass
+
+@app.route("/api/projects/", methods=['GET', 'POST', 'PUT'])  # Compliant - strings inside decorators are ignored
+def projects():
+    pass
+
+Compliant solution
+
+ACTION_1 = "action1"
+
+def run():
+    prepare(ACTION_1)
+    execute(ACTION_1)
+    release(ACTION_1)
+
+----------------------------------------
+
+Problema 4
+Archivo: chemistry-apps:frontend/src/app/core/api/identity-api.service.ts
+
+Problema:
+Replace this union type with a type alias.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S4323
+Severidad: MINOR
+Línea: 35
+
+Cómo solucionarlo:
+In TypeScript, a type alias is a way to give a name to a specific type. It allows you to create a new name for an existing type, making your code
+more expressive and readable. This is especially useful when you are working with complex or lengthy types that you use frequently.
+Type aliases should be preferred over complex types like unions or intersections for several reasons:
+
+   Type aliases can make your code more readable and maintainable by giving meaningful names to complex types. When you use a type alias, it
+  becomes clear what the type represents, making it easier for other developers (including your future self) to understand the code. 
+   Type aliases promote code reusability. When you define a type alias for a complex type, you can use that alias in multiple places throughout
+  your codebase, reducing duplication and promoting consistency. 
+   Type aliases allow you to abstract away the underlying complexity of types. This promotes encapsulation by hiding implementation details behind
+  a well-named alias, allowing you to change the underlying type in the future without affecting the code that uses the alias. 
+   If you need to modify a complex type, using a type alias means you only need to change the type definition in one place. This change will
+  automatically apply to all usages of the alias. 
+   Type aliases communicate the intent of the type, making it easier for other developers to understand what the type represents. Complex unions
+  and intersections, on the other hand, might require additional comments or documentation to explain their purpose. 
+   Using type aliases can help you avoid excessive nesting of complex types. Nested unions and intersections can quickly become hard to read and
+  maintain, and type aliases can simplify the type definitions. 
+
+This rule enforces the rule of three for code refactoring and reports unions and intersections with three or more constituents appearing at least
+three times in the codebase.
+
+function foo(x: string | null | number) { // Noncompliant: The union has three constituents and is duplicated three times in the code
+  /* ... */
+}
+
+let bar: string | null | number = /* ... */;
+
+function baz(): string | null | number {
+  /* ... */
+}
+
+You should define a type alias for the union or intersection duplicated in the code and replace all their occurrences with the alias name.
+
+type MyType = string | null | number;
+
+function foo(x: MyType) {
+  /* ... */
+}
+
+let bar: MyType = /* ... */;
+
+function baz(): MyType {
+  /* ... */
+}
+
+The rule disregards nullable types, irrespective of their frequency within the codebase. This includes types of the form T | null |
+undefined, where T can represent any type.
+
+function foo(x: T | null | undefined) {
+  /* ... */
+}
+
+----------------------------------------
+
+Problema 5
+Archivo: chemistry-apps:frontend/src/app/login/login.component.html
+
+Problema:
+DOM elements should use the "autocomplete" attribute correctly.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6840
+Severidad: MAJOR
+Línea: 13
+
+Cómo solucionarlo:
+Ensure the autocomplete attribute is correct and suitable for the form field it is used with:
+
+   Identify the input type: The autocomplete attribute should be used with form elements like &lt;input&gt;,
+  &lt;select&gt;, and &lt;textarea&gt;. The type of input field should be clearly identified using the type
+  attribute, such as type="text", type="email", or type="tel". 
+   Specify the autocomplete value: The value of the autocomplete attribute should be a string that specifies what kind of input the browser should
+  autofill. For example, autocomplete="name" would suggest that the browser autofill the user’s full name. 
+   Use appropriate autocomplete values: The value you use should be appropriate for the type of input. For example, for a credit card field, you
+  might use autocomplete="cc-number". For a country field in an address form, you might use autocomplete="country". 
+
+For additional details, please refer to the guidelines provided in the HTML standard.
+
+Noncompliant code example
+
+&lt;input type="text" autocomplete="foo" /&gt;
+
+Compliant solution
+
+&lt;input type="text" autocomplete="name" /&gt;
+
+----------------------------------------
+
+Problema 6
+Archivo: chemistry-apps:frontend/src/app/profile/profile.component.html
+
+Problema:
+DOM elements should use the "autocomplete" attribute correctly.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6840
+Severidad: MAJOR
+Línea: 15
+
+Cómo solucionarlo:
+Ensure the autocomplete attribute is correct and suitable for the form field it is used with:
+
+   Identify the input type: The autocomplete attribute should be used with form elements like &lt;input&gt;,
+  &lt;select&gt;, and &lt;textarea&gt;. The type of input field should be clearly identified using the type
+  attribute, such as type="text", type="email", or type="tel". 
+   Specify the autocomplete value: The value of the autocomplete attribute should be a string that specifies what kind of input the browser should
+  autofill. For example, autocomplete="name" would suggest that the browser autofill the user’s full name. 
+   Use appropriate autocomplete values: The value you use should be appropriate for the type of input. For example, for a credit card field, you
+  might use autocomplete="cc-number". For a country field in an address form, you might use autocomplete="country". 
+
+For additional details, please refer to the guidelines provided in the HTML standard.
+
+Noncompliant code example
+
+&lt;input type="text" autocomplete="foo" /&gt;
+
+Compliant solution
+
+&lt;input type="text" autocomplete="name" /&gt;
+
+----------------------------------------
+
+Problema 7
+Archivo: chemistry-apps:frontend/src/app/profile/profile.component.html
+
+Problema:
+DOM elements should use the "autocomplete" attribute correctly.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: Web:S6840
+Severidad: MAJOR
+Línea: 21
+
+Cómo solucionarlo:
+Ensure the autocomplete attribute is correct and suitable for the form field it is used with:
+
+   Identify the input type: The autocomplete attribute should be used with form elements like &lt;input&gt;,
+  &lt;select&gt;, and &lt;textarea&gt;. The type of input field should be clearly identified using the type
+  attribute, such as type="text", type="email", or type="tel". 
+   Specify the autocomplete value: The value of the autocomplete attribute should be a string that specifies what kind of input the browser should
+  autofill. For example, autocomplete="name" would suggest that the browser autofill the user’s full name. 
+   Use appropriate autocomplete values: The value you use should be appropriate for the type of input. For example, for a credit card field, you
+  might use autocomplete="cc-number". For a country field in an address form, you might use autocomplete="country". 
+
+For additional details, please refer to the guidelines provided in the HTML standard.
+
+Noncompliant code example
+
+&lt;input type="text" autocomplete="foo" /&gt;
+
+Compliant solution
+
+&lt;input type="text" autocomplete="name" /&gt;
+
+----------------------------------------
+
+Problema 8
+Archivo: chemistry-apps:frontend/src/app/profile/profile.component.ts
+
+Problema:
+Unexpected negated condition.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S7735
+Severidad: MINOR
+Línea: 85
+
+Cómo solucionarlo:
+Negated conditions in if-else statements can make code harder to read and understand. When you see if (!condition), your brain has to
+process the negation, which adds cognitive load.
+Positive conditions are generally easier to understand because they describe what is true rather than what is not
+true. When you have both an if and else branch, you can usually invert the condition and swap the branches to make the code more readable.
+For example, if (!user.isActive) requires you to think "if the user is NOT active", while if (user.isActive) is more
+direct: "if the user is active".
+This pattern is especially problematic with:
+
+   Boolean negation using the ! operator 
+   Inequality comparisons like !== and != 
+   Complex expressions where the negation makes the logic harder to follow 
+
+The rule only flags cases where there’s an else clause because single if statements with negated conditions are sometimes the clearest way to
+express "do something when this condition is false".
+What is the potential impact?
+While this issue doesn’t affect functionality, it impacts code maintainability and readability. Code with negated conditions takes longer to
+understand, especially for developers who are:
+
+   New to the codebase 
+   Working under pressure 
+   Non-native English speakers 
+   Debugging complex logic 
+
+Improved readability leads to fewer bugs, faster code reviews, and easier maintenance.
+How to fix?
+Invert the negated boolean condition and swap the if and else blocks.
+Non-compliant code example
+
+if (!isValid) { // Noncompliant
+  handleError();
+} else {
+  processData();
+}
+
+Compliant code example
+
+if (isValid) {
+  processData();
+} else {
+  handleError();
+}
+
+Documentation
+
+   eslint-plugin-unicorn - Rule no-negated-condition 
+   ESLint no-negated-condition rule - The original ESLint rule that inspired
+  this implementation 
+   JavaScript Conditional Statements - MDN documentation on
+  JavaScript conditional statements 
+
+Standards
+
+   Clean Code: Meaningful Names - Principles for writing readable and
+  maintainable code
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
-No se encontraron archivos con duplicación visible en la respuesta de Sonar.
+Resumen del proyecto: bloques=2 | líneas=36 | densidad=0.1%
+
+Archivos con densidad de duplicación > 3.5%:
+  - backend/apps/core/routers/_job_stream_mixin.py | densidad=11.8% | líneas=36 | bloques=2
+
+Archivo: backend/apps/core/routers/_job_stream_mixin.py
+Duplicated blocks: 2 | Duplicated lines: 36 | Density: 11.8%
+  - chemistry-apps:backend/apps/core/routers/_job_stream_mixin.py | líneas 188-188 | tamaño 18
+  - chemistry-apps:backend/apps/core/routers/_job_stream_mixin.py | líneas 275-275 | tamaño 18
+----------------------------------------
 
 === Security Hotspots (SonarQube) ===
 Total: 2 hotspot(s) encontrado(s).
