@@ -24,6 +24,7 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase
 
 from apps.core.runtime_tools import (
+    DEFAULT_AMBIT_JAR_DOWNLOAD_URL,
     DEFAULT_DOWNLOAD_MAX_ATTEMPTS,
     DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
     DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO,
@@ -164,7 +165,7 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
             self.assertFalse(is_runtime_tools_strict_check_enabled())
 
     def test_get_ambit_jar_download_url_returns_none_when_unset(self) -> None:
-        """Sin variable configurada no debe inventarse una URL insegura por defecto."""
+        """Sin variable configurada debe usar el mirror HTTP histórico permitido."""
         env_without_download_url = {
             key: value
             for key, value in os.environ.items()
@@ -172,10 +173,13 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
         }
 
         with patch.dict(os.environ, env_without_download_url, clear=True):
-            self.assertIsNone(get_ambit_jar_download_url())
+            self.assertEqual(
+                get_ambit_jar_download_url(),
+                DEFAULT_AMBIT_JAR_DOWNLOAD_URL,
+            )
 
     def test_get_ambit_jar_download_url_rejects_non_https_urls(self) -> None:
-        """Una URL HTTP debe rechazarse para evitar descargas ejecutables inseguras."""
+        """Solo el mirror HTTP permitido puede saltarse la exigencia de HTTPS."""
         unsafe_download_url = "http://example.test/ambit.jar"  # NOSONAR
         with patch.dict(
             os.environ,
@@ -184,6 +188,18 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
         ):
             with self.assertRaises(RuntimeToolsError):
                 get_ambit_jar_download_url()
+
+    def test_get_ambit_jar_download_url_accepts_allowed_http_mirror(self) -> None:
+        """El mirror HTTP legado de Uni Plovdiv sigue permitido por compatibilidad."""
+        with patch.dict(
+            os.environ,
+            {"AMBIT_JAR_DOWNLOAD_URL": DEFAULT_AMBIT_JAR_DOWNLOAD_URL},
+            clear=False,
+        ):
+            self.assertEqual(
+                get_ambit_jar_download_url(),
+                DEFAULT_AMBIT_JAR_DOWNLOAD_URL,
+            )
 
     def test_get_ambit_jar_download_url_accepts_https_urls(self) -> None:
         """Una URL HTTPS válida debe propagarse sin alteraciones."""
@@ -297,18 +313,17 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
     def test_prepare_external_artifacts_raises_without_secure_download_url(
         self,
     ) -> None:
-        """Si falta el JAR y no hay mirror HTTPS configurado, debe fallar explícitamente."""
+        """Si el mirror configurado es inválido, debe fallar explícitamente."""
         with TemporaryDirectory(
             prefix="runtime_external_artifacts_missing_url_"
         ) as temporary_directory:
             root_path = Path(temporary_directory)
-            env_without_download_url = {
-                key: value
-                for key, value in os.environ.items()
-                if key != "AMBIT_JAR_DOWNLOAD_URL"
-            }
-
-            with patch.dict(os.environ, env_without_download_url, clear=True):
+            invalid_http_mirror = "http://example.test/ambit.jar"  # NOSONAR
+            with patch.dict(
+                os.environ,
+                {"AMBIT_JAR_DOWNLOAD_URL": invalid_http_mirror},
+                clear=True,
+            ):
                 with self.assertRaises(RuntimeToolsError):
                     _prepare_external_artifacts(root_path)
 

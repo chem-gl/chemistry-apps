@@ -736,7 +736,7 @@ docker compose -f docker-compose.dev.yml up --build
 
 En producción existe `docker-compose.yml` sin hot reload, con variables de entorno en lugar de configuración de desarrollo.
 
-Si falta `tools/external/ambitSA/SyntheticAccessibilityCli.jar`, el backend ya no intenta descargarlo desde una URL HTTP insegura. En modo estricto, configure `AMBIT_JAR_DOWNLOAD_URL` con un mirror HTTPS confiable o copie el JAR manualmente en `tools/external/ambitSA/`. En modo no estricto el arranque continúa, pero las rutas que dependan de AMBIT fallarán hasta instalar ese artefacto.
+Si falta `tools/external/ambitSA/SyntheticAccessibilityCli.jar`, el backend intenta descargarlo desde el mirror histórico `http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar`, que es la única excepción HTTP permitida para este artefacto. También puede sobrescribirse con `AMBIT_JAR_DOWNLOAD_URL` usando una URL HTTPS. En modo no estricto el arranque continúa aunque la descarga falle, pero las rutas que dependan de AMBIT fallarán hasta instalar ese artefacto.
 
 ---
 

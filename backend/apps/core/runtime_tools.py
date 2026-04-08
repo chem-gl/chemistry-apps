@@ -35,6 +35,7 @@ DEFAULT_DOWNLOAD_TIMEOUT_SECONDS: int = 900
 DEFAULT_DOWNLOAD_CHUNK_SIZE_BYTES: int = 4 * 1024 * 1024
 DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO: float = 25.0
 AMBIT_JAR_DOWNLOAD_URL_ENV_VAR: str = "AMBIT_JAR_DOWNLOAD_URL"
+DEFAULT_AMBIT_JAR_DOWNLOAD_URL: str = "http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar"  # NOSONAR
 
 
 @dataclass(frozen=True)
@@ -153,28 +154,37 @@ def is_runtime_tools_strict_check_enabled() -> bool:
 
 
 def get_ambit_jar_download_url() -> str | None:
-    """Resuelve una URL HTTPS confiable para descargar el JAR de AMBIT.
+    """Resuelve la URL autorizada para descargar el JAR de AMBIT.
 
-    Se exige HTTPS porque el JAR se ejecuta localmente tras la descarga, por lo que
-    aceptar una URL insegura expondría al backend a artefactos manipulados en tránsito.
+    Regla de seguridad aplicada:
+    - Se aceptan URLs HTTPS arbitrarias configuradas por entorno.
+    - Se acepta una única excepción HTTP para el mirror histórico de Uni Plovdiv,
+      porque el proyecto depende operativamente de esa URL y el equipo no controla
+      ese servidor ni su disponibilidad TLS.
+    - Se rechaza cualquier otra URL HTTP para no abrir una excepción genérica.
     """
     configured_url: str = os.getenv(AMBIT_JAR_DOWNLOAD_URL_ENV_VAR, "").strip()
-    if configured_url == "":
-        return None
+    effective_url: str = configured_url or DEFAULT_AMBIT_JAR_DOWNLOAD_URL
 
-    parsed_url = urllib.parse.urlparse(configured_url)
-    if parsed_url.scheme != "https":
-        raise RuntimeToolsError(
-            "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS para descargar "
-            "SyntheticAccessibilityCli.jar de forma segura."
-        )
-
+    parsed_url = urllib.parse.urlparse(effective_url)
     if parsed_url.netloc == "":
         raise RuntimeToolsError(
             "La variable AMBIT_JAR_DOWNLOAD_URL no contiene un host válido."
         )
 
-    return configured_url
+    if parsed_url.scheme == "https" or effective_url == DEFAULT_AMBIT_JAR_DOWNLOAD_URL:
+        return effective_url
+
+    if parsed_url.scheme != "http":
+        raise RuntimeToolsError(
+            "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS o coincidir con el "
+            "mirror HTTP permitido de SyntheticAccessibilityCli.jar."
+        )
+
+    raise RuntimeToolsError(
+        "La variable AMBIT_JAR_DOWNLOAD_URL debe usar HTTPS o coincidir exactamente "
+        "con http://web.uni-plovdiv.bg/nick/ambit-tools/SyntheticAccessibilityCli.jar."
+    )
 
 
 def get_runtime_tools_root() -> Path:
@@ -603,16 +613,16 @@ def _prepare_external_artifacts(
         if ambit_jar_download_url is None:
             if not effective_strict_check:
                 logger.warning(
-                    "No se encontró SyntheticAccessibilityCli.jar ni mirror HTTPS. "
+                    "No se encontró SyntheticAccessibilityCli.jar ni mirror disponible. "
                     "El backend continuará en modo no estricto; las rutas que dependan "
                     "de AMBIT fallarán hasta instalar el JAR."
                 )
                 return
 
             raise RuntimeToolsError(
-                "Falta SyntheticAccessibilityCli.jar y no hay una URL HTTPS configurada. "
-                "Defina AMBIT_JAR_DOWNLOAD_URL con un mirror confiable o copie el JAR "
-                "manualmente en tools/external/ambitSA/."
+                "Falta SyntheticAccessibilityCli.jar y no hay un mirror utilizable configurado. "
+                "Defina AMBIT_JAR_DOWNLOAD_URL con una URL HTTPS o use exactamente el mirror "
+                "HTTP permitido de Uni Plovdiv, o copie el JAR manualmente en tools/external/ambitSA/."
             )
 
         logger.info("Descargando AMBIT SyntheticAccessibilityCli.jar")
