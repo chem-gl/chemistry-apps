@@ -22,15 +22,7 @@
       </span>
     </div>
 
-    @if (!workflow.canConfigureGeneration()) {
-    <output class="generation-lock-banner" aria-live="polite">
-      <strong>Section 4 is locked.</strong>
-      <span class="hint generation-lock-message">
-        Select scaffold positions and ensure every selected position is assigned to a block before
-        running generation.
-      </span>
-    </output>
-    }
+
 
     <fieldset class="generation-fieldset" [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()">
       <div class="options-grid compact">

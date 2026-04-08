@@ -1,12 +1,194 @@
 /* block-assignment-panel.component.scss: estilos específicos del panel de asignación de bloques. */
 
 :host {
-	display: block;
-	min-width: 0;
-	align-self: start;
+  display: block;
+  min-width: 0;
+  align-self: start;
 }
 
 .workspace-right-column,
 .workspace-side-column {
-	align-items: start;
+  align-items: start;
+}
+
+.panel-header-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.panel-header-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.panel-header-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.8rem;
+  row-gap: 0.45rem;
+  align-items: start;
+  justify-items: end;
+  min-width: min(17rem, 100%);
+}
+
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid var(--chem-border-strong);
+  border-radius: var(--chem-radius-pill);
+  background: linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--chem-shadow-sm);
+  transition:
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition),
+    border-color var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.icon-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--chem-accent);
+  box-shadow: var(--chem-shadow);
+  background: linear-gradient(
+    180deg,
+    var(--chem-surface-elevated) 0%,
+    var(--chem-accent-light) 100%
+  );
+}
+
+.icon-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.add-block-btn {
+  grid-column: 1;
+  justify-self: end;
+  min-height: 2.3rem;
+  padding: 0.45rem 0.9rem;
+  border-color: var(--chem-accent);
+  background: linear-gradient(180deg, var(--chem-accent-light) 0%, rgba(255, 255, 255, 0.9) 100%);
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.panel-collapse-toggle {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.panel-action-hint {
+  grid-column: 1;
+  margin: 0;
+  max-width: 14rem;
+  text-align: right;
+}
+
+.block-card {
+  position: relative;
+  padding-top: 1.2rem;
+}
+
+.block-collapse-toggle {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 1;
+}
+
+.block-header {
+  display: grid;
+  gap: 0.85rem;
+  padding-right: 3rem;
+}
+
+.block-title-wrap {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.block-priority {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-accent-light);
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.block-title-input {
+  min-width: 0;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: rgba(255, 255, 255, 0.74);
+  font: inherit;
+  color: var(--chem-ink);
+  box-shadow: inset 0 1px 2px rgba(44, 37, 51, 0.06);
+}
+
+.block-title-input:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.35);
+  outline-offset: 1px;
+  border-color: var(--chem-accent);
+}
+
+.block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  border-top: 1px dashed rgba(168, 161, 176, 0.5);
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .panel-header-row {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-header-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .add-block-btn,
+  .panel-action-hint {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .panel-collapse-toggle {
+    justify-self: end;
+  }
+
+  .block-header {
+    padding-right: 2.75rem;
+  }
 }

@@ -366,7 +366,26 @@ jobs:
              fi
             ./venv/bin/python -m pip install --upgrade pip
             ./venv/bin/pip install -r requirements.txt
-            ./venv/bin/python manage.py migrate --noinput
+
+            MIGRATION_LOG_FILE="$DEPLOY_STAGING_DIR/django-migrate.log"
+            set +e
+            ./venv/bin/python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
+            MIGRATE_EXIT_CODE=${PIPESTATUS[0]}
+            set -e
+
+            if [ "$MIGRATE_EXIT_CODE" -ne 0 ]; then
+              if grep -q "InconsistentMigrationHistory" "$MIGRATION_LOG_FILE"; then
+                echo "ERROR: se detectó un historial de migraciones inconsistente en la base remota."
+                echo "Detalle: admin.0001_initial fue aplicado antes de accounts.0001_initial."
+                echo "Causa probable: la base fue inicializada antes de adoptar AUTH_USER_MODEL=accounts.UserAccount."
+                echo "Acción requerida: usar una base compatible con el usuario personalizado o recrear el volumen persistente de PostgreSQL si este entorno puede reinicializarse."
+                echo "Ruta del volumen persistente esperado: $VM_PROJECT_PATH/docker-data/postgres"
+                echo "No se intentó reparar automáticamente para evitar pérdida de datos o dejar el esquema en un estado inválido."
+              fi
+
+              exit "$MIGRATE_EXIT_CODE"
+            fi
+
             cd "$VM_PROJECT_PATH"
 
             $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build backend frontend

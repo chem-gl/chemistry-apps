@@ -5,13 +5,13 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { SafeHtml } from '@angular/platform-browser';
 import {
-    SmileitCatalogEntryView,
-    SmileitStructureInspectionView,
+  SmileitCatalogEntryView,
+  SmileitStructureInspectionView,
 } from '../../core/api/jobs-api.service';
 import {
-    SmileitAssignmentBlockDraft,
-    SmileitBlockCollapsedSummary,
-    SmileitWorkflowService,
+  SmileitAssignmentBlockDraft,
+  SmileitBlockCollapsedSummary,
+  SmileitWorkflowService,
 } from '../../core/application/smileit-workflow.service';
 
 export type BlockPanelLibraryDetailRequest = {
@@ -51,6 +51,10 @@ export class BlockAssignmentPanelComponent {
     this.workflow.blocks.addAssignmentBlock();
   }
 
+  libraryPanelToggleLabel(): string {
+    return this.isLibraryPanelCollapsed() ? 'Expand right panel' : 'Minimize right panel';
+  }
+
   toggleLibraryPanelCollapse(): void {
     this.isLibraryPanelCollapsed.update((currentValue: boolean) => !currentValue);
   }
@@ -80,6 +84,10 @@ export class BlockAssignmentPanelComponent {
 
   isBlockCollapsed(blockId: string): boolean {
     return this.collapsedBlockMap()[blockId] ?? false;
+  }
+
+  blockCollapseButtonLabel(blockId: string): string {
+    return this.isBlockCollapsed(blockId) ? 'Expand block' : 'Minimize block';
   }
 
   onBlockLibraryGroupChange(blockId: string, nextGroupKey: string): void {
@@ -114,8 +122,7 @@ export class BlockAssignmentPanelComponent {
           !this.workflow.catalog.isCatalogEntryReferenced(block, catalogEntry),
       )
       .forEach((catalogEntry: SmileitCatalogEntryView) => {
-        const dedupeKey: string =
-          `${catalogEntry.stable_id}-${catalogEntry.version}-${catalogEntry.id}`;
+        const dedupeKey: string = `${catalogEntry.stable_id}-${catalogEntry.version}-${catalogEntry.id}`;
         if (!deduplicatedEntriesByKey.has(dedupeKey)) {
           deduplicatedEntriesByKey.set(dedupeKey, catalogEntry);
         }
