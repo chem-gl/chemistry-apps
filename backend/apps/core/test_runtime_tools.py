@@ -48,6 +48,7 @@ from apps.core.runtime_tools import (
     get_download_timeout_seconds,
     get_missing_runtime_files,
     get_runtime_tools_root,
+    is_runtime_tools_strict_check_enabled,
 )
 
 
@@ -103,6 +104,20 @@ class RuntimeToolsValidationTests(SimpleTestCase):
 
             self.assertIn("ambit_jar", str(context.exception))
 
+    def test_assert_runtime_tools_ready_ignores_optional_jar_when_non_strict(
+        self,
+    ) -> None:
+        with TemporaryDirectory(
+            prefix="runtime_tools_non_strict_"
+        ) as temporary_directory:
+            root_path: Path = Path(temporary_directory)
+
+            self._create_fake_executable(root_path / "java/jre8/bin/java")
+            self._create_fake_executable(root_path / "java/jre17/bin/java")
+            self._create_fake_executable(root_path / "java/jre21/bin/java")
+
+            assert_runtime_tools_ready(root_path, strict_check=False)
+
     @staticmethod
     def _create_fake_executable(executable_path: Path) -> None:
         """Crea un archivo ejecutable mínimo para simular binario java."""
@@ -127,6 +142,26 @@ class RuntimeToolsValidationTests(SimpleTestCase):
 
 class RuntimeToolsHelpersTests(SimpleTestCase):
     """Cubre helpers internos y rutas de error controladas en runtime tools."""
+
+    def test_is_runtime_tools_strict_check_enabled_defaults_to_true(self) -> None:
+        """Sin variable explícita, el comando usa validación estricta por defecto."""
+        env_without_strict_flag = {
+            key: value
+            for key, value in os.environ.items()
+            if key != "RUNTIME_TOOLS_STRICT_CHECK"
+        }
+
+        with patch.dict(os.environ, env_without_strict_flag, clear=True):
+            self.assertTrue(is_runtime_tools_strict_check_enabled())
+
+    def test_is_runtime_tools_strict_check_enabled_reads_false_values(self) -> None:
+        """El valor false debe desactivar el modo bloqueante para startup."""
+        with patch.dict(
+            os.environ,
+            {"RUNTIME_TOOLS_STRICT_CHECK": "false"},
+            clear=False,
+        ):
+            self.assertFalse(is_runtime_tools_strict_check_enabled())
 
     def test_get_ambit_jar_download_url_returns_none_when_unset(self) -> None:
         """Sin variable configurada no debe inventarse una URL insegura por defecto."""
@@ -276,6 +311,28 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
             with patch.dict(os.environ, env_without_download_url, clear=True):
                 with self.assertRaises(RuntimeToolsError):
                     _prepare_external_artifacts(root_path)
+
+    def test_prepare_external_artifacts_skips_missing_jar_when_non_strict(self) -> None:
+        """En modo no estricto el arranque no debe abortar por ausencia de AMBIT."""
+        with TemporaryDirectory(
+            prefix="runtime_external_artifacts_non_strict_"
+        ) as temporary_directory:
+            root_path = Path(temporary_directory)
+            env_without_download_url = {
+                key: value
+                for key, value in os.environ.items()
+                if key not in {"AMBIT_JAR_DOWNLOAD_URL", "RUNTIME_TOOLS_STRICT_CHECK"}
+            }
+
+            with patch.dict(
+                os.environ,
+                {
+                    **env_without_download_url,
+                    "RUNTIME_TOOLS_STRICT_CHECK": "false",
+                },
+                clear=True,
+            ):
+                _prepare_external_artifacts(root_path)
 
 
 class GetDownloadConfigTests(SimpleTestCase):
@@ -715,3 +772,23 @@ class EnsureRuntimeToolsReadyTests(SimpleTestCase):
 
             # La aserción debe estar dentro del bloque para que el temp dir exista
             self.assertTrue(new_root.exists())
+
+    def test_non_strict_mode_skips_optional_external_artifacts(self) -> None:
+        """El bootstrap no estricto debe permitir arrancar aunque AMBIT falte."""
+        with TemporaryDirectory(prefix="ensure_ready_non_strict_") as tmpdir:
+            root = Path(tmpdir)
+
+            with (
+                patch("apps.core.runtime_tools._prepare_java_runtime") as mock_prepare,
+                patch(
+                    "apps.core.runtime_tools._prepare_external_artifacts"
+                ) as mock_artifacts,
+                patch(
+                    "apps.core.runtime_tools.assert_runtime_tools_ready"
+                ) as mock_assert,
+            ):
+                ensure_runtime_tools_ready(root, strict_check=False)
+
+        self.assertEqual(mock_prepare.call_count, 3)
+        mock_artifacts.assert_called_once_with(root, strict_check=False)
+        mock_assert.assert_called_once_with(root, strict_check=False)
