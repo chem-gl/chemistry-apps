@@ -39,6 +39,7 @@ class DispatchScientificJobTests(SimpleTestCase):
         self.assertFalse(dispatched)
         mocked_delay.assert_not_called()
 
+    @override_settings(JOB_DISPATCH_ENABLED=True)
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_true_when_enqueue_succeeds(
         self, mocked_delay: MagicMock
@@ -50,6 +51,7 @@ class DispatchScientificJobTests(SimpleTestCase):
         self.assertTrue(dispatched)
         mocked_delay.assert_called_once_with("job-1")
 
+    @override_settings(JOB_DISPATCH_ENABLED=True)
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_false_for_operational_error(
         self,
@@ -61,6 +63,7 @@ class DispatchScientificJobTests(SimpleTestCase):
 
         self.assertFalse(dispatched)
 
+    @override_settings(JOB_DISPATCH_ENABLED=True)
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_false_for_redis_connection_error(
         self,
