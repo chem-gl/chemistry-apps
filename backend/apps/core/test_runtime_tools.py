@@ -755,8 +755,8 @@ class EnsureRuntimeToolsReadyTests(SimpleTestCase):
 
         # Debe llamarse una vez por cada JRE (jre8, jre17, jre21)
         self.assertEqual(mock_prepare.call_count, 3)
-        mock_artifacts.assert_called_once_with(root)
-        mock_assert.assert_called_once_with(root)
+        mock_artifacts.assert_called_once_with(root, strict_check=True)
+        mock_assert.assert_called_once_with(root, strict_check=True)
 
     def test_creates_root_dir_if_not_exists(self) -> None:
         """El directorio raíz se crea automáticamente si no existe."""
