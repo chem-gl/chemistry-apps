@@ -23,6 +23,8 @@ from ...models import (
 class AuthorizationService:
     """Servicio de autorización reutilizable para todo el backend."""
 
+    ROLE_PRIORITY: dict[str, int] = {"user": 0, "admin": 1, "root": 2}
+
     @staticmethod
     def is_root(actor: AbstractUser) -> bool:
         return bool(getattr(actor, "is_superuser", False)) or (
@@ -84,6 +86,10 @@ class AuthorizationService:
 
     @staticmethod
     def can_access_app(actor: AbstractUser, app_name: str) -> bool:
+        # Root siempre puede acceder a todas las apps sin importar reglas explícitas
+        if AuthorizationService.is_root(actor):
+            return True
+
         actor_group_ids = AuthorizationService._group_ids_for_user(actor)
         group_rule = AuthorizationService._get_group_app_permission(
             actor_group_ids=actor_group_ids,
@@ -119,7 +125,7 @@ class AuthorizationService:
             accessible_apps.append(
                 {
                     "app_name": definition.plugin_name,
-                    "route_key": definition.api_route_prefix,
+                    "route_key": definition.api_route_prefix.removesuffix("/jobs"),
                     "api_base_path": definition.api_base_path,
                     "supports_pause_resume": bool(definition.supports_pause_resume),
                     "enabled": AuthorizationService.can_access_app(
@@ -192,19 +198,27 @@ class AuthorizationService:
 
     @staticmethod
     def _resolve_role(actor: AbstractUser) -> str:
+        role_candidates: list[str] = []
         explicit_role = getattr(actor, "role", "")
         if explicit_role in {"root", "admin", "user"}:
-            return str(explicit_role)
+            role_candidates.append(str(explicit_role))
 
         profile = AuthorizationService._get_identity_profile(actor)
         if profile is not None and profile.role in {"root", "admin", "user"}:
-            return str(profile.role)
+            role_candidates.append(str(profile.role))
 
         if bool(getattr(actor, "is_superuser", False)):
-            return "root"
-        if bool(getattr(actor, "is_staff", False)):
-            return "admin"
-        return "user"
+            role_candidates.append("root")
+        elif bool(getattr(actor, "is_staff", False)):
+            role_candidates.append("admin")
+
+        if len(role_candidates) == 0:
+            return "user"
+
+        return max(
+            role_candidates,
+            key=lambda current_role: AuthorizationService.ROLE_PRIORITY[current_role],
+        )
 
     @staticmethod
     def _get_identity_profile(actor: AbstractUser) -> UserIdentityProfile | None:

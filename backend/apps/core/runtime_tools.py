@@ -356,8 +356,10 @@ def _validate_tar_entry_file_size(
     member: tarfile.TarInfo,
     total_size_bytes: int,
     max_total_size_bytes: int,
+    max_compression_ratio: float | None = None,
 ) -> int:
     """Valida tamaño descomprimido acumulado por entrada de archivo. Retorna nuevo total."""
+    del max_compression_ratio
     uncompressed_size: int = member.size
     new_total: int = total_size_bytes + uncompressed_size
 
@@ -402,7 +404,9 @@ def _extract_tarfile_safely(
                 member, total_size_bytes, max_total_size_bytes
             )
 
-        archive_file.extract(member, path=destination_dir)
+        # set_attrs=False evita aplicar permisos restrictivos del tar durante extracción,
+        # permitiendo crear subdirectorios anidados sin errores de permisos intermedios.
+        archive_file.extract(member, path=destination_dir, set_attrs=False)
 
 
 def _prepare_external_artifacts(runtime_tools_root: Path) -> None:

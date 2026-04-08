@@ -170,6 +170,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "rest_framework_simplejwt.token_blacklist",
+    "apps.accounts.apps.AccountsConfig",
     "apps.core",
     "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
@@ -181,6 +182,8 @@ INSTALLED_APPS = [
     "apps.sa_score.apps.SaScoreConfig",
     "apps.toxicity_properties.apps.ToxicityPropertiesConfig",
 ]
+
+AUTH_USER_MODEL = "accounts.UserAccount"
 
 if ENABLE_CORS:
     INSTALLED_APPS.insert(0, "corsheaders")

@@ -180,24 +180,66 @@ def _apply_admin_identity_fields(
     target_user, profile: UserIdentityProfile, payload: dict
 ) -> None:
     """Aplica campos administrativos de identidad (rol, status, grupo, flags)."""
+    _apply_role_from_payload(target_user=target_user, profile=profile, payload=payload)
+    _apply_account_status_from_payload(
+        target_user=target_user,
+        profile=profile,
+        payload=payload,
+    )
+    _apply_primary_group_from_payload(profile=profile, payload=payload)
+    _apply_is_active_from_payload(
+        target_user=target_user, profile=profile, payload=payload
+    )
+    _apply_is_staff_from_payload(
+        target_user=target_user, profile=profile, payload=payload
+    )
+
+
+def _apply_role_from_payload(
+    target_user, profile: UserIdentityProfile, payload: dict
+) -> None:
+    """Actualiza rol canónico y flags asociados cuando el payload lo incluye."""
     if "role" in payload:
         role_value = str(payload["role"])
         profile.role = role_value
+        if hasattr(target_user, "role"):
+            target_user.role = role_value
         target_user.is_superuser = role_value == UserIdentityProfile.ROLE_ROOT
         target_user.is_staff = role_value in {
             UserIdentityProfile.ROLE_ROOT,
             UserIdentityProfile.ROLE_ADMIN,
         }
 
+
+def _apply_account_status_from_payload(
+    target_user,
+    profile: UserIdentityProfile,
+    payload: dict,
+) -> None:
+    """Actualiza account_status explícito y sincroniza flag activo."""
     if "account_status" in payload:
         profile.account_status = str(payload["account_status"])
+        if hasattr(target_user, "account_status"):
+            target_user.account_status = profile.account_status
         target_user.is_active = (
             profile.account_status == UserIdentityProfile.STATUS_ACTIVE
         )
 
+
+def _apply_primary_group_from_payload(
+    profile: UserIdentityProfile, payload: dict
+) -> None:
+    """Actualiza grupo primario cuando es provisto por administración."""
     if "primary_group_id" in payload:
         profile.primary_group_id = payload["primary_group_id"]
 
+
+def _apply_is_active_from_payload(
+    target_user,
+    profile: UserIdentityProfile,
+    payload: dict,
+) -> None:
+    """Actualiza estado activo y refleja account_status equivalente."""
     if "is_active" in payload:
         target_user.is_active = bool(payload["is_active"])
         profile.account_status = (
@@ -205,11 +247,22 @@ def _apply_admin_identity_fields(
             if target_user.is_active
             else UserIdentityProfile.STATUS_INACTIVE
         )
+        if hasattr(target_user, "account_status"):
+            target_user.account_status = profile.account_status
 
+
+def _apply_is_staff_from_payload(
+    target_user,
+    profile: UserIdentityProfile,
+    payload: dict,
+) -> None:
+    """Actualiza staff y promueve rol mínimo admin cuando corresponde."""
     if "is_staff" in payload:
         target_user.is_staff = bool(payload["is_staff"])
         if target_user.is_staff and profile.role == UserIdentityProfile.ROLE_USER:
             profile.role = UserIdentityProfile.ROLE_ADMIN
+            if hasattr(target_user, "role"):
+                target_user.role = profile.role
 
 
 @extend_schema(tags=["Identity"])
@@ -253,6 +306,10 @@ class IdentityUserDetailView(views.APIView):
         profile.save()
 
         admin_update_fields = ["is_superuser", "is_staff", "is_active"]
+        if hasattr(target_user, "role"):
+            admin_update_fields.append("role")
+        if hasattr(target_user, "account_status"):
+            admin_update_fields.append("account_status")
         combined_user_update_fields = list(
             dict.fromkeys([*basic_updated_fields, *admin_update_fields])
         )

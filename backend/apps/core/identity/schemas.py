@@ -20,9 +20,12 @@ from ..models import (
 
 
 def _resolve_user_role(user) -> str:
+    role_priority: dict[str, int] = {"user": 0, "admin": 1, "root": 2}
+    role_candidates: list[str] = []
+
     explicit_role = getattr(user, "role", "")
     if explicit_role in {"root", "admin", "user"}:
-        return str(explicit_role)
+        role_candidates.append(str(explicit_role))
 
     identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
     if identity_profile is not None and identity_profile.role in {
@@ -30,13 +33,17 @@ def _resolve_user_role(user) -> str:
         "admin",
         "user",
     }:
-        return str(identity_profile.role)
+        role_candidates.append(str(identity_profile.role))
 
     if bool(getattr(user, "is_superuser", False)):
-        return "root"
-    if bool(getattr(user, "is_staff", False)):
-        return "admin"
-    return "user"
+        role_candidates.append("root")
+    elif bool(getattr(user, "is_staff", False)):
+        role_candidates.append("admin")
+
+    if len(role_candidates) == 0:
+        return "user"
+
+    return max(role_candidates, key=lambda current_role: role_priority[current_role])
 
 
 def _resolve_primary_group_id(user) -> int | None:
@@ -51,6 +58,10 @@ def _resolve_primary_group_id(user) -> int | None:
 
 
 def _resolve_account_status(user) -> str:
+    explicit_status = getattr(user, "account_status", "")
+    if explicit_status in {"active", "inactive"}:
+        return str(explicit_status)
+
     identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
     if identity_profile is not None:
         return identity_profile.account_status
@@ -58,6 +69,10 @@ def _resolve_account_status(user) -> str:
 
 
 def _resolve_avatar(user) -> str:
+    explicit_avatar = getattr(user, "avatar", None)
+    if isinstance(explicit_avatar, str):
+        return explicit_avatar
+
     identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
     if identity_profile is None:
         return ""
@@ -65,6 +80,10 @@ def _resolve_avatar(user) -> str:
 
 
 def _resolve_email_verified(user) -> bool:
+    explicit_email_verified = getattr(user, "email_verified", None)
+    if isinstance(explicit_email_verified, bool):
+        return explicit_email_verified
+
     identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
     if identity_profile is None:
         return False
@@ -223,11 +242,18 @@ class AppPermissionSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+        validators = []
+
+    def get_validators(self):
+        """Desactiva validadores automáticos para manejar PATCH parcial sin KeyError."""
+        return []
 
     def validate(self, attrs: dict):
         # En actualizaciones parciales, considerar valores de la instancia existente
         group_value = attrs.get("group", getattr(self.instance, "group", None))
         user_value = attrs.get("user", getattr(self.instance, "user", None))
+        app_name_value = attrs.get("app_name", getattr(self.instance, "app_name", ""))
+
         if group_value is None and user_value is None:
             raise serializers.ValidationError(
                 "Debes indicar un usuario o un grupo para la regla de acceso."
@@ -236,6 +262,36 @@ class AppPermissionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "La regla de acceso debe estar asociada a usuario o a grupo, no a ambos."
             )
+
+        # Valida unicidad por sujeto+app de forma explícita para evitar ambigüedad.
+        duplicated_permission_query = AppPermission.objects.filter(
+            app_name=app_name_value
+        )
+        if self.instance is not None:
+            duplicated_permission_query = duplicated_permission_query.exclude(
+                id=self.instance.id
+            )
+
+        if (
+            group_value is not None
+            and duplicated_permission_query.filter(
+                group=group_value, user__isnull=True
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                "Ya existe una regla para este grupo y app."
+            )
+
+        if (
+            user_value is not None
+            and duplicated_permission_query.filter(
+                user=user_value, group__isnull=True
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                "Ya existe una regla para este usuario y app."
+            )
+
         return attrs
 
 
@@ -277,14 +333,10 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
             password=raw_password,
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
+            role=role_value,
+            account_status=account_status,
         )
-        created_user.is_superuser = role_value == UserIdentityProfile.ROLE_ROOT
-        created_user.is_staff = role_value in {
-            UserIdentityProfile.ROLE_ROOT,
-            UserIdentityProfile.ROLE_ADMIN,
-        }
-        created_user.is_active = account_status == UserIdentityProfile.STATUS_ACTIVE
-        created_user.save(update_fields=["is_superuser", "is_staff", "is_active"])
+        created_user.save()
 
         UserIdentityProfile.objects.update_or_create(
             user=created_user,

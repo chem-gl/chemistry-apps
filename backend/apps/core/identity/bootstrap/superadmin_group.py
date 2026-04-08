@@ -83,6 +83,20 @@ def _ensure_root_membership(root_user: AbstractUser, group: WorkGroup) -> None:
 
 def _ensure_root_primary_group(root_user: AbstractUser, group: WorkGroup) -> None:
     """Asigna el grupo Superadmin como primary_group del root si no tiene uno."""
+    if hasattr(root_user, "role"):
+        root_user.role = UserIdentityProfile.ROLE_ROOT
+    if hasattr(root_user, "account_status"):
+        root_user.account_status = UserIdentityProfile.STATUS_ACTIVE
+    root_user.is_superuser = True
+    root_user.is_staff = True
+    root_user.is_active = True
+    update_fields: list[str] = ["is_superuser", "is_staff", "is_active"]
+    if hasattr(root_user, "role"):
+        update_fields.append("role")
+    if hasattr(root_user, "account_status"):
+        update_fields.append("account_status")
+    root_user.save(update_fields=update_fields)
+
     profile, profile_created = UserIdentityProfile.objects.get_or_create(
         user=root_user,
         defaults={

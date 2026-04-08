@@ -15,6 +15,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 # Referencia lazy al modelo WorkGroup para usar en ForeignKey sin importación circular
 WORK_GROUP_MODEL_REF = "core.WorkGroup"
@@ -149,6 +150,25 @@ class AppPermission(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["app_name", "group", "user"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(group__isnull=False, user__isnull=True)
+                    | Q(group__isnull=True, user__isnull=False)
+                ),
+                name="app_permission_exactly_one_subject",
+            ),
+            models.UniqueConstraint(
+                fields=["group", "app_name"],
+                condition=Q(group__isnull=False, user__isnull=True),
+                name="unique_group_app_permission",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "app_name"],
+                condition=Q(user__isnull=False, group__isnull=True),
+                name="unique_user_app_permission",
+            ),
+        ]
 
 
 class UserAppConfig(models.Model):
