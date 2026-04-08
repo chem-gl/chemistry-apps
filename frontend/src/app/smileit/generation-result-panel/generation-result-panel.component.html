@@ -68,8 +68,8 @@
   <article class="generation-card" aria-label="Previous enumeration jobs">
     <div class="subsection-header">
       <div>
-        <h4>Previous enumerations</h4>
-        <p class="hint">Select a previous job to load its full derivative set on demand.</p>
+        <h4>Previous Jobs</h4>
+        <p class="hint">Open a historical run to inspect the structures currently rendered below.</p>
       </div>
       <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
         [disabled]="workflow.isHistoryLoading()">
@@ -77,37 +77,81 @@
       </button>
     </div>
 
-    @if (workflow.historyJobs().length === 0) {
+    @if (isShowingCurrentResultBelow()) {
+    <p class="history-context-note">
+      The current run is already displayed below. This table only lists older jobs.
+    </p>
+    }
+
+    @if (visibleHistoryJobs().length === 0) {
     <p class="hint">No previous enumerations available yet.</p>
     } @else {
-    <div class="block-stack">
-      @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-      <button type="button" class="block-card" (click)="openHistoricalJob(historyJob.id)">
-        <div class="block-header">
-          <div class="block-title-wrap">
-            <span class="block-priority">{{ historicalJobDisplayName(historyJob) }}</span>
-            <p class="catalog-smiles mono">
-              {{ historicalJobPrincipalSmiles(historyJob) }}
-            </p>
-          </div>
-          <span [class]="historicalStatusClass(historyJob.status)">{{
-            historyJob.status
-            }}</span>
-        </div>
-        <div class="block-collapsed-summary">
-          @for (
-          blockSummary of historicalJobBlockSummaries(historyJob);
-          track blockSummary.label + '-' + $index
-          ) {
-          <p>
-            <strong>{{ blockSummary.label }}:</strong> sites {{ blockSummary.positions }}
-          </p>
-          <p class="catalog-smiles mono">{{ blockSummary.smiles }}</p>
+    <section class="history-table-shell" aria-label="Previous jobs table">
+      <table class="history-table history-table-detailed">
+        <thead>
+          <tr>
+            <th scope="col">Run</th>
+            <th scope="col">Status</th>
+            <th scope="col">Blocks</th>
+            <th scope="col">Updated</th>
+            <th scope="col">View</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (historyJob of visibleHistoryJobs(); track historyJob.id) {
+          <tr class="history-row" [class.is-selected-history-job]="isHistoricalJobSelected(historyJob.id)"
+            [attr.aria-current]="isHistoricalJobSelected(historyJob.id) ? 'true' : null">
+            <td class="history-primary-cell">
+              <button type="button" class="history-open-link" (click)="openHistoricalJob(historyJob.id)">
+                {{ historicalJobDisplayName(historyJob) }}
+              </button>
+              <p class="catalog-smiles mono history-principal-smiles">
+                {{ historicalJobPrincipalSmiles(historyJob) }}
+              </p>
+              <p class="history-job-id mono">ID {{ historyJob.id }}</p>
+            </td>
+            <td>
+              <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
+            </td>
+            <td class="history-blocks-cell">
+              @if (historicalJobBlockSummaries(historyJob).length === 0) {
+              <span class="history-empty-value">No blocks</span>
+              } @else {
+              <div class="history-block-list">
+                @for (blockSummary of historicalJobBlockSummaries(historyJob); track blockSummary.label + '-' + $index)
+                {
+                <div class="history-block-pill">
+                  <strong>{{ blockSummary.label }}</strong>
+                  <span>Sites {{ blockSummary.positions }}</span>
+                  <small class="catalog-smiles mono">{{ blockSummary.smiles }}</small>
+                </div>
+                }
+              </div>
+              }
+            </td>
+            <td>
+              @if (historicalJobUpdatedAt(historyJob); as updatedAt) {
+              {{ updatedAt | date: 'yyyy-MM-dd HH:mm' }}
+              } @else {
+              <span class="history-empty-value">Unknown</span>
+              }
+            </td>
+            <td>
+              <div class="history-view-cell">
+                <span [class]="historicalJobViewStateClass(historyJob.id)">
+                  {{ historicalJobViewStateLabel(historyJob.id) }}
+                </span>
+                <button type="button" class="history-open-btn" (click)="openHistoricalJob(historyJob.id)"
+                  [disabled]="isHistoricalJobSelected(historyJob.id)">
+                  {{ isHistoricalJobSelected(historyJob.id) ? 'Open below' : 'Open' }}
+                </button>
+              </div>
+            </td>
+          </tr>
           }
-        </div>
-      </button>
-      }
-    </div>
+        </tbody>
+      </table>
+    </section>
     }
   </article>
 
@@ -125,13 +169,25 @@
   <p class="summary-banner">{{ resultData.summaryMessage }}</p>
   }
 
-  <div class="metadata-grid enriched-grid">
-    <p><strong>Enumerated derivatives:</strong> {{ resultData.totalGenerated }}</p>
-    <p><strong>Reactive sites:</strong> {{ resultData.selectedAtomIndices.join(', ') }}</p>
-    <p><strong>Assignment blocks:</strong> {{ resultData.assignmentBlocks.length }}</p>
+  <div class="metadata-grid enriched-grid execution-summary-row">
+    <article class="execution-summary-card">
+      <span class="execution-summary-label">Enumerated derivatives</span>
+      <strong class="execution-summary-value">{{ resultData.totalGenerated }}</strong>
+    </article>
+    <article class="execution-summary-card">
+      <span class="execution-summary-label">Reactive sites</span>
+      <strong class="execution-summary-value">{{ resultData.selectedAtomIndices.join(', ') }}</strong>
+    </article>
+    <article class="execution-summary-card">
+      <span class="execution-summary-label">Assignment blocks</span>
+      <strong class="execution-summary-value">{{ resultData.assignmentBlocks.length }}</strong>
+    </article>
   </div>
 
-  <p class="catalog-smiles mono">Principal SMILES: {{ resultData.principalSmiles }}</p>
+  <section class="principal-smiles-card" aria-label="Principal SMILES summary">
+    <span class="principal-smiles-label">Principal SMILES</span>
+    <p class="catalog-smiles mono principal-smiles-value">{{ resultData.principalSmiles }}</p>
+  </section>
 
   <div class="action-row export-row">
     <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
@@ -171,10 +227,8 @@
   <section class="structures-list-card" aria-label="Generated derivatives list">
     <div class="subsection-header">
       <div>
-        <h4>Enumerated derivatives</h4>
-        <p class="hint">
-          Each card shows one generated scaffold image with its highlighted substitution sites.
-        </p>
+        <h4>Derivatives</h4>
+
       </div>
       <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
         {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
