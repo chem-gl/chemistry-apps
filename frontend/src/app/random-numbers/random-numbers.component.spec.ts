@@ -34,7 +34,7 @@ function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView 
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 describe('RandomNumbersComponent', () => {

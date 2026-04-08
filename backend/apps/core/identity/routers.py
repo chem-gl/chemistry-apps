@@ -1,0 +1,519 @@
+"""routers.py: Endpoints HTTP de autenticación y perfil del dominio transversal."""
+
+from __future__ import annotations
+
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
+from rest_framework import permissions, status, views
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from ..models import (
+    AppPermission,
+    GroupAppConfig,
+    GroupMembership,
+    UserAppConfig,
+    UserIdentityProfile,
+    WorkGroup,
+)
+from .schemas import (
+    AccessibleScientificAppSerializer,
+    AppPermissionSerializer,
+    DomainTokenObtainPairSerializer,
+    EffectiveAppConfigSerializer,
+    GroupAppConfigSerializer,
+    GroupMembershipSerializer,
+    IdentityBootstrapUserSerializer,
+    IdentityUserSummarySerializer,
+    IdentityUserUpdateSerializer,
+    UserAppConfigSerializer,
+    UserProfileSerializer,
+    WorkGroupSerializer,
+)
+from .services import AuthorizationService
+
+
+def _require_admin_or_root(actor) -> bool:
+    return AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor)
+
+
+def _is_group_admin(actor, group_id: int) -> bool:
+    return AuthorizationService.can_manage_group(actor=actor, group_id=group_id)
+
+
+@extend_schema(tags=["Auth"])
+class DomainTokenObtainPairView(TokenObtainPairView):
+    """Endpoint de login JWT con claims de dominio."""
+
+    serializer_class = DomainTokenObtainPairSerializer
+
+
+@extend_schema(tags=["Auth"])
+class DomainTokenRefreshView(TokenRefreshView):
+    """Endpoint de refresco JWT."""
+
+
+@extend_schema(tags=["Auth"])
+class CurrentUserProfileView(views.APIView):
+    """Devuelve el perfil del usuario autenticado."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Auth"])
+class CurrentUserAccessibleAppsView(views.APIView):
+    """Expone apps disponibles para el usuario actual con RBAC resuelto."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        payload = AuthorizationService.list_accessible_apps(request.user)
+        serializer = AccessibleScientificAppSerializer(payload, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Auth"])
+class CurrentUserAppConfigView(views.APIView):
+    """Consulta y actualiza configuración de app del usuario actual."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request, app_name: str) -> Response:
+        payload = AuthorizationService.get_effective_app_config(request.user, app_name)
+        serializer = EffectiveAppConfigSerializer(payload)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request: Request, app_name: str) -> Response:
+        user_app_config, _ = UserAppConfig.objects.update_or_create(
+            user=request.user,
+            app_name=app_name,
+            defaults={"config": request.data.get("config", {})},
+        )
+        serializer = UserAppConfigSerializer(user_app_config)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Identity"])
+class IdentityUsersView(views.APIView):
+    """Lista usuarios o crea usuarios para administración transversal."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para listar usuarios."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        user_model = get_user_model()
+        users_queryset = user_model.objects.all().order_by("id")
+        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
+            actor
+        ):
+            visible_user_ids = [
+                user.id
+                for user in users_queryset
+                if AuthorizationService.can_manage_user(actor, user)
+                or user.id == actor.id
+            ]
+            users_queryset = users_queryset.filter(id__in=visible_user_ids)
+
+        serializer = IdentityUserSummarySerializer(users_queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede crear usuarios administrativos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = IdentityBootstrapUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        created_user = serializer.save()
+        output_serializer = IdentityUserSummarySerializer(created_user)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Identity"])
+class IdentityUserDetailView(views.APIView):
+    """Actualiza identidad y estado administrativo de un usuario."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request: Request, user_id: int) -> Response:
+        actor = request.user
+        user_model = get_user_model()
+        target_user = get_object_or_404(user_model, id=user_id)
+        is_self_update = actor.id == target_user.id
+        if not is_self_update and not AuthorizationService.can_manage_user(
+            actor=actor, target=target_user
+        ):
+            return Response(
+                {"detail": "No tienes permisos para administrar este usuario."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = IdentityUserUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        admin_only_fields = {
+            "role",
+            "account_status",
+            "primary_group_id",
+            "is_active",
+            "is_staff",
+        }
+        if is_self_update and not _require_admin_or_root(actor):
+            requested_admin_fields = admin_only_fields.intersection(payload.keys())
+            if len(requested_admin_fields) > 0:
+                return Response(
+                    {
+                        "detail": "No tienes permisos para actualizar campos administrativos de tu usuario."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        profile, _ = UserIdentityProfile.objects.get_or_create(user=target_user)
+
+        target_user_fields_to_update: list[str] = []
+
+        if "email" in payload:
+            target_user.email = str(payload["email"])
+            target_user_fields_to_update.append("email")
+
+        if "first_name" in payload:
+            target_user.first_name = str(payload["first_name"])
+            target_user_fields_to_update.append("first_name")
+
+        if "last_name" in payload:
+            target_user.last_name = str(payload["last_name"])
+            target_user_fields_to_update.append("last_name")
+
+        if "password" in payload:
+            target_user.set_password(str(payload["password"]))
+            target_user_fields_to_update.append("password")
+
+        if "role" in payload:
+            role_value = str(payload["role"])
+            profile.role = role_value
+            target_user.is_superuser = role_value == UserIdentityProfile.ROLE_ROOT
+            target_user.is_staff = role_value in {
+                UserIdentityProfile.ROLE_ROOT,
+                UserIdentityProfile.ROLE_ADMIN,
+            }
+
+        if "account_status" in payload:
+            profile.account_status = str(payload["account_status"])
+            target_user.is_active = (
+                profile.account_status == UserIdentityProfile.STATUS_ACTIVE
+            )
+
+        if "primary_group_id" in payload:
+            profile.primary_group_id = payload["primary_group_id"]
+
+        if "is_active" in payload:
+            target_user.is_active = bool(payload["is_active"])
+            profile.account_status = (
+                UserIdentityProfile.STATUS_ACTIVE
+                if target_user.is_active
+                else UserIdentityProfile.STATUS_INACTIVE
+            )
+
+        if "is_staff" in payload:
+            target_user.is_staff = bool(payload["is_staff"])
+            if target_user.is_staff and profile.role == UserIdentityProfile.ROLE_USER:
+                profile.role = UserIdentityProfile.ROLE_ADMIN
+
+        profile.save()
+
+        admin_update_fields = ["is_superuser", "is_staff", "is_active"]
+        combined_user_update_fields = list(
+            dict.fromkeys([*target_user_fields_to_update, *admin_update_fields])
+        )
+        target_user.save(update_fields=combined_user_update_fields)
+
+        response_serializer = IdentityUserSummarySerializer(target_user)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Identity"])
+class WorkGroupsView(views.APIView):
+    """CRUD parcial para grupos de trabajo del dominio transversal."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para listar grupos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = WorkGroup.objects.all().order_by("name")
+        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
+            actor
+        ):
+            admin_group_ids = GroupMembership.objects.filter(
+                user_id=actor.id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).values_list("group_id", flat=True)
+            queryset = queryset.filter(id__in=admin_group_ids)
+
+        serializer = WorkGroupSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede crear grupos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = WorkGroupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(created_by=actor)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Identity"])
+class WorkGroupDetailView(views.APIView):
+    """Actualiza o elimina grupos de trabajo con control RBAC."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request: Request, group_id: int) -> Response:
+        actor = request.user
+        group = get_object_or_404(WorkGroup, id=group_id)
+        if not _is_group_admin(actor, group_id=group.id):
+            return Response(
+                {"detail": "No tienes permisos para actualizar este grupo."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = WorkGroupSerializer(group, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request: Request, group_id: int) -> Response:
+        actor = request.user
+        group = get_object_or_404(WorkGroup, id=group_id)
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede eliminar grupos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        group.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Identity"])
+class GroupMembershipsView(views.APIView):
+    """Lista y crea membresías de grupos con validaciones de alcance."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para listar membresías."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        memberships_queryset = GroupMembership.objects.all().order_by("id")
+        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
+            actor
+        ):
+            admin_group_ids = GroupMembership.objects.filter(
+                user_id=actor.id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).values_list("group_id", flat=True)
+            memberships_queryset = memberships_queryset.filter(
+                group_id__in=admin_group_ids
+            )
+
+        serializer = GroupMembershipSerializer(memberships_queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para crear membresías."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = GroupMembershipSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        target_group_id = int(serializer.validated_data["group"].id)
+        if not _is_group_admin(actor, group_id=target_group_id):
+            return Response(
+                {"detail": "No puedes administrar membresías de este grupo."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Identity"])
+class GroupMembershipDetailView(views.APIView):
+    """Actualiza o elimina membresías de grupo."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request: Request, membership_id: int) -> Response:
+        actor = request.user
+        membership = get_object_or_404(GroupMembership, id=membership_id)
+        if not _is_group_admin(actor, group_id=membership.group_id):
+            return Response(
+                {"detail": "No tienes permisos para actualizar esta membresía."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = GroupMembershipSerializer(
+            membership,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request: Request, membership_id: int) -> Response:
+        actor = request.user
+        membership = get_object_or_404(GroupMembership, id=membership_id)
+        if not _is_group_admin(actor, group_id=membership.group_id):
+            return Response(
+                {"detail": "No tienes permisos para eliminar esta membresía."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        membership.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Identity"])
+class AppPermissionsView(views.APIView):
+    """Lista y crea reglas de acceso por app para usuarios o grupos."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para listar reglas de acceso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = AppPermission.objects.all().order_by("-updated_at")
+        serializer = AppPermissionSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede crear reglas de acceso por app."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = AppPermissionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Identity"])
+class AppPermissionDetailView(views.APIView):
+    """Actualiza o elimina reglas de acceso de una app."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request: Request, permission_id: int) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede actualizar reglas de acceso por app."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        permission = get_object_or_404(AppPermission, id=permission_id)
+        serializer = AppPermissionSerializer(
+            permission, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request: Request, permission_id: int) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede eliminar reglas de acceso por app."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        permission = get_object_or_404(AppPermission, id=permission_id)
+        permission.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Identity"])
+class GroupAppConfigDetailView(views.APIView):
+    """Consulta y actualiza configuración de app a nivel de grupo."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request, group_id: int, app_name: str) -> Response:
+        actor = request.user
+        if not AuthorizationService.can_manage_group(actor=actor, group_id=group_id):
+            return Response(
+                {
+                    "detail": "No tienes permisos para ver la configuración de este grupo."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_app_config = GroupAppConfig.objects.filter(
+            group_id=group_id,
+            app_name=app_name,
+        ).first()
+        if group_app_config is None:
+            return Response(
+                {"group": group_id, "app_name": app_name, "config": {}},
+                status=status.HTTP_200_OK,
+            )
+
+        serializer = GroupAppConfigSerializer(group_app_config)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request: Request, group_id: int, app_name: str) -> Response:
+        actor = request.user
+        if not AuthorizationService.can_manage_group(actor=actor, group_id=group_id):
+            return Response(
+                {
+                    "detail": "No tienes permisos para configurar esta app para el grupo."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_app_config, _ = GroupAppConfig.objects.update_or_create(
+            group_id=group_id,
+            app_name=app_name,
+            defaults={"config": request.data.get("config", {})},
+        )
+        serializer = GroupAppConfigSerializer(group_app_config)
+        return Response(serializer.data, status=status.HTTP_200_OK)

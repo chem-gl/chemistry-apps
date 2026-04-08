@@ -3,10 +3,14 @@ README.md
 api.base.service.ts
 api.module.ts
 api/api.ts
+api/auth.service.ts
+api/auth.serviceInterface.ts
 api/calculator.service.ts
 api/calculator.serviceInterface.ts
 api/easyRate.service.ts
 api/easyRate.serviceInterface.ts
+api/identity.service.ts
+api/identity.serviceInterface.ts
 api/jobs.service.ts
 api/jobs.serviceInterface.ts
 api/marcus.service.ts
@@ -34,6 +38,7 @@ model/calculatorOperationEnum.ts
 model/calculatorParameters.ts
 model/calculatorResult.ts
 model/calculatorResultMetadata.ts
+model/domainTokenObtainPairRequest.ts
 model/easyRateArtifactDescriptor.ts
 model/easyRateInspectionExecution.ts
 model/easyRateInspectionResponse.ts
@@ -110,6 +115,8 @@ model/solventEnum.ts
 model/sourceFieldEnum.ts
 model/sourceKindEnum.ts
 model/statusEnum.ts
+model/tokenRefresh.ts
+model/tokenRefreshRequest.ts
 model/toxicityJobCreateRequest.ts
 model/toxicityJobResponse.ts
 model/toxicityMoleculeResult.ts

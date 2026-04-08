@@ -13,16 +13,24 @@
       <a routerLink="/jobs" class="app-link">Open monitor</a>
     </article>
 
-    @for (appItem of scientificApps; track appItem.key) {
-      <article class="app-card" [class.is-disabled]="!appItem.available">
-        <h2>{{ appItem.title }}</h2>
-        <p>{{ appItem.description }}</p>
-        @if (appItem.available) {
-          <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
-        } @else {
-          <span class="coming-soon">Coming soon</span>
-        }
-      </article>
+    @if (scientificApps().length === 0) {
+    <article class="app-card is-disabled">
+      <h2>No visible apps</h2>
+      <p>Your current role and group configuration do not expose additional scientific apps yet.</p>
+      <span class="coming-soon">Contact an administrator</span>
+    </article>
+    }
+
+    @for (appItem of scientificApps(); track appItem.key) {
+    <article class="app-card" [class.is-disabled]="!appItem.available">
+      <h2>{{ appItem.title }}</h2>
+      <p>{{ appItem.description }}</p>
+      @if (appItem.available) {
+      <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
+      } @else {
+      <span class="coming-soon">Coming soon</span>
+      }
+    </article>
     }
   </div>
 </section>

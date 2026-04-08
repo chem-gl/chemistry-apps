@@ -13,7 +13,181 @@ Cómo se usa:
 
 import uuid
 
+from django.conf import settings
 from django.db import models
+
+
+class WorkGroup(models.Model):
+    """Representa un grupo de trabajo colaborativo para usuarios científicos."""
+
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(max_length=140, unique=True)
+    description = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_work_groups",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class UserIdentityProfile(models.Model):
+    """Perfil transversal de identidad para un usuario Django existente."""
+
+    ROLE_ROOT = "root"
+    ROLE_ADMIN = "admin"
+    ROLE_USER = "user"
+    ROLE_CHOICES: list[tuple[str, str]] = [
+        (ROLE_ROOT, "Root"),
+        (ROLE_ADMIN, "Admin"),
+        (ROLE_USER, "User"),
+    ]
+
+    STATUS_ACTIVE = "active"
+    STATUS_INACTIVE = "inactive"
+    STATUS_CHOICES: list[tuple[str, str]] = [
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_INACTIVE, "Inactive"),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="identity_profile",
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_USER)
+    account_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+    )
+    avatar = models.TextField(blank=True, default="")
+    email_verified = models.BooleanField(default=False)
+    primary_group = models.ForeignKey(
+        "core.WorkGroup",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="primary_members",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["id"]
+
+
+class GroupMembership(models.Model):
+    """Relacion M2M explícita entre usuarios y grupos de trabajo."""
+
+    ROLE_ADMIN = "admin"
+    ROLE_MEMBER = "member"
+    ROLE_CHOICES: list[tuple[str, str]] = [
+        (ROLE_ADMIN, "Admin"),
+        (ROLE_MEMBER, "Member"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="group_memberships",
+    )
+    group = models.ForeignKey(
+        "core.WorkGroup",
+        on_delete=models.CASCADE,
+        related_name="memberships",
+    )
+    role_in_group = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_MEMBER,
+    )
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "group"],
+                name="unique_user_group_membership",
+            )
+        ]
+
+
+class AppPermission(models.Model):
+    """Regla de acceso a apps por grupo o por usuario individual."""
+
+    app_name = models.CharField(max_length=80)
+    group = models.ForeignKey(
+        "core.WorkGroup",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="app_permissions",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="app_permissions",
+    )
+    is_enabled = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["app_name", "group", "user"])]
+
+
+class UserAppConfig(models.Model):
+    """Configuración personalizada de app para un usuario específico."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="app_configs",
+    )
+    app_name = models.CharField(max_length=80)
+    config = models.JSONField(default=dict)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "app_name"],
+                name="unique_user_app_config",
+            )
+        ]
+
+
+class GroupAppConfig(models.Model):
+    """Configuración personalizada de app para un grupo de trabajo."""
+
+    group = models.ForeignKey(
+        "core.WorkGroup",
+        on_delete=models.CASCADE,
+        related_name="app_configs",
+    )
+    app_name = models.CharField(max_length=80)
+    config = models.JSONField(default=dict)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["group", "app_name"],
+                name="unique_group_app_config",
+            )
+        ]
 
 
 class ScientificJob(models.Model):
@@ -29,6 +203,20 @@ class ScientificJob(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="owned_jobs",
+    )
+    group = models.ForeignKey(
+        "core.WorkGroup",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="jobs",
+    )
     job_hash = models.CharField(
         max_length=64, db_index=True, help_text="Hash SHA-256 for caching"
     )

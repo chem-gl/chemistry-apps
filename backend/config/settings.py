@@ -169,6 +169,7 @@ INSTALLED_APPS = [
     "channels",
     "rest_framework",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",
     "apps.core",
     "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
@@ -184,8 +185,17 @@ INSTALLED_APPS = [
 if ENABLE_CORS:
     INSTALLED_APPS.insert(0, "corsheaders")
 
+ROOT_USERNAME: str = os.getenv("ROOT_USERNAME", "admin")
+ROOT_PASSWORD: str = os.getenv("ROOT_PASSWORD", "admin123")
+ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.local")
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
 }
 
 DEFAULT_OPENAPI_SERVER_URLS: list[str] = [

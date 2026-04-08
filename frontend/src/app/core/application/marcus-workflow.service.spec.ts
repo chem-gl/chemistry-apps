@@ -5,13 +5,13 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-  DownloadedReportFile,
-  JobLogEntryView,
-  JobLogsPageView,
-  JobProgressSnapshotView,
-  JobsApiService,
-  MarcusJobResponseView,
-  ScientificJobView,
+    DownloadedReportFile,
+    JobLogEntryView,
+    JobLogsPageView,
+    JobProgressSnapshotView,
+    JobsApiService,
+    MarcusJobResponseView,
+    ScientificJobView,
 } from '../api/jobs-api.service';
 import { MarcusWorkflowService } from './marcus-workflow.service';
 
@@ -50,7 +50,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 function makeMarcusJobResponse(

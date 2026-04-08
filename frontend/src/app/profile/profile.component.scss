@@ -1,0 +1,101 @@
+/* profile.component.scss: Estilo pastel-metálico para la gestión de perfil personal. */
+
+.profile-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.metallic-card {
+  border: 1px solid rgba(186, 198, 220, 0.7);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(236, 242, 250, 0.9));
+  box-shadow: 0 10px 24px rgba(90, 106, 138, 0.15);
+}
+
+.profile-header,
+.profile-card {
+  padding: 1.15rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #7280a6;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.4rem 0 0;
+  color: #243049;
+}
+
+.subtitle {
+  margin: 0.45rem 0 0;
+  color: #607092;
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #31415f;
+}
+
+.wide-field,
+.error-message,
+.success-message,
+.action-row {
+  grid-column: 1 / -1;
+}
+
+input {
+  border: 1px solid #cfd6e8;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #243049;
+  padding: 0.68rem 0.78rem;
+  font: inherit;
+}
+
+.error-message {
+  margin: 0;
+  color: #b64a61;
+}
+
+.success-message {
+  margin: 0;
+  color: #3f7a63;
+}
+
+.action-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-button {
+  border: 1px solid #b4bfd8;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #dce3f3, #c7d0e8);
+  color: #243049;
+  padding: 0.64rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+@media (max-width: 760px) {
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,6 +30,7 @@ from ..definitions import (
     CORE_JOBS_LOGS_ROUTE_SUFFIX,
     DEFAULT_SSE_TIMEOUT_SECONDS,
 )
+from ..identity.services import AuthorizationService
 from ..models import ScientificJob, ScientificJobLogEvent
 from ..schemas import ErrorResponseSerializer, JobLogListSerializer
 from ..types import JobLogEntry, JobLogListResponse
@@ -84,6 +85,15 @@ class JobStreamActionsMixin:
     def logs(self, request: Request, id: str | None = None) -> Response:
         """Lista logs persistidos por job para diagnóstico y auditoría."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para ver los logs de este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         after_event_index: int = parse_non_negative_int(
             request.query_params.get("after_event_index"),
             default_value=0,
@@ -176,6 +186,11 @@ class JobStreamActionsMixin:
     ) -> StreamingHttpResponse:
         """Expone stream SSE de logs de job para observabilidad en tiempo real."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return StreamingHttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         last_event_id_header: str | None = request.headers.get("Last-Event-ID")
         last_event_index: int = (
@@ -258,6 +273,11 @@ class JobStreamActionsMixin:
     def events(self, request: Request, id: str | None = None) -> StreamingHttpResponse:
         """Expone stream SSE de progreso del job con heartbeats de conexión."""
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            return StreamingHttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         last_event_id_header: str | None = request.headers.get("Last-Event-ID")
         last_event_index: int = (

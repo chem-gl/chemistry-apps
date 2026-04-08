@@ -1,0 +1,163 @@
+/* dashboard.component.scss: Presentación del dashboard principal multirol. */
+
+.dashboard-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.dashboard-header,
+.panel-card,
+.metric-card,
+.state-card {
+  background: var(--pastel-metal-card);
+  border: 1px solid var(--pastel-metal-border);
+  border-radius: 1.4rem;
+  padding: 1.4rem;
+  box-shadow: var(--pastel-metal-shadow);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.76rem;
+  color: #7c8baa;
+}
+
+h1,
+h2,
+.subtitle,
+.metric-label,
+.metric-value,
+.job-app,
+.job-meta,
+.summary-list {
+  margin: 0;
+}
+
+.subtitle {
+  margin-top: 0.5rem;
+  color: var(--pastel-metal-soft);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.outline-action,
+.solid-action,
+.app-chip {
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.outline-action {
+  border: 1px solid #c9d3e9;
+  color: var(--pastel-metal-ink);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.solid-action {
+  border: 1px solid #b8c4de;
+  background: linear-gradient(145deg, #dce4f6, #cad5ed);
+  color: #2b3a5a;
+}
+
+.metrics-grid,
+.dashboard-grid,
+.chip-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.wide-panel {
+  grid-column: span 2;
+}
+
+.metric-label {
+  color: var(--pastel-metal-soft);
+}
+
+.metric-value {
+  margin-top: 0.5rem;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--pastel-metal-ink);
+}
+
+.chip-grid {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.app-chip {
+  border: 1px solid #c5d0e8;
+  background: rgba(255, 255, 255, 0.86);
+  color: #43557d;
+  text-align: center;
+}
+
+.recent-jobs-list,
+.summary-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.job-row,
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.job-meta,
+.summary-list span,
+.empty-state {
+  color: var(--pastel-metal-soft);
+}
+
+.job-status {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: #5a6f97;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+}
+
+.error-card {
+  color: #b64a61;
+}
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wide-panel {
+    grid-column: span 1;
+  }
+}

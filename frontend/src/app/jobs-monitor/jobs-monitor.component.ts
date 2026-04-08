@@ -1,4 +1,4 @@
-// jobs-monitor.component.ts: Monitor UI for active and historical scientific jobs.
+// jobs-monitor.component.ts: Monitor UI con acciones condicionadas por RBAC frontend.
 
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
@@ -6,9 +6,10 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
-  JobStatusFilterOption,
-  JobsMonitorFacadeService,
+    JobStatusFilterOption,
+    JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
+import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 
 @Component({
@@ -20,6 +21,7 @@ import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/
 })
 export class JobsMonitorComponent implements OnInit, OnDestroy {
   readonly facade = inject(JobsMonitorFacadeService);
+  readonly sessionService = inject(IdentitySessionService);
 
   readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; label: string }> = [
     { value: 'all', label: 'All' },
@@ -85,35 +87,25 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   }
 
   appRouteForJob(jobItem: ScientificJobView): string | null {
-    if (jobItem.plugin_name === 'random-numbers') {
-      return '/random-numbers';
+    const routeKey = this.routeKeyForJob(jobItem);
+    if (routeKey === null || !this.sessionService.canAccessRoute(routeKey)) {
+      return null;
     }
 
-    if (jobItem.plugin_name === 'calculator') {
-      return '/calculator';
-    }
+    return `/${routeKey}`;
+  }
 
-    if (jobItem.plugin_name === 'molar-fractions') {
-      return '/molar-fractions';
-    }
+  canManageJob(jobItem: ScientificJobView): boolean {
+    return this.sessionService.canManageJob({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+  }
 
-    if (jobItem.plugin_name === 'tunnel-effect') {
-      return '/tunnel';
-    }
-
-    if (jobItem.plugin_name === 'easy-rate') {
-      return '/easy-rate';
-    }
-
-    if (jobItem.plugin_name === 'marcus') {
-      return '/marcus';
-    }
-
-    if (jobItem.plugin_name === 'smileit') {
-      return '/smileit';
-    }
-
-    return null;
+  ownerGroupLabel(jobItem: ScientificJobView): string {
+    const ownerLabel = jobItem.owner_username ?? 'Unknown user';
+    const groupLabel = jobItem.group_name ?? 'No group';
+    return `${ownerLabel} · ${groupLabel}`;
   }
 
   resultActionLabel(jobItem: ScientificJobView): string {
@@ -145,5 +137,24 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       typeof resultRecord.metadata === 'object' &&
       !Array.isArray(resultRecord.metadata)
     );
+  }
+
+  private routeKeyForJob(jobItem: ScientificJobView): string | null {
+    if (jobItem.plugin_name === 'tunnel-effect') {
+      return 'tunnel';
+    }
+
+    const pluginToRouteMap: Record<string, string> = {
+      calculator: 'calculator',
+      'random-numbers': 'random-numbers',
+      'molar-fractions': 'molar-fractions',
+      'easy-rate': 'easy-rate',
+      marcus: 'marcus',
+      smileit: 'smileit',
+      'sa-score': 'sa-score',
+      'toxicity-properties': 'toxicity-properties',
+    };
+
+    return pluginToRouteMap[jobItem.plugin_name] ?? null;
   }
 }

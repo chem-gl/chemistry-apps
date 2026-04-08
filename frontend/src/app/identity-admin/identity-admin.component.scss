@@ -1,0 +1,167 @@
+/* identity-admin.component.scss: Estilos de la consola administrativa de identidad. */
+
+.identity-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.identity-header,
+.panel-card,
+.feedback-card {
+  border: 1px solid var(--pastel-metal-border);
+  background: var(--pastel-metal-card);
+  border-radius: 1.4rem;
+  padding: 1.35rem;
+  box-shadow: var(--pastel-metal-shadow);
+}
+
+.identity-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.76rem;
+  color: #7d8aad;
+}
+
+h1,
+h2,
+.subtitle,
+.summary-list,
+.summary-list li {
+  margin: 0;
+}
+
+.subtitle {
+  margin-top: 0.5rem;
+  color: var(--pastel-metal-soft);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.profile-link {
+  border-radius: 999px;
+  border: 1px solid #c7d2e8;
+  background: rgba(255, 255, 255, 0.88);
+  color: #40547f;
+  text-decoration: none;
+  padding: 0.62rem 0.88rem;
+  font-weight: 700;
+}
+
+.helper-text {
+  margin: 0.25rem 0 0.8rem;
+  color: var(--pastel-metal-soft);
+}
+
+.identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+
+.wide-panel {
+  grid-column: span 2;
+}
+
+.admin-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea,
+.submit-button,
+.refresh-button,
+.action-cell button {
+  border-radius: 0.9rem;
+  border: 1px solid #cfd8ed;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+}
+
+.submit-button,
+.refresh-button,
+.action-cell button {
+  background: linear-gradient(145deg, #dae3f6, #c8d4ed);
+  color: #2b3a5a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dbe3f4;
+  text-align: left;
+  vertical-align: top;
+}
+
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-list span {
+  color: var(--pastel-metal-soft);
+}
+
+.error-card {
+  color: #b64a61;
+}
+
+.success-card {
+  color: #497a63;
+}
+
+@media (max-width: 900px) {
+  .identity-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wide-panel {
+    grid-column: span 1;
+  }
+}

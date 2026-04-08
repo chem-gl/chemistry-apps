@@ -1,12 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { IdentitySessionService } from './core/auth/identity-session.service';
 
 describe('App', () => {
+  const sessionServiceMock = {
+    initializeSession: () => ({ subscribe: () => void 0 }),
+    isAuthenticated: () => true,
+    displayName: () => 'Admin User',
+    currentRole: () => 'root',
+    canAccessRoute: () => true,
+    hasAdminAccess: () => false,
+    logout: () => void 0,
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: IdentitySessionService, useValue: sessionServiceMock },
+      ],
     }).compileComponents();
   });
 

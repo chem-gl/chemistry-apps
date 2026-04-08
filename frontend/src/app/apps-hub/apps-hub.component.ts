@@ -1,11 +1,12 @@
-// apps-hub.component.ts: Catalogo de navegacion para apps cientificas visibles (excluye ejemplos internos).
+// apps-hub.component.ts: Catalogo de navegacion filtrado por permisos de sesión.
 
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { IdentitySessionService } from '../core/auth/identity-session.service';
 import {
-  ScientificAppRouteItem,
-  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS,
+    ScientificAppRouteItem,
+    VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS,
 } from '../core/shared/scientific-apps.config';
 
 @Component({
@@ -15,6 +16,11 @@ import {
   styleUrl: './apps-hub.component.scss',
 })
 export class AppsHubComponent {
-  readonly scientificApps: ReadonlyArray<ScientificAppRouteItem> =
-    VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS;
+  private readonly sessionService = inject(IdentitySessionService);
+
+  readonly scientificApps = computed<ReadonlyArray<ScientificAppRouteItem>>(() =>
+    VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((appItem) =>
+      this.sessionService.canAccessRoute(appItem.key),
+    ),
+  );
 }

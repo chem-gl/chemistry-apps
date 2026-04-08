@@ -235,10 +235,17 @@ class ScientificJobSerializer(serializers.ModelSerializer):
     Usado como schema de salida.
     """
 
+    owner_username = serializers.CharField(source="owner.username", read_only=True)
+    group_name = serializers.CharField(source="group.name", read_only=True)
+
     class Meta:
         model = ScientificJob
         fields = [
             "id",
+            "owner",
+            "owner_username",
+            "group",
+            "group_name",
             "job_hash",
             "plugin_name",
             "algorithm_version",

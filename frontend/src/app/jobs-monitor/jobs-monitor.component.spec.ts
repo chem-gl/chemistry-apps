@@ -7,6 +7,7 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import { JobsMonitorFacadeService } from '../core/application/jobs-monitor.facade.service';
+import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobsMonitorComponent } from './jobs-monitor.component';
 
 function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
@@ -33,10 +34,15 @@ function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView 
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 describe('JobsMonitorComponent', () => {
+  const sessionServiceMock = {
+    canAccessRoute: vi.fn((routeKey: string) => routeKey !== 'unknown-plugin'),
+    canManageJob: vi.fn(() => true),
+  };
+
   const facadeMock = {
     jobs: signal<ScientificJobView[]>([]),
     isLoading: signal<boolean>(false),
@@ -74,6 +80,8 @@ describe('JobsMonitorComponent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionServiceMock.canAccessRoute.mockClear();
+    sessionServiceMock.canManageJob.mockClear();
 
     facadeMock.jobs.set([]);
     facadeMock.isLoading.set(false);
@@ -82,7 +90,10 @@ describe('JobsMonitorComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [JobsMonitorComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: IdentitySessionService, useValue: sessionServiceMock },
+      ],
     });
 
     TestBed.overrideComponent(JobsMonitorComponent, {

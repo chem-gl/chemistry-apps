@@ -1,0 +1,127 @@
+<!-- dashboard.component.html: Vista principal resumida por rol y alcance. -->
+<section class="dashboard-shell" aria-label="User dashboard">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Role-aware Workspace</p>
+            <h1>{{ sessionService.displayName() }}</h1>
+            <p class="subtitle">
+                Role: {{ sessionService.currentRole() ?? 'anonymous' }}
+                @if (sessionService.currentUser()?.primary_group_id; as primaryGroupId) {
+                <span>· Primary group #{{ primaryGroupId }}</span>
+                }
+            </p>
+        </div>
+
+        <div class="header-actions">
+            <a class="outline-action" routerLink="/profile">My profile</a>
+            <a class="outline-action" routerLink="/jobs">Open jobs monitor</a>
+            @if (sessionService.hasAdminAccess()) {
+            <a class="solid-action" routerLink="/admin/identity">Open identity console</a>
+            }
+        </div>
+    </header>
+
+    @if (isLoading()) {
+    <section class="state-card">Loading dashboard...</section>
+    } @else {
+    @if (errorMessage(); as currentError) {
+    <section class="state-card error-card" role="alert">{{ currentError }}</section>
+    }
+
+    <section class="metrics-grid">
+        <article class="metric-card">
+            <p class="metric-label">Running jobs</p>
+            <p class="metric-value">{{ runningJobsCount() }}</p>
+        </article>
+
+        <article class="metric-card">
+            <p class="metric-label">Paused jobs</p>
+            <p class="metric-value">{{ pausedJobsCount() }}</p>
+        </article>
+
+        <article class="metric-card">
+            <p class="metric-label">Completed jobs</p>
+            <p class="metric-value">{{ completedJobsCount() }}</p>
+        </article>
+
+        <article class="metric-card">
+            <p class="metric-label">Enabled apps</p>
+            <p class="metric-value">{{ enabledApps().length }}</p>
+        </article>
+
+        @if (sessionService.hasAdminAccess()) {
+        <article class="metric-card">
+            <p class="metric-label">Visible users</p>
+            <p class="metric-value">{{ visibleUsers().length }}</p>
+        </article>
+
+        <article class="metric-card">
+            <p class="metric-label">Visible groups</p>
+            <p class="metric-value">{{ visibleGroups().length }}</p>
+        </article>
+        }
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="panel-card">
+            <h2>Accessible apps</h2>
+            <div class="chip-grid">
+                @for (appItem of enabledApps(); track appItem.route_key) {
+                <a class="app-chip" [routerLink]="'/' + appItem.route_key">
+                    {{ appItem.app_name }}
+                </a>
+                }
+            </div>
+        </article>
+
+        <article class="panel-card wide-panel">
+            <h2>Recent jobs</h2>
+            @if (recentJobs().length === 0) {
+            <p class="empty-state">No jobs available for your current visibility scope.</p>
+            } @else {
+            <div class="recent-jobs-list">
+                @for (jobItem of recentJobs(); track jobItem.id) {
+                <article class="job-row">
+                    <div>
+                        <p class="job-app">{{ jobItem.plugin_name }}</p>
+                        <p class="job-meta">
+                            {{ jobItem.owner_username || 'Unknown user' }}
+                            ·
+                            {{ jobItem.group_name || 'No group' }}
+                        </p>
+                    </div>
+                    <span class="job-status">{{ jobItem.status }}</span>
+                </article>
+                }
+            </div>
+            }
+        </article>
+
+        @if (sessionService.hasAdminAccess()) {
+        <article class="panel-card">
+            <h2>Users in scope</h2>
+            <ul class="summary-list">
+                @for (userItem of visibleUsers().slice(0, 6); track userItem.id) {
+                <li>
+                    <strong>{{ userItem.username }}</strong>
+                    <span>{{ userItem.role }} · {{ userItem.account_status }}</span>
+                </li>
+                }
+            </ul>
+        </article>
+
+        <article class="panel-card">
+            <h2>Groups in scope</h2>
+            <ul class="summary-list">
+                @for (groupItem of visibleGroups().slice(0, 6); track groupItem.id) {
+                <li>
+                    <strong>{{ groupItem.name }}</strong>
+                    <span>{{ groupItem.slug }}</span>
+                </li>
+                }
+            </ul>
+        </article>
+        }
+    </section>
+    }
+</section>

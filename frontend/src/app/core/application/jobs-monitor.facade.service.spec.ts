@@ -30,7 +30,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJobView;
 }
 
 describe('JobsMonitorFacadeService', () => {

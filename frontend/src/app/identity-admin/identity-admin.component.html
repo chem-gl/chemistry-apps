@@ -1,0 +1,234 @@
+<!-- identity-admin.component.html: Consola administrativa para identidad, grupos y permisos. -->
+<section class="identity-shell" aria-label="Identity administration">
+    <header class="identity-header">
+        <div>
+            <p class="eyebrow">Administrative Console</p>
+            <h1>Identity and Access</h1>
+            <p class="subtitle">Manage users, groups, memberships and app-level RBAC in a consistent workspace.</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="profile-link" routerLink="/profile">My profile</a>
+            <button class="refresh-button" type="button" (click)="loadAdminData()">Refresh</button>
+        </div>
+    </header>
+
+    @if (errorMessage(); as currentError) {
+    <section class="feedback-card error-card" role="alert">{{ currentError }}</section>
+    }
+
+    @if (successMessage(); as currentSuccess) {
+    <section class="feedback-card success-card">{{ currentSuccess }}</section>
+    }
+
+    @if (isLoading()) {
+    <section class="feedback-card">Loading identity data...</section>
+    } @else {
+    <section class="identity-grid">
+        @if (sessionService.hasRootAccess()) {
+        <article class="panel-card">
+            <h2>Create user</h2>
+            <p class="helper-text">Root can create any account and define primary group/role during onboarding.</p>
+            <form class="admin-form" (ngSubmit)="createUser()">
+                <input [ngModel]="createUserForm().username" (ngModelChange)="setCreateUserField('username', $event)"
+                    name="username" placeholder="Username" required />
+                <input [ngModel]="createUserForm().email" (ngModelChange)="setCreateUserField('email', $event)"
+                    name="email" placeholder="Email" required />
+                <input [ngModel]="createUserForm().password" (ngModelChange)="setCreateUserField('password', $event)"
+                    name="password" type="password" placeholder="Password" required />
+                <input [ngModel]="createUserForm().first_name"
+                    (ngModelChange)="setCreateUserField('first_name', $event)" name="first_name"
+                    placeholder="First name" />
+                <input [ngModel]="createUserForm().last_name" (ngModelChange)="setCreateUserField('last_name', $event)"
+                    name="last_name" placeholder="Last name" />
+                <select [ngModel]="createUserForm().role" (ngModelChange)="setCreateUserField('role', $event)"
+                    name="role">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="root">Root</option>
+                </select>
+                <select [ngModel]="createUserForm().primary_group_id"
+                    (ngModelChange)="setCreateUserField('primary_group_id', $event)" name="primary_group_id">
+                    <option value="">No primary group</option>
+                    @for (groupItem of groups(); track groupItem.id) {
+                    <option [value]="groupItem.id">{{ groupItem.name }}</option>
+                    }
+                </select>
+                <button class="submit-button" type="submit" [disabled]="isSubmitting()">Create user</button>
+            </form>
+        </article>
+
+        <article class="panel-card">
+            <h2>Create group</h2>
+            <p class="helper-text">Group design should represent scientific teams or environments.</p>
+            <form class="admin-form" (ngSubmit)="createGroup()">
+                <input [ngModel]="createGroupForm().name" (ngModelChange)="setCreateGroupField('name', $event)"
+                    name="group_name" placeholder="Group name" required />
+                <input [ngModel]="createGroupForm().slug" (ngModelChange)="setCreateGroupField('slug', $event)"
+                    name="group_slug" placeholder="Slug" required />
+                <textarea [ngModel]="createGroupForm().description"
+                    (ngModelChange)="setCreateGroupField('description', $event)" name="group_description" rows="4"
+                    placeholder="Description"></textarea>
+                <button class="submit-button" type="submit" [disabled]="isSubmitting()">Create group</button>
+            </form>
+        </article>
+        }
+
+        <article class="panel-card wide-panel">
+            <h2>Users</h2>
+            <p class="helper-text">User actions are role-aware. Admins can only manage users in their managed groups.
+            </p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Primary group</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (userItem of users(); track userItem.id) {
+                        <tr>
+                            <td>{{ userItem.username }}</td>
+                            <td>{{ userItem.role }}</td>
+                            <td>{{ userItem.account_status }}</td>
+                            <td>{{ userItem.primary_group_id ? groupName(userItem.primary_group_id) : 'None' }}</td>
+                            <td class="action-cell">
+                                @if (sessionService.hasRootAccess()) {
+                                <button type="button" (click)="changeUserRole(userItem, 'user')">User</button>
+                                <button type="button" (click)="changeUserRole(userItem, 'admin')">Admin</button>
+                                <button type="button" (click)="changeUserRole(userItem, 'root')">Root</button>
+                                }
+                                <button type="button" (click)="toggleUserStatus(userItem)">
+                                    {{ userItem.is_active ? 'Deactivate' : 'Activate' }}
+                                </button>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel-card">
+            <h2>Memberships</h2>
+            <p class="helper-text">Use memberships to map users into groups before assigning app rules.</p>
+            <form class="admin-form" (ngSubmit)="createMembership()">
+                <select [ngModel]="membershipForm().user" (ngModelChange)="setMembershipField('user', $event)"
+                    name="membership_user" required>
+                    <option value="">Select user</option>
+                    @for (userItem of users(); track userItem.id) {
+                    <option [value]="userItem.id">{{ userItem.username }}</option>
+                    }
+                </select>
+                <select [ngModel]="membershipForm().group" (ngModelChange)="setMembershipField('group', $event)"
+                    name="membership_group" required>
+                    <option value="">Select group</option>
+                    @for (groupItem of groups(); track groupItem.id) {
+                    @if (canManageGroup(groupItem.id)) {
+                    <option [value]="groupItem.id">{{ groupItem.name }}</option>
+                    }
+                    }
+                </select>
+                <select [ngModel]="membershipForm().role_in_group"
+                    (ngModelChange)="setMembershipField('role_in_group', $event)" name="membership_role">
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button class="submit-button" type="submit" [disabled]="isSubmitting()">Add membership</button>
+            </form>
+
+            <ul class="summary-list">
+                @for (membershipItem of memberships(); track membershipItem.id) {
+                <li>
+                    <strong>{{ username(membershipItem.user) }}</strong>
+                    <span>{{ groupName(membershipItem.group) }} · {{ membershipItem.role_in_group }}</span>
+                </li>
+                }
+            </ul>
+        </article>
+
+        <article class="panel-card">
+            <h2>App permissions</h2>
+            <p class="helper-text">Permissions are evaluated by group first and then user-level overrides.</p>
+            <form class="admin-form" (ngSubmit)="createPermission()">
+                <select [ngModel]="permissionForm().app_name" (ngModelChange)="setPermissionField('app_name', $event)"
+                    name="permission_app_name">
+                    @for (appKey of availableAppKeys; track appKey) {
+                    <option [value]="appKey">{{ appKey }}</option>
+                    }
+                </select>
+                <select [ngModel]="permissionForm().target_scope"
+                    (ngModelChange)="setPermissionField('target_scope', $event)" name="permission_target_scope">
+                    <option value="group">Group</option>
+                    <option value="user">User</option>
+                </select>
+                <select [ngModel]="permissionForm().target_id" (ngModelChange)="setPermissionField('target_id', $event)"
+                    name="permission_target_id" required>
+                    <option value="">Select target</option>
+                    @if (permissionForm().target_scope === 'group') {
+                    @for (groupItem of groups(); track groupItem.id) {
+                    @if (canManageGroup(groupItem.id)) {
+                    <option [value]="groupItem.id">{{ groupItem.name }}</option>
+                    }
+                    }
+                    } @else {
+                    @for (userItem of users(); track userItem.id) {
+                    <option [value]="userItem.id">{{ userItem.username }}</option>
+                    }
+                    }
+                </select>
+                <label class="checkbox-field">
+                    <input [ngModel]="permissionForm().is_enabled"
+                        (ngModelChange)="setPermissionField('is_enabled', $event)" name="permission_enabled"
+                        type="checkbox" />
+                    Enabled
+                </label>
+                <button class="submit-button" type="submit" [disabled]="isSubmitting()">Store permission</button>
+            </form>
+
+            <ul class="summary-list">
+                @for (permissionItem of appPermissions(); track permissionItem.id) {
+                <li>
+                    <strong>{{ permissionItem.app_name }}</strong>
+                    <span>
+                        {{ permissionItem.group ? groupName(permissionItem.group) : username(permissionItem.user ?? 0)
+                        }}
+                        ·
+                        {{ permissionItem.is_enabled ? 'enabled' : 'disabled' }}
+                    </span>
+                </li>
+                }
+            </ul>
+        </article>
+
+        <article class="panel-card wide-panel">
+            <h2>Group app config</h2>
+            <p class="helper-text">Store app-specific defaults at group level. Users can still override per app.</p>
+            <form class="admin-form" (ngSubmit)="saveGroupConfig()">
+                <select [ngModel]="groupConfigForm().group_id" (ngModelChange)="setGroupConfigField('group_id', $event)"
+                    name="config_group_id" required>
+                    <option value="">Select group</option>
+                    @for (groupItem of groups(); track groupItem.id) {
+                    @if (canManageGroup(groupItem.id)) {
+                    <option [value]="groupItem.id">{{ groupItem.name }}</option>
+                    }
+                    }
+                </select>
+                <select [ngModel]="groupConfigForm().app_name" (ngModelChange)="setGroupConfigField('app_name', $event)"
+                    name="config_app_name">
+                    @for (appKey of availableAppKeys; track appKey) {
+                    <option [value]="appKey">{{ appKey }}</option>
+                    }
+                </select>
+                <textarea [ngModel]="groupConfigForm().config_json"
+                    (ngModelChange)="setGroupConfigField('config_json', $event)" name="config_json" rows="8"></textarea>
+                <button class="submit-button" type="submit" [disabled]="isSubmitting()">Save group config</button>
+            </form>
+        </article>
+    </section>
+    }
+</section>

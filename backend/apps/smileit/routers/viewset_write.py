@@ -73,9 +73,14 @@ class SmileitWriteActionsMixin:
     @action(detail=False, methods=["get", "post"], url_path="catalog")
     def catalog(self, request: Request) -> Response:
         """Lista o crea sustituyentes persistidos activos de Smile-it."""
+        is_authenticated_actor = bool(getattr(request.user, "is_authenticated", False))
+        actor_user_id = request.user.id if is_authenticated_actor else None
+        actor_username = request.user.username if is_authenticated_actor else ""
+
         if request.method.lower() == "get":
             serializer = SmileitCatalogEntrySerializer(
-                list_active_catalog_entries(), many=True
+                list_active_catalog_entries(actor_user_id=actor_user_id),
+                many=True,
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -83,7 +88,11 @@ class SmileitWriteActionsMixin:
         serializer.is_valid(raise_exception=True)
 
         try:
-            created_entry = create_catalog_substituent(serializer.validated_data)
+            created_entry = create_catalog_substituent(
+                serializer.validated_data,
+                actor_user_id=actor_user_id,
+                actor_username=actor_username,
+            )
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
@@ -133,6 +142,16 @@ class SmileitWriteActionsMixin:
                 payload=cast(
                     SmileitSubstituentCreatePayload, serializer.validated_data
                 ),
+                actor_user_id=(
+                    request.user.id
+                    if bool(getattr(request.user, "is_authenticated", False))
+                    else None
+                ),
+                actor_username=(
+                    request.user.username
+                    if bool(getattr(request.user, "is_authenticated", False))
+                    else ""
+                ),
             )
         except ValueError as exc:
             error_message = str(exc)
@@ -144,7 +163,14 @@ class SmileitWriteActionsMixin:
             return Response({"detail": error_message}, status=status_code)
 
         response_serializer = SmileitCatalogEntrySerializer(
-            list_active_catalog_entries(), many=True
+            list_active_catalog_entries(
+                actor_user_id=(
+                    request.user.id
+                    if bool(getattr(request.user, "is_authenticated", False))
+                    else None
+                )
+            ),
+            many=True,
         )
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 

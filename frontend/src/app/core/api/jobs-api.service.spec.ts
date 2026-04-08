@@ -7,14 +7,14 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-  CalculatorJobResponse,
-  EasyRateJobResponse,
-  JobLogList,
-  JobProgressSnapshot,
-  ProgressStageEnum,
-  ScientificJob,
-  StatusEnum,
-  provideApi,
+    CalculatorJobResponse,
+    EasyRateJobResponse,
+    JobLogList,
+    JobProgressSnapshot,
+    ProgressStageEnum,
+    ScientificJob,
+    StatusEnum,
+    provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
@@ -86,7 +86,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as ScientificJob;
 }
 
 function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
@@ -1044,8 +1044,8 @@ describe('JobsApiService', () => {
       .dispatchMolarFractionsJob({
         pkaValues: [4.5, 8.1],
         phMode: 'range',
-        phMin: 3.0,
-        phMax: 11.0,
+        phMin: 3,
+        phMax: 11,
         phStep: 0.5,
       })
       .subscribe();

@@ -1,5 +1,18 @@
 /* styles.scss: Estilos globales base para layout y tipografia de la aplicacion. */
 
+:root {
+  --pastel-metal-bg:
+    radial-gradient(circle at 10% 8%, #f9f3ff 0%, transparent 28%),
+    radial-gradient(circle at 90% 12%, #e8f5ff 0%, transparent 34%),
+    radial-gradient(circle at 20% 88%, #e9fff4 0%, transparent 32%),
+    linear-gradient(135deg, #f6f8fd 0%, #eef2f9 55%, #e9edf5 100%);
+  --pastel-metal-card: linear-gradient(160deg, rgba(255, 255, 255, 0.93), rgba(236, 241, 250, 0.9));
+  --pastel-metal-border: rgba(188, 198, 221, 0.72);
+  --pastel-metal-ink: #2a3754;
+  --pastel-metal-soft: #657498;
+  --pastel-metal-shadow: 0 10px 30px rgba(94, 112, 149, 0.15);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -11,7 +24,9 @@ body {
 }
 
 body {
-  color: #132524;
+  color: var(--pastel-metal-ink);
+  background: var(--pastel-metal-bg);
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
 }
 
 /*
@@ -21,6 +36,7 @@ body {
 :where([class*='card'], [class*='panel'], [class*='Card'], [class*='Panel']):not(button):not(
     [class*='btn']
   ) {
-  border: none !important;
-  box-shadow: none !important;
+  border: 1px solid var(--pastel-metal-border) !important;
+  box-shadow: var(--pastel-metal-shadow) !important;
+  background: var(--pastel-metal-card);
 }

@@ -95,7 +95,13 @@ class RuntimeJobService:
     # ── Creación de jobs ──
 
     def create_job(
-        self, plugin_name: str, version: str, parameters: JSONMap
+        self,
+        plugin_name: str,
+        version: str,
+        parameters: JSONMap,
+        *,
+        owner_id: int | None = None,
+        group_id: int | None = None,
     ) -> ScientificJob:
         """Crea un job y resuelve cache temprano para evitar encolado innecesario."""
         job_hash: str = generate_job_hash(plugin_name, version, parameters)
@@ -113,6 +119,8 @@ class RuntimeJobService:
             )
         ):
             cached_job: ScientificJob = ScientificJob.objects.create(
+                owner_id=owner_id,
+                group_id=group_id,
                 plugin_name=plugin_name,
                 algorithm_version=version,
                 job_hash=job_hash,
@@ -147,6 +155,8 @@ class RuntimeJobService:
             return cached_job
 
         created_job: ScientificJob = ScientificJob.objects.create(
+            owner_id=owner_id,
+            group_id=group_id,
             plugin_name=plugin_name,
             algorithm_version=version,
             job_hash=job_hash,

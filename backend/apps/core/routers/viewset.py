@@ -22,6 +22,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..definitions import ALLOWED_JOB_STATUS_FILTERS
+from ..identity.services import AuthorizationService
 from ..models import ScientificJob
 from ..schemas import (
     ErrorResponseSerializer,
@@ -101,7 +102,11 @@ class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        jobs_queryset = ScientificJob.objects.all().order_by("-created_at")
+        request_user = request.user
+        if bool(getattr(request_user, "is_authenticated", False)):
+            jobs_queryset = AuthorizationService.get_visible_jobs(request_user)
+        else:
+            jobs_queryset = ScientificJob.objects.all().order_by("-created_at")
 
         if plugin_name_filter:
             jobs_queryset = jobs_queryset.filter(plugin_name=plugin_name_filter)
@@ -140,10 +145,24 @@ class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet
 
         data: JobCreatePayload = cast(JobCreatePayload, serializer.validated_data)
 
+        actor = (
+            request.user
+            if bool(getattr(request.user, "is_authenticated", False))
+            else None
+        )
+        owner_id = actor.id if actor is not None else None
+        group_id = (
+            AuthorizationService.get_primary_group_id(actor)
+            if actor is not None
+            else None
+        )
+
         job: ScientificJob = JobService.create_job(
             plugin_name=data["plugin_name"],
             version=data["version"],
             parameters=data["parameters"],
+            owner_id=owner_id,
+            group_id=group_id,
         )
 
         dispatch_result: bool = True
@@ -176,8 +195,13 @@ class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet
     )
     def retrieve(self, request: Request, id: str | None = None) -> Response:
         """Obtiene un job según su UUID."""
-        del request
+        request_user = request.user
         job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        if bool(getattr(request_user, "is_authenticated", False)):
+            if not AuthorizationService.can_view_job(request_user, job):
+                return Response(
+                    {"detail": "No tienes permisos para ver este job."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         result_serializer = ScientificJobSerializer(job)
         return Response(result_serializer.data, status=status.HTTP_200_OK)
-

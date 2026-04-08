@@ -23,11 +23,22 @@ class JobService:
 
     @staticmethod
     def create_job(
-        plugin_name: str, version: str, parameters: JSONMap
+        plugin_name: str,
+        version: str,
+        parameters: JSONMap,
+        *,
+        owner_id: int | None = None,
+        group_id: int | None = None,
     ) -> ScientificJob:
         """Crea un job usando la instancia runtime compuesta por la factoría."""
         runtime_service: RuntimeJobService = JobService._get_runtime_service()
-        return runtime_service.create_job(plugin_name, version, parameters)
+        return runtime_service.create_job(
+            plugin_name,
+            version,
+            parameters,
+            owner_id=owner_id,
+            group_id=group_id,
+        )
 
     @staticmethod
     def register_dispatch_result(job_id: str, was_dispatched: bool) -> None:

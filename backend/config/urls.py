@@ -7,6 +7,22 @@ Enrutamiento principal del backend y exposición de OpenAPI.
 from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
 from apps.calculator.routers import CalculatorJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
+from apps.core.identity.routers import (
+    AppPermissionDetailView,
+    AppPermissionsView,
+    CurrentUserAccessibleAppsView,
+    CurrentUserAppConfigView,
+    CurrentUserProfileView,
+    DomainTokenObtainPairView,
+    DomainTokenRefreshView,
+    GroupAppConfigDetailView,
+    GroupMembershipDetailView,
+    GroupMembershipsView,
+    IdentityUserDetailView,
+    IdentityUsersView,
+    WorkGroupDetailView,
+    WorkGroupsView,
+)
 from apps.core.routers import JobViewSet
 from apps.easy_rate.definitions import APP_ROUTE_BASENAME as EASY_RATE_ROUTE_BASENAME
 from apps.easy_rate.definitions import APP_ROUTE_PREFIX as EASY_RATE_ROUTE_PREFIX
@@ -107,5 +123,51 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    path("api/auth/login/", DomainTokenObtainPairView.as_view(), name="auth-login"),
+    path("api/auth/refresh/", DomainTokenRefreshView.as_view(), name="auth-refresh"),
+    path("api/auth/me/", CurrentUserProfileView.as_view(), name="auth-me"),
+    path("api/auth/apps/", CurrentUserAccessibleAppsView.as_view(), name="auth-apps"),
+    path(
+        "api/auth/app-configs/<str:app_name>/",
+        CurrentUserAppConfigView.as_view(),
+        name="auth-app-config",
+    ),
+    path("api/identity/users/", IdentityUsersView.as_view(), name="identity-users"),
+    path(
+        "api/identity/users/<int:user_id>/",
+        IdentityUserDetailView.as_view(),
+        name="identity-user-detail",
+    ),
+    path("api/identity/groups/", WorkGroupsView.as_view(), name="identity-groups"),
+    path(
+        "api/identity/groups/<int:group_id>/",
+        WorkGroupDetailView.as_view(),
+        name="identity-group-detail",
+    ),
+    path(
+        "api/identity/groups/<int:group_id>/app-configs/<str:app_name>/",
+        GroupAppConfigDetailView.as_view(),
+        name="identity-group-app-config",
+    ),
+    path(
+        "api/identity/memberships/",
+        GroupMembershipsView.as_view(),
+        name="identity-memberships",
+    ),
+    path(
+        "api/identity/memberships/<int:membership_id>/",
+        GroupMembershipDetailView.as_view(),
+        name="identity-membership-detail",
+    ),
+    path(
+        "api/identity/app-permissions/",
+        AppPermissionsView.as_view(),
+        name="identity-app-permissions",
+    ),
+    path(
+        "api/identity/app-permissions/<int:permission_id>/",
+        AppPermissionDetailView.as_view(),
+        name="identity-app-permission-detail",
+    ),
     path("api/", include(router.urls)),
 ]

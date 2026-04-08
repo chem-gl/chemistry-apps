@@ -1,14 +1,14 @@
 /* app.scss: Estilos del cascaron principal de navegacion y layout global del frontend. */
 
 :host {
-  --shell-bg: radial-gradient(circle at 12% 8%, #ffe9c9 0%, #fff6ea 32%, #eefcfa 76%);
-  --ink-strong: #183534;
-  --ink-soft: #476867;
-  --nav-border: #b4dbd6;
-  --nav-active-bg: #0f766e;
-  --nav-active-text: #f7fefc;
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-border: rgba(175, 214, 209, 0.75);
+  --shell-bg: transparent;
+  --ink-strong: var(--pastel-metal-ink);
+  --ink-soft: var(--pastel-metal-soft);
+  --nav-border: #c7d2e8;
+  --nav-active-bg: #c8d4ec;
+  --nav-active-text: #2c3d62;
+  --surface: var(--pastel-metal-card);
+  --surface-border: var(--pastel-metal-border);
 
   display: block;
   min-height: 100vh;
@@ -26,6 +26,7 @@
 }
 
 .top-bar {
+  border: 1px solid var(--surface-border);
   border-radius: 18px;
   padding: 0.9rem 1rem;
   background: var(--surface);
@@ -40,7 +41,7 @@
 
 .brand-kicker {
   margin: 0;
-  color: #0f766e;
+  color: #7d8aad;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   font-weight: 700;
@@ -56,6 +57,7 @@ h1 {
   display: flex;
   gap: 0.45rem;
   flex-wrap: wrap;
+  flex: 1;
 }
 
 .main-nav a {
@@ -63,7 +65,7 @@ h1 {
   border: 1px solid var(--nav-border);
   border-radius: 999px;
   color: var(--ink-soft);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.86);
   padding: 0.42rem 0.82rem;
   font-weight: 700;
   font-size: 0.88rem;
@@ -76,22 +78,52 @@ h1 {
 
 .main-nav a:hover {
   transform: translateY(-1px);
-  border-color: #4fa89f;
+  border-color: #a4b4d7;
 }
 
 .main-nav a.is-active {
   background: var(--nav-active-bg);
-  border-color: var(--nav-active-bg);
+  border-color: #b2c0de;
   color: var(--nav-active-text);
 }
 
 .content-shell {
+  border: 1px solid var(--surface-border);
   border-radius: 20px;
   padding: clamp(0.9rem, 2.4vw, 1.35rem);
   background: var(--surface);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   min-height: 70vh;
+}
+
+.session-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.session-copy {
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.session-copy span {
+  color: var(--ink-soft);
+  text-transform: capitalize;
+  font-size: 0.84rem;
+}
+
+.session-button {
+  border: 1px solid var(--nav-border);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink-strong);
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 @media (max-width: 720px) {
@@ -105,6 +137,11 @@ h1 {
 
   .main-nav {
     width: 100%;
+  }
+
+  .session-panel {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .main-nav a {

@@ -1,0 +1,32 @@
+<!-- login.component.html: Inicio de sesión para operadores y administradores. -->
+<section class="login-shell" aria-label="Sign in">
+    <article class="login-panel">
+        <p class="eyebrow">Identity Gateway</p>
+        <h1>Scientific Access</h1>
+        <p class="lead">
+            Sign in to load your role, group access, app visibility rules and personalized workspace.
+        </p>
+
+        <form class="login-form" (ngSubmit)="submit()">
+            <label>
+                Username
+                <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username"
+                    autocomplete="username" required />
+            </label>
+
+            <label>
+                Password
+                <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
+                    autocomplete="current-password" required />
+            </label>
+
+            @if (localErrorMessage() ?? sessionService.lastAuthenticationError(); as errorMessage) {
+            <p class="error-message" role="alert">{{ errorMessage }}</p>
+            }
+
+            <button class="submit-button" type="submit" [disabled]="sessionService.isLoading()">
+                {{ sessionService.isLoading() ? 'Signing in...' : 'Sign in' }}
+            </button>
+        </form>
+    </article>
+</section>
