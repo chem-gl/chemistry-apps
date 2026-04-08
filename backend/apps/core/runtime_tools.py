@@ -356,9 +356,8 @@ def _validate_tar_entry_file_size(
     member: tarfile.TarInfo,
     total_size_bytes: int,
     max_total_size_bytes: int,
-    max_compression_ratio: float,
 ) -> int:
-    """Valida tamaño descomprimido y razón de compresión de una entrada. Retorna nuevo total."""
+    """Valida tamaño descomprimido acumulado por entrada de archivo. Retorna nuevo total."""
     uncompressed_size: int = member.size
     new_total: int = total_size_bytes + uncompressed_size
 
@@ -367,15 +366,6 @@ def _validate_tar_entry_file_size(
             f"El tarball supera el límite de {max_total_size_bytes // (1024**3)} GB "
             "descomprimidos (posible zip bomb)."
         )
-
-    compressed_size: int = max(member.size, 1)
-    if uncompressed_size > 0 and compressed_size > 0:
-        ratio: float = uncompressed_size / compressed_size
-        if ratio > max_compression_ratio:
-            raise RuntimeToolsError(
-                f"Razón de compresión sospechosa ({ratio:.1f}:1) en "
-                f"'{member.name}' del tarball (posible zip bomb)."
-            )
 
     return new_total
 
@@ -388,12 +378,11 @@ def _extract_tarfile_safely(
     Límites aplicados:
     - Máximo 10.000 entradas (protección contra inodes exhaustion).
     - Tamaño total descomprimido máximo 2 GB (protección contra data amplification).
-    - Razón compresión máxima 50:1 por entrada (detección de zip bomb).
+    - Extracción individual por entrada para evitar descompresión masiva sin control.
     """
     # Límites de seguridad contra zip bomb (S5042)
     max_total_entries: int = 10_000
     max_total_size_bytes: int = 2 * 1024 * 1024 * 1024  # 2 GB
-    max_compression_ratio: float = 50.0
 
     destination_dir_resolved: Path = destination_dir.resolve()
     total_size_bytes: int = 0
@@ -410,10 +399,10 @@ def _extract_tarfile_safely(
 
         if member.isfile():
             total_size_bytes = _validate_tar_entry_file_size(
-                member, total_size_bytes, max_total_size_bytes, max_compression_ratio
+                member, total_size_bytes, max_total_size_bytes
             )
 
-    archive_file.extractall(path=destination_dir)
+        archive_file.extract(member, path=destination_dir)
 
 
 def _prepare_external_artifacts(runtime_tools_root: Path) -> None:

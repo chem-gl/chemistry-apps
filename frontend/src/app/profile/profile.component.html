@@ -13,13 +13,13 @@
             <label>
                 First name
                 <input [ngModel]="formState().first_name" (ngModelChange)="setField('first_name', $event)"
-                    name="first_name" autocomplete="given-name" />
+                    name="first_name" type="text" autocomplete="given-name" />
             </label>
 
             <label>
                 Last name
                 <input [ngModel]="formState().last_name" (ngModelChange)="setField('last_name', $event)"
-                    name="last_name" autocomplete="family-name" />
+                    name="last_name" type="text" autocomplete="family-name" />
             </label>
 
             <label class="wide-field">

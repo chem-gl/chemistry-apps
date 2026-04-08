@@ -225,8 +225,9 @@ class AppPermissionSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
     def validate(self, attrs: dict):
-        group_value = attrs.get("group")
-        user_value = attrs.get("user")
+        # En actualizaciones parciales, considerar valores de la instancia existente
+        group_value = attrs.get("group", getattr(self.instance, "group", None))
+        user_value = attrs.get("user", getattr(self.instance, "user", None))
         if group_value is None and user_value is None:
             raise serializers.ValidationError(
                 "Debes indicar un usuario o un grupo para la regla de acceso."

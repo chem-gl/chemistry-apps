@@ -25,6 +25,14 @@ class BootstrapSuperadminGroupTests(TestCase):
 
     def setUp(self) -> None:
         self.user_model = get_user_model()
+        # Limpiar artefactos creados por el post_migrate de startup.py
+        AppPermission.objects.filter(group__slug="superadmin").delete()
+        GroupMembership.objects.filter(group__slug="superadmin").delete()
+        UserIdentityProfile.objects.filter(primary_group__slug="superadmin").update(
+            primary_group=None
+        )
+        WorkGroup.objects.filter(slug="superadmin").delete()
+
         self.root_user = self.user_model.objects.create_user(
             username="bootstrap-root",
             email="bootstrap@test.local",
@@ -104,22 +112,24 @@ class BootstrapRootUserTests(TestCase):
         from apps.core.identity.bootstrap.root_user import ensure_root_user
 
         user_model = get_user_model()
-        user_model.objects.filter(username="admin").delete()
+        # Eliminar todos los superusuarios para forzar la creación
+        user_model.objects.filter(is_superuser=True).delete()
 
-        user, profile, created = ensure_root_user()
+        user, password, created = ensure_root_user()
 
         self.assertTrue(created)
         self.assertEqual(user.username, "admin")
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
-        self.assertEqual(profile.role, UserIdentityProfile.ROLE_ROOT)
+        self.assertIsNotNone(password)
 
     def test_ensure_root_user_is_idempotent(self) -> None:
         """Segunda ejecución no duplica el usuario root."""
         from apps.core.identity.bootstrap.root_user import ensure_root_user
 
         user_model = get_user_model()
-        user_model.objects.filter(username="admin").delete()
+        # Eliminar todos los superusuarios para partir de cero
+        user_model.objects.filter(is_superuser=True).delete()
 
         _, _, first_created = ensure_root_user()
         _, _, second_created = ensure_root_user()
@@ -310,7 +320,7 @@ class IdentityRouterExtendedTests(TestCase):
 
     def test_admin_lists_only_administered_groups(self) -> None:
         """Admin solo ve grupos donde es admin."""
-        other_group = WorkGroup.objects.create(name="Secret", slug="secret-ext")
+        WorkGroup.objects.create(name="Secret", slug="secret-ext")
         self._auth(self.admin_user)
         response = self.client.get("/api/identity/groups/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -353,7 +363,7 @@ class IdentityRouterExtendedTests(TestCase):
             app_name="calculator", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
-        response = self.client.get("/api/identity/permissions/")
+        response = self.client.get("/api/identity/app-permissions/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
@@ -361,7 +371,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Root crea una regla de acceso para una app."""
         self._auth(self.root_user)
         response = self.client.post(
-            "/api/identity/permissions/",
+            "/api/identity/app-permissions/",
             {"app_name": "calculator", "group": self.group.id, "is_enabled": True},
             format="json",
         )
@@ -371,7 +381,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Solo root puede crear reglas de acceso."""
         self._auth(self.admin_user)
         response = self.client.post(
-            "/api/identity/permissions/",
+            "/api/identity/app-permissions/",
             {"app_name": "calculator", "group": self.group.id, "is_enabled": True},
             format="json",
         )
@@ -384,7 +394,7 @@ class IdentityRouterExtendedTests(TestCase):
         )
         self._auth(self.root_user)
         response = self.client.patch(
-            f"/api/identity/permissions/{perm.id}/",
+            f"/api/identity/app-permissions/{perm.id}/",
             {"is_enabled": False},
             format="json",
         )
@@ -399,7 +409,7 @@ class IdentityRouterExtendedTests(TestCase):
         )
         self._auth(self.admin_user)
         response = self.client.patch(
-            f"/api/identity/permissions/{perm.id}/",
+            f"/api/identity/app-permissions/{perm.id}/",
             {"is_enabled": False},
             format="json",
         )
@@ -411,7 +421,7 @@ class IdentityRouterExtendedTests(TestCase):
             app_name="calculator", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
-        response = self.client.delete(f"/api/identity/permissions/{perm.id}/")
+        response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(AppPermission.objects.filter(id=perm.id).exists())
 
@@ -421,7 +431,7 @@ class IdentityRouterExtendedTests(TestCase):
             app_name="calculator", group=self.group, is_enabled=True
         )
         self._auth(self.admin_user)
-        response = self.client.delete(f"/api/identity/permissions/{perm.id}/")
+        response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # ── Configuración de app por usuario ──
@@ -472,7 +482,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_standard_user_cannot_list_permissions(self) -> None:
         """Usuario estándar no puede listar permisos."""
         self._auth(self.standard_user)
-        response = self.client.get("/api/identity/permissions/")
+        response = self.client.get("/api/identity/app-permissions/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # ── Admin no puede crear usuarios ──
@@ -491,3 +501,74 @@ class IdentityRouterExtendedTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # ── Grupos: actualización y eliminación ──
+
+    def test_admin_can_patch_group(self) -> None:
+        """Admin del grupo puede actualizar nombre y descripción."""
+        self._auth(self.admin_user)
+        response = self.client.patch(
+            f"/api/identity/groups/{self.group.id}/",
+            {"name": "Renamed"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.group.refresh_from_db()
+        self.assertEqual(self.group.name, "Renamed")
+
+    def test_root_can_delete_group(self) -> None:
+        """Root puede eliminar un grupo de trabajo."""
+        target = WorkGroup.objects.create(
+            name="Disposable", slug="disposable-ext", created_by=self.root_user
+        )
+        self._auth(self.root_user)
+        response = self.client.delete(f"/api/identity/groups/{target.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(WorkGroup.objects.filter(id=target.id).exists())
+
+    def test_admin_cannot_delete_group(self) -> None:
+        """Solo root puede eliminar grupos."""
+        self._auth(self.admin_user)
+        response = self.client.delete(f"/api/identity/groups/{self.group.id}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # ── Membresías: creación, actualización y eliminación ──
+
+    def test_admin_can_create_membership(self) -> None:
+        """Admin del grupo puede agregar un miembro nuevo."""
+        new_user = self.user_model.objects.create_user(
+            username="new-member", email="new@test.local", password="pwd"
+        )
+        self._auth(self.admin_user)
+        response = self.client.post(
+            "/api/identity/memberships/",
+            {
+                "user": new_user.id,
+                "group": self.group.id,
+                "role_in_group": "member",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_admin_can_patch_membership(self) -> None:
+        """Admin puede cambiar el rol de un miembro en su grupo."""
+        membership = GroupMembership.objects.get(
+            user=self.standard_user, group=self.group
+        )
+        self._auth(self.admin_user)
+        response = self.client.patch(
+            f"/api/identity/memberships/{membership.id}/",
+            {"role_in_group": "admin"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_admin_can_delete_membership(self) -> None:
+        """Admin puede remover un miembro de su grupo."""
+        membership = GroupMembership.objects.get(
+            user=self.standard_user, group=self.group
+        )
+        self._auth(self.admin_user)
+        response = self.client.delete(f"/api/identity/memberships/{membership.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

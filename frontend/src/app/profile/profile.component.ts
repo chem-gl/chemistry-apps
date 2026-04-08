@@ -82,7 +82,7 @@ export class ProfileComponent implements OnInit {
         first_name: profileForm.first_name,
         last_name: profileForm.last_name,
         email: profileForm.email,
-        ...(profileForm.password.trim() !== '' ? { password: profileForm.password } : {}),
+        ...(profileForm.password.trim() === '' ? {} : { password: profileForm.password }),
       })
       .subscribe({
         next: () => {

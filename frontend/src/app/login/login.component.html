@@ -10,7 +10,7 @@
         <form class="login-form" (ngSubmit)="submit()">
             <label>
                 Username
-                <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username"
+                <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
                     autocomplete="username" required />
             </label>
 
