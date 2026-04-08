@@ -107,15 +107,19 @@
     gap: 1rem;
   }
 
+  /* Columna izquierda: sticky para flotar mientras se recorre la columna derecha */
   .workspace-left-column {
     grid-column: 1;
     grid-row: 1;
+    position: sticky;
+    top: 1rem;
+    align-self: start;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
 
-  /* Columna derecha: catálogo + bloques, sticky mientras se recorre la inspección */
+  /* Columna derecha: catálogo + bloques, sticky sin scroll propio */
   .workspace-right-column {
     grid-column: 2;
     grid-row: 1;
@@ -125,9 +129,6 @@
     display: grid;
     gap: 1rem;
     align-content: start;
-    max-height: calc(100dvh - 2rem);
-    overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   .workspace-side-column {
