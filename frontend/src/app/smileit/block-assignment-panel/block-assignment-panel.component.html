@@ -15,29 +15,25 @@
 
   <div class="workspace-side-column">
     <section class="library-panel" aria-label="Blocks and catalogs">
-      <div class="panel-header-row">
-        <div>
+      <header class="panel-header-row">
+        <section class="panel-header-copy">
           <h3>3. Block assignment by location</h3>
-          <p class="panel-caption">
-            Choose block-level sources and map each block to selected scaffold locations.
-          </p>
-        </div>
-        <div class="panel-header-actions">
-          <button class="btn-secondary" (click)="toggleLibraryPanelCollapse()" [disabled]="workflow.isProcessing()">
-            {{ isLibraryPanelCollapsed() ? 'Expand right panel' : 'Minimize right panel' }}
-          </button>
+        </section>
+        <section class="panel-header-actions">
           @if (!isLibraryPanelCollapsed()) {
-          <div class="guided-action">
-            <button class="btn-secondary" (click)="addAssignmentBlock()" [disabled]="workflow.isProcessing()">
-              + Add block
-            </button>
-            <p class="hint">
-              You can create empty blocks first and map scaffold positions later.
-            </p>
-          </div>
+          <button type="button" class="btn-secondary add-block-btn" aria-label="Create new block"
+            title="Create new block" (click)="addAssignmentBlock()" [disabled]="workflow.isProcessing()">
+            New block
+          </button>
+
           }
-        </div>
-      </div>
+          <button type="button" class="icon-action-btn panel-collapse-toggle"
+            [attr.aria-label]="libraryPanelToggleLabel()" [attr.title]="libraryPanelToggleLabel()"
+            (click)="toggleLibraryPanelCollapse()" [disabled]="workflow.isProcessing()">
+            {{ isLibraryPanelCollapsed() ? '+' : '-' }}
+          </button>
+        </section>
+      </header>
 
       @if (isLibraryPanelCollapsed()) {
       <article class="collapsed-panel-card" aria-label="Right panel minimized summary">
@@ -52,21 +48,6 @@
         </div>
       </article>
       } @else {
-      <div class="subsection-header block-stack-header">
-        <div>
-          <h4>Block stack controls</h4>
-          <p class="hint">Use collapse controls when the workspace becomes long.</p>
-        </div>
-        <div class="chip-actions">
-          <button class="btn-secondary small" (click)="collapseAllBlocks()" [disabled]="workflow.isProcessing()">
-            Collapse all
-          </button>
-          <button class="btn-secondary small" (click)="expandAllBlocks()" [disabled]="workflow.isProcessing()">
-            Expand all
-          </button>
-        </div>
-      </div>
-
       @if (workflow.assignmentBlocks().length === 0) {
       <p class="hint">
         Create the first block to define which substituent molecules will be available.
@@ -75,6 +56,12 @@
       <div class="block-stack">
         @for (block of workflow.assignmentBlocks(); track block.id; let blockIndex = $index) {
         <article class="block-card">
+          <button type="button" class="icon-action-btn block-collapse-toggle"
+            [attr.aria-label]="blockCollapseButtonLabel(block.id)" [attr.title]="blockCollapseButtonLabel(block.id)"
+            (click)="toggleBlockCollapse(block.id)" [disabled]="workflow.isProcessing()">
+            {{ isBlockCollapsed(block.id) ? '+' : '-' }}
+          </button>
+
           <div class="block-header">
             <div class="block-title-wrap">
               <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
@@ -84,10 +71,6 @@
                 [disabled]="workflow.isProcessing()" />
             </div>
             <div class="block-actions">
-              <button class="btn-secondary small" (click)="toggleBlockCollapse(block.id)"
-                [disabled]="workflow.isProcessing()">
-                {{ isBlockCollapsed(block.id) ? 'Expand' : 'Minimize' }}
-              </button>
               <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, -1)"
                 [disabled]="blockIndex === 0 || workflow.isProcessing()">
                 Up

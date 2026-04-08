@@ -7,8 +7,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import {
-    BlockAssignmentPanelComponent,
-    BlockPanelLibraryDetailRequest,
+  BlockAssignmentPanelComponent,
+  BlockPanelLibraryDetailRequest,
 } from './block-assignment-panel.component';
 
 /** Construye un mock mínimo del WorkflowService para el panel de asignación. */
@@ -106,6 +106,12 @@ describe('BlockAssignmentPanelComponent', () => {
       component.toggleLibraryPanelCollapse();
       expect(component.isLibraryPanelCollapsed()).toBe(false);
     });
+
+    it('expone un label accesible acorde al estado actual del panel', () => {
+      expect(component.libraryPanelToggleLabel()).toBe('Minimize right panel');
+      component.toggleLibraryPanelCollapse();
+      expect(component.libraryPanelToggleLabel()).toBe('Expand right panel');
+    });
   });
 
   describe('toggleBlockCollapse', () => {
@@ -137,6 +143,12 @@ describe('BlockAssignmentPanelComponent', () => {
     it('retorna true después de colapsar ese bloque', () => {
       component.toggleBlockCollapse('block-x');
       expect(component.isBlockCollapsed('block-x')).toBe(true);
+    });
+
+    it('expone el label accesible correcto para expandir o minimizar un bloque', () => {
+      expect(component.blockCollapseButtonLabel('block-x')).toBe('Minimize block');
+      component.toggleBlockCollapse('block-x');
+      expect(component.blockCollapseButtonLabel('block-x')).toBe('Expand block');
     });
   });
 

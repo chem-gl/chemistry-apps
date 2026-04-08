@@ -64,6 +64,7 @@ jobs:
   build:
     name: Build reusable workflow
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    needs: [tests]
     permissions:
       contents: write
     uses: ./.github/workflows/build.yml
@@ -74,7 +75,7 @@ jobs:
   deploy:
     name: Deploy reusable workflow
     if: github.ref == 'refs/heads/main'
-    needs: [build]
+    needs: [tests, build]
     uses: ./.github/workflows/deploy.yml
     with:
       image_tag: ${{ needs.build.outputs.image_tag }}
