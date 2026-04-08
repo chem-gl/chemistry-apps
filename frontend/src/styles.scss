@@ -23,7 +23,11 @@
 
   /* === Gradientes === */
   --chem-gradient-subtle: linear-gradient(128deg, rgba(123, 90, 158, 0.08), rgba(44, 37, 51, 0.06));
-  --chem-gradient-header: linear-gradient(135deg, rgba(123, 90, 158, 0.15), rgba(211, 47, 47, 0.08));
+  --chem-gradient-header: linear-gradient(
+    135deg,
+    rgba(123, 90, 158, 0.15),
+    rgba(211, 47, 47, 0.08)
+  );
 
   /* === Bordes === */
   --chem-border: #c8c2cc;
@@ -41,9 +45,10 @@
   --chem-ink-soft: #a8a1b0;
 
   /* === Tipografía === */
-  --chem-font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --chem-font-body: 'Inter', system-ui, sans-serif;
-  --chem-font-label: 'Public Sans', system-ui, sans-serif;
+  --chem-font-heading:
+    'Avenir Next Condensed', 'Arial Narrow', 'Franklin Gothic Medium', sans-serif;
+  --chem-font-body: 'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  --chem-font-label: 'Segoe UI Semibold', 'Helvetica Neue', Arial, sans-serif;
   --chem-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   --chem-text-xs: 0.72rem;
   --chem-text-sm: 0.84rem;
@@ -117,7 +122,8 @@ body {
 body {
   color: var(--chem-ink);
   background: var(--chem-bg);
-  background-image: radial-gradient(circle at 12% 10%, rgba(123, 90, 158, 0.11), transparent 38%),
+  background-image:
+    radial-gradient(circle at 12% 10%, rgba(123, 90, 158, 0.11), transparent 38%),
     radial-gradient(circle at 88% 84%, rgba(211, 47, 47, 0.07), transparent 42%);
   font-family: var(--chem-font-body);
   line-height: 1.5;
@@ -135,7 +141,9 @@ textarea {
   border: 1px solid var(--chem-input-border);
   border-radius: var(--chem-radius);
   padding: 0.55rem 0.75rem;
-  transition: border-color var(--chem-transition), box-shadow var(--chem-transition);
+  transition:
+    border-color var(--chem-transition),
+    box-shadow var(--chem-transition);
 }
 
 input:focus,

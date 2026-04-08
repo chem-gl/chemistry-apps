@@ -1,11 +1,11 @@
 // http-auth-token.interceptor.ts: Adjunta bearer token y refresca automáticamente ante 401.
 
 import {
-    HttpErrorResponse,
-    HttpEvent,
-    HttpHandler,
-    HttpInterceptor,
-    HttpRequest,
+  HttpErrorResponse,
+  HttpEvent,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest,
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, filter, switchMap, take, throwError } from 'rxjs';
@@ -19,12 +19,13 @@ export class HttpAuthTokenInterceptor implements HttpInterceptor {
   /** Indica si ya hay un refresh en curso para serializar peticiones concurrentes. */
   private isRefreshing = false;
   /** Emite el nuevo access token cuando el refresh finaliza (null mientras está en curso). */
-  private refreshedToken$ = new BehaviorSubject<string | null>(null);
+  private readonly refreshedToken$ = new BehaviorSubject<string | null>(null);
 
   intercept(httpRequest: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const isBackendRequest = httpRequest.url.startsWith(API_BASE_URL);
     const isAuthBootstrapRequest =
-      httpRequest.url.endsWith('/api/auth/login/') || httpRequest.url.endsWith('/api/auth/refresh/');
+      httpRequest.url.endsWith('/api/auth/login/') ||
+      httpRequest.url.endsWith('/api/auth/refresh/');
 
     if (!isBackendRequest || isAuthBootstrapRequest) {
       return next.handle(httpRequest);
@@ -67,10 +68,13 @@ export class HttpAuthTokenInterceptor implements HttpInterceptor {
 
         if (newAccessToken === null) {
           this.identitySessionService.logout();
-          return throwError(() => new HttpErrorResponse({
-            status: 401,
-            statusText: 'Session expired',
-          }));
+          return throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 401,
+                statusText: 'Session expired',
+              }),
+          );
         }
 
         this.refreshedToken$.next(newAccessToken);

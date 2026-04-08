@@ -404,9 +404,63 @@ def _extract_tarfile_safely(
                 member, total_size_bytes, max_total_size_bytes
             )
 
-        # set_attrs=False evita aplicar permisos restrictivos del tar durante extracción,
-        # permitiendo crear subdirectorios anidados sin errores de permisos intermedios.
-        archive_file.extract(member, path=destination_dir, set_attrs=False)
+        _extract_tar_member_safely(archive_file, member, destination_dir)
+
+
+def _extract_tar_member_safely(
+    archive_file: tarfile.TarFile, member: tarfile.TarInfo, destination_dir: Path
+) -> None:
+    """Extrae una entrada permitiendo solo directorios, archivos y symlinks internos."""
+    target_path: Path = destination_dir / member.name
+
+    if member.isdir():
+        target_path.mkdir(parents=True, exist_ok=True)
+        target_path.chmod(0o755)
+        return
+
+    if member.isfile():
+        extracted_file = archive_file.extractfile(member)
+        if extracted_file is None:
+            raise RuntimeToolsError(
+                f"No fue posible leer la entrada {member.name!r} del tarball."
+            )
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with extracted_file, target_path.open("wb") as destination_file:
+            shutil.copyfileobj(
+                extracted_file,
+                destination_file,
+                length=DEFAULT_DOWNLOAD_CHUNK_SIZE_BYTES,
+            )
+
+        target_mode: int = 0o755 if member.mode & 0o111 else 0o644
+        target_path.chmod(target_mode)
+        return
+
+    if member.issym():
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        link_target: Path = Path(member.linkname)
+        resolved_link_target: Path = (target_path.parent / link_target).resolve()
+        destination_dir_resolved: Path = destination_dir.resolve()
+        if (
+            not str(resolved_link_target).startswith(
+                str(destination_dir_resolved) + os.sep
+            )
+            and resolved_link_target != destination_dir_resolved
+        ):
+            raise RuntimeToolsError(
+                "El tarball contiene enlaces simbólicos fuera del destino de extracción."
+            )
+
+        if target_path.exists() or target_path.is_symlink():
+            target_path.unlink()
+
+        os.symlink(member.linkname, target_path)
+        return
+
+    raise RuntimeToolsError(
+        f"El tarball contiene una entrada no soportada: {member.name!r}."
+    )
 
 
 def _prepare_external_artifacts(runtime_tools_root: Path) -> None:

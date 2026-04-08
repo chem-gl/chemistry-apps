@@ -1,3 +1,40 @@
+Problema 1
+Archivo: chemistry-apps:frontend/src/app/core/api/interceptors/http-auth-token.interceptor.ts
+
+Problema:
+Member 'refreshedToken$' is never reassigned; mark it as `readonly`.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S2933
+Severidad: MAJOR
+Línea: 22
+
+Cómo solucionarlo:
+Mark the given field with the readonly modifier.
+
+Noncompliant code example
+
+class Person {
+  private birthYear: number; // Noncompliant
+
+  constructor(birthYear: number) {
+    this.birthYear = birthYear;
+  }
+}
+
+Compliant solution
+
+class Person {
+  private readonly birthYear: number;
+
+  constructor(birthYear: number) {
+    this.birthYear = birthYear;
+  }
+}
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
 Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
 No se encontraron archivos con duplicación visible en la respuesta de Sonar.
