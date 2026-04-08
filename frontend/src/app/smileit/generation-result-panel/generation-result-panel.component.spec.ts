@@ -37,7 +37,8 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
       downloadLogReport: vi.fn(),
       resultData: signal(null),
       currentJobId: signal(null),
-      jobHistory: signal([]),
+      selectedHistoricalJobId: signal<string | null>(null),
+      historyJobs: signal<ScientificJobView[]>([]),
     };
 
     const mockDataService = {
@@ -186,6 +187,55 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
 
       const summaries = component.historicalJobBlockSummaries(job);
       expect(summaries[0].positions).toBe('Not assigned');
+    });
+  });
+
+  describe('visibleHistoryJobs', () => {
+    it('oculta el job actual cuando el panel inferior muestra el resultado recién generado', () => {
+      const currentJob = { id: 'current-job', status: 'completed' } as ScientificJobView;
+      const oldJob = { id: 'older-job', status: 'completed' } as ScientificJobView;
+
+      component.workflow.currentJobId.set('current-job');
+      component.workflow.selectedHistoricalJobId.set(null);
+      component.workflow.historyJobs.set([currentJob, oldJob]);
+
+      expect(component.visibleHistoryJobs().map((job) => job.id)).toEqual(['older-job']);
+    });
+
+    it('mantiene visible el job seleccionado cuando fue abierto desde el historial', () => {
+      const selectedJob = { id: 'historic-job', status: 'completed' } as ScientificJobView;
+      const oldJob = { id: 'older-job', status: 'completed' } as ScientificJobView;
+
+      component.workflow.currentJobId.set('historic-job');
+      component.workflow.selectedHistoricalJobId.set('historic-job');
+      component.workflow.historyJobs.set([selectedJob, oldJob]);
+
+      expect(component.visibleHistoryJobs().map((job) => job.id)).toEqual([
+        'historic-job',
+        'older-job',
+      ]);
+    });
+  });
+
+  describe('historical job view state', () => {
+    it('marca la fila como visible abajo cuando coincide con el histórico seleccionado', () => {
+      component.workflow.selectedHistoricalJobId.set('historic-job');
+
+      expect(component.isHistoricalJobSelected('historic-job')).toBe(true);
+      expect(component.historicalJobViewStateLabel('historic-job')).toBe('Viewing below');
+      expect(component.historicalJobViewStateClass('historic-job')).toBe(
+        'job-view-state is-viewing',
+      );
+    });
+
+    it('muestra el estado available cuando la fila no es la seleccionada', () => {
+      component.workflow.selectedHistoricalJobId.set('another-job');
+
+      expect(component.isHistoricalJobSelected('historic-job')).toBe(false);
+      expect(component.historicalJobViewStateLabel('historic-job')).toBe('Available');
+      expect(component.historicalJobViewStateClass('historic-job')).toBe(
+        'job-view-state is-available',
+      );
     });
   });
 

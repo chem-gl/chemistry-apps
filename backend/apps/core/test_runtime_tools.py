@@ -26,6 +26,7 @@ from django.test import SimpleTestCase
 from apps.core.runtime_tools import (
     DEFAULT_DOWNLOAD_MAX_ATTEMPTS,
     DEFAULT_DOWNLOAD_TIMEOUT_SECONDS,
+    DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO,
     JavaRuntimeDownloadSpec,
     RuntimeToolRequirement,
     RuntimeToolsError,
@@ -37,10 +38,12 @@ from apps.core.runtime_tools import (
     _prepare_external_artifacts,
     _prepare_java_runtime,
     _resolve_requirement_path,
+    _validate_tar_archive_compression_ratio,
     _validate_tar_entry_file_size,
     _validate_tar_entry_path,
     assert_runtime_tools_ready,
     ensure_runtime_tools_ready,
+    get_ambit_jar_download_url,
     get_download_max_attempts,
     get_download_timeout_seconds,
     get_missing_runtime_files,
@@ -125,6 +128,40 @@ class RuntimeToolsValidationTests(SimpleTestCase):
 class RuntimeToolsHelpersTests(SimpleTestCase):
     """Cubre helpers internos y rutas de error controladas en runtime tools."""
 
+    def test_get_ambit_jar_download_url_returns_none_when_unset(self) -> None:
+        """Sin variable configurada no debe inventarse una URL insegura por defecto."""
+        env_without_download_url = {
+            key: value
+            for key, value in os.environ.items()
+            if key != "AMBIT_JAR_DOWNLOAD_URL"
+        }
+
+        with patch.dict(os.environ, env_without_download_url, clear=True):
+            self.assertIsNone(get_ambit_jar_download_url())
+
+    def test_get_ambit_jar_download_url_rejects_non_https_urls(self) -> None:
+        """Una URL HTTP debe rechazarse para evitar descargas ejecutables inseguras."""
+        unsafe_download_url = "http://example.test/ambit.jar"  # NOSONAR
+        with patch.dict(
+            os.environ,
+            {"AMBIT_JAR_DOWNLOAD_URL": unsafe_download_url},
+            clear=False,
+        ):
+            with self.assertRaises(RuntimeToolsError):
+                get_ambit_jar_download_url()
+
+    def test_get_ambit_jar_download_url_accepts_https_urls(self) -> None:
+        """Una URL HTTPS válida debe propagarse sin alteraciones."""
+        with patch.dict(
+            os.environ,
+            {"AMBIT_JAR_DOWNLOAD_URL": "https://example.test/ambit.jar"},
+            clear=False,
+        ):
+            self.assertEqual(
+                get_ambit_jar_download_url(),
+                "https://example.test/ambit.jar",
+            )
+
     def test_get_env_positive_int_uses_default_for_invalid_values(self) -> None:
         with patch.dict(os.environ, {"RUNTIME_TEST_INT": "-5"}, clear=False):
             self.assertEqual(_get_env_positive_int("RUNTIME_TEST_INT", 8), 8)
@@ -138,23 +175,25 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
     def test_get_runtime_tools_root_prefers_environment_variable(self) -> None:
         with patch.dict(
             os.environ,
-            {"RUNTIME_TOOLS_DIR": "/tmp/custom-runtime-tools"},
+            {"RUNTIME_TOOLS_DIR": "/opt/custom-runtime-tools"},
             clear=False,
         ):
             resolved_root = get_runtime_tools_root()
 
-        self.assertEqual(resolved_root.as_posix(), "/tmp/custom-runtime-tools")
+        self.assertEqual(resolved_root.as_posix(), "/opt/custom-runtime-tools")
 
     def test_resolve_requirement_path_combines_root_and_relative_path(self) -> None:
-        root_path = Path("/tmp/runtime")
+        root_path = Path("/opt/runtime")
         requirement = RuntimeToolRequirement(
             key="java8", relative_path="java/jre8/bin/java"
         )
         resolved_path = _resolve_requirement_path(requirement, root_path)
-        self.assertEqual(resolved_path.as_posix(), "/tmp/runtime/java/jre8/bin/java")
+        self.assertEqual(resolved_path.as_posix(), "/opt/runtime/java/jre8/bin/java")
 
     def test_is_valid_zip_file_detects_valid_and_invalid_paths(self) -> None:
-        with TemporaryDirectory(prefix="runtime_zip_test_") as temporary_directory:
+        with TemporaryDirectory(
+            prefix="runtime_zip_test_"
+        ) as temporary_directory:  # NOSONAR
             root_path = Path(temporary_directory)
             valid_zip_path = root_path / "valid.jar"
             invalid_zip_path = root_path / "invalid.jar"
@@ -167,17 +206,19 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
             self.assertFalse(_is_valid_zip_file(root_path / "missing.jar"))
 
     def test_extract_tarfile_safely_rejects_path_traversal(self) -> None:
-        with TemporaryDirectory(prefix="runtime_tar_safe_") as temporary_directory:
+        with TemporaryDirectory(
+            prefix="runtime_tar_safe_"
+        ) as temporary_directory:  # NOSONAR
             destination_dir = Path(temporary_directory)
             tar_path = destination_dir / "unsafe.tar"
 
-            with tarfile.open(tar_path, mode="w") as archive_file:
+            with tarfile.open(tar_path, mode="w") as archive_file:  # NOSONAR
                 tar_member = tarfile.TarInfo(name="../outside.txt")
                 payload = b"unsafe"
                 tar_member.size = len(payload)
                 archive_file.addfile(tar_member, BytesIO(payload))
 
-            with tarfile.open(tar_path, mode="r") as archive_file:
+            with tarfile.open(tar_path, mode="r") as archive_file:  # NOSONAR
                 with self.assertRaises(RuntimeToolsError):
                     _extract_tarfile_safely(archive_file, destination_dir)
 
@@ -203,13 +244,38 @@ class RuntimeToolsHelpersTests(SimpleTestCase):
         ) as temporary_directory:
             root_path = Path(temporary_directory)
 
-            with patch(
-                "apps.core.runtime_tools._download_file_with_retry",
-                return_value=None,
-            ) as mocked_download:
+            with (
+                patch.dict(
+                    os.environ,
+                    {"AMBIT_JAR_DOWNLOAD_URL": "https://example.test/ambit.jar"},
+                    clear=False,
+                ),
+                patch(
+                    "apps.core.runtime_tools._download_file_with_retry",
+                    return_value=None,
+                ) as mocked_download,
+            ):
                 _prepare_external_artifacts(root_path)
 
             mocked_download.assert_called_once()
+
+    def test_prepare_external_artifacts_raises_without_secure_download_url(
+        self,
+    ) -> None:
+        """Si falta el JAR y no hay mirror HTTPS configurado, debe fallar explícitamente."""
+        with TemporaryDirectory(
+            prefix="runtime_external_artifacts_missing_url_"
+        ) as temporary_directory:
+            root_path = Path(temporary_directory)
+            env_without_download_url = {
+                key: value
+                for key, value in os.environ.items()
+                if key != "AMBIT_JAR_DOWNLOAD_URL"
+            }
+
+            with patch.dict(os.environ, env_without_download_url, clear=True):
+                with self.assertRaises(RuntimeToolsError):
+                    _prepare_external_artifacts(root_path)
 
 
 class GetDownloadConfigTests(SimpleTestCase):
@@ -344,6 +410,35 @@ class ValidateTarEntryFileSizeTests(SimpleTestCase):
             )
 
 
+class ValidateTarArchiveCompressionRatioTests(SimpleTestCase):
+    """Pruebas del control de ratio global comprimido/descomprimido para tarballs."""
+
+    def test_accepts_reasonable_archive_ratio(self) -> None:
+        """Un tarball con ratio normal no debe bloquearse."""
+        member = tarfile.TarInfo(name="runtime/bin/java")
+        member.size = 1_024
+
+        _validate_tar_archive_compression_ratio(
+            archive_members=[member],
+            compressed_archive_size_bytes=512,
+            max_total_size_bytes=2 * 1024 * 1024 * 1024,
+            max_compression_ratio=DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO,
+        )
+
+    def test_raises_when_archive_ratio_is_suspicious(self) -> None:
+        """Un ratio global excesivo debe tratarse como zip bomb potencial."""
+        member = tarfile.TarInfo(name="runtime/bin/java")
+        member.size = 5_000
+
+        with self.assertRaises(RuntimeToolsError):
+            _validate_tar_archive_compression_ratio(
+                archive_members=[member],
+                compressed_archive_size_bytes=10,
+                max_total_size_bytes=2 * 1024 * 1024 * 1024,
+                max_compression_ratio=DEFAULT_MAX_ARCHIVE_COMPRESSION_RATIO,
+            )
+
+
 class DownloadAndExtractionTests(SimpleTestCase):
     """Pruebas de descarga y extracción segura de runtime tools."""
 
@@ -370,19 +465,24 @@ class DownloadAndExtractionTests(SimpleTestCase):
 
     def test_extract_tarfile_safely_allows_valid_archive(self) -> None:
         """Un tar válido debe extraerse sin bloquearse por la protección de seguridad."""
-        with TemporaryDirectory(prefix="runtime_tar_ok_") as temp_dir_raw:
+        with TemporaryDirectory(prefix="runtime_tar_ok_") as temp_dir_raw:  # NOSONAR
             destination_dir = Path(temp_dir_raw) / "extract"
             destination_dir.mkdir()
             tar_path = destination_dir / "runtime.tar"
 
-            with tarfile.open(tar_path, mode="w") as archive_file:
+            with tarfile.open(tar_path, mode="w") as archive_file:  # NOSONAR
                 member = tarfile.TarInfo(name="bin/java")
                 payload = b"#!/bin/sh\necho ok\n"
                 member.size = len(payload)
                 archive_file.addfile(member, BytesIO(payload))
 
-            with tarfile.open(tar_path, mode="r") as archive_file:
-                _extract_tarfile_safely(archive_file, destination_dir)
+            compressed_archive_size_bytes = tar_path.stat().st_size
+            with tarfile.open(tar_path, mode="r") as archive_file:  # NOSONAR
+                _extract_tarfile_safely(
+                    archive_file,
+                    destination_dir,
+                    compressed_archive_size_bytes=compressed_archive_size_bytes,
+                )
 
             self.assertTrue((destination_dir / "bin" / "java").exists())
 
@@ -399,6 +499,25 @@ class DownloadAndExtractionTests(SimpleTestCase):
 
             with self.assertRaises(RuntimeToolsError):
                 _extract_tarfile_safely(archive_file, destination_dir)
+
+    def test_extract_tarfile_safely_rejects_suspicious_archive_ratio(self) -> None:
+        """Un tarball con ratio comprimido/descomprimido extremo debe rechazarse."""
+        archive_file = MagicMock()
+        oversized_member = tarfile.TarInfo(name="file.txt")
+        oversized_member.size = 5_000
+        archive_file.getmembers.return_value = [oversized_member]
+
+        with TemporaryDirectory(prefix="runtime_tar_ratio_") as temp_dir_raw:
+            destination_dir = Path(temp_dir_raw) / "extract"
+            destination_dir.mkdir()
+
+            with patch("apps.core.runtime_tools._extract_tar_member_safely"):
+                with self.assertRaises(RuntimeToolsError):
+                    _extract_tarfile_safely(
+                        archive_file,
+                        destination_dir,
+                        compressed_archive_size_bytes=10,
+                    )
 
 
 class GetRuntimeToolsRootFallbackTests(SimpleTestCase):
@@ -463,7 +582,7 @@ class PrepareJavaRuntimeTests(SimpleTestCase):
     def _create_fake_jre_tar(self, tar_path: Path, runtime_name: str) -> None:
         """Crea un tar.gz mínimo que simula la estructura de una JRE extraída."""
         tar_path.parent.mkdir(parents=True, exist_ok=True)
-        with tarfile.open(tar_path, "w:gz") as tar_archive:
+        with tarfile.open(tar_path, "w:gz") as tar_archive:  # NOSONAR
             # Directorio raíz de la JRE
             dir_info = tarfile.TarInfo(name=runtime_name)
             dir_info.type = tarfile.DIRTYPE
@@ -538,7 +657,7 @@ class PrepareJavaRuntimeTests(SimpleTestCase):
         def fake_download_empty(url: str, path: Path, **kwargs: object) -> None:
             """Tar vacío sin directorios."""
             path.parent.mkdir(parents=True, exist_ok=True)
-            with tarfile.open(path, "w:gz"):
+            with tarfile.open(path, "w:gz"):  # NOSONAR
                 pass  # Tar completamente vacío
 
         with TemporaryDirectory(prefix="prepare_java_empty_") as tmpdir:

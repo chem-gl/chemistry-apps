@@ -1,7 +1,7 @@
 // generation-result-panel.component.ts: Panel de generación continua, historial y resultados de derivados para Smile-it.
 
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DownloadedReportFile, ScientificJobView } from '../../core/api/jobs-api.service';
@@ -32,6 +32,24 @@ export class GenerationResultPanelComponent {
   readonly isLoadingGeneratedStructures = this.resultDataService.isLoadingGeneratedStructures;
   readonly isPreparingImagesZip = this.resultDataService.isPreparingImagesZip;
   readonly imagesZipProgress = this.resultDataService.imagesZipProgress;
+  readonly visibleHistoryJobs = computed<ScientificJobView[]>(() => {
+    const selectedHistoricalJobId = this.workflow.selectedHistoricalJobId();
+    const currentJobId = this.workflow.currentJobId();
+
+    return this.workflow
+      .historyJobs()
+      .filter(
+        (historyJob: ScientificJobView) =>
+          !(
+            selectedHistoricalJobId === null &&
+            currentJobId !== null &&
+            historyJob.id === currentJobId
+          ),
+      );
+  });
+  readonly isShowingCurrentResultBelow = computed<boolean>(
+    () => this.workflow.currentJobId() !== null && this.workflow.selectedHistoricalJobId() === null,
+  );
 
   @ViewChild('generatedStructureDialog')
   private readonly generatedStructureDialogRef?: ElementRef<HTMLDialogElement>;
@@ -78,6 +96,20 @@ export class GenerationResultPanelComponent {
     return `history-status history-${jobStatus}`;
   }
 
+  isHistoricalJobSelected(jobId: string): boolean {
+    return this.workflow.selectedHistoricalJobId() === jobId;
+  }
+
+  historicalJobViewStateLabel(jobId: string): string {
+    return this.isHistoricalJobSelected(jobId) ? 'Viewing below' : 'Available';
+  }
+
+  historicalJobViewStateClass(jobId: string): string {
+    return this.isHistoricalJobSelected(jobId)
+      ? 'job-view-state is-viewing'
+      : 'job-view-state is-available';
+  }
+
   historicalJobDisplayName(historyJob: ScientificJobView): string {
     const jobParameters = historyJob.parameters as Record<string, unknown> | null;
     const exportBaseName = jobParameters?.['export_name_base'];
@@ -98,6 +130,10 @@ export class GenerationResultPanelComponent {
       return principalSmiles;
     }
     return 'Principal SMILES not available';
+  }
+
+  historicalJobUpdatedAt(historyJob: ScientificJobView): string | null {
+    return historyJob.updated_at ?? historyJob.created_at ?? null;
   }
 
   historicalJobBlockSummaries(

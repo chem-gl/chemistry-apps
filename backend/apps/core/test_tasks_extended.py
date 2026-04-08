@@ -27,6 +27,18 @@ from apps.core.tasks import (
 class DispatchScientificJobTests(SimpleTestCase):
     """Valida comportamiento de despacho resiliente ante fallos de broker."""
 
+    @override_settings(JOB_DISPATCH_ENABLED=False)
+    @patch("apps.core.tasks.execute_scientific_job.delay")
+    def test_dispatch_returns_false_when_dispatch_is_disabled(
+        self,
+        mocked_delay: MagicMock,
+    ) -> None:
+        """Si el despacho está deshabilitado, no debe intentar contactar Celery."""
+        dispatched = dispatch_scientific_job("job-disabled")
+
+        self.assertFalse(dispatched)
+        mocked_delay.assert_not_called()
+
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_true_when_enqueue_succeeds(
         self, mocked_delay: MagicMock

@@ -7,16 +7,16 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import type {
-    DownloadedReportFile,
-    JobLogEntryView,
-    JobLogsPageView,
-    JobProgressSnapshotView,
-    ScientificJobView,
-    SmileitAssignmentBlockParams,
-    SmileitGenerationParams,
-    SmileitJobResponseView,
-    SmileitManualSubstituentParams,
-    SmileitStructureInspectionView,
+  DownloadedReportFile,
+  JobLogEntryView,
+  JobLogsPageView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+  SmileitAssignmentBlockParams,
+  SmileitGenerationParams,
+  SmileitJobResponseView,
+  SmileitManualSubstituentParams,
+  SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
@@ -27,9 +27,9 @@ import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitManualSubstituentDraft,
-    SmileitResultData,
+  SmileitAssignmentBlockDraft,
+  SmileitManualSubstituentDraft,
+  SmileitResultData,
 } from './smileit/smileit-workflow.types';
 
 // Re-exportar tipos públicos para que los consumidores existentes no cambien sus import paths.
@@ -37,17 +37,17 @@ export { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.se
 export { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
 export { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 export type {
-    SmileitAssignmentBlockDraft,
-    SmileitBlockCollapsedSummary,
-    SmileitCatalogDraftPreview,
-    SmileitCatalogGroupView,
-    SmileitCatalogQueuedDraft,
-    SmileitChemicalNotationKind,
-    SmileitGeneratedStructureView,
-    SmileitManualSubstituentDraft,
-    SmileitResultData,
-    SmileitSection,
-    SmileitSiteCoverageView
+  SmileitAssignmentBlockDraft,
+  SmileitBlockCollapsedSummary,
+  SmileitCatalogDraftPreview,
+  SmileitCatalogGroupView,
+  SmileitCatalogQueuedDraft,
+  SmileitChemicalNotationKind,
+  SmileitGeneratedStructureView,
+  SmileitManualSubstituentDraft,
+  SmileitResultData,
+  SmileitSection,
+  SmileitSiteCoverageView,
 } from './smileit/smileit-workflow.types';
 
 @Injectable()
@@ -97,6 +97,7 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly exportPadding = this.state.exportPadding;
   readonly activeSection = this.state.activeSection;
   readonly currentJobId = this.state.currentJobId;
+  readonly selectedHistoricalJobId = this.state.selectedHistoricalJobId;
   readonly progressSnapshot = this.state.progressSnapshot;
   readonly jobLogs = this.state.jobLogs;
   readonly resultData = this.state.resultData;
@@ -218,12 +219,14 @@ export class SmileitWorkflowService implements OnDestroy {
     this.state.progressSnapshot.set(null);
     this.state.jobLogs.set([]);
     this.state.currentJobId.set(null);
+    this.state.selectedHistoricalJobId.set(null);
 
     const dispatchParams: SmileitGenerationParams = this.buildDispatchParams();
 
     this.smileitApiService.dispatchSmileitJob(dispatchParams).subscribe({
       next: (jobResponse: SmileitJobResponseView) => {
         this.state.currentJobId.set(jobResponse.id);
+        this.state.selectedHistoricalJobId.set(null);
 
         if (jobResponse.status === 'completed') {
           const immediateResultData: SmileitResultData | null = this.extractResultData(jobResponse);
@@ -258,6 +261,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.state.activeSection.set('idle');
     this.state.currentJobId.set(null);
+    this.state.selectedHistoricalJobId.set(null);
     this.state.progressSnapshot.set(null);
     this.state.jobLogs.set([]);
     this.state.resultData.set(null);
@@ -276,6 +280,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.state.errorMessage.set(null);
     this.state.exportErrorMessage.set(null);
     this.state.currentJobId.set(jobId);
+    this.state.selectedHistoricalJobId.set(jobId);
     this.state.jobLogs.set([]);
 
     this.smileitApiService.getSmileitJobStatus(jobId).subscribe({
