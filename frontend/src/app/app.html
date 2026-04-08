@@ -1,8 +1,26 @@
 <div class="app-shell">
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
-    <div class="brand-block">
-      <p class="brand-kicker">Chemistry Apps</p>
-      <h1>Scientific Control Desk</h1>
+    <div class="top-bar-main">
+      <div class="brand-block">
+        <p class="brand-kicker">Chemistry Apps</p>
+        <div class="brand-copy">
+          <h1>Scientific Control Desk</h1>
+          <p class="brand-caption">Central navigation for apps, jobs and account access.</p>
+        </div>
+      </div>
+
+      <div class="session-panel">
+        @if (sessionService.isAuthenticated()) {
+        <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
+        <div class="session-copy">
+          <strong>{{ sessionService.displayName() }}</strong>
+          <span>{{ sessionService.currentRole() }}</span>
+        </div>
+        <button class="session-button" type="button" (click)="logout()">Sign out</button>
+        } @else {
+        <a class="session-button" routerLink="/login">Sign in</a>
+        }
+      </div>
     </div>
 
     <nav class="main-nav" aria-label="Main navigation">
@@ -13,19 +31,6 @@
       </a>
       }
     </nav>
-
-    <div class="session-panel">
-      @if (sessionService.isAuthenticated()) {
-      <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
-      <div class="session-copy">
-        <strong>{{ sessionService.displayName() }}</strong>
-        <span>{{ sessionService.currentRole() }}</span>
-      </div>
-      <button class="session-button" type="button" (click)="logout()">Sign out</button>
-      } @else {
-      <a class="session-button" routerLink="/login">Sign in</a>
-      }
-    </div>
   </header>
 
   <main class="content-shell">

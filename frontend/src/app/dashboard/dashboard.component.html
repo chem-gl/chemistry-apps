@@ -81,7 +81,9 @@
             } @else {
             <div class="recent-jobs-list">
                 @for (jobItem of recentJobs(); track jobItem.id) {
-                <article class="job-row">
+                @if (recentJobRoutePath(jobItem); as routePath) {
+                <a class="job-row job-row-link" [routerLink]="routePath" [queryParams]="{ jobId: jobItem.id }"
+                    [attr.aria-label]="'Open result for ' + jobItem.plugin_name + ' job ' + jobItem.id">
                     <div>
                         <p class="job-app">{{ jobItem.plugin_name }}</p>
                         <p class="job-meta">
@@ -90,8 +92,27 @@
                             {{ jobItem.group_name || 'No group' }}
                         </p>
                     </div>
-                    <span class="job-status">{{ jobItem.status }}</span>
-                </article>
+                    <div class="job-row-actions">
+                        <span class="job-status">{{ jobItem.status }}</span>
+                        <span class="job-open-hint">{{ recentJobNavigationLabel(jobItem) }}</span>
+                    </div>
+                </a>
+                } @else {
+                <div class="job-row job-row-disabled" aria-disabled="true">
+                    <div>
+                        <p class="job-app">{{ jobItem.plugin_name }}</p>
+                        <p class="job-meta">
+                            {{ jobItem.owner_username || 'Unknown user' }}
+                            ·
+                            {{ jobItem.group_name || 'No group' }}
+                        </p>
+                    </div>
+                    <div class="job-row-actions">
+                        <span class="job-status">{{ jobItem.status }}</span>
+                        <span class="job-open-hint is-disabled">{{ recentJobNavigationLabel(jobItem) }}</span>
+                    </div>
+                </div>
+                }
                 }
             </div>
             }
@@ -100,26 +121,26 @@
         @if (sessionService.hasAdminAccess()) {
         <article class="panel-card">
             <h2>Users in scope</h2>
-            <ul class="summary-list">
+            <div class="summary-list">
                 @for (userItem of visibleUsers().slice(0, 6); track userItem.id) {
-                <li>
+                <div class="summary-list-item">
                     <strong>{{ userItem.username }}</strong>
                     <span>{{ userItem.role }} · {{ userItem.account_status }}</span>
-                </li>
+                </div>
                 }
-            </ul>
+            </div>
         </article>
 
         <article class="panel-card">
             <h2>Groups in scope</h2>
-            <ul class="summary-list">
+            <div class="summary-list">
                 @for (groupItem of visibleGroups().slice(0, 6); track groupItem.id) {
-                <li>
+                <div class="summary-list-item">
                     <strong>{{ groupItem.name }}</strong>
                     <span>{{ groupItem.slug }}</span>
-                </li>
+                </div>
                 }
-            </ul>
+            </div>
         </article>
         }
     </section>

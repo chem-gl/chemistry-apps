@@ -212,7 +212,7 @@ h1 {
 }
 
 .job-row,
-.summary-list li {
+.summary-list-item {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -221,14 +221,53 @@ h1 {
   border-bottom: 1px solid var(--chem-border);
 }
 
+.job-row {
+  text-decoration: none;
+  color: inherit;
+}
+
+.job-row-link {
+  border-radius: var(--chem-radius-md);
+  padding: 0.7rem 0.8rem;
+  margin-inline: -0.8rem;
+  transition:
+    background var(--chem-transition),
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+.job-row-link:hover,
+.job-row-link:focus-visible {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(111, 76, 143, 0.18);
+  transform: translateY(-1px);
+}
+
+.job-row-link:focus-visible {
+  outline: 2px solid rgba(111, 76, 143, 0.34);
+  outline-offset: 2px;
+}
+
+.job-row-disabled {
+  opacity: 0.78;
+}
+
 .job-row:last-child,
-.summary-list li:last-child {
+.summary-list-item:last-child {
   border-bottom: none;
 }
 
 .job-app {
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+.job-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .job-meta,
@@ -250,9 +289,17 @@ h1 {
   font-family: var(--chem-font-label);
 }
 
-.summary-list {
-  list-style: none;
-  padding: 0;
+.job-open-hint {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+}
+
+.job-open-hint.is-disabled {
+  color: var(--chem-ink-soft);
 }
 
 .error-card {
@@ -268,5 +315,15 @@ h1 {
 
   .wide-panel {
     grid-column: span 1;
+  }
+
+  .job-row,
+  .summary-list-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .job-row-actions {
+    justify-content: flex-start;
   }
 }

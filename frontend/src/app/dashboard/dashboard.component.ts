@@ -3,13 +3,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   IdentityApiService,
   IdentityUserSummaryView,
   WorkGroupView,
 } from '../core/api/identity-api.service';
+import { JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import {
+  resolveScientificJobRouteKey,
+  resolveScientificJobRoutePath,
+} from '../core/shared/scientific-apps.config';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,18 +33,36 @@ export class DashboardComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly runningJobsCount = computed(
-    () => this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'running').length,
+    () =>
+      this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'running')
+        .length,
   );
   readonly completedJobsCount = computed(
-    () => this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'completed').length,
+    () =>
+      this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'completed')
+        .length,
   );
   readonly pausedJobsCount = computed(
-    () => this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'paused').length,
+    () =>
+      this.visibleJobs().filter((jobItem: ScientificJobView) => jobItem.status === 'paused').length,
   );
   readonly recentJobs = computed(() => this.visibleJobs().slice(0, 6));
   readonly enabledApps = computed(() =>
     this.sessionService.accessibleApps().filter((appItem) => appItem.enabled),
   );
+
+  recentJobRoutePath(jobItem: ScientificJobView): string | null {
+    const routeKey = resolveScientificJobRouteKey(jobItem.plugin_name);
+    if (routeKey === null || !this.sessionService.canAccessRoute(routeKey)) {
+      return null;
+    }
+
+    return resolveScientificJobRoutePath(jobItem.plugin_name);
+  }
+
+  recentJobNavigationLabel(jobItem: ScientificJobView): string {
+    return this.recentJobRoutePath(jobItem) === null ? 'Result unavailable' : 'Open result';
+  }
 
   ngOnInit(): void {
     this.sessionService.initializeSession().subscribe({

@@ -94,6 +94,31 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
 export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
+const SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP: Readonly<Record<string, string>> = {
+  calculator: 'calculator',
+  'random-numbers': 'random-numbers',
+  'molar-fractions': 'molar-fractions',
+  'tunnel-effect': 'tunnel',
+  'easy-rate': 'easy-rate',
+  marcus: 'marcus',
+  smileit: 'smileit',
+  'sa-score': 'sa-score',
+  'toxicity-properties': 'toxicity-properties',
+};
+
+export function resolveScientificJobRouteKey(pluginName: string): string | null {
+  return SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP[pluginName] ?? null;
+}
+
+export function resolveScientificJobRoutePath(pluginName: string): string | null {
+  const routeKey = resolveScientificJobRouteKey(pluginName);
+  if (routeKey === null) {
+    return null;
+  }
+
+  return SCIENTIFIC_APP_ROUTE_ITEMS.find((appItem) => appItem.key === routeKey)?.routePath ?? null;
+}
+
 /** Lista filtrada: solo las apps visibles en menus y en el hub. Calculator y Random Numbers quedan excluidas. */
 export const VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.visibleInMenus);
