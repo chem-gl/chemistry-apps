@@ -51,13 +51,10 @@ export class SAScoreService extends BaseService implements SAScoreServiceInterfa
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SaScoreJobResponse>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SaScoreJobResponse>>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SaScoreJobResponse>>;
-    public saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (saScoreJobCreateRequest === null || saScoreJobCreateRequest === undefined) {
-            throw new Error('Required parameter saScoreJobCreateRequest was null or undefined when calling saScoreJobsCreate.');
-        }
+    public saScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SaScoreJobResponse>;
+    public saScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SaScoreJobResponse>>;
+    public saScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SaScoreJobResponse>>;
+    public saScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 

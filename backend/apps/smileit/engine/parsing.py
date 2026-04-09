@@ -67,6 +67,48 @@ def canonicalize_substituent(smiles: str, anchor_idx: int) -> tuple[str, int] | 
     return rooted_smiles, 0
 
 
+def remap_anchor_indices_to_canonical(
+    smiles: str,
+    anchor_indices: list[int],
+) -> tuple[str, list[int]] | None:
+    """Canonicaliza un SMILES y remapea los índices de anclaje al espacio canónico.
+
+    Usa GetSubstructMatch para calcular el mapeo exacto de índices entre el SMILES
+    de entrada y el SMILES canónico de RDKit. Garantiza que anchor_atom_indices
+    siempre referencie los mismos átomos en el SMILES canónico real.
+
+    Necesario porque RDKit puede reordenar átomos al canonicalizar: p.ej.
+    'C(=O)O' (C en idx 0) se canonicaliza a 'O=CO' (C en idx 1).
+
+    Returns:
+        Tupla (canonical_smiles, new_anchor_indices) o None si el SMILES es inválido
+        o si no se puede calcular el match estructural.
+    """
+    mol_input = parse_smiles_cached(smiles)
+    if mol_input is None:
+        return None
+
+    canonical = Chem.MolToSmiles(mol_input, isomericSmiles=True)
+    mol_canonical = Chem.MolFromSmiles(canonical)
+    if mol_canonical is None:
+        return None
+
+    # match[i] = índice en mol_canonical correspondiente al átomo i del query (mol_input)
+    match: tuple[int, ...] = mol_canonical.GetSubstructMatch(mol_input)
+    if len(match) == 0:
+        return None
+
+    remapped: list[int] = []
+    for anchor_idx in anchor_indices:
+        if 0 <= anchor_idx < len(match):
+            remapped.append(match[anchor_idx])
+
+    if len(remapped) == 0:
+        return None
+
+    return canonical, remapped
+
+
 def validate_smiles(smiles: str) -> bool:
     """Retorna True si el SMILES es parseable por RDKit."""
     return parse_smiles_cached(smiles) is not None

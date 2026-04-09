@@ -15,6 +15,8 @@ import { SaScoreComponent } from './sa-score.component';
 describe('SaScoreComponent', () => {
   const workflowMock = {
     smilesInput: signal<string>(''),
+    inputRows: signal<Array<{ name: string; smiles: string }>>([]),
+    customNamesEnabled: signal<boolean>(false),
     selectedMethods: signal<Record<SaScoreMethod, boolean>>({
       ambit: true,
       brsa: true,
@@ -38,6 +40,22 @@ describe('SaScoreComponent', () => {
     dispatch: vi.fn(),
     reset: vi.fn(),
     openHistoricalJob: vi.fn(),
+    setBatchInputText: vi.fn((rawInput: string) => {
+      const normalizedRows = rawInput
+        .split(/\r?\n/)
+        .map((lineValue: string) => lineValue.trim())
+        .filter((lineValue: string) => lineValue.length > 0)
+        .map((smilesValue: string) => ({ name: smilesValue, smiles: smilesValue }));
+      workflowMock.smilesInput.set(normalizedRows.map((row) => row.smiles).join('\n'));
+      workflowMock.inputRows.set(normalizedRows);
+    }),
+    updateInputRowName: vi.fn((rowIndex: number, nextName: string) => {
+      workflowMock.inputRows.update((currentRows) =>
+        currentRows.map((rowValue, index) =>
+          index === rowIndex ? { ...rowValue, name: nextName } : rowValue,
+        ),
+      );
+    }),
     toggleMethod: vi.fn(),
     downloadFullCsvReport: vi.fn(() =>
       of({ filename: 'sa_score_all.csv', blob: new Blob(['data'], { type: 'text/csv' }) }),
@@ -66,6 +84,8 @@ describe('SaScoreComponent', () => {
     });
 
     workflowMock.smilesInput.set('');
+    workflowMock.inputRows.set([]);
+    workflowMock.customNamesEnabled.set(false);
     workflowMock.currentJobId.set(null);
     workflowMock.activeSection.set('idle');
     workflowMock.resultData.set(null);
@@ -156,6 +176,7 @@ describe('SaScoreComponent', () => {
     const component = fixture.componentInstance;
 
     const molecule = {
+      name: 'ethanol',
       smiles: 'CCO',
       ambit_sa: 2.5,
       ambit_error: null,
@@ -175,6 +196,7 @@ describe('SaScoreComponent', () => {
     const component = fixture.componentInstance;
 
     const molecule = {
+      name: 'ethanol',
       smiles: 'CCO',
       ambit_sa: null,
       ambit_error: 'ambit failed',
@@ -501,7 +523,7 @@ describe('SaScoreComponent', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('');
+    workflowMock.setBatchInputText('');
     component.sketchDraftSmiles = '';
 
     await component.applySketch();
@@ -513,7 +535,7 @@ describe('SaScoreComponent', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('');
+    workflowMock.setBatchInputText('');
     component.sketchDraftSmiles = 'CCO';
 
     await component.applySketch();
@@ -525,7 +547,7 @@ describe('SaScoreComponent', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('N#N');
+    workflowMock.setBatchInputText('N#N');
     component.sketchDraftSmiles = 'CCO';
 
     await component.applySketch();

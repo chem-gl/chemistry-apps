@@ -2,13 +2,14 @@
 // Uso: importar cuando se necesiten parámetros de despacho o respuestas de SA Score.
 
 import { MethodsEnum, SaMoleculeResult, SaScoreJobResponse } from '../generated';
+import { NamedSmilesJobMolecule } from './named-smiles-api.types';
 
 /** Métodos soportados para cálculo SA score en backend. */
 export type SaScoreMethod = MethodsEnum;
 
 /** Payload tipado para crear jobs de SA score desde UI. */
 export interface SaScoreParams {
-  smiles: string[];
+  molecules: NamedSmilesJobMolecule[];
   methods: SaScoreMethod[];
   version?: string;
 }

@@ -1,7 +1,7 @@
 // toxicity-properties-workflow.service.ts: Orquesta entrada, ejecucion async,
 // progreso, resultados y export CSV para Toxicity Properties Table.
 
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   DownloadedReportFile,
@@ -19,75 +19,79 @@ export interface ToxicityPropertiesResultData {
 
 @Injectable()
 export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<ToxicityPropertiesResultData> {
+  constructor() {
+    super('CCO\nCC(=O)O\nc1ccccc1');
+  }
+
   protected override get defaultProgressMessage(): string {
     return 'Preparing toxicity prediction...';
   }
 
-  readonly smilesInput = signal<string>('CCO\nCC(=O)O\nc1ccccc1');
-
   override dispatch(): void {
     this.prepareForDispatch();
 
-    const normalizedSmiles: string[] = this.parseSmilesInput(this.smilesInput());
-    if (normalizedSmiles.length === 0) {
+    const normalizedRows = this.buildNamedInputRows();
+    if (normalizedRows.length === 0) {
       this.activeSection.set('error');
       this.errorMessage.set('At least one SMILES is required.');
       return;
     }
 
-    this.jobsApiService.validateSmilesCompatibility(normalizedSmiles).subscribe({
-      next: (validationResult: SmilesCompatibilityResultView) => {
-        if (!validationResult.compatible) {
-          this.activeSection.set('error');
-          this.errorMessage.set(this.buildSmilesCompatibilityErrorMessage(validationResult));
-          return;
-        }
+    this.jobsApiService
+      .validateSmilesCompatibility(normalizedRows.map((rowValue) => rowValue.smiles))
+      .subscribe({
+        next: (validationResult: SmilesCompatibilityResultView) => {
+          if (!validationResult.compatible) {
+            this.activeSection.set('error');
+            this.errorMessage.set(this.buildSmilesCompatibilityErrorMessage(validationResult));
+            return;
+          }
 
-        this.jobsApiService
-          .dispatchToxicityPropertiesJob({
-            smiles: normalizedSmiles,
-            version: '1.0.0',
-          })
-          .subscribe({
-            next: (jobResponse: ToxicityJobResponseView) => {
-              this.currentJobId.set(jobResponse.id);
+          this.jobsApiService
+            .dispatchToxicityPropertiesJob({
+              molecules: normalizedRows,
+              version: '1.0.0',
+            })
+            .subscribe({
+              next: (jobResponse: ToxicityJobResponseView) => {
+                this.currentJobId.set(jobResponse.id);
 
-              if (jobResponse.status === 'completed') {
-                const immediateResultData: ToxicityPropertiesResultData | null =
-                  this.extractResultData(jobResponse);
-                if (immediateResultData === null) {
-                  this.activeSection.set('error');
-                  this.errorMessage.set(
-                    'The completed job payload is invalid for toxicity properties.',
-                  );
+                if (jobResponse.status === 'completed') {
+                  const immediateResultData: ToxicityPropertiesResultData | null =
+                    this.extractResultData(jobResponse);
+                  if (immediateResultData === null) {
+                    this.activeSection.set('error');
+                    this.errorMessage.set(
+                      'The completed job payload is invalid for toxicity properties.',
+                    );
+                    return;
+                  }
+
+                  this.resultData.set(immediateResultData);
+                  this.loadHistoricalLogs(jobResponse.id);
+                  this.activeSection.set('result');
+                  this.loadHistory();
                   return;
                 }
 
-                this.resultData.set(immediateResultData);
-                this.loadHistoricalLogs(jobResponse.id);
-                this.activeSection.set('result');
-                this.loadHistory();
-                return;
-              }
-
-              this.activeSection.set('progress');
-              this.startProgressStream(jobResponse.id);
-            },
-            error: (dispatchError: Error) => {
-              this.activeSection.set('error');
-              this.errorMessage.set(
-                `Unable to create toxicity properties job: ${dispatchError.message}`,
-              );
-            },
-          });
-      },
-      error: (validationError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(
-          `Unable to validate SMILES compatibility: ${validationError.message}`,
-        );
-      },
-    });
+                this.activeSection.set('progress');
+                this.startProgressStream(jobResponse.id);
+              },
+              error: (dispatchError: Error) => {
+                this.activeSection.set('error');
+                this.errorMessage.set(
+                  `Unable to create toxicity properties job: ${dispatchError.message}`,
+                );
+              },
+            });
+        },
+        error: (validationError: Error) => {
+          this.activeSection.set('error');
+          this.errorMessage.set(
+            `Unable to validate SMILES compatibility: ${validationError.message}`,
+          );
+        },
+      });
   }
 
   override loadHistory(): void {

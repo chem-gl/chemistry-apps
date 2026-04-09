@@ -21,8 +21,10 @@ import { JobsApiService } from '../api/jobs-api.service';
 import { KetcherFrameService } from '../application/ketcher-frame.service';
 import {
   HistoricalJobWorkflowPort,
+  NamedSmilesInputRow,
+  buildSmilesTextFromRows,
   closeDialogOnBackdropClick,
-  parseSmilesLines,
+  parseNamedSmilesBatch,
   subscribeToRouteHistoricalJob,
 } from './scientific-app-ui.utils';
 
@@ -98,6 +100,12 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
 
   /** Retorna la señal de texto SMILES del workflow concreto. */
   protected abstract get workflowSmilesInput(): WritableSignal<string>;
+
+  /** Retorna la señal de filas parseadas name/smiles del workflow concreto. */
+  protected abstract get workflowInputRows(): WritableSignal<NamedSmilesInputRow[]>;
+
+  /** Retorna la señal que controla la edición de nombres personalizados. */
+  protected abstract get workflowCustomNamesEnabled(): WritableSignal<boolean>;
 
   // ---------------------------------------------------------------------------
   // Ciclo de vida
@@ -181,9 +189,12 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
       return;
     }
 
-    const current: string = this.workflowSmilesInput().trimEnd();
-    const updated: string = current.length > 0 ? `${current}\n${smilesLine}` : smilesLine;
-    this.workflowSmilesInput.set(updated);
+    const nextRows: NamedSmilesInputRow[] = [
+      ...this.workflowInputRows(),
+      { name: smilesLine, smiles: smilesLine },
+    ];
+    this.workflowInputRows.set(nextRows);
+    this.workflowSmilesInput.set(buildSmilesTextFromRows(nextRows));
     this.closeSketchDialog();
   }
 
@@ -226,7 +237,12 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
     }
 
     void file.text().then((rawContent: string) => {
-      this.workflowSmilesInput.set(parseSmilesLines(rawContent));
+      const parsedBatch = parseNamedSmilesBatch(rawContent);
+      this.workflowInputRows.set(parsedBatch.rows);
+      this.workflowSmilesInput.set(buildSmilesTextFromRows(parsedBatch.rows));
+      if (parsedBatch.containsExplicitNames) {
+        this.workflowCustomNamesEnabled.set(true);
+      }
     });
 
     input.value = '';

@@ -82,6 +82,7 @@ model/randomNumbersResultMetadata.ts
 model/saMoleculeResult.ts
 model/saScoreJobCreateRequest.ts
 model/saScoreJobResponse.ts
+model/saScoreMoleculeInputRequest.ts
 model/saScoreResults.ts
 model/scientificJob.ts
 model/siteOverlapPolicyEnum.ts
@@ -119,6 +120,7 @@ model/tokenRefresh.ts
 model/tokenRefreshRequest.ts
 model/toxicityJobCreateRequest.ts
 model/toxicityJobResponse.ts
+model/toxicityMoleculeInputRequest.ts
 model/toxicityMoleculeResult.ts
 model/toxicityResults.ts
 model/tunnelInputChangeEvent.ts

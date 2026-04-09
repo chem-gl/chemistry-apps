@@ -12,22 +12,21 @@
       <h3>Input</h3>
 
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
-        [lineCount]="lineCount()" (smilesChange)="workflow.smilesInput.set($event)" (openSketch)="openSketchDialog()"
+        [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
+        [customNamesEnabled]="workflow.customNamesEnabled()" (smilesChange)="workflow.setBatchInputText($event)"
+        (customNamesEnabledChange)="workflow.customNamesEnabled.set($event)"
+        (rowNameChange)="workflow.updateInputRowName($event.index, $event.name)" (openSketch)="openSketchDialog()"
         (fileUpload)="onFileUpload($event)"></app-smiles-batch-input>
 
       <fieldset class="methods-fieldset">
         <legend>Methods</legend>
         <div class="method-grid">
           @for (methodItem of methodItems; track methodItem.key) {
-            <label class="method-item">
-              <input
-                type="checkbox"
-                [ngModel]="workflow.selectedMethods()[methodItem.key]"
-                (ngModelChange)="workflow.toggleMethod(methodItem.key)"
-                [disabled]="workflow.isProcessing()"
-              />
-              {{ methodItem.label }}
-            </label>
+          <label class="method-item">
+            <input type="checkbox" [ngModel]="workflow.selectedMethods()[methodItem.key]"
+              (ngModelChange)="workflow.toggleMethod(methodItem.key)" [disabled]="workflow.isProcessing()" />
+            {{ methodItem.label }}
+          </label>
           }
         </div>
       </fieldset>
@@ -46,94 +45,84 @@
       <h3>Results</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-        <p class="status-message">Submitting SA score job to backend...</p>
+      <p class="status-message">Submitting SA score job to backend...</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
-        <app-job-progress-card
-          [jobId]="workflow.currentJobId()"
-          [progressPercentage]="workflow.progressPercentage()"
-          [progressMessage]="workflow.progressMessage()"
-          progressAriaLabel="SA score job progress"
-        ></app-job-progress-card>
+      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
+        [progressMessage]="workflow.progressMessage()"
+        progressAriaLabel="SA score job progress"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-        <div class="metadata-grid">
-          <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
-          <p><strong>Methods:</strong> {{ resultData.requestedMethods.join(', ') }}</p>
-          <p>
-            <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
-          </p>
-        </div>
+      <div class="metadata-grid">
+        <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
+        <p><strong>Methods:</strong> {{ resultData.requestedMethods.join(', ') }}</p>
+        <p>
+          <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
+        </p>
+      </div>
 
-        <div class="action-row export-row">
-          <label class="export-select-label" for="export-target-select">Export target</label>
-          <select
-            id="export-target-select"
-            class="export-select"
-            [ngModel]="selectedExportTarget()"
-            (ngModelChange)="selectedExportTarget.set($event)"
-            [disabled]="workflow.isExporting()"
-          >
-            @for (exportOption of exportOptions(); track exportOption.value) {
-              <option [ngValue]="exportOption.value">{{ exportOption.label }}</option>
-            }
-          </select>
-          <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-            {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-          </button>
-        </div>
+      <div class="action-row export-row">
+        <label class="export-select-label" for="export-target-select">Export target</label>
+        <select id="export-target-select" class="export-select" [ngModel]="selectedExportTarget()"
+          (ngModelChange)="selectedExportTarget.set($event)" [disabled]="workflow.isExporting()">
+          @for (exportOption of exportOptions(); track exportOption.value) {
+          <option [ngValue]="exportOption.value">{{ exportOption.label }}</option>
+          }
+        </select>
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+          {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+        </button>
+      </div>
 
-        @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-          <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-        }
+      @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+      <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+      }
 
-        <div class="table-wrap">
-          <table class="result-table">
-            <thead>
-              <tr>
-                <th>SMILES</th>
-                @for (methodItem of methodItems; track methodItem.key) {
-                  @if (resultData.requestedMethods.includes(methodItem.key)) {
-                    <th>{{ methodItem.label }}</th>
-                  }
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
-                <tr>
-                  <td>
-                    <button
-                      class="smiles-cell-btn"
-                      type="button"
-                      (click)="openMoleculeImageModal(molecule.smiles)"
-                      title="Click to view molecule structure"
-                    >
-                      {{ molecule.smiles }}
-                    </button>
-                  </td>
-                  @for (methodItem of methodItems; track methodItem.key) {
-                    @if (resultData.requestedMethods.includes(methodItem.key)) {
-                      <td>
-                        @if (methodError(molecule, methodItem.key); as rowError) {
-                          <span class="cell-error" [title]="rowError">ERROR</span>
-                        } @else {
-                          {{ methodScore(molecule, methodItem.key) }}
-                        }
-                      </td>
-                    }
-                  }
-                </tr>
+      <div class="table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SMILES</th>
+              @for (methodItem of methodItems; track methodItem.key) {
+              @if (resultData.requestedMethods.includes(methodItem.key)) {
+              <th>{{ methodItem.label }}</th>
               }
-            </tbody>
-          </table>
-        </div>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
+            <tr>
+              <td>{{ molecule.name }}</td>
+              <td>
+                <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
+                  title="Click to view molecule structure">
+                  {{ molecule.smiles }}
+                </button>
+              </td>
+              @for (methodItem of methodItems; track methodItem.key) {
+              @if (resultData.requestedMethods.includes(methodItem.key)) {
+              <td>
+                @if (methodError(molecule, methodItem.key); as rowError) {
+                <span class="cell-error" [title]="rowError">ERROR</span>
+                } @else {
+                {{ methodScore(molecule, methodItem.key) }}
+                }
+              </td>
+              }
+              }
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       }
 
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-        <p class="error-message" role="alert">{{ currentError }}</p>
+      <p class="error-message" role="alert">{{ currentError }}</p>
       }
     </section>
   </div>
@@ -145,12 +134,8 @@
     (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"></app-job-history-table>
 </section>
 <!-- ── Sketch dialog (Ketcher) ─────────────────────────────────────────── -->
-<dialog
-  #sketchDialog
-  class="sketch-dialog"
-  (click)="onSketchDialogBackdropClick($event)"
-  (keydown)="onSketchDialogBackdropClick($event)"
->
+<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"
+  (keydown)="onSketchDialogBackdropClick($event)">
   <section class="sketch-modal" aria-label="Draw SMILES with Ketcher">
     <h4>Draw SMILES</h4>
     <p class="hint">
@@ -159,18 +144,13 @@
 
     <div class="ketcher-frame-wrap">
       @if (isSketchDialogLoading()) {
-        <output class="ketcher-loading" aria-label="Loading molecule sketcher">
-          <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-          <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-        </output>
+      <output class="ketcher-loading" aria-label="Loading molecule sketcher">
+        <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
+        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+      </output>
       }
-      <iframe
-        #ketcherFrame
-        class="ketcher-frame"
-        [src]="ketcherPublicUrl"
-        title="Ketcher SMILES sketcher"
-        (load)="onKetcherFrameLoaded()"
-      ></iframe>
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
+        (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
     <div class="sketch-modal-actions">
@@ -181,21 +161,12 @@
 </dialog>
 
 <!-- ── Molecule image modal ────────────────────────────────────────────── -->
-<dialog
-  #moleculeImageDialog
-  class="molecule-image-dialog"
-  (click)="onMoleculeImageDialogBackdropClick($event)"
-  (keydown)="onMoleculeImageDialogBackdropClick($event)"
->
+<dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)"
+  (keydown)="onMoleculeImageDialogBackdropClick($event)">
   <section class="molecule-image-modal" aria-label="Molecule structure">
     <div class="molecule-image-header">
       <h4>Molecule structure</h4>
-      <button
-        class="close-btn"
-        type="button"
-        (click)="closeMoleculeImageModal()"
-        aria-label="Close molecule image"
-      >
+      <button class="close-btn" type="button" (click)="closeMoleculeImageModal()" aria-label="Close molecule image">
         ✕
       </button>
     </div>
@@ -203,11 +174,11 @@
     <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
 
     @if (isLoadingMoleculeImage()) {
-      <p class="status-message">Loading structure...</p>
+    <p class="status-message">Loading structure...</p>
     } @else if (moleculeImageError(); as imgError) {
-      <p class="error-message" role="alert">{{ imgError }}</p>
+    <p class="error-message" role="alert">{{ imgError }}</p>
     } @else if (moleculeModalSvg(); as svgContent) {
-      <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
+    <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
     }
   </section>
 </dialog>

@@ -27,7 +27,7 @@
     <fieldset class="generation-fieldset" [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()">
       <div class="options-grid compact">
         <label>
-          Export base name
+          Job name
           <input type="text" [ngModel]="workflow.exportNameBase()" (ngModelChange)="workflow.exportNameBase.set($event)"
             [disabled]="workflow.isProcessing()" placeholder="smileit_run" />
         </label>
@@ -257,7 +257,7 @@
                 ">
         <div class="derivative-info">
           <div class="derivative-legend">
-            <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
+            <span class="derivative-legend-pill scaffold-pill">{{ scaffoldLegendLabel() }}</span>
             @for (
             substituentName of getUniqueSubstituentsForStructure(structureItem);
             track substituentName
@@ -335,7 +335,7 @@
         <div class="structure-modal-title-area">
           <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>
           <div class="derivative-legend derivative-legend-modal">
-            <span class="derivative-legend-pill scaffold-pill">Scaffold</span>
+            <span class="derivative-legend-pill scaffold-pill">{{ scaffoldLegendLabel() }}</span>
             @for (
             substituentName of getUniqueSubstituentsForStructure(selectedStructure);
             track substituentName

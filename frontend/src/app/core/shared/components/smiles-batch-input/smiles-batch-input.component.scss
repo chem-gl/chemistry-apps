@@ -1,0 +1,161 @@
+/* smiles-batch-input.component.scss: Estilos compartidos del editor batch de SMILES con nombres opcionales. */
+:host {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.smiles-label {
+  display: grid;
+  gap: 0.38rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+textarea,
+input,
+button {
+  font-family: inherit;
+}
+
+textarea,
+.name-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+textarea:focus,
+.name-input:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.25);
+  border-color: var(--chem-accent);
+}
+
+.hint {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
+.support-hint {
+  color: var(--chem-ink-secondary);
+}
+
+.batch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.names-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-primary);
+}
+
+.batch-preview-shell {
+  overflow: auto;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+}
+
+.batch-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+}
+
+.batch-preview-table th,
+.batch-preview-table td {
+  padding: 0.55rem 0.62rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  text-align: left;
+  font-size: 0.84rem;
+}
+
+.batch-preview-table th {
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--chem-text-xs);
+}
+
+.name-input {
+  width: 100%;
+  min-width: 180px;
+}
+
+.smiles-preview {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.input-tools-row {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-tool {
+  border: 1px solid var(--chem-primary);
+  border-radius: 999px;
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  padding: 0.45rem 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.btn-tool:hover:not(.disabled):not(:disabled) {
+  background: var(--chem-surface-elevated);
+}
+
+.file-upload-label {
+  position: relative;
+  overflow: hidden;
+}
+
+.file-input-hidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .batch-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .batch-preview-table {
+    min-width: 0;
+  }
+}

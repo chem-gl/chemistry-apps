@@ -17,10 +17,12 @@ const buildMockWorkflow = (
   overrides: Partial<{
     resultDataValue: ReturnType<SmileitWorkflowService['resultData']> | null;
     currentJobIdValue: string | null;
+    exportNameBaseValue: string;
   }> = {},
 ) => ({
   resultData: signal(overrides.resultDataValue ?? null),
   currentJobId: signal(overrides.currentJobIdValue ?? null),
+  exportNameBase: signal(overrides.exportNameBaseValue ?? 'EDA'),
   exportErrorMessage: signal<string | null>(null),
   errorMessage: signal<string | null>(null),
 });
@@ -320,6 +322,7 @@ describe('GenerationResultDataService', () => {
 
       expect(mockJobsApi.listSmileitDerivations).toHaveBeenCalledWith('job-load', 0, 100);
       expect(service.loadedGeneratedStructures()).toHaveLength(1);
+      expect(service.loadedGeneratedStructures()[0].name).toBe('dEDA1');
     });
 
     it('usa la cache de sesión cuando la página ya fue cargada previamente', () => {
@@ -345,6 +348,7 @@ describe('GenerationResultDataService', () => {
       // No debe llamar al API si hay cache
       expect(mockJobsApi.listSmileitDerivations).not.toHaveBeenCalled();
       expect(service.loadedGeneratedStructures()).toHaveLength(1);
+      expect(service.loadedGeneratedStructures()[0].name).toBe('dEDA1');
 
       sessionStorage.removeItem('smileit:job-cached-page:page:0:100');
     });
@@ -393,7 +397,7 @@ describe('GenerationResultDataService', () => {
 
       TestBed.flushEffects();
 
-      expect(service.loadedGeneratedStructures()[0].name).toBe('Embedded');
+      expect(service.loadedGeneratedStructures()[0].name).toBe('dEDA1');
     });
 
     it('maneja error 404 del API sin generatedStructures embebidas', () => {
@@ -444,7 +448,7 @@ describe('GenerationResultDataService', () => {
       expect(service.isGeneratedStructuresCollapsed()).toBe(true);
     });
 
-    it('usa el nombre genérico si el nombre del item está vacío', () => {
+    it('usa el identificador d{jobName}{N} aunque el nombre del item esté vacío', () => {
       mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(
         of({
           totalGenerated: 1,
@@ -470,7 +474,7 @@ describe('GenerationResultDataService', () => {
 
       TestBed.flushEffects();
 
-      expect(service.loadedGeneratedStructures()[0].name).toBe('Generated molecule 6');
+      expect(service.loadedGeneratedStructures()[0].name).toBe('dEDA6');
     });
   });
 

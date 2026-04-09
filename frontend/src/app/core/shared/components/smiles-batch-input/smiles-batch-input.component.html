@@ -1,10 +1,51 @@
 <!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo). -->
 <label class="smiles-label">
-    SMILES list (one per line)
+    SMILES batch input
     <textarea rows="10" [ngModel]="smilesValue" (ngModelChange)="smilesChange.emit($event)"
         [disabled]="isDisabled"></textarea>
 </label>
-<p class="hint">Detected rows: {{ lineCount }}</p>
+
+<div class="batch-toolbar">
+    <p class="hint">Detected rows: {{ lineCount }}</p>
+    <label class="names-toggle">
+        <input type="checkbox" [ngModel]="customNamesEnabled" (ngModelChange)="customNamesEnabledChange.emit($event)"
+            [disabled]="isDisabled || inputRows.length === 0" />
+        Edit custom names
+    </label>
+</div>
+
+<p class="hint support-hint">
+    Supports plain SMILES lists, `.smi`/`.txt` lists, and CSV files where column 1 is name and column 2 is SMILES.
+</p>
+
+@if (customNamesEnabled && inputRows.length > 0) {
+<div class="batch-preview-shell" aria-label="Parsed molecule names and smiles">
+    <table class="batch-preview-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>SMILES</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (inputRow of inputRows; track inputRow.smiles + '-' + $index) {
+            <tr>
+                <td>{{ $index + 1 }}</td>
+                <td>
+                    <input type="text" class="name-input" [ngModel]="inputRow.name"
+                        (ngModelChange)="rowNameChange.emit({ index: $index, name: $event })" [disabled]="isDisabled"
+                        placeholder="Defaults to SMILES" />
+                </td>
+                <td>
+                    <code class="mono smiles-preview">{{ inputRow.smiles }}</code>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>
+}
 
 <div class="input-tools-row">
     <button class="btn-tool" type="button" (click)="openSketch.emit()" [disabled]="isDisabled"
@@ -13,9 +54,9 @@
     </button>
 
     <label class="btn-tool file-upload-label" [class.disabled]="isDisabled"
-        title="Upload a .smi or .txt file with one SMILES per line">
+        title="Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs">
         ↑ Upload file
-        <input type="file" accept=".smi,.txt" class="file-input-hidden" [disabled]="isDisabled"
+        <input type="file" accept=".smi,.txt,.csv" class="file-input-hidden" [disabled]="isDisabled"
             (change)="fileUpload.emit($event)" />
     </label>
 </div>

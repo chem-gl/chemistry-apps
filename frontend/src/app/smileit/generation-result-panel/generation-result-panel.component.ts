@@ -11,6 +11,11 @@ import {
 } from '../../core/application/smileit-workflow.service';
 import { JobProgressCardComponent } from '../../core/shared/components/job-progress-card/job-progress-card.component';
 import { GenerationResultDataService } from './generation-result-data.service';
+import {
+  buildDerivativeDisplayName,
+  buildHistoricalJobDisplayName,
+  resolveJobNameLabel,
+} from './generation-result-naming.utils';
 
 @Component({
   selector: 'app-generation-result-panel',
@@ -113,14 +118,10 @@ export class GenerationResultPanelComponent {
   historicalJobDisplayName(historyJob: ScientificJobView): string {
     const jobParameters = historyJob.parameters as Record<string, unknown> | null;
     const exportBaseName = jobParameters?.['export_name_base'];
-    if (
-      typeof exportBaseName === 'string' &&
-      exportBaseName.trim() !== '' &&
-      exportBaseName.trim().toLowerCase() !== 'smileit_run'
-    ) {
-      return exportBaseName;
+    if (typeof exportBaseName === 'string' && exportBaseName.trim() !== '') {
+      return buildHistoricalJobDisplayName(exportBaseName, historyJob.id);
     }
-    return `Enumeration ${historyJob.id.slice(0, 8)}`;
+    return buildHistoricalJobDisplayName('job', historyJob.id);
   }
 
   historicalJobPrincipalSmiles(historyJob: ScientificJobView): string {
@@ -187,11 +188,12 @@ export class GenerationResultPanelComponent {
   }
 
   structureDisplayName(structure: SmileitGeneratedStructureView, index: number): string {
-    const trimmedName = structure.name.trim();
-    if (/^smileit_run_\d+$/i.test(trimmedName)) {
-      return `Derivative ${index + 1}`;
-    }
-    return trimmedName === '' ? `Derivative ${index + 1}` : trimmedName;
+    const structureOrdinal = (structure.structureIndex ?? index) + 1;
+    return buildDerivativeDisplayName(this.currentResultJobName(), structureOrdinal);
+  }
+
+  scaffoldLegendLabel(): string {
+    return resolveJobNameLabel(this.currentResultJobName());
   }
 
   placeholderAssignmentsForStructure(structure: SmileitGeneratedStructureView): Array<{
@@ -314,5 +316,9 @@ export class GenerationResultPanelComponent {
       svg: detailSvg,
     };
     this.selectedGeneratedStructure.set(updatedStructure);
+  }
+
+  private currentResultJobName(): string {
+    return this.workflow.resultData()?.exportNameBase ?? this.workflow.exportNameBase();
   }
 }

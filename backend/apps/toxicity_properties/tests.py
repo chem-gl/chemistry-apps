@@ -34,6 +34,7 @@ class ToxicityCsvBuilderTests(TestCase):
         """El encabezado del CSV debe incluir las cinco columnas definidas."""
         molecules: list[ToxicityMoleculeResult] = [
             {
+                "name": "ethanol",
                 "smiles": "CCO",
                 "LD50_mgkg": 430.2,
                 "mutagenicity": "Negative",
@@ -49,7 +50,7 @@ class ToxicityCsvBuilderTests(TestCase):
 
         self.assertEqual(
             lines[0],
-            "smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score",
+            "name,smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score",
         )
         self.assertEqual(len(lines), 2)
 
@@ -79,8 +80,11 @@ class ToxicityMappingTests(TestCase):
             error_message=None,
         )
 
-        molecule_result = _build_molecule_result("CCO", prediction_result)
+        molecule_result = _build_molecule_result(
+            {"name": "ethanol", "smiles": "CCO"}, prediction_result
+        )
 
+        self.assertEqual(molecule_result["name"], "ethanol")
         self.assertEqual(molecule_result["LD50_mgkg"], 430.2)
         self.assertEqual(molecule_result["mutagenicity"], "Negative")
         self.assertEqual(molecule_result["ames_score"], 0.21)
@@ -131,7 +135,12 @@ class ToxicityPluginTests(TestCase):
             log_events.append((level, source, message))
 
         result_payload = toxicity_properties_plugin(
-            {"smiles_list": ["CCO", "c1ccccc1"]},
+            {
+                "molecules": [
+                    {"name": "ethanol", "smiles": "CCO"},
+                    {"name": "benzene", "smiles": "c1ccccc1"},
+                ]
+            },
             _capture_progress,
             _capture_log,
         )
@@ -139,6 +148,7 @@ class ToxicityPluginTests(TestCase):
         molecules = result_payload["molecules"]
         self.assertEqual(result_payload["total"], 2)
         self.assertEqual(len(molecules), 2)
+        self.assertEqual(molecules[0]["name"], "ethanol")
         self.assertEqual(molecules[0]["LD50_mgkg"], 123.45)
         self.assertEqual(molecules[0]["mutagenicity"], "Positive")
         self.assertEqual(molecules[0]["DevTox"], "Negative")
@@ -171,7 +181,7 @@ class ToxicityPluginTests(TestCase):
 
         with self.assertRaises(RuntimeError):
             toxicity_properties_plugin(
-                {"smiles_list": ["CCO"]},
+                {"molecules": [{"name": "ethanol", "smiles": "CCO"}]},
                 _noop_progress,
                 _noop_log,
             )
@@ -249,6 +259,7 @@ class ToxicityContractApiTests(TestCase):
         result_payload = retrieve_response.data["results"]
         molecules = result_payload["molecules"]
         self.assertEqual(result_payload["total"], 1)
+        self.assertEqual(molecules[0]["name"], "CCO")
         self.assertEqual(molecules[0]["smiles"], "CCO")
         self.assertEqual(molecules[0]["LD50_mgkg"], 321.0)
         self.assertEqual(molecules[0]["mutagenicity"], "Negative")
@@ -293,7 +304,7 @@ class ToxicityContractApiTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("smiles", response.data)
+        self.assertIn("molecules", response.data)
 
     def test_create_rejects_incompatible_smiles(self) -> None:
         """Debe rechazar payloads con SMILES no compatibles con RDKit."""
@@ -303,7 +314,7 @@ class ToxicityContractApiTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("smiles", response.data)
+        self.assertIn("molecules", response.data)
 
     def test_report_csv_returns_download_for_completed_job(self) -> None:
         """Debe descargar CSV cuando el job está completado."""
@@ -311,13 +322,14 @@ class ToxicityContractApiTests(TestCase):
             plugin_name=PLUGIN_NAME,
             algorithm_version="1.0.0",
             job_hash="tox-csv-job-hash-000000000000000000000000000000000000000000000000",
-            parameters={"smiles_list": ["CCO"]},
+            parameters={"molecules": [{"name": "ethanol", "smiles": "CCO"}]},
             status="completed",
             cache_hit=False,
             cache_miss=True,
             results={
                 "molecules": [
                     {
+                        "name": "ethanol",
                         "smiles": "CCO",
                         "LD50_mgkg": 430.2,
                         "mutagenicity": "Negative",
@@ -337,7 +349,8 @@ class ToxicityContractApiTests(TestCase):
         self.assertIn("text/csv", str(response["Content-Type"]))
         csv_content: str = response.content.decode("utf-8")
         self.assertIn(
-            "smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score", csv_content
+            "name,smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score",
+            csv_content,
         )
         self.assertIn("CCO", csv_content)
 
@@ -347,7 +360,7 @@ class ToxicityContractApiTests(TestCase):
             plugin_name=PLUGIN_NAME,
             algorithm_version="1.0.0",
             job_hash="tox-pending-job-hash-0000000000000000000000000000000000000000000000",
-            parameters={"smiles_list": ["CCO"]},
+            parameters={"molecules": [{"name": "ethanol", "smiles": "CCO"}]},
             status="pending",
             cache_hit=False,
             cache_miss=True,
@@ -364,7 +377,7 @@ class ToxicityContractApiTests(TestCase):
             plugin_name=PLUGIN_NAME,
             algorithm_version="1.0.0",
             job_hash="tox-log-job-hash-000000000000000000000000000000000000000000000000",
-            parameters={"smiles_list": ["CCO"]},
+            parameters={"molecules": [{"name": "ethanol", "smiles": "CCO"}]},
             status="completed",
             cache_hit=False,
             cache_miss=True,
@@ -384,7 +397,7 @@ class ToxicityContractApiTests(TestCase):
             plugin_name=PLUGIN_NAME,
             algorithm_version="1.0.0",
             job_hash="tox-error-job-hash-00000000000000000000000000000000000000000000000",
-            parameters={"smiles_list": ["CCO"]},
+            parameters={"molecules": [{"name": "ethanol", "smiles": "CCO"}]},
             status="failed",
             cache_hit=False,
             cache_miss=True,

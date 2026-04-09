@@ -18,8 +18,8 @@ from ._smileit_builders import (
     GeneratedCandidate,
     GeneratedNode,
     PendingFusionAttempt,
-    SiteOptionSignature,
     SiteOption,
+    SiteOptionSignature,
     _build_allowed_signatures_by_site,
     _build_pending_fusion_attempts,
     _build_placeholder_assignments,
@@ -43,44 +43,68 @@ LOG_PROGRESS_BATCH_SIZE: Final[int] = 50
 ATTEMPT_PROGRESS_BATCH_SIZE: Final[int] = 100
 
 
-def _resolve_principal_site_indices_for_node(
+def _resolve_principal_site_index_maps_for_node(
     principal_smiles: str,
     derivative_smiles: str,
     selected_atom_indices: list[int],
-) -> dict[int, int]:
-    """Resuelve índices de sitio de la principal sobre el nodo derivado actual."""
+) -> list[dict[int, int]]:
+    """Resuelve todos los mapeos válidos del scaffold principal sobre el derivado.
+
+    RDKit puede encontrar múltiples embeddings del scaffold principal dentro del
+    derivado actual. Si solo se conserva el primero, las rondas siguientes pueden
+    perder combinaciones válidas cuando otro embedding expone sitios restantes
+    distintos. Por eso este helper devuelve todos los matches con la mejor
+    puntuación química disponible.
+    """
     principal_molecule = parse_smiles_cached(principal_smiles)
     derivative_molecule = parse_smiles_cached(derivative_smiles)
     if principal_molecule is None or derivative_molecule is None:
-        return {}
+        return []
 
     all_principal_matches = derivative_molecule.GetSubstructMatches(principal_molecule)
     if len(all_principal_matches) == 0:
-        return {}
+        return []
 
-    best_match = all_principal_matches[0]
+    candidate_matches = list(all_principal_matches)
     if len(selected_atom_indices) > 0:
-        best_score = _score_principal_match_for_sites(
-            derivative_molecule=derivative_molecule,
-            principal_match=best_match,
-            principal_site_atom_indices=selected_atom_indices,
-        )
-        for candidate_match in all_principal_matches[1:]:
-            candidate_score = _score_principal_match_for_sites(
-                derivative_molecule=derivative_molecule,
-                principal_match=candidate_match,
-                principal_site_atom_indices=selected_atom_indices,
+        scored_matches = [
+            (
+                _score_principal_match_for_sites(
+                    derivative_molecule=derivative_molecule,
+                    principal_match=principal_match,
+                    principal_site_atom_indices=selected_atom_indices,
+                ),
+                principal_match,
             )
-            if candidate_score > best_score:
-                best_match = candidate_match
-                best_score = candidate_score
+            for principal_match in all_principal_matches
+        ]
+        best_score = max(score for score, _principal_match in scored_matches)
+        candidate_matches = [
+            principal_match
+            for score, principal_match in scored_matches
+            if score == best_score
+        ]
 
-    resolved_site_indices: dict[int, int] = {}
-    for site_atom_index in selected_atom_indices:
-        if site_atom_index < len(best_match):
-            resolved_site_indices[site_atom_index] = int(best_match[site_atom_index])
+    resolved_site_index_maps: list[dict[int, int]] = []
+    seen_map_signatures: set[tuple[tuple[int, int], ...]] = set()
+    for principal_match in candidate_matches:
+        resolved_site_indices: dict[int, int] = {}
+        for site_atom_index in selected_atom_indices:
+            if site_atom_index < len(principal_match):
+                resolved_site_indices[site_atom_index] = int(
+                    principal_match[site_atom_index]
+                )
 
-    return resolved_site_indices
+        map_signature = tuple(sorted(resolved_site_indices.items()))
+        if map_signature in seen_map_signatures:
+            continue
+        seen_map_signatures.add(map_signature)
+        resolved_site_index_maps.append(resolved_site_indices)
+
+    return sorted(
+        resolved_site_index_maps,
+        key=lambda resolved_site_indices: tuple(sorted(resolved_site_indices.items())),
+    )
 
 
 # =========================
@@ -150,7 +174,9 @@ def _is_traceability_sequence_valid(
             event["substituent_smiles"],
             0,
         )
-        valid_signatures_for_site = allowed_signatures_by_site.get(site_atom_index, set())
+        valid_signatures_for_site = allowed_signatures_by_site.get(
+            site_atom_index, set()
+        )
 
         # El ancla se ignora en esta validación para no acoplarla a cómo se serializa el evento.
         is_signature_allowed = any(
@@ -320,39 +346,75 @@ def _materialize_generated_structures(
 # =========================
 
 
-def _expand_derivatives_from_node(
+def _build_pending_attempts_for_node_embeddings(
+    *,
     node: GeneratedNode,
-    round_index: int,
-    derivative_counter: int,
     context: ExpansionContext,
-) -> ExpansionSummary:
-    """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
+    resolved_site_index_maps: list[dict[int, int]],
+    used_principal_sites: set[int],
+) -> list[PendingFusionAttempt]:
+    """Construye intentos únicos considerando todos los embeddings válidos.
+
+    Separamos este paso para mantener la expansión principal legible y para poder
+    deduplicar intentos equivalentes antes de pasar por validación/pesado de RDKit.
+    """
+    pending_attempts: list[PendingFusionAttempt] = []
+    seen_attempt_signatures: set[tuple[int, int, str, int, str, int, str, int, int]] = (
+        set()
+    )
+
+    for resolved_site_indices in resolved_site_index_maps:
+        for pending_attempt in _build_pending_fusion_attempts(
+            node=node,
+            selected_atom_indices=context.selected_atom_indices,
+            site_option_map=context.site_option_map,
+            resolved_site_indices=resolved_site_indices,
+            num_bonds=context.num_bonds,
+        ):
+            if pending_attempt.principal_site_atom_index in used_principal_sites:
+                continue
+
+            attempt_signature = (
+                pending_attempt.principal_site_atom_index,
+                pending_attempt.resolved_site_atom_index,
+                pending_attempt.site_option.block_label,
+                pending_attempt.site_option.block_priority,
+                pending_attempt.site_option.substituent["stable_id"],
+                pending_attempt.site_option.substituent["version"],
+                pending_attempt.site_option.substituent["smiles"],
+                pending_attempt.selected_anchor,
+                pending_attempt.bond_order,
+            )
+            if attempt_signature in seen_attempt_signatures:
+                continue
+
+            seen_attempt_signatures.add(attempt_signature)
+            pending_attempts.append(pending_attempt)
+
+    pending_attempts.sort(
+        key=lambda pending_attempt: (
+            pending_attempt.principal_site_atom_index,
+            pending_attempt.resolved_site_atom_index,
+            pending_attempt.site_option.block_priority,
+            pending_attempt.site_option.substituent["stable_id"],
+            pending_attempt.site_option.substituent["version"],
+            pending_attempt.selected_anchor,
+            pending_attempt.bond_order,
+            pending_attempt.site_option.block_label,
+        )
+    )
+    return pending_attempts
+
+
+def _prepare_attempts_for_resolution(
+    *,
+    pending_attempts: list[PendingFusionAttempt],
+    context: ExpansionContext,
+) -> tuple[int, list[PendingFusionAttempt]]:
+    """Filtra intentos inviables antes de invocar la resolución pesada de RDKit."""
     attempts_processed = 0
-    rejected_fusions = 0
-    duplicate_structures = 0
-    resolved_site_indices = _resolve_principal_site_indices_for_node(
-        principal_smiles=context.principal_smiles,
-        derivative_smiles=node.smiles,
-        selected_atom_indices=context.selected_atom_indices,
-    )
-    used_principal_sites = {
-        int(trace_event["site_atom_index"]) for trace_event in node.traceability
-    }
-
-    pending_attempts = _build_pending_fusion_attempts(
-        node=node,
-        selected_atom_indices=context.selected_atom_indices,
-        site_option_map=context.site_option_map,
-        resolved_site_indices=resolved_site_indices,
-        num_bonds=context.num_bonds,
-    )
-    pending_attempts = [
-        pending_attempt
-        for pending_attempt in pending_attempts
-        if pending_attempt.principal_site_atom_index not in used_principal_sites
-    ]
-
     attempts_to_resolve: list[PendingFusionAttempt] = []
+
     for pending_attempt in pending_attempts:
         attempts_processed += 1
         if pending_attempt.attempt_key in context.attempt_cache:
@@ -369,6 +431,48 @@ def _expand_derivatives_from_node(
             continue
 
         attempts_to_resolve.append(pending_attempt)
+
+    return attempts_processed, attempts_to_resolve
+
+
+def _expand_derivatives_from_node(
+    node: GeneratedNode,
+    round_index: int,
+    derivative_counter: int,
+    context: ExpansionContext,
+) -> ExpansionSummary:
+    """Expande derivados desde un nodo base para reducir complejidad ciclomática."""
+    attempts_processed = 0
+    rejected_fusions = 0
+    duplicate_structures = 0
+    resolved_site_index_maps = _resolve_principal_site_index_maps_for_node(
+        principal_smiles=context.principal_smiles,
+        derivative_smiles=node.smiles,
+        selected_atom_indices=context.selected_atom_indices,
+    )
+    if len(resolved_site_index_maps) == 0:
+        return ExpansionSummary(
+            derivative_counter=derivative_counter,
+            attempts_processed=attempts_processed,
+            rejected_fusions=rejected_fusions,
+            duplicate_structures=duplicate_structures,
+            reached_limit=False,
+        )
+
+    used_principal_sites = {
+        int(trace_event["site_atom_index"]) for trace_event in node.traceability
+    }
+
+    pending_attempts = _build_pending_attempts_for_node_embeddings(
+        node=node,
+        context=context,
+        resolved_site_index_maps=resolved_site_index_maps,
+        used_principal_sites=used_principal_sites,
+    )
+    attempts_processed, attempts_to_resolve = _prepare_attempts_for_resolution(
+        pending_attempts=pending_attempts,
+        context=context,
+    )
 
     _resolve_pending_fusion_attempts(
         attempt_cache=context.attempt_cache,
@@ -492,7 +596,9 @@ def _generate_derivatives(
             principal_smiles=principal_smiles,
             selected_atom_indices=selected_atom_indices,
             site_option_map=site_option_map,
-            allowed_signatures_by_site=_build_allowed_signatures_by_site(site_option_map),
+            allowed_signatures_by_site=_build_allowed_signatures_by_site(
+                site_option_map
+            ),
             num_bonds=num_bonds,
             seen_smiles=seen_smiles,
             attempt_cache=attempt_cache,

@@ -13,6 +13,7 @@ import { SmilesBatchInputComponent } from '../core/shared/components/smiles-batc
 import {
   downloadBlobFile,
   HistoricalJobWorkflowPort,
+  NamedSmilesInputRow,
 } from '../core/shared/scientific-app-ui.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 
@@ -36,6 +37,14 @@ export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
 
   protected override get workflowSmilesInput(): WritableSignal<string> {
     return this.workflow.smilesInput;
+  }
+
+  protected override get workflowInputRows(): WritableSignal<NamedSmilesInputRow[]> {
+    return this.workflow.inputRows;
+  }
+
+  protected override get workflowCustomNamesEnabled(): WritableSignal<boolean> {
+    return this.workflow.customNamesEnabled;
   }
 
   protected override get workflowPort(): HistoricalJobWorkflowPort {
@@ -74,4 +83,3 @@ export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
     return molecule.error_message !== null && molecule.error_message.trim() !== '';
   }
 }
-

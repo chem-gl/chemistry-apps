@@ -30,7 +30,7 @@ export interface SAScoreServiceInterface {
      * @endpoint post /api/sa-score/jobs/
      * @param saScoreJobCreateRequest 
      */
-    saScoreJobsCreate(saScoreJobCreateRequest: SaScoreJobCreateRequest, extraHttpRequestParams?: any): Observable<SaScoreJobResponse>;
+    saScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, extraHttpRequestParams?: any): Observable<SaScoreJobResponse>;
 
     /**
      * Descargar CSV por método específico

@@ -2,10 +2,11 @@
 // Uso: importar cuando se necesiten parámetros de despacho o respuestas de toxicidad.
 
 import { ToxicityJobResponse, ToxicityMoleculeResult } from '../generated';
+import { NamedSmilesJobMolecule } from './named-smiles-api.types';
 
 /** Payload tipado para crear jobs de Toxicity Properties desde UI. */
 export interface ToxicityPropertiesParams {
-  smiles: string[];
+  molecules: NamedSmilesJobMolecule[];
   version?: string;
 }
 

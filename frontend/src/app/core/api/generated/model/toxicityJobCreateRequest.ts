@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ToxicityMoleculeInputRequest } from './toxicityMoleculeInputRequest';
 
 
 /**
@@ -16,7 +17,11 @@ export interface ToxicityJobCreateRequest {
     /**
      * Lista de SMILES a evaluar. No se aplica límite de negocio; el procesamiento es por bloques internos.
      */
-    smiles: Array<string>;
+    smiles?: Array<string>;
+    /**
+     * Lista de moléculas con formato {name, smiles}. Si name se omite o queda vacío, se usa smiles como nombre.
+     */
+    molecules?: Array<ToxicityMoleculeInputRequest>;
     /**
      * Versión de algoritmo a persistir en el job.
      */

@@ -51,13 +51,10 @@ export class ToxicityPropertiesService extends BaseService implements ToxicityPr
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ToxicityJobResponse>;
-    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ToxicityJobResponse>>;
-    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ToxicityJobResponse>>;
-    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (toxicityJobCreateRequest === null || toxicityJobCreateRequest === undefined) {
-            throw new Error('Required parameter toxicityJobCreateRequest was null or undefined when calling toxicityPropertiesJobsCreate.');
-        }
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ToxicityJobResponse>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ToxicityJobResponse>>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ToxicityJobResponse>>;
+    public toxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 

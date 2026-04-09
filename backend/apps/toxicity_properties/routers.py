@@ -8,6 +8,12 @@ from __future__ import annotations
 
 from typing import cast
 
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import status, viewsets
+from rest_framework.request import Request
+from rest_framework.response import Response
+
 from apps.core.base_router import ScientificAppViewSetMixin
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.models import ScientificJob
@@ -15,11 +21,6 @@ from apps.core.reporting import escape_csv_cell
 from apps.core.schemas import ErrorResponseSerializer
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
-from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiResponse, extend_schema
-from rest_framework import status, viewsets
-from rest_framework.request import Request
-from rest_framework.response import Response
 
 from .definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from .schemas import ToxicityJobCreateSerializer, ToxicityJobResponseSerializer
@@ -28,11 +29,14 @@ from .types import ToxicityJobResult, ToxicityMoleculeResult
 
 def _build_toxicity_csv(molecules: list[ToxicityMoleculeResult]) -> str:
     """Construye CSV con columnas fijas de propiedades toxicológicas."""
-    header_line: str = "smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score"
+    header_line: str = (
+        "name,smiles,LD50_mgkg,mutagenicity,ames_score,DevTox,devtox_score"
+    )
 
     data_lines: list[str] = []
     for molecule in molecules:
         row_values: list[str] = [
+            escape_csv_cell(molecule["name"]),
             escape_csv_cell(molecule["smiles"]),
             "" if molecule["LD50_mgkg"] is None else f"{molecule['LD50_mgkg']:.6f}",
             "" if molecule["mutagenicity"] is None else molecule["mutagenicity"],
@@ -95,7 +99,7 @@ class ToxicityPropertiesJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
             dict[str, object], serializer.validated_data
         )
         parameters_payload: JSONMap = {
-            "smiles_list": validated_data["smiles"],
+            "molecules": validated_data["molecules"],
         }
         version_value: str = str(
             validated_data.get("version", DEFAULT_ALGORITHM_VERSION)

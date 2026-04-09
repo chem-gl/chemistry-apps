@@ -125,6 +125,8 @@ class BuildDerivationsImagesZipTests(TestCase):
         with ZipFile(BytesIO(result_bytes)) as zf:
             # Solo debe contener generated_smiles.txt (sin SVG)
             self.assertIn("generated_smiles.txt", zf.namelist())
+            smiles_content = zf.read("generated_smiles.txt").decode("utf-8")
+            self.assertIn("c1ccccc1\tSMILEIT molecula principal", smiles_content)
             svg_files = [n for n in zf.namelist() if n.endswith(".svg")]
             self.assertEqual(len(svg_files), 0)
 
@@ -159,7 +161,7 @@ class BuildDerivationsImagesZipTests(TestCase):
             svg_files = [n for n in names if n.endswith(".svg")]
             # Ambas estructuras tienen SVG válido, nombres únicos
             if len(svg_files) == 2:
-                self.assertNotEqual(svg_files[0], svg_files[1])
+                self.assertEqual(svg_files, ["dSMILEIT1.svg", "dSMILEIT2.svg"])
 
     def test_empty_svg_structure_is_skipped(self) -> None:
         """Estructura que genera SVG vacío debe saltar (continue) sin añadir al ZIP."""
@@ -266,3 +268,56 @@ class ResolveJobStructureByIndexTests(TestCase):
         result = resolve_job_structure_by_index(results, 0)  # type: ignore[arg-type]
         self.assertIsNotNone(result)
         self.assertEqual(result["smiles"], "CCO")  # type: ignore[index]
+
+
+class BuildStructuresExportsContractTests(TestCase):
+    """Prueba el contrato nuevo de nombres para CSV y SMI/TXT."""
+
+    def test_csv_includes_name_column_as_first_field(self) -> None:
+        """El CSV debe exponer la columna name como primer campo usando d{jobName}{N}."""
+        from .routers.exports import build_structures_csv
+
+        content = build_structures_csv(
+            {
+                "principal_smiles": "c1ccccc1",
+                "export_name_base": "EDA",
+                "generated_structures": [
+                    {
+                        "smiles": "Cc1ccccc1",
+                        "traceability": [
+                            {
+                                "site_atom_index": 1,
+                                "round_index": 1,
+                                "block_priority": 1,
+                                "substituent_name": "Me",
+                                "substituent_smiles": "C",
+                            }
+                        ],
+                    }
+                ],
+            }
+        )  # type: ignore[arg-type]
+
+        first_line, second_line, third_line = content.splitlines()
+        self.assertEqual(
+            first_line,
+            "name,generated_smiles,compound_name,principal_smiles,substituent_smiles,applied_positions",
+        )
+        self.assertTrue(second_line.startswith("dEDA1,c1ccccc1,"))
+        self.assertTrue(third_line.startswith("dEDA2,Cc1ccccc1,"))
+
+    def test_smiles_export_contains_only_principal_and_derivative_smiles(self) -> None:
+        """El export SMILES/TXT debe contener solo líneas SMILES sin nombres tabulados."""
+        from .routers.exports import build_enumerated_smiles_export
+
+        content = build_enumerated_smiles_export(
+            {
+                "principal_smiles": "c1ccccc1",
+                "export_name_base": "EDA",
+                "generated_structures": [{"smiles": "Cc1ccccc1"}],
+            }
+        )  # type: ignore[arg-type]
+
+        content_lines = content.splitlines()
+        self.assertEqual(content_lines[0], "c1ccccc1")
+        self.assertEqual(content_lines[1], "Cc1ccccc1")

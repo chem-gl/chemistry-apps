@@ -3,12 +3,14 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NamedSmilesInputRow } from '../../scientific-app-ui.utils';
 
 @Component({
   selector: 'app-smiles-batch-input',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './smiles-batch-input.component.html',
+  styleUrl: './smiles-batch-input.component.scss',
 })
 export class SmilesBatchInputComponent {
   /** Valor actual del textarea de SMILES. */
@@ -20,8 +22,20 @@ export class SmilesBatchInputComponent {
   /** Número de filas SMILES detectadas (sin blancos). */
   @Input() lineCount: number = 0;
 
+  /** Filas parseadas del lote para edición opcional de nombres personalizados. */
+  @Input() inputRows: NamedSmilesInputRow[] = [];
+
+  /** Indica si la tabla de nombres personalizados debe estar visible. */
+  @Input() customNamesEnabled: boolean = false;
+
   /** Emitido cuando el usuario edita el textarea; lleva el nuevo valor completo. */
   @Output() smilesChange = new EventEmitter<string>();
+
+  /** Emitido al activar o desactivar la edición de nombres personalizados. */
+  @Output() customNamesEnabledChange = new EventEmitter<boolean>();
+
+  /** Emitido al editar el nombre de una fila concreta. */
+  @Output() rowNameChange = new EventEmitter<{ index: number; name: string }>();
 
   /** Emitido al pulsar el botón "Draw SMILES". */
   @Output() openSketch = new EventEmitter<void>();
