@@ -6,9 +6,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import {
+  buildSmilesTextFromRows,
   closeDialogOnBackdropClick,
   downloadBlobFile,
   HistoricalJobWorkflowPort,
+  parseNamedSmilesBatch,
   parseSmilesLines,
   subscribeToRouteHistoricalJob,
 } from './scientific-app-ui.utils';
@@ -18,6 +20,54 @@ describe('scientific-app-ui.utils', () => {
     const raw = `# comment\nC C O\n\n  # another\nN`;
     const result = parseSmilesLines(raw);
     expect(result).toBe('C C O\nN');
+  });
+
+  it('parseNamedSmilesBatch interpreta csv con name en primera columna y smiles en segunda', () => {
+    const parsed = parseNamedSmilesBatch('name,smiles\nethanol,CCO\nbenzene,c1ccccc1');
+
+    expect(parsed.containsExplicitNames).toBe(true);
+    expect(parsed.rows).toEqual([
+      { name: 'ethanol', smiles: 'CCO' },
+      { name: 'benzene', smiles: 'c1ccccc1' },
+    ]);
+  });
+
+  it('parseNamedSmilesBatch ignora cabecera csv con BOM UTF-8', () => {
+    const parsed = parseNamedSmilesBatch('\uFEFFname,smiles\nethanol,CCO\nbenzene,c1ccccc1');
+
+    expect(parsed.rows).toEqual([
+      { name: 'ethanol', smiles: 'CCO' },
+      { name: 'benzene', smiles: 'c1ccccc1' },
+    ]);
+  });
+
+  it('parseNamedSmilesBatch ignora cabecera de una sola columna smiles', () => {
+    const parsed = parseNamedSmilesBatch('SMILES\nCCO\nN#N');
+
+    expect(parsed.containsExplicitNames).toBe(false);
+    expect(parsed.rows).toEqual([
+      { name: 'CCO', smiles: 'CCO' },
+      { name: 'N#N', smiles: 'N#N' },
+    ]);
+  });
+
+  it('parseNamedSmilesBatch usa smiles como nombre por defecto en listas simples', () => {
+    const parsed = parseNamedSmilesBatch('CCO\nN#N');
+
+    expect(parsed.containsExplicitNames).toBe(false);
+    expect(parsed.rows).toEqual([
+      { name: 'CCO', smiles: 'CCO' },
+      { name: 'N#N', smiles: 'N#N' },
+    ]);
+  });
+
+  it('buildSmilesTextFromRows genera el textarea canonico solo con smiles', () => {
+    const result = buildSmilesTextFromRows([
+      { name: 'ethanol', smiles: 'CCO' },
+      { name: 'benzene', smiles: 'c1ccccc1' },
+    ]);
+
+    expect(result).toBe('CCO\nc1ccccc1');
   });
 
   it('subscribeToRouteHistoricalJob llama loadHistory y openHistoricalJob cuando hay jobId', () => {

@@ -22,11 +22,14 @@ export interface SaScoreResultData {
 
 @Injectable()
 export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResultData> {
+  constructor() {
+    super('CCO\nCC(=O)O\nc1ccccc1');
+  }
+
   protected override get defaultProgressMessage(): string {
     return 'Preparing SA score calculation...';
   }
 
-  readonly smilesInput = signal<string>('CCO\nCC(=O)O\nc1ccccc1');
   readonly selectedMethods = signal<Record<SaScoreMethod, boolean>>({
     ambit: true,
     brsa: true,
@@ -53,8 +56,8 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
   override dispatch(): void {
     this.prepareForDispatch();
 
-    const normalizedSmiles: string[] = this.parseSmilesInput(this.smilesInput());
-    if (normalizedSmiles.length === 0) {
+    const normalizedRows = this.buildNamedInputRows();
+    if (normalizedRows.length === 0) {
       this.activeSection.set('error');
       this.errorMessage.set('At least one SMILES is required.');
       return;
@@ -68,40 +71,42 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
     }
 
     const dispatchParams: SaScoreParams = {
-      smiles: normalizedSmiles,
+      molecules: normalizedRows,
       methods: enabledMethods,
       version: '1.0.0',
     };
 
-    this.jobsApiService.validateSmilesCompatibility(normalizedSmiles).subscribe({
-      next: (validationResult: SmilesCompatibilityResultView) => {
-        if (!validationResult.compatible) {
-          this.activeSection.set('error');
-          this.errorMessage.set(this.buildSmilesCompatibilityErrorMessage(validationResult));
-          return;
-        }
-
-        this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
-          next: (jobResponse: SaScoreJobResponseView) => {
-            this.handleDispatchJobResponse(
-              jobResponse,
-              (job) => this.extractResultData(job),
-              'SA score',
-            );
-          },
-          error: (dispatchError: Error) => {
+    this.jobsApiService
+      .validateSmilesCompatibility(normalizedRows.map((rowValue) => rowValue.smiles))
+      .subscribe({
+        next: (validationResult: SmilesCompatibilityResultView) => {
+          if (!validationResult.compatible) {
             this.activeSection.set('error');
-            this.errorMessage.set(`Unable to create SA score job: ${dispatchError.message}`);
-          },
-        });
-      },
-      error: (validationError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(
-          `Unable to validate SMILES compatibility: ${validationError.message}`,
-        );
-      },
-    });
+            this.errorMessage.set(this.buildSmilesCompatibilityErrorMessage(validationResult));
+            return;
+          }
+
+          this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
+            next: (jobResponse: SaScoreJobResponseView) => {
+              this.handleDispatchJobResponse(
+                jobResponse,
+                (job) => this.extractResultData(job),
+                'SA score',
+              );
+            },
+            error: (dispatchError: Error) => {
+              this.activeSection.set('error');
+              this.errorMessage.set(`Unable to create SA score job: ${dispatchError.message}`);
+            },
+          });
+        },
+        error: (validationError: Error) => {
+          this.activeSection.set('error');
+          this.errorMessage.set(
+            `Unable to validate SMILES compatibility: ${validationError.message}`,
+          );
+        },
+      });
   }
 
   override loadHistory(): void {

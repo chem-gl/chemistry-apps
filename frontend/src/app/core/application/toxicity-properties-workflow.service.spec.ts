@@ -4,12 +4,12 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-    DownloadedReportFile,
-    JobLogsPageView,
-    JobsApiService,
-    ScientificJobView,
-    SmilesCompatibilityResultView,
-    ToxicityJobResponseView,
+  DownloadedReportFile,
+  JobLogsPageView,
+  JobsApiService,
+  ScientificJobView,
+  SmilesCompatibilityResultView,
+  ToxicityJobResponseView,
 } from '../api/jobs-api.service';
 import { ToxicityPropertiesWorkflowService } from './toxicity-properties-workflow.service';
 
@@ -32,11 +32,12 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     paused_at: null,
     resumed_at: null,
     parameters: {
-      smiles_list: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
     },
     results: {
       molecules: [
         {
+          name: 'CCO',
           smiles: 'CCO',
           LD50_mgkg: 430.2,
           mutagenicity: 'Negative',
@@ -66,11 +67,12 @@ function makeToxicityJobResponse(
     progress_stage: 'completed',
     progress_message: 'Completed',
     parameters: {
-      smiles_list: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
     },
     results: {
       molecules: [
         {
+          name: 'CCO',
           smiles: 'CCO',
           LD50_mgkg: 430.2,
           mutagenicity: 'Negative',
@@ -151,13 +153,13 @@ describe('ToxicityPropertiesWorkflowService', () => {
   });
 
   it('dispatches toxicity job and stores completed result', () => {
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
 
     workflowService.dispatch();
 
     expect(jobsApiServiceMock.validateSmilesCompatibility).toHaveBeenCalledWith(['CCO']);
     expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).toHaveBeenCalledWith({
-      smiles: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
       version: '1.0.0',
     });
     expect(workflowService.activeSection()).toBe('result');
@@ -166,7 +168,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
   });
 
   it('keeps error section when smiles input is empty', () => {
-    workflowService.smilesInput.set('\n   \n\t');
+    workflowService.setBatchInputText('\n   \n\t');
 
     workflowService.dispatch();
 
@@ -236,7 +238,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
         issues: [{ smiles: 'not_a_smiles', reason: 'Unsupported SMILES' }],
       }),
     );
-    workflowService.smilesInput.set('CCO\nnot_a_smiles');
+    workflowService.setBatchInputText('CCO\nnot_a_smiles');
 
     workflowService.dispatch();
 
@@ -249,7 +251,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
       throwError(() => new Error('validator unavailable')),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
 
     workflowService.dispatch();
 
@@ -292,7 +294,10 @@ describe('ToxicityPropertiesWorkflowService', () => {
   });
 
   it('falls back to polling, de-duplicates logs and resolves the final toxicity result', () => {
-    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
     const logEvents$ = new Subject<{
       eventIndex: number;
       level: 'info' | 'warning' | 'error' | 'debug';
@@ -309,13 +314,28 @@ describe('ToxicityPropertiesWorkflowService', () => {
     jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
       of(makeToxicityJobResponse({ id: 'tox-progress-1' })),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
 
     workflowService.dispatch();
 
-    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
-    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
-    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'second',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 1,
+      level: 'debug',
+      message: 'first',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'duplicate',
+      createdAt: new Date().toISOString(),
+    });
     expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
 
     progressEvents$.error(new Error('sse offline'));
@@ -326,7 +346,10 @@ describe('ToxicityPropertiesWorkflowService', () => {
   });
 
   it('surfaces final toxicity retrieval errors after progress completes', () => {
-    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
 
     jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
       of(makeRunningToxicityJobResponse('tox-progress-error-1')),
@@ -336,7 +359,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
     jobsApiServiceMock.getToxicityPropertiesJobStatus.mockReturnValue(
       throwError(() => new Error('gateway timeout')),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
 
     workflowService.dispatch();
     progressEvents$.complete();

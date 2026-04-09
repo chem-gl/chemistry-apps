@@ -562,7 +562,7 @@ export class JobsApiService {
   /** Despacha un job SA score para una lista de SMILES y métodos seleccionados. */
   dispatchSaScoreJob(params: SaScoreParams): Observable<SaScoreJobResponseView> {
     const payload: SaScoreJobCreateRequest = {
-      smiles: params.smiles,
+      molecules: params.molecules,
       methods: params.methods,
       version: params.version ?? '1.0.0',
     };
@@ -601,7 +601,7 @@ export class JobsApiService {
     params: ToxicityPropertiesParams,
   ): Observable<ToxicityJobResponseView> {
     const payload: ToxicityJobCreateRequest = {
-      smiles: params.smiles,
+      molecules: params.molecules,
       version: params.version ?? '1.0.0',
     };
     return this.toxicityPropertiesClient.toxicityPropertiesJobsCreate(payload).pipe(shareReplay(1));

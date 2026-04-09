@@ -13,6 +13,7 @@
  * Serializa el resultado de SA score para una molécula individual.
  */
 export interface SaMoleculeResult { 
+    readonly name: string;
     readonly smiles: string;
     /**
      * AMBIT-SA en porcentaje (0-100).

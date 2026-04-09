@@ -47,7 +47,7 @@ from .types import SaMoleculeResult, SaScoreJobResult
 
 
 def _build_full_csv(molecules: list[SaMoleculeResult], methods: list[str]) -> str:
-    """Construye CSV con una columna por método solicitado más la columna smiles.
+    """Construye CSV con nombre, smiles y una columna por método solicitado.
 
     Nota de unidades:
     - `ambit_sa_percent`: AMBIT expone accesibilidad como porcentaje (0-100).
@@ -67,14 +67,17 @@ def _build_full_csv(molecules: list[SaMoleculeResult], methods: list[str]) -> st
         "brsa": "brsa_sa",
         "rdkit": "rdkit_sa",
     }
-    column_names: list[str] = ["smiles"] + [
+    column_names: list[str] = ["name", "smiles"] + [
         method_header_map[m] for m in active_methods
     ]
     header_line: str = ",".join(column_names)
 
     data_lines: list[str] = []
     for molecule in molecules:
-        row_values: list[str] = [escape_csv_cell(molecule["smiles"])]
+        row_values: list[str] = [
+            escape_csv_cell(molecule["name"]),
+            escape_csv_cell(molecule["smiles"]),
+        ]
         for method_key in active_methods:
             field_name: str = method_field_map[method_key]
             score_value: float | None = cast(float | None, molecule.get(field_name))
@@ -85,20 +88,28 @@ def _build_full_csv(molecules: list[SaMoleculeResult], methods: list[str]) -> st
 
 
 def _build_single_method_csv(molecules: list[SaMoleculeResult], method: str) -> str:
-    """Construye CSV para un método específico con encabezado según su unidad."""
+    """Construye CSV para un método específico con nombre y smiles."""
     method_field_map: dict[str, str] = {
         "ambit": "ambit_sa",
         "brsa": "brsa_sa",
         "rdkit": "rdkit_sa",
     }
     field_name: str = method_field_map[method]
-    header_line: str = "smiles,sa_percent" if method == "ambit" else "smiles,sa"
+    header_line: str = (
+        "name,smiles,sa_percent" if method == "ambit" else "name,smiles,sa"
+    )
 
     data_lines: list[str] = []
     for molecule in molecules:
         score_value: float | None = cast(float | None, molecule.get(field_name))
         sa_cell: str = "" if score_value is None else f"{score_value:.6f}"
-        row: str = f"{escape_csv_cell(molecule['smiles'])},{sa_cell}"
+        row: str = ",".join(
+            [
+                escape_csv_cell(molecule["name"]),
+                escape_csv_cell(molecule["smiles"]),
+                sa_cell,
+            ]
+        )
         data_lines.append(row)
 
     return "\n".join([header_line, *data_lines])
@@ -152,7 +163,7 @@ class SaScoreJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
             dict[str, object], serializer.validated_data
         )
         parameters_payload: JSONMap = {
-            "smiles_list": validated_data["smiles"],
+            "molecules": validated_data["molecules"],
             "methods": validated_data["methods"],
         }
         version_value: str = str(

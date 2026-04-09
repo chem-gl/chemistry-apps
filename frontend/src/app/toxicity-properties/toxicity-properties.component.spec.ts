@@ -13,26 +13,26 @@ import { ToxicityPropertiesComponent } from './toxicity-properties.component';
 describe('ToxicityPropertiesComponent', () => {
   const workflowMock = {
     smilesInput: signal<string>('CCO'),
+    inputRows: signal<Array<{ name: string; smiles: string }>>([{ name: 'CCO', smiles: 'CCO' }]),
+    customNamesEnabled: signal<boolean>(false),
     activeSection: signal<'idle' | 'dispatching' | 'progress' | 'result' | 'error'>('idle'),
     currentJobId: signal<string | null>(null),
     progressSnapshot: signal<unknown | null>(null),
     jobLogs: signal<unknown[]>([]),
-    resultData: signal<
-      | {
-          total: number;
-          molecules: Array<{
-            smiles: string;
-            LD50_mgkg: number | null;
-            mutagenicity: string | null;
-            ames_score: number | null;
-            DevTox: string | null;
-            devtox_score: number | null;
-            error_message: string | null;
-          }>;
-          scientificReferences: string[];
-        }
-      | null
-    >(null),
+    resultData: signal<{
+      total: number;
+      molecules: Array<{
+        smiles: string;
+        name: string;
+        LD50_mgkg: number | null;
+        mutagenicity: string | null;
+        ames_score: number | null;
+        DevTox: string | null;
+        devtox_score: number | null;
+        error_message: string | null;
+      }>;
+      scientificReferences: string[];
+    } | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
@@ -45,6 +45,22 @@ describe('ToxicityPropertiesComponent', () => {
     reset: vi.fn(),
     openHistoricalJob: vi.fn(),
     loadHistory: vi.fn(),
+    setBatchInputText: vi.fn((rawInput: string) => {
+      const normalizedRows = rawInput
+        .split(/\r?\n/)
+        .map((lineValue: string) => lineValue.trim())
+        .filter((lineValue: string) => lineValue.length > 0)
+        .map((smilesValue: string) => ({ name: smilesValue, smiles: smilesValue }));
+      workflowMock.smilesInput.set(normalizedRows.map((row) => row.smiles).join('\n'));
+      workflowMock.inputRows.set(normalizedRows);
+    }),
+    updateInputRowName: vi.fn((rowIndex: number, nextName: string) => {
+      workflowMock.inputRows.update((currentRows) =>
+        currentRows.map((rowValue, index) =>
+          index === rowIndex ? { ...rowValue, name: nextName } : rowValue,
+        ),
+      );
+    }),
     downloadCsvReport: vi.fn(() =>
       of({
         filename: 'toxicity_properties_report.csv',
@@ -69,6 +85,8 @@ describe('ToxicityPropertiesComponent', () => {
     vi.clearAllMocks();
 
     workflowMock.smilesInput.set('CCO');
+    workflowMock.inputRows.set([{ name: 'CCO', smiles: 'CCO' }]);
+    workflowMock.customNamesEnabled.set(false);
     workflowMock.activeSection.set('idle');
     workflowMock.currentJobId.set(null);
     workflowMock.progressSnapshot.set(null);
@@ -157,6 +175,7 @@ describe('ToxicityPropertiesComponent', () => {
     expect(component.formatDecimal(null)).toBe('-');
     expect(
       component.rowHasError({
+        name: 'ethanol',
         smiles: 'CCO',
         LD50_mgkg: null,
         mutagenicity: null,
@@ -267,6 +286,7 @@ describe('ToxicityPropertiesComponent', () => {
       total: 1,
       molecules: [
         {
+          name: 'ethanol',
           smiles: 'CCO',
           LD50_mgkg: 320.1234,
           mutagenicity: 'Negative',
@@ -307,7 +327,9 @@ describe('ToxicityPropertiesComponent', () => {
     workflowMock.progressMessage.set('Predicting molecules');
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('app-job-progress-card')).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-job-progress-card'),
+    ).not.toBeNull();
   });
 
   it('renders error banner and history table states from workflow signals', () => {
@@ -348,7 +370,7 @@ describe('ToxicityPropertiesComponent', () => {
     const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('');
+    workflowMock.setBatchInputText('');
     component.sketchDraftSmiles = '';
 
     await component.applySketch();
@@ -360,7 +382,7 @@ describe('ToxicityPropertiesComponent', () => {
     const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('');
+    workflowMock.setBatchInputText('');
     component.sketchDraftSmiles = 'CCO';
 
     await component.applySketch();
@@ -372,7 +394,7 @@ describe('ToxicityPropertiesComponent', () => {
     const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
     const component = fixture.componentInstance;
 
-    workflowMock.smilesInput.set('N#N');
+    workflowMock.setBatchInputText('N#N');
     component.sketchDraftSmiles = 'CCO';
 
     await component.applySketch();
@@ -446,6 +468,7 @@ describe('ToxicityPropertiesComponent', () => {
     const component = fixture.componentInstance;
 
     const baseRow = {
+      name: 'CCO',
       smiles: 'CCO',
       LD50_mgkg: null,
       mutagenicity: null,

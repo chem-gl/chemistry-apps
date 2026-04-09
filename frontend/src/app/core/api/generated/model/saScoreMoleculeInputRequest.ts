@@ -9,8 +9,11 @@
  */
 
 
-export interface TokenRefresh { 
-    readonly access: string;
-    refresh: string;
+/**
+ * Serializa una fila de entrada name/smiles para lotes de SA Score.
+ */
+export interface SaScoreMoleculeInputRequest { 
+    name?: string;
+    smiles: string;
 }
 

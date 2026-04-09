@@ -8,24 +8,42 @@ from __future__ import annotations
 
 from typing import cast
 
-from apps.core.models import ScientificJob
-from apps.core.types import JSONMap
 from drf_spectacular.utils import extend_schema_field
-from rdkit import Chem
 from rest_framework import serializers
 
+from apps.core.models import ScientificJob
+from apps.core.smiles_batch import normalize_named_smiles_entries
+from apps.core.types import JSONMap
+
 from .definitions import DEFAULT_ALGORITHM_VERSION
+
+
+class ToxicityMoleculeInputSerializer(serializers.Serializer):
+    """Serializa una fila de entrada name/smiles para Toxicity Properties."""
+
+    name = serializers.CharField(required=False, allow_blank=True, max_length=4096)
+    smiles = serializers.CharField(max_length=4096)
 
 
 class ToxicityJobCreateSerializer(serializers.Serializer):
     """Valida la creación de un job toxicológico por lista de SMILES."""
 
     smiles = serializers.ListField(
-        child=serializers.CharField(max_length=4096),
+        child=serializers.CharField(max_length=4096, allow_blank=True),
         min_length=1,
+        required=False,
+        write_only=True,
         help_text=(
             "Lista de SMILES a evaluar. "
             "No se aplica límite de negocio; el procesamiento es por bloques internos."
+        ),
+    )
+    molecules = ToxicityMoleculeInputSerializer(
+        many=True,
+        required=False,
+        help_text=(
+            "Lista de moléculas con formato {name, smiles}. "
+            "Si name se omite o queda vacío, se usa smiles como nombre."
         ),
     )
     version = serializers.CharField(
@@ -35,34 +53,34 @@ class ToxicityJobCreateSerializer(serializers.Serializer):
         help_text="Versión de algoritmo a persistir en el job.",
     )
 
-    def validate_smiles(self, value: list[str]) -> list[str]:
-        """Normaliza y valida compatibilidad de SMILES con RDKit."""
-        cleaned_smiles: list[str] = []
-        seen_smiles: set[str] = set()
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
+        """Normaliza la entrada a una lista única de moléculas name/smiles."""
+        raw_smiles_list: list[str] | None = cast(list[str] | None, attrs.get("smiles"))
+        raw_molecules: list[dict[str, object]] | None = cast(
+            list[dict[str, object]] | None, attrs.get("molecules")
+        )
 
-        for raw_smiles in value:
-            normalized_smiles: str = raw_smiles.strip()
-            if normalized_smiles == "":
-                continue
-            if normalized_smiles in seen_smiles:
-                continue
-            if Chem.MolFromSmiles(normalized_smiles) is None:
-                raise serializers.ValidationError(
-                    f"SMILES no compatible con RDKit: {normalized_smiles}"
-                )
-            seen_smiles.add(normalized_smiles)
-            cleaned_smiles.append(normalized_smiles)
-
-        if len(cleaned_smiles) == 0:
+        if raw_smiles_list is None and raw_molecules is None:
             raise serializers.ValidationError(
-                "La lista de SMILES no puede quedar vacía tras normalizar."
+                {"molecules": "Debe enviar `molecules` o `smiles` para crear el job."}
             )
-        return cleaned_smiles
+
+        try:
+            attrs["molecules"] = normalize_named_smiles_entries(
+                smiles_list=raw_smiles_list,
+                molecule_entries=raw_molecules,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError({"molecules": str(exc)}) from exc
+
+        attrs.pop("smiles", None)
+        return attrs
 
 
 class ToxicityMoleculeResultSerializer(serializers.Serializer):
     """Serializa una fila de la tabla de propiedades toxicológicas."""
 
+    name = serializers.CharField(read_only=True)
     smiles = serializers.CharField(read_only=True)
     LD50_mgkg = serializers.FloatField(read_only=True, allow_null=True)
     mutagenicity = serializers.CharField(read_only=True, allow_null=True)

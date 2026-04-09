@@ -9,8 +9,11 @@
  */
 
 
-export interface TokenRefresh { 
-    readonly access: string;
-    refresh: string;
+/**
+ * Serializa una fila de entrada name/smiles para Toxicity Properties.
+ */
+export interface ToxicityMoleculeInputRequest { 
+    name?: string;
+    smiles: string;
 }
 

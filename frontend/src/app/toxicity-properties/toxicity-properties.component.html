@@ -15,7 +15,10 @@
       <h3>Input</h3>
 
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
-        [lineCount]="lineCount()" (smilesChange)="workflow.smilesInput.set($event)" (openSketch)="openSketchDialog()"
+        [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
+        [customNamesEnabled]="workflow.customNamesEnabled()" (smilesChange)="workflow.setBatchInputText($event)"
+        (customNamesEnabledChange)="workflow.customNamesEnabled.set($event)"
+        (rowNameChange)="workflow.updateInputRowName($event.index, $event.name)" (openSketch)="openSketchDialog()"
         (fileUpload)="onFileUpload($event)"></app-smiles-batch-input>
 
       <div class="action-row">
@@ -32,109 +35,100 @@
       <h3>Results</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-        <p class="status-message">Submitting toxicity job to backend...</p>
+      <p class="status-message">Submitting toxicity job to backend...</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
-        <app-job-progress-card
-          [jobId]="workflow.currentJobId()"
-          [progressPercentage]="workflow.progressPercentage()"
-          [progressMessage]="workflow.progressMessage()"
-          progressAriaLabel="Toxicity job progress"
-        ></app-job-progress-card>
+      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
+        [progressMessage]="workflow.progressMessage()"
+        progressAriaLabel="Toxicity job progress"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-        <div class="metadata-grid">
-          <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
-          <p><strong>Model:</strong> ADMET-AI</p>
-          <p>
-            <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
-          </p>
-        </div>
+      <div class="metadata-grid">
+        <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
+        <p><strong>Model:</strong> ADMET-AI</p>
+        <p>
+          <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
+        </p>
+      </div>
 
-        <div class="action-row export-row">
-          <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-            {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-          </button>
-        </div>
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
+          {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+        </button>
+      </div>
 
-        @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-          <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-        }
+      @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+      <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+      }
 
-        <div class="table-wrap">
-          <table class="result-table">
-            <thead>
-              <tr>
-                <th>SMILES</th>
-                <th>LD50_mgkg</th>
-                <th>mutagenicity</th>
-                <th>ames_score</th>
-                <th>DevTox</th>
-                <th>devtox_score</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
-                <tr>
-                  <td>
-                    <button
-                      class="smiles-cell-btn"
-                      type="button"
-                      (click)="openMoleculeImageModal(molecule.smiles)"
-                      title="Click to view molecule structure"
-                    >
-                      {{ molecule.smiles }}
-                    </button>
-                  </td>
-                  <td>{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
-                  <td>{{ molecule.mutagenicity ?? '-' }}</td>
-                  <td>{{ formatDecimal(molecule.ames_score, 4) }}</td>
-                  <td>{{ molecule.DevTox ?? '-' }}</td>
-                  <td>{{ formatDecimal(molecule.devtox_score, 4) }}</td>
-                </tr>
-                @if (rowHasError(molecule)) {
-                  <tr>
-                    <td colspan="6">
-                      <p class="row-error">{{ molecule.error_message }}</p>
-                    </td>
-                  </tr>
-                }
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <section class="references-card" aria-label="Scientific references">
-          <h4>Scientific references</h4>
-          <div class="references-list">
-            @for (referenceItem of resultData.scientificReferences; track referenceItem) {
-              <p>{{ referenceItem }}</p>
+      <div class="table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SMILES</th>
+              <th>LD50_mgkg</th>
+              <th>mutagenicity</th>
+              <th>ames_score</th>
+              <th>DevTox</th>
+              <th>devtox_score</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
+            <tr>
+              <td>{{ molecule.name }}</td>
+              <td>
+                <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
+                  title="Click to view molecule structure">
+                  {{ molecule.smiles }}
+                </button>
+              </td>
+              <td>{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
+              <td>{{ molecule.mutagenicity ?? '-' }}</td>
+              <td>{{ formatDecimal(molecule.ames_score, 4) }}</td>
+              <td>{{ molecule.DevTox ?? '-' }}</td>
+              <td>{{ formatDecimal(molecule.devtox_score, 4) }}</td>
+            </tr>
+            @if (rowHasError(molecule)) {
+            <tr>
+              <td colspan="7">
+                <p class="row-error">{{ molecule.error_message }}</p>
+              </td>
+            </tr>
             }
-          </div>
-        </section>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <section class="references-card" aria-label="Scientific references">
+        <h4>Scientific references</h4>
+        <div class="references-list">
+          @for (referenceItem of resultData.scientificReferences; track referenceItem) {
+          <p>{{ referenceItem }}</p>
+          }
+        </div>
+      </section>
       }
 
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-        <p class="error-message" role="alert">{{ currentError }}</p>
+      <p class="error-message" role="alert">{{ currentError }}</p>
       }
     </section>
   </div>
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-<app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
-  emptyMessage="No historical toxicity jobs yet." sectionTitle="History" ariaLabel="Historical toxicity jobs"
-  (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"></app-job-history-table>
+  <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+    emptyMessage="No historical toxicity jobs yet." sectionTitle="History" ariaLabel="Historical toxicity jobs"
+    (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"></app-job-history-table>
 </section>
 
-<dialog
-  #sketchDialog
-  class="sketch-dialog"
-  (click)="onSketchDialogBackdropClick($event)"
-  (keydown)="onSketchDialogBackdropClick($event)"
->
+<dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"
+  (keydown)="onSketchDialogBackdropClick($event)">
   <section class="sketch-modal" aria-label="Draw SMILES with Ketcher">
     <h4>Draw SMILES</h4>
     <p class="hint">
@@ -143,18 +137,13 @@
 
     <div class="ketcher-frame-wrap">
       @if (isSketchDialogLoading()) {
-        <output class="ketcher-loading" aria-label="Loading molecule sketcher">
-          <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-          <p class="ketcher-loading-text">Loading molecule sketcher…</p>
-        </output>
+      <output class="ketcher-loading" aria-label="Loading molecule sketcher">
+        <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
+        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+      </output>
       }
-      <iframe
-        #ketcherFrame
-        class="ketcher-frame"
-        [src]="ketcherPublicUrl"
-        title="Ketcher SMILES sketcher"
-        (load)="onKetcherFrameLoaded()"
-      ></iframe>
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
+        (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
     <div class="sketch-modal-actions">
@@ -164,21 +153,12 @@
   </section>
 </dialog>
 
-<dialog
-  #moleculeImageDialog
-  class="molecule-image-dialog"
-  (click)="onMoleculeImageDialogBackdropClick($event)"
-  (keydown)="onMoleculeImageDialogBackdropClick($event)"
->
+<dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)"
+  (keydown)="onMoleculeImageDialogBackdropClick($event)">
   <section class="molecule-image-modal" aria-label="Molecule structure">
     <div class="molecule-image-header">
       <h4>Molecule structure</h4>
-      <button
-        class="close-btn"
-        type="button"
-        (click)="closeMoleculeImageModal()"
-        aria-label="Close molecule image"
-      >
+      <button class="close-btn" type="button" (click)="closeMoleculeImageModal()" aria-label="Close molecule image">
         ✕
       </button>
     </div>
@@ -186,11 +166,11 @@
     <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
 
     @if (isLoadingMoleculeImage()) {
-      <p class="status-message">Loading structure...</p>
+    <p class="status-message">Loading structure...</p>
     } @else if (moleculeImageError(); as imgError) {
-      <p class="error-message" role="alert">{{ imgError }}</p>
+    <p class="error-message" role="alert">{{ imgError }}</p>
     } @else if (moleculeModalSvg(); as svgContent) {
-      <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
+    <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
     }
   </section>
 </dialog>

@@ -26,6 +26,7 @@ from .types import (
     DevToxLabel,
     MutagenicityLabel,
     ToxicityJobResult,
+    ToxicityMoleculeInput,
     ToxicityMoleculeResult,
 )
 
@@ -89,10 +90,13 @@ def _to_devtox_label(score_value: float) -> DevToxLabel:
 
 
 def _build_error_result(
-    smiles_value: str, error_message: str
+    name_value: str,
+    smiles_value: str,
+    error_message: str,
 ) -> ToxicityMoleculeResult:
     """Construye un resultado vacío con mensaje de error por molécula."""
     return {
+        "name": name_value,
         "smiles": smiles_value,
         "LD50_mgkg": None,
         "mutagenicity": None,
@@ -104,12 +108,15 @@ def _build_error_result(
 
 
 def _build_molecule_result(
-    smiles_value: str,
+    molecule_entry: ToxicityMoleculeInput,
     prediction_result: AdmetPredictionResult,
 ) -> ToxicityMoleculeResult:
     """Normaliza la predicción ADMET-AI a las cinco columnas del dominio."""
+    smiles_value: str = molecule_entry["smiles"]
+    name_value: str = molecule_entry["name"]
     if not prediction_result.success:
         return _build_error_result(
+            name_value,
             smiles_value,
             prediction_result.error_message or "ADMET-AI retornó error desconocido.",
         )
@@ -128,6 +135,7 @@ def _build_molecule_result(
 
     if ld50_key is None or ames_key is None or devtox_key is None:
         return _build_error_result(
+            name_value,
             smiles_value,
             (
                 "No se pudieron resolver claves toxicológicas requeridas en ADMET-AI. "
@@ -142,11 +150,13 @@ def _build_molecule_result(
         ld50_mgkg_value: float = _ld50_to_mgkg(ld50_log_value, smiles_value)
     except Exception as exc:  # noqa: BLE001
         return _build_error_result(
+            name_value,
             smiles_value,
             f"No se pudo transformar la predicción ADMET-AI: {exc}",
         )
 
     return {
+        "name": name_value,
         "smiles": smiles_value,
         "LD50_mgkg": ld50_mgkg_value,
         "mutagenicity": _to_ames_label(ames_score_value),
@@ -164,8 +174,10 @@ def toxicity_properties_plugin(
     log_callback: PluginLogCallback,
 ) -> JSONMap:
     """Ejecuta predicciones toxicológicas para una lista de SMILES."""
-    smiles_list: list[str] = cast(list[str], parameters["smiles_list"])
-    total_smiles: int = len(smiles_list)
+    molecules: list[ToxicityMoleculeInput] = cast(
+        list[ToxicityMoleculeInput], parameters["molecules"]
+    )
+    total_smiles: int = len(molecules)
     processed_count: int = 0
     molecule_results: list[ToxicityMoleculeResult] = []
     admet_client = AdmetAiClient()
@@ -182,10 +194,10 @@ def toxicity_properties_plugin(
     )
 
     for chunk_start in range(0, total_smiles, INFERENCE_CHUNK_SIZE):
-        chunk_smiles_list: list[str] = smiles_list[
+        chunk_molecules: list[ToxicityMoleculeInput] = molecules[
             chunk_start : chunk_start + INFERENCE_CHUNK_SIZE
         ]
-        chunk_end_index: int = chunk_start + len(chunk_smiles_list)
+        chunk_end_index: int = chunk_start + len(chunk_molecules)
 
         log_callback(
             "debug",
@@ -194,12 +206,13 @@ def toxicity_properties_plugin(
             {"chunk_start": chunk_start, "chunk_end": chunk_end_index},
         )
 
-        for smiles_value in chunk_smiles_list:
+        for molecule_entry in chunk_molecules:
+            smiles_value: str = molecule_entry["smiles"]
             prediction_result: AdmetPredictionResult = admet_client.predict_properties(
                 smiles_value
             )
             normalized_result: ToxicityMoleculeResult = _build_molecule_result(
-                smiles_value=smiles_value,
+                molecule_entry=molecule_entry,
                 prediction_result=prediction_result,
             )
 

@@ -8,14 +8,6 @@ from __future__ import annotations
 
 from typing import cast
 
-from apps.core.models import ScientificJob
-from apps.core.reporting import (
-    build_download_filename,
-    build_text_download_response,
-    validate_job_for_csv_report,
-)
-from apps.core.schemas import ErrorResponseSerializer
-from apps.core.types import JSONMap
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
@@ -28,6 +20,15 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from apps.core.models import ScientificJob
+from apps.core.reporting import (
+    build_download_filename,
+    build_text_download_response,
+    validate_job_for_csv_report,
+)
+from apps.core.schemas import ErrorResponseSerializer
+from apps.core.types import JSONMap
 
 from ..definitions import PLUGIN_NAME
 from ..schemas import (
@@ -249,7 +250,7 @@ class SmileitReadActionsMixin:
     def report_smiles(
         self, request: Request, id: str | None = None
     ) -> HttpResponse | Response:
-        """Descarga archivo limpio NAME + NAME_XXXXX SMILES para DataWarrior."""
+        """Descarga archivo SMI/TXT con principal y derivados como lista simple de SMILES."""
         job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:

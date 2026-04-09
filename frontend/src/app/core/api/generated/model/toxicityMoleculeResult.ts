@@ -13,6 +13,7 @@
  * Serializa una fila de la tabla de propiedades toxicológicas.
  */
 export interface ToxicityMoleculeResult { 
+    readonly name: string;
     readonly smiles: string;
     readonly LD50_mgkg: number | null;
     readonly mutagenicity: string | null;

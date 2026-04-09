@@ -13,13 +13,21 @@ from __future__ import annotations
 
 from typing import cast
 
-from apps.core.models import ScientificJob
-from apps.core.types import JSONMap
 from drf_spectacular.utils import extend_schema_field
-from rdkit import Chem
 from rest_framework import serializers
 
+from apps.core.models import ScientificJob
+from apps.core.smiles_batch import normalize_named_smiles_entries
+from apps.core.types import JSONMap
+
 from .definitions import DEFAULT_ALGORITHM_VERSION, MAX_SMILES_PER_JOB, SA_SCORE_METHODS
+
+
+class SaScoreMoleculeInputSerializer(serializers.Serializer):
+    """Serializa una fila de entrada name/smiles para lotes de SA Score."""
+
+    name = serializers.CharField(required=False, allow_blank=True, max_length=4096)
+    smiles = serializers.CharField(max_length=4096)
 
 
 class SaScoreJobCreateSerializer(serializers.Serializer):
@@ -30,12 +38,22 @@ class SaScoreJobCreateSerializer(serializers.Serializer):
     """
 
     smiles = serializers.ListField(
-        child=serializers.CharField(max_length=4096),
+        child=serializers.CharField(max_length=4096, allow_blank=True),
         min_length=1,
         max_length=MAX_SMILES_PER_JOB,
+        required=False,
+        write_only=True,
         help_text=(
             f"Lista de SMILES a evaluar. Máximo {MAX_SMILES_PER_JOB}. "
             "Cada elemento debe ser un SMILES válido."
+        ),
+    )
+    molecules = SaScoreMoleculeInputSerializer(
+        many=True,
+        required=False,
+        help_text=(
+            "Lista de moléculas con formato {name, smiles}. "
+            "Si name se omite o queda vacío, se usa smiles como nombre."
         ),
     )
     methods = serializers.ListField(
@@ -54,28 +72,38 @@ class SaScoreJobCreateSerializer(serializers.Serializer):
         help_text="Versión del algoritmo. Por defecto la versión más reciente.",
     )
 
-    def validate_smiles(self, value: list[str]) -> list[str]:
-        """Elimina duplicados y valida compatibilidad química de cada SMILES."""
-        cleaned_smiles: list[str] = []
-        seen_smiles: set[str] = set()
-        for raw_smiles in value:
-            normalized_smiles: str = raw_smiles.strip()
-            if normalized_smiles == "":
-                continue
-            if normalized_smiles in seen_smiles:
-                continue
-            if Chem.MolFromSmiles(normalized_smiles) is None:
-                raise serializers.ValidationError(
-                    f"SMILES no compatible con RDKit: {normalized_smiles}"
-                )
-            seen_smiles.add(normalized_smiles)
-            cleaned_smiles.append(normalized_smiles)
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
+        """Normaliza el lote de entrada a una única lista de moléculas name/smiles."""
+        raw_smiles_list: list[str] | None = cast(list[str] | None, attrs.get("smiles"))
+        raw_molecules: list[dict[str, object]] | None = cast(
+            list[dict[str, object]] | None, attrs.get("molecules")
+        )
 
-        if len(cleaned_smiles) == 0:
+        if raw_smiles_list is None and raw_molecules is None:
             raise serializers.ValidationError(
-                "La lista de SMILES no puede estar vacía después de normalizar."
+                {"molecules": "Debe enviar `molecules` o `smiles` para crear el job."}
             )
-        return cleaned_smiles
+
+        try:
+            normalized_molecules = normalize_named_smiles_entries(
+                smiles_list=raw_smiles_list,
+                molecule_entries=raw_molecules,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError({"molecules": str(exc)}) from exc
+
+        if len(normalized_molecules) > MAX_SMILES_PER_JOB:
+            raise serializers.ValidationError(
+                {
+                    "molecules": (
+                        f"El lote excede el máximo permitido de {MAX_SMILES_PER_JOB} moléculas."
+                    )
+                }
+            )
+
+        attrs["molecules"] = normalized_molecules
+        attrs.pop("smiles", None)
+        return attrs
 
     def validate_methods(self, value: list[str]) -> list[str]:
         """Elimina métodos duplicados preservando el orden canónico."""
@@ -85,6 +113,7 @@ class SaScoreJobCreateSerializer(serializers.Serializer):
 class SaMoleculeResultSerializer(serializers.Serializer):
     """Serializa el resultado de SA score para una molécula individual."""
 
+    name = serializers.CharField(read_only=True)
     smiles = serializers.CharField(read_only=True)
     ambit_sa = serializers.FloatField(
         read_only=True,

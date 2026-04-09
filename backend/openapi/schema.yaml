@@ -2065,7 +2065,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SaScoreJobCreateRequest'
-        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -3144,7 +3143,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ToxicityJobCreateRequest'
-        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -5404,6 +5402,9 @@ components:
       type: object
       description: Serializa el resultado de SA score para una molécula individual.
       properties:
+        name:
+          type: string
+          readOnly: true
         smiles:
           type: string
           readOnly: true
@@ -5442,6 +5443,7 @@ components:
       - ambit_sa
       - brsa_error
       - brsa_sa
+      - name
       - rdkit_error
       - rdkit_sa
       - smiles
@@ -5459,10 +5461,17 @@ components:
             type: string
             minLength: 1
             maxLength: 4096
+          writeOnly: true
           description: Lista de SMILES a evaluar. Máximo 500. Cada elemento debe ser
             un SMILES válido.
           maxItems: 500
           minItems: 1
+        molecules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaScoreMoleculeInputRequest'
+          description: Lista de moléculas con formato {name, smiles}. Si name se omite
+            o queda vacío, se usa smiles como nombre.
         methods:
           type: array
           items:
@@ -5480,8 +5489,6 @@ components:
           default: 1.0.0
           description: Versión del algoritmo. Por defecto la versión más reciente.
           maxLength: 20
-      required:
-      - smiles
     SaScoreJobResponse:
       type: object
       description: Serializa un job de SA score completo incluyendo resultados y estado.
@@ -5524,6 +5531,19 @@ components:
       - id
       - results
       - updated_at
+    SaScoreMoleculeInputRequest:
+      type: object
+      description: Serializa una fila de entrada name/smiles para lotes de SA Score.
+      properties:
+        name:
+          type: string
+          maxLength: 4096
+        smiles:
+          type: string
+          minLength: 1
+          maxLength: 4096
+      required:
+      - smiles
     SaScoreResults:
       type: object
       description: Serializa el bloque completo de resultados de un job de SA score.
@@ -6642,14 +6662,16 @@ components:
         access:
           type: string
           readOnly: true
+        refresh:
+          type: string
       required:
       - access
+      - refresh
     TokenRefreshRequest:
       type: object
       properties:
         refresh:
           type: string
-          writeOnly: true
           minLength: 1
       required:
       - refresh
@@ -6663,17 +6685,22 @@ components:
             type: string
             minLength: 1
             maxLength: 4096
+          writeOnly: true
           description: Lista de SMILES a evaluar. No se aplica límite de negocio;
             el procesamiento es por bloques internos.
           minItems: 1
+        molecules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToxicityMoleculeInputRequest'
+          description: Lista de moléculas con formato {name, smiles}. Si name se omite
+            o queda vacío, se usa smiles como nombre.
         version:
           type: string
           minLength: 1
           default: 1.0.0
           description: Versión de algoritmo a persistir en el job.
           maxLength: 20
-      required:
-      - smiles
     ToxicityJobResponse:
       type: object
       description: Serializa un ScientificJob para la app Toxicity Properties.
@@ -6716,10 +6743,26 @@ components:
       - id
       - results
       - updated_at
+    ToxicityMoleculeInputRequest:
+      type: object
+      description: Serializa una fila de entrada name/smiles para Toxicity Properties.
+      properties:
+        name:
+          type: string
+          maxLength: 4096
+        smiles:
+          type: string
+          minLength: 1
+          maxLength: 4096
+      required:
+      - smiles
     ToxicityMoleculeResult:
       type: object
       description: Serializa una fila de la tabla de propiedades toxicológicas.
       properties:
+        name:
+          type: string
+          readOnly: true
         smiles:
           type: string
           readOnly: true
@@ -6757,6 +6800,7 @@ components:
       - devtox_score
       - error_message
       - mutagenicity
+      - name
       - smiles
     ToxicityResults:
       type: object

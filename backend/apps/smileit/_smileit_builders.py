@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Final
 
+from ._naming import build_derivative_identifier
 from .engine import fuse_molecules
 from .types import (
     SmileitPlaceholderAssignment,
@@ -225,8 +226,8 @@ def _build_placeholder_assignments(
 
 def _build_structure_name(base_name: str, index_value: int, padding: int) -> str:
     """Construye nombre determinista para exportación reproducible."""
-    safe_padding = max(1, padding)
-    return f"{base_name}_{index_value:0{safe_padding}d}"
+    _ = padding
+    return build_derivative_identifier(base_name, index_value)
 
 
 def _build_pending_fusion_attempts(

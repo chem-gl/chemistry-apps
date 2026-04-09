@@ -2,12 +2,17 @@
 // Centraliza parseo de entrada, validación de compatibilidad y carga de logs históricos.
 // SaScoreWorkflowService y ToxicityPropertiesWorkflowService extienden esta clase.
 
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import {
   JobLogEntryView,
   JobLogsPageView,
   SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
+import {
+  buildSmilesTextFromRows,
+  NamedSmilesInputRow,
+  parseNamedSmilesBatch,
+} from '../shared/scientific-app-ui.utils';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 /**
@@ -19,6 +24,15 @@ import { BaseJobWorkflowService } from './base-job-workflow.service';
 export abstract class SmilesJobWorkflowService<
   TResultData,
 > extends BaseJobWorkflowService<TResultData> {
+  readonly smilesInput = signal<string>('');
+  readonly inputRows = signal<NamedSmilesInputRow[]>([]);
+  readonly customNamesEnabled = signal<boolean>(false);
+
+  protected constructor(initialInput: string) {
+    super();
+    this.setBatchInputText(initialInput);
+  }
+
   /**
    * Carga los logs históricos del job con un límite mayor y ordenados por eventIndex.
    * Sobrescribe el comportamiento base para apps de SMILES que generan más eventos de log.
@@ -43,10 +57,43 @@ export abstract class SmilesJobWorkflowService<
    * Elimina líneas vacías y espacios en blanco al inicio/fin de cada línea.
    */
   protected parseSmilesInput(rawInput: string): string[] {
-    return rawInput
-      .split(/\r?\n/)
-      .map((smilesItem: string) => smilesItem.trim())
-      .filter((smilesItem: string) => smilesItem.length > 0);
+    return parseNamedSmilesBatch(rawInput).rows.map(
+      (rowValue: NamedSmilesInputRow) => rowValue.smiles,
+    );
+  }
+
+  setBatchInputText(rawInput: string): void {
+    const parsedBatch = parseNamedSmilesBatch(rawInput);
+    this.inputRows.set(parsedBatch.rows);
+    this.smilesInput.set(buildSmilesTextFromRows(parsedBatch.rows));
+    if (parsedBatch.containsExplicitNames) {
+      this.customNamesEnabled.set(true);
+    }
+  }
+
+  setInputRows(rows: NamedSmilesInputRow[], enableCustomNames: boolean = false): void {
+    this.inputRows.set(rows);
+    this.smilesInput.set(buildSmilesTextFromRows(rows));
+    if (enableCustomNames || rows.some((rowValue) => rowValue.name !== rowValue.smiles)) {
+      this.customNamesEnabled.set(true);
+    }
+  }
+
+  updateInputRowName(rowIndex: number, nextName: string): void {
+    this.inputRows.update((currentRows: NamedSmilesInputRow[]) =>
+      currentRows.map((rowValue: NamedSmilesInputRow, index: number) =>
+        index === rowIndex ? { ...rowValue, name: nextName } : rowValue,
+      ),
+    );
+  }
+
+  protected buildNamedInputRows(): NamedSmilesInputRow[] {
+    return this.inputRows()
+      .map((rowValue: NamedSmilesInputRow) => ({
+        name: rowValue.name.trim().length > 0 ? rowValue.name.trim() : rowValue.smiles,
+        smiles: rowValue.smiles.trim(),
+      }))
+      .filter((rowValue: NamedSmilesInputRow) => rowValue.smiles.length > 0);
   }
 
   /**

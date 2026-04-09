@@ -27,7 +27,7 @@ from .definitions import (
     SA_SCORE_METHOD_BRSA,
     SA_SCORE_METHOD_RDKIT,
 )
-from .types import SaMoleculeResult, SaScoreJobResult
+from .types import SaMoleculeResult, SaScoreJobResult, SaScoreMoleculeInput
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +47,19 @@ def _compute_method_score(
 
 
 def _build_molecule_result(
-    smiles_value: str,
+    molecule_entry: SaScoreMoleculeInput | str,
     requested_methods: list[str],
     log_callback: PluginLogCallback,
 ) -> SaMoleculeResult:
     """Calcula todos los métodos solicitados para una molécula concreta."""
+    normalized_entry: SaScoreMoleculeInput = (
+        {"name": molecule_entry, "smiles": molecule_entry}
+        if isinstance(molecule_entry, str)
+        else molecule_entry
+    )
+    smiles_value: str = normalized_entry["smiles"]
     result: SaMoleculeResult = {
+        "name": normalized_entry["name"],
         "smiles": smiles_value,
         "ambit_sa": None,
         "brsa_sa": None,
@@ -158,10 +165,12 @@ def sa_score_plugin(
 
     Retorna JSONMap compatible con SaScoreJobResult.
     """
-    smiles_list: list[str] = cast(list[str], parameters["smiles_list"])
+    molecules: list[SaScoreMoleculeInput] = cast(
+        list[SaScoreMoleculeInput], parameters["molecules"]
+    )
     requested_methods: list[str] = cast(list[str], parameters["methods"])
 
-    total_smiles: int = len(smiles_list)
+    total_smiles: int = len(molecules)
     molecule_results: list[SaMoleculeResult] = []
 
     log_callback(
@@ -172,7 +181,8 @@ def sa_score_plugin(
         {},
     )
 
-    for index, smiles_value in enumerate(smiles_list):
+    for index, molecule_entry in enumerate(molecules):
+        smiles_value: str = molecule_entry["smiles"]
         log_callback(
             "debug",
             "sa_score_plugin",
@@ -181,7 +191,7 @@ def sa_score_plugin(
         )
 
         molecule_result: SaMoleculeResult = _build_molecule_result(
-            smiles_value=smiles_value,
+            molecule_entry=molecule_entry,
             requested_methods=requested_methods,
             log_callback=log_callback,
         )

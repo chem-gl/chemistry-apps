@@ -10,15 +10,23 @@ MutagenicityLabel = Literal["Positive", "Negative"]
 DevToxLabel = Literal["Positive", "Negative"]
 
 
+class ToxicityMoleculeInput(TypedDict):
+    """Fila de entrada del lote con nombre visible y SMILES."""
+
+    name: str
+    smiles: str
+
+
 class ToxicityJobParameters(TypedDict):
     """Parámetros de entrada persistidos para ejecutar el plugin."""
 
-    smiles_list: list[str]
+    molecules: list[ToxicityMoleculeInput]
 
 
 class ToxicityMoleculeResult(TypedDict):
     """Resultado toxicológico normalizado para una molécula individual."""
 
+    name: str
     smiles: str
     LD50_mgkg: float | None
     mutagenicity: MutagenicityLabel | None

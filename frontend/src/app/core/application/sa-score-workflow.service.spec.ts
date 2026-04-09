@@ -4,13 +4,13 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import {
-    DownloadedReportFile,
-    JobLogsPageView,
-    JobsApiService,
-    SaScoreJobResponseView,
-    SaScoreMethod,
-    ScientificJobView,
-    SmilesCompatibilityResultView,
+  DownloadedReportFile,
+  JobLogsPageView,
+  JobsApiService,
+  SaScoreJobResponseView,
+  SaScoreMethod,
+  ScientificJobView,
+  SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
 import { SaScoreWorkflowService } from './sa-score-workflow.service';
 
@@ -33,12 +33,13 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     paused_at: null,
     resumed_at: null,
     parameters: {
-      smiles_list: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
       methods: ['ambit'],
     },
     results: {
       molecules: [
         {
+          name: 'CCO',
           smiles: 'CCO',
           ambit_sa: 92.3,
           brsa_sa: null,
@@ -68,12 +69,13 @@ function makeSaScoreJobResponse(
     progress_stage: 'completed',
     progress_message: 'Completed',
     parameters: {
-      smiles_list: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
       methods: ['ambit'],
     },
     results: {
       molecules: [
         {
+          name: 'CCO',
           smiles: 'CCO',
           ambit_sa: 92.3,
           brsa_sa: null,
@@ -156,14 +158,14 @@ describe('SaScoreWorkflowService', () => {
   });
 
   it('dispatches SA score job when smiles are compatible', () => {
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
 
     workflowService.dispatch();
 
     expect(jobsApiServiceMock.validateSmilesCompatibility).toHaveBeenCalledWith(['CCO']);
     expect(jobsApiServiceMock.dispatchSaScoreJob).toHaveBeenCalledWith({
-      smiles: ['CCO'],
+      molecules: [{ name: 'CCO', smiles: 'CCO' }],
       methods: ['ambit'],
       version: '1.0.0',
     });
@@ -178,7 +180,7 @@ describe('SaScoreWorkflowService', () => {
         issues: [{ smiles: 'not_a_smiles', reason: 'Unsupported SMILES' }],
       }),
     );
-    workflowService.smilesInput.set('CCO\nnot_a_smiles');
+    workflowService.setBatchInputText('CCO\nnot_a_smiles');
 
     workflowService.dispatch();
 
@@ -188,7 +190,7 @@ describe('SaScoreWorkflowService', () => {
   });
 
   it('blocks dispatch when no methods are enabled', () => {
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: false, brsa: false, rdkit: false });
 
     workflowService.dispatch();
@@ -214,7 +216,7 @@ describe('SaScoreWorkflowService', () => {
         subscriber.error(new Error('validator unavailable'));
       }),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
 
     workflowService.dispatch();
 
@@ -305,7 +307,7 @@ describe('SaScoreWorkflowService', () => {
   });
 
   it('keeps error section when smiles input is empty', () => {
-    workflowService.smilesInput.set('  \n\t ');
+    workflowService.setBatchInputText('  \n\t ');
 
     workflowService.dispatch();
 
@@ -315,7 +317,10 @@ describe('SaScoreWorkflowService', () => {
   });
 
   it('falls back to polling, de-duplicates logs and resolves the final SA score result', () => {
-    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
     const logEvents$ = new Subject<{
       eventIndex: number;
       level: 'info' | 'warning' | 'error' | 'debug';
@@ -332,14 +337,29 @@ describe('SaScoreWorkflowService', () => {
     jobsApiServiceMock.getSaScoreJobStatus.mockReturnValue(
       of(makeSaScoreJobResponse({ id: 'sa-progress-1' })),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
 
     workflowService.dispatch();
 
-    logEvents$.next({ eventIndex: 2, level: 'info', message: 'second', createdAt: new Date().toISOString() });
-    logEvents$.next({ eventIndex: 1, level: 'debug', message: 'first', createdAt: new Date().toISOString() });
-    logEvents$.next({ eventIndex: 2, level: 'info', message: 'duplicate', createdAt: new Date().toISOString() });
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'second',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 1,
+      level: 'debug',
+      message: 'first',
+      createdAt: new Date().toISOString(),
+    });
+    logEvents$.next({
+      eventIndex: 2,
+      level: 'info',
+      message: 'duplicate',
+      createdAt: new Date().toISOString(),
+    });
     expect(workflowService.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
 
     progressEvents$.error(new Error('sse offline'));
@@ -350,7 +370,10 @@ describe('SaScoreWorkflowService', () => {
   });
 
   it('surfaces final SA score retrieval errors after progress completes', () => {
-    const progressEvents$ = new Subject<{ progress_percentage: number; progress_message: string }>();
+    const progressEvents$ = new Subject<{
+      progress_percentage: number;
+      progress_message: string;
+    }>();
 
     jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
       of(makeRunningSaScoreJobResponse('sa-progress-error-1')),
@@ -360,7 +383,7 @@ describe('SaScoreWorkflowService', () => {
     jobsApiServiceMock.getSaScoreJobStatus.mockReturnValue(
       throwError(() => new Error('gateway timeout')),
     );
-    workflowService.smilesInput.set('CCO');
+    workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
 
     workflowService.dispatch();

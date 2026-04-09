@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { MethodsEnum } from './methodsEnum';
+import { SaScoreMoleculeInputRequest } from './saScoreMoleculeInputRequest';
 
 
 /**
@@ -17,7 +18,11 @@ export interface SaScoreJobCreateRequest {
     /**
      * Lista de SMILES a evaluar. Máximo 500. Cada elemento debe ser un SMILES válido.
      */
-    smiles: Array<string>;
+    smiles?: Array<string>;
+    /**
+     * Lista de moléculas con formato {name, smiles}. Si name se omite o queda vacío, se usa smiles como nombre.
+     */
+    molecules?: Array<SaScoreMoleculeInputRequest>;
     /**
      * Métodos de SA score a calcular. Opciones: ambit, brsa, rdkit. Por defecto todos.
      */

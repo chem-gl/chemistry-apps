@@ -15,6 +15,11 @@ from apps.core.models import ScientificJob
 from apps.core.reporting import escape_csv_cell
 from apps.core.types import JSONMap
 
+from .._naming import (
+    build_derivative_identifier,
+    build_principal_identifier,
+    normalize_export_name_base,
+)
 from ..engine import render_derivative_svg_with_substituent_highlighting, tint_svg
 from ..schemas import SmileitJobResponseSerializer
 from ..types import SmileitGeneratedStructure, SmileitResult
@@ -44,16 +49,37 @@ def _build_compound_name(
     return f"{principal_smiles} + {substituent_smiles} @ {applied_positions}"
 
 
+def _resolve_export_name_base(results: SmileitResult) -> str:
+    """Obtiene el job name persistido y lo normaliza para naming consistente."""
+    return normalize_export_name_base(str(results.get("export_name_base", "SMILEIT")))
+
+
 def build_structures_csv(results: SmileitResult) -> str:
     """Construye CSV químico compacto con una fila por derivado."""
     structures = results.get("generated_structures", [])
     principal_smiles = str(results.get("principal_smiles", ""))
+    export_name_base = _resolve_export_name_base(results)
 
     lines: list[str] = [
-        "compound_name,principal_smiles,substituent_smiles,applied_positions,generated_smiles"
+        "name,generated_smiles,compound_name,principal_smiles,substituent_smiles,applied_positions"
     ]
 
-    for structure in structures:
+    if principal_smiles.strip() != "":
+        principal_name = build_derivative_identifier(export_name_base, 1)
+        lines.append(
+            ",".join(
+                [
+                    escape_csv_cell(principal_name),
+                    escape_csv_cell(principal_smiles),
+                    escape_csv_cell(principal_smiles),
+                    escape_csv_cell(principal_smiles),
+                    escape_csv_cell(""),
+                    escape_csv_cell(""),
+                ]
+            )
+        )
+
+    for index, structure in enumerate(structures, start=2):
         traceability = sorted(
             structure.get("traceability", []),
             key=lambda event: (
@@ -74,14 +100,16 @@ def build_structures_csv(results: SmileitResult) -> str:
             substituent_smiles=substituent_smiles,
             applied_positions=applied_positions,
         )
+        derivative_name = build_derivative_identifier(export_name_base, index)
         lines.append(
             ",".join(
                 [
+                    escape_csv_cell(derivative_name),
+                    escape_csv_cell(str(structure.get("smiles", ""))),
                     escape_csv_cell(compound_name),
                     escape_csv_cell(principal_smiles),
                     escape_csv_cell(substituent_smiles),
                     escape_csv_cell(applied_positions),
-                    escape_csv_cell(str(structure.get("smiles", ""))),
                 ]
             )
         )
@@ -123,13 +151,19 @@ def build_traceability_csv(results: SmileitResult) -> str:
 
 
 def build_enumerated_smiles_export(results: SmileitResult) -> str:
-    """Construye export SMILES: principal primero y luego solo derivados."""
+    """Construye export SMI/TXT con una línea por SMILES, sin nombres tabulados."""
     structures = results.get("generated_structures", [])
     principal_smiles = str(results.get("principal_smiles", ""))
 
-    lines: list[str] = [principal_smiles]
+    lines: list[str] = []
+    if principal_smiles.strip() != "":
+        lines.append(principal_smiles)
+
     for structure in structures:
-        lines.append(str(structure.get("smiles", "")))
+        derivative_smiles = str(structure.get("smiles", "")).strip()
+        if derivative_smiles == "":
+            continue
+        lines.append(derivative_smiles)
     return "\n".join(lines)
 
 
@@ -145,11 +179,14 @@ def build_derivations_images_zip(results: SmileitResult) -> bytes:
     """Construye ZIP server-side con SVG por derivado y un TXT con SMILES generados."""
     principal_smiles = str(results.get("principal_smiles", ""))
     structures = results.get("generated_structures", [])
+    export_name_base = _resolve_export_name_base(results)
 
     output_buffer = BytesIO()
     used_file_bases: set[str] = set()
     smiles_lines: list[str] = (
-        [principal_smiles] if principal_smiles.strip() != "" else []
+        [f"{principal_smiles}\t{build_principal_identifier(export_name_base)}"]
+        if principal_smiles.strip() != ""
+        else []
     )
 
     with ZipFile(output_buffer, mode="w", compression=ZIP_DEFLATED) as zip_file:
@@ -158,9 +195,10 @@ def build_derivations_images_zip(results: SmileitResult) -> bytes:
             if derivative_smiles == "":
                 continue
 
-            smiles_lines.append(derivative_smiles)
-            fallback_name = f"structure_{str(index + 1).zfill(5)}"
-            raw_name = str(structure.get("name", ""))
+            derivative_name = build_derivative_identifier(export_name_base, index + 1)
+            smiles_lines.append(f"{derivative_smiles}\t{derivative_name}")
+            fallback_name = derivative_name
+            raw_name = derivative_name
             file_base = _sanitize_zip_entry_base(raw_name, fallback_name)
 
             if file_base in used_file_bases:

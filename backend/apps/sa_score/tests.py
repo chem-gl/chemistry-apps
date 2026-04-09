@@ -34,6 +34,7 @@ class CsvBuilderTests(TestCase):
     def setUp(self) -> None:
         self.molecule_results: list[SaMoleculeResult] = [
             {
+                "name": "ethanol",
                 "smiles": "CCO",
                 "ambit_sa": 1.23,
                 "brsa_sa": 2.34,
@@ -43,6 +44,7 @@ class CsvBuilderTests(TestCase):
                 "rdkit_error": None,
             },
             {
+                "name": "benzene",
                 "smiles": "c1ccccc1",
                 "ambit_sa": None,
                 "brsa_sa": 4.56,
@@ -58,7 +60,7 @@ class CsvBuilderTests(TestCase):
         csv_content = _build_full_csv(self.molecule_results, ["ambit", "brsa"])
         lines = csv_content.splitlines()
 
-        self.assertIn("smiles,ambit_sa_percent,brsa_sa", lines[0])
+        self.assertIn("name,smiles,ambit_sa_percent,brsa_sa", lines[0])
         self.assertNotIn("rdkit_sa", lines[0])
         self.assertEqual(len(lines), 3)  # header + 2 moléculas
 
@@ -66,14 +68,14 @@ class CsvBuilderTests(TestCase):
         """El CSV completo con los tres métodos debe tener 4 columnas."""
         csv_content = _build_full_csv(self.molecule_results, ["ambit", "brsa", "rdkit"])
         header = csv_content.splitlines()[0]
-        self.assertEqual(header, "smiles,ambit_sa_percent,brsa_sa,rdkit_sa")
+        self.assertEqual(header, "name,smiles,ambit_sa_percent,brsa_sa,rdkit_sa")
 
     def test_single_method_csv_has_smiles_sa_columns(self) -> None:
         """El CSV de método único debe tener columnas smiles,sa."""
         csv_content = _build_single_method_csv(self.molecule_results, "brsa")
         lines = csv_content.splitlines()
 
-        self.assertEqual(lines[0], "smiles,sa")
+        self.assertEqual(lines[0], "name,smiles,sa")
         self.assertIn("2.340000", lines[1])  # brsa_sa de CCO
         self.assertIn("4.560000", lines[2])  # brsa_sa de c1ccccc1
 
@@ -81,7 +83,7 @@ class CsvBuilderTests(TestCase):
         """El CSV de AMBIT debe exponer encabezado explícito de porcentaje."""
         csv_content = _build_single_method_csv(self.molecule_results, "ambit")
         lines = csv_content.splitlines()
-        self.assertEqual(lines[0], "smiles,sa_percent")
+        self.assertEqual(lines[0], "name,smiles,sa_percent")
 
     def test_single_method_csv_empty_score_when_none(self) -> None:
         """Las celdas con score None deben quedar vacías en el CSV."""
@@ -196,7 +198,10 @@ class SaScoreJobPluginIntegrationTests(TestCase):
 
             result = sa_score_plugin(
                 {
-                    "smiles_list": ["CCO", "c1ccccc1"],
+                    "molecules": [
+                        {"name": "ethanol", "smiles": "CCO"},
+                        {"name": "benzene", "smiles": "c1ccccc1"},
+                    ],
                     "methods": ["ambit", "brsa", "rdkit"],
                 },
                 _noop_progress,
@@ -234,7 +239,10 @@ class SaScoreJobPluginIntegrationTests(TestCase):
             )
 
             result = sa_score_plugin(
-                {"smiles_list": ["CCO"], "methods": ["brsa"]},
+                {
+                    "molecules": [{"name": "ethanol", "smiles": "CCO"}],
+                    "methods": ["brsa"],
+                },
                 _noop,
                 _noop_log,
             )
@@ -274,7 +282,7 @@ class SaScoreCreateSerializerValidationTests(TestCase):
         )
 
         self.assertFalse(serializer.is_valid())
-        self.assertIn("smiles", serializer.errors)
+        self.assertIn("molecules", serializer.errors)
 
 
 class SaScoreContractTests(TestCase):
@@ -309,6 +317,7 @@ class SaScoreRouterApiTests(TestCase):
 
         molecules = [
             {
+                "name": "ethanol",
                 "smiles": "CCO",
                 "ambit_sa": None,
                 "brsa_sa": 2.34,
@@ -323,7 +332,10 @@ class SaScoreRouterApiTests(TestCase):
             plugin_name="sa-score",
             algorithm_version="1.0.0",
             status="completed",
-            parameters={"smiles_list": ["CCO"], "methods": methods},
+            parameters={
+                "molecules": [{"name": "ethanol", "smiles": "CCO"}],
+                "methods": methods,
+            },
             results={
                 "molecules": molecules,
                 "requested_methods": methods,
@@ -363,7 +375,7 @@ class SaScoreRouterApiTests(TestCase):
         self.assertEqual(http_response.status_code, 200)
         self.assertIn("text/csv", http_response.get("Content-Type", ""))
         content = http_response.content.decode("utf-8")
-        self.assertIn("smiles,sa", content)
+        self.assertIn("name,smiles,sa", content)
         self.assertIn("CCO", content)
 
     def test_report_csv_by_method_returns_400_for_unknown_method(self) -> None:
@@ -397,7 +409,10 @@ class SaScoreRouterApiTests(TestCase):
             plugin_name="sa-score",
             algorithm_version="1.0.0",
             status="pending",
-            parameters={"smiles_list": ["CCO"], "methods": ["brsa"]},
+            parameters={
+                "molecules": [{"name": "ethanol", "smiles": "CCO"}],
+                "methods": ["brsa"],
+            },
             results=None,
         )
         url = f"{self.SA_SCORE_URL}{pending_job.id}/report-csv-method/?method=brsa"

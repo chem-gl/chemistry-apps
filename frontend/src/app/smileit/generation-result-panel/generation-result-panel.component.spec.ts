@@ -35,6 +35,7 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
       downloadCsvReport: vi.fn(),
       downloadSmilesReport: vi.fn(),
       downloadLogReport: vi.fn(),
+      exportNameBase: signal('EDA'),
       resultData: signal(null),
       currentJobId: signal(null),
       selectedHistoricalJobId: signal<string | null>(null),
@@ -79,36 +80,20 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
   });
 
   describe('historicalJobDisplayName', () => {
-    it('retorna export_name_base si es distinto del valor por defecto', () => {
+    it('retorna export_name_base con el id del job para mantener unicidad visible', () => {
       const job = {
         id: 'abc-12345678',
         parameters: { export_name_base: 'Mi experimento' },
       } as unknown as ScientificJobView;
-      expect(component.historicalJobDisplayName(job)).toBe('Mi experimento');
+      expect(component.historicalJobDisplayName(job)).toBe('Mi experimento_abc-12345678');
     });
 
-    it('retorna Enumeration con los primeros 8 chars del id si el nombre es el default', () => {
+    it('retorna un fallback basado en job cuando no hay export_name_base', () => {
       const job = {
         id: 'abc12345-extra',
-        parameters: { export_name_base: 'smileit_run' },
-      } as unknown as ScientificJobView;
-      expect(component.historicalJobDisplayName(job)).toBe('Enumeration abc12345');
-    });
-
-    it('retorna Enumeration con id si no hay export_name_base', () => {
-      const job = {
-        id: 'xyz-id-999',
         parameters: {},
       } as unknown as ScientificJobView;
-      expect(component.historicalJobDisplayName(job)).toBe('Enumeration xyz-id-9');
-    });
-
-    it('retorna Enumeration si parameters es null', () => {
-      const job = {
-        id: 'null-params',
-        parameters: null,
-      } as unknown as ScientificJobView;
-      expect(component.historicalJobDisplayName(job)).toBe('Enumeration null-par');
+      expect(component.historicalJobDisplayName(job)).toBe('job_abc12345-extra');
     });
   });
 
@@ -240,19 +225,19 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
   });
 
   describe('structureDisplayName', () => {
-    it('retorna Derivative N+1 si el nombre sigue el patrón smileit_run', () => {
+    it('retorna el identificador d{jobName}{N} usando el índice de la estructura', () => {
       const structure = buildMockStructure('smileit_run_42');
-      expect(component.structureDisplayName(structure, 0)).toBe('Derivative 1');
+      expect(component.structureDisplayName(structure, 0)).toBe('dEDA1');
     });
 
-    it('retorna Derivative N+1 si el nombre es vacío', () => {
+    it('respeta structureIndex cuando está disponible', () => {
+      const structure = buildMockStructure('irrelevant', { structureIndex: 4 });
+      expect(component.structureDisplayName(structure, 0)).toBe('dEDA5');
+    });
+
+    it('construye un nombre canónico aunque el nombre original esté vacío', () => {
       const structure = buildMockStructure('   ');
-      expect(component.structureDisplayName(structure, 3)).toBe('Derivative 4');
-    });
-
-    it('retorna el nombre personalizado si no coincide con el patrón por defecto', () => {
-      const structure = buildMockStructure('Compuesto A');
-      expect(component.structureDisplayName(structure, 0)).toBe('Compuesto A');
+      expect(component.structureDisplayName(structure, 3)).toBe('dEDA4');
     });
   });
 

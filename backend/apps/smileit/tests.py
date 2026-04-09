@@ -1225,6 +1225,8 @@ class SmileitExportTests(SmileitSeedTestCase):
 
         self.assertGreaterEqual(len(content_lines), 2)
         self.assertEqual(content_lines[0], "c1ccccc1")
+        self.assertNotIn("\t", content_lines[0])
+        self.assertNotIn("\t", content_lines[1])
 
     def test_report_csv_returns_compact_chemical_columns(self) -> None:
         """El CSV principal debe compactar principal, sustituyentes, posiciones y derivado."""
@@ -1240,18 +1242,26 @@ class SmileitExportTests(SmileitSeedTestCase):
         self.assertEqual(
             list(first_row.keys()),
             [
+                "name",
+                "generated_smiles",
                 "compound_name",
                 "principal_smiles",
                 "substituent_smiles",
                 "applied_positions",
-                "generated_smiles",
             ],
         )
+        self.assertEqual(first_row["name"], "dSMILEIT_SERIES1")
+        self.assertEqual(first_row["generated_smiles"], "c1ccccc1")
+        self.assertEqual(first_row["substituent_smiles"], "")
+        self.assertEqual(first_row["applied_positions"], "")
         self.assertEqual(first_row["principal_smiles"], "c1ccccc1")
-        self.assertNotEqual(first_row["substituent_smiles"], "")
-        self.assertNotEqual(first_row["applied_positions"], "")
-        self.assertNotEqual(first_row["generated_smiles"], "")
         self.assertIn(first_row["principal_smiles"], first_row["compound_name"])
+
+        second_row = parsed_rows[1]
+        self.assertEqual(second_row["name"], "dSMILEIT_SERIES2")
+        self.assertNotEqual(second_row["substituent_smiles"], "")
+        self.assertNotEqual(second_row["applied_positions"], "")
+        self.assertNotEqual(second_row["generated_smiles"], "")
 
     def test_report_traceability_returns_csv(self) -> None:
         """Debe exportar trazabilidad tabular para auditoría de sustituciones."""
@@ -1282,4 +1292,8 @@ class SmileitExportTests(SmileitSeedTestCase):
         self.assertIn("generated_smiles.txt", member_names)
         self.assertTrue(any(name.endswith(".svg") for name in member_names))
         self.assertGreaterEqual(len(smiles_lines), 1)
-        self.assertEqual(smiles_lines[0], "c1ccccc1")
+        self.assertEqual(
+            smiles_lines[0],
+            "c1ccccc1\tSMILEIT_SERIES molecula principal",
+        )
+        self.assertTrue(any(name == "dSMILEIT_SERIES1.svg" for name in member_names))

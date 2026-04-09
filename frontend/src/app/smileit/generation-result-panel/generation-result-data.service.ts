@@ -9,6 +9,11 @@ import {
   SmileitGeneratedStructureView,
   SmileitWorkflowService,
 } from '../../core/application/smileit-workflow.service';
+import {
+  buildDerivativeDisplayName,
+  buildPrincipalExportName,
+  normalizeJobNameIdentifier,
+} from './generation-result-naming.utils';
 
 @Injectable()
 export class GenerationResultDataService implements OnDestroy {
@@ -151,19 +156,24 @@ export class GenerationResultDataService implements OnDestroy {
       currentJobId,
       resultData.totalGenerated,
     );
-    const exportBase = this.sanitizeFilenameSegment(resultData.exportNameBase || 'smileit');
+    const exportBase = this.sanitizeFilenameSegment(
+      normalizeJobNameIdentifier(resultData.exportNameBase || 'smileit'),
+    );
     const zip = new JSZip();
     const smilesLines: string[] =
-      resultData.principalSmiles.trim() === '' ? [] : [resultData.principalSmiles.trim()];
+      resultData.principalSmiles.trim() === ''
+        ? []
+        : [
+            `${resultData.principalSmiles.trim()}\t${buildPrincipalExportName(resultData.exportNameBase)}`,
+          ];
     const usedNames = new Set<string>();
     const structureFileNames: string[] = [];
 
     structures.forEach((structureItem: SmileitGeneratedStructureView, index: number) => {
-      smilesLines.push(structureItem.smiles);
+      const derivativeName = buildDerivativeDisplayName(resultData.exportNameBase, index + 1);
+      smilesLines.push(`${structureItem.smiles}\t${derivativeName}`);
 
-      const safeBaseName =
-        this.sanitizeFilenameSegment(structureItem.name) ||
-        `structure_${String(index + 1).padStart(5, '0')}`;
+      const safeBaseName = this.sanitizeFilenameSegment(derivativeName);
       let fileBase = safeBaseName;
       let suffix = 2;
       while (usedNames.has(fileBase)) {
@@ -328,9 +338,17 @@ export class GenerationResultDataService implements OnDestroy {
         if (httpError?.status === 404) {
           const embeddedStructures = resultData.generatedStructures ?? [];
           if (embeddedStructures.length > 0) {
-            this.loadedGeneratedStructures.set(embeddedStructures);
-            this.generatedStructuresOffset.set(embeddedStructures.length);
-            this.visibleStructuresCount.set(embeddedStructures.length);
+            const embeddedExportNameBase =
+              resultData.exportNameBase ?? this.workflow.exportNameBase();
+            const normalizedEmbeddedStructures = embeddedStructures.map(
+              (embeddedStructure: SmileitGeneratedStructureView, index: number) => ({
+                ...embeddedStructure,
+                name: buildDerivativeDisplayName(embeddedExportNameBase, index + 1),
+              }),
+            );
+            this.loadedGeneratedStructures.set(normalizedEmbeddedStructures);
+            this.generatedStructuresOffset.set(normalizedEmbeddedStructures.length);
+            this.visibleStructuresCount.set(normalizedEmbeddedStructures.length);
             return;
           }
           this.generatedStructuresOffset.set(resultData.totalGenerated);
@@ -348,17 +366,17 @@ export class GenerationResultDataService implements OnDestroy {
   private mapDerivationItemToView(
     item: SmileitDerivationPageItemView,
   ): SmileitGeneratedStructureView {
-    const normalizedName: string = item.name.trim();
     const currentJobId: string | null = this.workflow.currentJobId();
     const cachedSvg =
       currentJobId === null
         ? ''
         : this.readSvgFromSessionCache(currentJobId, item.structureIndex, 'thumb');
+    const exportNameBase =
+      this.workflow.resultData()?.exportNameBase ?? this.workflow.exportNameBase();
 
     return {
       structureIndex: item.structureIndex,
-      name:
-        normalizedName === '' ? `Generated molecule ${item.structureIndex + 1}` : normalizedName,
+      name: buildDerivativeDisplayName(exportNameBase, item.structureIndex + 1),
       smiles: item.smiles,
       svg: cachedSvg,
       placeholderAssignments: item.placeholderAssignments,

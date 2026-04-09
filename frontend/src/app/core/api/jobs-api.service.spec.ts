@@ -7,14 +7,14 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-    CalculatorJobResponse,
-    EasyRateJobResponse,
-    JobLogList,
-    JobProgressSnapshot,
-    ProgressStageEnum,
-    ScientificJob,
-    StatusEnum,
-    provideApi,
+  CalculatorJobResponse,
+  EasyRateJobResponse,
+  JobLogList,
+  JobProgressSnapshot,
+  ProgressStageEnum,
+  ScientificJob,
+  StatusEnum,
+  provideApi,
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
@@ -710,7 +710,10 @@ describe('JobsApiService', () => {
     // Verifica payload de contratos OpenAPI para dos plugins críticos del frontend.
     service
       .dispatchSaScoreJob({
-        smiles: ['CCO', 'N#N'],
+        molecules: [
+          { name: 'CCO', smiles: 'CCO' },
+          { name: 'N#N', smiles: 'N#N' },
+        ],
         methods: ['rdkit'],
       })
       .subscribe();
@@ -718,12 +721,15 @@ describe('JobsApiService', () => {
     const saReq = httpMock.expectOne((request) => request.url.includes('/api/sa-score/jobs/'));
     expect(saReq.request.method).toBe('POST');
     expect(saReq.request.body['version']).toBe('1.0.0');
-    expect(saReq.request.body['smiles']).toEqual(['CCO', 'N#N']);
+    expect(saReq.request.body['molecules']).toEqual([
+      { name: 'CCO', smiles: 'CCO' },
+      { name: 'N#N', smiles: 'N#N' },
+    ]);
     saReq.flush({ id: 'sa-job-1' });
 
     service
       .dispatchToxicityPropertiesJob({
-        smiles: ['CCO'],
+        molecules: [{ name: 'CCO', smiles: 'CCO' }],
       })
       .subscribe();
 
@@ -732,7 +738,7 @@ describe('JobsApiService', () => {
     );
     expect(toxReq.request.method).toBe('POST');
     expect(toxReq.request.body['version']).toBe('1.0.0');
-    expect(toxReq.request.body['smiles']).toEqual(['CCO']);
+    expect(toxReq.request.body['molecules']).toEqual([{ name: 'CCO', smiles: 'CCO' }]);
     toxReq.flush({ id: 'tox-job-1' });
   });
 
@@ -1110,7 +1116,7 @@ describe('JobsApiService', () => {
   it('should dispatch sa-score and toxicity jobs through generated clients', () => {
     service
       .dispatchSaScoreJob({
-        smiles: ['CCO'],
+        molecules: [{ name: 'CCO', smiles: 'CCO' }],
         methods: ['rdkit'],
       })
       .subscribe();
@@ -1122,7 +1128,7 @@ describe('JobsApiService', () => {
 
     service
       .dispatchToxicityPropertiesJob({
-        smiles: ['CCO'],
+        molecules: [{ name: 'CCO', smiles: 'CCO' }],
       })
       .subscribe();
 

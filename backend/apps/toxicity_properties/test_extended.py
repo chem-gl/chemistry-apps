@@ -75,15 +75,14 @@ class ToxicityPropertiesExtendedApiTests(ScientificJobTestMixin):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_deduplicates_repeated_smiles(self) -> None:
-        """Verifica que SMILES duplicados se deduplican antes de ejecutar."""
+    def test_preserves_repeated_smiles_rows(self) -> None:
+        """Permite filas repetidas para conservar entradas y nombres independientes."""
         payload = {"smiles": [CAFFEINE_SMILES, CAFFEINE_SMILES]}
         _job_id, response = self.create_and_run_job(
             APP_API_BASE_PATH, payload, ROUTER_MODULE
         )
         self.assertEqual(response.data["status"], "completed")
-        # El job debe procesarse como 1 molécula única
-        self.assertEqual(response.data["results"]["total"], 1)
+        self.assertEqual(response.data["results"]["total"], 2)
 
     def test_cancel_pending_job(self) -> None:
         """Cancela un job en estado pending."""

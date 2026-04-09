@@ -16,16 +16,24 @@ from typing import Literal, TypedDict
 SaScoreMethod = Literal["ambit", "brsa", "rdkit"]
 
 
+class SaScoreMoleculeInput(TypedDict):
+    """Fila de entrada del lote químico con nombre visible y SMILES."""
+
+    name: str
+    smiles: str
+
+
 class SaScoreJobParameters(TypedDict):
     """Parámetros de entrada para un job de SA score."""
 
-    smiles_list: list[str]
+    molecules: list[SaScoreMoleculeInput]
     methods: list[str]  # valores de SaScoreMethod
 
 
 class SaMoleculeResult(TypedDict):
     """Resultado de SA score para una molécula individual con todos los métodos."""
 
+    name: str
     smiles: str
     ambit_sa: float | None
     brsa_sa: float | None

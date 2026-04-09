@@ -30,7 +30,7 @@ export interface ToxicityPropertiesServiceInterface {
      * @endpoint post /api/toxicity-properties/jobs/
      * @param toxicityJobCreateRequest 
      */
-    toxicityPropertiesJobsCreate(toxicityJobCreateRequest: ToxicityJobCreateRequest, extraHttpRequestParams?: any): Observable<ToxicityJobResponse>;
+    toxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, extraHttpRequestParams?: any): Observable<ToxicityJobResponse>;
 
     /**
      * Descargar Reporte CSV
