@@ -27,6 +27,7 @@ from .parsing import (
     display_atom_symbol,
     get_implicit_hydrogens,
     parse_smiles_cached,
+    remap_anchor_indices_to_canonical,
     silence_rdkit_logs,
     validate_smarts,
     validate_smiles,
@@ -59,6 +60,7 @@ __all__ = [
     # parsing
     "canonicalize_smiles",
     "canonicalize_substituent",
+    "remap_anchor_indices_to_canonical",
     "validate_smiles",
     "validate_smarts",
     "get_implicit_hydrogens",

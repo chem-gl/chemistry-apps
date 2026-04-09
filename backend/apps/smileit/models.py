@@ -124,6 +124,25 @@ class SmileitSubstituent(models.Model):
             models.Index(fields=["is_active"]),
         ]
 
+    def save(self, *args: object, **kwargs: object) -> None:
+        """Garantiza que smiles_canonical sea siempre el SMILES canónico de RDKit.
+
+        Invariante de dominio: cualquier escritura a través del ORM que incluya
+        smiles_canonical (save completo o update_fields que lo contenga) dejará
+        el campo en su forma canónica.  Las migraciones usan modelos históricos
+        (apps.get_model) y no pasan por este método — gestionan la canonicalización
+        de forma explícita.
+        """
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None or "smiles_canonical" in update_fields:
+            from rdkit import Chem  # noqa: PLC0415
+
+            if self.smiles_canonical:
+                mol = Chem.MolFromSmiles(self.smiles_canonical)
+                if mol is not None:
+                    self.smiles_canonical = Chem.MolToSmiles(mol, isomericSmiles=True)
+        super().save(*args, **kwargs)  # type: ignore[misc]
+
     def __str__(self) -> str:
         return f"Substituent<{self.name}:{self.stable_id}:v{self.version}>"
 

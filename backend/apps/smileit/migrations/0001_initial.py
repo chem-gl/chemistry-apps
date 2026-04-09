@@ -117,6 +117,20 @@ def seed_smileit_reference_data(apps, schema_editor) -> None:
 
     for item in substituent_data:
         stable_id = uuid.uuid4()
+        # Canonicalizar el SMILES y calcular el anchor correcto en el espacio canónico.
+        # Sin este paso, el anchor_atom_indices=0 refiere al índice del SMILES input,
+        # que puede diferir del índice 0 del SMILES canónico (p.ej. 'C(=O)O' → 'O=CO').
+        from rdkit import (
+            Chem,  # noqa: PLC0415 (import local para no afectar el módulo de migración)
+        )
+
+        mol_input = Chem.MolFromSmiles(item["smiles"])
+        canonical_smiles = Chem.MolToSmiles(mol_input, isomericSmiles=True)
+        mol_canonical = Chem.MolFromSmiles(canonical_smiles)
+        # match[original_idx] = canonical_idx
+        match = mol_canonical.GetSubstructMatch(mol_input)
+        anchor_canonical = match[0] if match else 0
+
         substituent = substituent_model.objects.create(
             stable_id=stable_id,
             version=1,
@@ -124,8 +138,8 @@ def seed_smileit_reference_data(apps, schema_editor) -> None:
             is_active=True,
             name=item["name"],
             smiles_input=item["smiles"],
-            smiles_canonical=item["smiles"],
-            anchor_atom_indices=[0],
+            smiles_canonical=canonical_smiles,
+            anchor_atom_indices=[anchor_canonical],
             source_reference="legacy-smileit",
             provenance_metadata={"seed": True},
         )

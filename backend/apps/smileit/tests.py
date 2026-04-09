@@ -966,7 +966,24 @@ class SmileitPluginOptimizationTests(TestCase):
             }
             return mapping.get(principal_smiles)
 
+        def fake_resolve_site_maps(
+            principal_smiles: str,
+            derivative_smiles: str,
+            selected_atom_indices: list[int],
+        ) -> list[dict[int, int]]:
+            del principal_smiles, selected_atom_indices
+            mapping: dict[str, list[dict[int, int]]] = {
+                "CC": [{0: 0, 1: 1}],
+                "CCC": [{0: 0, 1: 1}],
+                "CCN": [{0: 0, 1: 1}],
+            }
+            return mapping.get(derivative_smiles, [])
+
         with (
+            patch(
+                "apps.smileit._smileit_engine._resolve_principal_site_index_maps_for_node",
+                side_effect=fake_resolve_site_maps,
+            ),
             patch(
                 "apps.smileit._smileit_engine.is_fusion_candidate_viable",
                 return_value=True,
