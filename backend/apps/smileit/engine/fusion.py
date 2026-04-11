@@ -138,7 +138,7 @@ def _fuse_with_wildcard_anchor(
     try:
         with silence_rdkit_logs():
             Chem.SanitizeMol(combo)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug(
             "Sanitización fallida para wildcard %r + %r: %s",
             principal_smiles,
@@ -150,7 +150,7 @@ def _fuse_with_wildcard_anchor(
     try:
         with silence_rdkit_logs():
             return Chem.MolToSmiles(combo, isomericSmiles=True)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Error generando SMILES con wildcard: %s", exc)
         return None
 
@@ -259,7 +259,7 @@ def fuse_molecules(
     try:
         with silence_rdkit_logs():
             Chem.SanitizeMol(combo)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug(
             "Sanitización fallida para fusión %r + %r: %s",
             principal_smiles,
@@ -271,7 +271,7 @@ def fuse_molecules(
     try:
         with silence_rdkit_logs():
             return Chem.MolToSmiles(combo, isomericSmiles=True)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Error generando SMILES: %s", exc)
         return None
 

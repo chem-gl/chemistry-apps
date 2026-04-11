@@ -157,7 +157,7 @@ export interface SmileitServiceInterface {
 
     /**
      * Descargar Export Principal SMILES Enumerado
-     * Descarga archivo limpio NAME + NAME_XXXXX SMILES para DataWarrior.
+     * Descarga archivo SMI/TXT con principal y derivados como lista simple de SMILES.
      * @endpoint get /api/smileit/jobs/{id}/report-smiles/
      * @param id A UUID string identifying this scientific job.
      */

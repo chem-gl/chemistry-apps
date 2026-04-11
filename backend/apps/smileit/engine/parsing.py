@@ -118,7 +118,7 @@ def get_implicit_hydrogens(atom: Chem.Atom) -> int:
     """Retorna el número de hidrógenos implícitos de un átomo."""
     try:
         return atom.GetNumImplicitHs()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return 0
 
 

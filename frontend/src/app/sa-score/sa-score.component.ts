@@ -4,21 +4,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  DownloadedReportFile,
-  SaScoreMethod,
-  SaScoreMoleculeResultView,
-} from '../core/api/jobs-api.service';
+import { SaScoreMethod, SaScoreMoleculeResultView } from '../core/api/jobs-api.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { SmilesBatchInputComponent } from '../core/shared/components/smiles-batch-input/smiles-batch-input.component';
-import {
-  downloadBlobFile,
-  HistoricalJobWorkflowPort,
-  NamedSmilesInputRow,
-} from '../core/shared/scientific-app-ui.utils';
+import { downloadReportFile, NamedSmilesInputRow } from '../core/shared/scientific-app-ui.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 
 @Component({
@@ -37,7 +29,7 @@ import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-ba
   styleUrl: './sa-score.component.scss',
 })
 export class SaScoreComponent extends SmilesMoleculesBaseComponent {
-  readonly workflow = inject(SaScoreWorkflowService);
+  protected override readonly workflow = inject(SaScoreWorkflowService);
 
   readonly methodItems = [
     { key: 'ambit' as SaScoreMethod, label: 'AMBIT SA' },
@@ -89,38 +81,12 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
     return this.workflow.customNamesEnabled;
   }
 
-  protected override get workflowPort(): HistoricalJobWorkflowPort {
-    return this.workflow;
-  }
-
-  dispatch(): void {
-    this.workflow.dispatch();
-  }
-
-  reset(): void {
-    this.workflow.reset();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
-
   exportAllCsv(): void {
-    this.workflow.downloadFullCsvReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {},
-    });
+    downloadReportFile(this.workflow.downloadFullCsvReport());
   }
 
   exportMethodCsv(method: SaScoreMethod): void {
-    this.workflow.downloadMethodCsvReport(method).subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {},
-    });
+    downloadReportFile(this.workflow.downloadMethodCsvReport(method));
   }
 
   exportCsv(): void {

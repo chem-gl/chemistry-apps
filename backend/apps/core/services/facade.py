@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from django.contrib.auth.models import AbstractUser
+
 from ..models import ScientificJob
-from ..types import JobRecoverySummary, JSONMap
+from ..types import JobDeleteResult, JobRecoverySummary, JSONMap
 from .runtime import RuntimeJobService
 
 
@@ -93,3 +95,21 @@ class JobService:
         """Reanuda un job pausado para permitir su reencolado desde cualquier capa."""
         runtime_service: RuntimeJobService = JobService._get_runtime_service()
         return runtime_service.resume_job(job_id)
+
+    @staticmethod
+    def delete_job(job_id: str, *, actor: AbstractUser) -> JobDeleteResult:
+        """Elimina un job definitivamente o lo mueve a papelera según jerarquía."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.delete_job(job_id, actor=actor)
+
+    @staticmethod
+    def restore_job(job_id: str, *, actor: AbstractUser) -> ScientificJob:
+        """Restaura un job previamente enviado a la papelera de reciclaje."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.restore_job(job_id, actor=actor)
+
+    @staticmethod
+    def purge_expired_deleted_jobs() -> int:
+        """Ejecuta purga oportunista de jobs vencidos en papelera."""
+        runtime_service: RuntimeJobService = JobService._get_runtime_service()
+        return runtime_service.purge_expired_deleted_jobs()

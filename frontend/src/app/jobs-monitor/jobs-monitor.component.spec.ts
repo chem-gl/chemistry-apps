@@ -40,7 +40,11 @@ function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView 
 describe('JobsMonitorComponent', () => {
   const sessionServiceMock = {
     canAccessRoute: vi.fn((routeKey: string) => routeKey !== 'unknown-plugin'),
+    hasAdminAccess: vi.fn(() => true),
     canManageJob: vi.fn(() => true),
+    canDeleteJob: vi.fn(() => true),
+    canRestoreJob: vi.fn(() => true),
+    resolveDeleteMode: vi.fn((): 'hard' | 'soft' | null => 'hard'),
   };
 
   const facadeMock = {
@@ -76,12 +80,19 @@ describe('JobsMonitorComponent', () => {
     pauseJob: vi.fn(),
     resumeJob: vi.fn(),
     cancelJob: vi.fn(),
+    deleteJob: vi.fn(),
+    restoreJob: vi.fn(),
+    isControlActionRunning: vi.fn(() => false),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     sessionServiceMock.canAccessRoute.mockClear();
+    sessionServiceMock.hasAdminAccess.mockClear();
     sessionServiceMock.canManageJob.mockClear();
+    sessionServiceMock.canDeleteJob.mockClear();
+    sessionServiceMock.canRestoreJob.mockClear();
+    sessionServiceMock.resolveDeleteMode.mockClear();
 
     facadeMock.jobs.set([]);
     facadeMock.isLoading.set(false);
@@ -145,7 +156,7 @@ describe('JobsMonitorComponent', () => {
     expect(facadeMock.setPluginFilter).toHaveBeenCalledWith('random-numbers');
   });
 
-  it('delega openJobDetails, closeJobDetails, pauseJob, resumeJob y cancelJob', () => {
+  it('delega openJobDetails, closeJobDetails, pauseJob, resumeJob, cancelJob, deleteJob y restoreJob', () => {
     const fixture = TestBed.createComponent(JobsMonitorComponent);
     const component = fixture.componentInstance;
 
@@ -154,12 +165,16 @@ describe('JobsMonitorComponent', () => {
     component.pauseJob('jm-10');
     component.resumeJob('jm-10');
     component.cancelJob('jm-10');
+    component.deleteJob('jm-10');
+    component.restoreJob('jm-10');
 
     expect(facadeMock.openJobDetails).toHaveBeenCalledWith('jm-10');
     expect(facadeMock.closeJobDetails).toHaveBeenCalled();
     expect(facadeMock.pauseJob).toHaveBeenCalledWith('jm-10');
     expect(facadeMock.resumeJob).toHaveBeenCalledWith('jm-10');
     expect(facadeMock.cancelJob).toHaveBeenCalledWith('jm-10');
+    expect(facadeMock.deleteJob).toHaveBeenCalledWith('jm-10');
+    expect(facadeMock.restoreJob).toHaveBeenCalledWith('jm-10');
   });
 
   it('statusClassName retorna clases CSS combinadas para estado del job', () => {
@@ -223,6 +238,26 @@ describe('JobsMonitorComponent', () => {
 
     expect(component.resultActionLabel(completedRandomJob)).toBe('Open result');
     expect(component.resultActionLabel(calculatorJob)).toBe('Open result');
+  });
+
+  it('canDeleteJob y deleteActionLabel respetan la jerarquía resuelta por la sesión', () => {
+    const fixture = TestBed.createComponent(JobsMonitorComponent);
+    const component = fixture.componentInstance;
+    const completedJob = makeJob({ status: 'completed' });
+    const softDeleteMode = 'soft' as const;
+
+    sessionServiceMock.canDeleteJob.mockReturnValueOnce(true);
+    sessionServiceMock.resolveDeleteMode.mockReturnValueOnce(softDeleteMode);
+
+    expect(component.canDeleteJob(completedJob)).toBe(true);
+    expect(component.deleteActionLabel(completedJob)).toBe('Move to trash');
+  });
+
+  it('canDeleteJob rechaza jobs no terminales aunque la sesión tenga permisos', () => {
+    const fixture = TestBed.createComponent(JobsMonitorComponent);
+    const component = fixture.componentInstance;
+
+    expect(component.canDeleteJob(makeJob({ status: 'running' }))).toBe(false);
   });
 
   it('expone las opciones de estado en statusOptions', () => {

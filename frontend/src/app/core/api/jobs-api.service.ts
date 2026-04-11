@@ -13,6 +13,7 @@ import {
   EasyRateService,
   JobControlActionResponse,
   JobCreateRequest,
+  JobDeleteActionResponse,
   JobProgressSnapshot,
   JobsService,
   MarcusJobResponse,
@@ -41,6 +42,7 @@ import type {
   EasyRateInspectionExecutionView,
   EasyRateParams,
   JobControlActionResult,
+  JobDeleteActionResult,
   JobListFilters,
   JobLogEntryView,
   JobLogsPageView,
@@ -185,6 +187,17 @@ export class JobsApiService {
     };
   }
 
+  private normalizeDeleteActionResult(
+    rawResponse: JobDeleteActionResponse,
+  ): JobDeleteActionResult {
+    return {
+      detail: rawResponse.detail,
+      jobId: rawResponse.job_id,
+      deletionMode: rawResponse.deletion_mode,
+      scheduledHardDeleteAt: rawResponse.scheduled_hard_delete_at,
+    };
+  }
+
   private normalizeEasyRateInspectionExecution(
     rawExecution: EasyRateInspectionExecutionApiResponse,
   ): EasyRateInspectionExecutionView {
@@ -233,6 +246,11 @@ export class JobsApiService {
    */
   listJobs(filters: JobListFilters = {}): Observable<ScientificJob[]> {
     return this.jobsClient.jobsList(filters.pluginName, filters.status).pipe(shareReplay(1));
+  }
+
+  /** Lista jobs actualmente enviados a la papelera de reciclaje. */
+  listDeletedJobs(): Observable<ScientificJob[]> {
+    return this.jobsClient.jobsTrashList().pipe(shareReplay(1));
   }
 
   /**
@@ -381,6 +399,22 @@ export class JobsApiService {
   /** Cancela un job de forma irreversible (pending/running/paused -> cancelled) */
   cancelJob(jobId: string): Observable<JobControlActionResult> {
     return this.jobsClient.jobsCancelCreate(jobId).pipe(
+      map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
+      shareReplay(1),
+    );
+  }
+
+  /** Elimina un job definitivamente o lo mueve a la papelera según la jerarquía del actor. */
+  deleteJob(jobId: string): Observable<JobDeleteActionResult> {
+    return this.jobsClient.jobsDeleteCreate(jobId).pipe(
+      map((rawResponse) => this.normalizeDeleteActionResult(rawResponse)),
+      shareReplay(1),
+    );
+  }
+
+  /** Restaura un job desde la papelera de reciclaje. */
+  restoreJob(jobId: string): Observable<JobControlActionResult> {
+    return this.jobsClient.jobsRestoreCreate(jobId).pipe(
       map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
       shareReplay(1),
     );

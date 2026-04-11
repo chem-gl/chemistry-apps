@@ -22,6 +22,7 @@ import { KetcherFrameService } from '../application/ketcher-frame.service';
 import {
   HistoricalJobWorkflowPort,
   NamedSmilesInputRow,
+  SmilesMoleculeWorkflowPort,
   buildSmilesTextFromRows,
   closeDialogOnBackdropClick,
   parseNamedSmilesBatch,
@@ -107,6 +108,12 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
   /** Retorna la señal que controla la edición de nombres personalizados. */
   protected abstract get workflowCustomNamesEnabled(): WritableSignal<boolean>;
 
+  /**
+   * Retorna el workflow del componente concreto con operaciones compartidas de UI.
+   * Implementar retornando `this.workflow`.
+   */
+  protected abstract readonly workflow: SmilesMoleculeWorkflowPort;
+
   // ---------------------------------------------------------------------------
   // Ciclo de vida
   // ---------------------------------------------------------------------------
@@ -123,7 +130,21 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
    * Retorna el workflow del componente concreto como HistoricalJobWorkflowPort.
    * Implementar retornando `this.workflow`.
    */
-  protected abstract get workflowPort(): HistoricalJobWorkflowPort;
+  protected get workflowPort(): HistoricalJobWorkflowPort {
+    return this.workflow;
+  }
+
+  dispatch(): void {
+    this.workflow.dispatch();
+  }
+
+  reset(): void {
+    this.workflow.reset();
+  }
+
+  openHistoricalJob(jobId: string): void {
+    this.workflow.openHistoricalJob(jobId);
+  }
 
   // ---------------------------------------------------------------------------
   // Clase CSS para el badge de estado en historial

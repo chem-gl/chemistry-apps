@@ -19,9 +19,12 @@ import {
 import { JobsApiService } from './jobs-api.service';
 
 const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
+const JOBS_DELETE_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/delete/`;
 const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
 const JOBS_LIST_URL: string = `${API_BASE_URL}/api/jobs/`;
 const JOBS_LOGS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/logs/`;
+const JOBS_RESTORE_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/restore/`;
+const JOBS_TRASH_URL: string = `${API_BASE_URL}/api/jobs/trash/`;
 const MOLAR_REPORT_CSV_URL = (id: string): string =>
   `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-csv/`;
 const MOLAR_REPORT_LOG_URL = (id: string): string =>
@@ -451,6 +454,21 @@ describe('JobsApiService', () => {
     req.flush([]);
   });
 
+  it('should list deleted jobs from recycle bin endpoint', () => {
+    const deletedJobs = [
+      makeScientificJob({ id: 'trash-a', deleted_at: new Date().toISOString() }),
+      makeScientificJob({ id: 'trash-b', deleted_at: new Date().toISOString() }),
+    ];
+
+    service.listDeletedJobs().subscribe((jobItems) => {
+      expect(jobItems.map((job) => job.id)).toEqual(['trash-a', 'trash-b']);
+    });
+
+    const req = httpMock.expectOne(JOBS_TRASH_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush(deletedJobs);
+  });
+
   it('should dispatch a generic scientific job', () => {
     const scientificJob = makeScientificJob({ id: 'random-job-1', plugin_name: 'random-numbers' });
 
@@ -646,6 +664,37 @@ describe('JobsApiService', () => {
     const cancelReq = httpMock.expectOne(`${JOBS_LIST_URL}ctrl-job-1/cancel/`);
     expect(cancelReq.request.method).toBe('POST');
     cancelReq.flush({ detail: 'cancel requested', job: controlledJob });
+  });
+
+  it('should map delete action to normalized wrapper result', () => {
+    service.deleteJob('ctrl-job-2').subscribe((result) => {
+      expect(result.detail).toContain('deleted');
+      expect(result.jobId).toBe('ctrl-job-2');
+      expect(result.deletionMode).toBe('soft');
+      expect(result.scheduledHardDeleteAt).toBe('2026-03-31T12:00:00Z');
+    });
+
+    const deleteReq = httpMock.expectOne(JOBS_DELETE_URL('ctrl-job-2'));
+    expect(deleteReq.request.method).toBe('POST');
+    deleteReq.flush({
+      detail: 'deleted successfully',
+      job_id: 'ctrl-job-2',
+      deletion_mode: 'soft',
+      scheduled_hard_delete_at: '2026-03-31T12:00:00Z',
+    });
+  });
+
+  it('should map restore action to normalized wrapper result', () => {
+    const restoredJob = makeScientificJob({ id: 'ctrl-job-3', status: 'completed' });
+
+    service.restoreJob('ctrl-job-3').subscribe((result) => {
+      expect(result.detail).toContain('restored');
+      expect(result.job.id).toBe('ctrl-job-3');
+    });
+
+    const restoreReq = httpMock.expectOne(JOBS_RESTORE_URL('ctrl-job-3'));
+    expect(restoreReq.request.method).toBe('POST');
+    restoreReq.flush({ detail: 'restored successfully', job: restoredJob });
   });
 
   it('should validate molar fractions params and throw for invalid pKa or missing range data', () => {

@@ -14,6 +14,7 @@ import { Observable }                                        from 'rxjs';
 import { ErrorResponse } from '../model/models';
 import { JobControlActionResponse } from '../model/models';
 import { JobCreateRequest } from '../model/models';
+import { JobDeleteActionResponse } from '../model/models';
 import { JobLogList } from '../model/models';
 import { JobProgressSnapshot } from '../model/models';
 import { ScientificJob } from '../model/models';
@@ -42,6 +43,14 @@ export interface JobsServiceInterface {
      * @param jobCreateRequest 
      */
     jobsCreate(jobCreateRequest: JobCreateRequest, extraHttpRequestParams?: any): Observable<ScientificJob>;
+
+    /**
+     * Eliminar un Job
+     * El autor original elimina definitivamente sus jobs terminales. Root/Admin envían a papelera los jobs ajenos dentro de su alcance y la restauración queda disponible por un período limitado.
+     * @endpoint post /api/jobs/{id}/delete/
+     * @param id UUID del job científico.
+     */
+    jobsDeleteCreate(id: string, extraHttpRequestParams?: any): Observable<JobDeleteActionResponse>;
 
     /**
      * Suscribirse a eventos de progreso de un Job (SSE)
@@ -97,6 +106,14 @@ export interface JobsServiceInterface {
     jobsProgressRetrieve(id: string, extraHttpRequestParams?: any): Observable<JobProgressSnapshot>;
 
     /**
+     * Restaurar un Job desde papelera
+     * Permite a root o administradores restaurar jobs eliminados lógicamente dentro de su ámbito autorizado.
+     * @endpoint post /api/jobs/{id}/restore/
+     * @param id UUID del job científico enviado a papelera.
+     */
+    jobsRestoreCreate(id: string, extraHttpRequestParams?: any): Observable<JobControlActionResponse>;
+
+    /**
      * Reanudar un Job pausado
      * Reanuda un job pausado y lo reencola para continuar desde su estado persistido cuando el plugin soporta pausa cooperativa.
      * @endpoint post /api/jobs/{id}/resume/
@@ -111,5 +128,12 @@ export interface JobsServiceInterface {
      * @param id UUID del job cientifico a consultar.
      */
     jobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<ScientificJob>;
+
+    /**
+     * Listar Jobs en papelera
+     * Devuelve jobs eliminados lógicamente disponibles para restauración. Sólo root y admins pueden consultar esta vista.
+     * @endpoint get /api/jobs/trash/
+     */
+    jobsTrashList(extraHttpRequestParams?: any): Observable<Array<ScientificJob>>;
 
 }

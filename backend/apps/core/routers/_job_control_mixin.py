@@ -24,8 +24,10 @@ from rest_framework.response import Response
 
 from ..definitions import (
     CORE_JOBS_CANCEL_ROUTE_SUFFIX,
+    CORE_JOBS_DELETE_ROUTE_SUFFIX,
     CORE_JOBS_PAUSE_ROUTE_SUFFIX,
     CORE_JOBS_PROGRESS_ROUTE_SUFFIX,
+    CORE_JOBS_RESTORE_ROUTE_SUFFIX,
     CORE_JOBS_RESUME_ROUTE_SUFFIX,
 )
 from ..identity.services import AuthorizationService
@@ -33,6 +35,7 @@ from ..models import ScientificJob
 from ..schemas import (
     ErrorResponseSerializer,
     JobControlActionResponseSerializer,
+    JobDeleteActionResponseSerializer,
     JobProgressSnapshotSerializer,
     ScientificJobSerializer,
 )
@@ -44,6 +47,13 @@ from .helpers import build_progress_snapshot
 
 class JobControlActionsMixin:
     """Mixin con acciones de control de estado (pause, resume, cancel, progress)."""
+
+    def _get_active_job_or_404(self, job_id: str | None) -> ScientificJob:
+        """Recupera un job visible para endpoints normales, excluyendo papelera."""
+        return get_object_or_404(
+            ScientificJob.objects.filter(deleted_at__isnull=True),
+            pk=job_id,
+        )
 
     @extend_schema(
         summary="Solicitar pausa de un Job",
@@ -77,7 +87,7 @@ class JobControlActionsMixin:
     def pause(self, request: Request, id: str | None = None) -> Response:
         """Solicita pausa cooperativa para un job con soporte explícito."""
         actor = request.user
-        job = get_object_or_404(ScientificJob, pk=id)
+        job = self._get_active_job_or_404(id)
         if bool(
             getattr(actor, "is_authenticated", False)
         ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
@@ -134,7 +144,7 @@ class JobControlActionsMixin:
     def resume(self, request: Request, id: str | None = None) -> Response:
         """Reanuda un job pausado y reintenta su encolado de ejecución."""
         actor = request.user
-        job = get_object_or_404(ScientificJob, pk=id)
+        job = self._get_active_job_or_404(id)
         if bool(
             getattr(actor, "is_authenticated", False)
         ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
@@ -209,7 +219,7 @@ class JobControlActionsMixin:
     def cancel(self, request: Request, id: str | None = None) -> Response:
         """Cancela un job de forma irreversible si se encuentra en estado activo."""
         actor = request.user
-        job = get_object_or_404(ScientificJob, pk=id)
+        job = self._get_active_job_or_404(id)
         if bool(
             getattr(actor, "is_authenticated", False)
         ) and not AuthorizationService.can_manage_job(actor=actor, job=job):
@@ -230,6 +240,135 @@ class JobControlActionsMixin:
         return Response(
             {
                 "detail": "Job cancelado correctamente. La operación es irreversible.",
+                "job": job_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        summary="Eliminar un Job",
+        description=(
+            "Usuarios estándar eliminan definitivamente sus jobs terminales. "
+            "Root/Admin siempre envían primero a papelera y desde ahí pueden restaurar "
+            "o eliminar definitivamente antes del vencimiento automático."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico.",
+            )
+        ],
+        responses={
+            200: JobDeleteActionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="El job ya está en papelera o aún debe cancelarse antes.",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+        request=None,
+    )
+    @action(detail=True, methods=["post"], url_path=CORE_JOBS_DELETE_ROUTE_SUFFIX)
+    def delete(self, request: Request, id: str | None = None) -> Response:
+        """Elimina un job según rol y estado de papelera."""
+        actor = request.user
+        if not bool(getattr(actor, "is_authenticated", False)):
+            return Response(
+                {"detail": "Debes autenticarte para eliminar jobs."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        job = get_object_or_404(ScientificJob, pk=id)
+        if not AuthorizationService.can_delete_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para eliminar este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            deletion_result = JobService.delete_job(str(id), actor=actor)
+        except ValueError as control_error:
+            return Response(
+                {"detail": str(control_error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        detail_message = (
+            "Job eliminado definitivamente."
+            if deletion_result["deletion_mode"] == "hard"
+            else "Job enviado a la papelera de reciclaje."
+        )
+        return Response(
+            {
+                "detail": detail_message,
+                "job_id": deletion_result["job_id"],
+                "deletion_mode": deletion_result["deletion_mode"],
+                "scheduled_hard_delete_at": deletion_result["scheduled_hard_delete_at"],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        summary="Restaurar un Job desde papelera",
+        description=(
+            "Permite a root o administradores restaurar jobs eliminados lógicamente "
+            "dentro de su ámbito autorizado."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="UUID del job científico enviado a papelera.",
+            )
+        ],
+        responses={
+            200: JobControlActionResponseSerializer,
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="El job no está en papelera o no puede restaurarse.",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Job no encontrado.",
+            ),
+        },
+        request=None,
+    )
+    @action(detail=True, methods=["post"], url_path=CORE_JOBS_RESTORE_ROUTE_SUFFIX)
+    def restore(self, request: Request, id: str | None = None) -> Response:
+        """Restaura un job enviado a papelera lógica dentro del alcance autorizado."""
+        actor = request.user
+        if not bool(getattr(actor, "is_authenticated", False)):
+            return Response(
+                {"detail": "Debes autenticarte para restaurar jobs."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        job = get_object_or_404(ScientificJob, pk=id)
+        if not AuthorizationService.can_restore_job(actor=actor, job=job):
+            return Response(
+                {"detail": "No tienes permisos para restaurar este job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            restored_job = JobService.restore_job(str(id), actor=actor)
+        except ValueError as control_error:
+            return Response(
+                {"detail": str(control_error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_serializer = ScientificJobSerializer(restored_job)
+        return Response(
+            {
+                "detail": "Job restaurado correctamente desde la papelera.",
                 "job": job_serializer.data,
             },
             status=status.HTTP_200_OK,
@@ -261,7 +400,7 @@ class JobControlActionsMixin:
     def progress(self, request: Request, id: str | None = None) -> Response:
         """Retorna el progreso actual del job en un contrato tipado y estable."""
         actor = request.user
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        job: ScientificJob = self._get_active_job_or_404(id)
         if bool(
             getattr(actor, "is_authenticated", False)
         ) and not AuthorizationService.can_view_job(actor=actor, job=job):

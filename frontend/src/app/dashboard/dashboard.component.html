@@ -16,6 +16,9 @@
             <a class="outline-action" routerLink="/profile">My profile</a>
             <a class="outline-action" routerLink="/jobs">Open jobs monitor</a>
             @if (sessionService.hasAdminAccess()) {
+            <a class="outline-action" routerLink="/jobs/trash">Open recycle bin</a>
+            }
+            @if (sessionService.hasAdminAccess()) {
             <a class="solid-action" routerLink="/admin/identity">Open identity console</a>
             }
         </div>
@@ -26,6 +29,10 @@
     } @else {
     @if (errorMessage(); as currentError) {
     <section class="state-card error-card" role="alert">{{ currentError }}</section>
+    }
+
+    @if (deleteErrorMessage(); as currentDeleteError) {
+    <section class="state-card error-card" role="alert">{{ currentDeleteError }}</section>
     }
 
     <section class="metrics-grid">
@@ -81,38 +88,46 @@
             } @else {
             <div class="recent-jobs-list">
                 @for (jobItem of recentJobs(); track jobItem.id) {
-                @if (recentJobRoutePath(jobItem); as routePath) {
-                <a class="job-row job-row-link" [routerLink]="routePath" [queryParams]="{ jobId: jobItem.id }"
-                    [attr.aria-label]="'Open result for ' + jobItem.plugin_name + ' job ' + jobItem.id">
-                    <div>
-                        <p class="job-app">{{ jobItem.plugin_name }}</p>
-                        <p class="job-meta">
-                            {{ jobItem.owner_username || 'Unknown user' }}
-                            ·
-                            {{ jobItem.group_name || 'No group' }}
-                        </p>
+                <div class="job-row-shell">
+                    @if (recentJobRoutePath(jobItem); as routePath) {
+                    <a class="job-row job-row-link" [routerLink]="routePath" [queryParams]="{ jobId: jobItem.id }"
+                        [attr.aria-label]="'Open result for ' + jobItem.plugin_name + ' job ' + jobItem.id">
+                        <div>
+                            <p class="job-app">{{ jobItem.plugin_name }}</p>
+                            <p class="job-meta">
+                                {{ jobItem.owner_username || 'Unknown user' }}
+                                ·
+                                {{ jobItem.group_name || 'No group' }}
+                            </p>
+                        </div>
+                        <div class="job-row-actions">
+                            <span class="job-status">{{ jobItem.status }}</span>
+                            <span class="job-open-hint">{{ recentJobNavigationLabel(jobItem) }}</span>
+                        </div>
+                    </a>
+                    } @else {
+                    <div class="job-row job-row-disabled" aria-disabled="true">
+                        <div>
+                            <p class="job-app">{{ jobItem.plugin_name }}</p>
+                            <p class="job-meta">
+                                {{ jobItem.owner_username || 'Unknown user' }}
+                                ·
+                                {{ jobItem.group_name || 'No group' }}
+                            </p>
+                        </div>
+                        <div class="job-row-actions">
+                            <span class="job-status">{{ jobItem.status }}</span>
+                            <span class="job-open-hint is-disabled">{{ recentJobNavigationLabel(jobItem) }}</span>
+                        </div>
                     </div>
-                    <div class="job-row-actions">
-                        <span class="job-status">{{ jobItem.status }}</span>
-                        <span class="job-open-hint">{{ recentJobNavigationLabel(jobItem) }}</span>
-                    </div>
-                </a>
-                } @else {
-                <div class="job-row job-row-disabled" aria-disabled="true">
-                    <div>
-                        <p class="job-app">{{ jobItem.plugin_name }}</p>
-                        <p class="job-meta">
-                            {{ jobItem.owner_username || 'Unknown user' }}
-                            ·
-                            {{ jobItem.group_name || 'No group' }}
-                        </p>
-                    </div>
-                    <div class="job-row-actions">
-                        <span class="job-status">{{ jobItem.status }}</span>
-                        <span class="job-open-hint is-disabled">{{ recentJobNavigationLabel(jobItem) }}</span>
-                    </div>
+                    }
+
+                    @if (canDeleteJob(jobItem)) {
+                    <app-job-management-actions [canDelete]="true" [isBusy]="isDeletingJob(jobItem.id)"
+                        [deleteLabel]="deleteActionLabel(jobItem)" [compact]="true"
+                        (deleteRequested)="deleteJob(jobItem.id)" />
+                    }
                 </div>
-                }
                 }
             </div>
             }

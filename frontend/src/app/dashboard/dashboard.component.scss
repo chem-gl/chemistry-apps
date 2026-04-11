@@ -211,6 +211,13 @@ h1 {
   gap: 0.65rem;
 }
 
+.job-row-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+}
+
 .job-row,
 .summary-list-item {
   display: flex;
@@ -255,6 +262,14 @@ h1 {
 .job-row:last-child,
 .summary-list-item:last-child {
   border-bottom: none;
+}
+
+.job-row-shell .job-row {
+  min-width: 0;
+}
+
+.job-row-shell app-job-management-actions {
+  justify-self: end;
 }
 
 .job-app {
@@ -315,6 +330,14 @@ h1 {
 
   .wide-panel {
     grid-column: span 1;
+  }
+
+  .job-row-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .job-row-shell app-job-management-actions {
+    justify-self: stretch;
   }
 
   .job-row,

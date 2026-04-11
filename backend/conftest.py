@@ -19,6 +19,6 @@ os.environ.setdefault("USE_INMEMORY_CHANNEL_LAYER", "true")
 
 # Importar y configurar Django solo una vez. Si ya se configuró, `django.setup`
 # no hace nada.
-import django  # noqa: E402
+import django
 
 django.setup()

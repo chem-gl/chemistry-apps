@@ -42,6 +42,8 @@ h1 {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--chem-border);
   color: var(--chem-ink-secondary);
   background: var(--chem-surface-elevated);
@@ -56,6 +58,11 @@ h1 {
 .btn:hover {
   border-color: var(--chem-accent);
   color: var(--chem-accent);
+}
+
+.btn,
+.btn:visited {
+  text-decoration: none;
 }
 
 .btn-ghost {
@@ -86,7 +93,9 @@ h1 {
   border-radius: var(--chem-radius-lg);
   padding: 0.85rem 1rem;
   border-left: 3px solid var(--chem-accent);
-  transition: transform var(--chem-transition), box-shadow var(--chem-transition);
+  transition:
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
 }
 
 .kpi-card:hover {
@@ -195,7 +204,9 @@ select {
   padding: 0.85rem;
   display: grid;
   gap: 0.6rem;
-  transition: transform var(--chem-transition), box-shadow var(--chem-transition);
+  transition:
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
 }
 
 .job-card:hover {
@@ -398,7 +409,9 @@ th {
   border: 1px solid var(--chem-primary);
   color: var(--chem-primary);
   background: var(--chem-surface);
-  transition: background var(--chem-transition), color var(--chem-transition);
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition);
 }
 
 .open-result-link:hover,

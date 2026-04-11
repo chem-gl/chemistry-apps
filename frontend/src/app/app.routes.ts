@@ -37,6 +37,12 @@ export const routes: Routes = [
       import('./jobs-monitor/jobs-monitor.component').then((m) => m.JobsMonitorComponent),
   },
   {
+    path: 'jobs/trash',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./jobs-trash/jobs-trash.component').then((m) => m.JobsTrashComponent),
+  },
+  {
     path: 'calculator',
     canActivate: [authGuard, appAccessGuard],
     data: { appKey: 'calculator' },

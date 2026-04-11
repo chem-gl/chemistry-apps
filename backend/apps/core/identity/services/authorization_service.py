@@ -75,14 +75,65 @@ class AuthorizationService:
         return job.group_id in actor_group_ids
 
     @staticmethod
-    def get_visible_jobs(actor: AbstractUser) -> QuerySet[ScientificJob]:
+    def can_delete_job(actor: AbstractUser, job: ScientificJob) -> bool:
+        if job.deleted_at is not None:
+            # Solo root/admin (con alcance válido) pueden eliminar definitivamente
+            # desde la papelera de reciclaje.
+            return AuthorizationService.can_restore_job(actor=actor, job=job)
+        return AuthorizationService.can_manage_job(actor=actor, job=job)
+
+    @staticmethod
+    def can_restore_job(actor: AbstractUser, job: ScientificJob) -> bool:
+        if job.deleted_at is None:
+            return False
         if AuthorizationService.is_root(actor):
-            return ScientificJob.objects.all().order_by("-created_at")
+            return True
+        if not AuthorizationService.is_admin(actor):
+            return False
+
+        actor_group_ids = AuthorizationService._group_ids_for_user(actor)
+        return job.group_id in actor_group_ids
+
+    @staticmethod
+    def should_use_hard_delete(actor: AbstractUser, job: ScientificJob) -> bool:
+        if AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor):
+            # Root/Admin nunca hacen hard delete en la primera acción;
+            # primero envían a papelera para permitir restauración.
+            return False
+        return job.owner_id == actor.id
+
+    @staticmethod
+    def get_visible_jobs(
+        actor: AbstractUser, *, include_deleted: bool = False
+    ) -> QuerySet[ScientificJob]:
+        if AuthorizationService.is_root(actor):
+            jobs_queryset = ScientificJob.objects.all()
+            if not include_deleted:
+                jobs_queryset = jobs_queryset.filter(deleted_at__isnull=True)
+            return jobs_queryset.order_by("-created_at")
+
+        actor_group_ids = AuthorizationService._group_ids_for_user(actor)
+        jobs_queryset = ScientificJob.objects.filter(
+            Q(owner_id=actor.id) | Q(group_id__in=actor_group_ids)
+        )
+        if not include_deleted:
+            jobs_queryset = jobs_queryset.filter(deleted_at__isnull=True)
+        return jobs_queryset.order_by("-created_at")
+
+    @staticmethod
+    def get_restorable_jobs(actor: AbstractUser) -> QuerySet[ScientificJob]:
+        if AuthorizationService.is_root(actor):
+            return ScientificJob.objects.filter(deleted_at__isnull=False).order_by(
+                "-deleted_at", "-created_at"
+            )
+        if not AuthorizationService.is_admin(actor):
+            return ScientificJob.objects.none()
 
         actor_group_ids = AuthorizationService._group_ids_for_user(actor)
         return ScientificJob.objects.filter(
-            Q(owner_id=actor.id) | Q(group_id__in=actor_group_ids)
-        ).order_by("-created_at")
+            deleted_at__isnull=False,
+            group_id__in=actor_group_ids,
+        ).order_by("-deleted_at", "-created_at")
 
     @staticmethod
     def can_access_app(actor: AbstractUser, app_name: str) -> bool:

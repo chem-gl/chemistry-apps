@@ -51,6 +51,8 @@ model/easyRateStructures.ts
 model/errorResponse.ts
 model/jobControlActionResponse.ts
 model/jobCreateRequest.ts
+model/jobDeleteActionResponse.ts
+model/jobDeleteActionResponseDeletionModeEnum.ts
 model/jobLogEvent.ts
 model/jobLogList.ts
 model/jobProgressSnapshot.ts
@@ -70,6 +72,7 @@ model/molarFractionsJobResponse.ts
 model/molarFractionsMetadata.ts
 model/molarFractionsParameters.ts
 model/molarFractionsResult.ts
+model/originalStatusEnum.ts
 model/patchedSmileitCatalogEntryCreateRequest.ts
 model/patternTypeEnum.ts
 model/phModeEnum.ts
@@ -85,6 +88,7 @@ model/saScoreJobResponse.ts
 model/saScoreMoleculeInputRequest.ts
 model/saScoreResults.ts
 model/scientificJob.ts
+model/scientificJobDeletionModeEnum.ts
 model/siteOverlapPolicyEnum.ts
 model/smileitAssignmentBlockInputRequest.ts
 model/smileitAtomInfo.ts

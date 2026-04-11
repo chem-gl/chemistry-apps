@@ -18,6 +18,7 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -196,7 +197,10 @@ class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet
     def retrieve(self, request: Request, id: str | None = None) -> Response:
         """Obtiene un job según su UUID."""
         request_user = request.user
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        job: ScientificJob = get_object_or_404(
+            ScientificJob.objects.filter(deleted_at__isnull=True),
+            pk=id,
+        )
         if bool(getattr(request_user, "is_authenticated", False)):
             if not AuthorizationService.can_view_job(request_user, job):
                 return Response(
@@ -205,3 +209,39 @@ class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet
                 )
         result_serializer = ScientificJobSerializer(job)
         return Response(result_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Listar Jobs en papelera",
+        description=(
+            "Devuelve jobs eliminados lógicamente disponibles para restauración. "
+            "Sólo root y admins pueden consultar esta vista."
+        ),
+        responses={
+            200: ScientificJobSerializer(many=True),
+            403: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="El actor no tiene permisos para consultar la papelera.",
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="trash")
+    def trash(self, request: Request) -> Response:
+        """Lista jobs eliminados lógicamente y aún restaurables."""
+        actor = request.user
+        if not bool(getattr(actor, "is_authenticated", False)):
+            return Response(
+                {"detail": "Debes autenticarte para consultar la papelera."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not (
+            AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor)
+        ):
+            return Response(
+                {"detail": "No tienes permisos para consultar la papelera."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        JobService.purge_expired_deleted_jobs()
+        trash_queryset = AuthorizationService.get_restorable_jobs(actor)
+        serializer = ScientificJobSerializer(trash_queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

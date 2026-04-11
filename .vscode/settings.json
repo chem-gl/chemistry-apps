@@ -1,7 +1,7 @@
 {
   "gitConfigUser.selectedProfile": "Cesar",
   "sonarlint.connectedMode.project": {
-    "connectionId": "http-100-72-72-91-9000-",
+    "connectionId": "http-localhost-9000",
     "projectKey": "chemistry-apps"
   }
 }

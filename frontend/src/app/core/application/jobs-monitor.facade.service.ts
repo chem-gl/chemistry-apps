@@ -4,6 +4,7 @@ import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import {
   JobControlActionResult,
+  JobDeleteActionResult,
   JobListFilters,
   JobListStatusFilter,
   JobLogEntryView,
@@ -119,6 +120,35 @@ export class JobsMonitorFacadeService implements OnDestroy {
       error: (loadError: Error) => {
         if (!shouldUseSilentMode) {
           this.errorMessage.set(`Unable to load jobs monitor: ${loadError.message}`);
+          this.isLoading.set(false);
+        }
+      },
+    });
+  }
+
+  loadDeletedJobs(options: { silent?: boolean } = {}): void {
+    const shouldUseSilentMode: boolean = options.silent ?? false;
+
+    if (!shouldUseSilentMode) {
+      this.isLoading.set(true);
+      this.errorMessage.set(null);
+    }
+
+    this.jobsApiService.listDeletedJobs().subscribe({
+      next: (jobItems: ScientificJobView[]) => {
+        const normalizedJobs: ScientificJobView[] = this.filterJobs(
+          this.deduplicateJobsById(jobItems),
+        );
+        this.jobs.set(normalizedJobs);
+        this.lastKnownJobsSignature = this.buildJobsSignature(normalizedJobs);
+        this.lastUpdatedAt.set(new Date());
+        if (!shouldUseSilentMode) {
+          this.isLoading.set(false);
+        }
+      },
+      error: (loadError: Error) => {
+        if (!shouldUseSilentMode) {
+          this.errorMessage.set(`Unable to load recycle bin: ${loadError.message}`);
           this.isLoading.set(false);
         }
       },
@@ -268,6 +298,40 @@ export class JobsMonitorFacadeService implements OnDestroy {
     });
   }
 
+  deleteJob(jobId: string): void {
+    this.controllingJobId.set(jobId);
+    this.controlErrorMessage.set(null);
+
+    this.jobsApiService.deleteJob(jobId).subscribe({
+      next: (_deleteResult: JobDeleteActionResult) => {
+        this.controllingJobId.set(null);
+        this.removeJobFromState(jobId);
+        this.clearSelectedJobIfMatches(jobId);
+      },
+      error: (controlError: Error) => {
+        this.controllingJobId.set(null);
+        this.controlErrorMessage.set(`Unable to delete job: ${controlError.message}`);
+      },
+    });
+  }
+
+  restoreJob(jobId: string): void {
+    this.controllingJobId.set(jobId);
+    this.controlErrorMessage.set(null);
+
+    this.jobsApiService.restoreJob(jobId).subscribe({
+      next: (_controlResult: JobControlActionResult) => {
+        this.controllingJobId.set(null);
+        this.removeJobFromState(jobId);
+        this.clearSelectedJobIfMatches(jobId);
+      },
+      error: (controlError: Error) => {
+        this.controllingJobId.set(null);
+        this.controlErrorMessage.set(`Unable to restore job: ${controlError.message}`);
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     this.stopAutoRefresh();
     this.stopDetailStreams();
@@ -362,6 +426,21 @@ export class JobsMonitorFacadeService implements OnDestroy {
     this.jobs.update((currentJobs: ScientificJobView[]) => this.upsertJob(currentJobs, updatedJob));
   }
 
+  private removeJobFromState(jobId: string): void {
+    this.jobs.update((currentJobs: ScientificJobView[]) =>
+      currentJobs.filter((jobItem: ScientificJobView) => jobItem.id !== jobId),
+    );
+    this.lastUpdatedAt.set(new Date());
+  }
+
+  private clearSelectedJobIfMatches(jobId: string): void {
+    if (this.selectedJobId() !== jobId) {
+      return;
+    }
+
+    this.closeJobDetails();
+  }
+
   private upsertJob(
     currentJobs: ScientificJobView[],
     updatedJob: ScientificJobView,
@@ -413,6 +492,9 @@ export class JobsMonitorFacadeService implements OnDestroy {
       cache_hit: jobItem.cache_hit,
       cache_miss: jobItem.cache_miss,
       error_trace: jobItem.error_trace,
+      is_deleted: jobItem.is_deleted,
+      deleted_at: jobItem.deleted_at,
+      scheduled_hard_delete_at: jobItem.scheduled_hard_delete_at,
     }));
 
     return JSON.stringify(normalizedItems);

@@ -10,6 +10,7 @@ import {
 } from '../core/api/identity-api.service';
 import { JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -17,7 +18,8 @@ import {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterLink],
+  standalone: true,
+  imports: [CommonModule, RouterLink, JobManagementActionsComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -31,6 +33,8 @@ export class DashboardComponent implements OnInit {
   readonly visibleUsers = signal<IdentityUserSummaryView[]>([]);
   readonly visibleGroups = signal<WorkGroupView[]>([]);
   readonly errorMessage = signal<string | null>(null);
+  readonly deletingJobId = signal<string | null>(null);
+  readonly deleteErrorMessage = signal<string | null>(null);
 
   readonly runningJobsCount = computed(
     () =>
@@ -62,6 +66,54 @@ export class DashboardComponent implements OnInit {
 
   recentJobNavigationLabel(jobItem: ScientificJobView): string {
     return this.recentJobRoutePath(jobItem) === null ? 'Result unavailable' : 'Open result';
+  }
+
+  canDeleteJob(jobItem: ScientificJobView): boolean {
+    return (
+      this.isTerminalJob(jobItem) &&
+      this.sessionService.canDeleteJob({
+        owner: jobItem.owner ?? null,
+        group: jobItem.group ?? null,
+      })
+    );
+  }
+
+  deleteActionLabel(jobItem: ScientificJobView): string {
+    const deleteMode = this.sessionService.resolveDeleteMode({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+
+    return deleteMode === 'hard' ? 'Delete permanently' : 'Move to trash';
+  }
+
+  deleteJob(jobId: string): void {
+    this.deletingJobId.set(jobId);
+    this.deleteErrorMessage.set(null);
+    this.jobsApiService.deleteJob(jobId).subscribe({
+      next: () => {
+        this.visibleJobs.update((currentJobs: ScientificJobView[]) =>
+          currentJobs.filter((jobItem: ScientificJobView) => jobItem.id !== jobId),
+        );
+        this.deletingJobId.set(null);
+      },
+      error: (deleteError: Error) => {
+        this.deleteErrorMessage.set(deleteError.message ?? 'Unable to delete job.');
+        this.deletingJobId.set(null);
+      },
+    });
+  }
+
+  isDeletingJob(jobId: string): boolean {
+    return this.deletingJobId() === jobId;
+  }
+
+  private isTerminalJob(jobItem: ScientificJobView): boolean {
+    return (
+      jobItem.status === 'completed' ||
+      jobItem.status === 'failed' ||
+      jobItem.status === 'cancelled'
+    );
   }
 
   ngOnInit(): void {

@@ -28,6 +28,7 @@ from ..ports import (
 )
 from ..realtime import broadcast_job_update
 from ..types import (
+    JobDeleteResult,
     JobLogLevel,
     JobProgressStage,
     JobRecoverySummary,
@@ -316,6 +317,39 @@ class RuntimeJobService:
             progress_publisher=self.progress_publisher,
             log_publisher=self.log_publisher,
         )
+
+    def delete_job(self, job_id: str, *, actor) -> JobDeleteResult:
+        """Borra un job definitivamente o lo envía a papelera según el actor."""
+        job_control.purge_expired_deleted_jobs()
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para eliminar.")
+        return job_control.delete_job(
+            job_id,
+            actor=actor,
+            job=job,
+            retention_days=20,
+            progress_publisher=self.progress_publisher,
+            log_publisher=self.log_publisher,
+        )
+
+    def restore_job(self, job_id: str, *, actor) -> ScientificJob:
+        """Restaura un job desde papelera y lo devuelve a la visibilidad normal."""
+        job_control.purge_expired_deleted_jobs()
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para restaurar.")
+        return job_control.restore_job(
+            job_id,
+            actor=actor,
+            job=job,
+            progress_publisher=self.progress_publisher,
+            log_publisher=self.log_publisher,
+        )
+
+    def purge_expired_deleted_jobs(self) -> int:
+        """Elimina definitivamente jobs vencidos en papelera de forma oportunista."""
+        return job_control.purge_expired_deleted_jobs()
 
     # ── Callbacks para plugins (delegados a callbacks.py) ──
 

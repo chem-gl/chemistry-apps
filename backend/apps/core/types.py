@@ -29,6 +29,7 @@ type JobStatus = Literal[
     "failed",
     "cancelled",
 ]
+type JobDeletionMode = Literal["hard", "soft"]
 type JobProgressStage = Literal[
     "pending",
     "queued",
@@ -95,6 +96,14 @@ class JobLogListResponse(TypedDict):
     count: int
     next_after_event_index: int
     results: list[JobLogEntry]
+
+
+class JobDeleteResult(TypedDict):
+    """Resultado tipado de una operación de borrado de job."""
+
+    job_id: str
+    deletion_mode: JobDeletionMode
+    scheduled_hard_delete_at: str | None
 
 
 class JobRecoverySummary(TypedDict):

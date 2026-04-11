@@ -456,9 +456,12 @@ describe('SmileitApiService', () => {
       issues: [],
     });
 
-    expect(smileitClientMock.smileitJobsInspectStructureCreate).toHaveBeenCalledWith({
-      smiles: 'CCO',
-    });
+    expect(smileitClientMock.smileitJobsInspectStructureCreate).toHaveBeenCalledWith(
+      { smiles: 'CCO' },
+      'body',
+      false,
+      expect.any(Object),
+    );
     expect(smileitClientMock.smileitJobsInspectStructureCreate).toHaveBeenCalledTimes(1);
   });
 

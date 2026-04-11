@@ -6,7 +6,7 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsApiService } from '../../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import { SmileitInspectionService } from '../core/services/smileit-inspection.service';
@@ -52,6 +52,7 @@ describe('CatalogPanelComponent', () => {
   };
 
   beforeEach(async () => {
+    vi.useFakeTimers();
     mockWorkflow = buildMockWorkflow();
     mockInspectionService = buildMockInspectionService();
     mockJobsApiService = buildMockJobsApiService();
@@ -82,6 +83,10 @@ describe('CatalogPanelComponent', () => {
     fixture.componentRef.setInput('libraryEntryInspectionErrors', {});
     fixture.detectChanges();
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('estado inicial', () => {
@@ -285,7 +290,21 @@ describe('CatalogPanelComponent', () => {
 
     it('suscribe a inspectSmileitStructure cuando el SMILES no está vacío', () => {
       component.onCatalogDraftSmilesChange('CCO');
+      vi.advanceTimersByTime(500);
       expect(mockJobsApiService.inspectSmileitStructure).toHaveBeenCalledWith('CCO');
+    });
+
+    it('espera antes de inspeccionar mientras el usuario sigue escribiendo', () => {
+      component.onCatalogDraftSmilesChange('C');
+      vi.advanceTimersByTime(300);
+      component.onCatalogDraftSmilesChange('CC');
+      vi.advanceTimersByTime(300);
+
+      expect(mockJobsApiService.inspectSmileitStructure).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(500);
+      expect(mockJobsApiService.inspectSmileitStructure).toHaveBeenCalledTimes(1);
+      expect(mockJobsApiService.inspectSmileitStructure).toHaveBeenCalledWith('CC');
     });
 
     it('limpia la inspección cuando el SMILES es vacío', () => {
@@ -300,6 +319,7 @@ describe('CatalogPanelComponent', () => {
         throwError(() => new Error('API error')),
       );
       component.onCatalogDraftSmilesChange('INVALID');
+      vi.advanceTimersByTime(500);
       expect(component.catalogDraftInspectionError()).toContain('API error');
     });
   });

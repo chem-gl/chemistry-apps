@@ -105,6 +105,12 @@
           </button>
         </header>
 
+        @if (catalogDraftInspectionError(); as catalogInspectionErrorMessage) {
+        <p class="warning-message" role="alert">
+          {{ catalogInspectionErrorMessage }}
+        </p>
+        }
+
         <div class="catalog-editor-layout">
           <section class="catalog-editor-form" aria-label="Catalog editor">
             <div class="catalog-step-stack">
@@ -131,10 +137,7 @@
                 <div class="subsection-header catalog-step-header">
                   <div>
                     <h4>2. SMILES</h4>
-                    <p class="hint">
-                      Type a SMILES or use Sketch. The structure preview updates live before you
-                      choose the substitution point.
-                    </p>
+
                   </div>
                   <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()"
                     [disabled]="workflow.isProcessing()">
@@ -150,11 +153,9 @@
                 </div>
                 <div class="catalog-live-status">
                   <p class="catalog-smiles mono">
-                    {{ workflow.catalogCreateSmiles() || 'Pending catalog SMILES' }}
+                    {{ catalogDraftCanonicalSmiles() }}
                   </p>
-                  <p class="hint">
-                    Live rendering appears in the next step as soon as the draft can be inspected.
-                  </p>
+
                 </div>
               </section>
 
@@ -162,9 +163,7 @@
                 <div class="subsection-header">
                   <div>
                     <h4>3. Substitution point</h4>
-                    <p class="hint">
-                      Inspect the live structure and click one atom to define the anchor index.
-                    </p>
+
                   </div>
                 </div>
                 @if (catalogDraftInspection(); as catalogInspection) {
@@ -190,20 +189,12 @@
                   Enter a SMILES string to unlock the live structure preview.
                 </p>
                 }
-                @if (catalogDraftInspectionError(); as catalogInspectionErrorMessage) {
-                <p class="warning-message" role="alert">
-                  {{ catalogInspectionErrorMessage }}
-                </p>
-                }
               </section>
 
               <section class="catalog-step-card catalog-category-panel">
                 <div class="subsection-header">
                   <div>
                     <h4>4. Chemistry categories</h4>
-                    <p class="hint">
-                      Select categories to classify the substituent. This step is optional.
-                    </p>
                   </div>
                 </div>
                 <div class="chip-grid compact-chip-grid">

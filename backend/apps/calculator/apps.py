@@ -8,8 +8,9 @@ Objetivo principal:
 - Asegurar que el plugin de cálculo quede disponible antes de recibir tráfico.
 """
 
-from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
 from django.apps import AppConfig
+
+from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
 
 from .definitions import (
     APP_API_BASE_PATH,

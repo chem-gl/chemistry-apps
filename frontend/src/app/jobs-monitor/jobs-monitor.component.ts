@@ -11,6 +11,7 @@ import {
 } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -18,7 +19,14 @@ import {
 
 @Component({
   selector: 'app-jobs-monitor',
-  imports: [CommonModule, FormsModule, RouterLink, JobLogsPanelComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    JobLogsPanelComponent,
+    JobManagementActionsComponent,
+  ],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-monitor.component.html',
   styleUrl: './jobs-monitor.component.scss',
@@ -82,6 +90,14 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.cancelJob(jobId);
   }
 
+  deleteJob(jobId: string): void {
+    this.facade.deleteJob(jobId);
+  }
+
+  restoreJob(jobId: string): void {
+    this.facade.restoreJob(jobId);
+  }
+
   statusClassName(jobStatus: ScientificJobView['status']): string {
     return `job-status status-${jobStatus}`;
   }
@@ -104,6 +120,40 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       owner: jobItem.owner ?? null,
       group: jobItem.group ?? null,
     });
+  }
+
+  canDeleteJob(jobItem: ScientificJobView): boolean {
+    return (
+      this.isTerminalJob(jobItem) &&
+      this.sessionService.canDeleteJob({
+        owner: jobItem.owner ?? null,
+        group: jobItem.group ?? null,
+      })
+    );
+  }
+
+  canRestoreJob(jobItem: ScientificJobView): boolean {
+    return this.sessionService.canRestoreJob({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+  }
+
+  deleteActionLabel(jobItem: ScientificJobView): string {
+    const deleteMode = this.sessionService.resolveDeleteMode({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+
+    return deleteMode === 'hard' ? 'Delete permanently' : 'Move to trash';
+  }
+
+  isTerminalJob(jobItem: ScientificJobView): boolean {
+    return (
+      jobItem.status === 'completed' ||
+      jobItem.status === 'failed' ||
+      jobItem.status === 'cancelled'
+    );
   }
 
   ownerGroupLabel(jobItem: ScientificJobView): string {

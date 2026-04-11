@@ -1,0 +1,77 @@
+/* job-management-actions.component.scss: Estilos reutilizables para acciones de job. */
+
+.job-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.job-actions.is-compact {
+  justify-content: flex-end;
+}
+
+.job-action-link,
+.job-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  border-radius: var(--chem-radius-pill);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    border-color var(--chem-transition),
+    filter var(--chem-transition);
+}
+
+.job-action-link {
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  border-color: var(--chem-primary);
+}
+
+.job-action-link:hover {
+  background: var(--chem-primary);
+  color: #fff;
+}
+
+.job-action-button {
+  cursor: pointer;
+}
+
+.job-action-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.delete-action {
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
+}
+
+.delete-action:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.restore-action {
+  color: var(--chem-success);
+  background: var(--chem-success-bg);
+}
+
+.restore-action:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+@media (max-width: 720px) {
+  .job-actions,
+  .job-actions.is-compact {
+    justify-content: flex-start;
+  }
+}

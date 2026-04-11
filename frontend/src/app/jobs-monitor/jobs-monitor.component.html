@@ -8,6 +8,9 @@
     </div>
 
     <div class="header-actions">
+      @if (sessionService.hasAdminAccess()) {
+      <a class="btn btn-ghost" routerLink="/jobs/trash">Recycle bin</a>
+      }
       <button class="btn btn-ghost" (click)="refreshNow()">Refresh</button>
       <button class="btn" [class.btn-on]="facade.autoRefreshEnabled()" (click)="toggleAutoRefresh()">
         Auto refresh: {{ facade.autoRefreshEnabled() ? 'ON' : 'OFF' }}
@@ -262,11 +265,14 @@
                 </button>
 
                 @if (appRouteForJob(finishedJob); as appRoutePath) {
-                <a class="open-result-link" [routerLink]="appRoutePath" [queryParams]="{ jobId: finishedJob.id }">
-                  {{ resultActionLabel(finishedJob) }}
-                </a>
+                <app-job-management-actions [openResultRoute]="appRoutePath"
+                  [openResultQueryParams]="{ jobId: finishedJob.id }" [openResultLabel]="resultActionLabel(finishedJob)"
+                  [canDelete]="canDeleteJob(finishedJob)" [isBusy]="facade.isControlActionRunning(finishedJob.id)"
+                  [deleteLabel]="deleteActionLabel(finishedJob)" (deleteRequested)="deleteJob(finishedJob.id)" />
                 } @else {
-                <span class="open-result-disabled">No viewer</span>
+                <app-job-management-actions [showOpenResult]="false" [canDelete]="canDeleteJob(finishedJob)"
+                  [isBusy]="facade.isControlActionRunning(finishedJob.id)"
+                  [deleteLabel]="deleteActionLabel(finishedJob)" (deleteRequested)="deleteJob(finishedJob.id)" />
                 }
               </div>
             </td>
@@ -343,6 +349,14 @@
           }}
         </button>
         }
+      </div>
+      }
+
+      @if (canDeleteJob(selectedJob)) {
+      <div class="actions-cell">
+        <app-job-management-actions [showOpenResult]="false" [canDelete]="true"
+          [isBusy]="facade.isControlActionRunning(selectedJob.id)" [deleteLabel]="deleteActionLabel(selectedJob)"
+          (deleteRequested)="deleteJob(selectedJob.id)" />
       </div>
       }
 

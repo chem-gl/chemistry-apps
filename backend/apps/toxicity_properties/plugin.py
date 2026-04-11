@@ -148,7 +148,7 @@ def _build_molecule_result(
         ames_score_value: float = float(prediction_map[ames_key])
         devtox_score_value: float = float(prediction_map[devtox_key])
         ld50_mgkg_value: float = _ld50_to_mgkg(ld50_log_value, smiles_value)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _build_error_result(
             name_value,
             smiles_value,

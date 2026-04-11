@@ -48,7 +48,7 @@ def render_molecule_svg(smiles: str) -> str:
         drawer.DrawMolecule(mol)
         drawer.FinishDrawing()
         return drawer.GetDrawingText()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Error renderizando SVG para %r: %s", smiles, exc)
         return ""
 
@@ -104,7 +104,7 @@ def render_molecule_svg_with_atom_labels(
         return svg_output.replace(
             "</svg>", "\n" + "\n".join(text_elements) + "\n</svg>"
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning(
             "Error renderizando SVG con placeholders para %r: %s",
             smiles,
@@ -249,7 +249,7 @@ def render_derivative_svg_with_substituent_highlighting(
         drawer.FinishDrawing()
         return drawer.GetDrawingText()
 
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning(
             "Error renderizando SVG derivado con highlighting de sustituto: %s",
             exc,

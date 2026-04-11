@@ -1,0 +1,90 @@
+<!-- jobs-trash.component.html: Vista administrativa separada para restaurar jobs en papelera. -->
+<section class="trash-shell" aria-label="Recycle bin">
+    <header class="trash-header">
+        <div>
+            <p class="eyebrow">Administrative Recovery</p>
+            <h1>Recycle bin</h1>
+            <p class="subtitle">Restore jobs deleted by administrators before automatic removal.</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="outline-link" routerLink="/jobs">Back to monitor</a>
+            <button class="outline-link button-link" type="button" (click)="refreshNow()">Refresh</button>
+        </div>
+    </header>
+
+    <section class="filters" aria-label="Trash filters">
+        <label>
+            Status
+            <select [ngModel]="facade.selectedStatus()" (ngModelChange)="onStatusFilterChanged($event)">
+                @for (statusOption of statusOptions; track statusOption.value) {
+                <option [value]="statusOption.value">{{ statusOption.label }}</option>
+                }
+            </select>
+        </label>
+
+        <label>
+            App
+            <select [ngModel]="facade.selectedPluginName()" (ngModelChange)="onPluginFilterChanged($event)">
+                @for (pluginOption of facade.pluginOptions(); track pluginOption) {
+                <option [value]="pluginOption">
+                    {{ pluginOption === 'all' ? 'All' : pluginOption }}
+                </option>
+                }
+            </select>
+        </label>
+    </section>
+
+    @if (facade.isLoading()) {
+    <section class="state-card info-card">Loading recycle bin...</section>
+    }
+
+    @if (facade.errorMessage(); as currentError) {
+    <section class="state-card error-card" role="alert">{{ currentError }}</section>
+    }
+
+    @if (facade.controlErrorMessage(); as controlError) {
+    <section class="state-card error-card" role="alert">{{ controlError }}</section>
+    }
+
+    @if (facade.jobs().length === 0) {
+    <section class="state-card empty-card">No deleted jobs available for restoration.</section>
+    } @else {
+    <section class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>App</th>
+                    <th>Owner / Group</th>
+                    <th>Status</th>
+                    <th>Deleted by</th>
+                    <th>Deleted at</th>
+                    <th>Purge at</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (deletedJob of facade.jobs(); track deletedJob.id) {
+                <tr>
+                    <td class="mono">{{ deletedJob.id }}</td>
+                    <td>{{ deletedJob.plugin_name }}</td>
+                    <td>{{ ownerGroupLabel(deletedJob) }}</td>
+                    <td>{{ deletedJob.status }}</td>
+                    <td>{{ deletedByLabel(deletedJob) }}</td>
+                    <td>{{ deletedJob.deleted_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>{{ scheduledDeletionLabel(deletedJob) | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>
+                        <app-job-management-actions [showOpenResult]="false" [canDelete]="true"
+                            [deleteLabel]="'Delete permanently'" [canRestore]="true" [restoreLabel]="'Restore job'"
+                            [isBusy]="facade.isControlActionRunning(deletedJob.id)"
+                            (deleteRequested)="deleteJobPermanently(deletedJob.id)"
+                            (restoreRequested)="restoreJob(deletedJob.id)" />
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+    }
+</section>
