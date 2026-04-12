@@ -34,6 +34,7 @@ backend/apps/<nombre_app>/
 ```
 
 Cada archivo debe incluir encabezado de módulo con:
+
 - propósito del archivo
 - forma de uso (quién lo importa y para qué)
 - relación con el flujo de integración del core
@@ -61,6 +62,7 @@ DEFAULT_MODE = "range"
 ```
 
 Reglas:
+
 - `PLUGIN_NAME` en snake_case y único en todo el sistema. Verificar contra los `PLUGIN_NAME` de las apps existentes.
 - `APP_ROUTE_PREFIX` en kebab-case. Debe coincidir con la ruta del router en `config/urls.py`.
 - `DEFAULT_ALGORITHM_VERSION` cambia solo cuando la lógica del plugin produce resultados diferentes para los mismos inputs. Un cambio de versión invalida la caché para esa app.
@@ -102,6 +104,7 @@ class NombreAppConfig(AppConfig):
 ```
 
 Añadir en `backend/config/settings.py`:
+
 ```python
 INSTALLED_APPS = [
     ...
@@ -110,6 +113,7 @@ INSTALLED_APPS = [
 ```
 
 Añadir en `backend/config/urls.py`:
+
 ```python
 from apps.nombre_app.routers import NombreAppViewSet
 router.register(APP_ROUTE_PREFIX, NombreAppViewSet, basename=APP_ROUTE_BASENAME)
@@ -156,6 +160,7 @@ class NombreAppResult(TypedDict):
 ```
 
 Reglas obligatorias:
+
 - No usar `Any`. Si un campo puede ser de tipos mixtos, usar `JSONMap` de `apps.core.types` o un `Union` explícito.
 - Tipar explícitamente listas y dicts: `list[float]` no `list`, `dict[str, float]` no `dict`.
 - El `NombreAppResult` debe ser directamente serializable a JSON sin conversiones en el plugin.
@@ -219,6 +224,7 @@ def nombre_app_plugin(
 ```
 
 Reglas estrictas:
+
 - Los errores de validación de parámetros lanzan `ValueError` con mensaje descriptivo.
 - Los errores inesperados de ejecución burbujean como `RuntimeError` para que el core los capture en `error_trace`.
 - El resultado retornado debe ser un dict de primitivos JSON (str, int, float, bool, list, dict). Sin objetos Python no serializables.
@@ -317,6 +323,7 @@ class NombreAppJobResponseSerializer(serializers.Serializer):
 ```
 
 Reglas:
+
 - El serializer de creación (`JobCreateSerializer`) es la primera línea de validación. Si falla, el router devuelve 400 antes de tocar el servicio.
 - El serializer de respuesta debe reflejar exactamente la estructura del `NombreAppResult` en `types.py`.
 - Usar `OpenApiExample` con valores realistas, no con datos genéricos. Esto mejora significativamente la documentación generada.
@@ -373,6 +380,7 @@ class NombreAppViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 ```
 
 Reglas de routers:
+
 - El router no contiene lógica científica. Solo valida, delega y responde.
 - `create()` siempre: valida con serializer → crea job → intenta encolar → registra resultado de dispatch → devuelve 202.
 - El código de respuesta de creación es 202 (Accepted), no 200 ni 201, porque el job puede no estar completado aún.
@@ -461,6 +469,7 @@ El contrato declarativo permite que el sistema pueda introspectar la app sin ins
 Actualizar dos archivos en `backend/config/`:
 
 **`settings.py`** — añadir el `AppConfig` al final de `INSTALLED_APPS`:
+
 ```python
 INSTALLED_APPS = [
     # ... apps existentes ...
@@ -469,6 +478,7 @@ INSTALLED_APPS = [
 ```
 
 **`urls.py`** — importar e incluir en el `DefaultRouter`:
+
 ```python
 from apps.nombre_app.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
 from apps.nombre_app.routers import NombreAppViewSet
@@ -476,7 +486,7 @@ from apps.nombre_app.routers import NombreAppViewSet
 router.register(APP_ROUTE_PREFIX, NombreAppViewSet, basename=APP_ROUTE_BASENAME)
 ```
 
-Verificar que no hay colisiones ejecutando `./venv/bin/python manage.py check`.
+Verificar que no hay colisiones ejecutando `poetry run python manage.py check`.
 
 ### Paso 9: Pruebas obligatorias
 
@@ -561,6 +571,7 @@ class NombreAppPluginTest(TestCase):
 ```
 
 Pruebas adicionales si aplica:
+
 - `test_pause_resume`: verifica que `JobPauseRequested` se lanza con checkpoint serializable y que al reanudar el resultado final es correcto.
 - `test_report_csv_returns_200_with_csv_content_type`: verifica el endpoint de descarga con `Content-Type: text/csv`.
 - `test_report_csv_on_pending_job_returns_409`: verifica que no se puede descargar reporte de un job sin completar.
@@ -570,36 +581,44 @@ Pruebas adicionales si aplica:
 Antes de dar la integración por terminada, ejecutar en orden:
 
 **1. Verificar configuración Django sin errores**:
+
 ```bash
-cd backend && ./venv/bin/python manage.py check && echo listo
+cd backend && poetry run python manage.py check && echo listo
 ```
 
 **2. Tests de la app nueva**:
+
 ```bash
-cd backend && ./venv/bin/python manage.py test apps.<nombre_app> --verbosity=2 && echo listo
+cd backend && poetry run python manage.py test apps.<nombre_app> --verbosity=2 && echo listo
 ```
 
 **3. Tests del core para detectar regresiones**:
+
 ```bash
-cd backend && ./venv/bin/python manage.py test apps.core --verbosity=2 && echo listo
+cd backend && poetry run python manage.py test apps.core --verbosity=2 && echo listo
 ```
 
 **4. Regenerar contrato OpenAPI y cliente frontend**:
+
 ```bash
-source backend/venv/bin/activate
-python scripts/create_openapi.py && echo listo
+cd backend && poetry install --with dev --no-interaction --no-ansi
+poetry run python ../scripts/create_openapi.py && echo listo
 ```
+
 Este paso es crítico. Verifica que:
+
 - Los serializers generan un schema OpenAPI válido sin errores de tipado.
 - El cliente TypeScript se regenera correctamente en `frontend/src/app/core/api/generated/`.
 - Los tipos de la nueva app quedan disponibles para uso en wrappers del frontend.
 
 **5. Verificar que el frontend compila sin errores**:
+
 ```bash
 cd frontend && npm run build && echo listo
 ```
 
 **6. Verificar que los tests del frontend pasan**:
+
 ```bash
 cd frontend && npm test && echo listo
 ```
@@ -624,6 +643,7 @@ Una app nueva se considera completamente integrada cuando:
 ## 6. Checklist final
 
 **Backend**:
+
 - [ ] `definitions.py`: `PLUGIN_NAME`, `APP_ROUTE_PREFIX`, `APP_API_BASE_PATH`, `APP_ROUTE_BASENAME`, `DEFAULT_ALGORITHM_VERSION` definidos y sin colisiones.
 - [ ] `apps.py`: `AppConfig.ready()` importa el módulo `plugin` y registra `ScientificAppDefinition`.
 - [ ] `types.py`: `TypedDict` de input, metadata y result sin uso de `Any`. Colecciones tipadas explícitamente.
@@ -638,9 +658,10 @@ Una app nueva se considera completamente integrada cuando:
 - [ ] `manage.py test apps.<nombre_app> apps.core` pasa en verde.
 
 **OpenAPI y frontend**:
-- [ ] `python scripts/create_openapi.py` termina sin errores.
+
+- [ ] `cd backend && poetry run python ../scripts/create_openapi.py` termina sin errores.
 - [ ] `frontend/src/app/core/api/generated/` regenerado y commiteable.
 - [ ] `npm run build` pasa sin errores ni advertencias de tipo.
 - [ ] App añadida a `scientific-apps.config.ts` con `key`, `title`, `description` y `visibleInMenus`.
 - [ ] Ruta añadida en `app.routes.ts` con lazy loading al componente standalone.
-La base de datos de desarrollo es descartable. y se puede regenerar las veces que sea necesario
+      La base de datos de desarrollo es descartable. y se puede regenerar las veces que sea necesario

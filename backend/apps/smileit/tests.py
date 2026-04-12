@@ -5,7 +5,7 @@ Objetivo del archivo:
   inspección enriquecida y exportes reproducibles con trazabilidad.
 
 Cómo se usa:
-- Ejecutar con `./venv/bin/python manage.py test apps.smileit`.
+- Ejecutar con `poetry run python manage.py test apps.smileit`.
 """
 
 from __future__ import annotations

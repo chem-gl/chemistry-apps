@@ -1,5 +1,7 @@
 venv
 venv/*
+.venv
+.venv/*
 .env
 __pycache__
 *.pyc
@@ -23,3 +25,5 @@ build
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+**/*.pyd
+**/*.db

@@ -24,26 +24,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Python 3.12
+      - name: Setup Python 3.14
         if: matrix.service == 'backend'
         uses: actions/setup-python@v6
         with:
-          python-version: &python_version 3.12
+          python-version: &python_version 3.14
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/poetry.lock
 
       - name: Install backend deps
         if: matrix.service == 'backend'
+        working-directory: backend
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          python -m pip install poetry
+          poetry config virtualenvs.in-project true
+          poetry env use python
+          poetry install --with dev --no-interaction --no-ansi
 
       - name: Run backend tests
         if: matrix.service == 'backend'
         working-directory: backend
         env:
           JOB_DISPATCH_ENABLED: "0"
-        run: python manage.py test
+        run: poetry run python manage.py test
 
       - name: Setup Node.js
         if: matrix.service == 'frontend'

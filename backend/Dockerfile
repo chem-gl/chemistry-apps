@@ -1,6 +1,6 @@
-# backend/Dockerfile: Imagenes Docker para desarrollo y produccion del backend Django.
+# backend/Dockerfile: Imagenes Docker para produccion del backend Django.
 
-FROM python:3.12.11 AS base
+FROM python:3.14.0 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -11,16 +11,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     USER=appuser \
     LOGNAME=appuser \
     HOME=/app \
+    POETRY_HOME=/opt/poetry \
+    POETRY_VERSION=1.8.5 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
     MPLCONFIGDIR=/tmp/matplotlib-cache \
     TORCHINDUCTOR_CACHE_DIR=/tmp/torchinductor-cache
+
+ENV PATH="${POETRY_HOME}/bin:${PATH}"
 
 WORKDIR /app
 
 # Crear directorios de caché con permisos globales para que cualquier UID pueda escribir
 RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
-    && chmod 1777 /tmp/matplotlib-cache /tmp/torchinductor-cache
-
-RUN apt-get update \
+    && chmod 1777 /tmp/matplotlib-cache /tmp/torchinductor-cache \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         libpq-dev \
@@ -28,18 +33,25 @@ RUN apt-get update \
         libxext6 \
         libx11-6 \
         libexpat1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip \
+    && pip install "poetry==${POETRY_VERSION}"
 
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip \
-    && pip install -r /tmp/requirements.txt
+COPY pyproject.toml poetry.lock* /app/
+
+FROM base AS deps-prod
+RUN poetry install --only main --no-root --no-ansi
+
+FROM base AS deps-dev
+RUN poetry install --with dev --no-root --no-ansi
+
+FROM deps-dev AS dev
 
 COPY . /app
 
 EXPOSE 8000
+CMD ["poetry", "run", "python", "manage.py", "up", "--without-celery", "--host", "0.0.0.0", "--port", "8000"]
 
-FROM base AS dev
-CMD ["python", "manage.py", "up", "--without-celery", "--host", "0.0.0.0", "--port", "8000"]
-
-FROM base AS prod
-CMD ["python", "config/startup_production.py"]
+FROM deps-prod AS prod
+COPY . /app
+CMD ["poetry", "run", "python", "config/startup_production.py"]

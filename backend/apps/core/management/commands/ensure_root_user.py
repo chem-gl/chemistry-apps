@@ -1,6 +1,6 @@
 """ensure_root_user.py: Comando para bootstrap idempotente del usuario root.
 
-Uso: ./venv/bin/python manage.py ensure_root_user
+Uso: poetry run python manage.py ensure_root_user
 """
 
 from __future__ import annotations

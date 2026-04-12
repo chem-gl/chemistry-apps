@@ -1,5 +1,51 @@
 # pyproject.toml: Configuracion de herramientas de calidad para el backend Django.
-# Incluye formato automatico con Black para mantener  
+# Incluye formato automatico con Black 
+# se agrego poetry para manejo de dependncias
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "chemistry-apps-backend"
+version = "0.1.0"
+description = "Backend Django para aplicaciones cientificas de Chemistry Apps"
+authors = ["Chem GL <cesar-gerardo@guzman-lopez.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.14,<3.15"
+asgiref = "3.11.1"
+admet_ai = "2.0.1"
+backend = "0.2.4.1"
+channels = "4.3.2"
+channels-redis = "4.3.0"
+daphne = "4.2.1"
+celery = "5.6.2"
+Django = "6.0.4"
+django-cors-headers = "4.9.0"
+djangorestframework = "3.16.1"
+drf-spectacular = "0.29.0"
+djangorestframework-simplejwt = "5.5.1"
+kombu = "5.6.2"
+matplotlib = "3.10.8"
+numpy = "2.4.4"
+pandas = "3.0.1"
+rdkit = "2026.3.1"
+redis = "7.4.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "26.3.1"
+flake8 = "7.3.0"
+coverage = "7.13.5"
+pytest = "9.0.2"
+pytest-cov = "7.1.0"
+ipython = "9.12.0"
+pipreqs = { version = "0.5.0", python = "<3.13" }
+ruff = "0.15.8"
+beautifulsoup4 = "4.14.3"
+mipy = "0.0.1"
+rich = "15.0.0"
 
 [tool.pytest.ini_options]
 # Configuración de pytest. Django se inicializa vía conftest.py con os.environ.
@@ -23,18 +69,19 @@ omit = [
     "apps/core/declarative_api_usage_examples.py",
     "libs/**",
     "conftest.py",
-    "venv/**",
+    ".venv/**",
     "manage.py",
     "config/wsgi.py",
     "config/asgi.py",
     "config/startup_production.py",
     "config/celery.py",
     "config/settings.py",
+    "asyncapi/**",
 ]
 
 [tool.coverage.report]
 # Umbrales mínimos de cobertura. El test fallará si la cobertura cae por debajo.
-# Backend objetivo: 91% (actualmente ~97%). Configurable ajustando estos valores.
+# Backend objetivo: 91% Configurable ajustando estos valores.
 fail_under = 91
 
 # No se cuentan líneas de imports/pass/docstrings puras como no cubiertas.
@@ -52,12 +99,12 @@ exclude_lines = [
 ]
 
 [tool.black]
-line-length = 88
-target-version = ['py312']
+line-length = 120
+target-version = ['py314']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  venv
+    \.venv
   |media
   |libs
   |openapi

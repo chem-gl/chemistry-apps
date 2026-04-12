@@ -5,7 +5,7 @@ Los clientes de SA score se mockean para aislar la lógica del plugin.
 
 Uso:
     cd backend
-    ./venv/bin/python manage.py test apps.sa_score --verbosity=2
+    poetry run python manage.py test apps.sa_score --verbosity=2
 """
 
 from __future__ import annotations
