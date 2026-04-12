@@ -65,7 +65,12 @@ input:focus {
   max-width: 620px;
 }
 
+.sketch-modifier-dialog[open] {
+  z-index: 62;
+}
+
 .sketch-modifier-dialog::backdrop {
+  z-index: 61; /* Justo debajo del dialog */
   background: rgba(44, 37, 51, 0.42);
 }
 

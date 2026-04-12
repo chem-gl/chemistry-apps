@@ -148,6 +148,7 @@
 }
 
 .catalog-studio-dialog::backdrop {
+  z-index: 61; /* Justo debajo del dialog */
   background: rgba(44, 37, 51, 0.64);
 }
 
@@ -161,7 +162,12 @@
   overflow: visible;
 }
 
+.catalog-smiles-sketch-dialog[open] {
+  z-index: 62;
+}
+
 .catalog-smiles-sketch-dialog::backdrop {
+  z-index: 61; /* Justo debajo del dialog */
   background: rgba(44, 37, 51, 0.64);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
@@ -282,6 +288,7 @@
 
 .pattern-catalog-dialog::backdrop,
 .pattern-detail-dialog::backdrop {
+  z-index: 62; /* Justo debaj del dialog */
   background: rgba(44, 37, 51, 0.64);
 }
 
@@ -321,12 +328,25 @@
 }
 
 .pattern-item-toggle {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: end;
   flex-shrink: 0;
 }
 
 .pattern-toggle-label {
   align-self: start;
   white-space: nowrap;
+}
+
+.pattern-item-actions {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.pattern-item-actions .btn-secondary {
+  width: 100%;
 }
 
 .pattern-name-link {

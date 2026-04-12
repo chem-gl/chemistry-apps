@@ -287,11 +287,24 @@
           <input type="text" [ngModel]="workflow.patternCreateCaption()"
             (ngModelChange)="workflow.patternCreateCaption.set($event)" />
         </label>
+        @if (!workflow.isPatternEditing()) {
         <div class="action-row compact-actions">
           <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
             {{ 'smileit.patterns.formSave' | transloco }}
           </button>
         </div>
+        }
+
+        @if (workflow.isPatternEditing()) {
+        <div class="action-row compact-actions catalog-editor-actions">
+          <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
+            {{ 'smileit.catalogForm.updateButton' | transloco }}
+          </button>
+          <button class="btn-secondary" (click)="cancelPatternEdition()" [disabled]="workflow.isProcessing()">
+            {{ 'smileit.catalogForm.cancelButton' | transloco }}
+          </button>
+        </div>
+        }
 
         @if (workflow.errorMessage(); as patternErrorMessage) {
         <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
@@ -320,6 +333,18 @@
                 {{ isPatternEnabled(pattern) ? ('smileit.patterns.active' | transloco) : ('smileit.patterns.hidden' |
                 transloco) }}
               </label>
+              @if (workflow.catalog.isPatternEntryEditable(pattern)) {
+              <div class="pattern-item-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                <button type="button" class="btn-secondary small" (click)="beginPatternEntryEdition(pattern)"
+                  [disabled]="workflow.isProcessing()">
+                  {{ 'smileit.step2.edit' | transloco }}
+                </button>
+                <button type="button" class="btn-secondary small" (click)="deletePatternEntry(pattern)"
+                  [disabled]="workflow.isProcessing()">
+                  {{ 'smileit.step2.delete' | transloco }}
+                </button>
+              </div>
+              }
             </div>
           </article>
           }

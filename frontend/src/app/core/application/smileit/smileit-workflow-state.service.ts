@@ -61,6 +61,7 @@ export class SmileitWorkflowState {
   readonly patternCreateType = signal<PatternTypeEnum>(PatternTypeEnum.Toxicophore);
   readonly patternCreateCaption = signal<string>('');
   readonly patternCreateSourceReference = signal<string>('local-lab');
+  readonly patternEditingStableId = signal<string | null>(null);
 
   // ── Parámetros de generación ──────────────────────────────────────────
   readonly siteOverlapPolicy = signal<SiteOverlapPolicyEnum>(SiteOverlapPolicyEnum.LastBlockWins);
@@ -133,6 +134,7 @@ export class SmileitWorkflowState {
 
   // ── Computed: catálogo ────────────────────────────────────────────────
   readonly isCatalogEditing = computed(() => this.catalogEditingStableId() !== null);
+  readonly isPatternEditing = computed(() => this.patternEditingStableId() !== null);
   readonly hasQueuedCatalogDrafts = computed(() => this.catalogDraftQueue().length > 0);
 
   readonly catalogGroups = computed<SmileitCatalogGroupView[]>(() =>

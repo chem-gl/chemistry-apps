@@ -89,6 +89,7 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly patternCreateType = this.state.patternCreateType;
   readonly patternCreateCaption = this.state.patternCreateCaption;
   readonly patternCreateSourceReference = this.state.patternCreateSourceReference;
+  readonly patternEditingStableId = this.state.patternEditingStableId;
   readonly siteOverlapPolicy = this.state.siteOverlapPolicy;
   readonly rSubstitutes = this.state.rSubstitutes;
   readonly numBonds = this.state.numBonds;
@@ -119,6 +120,7 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly canDispatch = this.state.canDispatch;
   readonly maxRSubstitutesByPositions = this.state.maxRSubstitutesByPositions;
   readonly isCatalogEditing = this.state.isCatalogEditing;
+  readonly isPatternEditing = this.state.isPatternEditing;
   readonly hasQueuedCatalogDrafts = this.state.hasQueuedCatalogDrafts;
   readonly catalogGroups = this.state.catalogGroups;
   readonly catalogDraftPreview = this.state.catalogDraftPreview;

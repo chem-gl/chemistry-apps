@@ -33,15 +33,22 @@ from .._catalog_schemas import (
 from ..catalog import (
     create_catalog_substituent,
     create_pattern_entry,
+    delete_catalog_substituent,
+    delete_pattern_entry,
     list_active_catalog_entries,
     list_active_categories,
     list_active_patterns,
     update_catalog_substituent,
+    update_pattern_entry,
 )
 from ..definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from ..engine import inspect_smiles_structure_with_patterns
 from ..schemas import SmileitJobCreateSerializer, SmileitJobResponseSerializer
-from ..types import SmileitJobCreatePayload, SmileitSubstituentCreatePayload
+from ..types import (
+    SmileitJobCreatePayload,
+    SmileitPatternCreatePayload,
+    SmileitSubstituentCreatePayload,
+)
 from .assignment_resolution import (
     resolve_assignment_blocks,
     validate_effective_coverage,
@@ -50,6 +57,64 @@ from .assignment_resolution import (
 
 class SmileitWriteActionsMixin:
     """Acciones de creación y administración de datos de Smile-it."""
+
+    NOT_FOUND_TOKEN = "No existe"
+
+    def _resolve_error_status(
+        self,
+        error_message: str,
+        exc: Exception,
+        *,
+        map_permission_to_forbidden: bool,
+    ) -> int:
+        """Resuelve status HTTP para excepciones de dominio."""
+        if self.NOT_FOUND_TOKEN in error_message:
+            return status.HTTP_404_NOT_FOUND
+        if map_permission_to_forbidden and isinstance(exc, PermissionError):
+            return status.HTTP_403_FORBIDDEN
+        return status.HTTP_409_CONFLICT
+
+    def _error_response_from_exception(
+        self,
+        exc: Exception,
+        *,
+        map_permission_to_forbidden: bool,
+    ) -> Response:
+        """Construye respuesta de error homogénea para ValueError/PermissionError."""
+        error_message = str(exc)
+        status_code = self._resolve_error_status(
+            error_message,
+            exc,
+            map_permission_to_forbidden=map_permission_to_forbidden,
+        )
+        return Response({"detail": error_message}, status=status_code)
+
+    def _get_actor_info(
+        self, request: Request
+    ) -> tuple[int | None, str, str | None, list[int]]:
+        """Extrae información del actor desde el request.
+
+        Retorna:
+            - actor_user_id: ID del usuario o None
+            - actor_username: Nombre del usuario
+            - actor_role: "root", "admin", "user", o None
+            - actor_group_ids: Lista de IDs de grupos
+        """
+        is_authenticated = bool(getattr(request.user, "is_authenticated", False))
+        actor_user_id = request.user.id if is_authenticated else None
+        actor_username = request.user.username if is_authenticated else ""
+
+        # Obtener rol desde el modelo UserAccount
+        actor_role = None
+        if is_authenticated:
+            actor_role = getattr(request.user, "role", "user")
+
+        # Obtener grupos
+        actor_group_ids = []
+        if is_authenticated:
+            actor_group_ids = list(request.user.groups.values_list("id", flat=True))
+
+        return actor_user_id, actor_username, actor_role, actor_group_ids
 
     @extend_schema(
         summary="Listar Categorías Químicas de Smile-it",
@@ -73,13 +138,17 @@ class SmileitWriteActionsMixin:
     @action(detail=False, methods=["get", "post"], url_path="catalog")
     def catalog(self, request: Request) -> Response:
         """Lista o crea sustituyentes persistidos activos de Smile-it."""
-        is_authenticated_actor = bool(getattr(request.user, "is_authenticated", False))
-        actor_user_id = request.user.id if is_authenticated_actor else None
-        actor_username = request.user.username if is_authenticated_actor else ""
+        actor_user_id, actor_username, actor_role, actor_group_ids = (
+            self._get_actor_info(request)
+        )
 
         if request.method.lower() == "get":
             serializer = SmileitCatalogEntrySerializer(
-                list_active_catalog_entries(actor_user_id=actor_user_id),
+                list_active_catalog_entries(
+                    actor_user_id=actor_user_id,
+                    actor_role=actor_role,
+                    actor_user_group_ids=actor_group_ids,
+                ),
                 many=True,
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -92,15 +161,17 @@ class SmileitWriteActionsMixin:
                 serializer.validated_data,
                 actor_user_id=actor_user_id,
                 actor_username=actor_username,
+                actor_role=actor_role,
+                actor_user_group_ids=actor_group_ids,
             )
-        except ValueError as exc:
+        except (ValueError, PermissionError) as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
         response_serializer = SmileitCatalogEntrySerializer(created_entry)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        summary="Actualizar Catálogo de Sustituyentes de Usuario",
+        summary="Actualizar o Eliminar Catálogo de Sustituyentes de Usuario",
         parameters=[
             OpenApiParameter(
                 name="stable_id",
@@ -114,68 +185,80 @@ class SmileitWriteActionsMixin:
         request=SmileitCatalogEntryCreateSerializer,
         responses={
             200: SmileitCatalogEntrySerializer(many=True),
+            204: OpenApiResponse(description="Sustituyente eliminado correctamente."),
             404: OpenApiResponse(response=ErrorResponseSerializer),
             409: OpenApiResponse(response=ErrorResponseSerializer),
         },
     )
     @action(
         detail=False,
-        methods=["patch"],
+        methods=["patch", "delete"],
         url_path=r"catalog/(?P<stable_id>[^/.]+)",
     )
     def update_catalog(
         self, request: Request, stable_id: str | None = None
     ) -> Response:
-        """Versiona una entrada de catálogo editable y retorna el catálogo vigente."""
+        """Versiona (PATCH) o elimina lógicamente (DELETE) una entrada de catálogo."""
         if stable_id is None:
             return Response(
-                {"detail": "Debe indicar stable_id para actualizar el catálogo."},
+                {"detail": "Debe indicar stable_id para operar sobre el catálogo."},
                 status=status.HTTP_409_CONFLICT,
             )
+
+        actor_user_id, actor_username, actor_role, actor_group_ids = (
+            self._get_actor_info(request)
+        )
+
+        if request.method.lower() == "delete":
+            try:
+                delete_catalog_substituent(
+                    stable_id=stable_id,
+                    actor_user_id=actor_user_id,
+                    actor_role=actor_role,
+                    actor_user_group_ids=actor_group_ids,
+                )
+            except (ValueError, PermissionError) as exc:
+                return self._error_response_from_exception(
+                    exc,
+                    map_permission_to_forbidden=True,
+                )
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = SmileitCatalogEntryCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            update_catalog_substituent(
+            updated_entry = update_catalog_substituent(
                 stable_id=stable_id,
                 payload=cast(
                     SmileitSubstituentCreatePayload, serializer.validated_data
                 ),
-                actor_user_id=(
-                    request.user.id
-                    if bool(getattr(request.user, "is_authenticated", False))
-                    else None
-                ),
-                actor_username=(
-                    request.user.username
-                    if bool(getattr(request.user, "is_authenticated", False))
-                    else ""
-                ),
+                actor_user_id=actor_user_id,
+                actor_username=actor_username,
+                actor_role=actor_role,
+                actor_user_group_ids=actor_group_ids,
             )
-        except ValueError as exc:
-            error_message = str(exc)
-            status_code = (
-                status.HTTP_404_NOT_FOUND
-                if "No existe" in error_message
-                else status.HTTP_409_CONFLICT
+        except (ValueError, PermissionError) as exc:
+            return self._error_response_from_exception(
+                exc,
+                map_permission_to_forbidden=False,
             )
-            return Response({"detail": error_message}, status=status_code)
 
-        response_serializer = SmileitCatalogEntrySerializer(
-            list_active_catalog_entries(
-                actor_user_id=(
-                    request.user.id
-                    if bool(getattr(request.user, "is_authenticated", False))
-                    else None
-                )
-            ),
-            many=True,
-        )
+        response_serializer = SmileitCatalogEntrySerializer([updated_entry], many=True)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Gestionar Patrones Estructurales Smile-it",
+        parameters=[
+            OpenApiParameter(
+                name="filter",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description='Filtro de visibilidad: "show-all" (default) o "root-only" (solo root)',
+                required=False,
+            )
+        ],
         request=SmileitPatternEntryCreateSerializer,
         responses={
             200: SmileitPatternEntrySerializer(many=True),
@@ -186,9 +269,22 @@ class SmileitWriteActionsMixin:
     @action(detail=False, methods=["get", "post"], url_path="patterns")
     def patterns(self, request: Request) -> Response:
         """Lista o crea patrones estructurales activos de Smile-it."""
+        actor_user_id, _, actor_role, actor_group_ids = self._get_actor_info(request)
+
         if request.method.lower() == "get":
+            # Obtener filtro de query params
+            filter_mode = request.query_params.get("filter", "show-all")
+            if filter_mode not in {"show-all", "root-only"}:
+                filter_mode = "show-all"
+
             serializer = SmileitPatternEntrySerializer(
-                list_active_patterns(), many=True
+                list_active_patterns(
+                    actor_user_id=actor_user_id,
+                    actor_role=actor_role,
+                    actor_user_group_ids=actor_group_ids,
+                    filter_mode=filter_mode,
+                ),
+                many=True,
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -196,12 +292,88 @@ class SmileitWriteActionsMixin:
         serializer.is_valid(raise_exception=True)
 
         try:
-            created_pattern = create_pattern_entry(serializer.validated_data)
-        except ValueError as exc:
+            created_pattern = create_pattern_entry(
+                serializer.validated_data,
+                actor_user_id=actor_user_id,
+                actor_role=actor_role,
+                actor_user_group_ids=actor_group_ids,
+            )
+        except (ValueError, PermissionError) as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
         response_serializer = SmileitPatternEntrySerializer(created_pattern)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Actualizar o Eliminar Patrón Estructural Smile-it",
+        parameters=[
+            OpenApiParameter(
+                name="stable_id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="Stable ID del patrón a versionar; solo patrones editables se pueden actualizar.",
+            )
+        ],
+        request=SmileitPatternEntryCreateSerializer,
+        responses={
+            200: SmileitPatternEntrySerializer,
+            204: OpenApiResponse(description="Patrón eliminado correctamente."),
+            404: OpenApiResponse(response=ErrorResponseSerializer),
+            409: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["patch", "delete"],
+        url_path=r"patterns/(?P<stable_id>[^/.]+)",
+    )
+    def update_patterns(
+        self, request: Request, stable_id: str | None = None
+    ) -> Response:
+        """Crea una nueva versión (PATCH) o elimina lógicamente (DELETE) un patrón."""
+        if stable_id is None:
+            return Response(
+                {"detail": "Debe indicar stable_id para operar sobre el patrón."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        actor_user_id, _, actor_role, actor_group_ids = self._get_actor_info(request)
+
+        if request.method.lower() == "delete":
+            try:
+                delete_pattern_entry(
+                    stable_id=stable_id,
+                    actor_user_id=actor_user_id,
+                    actor_role=actor_role,
+                    actor_user_group_ids=actor_group_ids,
+                )
+            except (ValueError, PermissionError) as exc:
+                return self._error_response_from_exception(
+                    exc,
+                    map_permission_to_forbidden=True,
+                )
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = SmileitPatternEntryCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            updated_pattern = update_pattern_entry(
+                stable_id=stable_id,
+                payload=cast(SmileitPatternCreatePayload, serializer.validated_data),
+                actor_user_id=actor_user_id,
+                actor_role=actor_role,
+                actor_user_group_ids=actor_group_ids,
+            )
+        except (ValueError, PermissionError) as exc:
+            return self._error_response_from_exception(
+                exc,
+                map_permission_to_forbidden=True,
+            )
+
+        response_serializer = SmileitPatternEntrySerializer(updated_pattern)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Inspeccionar Estructura Smile-it",

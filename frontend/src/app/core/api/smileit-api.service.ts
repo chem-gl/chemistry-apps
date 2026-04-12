@@ -1,7 +1,7 @@
 // smileit-api.service.ts: Sub-servicio API exclusivo para operaciones Smileit.
 // Encapsula catálogo, inspección estructural, validación, despacho y reportes.
 
-import { HttpContext, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
 import { createReportDownload$ } from './api-download.utils';
@@ -41,6 +41,15 @@ import type {
 })
 export class SmileitApiService {
   private readonly smileitClient = inject(SmileitService);
+  private readonly httpClient = inject(HttpClient);
+
+  /**
+   * Construye contexto HTTP para evitar modal global en flujos que ya muestran
+   * errores inline dentro de su propio modal (ej. catálogo Smileit).
+   */
+  private buildSkipGlobalErrorContext(): HttpContext {
+    return new HttpContext().set(SKIP_GLOBAL_ERROR_MODAL, true);
+  }
 
   /**
    * Devuelve el catálogo persistente y versionado de sustituyentes.
@@ -64,8 +73,11 @@ export class SmileitApiService {
   createSmileitCatalogEntry(
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
+    const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
-      .smileitJobsCatalogCreate(this.buildCatalogCreateRequest(params))
+      .smileitJobsCatalogCreate(this.buildCatalogCreateRequest(params), 'body', false, {
+        context: requestContext,
+      })
       .pipe(shareReplay(1));
   }
 
@@ -74,8 +86,17 @@ export class SmileitApiService {
     stableId: string,
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
+    const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
-      .smileitJobsCatalogPartialUpdate(stableId, this.buildCatalogPatchRequest(params))
+      .smileitJobsCatalogPartialUpdate(
+        stableId,
+        this.buildCatalogPatchRequest(params),
+        'body',
+        false,
+        {
+          context: requestContext,
+        },
+      )
       .pipe(shareReplay(1));
   }
 
@@ -83,8 +104,38 @@ export class SmileitApiService {
   createSmileitPatternEntry(
     params: SmileitPatternEntryCreateParams,
   ): Observable<SmileitPatternEntryView[]> {
+    const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
-      .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params))
+      .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params), 'body', false, {
+        context: requestContext,
+      })
+      .pipe(shareReplay(1));
+  }
+
+  /** Versiona un patrón editable y retorna la entrada actualizada. */
+  updateSmileitPatternEntry(
+    stableId: string,
+    params: SmileitPatternEntryCreateParams,
+  ): Observable<SmileitPatternEntryView> {
+    const requestContext = this.buildSkipGlobalErrorContext();
+    const encodedStableId: string = encodeURIComponent(stableId);
+    return this.httpClient
+      .patch<SmileitPatternEntryView>(
+        `/api/smileit/jobs/patterns/${encodedStableId}/`,
+        this.buildPatternEntryRequest(params),
+        { context: requestContext },
+      )
+      .pipe(shareReplay(1));
+  }
+
+  /** Elimina lógicamente un patrón editable por stable_id. */
+  deleteSmileitPatternEntry(stableId: string): Observable<void> {
+    const requestContext = this.buildSkipGlobalErrorContext();
+    const encodedStableId: string = encodeURIComponent(stableId);
+    return this.httpClient
+      .delete<void>(`/api/smileit/jobs/patterns/${encodedStableId}/`, {
+        context: requestContext,
+      })
       .pipe(shareReplay(1));
   }
 

@@ -399,9 +399,13 @@
 }
 
 .error-message {
+  position: sticky;
+  bottom: 0.55rem;
+  z-index: 2;
   border: 1px solid var(--chem-error);
   background: var(--chem-error-bg);
   color: var(--chem-error);
+  box-shadow: 0 8px 16px rgba(44, 37, 51, 0.12);
 }
 
 .summary-banner,

@@ -17,6 +17,14 @@ from dataclasses import dataclass
 from django.db import transaction
 from rdkit import Chem
 
+from apps.core.permissions import (
+    can_user_delete_entry,
+    can_user_edit_entry,
+    can_user_view_entry,
+    get_entry_source_reference,
+    get_source_reference_for_role,
+)
+
 from .engine import canonicalize_smiles, validate_smarts, verify_substituent_category
 from .models import (
     SmileitCategory,
@@ -33,6 +41,11 @@ from .types import (
     SmileitSubstituentReferenceInput,
 )
 from .types import SmileitCategory as SmileitCategoryType
+
+INVALID_STABLE_ID_MESSAGE = "El stable_id indicado no tiene formato UUID válido."
+MISSING_ACTIVE_SUBSTITUENT_MESSAGE = (
+    "No existe un sustituyente activo para el stable_id indicado."
+)
 
 
 @dataclass(frozen=True)
@@ -100,18 +113,6 @@ def _serialize_substituent(substituent: SmileitSubstituent) -> SmileitCatalogEnt
     )
 
 
-def _resolve_substituent_owner_user_id(substituent: SmileitSubstituent) -> int | None:
-    """Obtiene owner_user_id desde metadata cuando existe y es válido."""
-    raw_owner_user_id = substituent.provenance_metadata.get("owner_user_id")
-    if raw_owner_user_id is None:
-        return None
-
-    try:
-        return int(str(raw_owner_user_id).strip())
-    except ValueError:
-        return None
-
-
 def _serialize_pattern(pattern: SmileitPattern) -> SmileitPatternEntry:
     """Convierte patrón persistido a contrato tipado de salida."""
     metadata: dict[str, str] = {
@@ -141,35 +142,90 @@ def list_active_categories() -> list[SmileitCategoryType]:
 
 def list_active_catalog_entries(
     actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+    filter_mode: str = "show-all",
 ) -> list[SmileitCatalogEntry]:
-    """Lista sustituyentes activos, aislando entradas de usuario por actor."""
+    """Lista sustituyentes activos con filtrado por permisos y filtro root.
+
+    Args:
+        actor_user_id: ID del usuario actual (None si anónimo)
+        actor_role: Rol del usuario ("root", "admin", "user")
+        actor_user_group_ids: Lista de IDs de grupos a los que pertenece el usuario
+        filter_mode: "show-all" o "root-only". Si "root-only", solo muestra entries del root
+
+    Retorna:
+        Lista de sustituyentes que el usuario puede ver
+    """
     entries = (
         SmileitSubstituent.objects.filter(is_latest=True, is_active=True)
         .prefetch_related("categories")
         .order_by("name", "stable_id")
     )
 
-    if actor_user_id is None:
-        return [_serialize_substituent(entry) for entry in entries]
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
 
     visible_entries: list[SmileitCatalogEntry] = []
     for entry in entries:
-        if not _is_substituent_user_editable(entry):
-            visible_entries.append(_serialize_substituent(entry))
-            continue
+        # Aplicar filtro root-only si está activo y actor es root
+        if filter_mode == "root-only" and actor_role == "root":
+            if get_entry_source_reference(entry) != "root":
+                continue
 
-        if _resolve_substituent_owner_user_id(entry) == actor_user_id:
+        # Usar nueva función de permisos
+        if can_user_view_entry(
+            entry=entry,
+            actor_user_id=actor_user_id,
+            actor_user_groups=actor_user_group_ids,
+            actor_role=actor_role,
+        ):
             visible_entries.append(_serialize_substituent(entry))
 
     return visible_entries
 
 
-def list_active_patterns() -> list[SmileitPatternEntry]:
-    """Lista patrones estructurales activos para anotación visual."""
+def list_active_patterns(
+    actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+    filter_mode: str = "show-all",
+) -> list[SmileitPatternEntry]:
+    """Lista patrones estructurales activos con filtrado por permisos.
+
+    Args:
+        actor_user_id: ID del usuario actual (None si anónimo)
+        actor_role: Rol del usuario ("root", "admin", "user")
+        actor_user_group_ids: Lista de IDs de grupos a los que pertenece el usuario
+        filter_mode: "show-all" o "root-only". Si "root-only", solo muestra patrones del root
+
+    Retorna:
+        Lista de patrones que el usuario puede ver
+    """
     patterns = SmileitPattern.objects.filter(is_latest=True, is_active=True).order_by(
         "pattern_type", "name"
     )
-    return [_serialize_pattern(entry) for entry in patterns]
+
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
+
+    visible_patterns: list[SmileitPatternEntry] = []
+    for pattern in patterns:
+        # Aplicar filtro root-only si está activo y actor es root
+        if filter_mode == "root-only" and actor_role == "root":
+            if get_entry_source_reference(pattern) != "root":
+                continue
+
+        # Usar función de permisos
+        if can_user_view_entry(
+            entry=pattern,
+            actor_user_id=actor_user_id,
+            actor_user_groups=actor_user_group_ids,
+            actor_role=actor_role,
+        ):
+            visible_patterns.append(_serialize_pattern(pattern))
+
+    return visible_patterns
 
 
 def get_category_map(keys: list[str]) -> dict[str, SmileitCategory]:
@@ -279,6 +335,27 @@ def _validate_substituent_categories_or_raise(
     return validations
 
 
+# =========================
+# Funciones Específicas de Smile-it
+# =========================
+
+
+def _resolve_substituent_owner_user_id(substituent: SmileitSubstituent) -> int | None:
+    """Obtiene owner_user_id desde metadata cuando existe y es válido.
+
+    Esta función es específica de SmileitSubstituent. Para funciones genéricas,
+    ver `apps.core.permissions._get_owner_user_id_from_metadata()`.
+    """
+    raw_owner_user_id = substituent.provenance_metadata.get("owner_user_id")
+    if raw_owner_user_id is None:
+        return None
+
+    try:
+        return int(str(raw_owner_user_id).strip())
+    except ValueError:
+        return None
+
+
 def _resolve_latest_user_substituent_for_update(
     stable_id: str,
     *,
@@ -288,7 +365,7 @@ def _resolve_latest_user_substituent_for_update(
     try:
         stable_uuid = uuid.UUID(stable_id)
     except ValueError as exc:
-        raise ValueError("El stable_id indicado no tiene formato UUID válido.") from exc
+        raise ValueError(INVALID_STABLE_ID_MESSAGE) from exc
 
     current_substituent = (
         SmileitSubstituent.objects.filter(
@@ -300,7 +377,7 @@ def _resolve_latest_user_substituent_for_update(
         .first()
     )
     if current_substituent is None:
-        raise ValueError("No existe un sustituyente activo para el stable_id indicado.")
+        raise ValueError(MISSING_ACTIVE_SUBSTITUENT_MESSAGE)
 
     if not _is_substituent_user_editable(current_substituent):
         raise ValueError(
@@ -322,8 +399,18 @@ def create_catalog_substituent(
     *,
     actor_user_id: int | None = None,
     actor_username: str = "",
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
 ) -> SmileitCatalogEntry:
-    """Crea un nuevo sustituyente persistente si pasa validaciones químicas."""
+    """Crea un nuevo sustituyente persistente si pasa validaciones químicas.
+
+    Args:
+        payload: Datos del sustituyente
+        actor_user_id: ID del usuario que crea la entrada
+        actor_username: Nombre del usuario
+        actor_role: Rol del usuario ("root", "admin", "user")
+        actor_user_group_ids: Grupos del usuario (para admins)
+    """
     canonical_smiles = canonicalize_smiles(payload["smiles"])
     if canonical_smiles is None:
         raise ValueError("El SMILES del sustituyente es inválido.")
@@ -344,6 +431,20 @@ def create_catalog_substituent(
         normalized_metadata["owner_user_id"] = str(actor_user_id)
         normalized_metadata["owner_username"] = actor_username.strip()
 
+    # Determinar source_reference basado en actor_role
+    if actor_role is not None:
+        primary_group_id = None
+        if (
+            actor_role == "admin"
+            and actor_user_group_ids
+            and len(actor_user_group_ids) > 0
+        ):
+            primary_group_id = actor_user_group_ids[0]
+            normalized_metadata["owner_group_id"] = str(primary_group_id)
+        source_reference = get_source_reference_for_role(actor_role, primary_group_id)
+    else:
+        source_reference = payload["source_reference"].strip()
+
     substituent = SmileitSubstituent.objects.create(
         stable_id=uuid.uuid4(),
         version=1,
@@ -353,8 +454,9 @@ def create_catalog_substituent(
         smiles_input=payload["smiles"].strip(),
         smiles_canonical=canonical_smiles,
         anchor_atom_indices=anchor_indices,
-        source_reference=payload["source_reference"].strip(),
+        source_reference=source_reference,
         provenance_metadata=normalized_metadata,
+        created_by_id=actor_user_id,
     )
 
     for validation in validations:
@@ -375,12 +477,54 @@ def update_catalog_substituent(
     *,
     actor_user_id: int | None = None,
     actor_username: str = "",
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
 ) -> SmileitCatalogEntry:
-    """Crea una nueva versión editable de un sustituyente de usuario."""
-    stable_uuid, current_substituent = _resolve_latest_user_substituent_for_update(
-        stable_id,
-        actor_user_id=actor_user_id,
-    )
+    """Crea una nueva versión editable de un sustituyente de usuario.
+
+    Args:
+        stable_id: ID único del sustituyente
+        payload: Nuevos datos
+        actor_user_id: ID del usuario que edita
+        actor_username: Nombre del usuario
+        actor_role: Rol del usuario ("root", "admin", "user")
+        actor_user_group_ids: Grupos del usuario
+    """
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
+
+    # Compatibilidad legacy: clientes anónimos siguen usando la validación clásica
+    # para edición de entradas no-seed. Si hay actor autenticado, aplica permisos multinivel.
+    if actor_user_id is None and actor_role is None:
+        stable_uuid, current_substituent = _resolve_latest_user_substituent_for_update(
+            stable_id,
+            actor_user_id=None,
+        )
+    else:
+        try:
+            stable_uuid = uuid.UUID(stable_id)
+        except ValueError as exc:
+            raise ValueError(INVALID_STABLE_ID_MESSAGE) from exc
+
+        current_substituent = (
+            SmileitSubstituent.objects.filter(
+                stable_id=stable_uuid,
+                is_latest=True,
+                is_active=True,
+            )
+            .prefetch_related("categories")
+            .first()
+        )
+        if current_substituent is None:
+            raise ValueError(MISSING_ACTIVE_SUBSTITUENT_MESSAGE)
+
+        if not can_user_edit_entry(
+            entry=current_substituent,
+            actor_user_id=actor_user_id,
+            actor_role=actor_role,
+            actor_user_groups=actor_user_group_ids,
+        ):
+            raise PermissionError("No tienes permisos para editar este sustituyente.")
 
     canonical_smiles = canonicalize_smiles(payload["smiles"])
     if canonical_smiles is None:
@@ -412,9 +556,8 @@ def update_catalog_substituent(
         normalized_metadata["owner_user_id"] = str(actor_user_id)
         normalized_metadata["owner_username"] = actor_username.strip()
 
-    source_reference = payload["source_reference"].strip()
-    if source_reference == "":
-        source_reference = current_substituent.source_reference
+    # Preservar source_reference (no cambiar el ownership en ediciones)
+    source_reference = current_substituent.source_reference
 
     with transaction.atomic():
         SmileitSubstituent.objects.filter(pk=current_substituent.pk).update(
@@ -432,6 +575,7 @@ def update_catalog_substituent(
             anchor_atom_indices=anchor_indices,
             source_reference=source_reference,
             provenance_metadata=normalized_metadata,
+            created_by_id=actor_user_id,
         )
 
         for validation in validations:
@@ -446,8 +590,21 @@ def update_catalog_substituent(
     return _serialize_substituent(updated_substituent)
 
 
-def create_pattern_entry(payload: SmileitPatternCreatePayload) -> SmileitPatternEntry:
-    """Crea patrón estructural nuevo con validación de SMARTS y caption."""
+def create_pattern_entry(
+    payload: SmileitPatternCreatePayload,
+    *,
+    actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+) -> SmileitPatternEntry:
+    """Crea patrón estructural nuevo con validación de SMARTS y caption.
+
+    Args:
+        payload: Datos del patrón
+        actor_user_id: ID del usuario que crea
+        actor_role: Rol del usuario ("root", "admin", "user")
+        actor_user_group_ids: Grupos del usuario
+    """
     if payload["caption"].strip() == "":
         raise ValueError("El patrón requiere un caption/description obligatorio.")
 
@@ -463,6 +620,24 @@ def create_pattern_entry(payload: SmileitPatternCreatePayload) -> SmileitPattern
     if duplicates:
         raise ValueError("Ya existe un patrón activo con el mismo SMARTS y tipo.")
 
+    normalized_metadata = _normalize_metadata(payload["provenance_metadata"])
+    if actor_user_id is not None:
+        normalized_metadata["owner_user_id"] = str(actor_user_id)
+
+    # Determinar source_reference basado en actor_role
+    if actor_role is not None:
+        primary_group_id = None
+        if (
+            actor_role == "admin"
+            and actor_user_group_ids
+            and len(actor_user_group_ids) > 0
+        ):
+            primary_group_id = actor_user_group_ids[0]
+            normalized_metadata["owner_group_id"] = str(primary_group_id)
+        source_reference = get_source_reference_for_role(actor_role, primary_group_id)
+    else:
+        source_reference = payload["source_reference"].strip()
+
     pattern = SmileitPattern.objects.create(
         stable_id=uuid.uuid4(),
         version=1,
@@ -472,8 +647,9 @@ def create_pattern_entry(payload: SmileitPatternCreatePayload) -> SmileitPattern
         smarts=payload["smarts"].strip(),
         pattern_type=payload["pattern_type"],
         caption=payload["caption"].strip(),
-        source_reference=payload["source_reference"].strip(),
-        provenance_metadata=_normalize_metadata(payload["provenance_metadata"]),
+        source_reference=source_reference,
+        provenance_metadata=normalized_metadata,
+        created_by_id=actor_user_id,
     )
     return _serialize_pattern(pattern)
 
@@ -570,3 +746,193 @@ def normalize_manual_substituent(
         source_reference=source_reference.strip(),
         provenance_metadata=_normalize_metadata(provenance_metadata),
     )
+
+
+def update_pattern_entry(
+    stable_id: str,
+    payload: SmileitPatternCreatePayload,
+    *,
+    actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+) -> SmileitPatternEntry:
+    """Crea una nueva versión de un patrón estructural existente (versionado).
+
+    Los patrones son editables solo si no son semilla (seed=False en metadata).
+
+    Args:
+        stable_id: ID del patrón
+        payload: Nuevos datos
+        actor_user_id: ID del usuario que edita
+        actor_role: Rol del usuario
+        actor_user_group_ids: Grupos del usuario
+    """
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
+
+    # Resolver UUID del stable_id
+    try:
+        stable_uuid = uuid.UUID(stable_id)
+    except ValueError as exc:
+        raise ValueError(INVALID_STABLE_ID_MESSAGE) from exc
+
+    # Obtener la versión vigente
+    current_pattern = SmileitPattern.objects.filter(
+        stable_id=stable_uuid,
+        is_latest=True,
+        is_active=True,
+    ).first()
+
+    if current_pattern is None:
+        raise ValueError("No existe un patrón activo para el stable_id indicado.")
+
+    # Validar permisos con la nueva función
+    if not can_user_edit_entry(
+        entry=current_pattern,
+        actor_user_id=actor_user_id,
+        actor_role=actor_role,
+        actor_user_groups=actor_user_group_ids,
+    ):
+        raise PermissionError("No tienes permisos para editar este patrón.")
+
+    # Validar SMARTS
+    if not validate_smarts(payload["smarts"]):
+        raise ValueError("El SMARTS indicado es inválido.")
+
+    # Verificar duplicados (excluyendo el patrón actual)
+    duplicates = (
+        SmileitPattern.objects.filter(
+            is_latest=True,
+            is_active=True,
+            smarts=payload["smarts"].strip(),
+            pattern_type=payload["pattern_type"],
+        )
+        .exclude(stable_id=stable_uuid)
+        .exists()
+    )
+    if duplicates:
+        raise ValueError("Ya existe un patrón activo con el mismo SMARTS y tipo.")
+
+    # Normalizar metadata
+    normalized_metadata = _normalize_metadata(payload["provenance_metadata"])
+    if len(normalized_metadata) == 0:
+        normalized_metadata = dict(current_pattern.provenance_metadata)
+
+    if actor_user_id is not None:
+        normalized_metadata["owner_user_id"] = str(actor_user_id)
+
+    # Preservar source_reference
+    source_reference = current_pattern.source_reference
+
+    with transaction.atomic():
+        SmileitPattern.objects.filter(pk=current_pattern.pk).update(is_latest=False)
+
+        new_pattern = SmileitPattern.objects.create(
+            stable_id=stable_uuid,
+            version=current_pattern.version + 1,
+            is_latest=True,
+            is_active=True,
+            name=payload["name"].strip(),
+            smarts=payload["smarts"].strip(),
+            pattern_type=payload["pattern_type"],
+            caption=payload["caption"].strip(),
+            source_reference=source_reference,
+            provenance_metadata=normalized_metadata,
+            created_by_id=actor_user_id,
+        )
+
+    return _serialize_pattern(new_pattern)
+
+
+def delete_pattern_entry(
+    stable_id: str,
+    *,
+    actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+) -> None:
+    """Desactiva lógicamente un patrón estructural (soft-delete para trazabilidad).
+
+    Los patrones que el usuario tiene permisos para editar pueden eliminarse.
+
+    Args:
+        stable_id: ID del patrón
+        actor_user_id: ID del usuario
+        actor_role: Rol del usuario
+        actor_user_group_ids: Grupos del usuario
+    """
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
+
+    try:
+        stable_uuid = uuid.UUID(stable_id)
+    except ValueError as exc:
+        raise ValueError(INVALID_STABLE_ID_MESSAGE) from exc
+
+    pattern = SmileitPattern.objects.filter(
+        stable_id=stable_uuid,
+        is_latest=True,
+        is_active=True,
+    ).first()
+
+    if pattern is None:
+        raise ValueError("No existe un patrón activo para el stable_id indicado.")
+
+    # Validar permisos con la nueva función
+    if not can_user_delete_entry(
+        entry=pattern,
+        actor_user_id=actor_user_id,
+        actor_role=actor_role,
+        actor_user_groups=actor_user_group_ids,
+    ):
+        raise PermissionError("No tienes permisos para eliminar este patrón.")
+
+    # Soft-delete: solo desactivar
+    pattern.is_active = False
+    pattern.save(update_fields=["is_active", "updated_at"])
+
+
+def delete_catalog_substituent(
+    stable_id: str,
+    *,
+    actor_user_id: int | None = None,
+    actor_role: str | None = None,
+    actor_user_group_ids: list[int] | None = None,
+) -> None:
+    """Desactiva lógicamente un sustituyente de catálogo (soft-delete para trazabilidad).
+
+    Solo los sustituyentes que el usuario tiene permisos para editar pueden eliminarse.
+    """
+    if actor_user_group_ids is None:
+        actor_user_group_ids = []
+
+    try:
+        stable_uuid = uuid.UUID(stable_id)
+    except ValueError as exc:
+        raise ValueError(INVALID_STABLE_ID_MESSAGE) from exc
+
+    substituent = (
+        SmileitSubstituent.objects.filter(
+            stable_id=stable_uuid,
+            is_latest=True,
+            is_active=True,
+        )
+        .prefetch_related("categories")
+        .first()
+    )
+
+    if substituent is None:
+        raise ValueError(MISSING_ACTIVE_SUBSTITUENT_MESSAGE)
+
+    # Validar permisos con la nueva función
+    if not can_user_delete_entry(
+        entry=substituent,
+        actor_user_id=actor_user_id,
+        actor_role=actor_role,
+        actor_user_groups=actor_user_group_ids,
+    ):
+        raise PermissionError("No tienes permisos para eliminar este sustituyente.")
+
+    # Soft-delete: solo desactivar
+    substituent.is_active = False
+    substituent.save(update_fields=["is_active", "updated_at"])

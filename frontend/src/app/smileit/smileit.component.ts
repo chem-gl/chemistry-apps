@@ -322,6 +322,23 @@ export class SmileitComponent implements OnInit, OnDestroy {
     });
   }
 
+  beginPatternEntryEdition(pattern: SmileitPatternEntryView): void {
+    this.workflow.catalog.beginPatternEntryEdition(pattern);
+  }
+
+  cancelPatternEdition(): void {
+    this.workflow.catalog.cancelPatternEdition();
+  }
+
+  deletePatternEntry(pattern: SmileitPatternEntryView): void {
+    this.workflow.catalog.deletePatternEntry(pattern);
+
+    const selectedPattern: SmileitPatternEntryView | null = this.selectedPatternForDetail();
+    if (selectedPattern !== null && selectedPattern.stable_id === pattern.stable_id) {
+      this.closePatternDetail();
+    }
+  }
+
   openLibraryEntryDetail(
     catalogEntry: SmileitCatalogEntryView,
     openContext: 'browser' | 'reference' = 'browser',

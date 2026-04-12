@@ -204,6 +204,13 @@ class SmileitPattern(models.Model):
     caption = models.CharField(max_length=300)
     source_reference = models.CharField(max_length=200, blank=True, default="")
     provenance_metadata = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="smileit_patterns",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

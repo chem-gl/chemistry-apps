@@ -98,12 +98,12 @@
   --chem-transition: 0.18s ease;
   --chem-transition-slow: 0.3s ease;
 
-  /* === Z-index (escala simple 1‒5) === */
+  /* === Z-index (escala: base 1-5 → dialogs 60+, Ketcher 62-63) === */
   --z-base: 1;
   --z-sticky: 2;
   --z-dropdown: 3;
-  --z-backdrop: 4;
-  --z-modal: 5;
+  --z-backdrop: 59; /* Modalbackdrop justo debajo de modales */
+  --z-modal: 60; /* Modales encima de Ketcher (que usa 40-63) */
 }
 
 /* === Reset base === */

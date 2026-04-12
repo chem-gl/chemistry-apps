@@ -3,9 +3,10 @@
 
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import '@angular/compiler';
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of, throwError } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
   PatternTypeEnum,
@@ -185,6 +186,39 @@ describe('SmileitApiService', () => {
       source_reference: 'literature',
       provenance_metadata: { origin: 'manual' },
     });
+  });
+
+  it('updates and deletes patterns through HTTP endpoints when client has no generated methods', async () => {
+    const patternParams = {
+      name: 'Updated Ring pattern',
+      smarts: 'c1ccccc1',
+      patternType: PatternTypeEnum.Privileged,
+      caption: 'Updated caption',
+      sourceReference: 'local-lab',
+      provenanceMetadata: { owner_user_id: '2' },
+    };
+
+    const updatePromise = lastValueFrom(
+      service.updateSmileitPatternEntry('pattern-1', patternParams),
+    );
+    const updateRequest = httpMock.expectOne('/api/smileit/jobs/patterns/pattern-1/');
+    expect(updateRequest.request.method).toBe('PATCH');
+    expect(updateRequest.request.body).toEqual({
+      name: 'Updated Ring pattern',
+      smarts: 'c1ccccc1',
+      pattern_type: PatternTypeEnum.Privileged,
+      caption: 'Updated caption',
+      source_reference: 'local-lab',
+      provenance_metadata: { owner_user_id: '2' },
+    });
+    updateRequest.flush({ id: 'pattern-1', stable_id: 'pattern-1' });
+    await expect(updatePromise).resolves.toEqual({ id: 'pattern-1', stable_id: 'pattern-1' });
+
+    const deletePromise = lastValueFrom(service.deleteSmileitPatternEntry('pattern-1'));
+    const deleteRequest = httpMock.expectOne('/api/smileit/jobs/patterns/pattern-1/');
+    expect(deleteRequest.request.method).toBe('DELETE');
+    deleteRequest.flush(null);
+    await expect(deletePromise).resolves.toBeNull();
   });
 
   it('maps structure inspection and validation errors', async () => {
