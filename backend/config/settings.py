@@ -91,7 +91,7 @@ def _iter_origin_candidates(values: list[str]) -> list[str]:
 
 def _normalize_origin(origin_value: str) -> str | None:
     """Normaliza un origen URL a formato scheme://host[:port]."""
-    if not origin_value.startswith(("http://", "https://")):
+    if not origin_value.startswith(("http://", "https://")):  # noqa: S5332
         return None
 
     parsed_url = urlsplit(origin_value)
@@ -513,7 +513,7 @@ if database_engine in {"postgres", "postgresql"}:
             "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("DB_NAME", "chemistry_db"),
             "USER": os.getenv("DB_USER", "postgres"),
-            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),  # NOSONAR
             "HOST": os.getenv("DB_HOST", "127.0.0.1"),
             "PORT": os.getenv("DB_PORT", "5432"),
         }

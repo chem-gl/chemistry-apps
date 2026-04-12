@@ -9,6 +9,9 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from apps.tunnel.plugin import _build_input_change_event, _build_tunnel_input
+from apps.tunnel.types import TunnelInputChangeEvent
+
 # =========================
 # _build_input_change_event
 # =========================
@@ -17,8 +20,7 @@ from unittest.mock import MagicMock, patch
 class BuildInputChangeEventTests(TestCase):
     """Prueba las validaciones en _build_input_change_event."""
 
-    def _call(self, raw_event: dict) -> object:  # type: ignore[type-arg]
-        from .plugin import _build_input_change_event
+    def _call(self, raw_event: dict) -> TunnelInputChangeEvent:
 
         return _build_input_change_event(raw_event)
 
@@ -73,8 +75,7 @@ class BuildTunnelInputTests(TestCase):
         "input_change_events": [],
     }
 
-    def _call(self, params: dict) -> object:  # type: ignore[type-arg]
-        from .plugin import _build_tunnel_input
+    def _call(self, params: dict) -> TunnelInputChangeEvent:
 
         return _build_tunnel_input(params)
 
