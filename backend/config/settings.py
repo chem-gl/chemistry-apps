@@ -14,6 +14,7 @@ import os
 import sys
 from importlib.util import find_spec
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
@@ -68,6 +69,38 @@ def _get_env_list(variable_name: str, default_value: list[str]) -> list[str]:
         item.strip() for item in raw_value.split(",") if item.strip() != ""
     ]
     return parsed_values
+
+
+def _normalize_origin_values(values: list[str]) -> list[str]:
+    """Normaliza orígenes (CORS/CSRF) removiendo rutas, query y slash final."""
+    normalized_values: list[str] = []
+
+    for raw_value in values:
+        candidate_value: str = raw_value.strip().strip('"').strip("'")
+        if candidate_value == "":
+            continue
+
+        # Permite valores separados por salto de línea o ';' (común en secrets).
+        for segment_value in candidate_value.replace(";", ",").splitlines():
+            normalized_segment: str = segment_value.strip()
+            if normalized_segment == "":
+                continue
+
+            if not normalized_segment.startswith(("http://", "https://")):
+                continue
+
+            parsed_url = urlsplit(normalized_segment)
+            if parsed_url.netloc == "":
+                continue
+
+            origin_value: str = urlunsplit(
+                (parsed_url.scheme.lower(), parsed_url.netloc.lower(), "", "", "")
+            )
+
+            if origin_value not in normalized_values:
+                normalized_values.append(origin_value)
+
+    return normalized_values
 
 
 def _merge_unique_values(
@@ -486,13 +519,14 @@ CORS_ALLOW_CREDENTIALS = _get_env_bool("CORS_ALLOW_CREDENTIALS", True)
 DEFAULT_CORS_ALLOWED_ORIGINS: list[str] = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
-    "http://0.0.0.0:4200",
+    "http://0.0.0.0:4200",  # noqa: S5332
 ]
 
 CORS_ALLOWED_ORIGINS: list[str] = _get_env_list(
     "CORS_ALLOWED_ORIGINS",
     DEFAULT_CORS_ALLOWED_ORIGINS,
 )
+CORS_ALLOWED_ORIGINS = _normalize_origin_values(CORS_ALLOWED_ORIGINS)
 
 CORS_ALLOWED_ORIGIN_REGEXES: list[str] = _get_env_list(
     "CORS_ALLOWED_ORIGIN_REGEXES",
@@ -500,9 +534,15 @@ CORS_ALLOWED_ORIGIN_REGEXES: list[str] = _get_env_list(
 )
 
 CSRF_TRUSTED_ORIGINS: list[str] = _merge_unique_values(
-    _get_env_list(
-        "CSRF_TRUSTED_ORIGINS",
-        ["http://localhost:4200", "http://127.0.0.1:4200", "http://0.0.0.0:4200"],
+    _normalize_origin_values(
+        _get_env_list(
+            "CSRF_TRUSTED_ORIGINS",
+            [
+                "http://localhost:4200",
+                "http://127.0.0.1:4200",
+                "http://0.0.0.0:4200",  # noqa: S5332
+            ],
+        )
     ),
     CORS_ALLOWED_ORIGINS,
 )
