@@ -305,12 +305,16 @@ SPECTACULAR_SETTINGS = {
         "url": OPENAPI_LICENSE_URL,
     },
     "ENUM_NAME_OVERRIDES": {
-        "JobStatusEnum": [
+        # StatusEnum cubre los campos `status` y `original_status` de ScientificJob,
+        # que usan el mismo STATUS_CHOICES (6 valores incluyendo "cancelled").
+        # Sin este override drf-spectacular genera dos nombres para el mismo choice set.
+        "StatusEnum": [
             ("pending", "Pending"),
             ("running", "Running"),
             ("paused", "Paused"),
             ("completed", "Completed"),
             ("failed", "Failed"),
+            ("cancelled", "Cancelled"),
         ],
         "JobProgressStageEnum": [
             ("pending", "pending"),

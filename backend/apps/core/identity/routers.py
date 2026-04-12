@@ -60,6 +60,7 @@ class CurrentUserProfileView(views.APIView):
     """Devuelve el perfil del usuario autenticado."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserProfileSerializer
 
     def get(self, request: Request) -> Response:
         serializer = UserProfileSerializer(request.user)
@@ -71,7 +72,9 @@ class CurrentUserAccessibleAppsView(views.APIView):
     """Expone apps disponibles para el usuario actual con RBAC resuelto."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AccessibleScientificAppSerializer
 
+    @extend_schema(responses=AccessibleScientificAppSerializer(many=True))
     def get(self, request: Request) -> Response:
         payload = AuthorizationService.list_accessible_apps(request.user)
         serializer = AccessibleScientificAppSerializer(payload, many=True)
@@ -83,12 +86,15 @@ class CurrentUserAppConfigView(views.APIView):
     """Consulta y actualiza configuración de app del usuario actual."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = EffectiveAppConfigSerializer
 
+    @extend_schema(responses=EffectiveAppConfigSerializer)
     def get(self, request: Request, app_name: str) -> Response:
         payload = AuthorizationService.get_effective_app_config(request.user, app_name)
         serializer = EffectiveAppConfigSerializer(payload)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(request=UserAppConfigSerializer, responses=UserAppConfigSerializer)
     def patch(self, request: Request, app_name: str) -> Response:
         user_app_config, _ = UserAppConfig.objects.update_or_create(
             user=request.user,
@@ -104,7 +110,9 @@ class IdentityUsersView(views.APIView):
     """Lista usuarios o crea usuarios para administración transversal."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = IdentityUserSummarySerializer
 
+    @extend_schema(responses=IdentityUserSummarySerializer(many=True))
     def get(self, request: Request) -> Response:
         actor = request.user
         if not _require_admin_or_root(actor):
@@ -129,6 +137,10 @@ class IdentityUsersView(views.APIView):
         serializer = IdentityUserSummarySerializer(users_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=IdentityBootstrapUserSerializer,
+        responses={201: IdentityUserSummarySerializer},
+    )
     def post(self, request: Request) -> Response:
         actor = request.user
         if not AuthorizationService.is_root(actor):
@@ -270,7 +282,12 @@ class IdentityUserDetailView(views.APIView):
     """Actualiza identidad y estado administrativo de un usuario."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = IdentityUserSummarySerializer
 
+    @extend_schema(
+        request=IdentityUserUpdateSerializer,
+        responses={200: IdentityUserSummarySerializer},
+    )
     def patch(self, request: Request, user_id: int) -> Response:
         actor = request.user
         user_model = get_user_model()
@@ -324,7 +341,9 @@ class WorkGroupsView(views.APIView):
     """CRUD parcial para grupos de trabajo del dominio transversal."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WorkGroupSerializer
 
+    @extend_schema(responses=WorkGroupSerializer(many=True))
     def get(self, request: Request) -> Response:
         actor = request.user
         if not _require_admin_or_root(actor):
@@ -346,6 +365,7 @@ class WorkGroupsView(views.APIView):
         serializer = WorkGroupSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(request=WorkGroupSerializer, responses={201: WorkGroupSerializer})
     def post(self, request: Request) -> Response:
         actor = request.user
         if not AuthorizationService.is_root(actor):
@@ -365,7 +385,9 @@ class WorkGroupDetailView(views.APIView):
     """Actualiza o elimina grupos de trabajo con control RBAC."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WorkGroupSerializer
 
+    @extend_schema(request=WorkGroupSerializer, responses={200: WorkGroupSerializer})
     def patch(self, request: Request, group_id: int) -> Response:
         actor = request.user
         group = get_object_or_404(WorkGroup, id=group_id)
@@ -397,7 +419,9 @@ class GroupMembershipsView(views.APIView):
     """Lista y crea membresías de grupos con validaciones de alcance."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = GroupMembershipSerializer
 
+    @extend_schema(responses=GroupMembershipSerializer(many=True))
     def get(self, request: Request) -> Response:
         actor = request.user
         if not _require_admin_or_root(actor):
@@ -421,6 +445,10 @@ class GroupMembershipsView(views.APIView):
         serializer = GroupMembershipSerializer(memberships_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=GroupMembershipSerializer,
+        responses={201: GroupMembershipSerializer},
+    )
     def post(self, request: Request) -> Response:
         actor = request.user
         if not _require_admin_or_root(actor):
@@ -447,7 +475,12 @@ class GroupMembershipDetailView(views.APIView):
     """Actualiza o elimina membresías de grupo."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = GroupMembershipSerializer
 
+    @extend_schema(
+        request=GroupMembershipSerializer,
+        responses={200: GroupMembershipSerializer},
+    )
     def patch(self, request: Request, membership_id: int) -> Response:
         actor = request.user
         membership = get_object_or_404(GroupMembership, id=membership_id)
@@ -483,7 +516,9 @@ class AppPermissionsView(views.APIView):
     """Lista y crea reglas de acceso por app para usuarios o grupos."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AppPermissionSerializer
 
+    @extend_schema(responses=AppPermissionSerializer(many=True))
     def get(self, request: Request) -> Response:
         actor = request.user
         if not _require_admin_or_root(actor):
@@ -496,6 +531,10 @@ class AppPermissionsView(views.APIView):
         serializer = AppPermissionSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=AppPermissionSerializer,
+        responses={201: AppPermissionSerializer},
+    )
     def post(self, request: Request) -> Response:
         actor = request.user
         if not AuthorizationService.is_root(actor):
@@ -515,7 +554,12 @@ class AppPermissionDetailView(views.APIView):
     """Actualiza o elimina reglas de acceso de una app."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AppPermissionSerializer
 
+    @extend_schema(
+        request=AppPermissionSerializer,
+        responses={200: AppPermissionSerializer},
+    )
     def patch(self, request: Request, permission_id: int) -> Response:
         actor = request.user
         if not AuthorizationService.is_root(actor):
@@ -548,7 +592,9 @@ class GroupAppConfigDetailView(views.APIView):
     """Consulta y actualiza configuración de app a nivel de grupo."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = GroupAppConfigSerializer
 
+    @extend_schema(responses=GroupAppConfigSerializer)
     def get(self, request: Request, group_id: int, app_name: str) -> Response:
         actor = request.user
         if not AuthorizationService.can_manage_group(actor=actor, group_id=group_id):
@@ -572,6 +618,10 @@ class GroupAppConfigDetailView(views.APIView):
         serializer = GroupAppConfigSerializer(group_app_config)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=GroupAppConfigSerializer,
+        responses={200: GroupAppConfigSerializer},
+    )
     def patch(self, request: Request, group_id: int, app_name: str) -> Response:
         actor = request.user
         if not AuthorizationService.can_manage_group(actor=actor, group_id=group_id):

@@ -9,7 +9,6 @@
  */
 import { StatusEnum } from './statusEnum';
 import { ScientificJobDeletionModeEnum } from './scientificJobDeletionModeEnum';
-import { OriginalStatusEnum } from './originalStatusEnum';
 
 
 /**
@@ -49,7 +48,7 @@ export interface ScientificJob {
     /**
      * Estado que tenía el job cuando fue enviado a la papelera.  * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed * `cancelled` - Cancelled
      */
-    readonly original_status: OriginalStatusEnum;
+    readonly original_status: StatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     /**
