@@ -13,10 +13,9 @@ from uuid import uuid4
 
 from django.test import TestCase, override_settings
 
-from .exceptions import JobPauseRequested
 from .models import ScientificJob, ScientificJobLogEvent
 from .services import JobService, RuntimeJobService
-from .types import JSONMap
+from .types import JobPauseRequested, JSONMap
 
 
 class PayloadSizeEstimationTests(TestCase):

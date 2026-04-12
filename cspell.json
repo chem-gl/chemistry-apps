@@ -16,6 +16,8 @@
     "**/.vscode/**",
     "tools/**",
     "**/ketcher/**",
-    "sonar-project.properties"
+    "sonar-project.properties",
+    "**/tsconfig*.json",
+    "**/"
   ]
 }

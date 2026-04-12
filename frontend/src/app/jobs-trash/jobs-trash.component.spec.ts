@@ -13,7 +13,7 @@ function makeDeletedJob(overrides: Partial<ScientificJobView> = {}): ScientificJ
   return {
     id: 'trash-job-1',
     job_hash: 'trash-hash-1',
-    plugin_name: 'calculator',
+    plugin_name: 'random-numbers',
     algorithm_version: '1.0.0',
     status: 'completed',
     cache_hit: false,
@@ -46,7 +46,7 @@ describe('JobsTrashComponent', () => {
     controlErrorMessage: signal<string | null>(null),
     selectedStatus: signal<string>('all'),
     selectedPluginName: signal<string>('all'),
-    pluginOptions: signal<string[]>(['all', 'calculator']),
+    pluginOptions: signal<string[]>(['all', 'random-numbers']),
     loadDeletedJobs: vi.fn(),
     setStatusFilter: vi.fn(),
     setPluginFilter: vi.fn(),
@@ -99,10 +99,10 @@ describe('JobsTrashComponent', () => {
     const component = fixture.componentInstance;
 
     component.onStatusFilterChanged('failed');
-    component.onPluginFilterChanged('calculator');
+    component.onPluginFilterChanged('random-numbers');
 
     expect(facadeMock.setStatusFilter).toHaveBeenCalledWith('failed');
-    expect(facadeMock.setPluginFilter).toHaveBeenCalledWith('calculator');
+    expect(facadeMock.setPluginFilter).toHaveBeenCalledWith('random-numbers');
     expect(facadeMock.loadDeletedJobs).toHaveBeenCalledTimes(2);
   });
 });

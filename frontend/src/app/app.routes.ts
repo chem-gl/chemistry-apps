@@ -43,13 +43,6 @@ export const routes: Routes = [
       import('./jobs-trash/jobs-trash.component').then((m) => m.JobsTrashComponent),
   },
   {
-    path: 'calculator',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'calculator' },
-    loadComponent: () =>
-      import('./calculator/calculator.component').then((m) => m.CalculatorComponent),
-  },
-  {
     path: 'random-numbers',
     canActivate: [authGuard, appAccessGuard],
     data: { appKey: 'random-numbers' },

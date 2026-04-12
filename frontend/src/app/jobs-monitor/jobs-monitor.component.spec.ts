@@ -198,7 +198,6 @@ describe('JobsMonitorComponent', () => {
 
     const routes: Array<[string, string | null]> = [
       ['random-numbers', '/random-numbers'],
-      ['calculator', '/calculator'],
       ['molar-fractions', '/molar-fractions'],
       ['tunnel-effect', '/tunnel'],
       ['easy-rate', '/easy-rate'],
@@ -234,10 +233,7 @@ describe('JobsMonitorComponent', () => {
       },
     });
 
-    const calculatorJob = makeJob({ plugin_name: 'calculator', results: { value: 42 } });
-
     expect(component.resultActionLabel(completedRandomJob)).toBe('Open result');
-    expect(component.resultActionLabel(calculatorJob)).toBe('Open result');
   });
 
   it('canDeleteJob y deleteActionLabel respetan la jerarquía resuelta por la sesión', () => {

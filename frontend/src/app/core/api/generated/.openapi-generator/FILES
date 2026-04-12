@@ -5,8 +5,6 @@ api.module.ts
 api/api.ts
 api/auth.service.ts
 api/auth.serviceInterface.ts
-api/calculator.service.ts
-api/calculator.serviceInterface.ts
 api/easyRate.service.ts
 api/easyRate.serviceInterface.ts
 api/identity.service.ts
@@ -32,12 +30,6 @@ encoder.ts
 git_push.sh
 index.ts
 model/blankEnum.ts
-model/calculatorJobCreateRequest.ts
-model/calculatorJobResponse.ts
-model/calculatorOperationEnum.ts
-model/calculatorParameters.ts
-model/calculatorResult.ts
-model/calculatorResultMetadata.ts
 model/domainTokenObtainPairRequest.ts
 model/easyRateArtifactDescriptor.ts
 model/easyRateInspectionExecution.ts

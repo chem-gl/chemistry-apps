@@ -19,7 +19,7 @@ export class LoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly username = signal<string>('admin');
+  readonly username = signal<string>('');
   readonly password = signal<string>('');
   readonly localErrorMessage = signal<string | null>(null);
 

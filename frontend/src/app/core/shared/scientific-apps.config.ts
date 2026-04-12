@@ -30,12 +30,6 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
 
 const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   {
-    key: 'calculator',
-    title: 'Calculator',
-    description: 'Arithmetic operations with asynchronous execution and cache support.',
-    visibleInMenus: false,
-  },
-  {
     key: 'random-numbers',
     title: 'Random Numbers',
     description: 'Batch random number generation with URL seed and progress tracking.',
@@ -95,7 +89,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
 const SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP: Readonly<Record<string, string>> = {
-  calculator: 'calculator',
   'random-numbers': 'random-numbers',
   'molar-fractions': 'molar-fractions',
   'tunnel-effect': 'tunnel',
@@ -119,6 +112,6 @@ export function resolveScientificJobRoutePath(pluginName: string): string | null
   return SCIENTIFIC_APP_ROUTE_ITEMS.find((appItem) => appItem.key === routeKey)?.routePath ?? null;
 }
 
-/** Lista filtrada: solo las apps visibles en menus y en el hub. Calculator y Random Numbers quedan excluidas. */
+/** Lista filtrada: solo las apps visibles en menus y en el hub. */
 export const VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.visibleInMenus);

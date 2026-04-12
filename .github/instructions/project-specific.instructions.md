@@ -67,6 +67,7 @@ frontend/src/app/<nombre>/             # Un directorio por app científica (comp
 - **Servidor ASGI**: Daphne. En desarrollo el comando `up` lo gestiona automáticamente junto con el worker Celery.
 
 **Ejecución en desarrollo** (arranca API ASGI + worker Celery con auto-reload):
+
 ```bash
 cd backend
 ./venv/bin/python manage.py migrate
@@ -74,13 +75,16 @@ cd backend
 ```
 
 **Solo API HTTP sin worker** (cuando no se necesita Redis ni procesamiento asíncrono):
+
 ```bash
 cd backend
 ./venv/bin/python manage.py up --without-celery
 ```
+
 En este modo los jobs quedan en estado `pending` hasta que se levante un worker. Útil para desarrollar routers y serializers sin tener Redis activo.
 
 **Pruebas con cobertura**:
+
 ```bash
 cd backend
 ./venv/bin/python manage.py test apps.core apps.<nombre_app> --verbosity=2 && echo listo
@@ -89,18 +93,21 @@ cd backend
 ```
 
 **Lint**:
+
 ```bash
 cd backend
 ./venv/bin/ruff check . && echo listo
 ```
 
 **Verificar integridad de configuración Django**:
+
 ```bash
 cd backend
 ./venv/bin/python manage.py check && echo listo
 ```
 
 **Generar y aplicar migraciones**:
+
 ```bash
 cd backend
 ./venv/bin/python manage.py makemigrations
@@ -110,6 +117,7 @@ cd backend
 ### Registro de apps científicas en Django
 
 Cada nueva app científica requiere tres pasos de configuración:
+
 1. Añadir su `AppConfig` en `INSTALLED_APPS` en `backend/config/settings.py`.
 2. Registrar su `ViewSet` en el `DefaultRouter` en `backend/config/urls.py`.
 3. El `AppConfig.ready()` debe importar el módulo `plugin` para activar `@PluginRegistry.register(...)` y llamar a `ScientificAppRegistry.register(definition)`.
@@ -117,12 +125,14 @@ Cada nueva app científica requiere tres pasos de configuración:
 ### Celery y ejecución asíncrona
 
 Los jobs científicos se ejecutan en workers Celery. En desarrollo, `manage.py up` arranca el worker automáticamente. En producción se necesita un proceso separado por cada rol:
+
 ```bash
 # Worker de tareas
 ./venv/bin/python -m celery -A config worker -l info --concurrency 4
 # Scheduler de tareas periódicas (recuperación activa, purga de artefactos)
 ./venv/bin/python -m celery -A config beat -l info
 ```
+
 El broker y backend de resultados es Redis. Si Redis no está disponible al encolar, `dispatch_scientific_job` captura el error sin romper la API: el job queda en `pending` y la tarea periódica `run_active_recovery` lo re-encola cuando el broker vuelve.
 
 ## Frontend
@@ -132,6 +142,7 @@ El broker y backend de resultados es Redis. Si Redis no está disponible al enco
 - **Generación de cliente**: `openapi-generator-cli` 7.x leyendo `backend/openapi/schema.yaml`.
 
 **Ejecución en desarrollo** (proxy hacia backend en localhost:8000):
+
 ```bash
 cd frontend
 npm install
@@ -139,6 +150,7 @@ npm start
 ```
 
 **Build de producción**:
+
 ```bash
 cd frontend
 npm ci
@@ -146,12 +158,14 @@ npm run build && echo listo
 ```
 
 **Pruebas con cobertura**:
+
 ```bash
 cd frontend
 npm run test:coverage && echo listo
 ```
 
 **Lint**:
+
 ```bash
 cd frontend
 npx eslint . --format json > eslint.json && echo listo
@@ -168,6 +182,7 @@ Componente → jobs-api.service.ts (wrapper) → generated/ → HTTP
 `jobs-api.service.ts` centraliza todas las operaciones sobre jobs: crear, listar, cancelar, pausar, reanudar, descargar reportes, hacer polling y streaming. Los componentes reciben datos ya mapeados a tipos de vista definidos en `core/api/types/`.
 
 `jobs-streaming-api.service.ts` encapsula tres patrones de observabilidad:
+
 - **SSE** (`streamJobEvents`): `EventSource` nativo hacia `/api/jobs/{id}/events/`.
 - **WebSocket** (`connectToJobsStream`): conecta a `ws/jobs/stream/` con query params de filtro.
 - **Polling** (`pollJobProgress`): `interval` RxJS + `switchMap` para casos que prefieren polling explícito.
@@ -175,6 +190,7 @@ Componente → jobs-api.service.ts (wrapper) → generated/ → HTTP
 ### Código generado
 
 El directorio `frontend/src/app/core/api/generated/` es código autogenerado. **No se edita manualmente**. Si cambia un serializer en el backend, el flujo correcto es:
+
 1. Actualizar el serializer en Django.
 2. Regenerar schema y cliente: `python scripts/create_openapi.py`.
 3. Adaptar el wrapper en `core/api/` si la firma cambió.
@@ -184,6 +200,7 @@ Nunca parchar el código generado directamente: se sobreescribe en la siguiente 
 ## Scripts
 
 - **`create_openapi.py`**: Genera `backend/openapi/schema.yaml` desde Django y regenera el cliente TypeScript en `frontend/src/app/core/api/generated/`. Ejecutar desde la raíz del repositorio con el entorno virtual activado:
+
   ```bash
   source backend/venv/bin/activate
   python scripts/create_openapi.py && echo listo || echo error
@@ -200,6 +217,7 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 ## Estilo de codificación
 
 ### Python (backend)
+
 - Ruff como linter y formateador. Configurado en `pyproject.toml`. Ejecutar `ruff check .` antes de cada commit.
 - Tipado estricto obligatorio: sin `# type: ignore` salvo justificación explícita en el mismo comentario que explique por qué no se puede resolver con tipos propios.
 - Docstrings en español en todos los módulos con: objetivo del archivo, forma de uso y relación con el flujo general.
@@ -208,6 +226,7 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 - Los helpers internos (no parte de la API pública del módulo) tienen prefijo `_`.
 
 ### TypeScript (frontend)
+
 - ESLint configurado en `eslint.config.mjs`. Ejecutar antes de PR.
 - TypeScript en strict mode. Sin `@ts-ignore` ni `as any` salvo justificación documentada en comentario.
 - Comentarios en español para lógica compleja. Nombres de variables y funciones en inglés.
@@ -228,6 +247,7 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 ## Notas adicionales
 
 - El `README.md` es la documentación principal del proyecto. Actualizarlo cuando cambien arquitectura, comandos o el catálogo de apps.
+  solo existira un .md, el README.md y los que estan en la carpeta .github/instructions/ con las instrucciones para copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
 - Eliminar código muerto y archivos no utilizados. Si se elimina una funcionalidad completa, eliminar también todos sus archivos relacionados.
 - Los jobs en estado `pending` durante el arranque son normales si Redis no estaba disponible. La recuperación activa (`run_active_recovery`) los re-encola automáticamente cuando el broker vuelve.
 - El directorio `frontend/src/app/core/api/generated/` es volátil: se sobreescribe con cada ejecución de `create_openapi.py`. No commitear cambios manuales en esos archivos.
@@ -275,4 +295,8 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 8. Verificar compilación del frontend: `cd frontend && npm run build && echo listo`.
 9. Registrar la app en `frontend/src/app/core/shared/scientific-apps.config.ts`.
 10. Añadir ruta con lazy loading en `frontend/src/app/app.routes.ts`.
-El backend tiene su entorno virtual en `backend/venv/`. Siempre activarlo antes de ejecutar comandos Python: `source backend/venv/bin/activate`.
+    El backend tiene su entorno virtual en `backend/venv/`. Siempre activarlo antes de ejecutar comandos Python: `source backend/venv/bin/activate`.
+
+El multilenguaje i18n solo es para el frontend.
+El backend las variables y lógica van en inglés, los comentarios y docstrings en español. En el frontend todo lo visual (textos, labels, atributos Angular) va en inglés, la lógica de negocio y los comentarios pueden estar en español.
+solo centrarse en las vistas que se vean en ingles y su traduccion en español, al final de cada sprint se actualizaran los demas idiomas segun el avance del proyecto. para no saturar el proceso de desarrollo con tareas de traduccion que no aportan valor en las primeras etapas del proyecto.

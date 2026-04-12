@@ -12,9 +12,12 @@ Cómo se usa desde una app concreta:
     `ImproperlyConfigured`, evitando errores silenciosos en producción.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from django.core.exceptions import ImproperlyConfigured
+
+from .types import JSONMap
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +51,7 @@ class ScientificAppRegistry:
     _definitions_by_plugin: dict[str, ScientificAppDefinition] = {}
     _definitions_by_route_prefix: dict[str, ScientificAppDefinition] = {}
     _definitions_by_api_base_path: dict[str, ScientificAppDefinition] = {}
+    _cache_payload_validators_by_plugin: dict[str, Callable[[JSONMap], bool]] = {}
 
     @classmethod
     def register(cls, definition: ScientificAppDefinition) -> None:
@@ -90,6 +94,23 @@ class ScientificAppRegistry:
             cls._definitions_by_plugin.values(),
             key=lambda definition: definition.api_route_prefix,
         )
+
+    @classmethod
+    def register_cache_payload_validator(
+        cls,
+        plugin_name: str,
+        validator: Callable[[JSONMap], bool],
+    ) -> None:
+        """Registra un validador opcional de cache para un plugin específico."""
+        cls._cache_payload_validators_by_plugin[plugin_name] = validator
+
+    @classmethod
+    def get_cache_payload_validator(
+        cls,
+        plugin_name: str,
+    ) -> Callable[[JSONMap], bool] | None:
+        """Obtiene el validador de cache de un plugin, si fue registrado."""
+        return cls._cache_payload_validators_by_plugin.get(plugin_name)
 
     @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:

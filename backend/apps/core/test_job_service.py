@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import io
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import timedelta
 from unittest.mock import patch
 from uuid import uuid4
@@ -21,7 +21,6 @@ from django.utils import timezone
 
 from .adapters import DjangoJobLogPublisherAdapter
 from .artifacts import ScientificInputArtifactStorageService
-from .cache import generate_job_hash
 from .models import (
     ScientificCacheEntry,
     ScientificJob,
@@ -29,8 +28,72 @@ from .models import (
     ScientificJobLogEvent,
 )
 from .ports import JobLogUpdate
+from .processing import PluginRegistry
 from .services import JobService
+from .services.cache_operations import generate_job_hash
 from .types import JSONMap
+
+
+def _factorial_value(operand: float) -> float:
+    """Calcula factorial para tests garantizando operando entero no negativo."""
+    integer_operand = int(operand)
+    if integer_operand < 0:
+        raise ValueError("factorial requires non-negative integer")
+
+    factorial_result = 1
+    for current_value in range(2, integer_operand + 1):
+        factorial_result *= current_value
+    return float(factorial_result)
+
+
+def _resolve_binary_operation_result(
+    operation: str,
+    first_operand: float,
+    second_operand: float,
+) -> float:
+    """Resuelve operaciones binarias de forma declarativa para tests."""
+    operation_handlers: dict[str, Callable[[float, float], float]] = {
+        "add": lambda left, right: left + right,
+        "sub": lambda left, right: left - right,
+        "mul": lambda left, right: left * right,
+        "div": lambda left, right: left / right,
+        "pow": lambda left, right: left**right,
+    }
+    operation_handler = operation_handlers.get(operation)
+    if operation_handler is None:
+        raise ValueError(f"unsupported operation: {operation}")
+    return operation_handler(first_operand, second_operand)
+
+
+def _register_calculator_test_plugin() -> None:
+    """Registra un plugin de calculadora de prueba para tests del core."""
+    if "calculator" in PluginRegistry._plugins:  # noqa: SLF001
+        return
+
+    @PluginRegistry.register("calculator")
+    def _calculator_plugin(parameters: JSONMap) -> JSONMap:
+        operation = str(parameters.get("op", "add"))
+        a_value = float(parameters.get("a", 0))
+        b_raw_value = parameters.get("b", 0)
+        b_value = float(b_raw_value) if b_raw_value is not None else 0.0
+
+        result_value = (
+            _factorial_value(a_value)
+            if operation == "factorial"
+            else _resolve_binary_operation_result(operation, a_value, b_value)
+        )
+
+        # Mantener compatibilidad: algunas pruebas esperan la clave
+        # `final_result` mientras que otras historically utilizaron `result`.
+        return {
+            "final_result": result_value,
+            "result": result_value,
+            "operation": operation,
+            "operands": {"a": a_value, "b": b_value},
+        }
+
+
+_register_calculator_test_plugin()
 
 
 class HashingTests(TestCase):

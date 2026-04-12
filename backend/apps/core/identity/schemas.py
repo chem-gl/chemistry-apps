@@ -19,7 +19,13 @@ from ..models import (
 )
 
 
-def _resolve_user_role(user) -> str:
+def _load_profile(user_id: int) -> UserIdentityProfile | None:
+    """Carga el perfil de identidad del usuario en una sola query."""
+    return UserIdentityProfile.objects.filter(user_id=user_id).first()
+
+
+def _resolve_user_role(user, profile: UserIdentityProfile | None = None) -> str:
+    """Resuelve el rol efectivo del usuario por prioridad."""
     role_priority: dict[str, int] = {"user": 0, "admin": 1, "root": 2}
     role_candidates: list[str] = []
 
@@ -27,13 +33,13 @@ def _resolve_user_role(user) -> str:
     if explicit_role in {"root", "admin", "user"}:
         role_candidates.append(str(explicit_role))
 
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is not None and identity_profile.role in {
+    resolved_profile = profile if profile is not None else _load_profile(user.id)
+    if resolved_profile is not None and resolved_profile.role in {
         "root",
         "admin",
         "user",
     }:
-        role_candidates.append(str(identity_profile.role))
+        role_candidates.append(str(resolved_profile.role))
 
     if bool(getattr(user, "is_superuser", False)):
         role_candidates.append("root")
@@ -46,55 +52,67 @@ def _resolve_user_role(user) -> str:
     return max(role_candidates, key=lambda current_role: role_priority[current_role])
 
 
-def _resolve_primary_group_id(user) -> int | None:
-    explicit_primary_group_id = getattr(user, "primary_group_id", None)
-    if explicit_primary_group_id is not None:
-        return int(explicit_primary_group_id)
-
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is None:
-        return None
-    return identity_profile.primary_group_id
-
-
-def _resolve_account_status(user) -> str:
+def _resolve_account_status(user, profile: UserIdentityProfile | None) -> str:
+    """Resuelve el estado de cuenta del usuario con un perfil ya cargado."""
     explicit_status = getattr(user, "account_status", "")
     if explicit_status in {"active", "inactive"}:
         return str(explicit_status)
-
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is not None:
-        return identity_profile.account_status
+    if profile is not None:
+        return profile.account_status
     return "active" if bool(getattr(user, "is_active", True)) else "inactive"
 
 
-def _resolve_avatar(user) -> str:
-    explicit_avatar = getattr(user, "avatar", None)
+def _build_user_representation(
+    instance,
+    profile: UserIdentityProfile | None,
+) -> dict[str, object]:
+    """Construye el dict de representación del usuario usando un perfil ya cargado."""
+    role = _resolve_user_role(instance, profile)
+    account_status = _resolve_account_status(instance, profile)
+
+    primary_group_id: int | None
+    explicit_pg = getattr(instance, "primary_group_id", None)
+    if explicit_pg is not None:
+        primary_group_id = int(explicit_pg)
+    elif profile is not None:
+        primary_group_id = profile.primary_group_id
+    else:
+        primary_group_id = None
+
+    avatar: str
+    explicit_avatar = getattr(instance, "avatar", None)
     if isinstance(explicit_avatar, str):
-        return explicit_avatar
+        avatar = explicit_avatar
+    elif profile is not None:
+        avatar = profile.avatar
+    else:
+        avatar = ""
 
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is None:
-        return ""
-    return identity_profile.avatar
+    email_verified: bool
+    explicit_ev = getattr(instance, "email_verified", None)
+    if isinstance(explicit_ev, bool):
+        email_verified = explicit_ev
+    elif profile is not None:
+        email_verified = bool(profile.email_verified)
+    else:
+        email_verified = False
 
+    updated_at = profile.updated_at if profile is not None else None
 
-def _resolve_email_verified(user) -> bool:
-    explicit_email_verified = getattr(user, "email_verified", None)
-    if isinstance(explicit_email_verified, bool):
-        return explicit_email_verified
-
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is None:
-        return False
-    return bool(identity_profile.email_verified)
-
-
-def _resolve_updated_at(user):
-    identity_profile = UserIdentityProfile.objects.filter(user_id=user.id).first()
-    if identity_profile is None:
-        return None
-    return identity_profile.updated_at
+    return {
+        "id": instance.id,
+        "username": instance.username,
+        "email": instance.email,
+        "role": role,
+        "account_status": account_status,
+        "first_name": instance.first_name,
+        "last_name": instance.last_name,
+        "avatar": avatar,
+        "email_verified": email_verified,
+        "primary_group_id": primary_group_id,
+        "created_at": getattr(instance, "date_joined", None),
+        "updated_at": updated_at,
+    }
 
 
 class UserProfileSerializer(serializers.Serializer):
@@ -114,20 +132,8 @@ class UserProfileSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(read_only=True, allow_null=True)
 
     def to_representation(self, instance):
-        return {
-            "id": instance.id,
-            "username": instance.username,
-            "email": instance.email,
-            "role": _resolve_user_role(instance),
-            "account_status": _resolve_account_status(instance),
-            "first_name": instance.first_name,
-            "last_name": instance.last_name,
-            "avatar": _resolve_avatar(instance),
-            "email_verified": _resolve_email_verified(instance),
-            "primary_group_id": _resolve_primary_group_id(instance),
-            "created_at": getattr(instance, "date_joined", None),
-            "updated_at": _resolve_updated_at(instance),
-        }
+        profile = _load_profile(instance.id)
+        return _build_user_representation(instance, profile)
 
 
 class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -136,8 +142,9 @@ class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token["role"] = _resolve_user_role(user)
-        token["group_id"] = _resolve_primary_group_id(user)
+        profile = _load_profile(user.id)
+        token["role"] = _resolve_user_role(user, profile)
+        token["group_id"] = profile.primary_group_id if profile is not None else None
         token["user_id"] = str(user.id)
         return token
 
@@ -158,6 +165,7 @@ class IdentityUserSummarySerializer(serializers.Serializer):
     primary_group_id = serializers.IntegerField(read_only=True, allow_null=True)
 
     def to_representation(self, instance):
+        profile = _load_profile(instance.id)
         return {
             "id": instance.id,
             "username": instance.username,
@@ -167,9 +175,11 @@ class IdentityUserSummarySerializer(serializers.Serializer):
             "is_active": bool(instance.is_active),
             "is_staff": bool(instance.is_staff),
             "is_superuser": bool(instance.is_superuser),
-            "role": _resolve_user_role(instance),
-            "account_status": _resolve_account_status(instance),
-            "primary_group_id": _resolve_primary_group_id(instance),
+            "role": _resolve_user_role(instance, profile),
+            "account_status": _resolve_account_status(instance, profile),
+            "primary_group_id": profile.primary_group_id
+            if profile is not None
+            else None,
         }
 
 

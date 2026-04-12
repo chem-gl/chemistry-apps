@@ -26,6 +26,13 @@ from .services import JobService
 from .types import JSONMap
 
 
+def _ensure_calculator_test_plugin_registered() -> None:
+    """Asegura registro del plugin sintético usado por pruebas genéricas del core."""
+    from .test_job_service import _register_calculator_test_plugin
+
+    _register_calculator_test_plugin()
+
+
 class JobApiTests(TestCase):
     """Verifica endpoints principales y contrato HTTP de jobs."""
 
@@ -64,6 +71,8 @@ class JobApiTests(TestCase):
         )
 
     def test_create_and_retrieve_job(self) -> None:
+        _ensure_calculator_test_plugin_registered()
+
         payload: JSONMap = {
             "plugin_name": "calculator",
             "version": "1.0.0",

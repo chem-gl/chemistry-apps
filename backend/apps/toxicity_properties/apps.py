@@ -4,8 +4,10 @@ Registra la identidad de la app en ScientificAppRegistry durante startup
 para validar colisiones de rutas/plugins y habilitar ejecución declarativa.
 """
 
-from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
 from django.apps import AppConfig
+
+from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
+from apps.core.types import JSONMap
 
 from .definitions import (
     APP_API_BASE_PATH,
@@ -33,5 +35,28 @@ class ToxicityPropertiesConfig(AppConfig):
             supports_pause_resume=False,
         )
         ScientificAppRegistry.register(app_definition)
+        ScientificAppRegistry.register_cache_payload_validator(
+            PLUGIN_NAME,
+            _is_toxicity_cache_payload_usable,
+        )
 
         from . import plugin  # noqa: F401
+
+
+def _is_toxicity_cache_payload_usable(payload: JSONMap) -> bool:
+    """Descarta payloads totalmente degradados para evitar cache tóxica."""
+    molecules_value: object | None = payload.get("molecules")
+    if not isinstance(molecules_value, list) or len(molecules_value) == 0:
+        return False
+
+    total_rows: int = len(molecules_value)
+    rows_with_errors: int = 0
+
+    for row_value in molecules_value:
+        if not isinstance(row_value, dict):
+            return False
+        row_error_message: object | None = row_value.get("error_message")
+        if isinstance(row_error_message, str) and row_error_message.strip() != "":
+            rows_with_errors += 1
+
+    return rows_with_errors < total_rows

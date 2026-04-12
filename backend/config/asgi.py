@@ -24,7 +24,7 @@ django_asgi_app = get_asgi_application()
 
 def _get_websocket_urlpatterns():
     # Import tardío para preservar el orden de inicialización de Django/ORM.
-    from apps.core.routing import websocket_urlpatterns
+    from apps.core.consumers import websocket_urlpatterns
 
     return websocket_urlpatterns
 

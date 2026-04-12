@@ -317,59 +317,6 @@
       "serverError": "The server reported an internal error. Please try again later."
     }
   },
-  "calculator": {
-    "header": { "title": "Scientific Calculator" },
-    "aria": {
-      "form": "Calculation parameters",
-      "progress": "Job progress",
-      "result": "Calculation result",
-      "error": "Error",
-      "history": "Calculator job history"
-    },
-    "form": {
-      "operandA": "Operand A",
-      "operandB": "Operand B",
-      "operation": "Operation",
-      "operandAPlaceholder": "e.g. 5",
-      "operandBPlaceholder": "e.g. 3"
-    },
-    "actions": {
-      "calculate": "Calculate",
-      "processing": "Processing...",
-      "newOperation": "New operation",
-      "tryAgain": "Try again"
-    },
-    "states": { "submitting": "Submitting job to server..." },
-    "progress": {
-      "title": "Job Progress",
-      "ariaLabel": "Calculator job progress"
-    },
-    "result": {
-      "title": "Result",
-      "labels": {
-        "operation": "Operation",
-        "operandA": "Operand A",
-        "operandB": "Operand B",
-        "status": "Status",
-        "cache": "Cache",
-        "jobId": "Job ID",
-        "version": "Version"
-      }
-    },
-    "error": { "title": "Error" },
-    "history": {
-      "title": "Result History",
-      "empty": "No historical calculator jobs yet.",
-      "columns": {
-        "jobId": "Job ID",
-        "status": "Status",
-        "operation": "Operation",
-        "updated": "Updated",
-        "action": "Action"
-      }
-    },
-    "logs": { "title": "Execution Logs" }
-  },
   "tunnel": {
     "header": {
       "eyebrow": "Tunnel Effect",

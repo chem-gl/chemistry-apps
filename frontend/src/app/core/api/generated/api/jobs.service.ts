@@ -188,7 +188,7 @@ export class JobsService extends BaseService implements JobsServiceInterface {
 
     /**
      * Eliminar un Job
-     * El autor original elimina definitivamente sus jobs terminales. Root/Admin envían a papelera los jobs ajenos dentro de su alcance y la restauración queda disponible por un período limitado.
+     * Usuarios estándar eliminan definitivamente sus jobs terminales. Root/Admin siempre envían primero a papelera y desde ahí pueden restaurar o eliminar definitivamente antes del vencimiento automático.
      * @endpoint post /api/jobs/{id}/delete/
      * @param id UUID del job científico.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

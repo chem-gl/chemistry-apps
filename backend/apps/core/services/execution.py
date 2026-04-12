@@ -12,7 +12,6 @@ from typing import cast
 
 from django.utils import timezone
 
-from ..exceptions import JobPauseRequested
 from ..models import ScientificJob
 from ..ports import (
     CacheRepositoryPort,
@@ -21,7 +20,7 @@ from ..ports import (
     JobProgressUpdate,
     PluginExecutionPort,
 )
-from ..types import JSONMap
+from ..types import JobPauseRequested, JSONMap
 from .cache_operations import is_cache_payload_usable_for_plugin
 from .callbacks import (
     build_plugin_control_callback,

@@ -317,59 +317,6 @@
       "serverError": "El servidor reportó un error interno. Inténtalo de nuevo más tarde."
     }
   },
-  "calculator": {
-    "header": { "title": "Calculadora Científica" },
-    "aria": {
-      "form": "Parámetros de cálculo",
-      "progress": "Progreso del job",
-      "result": "Resultado del cálculo",
-      "error": "Error",
-      "history": "Historial de jobs de calculadora"
-    },
-    "form": {
-      "operandA": "Operando A",
-      "operandB": "Operando B",
-      "operation": "Operación",
-      "operandAPlaceholder": "ej. 5",
-      "operandBPlaceholder": "ej. 3"
-    },
-    "actions": {
-      "calculate": "Calcular",
-      "processing": "Procesando...",
-      "newOperation": "Nueva operación",
-      "tryAgain": "Intentar de nuevo"
-    },
-    "states": { "submitting": "Enviando job al servidor..." },
-    "progress": {
-      "title": "Progreso del Job",
-      "ariaLabel": "Progreso del job de calculadora"
-    },
-    "result": {
-      "title": "Resultado",
-      "labels": {
-        "operation": "Operación",
-        "operandA": "Operando A",
-        "operandB": "Operando B",
-        "status": "Estado",
-        "cache": "Caché",
-        "jobId": "ID de job",
-        "version": "Versión"
-      }
-    },
-    "error": { "title": "Error" },
-    "history": {
-      "title": "Historial de resultados",
-      "empty": "Aún no hay jobs históricos de calculadora.",
-      "columns": {
-        "jobId": "ID de job",
-        "status": "Estado",
-        "operation": "Operación",
-        "updated": "Actualizado",
-        "action": "Acción"
-      }
-    },
-    "logs": { "title": "Logs de ejecución" }
-  },
   "tunnel": {
     "header": {
       "eyebrow": "Efecto Túnel",

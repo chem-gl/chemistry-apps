@@ -160,14 +160,14 @@ class MolarFractionsContractApiTests(TestCase):
 
     def test_retrieve_molar_fractions_ignores_other_plugins(self) -> None:
         foreign_job: ScientificJob = ScientificJob.objects.create(
-            plugin_name="calculator",
+            plugin_name="random_numbers",
             algorithm_version="1.0.0",
             job_hash="x" * 64,
-            parameters={"op": "add", "a": 1, "b": 2},
+            parameters={"seed_url": "https://example.com/seed.txt", "total_numbers": 3},
             status="completed",
             cache_hit=False,
             cache_miss=True,
-            results={"final_result": 3},
+            results={"numbers": [1, 2, 3]},
         )
 
         response = self.client.get(f"{APP_API_BASE_PATH}{foreign_job.id}/")

@@ -17,7 +17,6 @@ from django.db import DatabaseError
 from django.utils import timezone
 
 from ..app_registry import ScientificAppRegistry
-from ..cache import generate_job_hash
 from ..models import ScientificJob
 from ..ports import (
     CacheRepositoryPort,
@@ -36,7 +35,6 @@ from ..types import (
     PluginControlAction,
 )
 from . import cache_operations, callbacks, execution, job_control, recovery
-from .config import get_max_recovery_attempts, get_result_cache_payload_limit_bytes
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
@@ -61,11 +59,11 @@ class RuntimeJobService:
 
     def _get_max_recovery_attempts(self) -> int:
         """Obtiene número máximo de reintentos de recuperación por job."""
-        return get_max_recovery_attempts()
+        return cache_operations.get_max_recovery_attempts()
 
     def _get_result_cache_payload_limit_bytes(self, plugin_name: str) -> int:
         """Retorna límite de caché para un plugin con fallback al valor global."""
-        return get_result_cache_payload_limit_bytes(plugin_name)
+        return cache_operations.get_result_cache_payload_limit_bytes(plugin_name)
 
     # ── Estimación y validación de caché (delegada a cache_operations.py) ──
 
@@ -105,7 +103,9 @@ class RuntimeJobService:
         group_id: int | None = None,
     ) -> ScientificJob:
         """Crea un job y resuelve cache temprano para evitar encolado innecesario."""
-        job_hash: str = generate_job_hash(plugin_name, version, parameters)
+        job_hash: str = cache_operations.generate_job_hash(
+            plugin_name, version, parameters
+        )
         cached_result_payload: JSONMap | None = self.cache_repository.get_cached_result(
             job_hash=job_hash,
             plugin_name=plugin_name,

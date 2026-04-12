@@ -13,6 +13,7 @@ import logging
 import math
 from typing import cast
 
+from libs.chemistry_constants import AVOGADRO, HARTREE_TO_KCAL, KB
 from libs.gaussian_log_parser.models import GaussianExecution
 from libs.gaussian_log_parser.parsers import GaussianLogParser
 
@@ -35,11 +36,9 @@ from .types import (
 logger = logging.getLogger(__name__)
 REORGANIZATION_ABS_TOLERANCE = 1e-12
 
-HARTREE_TO_KCAL: float = 627.5095
-KB: float = 1.38066e-23
+
 DEFAULT_VISCOSITY_PA_S: float = 8.91e-4
 PI: float = math.pi
-AVOGADRO_LEGACY: float = 6.02e23
 
 
 def _is_finite(value: float) -> bool:
@@ -289,7 +288,7 @@ def _compute_marcus_result(
             * PI
             * diff_coef_ab
             * parameters["reaction_distance"]
-            * AVOGADRO_LEGACY
+            * AVOGADRO
         )
         rate_constant = (k_diff * rate_constant_tst) / (k_diff + rate_constant_tst)
 

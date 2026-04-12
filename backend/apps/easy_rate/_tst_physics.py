@@ -11,6 +11,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from libs.chemistry_constants import ANGSTROM_TO_M, HARTREE_TO_KCAL, KB, R_GAS_KCAL
+from libs.chemistry_constants import AVOGADRO as NA
 from libs.ck_test.calculators import TST
 from libs.ck_test.models import TSTPrecalculatedConstants
 
@@ -27,12 +29,7 @@ from .types import (
 # CONSTANTES FÍSICAS
 # =========================
 
-HARTREE_TO_KCAL: float = 627.5095
-R_GAS_KCAL: float = 1.987 / 1000.0
-KB: float = 1.380649e-23
-NA: float = 6.02214076e23
 PI: float = math.pi
-ANGSTROM_TO_M: float = 1e-10
 KCAL_MOL_UNIT: str = "kcal/mol"
 
 

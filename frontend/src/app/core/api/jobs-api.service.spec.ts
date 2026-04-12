@@ -7,7 +7,6 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
-  CalculatorJobResponse,
   EasyRateJobResponse,
   JobLogList,
   JobProgressSnapshot,
@@ -18,7 +17,6 @@ import {
 } from './generated';
 import { JobsApiService } from './jobs-api.service';
 
-const CALC_JOBS_URL: string = `${API_BASE_URL}/api/calculator/jobs/`;
 const JOBS_DELETE_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/delete/`;
 const JOBS_PROGRESS_URL = (id: string): string => `${API_BASE_URL}/api/jobs/${id}/progress/`;
 const JOBS_LIST_URL: string = `${API_BASE_URL}/api/jobs/`;
@@ -30,25 +28,6 @@ const MOLAR_REPORT_CSV_URL = (id: string): string =>
 const MOLAR_REPORT_LOG_URL = (id: string): string =>
   `${API_BASE_URL}/api/molar-fractions/jobs/${id}/report-log/`;
 const EASY_RATE_JOBS_URL: string = `${API_BASE_URL}/api/easy-rate/jobs/`;
-
-/** Respuesta base reutilizable en tests de calculadora */
-function makeCalcResponse(overrides: Partial<CalculatorJobResponse> = {}): CalculatorJobResponse {
-  return {
-    id: 'test-uuid',
-    job_hash: 'abc123',
-    plugin_name: 'calculator',
-    algorithm_version: '1.0.0',
-    status: StatusEnum.Completed,
-    cache_hit: false,
-    cache_miss: true,
-    error_trace: '',
-    parameters: { op: 'add', a: 2, b: 3 },
-    results: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    ...overrides,
-  };
-}
 
 /** Snapshot de progreso base reutilizable */
 function makeProgressSnapshot(overrides: Partial<JobProgressSnapshot> = {}): JobProgressSnapshot {
@@ -69,7 +48,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
   return {
     id: 'job-id-1',
     job_hash: 'hash-value',
-    plugin_name: 'calculator',
+    plugin_name: 'random-numbers',
     algorithm_version: '1.0.0',
     status: StatusEnum.Pending,
     cache_hit: false,
@@ -102,8 +81,8 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
         job_id: 'job-id-1',
         event_index: 7,
         level: 'info',
-        source: 'calculator.plugin',
-        message: 'Iniciando operación de calculadora.',
+        source: 'random_numbers.plugin',
+        message: 'Iniciando generación de números aleatorios.',
         payload: { operation: 'add' },
         created_at: new Date().toISOString(),
       },
@@ -111,8 +90,8 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
         job_id: 'job-id-1',
         event_index: 8,
         level: 'info',
-        source: 'calculator.plugin',
-        message: 'Operación de calculadora completada.',
+        source: 'random_numbers.plugin',
+        message: 'Generación de números completada.',
         payload: { result: 7 },
         created_at: new Date().toISOString(),
       },
@@ -313,75 +292,6 @@ describe('JobsApiService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should dispatch job for binary operation (add)', () => {
-    const mockResponse = makeCalcResponse({ parameters: { op: 'add', a: 2, b: 3 } });
-
-    service.dispatchCalculatorJob({ op: 'add', a: 2, b: 3 }).subscribe((job) => {
-      expect(job.id).toBe('test-uuid');
-      expect(job.plugin_name).toBe('calculator');
-    });
-
-    const req = httpMock.expectOne(CALC_JOBS_URL);
-    expect(req.request.method).toBe('POST');
-    // Debe enviar b para operaciones binarias
-    expect(req.request.body['b']).toBe(3);
-    req.flush(mockResponse);
-  });
-
-  it('should dispatch job for pow operation with b', () => {
-    const mockResponse = makeCalcResponse({ parameters: { op: 'pow', a: 2, b: 10 } });
-
-    service.dispatchCalculatorJob({ op: 'pow', a: 2, b: 10 }).subscribe((job) => {
-      expect(job.parameters?.op).toBe('pow');
-    });
-
-    const req = httpMock.expectOne(CALC_JOBS_URL);
-    expect(req.request.body['op']).toBe('pow');
-    expect(req.request.body['b']).toBe(10);
-    req.flush(mockResponse);
-  });
-
-  it('should dispatch factorial job WITHOUT b field', () => {
-    const mockResponse = makeCalcResponse({
-      parameters: { op: 'factorial', a: 7 },
-      results: {
-        final_result: 5040,
-        metadata: { operation_used: 'factorial', operand_a: 7, operand_b: null },
-      },
-    });
-
-    service.dispatchCalculatorJob({ op: 'factorial', a: 7 }).subscribe((job) => {
-      expect(job.results?.final_result).toBe(5040);
-    });
-
-    const req = httpMock.expectOne(CALC_JOBS_URL);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body['op']).toBe('factorial');
-    // El campo b NO debe existir en el payload (no solo ser null)
-    expect('b' in req.request.body).toBe(false);
-    req.flush(mockResponse);
-  });
-
-  it('should retrieve job status', () => {
-    const mockJob = makeCalcResponse({
-      id: 'status-test-id',
-      status: StatusEnum.Completed,
-      results: {
-        final_result: 42,
-        metadata: { operation_used: 'add', operand_a: 20, operand_b: 22 },
-      },
-    });
-
-    service.getJobStatus('status-test-id').subscribe((job) => {
-      expect(job.status).toBe('completed');
-      expect(job.results?.final_result).toBe(42);
-    });
-
-    const req = httpMock.expectOne(`${CALC_JOBS_URL}status-test-id/`);
-    expect(req.request.method).toBe('GET');
-    req.flush(mockJob);
-  });
-
   it('should get job progress snapshot', () => {
     const jobId = 'progress-test-id';
     const snapshot = makeProgressSnapshot({ job_id: jobId, progress_percentage: 75 });
@@ -442,13 +352,13 @@ describe('JobsApiService', () => {
   });
 
   it('should list jobs with status and plugin filters', () => {
-    service.listJobs({ status: 'completed', pluginName: 'calculator' }).subscribe();
+    service.listJobs({ status: 'completed', pluginName: 'random-numbers' }).subscribe();
 
     const req = httpMock.expectOne(
       (request) =>
         request.url === JOBS_LIST_URL &&
         request.params.get('status') === 'completed' &&
-        request.params.get('plugin_name') === 'calculator',
+        request.params.get('plugin_name') === 'random-numbers',
     );
     expect(req.request.method).toBe('GET');
     req.flush([]);
@@ -546,7 +456,7 @@ describe('JobsApiService', () => {
       expect(logsPage.jobId).toBe('job-id-1');
       expect(logsPage.count).toBe(2);
       expect(logsPage.results[0].eventIndex).toBe(7);
-      expect(logsPage.results[0].source).toBe('calculator.plugin');
+      expect(logsPage.results[0].source).toBe('random_numbers.plugin');
       expect(logsPage.results[0].payload['operation']).toBe('add');
     });
 
@@ -563,14 +473,14 @@ describe('JobsApiService', () => {
   it('should open jobs realtime websocket and map snapshot and updates', () => {
     const receivedEvents: Array<string> = [];
 
-    service.streamJobsRealtime({ pluginName: 'calculator', includeLogs: false }).subscribe({
+    service.streamJobsRealtime({ pluginName: 'random-numbers', includeLogs: false }).subscribe({
       next: (event) => {
         receivedEvents.push(event.event);
       },
     });
 
     expect(capturedWebSocketUrls.length).toBe(1);
-    expect(capturedWebSocketUrls[0]).toContain('plugin_name=calculator');
+    expect(capturedWebSocketUrls[0]).toContain('plugin_name=random-numbers');
     expect(capturedWebSocketUrls[0]).toContain('include_logs=false');
 
     mockSocketInstance.onmessage?.(
@@ -1141,7 +1051,7 @@ describe('JobsApiService', () => {
   });
 
   it('should normalize pause, resume and cancel actions for jobs', () => {
-    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'calculator' });
+    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'random-numbers' });
 
     service.pauseJob('control-job').subscribe((result) => {
       expect(result.job.id).toBe('control-job');
