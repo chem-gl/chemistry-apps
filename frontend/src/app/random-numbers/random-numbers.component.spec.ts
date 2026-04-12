@@ -6,8 +6,15 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
-import { ScientificJobView } from '../core/api/jobs-api.service';
-import { RandomNumbersWorkflowService } from '../core/application/random-numbers-workflow.service';
+import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+} from '../core/api/jobs-api.service';
+import {
+  RandomNumbersResultData,
+  RandomNumbersWorkflowService,
+} from '../core/application/random-numbers-workflow.service';
 import { RandomNumbersComponent } from './random-numbers.component';
 
 function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
@@ -45,11 +52,11 @@ describe('RandomNumbersComponent', () => {
     totalNumbers: signal<number>(55),
     activeSection: signal<string>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<unknown>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<RandomNumbersResultData | null>(null),
     errorMessage: signal<string | null>(null),
-    historyJobs: signal<unknown[]>([]),
+    historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isControlActionLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
@@ -211,7 +218,7 @@ describe('RandomNumbersComponent', () => {
     const component = fixture.componentInstance;
     const unsubSpy = vi.spyOn(
       (component as unknown as { routeSubscription: { unsubscribe: () => void } })
-        .routeSubscription!,
+        .routeSubscription,
       'unsubscribe',
     );
     fixture.destroy();

@@ -407,7 +407,7 @@ class Command(BaseCommand):
         """Construye URL de acceso amigable para localhost o binding abierto."""
         if host_value == "0.0.0.0":
             return f"http://localhost:{port_value}/ (bind 0.0.0.0)"
-        return f"http://{host_value}:{port_value}/"
+        return f"http://{host_value}:{port_value}/"  # noqa: S5332
 
     def _stop_process(
         self,

@@ -7,6 +7,12 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, vi } from 'vitest';
 import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+  TunnelInputChangeEvent,
+} from '../core/api/jobs-api.service';
+import {
   TunnelResultData,
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
@@ -18,16 +24,16 @@ describe('TunnelComponent', () => {
     imaginaryFrequency: signal<number>(625),
     reactionEnergyZpe: signal<number>(-8.2),
     temperature: signal<number>(298.15),
-    inputChangeEvents: signal<unknown[]>([]),
+    inputChangeEvents: signal<TunnelInputChangeEvent[]>([]),
     activeSection: signal<string>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<unknown>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<TunnelResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal<unknown[]>([]),
+    historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     progressPercentage: signal<number>(0),

@@ -5,10 +5,23 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
-import { JobsApiService } from '../core/api/jobs-api.service';
+import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  JobsApiService,
+} from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
-import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
+import {
+  ToxicityPropertiesResultData,
+  ToxicityPropertiesWorkflowService,
+} from '../core/application/toxicity-properties-workflow.service';
 import { ToxicityPropertiesComponent } from './toxicity-properties.component';
+
+type ToxicityHistoryJobView = {
+  id: string;
+  status: string;
+  updated_at: string;
+};
 
 describe('ToxicityPropertiesComponent', () => {
   const workflowMock = {
@@ -17,26 +30,13 @@ describe('ToxicityPropertiesComponent', () => {
     customNamesEnabled: signal<boolean>(false),
     activeSection: signal<'idle' | 'dispatching' | 'progress' | 'result' | 'error'>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown | null>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<{
-      total: number;
-      molecules: Array<{
-        smiles: string;
-        name: string;
-        LD50_mgkg: number | null;
-        mutagenicity: string | null;
-        ames_score: number | null;
-        DevTox: string | null;
-        devtox_score: number | null;
-        error_message: string | null;
-      }>;
-      scientificReferences: string[];
-    } | null>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<ToxicityPropertiesResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal<Array<{ id: string; status: string; updated_at: string }>>([]),
+    historyJobs: signal<ToxicityHistoryJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     progressPercentage: signal<number>(0),

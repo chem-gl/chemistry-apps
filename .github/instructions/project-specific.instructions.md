@@ -300,3 +300,6 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 El multilenguaje i18n solo es para el frontend.
 El backend las variables y lógica van en inglés, los comentarios y docstrings en español. En el frontend todo lo visual (textos, labels, atributos Angular) va en inglés, la lógica de negocio y los comentarios pueden estar en español.
 solo centrarse en las vistas que se vean en ingles y su traduccion en español, al final de cada sprint se actualizaran los demas idiomas segun el avance del proyecto. para no saturar el proceso de desarrollo con tareas de traduccion que no aportan valor en las primeras etapas del proyecto.
+
+Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.

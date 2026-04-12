@@ -247,6 +247,7 @@ Usar:
 - `as const`
 - `readonly`
 - `unknown` sobre `any`
+- preferir no usar unknown, pero si se usa, manejarlo adecuadamente
 - `never` para exhaustividad
 - discriminated unions
 - template literal types
@@ -254,6 +255,110 @@ Usar:
 - utility types (`Pick`, `Omit`, `ReturnType`)
 
 ---
+
+Aquí tienes la versión ajustada:
+
+---
+
+# Instrucciones de tipado en TypeScript
+
+## Uso de tipos
+
+- No uses `any`.
+  Usa tipos concretos (`string`, `number`, etc.), uniones (`A | B`), `unknown` o genéricos (`T`).
+
+- No uses `unknown` como reemplazo automático de `any`.
+  Solo úsalo cuando el tipo realmente no se conoce y valida antes de usarlo.
+
+---
+
+## Colecciones tipadas
+
+- No uses `Array` sin tipo.
+  Usa `Array<T>` o `T[]`.
+
+- No uses objetos sin tipar.
+  Usa interfaces, `type` o `Record<K, V>`.
+
+- No uses `{}` como tipo.
+  Usa un tipo definido o `Record<string, unknown>` si es necesario.
+
+---
+
+## Funciones
+
+- No omitas tipos en parámetros o retorno.
+  Define siempre los tipos de entrada y salida.
+
+- No uses `Function` como tipo.
+  Usa firmas explícitas: `(args: T) => R`.
+
+---
+
+## Diseño de tipos
+
+- No uses uniones excesivas (`A | B | C | D...`).
+  Modela los datos con tipos discriminados o interfaces.
+
+- No uses objetos dinámicos para datos estructurados.
+  Define interfaces o tipos claros.
+
+---
+
+## Genéricos
+
+- No uses genéricos sin restricción cuando no es necesario.
+  Usa `<T>` solo si realmente hay relación entre entrada y salida.
+
+- No pierdas inferencia de tipos.
+  Mantén el tipo genérico en el retorno (`function fn<T>(x: T): T`).
+
+---
+
+## Conversiones y assertions
+
+- No abuses de `as`.
+  Evita forzar tipos incorrectos.
+
+- No uses doble assertion (`as unknown as T`).
+  Es equivalente a `any` y rompe el sistema de tipos.
+
+---
+
+## Manejo de errores de tipo
+
+- No uses `// @ts-ignore`.
+  Corrige el tipo o refactoriza.
+
+- No uses `// @ts-nocheck`.
+  No desactives el sistema de tipos en archivos.
+
+---
+
+## Tipos peligrosos
+
+- No uses `any` en APIs públicas.
+  Define contratos claros.
+
+- No uses `Partial` o `Record<string, any>` sin control.
+  Limita su uso y tipa correctamente.
+
+---
+
+## Reglas de calidad
+
+- No uses supresiones como `eslint-disable`, `ts-ignore` o `NOSONAR` para ocultar errores de tipado.
+
+- No ignores advertencias del linter relacionadas con tipos.
+  Deben resolverse correctamente.
+
+---
+
+## Regla general
+
+Si necesitas usar `any`, `as`, `ts-ignore` o desactivar reglas del linter, se debe asumir que el diseño de tipos es incorrecto y debe refactorizarse.
+
+Si el refactor es demasiado grande o costoso en ese momento, agrega un `TODO` explicando la deuda técnica y pregunta al usuario o al equipo si desea abordar ese refactor antes de continuar.
 
 ## 5.2 Mejoras recientes
 
@@ -406,6 +511,9 @@ Código:
 
 las traducciones son de baja prioridad y pueden ser aproximadas, pero el código debe ser claro y profesional en inglés.
 al igual que la version de salidas a ingles siempre debe estar preparadon para el i18n, usando claves de traducción en lugar de texto hardcodeado, y aplicando las mejores prácticas para la internacionalización en Angular, pero no centrandose en hacer la tradiccion inmediata, sino asegurando que el código esté estructurado para soportar múltiples idiomas de manera eficiente en el futuro. en ingles ya cuando sea necesario, pero sin perder de vista que el enfoque principal es la calidad del código y la arquitectura, no la traducción inmediata.
+
+Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.
 
 [1]: https://angularreleases.hashnode.dev/what-is-angular-latest-angular-releases?utm_source=chatgpt.com "What is Angular? Latest Releases Explained (2025)"
 [2]: https://dev.to/genildocs/angular-17-essential-guide-master-the-revolutionary-changes-that-transformed-modern-development-51ad?utm_source=chatgpt.com "Angular 17+ Essential Guide: Master the Revolutionary Changes That Transformed Modern Development - DEV Community"

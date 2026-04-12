@@ -5,7 +5,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { ScientificJobView } from '../core/api/jobs-api.service';
+import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
 import { JobsMonitorFacadeService } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobsMonitorComponent } from './jobs-monitor.component';
@@ -57,7 +57,7 @@ describe('JobsMonitorComponent', () => {
     lastUpdatedAt: signal<Date | null>(null),
     selectedJobId: signal<string | null>(null),
     selectedJob: signal<ScientificJobView | null>(null),
-    selectedJobLogs: signal<unknown[]>([]),
+    selectedJobLogs: signal<JobLogEntryView[]>([]),
     isDetailsLoading: signal<boolean>(false),
     detailsErrorMessage: signal<string | null>(null),
     controllingJobId: signal<string | null>(null),
