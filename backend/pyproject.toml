@@ -14,7 +14,7 @@ authors = ["Chem GL <cesar-gerardo@guzman-lopez.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.14"
+python = ">=3.14,<3.15"
 asgiref = "3.11.1"
 admet_ai = "2.0.1"
 backend = "0.2.4.1"
