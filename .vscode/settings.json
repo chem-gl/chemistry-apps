@@ -50,6 +50,7 @@
     "/\\b[a-z]+_[a-z0-9_]+\\b/g",
     "/\\b[a-z]+[A-Z][a-zA-Z]+\\b/g"
   ],
-
+  "explorer.excludeGitIgnore": true,
+  "search.useIgnoreFiles": false,
   "cSpell.allowCompoundWords": true
 }

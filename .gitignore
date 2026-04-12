@@ -21,3 +21,10 @@ sonar_report.json
 __pycache__/
 **/__pycache__/
 .pytest_cache/
+.ruff_cache/
+.scannerwork/
+.sonarlint/
+.sonar/
+deorecated/
+deprecated/*
+!.vscode/
