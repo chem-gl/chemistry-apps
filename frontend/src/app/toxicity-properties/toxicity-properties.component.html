@@ -1,18 +1,15 @@
 <!-- toxicity-properties.component.html: Interfaz de Toxicity Properties con sketch,
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
-<section class="toxicity-shell" aria-label="Toxicity properties scientific app">
+<section class="toxicity-shell" [attr.aria-label]="'toxicityProperties.header.eyebrow' | transloco">
   <header class="toxicity-header">
-    <p class="eyebrow">Toxicity Properties</p>
-    <h2>Toxicity Properties Table</h2>
-    <p>
-      Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of
-      SMILES
-    </p>
+    <p class="eyebrow">{{ 'toxicityProperties.header.eyebrow' | transloco }}</p>
+    <h2>{{ 'toxicityProperties.header.title' | transloco }}</h2>
+    <p>{{ 'toxicityProperties.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="workspace-grid">
-    <section class="entry-panel" aria-label="Input parameters">
-      <h3>Input</h3>
+    <section class="entry-panel" [attr.aria-label]="'toxicityProperties.form.ariaLabel' | transloco">
+      <h3>{{ 'toxicityProperties.form.title' | transloco }}</h3>
 
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
         [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
@@ -23,39 +20,42 @@
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
-          {{ workflow.isProcessing() ? 'Processing...' : 'Run Toxicity Properties' }}
+          {{ workflow.isProcessing() ? ('toxicityProperties.actions.processing' | transloco) :
+          ('toxicityProperties.actions.run' | transloco) }}
         </button>
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-          Reset
+          {{ 'toxicityProperties.actions.reset' | transloco }}
         </button>
       </div>
     </section>
 
-    <section class="result-panel" aria-label="Results and progress">
-      <h3>Results</h3>
+    <section class="result-panel" [attr.aria-label]="'toxicityProperties.result.ariaLabel' | transloco">
+      <h3>{{ 'toxicityProperties.result.title' | transloco }}</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-      <p class="status-message">Submitting toxicity job to backend...</p>
+      <p class="status-message">{{ 'toxicityProperties.result.submitting' | transloco }}</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
       <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
         [progressMessage]="workflow.progressMessage()"
-        progressAriaLabel="Toxicity job progress"></app-job-progress-card>
+        [progressAriaLabel]="'toxicityProperties.result.ariaProgressLabel' | transloco"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
       <div class="metadata-grid">
-        <p><strong>Total molecules:</strong> {{ resultData.total }}</p>
-        <p><strong>Model:</strong> ADMET-AI</p>
+        <p><strong>{{ 'toxicityProperties.result.totalMolecules' | transloco }}</strong> {{ resultData.total }}</p>
+        <p><strong>{{ 'toxicityProperties.result.modelLabel' | transloco }}</strong></p>
         <p>
-          <strong>Job ID:</strong> <span class="mono">{{ workflow.currentJobId() }}</span>
+          <strong>{{ 'toxicityProperties.result.jobIdLabel' | transloco }}</strong> <span class="mono">{{
+            workflow.currentJobId() }}</span>
         </p>
       </div>
 
       <div class="action-row export-row">
         <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-          {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
+          {{ workflow.isExporting() ? ('toxicityProperties.actions.exporting' | transloco) :
+          ('toxicityProperties.actions.exportCsv' | transloco) }}
         </button>
       </div>
 
@@ -67,8 +67,8 @@
         <table class="result-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>SMILES</th>
+              <th>{{ 'toxicityProperties.result.tableName' | transloco }}</th>
+              <th>{{ 'toxicityProperties.result.tableSMILES' | transloco }}</th>
               <th>LD50_mgkg</th>
               <th>mutagenicity</th>
               <th>ames_score</th>
@@ -104,8 +104,8 @@
         </table>
       </div>
 
-      <section class="references-card" aria-label="Scientific references">
-        <h4>Scientific references</h4>
+      <section class="references-card" [attr.aria-label]="'toxicityProperties.result.references' | transloco">
+        <h4>{{ 'toxicityProperties.result.references' | transloco }}</h4>
         <div class="references-list">
           @for (referenceItem of resultData.scientificReferences; track referenceItem) {
           <p>{{ referenceItem }}</p>
@@ -123,23 +123,23 @@
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
   <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
-    emptyMessage="No historical toxicity jobs yet." sectionTitle="History" ariaLabel="Historical toxicity jobs"
-    (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"></app-job-history-table>
+    [emptyMessage]="'toxicityProperties.history.empty' | transloco"
+    [sectionTitle]="'toxicityProperties.history.title' | transloco"
+    [ariaLabel]="'toxicityProperties.history.ariaLabel' | transloco" (reload)="workflow.loadHistory()"
+    (openJob)="openHistoricalJob($event)" (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
 </section>
 
 <dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"
   (keydown)="onSketchDialogBackdropClick($event)">
-  <section class="sketch-modal" aria-label="Draw SMILES with Ketcher">
-    <h4>Draw SMILES</h4>
-    <p class="hint">
-      Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.
-    </p>
+  <section class="sketch-modal" [attr.aria-label]="'toxicityProperties.sketch.title' | transloco">
+    <h4>{{ 'toxicityProperties.sketch.title' | transloco }}</h4>
+    <p class="hint">{{ 'toxicityProperties.sketch.hint' | transloco }}</p>
 
     <div class="ketcher-frame-wrap">
       @if (isSketchDialogLoading()) {
-      <output class="ketcher-loading" aria-label="Loading molecule sketcher">
+      <output class="ketcher-loading" [attr.aria-label]="'toxicityProperties.sketch.loading' | transloco">
         <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+        <p class="ketcher-loading-text">{{ 'toxicityProperties.sketch.loading' | transloco }}</p>
       </output>
       }
       <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
@@ -147,7 +147,8 @@
     </div>
 
     <div class="sketch-modal-actions">
-      <button class="btn-secondary" type="button" (click)="closeSketchDialog()">Cancel</button>
+      <button class="btn-secondary" type="button" (click)="closeSketchDialog()">{{ 'toxicityProperties.sketch.cancel' |
+        transloco }}</button>
       <button class="btn-primary" type="button" (click)="applySketch()">Add to list</button>
     </div>
   </section>
@@ -155,10 +156,11 @@
 
 <dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)"
   (keydown)="onMoleculeImageDialogBackdropClick($event)">
-  <section class="molecule-image-modal" aria-label="Molecule structure">
+  <section class="molecule-image-modal" [attr.aria-label]="'saScore.moleculeModal.title' | transloco">
     <div class="molecule-image-header">
-      <h4>Molecule structure</h4>
-      <button class="close-btn" type="button" (click)="closeMoleculeImageModal()" aria-label="Close molecule image">
+      <h4>{{ 'saScore.moleculeModal.title' | transloco }}</h4>
+      <button class="close-btn" type="button" (click)="closeMoleculeImageModal()"
+        [attr.aria-label]="'common.actions.close' | transloco">
         ✕
       </button>
     </div>
@@ -166,7 +168,7 @@
     <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
 
     @if (isLoadingMoleculeImage()) {
-    <p class="status-message">Loading structure...</p>
+    <p class="status-message">{{ 'saScore.moleculeModal.loading' | transloco }}</p>
     } @else if (moleculeImageError(); as imgError) {
     <p class="error-message" role="alert">{{ imgError }}</p>
     } @else if (moleculeModalSvg(); as svgContent) {

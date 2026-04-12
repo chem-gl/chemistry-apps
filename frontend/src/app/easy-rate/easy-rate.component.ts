@@ -4,6 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   DownloadedReportFile,
   EasyRateFileInspectionView,
@@ -29,6 +30,7 @@ interface EasyRateInputSlotView {
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     JobProgressCardComponent,
     DiffusionFieldsComponent,
     JobResultFooterComponent,

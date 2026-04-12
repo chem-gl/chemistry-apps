@@ -329,6 +329,24 @@ export class SmileitWorkflowService implements OnDestroy {
     });
   }
 
+  /** Elimina un job histórico y sincroniza estado local del panel. */
+  deleteHistoryJob(jobId: string): void {
+    this.jobsApiService.deleteJob(jobId).subscribe({
+      next: () => {
+        this.state.historyJobs.update((jobItems: ScientificJobView[]) =>
+          jobItems.filter((jobItem: ScientificJobView) => jobItem.id !== jobId),
+        );
+
+        if (this.state.currentJobId() === jobId) {
+          this.reset();
+        }
+      },
+      error: (deleteError: Error) => {
+        this.state.errorMessage.set(`Unable to delete job: ${deleteError.message}`);
+      },
+    });
+  }
+
   private deduplicateHistoryJobs(jobItems: ScientificJobView[]): ScientificJobView[] {
     return deduplicateJobsKeepingLatestSnapshot(jobItems);
   }

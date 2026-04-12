@@ -117,7 +117,7 @@ class AmbitClient:
                     f"Ambit excedió timeout de {self.timeout_seconds} segundos."
                 ),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return AmbitScoreResult(
                 smiles=smiles_value,
                 sa_score=None,

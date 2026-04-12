@@ -7,18 +7,24 @@ las transiciones de estado válidas y la publicación de eventos.
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
+from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 
+from ..identity.services import AuthorizationService
 from ..models import ScientificJob
 from ..ports import JobLogPublisherPort, JobProgressPublisherPort, JobProgressUpdate
 from ..realtime import broadcast_job_update
+from ..types import JobDeleteResult
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
 CONTROL_LOG_SOURCE = "core.control"
 PAUSED_PENDING_MESSAGE = "Job pausado antes de iniciar ejecución."
 CANCELLED_MESSAGE = "Job cancelado por el usuario. Operación irreversible."
+SOFT_DELETED_MESSAGE = "Job enviado a la papelera de reciclaje."
+RESTORED_MESSAGE = "Job restaurado desde la papelera de reciclaje."
 
 
 def request_pause(
@@ -192,4 +198,152 @@ def resume_job(
         message="Job marcado como pending para reanudar ejecución.",
         log_publisher=log_publisher,
     )
+    return job
+
+
+def purge_expired_deleted_jobs(*, retention_cutoff=None) -> int:
+    """Elimina definitivamente jobs de papelera cuyo vencimiento ya expiró."""
+    current_time = retention_cutoff or timezone.now()
+    expired_jobs_queryset = ScientificJob.objects.filter(
+        deleted_at__isnull=False,
+        scheduled_hard_delete_at__isnull=False,
+        scheduled_hard_delete_at__lte=current_time,
+    )
+    expired_job_ids: list[str] = list(
+        expired_jobs_queryset.values_list("id", flat=True)
+    )
+    if len(expired_job_ids) == 0:
+        return 0
+
+    deleted_count, _ = expired_jobs_queryset.delete()
+    logger.info(
+        "Purga oportunista eliminó %s jobs vencidos de la papelera.",
+        len(expired_job_ids),
+    )
+    _ = deleted_count
+    return len(expired_job_ids)
+
+
+def delete_job(
+    job_id: str,
+    *,
+    actor: AbstractUser,
+    job: ScientificJob,
+    retention_days: int,
+    progress_publisher: JobProgressPublisherPort,
+    log_publisher: JobLogPublisherPort,
+) -> JobDeleteResult:
+    """Borra un job definitivamente o lo envía a papelera según jerarquía.
+
+    Reglas:
+    - user propietario (job no borrado): hard delete directo.
+    - admin/root (job no borrado): soft delete hacia papelera.
+    - job en papelera: hard delete definitivo (solo permitido por autorización previa).
+    """
+    _ = progress_publisher
+
+    if job.deleted_at is not None:
+        deleted_job_id = str(job.id)
+        job.delete()
+        logger.info(
+            "Job %s eliminado definitivamente desde papelera por actor %s.",
+            job_id,
+            actor.id,
+        )
+        return {
+            "job_id": deleted_job_id,
+            "deletion_mode": "hard",
+            "scheduled_hard_delete_at": None,
+        }
+
+    if job.status in {"pending", "running", "paused"}:
+        raise ValueError(
+            "Debes cancelar el job antes de eliminarlo cuando aún está activo."
+        )
+
+    if AuthorizationService.should_use_hard_delete(actor=actor, job=job):
+        deleted_job_id = str(job.id)
+        job.delete()
+        logger.info("Job %s eliminado definitivamente por su autor.", job_id)
+        return {
+            "job_id": deleted_job_id,
+            "deletion_mode": "hard",
+            "scheduled_hard_delete_at": None,
+        }
+
+    now = timezone.now()
+    hard_delete_deadline = now + timedelta(days=retention_days)
+    job.deleted_at = now
+    job.deleted_by = actor
+    job.deletion_mode = ScientificJob.DELETION_MODE_SOFT
+    job.scheduled_hard_delete_at = hard_delete_deadline
+    job.original_status = str(job.status)
+    job.save(
+        update_fields=[
+            "deleted_at",
+            "deleted_by",
+            "deletion_mode",
+            "scheduled_hard_delete_at",
+            "original_status",
+            "updated_at",
+        ]
+    )
+    publish_job_log(
+        job,
+        level="warning",
+        source=CONTROL_LOG_SOURCE,
+        message=SOFT_DELETED_MESSAGE,
+        payload={
+            "deleted_by_id": actor.id,
+            "scheduled_hard_delete_at": hard_delete_deadline.isoformat(),
+        },
+        log_publisher=log_publisher,
+    )
+    logger.info("Job %s enviado a la papelera por actor %s.", job_id, actor.id)
+    return {
+        "job_id": str(job.id),
+        "deletion_mode": "soft",
+        "scheduled_hard_delete_at": hard_delete_deadline.isoformat(),
+    }
+
+
+def restore_job(
+    job_id: str,
+    *,
+    actor: AbstractUser,
+    job: ScientificJob,
+    progress_publisher: JobProgressPublisherPort,
+    log_publisher: JobLogPublisherPort,
+) -> ScientificJob:
+    """Restaura un job desde papelera preservando su estado funcional original."""
+    _ = progress_publisher
+
+    if job.deleted_at is None:
+        raise ValueError("El job no se encuentra en la papelera de reciclaje.")
+
+    job.deleted_at = None
+    job.deleted_by = None
+    job.deletion_mode = ""
+    job.scheduled_hard_delete_at = None
+    job.original_status = ""
+    job.save(
+        update_fields=[
+            "deleted_at",
+            "deleted_by",
+            "deletion_mode",
+            "scheduled_hard_delete_at",
+            "original_status",
+            "updated_at",
+        ]
+    )
+    publish_job_log(
+        job,
+        level="info",
+        source=CONTROL_LOG_SOURCE,
+        message=RESTORED_MESSAGE,
+        payload={"restored_by_id": actor.id},
+        log_publisher=log_publisher,
+    )
+    broadcast_job_update(job)
+    logger.info("Job %s restaurado desde papelera por actor %s.", job_id, actor.id)
     return job

@@ -4,11 +4,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-diffusion-fields',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './diffusion-fields.component.html',
   styleUrl: './diffusion-fields.component.scss',
 })

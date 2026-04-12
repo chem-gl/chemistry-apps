@@ -224,6 +224,10 @@ class ScientificJob(models.Model):
         ("failed", "Failed"),
         ("cancelled", "Cancelled"),
     ]
+    DELETION_MODE_SOFT = "soft"
+    DELETION_MODE_CHOICES: list[tuple[str, str]] = [
+        (DELETION_MODE_SOFT, "Soft delete"),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
@@ -246,6 +250,39 @@ class ScientificJob(models.Model):
     plugin_name = models.CharField(max_length=100)
     algorithm_version = models.CharField(max_length=50, default="1.0")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Marca temporal del envío del job a la papelera lógica.",
+    )
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deleted_scientific_jobs",
+    )
+    deletion_mode = models.CharField(
+        max_length=20,
+        choices=DELETION_MODE_CHOICES,
+        blank=True,
+        default="",
+        help_text="Modo de borrado persistido; vacío cuando el job no está en papelera.",
+    )
+    scheduled_hard_delete_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Fecha programada para eliminación definitiva automática desde la papelera.",
+    )
+    original_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        blank=True,
+        default="",
+        help_text="Estado que tenía el job cuando fue enviado a la papelera.",
+    )
 
     # Trazabilidad
     cache_hit = models.BooleanField(default=False)
@@ -322,10 +359,21 @@ class ScientificJob(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["deleted_at"]),
+            models.Index(fields=["scheduled_hard_delete_at"]),
+            models.Index(fields=["group", "deleted_at"]),
+            models.Index(fields=["owner", "deleted_at"]),
+        ]
 
     def __str__(self) -> str:
         """Retorna una representación compacta para trazabilidad de logs."""
         return f"{self.plugin_name} - {self.id} ({self.status})"
+
+    @property
+    def is_deleted(self) -> bool:
+        """Indica si el job está actualmente enviado a la papelera lógica."""
+        return self.deleted_at is not None
 
 
 class ScientificCacheEntry(models.Model):

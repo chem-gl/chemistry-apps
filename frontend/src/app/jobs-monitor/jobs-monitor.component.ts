@@ -4,13 +4,17 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobFiltersComponent } from '../core/shared/components/job-filters/job-filters.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
+import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
+import { buildJobOwnershipLabel } from '../core/shared/job-ownership-label.utils';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -18,7 +22,16 @@ import {
 
 @Component({
   selector: 'app-jobs-monitor',
-  imports: [CommonModule, FormsModule, RouterLink, JobLogsPanelComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    TranslocoPipe,
+    JobLogsPanelComponent,
+    JobManagementActionsComponent,
+    JobFiltersComponent,
+  ],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-monitor.component.html',
   styleUrl: './jobs-monitor.component.scss',
@@ -26,15 +39,16 @@ import {
 export class JobsMonitorComponent implements OnInit, OnDestroy {
   readonly facade = inject(JobsMonitorFacadeService);
   readonly sessionService = inject(IdentitySessionService);
+  private readonly translocoService = inject(TranslocoService);
 
-  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'running', label: 'Running' },
-    { value: 'paused', label: 'Paused' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'cancelled', label: 'Cancelled' },
+  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; labelKey: string }> = [
+    { value: 'all', labelKey: 'common.statusFilters.all' },
+    { value: 'pending', labelKey: 'common.jobStatus.pending' },
+    { value: 'running', labelKey: 'common.jobStatus.running' },
+    { value: 'paused', labelKey: 'common.jobStatus.paused' },
+    { value: 'completed', labelKey: 'common.jobStatus.completed' },
+    { value: 'failed', labelKey: 'common.jobStatus.failed' },
+    { value: 'cancelled', labelKey: 'common.jobStatus.cancelled' },
   ];
 
   ngOnInit(): void {
@@ -54,8 +68,8 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.toggleAutoRefresh();
   }
 
-  onStatusFilterChanged(nextStatus: JobStatusFilterOption): void {
-    this.facade.setStatusFilter(nextStatus);
+  onStatusFilterChanged(nextStatus: string): void {
+    this.facade.setStatusFilter(nextStatus as JobStatusFilterOption);
   }
 
   onPluginFilterChanged(nextPluginName: string): void {
@@ -82,6 +96,14 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.cancelJob(jobId);
   }
 
+  deleteJob(jobId: string): void {
+    this.facade.deleteJob(jobId);
+  }
+
+  restoreJob(jobId: string): void {
+    this.facade.restoreJob(jobId);
+  }
+
   statusClassName(jobStatus: ScientificJobView['status']): string {
     return `job-status status-${jobStatus}`;
   }
@@ -106,18 +128,54 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     });
   }
 
+  canDeleteJob(jobItem: ScientificJobView): boolean {
+    return (
+      this.isTerminalJob(jobItem) &&
+      this.sessionService.canDeleteJob({
+        owner: jobItem.owner ?? null,
+        group: jobItem.group ?? null,
+      })
+    );
+  }
+
+  canRestoreJob(jobItem: ScientificJobView): boolean {
+    return this.sessionService.canRestoreJob({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+  }
+
+  deleteActionLabel(jobItem: ScientificJobView): string {
+    const deleteMode = this.sessionService.resolveDeleteMode({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+
+    return deleteMode === 'hard'
+      ? this.translateOrFallback('common.actions.deletePermanently', 'Delete permanently')
+      : this.translateOrFallback('common.actions.moveToTrash', 'Move to trash');
+  }
+
+  isTerminalJob(jobItem: ScientificJobView): boolean {
+    return (
+      jobItem.status === 'completed' ||
+      jobItem.status === 'failed' ||
+      jobItem.status === 'cancelled'
+    );
+  }
+
   ownerGroupLabel(jobItem: ScientificJobView): string {
-    const ownerLabel = jobItem.owner_username ?? 'Unknown user';
-    const groupLabel = jobItem.group_name ?? 'No group';
-    return `${ownerLabel} · ${groupLabel}`;
+    return buildJobOwnershipLabel(jobItem, (translationKey: string) =>
+      this.translocoService.translate(translationKey),
+    );
   }
 
   resultActionLabel(jobItem: ScientificJobView): string {
     if (jobItem.plugin_name === 'random-numbers' && !this.hasFinalRandomNumbersResult(jobItem)) {
-      return 'View summary';
+      return this.translateOrFallback('jobsMonitor.actions.viewSummary', 'View summary');
     }
 
-    return 'Open result';
+    return this.translateOrFallback('common.actions.openResult', 'Open result');
   }
 
   private hasFinalRandomNumbersResult(jobItem: ScientificJobView): boolean {
@@ -141,5 +199,10 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       typeof resultRecord.metadata === 'object' &&
       !Array.isArray(resultRecord.metadata)
     );
+  }
+
+  private translateOrFallback(translationKey: string, fallbackText: string): string {
+    const translatedText = this.translocoService.translate(translationKey);
+    return translatedText === translationKey ? fallbackText : translatedText;
   }
 }

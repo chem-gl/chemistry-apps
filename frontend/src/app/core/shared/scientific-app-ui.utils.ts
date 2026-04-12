@@ -2,7 +2,7 @@
 // (historial por query param, descargas, backdrop de diálogos y parseo de SMILES).
 
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 export interface NamedSmilesInputRow {
   name: string;
@@ -17,6 +17,16 @@ export interface ParsedNamedSmilesBatch {
 export interface HistoricalJobWorkflowPort {
   loadHistory(): void;
   openHistoricalJob(jobId: string): void;
+}
+
+export interface SmilesMoleculeWorkflowPort extends HistoricalJobWorkflowPort {
+  dispatch(): void;
+  reset(): void;
+}
+
+export interface DownloadedReportFile {
+  filename: string;
+  blob: Blob;
 }
 
 export function subscribeToRouteHistoricalJob(
@@ -39,6 +49,15 @@ export function downloadBlobFile(filename: string, blob: Blob): void {
   anchorElement.download = filename;
   anchorElement.click();
   URL.revokeObjectURL(objectUrl);
+}
+
+export function downloadReportFile(report$: Observable<DownloadedReportFile>): void {
+  report$.subscribe({
+    next: (downloadedFile: DownloadedReportFile) => {
+      downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
+    },
+    error: () => {},
+  });
 }
 
 export function closeDialogOnBackdropClick(
@@ -65,8 +84,9 @@ function splitCsvLine(lineValue: string, delimiter: string): string[] {
   const cells: string[] = [];
   let currentCell: string = '';
   let insideQuotes: boolean = false;
+  let index: number = 0;
 
-  for (let index = 0; index < lineValue.length; index += 1) {
+  while (index < lineValue.length) {
     const currentCharacter: string = lineValue[index] ?? '';
     const nextCharacter: string = lineValue[index + 1] ?? '';
 
@@ -74,19 +94,17 @@ function splitCsvLine(lineValue: string, delimiter: string): string[] {
       if (insideQuotes && nextCharacter === '"') {
         currentCell += '"';
         index += 1;
-        continue;
+      } else {
+        insideQuotes = !insideQuotes;
       }
-      insideQuotes = !insideQuotes;
-      continue;
-    }
-
-    if (!insideQuotes && currentCharacter === delimiter) {
+    } else if (!insideQuotes && currentCharacter === delimiter) {
       cells.push(currentCell.trim());
       currentCell = '';
-      continue;
+    } else {
+      currentCell += currentCharacter;
     }
 
-    currentCell += currentCharacter;
+    index += 1;
   }
 
   cells.push(currentCell.trim());
@@ -95,11 +113,11 @@ function splitCsvLine(lineValue: string, delimiter: string): string[] {
 
 function normalizeHeaderToken(rawValue: string): string {
   return rawValue
-    .replace(/^\uFEFF+/, '')
+    .replaceAll('\uFEFF', '')
     .trim()
     .toLowerCase()
-    .replace(/^"|"$/g, '')
-    .replace(/[\s_-]+/g, '');
+    .replaceAll('"', '')
+    .replaceAll(/[\s_-]+/g, '');
 }
 
 function isSingleColumnHeaderLine(lineValue: string): boolean {
@@ -156,7 +174,7 @@ export function buildSmilesTextFromRows(rows: NamedSmilesInputRow[]): string {
 export function parseNamedSmilesBatch(rawContent: string): ParsedNamedSmilesBatch {
   const normalizedLines: string[] = rawContent
     .split(/\r?\n/)
-    .map((lineValue: string) => lineValue.replace(/^\uFEFF+/, '').trim())
+    .map((lineValue: string) => lineValue.replaceAll('\uFEFF', '').trim())
     .filter((lineValue: string) => lineValue.length > 0 && !lineValue.startsWith('#'));
 
   if (normalizedLines.length === 0) {

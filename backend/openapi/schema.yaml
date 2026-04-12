@@ -3,8 +3,8 @@ info:
   title: Chemistry Apps API
   version: 1.0.0
   description: API de plataforma científica modular para ejecutar jobs asíncronos
-    por plugins (calculator, random-numbers y molar-fractions), con observabilidad
-    de progreso y logs en tiempo real, cache por hash y recuperación activa automática.
+    por plugins (random-numbers y molar-fractions), con observabilidad de progreso
+    y logs en tiempo real, cache por hash y recuperación activa automática.
   contact:
     name: Chemistry Apps Team
     url: https://github.com/chem-gl/chemistry-apps
@@ -29,7 +29,11 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectiveAppConfig'
+          description: ''
     patch:
       operationId: auth_app_configs_partial_update
       description: Consulta y actualiza configuración de app del usuario actual.
@@ -41,15 +45,30 @@ paths:
         required: true
       tags:
       - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAppConfigRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAppConfigRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAppConfigRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppConfig'
+          description: ''
   /api/auth/apps/:
     get:
-      operationId: auth_apps_retrieve
+      operationId: auth_apps_list
       description: Expone apps disponibles para el usuario actual con RBAC resuelto.
       tags:
       - Auth
@@ -58,7 +77,13 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessibleScientificApp'
+          description: ''
   /api/auth/login/:
     post:
       operationId: auth_login_create
@@ -91,7 +116,11 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
   /api/auth/refresh/:
     post:
       operationId: auth_refresh_create
@@ -116,265 +145,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
-          description: ''
-  /api/calculator/jobs/:
-    post:
-      operationId: calculator_jobs_create
-      description: Recibe parámetros estrictos de calculadora y despacha el trabajo
-        en background cuando no existe caché.
-      summary: Crear Job de Calculadora
-      tags:
-      - Calculator
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CalculatorJobCreateRequest'
-            examples:
-              CrearJobCalculadoraPotencia:
-                value:
-                  version: 1.0.0
-                  op: pow
-                  a: 2.0
-                  b: 8.0
-                summary: Crear job calculadora potencia
-                description: 'Contrato estricto para potencia: resultado 2^8.'
-              CrearJobCalculadoraFactorial:
-                value:
-                  version: 1.0.0
-                  op: factorial
-                  a: 5.0
-                summary: Crear job calculadora factorial
-                description: 'Contrato estricto para factorial: solo usa el campo
-                  a.'
-              CrearJobCalculadoraBásico:
-                value:
-                  version: 1.0.0
-                  op: add
-                  a: 5.0
-                  b: 3.0
-                summary: Crear job calculadora básico
-                description: Contrato estricto para crear un job de calculadora.
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CalculatorJobCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CalculatorJobCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CalculatorJobResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                FactorialInválido:
-                  value:
-                    a:
-                    - Para factorial, a debe ser un entero no negativo.
-                  summary: Factorial inválido
-                OperaciónBinariaSinB:
-                  value:
-                    b:
-                    - El campo b es obligatorio para operaciones binarias.
-                  summary: Operación binaria sin b
-          description: Error de validación del contrato de calculadora.
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: No fue posible encolar o crear el job.
-  /api/calculator/jobs/{id}/:
-    get:
-      operationId: calculator_jobs_retrieve
-      description: Devuelve estado, progreso y resultados del job por UUID.
-      summary: Consultar Job
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        description: UUID del job.
-        required: true
-      tags:
-      - Calculator
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          description: No response body
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/calculator/jobs/{id}/report-csv/:
-    get:
-      operationId: calculator_jobs_report_csv_retrieve
-      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
-      summary: Descargar Reporte CSV
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scientific job.
-        required: true
-      tags:
-      - Calculator
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: string
-                format: binary
-          description: Archivo CSV.
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/calculator/jobs/{id}/report-error/:
-    get:
-      operationId: calculator_jobs_report_error_retrieve
-      description: Descarga reporte de error para jobs failed con error_trace. Incluye
-        parámetros de entrada y detalle del fallo.
-      summary: Descargar Reporte de Error
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scientific job.
-        required: true
-      tags:
-      - Calculator
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: string
-                format: binary
-          description: Reporte de error.
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/calculator/jobs/{id}/report-inputs/:
-    get:
-      operationId: calculator_jobs_report_inputs_retrieve
-      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
-        para reproducibilidad/reintento.
-      summary: Descargar Entradas Originales ZIP
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scientific job.
-        required: true
-      tags:
-      - Calculator
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: string
-                format: binary
-          description: Archivo ZIP con entradas persistidas del job.
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Job no encontrado.
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: No existen artefactos de entrada persistidos.
-  /api/calculator/jobs/{id}/report-log/:
-    get:
-      operationId: calculator_jobs_report_log_retrieve
-      description: Descarga log técnico con parámetros de entrada, estado, resultados
-        y eventos de ejecución.
-      summary: Descargar Reporte LOG
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scientific job.
-        required: true
-      tags:
-      - Calculator
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: string
-                format: binary
-          description: Log de auditoría.
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
           description: ''
   /api/easy-rate/jobs/:
     post:
@@ -632,7 +402,7 @@ paths:
           description: No fue posible inspeccionar el archivo cargado.
   /api/identity/app-permissions/:
     get:
-      operationId: identity_app_permissions_retrieve
+      operationId: identity_app_permissions_list
       description: Lista y crea reglas de acceso por app para usuarios o grupos.
       tags:
       - Identity
@@ -641,18 +411,40 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppPermission'
+          description: ''
     post:
       operationId: identity_app_permissions_create
       description: Lista y crea reglas de acceso por app para usuarios o grupos.
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppPermissionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AppPermissionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AppPermissionRequest'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
-        '200':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppPermission'
+          description: ''
   /api/identity/app-permissions/{permission_id}/:
     patch:
       operationId: identity_app_permissions_partial_update
@@ -665,12 +457,27 @@ paths:
         required: true
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAppPermissionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAppPermissionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAppPermissionRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppPermission'
+          description: ''
     delete:
       operationId: identity_app_permissions_destroy
       description: Actualiza o elimina reglas de acceso de una app.
@@ -690,7 +497,7 @@ paths:
           description: No response body
   /api/identity/groups/:
     get:
-      operationId: identity_groups_retrieve
+      operationId: identity_groups_list
       description: CRUD parcial para grupos de trabajo del dominio transversal.
       tags:
       - Identity
@@ -699,18 +506,40 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkGroup'
+          description: ''
     post:
       operationId: identity_groups_create
       description: CRUD parcial para grupos de trabajo del dominio transversal.
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkGroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkGroupRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkGroupRequest'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
-        '200':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkGroup'
+          description: ''
   /api/identity/groups/{group_id}/:
     patch:
       operationId: identity_groups_partial_update
@@ -723,12 +552,27 @@ paths:
         required: true
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkGroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkGroupRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkGroupRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkGroup'
+          description: ''
     delete:
       operationId: identity_groups_destroy
       description: Actualiza o elimina grupos de trabajo con control RBAC.
@@ -768,7 +612,11 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupAppConfig'
+          description: ''
     patch:
       operationId: identity_groups_app_configs_partial_update
       description: Consulta y actualiza configuración de app a nivel de grupo.
@@ -785,15 +633,30 @@ paths:
         required: true
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupAppConfigRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupAppConfigRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupAppConfigRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupAppConfig'
+          description: ''
   /api/identity/memberships/:
     get:
-      operationId: identity_memberships_retrieve
+      operationId: identity_memberships_list
       description: Lista y crea membresías de grupos con validaciones de alcance.
       tags:
       - Identity
@@ -802,18 +665,40 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupMembership'
+          description: ''
     post:
       operationId: identity_memberships_create
       description: Lista y crea membresías de grupos con validaciones de alcance.
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupMembershipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupMembershipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupMembershipRequest'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
-        '200':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembership'
+          description: ''
   /api/identity/memberships/{membership_id}/:
     patch:
       operationId: identity_memberships_partial_update
@@ -826,12 +711,27 @@ paths:
         required: true
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupMembershipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupMembershipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupMembershipRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembership'
+          description: ''
     delete:
       operationId: identity_memberships_destroy
       description: Actualiza o elimina membresías de grupo.
@@ -851,7 +751,7 @@ paths:
           description: No response body
   /api/identity/users/:
     get:
-      operationId: identity_users_retrieve
+      operationId: identity_users_list
       description: Lista usuarios o crea usuarios para administración transversal.
       tags:
       - Identity
@@ -860,18 +760,40 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentityUserSummary'
+          description: ''
     post:
       operationId: identity_users_create
       description: Lista usuarios o crea usuarios para administración transversal.
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityBootstrapUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IdentityBootstrapUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IdentityBootstrapUserRequest'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
-        '200':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityUserSummary'
+          description: ''
   /api/identity/users/{user_id}/:
     patch:
       operationId: identity_users_partial_update
@@ -884,12 +806,27 @@ paths:
         required: true
       tags:
       - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUserUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUserUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUserUpdateRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityUserSummary'
+          description: ''
   /api/jobs/:
     get:
       operationId: jobs_list
@@ -1059,6 +996,45 @@ paths:
                       actual: completed).'
                   summary: Job ya finalizado
           description: El job está en estado terminal y no puede cancelarse.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+  /api/jobs/{id}/delete/:
+    post:
+      operationId: jobs_delete_create
+      description: Usuarios estándar eliminan definitivamente sus jobs terminales.
+        Root/Admin siempre envían primero a papelera y desde ahí pueden restaurar
+        o eliminar definitivamente antes del vencimiento automático.
+      summary: Eliminar un Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDeleteActionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job ya está en papelera o aún debe cancelarse antes.
         '404':
           content:
             application/json:
@@ -1307,6 +1283,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/jobs/{id}/restore/:
+    post:
+      operationId: jobs_restore_create
+      description: Permite a root o administradores restaurar jobs eliminados lógicamente
+        dentro de su ámbito autorizado.
+      summary: Restaurar un Job desde papelera
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job científico enviado a papelera.
+        required: true
+      tags:
+      - Jobs
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobControlActionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El job no está en papelera o no puede restaurarse.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
   /api/jobs/{id}/resume/:
     post:
       operationId: jobs_resume_create
@@ -1345,6 +1359,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Job no encontrado.
+  /api/jobs/trash/:
+    get:
+      operationId: jobs_trash_list
+      description: Devuelve jobs eliminados lógicamente disponibles para restauración.
+        Sólo root y admins pueden consultar esta vista.
+      summary: Listar Jobs en papelera
+      tags:
+      - Jobs
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScientificJob'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: El actor no tiene permisos para consultar la papelera.
   /api/marcus/jobs/:
     post:
       operationId: marcus_jobs_create
@@ -2744,7 +2785,8 @@ paths:
   /api/smileit/jobs/{id}/report-smiles/:
     get:
       operationId: smileit_jobs_report_smiles_retrieve
-      description: Descarga archivo limpio NAME + NAME_XXXXX SMILES para DataWarrior.
+      description: Descarga archivo SMI/TXT con principal y derivados como lista simple
+        de SMILES.
       summary: Descargar Export Principal SMILES Enumerado
       parameters:
       - in: path
@@ -3591,89 +3633,67 @@ paths:
           description: ''
 components:
   schemas:
-    BlankEnum:
-      enum:
-      - ''
-    CalculatorJobCreateRequest:
+    AccessibleScientificApp:
       type: object
-      description: |-
-        Define parámetros estrictos para crear un job de calculadora.
-
-        Este serializer protege el contrato antes de llegar al plugin. Así se evita
-        encolar trabajos que no cumplirán reglas mínimas de dominio.
+      description: Serializer de apps visibles para el usuario actual.
       properties:
-        version:
+        app_name:
           type: string
-          minLength: 1
-          default: '1.0'
-          description: Versión del algoritmo calculadora.
-          maxLength: 50
-        op:
-          allOf:
-          - $ref: '#/components/schemas/CalculatorOperationEnum'
-          description: |-
-            Operación aritmética a ejecutar.
-
-            * `add` - add
-            * `sub` - sub
-            * `mul` - mul
-            * `div` - div
-            * `pow` - pow
-            * `factorial` - factorial
-        a:
-          type: number
-          format: double
-          description: Primer operando numérico.
-        b:
-          type: number
-          format: double
+          readOnly: true
+        route_key:
+          type: string
+          readOnly: true
+        api_base_path:
+          type: string
+          readOnly: true
+        supports_pause_resume:
+          type: boolean
+          readOnly: true
+        enabled:
+          type: boolean
+          readOnly: true
+        group_permission:
+          type: boolean
+          readOnly: true
           nullable: true
-          description: Segundo operando numérico. Es obligatorio para add/sub/mul/div/pow
-            y no debe enviarse para factorial.
+        user_permission:
+          type: boolean
+          readOnly: true
+          nullable: true
       required:
-      - a
-      - op
-    CalculatorJobResponse:
-      type: object
+      - api_base_path
+      - app_name
+      - enabled
+      - group_permission
+      - route_key
+      - supports_pause_resume
+      - user_permission
+    AccountStatusEnum:
+      enum:
+      - active
+      - inactive
+      type: string
       description: |-
-        Respuesta tipada para jobs de calculadora consumibles por frontend.
-
-        Mantiene consistencia con el modelo de jobs de core y permite a clientes
-        consumir resultados sin interpretar estructuras dinámicas ad-hoc.
+        * `active` - Active
+        * `inactive` - Inactive
+    AppPermission:
+      type: object
+      description: Serializer CRUD para permisos de app por usuario o por grupo.
       properties:
         id:
+          type: integer
+          readOnly: true
+        app_name:
           type: string
-          format: uuid
-          readOnly: true
-        job_hash:
-          type: string
-          readOnly: true
-          description: Hash SHA-256 for caching
-        plugin_name:
-          type: string
-          readOnly: true
-        algorithm_version:
-          type: string
-          readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          readOnly: true
-        cache_hit:
-          type: boolean
-          readOnly: true
-        cache_miss:
-          type: boolean
-          readOnly: true
-        parameters:
-          $ref: '#/components/schemas/CalculatorParameters'
-        results:
-          allOf:
-          - $ref: '#/components/schemas/CalculatorResult'
+          maxLength: 80
+        group:
+          type: integer
           nullable: true
-        error_trace:
-          type: string
-          readOnly: true
+        user:
+          type: integer
+          nullable: true
+        is_enabled:
+          type: boolean
         created_at:
           type: string
           format: date-time
@@ -3683,92 +3703,31 @@ components:
           format: date-time
           readOnly: true
       required:
-      - algorithm_version
-      - cache_hit
-      - cache_miss
+      - app_name
       - created_at
-      - error_trace
       - id
-      - job_hash
-      - parameters
-      - plugin_name
-      - status
       - updated_at
-    CalculatorOperationEnum:
+    AppPermissionRequest:
+      type: object
+      description: Serializer CRUD para permisos de app por usuario o por grupo.
+      properties:
+        app_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        group:
+          type: integer
+          nullable: true
+        user:
+          type: integer
+          nullable: true
+        is_enabled:
+          type: boolean
+      required:
+      - app_name
+    BlankEnum:
       enum:
-      - add
-      - sub
-      - mul
-      - div
-      - pow
-      - factorial
-      type: string
-      description: |-
-        * `add` - add
-        * `sub` - sub
-        * `mul` - mul
-        * `div` - div
-        * `pow` - pow
-        * `factorial` - factorial
-    CalculatorParameters:
-      type: object
-      description: Estructura de parámetros persistidos para el job calculadora.
-      properties:
-        op:
-          $ref: '#/components/schemas/CalculatorOperationEnum'
-        a:
-          type: number
-          format: double
-          description: Primer operando almacenado para trazabilidad.
-        b:
-          type: number
-          format: double
-          nullable: true
-          description: Segundo operando cuando aplica; ausente o nulo para factorial.
-      required:
-      - a
-      - op
-    CalculatorResult:
-      type: object
-      description: Resultado estricto del plugin calculadora.
-      properties:
-        final_result:
-          type: number
-          format: double
-        metadata:
-          $ref: '#/components/schemas/CalculatorResultMetadata'
-      required:
-      - final_result
-      - metadata
-    CalculatorResultMetadata:
-      type: object
-      description: Metadatos de trazabilidad del resultado de calculadora.
-      properties:
-        operation_used:
-          allOf:
-          - $ref: '#/components/schemas/CalculatorOperationEnum'
-          description: |-
-            Operación utilizada por el plugin para obtener el resultado.
-
-            * `add` - add
-            * `sub` - sub
-            * `mul` - mul
-            * `div` - div
-            * `pow` - pow
-            * `factorial` - factorial
-        operand_a:
-          type: number
-          format: double
-          description: Valor de entrada del operando a.
-        operand_b:
-          type: number
-          format: double
-          nullable: true
-          description: Valor de entrada del operando b cuando aplica.
-      required:
-      - operand_a
-      - operand_b
-      - operation_used
+      - ''
     DomainTokenObtainPairRequest:
       type: object
       description: Extiende claims JWT con rol y grupo primario.
@@ -4409,6 +4368,28 @@ components:
       - reactant_1_file
       - reactant_2_file
       - transition_state_file
+    EffectiveAppConfig:
+      type: object
+      description: Serializer de configuración resuelta para una app.
+      properties:
+        app_name:
+          type: string
+          readOnly: true
+        enabled:
+          type: boolean
+          readOnly: true
+        effective_config:
+          readOnly: true
+        group_config:
+          readOnly: true
+        user_config:
+          readOnly: true
+      required:
+      - app_name
+      - effective_config
+      - enabled
+      - group_config
+      - user_config
     ErrorResponse:
       type: object
       description: Schema consistente para respuestas de error API.
@@ -4418,6 +4399,146 @@ components:
           description: Descripción del error manejado por API.
       required:
       - detail
+    GroupAppConfig:
+      type: object
+      description: Serializer CRUD para configuración de app por grupo.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        group:
+          type: integer
+        app_name:
+          type: string
+          maxLength: 80
+        config: {}
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - app_name
+      - group
+      - id
+      - updated_at
+    GroupMembership:
+      type: object
+      description: Serializer CRUD para membresías de grupo.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        group:
+          type: integer
+        role_in_group:
+          $ref: '#/components/schemas/RoleInGroupEnum'
+        joined_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - group
+      - id
+      - joined_at
+      - user
+    GroupMembershipRequest:
+      type: object
+      description: Serializer CRUD para membresías de grupo.
+      properties:
+        user:
+          type: integer
+        group:
+          type: integer
+        role_in_group:
+          $ref: '#/components/schemas/RoleInGroupEnum'
+      required:
+      - group
+      - user
+    IdentityBootstrapUserRequest:
+      type: object
+      description: Serializer de creación de usuarios para panel administrativo.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        account_status:
+          allOf:
+          - $ref: '#/components/schemas/AccountStatusEnum'
+          default: active
+        primary_group_id:
+          type: integer
+          nullable: true
+      required:
+      - password
+      - role
+      - username
+    IdentityUserSummary:
+      type: object
+      description: Serializer resumido para listar usuarios en panel administrativo.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        is_staff:
+          type: boolean
+          readOnly: true
+        is_superuser:
+          type: boolean
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        account_status:
+          type: string
+          readOnly: true
+        primary_group_id:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - account_status
+      - email
+      - first_name
+      - id
+      - is_active
+      - is_staff
+      - is_superuser
+      - last_name
+      - primary_group_id
+      - role
+      - username
     JobControlActionResponse:
       type: object
       description: Respuesta estándar para acciones de control (pause/resume).
@@ -4453,6 +4574,44 @@ components:
       required:
       - parameters
       - plugin_name
+    JobDeleteActionResponse:
+      type: object
+      description: Respuesta estándar para eliminación hard/soft de jobs.
+      properties:
+        detail:
+          type: string
+          description: Resultado de la operación de borrado.
+        job_id:
+          type: string
+          format: uuid
+          description: Identificador único del job.
+        deletion_mode:
+          allOf:
+          - $ref: '#/components/schemas/JobDeleteActionResponseDeletionModeEnum'
+          description: |-
+            Modo de borrado aplicado al job.
+
+            * `hard` - Hard
+            * `soft` - Soft
+        scheduled_hard_delete_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha planificada de eliminación definitiva si el borrado fue
+            lógico.
+      required:
+      - deletion_mode
+      - detail
+      - job_id
+      - scheduled_hard_delete_at
+    JobDeleteActionResponseDeletionModeEnum:
+      enum:
+      - hard
+      - soft
+      type: string
+      description: |-
+        * `hard` - Hard
+        * `soft` - Soft
     JobLogEvent:
       type: object
       description: Contrato de un evento de log persistido para un job.
@@ -5153,6 +5312,69 @@ components:
       - metadata
       - rows
       - species_labels
+    PatchedAppPermissionRequest:
+      type: object
+      description: Serializer CRUD para permisos de app por usuario o por grupo.
+      properties:
+        app_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        group:
+          type: integer
+          nullable: true
+        user:
+          type: integer
+          nullable: true
+        is_enabled:
+          type: boolean
+    PatchedGroupAppConfigRequest:
+      type: object
+      description: Serializer CRUD para configuración de app por grupo.
+      properties:
+        group:
+          type: integer
+        app_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        config: {}
+    PatchedGroupMembershipRequest:
+      type: object
+      description: Serializer CRUD para membresías de grupo.
+      properties:
+        user:
+          type: integer
+        group:
+          type: integer
+        role_in_group:
+          $ref: '#/components/schemas/RoleInGroupEnum'
+    PatchedIdentityUserUpdateRequest:
+      type: object
+      description: Serializer de actualización de perfil/estado de usuario para administración.
+      properties:
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        account_status:
+          $ref: '#/components/schemas/AccountStatusEnum'
+        primary_group_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        is_staff:
+          type: boolean
     PatchedSmileitCatalogEntryCreateRequest:
       type: object
       description: Payload para crear sustituyente en catálogo persistente.
@@ -5189,6 +5411,32 @@ components:
           additionalProperties:
             type: string
             minLength: 1
+    PatchedUserAppConfigRequest:
+      type: object
+      description: Serializer CRUD para configuración de app por usuario.
+      properties:
+        user:
+          type: integer
+        app_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        config: {}
+    PatchedWorkGroupRequest:
+      type: object
+      description: Serializer CRUD para grupos de trabajo.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 140
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
     PatternTypeEnum:
       enum:
       - toxicophore
@@ -5398,6 +5646,24 @@ components:
       - seed_digest
       - seed_url
       - total_numbers
+    RoleEnum:
+      enum:
+      - root
+      - admin
+      - user
+      type: string
+      description: |-
+        * `root` - Root
+        * `admin` - Admin
+        * `user` - User
+    RoleInGroupEnum:
+      enum:
+      - admin
+      - member
+      type: string
+      description: |-
+        * `admin` - Admin
+        * `member` - Member
     SaMoleculeResult:
       type: object
       description: Serializa el resultado de SA score para una molécula individual.
@@ -5459,7 +5725,6 @@ components:
           type: array
           items:
             type: string
-            minLength: 1
             maxLength: 4096
           writeOnly: true
           description: Lista de SMILES a evaluar. Máximo 500. Cada elemento debe ser
@@ -5603,6 +5868,52 @@ components:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
+        is_deleted:
+          type: boolean
+          description: Expone un flag estable para frontend sin depender de comparar
+            timestamps.
+          readOnly: true
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Marca temporal del envío del job a la papelera lógica.
+        deleted_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        deleted_by_username:
+          type: string
+          readOnly: true
+        deletion_mode:
+          allOf:
+          - $ref: '#/components/schemas/ScientificJobDeletionModeEnum'
+          readOnly: true
+          description: |-
+            Modo de borrado persistido; vacío cuando el job no está en papelera.
+
+            * `soft` - Soft delete
+        scheduled_hard_delete_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Fecha programada para eliminación definitiva automática desde
+            la papelera.
+        original_status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+          description: |-
+            Estado que tenía el job cuando fue enviado a la papelera.
+
+            * `pending` - Pending
+            * `running` - Running
+            * `paused` - Paused
+            * `completed` - Completed
+            * `failed` - Failed
+            * `cancelled` - Cancelled
         cache_hit:
           type: boolean
           readOnly: true
@@ -5669,11 +5980,17 @@ components:
       - cache_hit
       - cache_miss
       - created_at
+      - deleted_at
+      - deleted_by
+      - deleted_by_username
+      - deletion_mode
       - error_trace
       - group
       - group_name
       - id
+      - is_deleted
       - job_hash
+      - original_status
       - owner
       - owner_username
       - parameters
@@ -5687,9 +6004,15 @@ components:
       - results
       - resumed_at
       - runtime_state
+      - scheduled_hard_delete_at
       - status
       - supports_pause_resume
       - updated_at
+    ScientificJobDeletionModeEnum:
+      enum:
+      - soft
+      type: string
+      description: '* `soft` - Soft delete'
     SiteOverlapPolicyEnum:
       enum:
       - last_block_wins
@@ -6683,7 +7006,6 @@ components:
           type: array
           items:
             type: string
-            minLength: 1
             maxLength: 4096
           writeOnly: true
           description: Lista de SMILES a evaluar. No se aplica límite de negocio;
@@ -7039,6 +7361,87 @@ components:
       - kappa_tst
       - metadata
       - u
+    UserAppConfig:
+      type: object
+      description: Serializer CRUD para configuración de app por usuario.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        app_name:
+          type: string
+          maxLength: 80
+        config: {}
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - app_name
+      - id
+      - updated_at
+      - user
+    UserProfile:
+      type: object
+      description: Serializer de lectura para perfil del usuario autenticado.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        account_status:
+          type: string
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        avatar:
+          type: string
+          readOnly: true
+        email_verified:
+          type: boolean
+          readOnly: true
+        primary_group_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - account_status
+      - avatar
+      - created_at
+      - email
+      - email_verified
+      - first_name
+      - id
+      - last_name
+      - primary_group_id
+      - role
+      - updated_at
+      - username
     VerificationRuleEnum:
       enum:
       - aromatic
@@ -7053,6 +7456,59 @@ components:
         * `hbond_acceptor` - hbond_acceptor
         * `hydrophobic` - hydrophobic
         * `smarts` - smarts
+    WorkGroup:
+      type: object
+      description: Serializer CRUD para grupos de trabajo.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          maxLength: 140
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - id
+      - name
+      - slug
+      - updated_at
+    WorkGroupRequest:
+      type: object
+      description: Serializer CRUD para grupos de trabajo.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 140
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+      required:
+      - name
+      - slug
   securitySchemes:
     cookieAuth:
       type: apiKey
@@ -7071,9 +7527,6 @@ tags:
 - name: Jobs
   description: Operaciones genéricas para consulta, progreso, eventos SSE y logs de
     jobs.
-- name: Calculator
-  description: Endpoints de ejecución para operaciones matemáticas de calculadora
-    científica.
 - name: RandomNumbers
   description: Endpoints de generación por lotes de números aleatorios con semilla
     externa.

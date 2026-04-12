@@ -5,40 +5,43 @@
 
 import { CommonModule } from '@angular/common';
 import {
-    Component,
-    ElementRef,
-    OnDestroy,
-    ViewChild,
-    computed,
-    inject,
-    input,
-    output,
-    signal,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import {
-    JobsApiService,
-    SmileitCatalogEntryView,
-    SmileitStructureInspectionView,
+  JobsApiService,
+  SmileitCatalogEntryView,
+  SmileitStructureInspectionView,
 } from '../../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import { SmileitInspectionService } from '../core/services/smileit-inspection.service';
 import {
-    formatAtomIndices,
-    hasSameNumberSet,
-    parseAtomIndicesInput,
+  formatAtomIndices,
+  hasSameNumberSet,
+  parseAtomIndicesInput,
 } from '../smileit-atom-selection.utils';
 
 @Component({
   selector: 'app-catalog-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './catalog-panel.component.html',
   styleUrl: './catalog-panel.component.scss',
 })
 export class CatalogPanelComponent implements OnDestroy {
+  private static readonly CATALOG_INSPECTION_DEBOUNCE_MS = 500;
+
   // --- Entradas desde el componente padre ---
   /** Cache compartido de inspecciones de entradas de catálogo (lectura por clave preview). */
   readonly libraryEntryInspections =
@@ -58,6 +61,7 @@ export class CatalogPanelComponent implements OnDestroy {
 
   // --- Estado interno del panel ---
   private catalogDraftInspectionSubscription: Subscription | null = null;
+  private catalogDraftInspectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   readonly isCatalogPanelCollapsed = signal<boolean>(true);
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
@@ -88,14 +92,22 @@ export class CatalogPanelComponent implements OnDestroy {
     this.filteredLibraryGroups()
       .flatMap((group) => group.entries)
       .forEach((catalogEntry: SmileitCatalogEntryView) => {
-        const dedupeKey: string =
-          `${catalogEntry.stable_id}-${catalogEntry.version}-${catalogEntry.id}`;
+        const dedupeKey: string = `${catalogEntry.stable_id}-${catalogEntry.version}-${catalogEntry.id}`;
         if (!deduplicatedEntriesByKey.has(dedupeKey)) {
           deduplicatedEntriesByKey.set(dedupeKey, catalogEntry);
         }
       });
 
     return [...deduplicatedEntriesByKey.values()];
+  });
+
+  /** SMILES canónico visible en el estado en vivo del borrador de catálogo. */
+  readonly catalogDraftCanonicalSmiles = computed<string>(() => {
+    const inspectionResult = this.catalogDraftInspection();
+    if (inspectionResult !== null && inspectionResult.canonicalSmiles.trim() !== '') {
+      return inspectionResult.canonicalSmiles;
+    }
+    return 'Pending canonical SMILES';
   });
 
   // --- ViewChild refs para diálogos nativos ---
@@ -107,6 +119,9 @@ export class CatalogPanelComponent implements OnDestroy {
   private readonly catalogSmilesKetcherFrameRef?: ElementRef<HTMLIFrameElement>;
 
   ngOnDestroy(): void {
+    if (this.catalogDraftInspectionDebounceTimer !== null) {
+      clearTimeout(this.catalogDraftInspectionDebounceTimer);
+    }
     this.catalogDraftInspectionSubscription?.unsubscribe();
   }
 
@@ -144,7 +159,7 @@ export class CatalogPanelComponent implements OnDestroy {
 
   onCatalogDraftSmilesChange(nextValue: string): void {
     this.workflow.catalogCreateSmiles.set(nextValue);
-    this.refreshCatalogDraftInspection();
+    this.scheduleCatalogDraftInspection();
   }
 
   openCatalogSmilesSketcher(): void {
@@ -308,9 +323,9 @@ export class CatalogPanelComponent implements OnDestroy {
     const catalogDraftSmiles = this.workflow.catalogCreateSmiles().trim();
     this.catalogDraftInspectionSubscription?.unsubscribe();
     this.catalogDraftInspectionSubscription = null;
+    this.catalogDraftInspection.set(null);
 
     if (catalogDraftSmiles === '') {
-      this.catalogDraftInspection.set(null);
       this.catalogDraftInspectionError.set(null);
       return;
     }
@@ -336,6 +351,25 @@ export class CatalogPanelComponent implements OnDestroy {
           );
         },
       });
+  }
+
+  private scheduleCatalogDraftInspection(): void {
+    if (this.catalogDraftInspectionDebounceTimer !== null) {
+      clearTimeout(this.catalogDraftInspectionDebounceTimer);
+    }
+
+    const currentDraftSmiles = this.workflow.catalogCreateSmiles().trim();
+    if (currentDraftSmiles === '') {
+      this.refreshCatalogDraftInspection();
+      return;
+    }
+
+    this.catalogDraftInspection.set(null);
+    this.catalogDraftInspectionError.set(null);
+    this.catalogDraftInspectionDebounceTimer = setTimeout(() => {
+      this.catalogDraftInspectionDebounceTimer = null;
+      this.refreshCatalogDraftInspection();
+    }, CatalogPanelComponent.CATALOG_INSPECTION_DEBOUNCE_MS);
   }
 
   private ensureCatalogDefaultAnchorSelection(

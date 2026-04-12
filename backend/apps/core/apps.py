@@ -29,7 +29,7 @@ class CoreConfig(AppConfig):
 
     Esta configuración se mantiene mínima por diseño. La integración activa de
     plugins ocurre en los `AppConfig` de cada app consumidora (por ejemplo,
-    `apps.calculator.apps.CalculatorConfig`).
+        por cada app científica registrada en el proyecto.
     """
 
     default_auto_field = "django.db.models.BigAutoField"

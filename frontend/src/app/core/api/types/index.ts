@@ -1,7 +1,6 @@
 // index.ts: Barrel de re-exportación de todos los tipos de la capa API del frontend.
 // Uso: importar tipos desde 'core/api/types' en lugar de archivos individuales.
 
-export * from './calculator-api.types';
 export * from './easy-rate-api.types';
 export * from './generic-jobs.types';
 export * from './marcus-api.types';

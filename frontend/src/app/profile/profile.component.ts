@@ -4,17 +4,19 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { IdentityApiService } from '../core/api/identity-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
 export class ProfileComponent implements OnInit {
   private readonly identityApiService = inject(IdentityApiService);
+  private readonly translocoService = inject(TranslocoService);
   readonly sessionService = inject(IdentitySessionService);
 
   readonly isSubmitting = signal<boolean>(false);
@@ -48,7 +50,9 @@ export class ProfileComponent implements OnInit {
         });
       },
       error: () => {
-        this.errorMessage.set('Unable to initialize profile information.');
+        this.errorMessage.set(
+          this.translocoService.translate('profile.errors.unableToInitializeProfile'),
+        );
       },
     });
   }
@@ -60,7 +64,7 @@ export class ProfileComponent implements OnInit {
   saveProfile(): void {
     const currentUser = this.sessionService.currentUser();
     if (currentUser === null) {
-      this.errorMessage.set('You must be signed in to update your profile.');
+      this.errorMessage.set(this.translocoService.translate('profile.errors.mustBeSignedIn'));
       return;
     }
 
@@ -69,7 +73,7 @@ export class ProfileComponent implements OnInit {
       profileForm.password.trim() !== '' &&
       profileForm.password !== profileForm.password_confirmation
     ) {
-      this.errorMessage.set('Password confirmation does not match the new password.');
+      this.errorMessage.set(this.translocoService.translate('profile.errors.passwordMismatch'));
       return;
     }
 
@@ -87,7 +91,9 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: () => {
           this.sessionService.reloadSessionData().subscribe();
-          this.successMessage.set('Profile updated successfully.');
+          this.successMessage.set(
+            this.translocoService.translate('profile.messages.updatedSuccessfully'),
+          );
           this.isSubmitting.set(false);
           this.formState.update((currentValue) => ({
             ...currentValue,
@@ -96,7 +102,10 @@ export class ProfileComponent implements OnInit {
           }));
         },
         error: (mutationError: { message?: string }) => {
-          this.errorMessage.set(mutationError.message ?? 'Unable to update profile.');
+          this.errorMessage.set(
+            mutationError.message ??
+              this.translocoService.translate('profile.errors.unableToUpdateProfile'),
+          );
           this.isSubmitting.set(false);
         },
       });

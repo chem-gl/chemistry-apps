@@ -3,6 +3,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   IdentityApiService,
   IdentityUserSummaryView,
@@ -10,6 +11,7 @@ import {
 } from '../core/api/identity-api.service';
 import { JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -17,7 +19,8 @@ import {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterLink],
+  standalone: true,
+  imports: [CommonModule, RouterLink, JobManagementActionsComponent, TranslocoPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -25,12 +28,15 @@ export class DashboardComponent implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
   private readonly jobsApiService = inject(JobsApiService);
   private readonly identityApiService = inject(IdentityApiService);
+  private readonly translocoService = inject(TranslocoService);
 
   readonly isLoading = signal<boolean>(true);
   readonly visibleJobs = signal<ScientificJobView[]>([]);
   readonly visibleUsers = signal<IdentityUserSummaryView[]>([]);
   readonly visibleGroups = signal<WorkGroupView[]>([]);
   readonly errorMessage = signal<string | null>(null);
+  readonly deletingJobId = signal<string | null>(null);
+  readonly deleteErrorMessage = signal<string | null>(null);
 
   readonly runningJobsCount = computed(
     () =>
@@ -61,7 +67,62 @@ export class DashboardComponent implements OnInit {
   }
 
   recentJobNavigationLabel(jobItem: ScientificJobView): string {
-    return this.recentJobRoutePath(jobItem) === null ? 'Result unavailable' : 'Open result';
+    return this.recentJobRoutePath(jobItem) === null
+      ? this.translocoService.translate('dashboard.jobs.resultUnavailable')
+      : this.translocoService.translate('common.actions.openResult');
+  }
+
+  canDeleteJob(jobItem: ScientificJobView): boolean {
+    return (
+      this.isTerminalJob(jobItem) &&
+      this.sessionService.canDeleteJob({
+        owner: jobItem.owner ?? null,
+        group: jobItem.group ?? null,
+      })
+    );
+  }
+
+  deleteActionLabel(jobItem: ScientificJobView): string {
+    const deleteMode = this.sessionService.resolveDeleteMode({
+      owner: jobItem.owner ?? null,
+      group: jobItem.group ?? null,
+    });
+
+    return deleteMode === 'hard'
+      ? this.translocoService.translate('common.actions.deletePermanently')
+      : this.translocoService.translate('common.actions.moveToTrash');
+  }
+
+  deleteJob(jobId: string): void {
+    this.deletingJobId.set(jobId);
+    this.deleteErrorMessage.set(null);
+    this.jobsApiService.deleteJob(jobId).subscribe({
+      next: () => {
+        this.visibleJobs.update((currentJobs: ScientificJobView[]) =>
+          currentJobs.filter((jobItem: ScientificJobView) => jobItem.id !== jobId),
+        );
+        this.deletingJobId.set(null);
+      },
+      error: (deleteError: Error) => {
+        this.deleteErrorMessage.set(
+          deleteError.message ??
+            this.translocoService.translate('dashboard.errors.unableToDeleteJob'),
+        );
+        this.deletingJobId.set(null);
+      },
+    });
+  }
+
+  isDeletingJob(jobId: string): boolean {
+    return this.deletingJobId() === jobId;
+  }
+
+  private isTerminalJob(jobItem: ScientificJobView): boolean {
+    return (
+      jobItem.status === 'completed' ||
+      jobItem.status === 'failed' ||
+      jobItem.status === 'cancelled'
+    );
   }
 
   ngOnInit(): void {
@@ -74,7 +135,10 @@ export class DashboardComponent implements OnInit {
         this.loadDashboardData();
       },
       error: (dashboardError: { message?: string }) => {
-        this.errorMessage.set(dashboardError.message ?? 'Unable to load dashboard.');
+        this.errorMessage.set(
+          dashboardError.message ??
+            this.translocoService.translate('dashboard.errors.unableToLoad'),
+        );
         this.isLoading.set(false);
       },
     });
@@ -90,7 +154,9 @@ export class DashboardComponent implements OnInit {
         this.loadIdentityScope();
       },
       error: (jobsError: { message?: string }) => {
-        this.errorMessage.set(jobsError.message ?? 'Unable to load dashboard jobs.');
+        this.errorMessage.set(
+          jobsError.message ?? this.translocoService.translate('dashboard.errors.unableToLoadJobs'),
+        );
         this.isLoading.set(false);
       },
     });
@@ -114,7 +180,10 @@ export class DashboardComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (identityError: { message?: string }) => {
-        this.errorMessage.set(identityError.message ?? 'Unable to load identity scope.');
+        this.errorMessage.set(
+          identityError.message ??
+            this.translocoService.translate('dashboard.errors.unableToLoadIdentityScope'),
+        );
         this.isLoading.set(false);
       },
     });

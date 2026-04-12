@@ -68,7 +68,7 @@ class BrsaScoreClient:
                 sa_score=float(score),
                 success=True,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return BrsaScoreResult(
                 smiles=smiles_value,
                 sa_score=None,

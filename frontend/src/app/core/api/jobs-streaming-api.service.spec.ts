@@ -8,12 +8,12 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import {
-    JobLogList,
-    JobProgressSnapshot,
-    ProgressStageEnum,
-    provideApi,
-    ScientificJob,
-    StatusEnum,
+  JobLogList,
+  JobProgressSnapshot,
+  ProgressStageEnum,
+  provideApi,
+  ScientificJob,
+  StatusEnum,
 } from './generated';
 import { JobsStreamingApiService } from './jobs-streaming-api.service';
 
@@ -96,7 +96,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
   return {
     id: 'job-1',
     job_hash: 'hash-1',
-    plugin_name: 'calculator',
+    plugin_name: 'random-numbers',
     algorithm_version: '1.0.0',
     status: StatusEnum.Pending,
     cache_hit: false,
@@ -181,7 +181,9 @@ describe('JobsStreamingApiService', () => {
 
   it('normaliza logs de getJobLogs aplicando fallback de payload', async () => {
     // Verifica que payload no-objeto se normaliza a {} manteniendo el nivel válido recibido.
-    const logsPromise: Promise<unknown> = firstValueFrom(service.getJobLogs('job-1', { limit: 50 }));
+    const logsPromise: Promise<unknown> = firstValueFrom(
+      service.getJobLogs('job-1', { limit: 50 }),
+    );
 
     const request = httpMock.expectOne(`${API_BASE_URL}/api/jobs/job-1/logs/?limit=50`);
     request.flush(makeLogList());
@@ -266,7 +268,10 @@ describe('JobsStreamingApiService', () => {
       created_at: new Date().toISOString(),
     });
 
-    const firstEvent = nextSpy.mock.calls[0]?.[0] as { level: string; payload: Record<string, unknown> };
+    const firstEvent = nextSpy.mock.calls[0]?.[0] as {
+      level: string;
+      payload: Record<string, unknown>;
+    };
     expect(firstEvent.level).toBe('info');
     expect(firstEvent.payload).toEqual({});
   });

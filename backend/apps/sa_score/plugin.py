@@ -117,7 +117,7 @@ def _compute_ambit_score(smiles_value: str) -> tuple[float | None, str | None]:
         if result.success:
             return result.sa_score, None
         return None, result.error_message
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return None, f"Error importando/ejecutando AMBIT: {exc}"
 
 
@@ -132,7 +132,7 @@ def _compute_brsa_score(smiles_value: str) -> tuple[float | None, str | None]:
                 return None, "BRSAScore retornó score vacío."
             return _convert_score(float(result.sa_score)), None
         return None, result.error_message
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return None, f"Error importando/ejecutando BRSAScore: {exc}"
 
 
@@ -147,7 +147,7 @@ def _compute_rdkit_score(smiles_value: str) -> tuple[float | None, str | None]:
                 return None, "RDKit SA Score retornó score vacío."
             return _convert_score(float(result.sa_score)), None
         return None, result.error_message
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return None, f"Error importando/ejecutando RDKit SA Score: {exc}"
 
 

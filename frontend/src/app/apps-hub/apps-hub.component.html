@@ -1,36 +1,36 @@
 <!-- apps-hub.component.html: Hub screen for scientific app navigation. -->
-<section class="apps-shell" aria-label="Scientific apps library">
+<section class="apps-shell" [attr.aria-label]="'appsHub.aria.library' | transloco">
   <header class="apps-header">
-    <p class="eyebrow">Modular Ecosystem</p>
-    <h1>Scientific Apps</h1>
-    <p>Access each module from one place and scale your scientific pipeline over time.</p>
+    <p class="eyebrow">{{ 'appsHub.header.eyebrow' | transloco }}</p>
+    <h1>{{ 'appsHub.header.title' | transloco }}</h1>
+    <p>{{ 'appsHub.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="apps-grid">
     <article class="app-card monitor-card">
-      <p class="card-kicker">System layer</p>
-      <h2>Jobs Monitor</h2>
-      <p>Cross-app view for active, paused, completed and failed jobs.</p>
-      <a routerLink="/jobs" class="app-link">Open monitor</a>
+      <p class="card-kicker">{{ 'appsHub.monitorCard.kicker' | transloco }}</p>
+      <h2>{{ 'appsHub.monitorCard.title' | transloco }}</h2>
+      <p>{{ 'appsHub.monitorCard.subtitle' | transloco }}</p>
+      <a routerLink="/jobs" class="app-link">{{ 'appsHub.monitorCard.open' | transloco }}</a>
     </article>
 
     @if (scientificApps().length === 0) {
     <article class="app-card is-disabled">
-      <h2>No visible apps</h2>
-      <p>Your current role and group configuration do not expose additional scientific apps yet.</p>
-      <span class="coming-soon">Contact an administrator</span>
+      <h2>{{ 'appsHub.empty.title' | transloco }}</h2>
+      <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
+      <span class="coming-soon">{{ 'appsHub.empty.action' | transloco }}</span>
     </article>
     }
 
     @for (appItem of scientificApps(); track appItem.key) {
     <article class="app-card" [class.is-disabled]="!appItem.available">
-      <p class="card-kicker">Scientific module</p>
+      <p class="card-kicker">{{ 'appsHub.appCard.kicker' | transloco }}</p>
       <h2>{{ appItem.title }}</h2>
       <p>{{ appItem.description }}</p>
       @if (appItem.available) {
-      <a [routerLink]="appItem.routePath" class="app-link">Open app</a>
+      <a [routerLink]="appItem.routePath" class="app-link">{{ 'appsHub.appCard.open' | transloco }}</a>
       } @else {
-      <span class="coming-soon">Coming soon</span>
+      <span class="coming-soon">{{ 'appsHub.appCard.comingSoon' | transloco }}</span>
       }
     </article>
     }

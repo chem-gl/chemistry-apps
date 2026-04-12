@@ -3,12 +3,13 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ScientificJobView } from '../../../api/jobs-api.service';
 
 @Component({
   selector: 'app-job-history-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './job-history-table.component.html',
   styleUrl: './job-history-table.component.scss',
 })
@@ -34,8 +35,23 @@ export class JobHistoryTableComponent {
   /** Emitido al pulsar "Open" en una fila; lleva el jobId. */
   @Output() openJob = new EventEmitter<string>();
 
+  /** Emitido al pulsar "Delete" en una fila; lleva el jobId. */
+  @Output() deleteJob = new EventEmitter<string>();
+
   /** Clase CSS para el badge de estado del job. */
   statusClass(status: string | undefined): string {
     return `history-status history-${status ?? 'unknown'}`;
+  }
+
+  canDeleteJob(jobItem: ScientificJobView): boolean {
+    return this.isTerminalJob(jobItem);
+  }
+
+  private isTerminalJob(jobItem: ScientificJobView): boolean {
+    return (
+      jobItem.status === 'completed' ||
+      jobItem.status === 'failed' ||
+      jobItem.status === 'cancelled'
+    );
   }
 }

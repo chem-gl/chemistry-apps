@@ -1,36 +1,37 @@
 <!-- principal-molecule-editor.component.html: Entrada de SMILES principal y acción de inspección del scaffold. -->
 
 <label>
-  Principal SMILES
+  {{ 'smileit.principalEditor.label' | transloco }}
   <input type="text" [ngModel]="principalSmiles" (ngModelChange)="onPrincipalSmilesChange($event)"
-    [disabled]="isProcessing" placeholder="c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O" />
+    [disabled]="isProcessing" [placeholder]="'smileit.principalEditor.placeholder' | transloco" />
 </label>
 
 <div class="principal-actions-row">
   <button class="btn-secondary" type="button" (click)="openSketchModifier()">
-    ✏ Open sketch modifier
+    {{ 'smileit.principalEditor.openSketch' | transloco }}
   </button>
   <button class="btn-secondary" type="button" (click)="requestInspect()" [disabled]="isProcessing">
-    {{ isInspecting ? 'Inspecting...' : 'Inspect structure' }}
+    {{ isInspecting ? ('smileit.principalEditor.inspecting' | transloco) : ('smileit.principalEditor.inspect' |
+    transloco) }}
   </button>
 </div>
 
-<p class="catalog-smiles mono">{{ principalSmiles || 'Pending principal SMILES' }}</p>
+<p class="catalog-smiles mono">{{ principalSmiles || ('smileit.principalEditor.pending' | transloco) }}</p>
 <dialog #sketchModifierDialog class="sketch-modifier-dialog" (click)="onSketchModifierDialogClick($event)"
   (keydown)="onSketchModifierDialogClick($event)">
-  <section class="sketch-modifier-modal" aria-label="Principal sketch modifier">
-    <h4>Principal sketch modifier</h4>
-    <p class="hint">Use the sketcher below to edit the principal molecule.</p>
+  <section class="sketch-modifier-modal" [attr.aria-label]="'smileit.principalEditor.sketchAriaLabel' | transloco">
+    <h4>{{ 'smileit.principalEditor.sketchTitle' | transloco }}</h4>
+    <p class="hint">{{ 'smileit.principalEditor.sketchHint' | transloco }}</p>
 
-    <div class="ketcher-frame-wrap" aria-label="Principal molecule sketcher">
+    <div class="ketcher-frame-wrap" [attr.aria-label]="'smileit.principalEditor.sketchTitle' | transloco">
       @if (isSketchModifierLoading()) {
-      <output class="ketcher-loading" aria-label="Loading molecule sketcher">
+      <output class="ketcher-loading" [attr.aria-label]="'smileit.principalEditor.sketchLoading' | transloco">
         <div class="ketcher-loading-bar"><span class="ketcher-loading-progress"></span></div>
-        <p class="ketcher-loading-text">Loading molecule sketcher…</p>
+        <p class="ketcher-loading-text">{{ 'smileit.principalEditor.sketchLoading' | transloco }}</p>
       </output>
       }
-      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher principal sketcher"
-        (load)="onKetcherFrameLoaded()"></iframe>
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl"
+        [title]="'smileit.principalEditor.sketcherFrameTitle' | transloco" (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
     @if (sketchValidationError()) {
@@ -39,10 +40,10 @@
 
     <div class="sketch-modifier-actions">
       <button class="btn-secondary" type="button" (click)="closeSketchModifier()" [disabled]="isProcessing">
-        Cancel
+        {{ 'smileit.principalEditor.cancelButton' | transloco }}
       </button>
       <button class="btn-secondary" type="button" (click)="applySketchModifier()" [disabled]="isProcessing">
-        Apply
+        {{ 'smileit.principalEditor.applyButton' | transloco }}
       </button>
     </div>
   </section>

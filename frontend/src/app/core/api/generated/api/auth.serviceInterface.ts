@@ -11,9 +11,14 @@ import { HttpHeaders }                                       from '@angular/comm
 
 import { Observable }                                        from 'rxjs';
 
+import { AccessibleScientificApp } from '../model/models';
 import { DomainTokenObtainPairRequest } from '../model/models';
+import { EffectiveAppConfig } from '../model/models';
+import { PatchedUserAppConfigRequest } from '../model/models';
 import { TokenRefresh } from '../model/models';
 import { TokenRefreshRequest } from '../model/models';
+import { UserAppConfig } from '../model/models';
+import { UserProfile } from '../model/models';
 
 
 import { Configuration }                                     from '../configuration';
@@ -29,8 +34,9 @@ export interface AuthServiceInterface {
      * Consulta y actualiza configuración de app del usuario actual.
      * @endpoint patch /api/auth/app-configs/{app_name}/
      * @param appName 
+     * @param patchedUserAppConfigRequest 
      */
-    authAppConfigsPartialUpdate(appName: string, extraHttpRequestParams?: any): Observable<{}>;
+    authAppConfigsPartialUpdate(appName: string, patchedUserAppConfigRequest?: PatchedUserAppConfigRequest, extraHttpRequestParams?: any): Observable<UserAppConfig>;
 
     /**
      * 
@@ -38,14 +44,14 @@ export interface AuthServiceInterface {
      * @endpoint get /api/auth/app-configs/{app_name}/
      * @param appName 
      */
-    authAppConfigsRetrieve(appName: string, extraHttpRequestParams?: any): Observable<{}>;
+    authAppConfigsRetrieve(appName: string, extraHttpRequestParams?: any): Observable<EffectiveAppConfig>;
 
     /**
      * 
      * Expone apps disponibles para el usuario actual con RBAC resuelto.
      * @endpoint get /api/auth/apps/
      */
-    authAppsRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    authAppsList(extraHttpRequestParams?: any): Observable<Array<AccessibleScientificApp>>;
 
     /**
      * 
@@ -60,7 +66,7 @@ export interface AuthServiceInterface {
      * Devuelve el perfil del usuario autenticado.
      * @endpoint get /api/auth/me/
      */
-    authMeRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    authMeRetrieve(extraHttpRequestParams?: any): Observable<UserProfile>;
 
     /**
      * 

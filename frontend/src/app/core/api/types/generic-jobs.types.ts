@@ -3,6 +3,9 @@
 
 import { JobProgressSnapshot, ScientificJob } from '../generated';
 
+export type JobDeletionMode = 'hard' | 'soft';
+export type JobSoftDeletionMode = 'soft' | '';
+
 /** Estados válidos para filtrado de jobs en listados globales */
 export type JobListStatusFilter =
   | 'pending'
@@ -53,10 +56,32 @@ export interface JobLogsPageView {
   results: JobLogEntryView[];
 }
 
+// Re-exports de tipos generados para evitar dependencias directas al cliente OpenAPI autogenerado.
+// El wrapper expone un view model más flexible para convivir con campos opcionales en UI y tests.
+export type ScientificJobView = Omit<
+  ScientificJob,
+  'owner_username' | 'group_name' | 'deleted_by_username' | 'deletion_mode' | 'original_status'
+> & {
+  owner_username?: string | null;
+  group_name?: string | null;
+  deleted_by_username?: string | null;
+  deletion_mode?: JobSoftDeletionMode;
+  original_status?: JobListStatusFilter | '';
+};
+export type JobProgressSnapshotView = JobProgressSnapshot;
+
 /** Resultado normalizado de acciones de control de ejecución (pause/resume) */
 export interface JobControlActionResult {
   detail: string;
-  job: ScientificJob;
+  job: ScientificJobView;
+}
+
+/** Resultado normalizado de la eliminación de un job. */
+export interface JobDeleteActionResult {
+  detail: string;
+  jobId: string;
+  deletionMode: JobDeletionMode;
+  scheduledHardDeleteAt: string | null;
 }
 
 /** Representa un archivo descargable retornado por reportes backend */
@@ -64,10 +89,3 @@ export interface DownloadedReportFile {
   filename: string;
   blob: Blob;
 }
-
-// Re-exports de tipos generados para evitar dependencias directas al cliente OpenAPI autogenerado
-export type ScientificJobView = ScientificJob & {
-  owner_username?: string | null;
-  group_name?: string | null;
-};
-export type JobProgressSnapshotView = JobProgressSnapshot;

@@ -1,10 +1,10 @@
 <!-- generation-result-panel.component.html: Panel de configuración, ejecución e inspección de resultados de generación. -->
-<section class="result-panel" aria-label="Result and progress panel">
+<section class="result-panel" [attr.aria-label]="'smileit.step4.ariaLabel' | transloco">
   <div class="panel-header-row">
     <div>
-      <h3>4. Continuous generation and outputs</h3>
+      <h3>{{ 'smileit.step4.title' | transloco }}</h3>
       <p class="panel-caption">
-        Configure generation, run continuously, and inspect/export resulting structures.
+        {{ 'smileit.step4.description' | transloco }}
       </p>
     </div>
   </div>
@@ -12,13 +12,14 @@
   <article class="generation-card">
     <div class="subsection-header">
       <div>
-        <h4>Generation setup</h4>
+        <h4>{{ 'smileit.step4.generationSetup' | transloco }}</h4>
         <p class="hint">
-          Run generation only after block molecules and scaffold positions are fully mapped.
+          {{ 'smileit.step4.setupHint' | transloco }}
         </p>
       </div>
       <span class="workflow-step-state" [class.generation-ready]="workflow.canConfigureGeneration()">
-        {{ workflow.canConfigureGeneration() ? 'Enabled' : 'Locked until mapping' }}
+        {{ workflow.canConfigureGeneration() ? ('smileit.step4.enabled' | transloco) :
+        ('smileit.step4.lockedUntilMapping' | transloco) }}
       </span>
     </div>
 
@@ -27,23 +28,22 @@
     <fieldset class="generation-fieldset" [disabled]="!workflow.canConfigureGeneration() || workflow.isProcessing()">
       <div class="options-grid compact">
         <label>
-          Job name
+          {{ 'smileit.step4.jobName' | transloco }}
           <input type="text" [ngModel]="workflow.exportNameBase()" (ngModelChange)="workflow.exportNameBase.set($event)"
-            [disabled]="workflow.isProcessing()" placeholder="smileit_run" />
+            [disabled]="workflow.isProcessing()" [placeholder]="'smileit.step4.jobNamePlaceholder' | transloco" />
         </label>
       </div>
 
       <div class="options-grid">
         <label>
-          R substitutes
+          {{ 'smileit.step4.rSubstitutes' | transloco }}
           <input type="number" min="1" [max]="workflow.maxRSubstitutesByPositions()" [ngModel]="workflow.rSubstitutes()"
             (ngModelChange)="workflow.setRSubstitutes(toNumber($event))"
             [disabled]="workflow.isProcessing() || workflow.selectedAtomIndices().length === 0" />
           @if (workflow.selectedAtomIndices().length > 0) {
           <small class="hint">
-            max {{ workflow.maxRSubstitutesByPositions() }} (based on
-            {{ workflow.selectedAtomIndices().length }}
-            selected sites)
+            {{ 'smileit.step4.maxHint' | transloco: {max: workflow.maxRSubstitutesByPositions(), sites:
+            workflow.selectedAtomIndices().length} }}
           </small>
           }
         </label>
@@ -56,45 +56,46 @@
               ? ''
               : 'Complete scaffold mapping before generating structures.'
           ">
-          {{ workflow.isProcessing() ? 'Processing...' : 'Generate structures' }}
+          {{ workflow.isProcessing() ? ('smileit.step4.processing' | transloco) : ('smileit.step4.run' | transloco) }}
         </button>
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-          Reset
+          {{ 'smileit.step4.reset' | transloco }}
         </button>
       </div>
     </fieldset>
   </article>
 
-  <article class="generation-card" aria-label="Previous enumeration jobs">
+  <article class="generation-card" [attr.aria-label]="'smileit.step4.previousEnumAriaLabel' | transloco">
     <div class="subsection-header">
       <div>
-        <h4>Previous Jobs</h4>
-        <p class="hint">Open a historical run to inspect the structures currently rendered below.</p>
+        <h4>{{ 'smileit.step4.previousJobs' | transloco }}</h4>
+        <p class="hint">{{ 'smileit.step4.previousJobsHint' | transloco }}</p>
       </div>
       <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
         [disabled]="workflow.isHistoryLoading()">
-        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload jobs' }}
+        {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) : ('smileit.step4.reloadJobs'
+        | transloco) }}
       </button>
     </div>
 
     @if (isShowingCurrentResultBelow()) {
     <p class="history-context-note">
-      The current run is already displayed below. This table only lists older jobs.
+      {{ 'smileit.step4.currentRunDisplayed' | transloco }}
     </p>
     }
 
     @if (visibleHistoryJobs().length === 0) {
-    <p class="hint">No previous enumerations available yet.</p>
+    <p class="hint">{{ 'smileit.step4.noPreviousEnumerations' | transloco }}</p>
     } @else {
-    <section class="history-table-shell" aria-label="Previous jobs table">
+    <section class="history-table-shell" [attr.aria-label]="'smileit.step4.histAriaLabel' | transloco">
       <table class="history-table history-table-detailed">
         <thead>
           <tr>
-            <th scope="col">Run</th>
-            <th scope="col">Status</th>
-            <th scope="col">Blocks</th>
-            <th scope="col">Updated</th>
-            <th scope="col">View</th>
+            <th scope="col">{{ 'smileit.step4.histColRun' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColStatus' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColBlocks' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColUpdated' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColView' | transloco }}</th>
           </tr>
         </thead>
         <tbody>
@@ -115,14 +116,14 @@
             </td>
             <td class="history-blocks-cell">
               @if (historicalJobBlockSummaries(historyJob).length === 0) {
-              <span class="history-empty-value">No blocks</span>
+              <span class="history-empty-value">{{ 'smileit.step4.noBlocks' | transloco }}</span>
               } @else {
               <div class="history-block-list">
                 @for (blockSummary of historicalJobBlockSummaries(historyJob); track blockSummary.label + '-' + $index)
                 {
                 <div class="history-block-pill">
                   <strong>{{ blockSummary.label }}</strong>
-                  <span>Sites {{ blockSummary.positions }}</span>
+                  <span>{{ 'smileit.step4.histSites' | transloco }} {{ blockSummary.positions }}</span>
                   <small class="catalog-smiles mono">{{ blockSummary.smiles }}</small>
                 </div>
                 }
@@ -133,7 +134,7 @@
               @if (historicalJobUpdatedAt(historyJob); as updatedAt) {
               {{ updatedAt | date: 'yyyy-MM-dd HH:mm' }}
               } @else {
-              <span class="history-empty-value">Unknown</span>
+              <span class="history-empty-value">{{ 'smileit.step4.unknown' | transloco }}</span>
               }
             </td>
             <td>
@@ -143,8 +144,15 @@
                 </span>
                 <button type="button" class="history-open-btn" (click)="openHistoricalJob(historyJob.id)"
                   [disabled]="isHistoricalJobSelected(historyJob.id)">
-                  {{ isHistoricalJobSelected(historyJob.id) ? 'Open below' : 'Open' }}
+                  {{ isHistoricalJobSelected(historyJob.id) ? ('smileit.step4.openBelow' | transloco) :
+                  ('smileit.step4.open' | transloco) }}
                 </button>
+                @if (canDeleteHistoricalJob(historyJob)) {
+                <button type="button" class="history-open-btn history-delete-btn"
+                  (click)="deleteHistoricalJob(historyJob.id)">
+                  {{ 'common.actions.delete' | transloco }}
+                </button>
+                }
               </div>
             </td>
           </tr>
@@ -156,12 +164,13 @@
   </article>
 
   @if (workflow.activeSection() === 'dispatching') {
-  <p class="status-message">Dispatching Smileit job...</p>
+  <p class="status-message">{{ 'smileit.step4.dispatchingJob' | transloco }}</p>
   }
 
   @if (workflow.activeSection() === 'progress') {
   <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
-    [progressMessage]="workflow.progressMessage()" progressAriaLabel="Smileit job progress"></app-job-progress-card>
+    [progressMessage]="workflow.progressMessage()"
+    [progressAriaLabel]="'smileit.step4.progressAriaLabel' | transloco"></app-job-progress-card>
   }
 
   @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
@@ -171,46 +180,46 @@
 
   <div class="metadata-grid enriched-grid execution-summary-row">
     <article class="execution-summary-card">
-      <span class="execution-summary-label">Enumerated derivatives</span>
+      <span class="execution-summary-label">{{ 'smileit.step4.enumeratedDerivatives' | transloco }}</span>
       <strong class="execution-summary-value">{{ resultData.totalGenerated }}</strong>
     </article>
     <article class="execution-summary-card">
-      <span class="execution-summary-label">Reactive sites</span>
+      <span class="execution-summary-label">{{ 'smileit.step4.reactiveSites' | transloco }}</span>
       <strong class="execution-summary-value">{{ resultData.selectedAtomIndices.join(', ') }}</strong>
     </article>
     <article class="execution-summary-card">
-      <span class="execution-summary-label">Assignment blocks</span>
+      <span class="execution-summary-label">{{ 'smileit.step4.assignmentBlocksLabel' | transloco }}</span>
       <strong class="execution-summary-value">{{ resultData.assignmentBlocks.length }}</strong>
     </article>
   </div>
 
-  <section class="principal-smiles-card" aria-label="Principal SMILES summary">
-    <span class="principal-smiles-label">Principal SMILES</span>
+  <section class="principal-smiles-card" [attr.aria-label]="'smileit.step4.principalSmilesAriaLabel' | transloco">
+    <span class="principal-smiles-label">{{ 'smileit.step4.principalSmilesLabel' | transloco }}</span>
     <p class="catalog-smiles mono principal-smiles-value">{{ resultData.principalSmiles }}</p>
   </section>
 
   <div class="action-row export-row">
     <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.isExporting()">
-      CSV
+      {{ 'smileit.step4.exportCsv' | transloco }}
     </button>
     <button class="btn-secondary" (click)="exportSmiles()" [disabled]="workflow.isExporting()">
-      SMI/TXT
+      {{ 'smileit.step4.exportSmi' | transloco }}
     </button>
     <button class="btn-secondary" (click)="exportLog()" [disabled]="workflow.isExporting()">
-      LOG
+      {{ 'smileit.step4.exportLog' | transloco }}
     </button>
     <button class="btn-secondary download-zip-btn" (click)="downloadVisibleStructuresZip()" [disabled]="
           workflow.isExporting() || isPreparingImagesZip() || resultData.totalGenerated === 0
-        "
-      title="Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after.">
-      {{ isPreparingImagesZip() ? 'Preparing SVG ZIP...' : '↓ Download SVGs (ZIP)' }}
+        " [title]="'smileit.step4.downloadZipTitle' | transloco">
+      {{ isPreparingImagesZip() ? ('smileit.step4.preparingZip' | transloco) : ('smileit.step4.downloadSvgZip' |
+      transloco) }}
     </button>
   </div>
 
   @if (isPreparingImagesZip()) {
   <output class="status-panel" aria-live="polite">
     <p class="hint">
-      Generating all derivative SVGs on-demand for ZIP export. This may take a while.
+      {{ 'smileit.step4.preparingZipHint' | transloco }}
     </p>
     <progress [value]="imagesZipProgress()" max="100"></progress>
     <small>{{ imagesZipProgress() }}%</small>
@@ -222,27 +231,28 @@
   }
 
   @if (resultData.totalGenerated === 0) {
-  <p class="status-message">No generated structures available in this snapshot.</p>
+  <p class="status-message">{{ 'smileit.step4.noStructures' | transloco }}</p>
   } @else {
-  <section class="structures-list-card" aria-label="Generated derivatives list">
+  <section class="structures-list-card" [attr.aria-label]="'smileit.step4.derivativesAriaLabel' | transloco">
     <div class="subsection-header">
       <div>
-        <h4>Derivatives</h4>
+        <h4>{{ 'smileit.step4.derivativesTitle' | transloco }}</h4>
 
       </div>
       <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
-        {{ isGeneratedStructuresCollapsed() ? 'Expand section' : 'Minimize section' }}
+        {{ isGeneratedStructuresCollapsed() ? ('smileit.step2.expand' | transloco) : ('smileit.step2.minimize' |
+        transloco) }}
       </button>
     </div>
     @if (isGeneratedStructuresCollapsed()) {
     <div class="block-collapsed-summary">
-      <p><strong>Available derivatives:</strong> {{ resultData.totalGenerated }}</p>
+      <p><strong>{{ 'smileit.step4.availableDerivatives' | transloco }}</strong> {{ resultData.totalGenerated }}</p>
       <p>
-        <strong>Loaded in current view:</strong> {{ visibleGeneratedStructures().length }}
+        <strong>{{ 'smileit.step4.loadedInView' | transloco }}</strong> {{ visibleGeneratedStructures().length }}
       </p>
       <p>
-        <strong>Inspection:</strong> Expand this section to review molecular depictions and
-        SMILES.
+        <strong>{{ 'smileit.step4.inspectionLabel' | transloco }}</strong> {{ 'smileit.step4.inspectionHint' | transloco
+        }}
       </p>
     </div>
     } @else {
@@ -269,7 +279,7 @@
           </div>
         </div>
         <div class="derivative-svg-frame combined-structure-frame">
-          <small class="derivative-visual-title">Generated derivative (substituents highlighted)</small>
+          <small class="derivative-visual-title">{{ 'smileit.step4.derivativeVisualTitle' | transloco }}</small>
           <div class="derivative-svg-preview" [innerHTML]="toTrustedSvg(structureItem.svg)"></div>
         </div>
         <div class="derivative-meta">
@@ -280,7 +290,7 @@
             {{ structureItem.smiles }}
           </p>
           <small class="derivative-substitutions" [title]="structurePlaceholderSummary(structureItem)">
-            Placeholder mapping: {{ structurePlaceholderSummary(structureItem) }}
+            {{ 'smileit.step4.placeholderMapping' | transloco }} {{ structurePlaceholderSummary(structureItem) }}
           </small>
           <div class="placeholder-assignment-list">
             @for (
@@ -312,7 +322,8 @@
       </p>
       <button class="btn-secondary" type="button" (click)="showMoreStructures()"
         [disabled]="isLoadingGeneratedStructures()">
-        {{ isLoadingGeneratedStructures() ? 'Loading...' : 'Show 100 more' }}
+        {{ isLoadingGeneratedStructures() ? ('smileit.step4.loadingDerivatives' | transloco) : ('smileit.step4.showMore'
+        | transloco) }}
       </button>
     </div>
     }
@@ -330,7 +341,7 @@
     (keydown.space)="onGeneratedStructureDialogClick($event); $event.preventDefault()"
     (cancel)="closeGeneratedStructureModal()">
     @if (selectedGeneratedStructure(); as selectedStructure) {
-    <section class="structure-modal" aria-label="Generated molecule preview">
+    <section class="structure-modal" [attr.aria-label]="'smileit.step4.generatedModalAriaLabel' | transloco">
       <header class="structure-modal-header">
         <div class="structure-modal-title-area">
           <h4 class="structure-modal-name">{{ structureDisplayName(selectedStructure, 0) }}</h4>
@@ -363,12 +374,12 @@
           </div>
         </div>
         <button type="button" class="btn-secondary" (click)="closeGeneratedStructureModal()">
-          Close
+          {{ 'common.actions.close' | transloco }}
         </button>
       </header>
 
       <div class="structure-modal-svg structure-modal-panel single-structure-panel">
-        <h5>Generated derivative (substituent highlighted)</h5>
+        <h5>{{ 'smileit.step4.generatedModalDerivativeTitle' | transloco }}</h5>
         <div [innerHTML]="toTrustedSvg(selectedStructure.svg)"></div>
       </div>
     </section>

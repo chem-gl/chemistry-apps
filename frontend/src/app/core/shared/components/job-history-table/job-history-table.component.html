@@ -3,7 +3,8 @@
     <div class="history-header">
         <h3>{{ sectionTitle }}</h3>
         <button class="btn-secondary" (click)="reload.emit()" [disabled]="isLoading">
-            {{ isLoading ? 'Loading...' : 'Reload history' }}
+            {{ isLoading ? ('shared.jobHistoryTable.reloading' | transloco) : ('shared.jobHistoryTable.reload' |
+            transloco) }}
         </button>
     </div>
 
@@ -14,10 +15,10 @@
         <table class="history-table">
             <thead>
                 <tr>
-                    <th>Job ID</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                    <th>Action</th>
+                    <th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th>
+                    <th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th>
+                    <th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th>
+                    <th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,9 +32,16 @@
                     </td>
                     <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                     <td>
-                        <button class="history-open-btn" (click)="openJob.emit(historyJob.id)">
-                            Open
-                        </button>
+                        <div class="actions-cell">
+                            <button class="history-open-btn" (click)="openJob.emit(historyJob.id)">
+                                {{ 'shared.jobHistoryTable.open' | transloco }}
+                            </button>
+                            @if (canDeleteJob(historyJob)) {
+                            <button class="history-open-btn" (click)="deleteJob.emit(historyJob.id)">
+                                {{ 'common.actions.delete' | transloco }}
+                            </button>
+                            }
+                        </div>
                     </td>
                 </tr>
                 }

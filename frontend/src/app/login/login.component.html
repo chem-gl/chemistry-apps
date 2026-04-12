@@ -1,30 +1,25 @@
 <!-- login.component.html: Inicio de sesión para operadores y administradores. -->
-<section class="login-shell" aria-label="Sign in">
-    <article class="login-hero" aria-label="Brand message">
-        <p class="hero-kicker">App Chemistry Sense</p>
-        <h1 class="hero-title">Designing Scientific Workflows with Clarity</h1>
-        <p class="hero-copy">
-            Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure
-            access controls from a single command surface.
-        </p>
+<section class="login-shell" [attr.aria-label]="'login.aria.signIn' | transloco">
+    <article class="login-hero" [attr.aria-label]="'login.aria.brandMessage' | transloco">
+        <p class="hero-kicker">{{ 'login.hero.kicker' | transloco }}</p>
+        <h1 class="hero-title">{{ 'login.hero.title' | transloco }}</h1>
+        <p class="hero-copy">{{ 'login.hero.copy' | transloco }}</p>
     </article>
 
     <article class="login-panel">
-        <p class="eyebrow">Identity Gateway</p>
-        <h2>Scientific Access</h2>
-        <p class="lead">
-            Sign in to load your role, group access, app visibility rules and personalized workspace.
-        </p>
+        <p class="eyebrow">{{ 'login.panel.eyebrow' | transloco }}</p>
+        <h2>{{ 'login.panel.title' | transloco }}</h2>
+        <p class="lead">{{ 'login.panel.copy' | transloco }}</p>
 
         <form class="login-form" (ngSubmit)="submit()">
             <label>
-                Username
+                {{ 'login.form.username' | transloco }}
                 <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
                     autocomplete="username" required />
             </label>
 
             <label>
-                Password
+                {{ 'login.form.password' | transloco }}
                 <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
                     autocomplete="current-password" required />
             </label>
@@ -34,7 +29,8 @@
             }
 
             <button class="submit-button" type="submit" [disabled]="sessionService.isLoading()">
-                {{ sessionService.isLoading() ? 'Signing in...' : 'Sign in' }}
+                {{ sessionService.isLoading() ? ('login.form.signingIn' | transloco) : ('login.form.signIn' | transloco)
+                }}
             </button>
         </form>
     </article>

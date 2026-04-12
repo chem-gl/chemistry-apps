@@ -1,0 +1,1132 @@
+{
+  "app": {
+    "brand": {
+      "kicker": "Chemistry Apps",
+      "title": "Panel de Control Científico",
+      "caption": "Navegación central para apps, jobs y acceso de cuenta."
+    },
+    "actions": {
+      "signIn": "Iniciar sesión",
+      "signOut": "Cerrar sesión"
+    },
+    "nav": {
+      "ariaLabel": "Navegación principal",
+      "signIn": "Iniciar sesión",
+      "dashboard": "Panel",
+      "profile": "Perfil",
+      "jobsMonitor": "Monitor de Jobs",
+      "apps": "Apps",
+      "identity": "Identidad"
+    },
+    "navHints": {
+      "signIn": "Autentícate para cargar tu espacio de trabajo",
+      "dashboard": "Resumen del espacio de trabajo adaptado al rol",
+      "profile": "Administra tu perfil personal y contraseña",
+      "jobsMonitor": "Rastrea jobs activos y completados",
+      "apps": "Apps científicas visibles para tu sesión actual",
+      "identity": "Usuarios, grupos y permisos"
+    }
+  },
+  "language": {
+    "switcher": {
+      "ariaLabel": "Selector de idioma",
+      "menuLabel": "Idiomas disponibles"
+    }
+  },
+  "common": {
+    "actions": {
+      "refresh": "Actualizar",
+      "openResult": "Abrir resultado",
+      "delete": "Eliminar",
+      "restore": "Restaurar",
+      "working": "Procesando...",
+      "deletePermanently": "Eliminar permanentemente",
+      "restoreJob": "Restaurar job",
+      "moveToTrash": "Mover a papelera",
+      "close": "Cerrar"
+    },
+    "flags": {
+      "on": "ON",
+      "off": "OFF"
+    },
+    "filters": {
+      "status": "Estado",
+      "app": "App",
+      "all": "Todos"
+    },
+    "statusFilters": {
+      "all": "Todos"
+    },
+    "jobStatus": {
+      "pending": "Pendiente",
+      "running": "En ejecución",
+      "paused": "Pausado",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
+    },
+    "table": {
+      "id": "ID",
+      "job": "Job",
+      "app": "App",
+      "ownerGroup": "Propietario / Grupo",
+      "status": "Estado",
+      "progress": "Progreso",
+      "stage": "Etapa",
+      "cache": "Caché",
+      "updated": "Actualizado",
+      "action": "Acción"
+    },
+    "fallback": {
+      "unknownUser": "Usuario desconocido",
+      "noGroup": "Sin grupo"
+    }
+  },
+  "login": {
+    "aria": {
+      "signIn": "Iniciar sesión",
+      "brandMessage": "Mensaje de marca"
+    },
+    "hero": {
+      "kicker": "App Chemistry Sense",
+      "title": "Diseñando flujos científicos con claridad",
+      "copy": "Entra a tu espacio científico para orquestar cálculos, monitorear jobs distribuidos y gestionar accesos seguros desde una sola superficie de control."
+    },
+    "panel": {
+      "eyebrow": "Puerta de Identidad",
+      "title": "Acceso Científico",
+      "copy": "Inicia sesión para cargar tu rol, acceso por grupo, visibilidad de apps y espacio personalizado."
+    },
+    "form": {
+      "username": "Usuario",
+      "password": "Contraseña",
+      "signIn": "Iniciar sesión",
+      "signingIn": "Iniciando sesión..."
+    },
+    "errors": {
+      "unableToAuthenticate": "No fue posible autenticarse."
+    }
+  },
+  "profile": {
+    "aria": {
+      "management": "Gestión de perfil"
+    },
+    "header": {
+      "eyebrow": "Espacio personal",
+      "title": "Perfil",
+      "subtitle": "Actualiza tu información de identidad. Estos cambios están disponibles para roles user, admin y root."
+    },
+    "form": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "saveProfile": "Guardar perfil",
+      "saving": "Guardando..."
+    },
+    "messages": {
+      "updatedSuccessfully": "Perfil actualizado correctamente."
+    },
+    "errors": {
+      "mustBeSignedIn": "Debes iniciar sesión para actualizar tu perfil.",
+      "passwordMismatch": "La confirmación no coincide con la nueva contraseña.",
+      "unableToInitializeProfile": "No fue posible inicializar la información del perfil.",
+      "unableToUpdateProfile": "No fue posible actualizar el perfil."
+    }
+  },
+  "appsHub": {
+    "aria": {
+      "library": "Biblioteca de apps científicas"
+    },
+    "header": {
+      "eyebrow": "Ecosistema modular",
+      "title": "Apps científicas",
+      "subtitle": "Accede a cada módulo desde un solo lugar y escala tu pipeline científico en el tiempo."
+    },
+    "monitorCard": {
+      "kicker": "Capa del sistema",
+      "title": "Monitor de Jobs",
+      "subtitle": "Vista transversal para jobs activos, pausados, completados y fallidos.",
+      "open": "Abrir monitor"
+    },
+    "empty": {
+      "title": "No hay apps visibles",
+      "subtitle": "Tu rol y configuración de grupo no exponen más apps científicas por ahora.",
+      "action": "Contacta a un administrador"
+    },
+    "appCard": {
+      "kicker": "Módulo científico",
+      "open": "Abrir app",
+      "comingSoon": "Próximamente"
+    }
+  },
+  "dashboard": {
+    "aria": {
+      "page": "Panel de usuario"
+    },
+    "header": {
+      "eyebrow": "Espacio por rol",
+      "role": "Rol",
+      "anonymous": "anónimo",
+      "primaryGroup": "Grupo principal"
+    },
+    "actions": {
+      "myProfile": "Mi perfil",
+      "openJobsMonitor": "Abrir monitor de jobs",
+      "openRecycleBin": "Abrir papelera",
+      "openIdentityConsole": "Abrir consola de identidad"
+    },
+    "states": {
+      "loading": "Cargando panel...",
+      "noRecentJobs": "No hay jobs disponibles en tu alcance actual."
+    },
+    "metrics": {
+      "runningJobs": "Jobs en ejecución",
+      "pausedJobs": "Jobs pausados",
+      "completedJobs": "Jobs completados",
+      "enabledApps": "Apps habilitadas",
+      "visibleUsers": "Usuarios visibles",
+      "visibleGroups": "Grupos visibles"
+    },
+    "panels": {
+      "accessibleApps": "Apps accesibles",
+      "recentJobs": "Jobs recientes",
+      "usersInScope": "Usuarios en alcance",
+      "groupsInScope": "Grupos en alcance"
+    },
+    "jobs": {
+      "resultUnavailable": "Resultado no disponible",
+      "openResultFor": "Abrir resultado para"
+    },
+    "errors": {
+      "unableToLoad": "No fue posible cargar el panel.",
+      "unableToLoadJobs": "No fue posible cargar los jobs del panel.",
+      "unableToLoadIdentityScope": "No fue posible cargar el alcance de identidad.",
+      "unableToDeleteJob": "No fue posible eliminar el job."
+    }
+  },
+  "jobsMonitor": {
+    "aria": {
+      "page": "Monitor de jobs",
+      "statusSummary": "Resumen de estado",
+      "filters": "Filtros del monitor",
+      "activeJobs": "Jobs activos",
+      "pausedJobs": "Jobs pausados",
+      "finishedJobs": "Jobs terminados"
+    },
+    "header": {
+      "eyebrow": "Operaciones distribuidas",
+      "title": "Monitor de Jobs",
+      "subtitle": "Supervisa jobs en ejecución, pausados, completados y fallidos en todas las apps."
+    },
+    "actions": {
+      "recycleBin": "Papelera",
+      "autoRefresh": "Auto actualización",
+      "openLiveLogs": "Abrir logs en vivo",
+      "openLogs": "Abrir logs",
+      "pause": "Pausar",
+      "pausing": "Pausando...",
+      "pauseRequested": "Pausa solicitada...",
+      "resume": "Reanudar",
+      "resuming": "Reanudando...",
+      "cancel": "Cancelar",
+      "cancelling": "Cancelando...",
+      "viewSummary": "Ver resumen",
+      "resumeJob": "Reanudar job",
+      "pauseJob": "Pausar job",
+      "cancelJob": "Cancelar job"
+    },
+    "kpi": {
+      "active": "Activos",
+      "paused": "Pausados",
+      "completed": "Completados",
+      "failed": "Fallidos",
+      "cancelled": "Cancelados",
+      "lastUpdate": "Última actualización"
+    },
+    "sections": {
+      "running": "En ejecución",
+      "paused": "Pausados",
+      "finished": "Completados, fallidos y cancelados"
+    },
+    "states": {
+      "loadingJobs": "Cargando jobs...",
+      "noActiveJobs": "No hay jobs activos para los filtros seleccionados.",
+      "noPausedJobs": "No hay jobs pausados para los filtros seleccionados.",
+      "noFinishedJobs": "No hay jobs terminales para este filtro todavía."
+    },
+    "hints": {
+      "cooperativePause": "Se registró una solicitud de pausa cooperativa."
+    },
+    "table": {
+      "cacheHit": "Hit",
+      "cacheMiss": "Miss"
+    },
+    "details": {
+      "aria": "Detalles del job",
+      "title": "Detalles del job",
+      "loading": "Cargando detalles y logs...",
+      "message": "Mensaje",
+      "errorTrace": "Traza de error",
+      "errorTraceAria": "Traza de error del job",
+      "noLogs": "No hay logs disponibles para este job.",
+      "logs": "Logs"
+    }
+  },
+  "trash": {
+    "aria": {
+      "page": "Papelera de reciclaje",
+      "filters": "Filtros de papelera"
+    },
+    "header": {
+      "eyebrow": "Recuperación administrativa",
+      "title": "Papelera",
+      "subtitle": "Restaura jobs eliminados por administradores antes de la eliminación automática."
+    },
+    "actions": {
+      "backToMonitor": "Volver al monitor"
+    },
+    "states": {
+      "loading": "Cargando papelera...",
+      "empty": "No hay jobs eliminados disponibles para restauración."
+    },
+    "table": {
+      "deletedBy": "Eliminado por",
+      "deletedAt": "Eliminado en",
+      "purgeAt": "Purgar en"
+    },
+    "fallback": {
+      "unknownActor": "Actor desconocido",
+      "noDeadline": "Sin fecha límite"
+    }
+  },
+  "errorModal": {
+    "actions": {
+      "closeAria": "Cerrar modal de error",
+      "viewDetails": "Ver detalles técnicos",
+      "understood": "Entendido"
+    },
+    "http": {
+      "requestFailedTitle": "Solicitud fallida",
+      "networkUnavailable": "Red no disponible. Verifica tu conexión.",
+      "badRequest": "La solicitud es inválida. Revisa los datos enviados.",
+      "unauthorized": "Tu sesión no está autorizada para esta operación.",
+      "forbidden": "No tienes permisos para realizar esta acción.",
+      "notFound": "No se encontró el recurso solicitado.",
+      "serverError": "El servidor reportó un error interno. Inténtalo de nuevo más tarde."
+    }
+  },
+  "tunnel": {
+    "header": {
+      "eyebrow": "Efecto Túnel",
+      "title": "Calculadora de Tunelización Eckart Asimétrica",
+      "subtitle": "Ingresa los mismos campos de la herramienta de escritorio y rastrea cada modificación de entrada para entender cómo se produjo el resultado final."
+    },
+    "form": {
+      "title": "Entrada de datos",
+      "ariaLabel": "Parámetros de entrada",
+      "barrierZpe": "Barrera de reacción ZPE (kcal/mol)",
+      "imaginaryFrequency": "Frecuencia imaginaria (cm-1)",
+      "energyZpe": "Energía de reacción ZPE (kcal/mol)",
+      "temperature": "Temperatura (K)"
+    },
+    "actions": {
+      "run": "Datos ok, ejecutar Túnel",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "clearTrace": "Limpiar traza de entrada",
+      "exportCsv": "Exportar CSV",
+      "exporting": "Exportando...",
+      "exportLog": "Exportar LOG (entradas + resultados)"
+    },
+    "result": {
+      "title": "Salida",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de efecto túnel al backend...",
+      "labels": {
+        "barrierZpe": "Barrera ZPE:",
+        "frequency": "Frecuencia:",
+        "energyZpe": "Energía ZPE:",
+        "temperature": "Temperatura:",
+        "model": "Modelo:",
+        "inputEvents": "Eventos de entrada:"
+      }
+    },
+    "trace": {
+      "title": "Traza de modificaciones de entrada",
+      "ariaLabel": "Eventos de modificación de entrada",
+      "eventsCapture": "eventos capturados",
+      "empty": "Aún no se capturaron modificaciones de entrada.",
+      "columns": {
+        "index": "#",
+        "field": "Campo",
+        "previous": "Anterior",
+        "new": "Nuevo",
+        "changedAt": "Modificado en"
+      }
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de efecto túnel.",
+      "ariaLabel": "Jobs históricos de túnel"
+    }
+  },
+  "molarFractions": {
+    "header": {
+      "eyebrow": "Fracciones Molares",
+      "title": "Fracciones de Equilibrio Ácido-Base",
+      "subtitle": "Configura los valores de pKa y el modo de pH para calcular la tabla de fracciones producida por la aplicación de escritorio."
+    },
+    "form": {
+      "title": "Entrada de datos",
+      "ariaLabel": "Parámetros de entrada",
+      "pkaCount": "Número de equilibrios ácido-base",
+      "pkaValues": "Ingresar valores pKa",
+      "phMode": "Valores de pH",
+      "phSingle": "Un valor de pH",
+      "phRange": "Rango de pH",
+      "singlePh": "Valor de pH único",
+      "phMin": "Mín",
+      "phMax": "Máx",
+      "phStep": "Paso"
+    },
+    "actions": {
+      "run": "Ejecutar Fracciones Molares",
+      "processing": "Procesando...",
+      "reset": "Restablecer"
+    },
+    "result": {
+      "title": "Resultados",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de fracciones molares al backend...",
+      "noRows": "Aún no hay filas finales disponibles para este job histórico.",
+      "metadata": {
+        "mode": "Modo:",
+        "pkaValues": "Valores pKa:",
+        "range": "Rango:",
+        "to": "a",
+        "step": "Paso:",
+        "species": "Especies:",
+        "points": "Puntos:"
+      },
+      "table": { "ph": "pH", "sum": "Suma" },
+      "exportLog": "Exportar LOG (entradas + CSV)"
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de fracciones molares.",
+      "ariaLabel": "Jobs históricos",
+      "columns": { "mode": "Modo" },
+      "open": "Abrir"
+    }
+  },
+  "easyRate": {
+    "header": {
+      "eyebrow": "Cinética — TST + Túnel Eckart",
+      "title": "Calculadora Easy-rate",
+      "subtitle": "Carga archivos de log Gaussian para las estructuras de reacción y calcula constantes de velocidad con mecánica estadística, corrección por tunelamiento y control de difusión opcional."
+    },
+    "form": {
+      "title": "Archivos de entrada",
+      "ariaLabel": "Archivos de entrada y parámetros",
+      "browseHint": "Explorar .log / .out / .txt",
+      "parserNotes": "Notas del parser:",
+      "parameters": "Parámetros",
+      "titleField": "Título",
+      "titlePlaceholder": "Etiqueta de reacción opcional",
+      "pathDegeneracy": "Degeneración del camino de reacción",
+      "solvent": "Solvente",
+      "customViscosity": "Viscosidad personalizada (Pa·s)",
+      "cageEffects": "Efectos de jaula",
+      "diffusionCorrection": "Corrección por difusión",
+      "printDataInput": "Imprimir entrada de datos",
+      "executionsParsed": "ejecución(es) procesada(s)",
+      "parsedExecution": "Ejecución procesada",
+      "gaussianPreview": "Vista previa Gaussian",
+      "analyzingGaussian": "Analizando ejecuciones Gaussian...",
+      "selectExecutionHint": "Selecciona una ejecución procesada para continuar."
+    },
+    "preview": {
+      "titleLabel": "Título",
+      "chargeMultiplicity": "Carga / Multiplicidad",
+      "scf": "SCF",
+      "hartree": "hartree",
+      "ghZpe": "G / H / ZPE",
+      "temperature": "Temperatura",
+      "imaginaryFrequency": "Frecuencia imaginaria",
+      "optimizationTermination": "Optimización / Terminación",
+      "optFreq": "OPT+FREQ",
+      "incomplete": "Incompleta",
+      "normalTermination": "Terminación normal",
+      "notTerminated": "No terminada"
+    },
+    "actions": {
+      "run": "Ejecutar Easy-rate",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "clearFiles": "Limpiar archivos"
+    },
+    "result": {
+      "title": "Salida",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de Easy-rate al backend...",
+      "defaultTitle": "Resultado Easy-rate",
+      "rateConstants": "Constantes de velocidad",
+      "tunnelCorrection": "Corrección por túnel (Eckart)",
+      "thermochemistry": "Termoquímica",
+      "conditions": "Condiciones",
+      "kTst": "k (TST)",
+      "kFinal": "k (final)",
+      "kDiffCorrected": "k (corr. difusión)",
+      "kDiff": "k_diff",
+      "kappaTst": "κ (TST)",
+      "tunnelU": "U",
+      "tunnelAlpha1": "α₁",
+      "tunnelAlpha2": "α₂",
+      "tunnelG": "G",
+      "imagFreq": "ν‡ (cm⁻¹)",
+      "thermReaction": "Reacción",
+      "thermActivation": "Activación",
+      "deltaG": "ΔG (kcal/mol)",
+      "deltaH": "ΔH (kcal/mol)",
+      "deltaZpe": "ΔZPE (kcal/mol)",
+      "condTemperature": "Temperatura",
+      "condPathDegeneracy": "Degeneración del camino",
+      "condViscosity": "Viscosidad",
+      "flagCageEffects": "Efectos de jaula",
+      "flagDiffusion": "Difusión",
+      "flagNegativeActivation": "⚠ Activación negativa"
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de Easy-rate.",
+      "ariaLabel": "Jobs históricos de Easy-rate"
+    }
+  },
+  "marcus": {
+    "header": {
+      "eyebrow": "Cinética — Teoría de Marcus",
+      "title": "Calculadora de Velocidad Marcus",
+      "subtitle": "Carga seis archivos de log Gaussian (reactivos, productos adiabáticos, productos verticales) para calcular energías Marcus, energía de reorganización, barreras y constantes de velocidad."
+    },
+    "fileGroups": {
+      "reactants": "Reactivos",
+      "adiabaticProducts": "Productos Adiabáticos",
+      "verticalProducts": "Productos Verticales",
+      "allRequired": "Los 6 son obligatorios",
+      "inputFilesTitle": "Archivos de entrada requeridos"
+    },
+    "form": {
+      "parameters": "Parámetros",
+      "titleField": "Título",
+      "titlePlaceholder": "Etiqueta de reacción opcional",
+      "diffusionCorrection": "Corrección por difusión"
+    },
+    "fileSlots": {
+      "reactant1": "Reactivo 1",
+      "reactant2": "Reactivo 2",
+      "product1Adiabatic": "Producto 1 Adiabático",
+      "product2Adiabatic": "Producto 2 Adiabático",
+      "product1Vertical": "Producto 1 Vertical",
+      "product2Vertical": "Producto 2 Vertical",
+      "browse": "Seleccionar .log / .out / .txt"
+    },
+    "actions": {
+      "run": "Ejecutar Marcus",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "clearFiles": "Limpiar archivos"
+    },
+    "result": {
+      "title": "Salida",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de Marcus al backend...",
+      "defaultTitle": "Resultado Marcus",
+      "marcusEnergies": "Energías de Marcus",
+      "rateConstants": "Constantes de velocidad",
+      "conditions": "Condiciones",
+      "adiabaticEnergy": "ΔE adiabático (kcal/mol)",
+      "adiabaticEnergyCorrected": "ΔE adiab. corr. (kcal/mol)",
+      "verticalEnergy": "ΔE vertical (kcal/mol)",
+      "reorganizationEnergy": "λ (reorganización, kcal/mol)",
+      "barrier": "ΔG‡ (barrera, kcal/mol)",
+      "kTst": "k (TST)",
+      "kFinal": "k (final)",
+      "kDiff": "k_diff",
+      "condTemperature": "Temperatura",
+      "condViscosity": "Viscosidad",
+      "flagDiffusion": "Difusión"
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de Marcus.",
+      "ariaLabel": "Jobs históricos de Marcus"
+    }
+  },
+  "randomNumbers": {
+    "header": {
+      "eyebrow": "Números Aleatorios",
+      "title": "Generación Asíncrona por Lotes",
+      "subtitle": "Configura la URL fuente, el tamaño de lote, el intervalo y el tamaño de salida total."
+    },
+    "form": {
+      "ariaLabel": "Parámetros de generación",
+      "seedUrl": "URL semilla",
+      "seedUrlPlaceholder": "https://ejemplo.com/semilla.txt",
+      "numbersPerBatch": "Números por lote",
+      "batchInterval": "Intervalo de lote (segundos)",
+      "totalNumbers": "Total de números"
+    },
+    "actions": {
+      "generate": "Generar",
+      "processing": "Procesando...",
+      "clear": "Limpiar",
+      "resuming": "Reanudando...",
+      "resumeJob": "Reanudar job",
+      "pausing": "Pausando...",
+      "pauseJob": "Pausar job"
+    },
+    "progress": {
+      "title": "Job en Progreso",
+      "ariaLabel": "Progreso del job de números aleatorios",
+      "stage": "Etapa:"
+    },
+    "logs": { "title": "Logs de ejecución" },
+    "result": {
+      "title": "Resultado Generado",
+      "ariaLabel": "Resultado de números aleatorios",
+      "seedUrlLabel": "URL semilla:",
+      "digestLabel": "Resumen:",
+      "batchLabel": "Lote:",
+      "intervalLabel": "Intervalo:",
+      "totalLabel": "Total:",
+      "numbersTitle": "Números Aleatorios"
+    },
+    "history": {
+      "title": "Historial de Resultados",
+      "ariaLabel": "Historial de jobs de números aleatorios",
+      "empty": "Aún no hay jobs históricos de números aleatorios.",
+      "reload": "Recargar historial",
+      "reloading": "Cargando...",
+      "columns": {
+        "jobId": "ID de Job",
+        "status": "Estado",
+        "numbers": "Números",
+        "updated": "Actualizado",
+        "action": "Acción"
+      }
+    }
+  },
+  "saScore": {
+    "header": {
+      "eyebrow": "SA Score",
+      "title": "Tabla de Accesibilidad Sintética",
+      "subtitle": "Ejecuta los métodos AMBIT, BRSAScore y RDKit sobre un lote de SMILES"
+    },
+    "form": {
+      "title": "Entrada",
+      "ariaLabel": "Parámetros de entrada",
+      "methodsLegend": "Métodos"
+    },
+    "actions": {
+      "run": "Ejecutar SA Score",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "exportCsv": "Exportar CSV",
+      "exporting": "Exportando..."
+    },
+    "result": {
+      "title": "Resultados",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de SA score al backend...",
+      "ariaProgressLabel": "Progreso del job SA score",
+      "exportTargetLabel": "Destino de exportación",
+      "totalMolecules": "Total de moléculas:",
+      "methodsLabel": "Métodos:",
+      "jobIdLabel": "ID de job:",
+      "tableName": "Nombre",
+      "tableSMILES": "SMILES"
+    },
+    "sketch": {
+      "title": "Dibujar SMILES",
+      "hint": "Usa el sketcher de abajo. Si no carga, pega un SMILES en el textarea de respaldo.",
+      "loading": "Cargando editor de moléculas…",
+      "cancel": "Cancelar",
+      "addToList": "Agregar a la lista"
+    },
+    "moleculeModal": {
+      "title": "Estructura molecular",
+      "loading": "Cargando estructura..."
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de SA score.",
+      "title": "Historial",
+      "ariaLabel": "Jobs históricos de SA score"
+    }
+  },
+  "toxicityProperties": {
+    "header": {
+      "eyebrow": "Propiedades de Toxicidad",
+      "title": "Tabla de Propiedades de Toxicidad",
+      "subtitle": "Predice LD50, mutagenicidad Ames y toxicidad del desarrollo con ADMET-AI sobre un lote de SMILES"
+    },
+    "form": {
+      "title": "Entrada",
+      "ariaLabel": "Parámetros de entrada"
+    },
+    "actions": {
+      "run": "Ejecutar Propiedades de Toxicidad",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "exportCsv": "Exportar CSV",
+      "exporting": "Exportando..."
+    },
+    "result": {
+      "title": "Resultados",
+      "ariaLabel": "Resultados y progreso",
+      "submitting": "Enviando job de toxicidad al backend...",
+      "ariaProgressLabel": "Progreso del job de toxicidad",
+      "totalMolecules": "Total de moléculas:",
+      "modelLabel": "Modelo: ADMET-AI",
+      "jobIdLabel": "ID de job:",
+      "tableName": "Nombre",
+      "tableSMILES": "SMILES",
+      "references": "Referencias científicas"
+    },
+    "sketch": {
+      "title": "Dibujar SMILES",
+      "hint": "Usa el sketcher de abajo. Si no carga, pega un SMILES en el textarea de respaldo.",
+      "loading": "Cargando editor de moléculas…",
+      "cancel": "Cancelar"
+    },
+    "history": {
+      "empty": "Aún no hay jobs históricos de toxicidad.",
+      "title": "Historial",
+      "ariaLabel": "Jobs históricos de toxicidad"
+    }
+  },
+  "smileit": {
+    "header": {
+      "eyebrow": "SMILE-IT",
+      "title": "Diseñador de Estructuras Combinatorias",
+      "subtitle": "Inspecciona scaffolds, asigna bloques de sustitución y genera bibliotecas derivadas desde notación SMILES.",
+      "ariaLabel": "App científica Smileit"
+    },
+    "step1": {
+      "title": "1. Molécula principal y vista previa del scaffold",
+      "description": "Define el SMILES principal, inspecciónalo visualmente y elige los sitios de sustitución que luego serán asignados a tus moléculas de bloque.",
+      "ariaLabel": "Parámetros de entrada"
+    },
+    "inspection": {
+      "ariaLabel": "Contexto de inspección principal",
+      "atoms": "Átomos:",
+      "patternsVisible": "Patrones visibles:",
+      "canonical": "Canónico:",
+      "clickTip": "Consejo: haz clic directamente en la imagen de la molécula para seleccionar átomos con el ratón."
+    },
+    "properties": {
+      "ariaLabel": "Propiedades fisicoquímicas rápidas",
+      "mwLabel": "PM:",
+      "mwAria": "Peso molecular",
+      "clogpLabel": "cLogP:",
+      "clogpAria": "LogP calculado",
+      "tpsaLabel": "TPSA:",
+      "tpsaAria": "Área de superficie polar topológica",
+      "rotatableBondsLabel": "Bonds rotables:",
+      "rotatableBondsAria": "Número de bonds rotables",
+      "hbdLabel": "HBD:",
+      "hbdAria": "Donadores de enlaces de hidrógeno",
+      "hbaLabel": "HBA:",
+      "hbaAria": "Aceptores de enlaces de hidrógeno",
+      "aromaticRingsLabel": "Anillos aromáticos:",
+      "aromaticRingsAria": "Número de anillos aromáticos"
+    },
+    "step2": {
+      "title": "2. Catálogo persistente de sustituyentes",
+      "description": "Construye y cuida los catálogos de sustituyentes primero. Estas entradas se reutilizan en el paso de asignación de bloques.",
+      "manageCatalog": "Administrar catálogo SMILES",
+      "expand": "Expandir sección",
+      "minimize": "Minimizar sección",
+      "storedEntries": "Entradas almacenadas:",
+      "catalogGroups": "Grupos de catálogo:",
+      "validatedCategories": "Categorías validadas:",
+      "catalogNote": "La creación y edición del catálogo están aisladas en el estudio SMILES para mantener el flujo principal limpio.",
+      "storedSubstituents": "Sustituyentes almacenados",
+      "browseHint": "Navega por grupo, inspecciona la vista previa y abre el modal detallado al hacer clic.",
+      "groupFilter": "Grupo",
+      "allGroups": "Todos los grupos",
+      "noCatalogMolecules": "No hay moléculas de catálogo disponibles para el grupo seleccionado.",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "ariaLabel": "Paso 2 catálogos de sustituyentes",
+      "collapsedAriaLabel": "Resumen de sección de catálogo colapsada",
+      "storedCatalogAriaLabel": "Catálogo de sustituyentes almacenados",
+      "groupFilterAria": "Filtrar sustituyentes por grupo",
+      "openDetail": "Abrir detalle de {{name}}"
+    },
+    "step3": {
+      "title": "3. Asignación de bloques por ubicación",
+      "ariaLabel": "Bloques y catálogos",
+      "newBlock": "Nuevo bloque",
+      "selectedSites": "Sitios seleccionados",
+      "effectiveCoverage": "Cobertura efectiva",
+      "uncovered": "sin cobertura",
+      "panelMinimized": "Panel derecho minimizado. Usa \"Expandir panel derecho\" para continuar.",
+      "blocks": "Bloques:",
+      "coveredSites": "Sitios cubiertos:",
+      "uncoveredSites": "Sitios sin cobertura:",
+      "catalogEntries": "Entradas de catálogo:",
+      "createFirstBlock": "Crea el primer bloque para definir qué moléculas sustituyentes estarán disponibles.",
+      "blockPriority": "Prioridad",
+      "up": "Arriba",
+      "down": "Abajo",
+      "deleteBlock": "Eliminar bloque",
+      "blockLabel": "Etiqueta del bloque",
+      "siteAssignment": "Asignación de sitios",
+      "noSitesAssigned": "Aún no hay sitios asignados.",
+      "addFromCatalog": "Agregar desde catálogo",
+      "overviewAriaLabel": "Resumen de cobertura del catálogo",
+      "collapsedAriaLabel": "Resumen del panel derecho minimizado",
+      "noneYet": "Ninguno todavía",
+      "blockPriorityPrefix": "Prioridad",
+      "blockLabelAria": "Etiqueta del bloque {{n}}",
+      "substLibTitle": "Biblioteca de sustituyentes",
+      "substLibHint": "Navega por grupo y agrega un sustituyente directamente a este bloque."
+    },
+    "step4": {
+      "title": "4. Generación continua y salidas",
+      "description": "Configura la generación, ejecuta continuamente e inspecciona/exporta las estructuras resultantes.",
+      "ariaLabel": "Panel de resultado y progreso",
+      "generationSetup": "Configuración de generación",
+      "setupHint": "Ejecuta la generación solo después de mapear completamente las posiciones del scaffold.",
+      "enabled": "Habilitado",
+      "lockedUntilMapping": "Bloqueado hasta el mapeo",
+      "jobName": "Nombre del job",
+      "jobNamePlaceholder": "smileit_run",
+      "rSubstitutes": "Sustituyentes R",
+      "maxHint": "máx {{max}} (basado en {{sites}} sitios seleccionados)",
+      "run": "Generar estructuras",
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "previousJobs": "Jobs anteriores",
+      "previousJobsHint": "Abre una ejecución histórica para inspeccionar las estructuras actualmente renderizadas.",
+      "currentRunDisplayed": "La ejecución actual ya se muestra abajo. Esta tabla solo lista jobs anteriores.",
+      "noPreviousEnumerations": "Aún no hay enumeraciones anteriores disponibles.",
+      "histAriaLabel": "Tabla de jobs anteriores",
+      "histColRun": "Ejecución",
+      "histColStatus": "Estado",
+      "histColBlocks": "Bloques",
+      "histColUpdated": "Actualizado",
+      "histColView": "Ver",
+      "noBlocks": "Sin bloques",
+      "unknown": "Desconocido",
+      "openBelow": "Abrir abajo",
+      "open": "Abrir",
+      "dispatchingJob": "Enviando job Smileit...",
+      "progressAriaLabel": "Progreso del job Smileit",
+      "reloadJobs": "Recargar jobs",
+      "histSites": "Sitios",
+      "previousEnumAriaLabel": "Jobs de enumeración anteriores",
+      "enumeratedDerivatives": "Derivados enumerados",
+      "reactiveSites": "Sitios reactivos",
+      "assignmentBlocksLabel": "Bloques de asignación",
+      "principalSmilesLabel": "SMILES principal",
+      "principalSmilesAriaLabel": "Resumen de SMILES principal",
+      "exportCsv": "CSV",
+      "exportSmi": "SMI/TXT",
+      "exportLog": "LOG",
+      "downloadSvgZip": "↓ Descargar SVGs (ZIP)",
+      "preparingZip": "Preparando ZIP de SVGs...",
+      "downloadZipTitle": "Descargar todas las estructuras como ZIP. Archivos SVG + TXT con SMILES principal primero.",
+      "preparingZipHint": "Generando todos los SVGs derivados para exportación ZIP. Puede tomar un momento.",
+      "noStructures": "No hay estructuras generadas disponibles en esta instantánea.",
+      "derivativesTitle": "Derivados",
+      "derivativesAriaLabel": "Lista de derivados generados",
+      "availableDerivatives": "Derivados disponibles:",
+      "loadedInView": "Cargados en la vista actual:",
+      "inspectionLabel": "Inspección:",
+      "inspectionHint": "Expande esta sección para revisar representaciones moleculares y SMILES.",
+      "derivativeVisualTitle": "Derivado generado (sustituyentes resaltados)",
+      "placeholderMapping": "Mapeo de marcadores:",
+      "showMore": "Mostrar 100 más",
+      "loadingDerivatives": "Cargando...",
+      "generatedModalAriaLabel": "Vista previa de molécula generada",
+      "generatedModalDerivativeTitle": "Derivado generado (sustituyente resaltado)"
+    },
+    "principalEditor": {
+      "label": "SMILES principal",
+      "placeholder": "c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O",
+      "openSketch": "✏ Abrir editor de sketch",
+      "inspecting": "Inspeccionando...",
+      "inspect": "Inspeccionar estructura",
+      "pending": "SMILES principal pendiente",
+      "sketchAriaLabel": "Editor de sketch principal",
+      "sketchTitle": "Editor de sketch principal",
+      "sketchHint": "Usa el sketcher de abajo para editar la molécula principal.",
+      "sketchLoading": "Cargando editor de moléculas…",
+      "sketcherFrameTitle": "Ketcher — editor principal",
+      "cancelButton": "Cancelar",
+      "applyButton": "Aplicar"
+    },
+    "catalogDetail": {
+      "added": "Agregado",
+      "close": "Cerrar",
+      "zoomOut": "Alejar",
+      "zoomIn": "Acercar",
+      "ariaLabel": "Detalle del sustituyente",
+      "smiles": "SMILES",
+      "anchorAtoms": "Átomos ancla",
+      "source": "Fuente",
+      "id": "ID",
+      "editInLibrary": "Editar en la biblioteca"
+    },
+    "siteSelection": {
+      "title": "Seleccionar sitios de sustitución en el scaffold",
+      "hint": "Haz clic en los átomos del visor para marcar donde se colocarán las sustituciones.",
+      "blocksAvailableSuffix": "bloques disponibles",
+      "blockMappingHint": "Crea bloques primero, luego mapea estos sitios al bloque que debe poseerlos.",
+      "pendingAssignment": "Sitios seleccionados pendientes de asignación:"
+    },
+    "patterns": {
+      "title": "Patrones estructurales",
+      "hint": "Abre el modal de patrones para crear reglas SMARTS y alternar resaltados en la molécula principal.",
+      "dialogAriaLabel": "Catálogo de patrones estructurales",
+      "modalHint": "Los patrones están habilitados por defecto. Alterna cada uno para mostrar u ocultar sus resaltados.",
+      "howItWorksTitle": "Cómo funciona",
+      "howItWorks1": "1. Los patrones activos iluminan los átomos coincidentes en la molécula principal.",
+      "howItWorks2": "2. Los nombres de los patrones se renderizan sobre el área resaltada en la vista previa.",
+      "howItWorks3": "3. Haz clic en cualquier nombre de patrón para abrir los detalles SMARTS completos.",
+      "formName": "Nombre",
+      "formSmarts": "SMARTS",
+      "formSmartsPlaceholder": "[N+](=O)[O-]",
+      "formType": "Tipo de patrón",
+      "formTypeToxicophore": "Toxicóforo",
+      "formTypePrivileged": "Scaffold privilegiado",
+      "formSource": "Referencia de fuente",
+      "formCaption": "Descripción",
+      "formSave": "Guardar patrón estructural",
+      "active": "Activo",
+      "hidden": "Oculto",
+      "detailAriaLabel": "Detalle del patrón",
+      "activeInScaffold": "Activo en scaffold",
+      "hiddenInScaffold": "Oculto en scaffold",
+      "smartsStructure": "Estructura SMARTS",
+      "patternType": "Tipo de patrón",
+      "specification": "Especificación",
+      "source": "Fuente",
+      "id": "ID"
+    },
+    "annotations": {
+      "ariaLabel": "Anotaciones estructurales",
+      "hidePatternAria": "Ocultar patrón",
+      "showPatternAria": "Mostrar patrón",
+      "hideTitleAttr": "Ocultar",
+      "showTitleAttr": "Mostrar"
+    },
+    "catalogStudio": {
+      "ariaLabel": "Estudio SMILES catálogo",
+      "title": "Estudio SMILES catálogo",
+      "hint": "Crea o edita sustituyentes sin mezclar este flujo con el mapeo de bloques."
+    },
+    "catalogForm": {
+      "step1Title": "1. Nombre del sustituyente",
+      "step1Hint": "Se prepara un nombre por defecto para cada borrador. Reemplázalo si necesitas una etiqueta personalizada.",
+      "nameLabel": "Nombre",
+      "step2Title": "2. SMILES",
+      "sketchButton": "✏ Dibujar SMILES",
+      "smilesLabel": "SMILES",
+      "step3Title": "3. Punto de sustitución",
+      "step3AriaLabel": "Selector de anco del borrador del catálogo",
+      "step4Title": "4. Categorías de química",
+      "step5Title": "5. Referencia de fuente",
+      "step5Hint": "Mantén una fuente breve y trazable para esta entrada del sustituyente.",
+      "sourceRefLabel": "Referencia de fuente",
+      "validationMessagesAria": "Mensajes de validación del borrador del catálogo",
+      "addAnother": "Agregar otro",
+      "addAndClose": "Agregar y cerrar",
+      "updateButton": "Actualizar entrada del catálogo",
+      "cancelButton": "Cancelar edición",
+      "previewAriaLabel": "Vista previa del borrador del catálogo",
+      "previewTitle": "Vista previa del borrador",
+      "previewName": "Nombre:",
+      "previewNotation": "Notación detectada:",
+      "previewAnchor": "Ancla:",
+      "pending": "Pendiente",
+      "previewCategories": "Categorías:",
+      "uncategorized": "Sin categoría",
+      "previewSource": "Fuente:",
+      "pendingCatalogSmiles": "SMILES del catálogo pendiente",
+      "emptySmartHint": "Introduce un SMILES para desbloquear la vista previa de estructura en vivo."
+    },
+    "catalogSketcher": {
+      "title": "Sketcher SMILES del catálogo",
+      "hint": "Dibuja el sustituyente en Ketcher y aplícalo al borrador SMILES actual.",
+      "ariaLabel": "Sketcher SMILES del catálogo",
+      "ketcherAriaLabel": "Marco del sketcher Ketcher",
+      "loadingAriaLabel": "Cargando editor de moléculas",
+      "loadingText": "Cargando editor de moléculas…",
+      "iframeTitle": "Sketcher SMILES del catálogo",
+      "cancelButton": "Cancelar",
+      "applyButton": "Aplicar al borrador"
+    },
+    "blocks": {
+      "collapsedSummaryAria": "Resumen del bloque colapsado",
+      "sitesLabel": "Sitios:",
+      "categoriesLabel": "Categorías:",
+      "catalogSubstituentsLabel": "Sustituyentes del catálogo:",
+      "manualSubstituentsLabel": "Sustituyentes manuales:",
+      "totalBlockSources": "Total de fuentes del bloque:",
+      "substituentsAdded": "Sustituyentes agregados",
+      "noSubstituentsYet": "Aún no se han agregado sustituyentes a este bloque.",
+      "openDetail": "Abrir detalle de {{name}}",
+      "anchorLabel": "Ancla",
+      "stableIdPrefix": "stable_id",
+      "removeButton": "Eliminar",
+      "noAutoMatched": "No hay moléculas del catálogo coincidentes por las categorías funcionales seleccionadas.",
+      "autoMatchedTitle": "Moléculas auto-coincidentes por categoría funcional",
+      "groupFilterAria": "Filtrar catálogo del bloque por grupo",
+      "noCatalogMolecules": "No hay moléculas de catálogo disponibles para el grupo seleccionado.",
+      "addToBlockAria": "Agregar {{name}} a este bloque",
+      "addButton": "Agregar",
+      "substLibTitle": "Biblioteca de sustituyentes",
+      "substLibHint": "Navega por grupo y agrega un sustituyente directamente a este bloque.",
+      "assignPositions": "Asignar este bloque a posiciones del scaffold",
+      "noAtomsHint": "Inspecciona la molécula principal y selecciona átomos objetivo antes de asignar este bloque.",
+      "siteLabel": "Sitio",
+      "noPositionsAssigned": "Este bloque aún no tiene posiciones del scaffold asignadas. Elige los sitios que deben recibir una de las moléculas de este bloque."
+    }
+  },
+  "identityAdmin": {
+    "ariaLabel": "Administración de identidad",
+    "header": {
+      "eyebrow": "Consola Administrativa",
+      "title": "Identidad y Acceso",
+      "subtitle": "Administra usuarios, grupos, membresías y RBAC a nivel de apps en un espacio de trabajo consistente.",
+      "myProfile": "Mi perfil",
+      "refresh": "Actualizar"
+    },
+    "feedback": {
+      "loading": "Cargando datos de identidad..."
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Las acciones son conscientes del rol. Los admins solo gestionan usuarios en sus grupos administrados.",
+      "colUsername": "Nombre de usuario",
+      "colRole": "Rol",
+      "colStatus": "Estado",
+      "colPrimaryGroup": "Grupo principal",
+      "colActions": "Acciones",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "roleUser": "Usuario",
+      "roleAdmin": "Administrador",
+      "roleRoot": "Root"
+    },
+    "createUser": {
+      "title": "Crear usuario",
+      "hint": "Define nombre de usuario, rol y grupo principal para una nueva cuenta.",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "roleLabel": "Rol",
+      "primaryGroup": "Grupo principal",
+      "noPrimaryGroup": "Sin grupo principal",
+      "submit": "Crear usuario",
+      "roleUserOption": "Usuario",
+      "roleAdminOption": "Administrador",
+      "roleRootOption": "Root"
+    },
+    "createGroup": {
+      "title": "Crear grupo",
+      "hint": "Los grupos representan equipos científicos o entornos.",
+      "name": "Nombre del grupo",
+      "slug": "Slug",
+      "description": "Descripción",
+      "submit": "Crear grupo"
+    },
+    "addMembership": {
+      "title": "Agregar membresía",
+      "hint": "Mapea usuarios en grupos antes de asignar reglas por app.",
+      "user": "Usuario",
+      "group": "Grupo",
+      "roleInGroup": "Rol en el grupo",
+      "selectUser": "Seleccionar usuario",
+      "selectGroup": "Seleccionar grupo",
+      "roleMember": "Miembro",
+      "roleAdmin": "Admin",
+      "submit": "Agregar membresía"
+    },
+    "permissions": {
+      "title": "Permisos de app",
+      "hint": "Se evalúa primero por grupo, luego por anulaciones a nivel de usuario.",
+      "app": "Aplicación",
+      "scope": "Alcance",
+      "target": "Destino",
+      "selectTarget": "Seleccionar destino",
+      "enabled": "Habilitado",
+      "submit": "Guardar permiso",
+      "statusEnabled": "habilitado",
+      "statusDisabled": "deshabilitado"
+    },
+    "groupConfig": {
+      "title": "Configuración de app por grupo",
+      "hint": "Almacena valores predeterminados por app a nivel de grupo. Los usuarios pueden sobrescribir por app.",
+      "group": "Grupo",
+      "selectGroup": "Seleccionar grupo",
+      "app": "Aplicación",
+      "configLabel": "Entradas de configuración",
+      "key": "Clave",
+      "valuePlaceholder": "Valor (true, false, número, texto)",
+      "removeButton": "×",
+      "addEntry": "+ Agregar entrada",
+      "submit": "Guardar configuración del grupo"
+    }
+  },
+  "shared": {
+    "smilesBatchInput": {
+      "label": "Entrada SMILES por lote",
+      "detectedRows": "Filas detectadas:",
+      "editCustomNames": "Editar nombres personalizados",
+      "hint": "Soporta listas planas de SMILES, archivos .smi/.txt, y CSV donde columna 1 es nombre y columna 2 es SMILES.",
+      "namePlaceholder": "Por defecto usa SMILES",
+      "drawSmiles": "✏ Dibujar SMILES",
+      "uploadFile": "↑ Subir archivo",
+      "tableNumber": "#",
+      "tableName": "Nombre",
+      "tableSMILES": "SMILES",
+      "drawSmilesTitle": "Dibuja una molécula con Ketcher y agrégala a la lista",
+      "uploadFileTitle": "Sube un archivo .smi, .txt o .csv con SMILES o pares nombre/SMILES",
+      "fileFormats": "Archivo .smi, .txt o .csv"
+    },
+    "jobArtifactExport": {
+      "persistedFiles": "Archivos de entrada persistidos",
+      "exportCsv": "Exportar CSV",
+      "exporting": "Exportando...",
+      "exportLog": "Exportar LOG",
+      "downloadInputsZip": "Descargar ZIP de entradas",
+      "downloadErrorReport": "Descargar reporte de error"
+    },
+    "diffusionFields": {
+      "radiusReactant1": "Radio reactivo 1 (Å)",
+      "radiusReactant2": "Radio reactivo 2 (Å)",
+      "reactionDistance": "Distancia de reacción (Å)"
+    },
+    "jobHistoryTable": {
+      "reload": "Recargar historial",
+      "reloading": "Cargando...",
+      "open": "Abrir",
+      "colJobId": "ID de job",
+      "colStatus": "Estado",
+      "colUpdated": "Actualizado",
+      "colAction": "Acción"
+    },
+    "jobResultFooter": {
+      "historicalJobs": "Histórico de jobs"
+    },
+    "jobProgress": {
+      "progressTitle": "Progreso del job científico"
+    },
+    "jobLogs": {
+      "ariaLabel": "Logs de ejecución"
+    }
+  }
+}

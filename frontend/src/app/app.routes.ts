@@ -37,11 +37,10 @@ export const routes: Routes = [
       import('./jobs-monitor/jobs-monitor.component').then((m) => m.JobsMonitorComponent),
   },
   {
-    path: 'calculator',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'calculator' },
+    path: 'jobs/trash',
+    canActivate: [adminGuard],
     loadComponent: () =>
-      import('./calculator/calculator.component').then((m) => m.CalculatorComponent),
+      import('./jobs-trash/jobs-trash.component').then((m) => m.JobsTrashComponent),
   },
   {
     path: 'random-numbers',

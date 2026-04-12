@@ -67,6 +67,21 @@ class JobControlActionResponseSerializer(serializers.Serializer):
     )
 
 
+class JobDeleteActionResponseSerializer(serializers.Serializer):
+    """Respuesta estándar para eliminación hard/soft de jobs."""
+
+    detail = serializers.CharField(help_text="Resultado de la operación de borrado.")
+    job_id = serializers.UUIDField(help_text=JOB_ID_HELP_TEXT)
+    deletion_mode = serializers.ChoiceField(
+        choices=[("hard", "Hard"), ("soft", "Soft")],
+        help_text="Modo de borrado aplicado al job.",
+    )
+    scheduled_hard_delete_at = serializers.DateTimeField(
+        allow_null=True,
+        help_text="Fecha planificada de eliminación definitiva si el borrado fue lógico.",
+    )
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -237,6 +252,10 @@ class ScientificJobSerializer(serializers.ModelSerializer):
 
     owner_username = serializers.CharField(source="owner.username", read_only=True)
     group_name = serializers.CharField(source="group.name", read_only=True)
+    deleted_by_username = serializers.CharField(
+        source="deleted_by.username", read_only=True
+    )
+    is_deleted = serializers.SerializerMethodField()
 
     class Meta:
         model = ScientificJob
@@ -250,6 +269,13 @@ class ScientificJobSerializer(serializers.ModelSerializer):
             "plugin_name",
             "algorithm_version",
             "status",
+            "is_deleted",
+            "deleted_at",
+            "deleted_by",
+            "deleted_by_username",
+            "deletion_mode",
+            "scheduled_hard_delete_at",
+            "original_status",
             "cache_hit",
             "cache_miss",
             "progress_percentage",
@@ -268,6 +294,10 @@ class ScientificJobSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+    def get_is_deleted(self, instance: ScientificJob) -> bool:
+        """Expone un flag estable para frontend sin depender de comparar timestamps."""
+        return instance.deleted_at is not None
 
     def to_representation(self, instance: ScientificJob):
         """Normaliza salida terminal para evitar inconsistencias legacy en UI."""

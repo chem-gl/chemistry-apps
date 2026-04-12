@@ -1,7 +1,55 @@
 {
   "gitConfigUser.selectedProfile": "Cesar",
   "sonarlint.connectedMode.project": {
-    "connectionId": "http-100-72-72-91-9000-",
+    "connectionId": "http-localhost-9000",
     "projectKey": "chemistry-apps"
-  }
+  },
+  "cSpell.words": [
+    "cachés",
+    "deduplica",
+    "explicítos",
+    "jsverse",
+    "ketcher",
+    "Ketcher",
+    "parseado",
+    "Precarga",
+    "rdchem",
+    "rdkit",
+    "Sanitización",
+    "sanitizarlas",
+    "smileit",
+    "Smileit",
+    "Substituents",
+    "transloco"
+  ],
+  "cSpell.ignorePaths": [
+    "**/i18n/**",
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/docs/**",
+    "**/logs/**",
+    "**/temp/**",
+    "**/venv/**",
+    "**/.vscode/**"
+  ],
+
+  "cSpell.ignoreRegExpList": [
+    "/from\\s+['\"].+['\"]/g",
+    "/import\\s+.+from\\s+['\"].+['\"]/g",
+    "/import\\s+['\"].+['\"]/g",
+    "/require\\(['\"].+['\"]\\)/g",
+    "/^\\s*import\\s+.+/gm",
+
+    "/^\\s*from\\s+\\S+\\s+import\\s+.+/gm",
+    "/^\\s*import\\s+\\S+/gm",
+
+    "/['\"].*\\/i18n\\/.*['\"]/g",
+    "/\\b[a-z]+_[a-z0-9_]+\\b/g",
+    "/\\b[a-z]+[A-Z][a-zA-Z]+\\b/g"
+  ],
+
+  "cSpell.allowCompoundWords": true
 }

@@ -1,94 +1,66 @@
 <!-- library-entry-detail-dialog.component.html: Vista modal de entrada de catálogo con navegación visual de estructura. -->
-<dialog
-  #libraryEntryDetailDialog
-  class="library-entry-detail-dialog"
-  (click)="onLibraryDetailDialogClick($event)"
+<dialog #libraryEntryDetailDialog class="library-entry-detail-dialog" (click)="onLibraryDetailDialogClick($event)"
   (keydown.enter)="onLibraryDetailDialogClick($event)"
-  (keydown.space)="onLibraryDetailDialogClick($event); $event.preventDefault()"
-  (cancel)="requestClose()"
->
+  (keydown.space)="onLibraryDetailDialogClick($event); $event.preventDefault()" (cancel)="requestClose()">
   @if (selectedEntry(); as detailEntry) {
-    <section class="library-entry-detail-modal" aria-label="Substituent detail">
-      <header class="library-detail-header">
-        <div class="library-detail-title-row">
-          <h4>{{ detailEntry.name }}</h4>
-          @if (isEntryAdded(detailEntry)) {
-            <span class="library-detail-badge">Added</span>
-          }
-        </div>
-        <button type="button" class="btn-secondary" (click)="requestClose()">Close</button>
-      </header>
-
-      <div class="library-detail-body">
-        <div class="library-detail-preview-wrap">
-          <div class="library-detail-zoom-controls">
-            <button
-              type="button"
-              class="zoom-btn"
-              (click)="zoomOutLibraryDetail()"
-              [disabled]="libraryDetailZoomLevel() === 1"
-              aria-label="Zoom out"
-            >
-              －
-            </button>
-            <span class="zoom-label">{{ libraryDetailZoomLevel() }}×</span>
-            <button
-              type="button"
-              class="zoom-btn"
-              (click)="zoomInLibraryDetail()"
-              [disabled]="libraryDetailZoomLevel() === 4"
-              aria-label="Zoom in"
-            >
-              ＋
-            </button>
-          </div>
-          @if (resolvedEntrySvg(detailEntry); as detailSvg) {
-            <div
-              class="library-detail-viewport"
-              [style.width.px]="libraryDetailViewportPx"
-              [style.height.px]="libraryDetailViewportPx"
-              [class.is-dragging]="libraryDetailIsDragging()"
-              (mousedown)="onLibraryDetailPanStart($event)"
-              (mousemove)="onLibraryDetailPanMove($event)"
-              (mouseup)="onLibraryDetailPanEnd()"
-              (mouseleave)="onLibraryDetailPanEnd()"
-              (wheel)="onLibraryDetailWheel($event)"
-            >
-              <div
-                class="library-detail-svg"
-                [style.width.px]="libraryDetailPreviewSize()"
-                [style.height.px]="libraryDetailPreviewSize()"
-                [style.transform]="
-                  'translate(' + libraryDetailPanX() + 'px, ' + libraryDetailPanY() + 'px)'
-                "
-                [innerHTML]="detailSvg"
-              ></div>
-            </div>
-          }
-        </div>
-        <dl class="library-detail-fields">
-          <dt>SMILES</dt>
-          <dd class="mono">{{ detailEntry.smiles }}</dd>
-          <dt>Anchor atoms</dt>
-          <dd>{{ detailEntry.anchor_atom_indices.join(', ') || '—' }}</dd>
-          <dt>Source</dt>
-          <dd>{{ detailEntry.source_reference || '—' }}</dd>
-          <dt>ID</dt>
-          <dd>stable_id {{ detailEntry.stable_id }} · v{{ detailEntry.version }}</dd>
-        </dl>
+  <section class="library-entry-detail-modal" [attr.aria-label]="'smileit.catalogDetail.ariaLabel' | transloco">
+    <header class="library-detail-header">
+      <div class="library-detail-title-row">
+        <h4>{{ detailEntry.name }}</h4>
+        @if (isEntryAdded(detailEntry)) {
+        <span class="library-detail-badge">{{ 'smileit.catalogDetail.added' | transloco }}</span>
+        }
       </div>
+      <button type="button" class="btn-secondary" (click)="requestClose()">{{ 'common.actions.close' | transloco
+        }}</button>
+    </header>
 
-      @if (isEntryEditable(detailEntry)) {
-        <footer class="library-detail-footer">
-          <button
-            class="catalog-add"
-            (click)="requestEdit(detailEntry)"
-            [disabled]="isProcessing()"
-          >
-            Edit in Library
+    <div class="library-detail-body">
+      <div class="library-detail-preview-wrap">
+        <div class="library-detail-zoom-controls">
+          <button type="button" class="zoom-btn" (click)="zoomOutLibraryDetail()"
+            [disabled]="libraryDetailZoomLevel() === 1" [attr.aria-label]="'smileit.catalogDetail.zoomOut' | transloco">
+            －
           </button>
-        </footer>
-      }
-    </section>
+          <span class="zoom-label">{{ libraryDetailZoomLevel() }}×</span>
+          <button type="button" class="zoom-btn" (click)="zoomInLibraryDetail()"
+            [disabled]="libraryDetailZoomLevel() === 4" [attr.aria-label]="'smileit.catalogDetail.zoomIn' | transloco">
+            ＋
+          </button>
+        </div>
+        @if (resolvedEntrySvg(detailEntry); as detailSvg) {
+        <div class="library-detail-viewport" [style.width.px]="libraryDetailViewportPx"
+          [style.height.px]="libraryDetailViewportPx" [class.is-dragging]="libraryDetailIsDragging()"
+          (mousedown)="onLibraryDetailPanStart($event)" (mousemove)="onLibraryDetailPanMove($event)"
+          (mouseup)="onLibraryDetailPanEnd()" (mouseleave)="onLibraryDetailPanEnd()"
+          (wheel)="onLibraryDetailWheel($event)">
+          <div class="library-detail-svg" [style.width.px]="libraryDetailPreviewSize()"
+            [style.height.px]="libraryDetailPreviewSize()" [style.transform]="
+                  'translate(' + libraryDetailPanX() + 'px, ' + libraryDetailPanY() + 'px)'
+                " [innerHTML]="detailSvg"></div>
+        </div>
+        }
+      </div>
+      <dl class="library-detail-fields">
+        <dt>{{ 'smileit.catalogDetail.smiles' | transloco }}</dt>
+        <dd class="mono">{{ detailEntry.smiles }}</dd>
+        <dt>{{ 'smileit.catalogDetail.anchorAtoms' | transloco }}</dt>
+        <dd>{{ detailEntry.anchor_atom_indices.join(', ') || '—' }}</dd>
+        <dt>{{ 'smileit.catalogDetail.source' | transloco }}</dt>
+        <dd>{{ detailEntry.source_reference || '—' }}</dd>
+        <dt>{{ 'smileit.catalogDetail.id' | transloco }}</dt>
+        <dd>{{ 'smileit.blocks.stableIdPrefix' | transloco }} {{ detailEntry.stable_id }} · v{{ detailEntry.version }}
+        </dd>
+      </dl>
+    </div>
+
+    @if (isEntryEditable(detailEntry)) {
+    <footer class="library-detail-footer">
+      <button class="catalog-add" (click)="requestEdit(detailEntry)" [disabled]="isProcessing()">
+        {{ 'smileit.catalogDetail.editInLibrary' | transloco }}
+      </button>
+    </footer>
+    }
+  </section>
   }
 </dialog>

@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { StatusEnum } from './statusEnum';
+import { ScientificJobDeletionModeEnum } from './scientificJobDeletionModeEnum';
 
 
 /**
@@ -26,6 +27,28 @@ export interface ScientificJob {
     readonly plugin_name: string;
     readonly algorithm_version: string;
     readonly status: StatusEnum;
+    /**
+     * Expone un flag estable para frontend sin depender de comparar timestamps.
+     */
+    readonly is_deleted: boolean;
+    /**
+     * Marca temporal del envío del job a la papelera lógica.
+     */
+    readonly deleted_at: string | null;
+    readonly deleted_by: number | null;
+    readonly deleted_by_username: string;
+    /**
+     * Modo de borrado persistido; vacío cuando el job no está en papelera.  * `soft` - Soft delete
+     */
+    readonly deletion_mode: ScientificJobDeletionModeEnum;
+    /**
+     * Fecha programada para eliminación definitiva automática desde la papelera.
+     */
+    readonly scheduled_hard_delete_at: string | null;
+    /**
+     * Estado que tenía el job cuando fue enviado a la papelera.  * `pending` - Pending * `running` - Running * `paused` - Paused * `completed` - Completed * `failed` - Failed * `cancelled` - Cancelled
+     */
+    readonly original_status: StatusEnum;
     readonly cache_hit: boolean;
     readonly cache_miss: boolean;
     /**

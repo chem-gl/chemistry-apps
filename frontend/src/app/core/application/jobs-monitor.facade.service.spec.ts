@@ -4,13 +4,14 @@ import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { JobsApiService, ScientificJobView } from '../api/jobs-api.service';
+import { JobControlActionResult, JobDeleteActionResult } from '../api/types';
 import { JobsMonitorFacadeService } from './jobs-monitor.facade.service';
 
 function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
   return {
     id: 'job-1',
     job_hash: 'hash-1',
-    plugin_name: 'calculator',
+    plugin_name: 'random-numbers',
     algorithm_version: '1.0.0',
     status: 'pending',
     cache_hit: false,
@@ -33,10 +34,35 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
   } as ScientificJobView;
 }
 
+function makeControlActionResult(
+  jobId: string,
+  overrides: Partial<JobControlActionResult> = {},
+): JobControlActionResult {
+  return {
+    detail: 'Action completed',
+    job: makeScientificJob({ id: jobId, status: 'completed' }),
+    ...overrides,
+  };
+}
+
+function makeDeleteActionResult(
+  jobId: string,
+  overrides: Partial<JobDeleteActionResult> = {},
+): JobDeleteActionResult {
+  return {
+    detail: 'Job deleted',
+    jobId,
+    deletionMode: 'hard',
+    scheduledHardDeleteAt: null,
+    ...overrides,
+  };
+}
+
 describe('JobsMonitorFacadeService', () => {
   let facadeService: JobsMonitorFacadeService;
   let jobsApiServiceMock: {
     listJobs: ReturnType<typeof vi.fn>;
+    listDeletedJobs: ReturnType<typeof vi.fn>;
     getScientificJobStatus: ReturnType<typeof vi.fn>;
     getJobLogs: ReturnType<typeof vi.fn>;
     streamJobEvents: ReturnType<typeof vi.fn>;
@@ -44,11 +70,14 @@ describe('JobsMonitorFacadeService', () => {
     pauseJob: ReturnType<typeof vi.fn>;
     resumeJob: ReturnType<typeof vi.fn>;
     cancelJob: ReturnType<typeof vi.fn>;
+    deleteJob: ReturnType<typeof vi.fn>;
+    restoreJob: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     jobsApiServiceMock = {
       listJobs: vi.fn((): Observable<ScientificJobView[]> => of([])),
+      listDeletedJobs: vi.fn((): Observable<ScientificJobView[]> => of([])),
       getScientificJobStatus: vi.fn(
         (jobId: string): Observable<ScientificJobView> =>
           of(makeScientificJob({ id: jobId, status: 'completed' })),
@@ -91,6 +120,8 @@ describe('JobsMonitorFacadeService', () => {
           job: makeScientificJob({ id: jobId, status: 'cancelled', progress_stage: 'cancelled' }),
         }),
       ),
+      deleteJob: vi.fn((jobId: string) => of(makeDeleteActionResult(jobId))),
+      restoreJob: vi.fn((jobId: string) => of(makeControlActionResult(jobId))),
     };
 
     TestBed.configureTestingModule({
@@ -172,26 +203,42 @@ describe('JobsMonitorFacadeService', () => {
   it('sends plugin filter when selecting a specific plugin', () => {
     jobsApiServiceMock.listJobs.mockReturnValue(of([]));
 
-    facadeService.setPluginFilter('calculator');
+    facadeService.setPluginFilter('random-numbers');
 
     expect(jobsApiServiceMock.listJobs).toHaveBeenCalledWith({
       status: undefined,
-      pluginName: 'calculator',
+      pluginName: 'random-numbers',
     });
+  });
+
+  it('loads deleted jobs from recycle bin API and applies current filters', () => {
+    facadeService.selectedStatus.set('completed');
+    jobsApiServiceMock.listDeletedJobs.mockReturnValue(
+      of([
+        makeScientificJob({ id: 'trash-1', status: 'completed' }),
+        makeScientificJob({ id: 'trash-2', status: 'failed' }),
+      ]),
+    );
+
+    facadeService.loadDeletedJobs();
+
+    expect(jobsApiServiceMock.listDeletedJobs).toHaveBeenCalled();
+    expect(facadeService.jobs().map((job) => job.id)).toEqual(['trash-1']);
+    expect(facadeService.isLoading()).toBe(false);
   });
 
   it('builds sorted unique plugin options from loaded jobs', () => {
     jobsApiServiceMock.listJobs.mockReturnValue(
       of([
-        makeScientificJob({ plugin_name: 'calculator' }),
+        makeScientificJob({ plugin_name: 'random-numbers' }),
         makeScientificJob({ plugin_name: 'thermo', id: 'job-2' }),
-        makeScientificJob({ plugin_name: 'calculator', id: 'job-3' }),
+        makeScientificJob({ plugin_name: 'random-numbers', id: 'job-3' }),
       ]),
     );
 
     facadeService.loadJobs();
 
-    expect(facadeService.pluginOptions()).toEqual(['all', 'calculator', 'thermo']);
+    expect(facadeService.pluginOptions()).toEqual(['all', 'random-numbers', 'thermo']);
   });
 
   it('loads selected job details and logs', () => {
@@ -247,6 +294,31 @@ describe('JobsMonitorFacadeService', () => {
     expect(facadeService.selectedJob()?.status).toBe('cancelled');
   });
 
+  it('deleteJob removes the job from state and closes selected detail when needed', () => {
+    const removableJob = makeScientificJob({ id: 'job-delete-1', status: 'completed' });
+    facadeService.jobs.set([removableJob]);
+    facadeService.selectedJobId.set('job-delete-1');
+    facadeService.selectedJob.set(removableJob);
+
+    facadeService.deleteJob('job-delete-1');
+
+    expect(jobsApiServiceMock.deleteJob).toHaveBeenCalledWith('job-delete-1');
+    expect(facadeService.jobs()).toEqual([]);
+    expect(facadeService.selectedJobId()).toBeNull();
+    expect(facadeService.controllingJobId()).toBeNull();
+  });
+
+  it('restoreJob removes the recycled job from local trash state', () => {
+    const deletedJob = makeScientificJob({ id: 'job-restore-1', status: 'failed' });
+    facadeService.jobs.set([deletedJob]);
+
+    facadeService.restoreJob('job-restore-1');
+
+    expect(jobsApiServiceMock.restoreJob).toHaveBeenCalledWith('job-restore-1');
+    expect(facadeService.jobs()).toEqual([]);
+    expect(facadeService.controllingJobId()).toBeNull();
+  });
+
   it('exposes control running state while pause request is in flight', () => {
     const pauseSubject = new Subject<{
       detail: string;
@@ -284,6 +356,20 @@ describe('JobsMonitorFacadeService', () => {
     );
     facadeService.cancelJob('job-err-1');
     expect(facadeService.controlErrorMessage()).toContain('cancel denied by backend');
+  });
+
+  it('stores control error messages for delete and restore failures', () => {
+    jobsApiServiceMock.deleteJob.mockReturnValueOnce(
+      throwError(() => new Error('delete denied by backend')),
+    );
+    facadeService.deleteJob('job-err-2');
+    expect(facadeService.controlErrorMessage()).toContain('delete denied by backend');
+
+    jobsApiServiceMock.restoreJob.mockReturnValueOnce(
+      throwError(() => new Error('restore denied by backend')),
+    );
+    facadeService.restoreJob('job-err-2');
+    expect(facadeService.controlErrorMessage()).toContain('restore denied by backend');
   });
 
   it('stores monitor loading error when listJobs fails in non-silent mode', () => {

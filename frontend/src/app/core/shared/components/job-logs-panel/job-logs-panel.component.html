@@ -1,23 +1,23 @@
 <!-- job-logs-panel.component.html: Panel de logs reutilizable para apps científicas. -->
 @if (logs.length > 0) {
-  <section class="logs-card" aria-label="Execution logs">
-    <h3>{{ title }}</h3>
-    <div class="logs-list">
-      @for (logEntry of logs; track logEntry.eventIndex) {
-        <article class="log-item">
-          <header class="log-header">
-            <span class="log-level" [class]="logLevelClass(logEntry.level)">
-              {{ logEntry.level }}
-            </span>
-            <span class="log-source">{{ logEntry.source }}</span>
-            <span class="log-index">#{{ logEntry.eventIndex }}</span>
-          </header>
-          <p class="log-message">{{ logEntry.message }}</p>
-          @if (hasPayload(logEntry)) {
-            <pre class="log-payload">{{ logEntry.payload | json }}</pre>
-          }
-        </article>
+<section class="logs-card" [attr.aria-label]="'shared.jobLogs.ariaLabel' | transloco">
+  <h3>{{ title }}</h3>
+  <div class="logs-list">
+    @for (logEntry of logs; track logEntry.eventIndex) {
+    <article class="log-item">
+      <header class="log-header">
+        <span class="log-level" [class]="logLevelClass(logEntry.level)">
+          {{ logEntry.level }}
+        </span>
+        <span class="log-source">{{ logEntry.source }}</span>
+        <span class="log-index">#{{ logEntry.eventIndex }}</span>
+      </header>
+      <p class="log-message">{{ logEntry.message }}</p>
+      @if (hasPayload(logEntry)) {
+      <pre class="log-payload">{{ logEntry.payload | json }}</pre>
       }
-    </div>
-  </section>
+    </article>
+    }
+  </div>
+</section>
 }

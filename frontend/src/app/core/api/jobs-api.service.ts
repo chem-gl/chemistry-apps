@@ -6,13 +6,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
 import { createReportDownload$ } from './api-download.utils';
 import {
-  CalculatorJobCreateRequest,
-  CalculatorJobResponse,
-  CalculatorService,
   EasyRateJobResponse,
   EasyRateService,
   JobControlActionResponse,
   JobCreateRequest,
+  JobDeleteActionResponse,
   JobProgressSnapshot,
   JobsService,
   MarcusJobResponse,
@@ -34,13 +32,13 @@ import { SmileitApiService } from './smileit-api.service';
 export type * from './types';
 
 import type {
-  CalculatorParams,
   DownloadedReportFile,
   EasyRateFileInspectionView,
   EasyRateInputFieldName,
   EasyRateInspectionExecutionView,
   EasyRateParams,
   JobControlActionResult,
+  JobDeleteActionResult,
   JobListFilters,
   JobLogEntryView,
   JobLogsPageView,
@@ -96,7 +94,6 @@ interface EasyRateInspectionApiResponse {
   providedIn: 'root',
 })
 export class JobsApiService {
-  private readonly calculatorClient = inject(CalculatorService);
   private readonly easyRateClient = inject(EasyRateService);
   private readonly marcusClient = inject(MarcusService);
   private readonly saScoreClient = inject(SAScoreService);
@@ -185,6 +182,15 @@ export class JobsApiService {
     };
   }
 
+  private normalizeDeleteActionResult(rawResponse: JobDeleteActionResponse): JobDeleteActionResult {
+    return {
+      detail: rawResponse.detail,
+      jobId: rawResponse.job_id,
+      deletionMode: rawResponse.deletion_mode,
+      scheduledHardDeleteAt: rawResponse.scheduled_hard_delete_at,
+    };
+  }
+
   private normalizeEasyRateInspectionExecution(
     rawExecution: EasyRateInspectionExecutionApiResponse,
   ): EasyRateInspectionExecutionView {
@@ -233,6 +239,11 @@ export class JobsApiService {
    */
   listJobs(filters: JobListFilters = {}): Observable<ScientificJob[]> {
     return this.jobsClient.jobsList(filters.pluginName, filters.status).pipe(shareReplay(1));
+  }
+
+  /** Lista jobs actualmente enviados a la papelera de reciclaje. */
+  listDeletedJobs(): Observable<ScientificJob[]> {
+    return this.jobsClient.jobsTrashList().pipe(shareReplay(1));
   }
 
   /**
@@ -386,35 +397,20 @@ export class JobsApiService {
     );
   }
 
-  // --- Calculator ---
-
-  /**
-   * Despacha un job de calculadora al backend.
-   * Si existe caché (job_hash conocido), el backend retorna resultado inmediato con status 'completed'.
-   * En caso contrario el job queda 'pending' hasta que el worker Celery lo procese.
-   *
-   * Para monitorear el progreso usar `streamJobEvents()` o `pollJobUntilCompleted()`.
-   */
-  dispatchCalculatorJob(
-    params: CalculatorParams,
-    version: string = '1.0.0',
-  ): Observable<CalculatorJobResponse> {
-    const payload: CalculatorJobCreateRequest = {
-      version,
-      op: params.op,
-      a: params.a,
-      // Omitir b completamente cuando no aplica (factorial)
-      ...(params.b === undefined ? {} : { b: params.b }),
-    };
-    return this.calculatorClient.calculatorJobsCreate(payload).pipe(shareReplay(1));
+  /** Elimina un job definitivamente o lo mueve a la papelera según la jerarquía del actor. */
+  deleteJob(jobId: string): Observable<JobDeleteActionResult> {
+    return this.jobsClient.jobsDeleteCreate(jobId).pipe(
+      map((rawResponse) => this.normalizeDeleteActionResult(rawResponse)),
+      shareReplay(1),
+    );
   }
 
-  /**
-   * Consulta el estado completo y resultados de un job de calculadora.
-   * Usar tras confirmar status 'completed' para obtener el CalculatorResult con tipos estrictos.
-   */
-  getJobStatus(jobId: string): Observable<CalculatorJobResponse> {
-    return this.calculatorClient.calculatorJobsRetrieve(jobId);
+  /** Restaura un job desde la papelera de reciclaje. */
+  restoreJob(jobId: string): Observable<JobControlActionResult> {
+    return this.jobsClient.jobsRestoreCreate(jobId).pipe(
+      map((rawResponse) => this.normalizeControlActionResult(rawResponse)),
+      shareReplay(1),
+    );
   }
 
   // --- Easy-rate ---

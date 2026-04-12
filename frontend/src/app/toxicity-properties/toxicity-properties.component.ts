@@ -4,17 +4,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DownloadedReportFile, ToxicityMoleculeResultView } from '../core/api/jobs-api.service';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { ToxicityMoleculeResultView } from '../core/api/jobs-api.service';
 import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { SmilesBatchInputComponent } from '../core/shared/components/smiles-batch-input/smiles-batch-input.component';
-import {
-  downloadBlobFile,
-  HistoricalJobWorkflowPort,
-  NamedSmilesInputRow,
-} from '../core/shared/scientific-app-ui.utils';
+import { downloadReportFile, NamedSmilesInputRow } from '../core/shared/scientific-app-ui.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 
 @Component({
@@ -23,6 +20,7 @@ import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-ba
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     JobProgressCardComponent,
     JobLogsPanelComponent,
     JobHistoryTableComponent,
@@ -33,7 +31,7 @@ import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-ba
   styleUrl: './toxicity-properties.component.scss',
 })
 export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
-  readonly workflow = inject(ToxicityPropertiesWorkflowService);
+  protected override readonly workflow = inject(ToxicityPropertiesWorkflowService);
 
   protected override get workflowSmilesInput(): WritableSignal<string> {
     return this.workflow.smilesInput;
@@ -47,29 +45,8 @@ export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
     return this.workflow.customNamesEnabled;
   }
 
-  protected override get workflowPort(): HistoricalJobWorkflowPort {
-    return this.workflow;
-  }
-
-  dispatch(): void {
-    this.workflow.dispatch();
-  }
-
-  reset(): void {
-    this.workflow.reset();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
-
   exportCsv(): void {
-    this.workflow.downloadCsvReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {},
-    });
+    downloadReportFile(this.workflow.downloadCsvReport());
   }
 
   formatDecimal(value: number | null, digits: number = 4): string {

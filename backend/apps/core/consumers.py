@@ -15,7 +15,9 @@ from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.urls import path
 
+from .definitions import CORE_JOBS_WEBSOCKET_ROUTE_PATH
 from .models import ScientificJob
 from .realtime import (
     build_scientific_job_payload,
@@ -147,3 +149,9 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
             )
 
         return [dict(build_scientific_job_payload(job)) for job in jobs_queryset[:250]]
+
+
+websocket_urlpatterns = [
+    # Ruta única de stream; el filtrado se maneja vía query params en el consumer.
+    path(CORE_JOBS_WEBSOCKET_ROUTE_PATH, JobsStreamConsumer.as_asgi()),
+]

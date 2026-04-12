@@ -360,7 +360,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_root_can_list_permissions(self) -> None:
         """Root obtiene todas las reglas de acceso."""
         AppPermission.objects.create(
-            app_name="calculator", group=self.group, is_enabled=True
+            app_name="random-numbers", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.get("/api/identity/app-permissions/")
@@ -372,7 +372,11 @@ class IdentityRouterExtendedTests(TestCase):
         self._auth(self.root_user)
         response = self.client.post(
             "/api/identity/app-permissions/",
-            {"app_name": "calculator", "group": self.group.id, "is_enabled": True},
+            {
+                "app_name": "random-numbers",
+                "group": self.group.id,
+                "is_enabled": True,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -382,7 +386,11 @@ class IdentityRouterExtendedTests(TestCase):
         self._auth(self.admin_user)
         response = self.client.post(
             "/api/identity/app-permissions/",
-            {"app_name": "calculator", "group": self.group.id, "is_enabled": True},
+            {
+                "app_name": "random-numbers",
+                "group": self.group.id,
+                "is_enabled": True,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -390,7 +398,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_root_can_update_permission(self) -> None:
         """Root puede actualizar una regla de acceso existente."""
         perm = AppPermission.objects.create(
-            app_name="calculator", group=self.group, is_enabled=True
+            app_name="random-numbers", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.patch(
@@ -405,7 +413,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_admin_cannot_update_permission(self) -> None:
         """Solo root puede actualizar reglas de acceso."""
         perm = AppPermission.objects.create(
-            app_name="calculator", group=self.group, is_enabled=True
+            app_name="random-numbers", group=self.group, is_enabled=True
         )
         self._auth(self.admin_user)
         response = self.client.patch(
@@ -418,7 +426,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_root_can_delete_permission(self) -> None:
         """Root puede eliminar una regla de acceso."""
         perm = AppPermission.objects.create(
-            app_name="calculator", group=self.group, is_enabled=True
+            app_name="random-numbers", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
@@ -428,7 +436,7 @@ class IdentityRouterExtendedTests(TestCase):
     def test_admin_cannot_delete_permission(self) -> None:
         """Solo root puede eliminar reglas de acceso."""
         perm = AppPermission.objects.create(
-            app_name="calculator", group=self.group, is_enabled=True
+            app_name="random-numbers", group=self.group, is_enabled=True
         )
         self._auth(self.admin_user)
         response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
@@ -440,7 +448,7 @@ class IdentityRouterExtendedTests(TestCase):
         """El usuario puede guardar su configuración personal de app."""
         self._auth(self.standard_user)
         response = self.client.patch(
-            "/api/auth/app-configs/calculator/",
+            "/api/auth/app-configs/random-numbers/",
             {"config": {"theme": "dark"}},
             format="json",
         )
@@ -452,11 +460,11 @@ class IdentityRouterExtendedTests(TestCase):
     def test_admin_can_get_group_app_config(self) -> None:
         """Admin del grupo puede consultar configuración de app grupal."""
         GroupAppConfig.objects.create(
-            group=self.group, app_name="calculator", config={"mode": "basic"}
+            group=self.group, app_name="random-numbers", config={"mode": "basic"}
         )
         self._auth(self.admin_user)
         response = self.client.get(
-            f"/api/identity/groups/{self.group.id}/app-configs/calculator/"
+            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["config"]["mode"], "basic")
@@ -465,7 +473,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Usuario sin rol admin no puede consultar config grupal."""
         self._auth(self.standard_user)
         response = self.client.get(
-            f"/api/identity/groups/{self.group.id}/app-configs/calculator/"
+            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -473,7 +481,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Usuario sin rol admin no puede modificar config grupal."""
         self._auth(self.standard_user)
         response = self.client.patch(
-            f"/api/identity/groups/{self.group.id}/app-configs/calculator/",
+            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/",
             {"config": {"mode": "advanced"}},
             format="json",
         )

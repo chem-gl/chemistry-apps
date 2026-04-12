@@ -7,10 +7,14 @@ persistir resultados en caché con trazabilidad de errores.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 
+from django.conf import settings
 from django.db import DatabaseError
 
+from ..app_registry import ScientificAppRegistry
 from ..models import ScientificJob
 from ..ports import (
     CacheRepositoryPort,
@@ -19,12 +23,66 @@ from ..ports import (
     JobProgressUpdate,
 )
 from ..types import JSONMap
-from .config import get_result_cache_payload_limit_bytes
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
 
 CORE_CACHE_LOG_SOURCE = "core.cache"
+
+
+def generate_job_hash(
+    plugin_name: str,
+    version: str,
+    parameters: JSONMap,
+    input_file_signatures: list[str] | None = None,
+) -> str:
+    """Genera hash SHA-256 estable del job para habilitar caché determinista."""
+    normalized_payload: JSONMap = {
+        "plugin_name": plugin_name,
+        "version": version,
+        "parameters": parameters,
+        "input_file_signatures": sorted(input_file_signatures or []),
+    }
+    payload_serialized: str = json.dumps(
+        normalized_payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    return hashlib.sha256(payload_serialized.encode("utf-8")).hexdigest()
+
+
+def get_max_recovery_attempts() -> int:
+    """Obtiene número máximo de reintentos de recuperación por job."""
+    configured_max_attempts: int = int(
+        getattr(settings, "JOB_RECOVERY_MAX_ATTEMPTS", 5)
+    )
+    return max(1, configured_max_attempts)
+
+
+def get_result_cache_payload_limit_bytes(plugin_name: str) -> int:
+    """Retorna límite de caché para un plugin con fallback al valor global."""
+    global_limit: int = int(
+        getattr(settings, "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES", 8 * 1024 * 1024)
+    )
+
+    per_plugin_limits_raw: object = getattr(
+        settings,
+        "JOB_RESULT_CACHE_MAX_PAYLOAD_BYTES_BY_PLUGIN",
+        {},
+    )
+    if isinstance(per_plugin_limits_raw, dict):
+        plugin_limit_value: object | None = per_plugin_limits_raw.get(plugin_name)
+        if isinstance(plugin_limit_value, int):
+            return max(1024, plugin_limit_value)
+        if isinstance(plugin_limit_value, str):
+            try:
+                parsed_plugin_limit: int = int(plugin_limit_value)
+            except ValueError:
+                parsed_plugin_limit = global_limit
+            return max(1024, parsed_plugin_limit)
+
+    return max(1024, global_limit)
 
 
 def estimate_json_payload_size_bytes(
@@ -149,28 +207,14 @@ def is_cache_payload_usable_for_plugin(
 ) -> bool:
     """Valida que un payload cacheado sea reutilizable por plugin.
 
-    Para `toxicity-properties` descartamos entradas degradadas donde todas
-    las filas tienen `error_message`, porque representan ejecuciones
-    fallidas o entornos no saludables que no deben propagarse por caché.
+    El comportamiento por defecto acepta el payload.
+    Si la app registró un validador específico en `ScientificAppRegistry`,
+    se delega la decisión a ese hook.
     """
-    if plugin_name != "toxicity-properties":
+    plugin_validator = ScientificAppRegistry.get_cache_payload_validator(plugin_name)
+    if plugin_validator is None:
         return True
-
-    molecules_value: object | None = payload.get("molecules")
-    if not isinstance(molecules_value, list) or len(molecules_value) == 0:
-        return False
-
-    total_rows: int = len(molecules_value)
-    rows_with_errors: int = 0
-
-    for row_value in molecules_value:
-        if not isinstance(row_value, dict):
-            return False
-        row_error_message: object | None = row_value.get("error_message")
-        if isinstance(row_error_message, str) and row_error_message.strip() != "":
-            rows_with_errors += 1
-
-    return rows_with_errors < total_rows
+    return bool(plugin_validator(payload))
 
 
 def persist_result_in_cache(

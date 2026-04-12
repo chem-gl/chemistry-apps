@@ -1015,7 +1015,7 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
     /**
      * Descargar Export Principal SMILES Enumerado
-     * Descarga archivo limpio NAME + NAME_XXXXX SMILES para DataWarrior.
+     * Descarga archivo SMI/TXT con principal y derivados como lista simple de SMILES.
      * @endpoint get /api/smileit/jobs/{id}/report-smiles/
      * @param id A UUID string identifying this scientific job.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

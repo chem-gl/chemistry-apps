@@ -3,12 +3,13 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { NamedSmilesInputRow } from '../../scientific-app-ui.utils';
 
 @Component({
   selector: 'app-smiles-batch-input',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslocoPipe],
   templateUrl: './smiles-batch-input.component.html',
   styleUrl: './smiles-batch-input.component.scss',
 })

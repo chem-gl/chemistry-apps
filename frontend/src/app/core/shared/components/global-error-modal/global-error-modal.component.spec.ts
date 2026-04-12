@@ -11,6 +11,7 @@ describe('GlobalErrorModalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [GlobalErrorModalComponent],
+      providers: [],
     }).compileComponents();
 
     fixture = TestBed.createComponent(GlobalErrorModalComponent);

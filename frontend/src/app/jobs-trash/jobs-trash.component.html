@@ -1,0 +1,76 @@
+<!-- jobs-trash.component.html: Vista administrativa separada para restaurar jobs en papelera. -->
+<section class="trash-shell" [attr.aria-label]="'trash.aria.page' | transloco">
+    <header class="trash-header">
+        <div>
+            <p class="eyebrow">{{ 'trash.header.eyebrow' | transloco }}</p>
+            <h1>{{ 'trash.header.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'trash.header.subtitle' | transloco }}</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="outline-link" routerLink="/jobs">{{ 'trash.actions.backToMonitor' | transloco }}</a>
+            <button class="outline-link button-link" type="button" (click)="refreshNow()">{{ 'common.actions.refresh' |
+                transloco }}</button>
+        </div>
+    </header>
+
+    <app-job-filters [statusOptions]="statusOptions" [pluginOptions]="facade.pluginOptions()"
+        [selectedStatus]="facade.selectedStatus()" [selectedPluginName]="facade.selectedPluginName()"
+        [ariaLabel]="'trash.aria.filters' | transloco" (statusChanged)="onStatusFilterChanged($event)"
+        (pluginChanged)="onPluginFilterChanged($event)">
+    </app-job-filters>
+
+    @if (facade.isLoading()) {
+    <section class="state-card info-card">{{ 'trash.states.loading' | transloco }}</section>
+    }
+
+    @if (facade.errorMessage(); as currentError) {
+    <section class="state-card error-card" role="alert">{{ currentError }}</section>
+    }
+
+    @if (facade.controlErrorMessage(); as controlError) {
+    <section class="state-card error-card" role="alert">{{ controlError }}</section>
+    }
+
+    @if (facade.jobs().length === 0) {
+    <section class="state-card empty-card">{{ 'trash.states.empty' | transloco }}</section>
+    } @else {
+    <section class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ 'common.table.job' | transloco }}</th>
+                    <th>{{ 'common.table.app' | transloco }}</th>
+                    <th>{{ 'common.table.ownerGroup' | transloco }}</th>
+                    <th>{{ 'common.table.status' | transloco }}</th>
+                    <th>{{ 'trash.table.deletedBy' | transloco }}</th>
+                    <th>{{ 'trash.table.deletedAt' | transloco }}</th>
+                    <th>{{ 'trash.table.purgeAt' | transloco }}</th>
+                    <th>{{ 'common.table.action' | transloco }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (deletedJob of facade.jobs(); track deletedJob.id) {
+                <tr>
+                    <td class="mono">{{ deletedJob.id }}</td>
+                    <td>{{ deletedJob.plugin_name }}</td>
+                    <td>{{ ownerGroupLabel(deletedJob) }}</td>
+                    <td>{{ deletedJob.status }}</td>
+                    <td>{{ deletedByLabel(deletedJob) }}</td>
+                    <td>{{ deletedJob.deleted_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>{{ scheduledDeletionLabel(deletedJob) | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>
+                        <app-job-management-actions [showOpenResult]="false" [canDelete]="true"
+                            [deleteLabel]="'common.actions.deletePermanently' | transloco" [canRestore]="true"
+                            [restoreLabel]="'common.actions.restoreJob' | transloco"
+                            [isBusy]="facade.isControlActionRunning(deletedJob.id)"
+                            (deleteRequested)="deleteJobPermanently(deletedJob.id)"
+                            (restoreRequested)="restoreJob(deletedJob.id)" />
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+    }
+</section>

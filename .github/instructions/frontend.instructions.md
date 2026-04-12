@@ -269,7 +269,7 @@ Usar:
 ```ts
 const config = {
   apiUrl: "/api",
-} as const satisfies Record<string, string>;
+} as const satisfies Record<string, string>
 ```
 
 ---
@@ -279,7 +279,7 @@ const config = {
 ## 6.1 Tipado estricto
 
 ```ts
-let data: User | null = null;
+let data: User | null = null
 ```
 
 ---
@@ -287,7 +287,7 @@ let data: User | null = null;
 ## 6.2 Nombres claros
 
 ```ts
-const userList = getUsers();
+const userList = getUsers()
 ```
 
 ---
@@ -295,7 +295,7 @@ const userList = getUsers();
 ## 6.3 Sin abreviaciones
 
 ```ts
-(user, config, response);
+;(user, config, response)
 ```
 
 ---
@@ -401,6 +401,11 @@ Código:
 - modular sin sobre-fragmentación
 - consistente y limpio
 - alineado con mejores prácticas actuales
+
+# El frontend es multiidioma, pero el código debe ser en inglés. Las instrucciones y comentarios pueden estar en español, pero el código, nombres de variables, funciones, clases, etc., deben estar en inglés para mantener la consistencia y legibilidad a nivel global.
+
+las traducciones son de baja prioridad y pueden ser aproximadas, pero el código debe ser claro y profesional en inglés.
+al igual que la version de salidas a ingles siempre debe estar preparadon para el i18n, usando claves de traducción en lugar de texto hardcodeado, y aplicando las mejores prácticas para la internacionalización en Angular, pero no centrandose en hacer la tradiccion inmediata, sino asegurando que el código esté estructurado para soportar múltiples idiomas de manera eficiente en el futuro. en ingles ya cuando sea necesario, pero sin perder de vista que el enfoque principal es la calidad del código y la arquitectura, no la traducción inmediata.
 
 [1]: https://angularreleases.hashnode.dev/what-is-angular-latest-angular-releases?utm_source=chatgpt.com "What is Angular? Latest Releases Explained (2025)"
 [2]: https://dev.to/genildocs/angular-17-essential-guide-master-the-revolutionary-changes-that-transformed-modern-development-51ad?utm_source=chatgpt.com "Angular 17+ Essential Guide: Master the Revolutionary Changes That Transformed Modern Development - DEV Community"

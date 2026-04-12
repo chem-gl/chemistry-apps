@@ -1,7 +1,7 @@
 // smileit-api.service.ts: Sub-servicio API exclusivo para operaciones Smileit.
 // Encapsula catálogo, inspección estructural, validación, despacho y reportes.
 
-import { HttpResponse } from '@angular/common/http';
+import { HttpContext, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
 import { createReportDownload$ } from './api-download.utils';
@@ -17,6 +17,7 @@ import {
   SmileitStructureInspectionResponse,
   SmileitSubstituentReferenceInputRequest,
 } from './generated';
+import { SKIP_GLOBAL_ERROR_MODAL } from './interceptors/http-context-tokens';
 import type {
   DownloadedReportFile,
   SmileitAssignmentBlockParams,
@@ -92,26 +93,31 @@ export class SmileitApiService {
    * Usar para que el usuario seleccione los átomos de sustitución antes de despachar el job.
    */
   inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
+    const requestContext = new HttpContext().set(SKIP_GLOBAL_ERROR_MODAL, true);
     const request: SmileitStructureInspectionRequestRequest = { smiles };
-    return this.smileitClient.smileitJobsInspectStructureCreate(request).pipe(
-      map(
-        (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
-          canonicalSmiles: raw.canonical_smiles,
-          atomCount: raw.atom_count,
-          atoms: raw.atoms.map((atom) => ({
-            index: atom.index,
-            symbol: atom.symbol,
-            implicitHydrogens: atom.implicit_hydrogens,
-            isAromatic: atom.is_aromatic,
-          })),
-          svg: raw.svg,
-          quickProperties: raw.quick_properties,
-          annotations: raw.annotations,
-          activePatternRefs: raw.active_pattern_refs,
-        }),
-      ),
-      shareReplay(1),
-    );
+    return this.smileitClient
+      .smileitJobsInspectStructureCreate(request, 'body', false, {
+        context: requestContext,
+      })
+      .pipe(
+        map(
+          (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
+            canonicalSmiles: raw.canonical_smiles,
+            atomCount: raw.atom_count,
+            atoms: raw.atoms.map((atom) => ({
+              index: atom.index,
+              symbol: atom.symbol,
+              implicitHydrogens: atom.implicit_hydrogens,
+              isAromatic: atom.is_aromatic,
+            })),
+            svg: raw.svg,
+            quickProperties: raw.quick_properties,
+            annotations: raw.annotations,
+            activePatternRefs: raw.active_pattern_refs,
+          }),
+        ),
+        shareReplay(1),
+      );
   }
 
   /**

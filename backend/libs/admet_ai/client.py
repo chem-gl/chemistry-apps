@@ -32,7 +32,7 @@ class AdmetAiClient:
 
         try:
             from admet_ai import ADMETModel  # type: ignore[import-not-found]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise RuntimeError(
                 "No se pudo importar admet_ai. Instala dependencias con: "
                 "pip install admet-ai rdkit-pypi pandas numpy"
@@ -42,7 +42,7 @@ class AdmetAiClient:
             # Importante en Celery (ForkPoolWorker daemon):
             # evitar DataLoader multiprocessing para no crear procesos hijos.
             cls._model_instance = ADMETModel(num_workers=0)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise RuntimeError(
                 f"No se pudo inicializar ADMETModel de admet_ai: {exc}"
             ) from exc
@@ -69,7 +69,7 @@ class AdmetAiClient:
                 predictions=normalized_predictions,
                 error_message=None,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return AdmetPredictionResult(
                 smiles=smiles_value,
                 success=False,

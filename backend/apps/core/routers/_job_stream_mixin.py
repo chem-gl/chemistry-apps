@@ -66,7 +66,10 @@ class JobStreamActionsMixin:
         stream_factory: JobSSEStreamFactory,
     ) -> StreamingHttpResponse:
         """Construye respuesta SSE reutilizable para logs y progreso de jobs."""
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        job: ScientificJob = get_object_or_404(
+            ScientificJob.objects.filter(deleted_at__isnull=True),
+            pk=id,
+        )
         actor = request.user
         if bool(
             getattr(actor, "is_authenticated", False)
@@ -128,7 +131,10 @@ class JobStreamActionsMixin:
     @action(detail=True, methods=["get"], url_path=CORE_JOBS_LOGS_ROUTE_SUFFIX)
     def logs(self, request: Request, id: str | None = None) -> Response:
         """Lista logs persistidos por job para diagnóstico y auditoría."""
-        job: ScientificJob = get_object_or_404(ScientificJob, pk=id)
+        job: ScientificJob = get_object_or_404(
+            ScientificJob.objects.filter(deleted_at__isnull=True),
+            pk=id,
+        )
         actor = request.user
         if bool(
             getattr(actor, "is_authenticated", False)

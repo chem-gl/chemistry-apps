@@ -130,6 +130,11 @@ class CalculatorTemplateIntegrationTests(TestCase):
     """Valida integración de la app calculadora como plantilla desacoplada."""
 
     def test_calculator_plugin_is_registered_and_executes(self) -> None:
+        # Asegurar registro del plugin de prueba para independencia entre tests
+        from .test_job_service import _register_calculator_test_plugin
+
+        _register_calculator_test_plugin()
+
         calculator_parameters: JSONMap = {"op": "mul", "a": 7, "b": 6}
 
         execution_result: JSONMap = PluginRegistry.execute(

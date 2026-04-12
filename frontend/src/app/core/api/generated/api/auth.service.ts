@@ -17,11 +17,21 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
+import { AccessibleScientificApp } from '../model/accessibleScientificApp';
+// @ts-ignore
 import { DomainTokenObtainPairRequest } from '../model/domainTokenObtainPairRequest';
+// @ts-ignore
+import { EffectiveAppConfig } from '../model/effectiveAppConfig';
+// @ts-ignore
+import { PatchedUserAppConfigRequest } from '../model/patchedUserAppConfigRequest';
 // @ts-ignore
 import { TokenRefresh } from '../model/tokenRefresh';
 // @ts-ignore
 import { TokenRefreshRequest } from '../model/tokenRefreshRequest';
+// @ts-ignore
+import { UserAppConfig } from '../model/userAppConfig';
+// @ts-ignore
+import { UserProfile } from '../model/userProfile';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -46,14 +56,15 @@ export class AuthService extends BaseService implements AuthServiceInterface {
      * Consulta y actualiza configuración de app del usuario actual.
      * @endpoint patch /api/auth/app-configs/{app_name}/
      * @param appName 
+     * @param patchedUserAppConfigRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authAppConfigsPartialUpdate(appName: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authAppConfigsPartialUpdate(appName: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authAppConfigsPartialUpdate(appName: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authAppConfigsPartialUpdate(appName: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authAppConfigsPartialUpdate(appName: string, patchedUserAppConfigRequest?: PatchedUserAppConfigRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserAppConfig>;
+    public authAppConfigsPartialUpdate(appName: string, patchedUserAppConfigRequest?: PatchedUserAppConfigRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserAppConfig>>;
+    public authAppConfigsPartialUpdate(appName: string, patchedUserAppConfigRequest?: PatchedUserAppConfigRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserAppConfig>>;
+    public authAppConfigsPartialUpdate(appName: string, patchedUserAppConfigRequest?: PatchedUserAppConfigRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (appName === null || appName === undefined) {
             throw new Error('Required parameter appName was null or undefined when calling authAppConfigsPartialUpdate.');
         }
@@ -66,6 +77,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -75,6 +87,17 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -89,9 +112,10 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         let localVarPath = `/api/auth/app-configs/${this.configuration.encodeParam({name: "appName", value: appName, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserAppConfig>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: patchedUserAppConfigRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -110,10 +134,10 @@ export class AuthService extends BaseService implements AuthServiceInterface {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authAppConfigsRetrieve(appName: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authAppConfigsRetrieve(appName: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authAppConfigsRetrieve(appName: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authAppConfigsRetrieve(appName: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authAppConfigsRetrieve(appName: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EffectiveAppConfig>;
+    public authAppConfigsRetrieve(appName: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EffectiveAppConfig>>;
+    public authAppConfigsRetrieve(appName: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EffectiveAppConfig>>;
+    public authAppConfigsRetrieve(appName: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (appName === null || appName === undefined) {
             throw new Error('Required parameter appName was null or undefined when calling authAppConfigsRetrieve.');
         }
@@ -126,6 +150,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -149,7 +174,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         let localVarPath = `/api/auth/app-configs/${this.configuration.encodeParam({name: "appName", value: appName, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<EffectiveAppConfig>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -169,10 +194,10 @@ export class AuthService extends BaseService implements AuthServiceInterface {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authAppsRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authAppsRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authAppsRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authAppsRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authAppsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AccessibleScientificApp>>;
+    public authAppsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AccessibleScientificApp>>>;
+    public authAppsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AccessibleScientificApp>>>;
+    public authAppsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -182,6 +207,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -205,7 +231,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         let localVarPath = `/api/auth/apps/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<AccessibleScientificApp>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -292,10 +318,10 @@ export class AuthService extends BaseService implements AuthServiceInterface {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authMeRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public authMeRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public authMeRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public authMeRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authMeRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserProfile>;
+    public authMeRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserProfile>>;
+    public authMeRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserProfile>>;
+    public authMeRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -305,6 +331,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -328,7 +355,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         let localVarPath = `/api/auth/me/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserProfile>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

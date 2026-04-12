@@ -18,9 +18,9 @@ from time import sleep
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from apps.core.exceptions import JobPauseRequested
 from apps.core.processing import PluginRegistry
 from apps.core.types import (
+    JobPauseRequested,
     JSONMap,
     PluginControlCallback,
     PluginLogCallback,

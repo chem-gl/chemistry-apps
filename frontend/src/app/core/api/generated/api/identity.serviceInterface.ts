@@ -11,6 +11,20 @@ import { HttpHeaders }                                       from '@angular/comm
 
 import { Observable }                                        from 'rxjs';
 
+import { AppPermission } from '../model/models';
+import { AppPermissionRequest } from '../model/models';
+import { GroupAppConfig } from '../model/models';
+import { GroupMembership } from '../model/models';
+import { GroupMembershipRequest } from '../model/models';
+import { IdentityBootstrapUserRequest } from '../model/models';
+import { IdentityUserSummary } from '../model/models';
+import { PatchedAppPermissionRequest } from '../model/models';
+import { PatchedGroupAppConfigRequest } from '../model/models';
+import { PatchedGroupMembershipRequest } from '../model/models';
+import { PatchedIdentityUserUpdateRequest } from '../model/models';
+import { PatchedWorkGroupRequest } from '../model/models';
+import { WorkGroup } from '../model/models';
+import { WorkGroupRequest } from '../model/models';
 
 
 import { Configuration }                                     from '../configuration';
@@ -25,8 +39,9 @@ export interface IdentityServiceInterface {
      * 
      * Lista y crea reglas de acceso por app para usuarios o grupos.
      * @endpoint post /api/identity/app-permissions/
+     * @param appPermissionRequest 
      */
-    identityAppPermissionsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    identityAppPermissionsCreate(appPermissionRequest: AppPermissionRequest, extraHttpRequestParams?: any): Observable<AppPermission>;
 
     /**
      * 
@@ -38,18 +53,19 @@ export interface IdentityServiceInterface {
 
     /**
      * 
-     * Actualiza o elimina reglas de acceso de una app.
-     * @endpoint patch /api/identity/app-permissions/{permission_id}/
-     * @param permissionId 
-     */
-    identityAppPermissionsPartialUpdate(permissionId: number, extraHttpRequestParams?: any): Observable<{}>;
-
-    /**
-     * 
      * Lista y crea reglas de acceso por app para usuarios o grupos.
      * @endpoint get /api/identity/app-permissions/
      */
-    identityAppPermissionsRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    identityAppPermissionsList(extraHttpRequestParams?: any): Observable<Array<AppPermission>>;
+
+    /**
+     * 
+     * Actualiza o elimina reglas de acceso de una app.
+     * @endpoint patch /api/identity/app-permissions/{permission_id}/
+     * @param permissionId 
+     * @param patchedAppPermissionRequest 
+     */
+    identityAppPermissionsPartialUpdate(permissionId: number, patchedAppPermissionRequest?: PatchedAppPermissionRequest, extraHttpRequestParams?: any): Observable<AppPermission>;
 
     /**
      * 
@@ -57,8 +73,9 @@ export interface IdentityServiceInterface {
      * @endpoint patch /api/identity/groups/{group_id}/app-configs/{app_name}/
      * @param appName 
      * @param groupId 
+     * @param patchedGroupAppConfigRequest 
      */
-    identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, extraHttpRequestParams?: any): Observable<{}>;
+    identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, patchedGroupAppConfigRequest?: PatchedGroupAppConfigRequest, extraHttpRequestParams?: any): Observable<GroupAppConfig>;
 
     /**
      * 
@@ -67,14 +84,15 @@ export interface IdentityServiceInterface {
      * @param appName 
      * @param groupId 
      */
-    identityGroupsAppConfigsRetrieve(appName: string, groupId: number, extraHttpRequestParams?: any): Observable<{}>;
+    identityGroupsAppConfigsRetrieve(appName: string, groupId: number, extraHttpRequestParams?: any): Observable<GroupAppConfig>;
 
     /**
      * 
      * CRUD parcial para grupos de trabajo del dominio transversal.
      * @endpoint post /api/identity/groups/
+     * @param workGroupRequest 
      */
-    identityGroupsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    identityGroupsCreate(workGroupRequest: WorkGroupRequest, extraHttpRequestParams?: any): Observable<WorkGroup>;
 
     /**
      * 
@@ -86,25 +104,27 @@ export interface IdentityServiceInterface {
 
     /**
      * 
-     * Actualiza o elimina grupos de trabajo con control RBAC.
-     * @endpoint patch /api/identity/groups/{group_id}/
-     * @param groupId 
-     */
-    identityGroupsPartialUpdate(groupId: number, extraHttpRequestParams?: any): Observable<{}>;
-
-    /**
-     * 
      * CRUD parcial para grupos de trabajo del dominio transversal.
      * @endpoint get /api/identity/groups/
      */
-    identityGroupsRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    identityGroupsList(extraHttpRequestParams?: any): Observable<Array<WorkGroup>>;
+
+    /**
+     * 
+     * Actualiza o elimina grupos de trabajo con control RBAC.
+     * @endpoint patch /api/identity/groups/{group_id}/
+     * @param groupId 
+     * @param patchedWorkGroupRequest 
+     */
+    identityGroupsPartialUpdate(groupId: number, patchedWorkGroupRequest?: PatchedWorkGroupRequest, extraHttpRequestParams?: any): Observable<WorkGroup>;
 
     /**
      * 
      * Lista y crea membresías de grupos con validaciones de alcance.
      * @endpoint post /api/identity/memberships/
+     * @param groupMembershipRequest 
      */
-    identityMembershipsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    identityMembershipsCreate(groupMembershipRequest: GroupMembershipRequest, extraHttpRequestParams?: any): Observable<GroupMembership>;
 
     /**
      * 
@@ -116,39 +136,42 @@ export interface IdentityServiceInterface {
 
     /**
      * 
-     * Actualiza o elimina membresías de grupo.
-     * @endpoint patch /api/identity/memberships/{membership_id}/
-     * @param membershipId 
-     */
-    identityMembershipsPartialUpdate(membershipId: number, extraHttpRequestParams?: any): Observable<{}>;
-
-    /**
-     * 
      * Lista y crea membresías de grupos con validaciones de alcance.
      * @endpoint get /api/identity/memberships/
      */
-    identityMembershipsRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    identityMembershipsList(extraHttpRequestParams?: any): Observable<Array<GroupMembership>>;
+
+    /**
+     * 
+     * Actualiza o elimina membresías de grupo.
+     * @endpoint patch /api/identity/memberships/{membership_id}/
+     * @param membershipId 
+     * @param patchedGroupMembershipRequest 
+     */
+    identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, extraHttpRequestParams?: any): Observable<GroupMembership>;
 
     /**
      * 
      * Lista usuarios o crea usuarios para administración transversal.
      * @endpoint post /api/identity/users/
+     * @param identityBootstrapUserRequest 
      */
-    identityUsersCreate(extraHttpRequestParams?: any): Observable<{}>;
-
-    /**
-     * 
-     * Actualiza identidad y estado administrativo de un usuario.
-     * @endpoint patch /api/identity/users/{user_id}/
-     * @param userId 
-     */
-    identityUsersPartialUpdate(userId: number, extraHttpRequestParams?: any): Observable<{}>;
+    identityUsersCreate(identityBootstrapUserRequest: IdentityBootstrapUserRequest, extraHttpRequestParams?: any): Observable<IdentityUserSummary>;
 
     /**
      * 
      * Lista usuarios o crea usuarios para administración transversal.
      * @endpoint get /api/identity/users/
      */
-    identityUsersRetrieve(extraHttpRequestParams?: any): Observable<{}>;
+    identityUsersList(extraHttpRequestParams?: any): Observable<Array<IdentityUserSummary>>;
+
+    /**
+     * 
+     * Actualiza identidad y estado administrativo de un usuario.
+     * @endpoint patch /api/identity/users/{user_id}/
+     * @param userId 
+     * @param patchedIdentityUserUpdateRequest 
+     */
+    identityUsersPartialUpdate(userId: number, patchedIdentityUserUpdateRequest?: PatchedIdentityUserUpdateRequest, extraHttpRequestParams?: any): Observable<IdentityUserSummary>;
 
 }

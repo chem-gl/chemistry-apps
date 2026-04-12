@@ -1,0 +1,23 @@
+{
+  "app": {
+    "brand": {
+      "title": "科学控制中心",
+      "caption": "统一管理应用、任务与账户访问。"
+    },
+    "actions": { "signIn": "登录", "signOut": "退出" },
+    "nav": { "dashboard": "仪表盘", "profile": "个人资料", "jobsMonitor": "任务监控", "apps": "应用", "identity": "身份管理" }
+  },
+  "language": { "switcher": { "ariaLabel": "语言选择", "menuLabel": "可用语言" } },
+  "common": {
+    "actions": { "refresh": "刷新", "openResult": "打开结果", "delete": "删除", "restore": "恢复", "working": "处理中...", "deletePermanently": "永久删除", "restoreJob": "恢复任务", "moveToTrash": "移到回收站", "close": "关闭" },
+    "filters": { "status": "状态", "app": "应用", "all": "全部" },
+    "statusFilters": { "all": "全部" },
+    "jobStatus": { "pending": "待处理", "running": "运行中", "paused": "已暂停", "completed": "已完成", "failed": "失败", "cancelled": "已取消" },
+    "fallback": { "unknownUser": "未知用户", "noGroup": "无分组" }
+  },
+  "login": { "panel": { "title": "科研访问" }, "form": { "username": "用户名", "password": "密码", "signIn": "登录", "signingIn": "登录中..." } },
+  "dashboard": { "header": { "eyebrow": "基于角色的工作区", "role": "角色" }, "actions": { "myProfile": "我的资料", "openJobsMonitor": "打开任务监控" }, "states": { "loading": "正在加载仪表盘..." } },
+  "jobsMonitor": { "header": { "title": "任务监控" }, "actions": { "recycleBin": "回收站", "autoRefresh": "自动刷新", "openLogs": "打开日志", "pause": "暂停", "resume": "继续", "cancel": "取消", "viewSummary": "查看摘要" }, "kpi": { "active": "活跃", "paused": "暂停", "completed": "完成", "failed": "失败", "cancelled": "取消", "lastUpdate": "最后更新" } },
+  "trash": { "header": { "title": "回收站" }, "actions": { "backToMonitor": "返回监控" }, "states": { "loading": "正在加载回收站...", "empty": "没有可恢复的已删除任务。" } },
+  "errorModal": { "actions": { "viewDetails": "查看技术详情", "understood": "我知道了" }, "http": { "requestFailedTitle": "请求失败", "networkUnavailable": "网络不可用。", "forbidden": "无权限执行此操作。", "serverError": "服务器内部错误。" } }
+}

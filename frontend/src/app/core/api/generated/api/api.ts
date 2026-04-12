@@ -1,9 +1,6 @@
 export * from './auth.service';
 import { AuthService } from './auth.service';
 export * from './auth.serviceInterface';
-export * from './calculator.service';
-import { CalculatorService } from './calculator.service';
-export * from './calculator.serviceInterface';
 export * from './easyRate.service';
 import { EasyRateService } from './easyRate.service';
 export * from './easyRate.serviceInterface';
@@ -34,4 +31,4 @@ export * from './toxicityProperties.serviceInterface';
 export * from './tunnel.service';
 import { TunnelService } from './tunnel.service';
 export * from './tunnel.serviceInterface';
-export const APIS = [AuthService, CalculatorService, EasyRateService, IdentityService, JobsService, MarcusService, MolarFractionsService, RandomNumbersService, SAScoreService, SmileitService, ToxicityPropertiesService, TunnelService];
+export const APIS = [AuthService, EasyRateService, IdentityService, JobsService, MarcusService, MolarFractionsService, RandomNumbersService, SAScoreService, SmileitService, ToxicityPropertiesService, TunnelService];

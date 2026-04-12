@@ -16,6 +16,34 @@ import { HttpClient, HttpHeaders, HttpParams,
 import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
+// @ts-ignore
+import { AppPermission } from '../model/appPermission';
+// @ts-ignore
+import { AppPermissionRequest } from '../model/appPermissionRequest';
+// @ts-ignore
+import { GroupAppConfig } from '../model/groupAppConfig';
+// @ts-ignore
+import { GroupMembership } from '../model/groupMembership';
+// @ts-ignore
+import { GroupMembershipRequest } from '../model/groupMembershipRequest';
+// @ts-ignore
+import { IdentityBootstrapUserRequest } from '../model/identityBootstrapUserRequest';
+// @ts-ignore
+import { IdentityUserSummary } from '../model/identityUserSummary';
+// @ts-ignore
+import { PatchedAppPermissionRequest } from '../model/patchedAppPermissionRequest';
+// @ts-ignore
+import { PatchedGroupAppConfigRequest } from '../model/patchedGroupAppConfigRequest';
+// @ts-ignore
+import { PatchedGroupMembershipRequest } from '../model/patchedGroupMembershipRequest';
+// @ts-ignore
+import { PatchedIdentityUserUpdateRequest } from '../model/patchedIdentityUserUpdateRequest';
+// @ts-ignore
+import { PatchedWorkGroupRequest } from '../model/patchedWorkGroupRequest';
+// @ts-ignore
+import { WorkGroup } from '../model/workGroup';
+// @ts-ignore
+import { WorkGroupRequest } from '../model/workGroupRequest';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -39,14 +67,18 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     /**
      * Lista y crea reglas de acceso por app para usuarios o grupos.
      * @endpoint post /api/identity/app-permissions/
+     * @param appPermissionRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityAppPermissionsCreate(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityAppPermissionsCreate(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityAppPermissionsCreate(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityAppPermissionsCreate(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityAppPermissionsCreate(appPermissionRequest: AppPermissionRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AppPermission>;
+    public identityAppPermissionsCreate(appPermissionRequest: AppPermissionRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AppPermission>>;
+    public identityAppPermissionsCreate(appPermissionRequest: AppPermissionRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AppPermission>>;
+    public identityAppPermissionsCreate(appPermissionRequest: AppPermissionRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (appPermissionRequest === null || appPermissionRequest === undefined) {
+            throw new Error('Required parameter appPermissionRequest was null or undefined when calling identityAppPermissionsCreate.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -56,6 +88,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -65,6 +98,17 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -79,9 +123,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/app-permissions/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<AppPermission>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: appPermissionRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -153,76 +198,16 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     }
 
     /**
-     * Actualiza o elimina reglas de acceso de una app.
-     * @endpoint patch /api/identity/app-permissions/{permission_id}/
-     * @param permissionId 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public identityAppPermissionsPartialUpdate(permissionId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityAppPermissionsPartialUpdate(permissionId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityAppPermissionsPartialUpdate(permissionId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityAppPermissionsPartialUpdate(permissionId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (permissionId === null || permissionId === undefined) {
-            throw new Error('Required parameter permissionId was null or undefined when calling identityAppPermissionsPartialUpdate.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (cookieAuth) required
-
-        // authentication (jwtAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/identity/app-permissions/${this.configuration.encodeParam({name: "permissionId", value: permissionId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * Lista y crea reglas de acceso por app para usuarios o grupos.
      * @endpoint get /api/identity/app-permissions/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityAppPermissionsRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityAppPermissionsRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityAppPermissionsRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityAppPermissionsRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityAppPermissionsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AppPermission>>;
+    public identityAppPermissionsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AppPermission>>>;
+    public identityAppPermissionsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AppPermission>>>;
+    public identityAppPermissionsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -232,6 +217,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -255,9 +241,83 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/app-permissions/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<AppPermission>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Actualiza o elimina reglas de acceso de una app.
+     * @endpoint patch /api/identity/app-permissions/{permission_id}/
+     * @param permissionId 
+     * @param patchedAppPermissionRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public identityAppPermissionsPartialUpdate(permissionId: number, patchedAppPermissionRequest?: PatchedAppPermissionRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<AppPermission>;
+    public identityAppPermissionsPartialUpdate(permissionId: number, patchedAppPermissionRequest?: PatchedAppPermissionRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<AppPermission>>;
+    public identityAppPermissionsPartialUpdate(permissionId: number, patchedAppPermissionRequest?: PatchedAppPermissionRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<AppPermission>>;
+    public identityAppPermissionsPartialUpdate(permissionId: number, patchedAppPermissionRequest?: PatchedAppPermissionRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (permissionId === null || permissionId === undefined) {
+            throw new Error('Required parameter permissionId was null or undefined when calling identityAppPermissionsPartialUpdate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/identity/app-permissions/${this.configuration.encodeParam({name: "permissionId", value: permissionId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<AppPermission>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: patchedAppPermissionRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -273,14 +333,15 @@ export class IdentityService extends BaseService implements IdentityServiceInter
      * @endpoint patch /api/identity/groups/{group_id}/app-configs/{app_name}/
      * @param appName 
      * @param groupId 
+     * @param patchedGroupAppConfigRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, patchedGroupAppConfigRequest?: PatchedGroupAppConfigRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GroupAppConfig>;
+    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, patchedGroupAppConfigRequest?: PatchedGroupAppConfigRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GroupAppConfig>>;
+    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, patchedGroupAppConfigRequest?: PatchedGroupAppConfigRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GroupAppConfig>>;
+    public identityGroupsAppConfigsPartialUpdate(appName: string, groupId: number, patchedGroupAppConfigRequest?: PatchedGroupAppConfigRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (appName === null || appName === undefined) {
             throw new Error('Required parameter appName was null or undefined when calling identityGroupsAppConfigsPartialUpdate.');
         }
@@ -296,6 +357,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -305,6 +367,17 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -319,9 +392,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/groups/${this.configuration.encodeParam({name: "groupId", value: groupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/app-configs/${this.configuration.encodeParam({name: "appName", value: appName, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<GroupAppConfig>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: patchedGroupAppConfigRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -341,10 +415,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GroupAppConfig>;
+    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GroupAppConfig>>;
+    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GroupAppConfig>>;
+    public identityGroupsAppConfigsRetrieve(appName: string, groupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (appName === null || appName === undefined) {
             throw new Error('Required parameter appName was null or undefined when calling identityGroupsAppConfigsRetrieve.');
         }
@@ -360,6 +434,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -383,7 +458,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/groups/${this.configuration.encodeParam({name: "groupId", value: groupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/app-configs/${this.configuration.encodeParam({name: "appName", value: appName, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<GroupAppConfig>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -399,14 +474,18 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     /**
      * CRUD parcial para grupos de trabajo del dominio transversal.
      * @endpoint post /api/identity/groups/
+     * @param workGroupRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityGroupsCreate(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityGroupsCreate(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityGroupsCreate(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityGroupsCreate(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityGroupsCreate(workGroupRequest: WorkGroupRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<WorkGroup>;
+    public identityGroupsCreate(workGroupRequest: WorkGroupRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<WorkGroup>>;
+    public identityGroupsCreate(workGroupRequest: WorkGroupRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<WorkGroup>>;
+    public identityGroupsCreate(workGroupRequest: WorkGroupRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (workGroupRequest === null || workGroupRequest === undefined) {
+            throw new Error('Required parameter workGroupRequest was null or undefined when calling identityGroupsCreate.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -416,6 +495,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -425,6 +505,17 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -439,9 +530,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/groups/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<WorkGroup>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: workGroupRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -513,76 +605,16 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     }
 
     /**
-     * Actualiza o elimina grupos de trabajo con control RBAC.
-     * @endpoint patch /api/identity/groups/{group_id}/
-     * @param groupId 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public identityGroupsPartialUpdate(groupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityGroupsPartialUpdate(groupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityGroupsPartialUpdate(groupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityGroupsPartialUpdate(groupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (groupId === null || groupId === undefined) {
-            throw new Error('Required parameter groupId was null or undefined when calling identityGroupsPartialUpdate.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (cookieAuth) required
-
-        // authentication (jwtAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/identity/groups/${this.configuration.encodeParam({name: "groupId", value: groupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * CRUD parcial para grupos de trabajo del dominio transversal.
      * @endpoint get /api/identity/groups/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityGroupsRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityGroupsRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityGroupsRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityGroupsRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityGroupsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<WorkGroup>>;
+    public identityGroupsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<WorkGroup>>>;
+    public identityGroupsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<WorkGroup>>>;
+    public identityGroupsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -592,6 +624,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -615,7 +648,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/groups/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<WorkGroup>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -629,16 +662,21 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     }
 
     /**
-     * Lista y crea membresías de grupos con validaciones de alcance.
-     * @endpoint post /api/identity/memberships/
+     * Actualiza o elimina grupos de trabajo con control RBAC.
+     * @endpoint patch /api/identity/groups/{group_id}/
+     * @param groupId 
+     * @param patchedWorkGroupRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityMembershipsCreate(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityMembershipsCreate(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityMembershipsCreate(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityMembershipsCreate(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityGroupsPartialUpdate(groupId: number, patchedWorkGroupRequest?: PatchedWorkGroupRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<WorkGroup>;
+    public identityGroupsPartialUpdate(groupId: number, patchedWorkGroupRequest?: PatchedWorkGroupRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<WorkGroup>>;
+    public identityGroupsPartialUpdate(groupId: number, patchedWorkGroupRequest?: PatchedWorkGroupRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<WorkGroup>>;
+    public identityGroupsPartialUpdate(groupId: number, patchedWorkGroupRequest?: PatchedWorkGroupRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (groupId === null || groupId === undefined) {
+            throw new Error('Required parameter groupId was null or undefined when calling identityGroupsPartialUpdate.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -648,6 +686,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -657,6 +696,90 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/identity/groups/${this.configuration.encodeParam({name: "groupId", value: groupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<WorkGroup>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: patchedWorkGroupRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Lista y crea membresías de grupos con validaciones de alcance.
+     * @endpoint post /api/identity/memberships/
+     * @param groupMembershipRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public identityMembershipsCreate(groupMembershipRequest: GroupMembershipRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GroupMembership>;
+    public identityMembershipsCreate(groupMembershipRequest: GroupMembershipRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GroupMembership>>;
+    public identityMembershipsCreate(groupMembershipRequest: GroupMembershipRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GroupMembership>>;
+    public identityMembershipsCreate(groupMembershipRequest: GroupMembershipRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (groupMembershipRequest === null || groupMembershipRequest === undefined) {
+            throw new Error('Required parameter groupMembershipRequest was null or undefined when calling identityMembershipsCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -671,9 +794,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/memberships/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<GroupMembership>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: groupMembershipRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -745,76 +869,16 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     }
 
     /**
-     * Actualiza o elimina membresías de grupo.
-     * @endpoint patch /api/identity/memberships/{membership_id}/
-     * @param membershipId 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public identityMembershipsPartialUpdate(membershipId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityMembershipsPartialUpdate(membershipId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityMembershipsPartialUpdate(membershipId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityMembershipsPartialUpdate(membershipId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (membershipId === null || membershipId === undefined) {
-            throw new Error('Required parameter membershipId was null or undefined when calling identityMembershipsPartialUpdate.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (cookieAuth) required
-
-        // authentication (jwtAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/identity/memberships/${this.configuration.encodeParam({name: "membershipId", value: membershipId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * Lista y crea membresías de grupos con validaciones de alcance.
      * @endpoint get /api/identity/memberships/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityMembershipsRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityMembershipsRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityMembershipsRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityMembershipsRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityMembershipsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<GroupMembership>>;
+    public identityMembershipsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<GroupMembership>>>;
+    public identityMembershipsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<GroupMembership>>>;
+    public identityMembershipsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -824,6 +888,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -847,7 +912,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/memberships/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<GroupMembership>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -861,16 +926,21 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     }
 
     /**
-     * Lista usuarios o crea usuarios para administración transversal.
-     * @endpoint post /api/identity/users/
+     * Actualiza o elimina membresías de grupo.
+     * @endpoint patch /api/identity/memberships/{membership_id}/
+     * @param membershipId 
+     * @param patchedGroupMembershipRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityUsersCreate(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityUsersCreate(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityUsersCreate(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityUsersCreate(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GroupMembership>;
+    public identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GroupMembership>>;
+    public identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GroupMembership>>;
+    public identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (membershipId === null || membershipId === undefined) {
+            throw new Error('Required parameter membershipId was null or undefined when calling identityMembershipsPartialUpdate.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -880,6 +950,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -889,6 +960,90 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/identity/memberships/${this.configuration.encodeParam({name: "membershipId", value: membershipId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<GroupMembership>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: patchedGroupMembershipRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Lista usuarios o crea usuarios para administración transversal.
+     * @endpoint post /api/identity/users/
+     * @param identityBootstrapUserRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public identityUsersCreate(identityBootstrapUserRequest: IdentityBootstrapUserRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<IdentityUserSummary>;
+    public identityUsersCreate(identityBootstrapUserRequest: IdentityBootstrapUserRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<IdentityUserSummary>>;
+    public identityUsersCreate(identityBootstrapUserRequest: IdentityBootstrapUserRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<IdentityUserSummary>>;
+    public identityUsersCreate(identityBootstrapUserRequest: IdentityBootstrapUserRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (identityBootstrapUserRequest === null || identityBootstrapUserRequest === undefined) {
+            throw new Error('Required parameter identityBootstrapUserRequest was null or undefined when calling identityUsersCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -903,69 +1058,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/users/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<IdentityUserSummary>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Actualiza identidad y estado administrativo de un usuario.
-     * @endpoint patch /api/identity/users/{user_id}/
-     * @param userId 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public identityUsersPartialUpdate(userId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityUsersPartialUpdate(userId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityUsersPartialUpdate(userId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityUsersPartialUpdate(userId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (userId === null || userId === undefined) {
-            throw new Error('Required parameter userId was null or undefined when calling identityUsersPartialUpdate.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (cookieAuth) required
-
-        // authentication (jwtAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/identity/users/${this.configuration.encodeParam({name: "userId", value: userId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('patch', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
+                body: identityBootstrapUserRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -983,10 +1079,10 @@ export class IdentityService extends BaseService implements IdentityServiceInter
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public identityUsersRetrieve(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public identityUsersRetrieve(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public identityUsersRetrieve(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public identityUsersRetrieve(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public identityUsersList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<IdentityUserSummary>>;
+    public identityUsersList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<IdentityUserSummary>>>;
+    public identityUsersList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<IdentityUserSummary>>>;
+    public identityUsersList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -996,6 +1092,7 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -1019,9 +1116,83 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarPath = `/api/identity/users/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<IdentityUserSummary>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Actualiza identidad y estado administrativo de un usuario.
+     * @endpoint patch /api/identity/users/{user_id}/
+     * @param userId 
+     * @param patchedIdentityUserUpdateRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public identityUsersPartialUpdate(userId: number, patchedIdentityUserUpdateRequest?: PatchedIdentityUserUpdateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<IdentityUserSummary>;
+    public identityUsersPartialUpdate(userId: number, patchedIdentityUserUpdateRequest?: PatchedIdentityUserUpdateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<IdentityUserSummary>>;
+    public identityUsersPartialUpdate(userId: number, patchedIdentityUserUpdateRequest?: PatchedIdentityUserUpdateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<IdentityUserSummary>>;
+    public identityUsersPartialUpdate(userId: number, patchedIdentityUserUpdateRequest?: PatchedIdentityUserUpdateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (userId === null || userId === undefined) {
+            throw new Error('Required parameter userId was null or undefined when calling identityUsersPartialUpdate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/identity/users/${this.configuration.encodeParam({name: "userId", value: userId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<IdentityUserSummary>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: patchedIdentityUserUpdateRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

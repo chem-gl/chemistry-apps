@@ -103,8 +103,8 @@ class CoreRoutingTests(TestCase):
     """Valida que los patrones WebSocket del dominio core están configurados."""
 
     def test_websocket_urlpatterns_are_configured(self) -> None:
-        """El módulo routing debe exportar al menos una ruta WebSocket para el stream."""
-        from apps.core.routing import websocket_urlpatterns
+        """El módulo consumers debe exportar al menos una ruta WebSocket para el stream."""
+        from apps.core.consumers import websocket_urlpatterns
 
         self.assertGreaterEqual(len(websocket_urlpatterns), 1)
 

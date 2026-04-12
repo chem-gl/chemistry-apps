@@ -3,7 +3,7 @@
 @if (activeSection === 'result') {
 @if (fileDescriptors.length > 0) {
 <div class="result-section">
-    <h4>Persisted Input Files</h4>
+    <h4>{{ 'shared.jobArtifactExport.persistedFiles' | transloco }}</h4>
     <div class="file-descriptors-list">
         @for (fd of fileDescriptors; track fd.fieldName) {
         <div class="fd-item">
@@ -18,13 +18,14 @@
 
 <div class="action-row export-row">
     <button class="btn-secondary" (click)="exportCsv.emit()" [disabled]="!canExport">
-        {{ isExporting ? 'Exporting...' : 'Export CSV' }}
+        {{ isExporting ? ('shared.jobArtifactExport.exporting' | transloco) : ('shared.jobArtifactExport.exportCsv' |
+        transloco) }}
     </button>
     <button class="btn-secondary" (click)="exportLog.emit()" [disabled]="!canExport">
-        Export LOG
+        {{ 'shared.jobArtifactExport.exportLog' | transloco }}
     </button>
     <button class="btn-secondary" (click)="exportInputsZip.emit()" [disabled]="!canExport">
-        Download Inputs ZIP
+        {{ 'shared.jobArtifactExport.downloadInputsZip' | transloco }}
     </button>
 </div>
 
@@ -40,7 +41,7 @@
     }
     @if (currentJobId !== null) {
     <button class="btn-secondary" (click)="exportError.emit()" [disabled]="!canExport">
-        Download Error Report
+        {{ 'shared.jobArtifactExport.downloadErrorReport' | transloco }}
     </button>
     }
 </div>

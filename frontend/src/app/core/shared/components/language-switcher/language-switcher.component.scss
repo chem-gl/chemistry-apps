@@ -1,0 +1,78 @@
+/* language-switcher.component.scss: Estilos del selector global de idioma con banderas. */
+
+.language-switcher {
+  position: relative;
+}
+
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(168, 161, 176, 0.34);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--chem-ink);
+  border-radius: var(--chem-radius-pill);
+  padding: 0.36rem 0.58rem;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.language-code {
+  letter-spacing: 0.08em;
+}
+
+.flag-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 220px;
+  z-index: var(--z-dropdown);
+  background: #fff;
+  border: 1px solid rgba(168, 161, 176, 0.36);
+  border-radius: 12px;
+  box-shadow: var(--chem-shadow-lg);
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--chem-ink);
+  border-radius: 8px;
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.language-option:hover {
+  background: rgba(243, 237, 247, 0.72);
+  border-color: rgba(123, 90, 158, 0.22);
+}
+
+.language-option.is-active {
+  background: rgba(211, 47, 47, 0.1);
+  border-color: rgba(211, 47, 47, 0.28);
+}
+
+.language-names {
+  display: grid;
+  line-height: 1.1;
+}
+
+.language-names small {
+  color: var(--chem-ink-secondary);
+  font-size: 0.68rem;
+}

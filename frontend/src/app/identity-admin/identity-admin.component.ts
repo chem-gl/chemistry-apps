@@ -4,13 +4,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { forkJoin } from 'rxjs';
 import {
-    AppPermissionView,
-    GroupMembershipView,
-    IdentityApiService,
-    IdentityUserSummaryView,
-    WorkGroupView,
+  AppPermissionView,
+  GroupMembershipView,
+  IdentityApiService,
+  IdentityUserSummaryView,
+  WorkGroupView,
 } from '../core/api/identity-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { SCIENTIFIC_APP_ROUTE_ITEMS } from '../core/shared/scientific-apps.config';
@@ -20,7 +21,7 @@ type IdentityRoleOption = 'root' | 'admin' | 'user';
 
 @Component({
   selector: 'app-identity-admin',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslocoPipe],
   templateUrl: './identity-admin.component.html',
   styleUrl: './identity-admin.component.scss',
 })
@@ -142,10 +143,7 @@ export class IdentityAdminComponent implements OnInit {
     this.createGroupForm.update((currentValue) => ({ ...currentValue, [fieldName]: value }));
   }
 
-  setMembershipField(
-    fieldName: keyof ReturnType<typeof this.membershipForm>,
-    value: string,
-  ): void {
+  setMembershipField(fieldName: keyof ReturnType<typeof this.membershipForm>, value: string): void {
     this.membershipForm.update((currentValue) => ({ ...currentValue, [fieldName]: value }));
   }
 
@@ -156,10 +154,7 @@ export class IdentityAdminComponent implements OnInit {
     this.permissionForm.update((currentValue) => ({ ...currentValue, [fieldName]: value }));
   }
 
-  setGroupConfigField(
-    fieldName: 'group_id' | 'app_name',
-    value: string,
-  ): void {
+  setGroupConfigField(fieldName: 'group_id' | 'app_name', value: string): void {
     this.groupConfigForm.update((currentValue) => ({ ...currentValue, [fieldName]: value }));
   }
 
@@ -196,7 +191,8 @@ export class IdentityAdminComponent implements OnInit {
         first_name: formValue.first_name,
         last_name: formValue.last_name,
         role: formValue.role,
-        primary_group_id: formValue.primary_group_id === '' ? null : Number(formValue.primary_group_id),
+        primary_group_id:
+          formValue.primary_group_id === '' ? null : Number(formValue.primary_group_id),
       }),
       'User created successfully.',
       () => {
@@ -310,7 +306,12 @@ export class IdentityAdminComponent implements OnInit {
   }
 
   private runMutation(
-    request$: { subscribe: (handlers: { next?: () => void; error?: (error: { message?: string }) => void }) => void },
+    request$: {
+      subscribe: (handlers: {
+        next?: () => void;
+        error?: (error: { message?: string }) => void;
+      }) => void;
+    },
     successMessage: string,
     onSuccess?: () => void,
   ): void {

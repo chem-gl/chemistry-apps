@@ -17,7 +17,6 @@ from django.db import DatabaseError
 from django.utils import timezone
 
 from ..app_registry import ScientificAppRegistry
-from ..cache import generate_job_hash
 from ..models import ScientificJob
 from ..ports import (
     CacheRepositoryPort,
@@ -28,6 +27,7 @@ from ..ports import (
 )
 from ..realtime import broadcast_job_update
 from ..types import (
+    JobDeleteResult,
     JobLogLevel,
     JobProgressStage,
     JobRecoverySummary,
@@ -35,7 +35,6 @@ from ..types import (
     PluginControlAction,
 )
 from . import cache_operations, callbacks, execution, job_control, recovery
-from .config import get_max_recovery_attempts, get_result_cache_payload_limit_bytes
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
@@ -60,11 +59,11 @@ class RuntimeJobService:
 
     def _get_max_recovery_attempts(self) -> int:
         """Obtiene número máximo de reintentos de recuperación por job."""
-        return get_max_recovery_attempts()
+        return cache_operations.get_max_recovery_attempts()
 
     def _get_result_cache_payload_limit_bytes(self, plugin_name: str) -> int:
         """Retorna límite de caché para un plugin con fallback al valor global."""
-        return get_result_cache_payload_limit_bytes(plugin_name)
+        return cache_operations.get_result_cache_payload_limit_bytes(plugin_name)
 
     # ── Estimación y validación de caché (delegada a cache_operations.py) ──
 
@@ -104,7 +103,9 @@ class RuntimeJobService:
         group_id: int | None = None,
     ) -> ScientificJob:
         """Crea un job y resuelve cache temprano para evitar encolado innecesario."""
-        job_hash: str = generate_job_hash(plugin_name, version, parameters)
+        job_hash: str = cache_operations.generate_job_hash(
+            plugin_name, version, parameters
+        )
         cached_result_payload: JSONMap | None = self.cache_repository.get_cached_result(
             job_hash=job_hash,
             plugin_name=plugin_name,
@@ -316,6 +317,39 @@ class RuntimeJobService:
             progress_publisher=self.progress_publisher,
             log_publisher=self.log_publisher,
         )
+
+    def delete_job(self, job_id: str, *, actor) -> JobDeleteResult:
+        """Borra un job definitivamente o lo envía a papelera según el actor."""
+        job_control.purge_expired_deleted_jobs()
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para eliminar.")
+        return job_control.delete_job(
+            job_id,
+            actor=actor,
+            job=job,
+            retention_days=20,
+            progress_publisher=self.progress_publisher,
+            log_publisher=self.log_publisher,
+        )
+
+    def restore_job(self, job_id: str, *, actor) -> ScientificJob:
+        """Restaura un job desde papelera y lo devuelve a la visibilidad normal."""
+        job_control.purge_expired_deleted_jobs()
+        job: ScientificJob | None = self._get_job_or_none(job_id)
+        if job is None:
+            raise ValueError("No se encontró el job solicitado para restaurar.")
+        return job_control.restore_job(
+            job_id,
+            actor=actor,
+            job=job,
+            progress_publisher=self.progress_publisher,
+            log_publisher=self.log_publisher,
+        )
+
+    def purge_expired_deleted_jobs(self) -> int:
+        """Elimina definitivamente jobs vencidos en papelera de forma oportunista."""
+        return job_control.purge_expired_deleted_jobs()
 
     # ── Callbacks para plugins (delegados a callbacks.py) ──
 

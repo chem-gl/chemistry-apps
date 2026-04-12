@@ -1,175 +1,127 @@
 <!-- marcus.component.html: UI de Marcus para cálculo de energías y constantes de velocidad por teoría de Marcus. -->
-<section class="marcus-shell" aria-label="Marcus theory scientific app">
+<section class="marcus-shell" [attr.aria-label]="'marcus.header.eyebrow' | transloco">
   <header class="marcus-header">
-    <p class="eyebrow">Kinetics — Marcus Theory</p>
-    <h2>Marcus Rate Calculator</h2>
-    <p>
-      Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute
-      Marcus energies, reorganization energy, barriers, and rate constants.
-    </p>
+    <p class="eyebrow">{{ 'marcus.header.eyebrow' | transloco }}</p>
+    <h2>{{ 'marcus.header.title' | transloco }}</h2>
+    <p>{{ 'marcus.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────────── -->
-    <section class="entry-panel" aria-label="Input files and parameters">
+    <section class="entry-panel" [attr.aria-label]="'marcus.form.parameters' | transloco">
       <h3>
-        Required Input Files
-        <span class="all-required-badge">All 6 required</span>
+        {{ 'marcus.fileGroups.inputFilesTitle' | transloco }}
+        <span class="all-required-badge">{{ 'marcus.fileGroups.allRequired' | transloco }}</span>
       </h3>
 
       <div class="file-group">
-        <h4 class="file-group-title">Reactants</h4>
+        <h4 class="file-group-title">{{ 'marcus.fileGroups.reactants' | transloco }}</h4>
         <div class="file-grid">
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.reactant1File() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Reactant 1 <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onReactant1FileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.reactant1File() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.reactant1' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onReactant1FileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.reactant1File(); as r1File) {
-              <span class="file-badge">{{ r1File.name }}</span>
+            <span class="file-badge">{{ r1File.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
 
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.reactant2File() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Reactant 2 <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onReactant2FileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.reactant2File() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.reactant2' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onReactant2FileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.reactant2File(); as r2File) {
-              <span class="file-badge">{{ r2File.name }}</span>
+            <span class="file-badge">{{ r2File.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
         </div>
       </div>
 
       <div class="file-group">
-        <h4 class="file-group-title">Adiabatic Products</h4>
+        <h4 class="file-group-title">{{ 'marcus.fileGroups.adiabaticProducts' | transloco }}</h4>
         <div class="file-grid">
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.product1AdiabaticFile() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Product 1 Adiabatic <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onProduct1AdiabaticFileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.product1AdiabaticFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.product1Adiabatic' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onProduct1AdiabaticFileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.product1AdiabaticFile(); as p1aFile) {
-              <span class="file-badge">{{ p1aFile.name }}</span>
+            <span class="file-badge">{{ p1aFile.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
 
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.product2AdiabaticFile() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Product 2 Adiabatic <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onProduct2AdiabaticFileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.product2AdiabaticFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.product2Adiabatic' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onProduct2AdiabaticFileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.product2AdiabaticFile(); as p2aFile) {
-              <span class="file-badge">{{ p2aFile.name }}</span>
+            <span class="file-badge">{{ p2aFile.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
         </div>
       </div>
 
       <div class="file-group">
-        <h4 class="file-group-title">Vertical Products</h4>
+        <h4 class="file-group-title">{{ 'marcus.fileGroups.verticalProducts' | transloco }}</h4>
         <div class="file-grid">
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.product1VerticalFile() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Product 1 Vertical <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onProduct1VerticalFileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.product1VerticalFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.product1Vertical' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onProduct1VerticalFileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.product1VerticalFile(); as p1vFile) {
-              <span class="file-badge">{{ p1vFile.name }}</span>
+            <span class="file-badge">{{ p1vFile.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
 
-          <label
-            class="upload-zone"
-            [class.has-file]="workflow.product2VerticalFile() !== null"
-            [class.is-disabled]="workflow.isProcessing()"
-          >
-            <span class="upload-label">Product 2 Vertical <span class="req-mark">*</span></span>
-            <input
-              type="file"
-              accept=".log,.out,.txt"
-              (change)="onProduct2VerticalFileChange($event)"
-              [disabled]="workflow.isProcessing()"
-            />
+          <label class="upload-zone" [class.has-file]="workflow.product2VerticalFile() !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">{{ 'marcus.fileSlots.product2Vertical' | transloco }} <span
+                class="req-mark">*</span></span>
+            <input type="file" accept=".log,.out,.txt" (change)="onProduct2VerticalFileChange($event)"
+              [disabled]="workflow.isProcessing()" />
             @if (workflow.product2VerticalFile(); as p2vFile) {
-              <span class="file-badge">{{ p2vFile.name }}</span>
+            <span class="file-badge">{{ p2vFile.name }}</span>
             } @else {
-              <span class="upload-hint">Browse .log / .out / .txt</span>
+            <span class="upload-hint">{{ 'marcus.fileSlots.browse' | transloco }}</span>
             }
           </label>
         </div>
       </div>
 
-      <h3 class="section-sub">Parameters</h3>
+      <h3 class="section-sub">{{ 'marcus.form.parameters' | transloco }}</h3>
 
       <div class="param-grid">
         <label>
-          Title
-          <input
-            type="text"
-            [ngModel]="workflow.title()"
-            (ngModelChange)="workflow.updateTitle($event)"
-            [disabled]="workflow.isProcessing()"
-            placeholder="Optional reaction label"
-          />
+          {{ 'marcus.form.titleField' | transloco }}
+          <input type="text" [ngModel]="workflow.title()" (ngModelChange)="workflow.updateTitle($event)"
+            [disabled]="workflow.isProcessing()" [placeholder]="'marcus.form.titlePlaceholder' | transloco" />
         </label>
       </div>
 
       <div class="checkbox-row">
         <label class="checkbox-label">
-          <input
-            type="checkbox"
-            [checked]="workflow.diffusion()"
-            (change)="onDiffusionChange($event)"
-            [disabled]="workflow.isProcessing()"
-          />
-          Diffusion correction
+          <input type="checkbox" [checked]="workflow.diffusion()" (change)="onDiffusionChange($event)"
+            [disabled]="workflow.isProcessing()" />
+          {{ 'marcus.form.diffusionCorrection' | transloco }}
         </label>
       </div>
 
@@ -182,104 +134,95 @@
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
-          {{ workflow.isProcessing() ? 'Processing...' : 'Run Marcus' }}
+          {{ workflow.isProcessing() ? ('marcus.actions.processing' | transloco) : ('marcus.actions.run' | transloco) }}
         </button>
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-          Reset
+          {{ 'marcus.actions.reset' | transloco }}
         </button>
         <button class="btn-secondary" (click)="clearFiles()" [disabled]="workflow.isProcessing()">
-          Clear files
+          {{ 'marcus.actions.clearFiles' | transloco }}
         </button>
       </div>
     </section>
 
     <!-- ── Panel de resultado ──────────────────────────────────────── -->
-    <section class="result-panel" aria-label="Results and progress">
-      <h3>Output</h3>
+    <section class="result-panel" [attr.aria-label]="'marcus.result.ariaLabel' | transloco">
+      <h3>{{ 'marcus.result.title' | transloco }}</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-        <p class="status-message">Submitting Marcus job to backend...</p>
+      <p class="status-message">{{ 'marcus.result.submitting' | transloco }}</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
-        <app-job-progress-card
-          [jobId]="workflow.currentJobId()"
-          [progressPercentage]="workflow.progressPercentage()"
-          [progressMessage]="workflow.progressMessage()"
-          progressAriaLabel="Marcus job progress"
-        ></app-job-progress-card>
+      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
+        [progressMessage]="workflow.progressMessage()"
+        [progressAriaLabel]="'marcus.result.ariaLabel' | transloco"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-          <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-        }
+      @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+      <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+      }
 
-        <div class="result-title-row">
-          <strong>{{ resultData.title || 'Marcus result' }}</strong>
-        </div>
+      <div class="result-title-row">
+        <strong>{{ resultData.title || ('marcus.result.defaultTitle' | transloco) }}</strong>
+      </div>
 
-        <!-- Energías -->
-        <div class="result-section">
-          <h4>Marcus Energies</h4>
-          <div class="kv-grid">
-            <span class="kv-label">ΔE adiabatic (kcal/mol)</span>
-            <span class="kv-value mono">{{
-              formatKcalMol(resultData.adiabaticEnergyKcalMol)
+      <!-- Energías -->
+      <div class="result-section">
+        <h4>{{ 'marcus.result.marcusEnergies' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'marcus.result.adiabaticEnergy' | transloco }}</span>
+          <span class="kv-value mono">{{
+            formatKcalMol(resultData.adiabaticEnergyKcalMol)
             }}</span>
-            <span class="kv-label">ΔE adiabatic corr. (kcal/mol)</span>
-            <span class="kv-value mono">{{
-              formatKcalMol(resultData.adiabaticEnergyCorrectedKcalMol)
+          <span class="kv-label">{{ 'marcus.result.adiabaticEnergyCorrected' | transloco }}</span>
+          <span class="kv-value mono">{{
+            formatKcalMol(resultData.adiabaticEnergyCorrectedKcalMol)
             }}</span>
-            <span class="kv-label">ΔE vertical (kcal/mol)</span>
-            <span class="kv-value mono">{{ formatKcalMol(resultData.verticalEnergyKcalMol) }}</span>
-            <span class="kv-label">λ (reorganization, kcal/mol)</span>
-            <span class="kv-value mono">{{
-              formatKcalMol(resultData.reorganizationEnergyKcalMol)
+          <span class="kv-label">{{ 'marcus.result.verticalEnergy' | transloco }}</span>
+          <span class="kv-value mono">{{ formatKcalMol(resultData.verticalEnergyKcalMol) }}</span>
+          <span class="kv-label">{{ 'marcus.result.reorganizationEnergy' | transloco }}</span>
+          <span class="kv-value mono">{{
+            formatKcalMol(resultData.reorganizationEnergyKcalMol)
             }}</span>
-            <span class="kv-label">ΔG‡ (barrier, kcal/mol)</span>
-            <span class="kv-value mono">{{ formatKcalMol(resultData.barrierKcalMol) }}</span>
-          </div>
+          <span class="kv-label">{{ 'marcus.result.barrier' | transloco }}</span>
+          <span class="kv-value mono">{{ formatKcalMol(resultData.barrierKcalMol) }}</span>
         </div>
+      </div>
 
-        <!-- Constantes de velocidad -->
-        <div class="result-section">
-          <h4>Rate Constants</h4>
-          <div class="kv-grid">
-            <span class="kv-label">k (TST)</span>
-            <span class="kv-value mono"
-              >{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span
-            >
-            <span class="kv-label">k (final)</span>
-            <span class="kv-value mono"
-              >{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span
-            >
-            @if (resultData.diffusionApplied && resultData.kDiff !== null) {
-              <span class="kv-label">k_diff</span>
-              <span class="kv-value mono"
-                >{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span
-              >
-            }
-          </div>
+      <!-- Constantes de velocidad -->
+      <div class="result-section">
+        <h4>{{ 'marcus.result.rateConstants' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'marcus.result.kTst' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span>
+          <span class="kv-label">{{ 'marcus.result.kFinal' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span>
+          @if (resultData.diffusionApplied && resultData.kDiff !== null) {
+          <span class="kv-label">{{ 'marcus.result.kDiff' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span>
+          }
         </div>
+      </div>
 
-        <!-- Condiciones -->
-        <div class="result-section">
-          <h4>Conditions</h4>
-          <div class="kv-grid">
-            <span class="kv-label">Temperature</span>
-            <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
-            @if (resultData.viscosityPaS !== null) {
-              <span class="kv-label">Viscosity</span>
-              <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
-            }
-          </div>
-          <div class="flag-row">
-            @if (resultData.diffusionApplied) {
-              <span class="flag-tag flag-on">Diffusion</span>
-            }
-          </div>
+      <!-- Condiciones -->
+      <div class="result-section">
+        <h4>{{ 'marcus.result.conditions' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'marcus.result.condTemperature' | transloco }}</span>
+          <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
+          @if (resultData.viscosityPaS !== null) {
+          <span class="kv-label">{{ 'marcus.result.condViscosity' | transloco }}</span>
+          <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
+          }
         </div>
+        <div class="flag-row">
+          @if (resultData.diffusionApplied) {
+          <span class="flag-tag flag-on">{{ 'marcus.result.flagDiffusion' | transloco }}</span>
+          }
+        </div>
+      </div>
 
       }
 
@@ -288,12 +231,8 @@
 
   <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->
   <app-job-result-footer [workflow]="workflow" [canExport]="canExport()"
-    emptyMessage="No historical Marcus jobs yet."
-    ariaLabel="Historical Marcus jobs"
-    (exportCsv)="exportCsv()"
-    (exportLog)="exportLog()"
-    (exportInputsZip)="exportInputsZip()"
-    (exportError)="exportError()"
-    (openJob)="openHistoricalJob($event)"
-  ></app-job-result-footer>
+    [emptyMessage]="'marcus.history.empty' | transloco" [ariaLabel]="'marcus.history.ariaLabel' | transloco"
+    (exportCsv)="exportCsv()" (exportLog)="exportLog()" (exportInputsZip)="exportInputsZip()"
+    (exportError)="exportError()" (openJob)="openHistoricalJob($event)"
+    (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-result-footer>
 </section>

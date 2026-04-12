@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import {
@@ -23,6 +24,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     JobProgressCardComponent,
     JobLogsPanelComponent,
     JobHistoryTableComponent,

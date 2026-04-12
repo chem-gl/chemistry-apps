@@ -4,6 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
 import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fields/diffusion-fields.component';
@@ -17,6 +18,7 @@ import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-a
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     JobProgressCardComponent,
     DiffusionFieldsComponent,
     JobResultFooterComponent,

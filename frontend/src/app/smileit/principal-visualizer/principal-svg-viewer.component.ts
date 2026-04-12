@@ -3,11 +3,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-principal-svg-viewer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './principal-svg-viewer.component.html',
   styleUrls: ['./principal-svg-viewer.component.scss'],
 })

@@ -2,12 +2,13 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { JobLogEntryView } from '../../../api/jobs-api.service';
 
 @Component({
   selector: 'app-job-logs-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './job-logs-panel.component.html',
   styleUrl: './job-logs-panel.component.scss',
 })

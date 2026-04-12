@@ -172,7 +172,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "apps.accounts.apps.AccountsConfig",
     "apps.core",
-    "apps.calculator.apps.CalculatorConfig",
     "apps.random_numbers.apps.RandomNumbersConfig",
     "apps.molar_fractions.apps.MolarFractionsConfig",
     "apps.tunnel.apps.TunnelConfig",
@@ -231,7 +230,7 @@ OPENAPI_DESCRIPTION: str = os.getenv(
     "OPENAPI_DESCRIPTION",
     (
         "API de plataforma científica modular para ejecutar jobs asíncronos "
-        "por plugins (calculator, random-numbers y molar-fractions), con observabilidad de progreso "
+        "por plugins (random-numbers y molar-fractions), con observabilidad de progreso "
         "y logs en tiempo real, cache por hash y recuperación activa automática."
     ),
 )
@@ -259,10 +258,6 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Jobs",
             "description": "Operaciones genéricas para consulta, progreso, eventos SSE y logs de jobs.",
-        },
-        {
-            "name": "Calculator",
-            "description": "Endpoints de ejecución para operaciones matemáticas de calculadora científica.",
         },
         {
             "name": "RandomNumbers",
@@ -310,20 +305,16 @@ SPECTACULAR_SETTINGS = {
         "url": OPENAPI_LICENSE_URL,
     },
     "ENUM_NAME_OVERRIDES": {
-        "CalculatorOperationEnum": [
-            ("add", "add"),
-            ("sub", "sub"),
-            ("mul", "mul"),
-            ("div", "div"),
-            ("pow", "pow"),
-            ("factorial", "factorial"),
-        ],
-        "JobStatusEnum": [
+        # StatusEnum cubre los campos `status` y `original_status` de ScientificJob,
+        # que usan el mismo STATUS_CHOICES (6 valores incluyendo "cancelled").
+        # Sin este override drf-spectacular genera dos nombres para el mismo choice set.
+        "StatusEnum": [
             ("pending", "Pending"),
             ("running", "Running"),
             ("paused", "Paused"),
             ("completed", "Completed"),
             ("failed", "Failed"),
+            ("cancelled", "Cancelled"),
         ],
         "JobProgressStageEnum": [
             ("pending", "pending"),

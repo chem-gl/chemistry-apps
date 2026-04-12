@@ -221,9 +221,12 @@ class IdentityApiTests(TestCase):
             response = self.client.post(
                 "/api/jobs/",
                 {
-                    "plugin_name": "calculator",
+                    "plugin_name": "random-numbers",
                     "version": "1.0.0",
-                    "parameters": {"op": "add", "a": 1, "b": 3},
+                    "parameters": {
+                        "seed_url": "https://example.com/seed.txt",
+                        "total_numbers": 3,
+                    },
                 },
                 format="json",
             )

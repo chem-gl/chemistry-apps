@@ -1,78 +1,66 @@
 <!-- jobs-monitor.component.html: Global monitor for scientific jobs. -->
-<section class="monitor-shell" aria-label="Jobs monitor">
+<section class="monitor-shell" [attr.aria-label]="'jobsMonitor.aria.page' | transloco">
   <header class="monitor-header">
     <div>
-      <p class="eyebrow">Distributed Operations</p>
-      <h1>Jobs Monitor</h1>
-      <p class="subtitle">Track running, paused, completed and failed jobs across all apps.</p>
+      <p class="eyebrow">{{ 'jobsMonitor.header.eyebrow' | transloco }}</p>
+      <h1>{{ 'jobsMonitor.header.title' | transloco }}</h1>
+      <p class="subtitle">{{ 'jobsMonitor.header.subtitle' | transloco }}</p>
     </div>
 
     <div class="header-actions">
-      <button class="btn btn-ghost" (click)="refreshNow()">Refresh</button>
+      @if (sessionService.hasAdminAccess()) {
+      <a class="btn btn-ghost" routerLink="/jobs/trash">{{ 'jobsMonitor.actions.recycleBin' | transloco }}</a>
+      }
+      <button class="btn btn-ghost" (click)="refreshNow()">{{ 'common.actions.refresh' | transloco }}</button>
       <button class="btn" [class.btn-on]="facade.autoRefreshEnabled()" (click)="toggleAutoRefresh()">
-        Auto refresh: {{ facade.autoRefreshEnabled() ? 'ON' : 'OFF' }}
+        {{ 'jobsMonitor.actions.autoRefresh' | transloco }}:
+        {{ facade.autoRefreshEnabled() ? ('common.flags.on' | transloco) : ('common.flags.off' | transloco) }}
       </button>
     </div>
   </header>
 
-  <section class="kpi-grid" aria-label="Status summary">
+  <section class="kpi-grid" [attr.aria-label]="'jobsMonitor.aria.statusSummary' | transloco">
     <article class="kpi-card">
-      <p class="kpi-label">Active</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.active' | transloco }}</p>
       <p class="kpi-value">{{ facade.activeJobs().length }}</p>
     </article>
 
     <article class="kpi-card">
-      <p class="kpi-label">Paused</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.paused' | transloco }}</p>
       <p class="kpi-value">{{ facade.pausedJobs().length }}</p>
     </article>
 
     <article class="kpi-card">
-      <p class="kpi-label">Completed</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.completed' | transloco }}</p>
       <p class="kpi-value">{{ facade.completedJobs().length }}</p>
     </article>
 
     <article class="kpi-card">
-      <p class="kpi-label">Failed</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.failed' | transloco }}</p>
       <p class="kpi-value">{{ facade.failedJobs().length }}</p>
     </article>
 
     <article class="kpi-card">
-      <p class="kpi-label">Cancelled</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.cancelled' | transloco }}</p>
       <p class="kpi-value">{{ facade.cancelledJobs().length }}</p>
     </article>
 
     <article class="kpi-card kpi-time">
-      <p class="kpi-label">Last update</p>
+      <p class="kpi-label">{{ 'jobsMonitor.kpi.lastUpdate' | transloco }}</p>
       <p class="kpi-time-value">
         {{ facade.lastUpdatedAt() ? (facade.lastUpdatedAt() | date: 'HH:mm:ss') : '--:--:--' }}
       </p>
     </article>
   </section>
 
-  <section class="filters" aria-label="Monitor filters">
-    <label>
-      Status
-      <select [ngModel]="facade.selectedStatus()" (ngModelChange)="onStatusFilterChanged($event)">
-        @for (statusOption of statusOptions; track statusOption.value) {
-        <option [value]="statusOption.value">{{ statusOption.label }}</option>
-        }
-      </select>
-    </label>
-
-    <label>
-      App
-      <select [ngModel]="facade.selectedPluginName()" (ngModelChange)="onPluginFilterChanged($event)">
-        @for (pluginOption of facade.pluginOptions(); track pluginOption) {
-        <option [value]="pluginOption">
-          {{ pluginOption === 'all' ? 'All' : pluginOption }}
-        </option>
-        }
-      </select>
-    </label>
-  </section>
+  <app-job-filters [statusOptions]="statusOptions" [pluginOptions]="facade.pluginOptions()"
+    [selectedStatus]="facade.selectedStatus()" [selectedPluginName]="facade.selectedPluginName()"
+    [ariaLabel]="'jobsMonitor.aria.filters' | transloco" (statusChanged)="onStatusFilterChanged($event)"
+    (pluginChanged)="onPluginFilterChanged($event)">
+  </app-job-filters>
 
   @if (facade.isLoading()) {
-  <section class="state state-loading" aria-live="polite">Loading jobs...</section>
+  <section class="state state-loading" aria-live="polite">{{ 'jobsMonitor.states.loadingJobs' | transloco }}</section>
   }
 
   @if (facade.errorMessage(); as currentError) {
@@ -83,10 +71,10 @@
   <section class="state state-error" role="alert">{{ controlError }}</section>
   }
 
-  <section class="jobs-section" aria-label="Active jobs">
-    <h2>Running</h2>
+  <section class="jobs-section" [attr.aria-label]="'jobsMonitor.aria.activeJobs' | transloco">
+    <h2>{{ 'jobsMonitor.sections.running' | transloco }}</h2>
     @if (facade.activeJobs().length === 0) {
-    <p class="empty-state">No active jobs for the selected filters.</p>
+    <p class="empty-state">{{ 'jobsMonitor.states.noActiveJobs' | transloco }}</p>
     } @else {
     <div class="jobs-grid">
       @for (activeJob of facade.activeJobs(); track activeJob.id) {
@@ -117,7 +105,7 @@
 
         <div class="actions-cell">
           <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
-            Open live logs
+            {{ 'jobsMonitor.actions.openLiveLogs' | transloco }}
           </button>
 
           @if (appRouteForJob(activeJob); as appRoutePath) {
@@ -131,22 +119,24 @@
                     facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
                   ">
             @if (activeJob.pause_requested) {
-            Pause requested...
+            {{ 'jobsMonitor.actions.pauseRequested' | transloco }}
             } @else {
-            {{ facade.isControlActionRunning(activeJob.id) ? 'Pausing...' : 'Pause' }}
+            {{ facade.isControlActionRunning(activeJob.id) ? ('jobsMonitor.actions.pausing' | transloco) :
+            ('jobsMonitor.actions.pause' | transloco) }}
             }
           </button>
           }
           @if (canManageJob(activeJob)) {
           <button class="control-btn cancel-btn" (click)="cancelJob(activeJob.id)"
             [disabled]="facade.isControlActionRunning(activeJob.id)">
-            {{ facade.isControlActionRunning(activeJob.id) ? 'Cancelling...' : 'Cancel' }}
+            {{ facade.isControlActionRunning(activeJob.id) ? ('jobsMonitor.actions.cancelling' | transloco) :
+            ('jobsMonitor.actions.cancel' | transloco) }}
           </button>
           }
         </div>
 
         @if (activeJob.pause_requested && activeJob.status !== 'paused') {
-        <p class="pause-hint">A cooperative pause request was registered.</p>
+        <p class="pause-hint">{{ 'jobsMonitor.hints.cooperativePause' | transloco }}</p>
         }
       </article>
       }
@@ -154,10 +144,10 @@
     }
   </section>
 
-  <section class="jobs-section" aria-label="Paused jobs">
-    <h2>Paused</h2>
+  <section class="jobs-section" [attr.aria-label]="'jobsMonitor.aria.pausedJobs' | transloco">
+    <h2>{{ 'jobsMonitor.sections.paused' | transloco }}</h2>
     @if (facade.pausedJobs().length === 0) {
-    <p class="empty-state">No paused jobs for the selected filters.</p>
+    <p class="empty-state">{{ 'jobsMonitor.states.noPausedJobs' | transloco }}</p>
     } @else {
     <div class="jobs-grid">
       @for (pausedJob of facade.pausedJobs(); track pausedJob.id) {
@@ -188,7 +178,7 @@
 
         <div class="actions-cell">
           <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">
-            Open logs
+            {{ 'jobsMonitor.actions.openLogs' | transloco }}
           </button>
 
           @if (appRouteForJob(pausedJob); as appRoutePath) {
@@ -200,13 +190,15 @@
           @if (canManageJob(pausedJob) && pausedJob.supports_pause_resume) {
           <button class="control-btn resume-btn" (click)="resumeJob(pausedJob.id)"
             [disabled]="facade.isControlActionRunning(pausedJob.id)">
-            {{ facade.isControlActionRunning(pausedJob.id) ? 'Resuming...' : 'Resume' }}
+            {{ facade.isControlActionRunning(pausedJob.id) ? ('jobsMonitor.actions.resuming' | transloco) :
+            ('jobsMonitor.actions.resume' | transloco) }}
           </button>
           }
           @if (canManageJob(pausedJob)) {
           <button class="control-btn cancel-btn" (click)="cancelJob(pausedJob.id)"
             [disabled]="facade.isControlActionRunning(pausedJob.id)">
-            {{ facade.isControlActionRunning(pausedJob.id) ? 'Cancelling...' : 'Cancel' }}
+            {{ facade.isControlActionRunning(pausedJob.id) ? ('jobsMonitor.actions.cancelling' | transloco) :
+            ('jobsMonitor.actions.cancel' | transloco) }}
           </button>
           }
         </div>
@@ -216,24 +208,24 @@
     }
   </section>
 
-  <section class="jobs-section" aria-label="Finished jobs">
-    <h2>Completed, failed and cancelled</h2>
+  <section class="jobs-section" [attr.aria-label]="'jobsMonitor.aria.finishedJobs' | transloco">
+    <h2>{{ 'jobsMonitor.sections.finished' | transloco }}</h2>
     @if (facade.finishedJobs().length === 0) {
-    <p class="empty-state">No terminal jobs for this filter yet.</p>
+    <p class="empty-state">{{ 'jobsMonitor.states.noFinishedJobs' | transloco }}</p>
     } @else {
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Job</th>
-            <th>App</th>
-            <th>Owner / Group</th>
-            <th>Status</th>
-            <th>Progress</th>
-            <th>Stage</th>
-            <th>Cache</th>
-            <th>Updated</th>
-            <th>Action</th>
+            <th>{{ 'common.table.job' | transloco }}</th>
+            <th>{{ 'common.table.app' | transloco }}</th>
+            <th>{{ 'common.table.ownerGroup' | transloco }}</th>
+            <th>{{ 'common.table.status' | transloco }}</th>
+            <th>{{ 'common.table.progress' | transloco }}</th>
+            <th>{{ 'common.table.stage' | transloco }}</th>
+            <th>{{ 'common.table.cache' | transloco }}</th>
+            <th>{{ 'common.table.updated' | transloco }}</th>
+            <th>{{ 'common.table.action' | transloco }}</th>
           </tr>
         </thead>
         <tbody>
@@ -253,20 +245,24 @@
                 finishedJob.progress_stage
                 }}</span>
             </td>
-            <td>{{ finishedJob.cache_hit ? 'Hit' : 'Miss' }}</td>
+            <td>{{ finishedJob.cache_hit ? ('jobsMonitor.table.cacheHit' | transloco) : ('jobsMonitor.table.cacheMiss' |
+              transloco) }}</td>
             <td>{{ finishedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
             <td>
               <div class="actions-cell">
                 <button class="open-logs-btn" (click)="openJobDetails(finishedJob.id)">
-                  Open logs
+                  {{ 'jobsMonitor.actions.openLogs' | transloco }}
                 </button>
 
                 @if (appRouteForJob(finishedJob); as appRoutePath) {
-                <a class="open-result-link" [routerLink]="appRoutePath" [queryParams]="{ jobId: finishedJob.id }">
-                  {{ resultActionLabel(finishedJob) }}
-                </a>
+                <app-job-management-actions [openResultRoute]="appRoutePath"
+                  [openResultQueryParams]="{ jobId: finishedJob.id }" [openResultLabel]="resultActionLabel(finishedJob)"
+                  [canDelete]="canDeleteJob(finishedJob)" [isBusy]="facade.isControlActionRunning(finishedJob.id)"
+                  [deleteLabel]="deleteActionLabel(finishedJob)" (deleteRequested)="deleteJob(finishedJob.id)" />
                 } @else {
-                <span class="open-result-disabled">No viewer</span>
+                <app-job-management-actions [showOpenResult]="false" [canDelete]="canDeleteJob(finishedJob)"
+                  [isBusy]="facade.isControlActionRunning(finishedJob.id)"
+                  [deleteLabel]="deleteActionLabel(finishedJob)" (deleteRequested)="deleteJob(finishedJob.id)" />
                 }
               </div>
             </td>
@@ -279,15 +275,16 @@
   </section>
 
   @if (facade.selectedJobId() !== null) {
-  <section class="details-overlay" aria-label="Job details" (click)="closeJobDetails()" (keydown)="closeJobDetails()">
+  <section class="details-overlay" [attr.aria-label]="'jobsMonitor.details.aria' | transloco"
+    (click)="closeJobDetails()" (keydown)="closeJobDetails()">
     <article class="details-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <header class="details-header">
-        <h3>Job details</h3>
-        <button class="close-details-btn" (click)="closeJobDetails()">Close</button>
+        <h3>{{ 'jobsMonitor.details.title' | transloco }}</h3>
+        <button class="close-details-btn" (click)="closeJobDetails()">{{ 'common.actions.close' | transloco }}</button>
       </header>
 
       @if (facade.isDetailsLoading()) {
-      <p class="details-loading">Loading details and logs...</p>
+      <p class="details-loading">{{ 'jobsMonitor.details.loading' | transloco }}</p>
       } @else {
       @if (facade.detailsErrorMessage(); as detailsError) {
       <p class="details-error">{{ detailsError }}</p>
@@ -296,16 +293,17 @@
       @if (facade.selectedJob(); as selectedJob) {
       <div class="details-meta-grid">
         <p>
-          <strong>ID:</strong> <span class="mono">{{ selectedJob.id }}</span>
+          <strong>{{ 'common.table.id' | transloco }}:</strong> <span class="mono">{{ selectedJob.id }}</span>
         </p>
-        <p><strong>App:</strong> {{ selectedJob.plugin_name }}</p>
-        <p><strong>Owner / Group:</strong> {{ ownerGroupLabel(selectedJob) }}</p>
-        <p><strong>Status:</strong> {{ selectedJob.status }}</p>
-        <p><strong>Stage:</strong> {{ selectedJob.progress_stage }}</p>
-        <p><strong>Progress:</strong> {{ selectedJob.progress_percentage }}%</p>
-        <p><strong>Message:</strong> {{ selectedJob.progress_message }}</p>
+        <p><strong>{{ 'common.table.app' | transloco }}:</strong> {{ selectedJob.plugin_name }}</p>
+        <p><strong>{{ 'common.table.ownerGroup' | transloco }}:</strong> {{ ownerGroupLabel(selectedJob) }}</p>
+        <p><strong>{{ 'common.table.status' | transloco }}:</strong> {{ selectedJob.status }}</p>
+        <p><strong>{{ 'common.table.stage' | transloco }}:</strong> {{ selectedJob.progress_stage }}</p>
+        <p><strong>{{ 'common.table.progress' | transloco }}:</strong> {{ selectedJob.progress_percentage }}%</p>
+        <p><strong>{{ 'jobsMonitor.details.message' | transloco }}:</strong> {{ selectedJob.progress_message }}</p>
         <p>
-          <strong>Updated:</strong> {{ selectedJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}
+          <strong>{{ 'common.table.updated' | transloco }}:</strong> {{ selectedJob.updated_at | date: 'yyyy-MM-dd
+          HH:mm:ss' }}
         </p>
       </div>
 
@@ -315,7 +313,9 @@
         <button class="control-btn resume-btn" (click)="resumeJob(selectedJob.id)"
           [disabled]="facade.isControlActionRunning(selectedJob.id)">
           {{
-          facade.isControlActionRunning(selectedJob.id) ? 'Resuming...' : 'Resume job'
+          facade.isControlActionRunning(selectedJob.id)
+          ? ('jobsMonitor.actions.resuming' | transloco)
+          : ('jobsMonitor.actions.resumeJob' | transloco)
           }}
         </button>
         } @else if (selectedJob.status === 'running' || selectedJob.status === 'pending') {
@@ -323,10 +323,12 @@
                       facade.isControlActionRunning(selectedJob.id) || selectedJob.pause_requested
                     ">
           @if (selectedJob.pause_requested) {
-          Pause requested...
+          {{ 'jobsMonitor.actions.pauseRequested' | transloco }}
           } @else {
           {{
-          facade.isControlActionRunning(selectedJob.id) ? 'Pausing...' : 'Pause job'
+          facade.isControlActionRunning(selectedJob.id)
+          ? ('jobsMonitor.actions.pausing' | transloco)
+          : ('jobsMonitor.actions.pauseJob' | transloco)
           }}
           }
         </button>
@@ -339,25 +341,36 @@
         <button class="control-btn cancel-btn" (click)="cancelJob(selectedJob.id)"
           [disabled]="facade.isControlActionRunning(selectedJob.id)">
           {{
-          facade.isControlActionRunning(selectedJob.id) ? 'Cancelling...' : 'Cancel job'
+          facade.isControlActionRunning(selectedJob.id)
+          ? ('jobsMonitor.actions.cancelling' | transloco)
+          : ('jobsMonitor.actions.cancelJob' | transloco)
           }}
         </button>
         }
       </div>
       }
 
+      @if (canDeleteJob(selectedJob)) {
+      <div class="actions-cell">
+        <app-job-management-actions [showOpenResult]="false" [canDelete]="true"
+          [isBusy]="facade.isControlActionRunning(selectedJob.id)" [deleteLabel]="deleteActionLabel(selectedJob)"
+          (deleteRequested)="deleteJob(selectedJob.id)" />
+      </div>
+      }
+
       @if (selectedJob.error_trace !== null && selectedJob.error_trace !== '') {
-      <section class="error-trace-box" aria-label="Job error trace">
-        <h4>Error trace</h4>
+      <section class="error-trace-box" [attr.aria-label]="'jobsMonitor.details.errorTraceAria' | transloco">
+        <h4>{{ 'jobsMonitor.details.errorTrace' | transloco }}</h4>
         <pre>{{ selectedJob.error_trace }}</pre>
       </section>
       }
       }
 
       @if (facade.selectedJobLogs().length === 0) {
-      <p class="details-empty">No logs available for this job.</p>
+      <p class="details-empty">{{ 'jobsMonitor.details.noLogs' | transloco }}</p>
       } @else {
-      <app-job-logs-panel [title]="'Logs'" [logs]="facade.selectedJobLogs()"></app-job-logs-panel>
+      <app-job-logs-panel [title]="'jobsMonitor.details.logs' | transloco"
+        [logs]="facade.selectedJobLogs()"></app-job-logs-panel>
       }
       }
     </article>

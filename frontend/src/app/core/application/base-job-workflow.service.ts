@@ -181,6 +181,24 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     });
   }
 
+  /** Elimina un job histórico y actualiza la lista local del historial. */
+  deleteHistoryJob(jobId: string): void {
+    this.jobsApiService.deleteJob(jobId).subscribe({
+      next: () => {
+        this.historyJobs.update((jobs: ScientificJobView[]) =>
+          jobs.filter((jobItem: ScientificJobView) => jobItem.id !== jobId),
+        );
+
+        if (this.currentJobId() === jobId) {
+          this.reset();
+        }
+      },
+      error: (deleteError: Error) => {
+        this.errorMessage.set(`Unable to delete job: ${deleteError.message}`);
+      },
+    });
+  }
+
   // ── Resúmenes históricos ───────────────────────────────────────────
 
   /** Construye el mensaje de resumen para jobs en estados no terminales. */

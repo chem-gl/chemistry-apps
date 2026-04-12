@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Literal, TypedDict
 
 type JSONPrimitive = str | int | float | bool | None
@@ -29,6 +30,7 @@ type JobStatus = Literal[
     "failed",
     "cancelled",
 ]
+type JobDeletionMode = Literal["hard", "soft"]
 type JobProgressStage = Literal[
     "pending",
     "queued",
@@ -97,6 +99,14 @@ class JobLogListResponse(TypedDict):
     results: list[JobLogEntry]
 
 
+class JobDeleteResult(TypedDict):
+    """Resultado tipado de una operación de borrado de job."""
+
+    job_id: str
+    deletion_mode: JobDeletionMode
+    scheduled_hard_delete_at: str | None
+
+
 class JobRecoverySummary(TypedDict):
     """Resumen tipado de ejecución de recuperación activa de jobs."""
 
@@ -105,6 +115,17 @@ class JobRecoverySummary(TypedDict):
     requeued_successfully: int
     requeue_failed: int
     marked_failed_by_retries: int
+
+
+@dataclass(slots=True)
+class JobPauseRequested(RuntimeError):
+    """Señal de pausa cooperativa emitida por un plugin durante ejecución."""
+
+    message: str = "Ejecución pausada por solicitud del usuario."
+    checkpoint: JSONMap | None = None
+
+    def __str__(self) -> str:
+        return self.message
 
 
 # === DOMAIN ERROR TYPES FOR EXTERNAL CONSUMERS ===

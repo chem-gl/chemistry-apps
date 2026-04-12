@@ -2,32 +2,33 @@
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
     <div class="top-bar-main">
       <div class="brand-block">
-        <p class="brand-kicker">Chemistry Apps</p>
+        <p class="brand-kicker">{{ 'app.brand.kicker' | transloco }}</p>
         <div class="brand-copy">
-          <h1>Scientific Control Desk</h1>
-          <p class="brand-caption">Central navigation for apps, jobs and account access.</p>
+          <h1>{{ 'app.brand.title' | transloco }}</h1>
+          <p class="brand-caption">{{ 'app.brand.caption' | transloco }}</p>
         </div>
       </div>
 
       <div class="session-panel">
+        <app-language-switcher />
         @if (sessionService.isAuthenticated()) {
         <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
         <div class="session-copy">
           <strong>{{ sessionService.displayName() }}</strong>
           <span>{{ sessionService.currentRole() }}</span>
         </div>
-        <button class="session-button" type="button" (click)="logout()">Sign out</button>
+        <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
         } @else {
-        <a class="session-button" routerLink="/login">Sign in</a>
+        <a class="session-button" routerLink="/login">{{ 'app.actions.signIn' | transloco }}</a>
         }
       </div>
     </div>
 
-    <nav class="main-nav" aria-label="Main navigation">
+    <nav class="main-nav" [attr.aria-label]="'app.nav.ariaLabel' | transloco">
       @for (navItem of primaryNavigationItems(); track navItem.path) {
       <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
-        [title]="navItem.hint">
-        {{ navItem.label }}
+        [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint">
+        {{ navItem.labelKey ? (navItem.labelKey | transloco) : navItem.label }}
       </a>
       }
     </nav>

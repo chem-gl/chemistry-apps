@@ -4,8 +4,6 @@
 Enrutamiento principal del backend y exposición de OpenAPI.
 """
 
-from apps.calculator.definitions import APP_ROUTE_BASENAME, APP_ROUTE_PREFIX
-from apps.calculator.routers import CalculatorJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
 from apps.core.identity.routers import (
     AppPermissionDetailView,
@@ -72,7 +70,6 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.trailing_slash = "/?"
 router.register(CORE_JOBS_ROUTE_PREFIX, JobViewSet, basename=CORE_JOBS_ROUTE_BASENAME)
-router.register(APP_ROUTE_PREFIX, CalculatorJobViewSet, basename=APP_ROUTE_BASENAME)
 router.register(
     RANDOM_NUMBERS_ROUTE_PREFIX,
     RandomNumbersJobViewSet,

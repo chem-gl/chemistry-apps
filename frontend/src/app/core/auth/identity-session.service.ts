@@ -2,12 +2,18 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, forkJoin, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import {
-    AuthApiService,
-    CurrentUserProfileView,
-    SessionTokens,
-} from '../api/auth-api.service';
+  Observable,
+  catchError,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
+import { AuthApiService, CurrentUserProfileView, SessionTokens } from '../api/auth-api.service';
 import { AccessibleScientificAppView, IdentityApiService } from '../api/identity-api.service';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'chemistry-apps.access-token';
@@ -17,6 +23,8 @@ export interface ManagedJobIdentity {
   owner: number | null;
   group: number | null;
 }
+
+export type ManagedJobDeleteMode = 'hard' | 'soft' | null;
 
 type SessionStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous';
 
@@ -50,7 +58,9 @@ export class IdentitySessionService {
     return fullName === '' ? userProfile.username : fullName;
   });
   readonly hasRootAccess = computed(() => this.currentRole() === 'root');
-  readonly hasAdminAccess = computed(() => this.currentRole() === 'root' || this.currentRole() === 'admin');
+  readonly hasAdminAccess = computed(
+    () => this.currentRole() === 'root' || this.currentRole() === 'admin',
+  );
   readonly enabledRouteKeys = computed(() =>
     this.accessibleApps()
       .filter((appItem: AccessibleScientificAppView) => appItem.enabled)
@@ -184,6 +194,44 @@ export class IdentitySessionService {
       jobIdentity.group !== null &&
       jobIdentity.group === userProfile.primary_group_id
     );
+  }
+
+  canDeleteJob(jobIdentity: ManagedJobIdentity): boolean {
+    return this.canManageJob(jobIdentity);
+  }
+
+  canRestoreJob(jobIdentity: ManagedJobIdentity): boolean {
+    const userProfile = this.currentUser();
+    if (userProfile === null) {
+      return false;
+    }
+
+    if (userProfile.role === 'root') {
+      return true;
+    }
+
+    return (
+      userProfile.role === 'admin' &&
+      jobIdentity.group !== null &&
+      jobIdentity.group === userProfile.primary_group_id
+    );
+  }
+
+  resolveDeleteMode(jobIdentity: ManagedJobIdentity): ManagedJobDeleteMode {
+    const userProfile = this.currentUser();
+    if (userProfile === null || !this.canDeleteJob(jobIdentity)) {
+      return null;
+    }
+
+    if (userProfile.role === 'root' || userProfile.role === 'admin') {
+      return 'soft';
+    }
+
+    if (jobIdentity.owner === userProfile.id) {
+      return 'hard';
+    }
+
+    return null;
   }
 
   private loadRemoteSession(): Observable<boolean> {

@@ -13,12 +13,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { KetcherFrameService } from '../../core/application/ketcher-frame.service';
 
 @Component({
   selector: 'app-principal-molecule-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './principal-molecule-editor.component.html',
   styleUrl: './principal-molecule-editor.component.scss',
 })

@@ -4,7 +4,6 @@ Parser profesional para archivos de logs de Gaussian (.log). Extrae información
 
 ## 📋 Características
 
-- ✅ **Tipado estricto**: Sin `Any`, con TypedDicts y dataclasses
 - ✅ **Sin dependencias externas**: Solo stdlib de Python
 - ✅ **Extrae múltiples cálculos**: Maneja logs con varias ejecuciones
 - ✅ **Atributos configurables**: Arquitectura extensible
