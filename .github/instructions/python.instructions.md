@@ -395,7 +395,7 @@ Cada endpoint debe incluir:
 
 ---
 
-# 17. ANTI-PATTERNS
+# 17. ANTI-PATTERNS y MALAS PRÁCTICAS
 
 - `Any`
 - lógica en views
@@ -404,7 +404,87 @@ Cada endpoint debe incluir:
 - funciones largas
 - acoplamiento fuerte
 
+# 18. Mejor refactorizar a servicios, usar puertos/adapters, dividir responsabilidades. por ejemplo
+
+Uso de tipos
+
+- No uses `Any`.
+  Usa tipos concretos (`str`, `int`, etc.), uniones (`X | Y`) o genéricos con `TypeVar`.
+
+- No uses `object` como tipo genérico.
+  Usa `Protocol` si necesitas definir comportamiento o `TypeVar` si el valor es genérico.
+
 ---
+
+Colecciones tipadas
+
+- No uses `list` sin parametrizar.
+  Usa `list[T]`.
+
+- No uses `dict` sin parametrizar.
+  Usa `dict[K, V]` o define un `TypedDict` o una clase.
+
+- No uses `tuple` sin definir su estructura.
+  Usa `tuple[T1, T2]` o `tuple[T, ...]`.
+
+- No uses `set` sin tipo.
+  Usa `set[T]`.
+
+---
+
+Tipos funcionales y clases
+
+- No uses `Callable` sin especificar firma.
+  Usa `Callable[[Args...], ReturnType]`.
+
+- No uses `Type` sin parametrizar.
+  Usa `type[T]`.
+
+---
+
+Diseño de tipos
+
+- No uses `Union` con demasiados tipos no relacionados.
+  Modela los datos con clases, `Protocol` o separa la lógica.
+
+- No uses estructuras ambiguas como `dict` genérico para datos estructurados.
+  Usa `TypedDict`, `dataclass` o clases.
+
+---
+
+Genéricos
+
+- No escribas funciones genéricas sin tipado.
+  Usa `TypeVar` para preservar el tipo de entrada y salida.
+
+---
+
+Validación y conversiones
+
+- No abuses de `cast`.
+  Asegura tipos correctos desde el origen o valida con `isinstance`.
+
+---
+
+    Manejo de errores de tipo
+
+- No uses `# type: ignore` para silenciar errores.
+  Corrige el tipo o refactoriza el código.
+
+---
+
+Reglas de calidad (Sonar y similares)
+
+- No uses `NOSONAR`, desactivación de reglas, ni supresiones para ocultar problemas de tipado.
+
+- No ocultes errores de análisis estático.
+  Los errores deben corregirse, no silenciarse.
+
+---
+
+Regla general
+
+Si necesitas usar `Any`, `type: ignore` o suprimir reglas del linter, se debe asumir que el diseño de tipos es incorrecto y debe refactorizarse.
 
 # ⚡ RESULTADO ESPERADO
 
@@ -421,3 +501,6 @@ Código:
 
 [1]: https://django.readthedocs.io/en/latest/releases/6.0.html?utm_source=chatgpt.com "Django 6.0 release notes — Django 6.1.dev20260311170544 documentation"
 [2]: https://django.wiki/articles/django-6-new-features/?utm_source=chatgpt.com "What's New in Django 6.0 Major Features and Changes - Django.wiki"
+
+Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.

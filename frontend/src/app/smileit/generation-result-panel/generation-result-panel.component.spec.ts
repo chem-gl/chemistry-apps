@@ -24,6 +24,42 @@ const buildMockStructure = (
   ...overrides,
 });
 
+const buildScientificJob = (overrides: Partial<ScientificJobView> = {}): ScientificJobView => ({
+  id: 'job-1',
+  owner: null,
+  owner_username: null,
+  group: null,
+  group_name: null,
+  job_hash: 'hash-1',
+  plugin_name: 'smileit',
+  algorithm_version: '1.0.0',
+  status: 'completed',
+  is_deleted: false,
+  deleted_at: null,
+  deleted_by: null,
+  deleted_by_username: null,
+  deletion_mode: '',
+  scheduled_hard_delete_at: null,
+  original_status: '',
+  cache_hit: false,
+  cache_miss: true,
+  progress_percentage: 100,
+  progress_stage: 'completed',
+  progress_message: 'Completed',
+  progress_event_index: 1,
+  supports_pause_resume: false,
+  pause_requested: false,
+  runtime_state: null,
+  paused_at: null,
+  resumed_at: null,
+  parameters: {},
+  results: null,
+  error_trace: '',
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-01T00:00:00Z',
+  ...overrides,
+});
+
 describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
   let component: GenerationResultPanelComponent;
 
@@ -81,58 +117,58 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
 
   describe('historicalJobDisplayName', () => {
     it('retorna export_name_base con el id del job para mantener unicidad visible', () => {
-      const job = {
+      const job = buildScientificJob({
         id: 'abc-12345678',
         parameters: { export_name_base: 'Mi experimento' },
-      } as unknown as ScientificJobView;
+      });
       expect(component.historicalJobDisplayName(job)).toBe('Mi experimento_abc-12345678');
     });
 
     it('retorna un fallback basado en job cuando no hay export_name_base', () => {
-      const job = {
+      const job = buildScientificJob({
         id: 'abc12345-extra',
         parameters: {},
-      } as unknown as ScientificJobView;
+      });
       expect(component.historicalJobDisplayName(job)).toBe('job_abc12345-extra');
     });
   });
 
   describe('historicalJobPrincipalSmiles', () => {
     it('retorna el principal_smiles si está presente', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: { principal_smiles: 'c1ccccc1' },
-      } as unknown as ScientificJobView;
+      });
       expect(component.historicalJobPrincipalSmiles(job)).toBe('c1ccccc1');
     });
 
     it('retorna mensaje de fallback si principal_smiles no está en parameters', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: {},
-      } as unknown as ScientificJobView;
+      });
       expect(component.historicalJobPrincipalSmiles(job)).toBe('Principal SMILES not available');
     });
 
     it('retorna mensaje de fallback si parameters es null', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: null,
-      } as unknown as ScientificJobView;
+      });
       expect(component.historicalJobPrincipalSmiles(job)).toBe('Principal SMILES not available');
     });
   });
 
   describe('historicalJobBlockSummaries', () => {
     it('retorna array vacío si no hay assignment_blocks en los parámetros', () => {
-      const job = { parameters: {} } as unknown as ScientificJobView;
+      const job = buildScientificJob({ parameters: {} });
       expect(component.historicalJobBlockSummaries(job)).toEqual([]);
     });
 
     it('retorna array vacío si parameters es null', () => {
-      const job = { parameters: null } as unknown as ScientificJobView;
+      const job = buildScientificJob({ parameters: null });
       expect(component.historicalJobBlockSummaries(job)).toEqual([]);
     });
 
     it('mapea correctamente un bloque con label y positions', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: {
           assignment_blocks: [
             {
@@ -142,7 +178,7 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
             },
           ],
         },
-      } as unknown as ScientificJobView;
+      });
 
       const summaries = component.historicalJobBlockSummaries(job);
       expect(summaries).toHaveLength(1);
@@ -153,22 +189,22 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
     });
 
     it('usa nombre genérico Block N cuando label es vacío', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: {
           assignment_blocks: [{ label: '', site_atom_indices: [], resolved_substituents: [] }],
         },
-      } as unknown as ScientificJobView;
+      });
 
       const summaries = component.historicalJobBlockSummaries(job);
       expect(summaries[0].label).toBe('Block 1');
     });
 
     it('retorna Not assigned si site_atom_indices no es array', () => {
-      const job = {
+      const job = buildScientificJob({
         parameters: {
           assignment_blocks: [{ label: 'A', site_atom_indices: null, resolved_substituents: [] }],
         },
-      } as unknown as ScientificJobView;
+      });
 
       const summaries = component.historicalJobBlockSummaries(job);
       expect(summaries[0].positions).toBe('Not assigned');

@@ -8,19 +8,36 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsApiService } from '../../core/api/jobs-api.service';
 import {
   SmileitGeneratedStructureView,
+  SmileitResultData,
   SmileitWorkflowService,
 } from '../../core/application/smileit-workflow.service';
 import { GenerationResultDataService } from './generation-result-data.service';
 
+const buildResultData = (overrides: Partial<SmileitResultData> = {}): SmileitResultData => ({
+  totalGenerated: 0,
+  generatedStructures: [],
+  truncated: false,
+  principalSmiles: 'C',
+  selectedAtomIndices: [],
+  assignmentBlocks: [],
+  traceabilityRows: [],
+  exportNameBase: 'EDA',
+  exportPadding: 5,
+  references: {},
+  isHistoricalSummary: false,
+  summaryMessage: null,
+  ...overrides,
+});
+
 /** Construye un workflow mock con las señales mínimas que requiere el servicio. */
 const buildMockWorkflow = (
   overrides: Partial<{
-    resultDataValue: ReturnType<SmileitWorkflowService['resultData']> | null;
+    resultDataValue: SmileitResultData | null;
     currentJobIdValue: string | null;
     exportNameBaseValue: string;
   }> = {},
 ) => ({
-  resultData: signal(overrides.resultDataValue ?? null),
+  resultData: signal<SmileitResultData | null>(overrides.resultDataValue ?? null),
   currentJobId: signal(overrides.currentJobIdValue ?? null),
   exportNameBase: signal(overrides.exportNameBaseValue ?? 'EDA'),
   exportErrorMessage: signal<string | null>(null),
@@ -81,10 +98,7 @@ describe('GenerationResultDataService', () => {
   describe('hasMoreGeneratedStructures', () => {
     it('retorna true si hay más estructuras que las cargadas', () => {
       // Simular que resultData tiene totalGenerated = 10 pero no hemos cargado nada
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 10,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 10 }));
 
       TestBed.flushEffects();
       expect(service.hasMoreGeneratedStructures()).toBe(true);
@@ -92,10 +106,7 @@ describe('GenerationResultDataService', () => {
 
     it('retorna false si todas las estructuras están cargadas', () => {
       // loadedGeneratedStructures vacío, resultData con totalGenerated = 0
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 0,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 0 }));
 
       TestBed.flushEffects();
       expect(service.hasMoreGeneratedStructures()).toBe(false);
@@ -206,12 +217,9 @@ describe('GenerationResultDataService', () => {
     });
 
     it('no hace nada si isPreparingImagesZip ya está activo', async () => {
-      mockWorkflow.resultData.set({
-        totalGenerated: 1,
-        exportNameBase: 'test',
-        principalSmiles: 'C',
-        isHistoricalSummary: false,
-      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.resultData.set(
+        buildResultData({ totalGenerated: 1, exportNameBase: 'test', principalSmiles: 'C' }),
+      );
       mockWorkflow.currentJobId.set('job-zip2');
       service.isPreparingImagesZip.set(true);
 
@@ -222,16 +230,13 @@ describe('GenerationResultDataService', () => {
       const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
       const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
       const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockReturnValue(undefined);
-      (mockJobsApi as Record<string, unknown>)['downloadSmileitImagesZipServer'] = vi
+      mockJobsApi.downloadSmileitImagesZipServer = vi
         .fn()
         .mockReturnValue(of({ filename: 'smileit.zip', blob: new Blob(['test']) }));
 
-      mockWorkflow.resultData.set({
-        totalGenerated: 1,
-        exportNameBase: 'test',
-        principalSmiles: 'C',
-        isHistoricalSummary: false,
-      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.resultData.set(
+        buildResultData({ totalGenerated: 1, exportNameBase: 'test', principalSmiles: 'C' }),
+      );
       mockWorkflow.currentJobId.set('job-zip-server');
 
       await service.downloadVisibleStructuresZip();
@@ -248,6 +253,9 @@ describe('GenerationResultDataService', () => {
       const serverZipMock = vi
         .fn()
         .mockReturnValue(throwError(() => new Error('zip backend unavailable')));
+      // acceso a método privado en test: la intersección con la clase reduce a never
+      // porque TypeScript combina el tipo privado con la firma pública. Se usa
+      // as unknown as para evitar ese comportamiento y acceder al spy correctamente.
       const fallbackSpy = vi
         .spyOn(
           service as unknown as { downloadVisibleStructuresZipClientFallback: () => Promise<void> },
@@ -255,12 +263,9 @@ describe('GenerationResultDataService', () => {
         )
         .mockResolvedValue(undefined);
 
-      mockWorkflow.resultData.set({
-        totalGenerated: 1,
-        exportNameBase: 'test',
-        principalSmiles: 'C',
-        isHistoricalSummary: false,
-      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.resultData.set(
+        buildResultData({ totalGenerated: 1, exportNameBase: 'test', principalSmiles: 'C' }),
+      );
       mockWorkflow.currentJobId.set('job-zip-fallback');
       mockJobsApi.downloadSmileitImagesZipServer = serverZipMock as never;
 
@@ -271,16 +276,14 @@ describe('GenerationResultDataService', () => {
     });
 
     it('registra error visible si el fallback local también falla', async () => {
-      mockWorkflow.resultData.set({
-        totalGenerated: 1,
-        exportNameBase: 'test',
-        principalSmiles: 'C',
-        isHistoricalSummary: false,
-      } as unknown as ReturnType<SmileitWorkflowService['resultData']>);
+      mockWorkflow.resultData.set(
+        buildResultData({ totalGenerated: 1, exportNameBase: 'test', principalSmiles: 'C' }),
+      );
       mockWorkflow.currentJobId.set('job-zip-error');
       mockJobsApi.downloadSmileitImagesZipServer = vi
         .fn()
         .mockReturnValue(throwError(() => new Error('zip backend unavailable')));
+      // mismo patrón: as unknown as para evitar reducción a never en intersección con privado
       vi.spyOn(
         service as unknown as { downloadVisibleStructuresZipClientFallback: () => Promise<void> },
         'downloadVisibleStructuresZipClientFallback',
@@ -313,10 +316,7 @@ describe('GenerationResultDataService', () => {
       mockJobsApi.getSmileitDerivationSvg = vi.fn().mockReturnValue(of('<svg/>'));
 
       mockWorkflow.currentJobId.set('job-load');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 2,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 2 }));
 
       TestBed.flushEffects();
 
@@ -338,10 +338,7 @@ describe('GenerationResultDataService', () => {
       sessionStorage.setItem('smileit:job-cached-page:page:0:100', JSON.stringify(cachedItems));
 
       mockWorkflow.currentJobId.set('job-cached-page');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 1,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 1 }));
 
       TestBed.flushEffects();
 
@@ -359,10 +356,7 @@ describe('GenerationResultDataService', () => {
         .mockReturnValue(of({ totalGenerated: 10, offset: 0, limit: 100, items: [] }));
 
       mockWorkflow.currentJobId.set('job-show-more');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 10,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 10 }));
 
       TestBed.flushEffects();
       const callsBefore = vi.mocked(mockJobsApi.listSmileitDerivations).mock.calls.length;
@@ -389,11 +383,9 @@ describe('GenerationResultDataService', () => {
       };
 
       mockWorkflow.currentJobId.set('job-404');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 1,
-        isHistoricalSummary: false,
-        generatedStructures: [embeddedStructure],
-      });
+      mockWorkflow.resultData.set(
+        buildResultData({ totalGenerated: 1, generatedStructures: [embeddedStructure] }),
+      );
 
       TestBed.flushEffects();
 
@@ -405,11 +397,7 @@ describe('GenerationResultDataService', () => {
       mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(throwError(() => httpError));
 
       mockWorkflow.currentJobId.set('job-404-no-embedded');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 3,
-        isHistoricalSummary: false,
-        generatedStructures: [],
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 3, generatedStructures: [] }));
 
       TestBed.flushEffects();
 
@@ -422,10 +410,7 @@ describe('GenerationResultDataService', () => {
         .mockReturnValue(throwError(() => new Error('Network error')));
 
       mockWorkflow.currentJobId.set('job-generic-error');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 5,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 5 }));
 
       TestBed.flushEffects();
 
@@ -434,10 +419,7 @@ describe('GenerationResultDataService', () => {
 
     it('resetea el estado cuando resultData cambia a null', () => {
       mockWorkflow.currentJobId.set('job-reset');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 1,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 1 }));
       TestBed.flushEffects();
 
       // Resetear resultData
@@ -467,10 +449,7 @@ describe('GenerationResultDataService', () => {
       );
 
       mockWorkflow.currentJobId.set('job-empty-name');
-      (mockWorkflow.resultData as ReturnType<typeof signal<unknown>>).set({
-        totalGenerated: 1,
-        isHistoricalSummary: false,
-      });
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 1 }));
 
       TestBed.flushEffects();
 
@@ -486,6 +465,7 @@ describe('GenerationResultDataService', () => {
 
   describe('utilidades de nombres y caché', () => {
     it('sanitiza segmentos de nombre con caracteres inválidos', () => {
+      // acceso a método privado: as unknown as evita la reducción a never
       const sanitized = (
         service as unknown as { sanitizeFilenameSegment: (value: string) => string }
       ).sanitizeFilenameSegment('  Molécula #1 / test  ');
@@ -501,6 +481,7 @@ describe('GenerationResultDataService', () => {
         traceability: [],
       } as never;
 
+      // acceso a método privado: as unknown as evita la reducción a never
       const resolved = await (
         service as unknown as {
           resolveStructureSvgForZip: (

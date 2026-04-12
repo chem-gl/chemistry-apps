@@ -7,9 +7,18 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
-import { JobsApiService, SaScoreMethod } from '../core/api/jobs-api.service';
+import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  JobsApiService,
+  SaScoreMethod,
+  ScientificJobView,
+} from '../core/api/jobs-api.service';
 import { KetcherFrameService } from '../core/application/ketcher-frame.service';
-import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
+import {
+  SaScoreResultData,
+  SaScoreWorkflowService,
+} from '../core/application/sa-score-workflow.service';
 import { SaScoreComponent } from './sa-score.component';
 
 describe('SaScoreComponent', () => {
@@ -24,13 +33,13 @@ describe('SaScoreComponent', () => {
     }),
     activeSection: signal<string>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<unknown>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<SaScoreResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal<unknown[]>([]),
+    historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     progressPercentage: signal<number>(0),

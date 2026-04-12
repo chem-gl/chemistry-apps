@@ -42,5 +42,79 @@
   En dado caso siempre se ignoran los archivos autogenerados **/generated/**, ya que estos archivos son generados automáticamente por herramientas y no deben ser editados manualmente. asi que se insta a modificar los linters y herramientas de análisis estático para que ignoren cualquier error de estilo o tipado en los archivos dentro de la carpeta **/generated/**, ya que estos archivos son generados automáticamente y no deben ser editados.
 - los test tocan todo el codigo privado y publico a traves de las pruebas a puntos publicos.
 
-para verificar que el comando acabo es posible agregar un & echo listo al final de los comandos, para que al finalizar el comando se imprima "listo" en la consola, lo que indica que el comando ha terminado de ejecutarse, esto es especialmente útil para comandos que pueden tardar un tiempo en ejecutarse o en comandos de tsc 
+para verificar que el comando acabo es posible agregar un & echo listo al final de los comandos, para que al finalizar el comando se imprima "listo" en la consola, lo que indica que el comando ha terminado de ejecutarse, esto es especialmente útil para comandos que pueden tardar un tiempo en ejecutarse o en comandos de tsc
 de cualquier forma siempre se debe asegurar que hay una salida en la tarminal que indique que el comando ha terminado de ejecutarse, ya sea a través de un mensaje personalizado como "listo" o a través de la salida estándar del comando, para asegurarse de que el usuario tenga claro cuándo el comando ha finalizado y pueda continuar con los siguientes pasos sin confusión. incluso si falla o es exitoso especialmente si es exitoso y este no siempre muestra una salida clara, es importante asegurarse de que haya una indicación clara de que el comando ha terminado, para evitar confusiones o incertidumbre sobre el estado del proceso. esto es especialmente importante en comandos que pueden tardar un tiempo en ejecutarse, para que el usuario sepa cuándo puede continuar con los siguientes pasos sin tener que adivinar si el comando ha terminado o no.
+Aquí tienes las instrucciones en forma general (agnósticas al lenguaje), redactadas para un LLM:
+
+---
+
+# Instrucciones de diseño: manejo de errores y estilo declarativo
+
+## Manejo de errores
+
+- No uses excepciones como mecanismo principal de control de flujo.
+  Usa estructuras tipadas que representen éxito y error.
+
+- No retornes `null`, `undefined` o valores ambiguos para indicar fallos.
+  Representa los errores de forma explícita en el tipo de retorno.
+
+- Modela los errores como datos.
+  Define estructuras claras para los errores en lugar de usar strings o códigos sin contexto.
+
+- Propaga errores de forma explícita.
+  Evita bloques anidados de control de errores; prefiere composición.
+
+---
+
+## Uso de mónadas
+
+- Usa abstracciones como `Result`, `Either`, `Option` o equivalentes para encapsular valores.
+
+- Encadena operaciones usando `map`, `flatMap` (o equivalente) en lugar de lógica imperativa.
+
+- No extraigas valores de la mónada antes de tiempo.
+  Mantén la composición hasta el final del flujo.
+
+- Evita condicionales repetitivos (`if`, `switch`) sobre estados de error.
+  Usa composición funcional.
+
+---
+
+## Estilo declarativo
+
+- Prefiere un estilo declarativo sobre uno imperativo cuando mejore la legibilidad.
+
+- Describe qué se quiere hacer en lugar de cómo hacerlo paso a paso.
+
+- Usa funciones puras siempre que sea posible.
+
+- Evita efectos secundarios ocultos.
+
+---
+
+## Tipado
+
+- Usa tipado fuerte y explícito para modelar flujos de datos.
+
+- Asegura que los tipos representen correctamente todos los estados posibles (incluyendo errores).
+
+- Evita tipos ambiguos o genéricos débiles.
+
+---
+
+## Legibilidad
+
+- Prioriza la legibilidad sobre la abstracción excesiva.
+
+- No introduzcas mónadas o patrones funcionales si hacen el código más difícil de entender.
+
+- Usa composición funcional solo cuando haga el flujo más claro.
+
+---
+
+## Reglas general
+
+El código debe ser lo más declarativo, tipado y expresivo posible, pero siempre priorizando la claridad.
+
+Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.

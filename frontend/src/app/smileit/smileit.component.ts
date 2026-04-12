@@ -131,10 +131,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   @ViewChild('patternDetailDialog')
   private readonly patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
 
-  readonly patternEntries = computed<SmileitPatternEntryView[]>(() => {
-    const rawPatterns: unknown = this.workflow.patterns() as unknown;
-    return Array.isArray(rawPatterns) ? (rawPatterns as SmileitPatternEntryView[]) : [];
-  });
+  readonly patternEntries = computed<SmileitPatternEntryView[]>(() => this.workflow.patterns());
 
   /**
    * Texto plano condensado de todos los logs para mostrar en un textbox con scroll.

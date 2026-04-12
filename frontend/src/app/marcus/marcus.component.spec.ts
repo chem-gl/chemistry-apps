@@ -6,7 +6,15 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, vi } from 'vitest';
-import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
+import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+} from '../core/api/jobs-api.service';
+import {
+  MarcusResultData,
+  MarcusWorkflowService,
+} from '../core/application/marcus-workflow.service';
 import { MarcusComponent } from './marcus.component';
 
 describe('MarcusComponent', () => {
@@ -24,13 +32,13 @@ describe('MarcusComponent', () => {
     reactionDistance: signal<number | null>(null),
     activeSection: signal<string>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<unknown>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<MarcusResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal<unknown[]>([]),
+    historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     canDispatch: signal<boolean>(false),

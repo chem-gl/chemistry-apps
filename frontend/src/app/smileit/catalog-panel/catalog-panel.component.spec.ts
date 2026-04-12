@@ -7,14 +7,41 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { JobsApiService } from '../../core/api/jobs-api.service';
+import {
+  JobsApiService,
+  SmileitCatalogEntryView,
+  SmileitStructureInspectionView,
+} from '../../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
 import { SmileitInspectionService } from '../core/services/smileit-inspection.service';
 import { CatalogPanelComponent } from './catalog-panel.component';
 
+type CatalogDialogElement = Pick<
+  HTMLDialogElement,
+  'open' | 'showModal' | 'close' | 'removeAttribute' | 'setAttribute'
+>;
+
+type CatalogPanelPrivateRefs = {
+  catalogStudioDialogRef?: { nativeElement: HTMLDialogElement };
+  catalogSmilesSketchDialogRef?: { nativeElement: HTMLDialogElement };
+};
+
+const buildCatalogEntry = (
+  overrides: Partial<SmileitCatalogEntryView> = {},
+): SmileitCatalogEntryView => ({
+  id: 'entry-1',
+  stable_id: 'stable-entry-1',
+  version: 1,
+  name: 'Entry 1',
+  smiles: 'C',
+  anchor_atom_indices: [],
+  source_reference: 'catalog',
+  ...overrides,
+});
+
 /** Construye un mock completo del WorkflowService para el panel de catálogo. */
 const buildMockWorkflow = () => ({
-  catalogGroups: signal<{ key: string; entries: unknown[] }[]>([]),
+  catalogGroups: signal<{ key: string; entries: SmileitCatalogEntryView[] }[]>([]),
   catalogCreateSmiles: signal<string>(''),
   catalogCreateAnchorIndicesText: signal<string>(''),
   isProcessing: signal<boolean>(false),
@@ -153,20 +180,29 @@ describe('CatalogPanelComponent', () => {
 
   describe('filteredLibraryEntries computed', () => {
     it('retorna lista plana de entradas visibles', () => {
-      const entryA = { id: 'e-1', stable_id: 'methane', version: 1, smiles: 'C', name: 'methane' };
-      const entryB = { id: 'e-2', stable_id: 'ethane', version: 1, smiles: 'CC', name: 'ethane' };
+      const entryA = buildCatalogEntry({
+        id: 'e-1',
+        stable_id: 'methane',
+        smiles: 'C',
+        name: 'methane',
+      });
+      const entryB = buildCatalogEntry({
+        id: 'e-2',
+        stable_id: 'ethane',
+        smiles: 'CC',
+        name: 'ethane',
+      });
       mockWorkflow.catalogGroups.set([{ key: 'all', entries: [entryA, entryB] }]);
       expect(component.filteredLibraryEntries()).toHaveLength(2);
     });
 
     it('deduplica entradas repetidas cuando una molécula aparece en múltiples grupos', () => {
-      const duplicatedEntry = {
+      const duplicatedEntry = buildCatalogEntry({
         id: 'e-1',
         stable_id: 'methane',
-        version: 1,
         smiles: 'C',
         name: 'methane',
-      };
+      });
 
       mockWorkflow.catalogGroups.set([
         { key: 'group-a', entries: [duplicatedEntry] },
@@ -193,14 +229,14 @@ describe('CatalogPanelComponent', () => {
 
   describe('catalogEntryPreviewError', () => {
     it('retorna null cuando no hay error para la entrada', () => {
-      const entry = { stable_id: 'e1', version: 1 } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e1', version: 1 });
       fixture.componentRef.setInput('libraryEntryInspectionErrors', {});
       fixture.detectChanges();
       expect(component.catalogEntryPreviewError(entry)).toBeNull();
     });
 
     it('retorna el error cuando existe la clave en el input', () => {
-      const entry = { stable_id: 'e1', version: 1 } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e1', version: 1 });
       fixture.componentRef.setInput('libraryEntryInspectionErrors', { 'e1@1': 'Network error' });
       fixture.detectChanges();
       expect(component.catalogEntryPreviewError(entry)).toBe('Network error');
@@ -209,16 +245,16 @@ describe('CatalogPanelComponent', () => {
 
   describe('catalogEntryPreviewSvg', () => {
     it('retorna null cuando no hay inspección para la entrada', () => {
-      const entry = { stable_id: 'e2', version: 1, anchor_atom_indices: [] } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e2', version: 1, anchor_atom_indices: [] });
       fixture.componentRef.setInput('libraryEntryInspections', {});
       fixture.detectChanges();
       expect(component.catalogEntryPreviewSvg(entry)).toBeNull();
     });
 
     it('retorna SVG decorado cuando existe inspección', () => {
-      const entry = { stable_id: 'e3', version: 2, anchor_atom_indices: [0] } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e3', version: 2, anchor_atom_indices: [0] });
       fixture.componentRef.setInput('libraryEntryInspections', {
-        'e3@2': { svg: '<svg>raw</svg>' },
+        'e3@2': { svg: '<svg>raw</svg>' } as SmileitStructureInspectionView,
       });
       fixture.detectChanges();
       const result = component.catalogEntryPreviewSvg(entry);
@@ -345,7 +381,7 @@ describe('CatalogPanelComponent', () => {
 
   describe('beginCatalogEntryEdition', () => {
     it('delega a workflow.catalog.beginCatalogEntryEdition', () => {
-      const entry = { stable_id: 'e1', version: 1 } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e1', version: 1 });
       component.beginCatalogEntryEdition(entry);
       expect(mockWorkflow.catalog.beginCatalogEntryEdition).toHaveBeenCalledWith(entry);
     });
@@ -353,9 +389,9 @@ describe('CatalogPanelComponent', () => {
 
   describe('openLibraryEntryDetail', () => {
     it('emite libraryEntryDetailRequested con la entrada recibida', () => {
-      const emitted: unknown[] = [];
+      const emitted: SmileitCatalogEntryView[] = [];
       component.libraryEntryDetailRequested.subscribe((e) => emitted.push(e));
-      const entry = { stable_id: 'e1', version: 1 } as never;
+      const entry = buildCatalogEntry({ stable_id: 'e1', version: 1 });
       component.openLibraryEntryDetail(entry);
       expect(emitted).toHaveLength(1);
       expect(emitted[0]).toBe(entry);
@@ -372,15 +408,15 @@ describe('CatalogPanelComponent', () => {
     });
 
     it('onCatalogStudioDialogClick no lanza error sin ViewChild', () => {
-      expect(() =>
-        component.onCatalogStudioDialogClick({ target: document.body } as unknown as Event),
-      ).not.toThrow();
+      const clickEvent = new Event('click');
+      Object.defineProperty(clickEvent, 'target', { value: document.body });
+      expect(() => component.onCatalogStudioDialogClick(clickEvent)).not.toThrow();
     });
 
     it('onCatalogSmilesSketchDialogClick no lanza error sin ViewChild', () => {
-      expect(() =>
-        component.onCatalogSmilesSketchDialogClick({ target: document.body } as unknown as Event),
-      ).not.toThrow();
+      const clickEvent = new Event('click');
+      Object.defineProperty(clickEvent, 'target', { value: document.body });
+      expect(() => component.onCatalogSmilesSketchDialogClick(clickEvent)).not.toThrow();
     });
 
     it('openCatalogStudioModal no lanza error sin ViewChild', () => {
@@ -388,19 +424,17 @@ describe('CatalogPanelComponent', () => {
     });
 
     it('openCatalogStudioModal muestra el dialog cuando el ref existe', () => {
-      const dialogElement = {
+      const dialogElement: CatalogDialogElement = {
         open: false,
         showModal: vi.fn(),
         close: vi.fn(),
         removeAttribute: vi.fn(),
         setAttribute: vi.fn(),
-      } as unknown as HTMLDialogElement;
-
-      (
-        component as unknown as { catalogStudioDialogRef: { nativeElement: HTMLDialogElement } }
-      ).catalogStudioDialogRef = {
-        nativeElement: dialogElement,
       };
+
+      Object.assign(component as CatalogPanelComponent & CatalogPanelPrivateRefs, {
+        catalogStudioDialogRef: { nativeElement: dialogElement as HTMLDialogElement },
+      });
 
       component.openCatalogStudioModal();
 
@@ -424,21 +458,17 @@ describe('CatalogPanelComponent', () => {
 
     it('abre el dialog y sincroniza el SMILES cuando el panel está listo', () => {
       component.isCatalogSmilesSketcherReady.set(true);
-      const dialogElement = {
+      const dialogElement: CatalogDialogElement = {
         open: false,
         showModal: vi.fn(),
         close: vi.fn(),
         removeAttribute: vi.fn(),
         setAttribute: vi.fn(),
-      } as unknown as HTMLDialogElement;
-
-      (
-        component as unknown as {
-          catalogSmilesSketchDialogRef: { nativeElement: HTMLDialogElement };
-        }
-      ).catalogSmilesSketchDialogRef = {
-        nativeElement: dialogElement,
       };
+
+      Object.assign(component as CatalogPanelComponent & CatalogPanelPrivateRefs, {
+        catalogSmilesSketchDialogRef: { nativeElement: dialogElement as HTMLDialogElement },
+      });
 
       component.openCatalogSmilesSketcher();
 

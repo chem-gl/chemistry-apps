@@ -6,8 +6,13 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, vi } from 'vitest';
-import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
+  JobLogEntryView,
+  JobProgressSnapshotView,
+  ScientificJobView,
+} from '../core/api/jobs-api.service';
+import {
+  MolarFractionsResultData,
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
 } from '../core/application/molar-fractions-workflow.service';
@@ -24,13 +29,13 @@ describe('MolarFractionsComponent', () => {
     phStep: signal<number>(1),
     activeSection: signal<string>('idle'),
     currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<unknown>(null),
-    jobLogs: signal<unknown[]>([]),
-    resultData: signal<unknown>(null),
+    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
+    jobLogs: signal<JobLogEntryView[]>([]),
+    resultData: signal<MolarFractionsResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
-    historyJobs: signal<unknown[]>([]),
+    historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
     progressPercentage: signal<number>(0),
