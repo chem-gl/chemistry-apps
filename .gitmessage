@@ -1,20 +1,15 @@
 # 👨‍💻
 
-<tipo>(area): descripción corta
+## TIPO (elige uno y borra el resto) feat ✨ | fix 🐛 | docs 📝 | refactor ♻️ | test 🧪 | chore 🧹
+
+## ÁREA (elige uno y borra el resto) backend ⚙️ | frontend 🎨 | devops 🚀 | docs 📚 | tests 🧪
+
+TIPO(ÁREA): descripción corta
 
 ---
-
-## Tipo (elige uno y borra el resto)
-
-feat ✨ | fix 🐛 | docs 📝 | refactor ♻️ | test 🧪 | chore 🧹
-
-## Área (elige uno y borra el resto)
-
-backend ⚙️ | frontend 🎨 | devops 🚀 | docs 📚 | tests 🧪
 
 ## Detalles (opcional)
 
 --
 
-Commit por 👨‍💻 @CesarGuzmanLopez (humano, no IA 🤖❌); y saber si lo hizo una persona o IA 👀.
-el proyecto tiene codigo generado por IA, pero este commit es exclusivamente código escrito por mí.
+Commit por 👨‍💻 @CesarGuzmanLopez (humano, no IA 🤖❌). Human-reviewed code
