@@ -82,9 +82,13 @@ h1 {
   background: var(--chem-surface-elevated);
 }
 
-label {
+.filter-control {
   display: grid;
   gap: 0.35rem;
+}
+
+.filter-control label {
+  display: grid;
   color: var(--chem-ink-secondary);
   font-weight: 600;
   font-size: var(--chem-text-sm);

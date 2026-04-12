@@ -1,4 +1,4 @@
-// apps-hub.component.ts: Catalogo de navegacion filtrado por permisos de sesión.
+// apps-hub.component.ts: Catalogo de navegación filtrado por permisos de sesión.
 
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';

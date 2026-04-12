@@ -11,8 +11,10 @@ import {
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobFiltersComponent } from '../core/shared/components/job-filters/job-filters.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
+import { buildJobOwnershipLabel } from '../core/shared/job-ownership-label.utils';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -28,6 +30,7 @@ import {
     TranslocoPipe,
     JobLogsPanelComponent,
     JobManagementActionsComponent,
+    JobFiltersComponent,
   ],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-monitor.component.html',
@@ -65,8 +68,8 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     this.facade.toggleAutoRefresh();
   }
 
-  onStatusFilterChanged(nextStatus: JobStatusFilterOption): void {
-    this.facade.setStatusFilter(nextStatus);
+  onStatusFilterChanged(nextStatus: string): void {
+    this.facade.setStatusFilter(nextStatus as JobStatusFilterOption);
   }
 
   onPluginFilterChanged(nextPluginName: string): void {
@@ -162,11 +165,9 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   }
 
   ownerGroupLabel(jobItem: ScientificJobView): string {
-    const ownerLabel =
-      jobItem.owner_username ?? this.translocoService.translate('common.fallback.unknownUser');
-    const groupLabel =
-      jobItem.group_name ?? this.translocoService.translate('common.fallback.noGroup');
-    return `${ownerLabel} · ${groupLabel}`;
+    return buildJobOwnershipLabel(jobItem, (translationKey: string) =>
+      this.translocoService.translate(translationKey),
+    );
   }
 
   resultActionLabel(jobItem: ScientificJobView): string {

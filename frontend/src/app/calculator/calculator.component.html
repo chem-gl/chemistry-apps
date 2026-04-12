@@ -53,15 +53,12 @@
       {{ 'calculator.progress.title' | transloco }} <span class="job-id-badge">{{ currentJobId() }}</span>
     </h3>
 
-    <ul class="stage-stepper">
-      @for (step of stageSteps; track step) {
-      <li class="stage-step" [class.step-done]="isStepDone(step)" [class.step-active]="isStepActive(step)"
+    <div class="stage-stepper">@for (step of stageSteps; track step) {<div class="stage-step"
+        [class.step-done]="isStepDone(step)" [class.step-active]="isStepActive(step)"
         [attr.aria-current]="isStepActive(step) ? 'step' : null">
         <div class="step-dot"></div>
         <span class="step-label">{{ stageLabel(step) }}</span>
-      </li>
-      }
-    </ul>
+      </div>}</div>
 
     <app-job-progress-card [jobId]="currentJobId()" [progressPercentage]="progressPercentage()"
       [progressMessage]="progressMessage()"

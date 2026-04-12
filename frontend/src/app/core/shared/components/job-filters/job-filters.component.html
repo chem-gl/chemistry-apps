@@ -1,0 +1,22 @@
+<!-- job-filters.component.html: Filtros de estado y app reutilizables para listados de jobs. -->
+<section class="filters" [attr.aria-label]="ariaLabel">
+    <label>
+        {{ 'common.filters.status' | transloco }}
+        <select [ngModel]="selectedStatus" (ngModelChange)="statusChanged.emit($event)">
+            @for (statusOption of statusOptions; track statusOption.value) {
+            <option [value]="statusOption.value">{{ statusOption.labelKey | transloco }}</option>
+            }
+        </select>
+    </label>
+
+    <label>
+        {{ 'common.filters.app' | transloco }}
+        <select [ngModel]="selectedPluginName" (ngModelChange)="pluginChanged.emit($event)">
+            @for (pluginOption of pluginOptions; track pluginOption) {
+            <option [value]="pluginOption">
+                {{ pluginOption === 'all' ? ('common.filters.all' | transloco) : pluginOption }}
+            </option>
+            }
+        </select>
+    </label>
+</section>

@@ -10,12 +10,21 @@ import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
+import { JobFiltersComponent } from '../core/shared/components/job-filters/job-filters.component';
 import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
+import { buildJobOwnershipLabel } from '../core/shared/job-ownership-label.utils';
 
 @Component({
   selector: 'app-jobs-trash',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JobManagementActionsComponent, TranslocoPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    JobManagementActionsComponent,
+    JobFiltersComponent,
+    TranslocoPipe,
+  ],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-trash.component.html',
   styleUrl: './jobs-trash.component.scss',
@@ -39,8 +48,8 @@ export class JobsTrashComponent implements OnInit {
     this.facade.loadDeletedJobs();
   }
 
-  onStatusFilterChanged(nextStatus: JobStatusFilterOption): void {
-    this.facade.setStatusFilter(nextStatus);
+  onStatusFilterChanged(nextStatus: string): void {
+    this.facade.setStatusFilter(nextStatus as JobStatusFilterOption);
     this.facade.loadDeletedJobs({ silent: true });
   }
 
@@ -58,11 +67,9 @@ export class JobsTrashComponent implements OnInit {
   }
 
   ownerGroupLabel(jobItem: ScientificJobView): string {
-    const ownerLabel =
-      jobItem.owner_username ?? this.translocoService.translate('common.fallback.unknownUser');
-    const groupLabel =
-      jobItem.group_name ?? this.translocoService.translate('common.fallback.noGroup');
-    return `${ownerLabel} · ${groupLabel}`;
+    return buildJobOwnershipLabel(jobItem, (translationKey: string) =>
+      this.translocoService.translate(translationKey),
+    );
   }
 
   deletedByLabel(jobItem: ScientificJobView): string {

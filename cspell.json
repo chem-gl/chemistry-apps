@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en,es",
+  "dictionaries": ["en", "es", "es-es", "softwareTerms", "node", "python"],
+  "ignorePaths": [
+    "**/i18n/**",
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/docs/**",
+    "**/logs/**",
+    "**/temp/**",
+    "**/venv/**",
+    "**/.vscode/**",
+    "tools/**",
+    "**/ketcher/**",
+    "sonar-project.properties"
+  ]
+}

@@ -14,27 +14,11 @@
         </div>
     </header>
 
-    <section class="filters" [attr.aria-label]="'trash.aria.filters' | transloco">
-        <label>
-            {{ 'common.filters.status' | transloco }}
-            <select [ngModel]="facade.selectedStatus()" (ngModelChange)="onStatusFilterChanged($event)">
-                @for (statusOption of statusOptions; track statusOption.value) {
-                <option [value]="statusOption.value">{{ statusOption.labelKey | transloco }}</option>
-                }
-            </select>
-        </label>
-
-        <label>
-            {{ 'common.filters.app' | transloco }}
-            <select [ngModel]="facade.selectedPluginName()" (ngModelChange)="onPluginFilterChanged($event)">
-                @for (pluginOption of facade.pluginOptions(); track pluginOption) {
-                <option [value]="pluginOption">
-                    {{ pluginOption === 'all' ? ('common.filters.all' | transloco) : pluginOption }}
-                </option>
-                }
-            </select>
-        </label>
-    </section>
+    <app-job-filters [statusOptions]="statusOptions" [pluginOptions]="facade.pluginOptions()"
+        [selectedStatus]="facade.selectedStatus()" [selectedPluginName]="facade.selectedPluginName()"
+        [ariaLabel]="'trash.aria.filters' | transloco" (statusChanged)="onStatusFilterChanged($event)"
+        (pluginChanged)="onPluginFilterChanged($event)">
+    </app-job-filters>
 
     @if (facade.isLoading()) {
     <section class="state-card info-card">{{ 'trash.states.loading' | transloco }}</section>
