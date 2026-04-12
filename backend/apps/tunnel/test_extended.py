@@ -6,7 +6,7 @@ Objetivo del archivo:
 - Complementar tests base sin duplicar escenarios existentes.
 
 Cómo se usa:
-- Ejecutar con `./venv/bin/python manage.py test apps.tunnel.test_extended`.
+- Ejecutar con `poetry run python manage.py test apps.tunnel.test_extended`.
 """
 
 from __future__ import annotations

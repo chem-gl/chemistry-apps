@@ -6,7 +6,7 @@ Objetivo del archivo:
 - Complementar MarcusContractApiTests sin duplicar escenarios base.
 
 Cómo se usa:
-- Ejecutar con `./venv/bin/python manage.py test apps.marcus.test_extended`.
+- Ejecutar con `poetry run python manage.py test apps.marcus.test_extended`.
 """
 
 from __future__ import annotations

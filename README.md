@@ -36,7 +36,7 @@ Repositorio monolítico para aplicaciones científicas de química. El backend e
 
 | Herramienta | Versión mínima | Uso                                               |
 | ----------- | -------------- | ------------------------------------------------- |
-| Python      | 3.12           | Runtime del backend                               |
+| Python      | 3.14           | Runtime del backend                               |
 | Django      | 6.x            | Framework web y ORM                               |
 | Node.js     | 20             | Compilación y servidor de desarrollo frontend     |
 | npm         | 11             | Gestión de paquetes frontend                      |
@@ -851,12 +851,14 @@ Las apps que procesan archivos Gaussian (`easy_rate`, `marcus`) no los guardan e
 
 ```bash
 cd backend
-python -m venv venv
-./venv/bin/pip install -r requirements.txt
+python3.14 -m pip install --upgrade pip poetry
+poetry config virtualenvs.in-project true
+poetry env use python3.14
+poetry install --with dev --no-interaction --no-ansi
 
 # Aplicar migraciones y arrancar server + worker
-./venv/bin/python manage.py migrate
-./venv/bin/python manage.py up
+poetry run python manage.py migrate
+poetry run python manage.py up
 ```
 
 El comando `up` es un comando de gestión personalizado que arranca Django Daphne y Celery worker en paralelo con auto-reload. Es el punto de entrada estándar para desarrollo.
@@ -864,7 +866,7 @@ El comando `up` es un comando de gestión personalizado que arranca Django Daphn
 Si solo se necesita la API HTTP sin worker asíncrono:
 
 ```bash
-./venv/bin/python manage.py up --without-celery
+poetry run python manage.py up --without-celery
 ```
 
 En este modo los jobs quedan en `pending` hasta que se levante un worker. Útil para desarrollo de routers y serializers sin necesitar Redis.
@@ -897,7 +899,7 @@ Para ejecutar también las tareas programadas (recuperación activa, purga de ar
 
 ```bash
 cd backend
-./venv/bin/python -m celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+poetry run python -m celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
 ---
@@ -937,7 +939,7 @@ sequenceDiagram
   participant GEN as openapi-generator-cli
   participant CLIENT as frontend/src/app/core/api/generated/
 
-  DEV->>SCRIPT: python scripts/create_openapi.py
+  DEV->>SCRIPT: cd backend && poetry run python ../scripts/create_openapi.py
   SCRIPT->>DJANGO: spectacular --file schema.yaml
   DJANGO->>SPEC: genera spec desde decoradores drf-spectacular
   SCRIPT->>GEN: npx openapi-generator-cli generate -i schema.yaml
@@ -960,9 +962,9 @@ cd ..
 Si `node_modules` no existe o está incompleto, `scripts/create_openapi.py` intentará ejecutar `npm install` automáticamente.
 
 ```bash
-# Desde la raíz del repositorio con el entorno virtual activado
-source backend/venv/bin/activate
-python scripts/create_openapi.py
+# Desde la raíz del repositorio
+cd backend
+poetry run python ../scripts/create_openapi.py
 ```
 
 El script ejecuta secuencialmente:
@@ -1033,12 +1035,12 @@ Si se necesita desplegar sin GitHub Actions:
 ```bash
 # Backend ASGI con WebSocket
 cd backend
-./venv/bin/python manage.py migrate
-./venv/bin/daphne -b 0.0.0.0 -p 8000 config.asgi:application
+poetry run python manage.py migrate
+poetry run daphne -b 0.0.0.0 -p 8000 config.asgi:application
 
 # Workers en terminales separadas
-./venv/bin/python -m celery -A config worker -l info --concurrency 4
-./venv/bin/python -m celery -A config beat -l info
+poetry run python -m celery -A config worker -l info --concurrency 4
+poetry run python -m celery -A config beat -l info
 
 # Frontend (build estático servido por Nginx)
 cd frontend
@@ -1079,10 +1081,10 @@ El código en `frontend/src/app/core/api/generated/` queda excluido del análisi
 ```bash
 cd backend
 # Lint
-./venv/bin/ruff check . --output-format json > ruff.json
+poetry run ruff check . --output-format json > ruff.json
 
 # Cobertura
-./venv/bin/pytest --cov=apps --cov-report=xml:coverage.xml
+poetry run pytest --cov=apps --cov-report=xml:coverage.xml
 ```
 
 ### Frontend: ESLint + Vitest
@@ -1186,9 +1188,9 @@ def nueva_app_plugin(
 
 ```bash
 cd backend
-./venv/bin/python manage.py check && echo listo
-./venv/bin/python manage.py test apps.nueva_app --verbosity=2 && echo listo
-python ../scripts/create_openapi.py && echo listo
+poetry run python manage.py check && echo listo
+poetry run python manage.py test apps.nueva_app --verbosity=2 && echo listo
+poetry run python ../scripts/create_openapi.py && echo listo
 ```
 
 ### 6. Registrar en el frontend
@@ -1315,14 +1317,14 @@ Ejecución rápida de suites Django:
 
 ```bash
 cd backend
-./venv/bin/python manage.py test && echo listo
+poetry run python manage.py test && echo listo
 ```
 
 Cobertura con pytest:
 
 ```bash
 cd backend
-./venv/bin/pytest --cov=apps --cov-report=xml:coverage.xml && echo listo
+poetry run pytest --cov=apps --cov-report=xml:coverage.xml && echo listo
 ```
 
 Detalles operativos relevantes:
@@ -1416,14 +1418,14 @@ El bootstrap también puede ejecutarse manualmente sin correr migraciones:
 
 ```bash
 cd backend
-./venv/bin/python manage.py ensure_root_user && echo listo
+poetry run python manage.py ensure_root_user && echo listo
 ```
 
 Y para verificar y descargar herramientas externas (AMBIT, Java) sin reiniciar el servidor:
 
 ```bash
 cd backend
-./venv/bin/python manage.py ensure_runtime_tools && echo listo
+poetry run python manage.py ensure_runtime_tools && echo listo
 ```
 
 ### Configuración de producción del frontend

@@ -6,7 +6,7 @@ Objetivo del archivo:
 - Asegurar que la persistencia en caché publica progreso y trazabilidad.
 
 Cómo se usa:
-- Ejecutar con `./venv/bin/python manage.py test apps.core.test_cache_operations`.
+- Ejecutar con `poetry run python manage.py test apps.core.test_cache_operations`.
 """
 
 from __future__ import annotations

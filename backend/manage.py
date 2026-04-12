@@ -19,10 +19,14 @@ import sys
 
 def main() -> None:
     """Configura settings y delega en el despachador oficial de Django."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    os.environ.setdefault(
+        "DJANGO_SETTINGS_MODULE",
+        "config.settings",  # se obtiene del .env
+    )
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
+        # Si Django no está instalado o no se encuentra
         raise ImportError(
             "Couldn't import Django. Are you sure it's installed and "
             "available on your PYTHONPATH environment variable? Did you "

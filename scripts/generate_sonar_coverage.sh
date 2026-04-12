@@ -28,21 +28,25 @@ require_directory() {
 generate_backend_reports() {
   echo "[backend] Generando ruff.json y coverage.xml..."
   require_directory "${BACKEND_DIR}"
-  require_file "${BACKEND_DIR}/venv/bin/python"
-  require_file "${BACKEND_DIR}/venv/bin/ruff"
+  require_file "${BACKEND_DIR}/pyproject.toml"
 
   pushd "${BACKEND_DIR}" >/dev/null
-  ./venv/bin/python -m pip show coverage >/dev/null 2>&1 || {
-    echo "coverage no está instalado en backend/venv. Ejecuta './venv/bin/python -m pip install coverage' o reinstala requirements." >&2
+  command -v poetry >/dev/null 2>&1 || {
+    echo "Poetry no está instalado. Instálalo y ejecuta 'poetry install --with dev' en backend/." >&2
     exit 1
   }
-  ./venv/bin/ruff check . --fix && echo "[backend] ruff check completado sin issues (fix aplicado)." || echo "[backend] ruff check completado con issues (fix aplicado, exit ignorado)."
-  ./venv/bin/ruff check . --output-format=sarif > ruff.json
+
+  poetry run python -m pip show coverage >/dev/null 2>&1 || {
+    echo "coverage no está disponible en el entorno de Poetry. Ejecuta 'poetry install --with dev' en backend/." >&2
+    exit 1
+  }
+  poetry run ruff check . --fix && echo "[backend] ruff check completado sin issues (fix aplicado)." || echo "[backend] ruff check completado con issues (fix aplicado, exit ignorado)."
+  poetry run ruff check . --output-format=sarif > ruff.json
   # Ejecutamos tests con el runner de Django para usar base de test aislada.
   # Esto evita bloqueos de sqlite que pueden aparecer al ejecutar pytest sin pytest-django.
-  ./venv/bin/python -m coverage erase
-  ./venv/bin/python -m coverage run --source=apps,config,libs manage.py test
-  ./venv/bin/python -m coverage xml -o coverage.xml
+  poetry run python -m coverage erase
+  poetry run python -m coverage run --source=apps,config,libs manage.py test
+  poetry run python -m coverage xml -o coverage.xml
   popd >/dev/null
 }
 

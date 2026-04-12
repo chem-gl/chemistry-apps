@@ -364,58 +364,48 @@ jobs:
             install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
 
             PYTHON_BIN=""
-            if command -v python3.12 >/dev/null 2>&1; then
-              PYTHON_BIN="python3.12"
+            if command -v python3.14 >/dev/null 2>&1; then
+              PYTHON_BIN="python3.14"
             elif command -v python3 >/dev/null 2>&1; then
-              if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
+              if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 14) else 1)' >/dev/null 2>&1; then
                 PYTHON_BIN="python3"
               fi
             fi
 
             if [ -z "$PYTHON_BIN" ] && command -v apt-get >/dev/null 2>&1; then
               if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-                echo "Python 3.12 no encontrado. Intentando instalar via apt/deadsnakes..."
+                echo "Python 3.14 no encontrado. Intentando instalar via apt/deadsnakes..."
                 sudo apt-get update
                 sudo apt-get install -y software-properties-common
                 sudo add-apt-repository -y ppa:deadsnakes/ppa
                 sudo apt-get update
-                sudo apt-get install -y python3.12 python3.12-venv
+                sudo apt-get install -y python3.14 python3.14-venv
               fi
 
-              if command -v python3.12 >/dev/null 2>&1; then
-                PYTHON_BIN="python3.12"
+              if command -v python3.14 >/dev/null 2>&1; then
+                PYTHON_BIN="python3.14"
               fi
             fi
 
             if [ -z "$PYTHON_BIN" ]; then
-              echo "ERROR: Python 3.12+ is required on remote host (Django 6.x)."
+              echo "ERROR: Python 3.14+ is required on remote host (Django 6.x)."
               echo "No fue posible instalarlo automaticamente."
-              echo "Instala python3.12 y python3.12-venv antes de desplegar."
-              echo "Ejemplo Ubuntu: add-apt-repository ppa:deadsnakes/ppa && apt install python3.12 python3.12-venv"
+              echo "Instala python3.14 y python3.14-venv antes de desplegar."
+              echo "Ejemplo Ubuntu: add-apt-repository ppa:deadsnakes/ppa && apt install python3.14 python3.14-venv"
               exit 1
             fi
 
             cd "$VM_PROJECT_PATH/backend"
-             RECREATE_VENV="1"
-             if [ -d venv ]; then
-               if [ -x venv/bin/python ] && ./venv/bin/python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' >/dev/null 2>&1; then
-                 echo "Entorno virtual existente compatible detectado. Se reutilizara venv."
-                 RECREATE_VENV="0"
-               else
-                 echo "Entorno virtual existente no compatible con Python 3.12+. Se recreara venv."
-                 rm -rf venv
-               fi
-             fi
+            "$PYTHON_BIN" -m pip install --upgrade pip
+            "$PYTHON_BIN" -m pip install poetry
 
-             if [ "$RECREATE_VENV" = "1" ]; then
-               "$PYTHON_BIN" -m venv venv
-             fi
-            ./venv/bin/python -m pip install --upgrade pip
-            ./venv/bin/pip install -r requirements.txt
+            poetry config virtualenvs.in-project true
+            poetry env use "$PYTHON_BIN"
+            poetry install --only main --no-interaction --no-ansi
 
             MIGRATION_LOG_FILE="$DEPLOY_STAGING_DIR/django-migrate.log"
             set +e
-            ./venv/bin/python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
+            poetry run python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
             MIGRATE_EXIT_CODE=${PIPESTATUS[0]}
             set -e
 

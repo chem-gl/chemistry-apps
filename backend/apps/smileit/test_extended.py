@@ -6,7 +6,7 @@ Objetivo del archivo:
 - Complementar los tests exhaustivos de tests.py sin duplicar lógica de negocio.
 
 Cómo se usa:
-- Ejecutar con `./venv/bin/python manage.py test apps.smileit.test_extended`.
+- Ejecutar con `poetry run python manage.py test apps.smileit.test_extended`.
 """
 
 from __future__ import annotations

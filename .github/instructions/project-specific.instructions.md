@@ -70,15 +70,15 @@ frontend/src/app/<nombre>/             # Un directorio por app científica (comp
 
 ```bash
 cd backend
-./venv/bin/python manage.py migrate
-./venv/bin/python manage.py up
+poetry run python manage.py migrate
+poetry run python manage.py up
 ```
 
 **Solo API HTTP sin worker** (cuando no se necesita Redis ni procesamiento asíncrono):
 
 ```bash
 cd backend
-./venv/bin/python manage.py up --without-celery
+poetry run python manage.py up --without-celery
 ```
 
 En este modo los jobs quedan en estado `pending` hasta que se levante un worker. Útil para desarrollar routers y serializers sin tener Redis activo.
@@ -87,31 +87,31 @@ En este modo los jobs quedan en estado `pending` hasta que se levante un worker.
 
 ```bash
 cd backend
-./venv/bin/python manage.py test apps.core apps.<nombre_app> --verbosity=2 && echo listo
+poetry run python manage.py test apps.core apps.<nombre_app> --verbosity=2 && echo listo
 # Con reporte de cobertura:
-./venv/bin/pytest --cov=apps --cov-report=xml:coverage.xml && echo listo
+poetry run pytest --cov=apps --cov-report=xml:coverage.xml && echo listo
 ```
 
 **Lint**:
 
 ```bash
 cd backend
-./venv/bin/ruff check . && echo listo
+poetry run ruff check . && echo listo
 ```
 
 **Verificar integridad de configuración Django**:
 
 ```bash
 cd backend
-./venv/bin/python manage.py check && echo listo
+poetry run python manage.py check && echo listo
 ```
 
 **Generar y aplicar migraciones**:
 
 ```bash
 cd backend
-./venv/bin/python manage.py makemigrations
-./venv/bin/python manage.py migrate
+poetry run python manage.py makemigrations
+poetry run python manage.py migrate
 ```
 
 ### Registro de apps científicas en Django
@@ -128,9 +128,9 @@ Los jobs científicos se ejecutan en workers Celery. En desarrollo, `manage.py u
 
 ```bash
 # Worker de tareas
-./venv/bin/python -m celery -A config worker -l info --concurrency 4
+poetry run python -m celery -A config worker -l info --concurrency 4
 # Scheduler de tareas periódicas (recuperación activa, purga de artefactos)
-./venv/bin/python -m celery -A config beat -l info
+poetry run python -m celery -A config beat -l info
 ```
 
 El broker y backend de resultados es Redis. Si Redis no está disponible al encolar, `dispatch_scientific_job` captura el error sin romper la API: el job queda en `pending` y la tarea periódica `run_active_recovery` lo re-encola cuando el broker vuelve.
@@ -192,7 +192,7 @@ Componente → jobs-api.service.ts (wrapper) → generated/ → HTTP
 El directorio `frontend/src/app/core/api/generated/` es código autogenerado. **No se edita manualmente**. Si cambia un serializer en el backend, el flujo correcto es:
 
 1. Actualizar el serializer en Django.
-2. Regenerar schema y cliente: `python scripts/create_openapi.py`.
+2. Regenerar schema y cliente: `poetry run python ../scripts/create_openapi.py`.
 3. Adaptar el wrapper en `core/api/` si la firma cambió.
 
 Nunca parchar el código generado directamente: se sobreescribe en la siguiente regeneración.
@@ -202,8 +202,8 @@ Nunca parchar el código generado directamente: se sobreescribe en la siguiente 
 - **`create_openapi.py`**: Genera `backend/openapi/schema.yaml` desde Django y regenera el cliente TypeScript en `frontend/src/app/core/api/generated/`. Ejecutar desde la raíz del repositorio con el entorno virtual activado:
 
   ```bash
-  source backend/venv/bin/activate
-  python scripts/create_openapi.py && echo listo || echo error
+  cd backend && poetry install --with dev --no-interaction --no-ansi
+  poetry run python ../scripts/create_openapi.py && echo listo || echo error
   ```
 
 - **`generate_sonar_coverage.sh`**: Genera todos los artefactos para análisis SonarQube: cobertura Python (XML), cobertura Angular (lcov), reporte Ruff y reporte ESLint. Ejecutar desde la raíz:
@@ -238,8 +238,8 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 - Usar ramas descriptivas: `feature/nombre-funcionalidad`, `fix/descripcion-error`, `refactor/descripcion`.
 - La rama `main` es producción. La rama `dev` es integración. No hacer push directo a `main`.
 - Antes de abrir un PR hacia `main` verificar localmente:
-  1. `./venv/bin/python manage.py check`
-  2. `./venv/bin/python manage.py test`
+  1. `poetry run python manage.py check`
+  2. `poetry run python manage.py test`
   3. `cd frontend && npm run build`
   4. `cd frontend && npm test`
 - El pipeline CI ejecuta automáticamente tests de backend y frontend en cada push a `main`/`dev` y en PRs hacia `main`.
@@ -263,7 +263,7 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 - Usar operadores de control de flujo modernos de Angular para evitar duplicación en plantillas.
 - Mantener strict mode de TypeScript y tipado estricto de respuestas OpenAPI.
 - Priorizar compatibilidad con la versión actual de Angular (21).
-- Al integrar una nueva app científica, regenerar el cliente con `python scripts/create_openapi.py` y verificar que el frontend compila sin errores antes de dar la app por integrada.
+- Al integrar una nueva app científica, regenerar el cliente con `poetry run python ../scripts/create_openapi.py` y verificar que el frontend compila sin errores antes de dar la app por integrada.
 - Todo endpoint del backend debe consumirse a través del cliente generado por OpenAPI y sus wrappers, nunca directamente desde los componentes. Excepción: los archivos `*.spec.ts` de pruebas unitarias pueden consumir directamente para lograr trazabilidad completa del test.
 - Configurar la base URL del backend de manera centralizada en `frontend/src/app/core/shared/constants.ts` usando valores de `environments/`. Nunca hardcodear URLs en componentes ni servicios.
 - Usar operadores de control de flujo modernos de Angular (`@if`, `@for`, `@switch`) en lugar de `*ngIf`, `*ngFor`, `[ngSwitch]`.
@@ -289,13 +289,13 @@ Nota: añadir `&& echo listo || echo error` al final de cualquier comando de gen
 2. Registrar `AppConfig` en `INSTALLED_APPS` en `backend/config/settings.py`.
 3. Registrar `ViewSet` en `DefaultRouter` en `backend/config/urls.py`.
 4. El `AppConfig.ready()` debe importar el módulo `plugin` y registrar la `ScientificAppDefinition`.
-5. Verificar: `./venv/bin/python manage.py check && echo listo`.
-6. Ejecutar tests: `./venv/bin/python manage.py test apps.<nombre> apps.core --verbosity=2`.
-7. Regenerar contrato: `python scripts/create_openapi.py && echo listo`.
+5. Verificar: `poetry run python manage.py check && echo listo`.
+6. Ejecutar tests: `poetry run python manage.py test apps.<nombre> apps.core --verbosity=2`.
+7. Regenerar contrato: `poetry run python ../scripts/create_openapi.py && echo listo`.
 8. Verificar compilación del frontend: `cd frontend && npm run build && echo listo`.
 9. Registrar la app en `frontend/src/app/core/shared/scientific-apps.config.ts`.
 10. Añadir ruta con lazy loading en `frontend/src/app/app.routes.ts`.
-    El backend tiene su entorno virtual en `backend/venv/`. Siempre activarlo antes de ejecutar comandos Python: `source backend/venv/bin/activate`.
+    El backend tiene su entorno virtual en `backend/.venv/`. Siempre activarlo antes de ejecutar comandos Python: `cd backend && poetry install --with dev --no-interaction --no-ansi`.
 
 El multilenguaje i18n solo es para el frontend.
 El backend las variables y lógica van en inglés, los comentarios y docstrings en español. En el frontend todo lo visual (textos, labels, atributos Angular) va en inglés, la lógica de negocio y los comentarios pueden estar en español.
