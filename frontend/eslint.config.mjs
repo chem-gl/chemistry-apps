@@ -15,7 +15,7 @@ const testGlobals = {
   vi: 'readonly',
 };
 
-export default tseslint.config(
+export default tseslint.defineConfig(
   {
     ignores: [
       'dist/**',

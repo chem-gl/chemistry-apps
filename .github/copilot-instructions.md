@@ -112,9 +112,10 @@ Aquí tienes las instrucciones en forma general (agnósticas al lenguaje), redac
 
 ---
 
-## Reglas general
+## Reglas generales
 
 El código debe ser lo más declarativo, tipado y expresivo posible, pero siempre priorizando la claridad.
 
 Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+
 Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.

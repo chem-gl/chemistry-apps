@@ -127,10 +127,13 @@ export class IdentitySessionService {
     }
 
     return this.authApiService.refresh(storedRefreshToken).pipe(
-      tap((nextAccessToken: string) => {
-        this.accessToken.set(nextAccessToken);
-        this.writeStorageValue(ACCESS_TOKEN_STORAGE_KEY, nextAccessToken);
+      tap((tokens: SessionTokens) => {
+        this.accessToken.set(tokens.accessToken);
+        this.refreshToken.set(tokens.refreshToken);
+        this.writeStorageValue(ACCESS_TOKEN_STORAGE_KEY, tokens.accessToken);
+        this.writeStorageValue(REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken);
       }),
+      map((tokens: SessionTokens) => tokens.accessToken),
       catchError(() => {
         this.clearSessionState();
         return of(null);
