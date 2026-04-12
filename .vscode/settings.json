@@ -51,6 +51,10 @@
     "/\\b[a-z]+[A-Z][a-zA-Z]+\\b/g"
   ],
   "explorer.excludeGitIgnore": true,
-  "search.useIgnoreFiles": false,
+  "files.exclude": {
+    "**/.env": false,
+    "as": false
+  },
+
   "cSpell.allowCompoundWords": true
 }
