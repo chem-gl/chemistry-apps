@@ -64,6 +64,9 @@ generate_frontend_reports() {
   echo "[frontend] Paso 1/3: eslint.json generado (exit ignorado, puede tener issues)."
 
   echo "[frontend] Paso 2/3: ejecutando ng test con cobertura..."
+  # Angular/Vitest puede escribir shards temporales en coverage/frontend/.tmp.
+  # Precrear el directorio evita ENOENT intermitentes en ejecuciones paralelas.
+  mkdir -p "${FRONTEND_DIR}/coverage/frontend/.tmp"
   npx ng test --coverage --coverage-reporters=json --coverage-reporters=lcov --watch=false
   echo "[frontend] Paso 2/3: ng test finalizado."
 

@@ -7,11 +7,15 @@ Usado por todos los módulos _sonar_*.py.
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 import re
 from pathlib import Path
-
-import requests
+from typing import Any
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
 
 # =========================
 # CARGA DE PROPIEDADES
@@ -97,14 +101,60 @@ if not SONAR_TOKEN:
 # =========================
 
 
-def sonar_get(path: str, params: dict[str, str | int]) -> requests.Response:
+class SonarHttpResponse:
+    """Respuesta HTTP mínima compatible con el uso actual del módulo."""
+
+    def __init__(self, status_code: int, body_text: str) -> None:
+        self.status_code = status_code
+        self._body_text = body_text
+
+    def json(self) -> dict[str, Any]:
+        """Parsea el body como JSON y retorna un dict seguro."""
+        if self._body_text.strip() == "":
+            return {}
+
+        parsed_payload = json.loads(self._body_text)
+        return parsed_payload if isinstance(parsed_payload, dict) else {}
+
+
+def _build_basic_auth_header(token: str) -> str:
+    """Construye el header Authorization para token de SonarQube."""
+    raw_value = f"{token}:".encode("utf-8")
+    encoded_value = base64.b64encode(raw_value).decode("ascii")
+    return f"Basic {encoded_value}"
+
+
+def _compose_url(path: str, params: dict[str, str | int]) -> str:
+    """Compone URL absoluta con querystring serializado."""
+    encoded_query = urllib_parse.urlencode(params)
+    base_url = f"{SONAR_URL}{path}"
+    return f"{base_url}?{encoded_query}" if encoded_query else base_url
+
+
+def sonar_get(path: str, params: dict[str, str | int]) -> SonarHttpResponse:
     """Ejecuta una petición GET autenticada contra SonarQube."""
-    return requests.get(
-        f"{SONAR_URL}{path}",
-        params=params,
-        auth=(SONAR_TOKEN, ""),
-        timeout=30,
+    request_url = _compose_url(path=path, params=params)
+    request_headers = {
+        "Accept": "application/json",
+        "Authorization": _build_basic_auth_header(SONAR_TOKEN),
+    }
+    http_request = urllib_request.Request(
+        request_url,
+        headers=request_headers,
+        method="GET",
     )
+
+    try:
+        with urllib_request.urlopen(http_request, timeout=30) as http_response:
+            response_body = http_response.read().decode("utf-8")
+            return SonarHttpResponse(
+                status_code=http_response.status, body_text=response_body
+            )
+    except urllib_error.HTTPError as http_error:
+        error_body = http_error.read().decode("utf-8")
+        return SonarHttpResponse(status_code=http_error.code, body_text=error_body)
+    except urllib_error.URLError:
+        return SonarHttpResponse(status_code=0, body_text="")
 
 
 # =========================
@@ -135,11 +185,7 @@ def get_rule_description(rule_key: str) -> str:
     if rule_key in _rules_cache:
         return _rules_cache[rule_key]
 
-    response = requests.get(
-        f"{SONAR_URL}/api/rules/show",
-        params={"key": rule_key},
-        auth=(SONAR_TOKEN, ""),
-    )
+    response = sonar_get("/api/rules/show", {"key": rule_key})
     if response.status_code != 200:
         return "No se pudo obtener la documentación"
 
