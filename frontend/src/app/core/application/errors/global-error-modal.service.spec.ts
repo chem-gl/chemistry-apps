@@ -8,7 +8,9 @@ describe('GlobalErrorModalService', () => {
   let service: GlobalErrorModalService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [],
+    });
     service = TestBed.inject(GlobalErrorModalService);
   });
 
@@ -38,7 +40,9 @@ describe('GlobalErrorModalService', () => {
     const currentError = service.currentError();
     expect(currentError).not.toBeNull();
     expect(currentError?.title).toBe('Request failed');
-    expect(currentError?.message).toBe('Server exploded');
+    expect(currentError?.message).toBe(
+      'The server reported an internal error. Please try again later.',
+    );
     expect(currentError?.details).toContain('Server exploded');
   });
 
@@ -52,7 +56,7 @@ describe('GlobalErrorModalService', () => {
     });
   });
 
-  it('extrae el mensaje de un error HTTP con string plano como body', () => {
+  it('mapea errores 400 a un mensaje de validación legible', () => {
     const response = new HttpErrorResponse({
       status: 400,
       error: 'Bad SMILES input',
@@ -60,10 +64,12 @@ describe('GlobalErrorModalService', () => {
 
     service.showHttpError(response);
 
-    expect(service.currentError()?.message).toBe('Bad SMILES input');
+    expect(service.currentError()?.message).toBe(
+      'The request is invalid. Please verify the submitted data.',
+    );
   });
 
-  it('usa httpError.message como fallback cuando error no tiene detalle', () => {
+  it('mapea errores 5xx al mensaje de servidor', () => {
     const response = new HttpErrorResponse({
       status: 503,
       error: null,
@@ -72,8 +78,9 @@ describe('GlobalErrorModalService', () => {
 
     service.showHttpError(response);
 
-    // HttpErrorResponse genera un message por defecto, por eso el fallback debe usarlo
-    expect(service.currentError()?.message).not.toBe('');
+    expect(service.currentError()?.message).toBe(
+      'The server reported an internal error. Please try again later.',
+    );
   });
 
   it('extractHttpDetails retorna null cuando el error no es un objeto', () => {

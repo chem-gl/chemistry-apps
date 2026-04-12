@@ -1,31 +1,33 @@
 <!-- dashboard.component.html: Vista principal resumida por rol y alcance. -->
-<section class="dashboard-shell" aria-label="User dashboard">
+<section class="dashboard-shell" [attr.aria-label]="'dashboard.aria.page' | transloco">
     <header class="dashboard-header">
         <div>
-            <p class="eyebrow">Role-aware Workspace</p>
+            <p class="eyebrow">{{ 'dashboard.header.eyebrow' | transloco }}</p>
             <h1>{{ sessionService.displayName() }}</h1>
             <p class="subtitle">
-                Role: {{ sessionService.currentRole() ?? 'anonymous' }}
+                {{ 'dashboard.header.role' | transloco }}: {{ sessionService.currentRole() ??
+                ('dashboard.header.anonymous' | transloco) }}
                 @if (sessionService.currentUser()?.primary_group_id; as primaryGroupId) {
-                <span>· Primary group #{{ primaryGroupId }}</span>
+                <span>· {{ 'dashboard.header.primaryGroup' | transloco }} #{{ primaryGroupId }}</span>
                 }
             </p>
         </div>
 
         <div class="header-actions">
-            <a class="outline-action" routerLink="/profile">My profile</a>
-            <a class="outline-action" routerLink="/jobs">Open jobs monitor</a>
+            <a class="outline-action" routerLink="/profile">{{ 'dashboard.actions.myProfile' | transloco }}</a>
+            <a class="outline-action" routerLink="/jobs">{{ 'dashboard.actions.openJobsMonitor' | transloco }}</a>
             @if (sessionService.hasAdminAccess()) {
-            <a class="outline-action" routerLink="/jobs/trash">Open recycle bin</a>
+            <a class="outline-action" routerLink="/jobs/trash">{{ 'dashboard.actions.openRecycleBin' | transloco }}</a>
             }
             @if (sessionService.hasAdminAccess()) {
-            <a class="solid-action" routerLink="/admin/identity">Open identity console</a>
+            <a class="solid-action" routerLink="/admin/identity">{{ 'dashboard.actions.openIdentityConsole' | transloco
+                }}</a>
             }
         </div>
     </header>
 
     @if (isLoading()) {
-    <section class="state-card">Loading dashboard...</section>
+    <section class="state-card">{{ 'dashboard.states.loading' | transloco }}</section>
     } @else {
     @if (errorMessage(); as currentError) {
     <section class="state-card error-card" role="alert">{{ currentError }}</section>
@@ -37,33 +39,33 @@
 
     <section class="metrics-grid">
         <article class="metric-card is-running">
-            <p class="metric-label">Running jobs</p>
+            <p class="metric-label">{{ 'dashboard.metrics.runningJobs' | transloco }}</p>
             <p class="metric-value">{{ runningJobsCount() }}</p>
         </article>
 
         <article class="metric-card is-paused">
-            <p class="metric-label">Paused jobs</p>
+            <p class="metric-label">{{ 'dashboard.metrics.pausedJobs' | transloco }}</p>
             <p class="metric-value">{{ pausedJobsCount() }}</p>
         </article>
 
         <article class="metric-card is-completed">
-            <p class="metric-label">Completed jobs</p>
+            <p class="metric-label">{{ 'dashboard.metrics.completedJobs' | transloco }}</p>
             <p class="metric-value">{{ completedJobsCount() }}</p>
         </article>
 
         <article class="metric-card is-apps">
-            <p class="metric-label">Enabled apps</p>
+            <p class="metric-label">{{ 'dashboard.metrics.enabledApps' | transloco }}</p>
             <p class="metric-value">{{ enabledApps().length }}</p>
         </article>
 
         @if (sessionService.hasAdminAccess()) {
         <article class="metric-card is-users">
-            <p class="metric-label">Visible users</p>
+            <p class="metric-label">{{ 'dashboard.metrics.visibleUsers' | transloco }}</p>
             <p class="metric-value">{{ visibleUsers().length }}</p>
         </article>
 
         <article class="metric-card is-groups">
-            <p class="metric-label">Visible groups</p>
+            <p class="metric-label">{{ 'dashboard.metrics.visibleGroups' | transloco }}</p>
             <p class="metric-value">{{ visibleGroups().length }}</p>
         </article>
         }
@@ -71,7 +73,7 @@
 
     <section class="dashboard-grid">
         <article class="panel-card">
-            <h2>Accessible apps</h2>
+            <h2>{{ 'dashboard.panels.accessibleApps' | transloco }}</h2>
             <div class="chip-grid">
                 @for (appItem of enabledApps(); track appItem.route_key) {
                 <a class="app-chip" [routerLink]="'/' + appItem.route_key">
@@ -82,22 +84,22 @@
         </article>
 
         <article class="panel-card wide-panel">
-            <h2>Recent jobs</h2>
+            <h2>{{ 'dashboard.panels.recentJobs' | transloco }}</h2>
             @if (recentJobs().length === 0) {
-            <p class="empty-state">No jobs available for your current visibility scope.</p>
+            <p class="empty-state">{{ 'dashboard.states.noRecentJobs' | transloco }}</p>
             } @else {
             <div class="recent-jobs-list">
                 @for (jobItem of recentJobs(); track jobItem.id) {
                 <div class="job-row-shell">
                     @if (recentJobRoutePath(jobItem); as routePath) {
                     <a class="job-row job-row-link" [routerLink]="routePath" [queryParams]="{ jobId: jobItem.id }"
-                        [attr.aria-label]="'Open result for ' + jobItem.plugin_name + ' job ' + jobItem.id">
+                        [attr.aria-label]="('dashboard.jobs.openResultFor' | transloco) + ' ' + jobItem.plugin_name + ' #' + jobItem.id">
                         <div>
                             <p class="job-app">{{ jobItem.plugin_name }}</p>
                             <p class="job-meta">
-                                {{ jobItem.owner_username || 'Unknown user' }}
+                                {{ jobItem.owner_username || ('common.fallback.unknownUser' | transloco) }}
                                 ·
-                                {{ jobItem.group_name || 'No group' }}
+                                {{ jobItem.group_name || ('common.fallback.noGroup' | transloco) }}
                             </p>
                         </div>
                         <div class="job-row-actions">
@@ -110,9 +112,9 @@
                         <div>
                             <p class="job-app">{{ jobItem.plugin_name }}</p>
                             <p class="job-meta">
-                                {{ jobItem.owner_username || 'Unknown user' }}
+                                {{ jobItem.owner_username || ('common.fallback.unknownUser' | transloco) }}
                                 ·
-                                {{ jobItem.group_name || 'No group' }}
+                                {{ jobItem.group_name || ('common.fallback.noGroup' | transloco) }}
                             </p>
                         </div>
                         <div class="job-row-actions">
@@ -135,7 +137,7 @@
 
         @if (sessionService.hasAdminAccess()) {
         <article class="panel-card">
-            <h2>Users in scope</h2>
+            <h2>{{ 'dashboard.panels.usersInScope' | transloco }}</h2>
             <div class="summary-list">
                 @for (userItem of visibleUsers().slice(0, 6); track userItem.id) {
                 <div class="summary-list-item">
@@ -147,7 +149,7 @@
         </article>
 
         <article class="panel-card">
-            <h2>Groups in scope</h2>
+            <h2>{{ 'dashboard.panels.groupsInScope' | transloco }}</h2>
             <div class="summary-list">
                 @for (groupItem of visibleGroups().slice(0, 6); track groupItem.id) {
                 <div class="summary-list-item">

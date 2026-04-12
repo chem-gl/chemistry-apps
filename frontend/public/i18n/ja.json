@@ -1,0 +1,23 @@
+{
+  "app": {
+    "brand": {
+      "title": "サイエンス管理デスク",
+      "caption": "アプリ、ジョブ、アカウントアクセスを一元的に管理します。"
+    },
+    "actions": { "signIn": "サインイン", "signOut": "サインアウト" },
+    "nav": { "dashboard": "ダッシュボード", "profile": "プロフィール", "jobsMonitor": "ジョブモニター", "apps": "アプリ", "identity": "アイデンティティ" }
+  },
+  "language": { "switcher": { "ariaLabel": "言語セレクター", "menuLabel": "利用可能な言語" } },
+  "common": {
+    "actions": { "refresh": "更新", "openResult": "結果を開く", "delete": "削除", "restore": "復元", "working": "処理中...", "deletePermanently": "完全に削除", "restoreJob": "ジョブを復元", "moveToTrash": "ゴミ箱へ移動", "close": "閉じる" },
+    "filters": { "status": "ステータス", "app": "アプリ", "all": "すべて" },
+    "statusFilters": { "all": "すべて" },
+    "jobStatus": { "pending": "待機中", "running": "実行中", "paused": "一時停止", "completed": "完了", "failed": "失敗", "cancelled": "キャンセル" },
+    "fallback": { "unknownUser": "不明なユーザー", "noGroup": "グループなし" }
+  },
+  "login": { "panel": { "title": "科学アクセス" }, "form": { "username": "ユーザー名", "password": "パスワード", "signIn": "サインイン", "signingIn": "サインイン中..." } },
+  "dashboard": { "header": { "eyebrow": "ロール対応ワークスペース", "role": "ロール" }, "actions": { "myProfile": "マイプロフィール", "openJobsMonitor": "ジョブモニターを開く" }, "states": { "loading": "ダッシュボードを読み込み中..." } },
+  "jobsMonitor": { "header": { "title": "ジョブモニター" }, "actions": { "recycleBin": "ゴミ箱", "autoRefresh": "自動更新", "openLogs": "ログを開く", "pause": "一時停止", "resume": "再開", "cancel": "キャンセル", "viewSummary": "概要を見る" }, "kpi": { "active": "稼働中", "paused": "一時停止", "completed": "完了", "failed": "失敗", "cancelled": "キャンセル", "lastUpdate": "最終更新" } },
+  "trash": { "header": { "title": "ゴミ箱" }, "actions": { "backToMonitor": "モニターへ戻る" }, "states": { "loading": "ゴミ箱を読み込み中...", "empty": "復元可能な削除済みジョブはありません。" } },
+  "errorModal": { "actions": { "viewDetails": "技術詳細を表示", "understood": "了解" }, "http": { "requestFailedTitle": "リクエスト失敗", "networkUnavailable": "ネットワークに接続できません。", "forbidden": "この操作を実行する権限がありません。", "serverError": "サーバー内部エラー。" } }
+}

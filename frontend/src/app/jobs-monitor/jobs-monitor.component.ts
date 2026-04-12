@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
@@ -24,6 +25,7 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
+    TranslocoPipe,
     JobLogsPanelComponent,
     JobManagementActionsComponent,
   ],
@@ -34,15 +36,16 @@ import {
 export class JobsMonitorComponent implements OnInit, OnDestroy {
   readonly facade = inject(JobsMonitorFacadeService);
   readonly sessionService = inject(IdentitySessionService);
+  private readonly translocoService = inject(TranslocoService);
 
-  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'running', label: 'Running' },
-    { value: 'paused', label: 'Paused' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'cancelled', label: 'Cancelled' },
+  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; labelKey: string }> = [
+    { value: 'all', labelKey: 'common.statusFilters.all' },
+    { value: 'pending', labelKey: 'common.jobStatus.pending' },
+    { value: 'running', labelKey: 'common.jobStatus.running' },
+    { value: 'paused', labelKey: 'common.jobStatus.paused' },
+    { value: 'completed', labelKey: 'common.jobStatus.completed' },
+    { value: 'failed', labelKey: 'common.jobStatus.failed' },
+    { value: 'cancelled', labelKey: 'common.jobStatus.cancelled' },
   ];
 
   ngOnInit(): void {
@@ -145,7 +148,9 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       group: jobItem.group ?? null,
     });
 
-    return deleteMode === 'hard' ? 'Delete permanently' : 'Move to trash';
+    return deleteMode === 'hard'
+      ? this.translateOrFallback('common.actions.deletePermanently', 'Delete permanently')
+      : this.translateOrFallback('common.actions.moveToTrash', 'Move to trash');
   }
 
   isTerminalJob(jobItem: ScientificJobView): boolean {
@@ -157,17 +162,19 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   }
 
   ownerGroupLabel(jobItem: ScientificJobView): string {
-    const ownerLabel = jobItem.owner_username ?? 'Unknown user';
-    const groupLabel = jobItem.group_name ?? 'No group';
+    const ownerLabel =
+      jobItem.owner_username ?? this.translocoService.translate('common.fallback.unknownUser');
+    const groupLabel =
+      jobItem.group_name ?? this.translocoService.translate('common.fallback.noGroup');
     return `${ownerLabel} · ${groupLabel}`;
   }
 
   resultActionLabel(jobItem: ScientificJobView): string {
     if (jobItem.plugin_name === 'random-numbers' && !this.hasFinalRandomNumbersResult(jobItem)) {
-      return 'View summary';
+      return this.translateOrFallback('jobsMonitor.actions.viewSummary', 'View summary');
     }
 
-    return 'Open result';
+    return this.translateOrFallback('common.actions.openResult', 'Open result');
   }
 
   private hasFinalRandomNumbersResult(jobItem: ScientificJobView): boolean {
@@ -191,5 +198,10 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
       typeof resultRecord.metadata === 'object' &&
       !Array.isArray(resultRecord.metadata)
     );
+  }
+
+  private translateOrFallback(translationKey: string, fallbackText: string): string {
+    const translatedText = this.translocoService.translate(translationKey);
+    return translatedText === translationKey ? fallbackText : translatedText;
   }
 }

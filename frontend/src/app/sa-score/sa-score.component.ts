@@ -4,6 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SaScoreMethod, SaScoreMoleculeResultView } from '../core/api/jobs-api.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
@@ -19,6 +20,7 @@ import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-ba
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     JobProgressCardComponent,
     JobLogsPanelComponent,
     JobHistoryTableComponent,

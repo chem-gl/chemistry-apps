@@ -12,12 +12,13 @@ import {
   signal,
 } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SmileitCatalogEntryView } from '../../core/api/jobs-api.service';
 
 @Component({
   selector: 'app-library-entry-detail-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './library-entry-detail-dialog.component.html',
   styleUrl: './library-entry-detail-dialog.component.scss',
 })

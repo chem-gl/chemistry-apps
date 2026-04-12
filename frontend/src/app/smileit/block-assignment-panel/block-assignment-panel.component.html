@@ -1,29 +1,30 @@
 <!-- block-assignment-panel.component.html: Panel de asignación por bloques y cobertura de sitios. -->
 <div class="workspace-right-column">
-  <section class="hero-strip catalog-overview-strip" aria-label="Catalog coverage overview">
+  <section class="hero-strip catalog-overview-strip" [attr.aria-label]="'smileit.step3.overviewAriaLabel' | transloco">
     <article class="hero-card">
-      <span class="hero-label">Selected sites</span>
+      <span class="hero-label">{{ 'smileit.step3.selectedSites' | transloco }}</span>
       <strong>{{ workflow.selectedAtomIndices().length }}</strong>
-      <p>{{ workflow.selectedAtomIndices().join(', ') || 'None yet' }}</p>
+      <p>{{ workflow.selectedAtomIndices().join(', ') || ('smileit.step3.noneYet' | transloco) }}</p>
     </article>
     <article class="hero-card">
-      <span class="hero-label">Effective coverage</span>
+      <span class="hero-label">{{ 'smileit.step3.effectiveCoverage' | transloco }}</span>
       <strong>{{ workflow.selectedSiteCoverage().length }}</strong>
-      <p>{{ workflow.uncoveredSelectedSites().length }} uncovered</p>
+      <p>{{ workflow.uncoveredSelectedSites().length }} {{ 'smileit.step3.uncovered' | transloco }}</p>
     </article>
   </section>
 
   <div class="workspace-side-column">
-    <section class="library-panel" aria-label="Blocks and catalogs">
+    <section class="library-panel" [attr.aria-label]="'smileit.step3.ariaLabel' | transloco">
       <header class="panel-header-row">
         <section class="panel-header-copy">
-          <h3>3. Block assignment by location</h3>
+          <h3>{{ 'smileit.step3.title' | transloco }}</h3>
         </section>
         <section class="panel-header-actions">
           @if (!isLibraryPanelCollapsed()) {
-          <button type="button" class="btn-secondary add-block-btn" aria-label="Create new block"
-            title="Create new block" (click)="addAssignmentBlock()" [disabled]="workflow.isProcessing()">
-            New block
+          <button type="button" class="btn-secondary add-block-btn"
+            [attr.aria-label]="'smileit.step3.newBlock' | transloco" [title]="'smileit.step3.newBlock' | transloco"
+            (click)="addAssignmentBlock()" [disabled]="workflow.isProcessing()">
+            {{ 'smileit.step3.newBlock' | transloco }}
           </button>
 
           }
@@ -36,21 +37,24 @@
       </header>
 
       @if (isLibraryPanelCollapsed()) {
-      <article class="collapsed-panel-card" aria-label="Right panel minimized summary">
+      <article class="collapsed-panel-card" [attr.aria-label]="'smileit.step3.collapsedAriaLabel' | transloco">
         <p class="hint">
-          Right panel minimized. Use "Expand right panel" to continue editing details.
+          {{ 'smileit.step3.panelMinimized' | transloco }}
         </p>
         <div class="metadata-grid">
-          <p><strong>Blocks:</strong> {{ workflow.assignmentBlocks().length }}</p>
-          <p><strong>Covered sites:</strong> {{ workflow.selectedSiteCoverage().length }}</p>
-          <p><strong>Uncovered sites:</strong> {{ workflow.uncoveredSelectedSites().length }}</p>
-          <p><strong>Catalog entries:</strong> {{ workflow.catalogEntries().length }}</p>
+          <p><strong>{{ 'smileit.step3.blocks' | transloco }}</strong> {{ workflow.assignmentBlocks().length }}</p>
+          <p><strong>{{ 'smileit.step3.coveredSites' | transloco }}</strong> {{ workflow.selectedSiteCoverage().length
+            }}</p>
+          <p><strong>{{ 'smileit.step3.uncoveredSites' | transloco }}</strong> {{
+            workflow.uncoveredSelectedSites().length }}</p>
+          <p><strong>{{ 'smileit.step3.catalogEntries' | transloco }}</strong> {{ workflow.catalogEntries().length }}
+          </p>
         </div>
       </article>
       } @else {
       @if (workflow.assignmentBlocks().length === 0) {
       <p class="hint">
-        Create the first block to define which substituent molecules will be available.
+        {{ 'smileit.step3.createFirstBlock' | transloco }}
       </p>
       } @else {
       <div class="block-stack">
@@ -64,57 +68,63 @@
 
           <div class="block-header">
             <div class="block-title-wrap">
-              <span class="block-priority">Priority {{ blockIndex + 1 }}</span>
-              <input type="text" class="block-title-input" [attr.aria-label]="'Block ' + (blockIndex + 1) + ' label'"
-                placeholder="Block label" [ngModel]="block.label"
+              <span class="block-priority">{{ 'smileit.step3.blockPriorityPrefix' | transloco }} {{ blockIndex + 1
+                }}</span>
+              <input type="text" class="block-title-input"
+                [attr.aria-label]="'smileit.step3.blockLabelAria' | transloco: {n: blockIndex + 1}"
+                title="{{ 'smileit.step3.blockLabelAria' | transloco: {n: blockIndex + 1} }}"
+                placeholder="{{ 'smileit.step3.blockLabel' | transloco }}" [ngModel]="block.label"
                 (ngModelChange)="workflow.blocks.updateBlockLabel(block.id, $event)"
                 [disabled]="workflow.isProcessing()" />
             </div>
             <div class="block-actions">
               <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, -1)"
                 [disabled]="blockIndex === 0 || workflow.isProcessing()">
-                Up
+                {{ 'smileit.step3.up' | transloco }}
               </button>
               <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, 1)" [disabled]="
                         blockIndex === workflow.assignmentBlocks().length - 1 ||
                         workflow.isProcessing()
                       ">
-                Down
+                {{ 'smileit.step3.down' | transloco }}
               </button>
               <button class="remove-btn small" (click)="workflow.blocks.removeAssignmentBlock(block.id)"
                 [disabled]="workflow.isProcessing()">
-                Remove
+                {{ 'smileit.blocks.removeButton' | transloco }}
               </button>
             </div>
           </div>
 
           @if (isBlockCollapsed(block.id)) {
-          <div class="block-collapsed-summary" aria-label="Collapsed block summary">
-            <p><strong>Sites:</strong> {{ blockSummary(block).selectedSitesLabel }}</p>
-            <p><strong>Categories:</strong> {{ blockSummary(block).categoriesLabel }}</p>
+          <div class="block-collapsed-summary" [attr.aria-label]="'smileit.blocks.collapsedSummaryAria' | transloco">
+            <p><strong>{{ 'smileit.blocks.sitesLabel' | transloco }}</strong> {{ blockSummary(block).selectedSitesLabel
+              }}</p>
+            <p><strong>{{ 'smileit.blocks.categoriesLabel' | transloco }}</strong> {{
+              blockSummary(block).categoriesLabel }}</p>
             <p>
-              <strong>Catalog substituents:</strong>
+              <strong>{{ 'smileit.blocks.catalogSubstituentsLabel' | transloco }}</strong>
               {{ blockSummary(block).catalogSmilesLabel }}
             </p>
             <p>
-              <strong>Manual substituents:</strong>
+              <strong>{{ 'smileit.blocks.manualSubstituentsLabel' | transloco }}</strong>
               {{ blockSummary(block).manualSmilesLabel }}
             </p>
             <p>
-              <strong>Total block sources:</strong>
+              <strong>{{ 'smileit.blocks.totalBlockSources' | transloco }}</strong>
               {{ blockSummary(block).sourceCount }}
             </p>
           </div>
           } @else {
           <div class="block-section">
-            <h4>Substituents added</h4>
+            <h4>{{ 'smileit.blocks.substituentsAdded' | transloco }}</h4>
             @if (block.catalogRefs.length === 0) {
-            <p class="hint">No substituents added to this block yet.</p>
+            <p class="hint">{{ 'smileit.blocks.noSubstituentsYet' | transloco }}</p>
             } @else {
             <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
               @for (entry of block.catalogRefs; track entry.stable_id + '-' + entry.version + '-' + entry.id) {
               <article class="block-library-thumb catalog-ref-thumb">
-                <button type="button" class="thumb-open-button" [attr.aria-label]="'Open detail for ' + entry.name"
+                <button type="button" class="thumb-open-button"
+                  [attr.aria-label]="'smileit.blocks.openDetail' | transloco: {name: entry.name}"
                   (click)="openLibraryEntryDetail(entry, 'reference')">
                   <span class="thumb-name">{{ entry.name }}</span>
                   <span class="thumb-preview">
@@ -127,8 +137,10 @@
                     }
                   </span>
                   <span class="thumb-smiles mono">{{ entry.smiles }}</span>
-                  <small class="thumb-anchor">Anchor {{ entry.anchor_atom_indices.join(', ') || '—' }}</small>
-                  <small>stable_id {{ entry.stable_id }} · v{{ entry.version }}</small>
+                  <small class="thumb-anchor">{{ 'smileit.blocks.anchorLabel' | transloco }} {{
+                    entry.anchor_atom_indices.join(', ') || '—' }}</small>
+                  <small>{{ 'smileit.blocks.stableIdPrefix' | transloco }} {{ entry.stable_id }} · v{{ entry.version
+                    }}</small>
                 </button>
                 <div class="block-thumb-actions block-ref-actions" (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()">
@@ -139,7 +151,7 @@
                                     entry.version
                                   )
                                 " [disabled]="workflow.isProcessing()">
-                    Remove
+                    {{ 'smileit.blocks.removeButton' | transloco }}
                   </button>
                 </div>
               </article>
@@ -148,11 +160,11 @@
             }
             @if (workflow.blocks.getAutoCatalogEntriesForBlock(block).length === 0) {
             <p class="hint">
-              No catalog molecules auto-matched by the selected functional categories.
+              {{ 'smileit.blocks.noAutoMatched' | transloco }}
             </p>
             } @else {
             <div class="auto-catalog-panel">
-              <h5>Auto-matched molecules by functional category</h5>
+              <h5>{{ 'smileit.blocks.autoMatchedTitle' | transloco }}</h5>
               <div class="tag-list">
                 @for (
                 entry of workflow.blocks.getAutoCatalogEntriesForBlock(block);
@@ -172,16 +184,17 @@
 
             <div class="subsection-header block-catalog-tools-row">
               <div>
-                <h5>Substituent library</h5>
+                <h5>{{ 'smileit.blocks.substLibTitle' | transloco }}</h5>
                 <p class="hint">
-                  Browse by group and add a substituent directly to this block.
+                  {{ 'smileit.blocks.substLibHint' | transloco }}
                 </p>
               </div>
-              <label class="library-group-filter block-library-group-filter" aria-label="Filter block catalog by group">
-                Group
+              <label class="library-group-filter block-library-group-filter"
+                [attr.aria-label]="'smileit.blocks.groupFilterAria' | transloco">
+                {{ 'smileit.step2.groupFilter' | transloco }}
                 <select [ngModel]="selectedBlockLibraryGroupKey(block.id)"
                   (ngModelChange)="onBlockLibraryGroupChange(block.id, $event)">
-                  <option value="all">All groups</option>
+                  <option value="all">{{ 'smileit.step2.allGroups' | transloco }}</option>
                   @for (group of workflow.catalogGroups(); track group.key) {
                   <option [value]="group.key">
                     {{ group.name }} ({{ group.entries.length }})
@@ -192,14 +205,14 @@
             </div>
 
             @if (filteredCatalogEntriesForBlock(block).length === 0) {
-            <p class="hint">No catalog molecules available for the selected group.</p>
+            <p class="hint">{{ 'smileit.blocks.noCatalogMolecules' | transloco }}</p>
             } @else {
             <div class="library-thumbnail-grid block-library-thumbnail-grid">
               @for (entry of filteredCatalogEntriesForBlock(block); track entry.stable_id + '-' + entry.version + '-' +
               entry.id) {
               <article class="block-library-thumb">
                 <button type="button" class="thumb-open-button"
-                  [attr.aria-label]="'Add ' + entry.name + ' to this block'"
+                  [attr.aria-label]="'smileit.blocks.addToBlockAria' | transloco: {name: entry.name}"
                   (click)="onBlockCatalogEntryCardActivate(block, entry)">
                   <span class="thumb-name">{{ entry.name }}</span>
                   <span class="thumb-preview">
@@ -217,7 +230,7 @@
                   (keydown)="$event.stopPropagation()">
                   <button class="catalog-add small" (click)="onBlockCatalogBrowserEntryActivate(block, entry)"
                     [disabled]="workflow.isProcessing()">
-                    Add
+                    {{ 'smileit.blocks.addButton' | transloco }}
                   </button>
                 </div>
               </article>
@@ -226,18 +239,17 @@
             }
           </div>
           <div class="block-section block-placement-section">
-            <h4>Assign this block to scaffold positions</h4>
+            <h4>{{ 'smileit.blocks.assignPositions' | transloco }}</h4>
             @if (workflow.selectedAtomIndices().length === 0) {
             <p class="hint">
-              Inspect the principal molecule and select target atoms before assigning this
-              block to positions.
+              {{ 'smileit.blocks.noAtomsHint' | transloco }}
             </p>
             } @else {
             <div class="atom-grid compact-grid">
               @for (atomIndex of workflow.selectedAtomIndices(); track atomIndex) {
               <button type="button" class="atom-chip compact" [class.selected]="isBlockSiteSelected(block, atomIndex)"
                 (click)="workflow.blocks.toggleBlockSite(block.id, atomIndex)" [disabled]="workflow.isProcessing()">
-                Site {{ atomIndex }}
+                {{ 'smileit.blocks.siteLabel' | transloco }} {{ atomIndex }}
               </button>
               }
             </div>
@@ -245,10 +257,8 @@
 
             @if (block.siteAtomIndices.length === 0) {
             <p class="hint guidance-hint">
-              This block still has no scaffold positions assigned. Choose the sites that
-              should receive one of this block's molecules.
-            </p>
-            }
+              {{ 'smileit.blocks.noPositionsAssigned' | transloco }}
+              }
           </div>
           }
         </article>

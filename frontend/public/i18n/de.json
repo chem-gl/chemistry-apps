@@ -1,0 +1,25 @@
+{
+  "app": {
+    "brand": {
+      "title": "Wissenschaftliches Kontrollzentrum",
+      "caption": "Zentrale Navigation für Apps, Jobs und Kontozugriff."
+    },
+    "actions": { "signIn": "Anmelden", "signOut": "Abmelden" },
+    "nav": { "dashboard": "Dashboard", "profile": "Profil", "jobsMonitor": "Job-Monitor", "apps": "Apps", "identity": "Identität" }
+  },
+  "language": { "switcher": { "ariaLabel": "Sprachauswahl", "menuLabel": "Verfügbare Sprachen" } },
+  "common": {
+    "actions": { "refresh": "Aktualisieren", "openResult": "Ergebnis öffnen", "delete": "Löschen", "restore": "Wiederherstellen", "working": "Wird ausgeführt...", "deletePermanently": "Endgültig löschen", "restoreJob": "Job wiederherstellen", "moveToTrash": "In Papierkorb verschieben", "close": "Schließen" },
+    "filters": { "status": "Status", "app": "App", "all": "Alle" },
+    "statusFilters": { "all": "Alle" },
+    "jobStatus": { "pending": "Ausstehend", "running": "Laufend", "paused": "Pausiert", "completed": "Abgeschlossen", "failed": "Fehlgeschlagen", "cancelled": "Abgebrochen" },
+    "fallback": { "unknownUser": "Unbekannter Benutzer", "noGroup": "Keine Gruppe" }
+  },
+  "login": { "panel": { "title": "Wissenschaftlicher Zugang" }, "form": { "username": "Benutzername", "password": "Passwort", "signIn": "Anmelden", "signingIn": "Anmeldung läuft..." } },
+  "profile": { "header": { "title": "Profil" }, "form": { "firstName": "Vorname", "lastName": "Nachname", "email": "E-Mail", "newPassword": "Neues Passwort", "confirmPassword": "Passwort bestätigen", "saveProfile": "Profil speichern", "saving": "Speichern..." } },
+  "appsHub": { "header": { "title": "Wissenschaftliche Apps" }, "monitorCard": { "title": "Job-Monitor", "open": "Monitor öffnen" }, "appCard": { "open": "App öffnen", "comingSoon": "Demnächst" } },
+  "dashboard": { "header": { "eyebrow": "Rollenbasierter Arbeitsbereich", "role": "Rolle" }, "actions": { "myProfile": "Mein Profil", "openJobsMonitor": "Job-Monitor öffnen" }, "states": { "loading": "Dashboard wird geladen..." }, "metrics": { "runningJobs": "Laufende Jobs", "pausedJobs": "Pausierte Jobs", "completedJobs": "Abgeschlossene Jobs" } },
+  "jobsMonitor": { "header": { "title": "Job-Monitor" }, "actions": { "recycleBin": "Papierkorb", "autoRefresh": "Auto-Aktualisierung", "openLiveLogs": "Live-Logs öffnen", "openLogs": "Logs öffnen", "pause": "Pausieren", "resume": "Fortsetzen", "cancel": "Abbrechen", "viewSummary": "Zusammenfassung anzeigen" }, "kpi": { "active": "Aktiv", "paused": "Pausiert", "completed": "Abgeschlossen", "failed": "Fehlgeschlagen", "cancelled": "Abgebrochen", "lastUpdate": "Letztes Update" }, "sections": { "running": "Laufend", "paused": "Pausiert", "finished": "Abgeschlossen, fehlgeschlagen und abgebrochen" }, "states": { "loadingJobs": "Jobs werden geladen..." }, "details": { "title": "Job-Details", "logs": "Logs", "errorTrace": "Fehler-Trace" } },
+  "trash": { "header": { "title": "Papierkorb" }, "actions": { "backToMonitor": "Zurück zum Monitor" }, "states": { "loading": "Papierkorb wird geladen...", "empty": "Keine gelöschten Jobs zur Wiederherstellung." }, "table": { "deletedBy": "Gelöscht von", "deletedAt": "Gelöscht am", "purgeAt": "Endgültige Löschung" } },
+  "errorModal": { "actions": { "viewDetails": "Technische Details anzeigen", "understood": "Verstanden" }, "http": { "requestFailedTitle": "Anfrage fehlgeschlagen", "networkUnavailable": "Netzwerk nicht verfügbar.", "forbidden": "Keine Berechtigung für diese Aktion.", "serverError": "Interner Serverfehler." } }
+}

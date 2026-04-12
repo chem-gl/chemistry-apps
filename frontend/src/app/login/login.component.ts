@@ -4,16 +4,18 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   readonly sessionService = inject(IdentitySessionService);
+  private readonly translocoService = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -27,7 +29,8 @@ export class LoginComponent {
       next: (wasAuthenticated: boolean) => {
         if (!wasAuthenticated) {
           this.localErrorMessage.set(
-            this.sessionService.lastAuthenticationError() ?? 'Unable to authenticate.',
+            this.sessionService.lastAuthenticationError() ??
+              this.translocoService.translate('login.errors.unableToAuthenticate'),
           );
           return;
         }
@@ -36,7 +39,10 @@ export class LoginComponent {
         void this.router.navigateByUrl(redirectTarget);
       },
       error: (loginError: { message?: string }) => {
-        this.localErrorMessage.set(loginError.message ?? 'Unable to authenticate.');
+        this.localErrorMessage.set(
+          loginError.message ??
+            this.translocoService.translate('login.errors.unableToAuthenticate'),
+        );
       },
     });
   }

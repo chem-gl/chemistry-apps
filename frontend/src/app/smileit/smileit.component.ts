@@ -17,6 +17,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import {
   JobLogEntryView,
@@ -46,6 +47,7 @@ import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-v
   imports: [
     CommonModule,
     FormsModule,
+    TranslocoPipe,
     PrincipalMoleculeEditorModule,
     PrincipalSvgViewerModule,
     CatalogPanelComponent,

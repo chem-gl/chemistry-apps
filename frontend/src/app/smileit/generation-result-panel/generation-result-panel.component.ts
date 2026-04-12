@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DownloadedReportFile, ScientificJobView } from '../../core/api/jobs-api.service';
 import {
   SmileitGeneratedStructureView,
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-generation-result-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, JobProgressCardComponent],
+  imports: [CommonModule, FormsModule, JobProgressCardComponent, TranslocoPipe],
   providers: [GenerationResultDataService],
   templateUrl: './generation-result-panel.component.html',
   styleUrl: './generation-result-panel.component.scss',
@@ -69,6 +70,10 @@ export class GenerationResultPanelComponent {
 
   openHistoricalJob(jobId: string): void {
     this.workflow.openHistoricalJob(jobId);
+  }
+
+  deleteHistoricalJob(jobId: string): void {
+    this.workflow.deleteHistoryJob(jobId);
   }
 
   toggleGeneratedStructuresCollapse(): void {
@@ -135,6 +140,14 @@ export class GenerationResultPanelComponent {
 
   historicalJobUpdatedAt(historyJob: ScientificJobView): string | null {
     return historyJob.updated_at ?? historyJob.created_at ?? null;
+  }
+
+  canDeleteHistoricalJob(historyJob: ScientificJobView): boolean {
+    return (
+      historyJob.status === 'completed' ||
+      historyJob.status === 'failed' ||
+      historyJob.status === 'cancelled'
+    );
   }
 
   historicalJobBlockSummaries(

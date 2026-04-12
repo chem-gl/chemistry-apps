@@ -4,6 +4,7 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { JobWorkflowSection } from '../../../application/base-job-workflow.service';
 
 /** Vista de un descriptor de archivo de entrada persistido en un job. */
@@ -16,7 +17,7 @@ export interface JobFileDescriptorView {
 @Component({
   selector: 'app-job-artifact-export-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './job-artifact-export-panel.component.html',
   styleUrl: './job-artifact-export-panel.component.scss',
 })

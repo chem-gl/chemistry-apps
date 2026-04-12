@@ -2,12 +2,13 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { GlobalErrorModalService } from '../../../application/errors/global-error-modal.service';
 
 @Component({
   selector: 'app-global-error-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './global-error-modal.component.html',
   styleUrl: './global-error-modal.component.scss',
 })

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
 import {
@@ -16,7 +17,13 @@ import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.
 
 @Component({
   selector: 'app-molar-fractions',
-  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslocoPipe,
+    JobProgressCardComponent,
+    JobLogsPanelComponent,
+  ],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
   styleUrl: './molar-fractions.component.scss',

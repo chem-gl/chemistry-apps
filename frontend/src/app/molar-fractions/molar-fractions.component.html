@@ -1,256 +1,220 @@
 <!-- molar-fractions.component.html: Molar fractions app UI with export actions. -->
-<section class="molar-shell" aria-label="Molar fractions scientific app">
+<section class="molar-shell" [attr.aria-label]="'molarFractions.header.eyebrow' | transloco">
   <header class="molar-header">
-    <p class="eyebrow">Molar Fractions</p>
-    <h2>Acid-Base Equilibrium Fractions</h2>
-    <p>
-      Configure pKa values and pH mode to calculate the same fraction table produced by the legacy
-      desktop app.
-    </p>
+    <p class="eyebrow">{{ 'molarFractions.header.eyebrow' | transloco }}</p>
+    <h2>{{ 'molarFractions.header.title' | transloco }}</h2>
+    <p>{{ 'molarFractions.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="workspace-grid">
-    <section class="entry-panel" aria-label="Input parameters">
-      <h3>Data Entry</h3>
+    <section class="entry-panel" [attr.aria-label]="'molarFractions.form.ariaLabel' | transloco">
+      <h3>{{ 'molarFractions.form.title' | transloco }}</h3>
 
       <div class="field-group">
-        <label for="pka-count">Number of acid-base equilibria</label>
-        <select
-          id="pka-count"
-          [ngModel]="workflow.pkaCount()"
-          (ngModelChange)="onPkaCountChange($event)"
-          [disabled]="workflow.isProcessing()"
-        >
+        <label for="pka-count">{{ 'molarFractions.form.pkaCount' | transloco }}</label>
+        <select id="pka-count" [ngModel]="workflow.pkaCount()" (ngModelChange)="onPkaCountChange($event)"
+          [disabled]="workflow.isProcessing()">
           @for (option of pkaCountOptions; track option) {
-            <option [ngValue]="option">{{ option }} pKa</option>
+          <option [ngValue]="option">{{ option }} pKa</option>
           }
         </select>
       </div>
 
       <div class="pka-block">
-        <h4>Enter pKa values</h4>
+        <h4>{{ 'molarFractions.form.pkaValues' | transloco }}</h4>
         <div class="pka-grid">
           @for (slotIndex of workflow.pkaInputSlots(); track slotIndex) {
-            <label>
-              pKa{{ slotIndex + 1 }}
-              <input
-                type="number"
-                step="0.01"
-                [ngModel]="workflow.pkaValues()[slotIndex]"
-                (ngModelChange)="workflow.updatePkaValue(slotIndex, toNumber($event))"
-                [disabled]="workflow.isProcessing()"
-              />
-            </label>
+          <label>
+            pKa{{ slotIndex + 1 }}
+            <input type="number" step="0.01" [ngModel]="workflow.pkaValues()[slotIndex]"
+              (ngModelChange)="workflow.updatePkaValue(slotIndex, toNumber($event))"
+              [disabled]="workflow.isProcessing()" />
+          </label>
           }
         </div>
       </div>
 
       <div class="field-group">
-        <label for="ph-mode">pH values</label>
-        <select
-          id="ph-mode"
-          [ngModel]="workflow.phMode()"
-          (ngModelChange)="workflow.phMode.set($event)"
-          [disabled]="workflow.isProcessing()"
-        >
-          <option value="single">One pH value</option>
-          <option value="range">pH range</option>
+        <label for="ph-mode">{{ 'molarFractions.form.phMode' | transloco }}</label>
+        <select id="ph-mode" [ngModel]="workflow.phMode()" (ngModelChange)="workflow.phMode.set($event)"
+          [disabled]="workflow.isProcessing()">
+          <option value="single">{{ 'molarFractions.form.phSingle' | transloco }}</option>
+          <option value="range">{{ 'molarFractions.form.phRange' | transloco }}</option>
         </select>
       </div>
 
       @if (workflow.phMode() === 'single') {
-        <div class="single-ph-block">
+      <div class="single-ph-block">
+        <label>
+          {{ 'molarFractions.form.singlePh' | transloco }}
+          <input type="number" step="0.01" [ngModel]="workflow.phValue()"
+            (ngModelChange)="workflow.phValue.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+        </label>
+      </div>
+      } @else {
+      <div class="range-block">
+        <h4>{{ 'molarFractions.form.phRange' | transloco }}</h4>
+        <div class="range-grid">
           <label>
-            Single pH value
-            <input
-              type="number"
-              step="0.01"
-              [ngModel]="workflow.phValue()"
-              (ngModelChange)="workflow.phValue.set(toNumber($event))"
-              [disabled]="workflow.isProcessing()"
-            />
+            {{ 'molarFractions.form.phMin' | transloco }}
+            <input type="number" step="0.01" [ngModel]="workflow.phMin()"
+              (ngModelChange)="workflow.phMin.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+          </label>
+          <label>
+            {{ 'molarFractions.form.phMax' | transloco }}
+            <input type="number" step="0.01" [ngModel]="workflow.phMax()"
+              (ngModelChange)="workflow.phMax.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+          </label>
+          <label>
+            {{ 'molarFractions.form.phStep' | transloco }}
+            <input type="number" step="0.01" min="0.01" [ngModel]="workflow.phStep()"
+              (ngModelChange)="workflow.phStep.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
           </label>
         </div>
-      } @else {
-        <div class="range-block">
-          <h4>pH range</h4>
-          <div class="range-grid">
-            <label>
-              Min
-              <input
-                type="number"
-                step="0.01"
-                [ngModel]="workflow.phMin()"
-                (ngModelChange)="workflow.phMin.set(toNumber($event))"
-                [disabled]="workflow.isProcessing()"
-              />
-            </label>
-            <label>
-              Max
-              <input
-                type="number"
-                step="0.01"
-                [ngModel]="workflow.phMax()"
-                (ngModelChange)="workflow.phMax.set(toNumber($event))"
-                [disabled]="workflow.isProcessing()"
-              />
-            </label>
-            <label>
-              Step
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                [ngModel]="workflow.phStep()"
-                (ngModelChange)="workflow.phStep.set(toNumber($event))"
-                [disabled]="workflow.isProcessing()"
-              />
-            </label>
-          </div>
-        </div>
+      </div>
       }
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
-          {{ workflow.isProcessing() ? 'Processing...' : 'Run Molar Fractions' }}
+          {{ workflow.isProcessing() ? ('molarFractions.actions.processing' | transloco) : ('molarFractions.actions.run'
+          | transloco) }}
         </button>
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-          Reset
+          {{ 'molarFractions.actions.reset' | transloco }}
         </button>
       </div>
     </section>
 
-    <section class="result-panel" aria-label="Results and progress">
-      <h3>Results</h3>
+    <section class="result-panel" [attr.aria-label]="'molarFractions.result.ariaLabel' | transloco">
+      <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-        <p class="status-message">Submitting molar fractions job to backend...</p>
+      <p class="status-message">{{ 'molarFractions.result.submitting' | transloco }}</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
-        <app-job-progress-card
-          [jobId]="workflow.currentJobId()"
-          [progressPercentage]="workflow.progressPercentage()"
-          [progressMessage]="workflow.progressMessage()"
-          progressAriaLabel="Molar fractions job progress"
-        ></app-job-progress-card>
+      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
+        [progressMessage]="workflow.progressMessage()"
+        [progressAriaLabel]="'molarFractions.result.ariaLabel' | transloco"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-          <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-        }
+      @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+      <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+      }
 
-        <div class="metadata-grid">
-          <p><strong>Mode:</strong> {{ resultData.metadata.phMode }}</p>
-          <p><strong>pKa values:</strong> {{ resultData.metadata.pkaValues.join(', ') }}</p>
-          <p>
-            <strong>Range:</strong> {{ resultData.metadata.phMin }} to
-            {{ resultData.metadata.phMax }}
-          </p>
-          <p><strong>Step:</strong> {{ resultData.metadata.phStep }}</p>
-          <p><strong>Species:</strong> {{ resultData.metadata.totalSpecies }}</p>
-          <p><strong>Points:</strong> {{ resultData.metadata.totalPoints }}</p>
-        </div>
+      <div class="metadata-grid">
+        <p><strong>{{ 'molarFractions.result.metadata.mode' | transloco }}</strong> {{ resultData.metadata.phMode }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.pkaValues' | transloco }}</strong> {{
+          resultData.metadata.pkaValues.join(', ') }}</p>
+        <p>
+          <strong>{{ 'molarFractions.result.metadata.range' | transloco }}</strong> {{ resultData.metadata.phMin }} {{
+          'molarFractions.result.metadata.to' | transloco }}
+          {{ resultData.metadata.phMax }}
+        </p>
+        <p><strong>{{ 'molarFractions.result.metadata.step' | transloco }}</strong> {{ resultData.metadata.phStep }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.species' | transloco }}</strong> {{
+          resultData.metadata.totalSpecies }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.points' | transloco }}</strong> {{ resultData.metadata.totalPoints
+          }}</p>
+      </div>
 
-        <div class="action-row export-row">
-          <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
-            {{ workflow.isExporting() ? 'Exporting...' : 'Export CSV' }}
-          </button>
-          <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
-            Export LOG (inputs + CSV)
-          </button>
-        </div>
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
+          {{ workflow.isExporting() ? ('tunnel.actions.exporting' | transloco) : ('tunnel.actions.exportCsv' |
+          transloco) }}
+        </button>
+        <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
+          {{ 'molarFractions.result.exportLog' | transloco }}
+        </button>
+      </div>
 
-        @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-          <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-        }
+      @if (workflow.exportErrorMessage(); as exportErrorMessage) {
+      <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
+      }
 
-        @if (resultData.rows.length === 0) {
-          <p class="status-message">No final rows available yet for this historical job.</p>
-        } @else {
-          <div class="table-wrap">
-            <table class="result-table">
-              <thead>
-                <tr>
-                  <th>pH</th>
-                  @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
-                    <th>{{ speciesLabel }}</th>
-                  }
-                  <th>Sum</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of resultData.rows; track $index) {
-                  <tr>
-                    <td>{{ formatPh(row) }}</td>
-                    @for (fractionValue of row.fractions; track $index) {
-                      <td>{{ formatFractionValue(fractionValue) }}</td>
-                    }
-                    <td>{{ formatFractionValue(row.sumFraction) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+      @if (resultData.rows.length === 0) {
+      <p class="status-message">{{ 'molarFractions.result.noRows' | transloco }}</p>
+      } @else {
+      <div class="table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
+              @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
+              <th>{{ speciesLabel }}</th>
+              }
+              <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of resultData.rows; track $index) {
+            <tr>
+              <td>{{ formatPh(row) }}</td>
+              @for (fractionValue of row.fractions; track $index) {
+              <td>{{ formatFractionValue(fractionValue) }}</td>
+              }
+              <td>{{ formatFractionValue(row.sumFraction) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
       }
 
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-        <p class="error-message" role="alert">{{ currentError }}</p>
+      <p class="error-message" role="alert">{{ currentError }}</p>
       }
     </section>
   </div>
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-  <section class="history-card" aria-label="Historical jobs">
+  <section class="history-card" [attr.aria-label]="'molarFractions.history.ariaLabel' | transloco">
     <div class="history-header">
-      <h3>Historical jobs</h3>
-      <button
-        class="btn-secondary"
-        (click)="workflow.loadHistory()"
-        [disabled]="workflow.isHistoryLoading()"
-      >
-        {{ workflow.isHistoryLoading() ? 'Loading...' : 'Reload history' }}
+      <h3>{{ 'shared.jobHistoryTable.title' | transloco }}</h3>
+      <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
+        {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) :
+        ('shared.jobHistoryTable.reload' | transloco) }}
       </button>
     </div>
 
     @if (workflow.historyJobs().length === 0) {
-      <p class="status-message">No historical jobs yet for molar fractions.</p>
+    <p class="status-message">{{ 'molarFractions.history.empty' | transloco }}</p>
     } @else {
-      <div class="table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>Job ID</th>
-              <th>Status</th>
-              <th>Mode</th>
-              <th>Updated</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-              <tr>
-                <td class="mono">{{ historyJob.id }}</td>
-                <td>
-                  <span [class]="historicalStatusClass(historyJob.status)">{{
-                    historyJob.status
-                  }}</span>
-                </td>
-                <td>{{ historicalModeLabel(historyJob) }}</td>
-                <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                <td>
-                  <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                    Open
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>{{ 'calculator.history.columns.jobId' | transloco }}</th>
+            <th>{{ 'calculator.history.columns.status' | transloco }}</th>
+            <th>{{ 'molarFractions.history.columns.mode' | transloco }}</th>
+            <th>{{ 'calculator.history.columns.updated' | transloco }}</th>
+            <th>{{ 'calculator.history.columns.action' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (historyJob of workflow.historyJobs(); track historyJob.id) {
+          <tr>
+            <td class="mono">{{ historyJob.id }}</td>
+            <td>
+              <span [class]="historicalStatusClass(historyJob.status)">{{
+                historyJob.status
+                }}</span>
+            </td>
+            <td>{{ historicalModeLabel(historyJob) }}</td>
+            <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+            <td>
+              <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
+                {{ 'molarFractions.history.open' | transloco }}
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     }
   </section>
 </section>

@@ -1,31 +1,31 @@
 <!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo). -->
 <label class="smiles-label">
-    SMILES batch input
+    {{ 'shared.smilesBatchInput.label' | transloco }}
     <textarea rows="10" [ngModel]="smilesValue" (ngModelChange)="smilesChange.emit($event)"
         [disabled]="isDisabled"></textarea>
 </label>
 
 <div class="batch-toolbar">
-    <p class="hint">Detected rows: {{ lineCount }}</p>
+    <p class="hint">{{ 'shared.smilesBatchInput.detectedRows' | transloco }} {{ lineCount }}</p>
     <label class="names-toggle">
         <input type="checkbox" [ngModel]="customNamesEnabled" (ngModelChange)="customNamesEnabledChange.emit($event)"
             [disabled]="isDisabled || inputRows.length === 0" />
-        Edit custom names
+        {{ 'shared.smilesBatchInput.editCustomNames' | transloco }}
     </label>
 </div>
 
 <p class="hint support-hint">
-    Supports plain SMILES lists, `.smi`/`.txt` lists, and CSV files where column 1 is name and column 2 is SMILES.
+    {{ 'shared.smilesBatchInput.hint' | transloco }}
 </p>
 
 @if (customNamesEnabled && inputRows.length > 0) {
-<div class="batch-preview-shell" aria-label="Parsed molecule names and smiles">
+<div class="batch-preview-shell" [attr.aria-label]="'shared.smilesBatchInput.label' | transloco">
     <table class="batch-preview-table">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>SMILES</th>
+                <th>{{ 'shared.smilesBatchInput.tableNumber' | transloco }}</th>
+                <th>{{ 'shared.smilesBatchInput.tableName' | transloco }}</th>
+                <th>{{ 'shared.smilesBatchInput.tableSMILES' | transloco }}</th>
             </tr>
         </thead>
         <tbody>
@@ -35,7 +35,8 @@
                 <td>
                     <input type="text" class="name-input" [ngModel]="inputRow.name"
                         (ngModelChange)="rowNameChange.emit({ index: $index, name: $event })" [disabled]="isDisabled"
-                        placeholder="Defaults to SMILES" />
+                        title="{{ 'shared.smilesBatchInput.namePlaceholder' | transloco }}"
+                        placeholder="{{ 'shared.smilesBatchInput.namePlaceholder' | transloco }}" />
                 </td>
                 <td>
                     <code class="mono smiles-preview">{{ inputRow.smiles }}</code>
@@ -49,13 +50,13 @@
 
 <div class="input-tools-row">
     <button class="btn-tool" type="button" (click)="openSketch.emit()" [disabled]="isDisabled"
-        title="Draw a molecule with Ketcher and add it to the list">
-        ✏ Draw SMILES
+        [title]="'shared.smilesBatchInput.drawSmilesTitle' | transloco">
+        {{ 'shared.smilesBatchInput.drawSmiles' | transloco }}
     </button>
 
     <label class="btn-tool file-upload-label" [class.disabled]="isDisabled"
-        title="Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs">
-        ↑ Upload file
+        [title]="'shared.smilesBatchInput.uploadFileTitle' | transloco">
+        {{ 'shared.smilesBatchInput.uploadFile' | transloco }}
         <input type="file" accept=".smi,.txt,.csv" class="file-input-hidden" [disabled]="isDisabled"
             (change)="fileUpload.emit($event)" />
     </label>

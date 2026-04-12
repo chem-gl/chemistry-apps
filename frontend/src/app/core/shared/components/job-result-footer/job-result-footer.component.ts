@@ -3,6 +3,7 @@
 // de estas tres secciones entre EasyRateComponent y MarcusComponent.
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 import { JobLogEntryView, ScientificJobView } from '../../../api/jobs-api.service';
 import { JobWorkflowSection } from '../../../application/base-job-workflow.service';
@@ -30,12 +31,18 @@ export interface JobResultFooterWorkflowPort {
   historyJobs(): ScientificJobView[];
   isHistoryLoading(): boolean;
   loadHistory(): void;
+  deleteHistoryJob(jobId: string): void;
 }
 
 @Component({
   selector: 'app-job-result-footer',
   standalone: true,
-  imports: [JobArtifactExportPanelComponent, JobLogsPanelComponent, JobHistoryTableComponent],
+  imports: [
+    JobArtifactExportPanelComponent,
+    JobLogsPanelComponent,
+    JobHistoryTableComponent,
+    TranslocoPipe,
+  ],
   templateUrl: './job-result-footer.component.html',
   styleUrl: './job-result-footer.component.scss',
 })
@@ -57,4 +64,5 @@ export class JobResultFooterComponent {
   @Output() exportInputsZip = new EventEmitter<void>();
   @Output() exportError = new EventEmitter<void>();
   @Output() openJob = new EventEmitter<string>();
+  @Output() deleteJob = new EventEmitter<string>();
 }

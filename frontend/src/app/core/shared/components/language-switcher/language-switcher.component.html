@@ -1,0 +1,25 @@
+<!-- language-switcher.component.html: Selector runtime de idioma con menú de banderas SVG. -->
+<div class="language-switcher" (click)="keepMenuOpen($event)" (keydown)="keepMenuOpen($event)">
+    <button class="language-toggle" type="button" (click)="toggleMenu()" [attr.aria-expanded]="isMenuOpen()"
+        [attr.aria-label]="'language.switcher.ariaLabel' | transloco">
+        <span class="flag-emoji" aria-hidden="true">{{ selectedLanguageOption().flagEmoji }}</span>
+        <span class="language-code">{{ selectedLanguageOption().code }}</span>
+    </button>
+
+    @if (isMenuOpen()) {
+    <div class="language-menu" role="menu" [attr.aria-label]="'language.switcher.menuLabel' | transloco">
+        @for (languageOption of languageService.languageOptions; track languageOption.code) {
+        <button class="language-option" type="button" role="menuitemradio" aria-checked="false"
+            [attr.aria-checked]="languageService.activeLanguageCode() === languageOption.code ? 'true' : 'false'"
+            [class.is-active]="languageService.activeLanguageCode() === languageOption.code"
+            (click)="selectLanguage(languageOption.code)">
+            <span class="flag-emoji" aria-hidden="true">{{ languageOption.flagEmoji }}</span>
+            <span class="language-names">
+                <strong>{{ languageOption.name }}</strong>
+                <small>{{ languageOption.nativeName }}</small>
+            </span>
+        </button>
+        }
+    </div>
+    }
+</div>

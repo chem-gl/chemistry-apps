@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import { CalculatorWorkflowService } from '../core/application/calculator-workflow.service';
@@ -12,7 +13,13 @@ import { JobProgressCardComponent } from '../core/shared/components/job-progress
 
 @Component({
   selector: 'app-calculator',
-  imports: [CommonModule, FormsModule, JobProgressCardComponent, JobLogsPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslocoPipe,
+    JobProgressCardComponent,
+    JobLogsPanelComponent,
+  ],
   providers: [CalculatorWorkflowService],
   templateUrl: './calculator.component.html',
   styleUrl: './calculator.component.scss',

@@ -2,22 +2,22 @@
 
 @if (showDiffusionFields) {
 <div class="param-grid diffusion-fields">
-    <label>
-        Radius reactant 1 (Å)
-        <input type="number" step="0.01" [ngModel]="radiusReactant1"
-            (ngModelChange)="radiusReactant1Change.emit($event)" [disabled]="isProcessing" />
-    </label>
+  <label>
+    {{ 'shared.diffusionFields.radiusReactant1' | transloco }}
+    <input type="number" step="0.01" [ngModel]="radiusReactant1" (ngModelChange)="radiusReactant1Change.emit($event)"
+      [disabled]="isProcessing" />
+  </label>
 
-    <label>
-        Radius reactant 2 (Å)
-        <input type="number" step="0.01" [ngModel]="radiusReactant2"
-            (ngModelChange)="radiusReactant2Change.emit($event)" [disabled]="isProcessing" />
-    </label>
+  <label>
+    {{ 'shared.diffusionFields.radiusReactant2' | transloco }}
+    <input type="number" step="0.01" [ngModel]="radiusReactant2" (ngModelChange)="radiusReactant2Change.emit($event)"
+      [disabled]="isProcessing" />
+  </label>
 
-    <label>
-        Reaction distance (Å)
-        <input type="number" step="0.01" [ngModel]="reactionDistance"
-            (ngModelChange)="reactionDistanceChange.emit($event)" [disabled]="isProcessing" />
-    </label>
+  <label>
+    {{ 'shared.diffusionFields.reactionDistance' | transloco }}
+    <input type="number" step="0.01" [ngModel]="reactionDistance" (ngModelChange)="reactionDistanceChange.emit($event)"
+      [disabled]="isProcessing" />
+  </label>
 </div>
 }

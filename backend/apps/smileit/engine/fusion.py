@@ -2,7 +2,7 @@
 
 Funciones para evaluar viabilidad de fusión, combinar dos moléculas
 mediante enlace covalente en posiciones específicas, incluyendo soporte
-para átomos comodín (`*`), y gestión de cachés LRU.
+para átomos comodín (`*`), y gestión de caches LRU.
 """
 
 import logging

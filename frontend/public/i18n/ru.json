@@ -1,0 +1,23 @@
+{
+  "app": {
+    "brand": {
+      "title": "Научный центр управления",
+      "caption": "Единая навигация для приложений, задач и доступа к аккаунту."
+    },
+    "actions": { "signIn": "Войти", "signOut": "Выйти" },
+    "nav": { "dashboard": "Панель", "profile": "Профиль", "jobsMonitor": "Монитор задач", "apps": "Приложения", "identity": "Идентификация" }
+  },
+  "language": { "switcher": { "ariaLabel": "Выбор языка", "menuLabel": "Доступные языки" } },
+  "common": {
+    "actions": { "refresh": "Обновить", "openResult": "Открыть результат", "delete": "Удалить", "restore": "Восстановить", "working": "Обработка...", "deletePermanently": "Удалить навсегда", "restoreJob": "Восстановить задачу", "moveToTrash": "В корзину", "close": "Закрыть" },
+    "filters": { "status": "Статус", "app": "Приложение", "all": "Все" },
+    "statusFilters": { "all": "Все" },
+    "jobStatus": { "pending": "Ожидание", "running": "Выполняется", "paused": "Пауза", "completed": "Завершено", "failed": "Ошибка", "cancelled": "Отменено" },
+    "fallback": { "unknownUser": "Неизвестный пользователь", "noGroup": "Без группы" }
+  },
+  "login": { "panel": { "title": "Научный доступ" }, "form": { "username": "Пользователь", "password": "Пароль", "signIn": "Войти", "signingIn": "Вход..." } },
+  "dashboard": { "header": { "eyebrow": "Рабочая область по ролям", "role": "Роль" }, "actions": { "myProfile": "Мой профиль", "openJobsMonitor": "Открыть монитор" }, "states": { "loading": "Загрузка панели..." } },
+  "jobsMonitor": { "header": { "title": "Монитор задач" }, "actions": { "recycleBin": "Корзина", "autoRefresh": "Автообновление", "openLogs": "Открыть логи", "pause": "Пауза", "resume": "Продолжить", "cancel": "Отменить", "viewSummary": "Сводка" }, "kpi": { "active": "Активные", "paused": "На паузе", "completed": "Завершённые", "failed": "С ошибкой", "cancelled": "Отменённые", "lastUpdate": "Последнее обновление" } },
+  "trash": { "header": { "title": "Корзина" }, "actions": { "backToMonitor": "Назад к монитору" }, "states": { "loading": "Загрузка корзины...", "empty": "Нет удалённых задач для восстановления." } },
+  "errorModal": { "actions": { "viewDetails": "Показать технические детали", "understood": "Понятно" }, "http": { "requestFailedTitle": "Ошибка запроса", "networkUnavailable": "Сеть недоступна.", "forbidden": "Недостаточно прав.", "serverError": "Внутренняя ошибка сервера." } }
+}

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   SmileitCatalogEntryView,
   SmileitStructureInspectionView,
@@ -22,7 +23,7 @@ export type BlockPanelLibraryDetailRequest = {
 @Component({
   selector: 'app-block-assignment-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './block-assignment-panel.component.html',
   styleUrl: './block-assignment-panel.component.scss',
 })

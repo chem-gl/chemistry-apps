@@ -2,23 +2,48 @@
 
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { IdentitySessionService } from './core/auth/identity-session.service';
+import { LanguageService } from './core/i18n/language.service';
 import { GlobalErrorModalComponent } from './core/shared/components/global-error-modal/global-error-modal.component';
+import { LanguageSwitcherComponent } from './core/shared/components/language-switcher/language-switcher.component';
 import { SCIENTIFIC_APP_ROUTE_ITEMS } from './core/shared/scientific-apps.config';
+
+interface PrimaryNavigationItem {
+  path: string;
+  label?: string;
+  labelKey?: string;
+  hint?: string;
+  hintKey?: string;
+}
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, GlobalErrorModalComponent],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    TranslocoPipe,
+    GlobalErrorModalComponent,
+    LanguageSwitcherComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
+  readonly languageService = inject(LanguageService);
   readonly isScrolled = signal(false);
 
-  readonly primaryNavigationItems = computed(() => {
+  readonly primaryNavigationItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
     if (!this.sessionService.isAuthenticated()) {
-      return [{ label: 'Sign in', path: '/login', hint: 'Authenticate to load your workspace' }];
+      return [
+        {
+          labelKey: 'app.nav.signIn',
+          path: '/login',
+          hintKey: 'app.navHints.signIn',
+        },
+      ];
     }
 
     const scientificNavigationItems = SCIENTIFIC_APP_ROUTE_ITEMS.filter(
@@ -30,18 +55,41 @@ export class App implements OnInit {
     }));
 
     return [
-      { label: 'Dashboard', path: '/dashboard', hint: 'Role-aware workspace overview' },
-      { label: 'Profile', path: '/profile', hint: 'Manage your personal profile and password' },
-      { label: 'Jobs Monitor', path: '/jobs', hint: 'Track active and completed jobs' },
-      { label: 'Apps', path: '/apps', hint: 'Visible scientific apps for your current session' },
+      {
+        labelKey: 'app.nav.dashboard',
+        path: '/dashboard',
+        hintKey: 'app.navHints.dashboard',
+      },
+      {
+        labelKey: 'app.nav.profile',
+        path: '/profile',
+        hintKey: 'app.navHints.profile',
+      },
+      {
+        labelKey: 'app.nav.jobsMonitor',
+        path: '/jobs',
+        hintKey: 'app.navHints.jobsMonitor',
+      },
+      {
+        labelKey: 'app.nav.apps',
+        path: '/apps',
+        hintKey: 'app.navHints.apps',
+      },
       ...scientificNavigationItems,
       ...(this.sessionService.hasAdminAccess()
-        ? [{ label: 'Identity', path: '/admin/identity', hint: 'Users, groups and permissions' }]
+        ? [
+            {
+              labelKey: 'app.nav.identity',
+              path: '/admin/identity',
+              hintKey: 'app.navHints.identity',
+            },
+          ]
         : []),
     ];
   });
 
   ngOnInit(): void {
+    this.languageService.initializeLanguage();
     this.sessionService.initializeSession().subscribe();
     this.updateScrollState();
   }

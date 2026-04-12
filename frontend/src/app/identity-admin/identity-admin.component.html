@@ -1,15 +1,16 @@
 <!-- identity-admin.component.html: Consola administrativa para identidad, grupos y permisos. -->
-<section class="identity-shell" aria-label="Identity administration">
+<section class="identity-shell" [attr.aria-label]="'identityAdmin.ariaLabel' | transloco">
     <header class="identity-header">
         <div>
-            <p class="eyebrow">Administrative Console</p>
-            <h1>Identity and Access</h1>
-            <p class="subtitle">Manage users, groups, memberships and app-level RBAC in a consistent workspace.</p>
+            <p class="eyebrow">{{ 'identityAdmin.header.eyebrow' | transloco }}</p>
+            <h1>{{ 'identityAdmin.header.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'identityAdmin.header.subtitle' | transloco }}</p>
         </div>
 
         <div class="header-actions">
-            <a class="action-link" routerLink="/profile">My profile</a>
-            <button class="action-button primary" type="button" (click)="loadAdminData()">Refresh</button>
+            <a class="action-link" routerLink="/profile">{{ 'identityAdmin.header.myProfile' | transloco }}</a>
+            <button class="action-button primary" type="button" (click)="loadAdminData()">{{
+                'identityAdmin.header.refresh' | transloco }}</button>
         </div>
     </header>
 
@@ -22,24 +23,22 @@
     }
 
     @if (isLoading()) {
-    <section class="feedback">Loading identity data...</section>
+    <section class="feedback">{{ 'identityAdmin.feedback.loading' | transloco }}</section>
     } @else {
 
-    <!-- Sección: Usuarios -->
     <section class="section-block">
-        <h2 class="section-title">Users</h2>
-        <p class="section-description">User actions are role-aware. Admins can only manage users in their managed
-            groups.</p>
+        <h2 class="section-title">{{ 'identityAdmin.users.title' | transloco }}</h2>
+        <p class="section-description">{{ 'identityAdmin.users.description' | transloco }}</p>
 
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Username</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Primary group</th>
-                        <th>Actions</th>
+                        <th>{{ 'identityAdmin.users.colUsername' | transloco }}</th>
+                        <th>{{ 'identityAdmin.users.colRole' | transloco }}</th>
+                        <th>{{ 'identityAdmin.users.colStatus' | transloco }}</th>
+                        <th>{{ 'identityAdmin.users.colPrimaryGroup' | transloco }}</th>
+                        <th>{{ 'identityAdmin.users.colActions' | transloco }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,7 +46,13 @@
                     <tr>
                         <td><strong>{{ userItem.username }}</strong></td>
                         <td><span class="badge" [class.badge-root]="userItem.role === 'root'"
-                                [class.badge-admin]="userItem.role === 'admin'">{{ userItem.role }}</span></td>
+                                [class.badge-admin]="userItem.role === 'admin'">{{
+                                userItem.role === 'root'
+                                ? ('identityAdmin.users.roleRoot' | transloco)
+                                : userItem.role === 'admin'
+                                ? ('identityAdmin.users.roleAdmin' | transloco)
+                                : ('identityAdmin.users.roleUser' | transloco)
+                                }}</span></td>
                         <td><span class="status-dot" [class.active]="userItem.account_status === 'active'"></span>{{
                             userItem.account_status
                             }}</td>
@@ -55,15 +60,19 @@
                         <td class="action-cell">
                             @if (sessionService.hasRootAccess()) {
                             <button class="action-button small" type="button"
-                                (click)="changeUserRole(userItem, 'user')">User</button>
+                                (click)="changeUserRole(userItem, 'user')">{{ 'identityAdmin.users.roleUser' | transloco
+                                }}</button>
                             <button class="action-button small" type="button"
-                                (click)="changeUserRole(userItem, 'admin')">Admin</button>
+                                (click)="changeUserRole(userItem, 'admin')">{{ 'identityAdmin.users.roleAdmin' |
+                                transloco }}</button>
                             <button class="action-button small" type="button"
-                                (click)="changeUserRole(userItem, 'root')">Root</button>
+                                (click)="changeUserRole(userItem, 'root')">{{ 'identityAdmin.users.roleRoot' | transloco
+                                }}</button>
                             }
                             <button class="action-button small" [class.danger]="userItem.is_active" type="button"
                                 (click)="toggleUserStatus(userItem)">
-                                {{ userItem.is_active ? 'Deactivate' : 'Activate' }}
+                                {{ userItem.is_active ? ('identityAdmin.users.deactivate' | transloco) :
+                                ('identityAdmin.users.activate' | transloco) }}
                             </button>
                         </td>
                     </tr>
@@ -73,102 +82,101 @@
         </div>
     </section>
 
-    <!-- Sección: Formularios de creación (solo root) y relaciones -->
     <section class="form-grid">
         @if (sessionService.hasRootAccess()) {
         <article class="form-card">
-            <h3>Create user</h3>
-            <p class="form-hint">Define username, role and primary group for a new account.</p>
+            <h3>{{ 'identityAdmin.createUser.title' | transloco }}</h3>
+            <p class="form-hint">{{ 'identityAdmin.createUser.hint' | transloco }}</p>
             <form class="admin-form" (ngSubmit)="createUser()">
                 <div class="form-row">
-                    <label>Username
+                    <label>{{ 'identityAdmin.createUser.username' | transloco }}
                         <input [ngModel]="createUserForm().username"
                             (ngModelChange)="setCreateUserField('username', $event)" name="username" required />
                     </label>
-                    <label>Email
+                    <label>{{ 'identityAdmin.createUser.email' | transloco }}
                         <input [ngModel]="createUserForm().email" (ngModelChange)="setCreateUserField('email', $event)"
                             name="email" type="email" required />
                     </label>
                 </div>
-                <label>Password
+                <label>{{ 'identityAdmin.createUser.password' | transloco }}
                     <input [ngModel]="createUserForm().password"
                         (ngModelChange)="setCreateUserField('password', $event)" name="password" type="password"
                         required />
                 </label>
                 <div class="form-row">
-                    <label>First name
+                    <label>{{ 'identityAdmin.createUser.firstName' | transloco }}
                         <input [ngModel]="createUserForm().first_name"
                             (ngModelChange)="setCreateUserField('first_name', $event)" name="first_name" />
                     </label>
-                    <label>Last name
+                    <label>{{ 'identityAdmin.createUser.lastName' | transloco }}
                         <input [ngModel]="createUserForm().last_name"
                             (ngModelChange)="setCreateUserField('last_name', $event)" name="last_name" />
                     </label>
                 </div>
                 <div class="form-row">
-                    <label>Role
+                    <label>{{ 'identityAdmin.createUser.roleLabel' | transloco }}
                         <select [ngModel]="createUserForm().role" (ngModelChange)="setCreateUserField('role', $event)"
                             name="role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                            <option value="root">Root</option>
+                            <option value="user">{{ 'identityAdmin.createUser.roleUserOption' | transloco }}</option>
+                            <option value="admin">{{ 'identityAdmin.createUser.roleAdminOption' | transloco }}</option>
+                            <option value="root">{{ 'identityAdmin.createUser.roleRootOption' | transloco }}</option>
                         </select>
                     </label>
-                    <label>Primary group
+                    <label>{{ 'identityAdmin.createUser.primaryGroup' | transloco }}
                         <select [ngModel]="createUserForm().primary_group_id"
                             (ngModelChange)="setCreateUserField('primary_group_id', $event)" name="primary_group_id">
-                            <option value="">No primary group</option>
+                            <option value="">{{ 'identityAdmin.createUser.noPrimaryGroup' | transloco }}</option>
                             @for (groupItem of groups(); track groupItem.id) {
                             <option [value]="groupItem.id">{{ groupItem.name }}</option>
                             }
                         </select>
                     </label>
                 </div>
-                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">Create
-                    user</button>
+                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">{{
+                    'identityAdmin.createUser.submit' | transloco }}</button>
             </form>
         </article>
 
         <article class="form-card">
-            <h3>Create group</h3>
-            <p class="form-hint">Groups represent scientific teams or environments.</p>
+            <h3>{{ 'identityAdmin.createGroup.title' | transloco }}</h3>
+            <p class="form-hint">{{ 'identityAdmin.createGroup.hint' | transloco }}</p>
             <form class="admin-form" (ngSubmit)="createGroup()">
-                <label>Group name
+                <label>{{ 'identityAdmin.createGroup.name' | transloco }}
                     <input [ngModel]="createGroupForm().name" (ngModelChange)="setCreateGroupField('name', $event)"
                         name="group_name" required />
                 </label>
-                <label>Slug
+                <label>{{ 'identityAdmin.createGroup.slug' | transloco }}
                     <input [ngModel]="createGroupForm().slug" (ngModelChange)="setCreateGroupField('slug', $event)"
                         name="group_slug" required />
                 </label>
-                <label>Description
+                <label>{{ 'identityAdmin.createGroup.description' | transloco }}
                     <textarea [ngModel]="createGroupForm().description"
                         (ngModelChange)="setCreateGroupField('description', $event)" name="group_description"
                         rows="3"></textarea>
                 </label>
-                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">Create
-                    group</button>
+                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">{{
+                    'identityAdmin.createGroup.submit' | transloco }}</button>
             </form>
         </article>
         }
 
         <article class="form-card">
-            <h3>Add membership</h3>
-            <p class="form-hint">Map users into groups before assigning app-level rules.</p>
+            <h3>{{ 'identityAdmin.addMembership.title' | transloco }}</h3>
+            <p class="form-hint">{{ 'identityAdmin.addMembership.hint' | transloco }}</p>
             <form class="admin-form" (ngSubmit)="createMembership()">
-                <label>User
+                <label>{{ 'identityAdmin.addMembership.user' | transloco }}
                     <select [ngModel]="membershipForm().user" (ngModelChange)="setMembershipField('user', $event)"
                         name="membership_user" required>
-                        <option value="">Select user</option>
+                        <option value="">{{ 'identityAdmin.addMembership.selectUser' | transloco }}</option>
                         @for (userItem of users(); track userItem.id) {
                         <option [value]="userItem.id">{{ userItem.username }}</option>
                         }
                     </select>
                 </label>
-                <label>Group
+                <label>{{ 'identityAdmin.addMembership.group' | transloco }}
                     <select [ngModel]="membershipForm().group" (ngModelChange)="setMembershipField('group', $event)"
                         name="membership_group" required>
-                        <option value="">Select group</option>
+                        <option value="">{{ 'identityAdmin.addMembership.selectGroup' | transloco }}</option>
                         @for (groupItem of groups(); track groupItem.id) {
                         @if (canManageGroup(groupItem.id)) {
                         <option [value]="groupItem.id">{{ groupItem.name }}</option>
@@ -176,34 +184,30 @@
                         }
                     </select>
                 </label>
-                <label>Role in group
+                <label>{{ 'identityAdmin.addMembership.roleInGroup' | transloco }}
                     <select [ngModel]="membershipForm().role_in_group"
                         (ngModelChange)="setMembershipField('role_in_group', $event)" name="membership_role">
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
+                        <option value="member">{{ 'identityAdmin.addMembership.roleMember' | transloco }}</option>
+                        <option value="admin">{{ 'identityAdmin.addMembership.roleAdmin' | transloco }}</option>
                     </select>
                 </label>
-                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">Add
-                    membership</button>
+                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">{{
+                    'identityAdmin.addMembership.submit' | transloco }}</button>
             </form>
 
             @if (memberships().length > 0) {
-            <ul class="item-list">
-                @for (membershipItem of memberships(); track membershipItem.id) {
-                <li>
-                    <strong>{{ username(membershipItem.user) }}</strong>
-                    <span>{{ groupName(membershipItem.group) }} · {{ membershipItem.role_in_group }}</span>
-                </li>
-                }
-            </ul>
+            <div class="item-list">@for (membershipItem of memberships(); track membershipItem.id) {<div><strong>{{
+                        username(membershipItem.user) }}</strong><span>{{ groupName(membershipItem.group) }} · {{
+                        membershipItem.role_in_group === 'admin' ? ('identityAdmin.addMembership.roleAdmin' | transloco)
+                        : ('identityAdmin.addMembership.roleMember' | transloco) }}</span></div>}</div>
             }
         </article>
 
         <article class="form-card">
-            <h3>App permissions</h3>
-            <p class="form-hint">Evaluated by group first, then user-level overrides.</p>
+            <h3>{{ 'identityAdmin.permissions.title' | transloco }}</h3>
+            <p class="form-hint">{{ 'identityAdmin.permissions.hint' | transloco }}</p>
             <form class="admin-form" (ngSubmit)="createPermission()">
-                <label>Application
+                <label>{{ 'identityAdmin.permissions.app' | transloco }}
                     <select [ngModel]="permissionForm().app_name"
                         (ngModelChange)="setPermissionField('app_name', $event)" name="permission_app_name">
                         @for (appKey of availableAppKeys; track appKey) {
@@ -212,18 +216,18 @@
                     </select>
                 </label>
                 <div class="form-row">
-                    <label>Scope
+                    <label>{{ 'identityAdmin.permissions.scope' | transloco }}
                         <select [ngModel]="permissionForm().target_scope"
                             (ngModelChange)="setPermissionField('target_scope', $event)" name="permission_target_scope">
-                            <option value="group">Group</option>
-                            <option value="user">User</option>
+                            <option value="group">{{ 'identityAdmin.addMembership.group' | transloco }}</option>
+                            <option value="user">{{ 'identityAdmin.addMembership.user' | transloco }}</option>
                         </select>
                     </label>
-                    <label>Target
+                    <label>{{ 'identityAdmin.permissions.target' | transloco }}
                         <select [ngModel]="permissionForm().target_id"
                             (ngModelChange)="setPermissionField('target_id', $event)" name="permission_target_id"
                             required>
-                            <option value="">Select target</option>
+                            <option value="">{{ 'identityAdmin.permissions.selectTarget' | transloco }}</option>
                             @if (permissionForm().target_scope === 'group') {
                             @for (groupItem of groups(); track groupItem.id) {
                             @if (canManageGroup(groupItem.id)) {
@@ -242,38 +246,30 @@
                     <input [ngModel]="permissionForm().is_enabled"
                         (ngModelChange)="setPermissionField('is_enabled', $event)" name="permission_enabled"
                         type="checkbox" />
-                    Enabled
+                    {{ 'identityAdmin.permissions.enabled' | transloco }}
                 </label>
-                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">Store
-                    permission</button>
+                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">{{
+                    'identityAdmin.permissions.submit' | transloco }}</button>
             </form>
 
             @if (appPermissions().length > 0) {
-            <ul class="item-list">
-                @for (permissionItem of appPermissions(); track permissionItem.id) {
-                <li>
-                    <strong>{{ permissionItem.app_name }}</strong>
-                    <span>
-                        {{ permissionItem.group ? groupName(permissionItem.group) :
-                        username(permissionItem.user ?? 0) }}
-                        ·
-                        {{ permissionItem.is_enabled ? 'enabled' : 'disabled' }}
-                    </span>
-                </li>
-                }
-            </ul>
+            <div class="item-list">@for (permissionItem of appPermissions(); track permissionItem.id) {<div><strong>{{
+                        permissionItem.app_name }}</strong><span>{{ permissionItem.group ?
+                        groupName(permissionItem.group) : username(permissionItem.user ?? 0) }} · {{
+                        permissionItem.is_enabled ? ('identityAdmin.permissions.statusEnabled' | transloco) :
+                        ('identityAdmin.permissions.statusDisabled' | transloco) }}</span></div>}</div>
             }
         </article>
 
         <article class="form-card wide-card">
-            <h3>Group app config</h3>
-            <p class="form-hint">Store app-specific defaults at group level. Users can still override per app.</p>
+            <h3>{{ 'identityAdmin.groupConfig.title' | transloco }}</h3>
+            <p class="form-hint">{{ 'identityAdmin.groupConfig.hint' | transloco }}</p>
             <form class="admin-form" (ngSubmit)="saveGroupConfig()">
                 <div class="form-row">
-                    <label>Group
+                    <label>{{ 'identityAdmin.groupConfig.group' | transloco }}
                         <select [ngModel]="groupConfigForm().group_id"
                             (ngModelChange)="setGroupConfigField('group_id', $event)" name="config_group_id" required>
-                            <option value="">Select group</option>
+                            <option value="">{{ 'identityAdmin.groupConfig.selectGroup' | transloco }}</option>
                             @for (groupItem of groups(); track groupItem.id) {
                             @if (canManageGroup(groupItem.id)) {
                             <option [value]="groupItem.id">{{ groupItem.name }}</option>
@@ -281,7 +277,7 @@
                             }
                         </select>
                     </label>
-                    <label>Application
+                    <label>{{ 'identityAdmin.groupConfig.app' | transloco }}
                         <select [ngModel]="groupConfigForm().app_name"
                             (ngModelChange)="setGroupConfigField('app_name', $event)" name="config_app_name">
                             @for (appKey of availableAppKeys; track appKey) {
@@ -292,22 +288,26 @@
                 </div>
 
                 <div class="config-entries">
-                    <p class="config-label">Configuration entries</p>
+                    <p class="config-label">{{ 'identityAdmin.groupConfig.configLabel' | transloco }}</p>
                     @for (entry of groupConfigForm().config_entries; track $index) {
                     <div class="config-entry-row">
                         <input [ngModel]="entry.key" (ngModelChange)="updateConfigEntry($index, 'key', $event)"
-                            [name]="'config_key_' + $index" placeholder="Key" />
+                            [name]="'config_key_' + $index" title="{{ 'identityAdmin.groupConfig.key' | transloco }}"
+                            placeholder="{{ 'identityAdmin.groupConfig.key' | transloco }}" />
                         <input [ngModel]="entry.value" (ngModelChange)="updateConfigEntry($index, 'value', $event)"
-                            [name]="'config_value_' + $index" placeholder="Value (true, false, number, text)" />
-                        <button class="action-button small danger" type="button"
-                            (click)="removeConfigEntry($index)">×</button>
+                            [name]="'config_value_' + $index"
+                            title="{{ 'identityAdmin.groupConfig.valuePlaceholder' | transloco }}"
+                            placeholder="{{ 'identityAdmin.groupConfig.valuePlaceholder' | transloco }}" />
+                        <button class="action-button small danger" type="button" (click)="removeConfigEntry($index)">{{
+                            'identityAdmin.groupConfig.removeButton' | transloco }}</button>
                     </div>
                     }
-                    <button class="action-button small" type="button" (click)="addConfigEntry()">+ Add entry</button>
+                    <button class="action-button small" type="button" (click)="addConfigEntry()">{{
+                        'identityAdmin.groupConfig.addEntry' | transloco }}</button>
                 </div>
 
-                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">Save group
-                    config</button>
+                <button class="action-button primary full-width" type="submit" [disabled]="isSubmitting()">{{
+                    'identityAdmin.groupConfig.submit' | transloco }}</button>
             </form>
         </article>
     </section>

@@ -1,34 +1,35 @@
 <!-- jobs-trash.component.html: Vista administrativa separada para restaurar jobs en papelera. -->
-<section class="trash-shell" aria-label="Recycle bin">
+<section class="trash-shell" [attr.aria-label]="'trash.aria.page' | transloco">
     <header class="trash-header">
         <div>
-            <p class="eyebrow">Administrative Recovery</p>
-            <h1>Recycle bin</h1>
-            <p class="subtitle">Restore jobs deleted by administrators before automatic removal.</p>
+            <p class="eyebrow">{{ 'trash.header.eyebrow' | transloco }}</p>
+            <h1>{{ 'trash.header.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'trash.header.subtitle' | transloco }}</p>
         </div>
 
         <div class="header-actions">
-            <a class="outline-link" routerLink="/jobs">Back to monitor</a>
-            <button class="outline-link button-link" type="button" (click)="refreshNow()">Refresh</button>
+            <a class="outline-link" routerLink="/jobs">{{ 'trash.actions.backToMonitor' | transloco }}</a>
+            <button class="outline-link button-link" type="button" (click)="refreshNow()">{{ 'common.actions.refresh' |
+                transloco }}</button>
         </div>
     </header>
 
-    <section class="filters" aria-label="Trash filters">
+    <section class="filters" [attr.aria-label]="'trash.aria.filters' | transloco">
         <label>
-            Status
+            {{ 'common.filters.status' | transloco }}
             <select [ngModel]="facade.selectedStatus()" (ngModelChange)="onStatusFilterChanged($event)">
                 @for (statusOption of statusOptions; track statusOption.value) {
-                <option [value]="statusOption.value">{{ statusOption.label }}</option>
+                <option [value]="statusOption.value">{{ statusOption.labelKey | transloco }}</option>
                 }
             </select>
         </label>
 
         <label>
-            App
+            {{ 'common.filters.app' | transloco }}
             <select [ngModel]="facade.selectedPluginName()" (ngModelChange)="onPluginFilterChanged($event)">
                 @for (pluginOption of facade.pluginOptions(); track pluginOption) {
                 <option [value]="pluginOption">
-                    {{ pluginOption === 'all' ? 'All' : pluginOption }}
+                    {{ pluginOption === 'all' ? ('common.filters.all' | transloco) : pluginOption }}
                 </option>
                 }
             </select>
@@ -36,7 +37,7 @@
     </section>
 
     @if (facade.isLoading()) {
-    <section class="state-card info-card">Loading recycle bin...</section>
+    <section class="state-card info-card">{{ 'trash.states.loading' | transloco }}</section>
     }
 
     @if (facade.errorMessage(); as currentError) {
@@ -48,20 +49,20 @@
     }
 
     @if (facade.jobs().length === 0) {
-    <section class="state-card empty-card">No deleted jobs available for restoration.</section>
+    <section class="state-card empty-card">{{ 'trash.states.empty' | transloco }}</section>
     } @else {
     <section class="table-card">
         <table>
             <thead>
                 <tr>
-                    <th>Job</th>
-                    <th>App</th>
-                    <th>Owner / Group</th>
-                    <th>Status</th>
-                    <th>Deleted by</th>
-                    <th>Deleted at</th>
-                    <th>Purge at</th>
-                    <th>Action</th>
+                    <th>{{ 'common.table.job' | transloco }}</th>
+                    <th>{{ 'common.table.app' | transloco }}</th>
+                    <th>{{ 'common.table.ownerGroup' | transloco }}</th>
+                    <th>{{ 'common.table.status' | transloco }}</th>
+                    <th>{{ 'trash.table.deletedBy' | transloco }}</th>
+                    <th>{{ 'trash.table.deletedAt' | transloco }}</th>
+                    <th>{{ 'trash.table.purgeAt' | transloco }}</th>
+                    <th>{{ 'common.table.action' | transloco }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -76,7 +77,8 @@
                     <td>{{ scheduledDeletionLabel(deletedJob) | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                     <td>
                         <app-job-management-actions [showOpenResult]="false" [canDelete]="true"
-                            [deleteLabel]="'Delete permanently'" [canRestore]="true" [restoreLabel]="'Restore job'"
+                            [deleteLabel]="'common.actions.deletePermanently' | transloco" [canRestore]="true"
+                            [restoreLabel]="'common.actions.restoreJob' | transloco"
                             [isBusy]="facade.isControlActionRunning(deletedJob.id)"
                             (deleteRequested)="deleteJobPermanently(deletedJob.id)"
                             (restoreRequested)="restoreJob(deletedJob.id)" />

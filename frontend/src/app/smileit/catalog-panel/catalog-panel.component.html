@@ -1,51 +1,48 @@
 <!-- catalog-panel.component.html: Panel de catálogo de sustituyentes con editor paso a paso y sketcher Ketcher integrado. -->
-<section class="catalog-panel" aria-label="Step 2 substituent catalogs">
+<section class="catalog-panel" [attr.aria-label]="'smileit.step2.ariaLabel' | transloco">
   <article class="catalog-card">
     <div class="catalog-card-header">
       <div>
-        <h3>2. Persistent substituent catalog</h3>
+        <h3>{{ 'smileit.step2.title' | transloco }}</h3>
         <p class="panel-caption">
-          Build and curate substituent catalogs first. These entries are then reused in the block
-          assignment step.
+          {{ 'smileit.step2.description' | transloco }}
         </p>
       </div>
       <div class="catalog-card-header-actions">
         <button class="btn-secondary" type="button" (click)="toggleCatalogPanelCollapse()">
-          {{ isCatalogPanelCollapsed() ? 'Expand section' : 'Minimize section' }}
+          {{ isCatalogPanelCollapsed() ? ('smileit.step2.expand' | transloco) : ('smileit.step2.minimize' | transloco) }}
         </button>
         <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
-          Manage SMILES catalog
+          {{ 'smileit.step2.manageCatalog' | transloco }}
         </button>
       </div>
     </div>
 
     @if (isCatalogPanelCollapsed()) {
-    <article class="collapsed-panel-card" aria-label="Catalog section collapsed summary">
+    <article class="collapsed-panel-card" [attr.aria-label]="'smileit.step2.collapsedAriaLabel' | transloco">
       <div class="metadata-grid">
-        <p><strong>Stored entries:</strong> {{ workflow.catalogEntries().length }}</p>
-        <p><strong>Catalog groups:</strong> {{ workflow.catalogGroups().length }}</p>
-        <p><strong>Validated categories:</strong> {{ workflow.categories().length }}</p>
+        <p><strong>{{ 'smileit.step2.storedEntries' | transloco }}</strong> {{ workflow.catalogEntries().length }}</p>
+        <p><strong>{{ 'smileit.step2.catalogGroups' | transloco }}</strong> {{ workflow.catalogGroups().length }}</p>
+        <p><strong>{{ 'smileit.step2.validatedCategories' | transloco }}</strong> {{ workflow.categories().length }}</p>
       </div>
     </article>
     } @else {
     <p class="hint catalog-editor-summary">
-      Catalog creation and edition are isolated in the SMILES catalog studio to keep the main
-      workflow clean.
+      {{ 'smileit.step2.catalogNote' | transloco }}
     </p>
 
-    <section class="catalog-browser-panel" aria-label="Stored substituent catalog">
+    <section class="catalog-browser-panel" [attr.aria-label]="'smileit.step2.storedCatalogAriaLabel' | transloco">
       <div class="subsection-header block-catalog-tools-row">
         <div>
-          <h4>Stored substituents</h4>
+          <h4>{{ 'smileit.step2.storedSubstituents' | transloco }}</h4>
           <p class="hint">
-            Browse by group, inspect the structure preview, and open the full detail modal on
-            click.
+            {{ 'smileit.step2.browseHint' | transloco }}
           </p>
         </div>
-        <label class="library-group-filter" aria-label="Filter stored substituents by group">
-          Group
+        <label class="library-group-filter" [attr.aria-label]="'smileit.step2.groupFilterAria' | transloco">
+          {{ 'smileit.step2.groupFilter' | transloco }}
           <select [ngModel]="selectedLibraryGroupKey()" (ngModelChange)="onLibraryGroupChange($event)">
-            <option value="all">All groups</option>
+            <option value="all">{{ 'smileit.step2.allGroups' | transloco }}</option>
             @for (group of workflow.catalogGroups(); track group.key) {
             <option [value]="group.key">{{ group.name }} ({{ group.entries.length }})</option>
             }
@@ -54,12 +51,12 @@
       </div>
 
       @if (filteredLibraryEntries().length === 0) {
-      <p class="hint">No catalog molecules available for the selected group.</p>
+      <p class="hint">{{ 'smileit.step2.noCatalogMolecules' | transloco }}</p>
       } @else {
       <div class="library-thumbnail-grid">
         @for (entry of filteredLibraryEntries(); track entry.stable_id + '-' + entry.version + '-' + entry.id) {
         <article class="library-thumb">
-          <button type="button" class="thumb-open-button" [attr.aria-label]="'Open detail for ' + entry.name"
+          <button type="button" class="thumb-open-button" [attr.aria-label]="'smileit.step2.openDetail' | transloco: {name: entry.name}"
             (click)="openLibraryEntryDetail(entry)">
             <span class="thumb-name">{{ entry.name }}</span>
             <span class="thumb-preview">
@@ -77,7 +74,7 @@
           <div class="library-thumb-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <button class="btn-secondary small" (click)="beginCatalogEntryEdition(entry)"
               [disabled]="workflow.isProcessing()">
-              Edit
+              {{ 'smileit.step2.edit' | transloco }}
             </button>
           </div>
           }
@@ -92,16 +89,16 @@
       (keydown.enter)="onCatalogStudioDialogClick($event)"
       (keydown.space)="onCatalogStudioDialogClick($event); $event.preventDefault()"
       (keydown.escape)="closeCatalogStudioModal()">
-      <section class="catalog-studio-modal" aria-label="SMILES catalog studio">
+      <section class="catalog-studio-modal" [attr.aria-label]="'smileit.catalogStudio.ariaLabel' | transloco">
         <header class="catalog-studio-header">
           <div>
-            <h4>SMILES catalog studio</h4>
+            <h4>{{ 'smileit.catalogStudio.title' | transloco }}</h4>
             <p class="hint">
-              Create or edit substituents without mixing this flow with block mapping.
+              {{ 'smileit.catalogStudio.hint' | transloco }}
             </p>
           </div>
           <button type="button" class="btn-secondary" (click)="closeCatalogStudioModal()">
-            Close
+            {{ 'common.actions.close' | transloco }}
           </button>
         </header>
 
@@ -112,21 +109,20 @@
         }
 
         <div class="catalog-editor-layout">
-          <section class="catalog-editor-form" aria-label="Catalog editor">
+          <section class="catalog-editor-form" [attr.aria-label]="'smileit.catalogStudio.ariaLabel' | transloco">
             <div class="catalog-step-stack">
               <section class="catalog-step-card catalog-name-section">
                 <div class="subsection-header">
                   <div>
-                    <h4>1. Substituent name</h4>
+                    <h4>{{ 'smileit.catalogForm.step1Title' | transloco }}</h4>
                     <p class="hint">
-                      A default name is prepared for each new draft. Replace it if you need a custom
-                      label.
+                      {{ 'smileit.catalogForm.step1Hint' | transloco }}
                     </p>
                   </div>
                 </div>
                 <div class="catalog-form-grid catalog-name-grid">
                   <label class="catalog-field-full">
-                    Name
+                    {{ 'smileit.catalogForm.nameLabel' | transloco }}
                     <input type="text" [ngModel]="workflow.catalogCreateName()"
                       (ngModelChange)="workflow.catalogCreateName.set($event)" />
                   </label>
@@ -136,17 +132,17 @@
               <section class="catalog-step-card catalog-smiles-section">
                 <div class="subsection-header catalog-step-header">
                   <div>
-                    <h4>2. SMILES</h4>
+                    <h4>{{ 'smileit.catalogForm.step2Title' | transloco }}</h4>
 
                   </div>
                   <button type="button" class="btn-secondary" (click)="openCatalogSmilesSketcher()"
                     [disabled]="workflow.isProcessing()">
-                    ✏ Sketch SMILES
+                    {{ 'smileit.catalogForm.sketchButton' | transloco }}
                   </button>
                 </div>
                 <div class="catalog-form-grid catalog-smiles-grid">
                   <label class="catalog-field-full">
-                    SMILES
+                    {{ 'smileit.catalogForm.smilesLabel' | transloco }}
                     <input type="text" [ngModel]="workflow.catalogCreateSmiles()"
                       (ngModelChange)="onCatalogDraftSmilesChange($event)" />
                   </label>
@@ -159,10 +155,10 @@
                 </div>
               </section>
 
-              <section class="catalog-step-card anchor-selection-panel" aria-label="Catalog draft anchor selector">
+              <section class="catalog-step-card anchor-selection-panel" [attr.aria-label]="'smileit.catalogForm.step3AriaLabel' | transloco">
                 <div class="subsection-header">
                   <div>
-                    <h4>3. Substitution point</h4>
+                    <h4>{{ 'smileit.catalogForm.step3Title' | transloco }}</h4>
 
                   </div>
                 </div>
@@ -186,7 +182,7 @@
                 }
                 @if (workflow.catalogCreateSmiles().trim() === '') {
                 <p class="hint catalog-empty-step">
-                  Enter a SMILES string to unlock the live structure preview.
+                  {{ 'smileit.catalogForm.emptySmartHint' | transloco }}
                 </p>
                 }
               </section>
@@ -194,7 +190,7 @@
               <section class="catalog-step-card catalog-category-panel">
                 <div class="subsection-header">
                   <div>
-                    <h4>4. Chemistry categories</h4>
+                    <h4>{{ 'smileit.catalogForm.step4Title' | transloco }}</h4>
                   </div>
                 </div>
                 <div class="chip-grid compact-chip-grid">
@@ -212,13 +208,13 @@
               <section class="catalog-step-card catalog-reference-section">
                 <div class="subsection-header">
                   <div>
-                    <h4>5. Source reference</h4>
-                    <p class="hint">Keep a short traceable source for this substituent entry.</p>
+                    <h4>{{ 'smileit.catalogForm.step5Title' | transloco }}</h4>
+                    <p class="hint">{{ 'smileit.catalogForm.step5Hint' | transloco }}</p>
                   </div>
                 </div>
                 <div class="catalog-form-grid catalog-reference-grid">
                   <label class="catalog-field-full">
-                    Source reference
+                    {{ 'smileit.catalogForm.sourceRefLabel' | transloco }}
                     <input type="text" [ngModel]="workflow.catalogCreateSourceReference()"
                       (ngModelChange)="workflow.catalogCreateSourceReference.set($event)" />
                   </label>
@@ -226,7 +222,7 @@
               </section>
 
               @if (workflow.catalogDraftPreview().warnings.length > 0) {
-              <div class="catalog-inline-warnings" aria-label="Catalog draft validation messages">
+              <div class="catalog-inline-warnings" [attr.aria-label]="'smileit.catalogForm.validationMessagesAria' | transloco">
                 @for (warningText of workflow.catalogDraftPreview().warnings; track warningText) {
                 <p class="warning-message preview-warning">{{ warningText }}</p>
                 }
@@ -237,11 +233,11 @@
               <div class="action-row compact-actions catalog-draft-actions">
                 <button type="button" class="btn-secondary" (click)="addAnotherCatalogDraft()"
                   [disabled]="workflow.isProcessing()">
-                  Add another
+                  {{ 'smileit.catalogForm.addAnother' | transloco }}
                 </button>
                 <button type="button" class="btn-secondary" (click)="addCatalogDraftAndClose()"
                   [disabled]="workflow.isProcessing()">
-                  Add and close
+                  {{ 'smileit.catalogForm.addAndClose' | transloco }}
                 </button>
               </div>
               }
@@ -250,11 +246,11 @@
               <div class="action-row compact-actions catalog-editor-actions">
                 <button class="btn-secondary" (click)="workflow.catalog.createCatalogEntry()"
                   [disabled]="workflow.isProcessing()">
-                  Update catalog entry
+                  {{ 'smileit.catalogForm.updateButton' | transloco }}
                 </button>
                 <button class="btn-secondary" (click)="workflow.catalog.cancelCatalogEdition()"
                   [disabled]="workflow.isProcessing()">
-                  Cancel edition
+                  {{ 'smileit.catalogForm.cancelButton' | transloco }}
                 </button>
               </div>
               }
@@ -265,30 +261,30 @@
           </section>
 
           @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
-          <aside class="catalog-preview-card catalog-preview-sidebar" aria-label="Catalog draft preview">
-            <h5>Catalog draft preview</h5>
+          <aside class="catalog-preview-card catalog-preview-sidebar" [attr.aria-label]="'smileit.catalogForm.previewAriaLabel' | transloco">
+            <h5>{{ 'smileit.catalogForm.previewTitle' | transloco }}</h5>
             <div class="catalog-preview-metadata">
-              <p><strong>Name:</strong> {{ catalogDraftPreview.name || 'Pending' }}</p>
+              <p><strong>{{ 'smileit.catalogForm.previewName' | transloco }}</strong> {{ catalogDraftPreview.name || ('smileit.catalogForm.pending' | transloco) }}</p>
               <p>
-                <strong>Notation detected:</strong>
+                <strong>{{ 'smileit.catalogForm.previewNotation' | transloco }}</strong>
                 {{ catalogDraftPreview.notationKind | uppercase }}
               </p>
               <p>
-                <strong>Anchor:</strong>
+                <strong>{{ 'smileit.catalogForm.previewAnchor' | transloco }}</strong>
                 {{
                 catalogDraftPreview.anchorAtomIndices.length > 0
                 ? catalogDraftPreview.anchorAtomIndices[0]
-                : 'Pending'
+                : ('smileit.catalogForm.pending' | transloco)
                 }}
               </p>
               <p>
-                <strong>Categories:</strong>
-                {{ catalogDraftPreview.categoryNames.join(', ') || 'Uncategorized' }}
+                <strong>{{ 'smileit.catalogForm.previewCategories' | transloco }}</strong>
+                {{ catalogDraftPreview.categoryNames.join(', ') || ('smileit.catalogForm.uncategorized' | transloco) }}
               </p>
-              <p><strong>Source:</strong> {{ catalogDraftPreview.sourceReference }}</p>
+              <p><strong>{{ 'smileit.catalogForm.previewSource' | transloco }}</strong> {{ catalogDraftPreview.sourceReference }}</p>
             </div>
             <p class="catalog-smiles mono">
-              {{ catalogDraftPreview.smiles || 'Pending catalog SMILES' }}
+              {{ catalogDraftPreview.smiles || ('smileit.catalogForm.pendingCatalogSmiles' | transloco) }}
             </p>
             @if (catalogDraftPreview.warnings.length > 0) {
             <div class="catalog-preview-warnings">
@@ -306,30 +302,30 @@
       (click)="onCatalogSmilesSketchDialogClick($event)" (keydown.enter)="onCatalogSmilesSketchDialogClick($event)"
       (keydown.space)="onCatalogSmilesSketchDialogClick($event); $event.preventDefault()"
       (keydown.escape)="closeCatalogSmilesSketcher()">
-      <section class="catalog-smiles-sketch-modal" aria-label="Catalog SMILES sketcher">
+      <section class="catalog-smiles-sketch-modal" [attr.aria-label]="'smileit.catalogSketcher.ariaLabel' | transloco">
         <header class="catalog-studio-header">
           <div>
-            <h4>Catalog SMILES sketcher</h4>
+            <h4>{{ 'smileit.catalogSketcher.title' | transloco }}</h4>
             <p class="hint">
-              Draw the substituent in Ketcher and apply it to the current SMILES draft.
+              {{ 'smileit.catalogSketcher.hint' | transloco }}
             </p>
           </div>
           <button type="button" class="btn-secondary" (click)="closeCatalogSmilesSketcher()">
-            Close
+            {{ 'common.actions.close' | transloco }}
           </button>
         </header>
 
-        <div class="catalog-ketcher-frame-wrap" aria-label="Ketcher sketcher frame">
+        <div class="catalog-ketcher-frame-wrap" [attr.aria-label]="'smileit.catalogSketcher.ketcherAriaLabel' | transloco">
           @if (isCatalogSmilesSketchLoading()) {
-          <div class="catalog-ketcher-loading" aria-live="polite" aria-label="Loading molecule sketcher">
+          <div class="catalog-ketcher-loading" aria-live="polite" [attr.aria-label]="'smileit.catalogSketcher.loadingAriaLabel' | transloco">
             <div class="catalog-ketcher-loading-bar">
               <span class="catalog-ketcher-loading-progress"></span>
             </div>
-            <p class="catalog-ketcher-loading-text">Loading molecule sketcher…</p>
+            <p class="catalog-ketcher-loading-text">{{ 'smileit.catalogSketcher.loadingText' | transloco }}</p>
           </div>
           }
           <iframe #catalogSmilesKetcherFrame class="catalog-ketcher-frame" [src]="catalogSmilesKetcherUrl"
-            title="Catalog SMILES sketcher" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
+            [title]="'smileit.catalogSketcher.iframeTitle' | transloco" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
         </div>
 
         <div class="action-row compact-actions catalog-editor-actions">
@@ -340,11 +336,11 @@
           }
           <button type="button" class="btn-secondary" (click)="closeCatalogSmilesSketcher()"
             [disabled]="workflow.isProcessing()">
-            Cancel
+            {{ 'smileit.catalogSketcher.cancelButton' | transloco }}
           </button>
           <button type="button" class="btn-secondary" (click)="applyCatalogSmilesFromSketcher()"
             [disabled]="workflow.isProcessing()">
-            Apply to draft
+            {{ 'smileit.catalogSketcher.applyButton' | transloco }}
           </button>
         </div>
       </section>

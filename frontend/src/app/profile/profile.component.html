@@ -1,41 +1,39 @@
 <!-- profile.component.html: Vista minimalista para editar perfil personal y contraseña. -->
-<section class="profile-shell" aria-label="Profile management">
+<section class="profile-shell" [attr.aria-label]="'profile.aria.management' | transloco">
     <header class="profile-header metallic-card">
-        <p class="eyebrow">Personal Workspace</p>
-        <h1>Profile</h1>
-        <p class="subtitle">
-            Update your identity information. These changes are available for user, admin and root roles.
-        </p>
+        <p class="eyebrow">{{ 'profile.header.eyebrow' | transloco }}</p>
+        <h1>{{ 'profile.header.title' | transloco }}</h1>
+        <p class="subtitle">{{ 'profile.header.subtitle' | transloco }}</p>
     </header>
 
     <article class="metallic-card profile-card">
         <form class="profile-form" (ngSubmit)="saveProfile()">
             <label>
-                First name
+                {{ 'profile.form.firstName' | transloco }}
                 <input [ngModel]="formState().first_name" (ngModelChange)="setField('first_name', $event)"
                     name="first_name" type="text" autocomplete="given-name" />
             </label>
 
             <label>
-                Last name
+                {{ 'profile.form.lastName' | transloco }}
                 <input [ngModel]="formState().last_name" (ngModelChange)="setField('last_name', $event)"
                     name="last_name" type="text" autocomplete="family-name" />
             </label>
 
             <label class="wide-field">
-                Email
+                {{ 'profile.form.email' | transloco }}
                 <input [ngModel]="formState().email" (ngModelChange)="setField('email', $event)" name="email"
                     autocomplete="email" type="email" required />
             </label>
 
             <label>
-                New password
+                {{ 'profile.form.newPassword' | transloco }}
                 <input [ngModel]="formState().password" (ngModelChange)="setField('password', $event)" name="password"
                     type="password" autocomplete="new-password" minlength="8" />
             </label>
 
             <label>
-                Confirm password
+                {{ 'profile.form.confirmPassword' | transloco }}
                 <input [ngModel]="formState().password_confirmation"
                     (ngModelChange)="setField('password_confirmation', $event)" name="password_confirmation"
                     type="password" autocomplete="new-password" [required]="hasPasswordInput()" />
@@ -51,7 +49,8 @@
 
             <div class="action-row">
                 <button class="primary-button" type="submit" [disabled]="isSubmitting()">
-                    {{ isSubmitting() ? 'Saving...' : 'Save profile' }}
+                    {{ isSubmitting() ? ('profile.form.saving' | transloco) : ('profile.form.saveProfile' | transloco)
+                    }}
                 </button>
             </div>
         </form>

@@ -1,0 +1,25 @@
+{
+  "app": {
+    "brand": {
+      "title": "Centre de contrôle scientifique",
+      "caption": "Navigation centrale pour les applications, les jobs et l'accès au compte."
+    },
+    "actions": { "signIn": "Se connecter", "signOut": "Se déconnecter" },
+    "nav": { "dashboard": "Tableau de bord", "profile": "Profil", "jobsMonitor": "Moniteur de jobs", "apps": "Applications", "identity": "Identité" }
+  },
+  "language": { "switcher": { "ariaLabel": "Sélecteur de langue", "menuLabel": "Langues disponibles" } },
+  "common": {
+    "actions": { "refresh": "Actualiser", "openResult": "Ouvrir le résultat", "delete": "Supprimer", "restore": "Restaurer", "working": "Traitement...", "deletePermanently": "Supprimer définitivement", "restoreJob": "Restaurer le job", "moveToTrash": "Envoyer à la corbeille", "close": "Fermer" },
+    "filters": { "status": "Statut", "app": "App", "all": "Tous" },
+    "statusFilters": { "all": "Tous" },
+    "jobStatus": { "pending": "En attente", "running": "En cours", "paused": "En pause", "completed": "Terminé", "failed": "Échoué", "cancelled": "Annulé" },
+    "fallback": { "unknownUser": "Utilisateur inconnu", "noGroup": "Aucun groupe" }
+  },
+  "login": { "panel": { "title": "Accès scientifique" }, "form": { "username": "Nom d'utilisateur", "password": "Mot de passe", "signIn": "Se connecter", "signingIn": "Connexion en cours..." } },
+  "profile": { "header": { "title": "Profil" }, "form": { "firstName": "Prénom", "lastName": "Nom", "email": "E-mail", "newPassword": "Nouveau mot de passe", "confirmPassword": "Confirmer le mot de passe", "saveProfile": "Enregistrer le profil", "saving": "Enregistrement..." } },
+  "appsHub": { "header": { "title": "Applications scientifiques" }, "monitorCard": { "title": "Moniteur de jobs", "open": "Ouvrir le moniteur" }, "appCard": { "open": "Ouvrir l'application", "comingSoon": "Bientôt disponible" } },
+  "dashboard": { "header": { "eyebrow": "Espace par rôle", "role": "Rôle" }, "actions": { "myProfile": "Mon profil", "openJobsMonitor": "Ouvrir le moniteur" }, "states": { "loading": "Chargement du tableau de bord..." }, "metrics": { "runningJobs": "Jobs en cours", "pausedJobs": "Jobs en pause", "completedJobs": "Jobs terminés" } },
+  "jobsMonitor": { "header": { "title": "Moniteur de jobs" }, "actions": { "recycleBin": "Corbeille", "autoRefresh": "Rafraîchissement auto", "openLiveLogs": "Ouvrir les logs en direct", "openLogs": "Ouvrir les logs", "pause": "Mettre en pause", "resume": "Reprendre", "cancel": "Annuler", "viewSummary": "Voir le résumé" }, "kpi": { "active": "Actifs", "paused": "En pause", "completed": "Terminés", "failed": "Échoués", "cancelled": "Annulés", "lastUpdate": "Dernière mise à jour" }, "sections": { "running": "En cours", "paused": "En pause", "finished": "Terminés, échoués et annulés" }, "states": { "loadingJobs": "Chargement des jobs..." }, "details": { "title": "Détails du job", "logs": "Logs", "errorTrace": "Trace d'erreur" } },
+  "trash": { "header": { "title": "Corbeille" }, "actions": { "backToMonitor": "Retour au moniteur" }, "states": { "loading": "Chargement de la corbeille...", "empty": "Aucun job supprimé à restaurer." }, "table": { "deletedBy": "Supprimé par", "deletedAt": "Supprimé le", "purgeAt": "Purge le" } },
+  "errorModal": { "actions": { "viewDetails": "Voir les détails techniques", "understood": "Compris" }, "http": { "requestFailedTitle": "Échec de la requête", "networkUnavailable": "Réseau indisponible.", "forbidden": "Vous n'avez pas les permissions requises.", "serverError": "Erreur interne du serveur." } }
+}

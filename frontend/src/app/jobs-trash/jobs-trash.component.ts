@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ScientificJobView } from '../core/api/jobs-api.service';
 import {
   JobStatusFilterOption,
@@ -14,19 +15,20 @@ import { JobManagementActionsComponent } from '../core/shared/components/job-man
 @Component({
   selector: 'app-jobs-trash',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, JobManagementActionsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, JobManagementActionsComponent, TranslocoPipe],
   providers: [JobsMonitorFacadeService],
   templateUrl: './jobs-trash.component.html',
   styleUrl: './jobs-trash.component.scss',
 })
 export class JobsTrashComponent implements OnInit {
   readonly facade = inject(JobsMonitorFacadeService);
+  private readonly translocoService = inject(TranslocoService);
 
-  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'cancelled', label: 'Cancelled' },
+  readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; labelKey: string }> = [
+    { value: 'all', labelKey: 'common.statusFilters.all' },
+    { value: 'completed', labelKey: 'common.jobStatus.completed' },
+    { value: 'failed', labelKey: 'common.jobStatus.failed' },
+    { value: 'cancelled', labelKey: 'common.jobStatus.cancelled' },
   ];
 
   ngOnInit(): void {
@@ -56,16 +58,23 @@ export class JobsTrashComponent implements OnInit {
   }
 
   ownerGroupLabel(jobItem: ScientificJobView): string {
-    const ownerLabel = jobItem.owner_username ?? 'Unknown user';
-    const groupLabel = jobItem.group_name ?? 'No group';
+    const ownerLabel =
+      jobItem.owner_username ?? this.translocoService.translate('common.fallback.unknownUser');
+    const groupLabel =
+      jobItem.group_name ?? this.translocoService.translate('common.fallback.noGroup');
     return `${ownerLabel} · ${groupLabel}`;
   }
 
   deletedByLabel(jobItem: ScientificJobView): string {
-    return jobItem.deleted_by_username ?? 'Unknown actor';
+    return (
+      jobItem.deleted_by_username ?? this.translocoService.translate('trash.fallback.unknownActor')
+    );
   }
 
   scheduledDeletionLabel(jobItem: ScientificJobView): string {
-    return jobItem.scheduled_hard_delete_at ?? 'No deadline';
+    return (
+      jobItem.scheduled_hard_delete_at ??
+      this.translocoService.translate('trash.fallback.noDeadline')
+    );
   }
 }

@@ -1,225 +1,181 @@
 <!-- easy-rate.component.html: UI de Easy-rate para cálculo TST + túnel de constantes de velocidad química. -->
-<section class="easy-rate-shell" aria-label="Easy-rate scientific app">
+<section class="easy-rate-shell" [attr.aria-label]="'easyRate.header.eyebrow' | transloco">
   <header class="easy-rate-header">
-    <p class="eyebrow">Kinetics — TST + Eckart Tunnel</p>
-    <h2>Easy-rate Calculator</h2>
-    <p>
-      Upload Gaussian log files for your reaction structures and compute rate constants with
-      statistical mechanics, tunneling correction, and optional diffusion control.
-    </p>
+    <p class="eyebrow">{{ 'easyRate.header.eyebrow' | transloco }}</p>
+    <h2>{{ 'easyRate.header.title' | transloco }}</h2>
+    <p>{{ 'easyRate.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────── -->
-    <section class="entry-panel" aria-label="Input files and parameters">
-      <h3>Input Files</h3>
+    <section class="entry-panel" [attr.aria-label]="'easyRate.form.ariaLabel' | transloco">
+      <h3>{{ 'easyRate.form.title' | transloco }}</h3>
 
       <div class="file-grid">
         @for (slot of inputSlots; track trackInputSlot($index, slot)) {
-          <div class="file-slot-card">
-            <label
-              class="upload-zone"
-              [class.has-file]="getSelectedFile(slot.fieldName) !== null"
-              [class.is-disabled]="workflow.isProcessing()"
-            >
-              <span class="upload-label">
-                {{ slot.label }}
-                @if (slot.required) {
-                  <span class="req-mark">*</span>
-                } @else if (slot.note !== null) {
-                  <span class="opt-mark">{{ slot.note }}</span>
-                }
-              </span>
-              <input
-                type="file"
-                accept=".log,.out,.txt"
-                (change)="onInputFileChange(slot.fieldName, $event)"
-                [disabled]="workflow.isProcessing()"
-              />
-              @if (getSelectedFile(slot.fieldName); as selectedFile) {
-                <span class="file-badge">{{ selectedFile.name }}</span>
-              } @else {
-                <span class="upload-hint">Browse .log / .out / .txt</span>
+        <div class="file-slot-card">
+          <label class="upload-zone" [class.has-file]="getSelectedFile(slot.fieldName) !== null"
+            [class.is-disabled]="workflow.isProcessing()">
+            <span class="upload-label">
+              {{ slot.label }}
+              @if (slot.required) {
+              <span class="req-mark">*</span>
+              } @else if (slot.note !== null) {
+              <span class="opt-mark">{{ slot.note }}</span>
               }
-            </label>
+            </span>
+            <input type="file" accept=".log,.out,.txt" (change)="onInputFileChange(slot.fieldName, $event)"
+              [disabled]="workflow.isProcessing()" />
+            @if (getSelectedFile(slot.fieldName); as selectedFile) {
+            <span class="file-badge">{{ selectedFile.name }}</span>
+            } @else {
+            <span class="upload-hint">{{ 'easyRate.form.browseHint' | transloco }}</span>
+            }
+          </label>
 
-            @if (getSelectedFile(slot.fieldName) !== null) {
-              <div class="inspection-card">
-                @if (isInspectionPending(slot.fieldName)) {
-                  <p class="inspection-status">Analyzing Gaussian executions...</p>
-                } @else if (getInspectionError(slot.fieldName); as inspectionError) {
-                  <p class="inspection-error">{{ inspectionError }}</p>
-                } @else if (getInspection(slot.fieldName); as inspection) {
-                  <div class="inspection-header-row">
-                    <div>
-                      <strong>Gaussian Preview</strong>
-                      <p class="inspection-meta">
-                        {{ inspection.executionCount }} parsed execution(s)
-                      </p>
-                    </div>
-
-                    @if (inspection.executionCount > 1) {
-                      <label class="execution-selector">
-                        Parsed execution
-                        <select
-                          [ngModel]="getSelectedExecutionIndex(slot.fieldName)"
-                          (ngModelChange)="
-                            workflow.updateSelectedExecutionIndex(slot.fieldName, $event)
-                          "
-                          [disabled]="workflow.isProcessing()"
-                        >
-                          @for (
-                            execution of inspection.executions;
-                            track execution.executionIndex
-                          ) {
-                            <option [ngValue]="execution.executionIndex">
-                              {{ buildExecutionOptionLabel(execution) }}
-                            </option>
-                          }
-                        </select>
-                      </label>
-                    }
-                  </div>
-
-                  @if (inspection.parseErrors.length > 0) {
-                    <p class="inspection-warning">
-                      Parser notes: {{ joinMessages(inspection.parseErrors) }}
-                    </p>
-                  }
-                  @if (getSelectedExecution(slot.fieldName); as selectedExecution) {
-                    <div class="preview-grid">
-                      <span class="preview-label">Title</span>
-                      <span class="preview-value">{{ selectedExecution.jobTitle || '--' }}</span>
-                      <span class="preview-label">Charge / Multiplicity</span>
-                      <span class="preview-value">
-                        {{ selectedExecution.charge }} / {{ selectedExecution.multiplicity }}
-                      </span>
-                      <span class="preview-label">SCF</span>
-                      <span class="preview-value mono">
-                        {{ formatNullableNumber(selectedExecution.scfEnergy) }} hartree
-                      </span>
-                      <span class="preview-label">G / H / ZPE</span>
-                      <span class="preview-value mono">
-                        {{ formatNullableNumber(selectedExecution.freeEnergy) }} /
-                        {{ formatNullableNumber(selectedExecution.thermalEnthalpy) }} /
-                        {{ formatNullableNumber(selectedExecution.zeroPointEnergy) }}
-                      </span>
-                      <span class="preview-label">Temperature</span>
-                      <span class="preview-value mono">
-                        {{ formatNullableNumber(selectedExecution.temperature, 2) }} K
-                      </span>
-                      <span class="preview-label">Imaginary frequency</span>
-                      <span class="preview-value mono">
-                        {{ formatNullableNumber(selectedExecution.imaginaryFrequency, 2) }} cm⁻¹
-                      </span>
-                      <span class="preview-label">Optimization / Termination</span>
-                      <span class="preview-value">
-                        {{ selectedExecution.isOptFreq ? 'OPT+FREQ' : 'Incomplete' }} ·
-                        {{
-                          selectedExecution.normalTermination
-                            ? 'Normal termination'
-                            : 'Not terminated'
-                        }}
-                      </span>
-                    </div>
-
-                    @if (!selectedExecution.isValidForRole) {
-                      <p class="inspection-error">
-                        {{ joinMessages(selectedExecution.validationErrors) }}
-                      </p>
-                    }
-                  } @else {
-                    <p class="inspection-warning">Select one parsed execution to continue.</p>
-                  }
-                }
+          @if (getSelectedFile(slot.fieldName) !== null) {
+          <div class="inspection-card">
+            @if (isInspectionPending(slot.fieldName)) {
+            <p class="inspection-status">{{ 'easyRate.form.analyzingGaussian' | transloco }}</p>
+            } @else if (getInspectionError(slot.fieldName); as inspectionError) {
+            <p class="inspection-error">{{ inspectionError }}</p>
+            } @else if (getInspection(slot.fieldName); as inspection) {
+            <div class="inspection-header-row">
+              <div>
+                <strong>{{ 'easyRate.form.gaussianPreview' | transloco }}</strong>
+                <p class="inspection-meta">
+                  {{ inspection.executionCount }} {{ 'easyRate.form.executionsParsed' | transloco }}
+                </p>
               </div>
+
+              @if (inspection.executionCount > 1) {
+              <label class="execution-selector">
+                {{ 'easyRate.form.parsedExecution' | transloco }}
+                <select [ngModel]="getSelectedExecutionIndex(slot.fieldName)" (ngModelChange)="
+                            workflow.updateSelectedExecutionIndex(slot.fieldName, $event)
+                          " [disabled]="workflow.isProcessing()">
+                  @for (
+                  execution of inspection.executions;
+                  track execution.executionIndex
+                  ) {
+                  <option [ngValue]="execution.executionIndex">
+                    {{ buildExecutionOptionLabel(execution) }}
+                  </option>
+                  }
+                </select>
+              </label>
+              }
+            </div>
+
+            @if (inspection.parseErrors.length > 0) {
+            <p class="inspection-warning">
+              {{ 'easyRate.form.parserNotes' | transloco }} {{ joinMessages(inspection.parseErrors) }}
+            </p>
+            }
+            @if (getSelectedExecution(slot.fieldName); as selectedExecution) {
+            <div class="preview-grid">
+              <span class="preview-label">{{ 'easyRate.preview.titleLabel' | transloco }}</span>
+              <span class="preview-value">{{ selectedExecution.jobTitle || '--' }}</span>
+              <span class="preview-label">{{ 'easyRate.preview.chargeMultiplicity' | transloco }}</span>
+              <span class="preview-value">
+                {{ selectedExecution.charge }} / {{ selectedExecution.multiplicity }}
+              </span>
+              <span class="preview-label">{{ 'easyRate.preview.scf' | transloco }}</span>
+              <span class="preview-value mono">
+                {{ formatNullableNumber(selectedExecution.scfEnergy) }} {{ 'easyRate.preview.hartree' | transloco }}
+              </span>
+              <span class="preview-label">{{ 'easyRate.preview.ghZpe' | transloco }}</span>
+              <span class="preview-value mono">
+                {{ formatNullableNumber(selectedExecution.freeEnergy) }} /
+                {{ formatNullableNumber(selectedExecution.thermalEnthalpy) }} /
+                {{ formatNullableNumber(selectedExecution.zeroPointEnergy) }}
+              </span>
+              <span class="preview-label">{{ 'easyRate.preview.temperature' | transloco }}</span>
+              <span class="preview-value mono">
+                {{ formatNullableNumber(selectedExecution.temperature, 2) }} K
+              </span>
+              <span class="preview-label">{{ 'easyRate.preview.imaginaryFrequency' | transloco }}</span>
+              <span class="preview-value mono">
+                {{ formatNullableNumber(selectedExecution.imaginaryFrequency, 2) }} cm⁻¹
+              </span>
+              <span class="preview-label">{{ 'easyRate.preview.optimizationTermination' | transloco }}</span>
+              <span class="preview-value">
+                {{ selectedExecution.isOptFreq ? ('easyRate.preview.optFreq' | transloco) :
+                ('easyRate.preview.incomplete' | transloco) }} ·
+                {{
+                selectedExecution.normalTermination
+                ? ('easyRate.preview.normalTermination' | transloco)
+                : ('easyRate.preview.notTerminated' | transloco)
+                }}
+              </span>
+            </div>
+
+            @if (!selectedExecution.isValidForRole) {
+            <p class="inspection-error">
+              {{ joinMessages(selectedExecution.validationErrors) }}
+            </p>
+            }
+            } @else {
+            <p class="inspection-warning">{{ 'easyRate.form.selectExecutionHint' | transloco }}</p>
+            }
             }
           </div>
+          }
+        </div>
         }
       </div>
 
-      <h3 class="section-sub">Parameters</h3>
+      <h3 class="section-sub">{{ 'easyRate.form.parameters' | transloco }}</h3>
 
       <div class="param-grid">
         <label>
-          Title
-          <input
-            type="text"
-            [ngModel]="workflow.title()"
-            (ngModelChange)="workflow.updateTitle($event)"
-            [disabled]="workflow.isProcessing()"
-            placeholder="Optional reaction label"
-          />
+          {{ 'easyRate.form.titleField' | transloco }}
+          <input type="text" [ngModel]="workflow.title()" (ngModelChange)="workflow.updateTitle($event)"
+            [disabled]="workflow.isProcessing()" [placeholder]="'easyRate.form.titlePlaceholder' | transloco" />
         </label>
 
         <label>
-          Reaction path degeneracy
-          <input
-            type="number"
-            step="1"
-            min="1"
-            [ngModel]="workflow.reactionPathDegeneracy()"
-            (ngModelChange)="workflow.updateReactionPathDegeneracy($event)"
-            [disabled]="workflow.isProcessing()"
-          />
+          {{ 'easyRate.form.pathDegeneracy' | transloco }}
+          <input type="number" step="1" min="1" [ngModel]="workflow.reactionPathDegeneracy()"
+            (ngModelChange)="workflow.updateReactionPathDegeneracy($event)" [disabled]="workflow.isProcessing()" />
         </label>
 
         <label>
-          Solvent
-          <select
-            [ngModel]="workflow.solvent()"
-            (ngModelChange)="workflow.updateSolvent($event)"
-            [disabled]="workflow.isProcessing()"
-          >
+          {{ 'easyRate.form.solvent' | transloco }}
+          <select [ngModel]="workflow.solvent()" (ngModelChange)="workflow.updateSolvent($event)"
+            [disabled]="workflow.isProcessing()">
             @for (solventOption of solventOptions; track solventOption) {
-              <option [value]="solventOption">{{ solventOption }}</option>
+            <option [value]="solventOption">{{ solventOption }}</option>
             }
           </select>
         </label>
 
         @if (workflow.showCustomViscosity()) {
-          <label>
-            Custom viscosity (Pa·s)
-            <input
-              type="number"
-              step="0.0001"
-              [ngModel]="workflow.customViscosity()"
-              (ngModelChange)="workflow.updateCustomViscosity($event)"
-              [disabled]="workflow.isProcessing()"
-            />
-          </label>
+        <label>
+          {{ 'easyRate.form.customViscosity' | transloco }}
+          <input type="number" step="0.0001" [ngModel]="workflow.customViscosity()"
+            (ngModelChange)="workflow.updateCustomViscosity($event)" [disabled]="workflow.isProcessing()" />
+        </label>
         }
       </div>
 
       <div class="checkbox-row">
         <label class="checkbox-label">
-          <input
-            type="checkbox"
-            [checked]="workflow.cageEffects()"
-            (change)="onCageEffectsChange($event)"
-            [disabled]="workflow.isProcessing()"
-          />
-          Cage effects
+          <input type="checkbox" [checked]="workflow.cageEffects()" (change)="onCageEffectsChange($event)"
+            [disabled]="workflow.isProcessing()" />
+          {{ 'easyRate.form.cageEffects' | transloco }}
         </label>
 
         <label class="checkbox-label">
-          <input
-            type="checkbox"
-            [checked]="workflow.diffusion()"
-            (change)="onDiffusionChange($event)"
-            [disabled]="workflow.isProcessing()"
-          />
-          Diffusion correction
+          <input type="checkbox" [checked]="workflow.diffusion()" (change)="onDiffusionChange($event)"
+            [disabled]="workflow.isProcessing()" />
+          {{ 'easyRate.form.diffusionCorrection' | transloco }}
         </label>
 
         <label class="checkbox-label">
-          <input
-            type="checkbox"
-            [checked]="workflow.printDataInput()"
-            (change)="onPrintDataInputChange($event)"
-            [disabled]="workflow.isProcessing()"
-          />
-          Print data input
+          <input type="checkbox" [checked]="workflow.printDataInput()" (change)="onPrintDataInputChange($event)"
+            [disabled]="workflow.isProcessing()" />
+          {{ 'easyRate.form.printDataInput' | transloco }}
         </label>
       </div>
 
@@ -232,13 +188,14 @@
 
       <div class="action-row">
         <button class="btn-primary" (click)="dispatch()" [disabled]="!workflow.canDispatch()">
-          {{ workflow.isProcessing() ? 'Processing...' : 'Run Easy-rate' }}
+          {{ workflow.isProcessing() ? ('easyRate.actions.processing' | transloco) : ('easyRate.actions.run' |
+          transloco) }}
         </button>
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-          Reset
+          {{ 'easyRate.actions.reset' | transloco }}
         </button>
         <button class="btn-secondary" (click)="clearFiles()" [disabled]="workflow.isProcessing()">
-          Clear files
+          {{ 'easyRate.actions.clearFiles' | transloco }}
         </button>
       </div>
     </section>
@@ -248,121 +205,110 @@
       <h3>Output</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-        <p class="status-message">Submitting Easy-rate job to backend...</p>
+      <p class="status-message">Submitting Easy-rate job to backend...</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
-        <app-job-progress-card
-          [jobId]="workflow.currentJobId()"
-          [progressPercentage]="workflow.progressPercentage()"
-          [progressMessage]="workflow.progressMessage()"
-          progressAriaLabel="Easy-rate job progress"
-        ></app-job-progress-card>
+      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
+        [progressMessage]="workflow.progressMessage()"
+        progressAriaLabel="Easy-rate job progress"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-        @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-          <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-        }
+      @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
+      <p class="summary-banner">{{ resultData.summaryMessage }}</p>
+      }
 
-        <div class="result-title-row">
-          <strong>{{ resultData.title || 'Easy-rate result' }}</strong>
-          <span class="solvent-tag">{{ resultData.solventUsed }}</span>
+      <div class="result-title-row">
+        <strong>{{ resultData.title || 'Easy-rate result' }}</strong>
+        <span class="solvent-tag">{{ resultData.solventUsed }}</span>
+      </div>
+
+      <!-- Constantes de velocidad -->
+      <div class="result-section">
+        <h4>{{ 'easyRate.result.rateConstants' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'easyRate.result.kTst' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span>
+          <span class="kv-label">{{ 'easyRate.result.kFinal' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span>
+          @if (resultData.diffusionApplied) {
+          <span class="kv-label">{{ 'easyRate.result.kDiffCorrected' | transloco }}</span>
+          <span class="kv-value mono">{{
+            formatRateConstant(resultData.rateConstantDiffusionCorrected)
+            }}
+            L·mol⁻¹·s⁻¹</span>
+          <span class="kv-label">{{ 'easyRate.result.kDiff' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span>
+          }
+          <span class="kv-label">κ (TST)</span>
+          <span class="kv-value mono">{{ resultData.kappaTst.toFixed(6) }}</span>
         </div>
+      </div>
 
-        <!-- Constantes de velocidad -->
-        <div class="result-section">
-          <h4>Rate Constants</h4>
-          <div class="kv-grid">
-            <span class="kv-label">k (TST)</span>
-            <span class="kv-value mono"
-              >{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span
-            >
-            <span class="kv-label">k (final)</span>
-            <span class="kv-value mono"
-              >{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span
-            >
-            @if (resultData.diffusionApplied) {
-              <span class="kv-label">k (diff-corrected)</span>
-              <span class="kv-value mono"
-                >{{
-                  formatRateConstant(resultData.rateConstantDiffusionCorrected)
-                }}
-                L·mol⁻¹·s⁻¹</span
-              >
-              <span class="kv-label">k_diff</span>
-              <span class="kv-value mono"
-                >{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span
-              >
-            }
-            <span class="kv-label">κ (TST)</span>
-            <span class="kv-value mono">{{ resultData.kappaTst.toFixed(6) }}</span>
-          </div>
+      <!-- Corrección por túnel -->
+      @if (resultData.tunnelU !== null) {
+      <div class="result-section">
+        <h4>{{ 'easyRate.result.tunnelCorrection' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'easyRate.result.tunnelU' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelU) }}</span>
+          <span class="kv-label">{{ 'easyRate.result.tunnelAlpha1' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha1) }}</span>
+          <span class="kv-label">{{ 'easyRate.result.tunnelAlpha2' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha2) }}</span>
+          <span class="kv-label">{{ 'easyRate.result.tunnelG' | transloco }}</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelG) }}</span>
+          <span class="kv-label">{{ 'easyRate.result.imagFreq' | transloco }}</span>
+          <span class="kv-value mono">{{ resultData.imaginaryFrequencyCm1.toFixed(2) }}</span>
         </div>
+      </div>
+      }
 
-        <!-- Corrección por túnel -->
-        @if (resultData.tunnelU !== null) {
-          <div class="result-section">
-            <h4>Tunnel Correction (Eckart)</h4>
-            <div class="kv-grid">
-              <span class="kv-label">U</span>
-              <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelU) }}</span>
-              <span class="kv-label">α₁</span>
-              <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha1) }}</span>
-              <span class="kv-label">α₂</span>
-              <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelAlpha2) }}</span>
-              <span class="kv-label">G</span>
-              <span class="kv-value mono">{{ formatRateConstant(resultData.tunnelG) }}</span>
-              <span class="kv-label">ν‡ (cm⁻¹)</span>
-              <span class="kv-value mono">{{ resultData.imaginaryFrequencyCm1.toFixed(2) }}</span>
-            </div>
-          </div>
-        }
-
-        <!-- Termodinámica -->
-        <div class="result-section">
-          <h4>Thermochemistry</h4>
-          <div class="thermo-grid">
-            <span></span>
-            <span class="thermo-header">Reaction</span>
-            <span class="thermo-header">Activation</span>
-            <span class="thermo-row-label">ΔG (kcal/mol)</span>
-            <span class="mono">{{ formatKcalMol(resultData.gibbsReactionKcalMol) }}</span>
-            <span class="mono">{{ formatKcalMol(resultData.gibbsActivationKcalMol) }}</span>
-            <span class="thermo-row-label">ΔH (kcal/mol)</span>
-            <span class="mono">{{ formatKcalMol(resultData.enthalpyReactionKcalMol) }}</span>
-            <span class="mono">{{ formatKcalMol(resultData.enthalpyActivationKcalMol) }}</span>
-            <span class="thermo-row-label">ΔZPE (kcal/mol)</span>
-            <span class="mono">{{ formatKcalMol(resultData.zpeReactionKcalMol) }}</span>
-            <span class="mono">{{ formatKcalMol(resultData.zpeActivationKcalMol) }}</span>
-          </div>
+      <!-- Termodinámica -->
+      <div class="result-section">
+        <h4>{{ 'easyRate.result.thermochemistry' | transloco }}</h4>
+        <div class="thermo-grid">
+          <span></span>
+          <span class="thermo-header">{{ 'easyRate.result.thermReaction' | transloco }}</span>
+          <span class="thermo-header">{{ 'easyRate.result.thermActivation' | transloco }}</span>
+          <span class="thermo-row-label">{{ 'easyRate.result.deltaG' | transloco }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.gibbsReactionKcalMol) }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.gibbsActivationKcalMol) }}</span>
+          <span class="thermo-row-label">{{ 'easyRate.result.deltaH' | transloco }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.enthalpyReactionKcalMol) }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.enthalpyActivationKcalMol) }}</span>
+          <span class="thermo-row-label">{{ 'easyRate.result.deltaZpe' | transloco }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.zpeReactionKcalMol) }}</span>
+          <span class="mono">{{ formatKcalMol(resultData.zpeActivationKcalMol) }}</span>
         </div>
+      </div>
 
-        <!-- Condiciones y flags -->
-        <div class="result-section">
-          <h4>Conditions</h4>
-          <div class="kv-grid">
-            <span class="kv-label">Temperature</span>
-            <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
-            <span class="kv-label">Path degeneracy</span>
-            <span class="kv-value">{{ resultData.reactionPathDegeneracy }}</span>
-            @if (resultData.viscosityPaS !== null) {
-              <span class="kv-label">Viscosity</span>
-              <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
-            }
-          </div>
-          <div class="flag-row">
-            @if (resultData.cageEffectsApplied) {
-              <span class="flag-tag flag-on">Cage effects</span>
-            }
-            @if (resultData.diffusionApplied) {
-              <span class="flag-tag flag-on">Diffusion</span>
-            }
-            @if (resultData.warnNegativeActivation) {
-              <span class="flag-tag flag-warn">⚠ Negative activation</span>
-            }
-          </div>
+      <!-- Condiciones y flags -->
+      <div class="result-section">
+        <h4>{{ 'easyRate.result.conditions' | transloco }}</h4>
+        <div class="kv-grid">
+          <span class="kv-label">{{ 'easyRate.result.condTemperature' | transloco }}</span>
+          <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
+          <span class="kv-label">{{ 'easyRate.result.condPathDegeneracy' | transloco }}</span>
+          <span class="kv-value">{{ resultData.reactionPathDegeneracy }}</span>
+          @if (resultData.viscosityPaS !== null) {
+          <span class="kv-label">{{ 'easyRate.result.condViscosity' | transloco }}</span>
+          <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
+          }
         </div>
+        <div class="flag-row">
+          @if (resultData.cageEffectsApplied) {
+          <span class="flag-tag flag-on">{{ 'easyRate.result.flagCageEffects' | transloco }}</span>
+          }
+          @if (resultData.diffusionApplied) {
+          <span class="flag-tag flag-on">{{ 'easyRate.result.flagDiffusion' | transloco }}</span>
+          }
+          @if (resultData.warnNegativeActivation) {
+          <span class="flag-tag flag-warn">{{ 'easyRate.result.flagNegativeActivation' | transloco }}</span>
+          }
+        </div>
+      </div>
 
       }
 
@@ -371,12 +317,8 @@
 
   <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->
   <app-job-result-footer [workflow]="workflow" [canExport]="canExport()"
-    emptyMessage="No historical Easy-rate jobs yet."
-    ariaLabel="Historical Easy-rate jobs"
-    (exportCsv)="exportCsv()"
-    (exportLog)="exportLog()"
-    (exportInputsZip)="exportInputsZip()"
-    (exportError)="exportError()"
-    (openJob)="openHistoricalJob($event)"
-  ></app-job-result-footer>
+    [emptyMessage]="'easyRate.history.empty' | transloco" [ariaLabel]="'easyRate.history.ariaLabel' | transloco"
+    (exportCsv)="exportCsv()" (exportLog)="exportLog()" (exportInputsZip)="exportInputsZip()"
+    (exportError)="exportError()" (openJob)="openHistoricalJob($event)"
+    (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-result-footer>
 </section>

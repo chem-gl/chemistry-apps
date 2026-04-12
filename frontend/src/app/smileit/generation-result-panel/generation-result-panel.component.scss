@@ -361,6 +361,16 @@ select:focus {
   cursor: default;
 }
 
+.history-delete-btn {
+  border-color: rgba(211, 47, 47, 0.45);
+  color: var(--chem-error);
+}
+
+.history-delete-btn:hover:not(:disabled) {
+  border-color: var(--chem-error);
+  color: var(--chem-error);
+}
+
 .execution-summary-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
