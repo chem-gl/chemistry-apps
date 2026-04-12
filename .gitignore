@@ -16,7 +16,6 @@ backend/celerybeat-schedule
 
 tools/
 .env
-!.env
 sonar_report.json
 .pytest_cache
 __pycache__/
