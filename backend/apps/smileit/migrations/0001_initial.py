@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import uuid
 
+from django.conf import settings
 from django.db import migrations, models
 
 
@@ -205,7 +206,9 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = []
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
 
     operations = [
         migrations.CreateModel(
@@ -242,6 +245,16 @@ class Migration(migrations.Migration):
                 (
                     "verification_smarts",
                     models.CharField(blank=True, default="", max_length=2000),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=models.deletion.SET_NULL,
+                        related_name="smileit_categories",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -318,6 +331,16 @@ class Migration(migrations.Migration):
                     models.CharField(blank=True, default="", max_length=200),
                 ),
                 ("provenance_metadata", models.JSONField(blank=True, default=dict)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=models.deletion.SET_NULL,
+                        related_name="smileit_substituents",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
@@ -372,6 +395,23 @@ class Migration(migrations.Migration):
             model_name="smileitcategory",
             constraint=models.UniqueConstraint(
                 fields=("key", "version"), name="unique_smileit_category_key_version"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="smileitcategory",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("verification_rule", "smarts"),
+                        models.Q(("verification_smarts", ""), _negated=True),
+                    ),
+                    models.Q(
+                        models.Q(("verification_rule", "smarts"), _negated=True),
+                        ("verification_smarts", ""),
+                    ),
+                    _connector="OR",
+                ),
+                name="smileit_category_smarts_rule_consistency",
             ),
         ),
         migrations.AddConstraint(
