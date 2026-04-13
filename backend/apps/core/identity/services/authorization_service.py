@@ -177,47 +177,89 @@ class AuthorizationService:
         - Admin ve todas las apps (sin restricción por grupo)
         - User ve solo apps de su grupo primario
         """
-        accessible_apps: list[dict[str, object]] = []
         effective_group_ids = AuthorizationService._resolve_effective_group_ids(
             actor=actor,
             active_group_id=active_group_id,
         )
 
-        for definition in ScientificAppRegistry.list_definitions():
-            group_rule = AuthorizationService._get_group_app_permission(
-                actor_group_ids=effective_group_ids,
-                app_name=definition.plugin_name,
-            )
-            user_rule = AuthorizationService._get_user_app_permission(
-                actor_id=actor.id,
-                app_name=definition.plugin_name,
-            )
-            is_enabled = AuthorizationService._resolve_app_enabled_state(
+        return [
+            AuthorizationService._build_accessible_app_entry(
                 actor=actor,
                 active_group_id=active_group_id,
                 effective_group_ids=effective_group_ids,
-                group_rule=group_rule,
-                user_rule=user_rule,
+                app_name=definition.plugin_name,
+                route_key=definition.api_route_prefix.removesuffix("/jobs"),
+                api_base_path=definition.api_base_path,
+                supports_pause_resume=bool(definition.supports_pause_resume),
+                available_features=list(definition.available_features),
             )
+            for definition in ScientificAppRegistry.list_definitions()
+        ]
 
-            accessible_apps.append(
-                {
-                    "app_name": definition.plugin_name,
-                    "route_key": definition.api_route_prefix.removesuffix("/jobs"),
-                    "api_base_path": definition.api_base_path,
-                    "supports_pause_resume": bool(definition.supports_pause_resume),
-                    "available_features": list(definition.available_features),
-                    "enabled": is_enabled,
-                    "group_permission": None
-                    if group_rule is None
-                    else bool(group_rule.is_enabled),
-                    "user_permission": None
-                    if user_rule is None
-                    else bool(user_rule.is_enabled),
-                }
-            )
+    @staticmethod
+    def _build_accessible_app_entry(
+        *,
+        actor: AbstractUser,
+        active_group_id: int | None,
+        effective_group_ids: set[int],
+        app_name: str,
+        route_key: str,
+        api_base_path: str,
+        supports_pause_resume: bool,
+        available_features: list[str],
+    ) -> dict[str, object]:
+        """Construye la vista serializable del catálogo para una app."""
+        group_rule, user_rule = AuthorizationService._get_app_permissions(
+            actor_id=actor.id,
+            actor_group_ids=effective_group_ids,
+            app_name=app_name,
+        )
+        is_enabled = AuthorizationService._resolve_app_enabled_state(
+            actor=actor,
+            active_group_id=active_group_id,
+            effective_group_ids=effective_group_ids,
+            group_rule=group_rule,
+            user_rule=user_rule,
+        )
+        return {
+            "app_name": app_name,
+            "route_key": route_key,
+            "api_base_path": api_base_path,
+            "supports_pause_resume": supports_pause_resume,
+            "available_features": available_features,
+            "enabled": is_enabled,
+            "group_permission": AuthorizationService._resolve_permission_flag(
+                group_rule
+            ),
+            "user_permission": AuthorizationService._resolve_permission_flag(
+                user_rule
+            ),
+        }
 
-        return accessible_apps
+    @staticmethod
+    def _get_app_permissions(
+        *,
+        actor_id: int,
+        actor_group_ids: set[int],
+        app_name: str,
+    ) -> tuple[AppPermission | None, AppPermission | None]:
+        """Recupera reglas de grupo y usuario para una app concreta."""
+        group_rule = AuthorizationService._get_group_app_permission(
+            actor_group_ids=actor_group_ids,
+            app_name=app_name,
+        )
+        user_rule = AuthorizationService._get_user_app_permission(
+            actor_id=actor_id,
+            app_name=app_name,
+        )
+        return group_rule, user_rule
+
+    @staticmethod
+    def _resolve_permission_flag(permission: AppPermission | None) -> bool | None:
+        """Normaliza el permiso opcional a un valor serializable."""
+        if permission is None:
+            return None
+        return bool(permission.is_enabled)
 
     @staticmethod
     def _resolve_effective_group_ids(

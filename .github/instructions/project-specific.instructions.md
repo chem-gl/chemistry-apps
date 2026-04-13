@@ -2,6 +2,65 @@
 
 Estas instrucciones están diseñadas para estandarizar el desarrollo y mantenimiento del proyecto Chemistry Apps.
 
+# Project Rules
+
+## 1. Scientific Accuracy (CRITICAL)
+- Never invent chemical data or formulas.
+- All chemical calculations must be correct and verifiable.
+- Do not assume missing scientific values; ask or state uncertainty.
+- Use standard scientific units (SI units).
+
+## 2. Code Quality
+- Follow clean code principles.
+- Prefer readability over cleverness.
+- Keep functions small and focused.
+- Use meaningful variable and function names.
+
+## 3. Python Rules
+- Use standard libraries unless otherwise required.
+- Prefer numpy/pandas for scientific computations.
+- Avoid hardcoded values in calculations.
+- Validate all inputs before processing.
+
+## 4. Frontend Rules
+- UI must clearly represent scientific data.
+- Avoid misleading visualizations.
+- Ensure accessibility and readability.
+- Handle loading and error states properly.
+
+## 5. API Rules
+- Validate all incoming data.
+- Never trust client input.
+- Return structured and consistent responses.
+- Handle errors gracefully.
+
+## 6. Testing (MANDATORY)
+- All scientific logic must have unit tests.
+- Cover edge cases in calculations.
+- Tests must be deterministic and reproducible.
+
+## 7. Security
+- Never expose secrets or credentials.
+- Sanitize all inputs.
+- Avoid unsafe code execution.
+
+## 8. Consistency
+- Follow existing project structure.
+- Do not introduce new patterns without justification.
+- Reuse existing utilities when possible.
+
+## 9. Documentation
+- Document complex logic clearly.
+- Explain scientific formulas when used.
+- Keep documentation up to date.
+
+## 10. Copilot Behavior Rules
+- Do not hallucinate APIs or libraries.
+- If unsure, say it explicitly.
+- Prefer safe and well-known approaches.
+- Provide explanations when generating complex logic.
+
+
 ## Estructura del proyecto
 
 - **Backend**: Django 6 + DRF + Celery + Django Channels. Toda la lógica del servidor vive en `backend/apps/`, dividida en `apps/core/` (infraestructura transversal) y una carpeta por app científica. La configuración centralizada está en `backend/config/`.
