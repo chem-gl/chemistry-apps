@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status, views
@@ -320,17 +322,29 @@ class IdentityUserDetailView(views.APIView):
         basic_updated_fields = _apply_basic_user_fields(target_user, payload)
         _apply_admin_identity_fields(target_user, profile, payload)
 
-        profile.save()
+        try:
+            with transaction.atomic():
+                profile.save()
 
-        admin_update_fields = ["is_superuser", "is_staff", "is_active"]
-        if hasattr(target_user, "role"):
-            admin_update_fields.append("role")
-        if hasattr(target_user, "account_status"):
-            admin_update_fields.append("account_status")
-        combined_user_update_fields = list(
-            dict.fromkeys([*basic_updated_fields, *admin_update_fields])
-        )
-        target_user.save(update_fields=combined_user_update_fields)
+                admin_update_fields = ["is_superuser", "is_staff", "is_active"]
+                if hasattr(target_user, "role"):
+                    admin_update_fields.append("role")
+                if hasattr(target_user, "account_status"):
+                    admin_update_fields.append("account_status")
+                combined_user_update_fields = list(
+                    dict.fromkeys([*basic_updated_fields, *admin_update_fields])
+                )
+                target_user.save(update_fields=combined_user_update_fields)
+        except ValidationError as error:
+            error_message = (
+                error.messages[0]
+                if hasattr(error, "messages") and len(error.messages) > 0
+                else "No se pudo actualizar el usuario."
+            )
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         response_serializer = IdentityUserSummarySerializer(target_user)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

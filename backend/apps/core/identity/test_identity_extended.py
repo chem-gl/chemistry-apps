@@ -200,6 +200,16 @@ class IdentityRouterExtendedTests(TestCase):
     def _auth(self, user) -> None:
         self.client.force_authenticate(user=user)
 
+    def _ensure_single_active_root(self) -> None:
+        """Deja a root_user como único root activo para pruebas de invariantes."""
+        self.user_model.objects.exclude(id=self.root_user.id).filter(
+            role=UserIdentityProfile.ROLE_ROOT,
+            account_status=UserIdentityProfile.STATUS_ACTIVE,
+        ).update(
+            account_status=UserIdentityProfile.STATUS_INACTIVE,
+            is_active=False,
+        )
+
     # ── Usuarios: listado ──
 
     def test_root_can_list_users(self) -> None:
@@ -259,6 +269,62 @@ class IdentityRouterExtendedTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         profile = UserIdentityProfile.objects.get(user=self.standard_user)
         self.assertEqual(profile.account_status, UserIdentityProfile.STATUS_INACTIVE)
+
+    def test_root_cannot_deactivate_last_active_root(self) -> None:
+        """No permite desactivar el ultimo root activo para evitar bloqueo."""
+        self._ensure_single_active_root()
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ultimo usuario root activo", response.data["detail"])
+
+        self.root_user.refresh_from_db()
+        self.assertTrue(self.root_user.is_active)
+
+    def test_root_cannot_demote_last_active_root_role(self) -> None:
+        """No permite degradar a admin al ultimo root activo."""
+        self._ensure_single_active_root()
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"role": "admin"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ultimo usuario root activo", response.data["detail"])
+
+        self.root_user.refresh_from_db()
+        self.assertTrue(self.root_user.is_superuser)
+
+    def test_root_can_deactivate_root_when_another_active_root_exists(self) -> None:
+        """Permite desactivar root si existe al menos otro root activo."""
+        secondary_root = self.user_model.objects.create_user(
+            username="second-root-ext",
+            email="second-root-ext@test.local",
+            password="root-pwd",
+            is_superuser=True,
+            is_staff=True,
+        )
+        UserIdentityProfile.objects.create(
+            user=secondary_root,
+            role=UserIdentityProfile.ROLE_ROOT,
+            primary_group=self.group,
+        )
+
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.root_user.refresh_from_db()
+        self.assertFalse(self.root_user.is_active)
 
     def test_root_can_change_user_staff_flag(self) -> None:
         """Root puede promover is_staff y se ajusta role si estaba en user."""

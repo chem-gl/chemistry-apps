@@ -11,6 +11,7 @@ Cómo se usa:
 from __future__ import annotations
 
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -45,6 +46,49 @@ class UserAccount(AbstractUser):
     class Meta:
         ordering = ["id"]
 
+    def _validate_last_active_root_invariant(self) -> None:
+        """Evita dejar el sistema sin usuarios root activos.
+
+        La validación se ejecuta solo en actualización de un root activo existente
+        cuando el estado final lo convertiría en no-root o inactivo.
+        """
+        if self.pk is None:
+            return
+
+        previous_state = (
+            UserAccount.objects.filter(pk=self.pk)
+            .values("role", "account_status")
+            .first()
+        )
+        if previous_state is None:
+            return
+
+        was_active_root = (
+            previous_state["role"] == self.ROLE_ROOT
+            and previous_state["account_status"] == self.STATUS_ACTIVE
+        )
+        will_be_active_root = (
+            self.role == self.ROLE_ROOT and self.account_status == self.STATUS_ACTIVE
+        )
+
+        if not was_active_root or will_be_active_root:
+            return
+
+        other_active_roots_exist = (
+            UserAccount.objects.filter(
+                role=self.ROLE_ROOT,
+                account_status=self.STATUS_ACTIVE,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+        if other_active_roots_exist:
+            return
+
+        raise ValidationError(
+            "No se puede desactivar o degradar el ultimo usuario root activo."
+        )
+
     def save(self, *args, **kwargs):
         """Sincroniza flags Django con rol/estado de dominio antes de persistir."""
         if self.is_superuser:
@@ -60,4 +104,5 @@ class UserAccount(AbstractUser):
         self.is_superuser = self.role == self.ROLE_ROOT
         self.is_staff = self.role in {self.ROLE_ROOT, self.ROLE_ADMIN}
         self.is_active = self.account_status == self.STATUS_ACTIVE
+        self._validate_last_active_root_invariant()
         return super().save(*args, **kwargs)
