@@ -19,6 +19,24 @@ from ..models import (
 )
 
 
+def _load_user_memberships(user_id: int) -> list[dict[str, object]]:
+    """Carga las membresías de grupo del usuario en una sola query."""
+    memberships = (
+        GroupMembership.objects.filter(user_id=user_id)
+        .select_related("group")
+        .order_by("group__name")
+    )
+    return [
+        {
+            "group_id": m.group_id,
+            "group_name": m.group.name,
+            "group_slug": m.group.slug,
+            "role_in_group": m.role_in_group,
+        }
+        for m in memberships
+    ]
+
+
 def _load_profile(user_id: int) -> UserIdentityProfile | None:
     """Carga el perfil de identidad del usuario en una sola query."""
     return UserIdentityProfile.objects.filter(user_id=user_id).first()
@@ -115,8 +133,17 @@ def _build_user_representation(
     }
 
 
+class UserMembershipSummarySerializer(serializers.Serializer):
+    """Serializer de resumen de membresía de grupo para el perfil del usuario."""
+
+    group_id = serializers.IntegerField(read_only=True)
+    group_name = serializers.CharField(read_only=True)
+    group_slug = serializers.CharField(read_only=True)
+    role_in_group = serializers.CharField(read_only=True)
+
+
 class UserProfileSerializer(serializers.Serializer):
-    """Serializer de lectura para perfil del usuario autenticado."""
+    """Serializer de lectura para perfil del usuario autenticado. Incluye membresías."""
 
     id = serializers.IntegerField(read_only=True)
     username = serializers.CharField(read_only=True)
@@ -130,10 +157,13 @@ class UserProfileSerializer(serializers.Serializer):
     primary_group_id = serializers.IntegerField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True, allow_null=True)
     updated_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    memberships = UserMembershipSummarySerializer(many=True, read_only=True)
 
     def to_representation(self, instance):
         profile = _load_profile(instance.id)
-        return _build_user_representation(instance, profile)
+        base = _build_user_representation(instance, profile)
+        base["memberships"] = _load_user_memberships(instance.id)
+        return base
 
 
 class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -360,12 +390,15 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
 
 
 class AccessibleScientificAppSerializer(serializers.Serializer):
-    """Serializer de apps visibles para el usuario actual."""
+    """Serializer de apps visibles para el usuario actual. Incluye features disponibles."""
 
     app_name = serializers.CharField(read_only=True)
     route_key = serializers.CharField(read_only=True)
     api_base_path = serializers.CharField(read_only=True)
     supports_pause_resume = serializers.BooleanField(read_only=True)
+    available_features = serializers.ListField(
+        child=serializers.CharField(), read_only=True
+    )
     enabled = serializers.BooleanField(read_only=True)
     group_permission = serializers.BooleanField(read_only=True, allow_null=True)
     user_permission = serializers.BooleanField(read_only=True, allow_null=True)

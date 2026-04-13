@@ -71,14 +71,30 @@ class CurrentUserProfileView(views.APIView):
 
 @extend_schema(tags=["Auth"])
 class CurrentUserAccessibleAppsView(views.APIView):
-    """Expone apps disponibles para el usuario actual con RBAC resuelto."""
+    """Expone apps disponibles para el usuario actual con RBAC resuelto.
+
+    Acepta `?group_id=X` para evaluar acceso estrictamente desde el grupo activo.
+    """
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccessibleScientificAppSerializer
 
     @extend_schema(responses=AccessibleScientificAppSerializer(many=True))
     def get(self, request: Request) -> Response:
-        payload = AuthorizationService.list_accessible_apps(request.user)
+        raw_group_id = request.query_params.get("group_id")
+        active_group_id: int | None = None
+        if raw_group_id is not None:
+            try:
+                active_group_id = int(raw_group_id)
+            except (ValueError, TypeError):
+                return Response(
+                    {"detail": "group_id debe ser un entero válido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        payload = AuthorizationService.list_accessible_apps(
+            request.user, active_group_id=active_group_id
+        )
         serializer = AccessibleScientificAppSerializer(payload, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -145,14 +161,41 @@ class IdentityUsersView(views.APIView):
     )
     def post(self, request: Request) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
+
+        # Root puede crear cualquier usuario. Admin puede crear usuarios solo para
+        # grupos que administra; el primary_group_id debe ser uno de esos grupos.
+        if not _require_admin_or_root(actor):
             return Response(
-                {"detail": "Solo root puede crear usuarios administrativos."},
+                {"detail": "No tienes permisos para crear usuarios."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = IdentityBootstrapUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        if not AuthorizationService.is_root(actor):
+            # Admin: valida que el primary_group_id sea un grupo que administra
+            primary_group_id = serializer.validated_data.get("primary_group_id")
+            if primary_group_id is None:
+                return Response(
+                    {
+                        "detail": "No tienes permisos para crear usuarios sin grupo primario asignado."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not _is_group_admin(actor, group_id=int(primary_group_id)):
+                return Response(
+                    {"detail": "Solo puedes crear usuarios en grupos que administras."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Admin no puede crear usuarios root
+            requested_role = serializer.validated_data.get("role", "user")
+            if requested_role == "root":
+                return Response(
+                    {"detail": "Los administradores no pueden crear usuarios root."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         created_user = serializer.save()
         output_serializer = IdentityUserSummarySerializer(created_user)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
@@ -281,7 +324,7 @@ def _apply_is_staff_from_payload(
 
 @extend_schema(tags=["Identity"])
 class IdentityUserDetailView(views.APIView):
-    """Actualiza identidad y estado administrativo de un usuario."""
+    """Actualiza o elimina identidad y estado administrativo de un usuario."""
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = IdentityUserSummarySerializer
@@ -349,6 +392,24 @@ class IdentityUserDetailView(views.APIView):
         response_serializer = IdentityUserSummarySerializer(target_user)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
+    def delete(self, request: Request, user_id: int) -> Response:
+        """Elimina un usuario del sistema. Solo root puede eliminar."""
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede eliminar usuarios."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        user_model = get_user_model()
+        target_user = get_object_or_404(user_model, id=user_id)
+        if actor.id == target_user.id:
+            return Response(
+                {"detail": "No puedes eliminar tu propio usuario."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        target_user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @extend_schema(tags=["Identity"])
 class WorkGroupsView(views.APIView):
@@ -382,9 +443,16 @@ class WorkGroupsView(views.APIView):
     @extend_schema(request=WorkGroupSerializer, responses={201: WorkGroupSerializer})
     def post(self, request: Request) -> Response:
         actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para crear grupos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Solo root puede crear grupos; admins gestionan grupos existentes
         if not AuthorizationService.is_root(actor):
             return Response(
-                {"detail": "Solo root puede crear grupos."},
+                {"detail": "Solo root puede crear nuevos grupos."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -521,6 +589,24 @@ class GroupMembershipDetailView(views.APIView):
                 {"detail": "No tienes permisos para eliminar esta membresía."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # Validar invariante: el grupo debe tener al menos un admin tras la eliminación
+        if membership.role_in_group == GroupMembership.ROLE_ADMIN:
+            admin_count = GroupMembership.objects.filter(
+                group_id=membership.group_id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).count()
+            if admin_count <= 1:
+                return Response(
+                    {
+                        "detail": (
+                            "No se puede eliminar la membresía: el grupo debe tener "
+                            "al menos un administrador. Asigna otro administrador primero."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         membership.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -551,6 +637,14 @@ class AppPermissionsView(views.APIView):
     )
     def post(self, request: Request) -> Response:
         actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para crear reglas de acceso por app."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Solo root puede crear reglas nuevas; admin puede consultar listado,
+        # pero no emitir nuevas reglas globales de acceso.
         if not AuthorizationService.is_root(actor):
             return Response(
                 {"detail": "Solo root puede crear reglas de acceso por app."},
@@ -559,6 +653,7 @@ class AppPermissionsView(views.APIView):
 
         serializer = AppPermissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -111,44 +111,61 @@ La carpeta `deprecated/` contiene código anterior sin uso activo. En documentac
 El sistema está dividido en cuatro capas con responsabilidades claras:
 
 ```mermaid
-flowchart LR
-  U[Usuario] --> F[Frontend Angular]
+flowchart TB
+  U[Usuario]
 
-  subgraph Frontend
-    F --> AUTH[Guards: auth / admin / appAccess]
-    AUTH --> W[Wrappers API]
-    W --> GEN[Cliente OpenAPI generado]
-    F --> I18N[LanguageService / Transloco]
-    I18N --> LANG[(i18n JSON)]
+  subgraph L1[1. Frontend Angular]
+    F[UI de apps]
+    AUTH[Guards auth/admin/appAccess]
+    WRAP[Wrappers core/api]
+    GEN[Cliente OpenAPI generado]
+    I18N[Transloco + LanguageService]
+    LANG[(Catalogos i18n JSON)]
+
+    U --> F
+    F --> AUTH
+    AUTH --> WRAP
+    WRAP --> GEN
+    F --> I18N
+    I18N --> LANG
   end
 
-  GEN --> B
+  subgraph L2[2. Backend Django]
+    API[Django + DRF]
+    CORE[Core de jobs]
+    ID[Identity / RBAC]
+    APPS[Apps cientificas]
+    REG[Plugin Registry]
 
-  subgraph Backend
-    B[Django + DRF] --> CORE[Core jobs]
-    B --> IDENTITY[Identity / RBAC]
-    B --> APPS[Apps científicas]
-    CORE --> PLUGINS[Plugin Registry]
-    PLUGINS --> APPS
-    IDENTITY --> CORE
+    API --> CORE
+    API --> ID
+    API --> APPS
+    CORE --> REG
+    REG --> APPS
+    ID --> CORE
   end
 
-  subgraph Async
-    CORE --> Q[Redis / Cola Celery]
-    Q --> WK[Worker Celery]
-    WK --> PLUGINS
+  subgraph L3[3. Ejecucion asincrona]
+    REDIS[Redis broker]
+    CELERY[Celery worker]
+
+    CORE --> REDIS
+    REDIS --> CELERY
+    CELERY --> REG
   end
 
-  subgraph Persistencia
-    CORE --> DB[(Base de datos)]
+  subgraph L4[4. Persistencia y realtime]
+    DB[(Base de datos)]
+    CH[Django Channels]
+
+    CORE --> DB
     APPS --> DB
-    IDENTITY --> DB
+    ID --> DB
+    CORE --> CH
+    CH --> F
   end
 
-  subgraph Realtime
-    CORE --> WS[Django Channels]
-    WS --> F
-  end
+  GEN --> API
 ```
 
 ### Capa de identidad y RBAC
@@ -169,6 +186,7 @@ El módulo `backend/apps/core/identity/` centraliza toda la lógica de autentica
 
 ```mermaid
 sequenceDiagram
+  autonumber
   actor U as Usuario
   participant F as Frontend Angular
   participant R as Router (apps/<app>/routers.py)
@@ -183,33 +201,45 @@ sequenceDiagram
   participant RT as Realtime (core/realtime.py)
   participant WS as WebSocket cliente
 
-  U->>F: Completa formulario y lanza cálculo
+  U->>F: Completa formulario y ejecuta calculo
   F->>R: POST /api/<app>/
   R->>JS: create_job(plugin_name, version, parameters)
   JS->>RJS: create_job(...)
-  RJS->>DB: ScientificJob.objects.create(status=pending)
-  RJS->>DB: generate_job_hash(): consulta cache hit
-  JS->>T: dispatch_scientific_job(job_id)
-  T->>Redis: execute_scientific_job.delay(job_id)
-  Redis->>WK: entrega tarea
-  WK->>T: execute_scientific_job(job_id)
-  T->>JS: JobService.run_job(job_id)
-  JS->>RJS: run_job(job_id)
-  RJS->>DB: status = running
-  RJS->>PR: execute(plugin_name, params, callbacks)
-  PR->>P: llama función del plugin
-  P-->>RJS: progress_cb(percentage, stage, message)
-  RJS->>DB: actualiza progress_percentage / progress_stage
-  RJS->>RT: broadcast_job_progress(job)
-  RT->>WS: evento job.progress
-  P-->>RJS: log_cb(level, source, message)
-  RJS->>DB: ScientificJobLogEvent.objects.create(...)
-  RJS->>RT: broadcast_job_log(job, log_event)
-  RT->>WS: evento job.log
-  P->>RJS: retorna resultado JSONMap
-  RJS->>DB: status = completed, results = payload
-  RJS->>RT: broadcast_job_update(job)
-  RT->>WS: evento job.updated
+  RJS->>DB: Crea ScientificJob (pending)
+  RJS->>DB: Calcula hash y revisa cache
+
+  alt Cache hit
+    RJS->>DB: Guarda resultado cached (completed)
+    RJS->>RT: broadcast_job_update(job)
+    RT->>WS: job.updated
+  else Cache miss
+    JS->>T: dispatch_scientific_job(job_id)
+    T->>Redis: delay(job_id)
+    Redis->>WK: Entrega tarea
+    WK->>T: execute_scientific_job(job_id)
+    T->>JS: run_job(job_id)
+    JS->>RJS: run_job(job_id)
+    RJS->>DB: Cambia status a running
+    RJS->>PR: execute(plugin_name, params, callbacks)
+    PR->>P: Ejecuta plugin
+
+    loop Mientras procesa
+      P-->>RJS: progress_cb(...)
+      RJS->>DB: Actualiza progreso
+      RJS->>RT: broadcast_job_progress(job)
+      RT->>WS: job.progress
+      P-->>RJS: log_cb(...)
+      RJS->>DB: Crea ScientificJobLogEvent
+      RJS->>RT: broadcast_job_log(...)
+      RT->>WS: job.log
+    end
+
+    P-->>RJS: Resultado JSONMap
+    RJS->>DB: Guarda results y status completed
+    RJS->>RT: broadcast_job_update(job)
+    RT->>WS: job.updated
+  end
+
   F->>R: GET /api/jobs/{id}/ o stream WebSocket
 ```
 
@@ -282,6 +312,53 @@ El modelo `ScientificJobInputArtifact` y `ScientificJobInputArtifactChunk` persi
 
 ```mermaid
 classDiagram
+  direction LR
+
+  class AuthorizationService {
+    +is_root(actor)
+    +is_admin(actor)
+    +can_view_job(actor, job)
+    +can_manage_job(actor, job)
+    +can_delete_job(actor, job)
+    +list_accessible_apps(user)
+  }
+
+  class JobService {
+    <<facade>>
+    +create_job(plugin_name, version, parameters)
+    +register_dispatch_result(job_id, was_dispatched)
+    +run_job(job_id)
+    +cancel_job(job_id)
+    +request_pause(job_id)
+    +resume_job(job_id)
+    +run_active_recovery(...)
+  }
+
+  class RuntimeJobService {
+    <<dataclass>>
+    +cache_repository CacheRepositoryPort
+    +plugin_execution PluginExecutionPort
+    +progress_publisher JobProgressPublisherPort
+    +log_publisher JobLogPublisherPort
+    +create_job(...)
+    +run_job(...)
+    +cancel_job(...)
+    +request_pause(...)
+    +resume_job(...)
+  }
+
+  class PluginRegistry {
+    +_plugins dict
+    +register(name) decorator
+    +execute(name, params, callbacks)
+  }
+
+  class CeleryTasks {
+    +execute_scientific_job(job_id)
+    +run_active_recovery(exclude_job_id)
+    +purge_expired_artifact_chunks()
+  }
+
   class ScientificJob {
     +UUID id
     +FK owner
@@ -330,15 +407,6 @@ classDiagram
     +bool is_enabled
   }
 
-  class AuthorizationService {
-    +is_root(actor)
-    +is_admin(actor)
-    +can_view_job(actor, job)
-    +can_manage_job(actor, job)
-    +can_delete_job(actor, job)
-    +list_accessible_apps(user)
-  }
-
   class ScientificJobLogEvent {
     +UUID job_id (FK)
     +int event_index
@@ -348,53 +416,17 @@ classDiagram
     +JSONField payload
   }
 
-  class JobService {
-    <<facade>>
-    +create_job(plugin_name, version, parameters)
-    +register_dispatch_result(job_id, was_dispatched)
-    +run_job(job_id)
-    +cancel_job(job_id)
-    +request_pause(job_id)
-    +resume_job(job_id)
-    +run_active_recovery(...)
-  }
+  JobService --> RuntimeJobService : delega por factory
+  RuntimeJobService --> PluginRegistry : ejecuta plugin
+  RuntimeJobService --> ScientificJob : persiste ciclo de vida
+  CeleryTasks --> JobService : orquesta run/recovery
+  AuthorizationService --> ScientificJob : aplica RBAC
 
-  class RuntimeJobService {
-    <<dataclass>>
-    +cache_repository CacheRepositoryPort
-    +plugin_execution PluginExecutionPort
-    +progress_publisher JobProgressPublisherPort
-    +log_publisher JobLogPublisherPort
-    +create_job(...)
-    +run_job(...)
-    +cancel_job(...)
-    +request_pause(...)
-    +resume_job(...)
-  }
-
-  class PluginRegistry {
-    +_plugins dict
-    +register(name) decorator
-    +execute(name, params, callbacks)
-  }
-
-  class CeleryTasks {
-    +execute_scientific_job(job_id)
-    +run_active_recovery(exclude_job_id)
-    +purge_expired_artifact_chunks()
-  }
-
-  JobService --> RuntimeJobService : delega via factory
-  RuntimeJobService --> ScientificJob : persiste y consulta
-  RuntimeJobService --> PluginRegistry : ejecuta
-  CeleryTasks --> JobService : llama run_job
-  ScientificJob "1" --> "*" ScientificJobLogEvent : tiene logs
-  ScientificJob --> WorkGroup : grupo
-  UserIdentityProfile --> WorkGroup : primary_group
-  GroupMembership --> WorkGroup : grupo
-  GroupMembership --> UserIdentityProfile : usuario
-  AppPermission --> WorkGroup : sujeto grupo
-  AuthorizationService --> ScientificJob : decide visibilidad
+  ScientificJob "1" --> "0..*" ScientificJobLogEvent : genera
+  ScientificJob "0..*" --> "0..1" WorkGroup : pertenece a
+  UserIdentityProfile "0..*" --> "0..1" WorkGroup : primary_group
+  GroupMembership "0..*" --> "1" WorkGroup : group
+  AppPermission "0..*" --> "0..1" WorkGroup : subject_group
 ```
 
 ### Arquitectura de puertos y adaptadores
@@ -500,13 +532,17 @@ Si el usuario solicita pausa desde la UI, el backend marca `pause_requested = Tr
 stateDiagram-v2
   [*] --> pending: create_job
   pending --> running: dispatch + run_job
-  running --> paused: JobPauseRequested
-  running --> completed: resultado OK
-  running --> failed: excepción no controlada
+
+  running --> paused: pause cooperativa
   paused --> running: resume_job
-  running --> cancelled: cancel_job
+
   pending --> cancelled: cancel_job
+  running --> cancelled: cancel_job
   paused --> cancelled: cancel_job
+
+  running --> completed: resultado valido
+  running --> failed: excepcion no controlada
+
   completed --> [*]
   failed --> [*]
   cancelled --> [*]
@@ -932,6 +968,7 @@ El contrato HTTP entre backend y frontend se mantiene sincronizado mediante `ope
 
 ```mermaid
 sequenceDiagram
+  autonumber
   participant DEV as Desarrollador
   participant SCRIPT as scripts/create_openapi.py
   participant DJANGO as Django manage.py
@@ -939,12 +976,12 @@ sequenceDiagram
   participant GEN as openapi-generator-cli
   participant CLIENT as frontend/src/app/core/api/generated/
 
-  DEV->>SCRIPT: cd backend && poetry run python ../scripts/create_openapi.py
-  SCRIPT->>DJANGO: spectacular --file schema.yaml
-  DJANGO->>SPEC: genera spec desde decoradores drf-spectacular
-  SCRIPT->>GEN: npx openapi-generator-cli generate -i schema.yaml
-  GEN->>CLIENT: genera modelos y servicios TypeScript
-  DEV->>DEV: implementa/actualiza wrappers en core/api/
+  DEV->>SCRIPT: Ejecuta create_openapi.py
+  SCRIPT->>DJANGO: manage.py spectacular --file schema.yaml
+  DJANGO->>SPEC: Actualiza contrato OpenAPI
+  SCRIPT->>GEN: Ejecuta openapi-generator-cli
+  GEN->>CLIENT: Regenera modelos y servicios TS
+  DEV->>DEV: Ajusta wrappers en frontend/core/api
 ```
 
 ### Comando de regeneración
@@ -1543,11 +1580,12 @@ La propiedad `is_deleted` retorna `True` cuando `deleted_at is not None`.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> activo: create_job
-  activo --> papelera: delete_job (admin/root o propietario)
-  papelera --> activo: restore_job (admin/root)
-  papelera --> [*]: hard_delete (eliminación definitiva)
-  papelera --> [*]: scheduled_hard_delete_at alcanzado
+  [*] --> Activo: create_job
+  Activo --> Papelera: delete_job
+  Papelera --> Activo: restore_job
+  Papelera --> Eliminado: hard_delete
+  Papelera --> Eliminado: expiracion programada
+  Eliminado --> [*]
 ```
 
 1. **Borrado suave**: cualquier usuario puede enviar su propio job a la papelera; admin y root pueden borrar jobs de otros usuarios dentro de su alcance RBAC.

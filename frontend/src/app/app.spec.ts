@@ -9,8 +9,17 @@ describe('App', () => {
     isAuthenticated: () => true,
     displayName: () => 'Admin User',
     currentRole: () => 'root',
+    currentUser: () => ({ id: 1, username: 'admin' }),
     canAccessRoute: () => true,
     hasAdminAccess: () => false,
+    canAccessAdminArea: () => false,
+    hasRootAccess: () => true,
+    userMemberships: () => [],
+    isRootViewContext: () => true,
+    activeGroupContext: () => null,
+    activeGroupId: () => null,
+    setRootViewContext: () => void 0,
+    setActiveGroup: () => void 0,
     logout: () => void 0,
   };
 

@@ -6,15 +6,16 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import {
-    JobLogsPageView,
-    JobsApiService,
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitJobResponseView,
-    SmileitPatternEntryView,
-    SmileitStructureInspectionView,
+  JobLogsPageView,
+  JobsApiService,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitJobResponseView,
+  SmileitPatternEntryView,
+  SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
+import { IdentitySessionService } from '../auth/identity-session.service';
 import { SmileitAssignmentBlockDraft, SmileitWorkflowService } from './smileit-workflow.service';
 import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
@@ -197,6 +198,11 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
 
 describe('SmileitWorkflowService', () => {
   let workflowService: SmileitWorkflowService;
+  const identitySessionMock = {
+    currentUser: vi.fn(() => ({ id: 2 })),
+    currentRole: vi.fn(() => 'admin'),
+  };
+
   const emptyLogsPage: JobLogsPageView = {
     jobId: 'smileit-job-1',
     count: 0,
@@ -260,6 +266,10 @@ describe('SmileitWorkflowService', () => {
         {
           provide: SmileitApiService,
           useValue: jobsApiServiceMock,
+        },
+        {
+          provide: IdentitySessionService,
+          useValue: identitySessionMock,
         },
         SmileitWorkflowState,
         SmileitCatalogWorkflowService,
@@ -720,7 +730,9 @@ describe('SmileitWorkflowService', () => {
 
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
-    expect(workflowService.resultData()?.summaryMessage).toContain('Historical job status: running');
+    expect(workflowService.resultData()?.summaryMessage).toContain(
+      'Historical job status: running',
+    );
     expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('smileit-running-1', {
       limit: 250,
     });
@@ -790,7 +802,10 @@ describe('SmileitWorkflowService', () => {
 
     progressEvents$.error(new Error('sse offline'));
 
-    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('smileit-progress-1', 1000);
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith(
+      'smileit-progress-1',
+      1000,
+    );
     expect(jobsApiServiceMock.getSmileitJobStatus).toHaveBeenCalledWith('smileit-progress-1');
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.generatedStructures).toHaveLength(1);

@@ -159,29 +159,56 @@ class AuthorizationService:
         return True
 
     @staticmethod
-    def list_accessible_apps(actor: AbstractUser) -> list[dict[str, object]]:
-        """Retorna catálogo de apps con visibilidad resuelta para el actor."""
+    def list_accessible_apps(
+        actor: AbstractUser,
+        *,
+        active_group_id: int | None = None,
+    ) -> list[dict[str, object]]:
+        """Retorna catálogo de apps con visibilidad resuelta para el actor.
+
+        Si `active_group_id` se provee, el acceso se evalúa estrictamente para
+        ese grupo — solo apps con `AppPermission` habilitada para ese grupo (o
+        permisos root globales) se marcan como `enabled`. Esto soporta el modo
+        de selección de grupo activo en el frontend.
+        """
         accessible_apps: list[dict[str, object]] = []
-        actor_group_ids = AuthorizationService._group_ids_for_user(actor)
+
+        # Para el filtro estricto por grupo activo usamos solo ese grupo_id.
+        # Sin filtro, usamos todos los grupos del actor (comportamiento original).
+        if active_group_id is not None:
+            effective_group_ids: set[int] = {active_group_id}
+        else:
+            effective_group_ids = AuthorizationService._group_ids_for_user(actor)
 
         for definition in ScientificAppRegistry.list_definitions():
             group_rule = AuthorizationService._get_group_app_permission(
-                actor_group_ids=actor_group_ids,
+                actor_group_ids=effective_group_ids,
                 app_name=definition.plugin_name,
             )
             user_rule = AuthorizationService._get_user_app_permission(
                 actor_id=actor.id,
                 app_name=definition.plugin_name,
             )
+
+            # Root siempre habilitado; de lo contrario evaluar regla del grupo activo.
+            if AuthorizationService.is_root(actor):
+                is_enabled = True
+            elif group_rule is not None:
+                is_enabled = bool(group_rule.is_enabled)
+            elif user_rule is not None:
+                is_enabled = bool(user_rule.is_enabled)
+            else:
+                # Sin regla explícita: acceso permitido (comportamiento por defecto)
+                is_enabled = active_group_id is None
+
             accessible_apps.append(
                 {
                     "app_name": definition.plugin_name,
                     "route_key": definition.api_route_prefix.removesuffix("/jobs"),
                     "api_base_path": definition.api_base_path,
                     "supports_pause_resume": bool(definition.supports_pause_resume),
-                    "enabled": AuthorizationService.can_access_app(
-                        actor, definition.plugin_name
-                    ),
+                    "available_features": list(definition.available_features),
+                    "enabled": is_enabled,
                     "group_permission": None
                     if group_rule is None
                     else bool(group_rule.is_enabled),

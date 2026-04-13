@@ -162,30 +162,46 @@ describe('SmileitApiService', () => {
     await lastValueFrom(service.updateSmileitCatalogEntry('catalog-1', catalogParams));
     await lastValueFrom(service.createSmileitPatternEntry(patternParams));
 
-    expect(smileitClientMock.smileitJobsCatalogCreate).toHaveBeenCalledWith({
-      name: 'Aromatic ring',
-      smiles: 'c1ccccc1',
-      anchor_atom_indices: [1, 2],
-      category_keys: ['aryl'],
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
-    });
-    expect(smileitClientMock.smileitJobsCatalogPartialUpdate).toHaveBeenCalledWith('catalog-1', {
-      name: 'Aromatic ring',
-      smiles: 'c1ccccc1',
-      anchor_atom_indices: [1, 2],
-      category_keys: ['aryl'],
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
-    });
-    expect(smileitClientMock.smileitJobsPatternsCreate).toHaveBeenCalledWith({
-      name: 'Ring pattern',
-      smarts: 'c1ccccc1',
-      pattern_type: PatternTypeEnum.Toxicophore,
-      caption: 'Aromatic ring',
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
-    });
+    expect(smileitClientMock.smileitJobsCatalogCreate).toHaveBeenCalledWith(
+      {
+        name: 'Aromatic ring',
+        smiles: 'c1ccccc1',
+        anchor_atom_indices: [1, 2],
+        category_keys: ['aryl'],
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
+    expect(smileitClientMock.smileitJobsCatalogPartialUpdate).toHaveBeenCalledWith(
+      'catalog-1',
+      {
+        name: 'Aromatic ring',
+        smiles: 'c1ccccc1',
+        anchor_atom_indices: [1, 2],
+        category_keys: ['aryl'],
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
+    expect(smileitClientMock.smileitJobsPatternsCreate).toHaveBeenCalledWith(
+      {
+        name: 'Ring pattern',
+        smarts: 'c1ccccc1',
+        pattern_type: PatternTypeEnum.Toxicophore,
+        caption: 'Aromatic ring',
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
   });
 
   it('updates and deletes patterns through HTTP endpoints when client has no generated methods', async () => {

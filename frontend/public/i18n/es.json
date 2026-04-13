@@ -16,7 +16,9 @@
       "profile": "Perfil",
       "jobsMonitor": "Monitor de Jobs",
       "apps": "Apps",
-      "identity": "Identidad"
+      "identity": "Identidad",
+      "groups": "Grupos",
+      "users": "Usuarios"
     },
     "navHints": {
       "signIn": "Autentícate para cargar tu espacio de trabajo",
@@ -24,7 +26,9 @@
       "profile": "Administra tu perfil personal y contraseña",
       "jobsMonitor": "Rastrea jobs activos y completados",
       "apps": "Apps científicas visibles para tu sesión actual",
-      "identity": "Usuarios, grupos y permisos"
+      "identity": "Usuarios, grupos y permisos",
+      "groups": "Gestionar grupos de laboratorio y sus permisos",
+      "users": "Gestionar cuentas de usuario y membresías"
     }
   },
   "language": {
@@ -996,7 +1000,7 @@
   "identityAdmin": {
     "ariaLabel": "Administración de identidad",
     "header": {
-      "eyebrow": "Consola Administrativa",
+      "eyebrow": "Consola Administrativa"
       "title": "Identidad y Acceso",
       "subtitle": "Administra usuarios, grupos, membresías y RBAC a nivel de apps en un espacio de trabajo consistente.",
       "myProfile": "Mi perfil",
@@ -1079,6 +1083,89 @@
       "removeButton": "×",
       "addEntry": "+ Agregar entrada",
       "submit": "Guardar configuración del grupo"
+    }
+  },
+  "groupManager": {
+    "header": {
+      "eyebrow": "Administración",
+      "title": "Gestión de Grupos",
+      "subtitle": "Administra grupos científicos, sus miembros y reglas de acceso a apps."
+    },
+    "feedback": {
+      "loading": "Cargando grupos..."
+    },
+    "groups": {
+      "title": "Grupos",
+      "colName": "Nombre",
+      "colSlug": "Slug",
+      "colMembers": "Miembros",
+      "colActions": "Acciones",
+      "manage": "Gestionar",
+      "collapse": "Colapsar"
+    },
+    "members": {
+      "title": "Miembros",
+      "colUser": "Usuario",
+      "colRole": "Rol",
+      "colActions": "Acciones",
+      "selectUser": "Seleccionar usuario",
+      "addButton": "Añadir miembro"
+    },
+    "permissions": {
+      "title": "Permisos de Apps"
+    },
+    "createGroup": {
+      "title": "Crear grupo",
+      "hint": "Los grupos representan equipos o entornos científicos.",
+      "name": "Nombre del grupo",
+      "slug": "Slug",
+      "description": "Descripción",
+      "submit": "Crear grupo"
+    }
+  },
+  "userManager": {
+    "header": {
+      "eyebrow": "Administración",
+      "title": "Gestión de Usuarios",
+      "subtitle": "Administra cuentas de usuario, roles y membresías de grupo."
+    },
+    "feedback": {
+      "loading": "Cargando usuarios..."
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Los admins solo pueden gestionar usuarios de sus grupos.",
+      "filterGroup": "Filtrar por grupo",
+      "allGroups": "Todos los grupos",
+      "colUsername": "Usuario",
+      "colRole": "Rol",
+      "colStatus": "Estado",
+      "colGroups": "Grupos",
+      "colActions": "Acciones",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar"
+    },
+    "createUser": {
+      "title": "Crear usuario",
+      "hint": "Los admins solo pueden crear cuentas para sus grupos.",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "roleLabel": "Rol",
+      "primaryGroup": "Grupo principal",
+      "noPrimaryGroup": "Sin grupo principal",
+      "submit": "Crear usuario"
+    },
+    "addMembership": {
+      "title": "Añadir membresía",
+      "hint": "Asigna un usuario existente a un grupo con un rol específico.",
+      "selectUser": "Seleccionar usuario",
+      "selectGroup": "Seleccionar grupo",
+      "submit": "Añadir membresía"
     }
   },
   "shared": {

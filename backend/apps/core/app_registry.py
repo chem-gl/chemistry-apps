@@ -29,6 +29,10 @@ class ScientificAppDefinition:
     - Resolver colisiones de rutas.
     - Mantener naming consistente entre plugin y endpoints.
     - Facilitar trazabilidad cuando se diagnostican errores de startup.
+
+    `available_features` declara las características opcionales de la app que pueden
+    habilitarse o deshabilitarse por grupo vía GroupAppConfig. Permite al frontend
+    construir toggles estructurados en el panel de administración de grupos.
     """
 
     app_config_name: str
@@ -37,6 +41,7 @@ class ScientificAppDefinition:
     api_base_path: str
     route_basename: str
     supports_pause_resume: bool = False
+    available_features: tuple[str, ...] = ()
 
 
 class ScientificAppRegistry:

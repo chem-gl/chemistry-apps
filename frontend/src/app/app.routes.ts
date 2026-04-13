@@ -1,7 +1,7 @@
 // app.routes.ts: Enrutado principal con guards de sesión y acceso por app.
 
 import { Routes } from '@angular/router';
-import { adminGuard, appAccessGuard, authGuard } from './core/auth/auth.guards';
+import { adminGuard, appAccessGuard, authGuard, groupAdminGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
   {
@@ -25,10 +25,21 @@ export const routes: Routes = [
     loadComponent: () => import('./profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
+    // Redirección de compatibilidad: la ruta antigua apunta a la nueva pantalla de usuarios
     path: 'admin/identity',
-    canActivate: [adminGuard],
+    redirectTo: 'admin/users',
+  },
+  {
+    path: 'admin/groups',
+    canActivate: [groupAdminGuard],
     loadComponent: () =>
-      import('./identity-admin/identity-admin.component').then((m) => m.IdentityAdminComponent),
+      import('./group-manager/group-manager.component').then((m) => m.GroupManagerComponent),
+  },
+  {
+    path: 'admin/users',
+    canActivate: [groupAdminGuard],
+    loadComponent: () =>
+      import('./user-manager/user-manager.component').then((m) => m.UserManagerComponent),
   },
   {
     path: 'jobs',

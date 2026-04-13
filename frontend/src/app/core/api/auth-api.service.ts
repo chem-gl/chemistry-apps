@@ -22,6 +22,16 @@ export interface CurrentUserProfileView {
   primary_group_id: number | null;
   created_at: string | null;
   updated_at: string | null;
+  /** Membresías del usuario con su rol en cada grupo. */
+  memberships: UserMembershipSummary[];
+}
+
+/** Resumen de membresía devuelto por /auth/me/ para construir el selector de grupo activo. */
+export interface UserMembershipSummary {
+  group_id: number;
+  group_name: string;
+  group_slug: string;
+  role_in_group: 'admin' | 'member';
 }
 
 interface LoginApiResponse {

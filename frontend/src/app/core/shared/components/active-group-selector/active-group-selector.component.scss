@@ -1,0 +1,127 @@
+/* active-group-selector.component.scss: Estilos del selector de contexto de grupo activo. */
+
+:host {
+  position: relative;
+  display: inline-block;
+}
+
+.group-selector {
+  position: relative;
+}
+
+.selector-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(168, 161, 176, 0.4);
+  border-radius: var(--chem-radius-pill);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--chem-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color var(--chem-transition),
+    background var(--chem-transition);
+
+  &:hover {
+    border-color: var(--chem-accent);
+    background: var(--chem-accent-light);
+  }
+}
+
+.is-open .selector-trigger {
+  border-color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+.selector-icon {
+  opacity: 0.55;
+  font-size: 0.7rem;
+}
+
+.selector-caret {
+  font-size: 0.65rem;
+  opacity: 0.5;
+  transition: transform var(--chem-transition);
+}
+
+.is-open .selector-caret {
+  transform: rotate(180deg);
+}
+
+.selector-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.selector-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  min-width: 210px;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: 0 12px 30px rgba(44, 37, 51, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.menu-option {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 0.48rem 0.65rem;
+  border: none;
+  border-radius: var(--chem-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: background var(--chem-transition);
+
+  &:hover {
+    background: var(--chem-accent-light);
+  }
+
+  &.is-selected {
+    background: linear-gradient(135deg, rgba(123, 90, 158, 0.12), rgba(211, 47, 47, 0.06));
+  }
+
+  &.is-root .option-label {
+    color: var(--chem-primary);
+  }
+}
+
+.option-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
+}
+
+.option-sub {
+  font-size: 0.7rem;
+  color: var(--chem-ink-secondary);
+  margin-top: 0.08rem;
+}
+
+.option-check {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--chem-accent);
+  font-size: 0.75rem;
+  font-weight: 900;
+}

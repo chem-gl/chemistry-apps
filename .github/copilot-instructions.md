@@ -15,6 +15,7 @@
 - Seguir las mejores prácticas de programación
 - Evitar el uso de código obsoleto.
 - usar arquitecturas por capas
+- simpre se puede usar el navegador web integrado para verificar los cambios del frontend
 - separar responsabilidades en diferentes archivos y carpetas
 - usar patrones de diseño cuando sea apropiado
 - mantener la coherencia en el estilo de codificación

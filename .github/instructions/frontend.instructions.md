@@ -4,6 +4,8 @@
 
 ## 🎯 OBJETIVO
 
+- simpre se puede usar el navegador web integrado para verificar los cambios del frontend
+
 El agente debe generar código:
 
 - legible
