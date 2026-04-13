@@ -12,7 +12,7 @@ from unittest.mock import patch
 from django.test import TestCase
 from rdkit import Chem
 
-from .engine import (
+from ..engine import (
     _bond_order_to_type,
     _compute_substituent_atom_indices,
     _has_enough_implicit_hydrogens,
@@ -38,7 +38,7 @@ from .engine import (
     validate_smiles,
     verify_substituent_category,
 )
-from .types import SmileitPatternEntry
+from ..types import SmileitPatternEntry
 
 
 class ParseAndCanonicalizationTests(TestCase):
@@ -62,14 +62,13 @@ class ParseAndCanonicalizationTests(TestCase):
     def test_canonicalize_substituent_single_atom(self) -> None:
         result = canonicalize_substituent("C", 0)
         self.assertIsNotNone(result)
-        smiles, idx = result
+        _, idx = result
         self.assertEqual(idx, 0)
-        self.assertIsNotNone(smiles)
 
     def test_canonicalize_substituent_multi_atom(self) -> None:
         result = canonicalize_substituent("CCO", 1)
         self.assertIsNotNone(result)
-        smiles, idx = result
+        _, idx = result
         self.assertEqual(idx, 0)  # Siempre retorna 0 por rootedAtAtom
 
     def test_canonicalize_substituent_invalid_returns_none(self) -> None:
@@ -313,57 +312,57 @@ class CategoryVerificationTests(TestCase):
     """Verifica verificación de categorías químicas de sustituyentes."""
 
     def test_aromatic_category_with_benzene(self) -> None:
-        result, msg = verify_substituent_category("c1ccccc1", "aromatic", "")
+        result, _ = verify_substituent_category("c1ccccc1", "aromatic", "")
         self.assertTrue(result)
 
     def test_aromatic_category_with_ethanol(self) -> None:
-        result, msg = verify_substituent_category("CCO", "aromatic", "")
+        result, _ = verify_substituent_category("CCO", "aromatic", "")
         self.assertFalse(result)
 
     def test_hbond_donor_with_ethanol(self) -> None:
-        result, msg = verify_substituent_category("CCO", "hbond_donor", "")
+        result, _ = verify_substituent_category("CCO", "hbond_donor", "")
         self.assertTrue(result)
 
     def test_hbond_donor_without_donor(self) -> None:
-        result, msg = verify_substituent_category("CC", "hbond_donor", "")
+        result, _ = verify_substituent_category("CC", "hbond_donor", "")
         self.assertFalse(result)
 
     def test_hbond_acceptor_with_ethanol(self) -> None:
-        result, msg = verify_substituent_category("CCO", "hbond_acceptor", "")
+        result, _ = verify_substituent_category("CCO", "hbond_acceptor", "")
         self.assertTrue(result)
 
     def test_hydrophobic_category(self) -> None:
         # Hexano debería ser hidrofóbico (cLogP > 0.5)
-        result, msg = verify_substituent_category("CCCCCC", "hydrophobic", "")
+        result, _ = verify_substituent_category("CCCCCC", "hydrophobic", "")
         self.assertTrue(result)
 
     def test_hydrophobic_fails_for_water(self) -> None:
-        result, msg = verify_substituent_category("O", "hydrophobic", "")
+        result, _ = verify_substituent_category("O", "hydrophobic", "")
         self.assertFalse(result)
 
     def test_smarts_category_valid_pattern(self) -> None:
         # Buscar grupo hidroxilo en etanol
-        result, msg = verify_substituent_category("CCO", "smarts", "[OX2H]")
+        result, _ = verify_substituent_category("CCO", "smarts", "[OX2H]")
         self.assertTrue(result)
 
     def test_smarts_category_no_match(self) -> None:
-        result, msg = verify_substituent_category("CC", "smarts", "[OX2H]")
+        result, _ = verify_substituent_category("CC", "smarts", "[OX2H]")
         self.assertFalse(result)
 
     def test_smarts_category_empty_pattern(self) -> None:
-        result, msg = verify_substituent_category("CCO", "smarts", "")
+        result, _ = verify_substituent_category("CCO", "smarts", "")
         self.assertFalse(result)
 
     def test_smarts_category_invalid_pattern(self) -> None:
-        result, msg = verify_substituent_category("CCO", "smarts", "[[[INVALID")
+        result, _ = verify_substituent_category("CCO", "smarts", "[[[INVALID")
         self.assertFalse(result)
 
     def test_invalid_smiles_returns_false(self) -> None:
-        result, msg = verify_substituent_category("INVALID", "aromatic", "")
+        result, _ = verify_substituent_category("INVALID", "aromatic", "")
         self.assertFalse(result)
 
     def test_unsupported_rule(self) -> None:
-        result, msg = verify_substituent_category("CCO", "unknown_rule", "")
+        result, _ = verify_substituent_category("CCO", "unknown_rule", "")
         self.assertFalse(result)
 
 

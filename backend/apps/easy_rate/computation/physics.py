@@ -1,4 +1,4 @@
-"""_tst_physics.py: Cálculos de física cinética para Easy-rate.
+"""computation/physics.py: Calculos de fisica cinetica para Easy-rate.
 
 Objetivo: resolver viscosidades, calcular términos termodinámicos (G, H, ZPE),
 corrección de túnel de Eckart y corrección difusiva de Stokes-Einstein,
@@ -18,8 +18,8 @@ from libs.ck_test.models import TSTPrecalculatedConstants
 
 from apps.core.types import PluginLogCallback
 
-from ._gaussian_inspector import _is_finite, _to_optional_finite
-from .types import (
+from ..inspection.gaussian import _is_finite, _to_optional_finite
+from ..types import (
     EasyRateCalculationResult,
     EasyRateJobParameters,
     EasyRateStructureSnapshot,

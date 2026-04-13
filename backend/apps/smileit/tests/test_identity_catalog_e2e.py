@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from .definitions import APP_API_BASE_PATH
+from ..definitions import APP_API_BASE_PATH
 from .test_seed import SmileitSeedTestCase
 
 

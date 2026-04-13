@@ -1,13 +1,16 @@
 """test_coverage_improvements.py: Pruebas unitarias para mejorar cobertura del core.
 
 Contiene pruebas enfocadas en utilidades puras y adaptadores DB-lite
-para aumentar la cobertura de líneas no cubiertas previamente.
 """
 
 from __future__ import annotations
 
 import hashlib
 import os
+
+from django.core.exceptions import ImproperlyConfigured
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 
 from apps.core.adapters import (
     DjangoCacheRepositoryAdapter,
@@ -22,9 +25,6 @@ from apps.core.artifacts import (
 )
 from apps.core.models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
 from apps.core.ports import JobLogUpdate
-from django.core.exceptions import ImproperlyConfigured
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
 
 
 class ArtifactsUtilsTest(TestCase):

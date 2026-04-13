@@ -20,21 +20,21 @@ class BuildPipeJoinedValuesTests(TestCase):
 
     def test_empty_string_is_skipped(self) -> None:
         """Cadenas vacías o solo espacios deben ser omitidas (continue)."""
-        from .routers.exports import _build_pipe_joined_values
+        from ..routers.exports import _build_pipe_joined_values
 
         result = _build_pipe_joined_values(["CC", "", "  ", "CCO"])
         self.assertEqual(result, "CC|CCO")
 
     def test_all_empty_returns_empty_string(self) -> None:
         """Lista con solo espacios devuelve cadena vacía."""
-        from .routers.exports import _build_pipe_joined_values
+        from ..routers.exports import _build_pipe_joined_values
 
         result = _build_pipe_joined_values(["", "  ", "   "])
         self.assertEqual(result, "")
 
     def test_no_empty_preserves_all(self) -> None:
         """Sin cadenas vacías mantiene todos los valores separados por |."""
-        from .routers.exports import _build_pipe_joined_values
+        from ..routers.exports import _build_pipe_joined_values
 
         result = _build_pipe_joined_values(["a", "b", "c"])
         self.assertEqual(result, "a|b|c")
@@ -50,21 +50,21 @@ class BuildCompoundNameTests(TestCase):
 
     def test_empty_substituent_returns_principal_smiles(self) -> None:
         """Cuando substituent_smiles es vacío retorna solo principal_smiles."""
-        from .routers.exports import _build_compound_name
+        from ..routers.exports import _build_compound_name
 
         result = _build_compound_name("c1ccccc1", "", "0")
         self.assertEqual(result, "c1ccccc1")
 
     def test_empty_positions_returns_simple_sum(self) -> None:
         """Cuando applied_positions es vacío retorna 'principal + substituent'."""
-        from .routers.exports import _build_compound_name
+        from ..routers.exports import _build_compound_name
 
         result = _build_compound_name("c1ccccc1", "C", "")
         self.assertEqual(result, "c1ccccc1 + C")
 
     def test_full_name_includes_positions(self) -> None:
         """Cuando todos los campos son válidos retorna nombre completo con @."""
-        from .routers.exports import _build_compound_name
+        from ..routers.exports import _build_compound_name
 
         result = _build_compound_name("c1ccccc1", "C", "0")
         self.assertEqual(result, "c1ccccc1 + C @ 0")
@@ -80,21 +80,21 @@ class SanitizeZipEntryBaseTests(TestCase):
 
     def test_name_with_only_special_chars_uses_fallback(self) -> None:
         """Nombre con solo caracteres especiales → cleaned_name vacía → usa fallback."""
-        from .routers.exports import _sanitize_zip_entry_base
+        from ..routers.exports import _sanitize_zip_entry_base
 
         result = _sanitize_zip_entry_base("!@#$%^", "fallback_name")
         self.assertEqual(result, "fallback_name")
 
     def test_empty_name_uses_fallback(self) -> None:
         """Nombre vacío → usa fallback."""
-        from .routers.exports import _sanitize_zip_entry_base
+        from ..routers.exports import _sanitize_zip_entry_base
 
         result = _sanitize_zip_entry_base("", "fallback_001")
         self.assertEqual(result, "fallback_001")
 
     def test_valid_name_is_preserved(self) -> None:
         """Nombre alfanumérico válido se preserva."""
-        from .routers.exports import _sanitize_zip_entry_base
+        from ..routers.exports import _sanitize_zip_entry_base
 
         result = _sanitize_zip_entry_base("MyCompound123", "fallback")
         self.assertEqual(result, "MyCompound123")
@@ -110,7 +110,7 @@ class BuildDerivationsImagesZipTests(TestCase):
 
     def test_structure_with_empty_smiles_is_skipped(self) -> None:
         """Estructura con SMILES vacío debe saltar (continue) sin añadir a ZIP."""
-        from .routers.exports import build_derivations_images_zip
+        from ..routers.exports import build_derivations_images_zip
 
         results = {
             "principal_smiles": "c1ccccc1",
@@ -132,7 +132,7 @@ class BuildDerivationsImagesZipTests(TestCase):
 
     def test_duplicate_file_base_gets_suffix(self) -> None:
         """Dos estructuras con el mismo nombre deben generar nombres de archivo únicos."""
-        from .routers.exports import build_derivations_images_zip
+        from ..routers.exports import build_derivations_images_zip
 
         # Usamos SMILES que generen SVG real (no mocked)
         results = {
@@ -165,7 +165,7 @@ class BuildDerivationsImagesZipTests(TestCase):
 
     def test_empty_svg_structure_is_skipped(self) -> None:
         """Estructura que genera SVG vacío debe saltar (continue) sin añadir al ZIP."""
-        from .routers.exports import build_derivations_images_zip
+        from ..routers.exports import build_derivations_images_zip
 
         with patch(
             "apps.smileit.routers.exports.render_derivative_svg_with_substituent_highlighting",
@@ -202,7 +202,7 @@ class BuildSmileitSummaryPayloadTests(TestCase):
 
     def test_non_dict_results_returns_payload_unchanged(self) -> None:
         """Cuando results no es un dict, debe retornar payload sin modificarlo."""
-        from .routers.exports import build_smileit_summary_payload
+        from ..routers.exports import build_smileit_summary_payload
 
         mock_job = MagicMock()
         with patch(
@@ -229,14 +229,14 @@ class ResolveJobStructureByIndexTests(TestCase):
 
     def test_none_results_returns_none(self) -> None:
         """Cuando results es None debe retornar None."""
-        from .routers.exports import resolve_job_structure_by_index
+        from ..routers.exports import resolve_job_structure_by_index
 
         result = resolve_job_structure_by_index(None, 0)
         self.assertIsNone(result)
 
     def test_negative_index_returns_none(self) -> None:
         """Índice negativo debe retornar None."""
-        from .routers.exports import resolve_job_structure_by_index
+        from ..routers.exports import resolve_job_structure_by_index
 
         results = {  # type: ignore[assignment]
             "generated_structures": [{"smiles": "CC"}],
@@ -247,7 +247,7 @@ class ResolveJobStructureByIndexTests(TestCase):
 
     def test_out_of_range_index_returns_none(self) -> None:
         """Índice >= len(structures) debe retornar None."""
-        from .routers.exports import resolve_job_structure_by_index
+        from ..routers.exports import resolve_job_structure_by_index
 
         results = {  # type: ignore[assignment]
             "generated_structures": [{"smiles": "CC"}],
@@ -258,7 +258,7 @@ class ResolveJobStructureByIndexTests(TestCase):
 
     def test_valid_index_returns_structure(self) -> None:
         """Índice válido debe retornar la estructura correspondiente."""
-        from .routers.exports import resolve_job_structure_by_index
+        from ..routers.exports import resolve_job_structure_by_index
 
         structure = {"smiles": "CCO", "name": "ethanol"}
         results = {  # type: ignore[assignment]
@@ -275,7 +275,7 @@ class BuildStructuresExportsContractTests(TestCase):
 
     def test_csv_includes_name_column_as_first_field(self) -> None:
         """El CSV debe exponer la columna name como primer campo usando d{jobName}{N}."""
-        from .routers.exports import build_structures_csv
+        from ..routers.exports import build_structures_csv
 
         content = build_structures_csv(
             {
@@ -308,7 +308,7 @@ class BuildStructuresExportsContractTests(TestCase):
 
     def test_smiles_export_contains_only_principal_and_derivative_smiles(self) -> None:
         """El export SMILES/TXT debe contener solo líneas SMILES sin nombres tabulados."""
-        from .routers.exports import build_enumerated_smiles_export
+        from ..routers.exports import build_enumerated_smiles_export
 
         content = build_enumerated_smiles_export(
             {

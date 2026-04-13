@@ -1,4 +1,4 @@
-"""test_gaussian_unit.py: Tests unitarios para _gaussian_inspector.py.
+"""test_gaussian_unit.py: Tests unitarios para inspection/gaussian.py.
 
 Objetivo: Cubrir rutas de validación y normalización en el inspector Gaussian
 que no son alcanzadas por los tests de integración HTTP existentes.
@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from ._gaussian_inspector import (
+from .inspection.gaussian import (
     _build_structure_snapshot,
     _collect_structure_validation_errors,
     _parse_gaussian_execution,

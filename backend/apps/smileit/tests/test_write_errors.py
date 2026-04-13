@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from rest_framework.test import APIClient
 
-from .definitions import APP_API_BASE_PATH
+from ..definitions import APP_API_BASE_PATH
 from .test_seed import SmileitSeedTestCase
 
 

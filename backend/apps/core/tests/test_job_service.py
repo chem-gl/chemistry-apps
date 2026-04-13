@@ -19,19 +19,19 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from .adapters import DjangoJobLogPublisherAdapter
-from .artifacts import ScientificInputArtifactStorageService
-from .models import (
+from ..adapters import DjangoJobLogPublisherAdapter
+from ..artifacts import ScientificInputArtifactStorageService
+from ..models import (
     ScientificCacheEntry,
     ScientificJob,
     ScientificJobInputArtifact,
     ScientificJobLogEvent,
 )
-from .ports import JobLogUpdate
-from .processing import PluginRegistry
-from .services import JobService
-from .services.cache_operations import generate_job_hash
-from .types import JSONMap
+from ..ports import JobLogUpdate
+from ..processing import PluginRegistry
+from ..services import JobService
+from ..services.cache_operations import generate_job_hash
+from ..types import JSONMap
 
 
 def _factorial_value(operand: float) -> float:

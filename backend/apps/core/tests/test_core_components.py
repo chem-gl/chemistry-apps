@@ -19,17 +19,17 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from .app_registry import ScientificAppDefinition, ScientificAppRegistry
-from .models import ScientificJob, ScientificJobLogEvent
-from .processing import PluginRegistry
-from .realtime import (
+from ..app_registry import ScientificAppDefinition, ScientificAppRegistry
+from ..models import ScientificJob, ScientificJobLogEvent
+from ..processing import PluginRegistry
+from ..realtime import (
     broadcast_job_log,
     broadcast_job_update,
     build_job_log_entry,
     build_job_progress_snapshot,
     build_scientific_job_payload,
 )
-from .types import JSONMap
+from ..types import JSONMap
 
 PluginSourceCallable = Callable[[JSONMap], JSONMap]
 

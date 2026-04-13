@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from .catalog import (
+from ..catalog import (
     CategoryValidationResult,
     _assert_anchor_indices,
     _is_substituent_user_editable,

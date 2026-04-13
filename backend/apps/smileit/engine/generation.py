@@ -1,8 +1,8 @@
-"""_smileit_engine.py: Motor de generación combinatoria y progreso para Smile-it.
+"""engine/generation.py: Motor de generacion combinatoria y progreso para Smile-it.
 
 Objetivo: contener las funciones de progreso/log, materialización de resultados
 y el bucle principal de generación de derivados por rondas de sustitución.
-Importa estructuras de datos y utilidades desde _smileit_builders.
+Importa estructuras de datos y utilidades desde engine/builders.py.
 """
 
 from __future__ import annotations
@@ -11,7 +11,12 @@ from typing import Final, cast
 
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
-from ._smileit_builders import (
+from ..types import (
+    SmileitGeneratedStructure,
+    SmileitSubstitutionTraceEvent,
+    SmileitTraceabilityRow,
+)
+from .builders import (
     ExpansionContext,
     ExpansionSummary,
     FusionAttemptKey,
@@ -27,16 +32,9 @@ from ._smileit_builders import (
     _resolve_pending_fusion_attempts,
     _sort_traceability_events,
 )
-from .engine import (
-    _score_principal_match_for_sites,
-    is_fusion_candidate_viable,
-    parse_smiles_cached,
-)
-from .types import (
-    SmileitGeneratedStructure,
-    SmileitSubstitutionTraceEvent,
-    SmileitTraceabilityRow,
-)
+from .fusion import is_fusion_candidate_viable
+from .parsing import parse_smiles_cached
+from .rendering import _score_principal_match_for_sites
 
 SMILEIT_LOG_SOURCE: Final[str] = "smileit.plugin"
 LOG_PROGRESS_BATCH_SIZE: Final[int] = 50

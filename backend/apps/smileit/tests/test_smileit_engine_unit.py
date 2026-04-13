@@ -1,4 +1,4 @@
-"""test_smileit_engine_unit.py: Tests unitarios para _smileit_engine.py.
+"""test_smileit_engine_unit.py: Tests unitarios para engine/generation.py.
 
 Objetivo: Cubrir funciones de progreso, log y trazabilidad del motor de
 generación combinatoria que no son alcanzadas por los tests de integración.
@@ -9,8 +9,8 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from ._smileit_builders import SiteOption
-from ._smileit_engine import (
+from ..engine.builders import SiteOption
+from ..engine.generation import (
     _build_generation_progress_percentage,
     _build_render_progress_percentage,
     _emit_log,
@@ -305,15 +305,15 @@ class GenerateDerivativesEmbeddingExpansionTests(TestCase):
 
         with (
             patch(
-                "apps.smileit._smileit_engine._resolve_principal_site_index_maps_for_node",
+                "apps.smileit.engine.generation._resolve_principal_site_index_maps_for_node",
                 side_effect=fake_resolve,
             ),
             patch(
-                "apps.smileit._smileit_engine.is_fusion_candidate_viable",
+                "apps.smileit.engine.generation.is_fusion_candidate_viable",
                 return_value=True,
             ),
             patch(
-                "apps.smileit._smileit_builders.fuse_molecules",
+                "apps.smileit.engine.builders.fuse_molecules",
                 side_effect=fake_fuse,
             ) as mocked_fuse,
         ):

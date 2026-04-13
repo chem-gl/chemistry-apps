@@ -1,4 +1,4 @@
-"""_gaussian_inspector.py: Inspección y parseo de archivos Gaussian para Easy-rate.
+"""inspection/gaussian.py: Inspeccion y parseo de archivos Gaussian para Easy-rate.
 
 Objetivo: parsear archivos log de Gaussian, construir snapshots de estructura
 termodinámica y validar cada archivo según el rol esperado (reactivo, producto, TS).
@@ -12,7 +12,7 @@ import math
 from libs.gaussian_log_parser.models import GaussianExecution
 from libs.gaussian_log_parser.parsers import GaussianLogParser
 
-from .types import (
+from ..types import (
     EasyRateInspectionExecutionSummary,
     EasyRateInspectionResult,
     EasyRateStructureSnapshot,

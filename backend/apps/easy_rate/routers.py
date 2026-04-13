@@ -117,7 +117,7 @@ class EasyRateJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            from ._gaussian_inspector import inspect_easy_rate_gaussian_blob
+            from .inspection.gaussian import inspect_easy_rate_gaussian_blob
         except ModuleNotFoundError:
             return Response(
                 {

@@ -6,7 +6,7 @@ Objetivo del archivo:
 - Complementar los tests exhaustivos de tests.py sin duplicar lógica de negocio.
 
 Cómo se usa:
-- Ejecutar con `poetry run python manage.py test apps.smileit.test_extended`.
+- Ejecutar con `poetry run python manage.py test apps.smileit.tests.test_extended`.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from rest_framework.test import APIClient
 from apps.core.models import ScientificJob
 from apps.core.services import JobService
 
-from .definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
+from ..definitions import APP_API_BASE_PATH, DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from .test_seed import SmileitSeedTestCase
 
 ROUTER_MODULE = "apps.smileit.routers.viewset_write"
@@ -204,7 +204,7 @@ class SmileitContractTests(SmileitSeedTestCase):
 
     def test_contract_exposes_required_interface(self) -> None:
         """El contrato debe tener plugin_name, execute y supports_pause_resume."""
-        from .contract import get_smileit_contract
+        from ..contract import get_smileit_contract
 
         contract = get_smileit_contract()
         for key in ("plugin_name", "version", "execute", "supports_pause_resume"):

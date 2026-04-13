@@ -16,7 +16,7 @@ import uuid
 
 from django.test import TestCase
 
-from .models import (
+from ..models import (
     SmileitCategory,
     SmileitPattern,
     SmileitSubstituent,

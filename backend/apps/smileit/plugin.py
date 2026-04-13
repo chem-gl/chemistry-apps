@@ -1,9 +1,9 @@
 """plugin.py: Plugin Smile-it — normalización de parámetros y registro del plugin.
 
-Objetivo: parsear y normalizar el payload del job Smile-it, delegar la generación
-combinatoria a _smileit_engine y registrar el plugin en PluginRegistry.
-La lógica pesada de generación y las estructuras de datos internas viven en
-_smileit_builders.py y _smileit_engine.py respectivamente.
+Objetivo: parsear y normalizar el payload del job Smile-it, delegar la generacion
+combinatoria al paquete engine y registrar el plugin en PluginRegistry.
+La logica pesada de generacion y las estructuras de datos internas viven en
+engine/builders.py y engine/generation.py respectivamente.
 """
 
 from __future__ import annotations
@@ -13,13 +13,6 @@ from typing import cast
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
-from ._smileit_builders import _build_site_option_map
-from ._smileit_engine import (
-    SMILEIT_LOG_SOURCE,
-    _emit_log,
-    _generate_derivatives,
-    _materialize_generated_structures,
-)
 from .definitions import (
     DEFAULT_EXPORT_PADDING,
     MAX_NUM_BONDS,
@@ -27,6 +20,13 @@ from .definitions import (
     PLUGIN_NAME,
 )
 from .engine import canonicalize_smiles, clear_smileit_caches
+from .engine.builders import _build_site_option_map
+from .engine.generation import (
+    SMILEIT_LOG_SOURCE,
+    _emit_log,
+    _generate_derivatives,
+    _materialize_generated_structures,
+)
 from .types import (
     SmileitInput,
     SmileitResolvedAssignmentBlock,

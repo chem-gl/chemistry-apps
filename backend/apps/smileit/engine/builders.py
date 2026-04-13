@@ -1,8 +1,8 @@
-"""_smileit_builders.py: Estructuras de datos internas y constructores del motor Smile-it.
+"""engine/builders.py: Estructuras de datos internas y constructores del motor Smile-it.
 
 Objetivo: definir dataclasses de estado (GeneratedNode, ExpansionContext, SiteOption, etc.)
 y las funciones que construyen opciones de sitio, ordenan trazabilidad y resuelven fusiones
-en paralelo. No depende de _smileit_engine ni de plugin para evitar ciclos.
+en paralelo. No depende de engine/generation ni de plugin para evitar ciclos.
 """
 
 from __future__ import annotations
@@ -12,15 +12,15 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Final
 
-from ._naming import build_derivative_identifier
-from .engine import fuse_molecules
-from .types import (
+from .._naming import build_derivative_identifier
+from ..types import (
     SmileitPlaceholderAssignment,
     SmileitResolvedAssignmentBlock,
     SmileitResolvedSubstituent,
     SmileitSubstitutionTraceEvent,
     SmileitTraceabilityRow,
 )
+from .fusion import fuse_molecules
 
 GENERATION_CONCURRENCY_MIN_BATCH: Final[int] = 8
 MAX_GENERATION_WORKERS: Final[int] = max(1, min(8, (os.cpu_count() or 2)))
