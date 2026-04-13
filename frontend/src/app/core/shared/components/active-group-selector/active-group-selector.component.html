@@ -2,7 +2,7 @@
 @if (isVisible()) {
 <div class="group-selector" [class.is-open]="isDropdownOpen()">
     <button class="selector-trigger" type="button" (click)="toggleDropdown()" [attr.aria-expanded]="isDropdownOpen()"
-        aria-haspopup="menu">
+        aria-haspopup="menu" data-testid="active-group-selector-trigger">
         <span class="selector-icon" aria-hidden="true">◈</span>
         <span class="selector-label">{{ activeGroupLabel() }}</span>
         <span class="selector-caret" aria-hidden="true">▾</span>
@@ -17,6 +17,7 @@
         <div class="menu-item">
             <button class="menu-option" type="button" [class.is-selected]="isSelected(option)"
                 [class.is-root]="option.isRootOption" [attr.aria-current]="isSelected(option) ? 'true' : null"
+                [attr.data-testid]="option.isRootOption ? 'group-option-root' : 'group-option-' + option.id"
                 (click)="selectOption(option)">
                 <span class="option-label">{{ option.label }}</span>
                 <span class="option-sub">{{ option.sublabel }}</span>

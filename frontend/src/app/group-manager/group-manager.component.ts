@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { forkJoin } from 'rxjs';
+import { forkJoin, switchMap } from 'rxjs';
 import {
   AppPermissionView,
   GroupMembershipView,
@@ -54,21 +54,12 @@ export class GroupManagerComponent implements OnInit {
 
   /** IDs de grupos que el usuario actual puede administrar. */
   readonly managedGroupIds = computed<number[]>(() => {
-    if (this.sessionService.hasRootAccess()) {
-      return this.groups().map((g) => g.id);
-    }
-    const currentUser = this.sessionService.currentUser();
-    if (currentUser === null) return [];
-    return this.memberships()
-      .filter((m) => m.user === currentUser.id && m.role_in_group === 'admin')
-      .map((m) => m.group);
+    return this.sessionService.resolveManagedGroupIds(this.groups(), this.memberships());
   });
 
   /** Grupos visibles para el usuario (root ve todos, admin ve los suyos). */
   readonly visibleGroups = computed<WorkGroupView[]>(() => {
-    if (this.sessionService.hasRootAccess()) return this.groups();
-    const managed = this.managedGroupIds();
-    return this.groups().filter((g) => managed.includes(g.id));
+    return this.sessionService.resolveVisibleGroups(this.groups(), this.managedGroupIds());
   });
 
   readonly createGroupForm = signal<CreateGroupForm>({ name: '', slug: '', description: '' });
@@ -121,8 +112,8 @@ export class GroupManagerComponent implements OnInit {
     const perm = this.appPermissions().find(
       (p) => p.group === groupId && p.app_name === appKey && p.user === null,
     );
-    // Sin regla explícita: habilitado por defecto (comportamiento de autorización_service.py)
-    return perm?.is_enabled ?? true;
+    // Sin regla explícita: denegado por defecto hasta que exista una regla del grupo.
+    return perm?.is_enabled ?? false;
   }
 
   submitCreateGroup(): void {
@@ -131,9 +122,9 @@ export class GroupManagerComponent implements OnInit {
     this.isSubmitting.set(true);
     this.identityApiService.createGroup(form).subscribe({
       next: (newGroup) => {
-        this.groups.update((list) => [...list, newGroup]);
         this.createGroupForm.set({ name: '', slug: '', description: '' });
         this.successMessage.set(`Grupo "${newGroup.name}" creado correctamente.`);
+        this.loadData();
         this.isSubmitting.set(false);
       },
       error: () => {
@@ -201,6 +192,9 @@ export class GroupManagerComponent implements OnInit {
           next: (created) => {
             this.appPermissions.update((list) => [...list, created]);
           },
+          error: (err: { error?: { detail?: string } }) => {
+            this.errorMessage.set(err?.error?.detail ?? 'Error al crear el permiso de app.');
+          },
         });
     } else {
       this.identityApiService
@@ -211,19 +205,30 @@ export class GroupManagerComponent implements OnInit {
               list.map((p) => (p.id === existing.id ? updated : p)),
             );
           },
+          error: (err: { error?: { detail?: string } }) => {
+            this.errorMessage.set(err?.error?.detail ?? 'Error al actualizar el permiso de app.');
+          },
         });
     }
   }
 
   deleteGroup(groupId: number): void {
     if (!confirm('¿Seguro que deseas eliminar este grupo? Esta acción es irreversible.')) return;
-    this.identityApiService.deleteGroup(groupId).subscribe({
-      next: () => {
-        this.groups.update((list) => list.filter((g) => g.id !== groupId));
-        if (this.expandedGroupId() === groupId) this.expandedGroupId.set(null);
-        this.successMessage.set('Grupo eliminado correctamente.');
-      },
-      error: () => this.errorMessage.set('Error al eliminar el grupo.'),
-    });
+    this.isSubmitting.set(true);
+    this.identityApiService
+      .deleteGroup(groupId)
+      .pipe(switchMap(() => this.sessionService.reloadSessionData()))
+      .subscribe({
+        next: () => {
+          if (this.expandedGroupId() === groupId) this.expandedGroupId.set(null);
+          this.successMessage.set('Grupo eliminado correctamente.');
+          this.loadData();
+          this.isSubmitting.set(false);
+        },
+        error: (err: { error?: { detail?: string } }) => {
+          this.errorMessage.set(err?.error?.detail ?? 'Error al eliminar el grupo.');
+          this.isSubmitting.set(false);
+        },
+      });
   }
 }

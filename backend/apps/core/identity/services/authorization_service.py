@@ -137,17 +137,18 @@ class AuthorizationService:
 
     @staticmethod
     def can_access_app(actor: AbstractUser, app_name: str) -> bool:
-        # Root siempre puede acceder a todas las apps sin importar reglas explícitas
-        if AuthorizationService.is_root(actor):
+        # Root/Admin siempre pueden acceder al catálogo completo.
+        if AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor):
             return True
 
-        actor_group_ids = AuthorizationService._group_ids_for_user(actor)
-        group_rule = AuthorizationService._get_group_app_permission(
-            actor_group_ids=actor_group_ids,
-            app_name=app_name,
-        )
-        if group_rule is not None:
-            return bool(group_rule.is_enabled)
+        primary_group_id = AuthorizationService.get_primary_group_id(actor)
+        if primary_group_id is not None:
+            primary_group_rule = AppPermission.objects.filter(
+                app_name=app_name,
+                group_id=int(primary_group_id),
+            ).first()
+            if primary_group_rule is not None:
+                return bool(primary_group_rule.is_enabled)
 
         user_rule = AuthorizationService._get_user_app_permission(
             actor_id=actor.id,
@@ -156,7 +157,7 @@ class AuthorizationService:
         if user_rule is not None:
             return bool(user_rule.is_enabled)
 
-        return True
+        return False
 
     @staticmethod
     def list_accessible_apps(
@@ -170,15 +171,17 @@ class AuthorizationService:
         ese grupo — solo apps con `AppPermission` habilitada para ese grupo (o
         permisos root globales) se marcan como `enabled`. Esto soporta el modo
         de selección de grupo activo en el frontend.
+
+        Sin filtro explícito:
+        - Root ve todas las apps (con permisos globales)
+        - Admin ve todas las apps (sin restricción por grupo)
+        - User ve solo apps de su grupo primario
         """
         accessible_apps: list[dict[str, object]] = []
-
-        # Para el filtro estricto por grupo activo usamos solo ese grupo_id.
-        # Sin filtro, usamos todos los grupos del actor (comportamiento original).
-        if active_group_id is not None:
-            effective_group_ids: set[int] = {active_group_id}
-        else:
-            effective_group_ids = AuthorizationService._group_ids_for_user(actor)
+        effective_group_ids = AuthorizationService._resolve_effective_group_ids(
+            actor=actor,
+            active_group_id=active_group_id,
+        )
 
         for definition in ScientificAppRegistry.list_definitions():
             group_rule = AuthorizationService._get_group_app_permission(
@@ -189,17 +192,13 @@ class AuthorizationService:
                 actor_id=actor.id,
                 app_name=definition.plugin_name,
             )
-
-            # Root siempre habilitado; de lo contrario evaluar regla del grupo activo.
-            if AuthorizationService.is_root(actor):
-                is_enabled = True
-            elif group_rule is not None:
-                is_enabled = bool(group_rule.is_enabled)
-            elif user_rule is not None:
-                is_enabled = bool(user_rule.is_enabled)
-            else:
-                # Sin regla explícita: acceso permitido (comportamiento por defecto)
-                is_enabled = active_group_id is None
+            is_enabled = AuthorizationService._resolve_app_enabled_state(
+                actor=actor,
+                active_group_id=active_group_id,
+                effective_group_ids=effective_group_ids,
+                group_rule=group_rule,
+                user_rule=user_rule,
+            )
 
             accessible_apps.append(
                 {
@@ -219,6 +218,67 @@ class AuthorizationService:
             )
 
         return accessible_apps
+
+    @staticmethod
+    def _resolve_effective_group_ids(
+        *, actor: AbstractUser, active_group_id: int | None
+    ) -> set[int]:
+        """Resuelve los grupos que participan en la evaluación de permisos."""
+        if active_group_id is not None:
+            return {active_group_id}
+
+        if AuthorizationService.is_root(actor):
+            return AuthorizationService._group_ids_for_user(actor)
+
+        if AuthorizationService.is_admin(actor):
+            # Admin sin filtro ve catálogo completo, sin restricción de grupo.
+            return set()
+
+        primary_group_id = AuthorizationService.get_primary_group_id(actor)
+        return set() if primary_group_id is None else {int(primary_group_id)}
+
+    @staticmethod
+    def _resolve_app_enabled_state(
+        *,
+        actor: AbstractUser,
+        active_group_id: int | None,
+        effective_group_ids: set[int],
+        group_rule: AppPermission | None,
+        user_rule: AppPermission | None,
+    ) -> bool:
+        """Determina el estado final de habilitación de una app para el actor."""
+        if AuthorizationService.is_root(actor):
+            return True
+
+        if AuthorizationService._is_admin_catalog_view(
+            actor=actor,
+            active_group_id=active_group_id,
+            effective_group_ids=effective_group_ids,
+        ):
+            return True
+
+        if group_rule is not None:
+            return bool(group_rule.is_enabled)
+
+        if user_rule is not None:
+            return bool(user_rule.is_enabled)
+
+        # Sin regla explícita: sin acceso para usuarios no-root.
+        return False
+
+    @staticmethod
+    def _is_admin_catalog_view(
+        *,
+        actor: AbstractUser,
+        active_group_id: int | None,
+        effective_group_ids: set[int],
+    ) -> bool:
+        """Indica si el admin está en modo de catálogo global (sin filtro de grupo)."""
+        return (
+            AuthorizationService.is_admin(actor)
+            and active_group_id is None
+            and len(effective_group_ids) == 0
+        )
 
     @staticmethod
     def get_effective_app_config(
@@ -250,6 +310,13 @@ class AuthorizationService:
             group_id=group_id,
             role_in_group=GroupMembership.ROLE_ADMIN,
         ).exists()
+
+    @staticmethod
+    def can_access_group(actor: AbstractUser, group_id: int) -> bool:
+        """Valida si el actor pertenece al grupo solicitado o tiene alcance root."""
+        if AuthorizationService.is_root(actor):
+            return True
+        return group_id in AuthorizationService._group_ids_for_user(actor)
 
     @staticmethod
     def _group_ids_for_user(actor: AbstractUser) -> set[int]:
@@ -329,14 +396,15 @@ class AuthorizationService:
 
     @staticmethod
     def _get_group_app_config(actor: AbstractUser, app_name: str) -> dict[str, object]:
-        actor_group_ids = AuthorizationService._group_ids_for_user(actor)
-        group_config = (
-            GroupAppConfig.objects.filter(
-                app_name=app_name, group_id__in=actor_group_ids
-            )
-            .order_by("-updated_at")
-            .first()
-        )
+        # Resolución implícita por grupo primario para evitar mezcla de capas entre grupos.
+        primary_group_id = AuthorizationService.get_primary_group_id(actor)
+        if primary_group_id is None:
+            return {}
+
+        group_config = GroupAppConfig.objects.filter(
+            app_name=app_name,
+            group_id=int(primary_group_id),
+        ).first()
         if group_config is None:
             return {}
         return dict(group_config.config)

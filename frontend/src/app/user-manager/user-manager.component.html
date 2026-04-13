@@ -186,8 +186,8 @@
                     {{ 'userManager.createUser.primaryGroup' | transloco }}
                     <select class="form-select" [ngModel]="createUserForm().primary_group_id"
                         (ngModelChange)="createUserForm.update(f => ({ ...f, primary_group_id: $event }))"
-                        name="primary_group_id">
-                        <option value="">{{ 'userManager.createUser.noPrimaryGroup' | transloco }}</option>
+                        name="primary_group_id" required>
+                        <option value="" disabled>{{ 'userManager.createUser.noPrimaryGroup' | transloco }}</option>
                         @for (group of visibleGroups(); track group.id) {
                         <option [value]="group.id">{{ group.name }}</option>
                         }

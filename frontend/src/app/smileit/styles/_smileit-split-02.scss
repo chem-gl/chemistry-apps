@@ -336,6 +336,51 @@
   margin-top: 0.95rem;
 }
 
+.catalog-panel .collapsed-panel-card {
+  position: relative;
+  padding-top: 2.7rem;
+}
+
+.catalog-panel .collapsed-panel-card .collapsed-toggle {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  min-width: 2rem;
+  padding-inline: 0.6rem;
+  text-align: center;
+}
+
+.catalog-panel .catalog-browser-panel {
+  position: relative;
+  padding-top: 2.7rem;
+}
+
+.catalog-panel .catalog-browser-panel .expanded-toggle {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  min-width: 2rem;
+  padding-inline: 0.6rem;
+  text-align: center;
+}
+
+.catalog-panel .catalog-collapsed-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.catalog-panel .catalog-collapsed-metrics p {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.58rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 999px;
+  background: var(--chem-surface);
+}
+
 .catalog-editor-summary {
   margin-top: 0.8rem;
 }

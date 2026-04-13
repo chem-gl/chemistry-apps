@@ -128,10 +128,26 @@ export class SmileitComponent implements OnInit, OnDestroy {
   );
   @ViewChild('patternCatalogDialog')
   private readonly patternCatalogDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('patternCatalogModalBody')
+  private readonly patternCatalogModalBodyRef?: ElementRef<HTMLElement>;
+  @ViewChild('patternNameInput')
+  private readonly patternNameInputRef?: ElementRef<HTMLInputElement>;
   @ViewChild('patternDetailDialog')
   private readonly patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly patternEntries = computed<SmileitPatternEntryView[]>(() => this.workflow.patterns());
+  readonly editingPatternEntry = computed<SmileitPatternEntryView | null>(() => {
+    const editingStableId: string | null = this.workflow.patternEditingStableId();
+    if (editingStableId === null) {
+      return null;
+    }
+
+    return (
+      this.patternEntries().find((patternEntry: SmileitPatternEntryView) => {
+        return patternEntry.stable_id === editingStableId;
+      }) ?? null
+    );
+  });
 
   /**
    * Texto plano condensado de todos los logs para mostrar en un textbox con scroll.
@@ -324,6 +340,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   beginPatternEntryEdition(pattern: SmileitPatternEntryView): void {
     this.workflow.catalog.beginPatternEntryEdition(pattern);
+    this.bringPatternEditorToTop();
   }
 
   cancelPatternEdition(): void {
@@ -337,6 +354,10 @@ export class SmileitComponent implements OnInit, OnDestroy {
     if (selectedPattern !== null && selectedPattern.stable_id === pattern.stable_id) {
       this.closePatternDetail();
     }
+  }
+
+  isPatternBeingEdited(pattern: SmileitPatternEntryView): boolean {
+    return this.workflow.patternEditingStableId() === pattern.stable_id;
   }
 
   openLibraryEntryDetail(
@@ -431,6 +452,20 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   private resolveAtomIndexFromPointer(mouseEvent: MouseEvent): number | null {
     return this.inspectionService.extractAtomIndexFromEvent(mouseEvent);
+  }
+
+  /**
+   * Lleva el formulario de edición al área visible superior del modal y enfoca el primer campo.
+   */
+  private bringPatternEditorToTop(): void {
+    const modalBody: HTMLElement | undefined = this.patternCatalogModalBodyRef?.nativeElement;
+    if (modalBody !== undefined) {
+      modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    setTimeout(() => {
+      this.patternNameInputRef?.nativeElement.focus({ preventScroll: true });
+    }, 0);
   }
 
   private syncVisibleLibraryPreviews(): void {

@@ -2,24 +2,19 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  Observable,
-  catchError,
-  finalize,
-  forkJoin,
-  map,
-  of,
-  shareReplay,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { Observable, catchError, finalize, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import {
   AuthApiService,
   CurrentUserProfileView,
   SessionTokens,
   UserMembershipSummary,
 } from '../api/auth-api.service';
-import { AccessibleScientificAppView, IdentityApiService } from '../api/identity-api.service';
+import {
+  AccessibleScientificAppView,
+  GroupMembershipView,
+  IdentityApiService,
+  WorkGroupView,
+} from '../api/identity-api.service';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'chemistry-apps.access-token';
 const REFRESH_TOKEN_STORAGE_KEY = 'chemistry-apps.refresh-token';
@@ -52,6 +47,8 @@ export class IdentitySessionService {
   private readonly router = inject(Router);
 
   private sessionInitialization$: Observable<boolean> | null = null;
+  private tokenRefreshTimerId: ReturnType<typeof globalThis.setTimeout> | null = null;
+  private accessibleAppsRequestSequence = 0;
 
   readonly status = signal<SessionStatus>('idle');
   readonly accessToken = signal<string | null>(this.readStorageValue(ACCESS_TOKEN_STORAGE_KEY));
@@ -162,11 +159,10 @@ export class IdentitySessionService {
     this.activeGroupId.set(groupId);
     this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, groupId === null ? null : String(groupId));
 
-    // Recargar apps accesibles con el nuevo filtro de grupo
     if (this.isAuthenticated()) {
-      this.identityApiService
-        .listAccessibleApps(groupId ?? undefined)
-        .subscribe((apps) => this.accessibleApps.set(apps));
+      const requestedGroupId =
+        this.hasRootAccess() && this.isRootViewContext() ? undefined : (groupId ?? undefined);
+      this.refreshAccessibleApps(requestedGroupId);
     }
   }
 
@@ -177,9 +173,7 @@ export class IdentitySessionService {
 
     if (this.isAuthenticated()) {
       const groupId = isRootView ? undefined : (this.activeGroupId() ?? undefined);
-      this.identityApiService
-        .listAccessibleApps(groupId)
-        .subscribe((apps) => this.accessibleApps.set(apps));
+      this.refreshAccessibleApps(groupId);
     }
   }
 
@@ -244,10 +238,7 @@ export class IdentitySessionService {
 
     return this.authApiService.refresh(storedRefreshToken).pipe(
       tap((tokens: SessionTokens) => {
-        this.accessToken.set(tokens.accessToken);
-        this.refreshToken.set(tokens.refreshToken);
-        this.writeStorageValue(ACCESS_TOKEN_STORAGE_KEY, tokens.accessToken);
-        this.writeStorageValue(REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken);
+        this.persistTokens(tokens);
       }),
       map((tokens: SessionTokens) => tokens.accessToken),
       catchError(() => {
@@ -263,11 +254,11 @@ export class IdentitySessionService {
     }
 
     return this.fetchSessionPayload().pipe(
-      tap(({ accessibleApps, currentUser }) => {
+      tap(({ accessibleApps, currentUser, resolvedGroupId }) => {
         this.currentUser.set(currentUser);
-        this.accessibleApps.set(accessibleApps);
         this.status.set('authenticated');
-        this._reconcileActiveGroup(currentUser);
+        this.activeGroupId.set(resolvedGroupId);
+        this.accessibleApps.set(accessibleApps);
       }),
       map(() => true),
       catchError(() => of(false)),
@@ -276,6 +267,46 @@ export class IdentitySessionService {
 
   canAccessRoute(routeKey: string): boolean {
     return this.enabledRouteKeys().includes(routeKey);
+  }
+
+  /**
+   * Calcula los IDs de grupos que el usuario actual puede administrar.
+   * Root administra todos los grupos; admin de grupo administra solo sus membresías admin.
+   */
+  resolveManagedGroupIds(
+    groups: ReadonlyArray<WorkGroupView>,
+    memberships: ReadonlyArray<GroupMembershipView>,
+  ): number[] {
+    if (this.hasRootAccess()) {
+      return groups.map((groupItem) => groupItem.id);
+    }
+
+    const currentUser = this.currentUser();
+    if (currentUser === null) {
+      return [];
+    }
+
+    return memberships
+      .filter(
+        (membershipItem) =>
+          membershipItem.user === currentUser.id && membershipItem.role_in_group === 'admin',
+      )
+      .map((membershipItem) => membershipItem.group);
+  }
+
+  /**
+   * Filtra grupos visibles para el usuario actual.
+   * Root ve todos; el resto solo los grupos administrables.
+   */
+  resolveVisibleGroups(
+    groups: ReadonlyArray<WorkGroupView>,
+    managedGroupIds: ReadonlyArray<number>,
+  ): WorkGroupView[] {
+    if (this.hasRootAccess()) {
+      return [...groups];
+    }
+
+    return groups.filter((groupItem) => managedGroupIds.includes(groupItem.id));
   }
 
   canViewJob(jobIdentity: ManagedJobIdentity): boolean {
@@ -355,13 +386,13 @@ export class IdentitySessionService {
   }
 
   private loadRemoteSession(): Observable<boolean> {
-    const activeId = this.activeGroupId();
-    return this.fetchSessionPayload(activeId ?? undefined).pipe(
-      tap(({ accessibleApps, currentUser }) => {
+    return this.fetchSessionPayload().pipe(
+      tap(({ accessibleApps, currentUser, resolvedGroupId }) => {
         this.currentUser.set(currentUser);
-        this.accessibleApps.set(accessibleApps);
+        this.activeGroupId.set(resolvedGroupId);
         this.status.set('authenticated');
-        this._reconcileActiveGroup(currentUser);
+        this.accessibleApps.set(accessibleApps);
+        this.scheduleTokenRefresh();
       }),
       map(() => true),
       catchError(() => {
@@ -376,12 +407,13 @@ export class IdentitySessionService {
             if (nextAccessToken === null) {
               return of(false);
             }
-            return this.fetchSessionPayload(activeId ?? undefined).pipe(
-              tap(({ accessibleApps, currentUser }) => {
+            return this.fetchSessionPayload().pipe(
+              tap(({ accessibleApps, currentUser, resolvedGroupId }) => {
                 this.currentUser.set(currentUser);
-                this.accessibleApps.set(accessibleApps);
+                this.activeGroupId.set(resolvedGroupId);
                 this.status.set('authenticated');
-                this._reconcileActiveGroup(currentUser);
+                this.accessibleApps.set(accessibleApps);
+                this.scheduleTokenRefresh();
               }),
               map(() => true),
               catchError(() => {
@@ -395,42 +427,64 @@ export class IdentitySessionService {
     );
   }
 
-  private fetchSessionPayload(groupId?: number): Observable<{
+  private fetchSessionPayload(): Observable<{
     currentUser: CurrentUserProfileView;
     accessibleApps: AccessibleScientificAppView[];
+    resolvedGroupId: number | null;
   }> {
-    return forkJoin({
-      currentUser: this.authApiService.getCurrentUserProfile(),
-      accessibleApps: this.identityApiService.listAccessibleApps(groupId),
-    });
+    return this.authApiService.getCurrentUserProfile().pipe(
+      switchMap((currentUser: CurrentUserProfileView) => {
+        const resolvedGroupId = this._resolvePreferredGroupId(currentUser);
+        const requestedGroupId = this._shouldUseRootGlobalView(currentUser)
+          ? undefined
+          : (resolvedGroupId ?? undefined);
+
+        return this.identityApiService.listAccessibleApps(requestedGroupId).pipe(
+          map((accessibleApps: AccessibleScientificAppView[]) => ({
+            currentUser,
+            accessibleApps,
+            resolvedGroupId,
+          })),
+        );
+      }),
+    );
   }
 
   /**
-   * Reconcilia el grupo activo almacenado contra las membresías del usuario.
-   * Si el grupo ya no existe en las membresías, auto-selecciona el primero disponible.
+   * Resuelve el grupo activo preferido usando grupo almacenado, grupo primario o
+   * el primer grupo administrable/disponible del usuario.
    */
-  private _reconcileActiveGroup(user: CurrentUserProfileView): void {
+  private _resolvePreferredGroupId(user: CurrentUserProfileView): number | null {
     const storedId = this.activeGroupId();
     const memberships = user.memberships ?? [];
 
     if (memberships.length === 0) {
-      // Sin membresías, limpiar selección
-      if (storedId !== null) {
-        this.activeGroupId.set(null);
-        this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, null);
-      }
-      return;
+      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, null);
+      return null;
     }
 
-    const isStoredValid = storedId !== null && memberships.some((m) => m.group_id === storedId);
+    const isStoredValid =
+      storedId !== null && memberships.some((membership) => membership.group_id === storedId);
 
-    if (!isStoredValid) {
-      // Auto-seleccionar el primer grupo o el primero donde es admin
-      const firstAdminGroup = memberships.find((m) => m.role_in_group === 'admin');
-      const selectedId = (firstAdminGroup ?? memberships[0]).group_id;
-      this.activeGroupId.set(selectedId);
-      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, String(selectedId));
+    if (isStoredValid) {
+      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, String(storedId));
+      return storedId;
     }
+
+    const primaryGroupId = user.primary_group_id;
+    const hasValidPrimaryGroup =
+      primaryGroupId !== null &&
+      memberships.some((membership) => membership.group_id === primaryGroupId);
+    const firstAdminGroup = memberships.find((membership) => membership.role_in_group === 'admin');
+    const selectedId = hasValidPrimaryGroup
+      ? primaryGroupId
+      : (firstAdminGroup ?? memberships[0]).group_id;
+    this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, String(selectedId));
+    return selectedId;
+  }
+
+  private _shouldUseRootGlobalView(user: CurrentUserProfileView): boolean {
+    return user.role === 'root' && this.isRootViewContext();
   }
 
   /** Si el grupo activo no es válido, auto-selecciona el primer disponible. */
@@ -458,9 +512,12 @@ export class IdentitySessionService {
     this.refreshToken.set(tokens.refreshToken);
     this.writeStorageValue(ACCESS_TOKEN_STORAGE_KEY, tokens.accessToken);
     this.writeStorageValue(REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken);
+    this.scheduleTokenRefresh();
   }
 
   private clearSessionState(): void {
+    this.accessibleAppsRequestSequence += 1;
+    this.clearScheduledTokenRefresh();
     this.status.set('anonymous');
     this.currentUser.set(null);
     this.accessibleApps.set([]);
@@ -488,6 +545,65 @@ export class IdentitySessionService {
       globalThis.localStorage?.setItem(storageKey, nextValue);
     } catch {
       // Ignora storage no disponible para mantener compatibilidad SSR/tests.
+    }
+  }
+
+  private refreshAccessibleApps(groupId?: number): void {
+    const requestId = ++this.accessibleAppsRequestSequence;
+    this.identityApiService.listAccessibleApps(groupId).subscribe({
+      next: (apps: AccessibleScientificAppView[]) => {
+        if (requestId !== this.accessibleAppsRequestSequence) {
+          return;
+        }
+        this.accessibleApps.set(apps);
+      },
+    });
+  }
+
+  private scheduleTokenRefresh(): void {
+    this.clearScheduledTokenRefresh();
+
+    const accessToken = this.accessToken();
+    if (accessToken === null) {
+      return;
+    }
+
+    const expirationEpochSeconds = this.getTokenExpirationEpochSeconds(accessToken);
+    if (expirationEpochSeconds === null) {
+      return;
+    }
+
+    const nowMilliseconds = Date.now();
+    const refreshAtMilliseconds = expirationEpochSeconds * 1000 - 60_000;
+    const delayMilliseconds = Math.max(refreshAtMilliseconds - nowMilliseconds, 1000);
+
+    this.tokenRefreshTimerId = globalThis.setTimeout(() => {
+      this.refreshAccessToken().subscribe();
+    }, delayMilliseconds);
+  }
+
+  private clearScheduledTokenRefresh(): void {
+    if (this.tokenRefreshTimerId !== null) {
+      globalThis.clearTimeout(this.tokenRefreshTimerId);
+      this.tokenRefreshTimerId = null;
+    }
+  }
+
+  private getTokenExpirationEpochSeconds(token: string): number | null {
+    const tokenParts = token.split('.');
+    if (tokenParts.length < 2) {
+      return null;
+    }
+
+    try {
+      const payloadJson = globalThis.atob(tokenParts[1].replaceAll('-', '+').replaceAll('_', '/'));
+      const payload = JSON.parse(payloadJson) as { exp?: number };
+      if (typeof payload.exp !== 'number') {
+        return null;
+      }
+      return payload.exp;
+    } catch {
+      return null;
     }
   }
 }

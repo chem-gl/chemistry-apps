@@ -6,6 +6,7 @@ Define serializadores para autenticación y lectura de perfil de usuario.
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -358,6 +359,19 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
             raise serializers.ValidationError("El grupo primario indicado no existe.")
         return value
 
+    def validate(self, attrs: dict) -> dict:
+        role_value = str(attrs.get("role", UserIdentityProfile.ROLE_USER))
+        primary_group_id = attrs.get("primary_group_id")
+        if role_value != UserIdentityProfile.ROLE_ROOT and primary_group_id is None:
+            raise serializers.ValidationError(
+                {
+                    "primary_group_id": (
+                        "Todo usuario no root debe crearse con un grupo primario."
+                    )
+                }
+            )
+        return attrs
+
     def create(self, validated_data: dict):
         user_model = get_user_model()
         role_value = str(validated_data.pop("role"))
@@ -367,25 +381,42 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
         primary_group_id = validated_data.pop("primary_group_id", None)
         raw_password = str(validated_data.pop("password"))
 
-        created_user = user_model.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data.get("email", ""),
-            password=raw_password,
-            first_name=validated_data.get("first_name", ""),
-            last_name=validated_data.get("last_name", ""),
-            role=role_value,
-            account_status=account_status,
-        )
-        created_user.save()
+        with transaction.atomic():
+            created_user = user_model.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data.get("email", ""),
+                password=raw_password,
+                first_name=validated_data.get("first_name", ""),
+                last_name=validated_data.get("last_name", ""),
+                role=role_value,
+                account_status=account_status,
+            )
+            created_user.save()
 
-        UserIdentityProfile.objects.update_or_create(
-            user=created_user,
-            defaults={
-                "role": role_value,
-                "account_status": account_status,
-                "primary_group_id": primary_group_id,
-            },
-        )
+            UserIdentityProfile.objects.update_or_create(
+                user=created_user,
+                defaults={
+                    "role": role_value,
+                    "account_status": account_status,
+                    "primary_group_id": primary_group_id,
+                },
+            )
+
+            if primary_group_id is not None:
+                default_membership_role = (
+                    GroupMembership.ROLE_ADMIN
+                    if role_value
+                    in {
+                        UserIdentityProfile.ROLE_ADMIN,
+                        UserIdentityProfile.ROLE_ROOT,
+                    }
+                    else GroupMembership.ROLE_MEMBER
+                )
+                GroupMembership.objects.update_or_create(
+                    user=created_user,
+                    group_id=primary_group_id,
+                    defaults={"role_in_group": default_membership_role},
+                )
         return created_user
 
 

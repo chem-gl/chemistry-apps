@@ -316,6 +316,16 @@
   margin-top: 0.8rem;
 }
 
+.pattern-editing-notice {
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(46, 118, 86, 0.38);
+  border-radius: 10px;
+  background: rgba(58, 146, 108, 0.12);
+  color: var(--chem-ink);
+  font-size: 0.88rem;
+}
+
 .pattern-item {
   display: flex;
   justify-content: space-between;
@@ -323,8 +333,27 @@
   align-items: flex-start;
 }
 
+.pattern-item-editing {
+  border-color: rgba(46, 118, 86, 0.45);
+  box-shadow: 0 0 0 1px rgba(58, 146, 108, 0.25);
+  background: linear-gradient(135deg, rgba(58, 146, 108, 0.12), rgba(228, 245, 236, 0.92));
+}
+
 .pattern-item-content {
   min-width: 0;
+}
+
+.pattern-editing-badge {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 118, 86, 0.45);
+  background: rgba(58, 146, 108, 0.14);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .pattern-item-toggle {

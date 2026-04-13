@@ -9,29 +9,41 @@
         </p>
       </div>
       <div class="catalog-card-header-actions">
-        <button class="btn-secondary" type="button" (click)="toggleCatalogPanelCollapse()">
-          {{ isCatalogPanelCollapsed() ? ('smileit.step2.expand' | transloco) : ('smileit.step2.minimize' | transloco) }}
-        </button>
         <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
-          {{ 'smileit.step2.manageCatalog' | transloco }}
+          Manage substituents
         </button>
       </div>
     </div>
 
     @if (isCatalogPanelCollapsed()) {
     <article class="collapsed-panel-card" [attr.aria-label]="'smileit.step2.collapsedAriaLabel' | transloco">
-      <div class="metadata-grid">
+      <button type="button" class="btn-secondary small collapsed-toggle" (click)="toggleCatalogPanelCollapse()"
+        aria-label="Maximize section">
+        +
+      </button>
+
+      <div class="metadata-grid catalog-collapsed-metrics">
         <p><strong>{{ 'smileit.step2.storedEntries' | transloco }}</strong> {{ workflow.catalogEntries().length }}</p>
         <p><strong>{{ 'smileit.step2.catalogGroups' | transloco }}</strong> {{ workflow.catalogGroups().length }}</p>
         <p><strong>{{ 'smileit.step2.validatedCategories' | transloco }}</strong> {{ workflow.categories().length }}</p>
       </div>
     </article>
     } @else {
-    <p class="hint catalog-editor-summary">
-      {{ 'smileit.step2.catalogNote' | transloco }}
-    </p>
-
     <section class="catalog-browser-panel" [attr.aria-label]="'smileit.step2.storedCatalogAriaLabel' | transloco">
+
+      Tunnel Effect
+      Easy-rate
+      Marcus Theory
+      Smileit
+      SA Score
+      Toxicity Properties
+      Groups
+      Users
+      <button type="button" class="btn-secondary small collapsed-toggle expanded-toggle"
+        (click)="toggleCatalogPanelCollapse()" aria-label="Minimize section">
+        -
+      </button>
+
       <div class="subsection-header block-catalog-tools-row">
         <div>
           <h4>{{ 'smileit.step2.storedSubstituents' | transloco }}</h4>
@@ -56,7 +68,8 @@
       <div class="library-thumbnail-grid">
         @for (entry of filteredLibraryEntries(); track entry.stable_id + '-' + entry.version + '-' + entry.id) {
         <article class="library-thumb">
-          <button type="button" class="thumb-open-button" [attr.aria-label]="'smileit.step2.openDetail' | transloco: {name: entry.name}"
+          <button type="button" class="thumb-open-button"
+            [attr.aria-label]="'smileit.step2.openDetail' | transloco: {name: entry.name}"
             (click)="openLibraryEntryDetail(entry)">
             <span class="thumb-name">{{ entry.name }}</span>
             <span class="thumb-preview">
@@ -155,7 +168,8 @@
                 </div>
               </section>
 
-              <section class="catalog-step-card anchor-selection-panel" [attr.aria-label]="'smileit.catalogForm.step3AriaLabel' | transloco">
+              <section class="catalog-step-card anchor-selection-panel"
+                [attr.aria-label]="'smileit.catalogForm.step3AriaLabel' | transloco">
                 <div class="subsection-header">
                   <div>
                     <h4>{{ 'smileit.catalogForm.step3Title' | transloco }}</h4>
@@ -222,7 +236,8 @@
               </section>
 
               @if (workflow.catalogDraftPreview().warnings.length > 0) {
-              <div class="catalog-inline-warnings" [attr.aria-label]="'smileit.catalogForm.validationMessagesAria' | transloco">
+              <div class="catalog-inline-warnings"
+                [attr.aria-label]="'smileit.catalogForm.validationMessagesAria' | transloco">
                 @for (warningText of workflow.catalogDraftPreview().warnings; track warningText) {
                 <p class="warning-message preview-warning">{{ warningText }}</p>
                 }
@@ -261,10 +276,12 @@
           </section>
 
           @if (workflow.catalogDraftPreview(); as catalogDraftPreview) {
-          <aside class="catalog-preview-card catalog-preview-sidebar" [attr.aria-label]="'smileit.catalogForm.previewAriaLabel' | transloco">
+          <aside class="catalog-preview-card catalog-preview-sidebar"
+            [attr.aria-label]="'smileit.catalogForm.previewAriaLabel' | transloco">
             <h5>{{ 'smileit.catalogForm.previewTitle' | transloco }}</h5>
             <div class="catalog-preview-metadata">
-              <p><strong>{{ 'smileit.catalogForm.previewName' | transloco }}</strong> {{ catalogDraftPreview.name || ('smileit.catalogForm.pending' | transloco) }}</p>
+              <p><strong>{{ 'smileit.catalogForm.previewName' | transloco }}</strong> {{ catalogDraftPreview.name ||
+                ('smileit.catalogForm.pending' | transloco) }}</p>
               <p>
                 <strong>{{ 'smileit.catalogForm.previewNotation' | transloco }}</strong>
                 {{ catalogDraftPreview.notationKind | uppercase }}
@@ -281,7 +298,8 @@
                 <strong>{{ 'smileit.catalogForm.previewCategories' | transloco }}</strong>
                 {{ catalogDraftPreview.categoryNames.join(', ') || ('smileit.catalogForm.uncategorized' | transloco) }}
               </p>
-              <p><strong>{{ 'smileit.catalogForm.previewSource' | transloco }}</strong> {{ catalogDraftPreview.sourceReference }}</p>
+              <p><strong>{{ 'smileit.catalogForm.previewSource' | transloco }}</strong> {{
+                catalogDraftPreview.sourceReference }}</p>
             </div>
             <p class="catalog-smiles mono">
               {{ catalogDraftPreview.smiles || ('smileit.catalogForm.pendingCatalogSmiles' | transloco) }}
@@ -315,9 +333,11 @@
           </button>
         </header>
 
-        <div class="catalog-ketcher-frame-wrap" [attr.aria-label]="'smileit.catalogSketcher.ketcherAriaLabel' | transloco">
+        <div class="catalog-ketcher-frame-wrap"
+          [attr.aria-label]="'smileit.catalogSketcher.ketcherAriaLabel' | transloco">
           @if (isCatalogSmilesSketchLoading()) {
-          <div class="catalog-ketcher-loading" aria-live="polite" [attr.aria-label]="'smileit.catalogSketcher.loadingAriaLabel' | transloco">
+          <div class="catalog-ketcher-loading" aria-live="polite"
+            [attr.aria-label]="'smileit.catalogSketcher.loadingAriaLabel' | transloco">
             <div class="catalog-ketcher-loading-bar">
               <span class="catalog-ketcher-loading-progress"></span>
             </div>
@@ -325,7 +345,8 @@
           </div>
           }
           <iframe #catalogSmilesKetcherFrame class="catalog-ketcher-frame" [src]="catalogSmilesKetcherUrl"
-            [title]="'smileit.catalogSketcher.iframeTitle' | transloco" (load)="onCatalogSmilesKetcherLoaded()"></iframe>
+            [title]="'smileit.catalogSketcher.iframeTitle' | transloco"
+            (load)="onCatalogSmilesKetcherLoaded()"></iframe>
         </div>
 
         <div class="action-row compact-actions catalog-editor-actions">

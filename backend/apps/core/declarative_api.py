@@ -301,6 +301,8 @@ class DeclarativeJobAPI:
         plugin: str,
         parameters: JSONMap,
         version: str = "1.0",
+        owner_id: int | None = None,
+        group_id: int | None = None,
     ) -> Task[JobHandle[JSONMap], DomainError]:
         """Tarea diferida para crear, encolar y retornar handle de job.
 
@@ -319,7 +321,11 @@ class DeclarativeJobAPI:
 
                 # Crear job (con early cache hit automático)
                 job = JobService.create_job(
-                    plugin_name=plugin, version=version, parameters=parameters
+                    plugin_name=plugin,
+                    version=version,
+                    parameters=parameters,
+                    owner_id=owner_id,
+                    group_id=group_id,
                 )
 
                 # Intentar encolar (broker puede fallar, pero es tolerable)
@@ -360,6 +366,8 @@ class DeclarativeJobAPI:
         plugin: str,
         parameters: JSONMap,
         version: str = "1.0",
+        owner_id: int | None = None,
+        group_id: int | None = None,
     ) -> Task[JobHandle[JSONMap], DomainError]:
         """Tarea diferida que crea el job sin encolarlo.
 
@@ -378,7 +386,11 @@ class DeclarativeJobAPI:
                     )
 
                 job = JobService.create_job(
-                    plugin_name=plugin, version=version, parameters=parameters
+                    plugin_name=plugin,
+                    version=version,
+                    parameters=parameters,
+                    owner_id=owner_id,
+                    group_id=group_id,
                 )
 
                 handle = ConcreteJobHandle(

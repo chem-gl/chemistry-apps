@@ -53,37 +53,35 @@ export class UserManagerComponent implements OnInit {
 
   /** IDs de grupos manejados por el usuario actual (root ve todos). */
   readonly managedGroupIds = computed<number[]>(() => {
-    if (this.sessionService.hasRootAccess()) {
-      return this.groups().map((g) => g.id);
-    }
-    const currentUser = this.sessionService.currentUser();
-    if (currentUser === null) return [];
-    return this.memberships()
-      .filter((m) => m.user === currentUser.id && m.role_in_group === 'admin')
-      .map((m) => m.group);
+    return this.sessionService.resolveManagedGroupIds(this.groups(), this.memberships());
   });
 
   /** Grupos visibles para el selector de filtro. */
   readonly visibleGroups = computed<WorkGroupView[]>(() => {
-    if (this.sessionService.hasRootAccess()) return this.groups();
-    const managed = this.managedGroupIds();
-    return this.groups().filter((g) => managed.includes(g.id));
+    return this.sessionService.resolveVisibleGroups(this.groups(), this.managedGroupIds());
   });
 
   /** Usuarios visibles según rol y filtro de grupo activo. */
   readonly visibleUsers = computed<IdentityUserSummaryView[]>(() => {
     const groupFilter = this.filterGroupId();
-    if (this.sessionService.hasRootAccess() && !groupFilter) return this.users();
+
+    // Root y admin ven todos los usuarios cuando no aplican filtro explícito.
+    if (this.sessionService.hasAdminAccess() && groupFilter === '') {
+      return this.users();
+    }
 
     const targetGroupIds = groupFilter ? [Number(groupFilter)] : this.managedGroupIds();
+    if (targetGroupIds.length === 0) {
+      return this.users();
+    }
 
     const usersInGroups = new Set(
       this.memberships()
-        .filter((m) => targetGroupIds.includes(m.group))
-        .map((m) => m.user),
+        .filter((membershipItem) => targetGroupIds.includes(membershipItem.group))
+        .map((membershipItem) => membershipItem.user),
     );
 
-    return this.users().filter((u) => usersInGroups.has(u.id));
+    return this.users().filter((userItem) => usersInGroups.has(userItem.id));
   });
 
   readonly createUserForm = signal<CreateUserForm>({
@@ -137,7 +135,15 @@ export class UserManagerComponent implements OnInit {
 
   submitCreateUser(): void {
     const form = this.createUserForm();
-    if (!form.username.trim() || !form.email.trim() || !form.password.trim()) return;
+    if (
+      !form.username.trim() ||
+      !form.email.trim() ||
+      !form.password.trim() ||
+      !form.primary_group_id
+    ) {
+      this.errorMessage.set('Debe seleccionar un grupo primario para el usuario.');
+      return;
+    }
     this.isSubmitting.set(true);
     const payload: CreateIdentityUserPayload = {
       username: form.username,
@@ -150,7 +156,6 @@ export class UserManagerComponent implements OnInit {
     };
     this.identityApiService.createUser(payload).subscribe({
       next: (newUser) => {
-        this.users.update((list) => [...list, newUser]);
         this.createUserForm.set({
           username: '',
           email: '',
@@ -161,6 +166,7 @@ export class UserManagerComponent implements OnInit {
           primary_group_id: '',
         });
         this.successMessage.set(`Usuario "${newUser.username}" creado correctamente.`);
+        this.loadData();
         this.isSubmitting.set(false);
       },
       error: (err: { error?: { detail?: string; username?: string[] } }) => {
@@ -203,6 +209,7 @@ export class UserManagerComponent implements OnInit {
           this.memberships.update((list) => [...list, created]);
           this.addMembershipForm.set({ userId: '', groupId: '', roleInGroup: 'member' });
           this.successMessage.set('Membresía añadida correctamente.');
+          this.loadData();
           this.isSubmitting.set(false);
         },
         error: () => {
@@ -217,6 +224,7 @@ export class UserManagerComponent implements OnInit {
       next: () => {
         this.memberships.update((list) => list.filter((m) => m.id !== membershipId));
         this.successMessage.set('Membresía eliminada.');
+        this.loadData();
       },
       error: (err: { error?: { detail?: string } }) => {
         this.errorMessage.set(err?.error?.detail ?? 'Error al eliminar membresía.');

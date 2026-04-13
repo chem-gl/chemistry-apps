@@ -203,16 +203,30 @@
 }
 
 .principal-pattern-action {
-  margin-top: 0.55rem;
-  display: grid;
-  gap: 0.3rem;
-  justify-items: start;
+  margin-top: 0.8rem;
+  padding-top: 0.35rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .principal-pattern-action .hint {
   margin: 0;
   max-width: 42ch;
   text-align: left;
+}
+
+.principal-pattern-action .pattern-open-button {
+  align-self: flex-end;
+  border-radius: 0;
+  border-color: transparent;
+  background: linear-gradient(
+    90deg,
+    rgba(46, 125, 50, 0.8) 0%,
+    rgba(211, 47, 47, 0.72) 68%,
+    rgba(211, 47, 47, 0.46) 100%
+  );
+  color: #fff;
+  margin-left: auto;
 }
 
 .guided-action {
@@ -229,14 +243,38 @@
 }
 
 .site-toolbar-summary {
-  display: grid;
-  gap: 0.22rem;
-  justify-items: end;
-  text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: auto;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 10px;
+  background: var(--chem-surface-elevated);
 }
 
 .site-toolbar-summary strong {
   color: var(--chem-ink);
+}
+
+.site-toolbar-main {
+  min-width: 220px;
+}
+
+.site-toolbar-summary-value {
+  align-self: start;
+  justify-self: start;
+  white-space: nowrap;
+}
+
+.site-toolbar-summary-note {
+  margin: 0;
+  text-align: left;
+}
+
+.atom-selection-sticky .site-toolbar {
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .panel-caption,
@@ -304,7 +342,11 @@ select:not(.property-input):focus {
   padding: 0.52rem 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 120ms ease, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
 }
 
 .btn-primary:hover,
@@ -418,8 +460,12 @@ select:not(.property-input):focus {
   box-shadow: none !important;
   outline: none;
   -webkit-appearance: none;
+  appearance: auto;
   line-height: 1.3;
   cursor: default;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
   user-select: text;
 }
 

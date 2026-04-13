@@ -39,17 +39,18 @@
                 </thead>
                 <tbody>
                     @for (group of visibleGroups(); track group.id) {
-                    <tr>
+                    <tr [attr.data-testid]="'group-row-' + group.id">
                         <td><strong>{{ group.name }}</strong><br /><small class="hint">{{ group.description }}</small>
                         </td>
                         <td><code>{{ group.slug }}</code></td>
                         <td>{{ membershipsForGroup(group.id).length }}</td>
                         <td class="action-cell">
-                            <button class="action-button small" type="button" (click)="toggleExpand(group.id)">
+                            <button class="action-button small" type="button" (click)="toggleExpand(group.id)"
+                                [attr.data-testid]="'manage-group-' + group.id">
                                 {{ expandedGroupId() === group.id ? ('groupManager.groups.collapse' | transloco) :
                                 ('groupManager.groups.manage' | transloco) }}
                             </button>
-                            @if (sessionService.hasRootAccess()) {
+                            @if (sessionService.canAccessAdminArea()) {
                             <button class="action-button small danger" type="button" (click)="deleteGroup(group.id)">
                                 {{ 'common.actions.delete' | transloco }}
                             </button>
@@ -129,6 +130,7 @@
                                         @for (appKey of availableAppKeys; track appKey) {
                                         <label class="app-toggle">
                                             <input type="checkbox" [checked]="appPermissionEnabled(group.id, appKey)"
+                                                [attr.data-testid]="'toggle-app-' + group.id + '-' + appKey"
                                                 (change)="toggleAppPermission(group.id, appKey)" />
                                             <span>{{ appKey }}</span>
                                         </label>
@@ -146,8 +148,8 @@
         </div>
     </section>
 
-    <!-- Formulario de creación de grupo (solo root) -->
-    @if (sessionService.hasRootAccess()) {
+    <!-- Formulario de creación de grupo -->
+    @if (sessionService.canAccessAdminArea()) {
     <section class="section-block">
         <h2 class="section-title">{{ 'groupManager.createGroup.title' | transloco }}</h2>
         <p class="section-description">{{ 'groupManager.createGroup.hint' | transloco }}</p>

@@ -201,8 +201,6 @@ if ENABLE_CORS and not CORS_PACKAGE_INSTALLED:
     raise ImproperlyConfigured(
         "ENABLE_CORS=true requiere instalar el paquete 'django-cors-headers'."
     )
-
-
 # Definición de aplicaciones instaladas.
 
 INSTALLED_APPS = [
@@ -442,7 +440,6 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -475,8 +472,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
-
-
 CHANNEL_LAYERS_REDIS_URL = os.getenv(
     "CHANNEL_LAYERS_REDIS_URL",
     CELERY_BROKER_URL,
@@ -501,7 +496,6 @@ else:
             },
         }
     }
-
 
 # Base de datos configurable por entorno, con fallback a SQLite para local.
 
@@ -561,9 +555,7 @@ CSRF_TRUSTED_ORIGINS: list[str] = _merge_unique_values(
     CORS_ALLOWED_ORIGINS,
 )
 
-
 # Validadores de contraseña.
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -578,19 +570,12 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-
-
 # Internacionalización.
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
-
-
 # Archivos estáticos.
 
 STATIC_URL = "static/"

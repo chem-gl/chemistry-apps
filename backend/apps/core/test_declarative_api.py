@@ -439,6 +439,38 @@ class DeclarativeJobAPITests(TestCase):
         self.assertEqual(result.get_or_else(None).job_id, str(created_job.id))
         mocked_register_dispatch.assert_called_once_with(str(created_job.id), True)
 
+    @patch("apps.core.declarative_api.JobService.register_dispatch_result")
+    @patch("apps.core.declarative_api.JobService.create_job")
+    @patch("apps.core.declarative_api.ScientificAppRegistry.get_definition_by_plugin")
+    def test_submit_job_propagates_owner_and_group_scope(
+        self,
+        mocked_get_definition: object,
+        mocked_create_job: object,
+        mocked_register_dispatch: object,
+    ) -> None:
+        """Verifica que submit_job conserva owner/group para autorización posterior."""
+        mocked_get_definition.return_value = object()
+        created_job = self._create_job("calculator")
+        mocked_create_job.return_value = created_job
+
+        api = DeclarativeJobAPI(dispatch_callback=lambda _job_id: True)
+        result = api.submit_job(
+            plugin="calculator",
+            parameters={"a": 1},
+            owner_id=17,
+            group_id=5,
+        ).run()
+
+        self.assertTrue(result.is_success())
+        mocked_create_job.assert_called_once_with(
+            plugin_name="calculator",
+            version="1.0",
+            parameters={"a": 1},
+            owner_id=17,
+            group_id=5,
+        )
+        mocked_register_dispatch.assert_called_once_with(str(created_job.id), True)
+
     @patch("apps.core.declarative_api.ScientificAppRegistry.get_definition_by_plugin")
     def test_submit_job_returns_failure_when_plugin_missing(
         self,

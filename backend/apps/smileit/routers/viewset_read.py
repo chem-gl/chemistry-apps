@@ -21,6 +21,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.identity.services import AuthorizationService
 from apps.core.models import ScientificJob
 from apps.core.reporting import (
     build_download_filename,
@@ -49,6 +50,20 @@ from .exports import (
 class SmileitReadActionsMixin:
     """Acciones GET y reportes binarios para jobs de Smile-it."""
 
+    def _get_scoped_job_or_404(
+        self, request: Request, job_id: str | None
+    ) -> ScientificJob:
+        """Obtiene job Smile-it validando visibilidad para el actor autenticado."""
+        job = get_object_or_404(ScientificJob, pk=job_id, plugin_name=PLUGIN_NAME)
+        actor = request.user
+        if bool(
+            getattr(actor, "is_authenticated", False)
+        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
+            from django.http import Http404
+
+            raise Http404("Job no encontrado.")
+        return job
+
     def build_csv_content(self, job: ScientificJob) -> str:
         """Delega a helper para CSV químico por derivado."""
         results_payload = cast(SmileitResult, job.results)
@@ -60,7 +75,7 @@ class SmileitReadActionsMixin:
     )
     def retrieve(self, request: Request, id: str | None = None) -> Response:
         """Retorna estado del job sin lista completa de derivados para reducir payload."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         return Response(build_smileit_summary_payload(job), status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -90,7 +105,7 @@ class SmileitReadActionsMixin:
     @action(detail=True, methods=["get"], url_path="derivations")
     def derivations(self, request: Request, id: str | None = None) -> Response:
         """Entrega derivados por páginas para evitar respuestas gigantes en frontend."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:
             return Response(
@@ -178,7 +193,7 @@ class SmileitReadActionsMixin:
             tint_svg,
         )
 
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:
             return Response(
@@ -251,7 +266,7 @@ class SmileitReadActionsMixin:
         self, request: Request, id: str | None = None
     ) -> HttpResponse | Response:
         """Descarga archivo SMI/TXT con principal y derivados como lista simple de SMILES."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:
             return Response(
@@ -287,7 +302,7 @@ class SmileitReadActionsMixin:
         id: str | None = None,
     ) -> HttpResponse | Response:
         """Descarga auditoría sitio -> sustituyente aplicada por derivado."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:
             return Response(
@@ -323,7 +338,7 @@ class SmileitReadActionsMixin:
         id: str | None = None,
     ) -> HttpResponse | Response:
         """Entrega ZIP de imágenes por backend para jobs extremadamente grandes."""
-        job = get_object_or_404(ScientificJob, pk=id, plugin_name=PLUGIN_NAME)
+        job = self._get_scoped_job_or_404(request, id)
         validation_error = validate_job_for_csv_report(job)
         if validation_error is not None:
             return Response(

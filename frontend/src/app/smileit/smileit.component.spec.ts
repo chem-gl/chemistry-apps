@@ -39,6 +39,10 @@ const buildMockWorkflow = () => {
   const mockCatalog = {
     loadInitialData: vi.fn(),
     catalogGroups: signal([]),
+    beginPatternEntryEdition: vi.fn(),
+    cancelPatternEdition: vi.fn(),
+    deletePatternEntry: vi.fn(),
+    isPatternEntryEditable: vi.fn().mockReturnValue(true),
   };
 
   return {
@@ -64,6 +68,7 @@ const buildMockWorkflow = () => {
     patternCreateType: signal('functional'),
     patternCreateCaption: signal(''),
     patternCreateSourceReference: signal(''),
+    patternEditingStableId: signal<string | null>(null),
     siteOverlapPolicy: signal('last_block_wins'),
     rSubstitutes: signal(false),
     numBonds: signal(1),
@@ -184,6 +189,23 @@ describe('SmileitComponent', () => {
     });
   });
 
+  describe('edicion de patrones en modal', () => {
+    it('isPatternBeingEdited retorna true cuando coincide el stable_id en edicion', () => {
+      mockWorkflow.patternEditingStableId.set('pat-editing');
+      const editingPattern = buildMockPattern('pat-editing');
+      const otherPattern = buildMockPattern('pat-other');
+
+      expect(component.isPatternBeingEdited(editingPattern)).toBe(true);
+      expect(component.isPatternBeingEdited(otherPattern)).toBe(false);
+    });
+
+    it('beginPatternEntryEdition delega al workflow de catalogo', () => {
+      const pattern = buildMockPattern('pat-delegate');
+      component.beginPatternEntryEdition(pattern);
+      expect(mockWorkflow.catalog.beginPatternEntryEdition).toHaveBeenCalledWith(pattern);
+    });
+  });
+
   describe('openLibraryEntryDetail y closeLibraryEntryDetail', () => {
     it('openLibraryEntryDetail guarda la entrada y contexto', () => {
       const entry = { id: 1, label: 'Test' } as unknown as SmileitCatalogEntryView;
@@ -243,7 +265,7 @@ describe('SmileitComponent', () => {
 
     it('llama openHistoricalJob con el jobId de la ruta si está presente', async () => {
       // Reconfigurar con un queryParam jobId
-      await TestBed.resetTestingModule();
+      TestBed.resetTestingModule();
       mockWorkflow = buildMockWorkflow();
 
       await TestBed.configureTestingModule({

@@ -226,8 +226,10 @@
   }
 
   .site-toolbar-summary {
+    display: inline-flex;
     justify-items: start;
     text-align: left;
+    min-width: auto;
   }
 
   .workflow-step-item {
