@@ -359,10 +359,13 @@ jobs:
             # evitando "Permission denied" en deploys previos con archivos de otro owner.
             # Se excluye docker-data/ porque PostgreSQL y Redis necesitan mantener
             # la propiedad interna del contenedor (uid 70 para postgres en Alpine).
+            # IMPORTANTE: CURRENT_UID se resuelve aquí en el servidor remoto (no en el runner).
+            CURRENT_UID="$(id -u)"
+            CURRENT_GID="$(id -g)"
             docker run --rm \
               -v "$VM_PROJECT_PATH:/work" \
               alpine \
-              sh -c "find /work -maxdepth 1 -mindepth 1 ! -name 'docker-data' -exec chown -R $(id -u):$(id -g) {} \; 2>/dev/null; true"
+              sh -c "find /work -maxdepth 1 -mindepth 1 ! -name docker-data -exec chown -R ${CURRENT_UID}:${CURRENT_GID} {} + 2>/dev/null; true"
 
             # --no-same-owner: ignorar el propietario almacenado en el tar
             tar --no-same-owner -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
