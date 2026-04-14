@@ -35,7 +35,7 @@
 .workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
   align-items: start;
 }
 
@@ -47,6 +47,15 @@
   border-radius: var(--chem-radius);
   background: var(--chem-surface);
   padding: 1rem;
+  min-width: 0;
+}
+
+.entry-panel {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 h3 {
@@ -88,6 +97,29 @@ textarea:focus {
   margin: 0.35rem 0 0;
   color: var(--chem-ink);
   font-size: var(--chem-text-sm);
+}
+
+.job-name-field {
+  display: grid;
+  gap: 0.38rem;
+  margin-top: 0.9rem;
+  color: var(--chem-ink);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.job-name-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+.job-name-hint {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-xs);
+  font-weight: 500;
 }
 
 .methods-fieldset {
@@ -132,7 +164,9 @@ textarea:focus {
   padding: 0.45rem 0.88rem;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity var(--chem-transition), background var(--chem-transition);
+  transition:
+    opacity var(--chem-transition),
+    background var(--chem-transition);
 }
 
 .btn-primary {
@@ -234,11 +268,58 @@ textarea:focus {
   outline: 2px solid rgba(123, 90, 158, 0.2);
 }
 
+.table-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.table-search-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 320px);
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table-search-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+  padding: 0.62rem 0.9rem;
+  font-size: var(--chem-text-sm);
+}
+
+.table-search-input:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.18);
+  border-color: var(--chem-accent);
+}
+
+.table-summary-pill {
+  margin: 0;
+  padding: 0.46rem 0.78rem;
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-glass-heavy);
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+}
+
 .table-wrap {
   margin-top: 0.7rem;
   overflow: auto;
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
+  background: linear-gradient(180deg, rgba(250, 248, 252, 0.96), rgba(237, 233, 240, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .result-table,
@@ -267,6 +348,58 @@ textarea:focus {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: var(--chem-text-xs);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.result-table tbody tr:nth-child(odd) {
+  background: rgba(250, 248, 252, 0.92);
+}
+
+.result-table tbody tr:hover {
+  background: rgba(123, 90, 158, 0.06);
+}
+
+.result-row-with-error {
+  background: rgba(255, 235, 238, 0.7);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-indicator {
+  color: var(--chem-accent);
+  font-size: 0.8rem;
+}
+
+.numeric-head,
+.numeric-cell {
+  text-align: right;
+}
+
+.numeric-head .sort-button {
+  justify-content: flex-end;
+}
+
+.empty-table-cell {
+  padding: 1rem;
+  text-align: center;
+  color: var(--chem-ink-secondary);
+  font-style: italic;
 }
 
 .cell-error {
@@ -410,6 +543,22 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .entry-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  @media (max-width: 720px) {
+    .table-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .table-search-field {
+      min-width: 100%;
+    }
+  }
   .result-table,
   .history-table {
     min-width: 620px;
@@ -437,7 +586,9 @@ textarea:focus {
   color: var(--chem-ink);
   background: var(--chem-surface-elevated);
   font-family: inherit;
-  transition: background var(--chem-transition), border-color var(--chem-transition);
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
 }
 
 .btn-tool:hover:not(:disabled) {

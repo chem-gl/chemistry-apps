@@ -18,6 +18,7 @@ from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
 from apps.core.types import JSONMap
 
+from ._species_labels import generate_species_labels
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 
 
@@ -31,6 +32,8 @@ class MolarFractionsContractApiTests(TestCase):
         request_payload: JSONMap = {
             "version": "1.0.0",
             "pka_values": [2.2, 7.2, 12.3],
+            "initial_charge": "q",
+            "label": "A",
             "ph_mode": "range",
             "ph_min": 0.0,
             "ph_max": 14.0,
@@ -63,7 +66,7 @@ class MolarFractionsContractApiTests(TestCase):
         )
         rows: list[dict[str, object]] = list(retrieve_response.data["results"]["rows"])
 
-        self.assertEqual(species_labels, ["f0", "f1", "f2", "f3"])
+        self.assertEqual(species_labels, ["H₃Aq", "H₂Aq⁻¹", "HAq⁻²", "Aq⁻³"])
         self.assertEqual(len(rows), 15)
 
         for row in rows:
@@ -74,6 +77,8 @@ class MolarFractionsContractApiTests(TestCase):
         request_payload: JSONMap = {
             "version": "1.0.0",
             "pka_values": [4.75],
+            "initial_charge": -1,
+            "label": "Ac",
             "ph_mode": "single",
             "ph_value": 7.4,
         }
@@ -99,6 +104,10 @@ class MolarFractionsContractApiTests(TestCase):
         self.assertEqual(
             retrieve_response.data["results"]["metadata"]["ph_mode"],
             "single",
+        )
+        self.assertEqual(
+            retrieve_response.data["results"]["species_labels"],
+            ["HAc⁻", "Ac²⁻"],
         )
 
     def test_create_molar_fractions_rejects_single_without_ph_value(self) -> None:
@@ -132,6 +141,8 @@ class MolarFractionsContractApiTests(TestCase):
         request_payload: JSONMap = {
             "version": "1.0.0",
             "pka_values": [2.2, 7.2, 12.3],
+            "initial_charge": "q",
+            "label": "A",
             "ph_mode": "range",
             "ph_min": 14.0,
             "ph_max": 0.0,
@@ -160,7 +171,7 @@ class MolarFractionsContractApiTests(TestCase):
 
     def test_retrieve_molar_fractions_ignores_other_plugins(self) -> None:
         foreign_job: ScientificJob = ScientificJob.objects.create(
-            plugin_name="random_numbers",
+            plugin_name="smileit",
             algorithm_version="1.0.0",
             job_hash="x" * 64,
             parameters={"seed_url": "https://example.com/seed.txt", "total_numbers": 3},
@@ -203,6 +214,8 @@ class MolarFractionsContractApiTests(TestCase):
         request_payload: JSONMap = {
             "version": "1.0.0",
             "pka_values": [2.2, 7.2, 12.3],
+            "initial_charge": 2,
+            "label": "EDA",
             "ph_mode": "range",
             "ph_min": 0.0,
             "ph_max": 2.0,
@@ -251,6 +264,8 @@ class MolarFractionsContractApiTests(TestCase):
             job_hash="m" * 64,
             parameters={
                 "pka_values": [4.75],
+                "initial_charge": "q",
+                "label": "A",
                 "ph_mode": "single",
                 "ph_value": 7.4,
             },
@@ -258,7 +273,7 @@ class MolarFractionsContractApiTests(TestCase):
             cache_hit=False,
             cache_miss=True,
             results={
-                "species_labels": ["f0", "f1"],
+                "species_labels": ["HAq", "Aq⁻¹"],
                 "rows": [
                     {
                         "ph": 7.4,
@@ -268,6 +283,8 @@ class MolarFractionsContractApiTests(TestCase):
                 ],
                 "metadata": {
                     "pka_values": [4.75],
+                    "initial_charge": "q",
+                    "label": "A",
                     "ph_mode": "single",
                     "ph_min": 7.4,
                     "ph_max": 7.4,
@@ -285,7 +302,7 @@ class MolarFractionsContractApiTests(TestCase):
         self.assertIn("attachment;", str(response["Content-Disposition"]))
 
         csv_content: str = response.content.decode("utf-8")
-        self.assertIn("ph,f0,f1,sum_fraction", csv_content)
+        self.assertIn("ph,HAq,Aq⁻¹,sum_fraction", csv_content)
         self.assertIn("7.400000", csv_content)
 
     def test_report_csv_returns_conflict_when_job_is_not_completed(self) -> None:
@@ -295,6 +312,8 @@ class MolarFractionsContractApiTests(TestCase):
             job_hash="n" * 64,
             parameters={
                 "pka_values": [4.75],
+                "initial_charge": "q",
+                "label": "A",
                 "ph_mode": "single",
                 "ph_value": 7.4,
             },
@@ -316,6 +335,8 @@ class MolarFractionsContractApiTests(TestCase):
             job_hash="o" * 64,
             parameters={
                 "pka_values": [2.2, 7.2],
+                "initial_charge": "q",
+                "label": "A",
                 "ph_mode": "range",
                 "ph_min": 0.0,
                 "ph_max": 14.0,
@@ -349,3 +370,33 @@ class MolarFractionsContractTests(TestCase):
         for key in ("plugin_name", "version", "execute", "supports_pause_resume"):
             self.assertIn(key, contract)
         self.assertIsNotNone(contract["execute"])
+
+
+class MolarFractionsSpeciesLabelTests(TestCase):
+    """Valida la generación de etiquetas químicas a partir del notebook legado."""
+
+    def test_generate_species_labels_supports_numeric_initial_charge(self) -> None:
+        label_payload = generate_species_labels(
+            pka_values=[6.16, 10.26],
+            initial_charge=2,
+            label="EDA",
+        )
+
+        self.assertEqual(
+            label_payload["labels_pretty"],
+            ["H₂EDA²⁺", "HEDA⁺", "EDA"],
+        )
+        self.assertEqual(label_payload["charges"], [2, 1, 0])
+
+    def test_generate_species_labels_supports_symbolic_initial_charge(self) -> None:
+        label_payload = generate_species_labels(
+            pka_values=[2.0, 6.0],
+            initial_charge="q",
+            label="A",
+        )
+
+        self.assertEqual(
+            label_payload["labels_pretty"],
+            ["H₂Aq", "HAq⁻¹", "Aq⁻²"],
+        )
+        self.assertEqual(label_payload["labels_ascii"], ["H2Aq", "HAq-1", "Aq-2"])

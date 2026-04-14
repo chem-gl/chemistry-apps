@@ -1,0 +1,184 @@
+<!-- group-manager.component.html: Interfaz de manejo de grupos científicos. -->
+<section class="gm-shell" aria-label="Gestión de grupos">
+    <header class="gm-header">
+        <div>
+            <p class="eyebrow">{{ 'groupManager.header.eyebrow' | transloco }}</p>
+            <h1>{{ 'groupManager.header.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'groupManager.header.subtitle' | transloco }}</p>
+        </div>
+        <div class="header-actions">
+            <button class="action-button" type="button" (click)="loadData()">
+                {{ 'common.actions.refresh' | transloco }}
+            </button>
+        </div>
+    </header>
+
+    @if (errorMessage(); as msg) {
+    <div class="feedback error" role="alert">{{ msg }}</div>
+    } @if (successMessage(); as msg) {
+    <div class="feedback success">{{ msg }}</div>
+    }
+
+    @if (isLoading()) {
+    <div class="feedback">{{ 'groupManager.feedback.loading' | transloco }}</div>
+    } @else {
+
+    <!-- Tabla de grupos -->
+    <section class="section-block">
+        <h2 class="section-title">{{ 'groupManager.groups.title' | transloco }}</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ 'groupManager.groups.colName' | transloco }}</th>
+                        <th>{{ 'groupManager.groups.colSlug' | transloco }}</th>
+                        <th>{{ 'groupManager.groups.colMembers' | transloco }}</th>
+                        <th>{{ 'groupManager.groups.colActions' | transloco }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (group of visibleGroups(); track group.id) {
+                    <tr [attr.data-testid]="'group-row-' + group.id">
+                        <td><strong>{{ group.name }}</strong><br /><small class="hint">{{ group.description }}</small>
+                        </td>
+                        <td><code>{{ group.slug }}</code></td>
+                        <td>{{ membershipsForGroup(group.id).length }}</td>
+                        <td class="action-cell">
+                            <button class="action-button small" type="button" (click)="toggleExpand(group.id)"
+                                [attr.data-testid]="'manage-group-' + group.id">
+                                {{ expandedGroupId() === group.id ? ('groupManager.groups.collapse' | transloco) :
+                                ('groupManager.groups.manage' | transloco) }}
+                            </button>
+                            @if (sessionService.canAccessAdminArea()) {
+                            <button class="action-button small danger" type="button" (click)="deleteGroup(group.id)">
+                                {{ 'common.actions.delete' | transloco }}
+                            </button>
+                            }
+                        </td>
+                    </tr>
+
+                    <!-- Panel expandido del grupo -->
+                    @if (expandedGroupId() === group.id) {
+                    <tr class="expanded-row">
+                        <td colspan="4">
+                            <div class="expanded-panel">
+
+                                <!-- Subsección: miembros -->
+                                <div class="sub-section">
+                                    <h3 class="sub-title">{{ 'groupManager.members.title' | transloco }}</h3>
+                                    <table class="inner-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ 'groupManager.members.colUser' | transloco }}</th>
+                                                <th>{{ 'groupManager.members.colRole' | transloco }}</th>
+                                                <th>{{ 'groupManager.members.colActions' | transloco }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (member of membershipsForGroup(group.id); track member.id) {
+                                            <tr>
+                                                <td>{{ userName(member.user) }}</td>
+                                                <td>
+                                                    <select class="small-select" title="Rol del miembro"
+                                                        [ngModel]="member.role_in_group"
+                                                        (ngModelChange)="updateMemberRole(member.id, $event)">
+                                                        <option value="admin">Admin</option>
+                                                        <option value="member">Member</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button class="action-button small danger" type="button"
+                                                        (click)="removeMember(member.id)">
+                                                        {{ 'common.actions.delete' | transloco }}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                    <!-- Añadir miembro -->
+                                    <form class="inline-form" (ngSubmit)="addMember(group.id)">
+                                        <select class="form-select" title="Usuario" [ngModel]="addMemberForm().userId"
+                                            (ngModelChange)="addMemberForm.update(f => ({ ...f, userId: $event }))"
+                                            name="userId" required>
+                                            <option value="">{{ 'groupManager.members.selectUser' | transloco }}
+                                            </option>
+                                            @for (user of users(); track user.id) {
+                                            <option [value]="user.id">{{ user.username }}</option>
+                                            }
+                                        </select>
+                                        <select class="form-select small" title="Rol"
+                                            [ngModel]="addMemberForm().roleInGroup"
+                                            (ngModelChange)="addMemberForm.update(f => ({ ...f, roleInGroup: $event }))"
+                                            name="roleInGroup">
+                                            <option value="member">Member</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                        <button class="action-button small primary" type="submit"
+                                            [disabled]="isSubmitting()">
+                                            {{ 'groupManager.members.addButton' | transloco }}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Subsección: permisos de apps -->
+                                <div class="sub-section">
+                                    <h3 class="sub-title">{{ 'groupManager.permissions.title' | transloco }}</h3>
+                                    <div class="app-permissions-grid">
+                                        @for (appKey of availableAppKeys; track appKey) {
+                                        <label class="app-toggle">
+                                            <input type="checkbox" [checked]="appPermissionEnabled(group.id, appKey)"
+                                                [attr.data-testid]="'toggle-app-' + group.id + '-' + appKey"
+                                                (change)="toggleAppPermission(group.id, appKey)" />
+                                            <span>{{ appKey }}</span>
+                                        </label>
+                                        }
+                                    </div>
+                                </div>
+
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Formulario de creación de grupo -->
+    @if (sessionService.canAccessAdminArea()) {
+    <section class="section-block">
+        <h2 class="section-title">{{ 'groupManager.createGroup.title' | transloco }}</h2>
+        <p class="section-description">{{ 'groupManager.createGroup.hint' | transloco }}</p>
+
+        <form class="create-form" (ngSubmit)="submitCreateGroup()">
+            <div class="form-row">
+                <label class="form-label">
+                    {{ 'groupManager.createGroup.name' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createGroupForm().name"
+                        (ngModelChange)="createGroupForm.update(f => ({ ...f, name: $event }))" name="name" required />
+                </label>
+                <label class="form-label">
+                    {{ 'groupManager.createGroup.slug' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createGroupForm().slug"
+                        (ngModelChange)="createGroupForm.update(f => ({ ...f, slug: $event }))" name="slug" required />
+                </label>
+                <label class="form-label">
+                    {{ 'groupManager.createGroup.description' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createGroupForm().description"
+                        (ngModelChange)="createGroupForm.update(f => ({ ...f, description: $event }))"
+                        name="description" />
+                </label>
+            </div>
+            <button class="action-button primary" type="submit" [disabled]="isSubmitting()">
+                {{ 'groupManager.createGroup.submit' | transloco }}
+            </button>
+        </form>
+    </section>
+    }
+
+    } <!-- fin !isLoading -->
+</section>

@@ -1,0 +1,12 @@
+/* scientific-chart.component.scss: Estilos base para el host reutilizable de graficas. */
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.chart-host {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+}

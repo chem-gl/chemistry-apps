@@ -51,6 +51,28 @@ describe('scientific-app-ui.utils', () => {
     ]);
   });
 
+  it('parseNamedSmilesBatch ignora cabecera csv de una columna con sufijo smiles', () => {
+    const parsed = parseNamedSmilesBatch('generated_smiles\nCCO\nN#N');
+
+    expect(parsed.containsExplicitNames).toBe(false);
+    expect(parsed.rows).toEqual([
+      { name: 'CCO', smiles: 'CCO' },
+      { name: 'N#N', smiles: 'N#N' },
+    ]);
+  });
+
+  it('parseNamedSmilesBatch reconoce cabeceras csv compuestas name/smiles', () => {
+    const parsed = parseNamedSmilesBatch(
+      'compound_name,generated_smiles\nethanol,CCO\nbenzene,c1ccccc1',
+    );
+
+    expect(parsed.containsExplicitNames).toBe(true);
+    expect(parsed.rows).toEqual([
+      { name: 'ethanol', smiles: 'CCO' },
+      { name: 'benzene', smiles: 'c1ccccc1' },
+    ]);
+  });
+
   it('parseNamedSmilesBatch usa smiles como nombre por defecto en listas simples', () => {
     const parsed = parseNamedSmilesBatch('CCO\nN#N');
 

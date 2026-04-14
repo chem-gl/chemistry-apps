@@ -2,14 +2,27 @@
 
 .molar-shell {
   display: grid;
-  gap: 1rem;
+  gap: 1.15rem;
+}
+
+.molar-header {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid rgba(123, 90, 158, 0.16);
+  border-radius: calc(var(--chem-radius-lg) + 2px);
+  background:
+    radial-gradient(circle at top right, rgba(123, 90, 158, 0.18), transparent 36%),
+    linear-gradient(140deg, rgba(250, 248, 252, 0.98), rgba(237, 233, 240, 0.94));
+  box-shadow: var(--chem-shadow);
 }
 
 .molar-header h2 {
   margin: 0.2rem 0;
   color: var(--chem-ink);
   font-family: var(--chem-font-heading);
-  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+  line-height: 1.05;
 }
 
 .eyebrow {
@@ -25,46 +38,71 @@
 .molar-header p {
   margin: 0;
   color: var(--chem-ink-secondary);
+  max-width: 72ch;
 }
 
 .workspace-grid {
   display: grid;
-  gap: 0.9rem;
-  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 1rem;
+  grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
   align-items: start;
 }
 
+.form-card,
 .entry-panel,
 .result-panel,
-.logs-card,
 .history-card {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface-elevated);
-  padding: 1rem;
+  border: 1px solid rgba(123, 90, 158, 0.14);
+  border-radius: var(--chem-radius-lg);
+  background:
+    linear-gradient(180deg, rgba(250, 248, 252, 0.98), rgba(244, 240, 247, 0.96)),
+    var(--chem-surface-elevated);
+  padding: 1rem 1rem 1.05rem;
   min-width: 0;
+  box-shadow: var(--chem-shadow);
+}
+
+.form-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.panel-heading {
+  display: grid;
+  gap: 0.18rem;
+  margin-bottom: 0.95rem;
+}
+
+.panel-kicker {
+  margin: 0;
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .entry-panel h3,
 .result-panel h3,
-.logs-card h3,
 .history-card h3 {
-  margin: 0 0 0.8rem;
+  margin: 0;
   color: var(--chem-ink);
   font-family: var(--chem-font-heading);
-  font-size: var(--chem-text-lg);
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
 }
 
 .field-group {
   display: grid;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
+  gap: 0.42rem;
+  margin-bottom: 0.9rem;
 }
 
 .field-group label,
 .pka-grid label,
 .range-grid label,
-.single-ph-block label {
+.single-ph-block label,
+.species-meta-grid label {
   display: grid;
   gap: 0.3rem;
   font-size: 0.82rem;
@@ -73,14 +111,90 @@
   font-family: var(--chem-font-label);
 }
 
+.field-group select,
+.field-group input,
+.pka-grid input,
+.range-grid input,
+.single-ph-block input,
+.species-meta-grid input {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid rgba(123, 90, 158, 0.18);
+  border-radius: 12px;
+  background: rgba(250, 248, 252, 0.94);
+  color: var(--chem-ink);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  transition:
+    border-color var(--chem-transition),
+    box-shadow var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.field-group select:focus,
+.field-group input:focus,
+.pka-grid input:focus,
+.range-grid input:focus,
+.single-ph-block input:focus,
+.species-meta-grid input:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+  box-shadow: 0 0 0 3px rgba(123, 90, 158, 0.16);
+}
+
+.field-group select:disabled,
+.field-group input:disabled,
+.pka-grid input:disabled,
+.range-grid input:disabled,
+.single-ph-block input:disabled,
+.species-meta-grid input:disabled {
+  background: var(--chem-input-disabled-bg);
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.mode-toggle-btn {
+  border: 1px solid rgba(123, 90, 158, 0.16);
+  border-radius: 14px;
+  min-height: 2.8rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(250, 248, 252, 0.86);
+  color: var(--chem-ink-secondary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    border-color var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.mode-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+.mode-toggle-btn.is-active {
+  border-color: var(--chem-primary);
+  background: linear-gradient(135deg, rgba(211, 47, 47, 0.14), rgba(123, 90, 158, 0.14));
+  color: var(--chem-ink);
+}
+
 .pka-block,
 .range-block,
 .single-ph-block {
-  border: 1px solid var(--chem-border);
-  background: var(--chem-surface);
-  border-radius: var(--chem-radius);
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
+  border: 1px solid rgba(123, 90, 158, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
+    var(--chem-surface);
+  border-radius: 14px;
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
   display: grid;
   gap: 0.6rem;
 }
@@ -90,6 +204,12 @@
   margin: 0;
   color: var(--chem-ink-secondary);
   font-size: 0.86rem;
+}
+
+.field-hint {
+  margin: -0.15rem 0 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
 }
 
 .pka-grid {
@@ -104,54 +224,145 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.species-meta-grid,
+.batch-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.batch-copy-card,
+.csv-example-card {
+  border: 1px solid rgba(123, 90, 158, 0.14);
+  border-radius: 14px;
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
+    var(--chem-surface);
+}
+
+.batch-copy-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.batch-copy-card p,
+.csv-example-title,
+.batch-file-name,
+.batch-threshold-hint {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.8rem;
+}
+
+.csv-example-title {
+  margin-bottom: 0.55rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.csv-example {
+  margin: 0;
+  overflow: auto;
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: rgba(34, 26, 40, 0.92);
+  color: #f7f1fb;
+  font-family: var(--chem-font-mono);
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.batch-file-input {
+  padding-block: 0.7rem;
+}
+
+.batch-parameter-block {
+  margin-bottom: 0.9rem;
+}
+
+.batch-threshold-hint {
+  margin-top: 0.15rem;
+}
+
+.batch-metadata-grid {
+  margin-bottom: 0.75rem;
+}
+
+.batch-result-table td:nth-child(2),
+.batch-result-table td:nth-child(5) {
+  min-width: 140px;
+}
+
 .action-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
+}
+
+.form-actions {
+  margin-top: 0.2rem;
 }
 
 .btn-primary,
 .btn-secondary,
 .history-open-btn {
   border-radius: 999px;
-  padding: 0.42rem 0.8rem;
+  min-height: 2.7rem;
+  padding: 0.48rem 0.95rem;
   font-weight: 700;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: background var(--chem-transition), color var(--chem-transition);
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    transform var(--chem-transition),
+    box-shadow var(--chem-transition);
 }
 
 .btn-primary {
   border: 1px solid var(--chem-primary);
-  color: var(--chem-surface);
-  background: var(--chem-primary);
+  color: #fff;
+  background: linear-gradient(135deg, var(--chem-primary), var(--chem-primary-dark));
+  box-shadow: 0 10px 20px rgba(211, 47, 47, 0.18);
 }
 
 .btn-primary:hover {
-  filter: brightness(0.9);
+  transform: translateY(-1px);
+  filter: brightness(0.96);
 }
 
 .btn-secondary,
 .history-open-btn {
-  border: 1px solid var(--chem-primary);
+  border: 1px solid rgba(123, 90, 158, 0.18);
   color: var(--chem-ink-secondary);
-  background: var(--chem-surface);
+  background: rgba(250, 248, 252, 0.9);
 }
 
 .btn-secondary:hover,
 .history-open-btn:hover {
-  background: var(--chem-primary);
-  color: var(--chem-surface);
+  background: var(--chem-accent);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .export-row {
   margin-bottom: 0.6rem;
+  justify-content: flex-end;
 }
 
 .status-message {
   margin: 0;
   color: var(--chem-ink-secondary);
   font-size: 0.86rem;
+}
+
+.status-card {
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed rgba(123, 90, 158, 0.18);
+  border-radius: 14px;
+  background: rgba(243, 237, 247, 0.42);
 }
 
 .progress-card {
@@ -205,22 +416,122 @@
 .metadata-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 0.3rem 0.7rem;
-  margin-bottom: 0.65rem;
+  gap: 0.55rem 0.8rem;
+  margin-bottom: 0.85rem;
 }
 
 .metadata-grid p {
   margin: 0;
   font-size: 0.8rem;
   color: var(--chem-ink-secondary);
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(123, 90, 158, 0.12);
+  border-radius: 12px;
+  background: rgba(250, 248, 252, 0.72);
+}
+
+.chart-card {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(2, 119, 189, 0.15);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(2, 119, 189, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(250, 248, 252, 0.98), rgba(237, 233, 240, 0.96)),
+    var(--chem-surface-elevated);
+}
+
+.probe-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(123, 90, 158, 0.12);
+  border-radius: 14px;
+  background: rgba(250, 248, 252, 0.72);
+}
+
+.probe-controls {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  align-items: end;
+}
+
+.probe-field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.probe-field input {
+  width: 100%;
+}
+
+.probe-slider-field input {
+  accent-color: var(--chem-info);
+}
+
+.probe-readings {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.probe-summary {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.84rem;
+}
+
+.probe-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.probe-grid p {
+  display: grid;
+  gap: 0.18rem;
+  margin: 0;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(237, 233, 240, 0.86);
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
+}
+
+.chart-header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.chart-header h4 {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.95rem;
+  font-family: var(--chem-font-heading);
+}
+
+.chart-header p {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.8rem;
 }
 
 .table-wrap {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
+  border: 1px solid rgba(123, 90, 158, 0.14);
+  border-radius: 16px;
   overflow: auto;
-  background: var(--chem-surface);
+  background: rgba(250, 248, 252, 0.88);
   max-width: 100%;
+}
+
+.result-table-wrap {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .result-table,
@@ -242,7 +553,7 @@
 
 .result-table th,
 .history-table th {
-  background: var(--chem-surface-elevated);
+  background: rgba(237, 233, 240, 0.82);
   color: var(--chem-ink-secondary);
   font-weight: 700;
   font-family: var(--chem-font-label);
@@ -256,6 +567,10 @@
   color: var(--chem-error);
   font-weight: 700;
   font-size: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(211, 47, 47, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 235, 238, 0.76);
 }
 
 .logs-list {
@@ -343,7 +658,7 @@
   align-items: center;
   gap: 0.7rem;
   flex-wrap: wrap;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.85rem;
 }
 
 .history-status {
@@ -382,13 +697,28 @@
 }
 
 @media (max-width: 980px) {
+  .form-card {
+    position: static;
+  }
+
   .workspace-grid {
     grid-template-columns: 1fr;
   }
 
   .metadata-grid,
   .pka-grid,
-  .range-grid {
+  .range-grid,
+  .species-meta-grid,
+  .batch-grid,
+  .mode-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .export-row {
+    justify-content: flex-start;
+  }
+
+  .probe-controls {
     grid-template-columns: 1fr;
   }
 }

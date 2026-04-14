@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status, views
@@ -43,6 +45,82 @@ def _is_group_admin(actor, group_id: int) -> bool:
     return AuthorizationService.can_manage_group(actor=actor, group_id=group_id)
 
 
+def _resolve_replacement_primary_group_id(
+    *, user_id: int, excluded_group_id: int
+) -> int | None:
+    """Resuelve un grupo alternativo para conservar consistencia de identidad.
+
+    Prioriza grupos donde el usuario sea admin; si no existen, toma el primer
+    grupo restante por orden estable de nombre e id.
+    """
+    remaining_memberships = list(
+        GroupMembership.objects.filter(user_id=user_id)
+        .exclude(group_id=excluded_group_id)
+        .select_related("group")
+    )
+    if len(remaining_memberships) == 0:
+        return None
+
+    remaining_memberships.sort(
+        key=lambda membership: (
+            membership.role_in_group != GroupMembership.ROLE_ADMIN,
+            membership.group.name.lower(),
+            membership.group_id,
+        )
+    )
+    return int(remaining_memberships[0].group_id)
+
+
+def _profile_requires_group_membership(profile: UserIdentityProfile | None) -> bool:
+    """Indica si el perfil debe conservar al menos un grupo asociado."""
+    if profile is None:
+        return False
+    return profile.role != UserIdentityProfile.ROLE_ROOT
+
+
+def _reassign_primary_group_after_membership_removal(
+    *,
+    user_id: int,
+    removed_group_id: int,
+) -> tuple[bool, str | None]:
+    """Reasigna grupo primario o bloquea la operación si dejaría al usuario inválido."""
+    profile = UserIdentityProfile.objects.filter(user_id=user_id).first()
+    replacement_group_id = _resolve_replacement_primary_group_id(
+        user_id=user_id,
+        excluded_group_id=removed_group_id,
+    )
+
+    if replacement_group_id is None and _profile_requires_group_membership(profile):
+        return (
+            False,
+            "No se puede completar la operación porque el usuario perdería su ultimo grupo.",
+        )
+
+    if profile is None or profile.primary_group_id != removed_group_id:
+        return True, None
+
+    profile.primary_group_id = replacement_group_id
+    profile.save(update_fields=["primary_group"])
+    return True, None
+
+
+def _prepare_group_deletion(group: WorkGroup) -> tuple[bool, str | None]:
+    """Valida y prepara la eliminación del grupo sin dejar perfiles inconsistentes."""
+    member_user_ids = list(
+        GroupMembership.objects.filter(group_id=group.id).values_list(
+            "user_id", flat=True
+        )
+    )
+    for user_id in member_user_ids:
+        can_delete, error_message = _reassign_primary_group_after_membership_removal(
+            user_id=int(user_id),
+            removed_group_id=group.id,
+        )
+        if not can_delete:
+            return False, error_message
+    return True, None
+
+
 @extend_schema(tags=["Auth"])
 class DomainTokenObtainPairView(TokenObtainPairView):
     """Endpoint de login JWT con claims de dominio."""
@@ -69,14 +147,40 @@ class CurrentUserProfileView(views.APIView):
 
 @extend_schema(tags=["Auth"])
 class CurrentUserAccessibleAppsView(views.APIView):
-    """Expone apps disponibles para el usuario actual con RBAC resuelto."""
+    """Expone apps disponibles para el usuario actual con RBAC resuelto.
+
+    Acepta `?group_id=X` para evaluar acceso estrictamente desde el grupo activo.
+    """
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccessibleScientificAppSerializer
 
     @extend_schema(responses=AccessibleScientificAppSerializer(many=True))
     def get(self, request: Request) -> Response:
-        payload = AuthorizationService.list_accessible_apps(request.user)
+        raw_group_id = request.query_params.get("group_id")
+        active_group_id: int | None = None
+        if raw_group_id is not None:
+            try:
+                active_group_id = int(raw_group_id)
+            except (ValueError, TypeError):
+                return Response(
+                    {"detail": "group_id debe ser un entero válido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not AuthorizationService.is_root(
+                request.user
+            ) and not AuthorizationService.can_access_group(
+                request.user, active_group_id
+            ):
+                return Response(
+                    {"detail": "No tienes permisos para consultar apps de este grupo."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        payload = AuthorizationService.list_accessible_apps(
+            request.user, active_group_id=active_group_id
+        )
         serializer = AccessibleScientificAppSerializer(payload, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -123,16 +227,6 @@ class IdentityUsersView(views.APIView):
 
         user_model = get_user_model()
         users_queryset = user_model.objects.all().order_by("id")
-        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
-            actor
-        ):
-            visible_user_ids = [
-                user.id
-                for user in users_queryset
-                if AuthorizationService.can_manage_user(actor, user)
-                or user.id == actor.id
-            ]
-            users_queryset = users_queryset.filter(id__in=visible_user_ids)
 
         serializer = IdentityUserSummarySerializer(users_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -143,14 +237,41 @@ class IdentityUsersView(views.APIView):
     )
     def post(self, request: Request) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
+
+        # Root puede crear cualquier usuario. Admin puede crear usuarios solo para
+        # grupos que administra; el primary_group_id debe ser uno de esos grupos.
+        if not _require_admin_or_root(actor):
             return Response(
-                {"detail": "Solo root puede crear usuarios administrativos."},
+                {"detail": "No tienes permisos para crear usuarios."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = IdentityBootstrapUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        if not AuthorizationService.is_root(actor):
+            # Admin: valida que el primary_group_id sea un grupo que administra
+            primary_group_id = serializer.validated_data.get("primary_group_id")
+            if primary_group_id is None:
+                return Response(
+                    {
+                        "detail": "No tienes permisos para crear usuarios sin grupo primario asignado."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not _is_group_admin(actor, group_id=int(primary_group_id)):
+                return Response(
+                    {"detail": "Solo puedes crear usuarios en grupos que administras."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Admin no puede crear usuarios root
+            requested_role = serializer.validated_data.get("role", "user")
+            if requested_role == "root":
+                return Response(
+                    {"detail": "Los administradores no pueden crear usuarios root."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         created_user = serializer.save()
         output_serializer = IdentityUserSummarySerializer(created_user)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
@@ -277,9 +398,36 @@ def _apply_is_staff_from_payload(
                 target_user.role = profile.role
 
 
+def _synchronize_primary_group_membership(
+    *,
+    target_user,
+    profile: UserIdentityProfile,
+) -> None:
+    """Mantiene membresía del grupo primario consistente con el rol del perfil."""
+    primary_group_id = profile.primary_group_id
+    if primary_group_id is None:
+        return
+
+    membership_role = (
+        GroupMembership.ROLE_ADMIN
+        if profile.role
+        in {
+            UserIdentityProfile.ROLE_ADMIN,
+            UserIdentityProfile.ROLE_ROOT,
+        }
+        else GroupMembership.ROLE_MEMBER
+    )
+
+    GroupMembership.objects.update_or_create(
+        user=target_user,
+        group_id=int(primary_group_id),
+        defaults={"role_in_group": membership_role},
+    )
+
+
 @extend_schema(tags=["Identity"])
 class IdentityUserDetailView(views.APIView):
-    """Actualiza identidad y estado administrativo de un usuario."""
+    """Actualiza o elimina identidad y estado administrativo de un usuario."""
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = IdentityUserSummarySerializer
@@ -305,6 +453,21 @@ class IdentityUserDetailView(views.APIView):
         serializer.is_valid(raise_exception=True)
         payload = serializer.validated_data
 
+        # Encapsulamiento de grupos: un admin solo puede mover primary_group
+        # hacia grupos que administra.
+        requested_primary_group_id = payload.get("primary_group_id")
+        if (
+            requested_primary_group_id is not None
+            and not AuthorizationService.is_root(actor)
+            and not _is_group_admin(actor, group_id=int(requested_primary_group_id))
+        ):
+            return Response(
+                {
+                    "detail": "Solo puedes asignar grupo primario en grupos que administras."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if is_self_update and not _require_admin_or_root(actor):
             requested_admin_fields = _ADMIN_ONLY_FIELDS.intersection(payload.keys())
             if len(requested_admin_fields) > 0:
@@ -320,20 +483,54 @@ class IdentityUserDetailView(views.APIView):
         basic_updated_fields = _apply_basic_user_fields(target_user, payload)
         _apply_admin_identity_fields(target_user, profile, payload)
 
-        profile.save()
+        try:
+            with transaction.atomic():
+                profile.save()
+                _synchronize_primary_group_membership(
+                    target_user=target_user,
+                    profile=profile,
+                )
 
-        admin_update_fields = ["is_superuser", "is_staff", "is_active"]
-        if hasattr(target_user, "role"):
-            admin_update_fields.append("role")
-        if hasattr(target_user, "account_status"):
-            admin_update_fields.append("account_status")
-        combined_user_update_fields = list(
-            dict.fromkeys([*basic_updated_fields, *admin_update_fields])
-        )
-        target_user.save(update_fields=combined_user_update_fields)
+                admin_update_fields = ["is_superuser", "is_staff", "is_active"]
+                if hasattr(target_user, "role"):
+                    admin_update_fields.append("role")
+                if hasattr(target_user, "account_status"):
+                    admin_update_fields.append("account_status")
+                combined_user_update_fields = list(
+                    dict.fromkeys([*basic_updated_fields, *admin_update_fields])
+                )
+                target_user.save(update_fields=combined_user_update_fields)
+        except ValidationError as error:
+            error_message = (
+                error.messages[0]
+                if hasattr(error, "messages") and len(error.messages) > 0
+                else "No se pudo actualizar el usuario."
+            )
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         response_serializer = IdentityUserSummarySerializer(target_user)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request: Request, user_id: int) -> Response:
+        """Elimina un usuario del sistema. Solo root puede eliminar."""
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede eliminar usuarios."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        user_model = get_user_model()
+        target_user = get_object_or_404(user_model, id=user_id)
+        if actor.id == target_user.id:
+            return Response(
+                {"detail": "No puedes eliminar tu propio usuario."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        target_user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(tags=["Identity"])
@@ -368,15 +565,27 @@ class WorkGroupsView(views.APIView):
     @extend_schema(request=WorkGroupSerializer, responses={201: WorkGroupSerializer})
     def post(self, request: Request) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
+        if not _require_admin_or_root(actor):
             return Response(
-                {"detail": "Solo root puede crear grupos."},
+                {"detail": "No tienes permisos para crear grupos."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = WorkGroupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(created_by=actor)
+        with transaction.atomic():
+            group = serializer.save(created_by=actor)
+            # Admin que crea grupo automáticamente queda como admin del grupo
+            if not AuthorizationService.is_root(actor):
+                GroupMembership.objects.update_or_create(
+                    user=actor,
+                    group=group,
+                    defaults={"role_in_group": GroupMembership.ROLE_ADMIN},
+                )
+                profile = UserIdentityProfile.objects.filter(user=actor).first()
+                if profile is not None and profile.primary_group_id is None:
+                    profile.primary_group = group
+                    profile.save(update_fields=["primary_group"])
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -405,11 +614,19 @@ class WorkGroupDetailView(views.APIView):
     def delete(self, request: Request, group_id: int) -> Response:
         actor = request.user
         group = get_object_or_404(WorkGroup, id=group_id)
-        if not AuthorizationService.is_root(actor):
+        if not _is_group_admin(actor, group_id=group.id):
             return Response(
-                {"detail": "Solo root puede eliminar grupos."},
+                {"detail": "No tienes permisos para eliminar este grupo."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        can_delete, error_message = _prepare_group_deletion(group)
+        if not can_delete:
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         group.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -507,6 +724,34 @@ class GroupMembershipDetailView(views.APIView):
                 {"detail": "No tienes permisos para eliminar esta membresía."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # Validar invariante: el grupo debe tener al menos un admin tras la eliminación
+        if membership.role_in_group == GroupMembership.ROLE_ADMIN:
+            admin_count = GroupMembership.objects.filter(
+                group_id=membership.group_id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).count()
+            if admin_count <= 1:
+                return Response(
+                    {
+                        "detail": (
+                            "No se puede eliminar la membresía: el grupo debe tener "
+                            "al menos un administrador. Asigna otro administrador primero."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        can_delete, error_message = _reassign_primary_group_after_membership_removal(
+            user_id=int(membership.user_id),
+            removed_group_id=int(membership.group_id),
+        )
+        if not can_delete:
+            return Response(
+                {"detail": error_message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         membership.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -528,6 +773,15 @@ class AppPermissionsView(views.APIView):
             )
 
         queryset = AppPermission.objects.all().order_by("-updated_at")
+        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
+            actor
+        ):
+            admin_group_ids = GroupMembership.objects.filter(
+                user_id=actor.id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).values_list("group_id", flat=True)
+            queryset = queryset.filter(group_id__in=admin_group_ids)
+
         serializer = AppPermissionSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -537,14 +791,34 @@ class AppPermissionsView(views.APIView):
     )
     def post(self, request: Request) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
+        if not _require_admin_or_root(actor):
             return Response(
-                {"detail": "Solo root puede crear reglas de acceso por app."},
+                {"detail": "No tienes permisos para crear reglas de acceso por app."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = AppPermissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # Root puede crear globalmente; admin solo para sus grupos.
+        if not AuthorizationService.is_root(actor):
+            target_group = serializer.validated_data.get("group")
+            target_user = serializer.validated_data.get("user")
+            # Admin no puede crear reglas por usuario (solo root).
+            # Admin solo puede crear reglas para grupos que administra.
+            if target_user is not None or target_group is None:
+                return Response(
+                    {
+                        "detail": "Los administradores solo pueden crear reglas para grupos que administran."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not _is_group_admin(actor, group_id=int(target_group.id)):
+                return Response(
+                    {"detail": "Solo puedes crear reglas para grupos que administras."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -562,12 +836,27 @@ class AppPermissionDetailView(views.APIView):
     )
     def patch(self, request: Request, permission_id: int) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
-            return Response(
-                {"detail": "Solo root puede actualizar reglas de acceso por app."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         permission = get_object_or_404(AppPermission, id=permission_id)
+
+        # Root puede actualizar cualquier regla; admin solo las de sus grupos.
+        if not AuthorizationService.is_root(actor):
+            # Rechaza si es regla por usuario (no admin editable).
+            if permission.user_id is not None or permission.group_id is None:
+                return Response(
+                    {
+                        "detail": "Solo root puede actualizar reglas de acceso por usuario."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Rechaza si no es admin del grupo.
+            if not _is_group_admin(actor, group_id=int(permission.group_id)):
+                return Response(
+                    {
+                        "detail": "Solo puedes actualizar reglas de grupos que administras."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         serializer = AppPermissionSerializer(
             permission, data=request.data, partial=True
         )
@@ -577,12 +866,27 @@ class AppPermissionDetailView(views.APIView):
 
     def delete(self, request: Request, permission_id: int) -> Response:
         actor = request.user
-        if not AuthorizationService.is_root(actor):
-            return Response(
-                {"detail": "Solo root puede eliminar reglas de acceso por app."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         permission = get_object_or_404(AppPermission, id=permission_id)
+
+        # Root puede eliminar cualquier regla; admin solo las de sus grupos.
+        if not AuthorizationService.is_root(actor):
+            # Rechaza si es regla por usuario (no admin deleteable).
+            if permission.user_id is not None or permission.group_id is None:
+                return Response(
+                    {
+                        "detail": "Solo root puede eliminar reglas de acceso por usuario."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Rechaza si no es admin del grupo.
+            if not _is_group_admin(actor, group_id=int(permission.group_id)):
+                return Response(
+                    {
+                        "detail": "Solo puedes eliminar reglas de grupos que administras."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         permission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

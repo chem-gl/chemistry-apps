@@ -1,0 +1,3 @@
+<!-- scientific-chart.component.html: Host visual para una grafica reusable basada en ECharts. -->
+<div echarts class="chart-host" [attr.aria-label]="ariaLabel()" [attr.role]="'img'" [autoResize]="true"
+    [initOpts]="{ renderer: 'canvas' }" [options]="options()" [style.height]="chartHeight()"></div>

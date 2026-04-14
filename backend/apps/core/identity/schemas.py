@@ -6,6 +6,7 @@ Define serializadores para autenticación y lectura de perfil de usuario.
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -17,6 +18,24 @@ from ..models import (
     UserIdentityProfile,
     WorkGroup,
 )
+
+
+def _load_user_memberships(user_id: int) -> list[dict[str, object]]:
+    """Carga las membresías de grupo del usuario en una sola query."""
+    memberships = (
+        GroupMembership.objects.filter(user_id=user_id)
+        .select_related("group")
+        .order_by("group__name")
+    )
+    return [
+        {
+            "group_id": m.group_id,
+            "group_name": m.group.name,
+            "group_slug": m.group.slug,
+            "role_in_group": m.role_in_group,
+        }
+        for m in memberships
+    ]
 
 
 def _load_profile(user_id: int) -> UserIdentityProfile | None:
@@ -115,8 +134,17 @@ def _build_user_representation(
     }
 
 
+class UserMembershipSummarySerializer(serializers.Serializer):
+    """Serializer de resumen de membresía de grupo para el perfil del usuario."""
+
+    group_id = serializers.IntegerField(read_only=True)
+    group_name = serializers.CharField(read_only=True)
+    group_slug = serializers.CharField(read_only=True)
+    role_in_group = serializers.CharField(read_only=True)
+
+
 class UserProfileSerializer(serializers.Serializer):
-    """Serializer de lectura para perfil del usuario autenticado."""
+    """Serializer de lectura para perfil del usuario autenticado. Incluye membresías."""
 
     id = serializers.IntegerField(read_only=True)
     username = serializers.CharField(read_only=True)
@@ -130,10 +158,13 @@ class UserProfileSerializer(serializers.Serializer):
     primary_group_id = serializers.IntegerField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True, allow_null=True)
     updated_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    memberships = UserMembershipSummarySerializer(many=True, read_only=True)
 
     def to_representation(self, instance):
         profile = _load_profile(instance.id)
-        return _build_user_representation(instance, profile)
+        base = _build_user_representation(instance, profile)
+        base["memberships"] = _load_user_memberships(instance.id)
+        return base
 
 
 class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -328,6 +359,19 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
             raise serializers.ValidationError("El grupo primario indicado no existe.")
         return value
 
+    def validate(self, attrs: dict) -> dict:
+        role_value = str(attrs.get("role", UserIdentityProfile.ROLE_USER))
+        primary_group_id = attrs.get("primary_group_id")
+        if role_value != UserIdentityProfile.ROLE_ROOT and primary_group_id is None:
+            raise serializers.ValidationError(
+                {
+                    "primary_group_id": (
+                        "Todo usuario no root debe crearse con un grupo primario."
+                    )
+                }
+            )
+        return attrs
+
     def create(self, validated_data: dict):
         user_model = get_user_model()
         role_value = str(validated_data.pop("role"))
@@ -337,35 +381,55 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
         primary_group_id = validated_data.pop("primary_group_id", None)
         raw_password = str(validated_data.pop("password"))
 
-        created_user = user_model.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data.get("email", ""),
-            password=raw_password,
-            first_name=validated_data.get("first_name", ""),
-            last_name=validated_data.get("last_name", ""),
-            role=role_value,
-            account_status=account_status,
-        )
-        created_user.save()
+        with transaction.atomic():
+            created_user = user_model.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data.get("email", ""),
+                password=raw_password,
+                first_name=validated_data.get("first_name", ""),
+                last_name=validated_data.get("last_name", ""),
+                role=role_value,
+                account_status=account_status,
+            )
+            created_user.save()
 
-        UserIdentityProfile.objects.update_or_create(
-            user=created_user,
-            defaults={
-                "role": role_value,
-                "account_status": account_status,
-                "primary_group_id": primary_group_id,
-            },
-        )
+            UserIdentityProfile.objects.update_or_create(
+                user=created_user,
+                defaults={
+                    "role": role_value,
+                    "account_status": account_status,
+                    "primary_group_id": primary_group_id,
+                },
+            )
+
+            if primary_group_id is not None:
+                default_membership_role = (
+                    GroupMembership.ROLE_ADMIN
+                    if role_value
+                    in {
+                        UserIdentityProfile.ROLE_ADMIN,
+                        UserIdentityProfile.ROLE_ROOT,
+                    }
+                    else GroupMembership.ROLE_MEMBER
+                )
+                GroupMembership.objects.update_or_create(
+                    user=created_user,
+                    group_id=primary_group_id,
+                    defaults={"role_in_group": default_membership_role},
+                )
         return created_user
 
 
 class AccessibleScientificAppSerializer(serializers.Serializer):
-    """Serializer de apps visibles para el usuario actual."""
+    """Serializer de apps visibles para el usuario actual. Incluye features disponibles."""
 
     app_name = serializers.CharField(read_only=True)
     route_key = serializers.CharField(read_only=True)
     api_base_path = serializers.CharField(read_only=True)
     supports_pause_resume = serializers.BooleanField(read_only=True)
+    available_features = serializers.ListField(
+        child=serializers.CharField(), read_only=True
+    )
     enabled = serializers.BooleanField(read_only=True)
     group_permission = serializers.BooleanField(read_only=True, allow_null=True)
     user_permission = serializers.BooleanField(read_only=True, allow_null=True)

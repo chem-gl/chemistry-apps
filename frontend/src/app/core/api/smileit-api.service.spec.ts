@@ -3,9 +3,10 @@
 
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import '@angular/compiler';
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of, throwError } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../shared/constants';
 import {
   PatternTypeEnum,
@@ -161,30 +162,80 @@ describe('SmileitApiService', () => {
     await lastValueFrom(service.updateSmileitCatalogEntry('catalog-1', catalogParams));
     await lastValueFrom(service.createSmileitPatternEntry(patternParams));
 
-    expect(smileitClientMock.smileitJobsCatalogCreate).toHaveBeenCalledWith({
-      name: 'Aromatic ring',
-      smiles: 'c1ccccc1',
-      anchor_atom_indices: [1, 2],
-      category_keys: ['aryl'],
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
-    });
-    expect(smileitClientMock.smileitJobsCatalogPartialUpdate).toHaveBeenCalledWith('catalog-1', {
-      name: 'Aromatic ring',
-      smiles: 'c1ccccc1',
-      anchor_atom_indices: [1, 2],
-      category_keys: ['aryl'],
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
-    });
-    expect(smileitClientMock.smileitJobsPatternsCreate).toHaveBeenCalledWith({
-      name: 'Ring pattern',
+    expect(smileitClientMock.smileitJobsCatalogCreate).toHaveBeenCalledWith(
+      {
+        name: 'Aromatic ring',
+        smiles: 'c1ccccc1',
+        anchor_atom_indices: [1, 2],
+        category_keys: ['aryl'],
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
+    expect(smileitClientMock.smileitJobsCatalogPartialUpdate).toHaveBeenCalledWith(
+      'catalog-1',
+      {
+        name: 'Aromatic ring',
+        smiles: 'c1ccccc1',
+        anchor_atom_indices: [1, 2],
+        category_keys: ['aryl'],
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
+    expect(smileitClientMock.smileitJobsPatternsCreate).toHaveBeenCalledWith(
+      {
+        name: 'Ring pattern',
+        smarts: 'c1ccccc1',
+        pattern_type: PatternTypeEnum.Toxicophore,
+        caption: 'Aromatic ring',
+        source_reference: 'literature',
+        provenance_metadata: { origin: 'manual' },
+      },
+      undefined,
+      'body',
+      false,
+      expect.objectContaining({ context: expect.any(Object) }),
+    );
+  });
+
+  it('updates and deletes patterns through HTTP endpoints when client has no generated methods', async () => {
+    const patternParams = {
+      name: 'Updated Ring pattern',
       smarts: 'c1ccccc1',
-      pattern_type: PatternTypeEnum.Toxicophore,
-      caption: 'Aromatic ring',
-      source_reference: 'literature',
-      provenance_metadata: { origin: 'manual' },
+      patternType: PatternTypeEnum.Privileged,
+      caption: 'Updated caption',
+      sourceReference: 'local-lab',
+      provenanceMetadata: { owner_user_id: '2' },
+    };
+
+    const updatePromise = lastValueFrom(
+      service.updateSmileitPatternEntry('pattern-1', patternParams),
+    );
+    const updateRequest = httpMock.expectOne('/api/smileit/jobs/patterns/pattern-1/');
+    expect(updateRequest.request.method).toBe('PATCH');
+    expect(updateRequest.request.body).toEqual({
+      name: 'Updated Ring pattern',
+      smarts: 'c1ccccc1',
+      pattern_type: PatternTypeEnum.Privileged,
+      caption: 'Updated caption',
+      source_reference: 'local-lab',
+      provenance_metadata: { owner_user_id: '2' },
     });
+    updateRequest.flush({ id: 'pattern-1', stable_id: 'pattern-1' });
+    await expect(updatePromise).resolves.toEqual({ id: 'pattern-1', stable_id: 'pattern-1' });
+
+    const deletePromise = lastValueFrom(service.deleteSmileitPatternEntry('pattern-1'));
+    const deleteRequest = httpMock.expectOne('/api/smileit/jobs/patterns/pattern-1/');
+    expect(deleteRequest.request.method).toBe('DELETE');
+    deleteRequest.flush(null);
+    await expect(deletePromise).resolves.toBeNull();
   });
 
   it('maps structure inspection and validation errors', async () => {

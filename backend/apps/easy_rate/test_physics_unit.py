@@ -1,4 +1,4 @@
-"""test_physics_unit.py: Tests unitarios para _tst_physics.py.
+"""test_physics_unit.py: Tests unitarios para computation/physics.py.
 
 Objetivo: Cubrir rutas de error y casos borde en las funciones de física
 cinética (viscosidad, túnel, difusión) que no son alcanzadas por los
@@ -11,7 +11,7 @@ import math
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from ._tst_physics import (
+from .computation.physics import (
     _compute_diffusion_terms,
     _compute_thermodynamic_terms,
     _compute_tunnel_terms,
@@ -305,7 +305,7 @@ class ComputeTunnelTermsTests(TestCase):
         mock_result = MagicMock()
         mock_result.success = False
         mock_result.error_message = "TST no convergió en iteración 10."
-        with patch("apps.easy_rate._tst_physics.TST") as mock_tst_class:
+        with patch("apps.easy_rate.computation.physics.TST") as mock_tst_class:
             mock_tst_class.return_value.set_parameters.return_value = mock_result
             with self.assertRaises(ValueError) as ctx:
                 _compute_tunnel_terms(
@@ -322,7 +322,7 @@ class ComputeTunnelTermsTests(TestCase):
         mock_result = MagicMock()
         mock_result.success = False
         mock_result.error_message = None
-        with patch("apps.easy_rate._tst_physics.TST") as mock_tst_class:
+        with patch("apps.easy_rate.computation.physics.TST") as mock_tst_class:
             mock_tst_class.return_value.set_parameters.return_value = mock_result
             with self.assertRaises(ValueError) as ctx:
                 _compute_tunnel_terms(

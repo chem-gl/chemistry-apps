@@ -16,7 +16,9 @@
       "profile": "Profile",
       "jobsMonitor": "Jobs Monitor",
       "apps": "Apps",
-      "identity": "Identity"
+      "identity": "Identity",
+      "groups": "Groups",
+      "users": "Users"
     },
     "navHints": {
       "signIn": "Authenticate to load your workspace",
@@ -24,7 +26,9 @@
       "profile": "Manage your personal profile and password",
       "jobsMonitor": "Track active and completed jobs",
       "apps": "Visible scientific apps for your current session",
-      "identity": "Users, groups and permissions"
+      "identity": "Users, groups and permissions",
+      "groups": "Manage scientific team groups and their permissions",
+      "users": "Manage user accounts and group memberships"
     }
   },
   "language": {
@@ -380,8 +384,17 @@
     "form": {
       "title": "Data Entry",
       "ariaLabel": "Input parameters",
+      "inputMode": "Input mode",
+      "singleMode": "Single species",
+      "batchMode": "Batch CSV",
       "pkaCount": "Number of acid-base equilibria",
       "pkaValues": "Enter pKa values",
+        "speciesSettings": "Species configuration",
+        "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
+        "initialCharge": "Charge of the most protonated species",
+        "initialChargePlaceholder": "q",
+        "speciesLabel": "Species label",
+        "speciesLabelPlaceholder": "A",
       "phMode": "pH values",
       "phSingle": "One pH value",
       "phRange": "pH range",
@@ -393,14 +406,59 @@
     "actions": {
       "run": "Run Molar Fractions",
       "processing": "Processing...",
-      "reset": "Reset"
+      "reset": "Reset",
+      "exportCsv": "Export CSV"
+    },
+    "batch": {
+      "description": "Upload a CSV file with multiple compounds to calculate species fractions at one fixed pH value.",
+      "studentNote": "Students usually estimate pKa values outside the platform and then upload the final curated table here.",
+      "csvExampleTitle": "Expected CSV example",
+      "fileLabel": "CSV file",
+      "parameters": "Batch parameters",
+      "targetPh": "Target pH",
+      "threshold": "Minimum fraction threshold",
+      "thresholdHint": "Only species with fraction greater than or equal to this value will remain in the final table.",
+      "run": "Calculate from CSV",
+      "exportCsv": "Export batch CSV",
+      "noRows": "No species met the selected threshold for this file.",
+      "summary": {
+        "rows": "Visible rows:",
+        "ph": "Target pH:"
+      },
+      "table": {
+        "acronym": "Acronym",
+        "smiles": "SMILES",
+        "pkaValues": "pKa values",
+        "initialCharge": "Initial charge",
+        "species": "Species",
+        "charge": "Charge",
+        "fraction": "Fraction"
+      },
+      "csvExample": {
+        "header": "Acronym,SMILES,InitialCharge,pKaValues",
+        "row1": "EDA,NCCN,2,6.16;10.26",
+        "row2": "GLY,NCC(=O)O,-1,2.35;9.78",
+        "row3": "AMPH,CC(N)CC1=CC=CC=C1,q,9.9"
+      }
     },
     "result": {
       "title": "Results",
       "ariaLabel": "Results and progress",
       "submitting": "Submitting molar fractions job to backend...",
       "noRows": "No final rows available yet for this historical job.",
+      "chart": {
+        "title": "Fraction curves",
+        "subtitle": "Each species is drawn as a curve across the computed pH range.",
+        "ariaLabel": "Molar fractions chart",
+        "probe": {
+          "label": "Reference pH",
+          "slider": "Move reference line",
+          "fixed": "Interpolated readings at pH"
+        }
+      },
       "metadata": {
+        "label": "Label:",
+        "initialCharge": "Initial charge:",
         "mode": "Mode:",
         "pkaValues": "pKa values:",
         "range": "Range:",
@@ -560,60 +618,6 @@
       "ariaLabel": "Historical Marcus jobs"
     }
   },
-  "randomNumbers": {
-    "header": {
-      "eyebrow": "Random Numbers",
-      "title": "Asynchronous Batch Generation",
-      "subtitle": "Configure the source URL, batch size, interval, and total output size."
-    },
-    "form": {
-      "ariaLabel": "Generation parameters",
-      "seedUrl": "Seed URL",
-      "seedUrlPlaceholder": "https://example.com/seed.txt",
-      "numbersPerBatch": "Numbers per batch",
-      "batchInterval": "Batch interval (seconds)",
-      "totalNumbers": "Total numbers"
-    },
-    "actions": {
-      "generate": "Generate",
-      "processing": "Processing...",
-      "clear": "Clear",
-      "resuming": "Resuming...",
-      "resumeJob": "Resume job",
-      "pausing": "Pausing...",
-      "pauseJob": "Pause job"
-    },
-    "progress": {
-      "title": "Job in Progress",
-      "ariaLabel": "Random numbers job progress",
-      "stage": "Stage:"
-    },
-    "logs": { "title": "Execution Logs" },
-    "result": {
-      "title": "Generated Result",
-      "ariaLabel": "Random numbers result",
-      "seedUrlLabel": "Seed URL:",
-      "digestLabel": "Digest:",
-      "batchLabel": "Batch:",
-      "intervalLabel": "Interval:",
-      "totalLabel": "Total:",
-      "numbersTitle": "Random Numbers"
-    },
-    "history": {
-      "title": "Result History",
-      "ariaLabel": "Random numbers job history",
-      "empty": "No historical random numbers jobs yet.",
-      "reload": "Reload history",
-      "reloading": "Loading...",
-      "columns": {
-        "jobId": "Job ID",
-        "status": "Status",
-        "numbers": "Numbers",
-        "updated": "Updated",
-        "action": "Action"
-      }
-    }
-  },
   "saScore": {
     "header": {
       "eyebrow": "SA Score",
@@ -623,6 +627,9 @@
     "form": {
       "title": "Input",
       "ariaLabel": "Input parameters",
+      "jobNameLabel": "Job name",
+      "jobNamePlaceholder": "Optional: visible job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
       "methodsLegend": "Methods"
     },
     "actions": {
@@ -637,9 +644,14 @@
       "ariaLabel": "Results and progress",
       "submitting": "Submitting SA score job to backend...",
       "ariaProgressLabel": "SA score job progress",
+      "searchLabel": "Search table",
+      "searchPlaceholder": "Search by name or SMILES",
+      "filteredCount": "visible rows",
+      "emptySearch": "No SA Score rows match the current search.",
       "exportTargetLabel": "Export target",
       "totalMolecules": "Total molecules:",
       "methodsLabel": "Methods:",
+      "jobNameLabel": "Visible name:",
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
       "tableSMILES": "SMILES"
@@ -669,7 +681,10 @@
     },
     "form": {
       "title": "Input",
-      "ariaLabel": "Input parameters"
+      "ariaLabel": "Input parameters",
+      "jobNameLabel": "Job name",
+      "jobNamePlaceholder": "Optional: visible job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved."
     },
     "actions": {
       "run": "Run Toxicity Properties",
@@ -683,8 +698,13 @@
       "ariaLabel": "Results and progress",
       "submitting": "Submitting toxicity job to backend...",
       "ariaProgressLabel": "Toxicity job progress",
+      "searchLabel": "Search table",
+      "searchPlaceholder": "Search by name or SMILES",
+      "filteredCount": "visible rows",
+      "emptySearch": "No toxicity rows match the current search.",
       "totalMolecules": "Total molecules:",
       "modelLabel": "Model: ADMET-AI",
+      "jobNameLabel": "Visible name:",
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
       "tableSMILES": "SMILES",
@@ -1081,6 +1101,89 @@
       "submit": "Save group config"
     }
   },
+  "groupManager": {
+    "header": {
+      "eyebrow": "Administration",
+      "title": "Group Management",
+      "subtitle": "Manage scientific groups, their members, and app-level access rules."
+    },
+    "feedback": {
+      "loading": "Loading groups..."
+    },
+    "groups": {
+      "title": "Groups",
+      "colName": "Name",
+      "colSlug": "Slug",
+      "colMembers": "Members",
+      "colActions": "Actions",
+      "manage": "Manage",
+      "collapse": "Collapse"
+    },
+    "members": {
+      "title": "Members",
+      "colUser": "User",
+      "colRole": "Role",
+      "colActions": "Actions",
+      "selectUser": "Select user",
+      "addButton": "Add member"
+    },
+    "permissions": {
+      "title": "App Permissions"
+    },
+    "createGroup": {
+      "title": "Create group",
+      "hint": "Groups represent scientific teams or environments.",
+      "name": "Group name",
+      "slug": "Slug",
+      "description": "Description",
+      "submit": "Create group"
+    }
+  },
+  "userManager": {
+    "header": {
+      "eyebrow": "Administration",
+      "title": "User Management",
+      "subtitle": "Manage user accounts, roles, and group memberships."
+    },
+    "feedback": {
+      "loading": "Loading users..."
+    },
+    "users": {
+      "title": "Users",
+      "description": "Admins can only manage users in their groups.",
+      "filterGroup": "Filter by group",
+      "allGroups": "All groups",
+      "colUsername": "Username",
+      "colRole": "Role",
+      "colStatus": "Status",
+      "colGroups": "Groups",
+      "colActions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    },
+    "createUser": {
+      "title": "Create user",
+      "hint": "Admins can create accounts only for their groups.",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "roleLabel": "Role",
+      "primaryGroup": "Primary group",
+      "noPrimaryGroup": "No primary group",
+      "submit": "Create user"
+    },
+    "addMembership": {
+      "title": "Add membership",
+      "hint": "Assign an existing user to a group with a specific role.",
+      "selectUser": "Select user",
+      "selectGroup": "Select group",
+      "submit": "Add membership"
+    }
+  },
   "shared": {
     "smilesBatchInput": {
       "label": "SMILES batch input",
@@ -1095,7 +1198,8 @@
       "tableSMILES": "SMILES",
       "drawSmilesTitle": "Draw a molecule with Ketcher and add it to the list",
       "uploadFileTitle": "Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs",
-      "fileFormats": ".smi, .txt or .csv file"
+      "fileFormats": ".smi, .txt or .csv file",
+      "validating": "Validating SMILES before submission..."
     },
     "jobArtifactExport": {
       "persistedFiles": "Persisted Input Files",

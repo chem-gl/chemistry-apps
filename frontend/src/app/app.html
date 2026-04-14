@@ -12,6 +12,7 @@
       <div class="session-panel">
         <app-language-switcher />
         @if (sessionService.isAuthenticated()) {
+        <app-active-group-selector />
         <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
         <div class="session-copy">
           <strong>{{ sessionService.displayName() }}</strong>

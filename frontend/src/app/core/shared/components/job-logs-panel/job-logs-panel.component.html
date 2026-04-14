@@ -1,7 +1,15 @@
 <!-- job-logs-panel.component.html: Panel de logs reutilizable para apps científicas. -->
 @if (logs.length > 0) {
 <section class="logs-card" [attr.aria-label]="'shared.jobLogs.ariaLabel' | transloco">
-  <h3>{{ title }}</h3>
+  <button class="logs-toggle" type="button" (click)="toggleExpanded()" [attr.aria-expanded]="isExpanded()">
+    <span class="logs-toggle-copy">
+      <span class="logs-toggle-title">{{ title }}</span>
+      <span class="logs-toggle-count">{{ logs.length }}</span>
+    </span>
+    <span class="logs-toggle-icon" [class.is-expanded]="isExpanded()">▾</span>
+  </button>
+
+  @if (isExpanded()) {
   <div class="logs-list">
     @for (logEntry of logs; track logEntry.eventIndex) {
     <article class="log-item">
@@ -19,5 +27,6 @@
     </article>
     }
   </div>
+  }
 </section>
 }

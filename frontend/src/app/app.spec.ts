@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { IdentitySessionService } from './core/auth/identity-session.service';
+import { provideTestingTransloco } from './core/i18n/testing-transloco.provider';
 
 describe('App', () => {
   const sessionServiceMock = {
@@ -9,8 +10,17 @@ describe('App', () => {
     isAuthenticated: () => true,
     displayName: () => 'Admin User',
     currentRole: () => 'root',
+    currentUser: () => ({ id: 1, username: 'admin' }),
     canAccessRoute: () => true,
     hasAdminAccess: () => false,
+    canAccessAdminArea: () => false,
+    hasRootAccess: () => true,
+    userMemberships: () => [],
+    isRootViewContext: () => true,
+    activeGroupContext: () => null,
+    activeGroupId: () => null,
+    setRootViewContext: () => void 0,
+    setActiveGroup: () => void 0,
     logout: () => void 0,
   };
 
@@ -19,6 +29,7 @@ describe('App', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideTestingTransloco(),
         { provide: IdentitySessionService, useValue: sessionServiceMock },
       ],
     }).compileComponents();

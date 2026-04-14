@@ -85,10 +85,11 @@ chemistry-apps/
 │       │   ├── i18n/          # LanguageService, TranslocoLoader, idiomas soportados
 │       │   └── shared/        # Componentes, constantes y utilidades transversales
 │       ├── dashboard/
-│       ├── jobs-monitor/      # Monitor global de jobs activos
+│       ├── group-manager/     # Gestión de grupos, membresías y permisos por app
+│       ├── jobs-monitor/      # Monitor de jobs visibles para la sesión actual
 │       ├── jobs-trash/        # Papelera de jobs eliminados (admin)
-│       ├── identity-admin/    # Consola de usuarios, grupos y permisos
 │       ├── apps-hub/          # Catálogo navegable de apps
+│       ├── profile/           # Perfil propio y cambio de contraseña
 │       ├── random-numbers/
 │       ├── molar-fractions/
 │       ├── tunnel/
@@ -96,7 +97,8 @@ chemistry-apps/
 │       ├── marcus/
 │       ├── smileit/
 │       ├── sa-score/
-│       └── toxicity-properties/
+│       ├── toxicity-properties/
+│       └── user-manager/      # Gestión de usuarios y asignaciones a grupos
 ├── scripts/               # Generación OpenAPI y reportes de calidad
 ├── deprecated/            # Código histórico fuera de uso
 └── tools/                 # Runtimes Java para librerías externas
@@ -111,49 +113,70 @@ La carpeta `deprecated/` contiene código anterior sin uso activo. En documentac
 El sistema está dividido en cuatro capas con responsabilidades claras:
 
 ```mermaid
-flowchart LR
-  U[Usuario] --> F[Frontend Angular]
+flowchart TB
+  U[Usuario]
 
-  subgraph Frontend
-    F --> AUTH[Guards: auth / admin / appAccess]
-    AUTH --> W[Wrappers API]
-    W --> GEN[Cliente OpenAPI generado]
-    F --> I18N[LanguageService / Transloco]
-    I18N --> LANG[(i18n JSON)]
+  subgraph L1[1. Frontend Angular]
+    F[Apps y vistas protegidas]
+    AUTH[Guards auth/admin/groupAdmin/appAccess]
+    SESSION[IdentitySessionService + grupo activo]
+    ADMINUI[Dashboard, GroupManager, UserManager, JobsTrash]
+    WRAP[Wrappers core/api]
+    GEN[Cliente OpenAPI generado]
+    I18N[Transloco + LanguageService]
+    LANG[(Catalogos i18n JSON)]
+
+    U --> F
+    F --> AUTH
+    AUTH --> SESSION
+    SESSION --> ADMINUI
+    SESSION --> WRAP
+    WRAP --> GEN
+    F --> I18N
+    I18N --> LANG
   end
 
-  GEN --> B
+  subgraph L2[2. Backend Django]
+    API[Django + DRF]
+    CORE[Core de jobs]
+    ID[Identity / RBAC]
+    APPS[Apps cientificas]
+    REG[Plugin Registry]
 
-  subgraph Backend
-    B[Django + DRF] --> CORE[Core jobs]
-    B --> IDENTITY[Identity / RBAC]
-    B --> APPS[Apps científicas]
-    CORE --> PLUGINS[Plugin Registry]
-    PLUGINS --> APPS
-    IDENTITY --> CORE
+    API --> CORE
+    API --> ID
+    API --> APPS
+    CORE --> REG
+    REG --> APPS
+    ID --> CORE
   end
 
-  subgraph Async
-    CORE --> Q[Redis / Cola Celery]
-    Q --> WK[Worker Celery]
-    WK --> PLUGINS
+  subgraph L3[3. Ejecucion asincrona]
+    REDIS[Redis broker]
+    CELERY[Celery worker]
+
+    CORE --> REDIS
+    REDIS --> CELERY
+    CELERY --> REG
   end
 
-  subgraph Persistencia
-    CORE --> DB[(Base de datos)]
+  subgraph L4[4. Persistencia y realtime]
+    DB[(Base de datos)]
+    CH[Django Channels]
+
+    CORE --> DB
     APPS --> DB
-    IDENTITY --> DB
+    ID --> DB
+    CORE --> CH
+    CH --> F
   end
 
-  subgraph Realtime
-    CORE --> WS[Django Channels]
-    WS --> F
-  end
+  GEN --> API
 ```
 
 ### Capa de identidad y RBAC
 
-El módulo `backend/apps/core/identity/` centraliza toda la lógica de autenticación y autorización transversal. `AuthorizationService` resuelve permisos para jobs y apps a partir de roles globales (`root/admin/user`) y membresías de grupo. Los jobs llevan `owner` y `group` como claves foráneas, lo que permite filtrar visibilidad sin duplicar lógica en cada app.
+El módulo `backend/apps/core/identity/` centraliza autenticación JWT, bootstrap administrativo, grupos de trabajo y autorización transversal. `AuthorizationService` resuelve permisos para jobs, apps, grupos y usuarios a partir de roles globales (`root/admin/user`), `primary_group` y membresías explícitas. Los jobs llevan `owner` y `group` como claves foráneas, lo que permite filtrar visibilidad y acciones sin duplicar lógica en cada app científica.
 
 **Capa de presentación**: Angular con lazy loading por ruta. Cada app científica es un componente standalone que únicamente conoce los tipos del cliente generado y los servicios de aplicación de `core/api/`.
 
@@ -169,6 +192,7 @@ El módulo `backend/apps/core/identity/` centraliza toda la lógica de autentica
 
 ```mermaid
 sequenceDiagram
+  autonumber
   actor U as Usuario
   participant F as Frontend Angular
   participant R as Router (apps/<app>/routers.py)
@@ -183,33 +207,45 @@ sequenceDiagram
   participant RT as Realtime (core/realtime.py)
   participant WS as WebSocket cliente
 
-  U->>F: Completa formulario y lanza cálculo
+  U->>F: Completa formulario y ejecuta calculo
   F->>R: POST /api/<app>/
   R->>JS: create_job(plugin_name, version, parameters)
   JS->>RJS: create_job(...)
-  RJS->>DB: ScientificJob.objects.create(status=pending)
-  RJS->>DB: generate_job_hash(): consulta cache hit
-  JS->>T: dispatch_scientific_job(job_id)
-  T->>Redis: execute_scientific_job.delay(job_id)
-  Redis->>WK: entrega tarea
-  WK->>T: execute_scientific_job(job_id)
-  T->>JS: JobService.run_job(job_id)
-  JS->>RJS: run_job(job_id)
-  RJS->>DB: status = running
-  RJS->>PR: execute(plugin_name, params, callbacks)
-  PR->>P: llama función del plugin
-  P-->>RJS: progress_cb(percentage, stage, message)
-  RJS->>DB: actualiza progress_percentage / progress_stage
-  RJS->>RT: broadcast_job_progress(job)
-  RT->>WS: evento job.progress
-  P-->>RJS: log_cb(level, source, message)
-  RJS->>DB: ScientificJobLogEvent.objects.create(...)
-  RJS->>RT: broadcast_job_log(job, log_event)
-  RT->>WS: evento job.log
-  P->>RJS: retorna resultado JSONMap
-  RJS->>DB: status = completed, results = payload
-  RJS->>RT: broadcast_job_update(job)
-  RT->>WS: evento job.updated
+  RJS->>DB: Crea ScientificJob (pending)
+  RJS->>DB: Calcula hash y revisa cache
+
+  alt Cache hit
+    RJS->>DB: Guarda resultado cached (completed)
+    RJS->>RT: broadcast_job_update(job)
+    RT->>WS: job.updated
+  else Cache miss
+    JS->>T: dispatch_scientific_job(job_id)
+    T->>Redis: delay(job_id)
+    Redis->>WK: Entrega tarea
+    WK->>T: execute_scientific_job(job_id)
+    T->>JS: run_job(job_id)
+    JS->>RJS: run_job(job_id)
+    RJS->>DB: Cambia status a running
+    RJS->>PR: execute(plugin_name, params, callbacks)
+    PR->>P: Ejecuta plugin
+
+    loop Mientras procesa
+      P-->>RJS: progress_cb(...)
+      RJS->>DB: Actualiza progreso
+      RJS->>RT: broadcast_job_progress(job)
+      RT->>WS: job.progress
+      P-->>RJS: log_cb(...)
+      RJS->>DB: Crea ScientificJobLogEvent
+      RJS->>RT: broadcast_job_log(...)
+      RT->>WS: job.log
+    end
+
+    P-->>RJS: Resultado JSONMap
+    RJS->>DB: Guarda results y status completed
+    RJS->>RT: broadcast_job_update(job)
+    RT->>WS: job.updated
+  end
+
   F->>R: GET /api/jobs/{id}/ o stream WebSocket
 ```
 
@@ -282,6 +318,53 @@ El modelo `ScientificJobInputArtifact` y `ScientificJobInputArtifactChunk` persi
 
 ```mermaid
 classDiagram
+  direction LR
+
+  class AuthorizationService {
+    +is_root(actor)
+    +is_admin(actor)
+    +can_view_job(actor, job)
+    +can_manage_job(actor, job)
+    +can_delete_job(actor, job)
+    +list_accessible_apps(user)
+  }
+
+  class JobService {
+    <<facade>>
+    +create_job(plugin_name, version, parameters)
+    +register_dispatch_result(job_id, was_dispatched)
+    +run_job(job_id)
+    +cancel_job(job_id)
+    +request_pause(job_id)
+    +resume_job(job_id)
+    +run_active_recovery(...)
+  }
+
+  class RuntimeJobService {
+    <<dataclass>>
+    +cache_repository CacheRepositoryPort
+    +plugin_execution PluginExecutionPort
+    +progress_publisher JobProgressPublisherPort
+    +log_publisher JobLogPublisherPort
+    +create_job(...)
+    +run_job(...)
+    +cancel_job(...)
+    +request_pause(...)
+    +resume_job(...)
+  }
+
+  class PluginRegistry {
+    +_plugins dict
+    +register(name) decorator
+    +execute(name, params, callbacks)
+  }
+
+  class CeleryTasks {
+    +execute_scientific_job(job_id)
+    +run_active_recovery(exclude_job_id)
+    +purge_expired_artifact_chunks()
+  }
+
   class ScientificJob {
     +UUID id
     +FK owner
@@ -330,15 +413,6 @@ classDiagram
     +bool is_enabled
   }
 
-  class AuthorizationService {
-    +is_root(actor)
-    +is_admin(actor)
-    +can_view_job(actor, job)
-    +can_manage_job(actor, job)
-    +can_delete_job(actor, job)
-    +list_accessible_apps(user)
-  }
-
   class ScientificJobLogEvent {
     +UUID job_id (FK)
     +int event_index
@@ -348,53 +422,17 @@ classDiagram
     +JSONField payload
   }
 
-  class JobService {
-    <<facade>>
-    +create_job(plugin_name, version, parameters)
-    +register_dispatch_result(job_id, was_dispatched)
-    +run_job(job_id)
-    +cancel_job(job_id)
-    +request_pause(job_id)
-    +resume_job(job_id)
-    +run_active_recovery(...)
-  }
+  JobService --> RuntimeJobService : delega por factory
+  RuntimeJobService --> PluginRegistry : ejecuta plugin
+  RuntimeJobService --> ScientificJob : persiste ciclo de vida
+  CeleryTasks --> JobService : orquesta run/recovery
+  AuthorizationService --> ScientificJob : aplica RBAC
 
-  class RuntimeJobService {
-    <<dataclass>>
-    +cache_repository CacheRepositoryPort
-    +plugin_execution PluginExecutionPort
-    +progress_publisher JobProgressPublisherPort
-    +log_publisher JobLogPublisherPort
-    +create_job(...)
-    +run_job(...)
-    +cancel_job(...)
-    +request_pause(...)
-    +resume_job(...)
-  }
-
-  class PluginRegistry {
-    +_plugins dict
-    +register(name) decorator
-    +execute(name, params, callbacks)
-  }
-
-  class CeleryTasks {
-    +execute_scientific_job(job_id)
-    +run_active_recovery(exclude_job_id)
-    +purge_expired_artifact_chunks()
-  }
-
-  JobService --> RuntimeJobService : delega via factory
-  RuntimeJobService --> ScientificJob : persiste y consulta
-  RuntimeJobService --> PluginRegistry : ejecuta
-  CeleryTasks --> JobService : llama run_job
-  ScientificJob "1" --> "*" ScientificJobLogEvent : tiene logs
-  ScientificJob --> WorkGroup : grupo
-  UserIdentityProfile --> WorkGroup : primary_group
-  GroupMembership --> WorkGroup : grupo
-  GroupMembership --> UserIdentityProfile : usuario
-  AppPermission --> WorkGroup : sujeto grupo
-  AuthorizationService --> ScientificJob : decide visibilidad
+  ScientificJob "1" --> "0..*" ScientificJobLogEvent : genera
+  ScientificJob "0..*" --> "0..1" WorkGroup : pertenece a
+  UserIdentityProfile "0..*" --> "0..1" WorkGroup : primary_group
+  GroupMembership "0..*" --> "1" WorkGroup : group
+  AppPermission "0..*" --> "0..1" WorkGroup : subject_group
 ```
 
 ### Arquitectura de puertos y adaptadores
@@ -500,13 +538,17 @@ Si el usuario solicita pausa desde la UI, el backend marca `pause_requested = Tr
 stateDiagram-v2
   [*] --> pending: create_job
   pending --> running: dispatch + run_job
-  running --> paused: JobPauseRequested
-  running --> completed: resultado OK
-  running --> failed: excepción no controlada
+
+  running --> paused: pause cooperativa
   paused --> running: resume_job
-  running --> cancelled: cancel_job
+
   pending --> cancelled: cancel_job
+  running --> cancelled: cancel_job
   paused --> cancelled: cancel_job
+
+  running --> completed: resultado valido
+  running --> failed: excepcion no controlada
+
   completed --> [*]
   failed --> [*]
   cancelled --> [*]
@@ -628,44 +670,53 @@ Ambas apps procesan lotes de SMILES:
 
 ### Rutas de la aplicación
 
-| Ruta                   | Componente                    | Guard            | Descripción                              |
-| ---------------------- | ----------------------------- | ---------------- | ---------------------------------------- |
-| `/`                    | → `/dashboard`                | —                | Redirección por defecto                  |
-| `/login`               | `LoginComponent`              | —                | Inicio de sesión JWT con redirección     |
-| `/dashboard`           | `DashboardComponent`          | `authGuard`      | Resumen por rol, apps y jobs recientes   |
-| `/profile`             | `ProfileComponent`            | `authGuard`      | Edición de perfil y contraseña           |
-| `/admin/identity`      | `IdentityAdminComponent`      | `adminGuard`     | Consola de usuarios, grupos y permisos   |
-| `/jobs`                | `JobsMonitorComponent`        | `authGuard`      | Monitor global de todos los jobs activos |
-| `/jobs/trash`          | `JobsTrashComponent`          | `adminGuard`     | Papelera de jobs eliminados              |
-| `/apps`                | `AppsHubComponent`            | `authGuard`      | Catálogo navegable de apps disponibles   |
-| `/random-numbers`      | `RandomNumbersComponent`      | `appAccessGuard` | Generación de números aleatorios         |
-| `/molar-fractions`     | `MolarFractionsComponent`     | `appAccessGuard` | Fracciones molares                       |
-| `/tunnel`              | `TunnelComponent`             | `appAccessGuard` | Corrección efecto túnel                  |
-| `/easy-rate`           | `EasyRateComponent`           | `appAccessGuard` | Cinética TST + Eckart                    |
-| `/marcus`              | `MarcusComponent`             | `appAccessGuard` | Marcus Theory                            |
-| `/smileit`             | `SmileitComponent`            | `appAccessGuard` | Generador SMILES combinatorio            |
-| `/sa-score`            | `SaScoreComponent`            | `appAccessGuard` | SA Score                                 |
-| `/toxicity-properties` | `ToxicityPropertiesComponent` | `appAccessGuard` | ADMET-AI                                 |
+| Ruta                   | Componente                    | Guard             | Descripción                             |
+| ---------------------- | ----------------------------- | ----------------- | --------------------------------------- |
+| `/`                    | → `/dashboard`                | —                 | Redirección por defecto                 |
+| `/login`               | `LoginComponent`              | —                 | Inicio de sesión JWT con redirección    |
+| `/dashboard`           | `DashboardComponent`          | `authGuard`       | Resumen por rol, apps y jobs recientes  |
+| `/profile`             | `ProfileComponent`            | `authGuard`       | Edición de perfil y contraseña          |
+| `/admin/identity`      | → `/admin/users`              | —                 | Redirección de compatibilidad           |
+| `/admin/groups`        | `GroupManagerComponent`       | `groupAdminGuard` | Gestión de grupos, miembros y permisos  |
+| `/admin/users`         | `UserManagerComponent`        | `groupAdminGuard` | Gestión de usuarios y asignaciones      |
+| `/jobs`                | `JobsMonitorComponent`        | `authGuard`       | Monitor de jobs visibles para la sesión |
+| `/jobs/trash`          | `JobsTrashComponent`          | `adminGuard`      | Papelera de jobs eliminados             |
+| `/apps`                | `AppsHubComponent`            | `authGuard`       | Catálogo navegable de apps disponibles  |
+| `/random-numbers`      | `RandomNumbersComponent`      | `appAccessGuard`  | Generación de números aleatorios        |
+| `/molar-fractions`     | `MolarFractionsComponent`     | `appAccessGuard`  | Fracciones molares                      |
+| `/tunnel`              | `TunnelComponent`             | `appAccessGuard`  | Corrección efecto túnel                 |
+| `/easy-rate`           | `EasyRateComponent`           | `appAccessGuard`  | Cinética TST + Eckart                   |
+| `/marcus`              | `MarcusComponent`             | `appAccessGuard`  | Marcus Theory                           |
+| `/smileit`             | `SmileitComponent`            | `appAccessGuard`  | Generador SMILES combinatorio           |
+| `/sa-score`            | `SaScoreComponent`            | `appAccessGuard`  | SA Score                                |
+| `/toxicity-properties` | `ToxicityPropertiesComponent` | `appAccessGuard`  | ADMET-AI                                |
 
 La ruta `random-numbers` tiene `visibleInMenus: false` en la configuración de apps: existe y funciona pero no aparece en el menú ni en el hub. Se usa como app mínima de demostración y validación.
 
 ### Guards y navegación condicionada por sesión
 
 - `authGuard`: exige sesión válida y redirige a `/login?redirectTo=<ruta>` cuando el usuario no está autenticado.
-- `adminGuard`: permite acceso solo a roles `root` y `admin`; cubre `/admin/identity` y `/jobs/trash`.
+- `adminGuard`: permite acceso solo a roles globales `root` y `admin`; cubre `/jobs/trash`.
+- `groupAdminGuard`: permite acceso a `root`, admins globales y usuarios que sean admin de al menos un grupo; cubre `/admin/groups` y `/admin/users`.
 - `appAccessGuard`: valida si el `appKey` de la ruta está habilitado para la sesión actual; si no, redirige al hub `/apps`.
 
 Todos los guards usan `IdentitySessionService.initializeSession()` como fuente reactiva de sesión. La inicialización es idempotente: la segunda llamada usa el estado ya cacheado en memoria sin generar peticiones HTTP adicionales.
 
 La barra superior y el catálogo de apps no son estáticos: se construyen a partir de `SCIENTIFIC_APP_ROUTE_ITEMS` y de `IdentitySessionService`, que filtra por permisos efectivos resueltos desde el backend.
 
+Además, el frontend distingue entre:
+
+- grupo activo persistido en `localStorage` (`chemistry-apps.active-group-id`),
+- modo de vista root global o acotado a grupo (`chemistry-apps.root-view-context`),
+- helpers visuales para decidir si una eliminación será `soft` o `hard` según rol y ownership.
+
 ### Estado de sesión y configuración compartida
 
 El frontend persiste los tokens JWT en `localStorage` bajo las claves `chemistry-apps.access-token` y `chemistry-apps.refresh-token`. Durante el bootstrap, `IdentitySessionService` carga:
 
 1. perfil actual del usuario (`/api/auth/me/`),
-2. apps accesibles (`/api/auth/apps/`),
-3. permisos de visibilidad y gestión para jobs.
+2. apps accesibles (`/api/auth/apps/` o `/api/auth/apps/?group_id=<id>` según el grupo activo),
+3. contexto de grupo activo y permisos de visibilidad/gestión para jobs.
 
 `frontend/src/app/core/shared/constants.ts` centraliza `API_BASE_URL`, `WEBSOCKET_BASE_URL` y `JOBS_WEBSOCKET_URL`. La URL WebSocket se deriva automáticamente desde la base REST, evitando hardcodear hosts distintos para `/api` y `/ws`.
 
@@ -698,8 +749,8 @@ frontend/src/app/core/
 │   ├── jobs-monitor.facade.service.ts # Fachada para el monitor y papelera
 │   └── ketcher-frame.service.ts      # Integración con editor Ketcher
 ├── auth/
-│   ├── auth.guards.ts                # authGuard, adminGuard, appAccessGuard
-│   └── identity-session.service.ts   # Gestión reactiva de sesión JWT
+│   ├── auth.guards.ts                # authGuard, adminGuard, groupAdminGuard, appAccessGuard
+│   └── identity-session.service.ts   # Gestión reactiva de sesión JWT, grupo activo y RBAC visual
 ├── i18n/
 │   ├── language.service.ts           # Cambio y persistencia del idioma activo
 │   ├── supported-languages.ts        # Catálogo tipado de idiomas soportados
@@ -932,6 +983,7 @@ El contrato HTTP entre backend y frontend se mantiene sincronizado mediante `ope
 
 ```mermaid
 sequenceDiagram
+  autonumber
   participant DEV as Desarrollador
   participant SCRIPT as scripts/create_openapi.py
   participant DJANGO as Django manage.py
@@ -939,12 +991,12 @@ sequenceDiagram
   participant GEN as openapi-generator-cli
   participant CLIENT as frontend/src/app/core/api/generated/
 
-  DEV->>SCRIPT: cd backend && poetry run python ../scripts/create_openapi.py
-  SCRIPT->>DJANGO: spectacular --file schema.yaml
-  DJANGO->>SPEC: genera spec desde decoradores drf-spectacular
-  SCRIPT->>GEN: npx openapi-generator-cli generate -i schema.yaml
-  GEN->>CLIENT: genera modelos y servicios TypeScript
-  DEV->>DEV: implementa/actualiza wrappers en core/api/
+  DEV->>SCRIPT: Ejecuta create_openapi.py
+  SCRIPT->>DJANGO: manage.py spectacular --file schema.yaml
+  DJANGO->>SPEC: Actualiza contrato OpenAPI
+  SCRIPT->>GEN: Ejecuta openapi-generator-cli
+  GEN->>CLIENT: Regenera modelos y servicios TS
+  DEV->>DEV: Ajusta wrappers en frontend/core/api
 ```
 
 ### Comando de regeneración
@@ -1230,6 +1282,39 @@ En `frontend/src/app/core/shared/scientific-apps.config.ts` agregar la definici�
 
 La plataforma incorpora un dominio transversal de identidad con JWT, roles jerárquicos, grupos de trabajo colaborativos y permisos granulares por app. Toda la lógica de autorización está centralizada en `AuthorizationService` sin duplicación en los routers de apps científicas.
 
+### Diagrama de identidad, grupos y bootstrap root
+
+```mermaid
+flowchart LR
+  subgraph Bootstrap
+    MIGRATE[post_migrate apps.core]
+    ROOT[ensure_root_user]
+    SUPER[ensure_superadmin_group]
+  end
+
+  subgraph Dominio[Identidad y RBAC]
+    USER[User]
+    PROFILE[UserIdentityProfile]
+    GROUP[WorkGroup]
+    MEMBER[GroupMembership]
+    PERM[AppPermission]
+    AUTHZ[AuthorizationService]
+  end
+
+  MIGRATE --> ROOT --> SUPER
+  SUPER --> GROUP
+  SUPER --> MEMBER
+  SUPER --> PERM
+  ROOT --> USER
+  USER --> PROFILE
+  PROFILE --> GROUP
+  USER --> MEMBER
+  GROUP --> PERM
+  AUTHZ --> PROFILE
+  AUTHZ --> MEMBER
+  AUTHZ --> PERM
+```
+
 ### Flujo de autenticación
 
 1. El usuario inicia sesión contra `POST /api/auth/login/`.
@@ -1247,11 +1332,19 @@ Configuración real de JWT en backend:
 
 ### Roles globales
 
-| Rol     | Alcance principal                                                                   |
-| ------- | ----------------------------------------------------------------------------------- |
-| `root`  | Acceso total al dominio de identidad, grupos, permisos y jobs visibles              |
-| `admin` | Gestión administrativa dentro del alcance permitido por grupos y permisos efectivos |
-| `user`  | Acceso a sus apps habilitadas y a sus jobs o jobs visibles por grupo                |
+| Rol     | Alcance principal                                                                |
+| ------- | -------------------------------------------------------------------------------- |
+| `root`  | Acceso total a identidad, grupos, permisos por app, jobs y papelera              |
+| `admin` | Gestión administrativa en los grupos que administra y acceso global al catálogo  |
+| `user`  | Acceso a sus apps habilitadas y a jobs propios o visibles por membresía de grupo |
+
+### Reglas operativas por rol
+
+- `root` puede crear cualquier usuario, incluyendo otros `root`, eliminar usuarios, editar reglas `AppPermission` por usuario o grupo, y administrar cualquier `WorkGroup`.
+- `root` se bootstrappea automáticamente tras `migrate`; si no existe un superusuario, se crea uno con `ROOT_USERNAME`, `ROOT_BOOTSTRAP_EMAIL` y `ROOT_PASSWORD`. Si `ROOT_PASSWORD` no está definido, el valor inicial es `admin123` y debe cambiarse inmediatamente.
+- El mismo bootstrap crea el grupo `Superadmin`, asigna al root una membresía `admin`, fija ese grupo como `primary_group` si faltaba y genera `AppPermission(is_enabled=True)` para todas las apps registradas.
+- Un `admin` global no puede crear usuarios `root` ni manipular reglas por usuario; solo puede operar sobre grupos que administra y usuarios que compartan alguno de esos grupos.
+- Un usuario con `role=user` puede acceder a áreas administrativas solo si posee al menos una `GroupMembership` con `role_in_group=admin`; en ese caso entra por `groupAdminGuard`, pero su alcance sigue limitado a esos grupos.
 
 ### Modelo RBAC transversal
 
@@ -1269,39 +1362,81 @@ Las entidades de identidad viven en `backend/apps/core/models.py`:
 Restricciones importantes:
 
 - `AppPermission` permite exactamente un sujeto: o `group` o `user`, nunca ambos.
-- La visibilidad y gestión de jobs se resuelven por ownership, rol y grupo primario.
+- `GroupAppConfig` se resuelve por grupo y `UserAppConfig` sobrescribe a nivel de usuario en la configuración efectiva.
+- La visibilidad y gestión de jobs se resuelven por ownership, rol y membresías; el grupo primario se usa además para configuración efectiva y para etiquetar contexto activo en la UI.
 - El frontend replica solo la capa visual de autorización; la decisión final siempre está en el backend.
+
+### Reglas de grupos y usuarios
+
+- `WorkGroupsView`: `root` lista todos los grupos; un `admin` no-root solo ve grupos en los que tiene membresía `admin`.
+- Al crear un grupo, un `admin` queda asignado automáticamente como admin de ese grupo. Si no tenía `primary_group`, ese grupo pasa a serlo.
+- `GroupMembershipDetailView` impide dejar un grupo sin administradores y bloquea remover la última membresía de un usuario no-root si eso lo dejaría sin grupo válido.
+- `WorkGroupDetailView` bloquea eliminar un grupo si algún usuario perdería su único grupo utilizable tras la operación.
+- `IdentityUserDetailView` permite autoedición básica del propio perfil, pero los campos administrativos (`role`, `account_status`, `primary_group_id`, `is_staff`, `is_active`) requieren alcance administrativo válido.
 
 ### Endpoints de identidad y sesión
 
-| Endpoint                                      | Uso                                                                 |
-| --------------------------------------------- | ------------------------------------------------------------------- |
-| `POST /api/auth/login/`                       | Obtiene par JWT inicial                                             |
-| `POST /api/auth/refresh/`                     | Rota el access token                                                |
-| `GET /api/auth/me/`                           | Retorna perfil del usuario autenticado                              |
-| `GET /api/auth/apps/`                         | Lista apps accesibles con RBAC ya resuelto                          |
-| `GET/PATCH /api/auth/app-configs/<app_name>/` | Consulta o modifica configuración efectiva del usuario para una app |
-| `GET/POST /api/identity/users/`               | Administración de usuarios                                          |
-| `GET/POST /api/identity/groups/`              | Administración de grupos                                            |
-| `GET/POST /api/identity/memberships/`         | Membresías usuario ↔ grupo                                          |
-| `GET/POST /api/identity/app-permissions/`     | Permisos por app a usuario o grupo                                  |
+| Endpoint                                                 | Uso                                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------------------- |
+| `POST /api/auth/login/`                                  | Obtiene par JWT inicial                                             |
+| `POST /api/auth/refresh/`                                | Rota el access token                                                |
+| `GET /api/auth/me/`                                      | Retorna perfil del usuario autenticado                              |
+| `GET /api/auth/apps/`                                    | Lista apps accesibles con RBAC ya resuelto                          |
+| `GET /api/auth/apps/?group_id=<id>`                      | Evalúa apps accesibles en el contexto de un grupo activo            |
+| `GET/PATCH /api/auth/app-configs/<app_name>/`            | Consulta o modifica configuración efectiva del usuario para una app |
+| `GET/POST /api/identity/users/`                          | Administración de usuarios                                          |
+| `PATCH/DELETE /api/identity/users/<id>/`                 | Actualiza o elimina usuarios                                        |
+| `GET/POST /api/identity/groups/`                         | Administración de grupos                                            |
+| `PATCH/DELETE /api/identity/groups/<id>/`                | Actualiza o elimina un grupo                                        |
+| `GET/PATCH /api/identity/groups/<id>/app-configs/<app>/` | Configuración compartida por grupo para una app                     |
+| `GET/POST /api/identity/memberships/`                    | Membresías usuario ↔ grupo                                          |
+| `PATCH/DELETE /api/identity/memberships/<id>/`           | Actualiza o elimina membresías                                      |
+| `GET/POST /api/identity/app-permissions/`                | Permisos por app a usuario o grupo                                  |
+| `PATCH/DELETE /api/identity/app-permissions/<id>/`       | Actualiza o elimina permisos por app                                |
 
 ### Componentes frontend vinculados al dominio de identidad
 
 - `LoginComponent`: autenticación JWT con parámetro opcional `redirectTo`.
 - `DashboardComponent`: resumen de jobs, usuarios, grupos y apps visibles para la sesión actual.
 - `ProfileComponent`: edición del perfil propio, email y cambio de contraseña.
-- `IdentityAdminComponent`: consola administrativa para usuarios, grupos, memberships, permisos y `group app configs`.
+- `GroupManagerComponent`: consola de grupos, miembros, roles dentro del grupo y permisos por app.
+- `UserManagerComponent`: consola de usuarios, roles globales, grupo primario y memberships.
 - `JobsTrashComponent`: papelera de jobs eliminados con acciones de restauración y eliminación permanente (solo admin/root).
 - `AppsHubComponent`: catálogo filtrado por `route_key` accesible.
 
+### Resolución de catálogo y grupo activo
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Frontend
+  participant SS as IdentitySessionService
+  participant API as /api/auth/apps/
+  participant AZ as AuthorizationService
+
+  UI->>SS: initializeSession()
+  SS->>API: GET /api/auth/me/
+  SS->>API: GET /api/auth/apps/ o ?group_id=<id>
+  API->>AZ: list_accessible_apps(actor, active_group_id)
+  alt root sin grupo activo
+    AZ-->>API: todas las apps enabled
+  else admin sin filtro
+    AZ-->>API: catálogo global enabled
+  else usuario o grupo activo explícito
+    AZ-->>API: permisos por group/user + configs efectivas
+  end
+  API-->>SS: apps accesibles
+  SS-->>UI: menú, hub y guards actualizados
+```
+
 ### Relación de jobs con usuarios y grupos
 
-Cada `ScientificJob` lleva `owner` (FK al creador) y `group` (FK al WorkGroup activo del usuario). `AuthorizationService.can_view_job()` resuelve visibilidad en tres niveles:
+Cada `ScientificJob` lleva `owner` (FK al creador) y `group` (FK al `WorkGroup` asociado). `AuthorizationService` resuelve visibilidad y gestión con reglas distintas:
 
-1. Root: ve todos los jobs sin restricción.
-2. Admin: ve jobs cuyo `group_id` pertenece a sus grupos.
-3. User: ve únicamente sus propios jobs y los de su grupo.
+1. `root`: ve, gestiona, restaura y elimina cualquier job.
+2. `admin`: puede ver jobs propios y jobs de cualquier grupo al que pertenezca; solo gestiona o restaura jobs de grupos dentro de su alcance.
+3. `user`: puede ver jobs propios y jobs de grupos donde tenga membresía, pero solo gestiona sus propios jobs.
+4. La primera eliminación de `root` y `admin` es siempre `soft delete` hacia la papelera; para el propietario `user`, la eliminación puede ser directa.
 
 Esta resolución se aplica en el `JobViewSet` antes de serializar la respuesta, sin requerir código adicional en cada app científica.
 
@@ -1411,6 +1546,8 @@ Ese bootstrap garantiza:
 3. membresía administrativa del root dentro de ese grupo,
 4. asignación del grupo primario del root cuando corresponde,
 5. creación de `AppPermission(is_enabled=True)` para todas las apps registradas en el `ScientificAppRegistry` dentro del grupo Superadmin.
+
+Si `ROOT_PASSWORD` no está definido, el bootstrap usa `admin123` como contraseña inicial. Ese valor existe para facilitar un primer arranque local y debe sustituirse por una credencial segura en cualquier entorno persistente o compartido.
 
 Este comportamiento está cubierto por tests en `backend/apps/core/identity/test_identity_extended.py`.
 
@@ -1543,11 +1680,12 @@ La propiedad `is_deleted` retorna `True` cuando `deleted_at is not None`.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> activo: create_job
-  activo --> papelera: delete_job (admin/root o propietario)
-  papelera --> activo: restore_job (admin/root)
-  papelera --> [*]: hard_delete (eliminación definitiva)
-  papelera --> [*]: scheduled_hard_delete_at alcanzado
+  [*] --> Activo: create_job
+  Activo --> Papelera: delete_job
+  Papelera --> Activo: restore_job
+  Papelera --> Eliminado: hard_delete
+  Papelera --> Eliminado: expiracion programada
+  Eliminado --> [*]
 ```
 
 1. **Borrado suave**: cualquier usuario puede enviar su propio job a la papelera; admin y root pueden borrar jobs de otros usuarios dentro de su alcance RBAC.

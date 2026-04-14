@@ -6,31 +6,35 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin } from 'rxjs';
 import { PatternTypeEnum } from '../../api/generated';
 import type {
-    SmileitCatalogEntryCreateParams,
-    SmileitCatalogEntryView,
-    SmileitPatternEntryCreateParams,
-    SmileitPatternEntryView,
+  SmileitCatalogEntryCreateParams,
+  SmileitCatalogEntryView,
+  SmileitPatternEntryCreateParams,
+  SmileitPatternEntryView,
 } from '../../api/jobs-api.service';
 import { SmileitApiService } from '../../api/smileit-api.service';
+import { IdentitySessionService } from '../../auth/identity-session.service';
 
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 import type {
-    SmileitAssignmentBlockDraft,
-    SmileitCatalogDraftPreview,
-    SmileitCatalogQueuedDraft,
+  SmileitAssignmentBlockDraft,
+  SmileitCatalogDraftPreview,
+  SmileitCatalogQueuedDraft,
 } from './smileit-workflow.types';
 import {
-    buildNextCloneDraftName,
-    buildNextSequentialCatalogDraftName,
-    dedupeVersionedEntries,
-    extractRequestErrorMessage,
-    toggleString,
+  buildNextCloneDraftName,
+  buildNextSequentialCatalogDraftName,
+  dedupeVersionedEntries,
+  extractRequestErrorMessage,
+  toggleString,
 } from './smileit-workflow.utils';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class SmileitCatalogWorkflowService {
   private readonly state = inject(SmileitWorkflowState);
   private readonly smileitApi = inject(SmileitApiService);
+  private readonly session = inject(IdentitySessionService);
   private catalogDraftSequence: number = 0;
 
   // ── Carga inicial de datos de referencia ──────────────────────────────
@@ -320,8 +324,16 @@ export class SmileitCatalogWorkflowService {
     this.state.errorMessage.set(null);
   }
 
-  /** Determina si una entrada puede ser editada (no seeds ni legacy). */
+  /**
+   * Determina si el usuario actual puede editar una entrada de catálogo.
+   * Valida: tipo de fuente (no seeds), propiedad (owner_user_id), y rol de usuario (root > admin > user).
+   * Lógica de permisos alineada con backend/apps/core/permissions.py:
+   * - 'root' → acceso total, puede editar cualquier entrada
+   * - 'admin' → solo entradas de admin si es del mismo grupo, o propias
+   * - 'user' → solo entradas propias (owner_user_id === currentUser.id)
+   */
   isCatalogEntryEditable(entry: SmileitCatalogEntryView): boolean {
+    // ── Verificar que no es entrada de seed o legacy ──
     const normalizedSourceReference: string = (entry.source_reference ?? '').trim().toLowerCase();
     if (
       normalizedSourceReference === 'legacy-smileit' ||
@@ -332,7 +344,52 @@ export class SmileitCatalogWorkflowService {
     const rawSeedFlag: string = String(entry.provenance_metadata?.['seed'] ?? '')
       .trim()
       .toLowerCase();
-    return rawSeedFlag !== 'true' && rawSeedFlag !== '1' && rawSeedFlag !== 'yes';
+    if (rawSeedFlag === 'true' || rawSeedFlag === '1' || rawSeedFlag === 'yes') {
+      return false;
+    }
+
+    // ── Obtener contexto del usuario actual ──
+    const currentUser = this.session.currentUser();
+    const currentRole = this.session.currentRole();
+
+    // Si no hay usuario logueado (anónimo), no puede editar
+    if (!currentUser || !currentRole) {
+      return false;
+    }
+
+    // ── Root tiene acceso completo de edición ──
+    if (currentRole === 'root') {
+      return true;
+    }
+
+    // ── Admins solo pueden editar entradas propias o de admin (mismo grupo) ──
+    if (currentRole === 'admin') {
+      // Admin puede editar entradas propias (user-created)
+      const ownerUserId = String(entry.provenance_metadata?.['owner_user_id'] ?? '');
+      if (ownerUserId === String(currentUser.id)) {
+        return true;
+      }
+      // Admin NO puede editar de root
+      if (normalizedSourceReference === 'root') {
+        return false;
+      }
+      // Admin NO puede editar de otro admin
+      if (normalizedSourceReference.startsWith('admin-')) {
+        // En teoría, podría permitir si es del mismo grupo, pero por seguridad se restringe
+        return false;
+      }
+      return true; // Puede editar user-created
+    }
+
+    // ── Users normales solo pueden editar sus propias entradas ──
+    if (currentRole === 'user') {
+      const ownerUserId = String(entry.provenance_metadata?.['owner_user_id'] ?? '');
+      // Solo si es propietaria (owner_user_id === currentUser.id)
+      return ownerUserId === String(currentUser.id);
+    }
+
+    // Rol desconocido → denegar acceso
+    return false;
   }
 
   /** Comprueba si una entrada de catálogo está referenciada por un bloque. */
@@ -353,6 +410,7 @@ export class SmileitCatalogWorkflowService {
    * Recibe un callback opcional para re-inspeccionar la estructura principal tras la creación.
    */
   createPatternEntry(onPatternCreated?: () => void): void {
+    const editingStableId: string | null = this.state.patternEditingStableId();
     const patternName: string = this.state.patternCreateName().trim();
     const patternSmarts: string = this.state.patternCreateSmarts().trim();
     const patternCaption: string = this.state.patternCreateCaption().trim();
@@ -373,32 +431,125 @@ export class SmileitCatalogWorkflowService {
 
     this.state.errorMessage.set(null);
 
-    this.smileitApi.createSmileitPatternEntry(requestPayload).subscribe({
+    if (editingStableId === null) {
+      this.smileitApi.createSmileitPatternEntry(requestPayload).subscribe({
+        next: () => {
+          this.reloadPatternsAndResetEditor(onPatternCreated);
+        },
+        error: (requestError: unknown) => {
+          this.state.errorMessage.set(
+            `Unable to create structural pattern: ${extractRequestErrorMessage(requestError)}`,
+          );
+        },
+      });
+      return;
+    }
+
+    this.smileitApi.updateSmileitPatternEntry(editingStableId, requestPayload).subscribe({
       next: () => {
-        this.smileitApi.listSmileitPatterns().subscribe({
-          next: (patterns: SmileitPatternEntryView[]) => {
-            this.state.patterns.set(this.normalizePatternEntries(patterns));
-            this.state.patternCreateName.set('');
-            this.state.patternCreateSmarts.set('');
-            this.state.patternCreateCaption.set('');
-            this.state.patternCreateType.set(PatternTypeEnum.Toxicophore);
-            this.state.patternCreateSourceReference.set('local-lab');
-            this.state.errorMessage.set(null);
-            onPatternCreated?.();
-          },
-          error: (requestError: unknown) => {
-            this.state.errorMessage.set(
-              `Unable to refresh structural patterns: ${extractRequestErrorMessage(requestError)}`,
-            );
-          },
-        });
+        this.reloadPatternsAndResetEditor(onPatternCreated);
       },
       error: (requestError: unknown) => {
         this.state.errorMessage.set(
-          `Unable to create structural pattern: ${extractRequestErrorMessage(requestError)}`,
+          `Unable to update structural pattern: ${extractRequestErrorMessage(requestError)}`,
         );
       },
     });
+  }
+
+  /** Carga un patrón editable en el formulario para edición. */
+  beginPatternEntryEdition(patternEntry: SmileitPatternEntryView): void {
+    if (!this.isPatternEntryEditable(patternEntry)) {
+      this.state.errorMessage.set('Seed patterns are read-only and cannot be edited from the UI.');
+      return;
+    }
+
+    this.state.patternEditingStableId.set(patternEntry.stable_id);
+    this.state.patternCreateName.set(patternEntry.name);
+    this.state.patternCreateSmarts.set(patternEntry.smarts);
+    this.state.patternCreateType.set(patternEntry.pattern_type);
+    this.state.patternCreateCaption.set(patternEntry.caption);
+    this.state.patternCreateSourceReference.set(patternEntry.source_reference || 'local-lab');
+    this.state.errorMessage.set(null);
+  }
+
+  /** Cancela la edición de patrón y restablece el formulario por defecto. */
+  cancelPatternEdition(): void {
+    this.resetPatternForm();
+    this.state.errorMessage.set(null);
+  }
+
+  /** Elimina lógicamente un patrón editable y refresca el listado activo. */
+  deletePatternEntry(patternEntry: SmileitPatternEntryView): void {
+    if (!this.isPatternEntryEditable(patternEntry)) {
+      this.state.errorMessage.set('This pattern cannot be deleted with your current permissions.');
+      return;
+    }
+
+    this.smileitApi.deleteSmileitPatternEntry(patternEntry.stable_id).subscribe({
+      next: () => {
+        this.reloadPatternsAndResetEditor();
+      },
+      error: (requestError: unknown) => {
+        this.state.errorMessage.set(
+          `Unable to delete structural pattern: ${extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
+  }
+
+  /** Determina si el usuario actual puede editar o eliminar el patrón indicado. */
+  isPatternEntryEditable(patternEntry: SmileitPatternEntryView): boolean {
+    const normalizedSourceReference: string = (patternEntry.source_reference ?? '')
+      .trim()
+      .toLowerCase();
+    if (
+      normalizedSourceReference === 'legacy-smileit' ||
+      normalizedSourceReference === 'smileit-seed'
+    ) {
+      return false;
+    }
+
+    const rawSeedFlag: string = String(patternEntry.provenance_metadata?.['seed'] ?? '')
+      .trim()
+      .toLowerCase();
+    if (rawSeedFlag === 'true' || rawSeedFlag === '1' || rawSeedFlag === 'yes') {
+      return false;
+    }
+
+    const currentUser = this.session.currentUser();
+    const currentRole = this.session.currentRole();
+    if (!currentUser || !currentRole) {
+      return false;
+    }
+
+    if (currentRole === 'root') {
+      return true;
+    }
+
+    const ownerUserId: string = String(patternEntry.provenance_metadata?.['owner_user_id'] ?? '');
+
+    if (currentRole === 'admin') {
+      if (ownerUserId === String(currentUser.id)) {
+        return true;
+      }
+
+      if (normalizedSourceReference === 'root') {
+        return false;
+      }
+
+      if (normalizedSourceReference.startsWith('admin-')) {
+        return false;
+      }
+
+      return true;
+    }
+
+    if (currentRole === 'user') {
+      return ownerUserId === String(currentUser.id);
+    }
+
+    return false;
   }
 
   // ── Helpers privados ──────────────────────────────────────────────────
@@ -428,7 +579,9 @@ export class SmileitCatalogWorkflowService {
     return dedupeVersionedEntries(rawPatterns as SmileitPatternEntryView[]);
   }
 
-  private resolveCatalogMutationResult(rawCatalogMutationResult: unknown): SmileitCatalogEntryView[] | null {
+  private resolveCatalogMutationResult(
+    rawCatalogMutationResult: unknown,
+  ): SmileitCatalogEntryView[] | null {
     if (!Array.isArray(rawCatalogMutationResult)) {
       return null;
     }
@@ -570,5 +723,30 @@ export class SmileitCatalogWorkflowService {
         .catalogDraftQueue()
         .map((queuedDraft: SmileitCatalogQueuedDraft) => queuedDraft.name),
     ];
+  }
+
+  private reloadPatternsAndResetEditor(onPatternSaved?: () => void): void {
+    this.smileitApi.listSmileitPatterns().subscribe({
+      next: (patterns: SmileitPatternEntryView[]) => {
+        this.state.patterns.set(this.normalizePatternEntries(patterns));
+        this.resetPatternForm();
+        this.state.errorMessage.set(null);
+        onPatternSaved?.();
+      },
+      error: (requestError: unknown) => {
+        this.state.errorMessage.set(
+          `Unable to refresh structural patterns: ${extractRequestErrorMessage(requestError)}`,
+        );
+      },
+    });
+  }
+
+  private resetPatternForm(): void {
+    this.state.patternCreateName.set('');
+    this.state.patternCreateSmarts.set('');
+    this.state.patternCreateCaption.set('');
+    this.state.patternCreateType.set(PatternTypeEnum.Toxicophore);
+    this.state.patternCreateSourceReference.set('local-lab');
+    this.state.patternEditingStableId.set(null);
   }
 }

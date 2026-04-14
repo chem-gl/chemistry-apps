@@ -8,12 +8,15 @@ Cómo se usa:
 - El serializer de respuesta documenta estructura estable para frontend.
 """
 
-from apps.core.models import ScientificJob
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
+from apps.core.models import ScientificJob
+
 from .definitions import (
     DEFAULT_ALGORITHM_VERSION,
+    DEFAULT_INITIAL_CHARGE,
+    DEFAULT_LABEL,
     MAX_PH_POINTS,
     MAX_PKA_VALUES,
     MIN_PKA_VALUES,
@@ -25,6 +28,27 @@ PH_MODE_CHOICES: list[tuple[str, str]] = [
 ]
 
 
+class InitialChargeField(serializers.CharField):
+    """Normaliza la carga inicial permitiendo q o enteros."""
+
+    def to_internal_value(self, data: object) -> int | str:
+        raw_value: str = str(data).strip()
+        if raw_value == "q":
+            return "q"
+
+        try:
+            return int(raw_value)
+        except (TypeError, ValueError) as exc:
+            raise serializers.ValidationError(
+                "initial_charge debe ser un entero o el string 'q'."
+            ) from exc
+
+    def to_representation(self, value: object) -> int | str:
+        if value == "q":
+            return "q"
+        return int(value)
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -32,6 +56,8 @@ PH_MODE_CHOICES: list[tuple[str, str]] = [
             value={
                 "version": "1.0.0",
                 "pka_values": [2.2, 7.2, 12.3],
+                "initial_charge": "q",
+                "label": "A",
                 "ph_mode": "range",
                 "ph_min": 0.0,
                 "ph_max": 14.0,
@@ -45,6 +71,8 @@ PH_MODE_CHOICES: list[tuple[str, str]] = [
             value={
                 "version": "1.0.0",
                 "pka_values": [4.75],
+                "initial_charge": -1,
+                "label": "Ac",
                 "ph_mode": "single",
                 "ph_value": 7.4,
             },
@@ -62,6 +90,15 @@ class MolarFractionsJobCreateSerializer(serializers.Serializer):
         min_length=MIN_PKA_VALUES,
         max_length=MAX_PKA_VALUES,
         help_text="Lista de pKa en el orden químico definido por el usuario.",
+    )
+    initial_charge = InitialChargeField(
+        default=DEFAULT_INITIAL_CHARGE,
+        help_text="Carga de la especie máximamente protonada. Acepta entero o 'q'.",
+    )
+    label = serializers.CharField(
+        max_length=20,
+        default=DEFAULT_LABEL,
+        help_text="Etiqueta base de la especie, por ejemplo A o EDA.",
     )
     ph_mode = serializers.ChoiceField(
         choices=PH_MODE_CHOICES,
@@ -103,6 +140,11 @@ class MolarFractionsJobCreateSerializer(serializers.Serializer):
                     )
                 }
             )
+
+        label_value: str = str(attrs.get("label", DEFAULT_LABEL)).strip()
+        if label_value == "":
+            raise serializers.ValidationError({"label": "label no puede estar vacío."})
+        attrs["label"] = label_value
 
         mode_value: str = str(attrs.get("ph_mode", ""))
 
@@ -159,6 +201,8 @@ class MolarFractionsParametersSerializer(serializers.Serializer):
         min_length=MIN_PKA_VALUES,
         max_length=MAX_PKA_VALUES,
     )
+    initial_charge = InitialChargeField(default=DEFAULT_INITIAL_CHARGE)
+    label = serializers.CharField(max_length=20, default=DEFAULT_LABEL)
     ph_mode = serializers.ChoiceField(choices=PH_MODE_CHOICES)
     ph_value = serializers.FloatField(required=False, allow_null=True)
     ph_min = serializers.FloatField(required=False, allow_null=True)
@@ -183,6 +227,8 @@ class MolarFractionsMetadataSerializer(serializers.Serializer):
     """Metadatos técnicos del barrido de fracciones molares."""
 
     pka_values = serializers.ListField(child=serializers.FloatField())
+    initial_charge = InitialChargeField(default=DEFAULT_INITIAL_CHARGE)
+    label = serializers.CharField(max_length=20, default=DEFAULT_LABEL)
     ph_mode = serializers.ChoiceField(choices=PH_MODE_CHOICES)
     ph_min = serializers.FloatField()
     ph_max = serializers.FloatField()
@@ -196,7 +242,7 @@ class MolarFractionsResultSerializer(serializers.Serializer):
 
     species_labels = serializers.ListField(
         child=serializers.CharField(max_length=20),
-        help_text="Etiquetas de especies en formato f0..fn.",
+        help_text="Etiquetas formateadas de especies ácido-base.",
     )
     rows = MolarFractionRowSerializer(many=True)
     metadata = MolarFractionsMetadataSerializer()

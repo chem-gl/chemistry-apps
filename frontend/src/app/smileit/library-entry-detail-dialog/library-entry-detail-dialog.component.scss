@@ -1,1 +1,13 @@
 /* library-entry-detail-dialog.component.scss: Estilos del componente de detalle de entrada de librería. */
+
+/**
+ * Posiciona el dialog por encima de Ketcher (z-index 62-63) para garantizar que sea visible.
+ * El backdrop (::backdrop) se coloca justo debajo del modal para evitar que otros contenidos queden atrapados.
+ */
+.library-entry-detail-dialog[open] {
+  z-index: 60;
+}
+
+.library-entry-detail-dialog::backdrop {
+  z-index: 59;
+}

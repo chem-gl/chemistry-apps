@@ -26,6 +26,7 @@ describe('SaScoreComponent', () => {
     smilesInput: signal<string>(''),
     inputRows: signal<Array<{ name: string; smiles: string }>>([]),
     customNamesEnabled: signal<boolean>(false),
+    jobNameInput: signal<string>(''),
     selectedMethods: signal<Record<SaScoreMethod, boolean>>({
       ambit: true,
       brsa: true,
@@ -38,6 +39,10 @@ describe('SaScoreComponent', () => {
     resultData: signal<SaScoreResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
+    currentJobDisplayName: signal<string | null>(null),
+    isInputValidationPending: signal<boolean>(false),
+    hasInvalidSmiles: signal<boolean>(false),
+    inputValidationMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
     historyJobs: signal<ScientificJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
@@ -58,6 +63,15 @@ describe('SaScoreComponent', () => {
       workflowMock.smilesInput.set(normalizedRows.map((row) => row.smiles).join('\n'));
       workflowMock.inputRows.set(normalizedRows);
     }),
+    setInputRows: vi.fn(
+      (rows: Array<{ name: string; smiles: string }>, enableCustomNames: boolean = false) => {
+        workflowMock.inputRows.set(rows);
+        workflowMock.smilesInput.set(rows.map((row) => row.smiles).join('\n'));
+        if (enableCustomNames) {
+          workflowMock.customNamesEnabled.set(true);
+        }
+      },
+    ),
     updateInputRowName: vi.fn((rowIndex: number, nextName: string) => {
       workflowMock.inputRows.update((currentRows) =>
         currentRows.map((rowValue, index) =>
@@ -95,9 +109,11 @@ describe('SaScoreComponent', () => {
     workflowMock.smilesInput.set('');
     workflowMock.inputRows.set([]);
     workflowMock.customNamesEnabled.set(false);
+    workflowMock.jobNameInput.set('');
     workflowMock.currentJobId.set(null);
     workflowMock.activeSection.set('idle');
     workflowMock.resultData.set(null);
+    workflowMock.currentJobDisplayName.set(null);
 
     TestBed.configureTestingModule({
       imports: [SaScoreComponent],
@@ -180,6 +196,22 @@ describe('SaScoreComponent', () => {
     expect(component.historicalStatusClass('pending')).toBe('history-status history-pending');
   });
 
+  it('construye el nombre visible del job actual e histórico cuando existe nombre', () => {
+    const fixture = TestBed.createComponent(SaScoreComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.currentJobId.set('sa-job-77');
+    workflowMock.currentJobDisplayName.set('Lote CSV');
+
+    expect(component.currentJobDisplayLabel()).toBe('Lote CSV_sa-job-77');
+    expect(
+      component.resolveHistoryJobDisplayName({
+        id: 'sa-history-1',
+        parameters: { molecules: [{ name: 'Ethanol batch', smiles: 'CCO' }] },
+      }),
+    ).toBe('Ethanol batch_sa-history-1');
+  });
+
   it('methodScore retorna -- para null y formato 4 decimales para número', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
@@ -218,6 +250,50 @@ describe('SaScoreComponent', () => {
     expect(component.methodError(molecule, 'ambit')).toBe('ambit failed');
     expect(component.methodError(molecule, 'brsa')).toBeNull();
     expect(component.methodError(molecule, 'rdkit')).toBe('rdkit failed');
+  });
+
+  it('filtra por nombre o SMILES y ordena por columna seleccionada', () => {
+    const fixture = TestBed.createComponent(SaScoreComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set({
+      molecules: [
+        {
+          name: 'benzene',
+          smiles: 'c1ccccc1',
+          ambit_sa: 3.1,
+          brsa_sa: 2.7,
+          rdkit_sa: 1.1,
+          ambit_error: null,
+          brsa_error: null,
+          rdkit_error: null,
+        },
+        {
+          name: 'ethanol',
+          smiles: 'CCO',
+          ambit_sa: 1.5,
+          brsa_sa: 1.2,
+          rdkit_sa: 0.8,
+          ambit_error: null,
+          brsa_error: null,
+          rdkit_error: null,
+        },
+      ],
+      total: 2,
+      requestedMethods: ['ambit', 'brsa', 'rdkit'],
+      isHistoricalSummary: false,
+      summaryMessage: null,
+    });
+
+    component.updateTableSearch('cco');
+    expect(component.visibleMolecules().map((row) => row.name)).toEqual(['ethanol']);
+
+    component.updateTableSearch('');
+    component.toggleTableSort('ambit');
+    component.toggleTableSort('ambit');
+
+    expect(component.visibleMolecules().map((row) => row.name)).toEqual(['benzene', 'ethanol']);
+    expect(component.sortIndicator('ambit')).toBe('↓');
   });
 
   it('exportAllCsv llama downloadFullCsvReport y dispara descarga', () => {

@@ -5,6 +5,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { IdentitySessionService } from './core/auth/identity-session.service';
 import { LanguageService } from './core/i18n/language.service';
+import { ScientificNumberInputLocaleService } from './core/i18n/scientific-number-input-locale.service';
+import { ActiveGroupSelectorComponent } from './core/shared/components/active-group-selector/active-group-selector.component';
 import { GlobalErrorModalComponent } from './core/shared/components/global-error-modal/global-error-modal.component';
 import { LanguageSwitcherComponent } from './core/shared/components/language-switcher/language-switcher.component';
 import { SCIENTIFIC_APP_ROUTE_ITEMS } from './core/shared/scientific-apps.config';
@@ -26,6 +28,7 @@ interface PrimaryNavigationItem {
     TranslocoPipe,
     GlobalErrorModalComponent,
     LanguageSwitcherComponent,
+    ActiveGroupSelectorComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -33,6 +36,7 @@ interface PrimaryNavigationItem {
 export class App implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
   readonly languageService = inject(LanguageService);
+  readonly scientificNumberInputLocaleService = inject(ScientificNumberInputLocaleService);
   readonly isScrolled = signal(false);
 
   readonly primaryNavigationItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
@@ -76,12 +80,17 @@ export class App implements OnInit {
         hintKey: 'app.navHints.apps',
       },
       ...scientificNavigationItems,
-      ...(this.sessionService.hasAdminAccess()
+      ...(this.sessionService.canAccessAdminArea()
         ? [
             {
-              labelKey: 'app.nav.identity',
-              path: '/admin/identity',
-              hintKey: 'app.navHints.identity',
+              labelKey: 'app.nav.groups',
+              path: '/admin/groups',
+              hintKey: 'app.navHints.groups',
+            },
+            {
+              labelKey: 'app.nav.users',
+              path: '/admin/users',
+              hintKey: 'app.navHints.users',
             },
           ]
         : []),
@@ -90,6 +99,7 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.languageService.initializeLanguage();
+    this.scientificNumberInputLocaleService.initialize();
     this.sessionService.initializeSession().subscribe();
     this.updateScrollState();
   }

@@ -1,12 +1,7 @@
-// tunnel-workflow.service.ts: Orquesta formulario, trazabilidad de entradas, progreso y resultados de Tunnel.
+// tunnel-workflow.service.ts: Orquesta formulario, ejecución inmediata y resultados de Tunnel.
 
 import { Injectable, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import {
-  DownloadedReportFile,
-  ScientificJobView,
-  TunnelInputChangeEvent,
-} from '../api/jobs-api.service';
+import { ScientificJobView } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 export interface TunnelResultData {
@@ -21,9 +16,6 @@ export interface TunnelResultData {
   kappaTst: number | null;
   modelName: string | null;
   sourceLibrary: string | null;
-  inputEventCount: number;
-  isHistoricalSummary: boolean;
-  summaryMessage: string | null;
 }
 
 @Injectable()
@@ -37,44 +29,20 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
   readonly reactionEnergyZpe = signal<number>(-8.2);
   readonly temperature = signal<number>(298.15);
 
-  readonly inputChangeEvents = signal<TunnelInputChangeEvent[]>([]);
-
   updateReactionBarrierZpe(nextValue: number): void {
-    const previousValue: number = this.reactionBarrierZpe();
     this.reactionBarrierZpe.set(Number(nextValue));
-    this.recordInputChange('reaction_barrier_zpe', previousValue, Number(nextValue));
   }
 
   updateImaginaryFrequency(nextValue: number): void {
-    const previousValue: number = this.imaginaryFrequency();
     this.imaginaryFrequency.set(Number(nextValue));
-    this.recordInputChange('imaginary_frequency', previousValue, Number(nextValue));
   }
 
   updateReactionEnergyZpe(nextValue: number): void {
-    const previousValue: number = this.reactionEnergyZpe();
     this.reactionEnergyZpe.set(Number(nextValue));
-    this.recordInputChange('reaction_energy_zpe', previousValue, Number(nextValue));
   }
 
   updateTemperature(nextValue: number): void {
-    const previousValue: number = this.temperature();
     this.temperature.set(Number(nextValue));
-    this.recordInputChange('temperature', previousValue, Number(nextValue));
-  }
-
-  clearInputHistory(): void {
-    this.inputChangeEvents.set([]);
-  }
-
-  private recordInputChange(fieldName: string, previousValue: number, newValue: number): void {
-    const changeEvent: TunnelInputChangeEvent = {
-      fieldName,
-      previousValue,
-      newValue,
-      changedAt: new Date().toISOString(),
-    };
-    this.inputChangeEvents.update((events) => [...events, changeEvent]);
   }
 
   override dispatch(): void {
@@ -86,12 +54,11 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
         imaginaryFrequency: this.imaginaryFrequency(),
         reactionEnergyZpe: this.reactionEnergyZpe(),
         temperature: this.temperature(),
-        inputChangeEvents: this.inputChangeEvents(),
       })
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
           this.syncInputsFromJobParameters(jobResponse);
-          this.handleDispatchJobResponse(
+          this.handleTransientDispatchJobResponse(
             jobResponse,
             (job) => this.extractResultData(job),
             'tunnel effect',
@@ -105,49 +72,18 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
   }
 
   override loadHistory(): void {
-    this.loadHistoryForPlugin('tunnel-effect');
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.prepareForDispatch();
-    this.currentJobId.set(jobId);
-
-    this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJobView) => {
-        this.syncInputsFromJobParameters(jobResponse);
-        this.handleJobOutcome(
-          jobId,
-          jobResponse,
-          (job) => this.extractResultData(job) ?? this.extractSummaryData(job),
-          { loadHistoryAfter: false },
-        );
-      },
-      error: (statusError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to recover historical tunnel job: ${statusError.message}`);
-      },
-    });
-  }
-
-  downloadCsvReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadTunnelCsvReport(this.currentJobId()!),
-      'CSV report',
-    );
-  }
-
-  downloadLogReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadTunnelLogReport(this.currentJobId()!),
-      'LOG report',
-    );
+    this.historyJobs.set([]);
+    this.isHistoryLoading.set(false);
   }
 
   protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
-        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
+          loadLogs: false,
+          loadHistoryAfter: false,
+        });
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -180,14 +116,13 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
       return null;
     }
 
-    const parametersData: TunnelResultData | null = this.extractSummaryData(jobResponse);
+    const parametersData: TunnelResultData | null = this.extractParametersData(jobResponse);
     if (parametersData === null) {
       return null;
     }
 
     const modelName: unknown = rawMetadata['model_name'];
     const sourceLibrary: unknown = rawMetadata['source_library'];
-    const inputEventCount: unknown = rawMetadata['input_event_count'];
 
     return {
       ...parametersData,
@@ -198,13 +133,10 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
       kappaTst: rawKappa,
       modelName: typeof modelName === 'string' ? modelName : null,
       sourceLibrary: typeof sourceLibrary === 'string' ? sourceLibrary : null,
-      inputEventCount: typeof inputEventCount === 'number' ? inputEventCount : 0,
-      isHistoricalSummary: false,
-      summaryMessage: null,
     };
   }
 
-  private extractSummaryData(jobResponse: ScientificJobView): TunnelResultData | null {
+  private extractParametersData(jobResponse: ScientificJobView): TunnelResultData | null {
     const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawParameters)) {
       return null;
@@ -236,9 +168,6 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
       kappaTst: null,
       modelName: null,
       sourceLibrary: null,
-      inputEventCount: this.extractInputEventsFromParameters(rawParameters).length,
-      isHistoricalSummary: true,
-      summaryMessage: this.buildHistoricalSummaryMessage(jobResponse.status),
     };
   }
 
@@ -268,47 +197,6 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
     if (typeof rawTemperature === 'number') {
       this.temperature.set(rawTemperature);
     }
-
-    this.inputChangeEvents.set(this.extractInputEventsFromParameters(rawParameters));
-  }
-
-  private extractInputEventsFromParameters(
-    rawParameters: Record<string, unknown>,
-  ): TunnelInputChangeEvent[] {
-    const rawEvents: unknown = rawParameters['input_change_events'];
-    if (!Array.isArray(rawEvents)) {
-      return [];
-    }
-
-    const parsedEvents: TunnelInputChangeEvent[] = [];
-    for (const eventCandidate of rawEvents) {
-      if (!this.isRecord(eventCandidate)) {
-        continue;
-      }
-
-      const rawFieldName: unknown = eventCandidate['field_name'];
-      const rawPreviousValue: unknown = eventCandidate['previous_value'];
-      const rawNewValue: unknown = eventCandidate['new_value'];
-      const rawChangedAt: unknown = eventCandidate['changed_at'];
-
-      if (
-        typeof rawFieldName !== 'string' ||
-        typeof rawPreviousValue !== 'number' ||
-        typeof rawNewValue !== 'number' ||
-        typeof rawChangedAt !== 'string'
-      ) {
-        continue;
-      }
-
-      parsedEvents.push({
-        fieldName: rawFieldName,
-        previousValue: rawPreviousValue,
-        newValue: rawNewValue,
-        changedAt: rawChangedAt,
-      });
-    }
-
-    return parsedEvents;
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,0 +1,317 @@
+/* group-manager.component.scss: Estilos de la página de gestión de grupos. */
+
+@use 'sass:color';
+
+.gm-shell {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+/* ─── Header ─── */
+.gm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-left: 3px solid var(--chem-accent);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: var(--chem-shadow);
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--chem-accent);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--chem-ink);
+}
+
+.subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+/* ─── Feedback ─── */
+.feedback {
+  padding: 0.8rem 1rem;
+  border-radius: var(--chem-radius);
+  border: 1px solid var(--chem-border);
+  font-size: 0.9rem;
+
+  &.error {
+    background: var(--chem-primary-light);
+    border-color: var(--chem-primary);
+    color: var(--chem-primary-dark);
+  }
+
+  &.success {
+    background: #e8f5e9;
+    border-color: #43a047;
+    color: #2e7d32;
+  }
+}
+
+/* ─── Secciones ─── */
+.section-block {
+  padding: 1.25rem 1.5rem;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: var(--chem-shadow);
+  display: grid;
+  gap: 1rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--chem-ink);
+}
+
+.section-description {
+  margin: 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
+}
+
+/* ─── Tabla principal ─── */
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th,
+  td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--chem-border);
+  }
+
+  th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--chem-ink-secondary);
+  }
+
+  tbody tr:hover {
+    background: rgba(243, 237, 247, 0.4);
+  }
+}
+
+.hint {
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
+}
+
+.action-cell {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Panel expandido ─── */
+.expanded-row > td {
+  padding: 0;
+}
+
+.expanded-panel {
+  padding: 1rem 1.2rem;
+  background: rgba(243, 237, 247, 0.35);
+  border-top: 1px solid var(--chem-border);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.sub-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sub-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.inner-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  th,
+  td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid rgba(168, 161, 176, 0.25);
+    text-align: left;
+  }
+}
+
+.small-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.82rem;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+/* ─── Permisos de apps ─── */
+.app-permissions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.app-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
+
+  &:has(input:checked) {
+    background: var(--chem-accent-light);
+    border-color: var(--chem-accent);
+    color: var(--chem-accent);
+  }
+
+  input {
+    accent-color: var(--chem-accent);
+  }
+}
+
+/* ─── Formulario de creación ─── */
+.create-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+.form-input,
+.form-select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  transition: border-color var(--chem-transition);
+
+  &:focus {
+    outline: none;
+    border-color: var(--chem-accent);
+  }
+}
+
+.form-select.small {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+/* ─── Botones ─── */
+.action-button {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
+
+  &:hover:not(:disabled) {
+    background: var(--chem-accent-light);
+    border-color: var(--chem-accent);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &.small {
+    padding: 0.32rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  &.primary {
+    background: var(--chem-accent);
+    color: #fff;
+    border-color: var(--chem-accent);
+
+    &:hover:not(:disabled) {
+      background: color.adjust(#7b5a9e, $lightness: -8%);
+    }
+  }
+
+  &.danger {
+    &:hover:not(:disabled) {
+      background: var(--chem-primary-light);
+      border-color: var(--chem-primary);
+      color: var(--chem-primary-dark);
+    }
+  }
+}

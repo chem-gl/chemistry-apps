@@ -8,11 +8,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PatternTypeEnum } from '../../api/generated';
 import type {
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitPatternEntryView,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitPatternEntryView,
 } from '../../api/jobs-api.service';
 import { SmileitApiService } from '../../api/smileit-api.service';
+import { IdentitySessionService } from '../../auth/identity-session.service';
 import { SmileitCatalogWorkflowService } from './smileit-catalog-workflow.service';
 import { SmileitWorkflowState } from './smileit-workflow-state.service';
 
@@ -72,16 +73,31 @@ describe('SmileitCatalogWorkflowService', () => {
     createSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     updateSmileitCatalogEntry: ReturnType<typeof vi.fn>;
     createSmileitPatternEntry: ReturnType<typeof vi.fn>;
+    updateSmileitPatternEntry: ReturnType<typeof vi.fn>;
+    deleteSmileitPatternEntry: ReturnType<typeof vi.fn>;
+  };
+
+  const identitySessionMock = {
+    currentUser: vi.fn(() => ({ id: 2 })),
+    currentRole: vi.fn(() => 'admin'),
   };
 
   beforeEach(() => {
     smileitApiMock = {
-      listSmileitCatalog: vi.fn((): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()])),
+      listSmileitCatalog: vi.fn(
+        (): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()]),
+      ),
       listSmileitCategories: vi.fn((): Observable<SmileitCategoryView[]> => of([makeCategory()])),
       listSmileitPatterns: vi.fn((): Observable<SmileitPatternEntryView[]> => of([makePattern()])),
-      createSmileitCatalogEntry: vi.fn((): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()])),
-      updateSmileitCatalogEntry: vi.fn((): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()])),
+      createSmileitCatalogEntry: vi.fn(
+        (): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()]),
+      ),
+      updateSmileitCatalogEntry: vi.fn(
+        (): Observable<SmileitCatalogEntryView[]> => of([makeCatalogEntry()]),
+      ),
       createSmileitPatternEntry: vi.fn((): Observable<unknown> => of({ ok: true })),
+      updateSmileitPatternEntry: vi.fn((): Observable<unknown> => of({ ok: true })),
+      deleteSmileitPatternEntry: vi.fn((): Observable<void> => of(void 0)),
     };
 
     const injector: Injector = Injector.create({
@@ -91,6 +107,10 @@ describe('SmileitCatalogWorkflowService', () => {
         {
           provide: SmileitApiService,
           useValue: smileitApiMock,
+        },
+        {
+          provide: IdentitySessionService,
+          useValue: identitySessionMock,
         },
       ],
     });
@@ -226,7 +246,13 @@ describe('SmileitCatalogWorkflowService', () => {
 
   it('falls back to catalog reload when create returns a single entry object', () => {
     smileitApiMock.createSmileitCatalogEntry.mockReturnValue(
-      of(makeCatalogEntry({ id: 'catalog-single', stable_id: 'single', name: 'Single result' }) as never),
+      of(
+        makeCatalogEntry({
+          id: 'catalog-single',
+          stable_id: 'single',
+          name: 'Single result',
+        }) as never,
+      ),
     );
     smileitApiMock.listSmileitCatalog.mockReturnValue(
       of([makeCatalogEntry({ id: 'catalog-3', stable_id: 'uncat', name: 'Uncategorized entry' })]),
@@ -511,5 +537,60 @@ describe('SmileitCatalogWorkflowService', () => {
     service.createPatternEntry();
 
     expect(state.errorMessage()).toContain('Unable to refresh structural patterns');
+  });
+
+  it('hydrates pattern form when edition is allowed and blocks seed patterns', () => {
+    service.beginPatternEntryEdition(
+      makePattern({
+        stable_id: 'seed-pattern',
+        source_reference: 'smileit-seed',
+      }),
+    );
+    expect(state.errorMessage()).toContain('read-only');
+
+    service.beginPatternEntryEdition(
+      makePattern({
+        stable_id: 'editable-pattern',
+        name: 'Editable pattern',
+        smarts: 'CCN',
+        caption: 'Editable caption',
+        source_reference: 'local-lab',
+        provenance_metadata: { owner_user_id: '2' },
+      }),
+    );
+
+    expect(state.patternEditingStableId()).toBe('editable-pattern');
+    expect(state.patternCreateName()).toBe('Editable pattern');
+    expect(state.patternCreateSmarts()).toBe('CCN');
+  });
+
+  it('updates an existing pattern when editing mode is active', () => {
+    state.patternEditingStableId.set('pattern-1');
+    state.patternCreateName.set('Updated pattern');
+    state.patternCreateSmarts.set('c1ccccc1');
+    state.patternCreateCaption.set('Updated caption');
+
+    service.createPatternEntry();
+
+    expect(smileitApiMock.updateSmileitPatternEntry).toHaveBeenCalledWith('pattern-1', {
+      name: 'Updated pattern',
+      smarts: 'c1ccccc1',
+      patternType: PatternTypeEnum.Toxicophore,
+      caption: 'Updated caption',
+      sourceReference: 'local-lab',
+      provenanceMetadata: {},
+    });
+  });
+
+  it('deletes a pattern when current user has permissions', () => {
+    const editablePattern = makePattern({
+      stable_id: 'editable-pattern',
+      source_reference: 'local-lab',
+      provenance_metadata: { owner_user_id: '2' },
+    });
+
+    service.deletePatternEntry(editablePattern);
+
+    expect(smileitApiMock.deleteSmileitPatternEntry).toHaveBeenCalledWith('editable-pattern');
   });
 });

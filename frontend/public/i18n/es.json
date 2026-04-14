@@ -16,7 +16,9 @@
       "profile": "Perfil",
       "jobsMonitor": "Monitor de Jobs",
       "apps": "Apps",
-      "identity": "Identidad"
+      "identity": "Identidad",
+      "groups": "Grupos",
+      "users": "Usuarios"
     },
     "navHints": {
       "signIn": "Autentícate para cargar tu espacio de trabajo",
@@ -24,7 +26,9 @@
       "profile": "Administra tu perfil personal y contraseña",
       "jobsMonitor": "Rastrea jobs activos y completados",
       "apps": "Apps científicas visibles para tu sesión actual",
-      "identity": "Usuarios, grupos y permisos"
+      "identity": "Usuarios, grupos y permisos",
+      "groups": "Gestionar grupos de laboratorio y sus permisos",
+      "users": "Gestionar cuentas de usuario y membresías"
     }
   },
   "language": {
@@ -380,8 +384,17 @@
     "form": {
       "title": "Entrada de datos",
       "ariaLabel": "Parámetros de entrada",
+      "inputMode": "Modo de entrada",
+      "singleMode": "Una especie",
+      "batchMode": "CSV por lote",
       "pkaCount": "Número de equilibrios ácido-base",
       "pkaValues": "Ingresar valores pKa",
+      "speciesSettings": "Configuración de la especie",
+      "speciesSettingsOptional": "Opcional. Si lo dejas vacío se usa la configuración estándar del modelo.",
+      "initialCharge": "Carga de la especie máximamente protonada",
+      "initialChargePlaceholder": "q",
+      "speciesLabel": "Etiqueta de la especie",
+      "speciesLabelPlaceholder": "A",
       "phMode": "Valores de pH",
       "phSingle": "Un valor de pH",
       "phRange": "Rango de pH",
@@ -393,14 +406,59 @@
     "actions": {
       "run": "Ejecutar Fracciones Molares",
       "processing": "Procesando...",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "exportCsv": "Exportar CSV"
+    },
+    "batch": {
+      "description": "Carga un archivo CSV con muchos compuestos para calcular las fracciones de especies en un único valor de pH.",
+      "studentNote": "Los estudiantes suelen estimar los valores de pKa fuera de la plataforma y después subir aquí la tabla final ya curada.",
+      "csvExampleTitle": "Ejemplo de CSV esperado",
+      "fileLabel": "Archivo CSV",
+      "parameters": "Parámetros del lote",
+      "targetPh": "pH objetivo",
+      "threshold": "Umbral mínimo de fracción",
+      "thresholdHint": "Solo se conservarán en la tabla final las especies con fracción mayor o igual a este valor.",
+      "run": "Calcular desde CSV",
+      "exportCsv": "Exportar CSV del lote",
+      "noRows": "Ninguna especie superó el umbral seleccionado para este archivo.",
+      "summary": {
+        "rows": "Filas visibles:",
+        "ph": "pH objetivo:"
+      },
+      "table": {
+        "acronym": "Acrónimo",
+        "smiles": "SMILES",
+        "pkaValues": "Valores pKa",
+        "initialCharge": "Carga inicial",
+        "species": "Especie",
+        "charge": "Carga",
+        "fraction": "Fracción"
+      },
+      "csvExample": {
+        "header": "Acrónimo,SMILES,carga de la especie máximamente protonada,valores de pka",
+        "row1": "EDA,NCCN,2,6.16;10.26",
+        "row2": "GLY,NCC(=O)O,-1,2.35;9.78",
+        "row3": "AMPH,CC(N)CC1=CC=CC=C1,q,9.9"
+      }
     },
     "result": {
       "title": "Resultados",
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de fracciones molares al backend...",
       "noRows": "Aún no hay filas finales disponibles para este job histórico.",
+      "chart": {
+        "title": "Curvas de fracción",
+        "subtitle": "Cada especie se dibuja como una curva a lo largo del rango de pH calculado.",
+        "ariaLabel": "Gráfica de fracciones molares",
+        "probe": {
+          "label": "pH de referencia",
+          "slider": "Mover línea de referencia",
+          "fixed": "Lecturas interpoladas en pH"
+        }
+      },
       "metadata": {
+        "label": "Etiqueta:",
+        "initialCharge": "Carga inicial:",
         "mode": "Modo:",
         "pkaValues": "Valores pKa:",
         "range": "Rango:",
@@ -560,60 +618,6 @@
       "ariaLabel": "Jobs históricos de Marcus"
     }
   },
-  "randomNumbers": {
-    "header": {
-      "eyebrow": "Números Aleatorios",
-      "title": "Generación Asíncrona por Lotes",
-      "subtitle": "Configura la URL fuente, el tamaño de lote, el intervalo y el tamaño de salida total."
-    },
-    "form": {
-      "ariaLabel": "Parámetros de generación",
-      "seedUrl": "URL semilla",
-      "seedUrlPlaceholder": "https://ejemplo.com/semilla.txt",
-      "numbersPerBatch": "Números por lote",
-      "batchInterval": "Intervalo de lote (segundos)",
-      "totalNumbers": "Total de números"
-    },
-    "actions": {
-      "generate": "Generar",
-      "processing": "Procesando...",
-      "clear": "Limpiar",
-      "resuming": "Reanudando...",
-      "resumeJob": "Reanudar job",
-      "pausing": "Pausando...",
-      "pauseJob": "Pausar job"
-    },
-    "progress": {
-      "title": "Job en Progreso",
-      "ariaLabel": "Progreso del job de números aleatorios",
-      "stage": "Etapa:"
-    },
-    "logs": { "title": "Logs de ejecución" },
-    "result": {
-      "title": "Resultado Generado",
-      "ariaLabel": "Resultado de números aleatorios",
-      "seedUrlLabel": "URL semilla:",
-      "digestLabel": "Resumen:",
-      "batchLabel": "Lote:",
-      "intervalLabel": "Intervalo:",
-      "totalLabel": "Total:",
-      "numbersTitle": "Números Aleatorios"
-    },
-    "history": {
-      "title": "Historial de Resultados",
-      "ariaLabel": "Historial de jobs de números aleatorios",
-      "empty": "Aún no hay jobs históricos de números aleatorios.",
-      "reload": "Recargar historial",
-      "reloading": "Cargando...",
-      "columns": {
-        "jobId": "ID de Job",
-        "status": "Estado",
-        "numbers": "Números",
-        "updated": "Actualizado",
-        "action": "Acción"
-      }
-    }
-  },
   "saScore": {
     "header": {
       "eyebrow": "SA Score",
@@ -623,6 +627,9 @@
     "form": {
       "title": "Entrada",
       "ariaLabel": "Parámetros de entrada",
+      "jobNameLabel": "Nombre del trabajo",
+      "jobNamePlaceholder": "Opcional: nombre visible del job",
+      "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual.",
       "methodsLegend": "Métodos"
     },
     "actions": {
@@ -637,9 +644,14 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de SA score al backend...",
       "ariaProgressLabel": "Progreso del job SA score",
+      "searchLabel": "Buscar en tabla",
+      "searchPlaceholder": "Buscar por nombre o SMILES",
+      "filteredCount": "filas visibles",
+      "emptySearch": "No hay filas de SA Score que coincidan con la búsqueda actual.",
       "exportTargetLabel": "Destino de exportación",
       "totalMolecules": "Total de moléculas:",
       "methodsLabel": "Métodos:",
+      "jobNameLabel": "Nombre visible:",
       "jobIdLabel": "ID de job:",
       "tableName": "Nombre",
       "tableSMILES": "SMILES"
@@ -669,7 +681,10 @@
     },
     "form": {
       "title": "Entrada",
-      "ariaLabel": "Parámetros de entrada"
+      "ariaLabel": "Parámetros de entrada",
+      "jobNameLabel": "Nombre del trabajo",
+      "jobNamePlaceholder": "Opcional: nombre visible del job",
+      "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual."
     },
     "actions": {
       "run": "Ejecutar Propiedades de Toxicidad",
@@ -683,8 +698,13 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de toxicidad al backend...",
       "ariaProgressLabel": "Progreso del job de toxicidad",
+      "searchLabel": "Buscar en tabla",
+      "searchPlaceholder": "Buscar por nombre o SMILES",
+      "filteredCount": "filas visibles",
+      "emptySearch": "No hay filas de toxicidad que coincidan con la búsqueda actual.",
       "totalMolecules": "Total de moléculas:",
       "modelLabel": "Modelo: ADMET-AI",
+      "jobNameLabel": "Nombre visible:",
       "jobIdLabel": "ID de job:",
       "tableName": "Nombre",
       "tableSMILES": "SMILES",
@@ -1081,6 +1101,89 @@
       "submit": "Guardar configuración del grupo"
     }
   },
+  "groupManager": {
+    "header": {
+      "eyebrow": "Administración",
+      "title": "Gestión de Grupos",
+      "subtitle": "Administra grupos científicos, sus miembros y reglas de acceso a apps."
+    },
+    "feedback": {
+      "loading": "Cargando grupos..."
+    },
+    "groups": {
+      "title": "Grupos",
+      "colName": "Nombre",
+      "colSlug": "Slug",
+      "colMembers": "Miembros",
+      "colActions": "Acciones",
+      "manage": "Gestionar",
+      "collapse": "Colapsar"
+    },
+    "members": {
+      "title": "Miembros",
+      "colUser": "Usuario",
+      "colRole": "Rol",
+      "colActions": "Acciones",
+      "selectUser": "Seleccionar usuario",
+      "addButton": "Añadir miembro"
+    },
+    "permissions": {
+      "title": "Permisos de Apps"
+    },
+    "createGroup": {
+      "title": "Crear grupo",
+      "hint": "Los grupos representan equipos o entornos científicos.",
+      "name": "Nombre del grupo",
+      "slug": "Slug",
+      "description": "Descripción",
+      "submit": "Crear grupo"
+    }
+  },
+  "userManager": {
+    "header": {
+      "eyebrow": "Administración",
+      "title": "Gestión de Usuarios",
+      "subtitle": "Administra cuentas de usuario, roles y membresías de grupo."
+    },
+    "feedback": {
+      "loading": "Cargando usuarios..."
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Los admins solo pueden gestionar usuarios de sus grupos.",
+      "filterGroup": "Filtrar por grupo",
+      "allGroups": "Todos los grupos",
+      "colUsername": "Usuario",
+      "colRole": "Rol",
+      "colStatus": "Estado",
+      "colGroups": "Grupos",
+      "colActions": "Acciones",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar"
+    },
+    "createUser": {
+      "title": "Crear usuario",
+      "hint": "Los admins solo pueden crear cuentas para sus grupos.",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "roleLabel": "Rol",
+      "primaryGroup": "Grupo principal",
+      "noPrimaryGroup": "Sin grupo principal",
+      "submit": "Crear usuario"
+    },
+    "addMembership": {
+      "title": "Añadir membresía",
+      "hint": "Asigna un usuario existente a un grupo con un rol específico.",
+      "selectUser": "Seleccionar usuario",
+      "selectGroup": "Seleccionar grupo",
+      "submit": "Añadir membresía"
+    }
+  },
   "shared": {
     "smilesBatchInput": {
       "label": "Entrada SMILES por lote",
@@ -1095,7 +1198,8 @@
       "tableSMILES": "SMILES",
       "drawSmilesTitle": "Dibuja una molécula con Ketcher y agrégala a la lista",
       "uploadFileTitle": "Sube un archivo .smi, .txt o .csv con SMILES o pares nombre/SMILES",
-      "fileFormats": "Archivo .smi, .txt o .csv"
+      "fileFormats": "Archivo .smi, .txt o .csv",
+      "validating": "Validando los SMILES antes del envío..."
     },
     "jobArtifactExport": {
       "persistedFiles": "Archivos de entrada persistidos",

@@ -4,6 +4,9 @@
     "connectionId": "http-localhost-9000",
     "projectKey": "chemistry-apps"
   },
+
+  "js/ts.tsdk.path": "./frontend/node_modules/typescript/lib",
+  "js/ts.enablePromptUseWorkspaceTsdk": true,
   "cSpell.words": [
     "cachés",
     "deduplica",

@@ -64,13 +64,31 @@ generate_frontend_reports() {
   echo "[frontend] Paso 1/3: eslint.json generado (exit ignorado, puede tener issues)."
 
   echo "[frontend] Paso 2/3: ejecutando ng test con cobertura..."
+  # Angular/Vitest puede escribir shards temporales en coverage/frontend/.tmp.
+  # Precrear el directorio evita ENOENT intermitentes en ejecuciones paralelas.
+  mkdir -p "${FRONTEND_DIR}/coverage/frontend/.tmp"
   npx ng test --coverage --coverage-reporters=json --coverage-reporters=lcov --watch=false
   echo "[frontend] Paso 2/3: ng test finalizado."
+
+  echo "[frontend] Paso 2.5/3: consolidando lcov para Sonar..."
+  cp "${FRONTEND_DIR}/coverage/frontend/lcov.info" "${FRONTEND_DIR}/coverage/frontend/lcov-sonar.info"
+
+  if [[ "${SONAR_INCLUDE_E2E_COVERAGE:-1}" == "1" ]]; then
+    echo "[frontend] E2E para Sonar habilitado: ejecutando Playwright con cobertura de navegador..."
+    npm run e2e:coverage:sonar
+    require_file "${FRONTEND_DIR}/coverage/e2e/lcov.info"
+    printf '\n' >> "${FRONTEND_DIR}/coverage/frontend/lcov-sonar.info"
+    cat "${FRONTEND_DIR}/coverage/e2e/lcov.info" >> "${FRONTEND_DIR}/coverage/frontend/lcov-sonar.info"
+    echo "[frontend] Cobertura E2E agregada a lcov-sonar.info."
+  else
+    echo "[frontend] E2E para Sonar omitido (define SONAR_INCLUDE_E2E_COVERAGE=0 para deshabilitarlo por defecto)."
+  fi
 
   popd >/dev/null
 
   echo "[frontend] Paso 3/3: validando generación de lcov.info..."
   require_file "${FRONTEND_DIR}/coverage/frontend/lcov.info"
+  require_file "${FRONTEND_DIR}/coverage/frontend/lcov-sonar.info"
   echo "[frontend] Paso 3/3: lcov.info generado."
 }
 
@@ -112,6 +130,7 @@ main() {
   echo "- ${FRONTEND_DIR}/eslint.json"
   echo "- ${FRONTEND_DIR}/coverage/frontend/coverage-final.json"
   echo "- ${FRONTEND_DIR}/coverage/frontend/lcov.info"
+  echo "- ${FRONTEND_DIR}/coverage/frontend/lcov-sonar.info"
 
   run_sonar_scanner_if_available
 }

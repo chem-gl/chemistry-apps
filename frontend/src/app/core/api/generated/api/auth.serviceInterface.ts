@@ -48,7 +48,7 @@ export interface AuthServiceInterface {
 
     /**
      * 
-     * Expone apps disponibles para el usuario actual con RBAC resuelto.
+     * Expone apps disponibles para el usuario actual con RBAC resuelto.  Acepta &#x60;?group_id&#x3D;X&#x60; para evaluar acceso estrictamente desde el grupo activo.
      * @endpoint get /api/auth/apps/
      */
     authAppsList(extraHttpRequestParams?: any): Observable<Array<AccessibleScientificApp>>;

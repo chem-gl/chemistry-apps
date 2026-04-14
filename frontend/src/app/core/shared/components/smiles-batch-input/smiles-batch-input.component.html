@@ -18,6 +18,16 @@
     {{ 'shared.smilesBatchInput.hint' | transloco }}
 </p>
 
+@if (isValidatingSmiles) {
+<p class="hint validation-status" aria-live="polite">
+    {{ 'shared.smilesBatchInput.validating' | transloco }}
+</p>
+}
+
+@if (validationMessage; as currentValidationMessage) {
+<p class="validation-error" role="alert">{{ currentValidationMessage }}</p>
+}
+
 @if (customNamesEnabled && inputRows.length > 0) {
 <div class="batch-preview-shell" [attr.aria-label]="'shared.smilesBatchInput.label' | transloco">
     <table class="batch-preview-table">

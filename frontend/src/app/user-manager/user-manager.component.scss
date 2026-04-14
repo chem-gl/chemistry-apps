@@ -1,0 +1,334 @@
+/* user-manager.component.scss: Estilos de la página de gestión de usuarios. */
+
+.um-shell {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+/* ─── Header ─── */
+.um-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-left: 3px solid var(--chem-primary);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: var(--chem-shadow);
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--chem-primary);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--chem-ink);
+}
+
+.subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+/* ─── Feedback ─── */
+.feedback {
+  padding: 0.8rem 1rem;
+  border-radius: var(--chem-radius);
+  border: 1px solid var(--chem-border);
+  font-size: 0.9rem;
+
+  &.error {
+    background: var(--chem-primary-light);
+    border-color: var(--chem-primary);
+    color: var(--chem-primary-dark);
+  }
+
+  &.success {
+    background: #e8f5e9;
+    border-color: #43a047;
+    color: #2e7d32;
+  }
+}
+
+/* ─── Filtro de grupo ─── */
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+/* ─── Secciones ─── */
+.section-block {
+  padding: 1.25rem 1.5rem;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: var(--chem-shadow);
+  display: grid;
+  gap: 1rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--chem-ink);
+}
+
+.section-description {
+  margin: 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.88rem;
+}
+
+/* ─── Tabla de usuarios ─── */
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th,
+  td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--chem-border);
+  }
+
+  th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--chem-ink-secondary);
+  }
+
+  tbody tr:hover {
+    background: rgba(250, 248, 252, 0.7);
+  }
+}
+
+.hint {
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
+}
+
+.action-cell {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Badge de rol ─── */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--chem-radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--chem-bg);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink-secondary);
+
+  &.badge-admin {
+    background: var(--chem-accent-light);
+    border-color: var(--chem-accent);
+    color: var(--chem-accent);
+  }
+
+  &.badge-root {
+    background: var(--chem-primary-light);
+    border-color: var(--chem-primary);
+    color: var(--chem-primary-dark);
+  }
+}
+
+/* ─── Indicador de estado ─── */
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--chem-ink-secondary);
+  margin-right: 0.35rem;
+  vertical-align: middle;
+
+  &.active {
+    background: #43a047;
+  }
+}
+
+/* ─── Etiquetas de grupo del usuario ─── */
+.group-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.group-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.5rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-pill);
+  font-size: 0.75rem;
+  background: var(--chem-bg);
+
+  &.tag-admin {
+    border-color: var(--chem-accent);
+    background: var(--chem-accent-light);
+  }
+}
+
+.tag-role {
+  opacity: 0.65;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.tag-remove {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--chem-ink-secondary);
+  padding: 0;
+  margin-left: 0.1rem;
+
+  &:hover {
+    color: var(--chem-primary);
+  }
+}
+
+/* ─── Formulario inline ─── */
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ─── Formulario de creación ─── */
+.create-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+.form-input,
+.form-select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  transition: border-color var(--chem-transition);
+
+  &:focus {
+    outline: none;
+    border-color: var(--chem-primary);
+  }
+}
+
+.form-select.small {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+/* ─── Botones ─── */
+.action-button {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
+
+  &:hover:not(:disabled) {
+    background: var(--chem-primary-light);
+    border-color: var(--chem-primary);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &.small {
+    padding: 0.32rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  &.primary {
+    background: var(--chem-primary);
+    color: #fff;
+    border-color: var(--chem-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--chem-primary-dark);
+    }
+  }
+
+  &.danger:hover:not(:disabled) {
+    background: var(--chem-primary-light);
+    border-color: var(--chem-primary);
+    color: var(--chem-primary-dark);
+  }
+}

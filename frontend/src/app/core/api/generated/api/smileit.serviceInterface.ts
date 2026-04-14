@@ -13,6 +13,7 @@ import { Observable }                                        from 'rxjs';
 
 import { ErrorResponse } from '../model/models';
 import { PatchedSmileitCatalogEntryCreateRequest } from '../model/models';
+import { PatchedSmileitPatternEntryCreateRequest } from '../model/models';
 import { SmileitCatalogEntry } from '../model/models';
 import { SmileitCatalogEntryCreateRequest } from '../model/models';
 import { SmileitCategory } from '../model/models';
@@ -42,6 +43,14 @@ export interface SmileitServiceInterface {
     smileitJobsCatalogCreate(smileitCatalogEntryCreateRequest: SmileitCatalogEntryCreateRequest, extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
 
     /**
+     * Actualizar o Eliminar Catálogo de Sustituyentes de Usuario
+     * Versiona (PATCH) o elimina lógicamente (DELETE) una entrada de catálogo.
+     * @endpoint delete /api/smileit/jobs/catalog/{stable_id}/
+     * @param stableId Stable ID del catálogo a versionar; solo entradas de usuario son editables.
+     */
+    smileitJobsCatalogDestroy(stableId: string, extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
+
+    /**
      * Gestionar Catálogo de Sustituyentes
      * Lista o crea sustituyentes persistidos activos de Smile-it.
      * @endpoint get /api/smileit/jobs/catalog/
@@ -49,8 +58,8 @@ export interface SmileitServiceInterface {
     smileitJobsCatalogList(extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
 
     /**
-     * Actualizar Catálogo de Sustituyentes de Usuario
-     * Versiona una entrada de catálogo editable y retorna el catálogo vigente.
+     * Actualizar o Eliminar Catálogo de Sustituyentes de Usuario
+     * Versiona (PATCH) o elimina lógicamente (DELETE) una entrada de catálogo.
      * @endpoint patch /api/smileit/jobs/catalog/{stable_id}/
      * @param stableId Stable ID del catálogo a versionar; solo entradas de usuario son editables.
      * @param patchedSmileitCatalogEntryCreateRequest 
@@ -105,15 +114,34 @@ export interface SmileitServiceInterface {
      * Lista o crea patrones estructurales activos de Smile-it.
      * @endpoint post /api/smileit/jobs/patterns/
      * @param smileitPatternEntryCreateRequest 
+     * @param filter Filtro de visibilidad: \&quot;show-all\&quot; (default) o \&quot;root-only\&quot; (solo root)
      */
-    smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+    smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, filter?: string, extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+
+    /**
+     * Actualizar o Eliminar Patrón Estructural Smile-it
+     * Crea una nueva versión (PATCH) o elimina lógicamente (DELETE) un patrón.
+     * @endpoint delete /api/smileit/jobs/patterns/{stable_id}/
+     * @param stableId Stable ID del patrón a versionar; solo patrones editables se pueden actualizar.
+     */
+    smileitJobsPatternsDestroy(stableId: string, extraHttpRequestParams?: any): Observable<SmileitPatternEntry>;
 
     /**
      * Gestionar Patrones Estructurales Smile-it
      * Lista o crea patrones estructurales activos de Smile-it.
      * @endpoint get /api/smileit/jobs/patterns/
+     * @param filter Filtro de visibilidad: \&quot;show-all\&quot; (default) o \&quot;root-only\&quot; (solo root)
      */
-    smileitJobsPatternsList(extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+    smileitJobsPatternsList(filter?: string, extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
+
+    /**
+     * Actualizar o Eliminar Patrón Estructural Smile-it
+     * Crea una nueva versión (PATCH) o elimina lógicamente (DELETE) un patrón.
+     * @endpoint patch /api/smileit/jobs/patterns/{stable_id}/
+     * @param stableId Stable ID del patrón a versionar; solo patrones editables se pueden actualizar.
+     * @param patchedSmileitPatternEntryCreateRequest 
+     */
+    smileitJobsPatternsPartialUpdate(stableId: string, patchedSmileitPatternEntryCreateRequest?: PatchedSmileitPatternEntryCreateRequest, extraHttpRequestParams?: any): Observable<SmileitPatternEntry>;
 
     /**
      * Descargar Reporte CSV

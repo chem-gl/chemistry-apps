@@ -1,6 +1,6 @@
 // identity-api.service.ts: Wrapper transversal para usuarios, grupos, permisos y configs.
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../shared/constants';
@@ -13,6 +13,8 @@ export interface AccessibleScientificAppView {
   route_key: string;
   api_base_path: string;
   supports_pause_resume: boolean;
+  /** Features opcionales declaradas por la app para habilitar/deshabilitar por grupo. */
+  available_features: string[];
   enabled: boolean;
   group_permission: boolean | null;
   user_permission: boolean | null;
@@ -107,22 +109,31 @@ export class IdentityApiService {
   private readonly identityBaseUrl = `${API_BASE_URL}/api/identity`;
   private readonly authBaseUrl = `${API_BASE_URL}/api/auth`;
 
-  listAccessibleApps(): Observable<AccessibleScientificAppView[]> {
-    return this.httpClient.get<AccessibleScientificAppView[]>(`${this.authBaseUrl}/apps/`);
+  /** Lista apps accesibles. Si se provee groupId, el acceso se evalúa estrictamente para ese grupo. */
+  listAccessibleApps(groupId?: number): Observable<AccessibleScientificAppView[]> {
+    const params =
+      groupId === undefined ? undefined : new HttpParams().set('group_id', String(groupId));
+    return this.httpClient.get<AccessibleScientificAppView[]>(`${this.authBaseUrl}/apps/`, {
+      params,
+    });
   }
 
   getCurrentAppConfig(appName: string): Observable<EffectiveAppConfigView> {
-    return this.httpClient.get<EffectiveAppConfigView>(`${this.authBaseUrl}/app-configs/${appName}/`);
+    return this.httpClient.get<EffectiveAppConfigView>(
+      `${this.authBaseUrl}/app-configs/${appName}/`,
+    );
   }
 
   updateCurrentAppConfig(
     appName: string,
     config: Record<string, unknown>,
   ): Observable<{ id: number; user: number; app_name: string; config: Record<string, unknown> }> {
-    return this.httpClient.patch<{ id: number; user: number; app_name: string; config: Record<string, unknown> }>(
-      `${this.authBaseUrl}/app-configs/${appName}/`,
-      { config },
-    );
+    return this.httpClient.patch<{
+      id: number;
+      user: number;
+      app_name: string;
+      config: Record<string, unknown>;
+    }>(`${this.authBaseUrl}/app-configs/${appName}/`, { config });
   }
 
   listUsers(): Observable<IdentityUserSummaryView[]> {
@@ -133,11 +144,18 @@ export class IdentityApiService {
     return this.httpClient.post<IdentityUserSummaryView>(`${this.identityBaseUrl}/users/`, payload);
   }
 
-  updateUser(userId: number, payload: UpdateIdentityUserPayload): Observable<IdentityUserSummaryView> {
+  updateUser(
+    userId: number,
+    payload: UpdateIdentityUserPayload,
+  ): Observable<IdentityUserSummaryView> {
     return this.httpClient.patch<IdentityUserSummaryView>(
       `${this.identityBaseUrl}/users/${userId}/`,
       payload,
     );
+  }
+
+  deleteUser(userId: number): Observable<void> {
+    return this.httpClient.delete<void>(`${this.identityBaseUrl}/users/${userId}/`);
   }
 
   listGroups(): Observable<WorkGroupView[]> {
@@ -162,6 +180,10 @@ export class IdentityApiService {
     );
   }
 
+  deleteGroup(groupId: number): Observable<void> {
+    return this.httpClient.delete<void>(`${this.identityBaseUrl}/groups/${groupId}/`);
+  }
+
   listMemberships(): Observable<GroupMembershipView[]> {
     return this.httpClient.get<GroupMembershipView[]>(`${this.identityBaseUrl}/memberships/`);
   }
@@ -177,6 +199,20 @@ export class IdentityApiService {
     );
   }
 
+  updateMembership(
+    membershipId: number,
+    payload: { role_in_group: 'admin' | 'member' },
+  ): Observable<GroupMembershipView> {
+    return this.httpClient.patch<GroupMembershipView>(
+      `${this.identityBaseUrl}/memberships/${membershipId}/`,
+      payload,
+    );
+  }
+
+  deleteMembership(membershipId: number): Observable<void> {
+    return this.httpClient.delete<void>(`${this.identityBaseUrl}/memberships/${membershipId}/`);
+  }
+
   listAppPermissions(): Observable<AppPermissionView[]> {
     return this.httpClient.get<AppPermissionView[]>(`${this.identityBaseUrl}/app-permissions/`);
   }
@@ -190,6 +226,26 @@ export class IdentityApiService {
     return this.httpClient.post<AppPermissionView>(
       `${this.identityBaseUrl}/app-permissions/`,
       payload,
+    );
+  }
+
+  updateAppPermission(
+    permissionId: number,
+    payload: { is_enabled: boolean },
+  ): Observable<AppPermissionView> {
+    return this.httpClient.patch<AppPermissionView>(
+      `${this.identityBaseUrl}/app-permissions/${permissionId}/`,
+      payload,
+    );
+  }
+
+  deleteAppPermission(permissionId: number): Observable<void> {
+    return this.httpClient.delete<void>(`${this.identityBaseUrl}/app-permissions/${permissionId}/`);
+  }
+
+  getGroupAppConfig(groupId: number, appName: string): Observable<GroupAppConfigView> {
+    return this.httpClient.get<GroupAppConfigView>(
+      `${this.identityBaseUrl}/groups/${groupId}/app-configs/${appName}/`,
     );
   }
 

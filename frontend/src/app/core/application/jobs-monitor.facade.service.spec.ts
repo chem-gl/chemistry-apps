@@ -11,7 +11,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
   return {
     id: 'job-1',
     job_hash: 'hash-1',
-    plugin_name: 'random-numbers',
+    plugin_name: 'molar-fractions',
     algorithm_version: '1.0.0',
     status: 'pending',
     cache_hit: false,
@@ -203,11 +203,11 @@ describe('JobsMonitorFacadeService', () => {
   it('sends plugin filter when selecting a specific plugin', () => {
     jobsApiServiceMock.listJobs.mockReturnValue(of([]));
 
-    facadeService.setPluginFilter('random-numbers');
+    facadeService.setPluginFilter('molar-fractions');
 
     expect(jobsApiServiceMock.listJobs).toHaveBeenCalledWith({
       status: undefined,
-      pluginName: 'random-numbers',
+      pluginName: 'molar-fractions',
     });
   });
 
@@ -230,15 +230,15 @@ describe('JobsMonitorFacadeService', () => {
   it('builds sorted unique plugin options from loaded jobs', () => {
     jobsApiServiceMock.listJobs.mockReturnValue(
       of([
-        makeScientificJob({ plugin_name: 'random-numbers' }),
+        makeScientificJob({ plugin_name: 'molar-fractions' }),
         makeScientificJob({ plugin_name: 'thermo', id: 'job-2' }),
-        makeScientificJob({ plugin_name: 'random-numbers', id: 'job-3' }),
+        makeScientificJob({ plugin_name: 'molar-fractions', id: 'job-3' }),
       ]),
     );
 
     facadeService.loadJobs();
 
-    expect(facadeService.pluginOptions()).toEqual(['all', 'random-numbers', 'thermo']);
+    expect(facadeService.pluginOptions()).toEqual(['all', 'molar-fractions', 'thermo']);
   });
 
   it('loads selected job details and logs', () => {

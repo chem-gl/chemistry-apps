@@ -6,15 +6,16 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import {
-    JobLogsPageView,
-    JobsApiService,
-    SmileitCatalogEntryView,
-    SmileitCategoryView,
-    SmileitJobResponseView,
-    SmileitPatternEntryView,
-    SmileitStructureInspectionView,
+  JobLogsPageView,
+  JobsApiService,
+  SmileitCatalogEntryView,
+  SmileitCategoryView,
+  SmileitJobResponseView,
+  SmileitPatternEntryView,
+  SmileitStructureInspectionView,
 } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
+import { IdentitySessionService } from '../auth/identity-session.service';
 import { SmileitAssignmentBlockDraft, SmileitWorkflowService } from './smileit-workflow.service';
 import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
@@ -197,6 +198,11 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
 
 describe('SmileitWorkflowService', () => {
   let workflowService: SmileitWorkflowService;
+  const identitySessionMock = {
+    currentUser: vi.fn(() => ({ id: 2 })),
+    currentRole: vi.fn(() => 'admin'),
+  };
+
   const emptyLogsPage: JobLogsPageView = {
     jobId: 'smileit-job-1',
     count: 0,
@@ -260,6 +266,10 @@ describe('SmileitWorkflowService', () => {
         {
           provide: SmileitApiService,
           useValue: jobsApiServiceMock,
+        },
+        {
+          provide: IdentitySessionService,
+          useValue: identitySessionMock,
         },
         SmileitWorkflowState,
         SmileitCatalogWorkflowService,
@@ -328,6 +338,28 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.generatedStructures.length).toBe(1);
     expect(workflowService.resultData()?.traceabilityRows.length).toBe(1);
+  });
+
+  it('dispatches the user-selected rSubstitutes value when multiple sites are configured', () => {
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1, 2, 3]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        siteAtomIndices: [1, 2, 3],
+        manualSubstituents: [],
+      },
+    ]);
+    workflowService.setRSubstitutes(3);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedAtomIndices: [1, 2, 3],
+        rSubstitutes: 3,
+      }),
+    );
   });
 
   it('loads catalog, categories and patterns together for the Smile-it workspace', () => {
@@ -720,7 +752,9 @@ describe('SmileitWorkflowService', () => {
 
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.isHistoricalSummary).toBe(true);
-    expect(workflowService.resultData()?.summaryMessage).toContain('Historical job status: running');
+    expect(workflowService.resultData()?.summaryMessage).toContain(
+      'Historical job status: running',
+    );
     expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalledWith('smileit-running-1', {
       limit: 250,
     });
@@ -790,7 +824,10 @@ describe('SmileitWorkflowService', () => {
 
     progressEvents$.error(new Error('sse offline'));
 
-    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('smileit-progress-1', 1000);
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith(
+      'smileit-progress-1',
+      1000,
+    );
     expect(jobsApiServiceMock.getSmileitJobStatus).toHaveBeenCalledWith('smileit-progress-1');
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.generatedStructures).toHaveLength(1);
@@ -966,6 +1003,28 @@ describe('SmileitWorkflowService', () => {
     workflowService.state.selectedAtomIndices.set([1, 2, 3]);
 
     workflowService.setRSubstitutes(0);
+
+    expect(workflowService.rSubstitutes()).toBe(1);
+  });
+
+  it('expands rSubstitutes when the user keeps selecting more sites using the current max', () => {
+    workflowService.toggleSelectedAtom(1);
+    expect(workflowService.rSubstitutes()).toBe(1);
+
+    workflowService.toggleSelectedAtom(2);
+    expect(workflowService.rSubstitutes()).toBe(2);
+
+    workflowService.toggleSelectedAtom(3);
+    expect(workflowService.rSubstitutes()).toBe(3);
+  });
+
+  it('preserves a manual lower rSubstitutes value when the selection grows', () => {
+    workflowService.toggleSelectedAtom(1);
+    workflowService.toggleSelectedAtom(2);
+    workflowService.toggleSelectedAtom(3);
+    workflowService.setRSubstitutes(1);
+
+    workflowService.toggleSelectedAtom(4);
 
     expect(workflowService.rSubstitutes()).toBe(1);
   });

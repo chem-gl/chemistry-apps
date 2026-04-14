@@ -3,7 +3,7 @@
 Objetivo: orquestar el ciclo de vida del job Easy-rate:
   1. Normalizar parámetros serializados desde la BD.
   2. Cargar y parsear archivos Gaussian desde artefactos persistidos.
-  3. Delegar cálculo TST+Tunnel+Difusión a _tst_physics.
+  3. Delegar calculo TST+Tunnel+Difusion al modulo computation/physics.py.
 Registrado en PluginRegistry bajo el nombre definido en definitions.py.
 """
 
@@ -22,14 +22,14 @@ from apps.core.models import ScientificJobInputArtifact
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
-from ._gaussian_inspector import (
+from .computation.physics import _compute_easy_rate
+from .definitions import PLUGIN_NAME
+from .inspection.gaussian import (
     _build_structure_snapshot,
     _build_zero_structure_snapshot,
     _parse_gaussian_execution,
     _validate_structure_snapshot,
 )
-from ._tst_physics import _compute_easy_rate
-from .definitions import PLUGIN_NAME
 from .types import (
     EasyRateCalculationResult,
     EasyRateJobParameters,

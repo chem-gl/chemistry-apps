@@ -1,0 +1,204 @@
+<!-- user-manager.component.html: Interfaz de administración de usuarios y membresías. -->
+<section class="um-shell" aria-label="Gestión de usuarios">
+    <header class="um-header">
+        <div>
+            <p class="eyebrow">{{ 'userManager.header.eyebrow' | transloco }}</p>
+            <h1>{{ 'userManager.header.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'userManager.header.subtitle' | transloco }}</p>
+        </div>
+        <div class="header-actions">
+            <button class="action-button" type="button" (click)="loadData()">
+                {{ 'common.actions.refresh' | transloco }}
+            </button>
+        </div>
+    </header>
+
+    @if (errorMessage(); as msg) {
+    <div class="feedback error" role="alert">{{ msg }}</div>
+    } @if (successMessage(); as msg) {
+    <div class="feedback success">{{ msg }}</div>
+    }
+
+    @if (isLoading()) {
+    <div class="feedback">{{ 'userManager.feedback.loading' | transloco }}</div>
+    } @else {
+
+    <!-- Filtro por grupo -->
+    <div class="filter-bar">
+        <label class="filter-label">
+            {{ 'userManager.users.filterGroup' | transloco }}
+            <select class="form-select" [ngModel]="filterGroupId()" (ngModelChange)="filterGroupId.set($event)">
+                <option value="">{{ 'userManager.users.allGroups' | transloco }}</option>
+                @for (group of visibleGroups(); track group.id) {
+                <option [value]="group.id">{{ group.name }}</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <section class="section-block">
+        <h2 class="section-title">{{ 'userManager.users.title' | transloco }}</h2>
+        <p class="section-description">{{ 'userManager.users.description' | transloco }}</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ 'userManager.users.colUsername' | transloco }}</th>
+                        <th>{{ 'userManager.users.colRole' | transloco }}</th>
+                        <th>{{ 'userManager.users.colStatus' | transloco }}</th>
+                        <th>{{ 'userManager.users.colGroups' | transloco }}</th>
+                        <th>{{ 'userManager.users.colActions' | transloco }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (user of visibleUsers(); track user.id) {
+                    <tr>
+                        <td>
+                            <strong>{{ user.username }}</strong>
+                            @if (user.email) {
+                            <br /><small class="hint">{{ user.email }}</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge" [class.badge-root]="user.role === 'root'"
+                                [class.badge-admin]="user.role === 'admin'">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-dot" [class.active]="user.is_active"></span>
+                            {{ user.is_active ? ('userManager.users.active' | transloco) : ('userManager.users.inactive'
+                            | transloco) }}
+                        </td>
+                        <td>
+                            <div class="group-tags">
+                                @for (membership of membershipsForUser(user.id); track membership.id) {
+                                <span class="group-tag" [class.tag-admin]="membership.role_in_group === 'admin'">
+                                    {{ groupName(membership.group) }}
+                                    <span class="tag-role">{{ membership.role_in_group }}</span>
+                                    <button class="tag-remove" type="button" (click)="removeMembership(membership.id)"
+                                        title="Quitar del grupo">×</button>
+                                </span>
+                                }
+                            </div>
+                        </td>
+                        <td class="action-cell">
+                            @if (sessionService.hasRootAccess()) {
+                            <button class="action-button small" type="button" (click)="changeUserRole(user, 'user')">
+                                User
+                            </button>
+                            <button class="action-button small" type="button" (click)="changeUserRole(user, 'admin')">
+                                Admin
+                            </button>
+                            }
+                            <button class="action-button small" [class.danger]="user.is_active" type="button"
+                                (click)="toggleUserStatus(user)">
+                                {{ user.is_active ? ('userManager.users.deactivate' | transloco) :
+                                ('userManager.users.activate' | transloco) }}
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Añadir membresía -->
+    <section class="section-block">
+        <h2 class="section-title">{{ 'userManager.addMembership.title' | transloco }}</h2>
+        <p class="section-description">{{ 'userManager.addMembership.hint' | transloco }}</p>
+
+        <form class="inline-form" (ngSubmit)="submitAddMembership()">
+            <select class="form-select" title="Usuario" [ngModel]="addMembershipForm().userId"
+                (ngModelChange)="addMembershipForm.update(f => ({ ...f, userId: $event }))" name="userId" required>
+                <option value="">{{ 'userManager.addMembership.selectUser' | transloco }}</option>
+                @for (user of users(); track user.id) {
+                <option [value]="user.id">{{ user.username }}</option>
+                }
+            </select>
+            <select class="form-select" title="Grupo" [ngModel]="addMembershipForm().groupId"
+                (ngModelChange)="addMembershipForm.update(f => ({ ...f, groupId: $event }))" name="groupId" required>
+                <option value="">{{ 'userManager.addMembership.selectGroup' | transloco }}</option>
+                @for (group of visibleGroups(); track group.id) {
+                <option [value]="group.id">{{ group.name }}</option>
+                }
+            </select>
+            <select class="form-select small" title="Rol" [ngModel]="addMembershipForm().roleInGroup"
+                (ngModelChange)="addMembershipForm.update(f => ({ ...f, roleInGroup: $event }))" name="roleInGroup">
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button class="action-button primary" type="submit" [disabled]="isSubmitting()">
+                {{ 'userManager.addMembership.submit' | transloco }}
+            </button>
+        </form>
+    </section>
+
+    <!-- Crear usuario -->
+    <section class="section-block">
+        <h2 class="section-title">{{ 'userManager.createUser.title' | transloco }}</h2>
+        <p class="section-description">{{ 'userManager.createUser.hint' | transloco }}</p>
+
+        <form class="create-form" (ngSubmit)="submitCreateUser()">
+            <div class="form-row">
+                <label class="form-label">
+                    {{ 'userManager.createUser.username' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createUserForm().username"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, username: $event }))" name="username"
+                        required />
+                </label>
+                <label class="form-label">
+                    {{ 'userManager.createUser.email' | transloco }}
+                    <input class="form-input" type="email" [ngModel]="createUserForm().email"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, email: $event }))" name="email" required />
+                </label>
+                <label class="form-label">
+                    {{ 'userManager.createUser.password' | transloco }}
+                    <input class="form-input" type="password" [ngModel]="createUserForm().password"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, password: $event }))" name="password"
+                        required />
+                </label>
+                <label class="form-label">
+                    {{ 'userManager.createUser.firstName' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createUserForm().first_name"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, first_name: $event }))"
+                        name="first_name" />
+                </label>
+                <label class="form-label">
+                    {{ 'userManager.createUser.lastName' | transloco }}
+                    <input class="form-input" type="text" [ngModel]="createUserForm().last_name"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, last_name: $event }))" name="last_name" />
+                </label>
+                @if (sessionService.hasRootAccess()) {
+                <label class="form-label">
+                    {{ 'userManager.createUser.roleLabel' | transloco }}
+                    <select class="form-select" [ngModel]="createUserForm().role"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, role: $event }))" name="role">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </label>
+                }
+                <label class="form-label">
+                    {{ 'userManager.createUser.primaryGroup' | transloco }}
+                    <select class="form-select" [ngModel]="createUserForm().primary_group_id"
+                        (ngModelChange)="createUserForm.update(f => ({ ...f, primary_group_id: $event }))"
+                        name="primary_group_id" required>
+                        <option value="" disabled>{{ 'userManager.createUser.noPrimaryGroup' | transloco }}</option>
+                        @for (group of visibleGroups(); track group.id) {
+                        <option [value]="group.id">{{ group.name }}</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            <button class="action-button primary" type="submit" [disabled]="isSubmitting()">
+                {{ 'userManager.createUser.submit' | transloco }}
+            </button>
+        </form>
+    </section>
+
+    } <!-- fin !isLoading -->
+</section>

@@ -45,10 +45,6 @@
         <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
           {{ 'tunnel.actions.reset' | transloco }}
         </button>
-        <button class="btn-secondary" (click)="clearInputHistory()"
-          [disabled]="workflow.isProcessing() || workflow.inputChangeEvents().length === 0">
-          {{ 'tunnel.actions.clearTrace' | transloco }}
-        </button>
       </div>
     </section>
 
@@ -60,23 +56,16 @@
       }
 
       @if (workflow.activeSection() === 'progress') {
-      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
-        [progressMessage]="workflow.progressMessage()"
-        [progressAriaLabel]="'tunnel.result.ariaLabel' | transloco"></app-job-progress-card>
+      <p class="status-message">{{ workflow.progressMessage() }}</p>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-      @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-      <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-      }
-
       <div class="metadata-grid">
         <p><strong>{{ 'tunnel.result.labels.barrierZpe' | transloco }}</strong> {{ resultData.reactionBarrierZpe }}</p>
         <p><strong>{{ 'tunnel.result.labels.frequency' | transloco }}</strong> {{ resultData.imaginaryFrequency }}</p>
         <p><strong>{{ 'tunnel.result.labels.energyZpe' | transloco }}</strong> {{ resultData.reactionEnergyZpe }}</p>
         <p><strong>{{ 'tunnel.result.labels.temperature' | transloco }}</strong> {{ resultData.temperature }}</p>
         <p><strong>{{ 'tunnel.result.labels.model' | transloco }}</strong> {{ resultData.modelName ?? '--' }}</p>
-        <p><strong>{{ 'tunnel.result.labels.inputEvents' | transloco }}</strong> {{ resultData.inputEventCount }}</p>
       </div>
 
       <div class="output-block" [class.output-empty]="!hasResultValues(resultData)">
@@ -88,18 +77,10 @@
       </div>
 
       <div class="action-row export-row">
-        <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
-          {{ workflow.isExporting() ? ('tunnel.actions.exporting' | transloco) : ('tunnel.actions.exportCsv' |
-          transloco) }}
-        </button>
-        <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
-          {{ 'tunnel.actions.exportLog' | transloco }}
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.resultData() === null">
+          {{ 'tunnel.actions.exportCsv' | transloco }}
         </button>
       </div>
-
-      @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-      <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-      }
       }
 
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
@@ -108,46 +89,4 @@
     </section>
   </div>
 
-  <section class="events-card" [attr.aria-label]="'tunnel.trace.ariaLabel' | transloco">
-    <div class="events-header">
-      <h3>{{ 'tunnel.trace.title' | transloco }}</h3>
-      <p>{{ workflow.inputChangeEvents().length }} {{ 'tunnel.trace.eventsCapture' | transloco }}</p>
-    </div>
-
-    @if (workflow.inputChangeEvents().length === 0) {
-    <p class="status-message">{{ 'tunnel.trace.empty' | transloco }}</p>
-    } @else {
-    <div class="table-wrap">
-      <table class="events-table">
-        <thead>
-          <tr>
-            <th>{{ 'tunnel.trace.columns.index' | transloco }}</th>
-            <th>{{ 'tunnel.trace.columns.field' | transloco }}</th>
-            <th>{{ 'tunnel.trace.columns.previous' | transloco }}</th>
-            <th>{{ 'tunnel.trace.columns.new' | transloco }}</th>
-            <th>{{ 'tunnel.trace.columns.changedAt' | transloco }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (eventItem of workflow.inputChangeEvents(); track $index) {
-          <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ eventItem.fieldName }}</td>
-            <td>{{ eventItem.previousValue }}</td>
-            <td>{{ eventItem.newValue }}</td>
-            <td>{{ eventItem.changedAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-  </section>
-
-  <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
-
-  <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
-    [emptyMessage]="'tunnel.history.empty' | transloco" [sectionTitle]="'shared.jobHistoryTable.title' | transloco"
-    [ariaLabel]="'tunnel.history.ariaLabel' | transloco" (reload)="workflow.loadHistory()"
-    (openJob)="openHistoricalJob($event)" (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
 </section>

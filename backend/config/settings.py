@@ -201,8 +201,6 @@ if ENABLE_CORS and not CORS_PACKAGE_INSTALLED:
     raise ImproperlyConfigured(
         "ENABLE_CORS=true requiere instalar el paquete 'django-cors-headers'."
     )
-
-
 # Definición de aplicaciones instaladas.
 
 INSTALLED_APPS = [
@@ -219,7 +217,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "apps.accounts.apps.AccountsConfig",
     "apps.core",
-    "apps.random_numbers.apps.RandomNumbersConfig",
     "apps.molar_fractions.apps.MolarFractionsConfig",
     "apps.tunnel.apps.TunnelConfig",
     "apps.easy_rate.apps.EasyRateConfig",
@@ -277,7 +274,7 @@ OPENAPI_DESCRIPTION: str = os.getenv(
     "OPENAPI_DESCRIPTION",
     (
         "API de plataforma científica modular para ejecutar jobs asíncronos "
-        "por plugins (random-numbers y molar-fractions), con observabilidad de progreso "
+        "por plugins científicos, con observabilidad de progreso "
         "y logs en tiempo real, cache por hash y recuperación activa automática."
     ),
 )
@@ -305,10 +302,6 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Jobs",
             "description": "Operaciones genéricas para consulta, progreso, eventos SSE y logs de jobs.",
-        },
-        {
-            "name": "RandomNumbers",
-            "description": "Endpoints de generación por lotes de números aleatorios con semilla externa.",
         },
         {
             "name": "MolarFractions",
@@ -442,7 +435,6 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -475,8 +467,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
-
-
 CHANNEL_LAYERS_REDIS_URL = os.getenv(
     "CHANNEL_LAYERS_REDIS_URL",
     CELERY_BROKER_URL,
@@ -501,7 +491,6 @@ else:
             },
         }
     }
-
 
 # Base de datos configurable por entorno, con fallback a SQLite para local.
 
@@ -561,9 +550,7 @@ CSRF_TRUSTED_ORIGINS: list[str] = _merge_unique_values(
     CORS_ALLOWED_ORIGINS,
 )
 
-
 # Validadores de contraseña.
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -578,19 +565,12 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-
-
 # Internacionalización.
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
-
-
 # Archivos estáticos.
 
 STATIC_URL = "static/"

@@ -15,6 +15,7 @@
 - Seguir las mejores prácticas de programación
 - Evitar el uso de código obsoleto.
 - usar arquitecturas por capas
+- simpre se puede usar el navegador web integrado para verificar los cambios del frontend
 - separar responsabilidades en diferentes archivos y carpetas
 - usar patrones de diseño cuando sea apropiado
 - mantener la coherencia en el estilo de codificación
@@ -23,7 +24,7 @@
 - no crear .md adicionales como para decir cosas de phases o cosas asi, solo se usara el README.md para documentar el proyecto y los archivos .md en la carpeta .github/instructions/ para las instrucciones de copilot, no se crearan otros archivos de documentacion .md adicionales no solicitados
 - seguir las convenciones de programacion para codigo de ciencia
 - al ambientarse debe quedar claro que el usuario puede ejecutar el código en su máquina local o en un servidor, y que se pueden usar diferentes IDEs o editores de texto para trabajar con el código
-- No crear archivos .sh (al menos que se pida especificamente) para ejecutar comandos, se deben ejecutar directamente con el entorno virtual o npm scripts, de tal forma que el usuario pueda ejecutar los comandos sin necesidad de usar scripts adicionales, por ejemplo: `./venv/bin/python manage.py test` o `npm run build`
+- No crear archivos .sh (al menos que se pida especificamente) para ejecutar comandos, se deben ejecutar directamente con el entorno virtual o npm scripts, de tal forma que el usuario pueda ejecutar los comandos sin necesidad de usar scripts adicionales, por ejemplo: `./.venv/bin/python manage.py test` o `npm run build`
 - se debe verificar que todo este bien conectado y funcionando, continuamente verificar y eliminar cualquier código que no funcione o que no se integre correctamente, para mantener un proyecto limpio y funcional, eliminando cualquier codigo muerto o archivos que no se usen, y asegurando que todo el código que quede sea funcional y esté bien integrado en el proyecto
 
 - Tratar dentro de lo posible que los archivos cualquier archivo no mida mas de 400 lineas, si es necesario dividirlo en varios archivos para mantener la legibilidad y mantenibilidad del código.
@@ -36,7 +37,7 @@
   Cuando haya problemas de tipado por tipado insuficiente tratar de crear los tipara solucionarlo tratar dentro de lo factible no usar `# type: ignore` al igual que ts-ignore, es importante tratar de mantener el código lo más tipado posible, para asegurar que sea fácil de entender y mantener, y para aprovechar las ventajas del tipado estático, como la detección temprana de errores y la autocompletación en los editores de código, si es necesario crear tipos personalizados para solucionar problemas de tipado, es preferible hacerlo en lugar de usar `# type: ignore` o `// @ts-ignore`, para mantener el código limpio y bien tipado, y evitar tener código con tipado insuficiente o con errores de tipado que puedan causar problemas en el futuro. asi como cualquir error de estilo evitar usar ignore para cualquier error y justificar en caso de que el ignore sea estrictamente necesario, p
   por ejemplo  
   Using http protocol is insecure. Use https instead
-  "http://0.0.0.0:4200" #se ignora porque es la url de desarrollo local, no se expone a internet y no representa un riesgo de seguridad en este contexto, además se usa para facilitar el desarrollo y pruebas locales, y no se utiliza en producción donde se debe usar https para garantizar la seguridad de las comunicaciones. eso tiene sentido y poner un https local con un certificado autofirmado para desarrollo local es posible pero puede generar problemas de configuración y uso, por lo que en este caso se prefiere usar http para desarrollo local, siempre y cuando se tenga claro que no se expone a internet y no representa un riesgo de seguridad en este contexto, y se debe asegurar que en producción se use https para garantizar la seguridad de las comunicaciones.
+  "http://0.0.0.0:4200" #se ignora porque es la url de desarrollo local, no se expone a internet y no representa un riesgo de seguridad en este contexto, además se usa para facilitar el desarrollo y pruebas locales siempre y cuando se tenga claro que no se expone a internet y no representa un riesgo de seguridad en este contexto, y se debe asegurar que en producción se use https para garantizar la seguridad de las comunicaciones.
   asi que si se llega a ignorar debe haber razones de peso y una justificacion de porque no ignorarlo
   asi mismo si se llega haber problemas de tipo quizas convenga usar monados como Maybe o Result para manejar errores de manera más elegante y evitar tener que usar `# type: ignore` para ignorar errores de tipado, esto puede ayudar a mantener el código limpio y bien tipado, y a manejar
   En dado caso siempre se ignoran los archivos autogenerados **/generated/**, ya que estos archivos son generados automáticamente por herramientas y no deben ser editados manualmente. asi que se insta a modificar los linters y herramientas de análisis estático para que ignoren cualquier error de estilo o tipado en los archivos dentro de la carpeta **/generated/**, ya que estos archivos son generados automáticamente y no deben ser editados.
@@ -112,9 +113,41 @@ Aquí tienes las instrucciones en forma general (agnósticas al lenguaje), redac
 
 ---
 
-## Reglas general
+## Reglas generales
 
 El código debe ser lo más declarativo, tipado y expresivo posible, pero siempre priorizando la claridad.
 
 Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
+
 Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.
+
+# Tokens
+
+## Regla principal
+
+Minimiza tokens sin sacrificar precisión.
+
+## Formato
+
+- Prefiere listas cortas o código directo.
+- Máximo 5–8 líneas si no se pide explicación.
+- Si es código: solo devuelve el código.
+
+## Instrucciones
+
+- Responde con la menor cantidad de texto posible.
+- No expliques lo obvio.
+- No repitas la pregunta.
+- No agregues contexto innecesario.
+- No uses introducciones ni conclusiones.
+
+## Explicaciones
+
+- Solo si el usuario lo pide explícitamente.
+- Si explicas: máximo 3 puntos clave.
+
+## Prohibido
+
+- Emojis
+- Frases de relleno ("Claro", "Aquí tienes", etc.)
+- Ejemplos innecesarios

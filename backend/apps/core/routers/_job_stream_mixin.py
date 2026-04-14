@@ -211,9 +211,9 @@ class JobStreamActionsMixin:
                             "event: job.log\n"
                             'data: {"job_id":"8ca8c1fa-1f2f-4a13-9038-9e1be7d0ce24",'
                             '"event_index":12,"level":"info",'
-                            '"source":"random_numbers.plugin",'
-                            '"message":"Procesando lote de generación.",'
-                            '"payload":{"current_batch_size":5},'
+                            '"source":"molar_fractions.plugin",'
+                            '"message":"Calculando distribución de fracciones molares.",'
+                            '"payload":{"ph_value":7.4},'
                             '"created_at":"2026-03-11T10:25:00Z"}\n\n'
                         ),
                     )

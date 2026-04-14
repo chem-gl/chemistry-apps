@@ -29,6 +29,12 @@ export class SmilesBatchInputComponent {
   /** Indica si la tabla de nombres personalizados debe estar visible. */
   @Input() customNamesEnabled: boolean = false;
 
+  /** Indica si hay una validación asíncrona de SMILES en curso. */
+  @Input() isValidatingSmiles: boolean = false;
+
+  /** Mensaje de validación mostrado cuando existen SMILES inválidos. */
+  @Input() validationMessage: string | null = null;
+
   /** Emitido cuando el usuario edita el textarea; lleva el nuevo valor completo. */
   @Output() smilesChange = new EventEmitter<string>();
 

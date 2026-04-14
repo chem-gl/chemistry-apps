@@ -15,6 +15,6 @@ export interface TunnelParams {
   imaginaryFrequency: number;
   reactionEnergyZpe: number;
   temperature: number;
-  inputChangeEvents: TunnelInputChangeEvent[];
+  inputChangeEvents?: TunnelInputChangeEvent[];
   version?: string;
 }

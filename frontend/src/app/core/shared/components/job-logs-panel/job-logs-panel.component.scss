@@ -1,5 +1,66 @@
 /* job-logs-panel.component.scss: Panel de logs — App Chemistry Sense. */
 
+.logs-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+  padding: 0.8rem 0.95rem;
+  color: var(--chem-ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--chem-transition),
+    background var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+.logs-toggle:hover,
+.logs-toggle:focus-visible {
+  border-color: var(--chem-border-strong);
+  background: var(--chem-surface);
+  box-shadow: var(--chem-shadow-sm);
+}
+
+.logs-toggle-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.logs-toggle-title {
+  font-family: var(--chem-font-heading);
+  font-size: var(--chem-text-lg);
+  font-weight: 700;
+  text-align: left;
+}
+
+.logs-toggle-count {
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
+  padding: 0.18rem 0.55rem;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
+}
+
+.logs-toggle-icon {
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-lg);
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform var(--chem-transition);
+}
+
+.logs-toggle-icon.is-expanded {
+  transform: rotate(180deg);
+}
+
 .logs-list {
   display: grid;
   gap: 0.35rem;
@@ -8,6 +69,7 @@
   background: var(--chem-surface-inset);
   border-radius: var(--chem-radius);
   padding: 0.5rem;
+  margin-top: 0.55rem;
 }
 
 .log-item {

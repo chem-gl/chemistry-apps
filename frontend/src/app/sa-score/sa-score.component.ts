@@ -11,7 +11,19 @@ import { JobHistoryTableComponent } from '../core/shared/components/job-history-
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { SmilesBatchInputComponent } from '../core/shared/components/smiles-batch-input/smiles-batch-input.component';
+import {
+  applyResultTableSortDirection,
+  compareNullableResultTableNumber,
+  compareResultTableText,
+  matchesResultTableQuery,
+  nextResultTableSortState,
+  ResultTableSortState,
+} from '../core/shared/result-table.utils';
 import { downloadReportFile, NamedSmilesInputRow } from '../core/shared/scientific-app-ui.utils';
+import {
+  buildScientificJobDisplayName,
+  resolveScientificJobNameForHistory,
+} from '../core/shared/scientific-job-name.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 
 @Component({
@@ -32,6 +44,14 @@ import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-ba
 })
 export class SaScoreComponent extends SmilesMoleculesBaseComponent {
   protected override readonly workflow = inject(SaScoreWorkflowService);
+  readonly resolveHistoryJobDisplayName = (historyJob: {
+    id: string;
+    parameters: unknown;
+  }): string =>
+    buildScientificJobDisplayName(
+      historyJob.id,
+      resolveScientificJobNameForHistory('sa-score', historyJob.id, historyJob.parameters),
+    );
 
   readonly methodItems = [
     { key: 'ambit' as SaScoreMethod, label: 'AMBIT SA' },
@@ -39,6 +59,11 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
     { key: 'rdkit' as SaScoreMethod, label: 'RDKit SA' },
   ];
   readonly selectedExportTarget = signal<ExportTarget>('all');
+  readonly tableSearchTerm = signal<string>('');
+  readonly tableSort = signal<ResultTableSortState<SaScoreSortColumn>>({
+    column: 'name',
+    direction: 'asc',
+  });
 
   readonly exportOptions = computed<ReadonlyArray<ExportOption>>(() => {
     const currentResultData = this.workflow.resultData();
@@ -55,6 +80,28 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
 
     return [{ value: 'all', label: 'All methods CSV' }, ...methodOptions];
   });
+
+  readonly visibleMolecules = computed<SaScoreMoleculeResultView[]>(() => {
+    const currentResultData = this.workflow.resultData();
+    if (currentResultData === null) {
+      return [];
+    }
+
+    const filteredRows: SaScoreMoleculeResultView[] = currentResultData.molecules.filter(
+      (molecule: SaScoreMoleculeResultView) =>
+        matchesResultTableQuery([molecule.name, molecule.smiles], this.tableSearchTerm()),
+    );
+
+    const sortState: ResultTableSortState<SaScoreSortColumn> = this.tableSort();
+    return [...filteredRows].sort((leftRow, rightRow) =>
+      applyResultTableSortDirection(
+        this.compareMolecules(leftRow, rightRow, sortState.column),
+        sortState.direction,
+      ),
+    );
+  });
+
+  readonly filteredMoleculeCount = computed<number>(() => this.visibleMolecules().length);
 
   constructor() {
     super();
@@ -100,15 +147,56 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
     this.exportMethodCsv(exportTarget);
   }
 
-  methodScore(molecule: SaScoreMoleculeResultView, method: SaScoreMethod): string {
-    let rawValue: number | null;
-    if (method === 'ambit') {
-      rawValue = molecule.ambit_sa;
-    } else if (method === 'brsa') {
-      rawValue = molecule.brsa_sa;
-    } else {
-      rawValue = molecule.rdkit_sa;
+  updateTableSearch(nextValue: string): void {
+    this.tableSearchTerm.set(nextValue);
+  }
+
+  toggleTableSort(column: SaScoreSortColumn): void {
+    this.tableSort.update((currentState) => nextResultTableSortState(currentState, column));
+  }
+
+  sortIndicator(column: SaScoreSortColumn): string {
+    const currentSortState = this.tableSort();
+    if (currentSortState.column !== column) {
+      return '↕';
     }
+    return currentSortState.direction === 'asc' ? '↑' : '↓';
+  }
+
+  ariaSort(column: SaScoreSortColumn): 'ascending' | 'descending' | 'none' {
+    const currentSortState = this.tableSort();
+    if (currentSortState.column !== column) {
+      return 'none';
+    }
+    return currentSortState.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  currentJobDisplayLabel(): string | null {
+    const currentJobId: string | null = this.workflow.currentJobId();
+    if (currentJobId === null) {
+      return null;
+    }
+
+    const currentJobName: string | null = this.workflow.currentJobDisplayName();
+    if (currentJobName === null) {
+      return null;
+    }
+
+    return buildScientificJobDisplayName(currentJobId, currentJobName);
+  }
+
+  resultTableColspan(requestedMethods: SaScoreMethod[]): number {
+    return requestedMethods.length + 2;
+  }
+
+  hasMethodError(molecule: SaScoreMoleculeResultView): boolean {
+    return this.methodItems.some(
+      (methodItem) => this.methodError(molecule, methodItem.key) !== null,
+    );
+  }
+
+  methodScore(molecule: SaScoreMoleculeResultView, method: SaScoreMethod): string {
+    const rawValue: number | null = this.methodScoreValue(molecule, method);
 
     if (rawValue === null) {
       return '-';
@@ -122,9 +210,40 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
     if (method === 'brsa') return molecule.brsa_error;
     return molecule.rdkit_error;
   }
+
+  private methodScoreValue(
+    molecule: SaScoreMoleculeResultView,
+    method: SaScoreMethod,
+  ): number | null {
+    if (method === 'ambit') {
+      return molecule.ambit_sa;
+    }
+    if (method === 'brsa') {
+      return molecule.brsa_sa;
+    }
+    return molecule.rdkit_sa;
+  }
+
+  private compareMolecules(
+    leftRow: SaScoreMoleculeResultView,
+    rightRow: SaScoreMoleculeResultView,
+    column: SaScoreSortColumn,
+  ): number {
+    if (column === 'name') {
+      return compareResultTableText(leftRow.name, rightRow.name);
+    }
+    if (column === 'smiles') {
+      return compareResultTableText(leftRow.smiles, rightRow.smiles);
+    }
+    return compareNullableResultTableNumber(
+      this.methodScoreValue(leftRow, column),
+      this.methodScoreValue(rightRow, column),
+    );
+  }
 }
 
 type ExportTarget = 'all' | SaScoreMethod;
+type SaScoreSortColumn = 'name' | 'smiles' | SaScoreMethod;
 
 type ExportOption = {
   value: ExportTarget;

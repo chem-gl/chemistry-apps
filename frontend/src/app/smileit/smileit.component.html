@@ -134,18 +134,12 @@
               <!-- Selección de átomos: bloque visual unido al visor SVG -->
               <div class="atom-selection-sticky">
                 <div class="site-toolbar">
-                  <div>
-                    <h4>{{ 'smileit.siteSelection.title' | transloco }}</h4>
-                    <p class="hint">
-                      {{ 'smileit.siteSelection.hint' | transloco }}
-                    </p>
-                  </div>
                   <div class="site-toolbar-summary">
-                    <strong>{{ workflow.assignmentBlocks().length }} {{ 'smileit.siteSelection.blocksAvailableSuffix' |
-                      transloco }}</strong>
-                    <p class="hint">
-                      {{ 'smileit.siteSelection.blockMappingHint' | transloco }}
-                    </p>
+                    <strong class="site-toolbar-summary-value">{{ workflow.assignmentBlocks().length }} {{
+                      'smileit.siteSelection.blocksAvailableSuffix' | transloco }}</strong>
+                  </div>
+                  <div class="site-toolbar-main">
+                    <h4>{{ 'smileit.siteSelection.title' | transloco }}</h4>
                   </div>
                 </div>
 
@@ -169,13 +163,10 @@
               </div>
 
               <div class="principal-pattern-action">
-                <button class="btn-secondary" type="button" (click)="openPatternCatalogModal()"
+                <button class="btn-secondary pattern-open-button" type="button" (click)="openPatternCatalogModal()"
                   [disabled]="workflow.isProcessing()">
                   {{ 'smileit.patterns.title' | transloco }}
                 </button>
-                <p class="hint">
-                  {{ 'smileit.patterns.hint' | transloco }}
-                </p>
               </div>
 
               @if (inspectionResult.annotations.length > 0) {
@@ -236,7 +227,7 @@
     <dialog #patternCatalogDialog class="pattern-catalog-dialog"
       [attr.aria-label]="'smileit.patterns.dialogAriaLabel' | transloco" (click)="onPatternCatalogDialogClick($event)"
       (keydown)="onPatternCatalogDialogClick($event)" (cancel)="closePatternCatalogModal()">
-      <section class="pattern-catalog-modal" (click)="$event.stopPropagation()"
+      <section #patternCatalogModalBody class="pattern-catalog-modal" (click)="$event.stopPropagation()"
         (keydown)="onPatternModalSectionKeydown($event)">
         <header class="catalog-studio-header">
           <div>
@@ -257,10 +248,17 @@
           <p>{{ 'smileit.patterns.howItWorks3' | transloco }}</p>
         </article>
 
+        @if (editingPatternEntry(); as activePatternEdition) {
+        <output class="pattern-editing-notice" aria-live="polite">
+          Editing pattern: <strong>{{ activePatternEdition.name }}</strong>
+          <span class="mono">(stable_id {{ activePatternEdition.stable_id }})</span>
+        </output>
+        }
+
         <div class="options-grid compact">
           <label>
             {{ 'smileit.patterns.formName' | transloco }}
-            <input type="text" [ngModel]="workflow.patternCreateName()"
+            <input #patternNameInput type="text" [ngModel]="workflow.patternCreateName()"
               (ngModelChange)="workflow.patternCreateName.set($event)" />
           </label>
           <label>
@@ -287,11 +285,24 @@
           <input type="text" [ngModel]="workflow.patternCreateCaption()"
             (ngModelChange)="workflow.patternCreateCaption.set($event)" />
         </label>
+        @if (!workflow.isPatternEditing()) {
         <div class="action-row compact-actions">
           <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
             {{ 'smileit.patterns.formSave' | transloco }}
           </button>
         </div>
+        }
+
+        @if (workflow.isPatternEditing()) {
+        <div class="action-row compact-actions catalog-editor-actions">
+          <button class="btn-secondary" (click)="workflow.createPatternEntry()" [disabled]="workflow.isProcessing()">
+            {{ 'smileit.catalogForm.updateButton' | transloco }}
+          </button>
+          <button class="btn-secondary" (click)="cancelPatternEdition()" [disabled]="workflow.isProcessing()">
+            {{ 'smileit.catalogForm.cancelButton' | transloco }}
+          </button>
+        </div>
+        }
 
         @if (workflow.errorMessage(); as patternErrorMessage) {
         <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
@@ -303,11 +314,15 @@
           track pattern.stable_id + '-' + pattern.version + '-' + $index
           ) {
           <article class="pattern-item" [class.pattern-toxicophore]="pattern.pattern_type === 'toxicophore'"
+            [class.pattern-item-editing]="isPatternBeingEdited(pattern)"
             [class.pattern-privileged]="pattern.pattern_type === 'privileged'">
             <div class="pattern-item-content">
               <button type="button" class="pattern-name-link" (click)="openPatternDetail(pattern)">
                 {{ pattern.name }}
               </button>
+              @if (isPatternBeingEdited(pattern)) {
+              <span class="pattern-editing-badge">Editing</span>
+              }
               <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
               <p class="catalog-description">{{ pattern.caption }}</p>
               <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id
@@ -320,6 +335,18 @@
                 {{ isPatternEnabled(pattern) ? ('smileit.patterns.active' | transloco) : ('smileit.patterns.hidden' |
                 transloco) }}
               </label>
+              @if (workflow.catalog.isPatternEntryEditable(pattern)) {
+              <div class="pattern-item-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                <button type="button" class="btn-secondary small" (click)="beginPatternEntryEdition(pattern)"
+                  [disabled]="workflow.isProcessing()">
+                  {{ 'smileit.step2.edit' | transloco }}
+                </button>
+                <button type="button" class="btn-secondary small" (click)="deletePatternEntry(pattern)"
+                  [disabled]="workflow.isProcessing()">
+                  {{ 'smileit.step2.delete' | transloco }}
+                </button>
+              </div>
+              }
             </div>
           </article>
           }

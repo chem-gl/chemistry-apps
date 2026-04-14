@@ -14,7 +14,7 @@ function makeJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView 
   return {
     id: 'jm-1',
     job_hash: 'hash-1',
-    plugin_name: 'random-numbers',
+    plugin_name: 'molar-fractions',
     algorithm_version: '1.0.0',
     status: 'completed',
     cache_hit: false,
@@ -152,8 +152,8 @@ describe('JobsMonitorComponent', () => {
   it('delega onPluginFilterChanged al facade', () => {
     const fixture = TestBed.createComponent(JobsMonitorComponent);
     const component = fixture.componentInstance;
-    component.onPluginFilterChanged('random-numbers');
-    expect(facadeMock.setPluginFilter).toHaveBeenCalledWith('random-numbers');
+    component.onPluginFilterChanged('molar-fractions');
+    expect(facadeMock.setPluginFilter).toHaveBeenCalledWith('molar-fractions');
   });
 
   it('delega openJobDetails, closeJobDetails, pauseJob, resumeJob, cancelJob, deleteJob y restoreJob', () => {
@@ -197,7 +197,6 @@ describe('JobsMonitorComponent', () => {
     const component = fixture.componentInstance;
 
     const routes: Array<[string, string | null]> = [
-      ['random-numbers', '/random-numbers'],
       ['molar-fractions', '/molar-fractions'],
       ['tunnel-effect', '/tunnel'],
       ['easy-rate', '/easy-rate'],
@@ -211,29 +210,10 @@ describe('JobsMonitorComponent', () => {
     }
   });
 
-  it('resultActionLabel retorna "View summary" para random-numbers sin resultado final', () => {
+  it('resultActionLabel retorna "Open result" para cualquier app científica', () => {
     const fixture = TestBed.createComponent(JobsMonitorComponent);
     const component = fixture.componentInstance;
-    const incompleteRandomJob = makeJob({
-      plugin_name: 'random-numbers',
-      results: null,
-    });
-    expect(component.resultActionLabel(incompleteRandomJob)).toBe('View summary');
-  });
-
-  it('resultActionLabel retorna "Open result" para job con resultados finales', () => {
-    const fixture = TestBed.createComponent(JobsMonitorComponent);
-    const component = fixture.componentInstance;
-
-    const completedRandomJob = makeJob({
-      plugin_name: 'random-numbers',
-      results: {
-        generated_numbers: [1, 2, 3],
-        metadata: { seed_url: 'x', seed_digest: 'y', total_numbers: 3 },
-      },
-    });
-
-    expect(component.resultActionLabel(completedRandomJob)).toBe('Open result');
+    expect(component.resultActionLabel(makeJob({ results: null }))).toBe('Open result');
   });
 
   it('canDeleteJob y deleteActionLabel respetan la jerarquía resuelta por la sesión', () => {

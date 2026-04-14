@@ -95,6 +95,8 @@ class MolarFractionsJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
         parameters_payload: JSONMap = {
             "pka_values": validated_payload["pka_values"],
+            "initial_charge": validated_payload["initial_charge"],
+            "label": validated_payload["label"],
             "ph_mode": ph_mode,
         }
         if ph_mode == "single":
@@ -107,10 +109,13 @@ class MolarFractionsJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         declarative_api = DeclarativeJobAPI(
             dispatch_callback=dispatch_scientific_job,
         )
+        owner_id, group_id = self.resolve_actor_job_scope(request)
         submit_result = declarative_api.submit_job(
             plugin=PLUGIN_NAME,
             version=version_value,
             parameters=parameters_payload,
+            owner_id=owner_id,
+            group_id=group_id,
         ).run()
 
         return self.handle_submit_result(

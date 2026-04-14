@@ -15,8 +15,6 @@ api/marcus.service.ts
 api/marcus.serviceInterface.ts
 api/molarFractions.service.ts
 api/molarFractions.serviceInterface.ts
-api/randomNumbers.service.ts
-api/randomNumbers.serviceInterface.ts
 api/sAScore.service.ts
 api/sAScore.serviceInterface.ts
 api/smileit.service.ts
@@ -79,16 +77,12 @@ model/patchedGroupAppConfigRequest.ts
 model/patchedGroupMembershipRequest.ts
 model/patchedIdentityUserUpdateRequest.ts
 model/patchedSmileitCatalogEntryCreateRequest.ts
+model/patchedSmileitPatternEntryCreateRequest.ts
 model/patchedUserAppConfigRequest.ts
 model/patchedWorkGroupRequest.ts
 model/patternTypeEnum.ts
 model/phModeEnum.ts
 model/progressStageEnum.ts
-model/randomNumbersJobCreateRequest.ts
-model/randomNumbersJobResponse.ts
-model/randomNumbersParameters.ts
-model/randomNumbersResult.ts
-model/randomNumbersResultMetadata.ts
 model/roleEnum.ts
 model/roleInGroupEnum.ts
 model/saMoleculeResult.ts
@@ -143,6 +137,7 @@ model/tunnelMetadata.ts
 model/tunnelParameters.ts
 model/tunnelResult.ts
 model/userAppConfig.ts
+model/userMembershipSummary.ts
 model/userProfile.ts
 model/verificationRuleEnum.ts
 model/workGroup.ts

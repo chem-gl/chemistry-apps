@@ -21,6 +21,8 @@ import { ErrorResponse } from '../model/errorResponse';
 // @ts-ignore
 import { PatchedSmileitCatalogEntryCreateRequest } from '../model/patchedSmileitCatalogEntryCreateRequest';
 // @ts-ignore
+import { PatchedSmileitPatternEntryCreateRequest } from '../model/patchedSmileitPatternEntryCreateRequest';
+// @ts-ignore
 import { SmileitCatalogEntry } from '../model/smileitCatalogEntry';
 // @ts-ignore
 import { SmileitCatalogEntryCreateRequest } from '../model/smileitCatalogEntryCreateRequest';
@@ -135,6 +137,68 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
     }
 
     /**
+     * Actualizar o Eliminar Catálogo de Sustituyentes de Usuario
+     * Versiona (PATCH) o elimina lógicamente (DELETE) una entrada de catálogo.
+     * @endpoint delete /api/smileit/jobs/catalog/{stable_id}/
+     * @param stableId Stable ID del catálogo a versionar; solo entradas de usuario son editables.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public smileitJobsCatalogDestroy(stableId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SmileitCatalogEntry>>;
+    public smileitJobsCatalogDestroy(stableId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SmileitCatalogEntry>>>;
+    public smileitJobsCatalogDestroy(stableId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SmileitCatalogEntry>>>;
+    public smileitJobsCatalogDestroy(stableId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (stableId === null || stableId === undefined) {
+            throw new Error('Required parameter stableId was null or undefined when calling smileitJobsCatalogDestroy.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/smileit/jobs/catalog/${this.configuration.encodeParam({name: "stableId", value: stableId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<SmileitCatalogEntry>>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Gestionar Catálogo de Sustituyentes
      * Lista o crea sustituyentes persistidos activos de Smile-it.
      * @endpoint get /api/smileit/jobs/catalog/
@@ -193,8 +257,8 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
     }
 
     /**
-     * Actualizar Catálogo de Sustituyentes de Usuario
-     * Versiona una entrada de catálogo editable y retorna el catálogo vigente.
+     * Actualizar o Eliminar Catálogo de Sustituyentes de Usuario
+     * Versiona (PATCH) o elimina lógicamente (DELETE) una entrada de catálogo.
      * @endpoint patch /api/smileit/jobs/catalog/{stable_id}/
      * @param stableId Stable ID del catálogo a versionar; solo entradas de usuario son editables.
      * @param patchedSmileitCatalogEntryCreateRequest 
@@ -631,17 +695,29 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
      * Lista o crea patrones estructurales activos de Smile-it.
      * @endpoint post /api/smileit/jobs/patterns/
      * @param smileitPatternEntryCreateRequest 
+     * @param filter Filtro de visibilidad: \&quot;show-all\&quot; (default) o \&quot;root-only\&quot; (solo root)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SmileitPatternEntry>>;
-    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SmileitPatternEntry>>>;
-    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SmileitPatternEntry>>>;
-    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, filter?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SmileitPatternEntry>>;
+    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, filter?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SmileitPatternEntry>>>;
+    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, filter?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SmileitPatternEntry>>>;
+    public smileitJobsPatternsCreate(smileitPatternEntryCreateRequest: SmileitPatternEntryCreateRequest, filter?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (smileitPatternEntryCreateRequest === null || smileitPatternEntryCreateRequest === undefined) {
             throw new Error('Required parameter smileitPatternEntryCreateRequest was null or undefined when calling smileitJobsPatternsCreate.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'filter',
+            <any>filter,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -690,6 +766,69 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
             {
                 context: localVarHttpContext,
                 body: smileitPatternEntryCreateRequest,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Actualizar o Eliminar Patrón Estructural Smile-it
+     * Crea una nueva versión (PATCH) o elimina lógicamente (DELETE) un patrón.
+     * @endpoint delete /api/smileit/jobs/patterns/{stable_id}/
+     * @param stableId Stable ID del patrón a versionar; solo patrones editables se pueden actualizar.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public smileitJobsPatternsDestroy(stableId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SmileitPatternEntry>;
+    public smileitJobsPatternsDestroy(stableId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SmileitPatternEntry>>;
+    public smileitJobsPatternsDestroy(stableId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SmileitPatternEntry>>;
+    public smileitJobsPatternsDestroy(stableId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (stableId === null || stableId === undefined) {
+            throw new Error('Required parameter stableId was null or undefined when calling smileitJobsPatternsDestroy.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/smileit/jobs/patterns/${this.configuration.encodeParam({name: "stableId", value: stableId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SmileitPatternEntry>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -704,14 +843,26 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
      * Gestionar Patrones Estructurales Smile-it
      * Lista o crea patrones estructurales activos de Smile-it.
      * @endpoint get /api/smileit/jobs/patterns/
+     * @param filter Filtro de visibilidad: \&quot;show-all\&quot; (default) o \&quot;root-only\&quot; (solo root)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public smileitJobsPatternsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SmileitPatternEntry>>;
-    public smileitJobsPatternsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SmileitPatternEntry>>>;
-    public smileitJobsPatternsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SmileitPatternEntry>>>;
-    public smileitJobsPatternsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public smileitJobsPatternsList(filter?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SmileitPatternEntry>>;
+    public smileitJobsPatternsList(filter?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SmileitPatternEntry>>>;
+    public smileitJobsPatternsList(filter?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SmileitPatternEntry>>>;
+    public smileitJobsPatternsList(filter?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'filter',
+            <any>filter,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -748,6 +899,82 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         return this.httpClient.request<Array<SmileitPatternEntry>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Actualizar o Eliminar Patrón Estructural Smile-it
+     * Crea una nueva versión (PATCH) o elimina lógicamente (DELETE) un patrón.
+     * @endpoint patch /api/smileit/jobs/patterns/{stable_id}/
+     * @param stableId Stable ID del patrón a versionar; solo patrones editables se pueden actualizar.
+     * @param patchedSmileitPatternEntryCreateRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public smileitJobsPatternsPartialUpdate(stableId: string, patchedSmileitPatternEntryCreateRequest?: PatchedSmileitPatternEntryCreateRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SmileitPatternEntry>;
+    public smileitJobsPatternsPartialUpdate(stableId: string, patchedSmileitPatternEntryCreateRequest?: PatchedSmileitPatternEntryCreateRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SmileitPatternEntry>>;
+    public smileitJobsPatternsPartialUpdate(stableId: string, patchedSmileitPatternEntryCreateRequest?: PatchedSmileitPatternEntryCreateRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SmileitPatternEntry>>;
+    public smileitJobsPatternsPartialUpdate(stableId: string, patchedSmileitPatternEntryCreateRequest?: PatchedSmileitPatternEntryCreateRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (stableId === null || stableId === undefined) {
+            throw new Error('Required parameter stableId was null or undefined when calling smileitJobsPatternsPartialUpdate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/smileit/jobs/patterns/${this.configuration.encodeParam({name: "stableId", value: stableId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<SmileitPatternEntry>('patch', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: patchedSmileitPatternEntryCreateRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

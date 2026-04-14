@@ -10,13 +10,14 @@
 
 
 /**
- * Serializer de apps visibles para el usuario actual.
+ * Serializer de apps visibles para el usuario actual. Incluye features disponibles.
  */
 export interface AccessibleScientificApp { 
     readonly app_name: string;
     readonly route_key: string;
     readonly api_base_path: string;
     readonly supports_pause_resume: boolean;
+    readonly available_features: Array<string>;
     readonly enabled: boolean;
     readonly group_permission: boolean | null;
     readonly user_permission: boolean | null;

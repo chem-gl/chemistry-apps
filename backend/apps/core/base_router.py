@@ -66,6 +66,25 @@ class ScientificAppViewSetMixin:
     response_serializer_class: type[serializers.Serializer]
     csv_report_suffix: str = "report"
 
+    def resolve_actor_job_scope(
+        self, request: Request
+    ) -> tuple[int | None, int | None]:
+        """Resuelve owner/group para persistir trazabilidad de permisos por job.
+
+        Mantiene alineado el comportamiento de apps específicas con `/api/jobs/`:
+        si existe usuario autenticado, el job queda asociado al owner y grupo primario.
+        """
+        actor = (
+            request.user
+            if bool(getattr(request.user, "is_authenticated", False))
+            else None
+        )
+        if actor is None:
+            return None, None
+        owner_id: int | None = actor.id
+        group_id: int | None = AuthorizationService.get_primary_group_id(actor)
+        return owner_id, group_id
+
     def get_job_queryset(self) -> "viewsets.ViewSet.queryset":
         """Devuelve queryset por plugin y alcance de visibilidad del actor."""
         base_queryset = ScientificJob.objects.filter(plugin_name=self.plugin_name)
@@ -341,10 +360,13 @@ class ScientificAppViewSetMixin:
         artefactos, o 201 con el job serializado si todo termina exitosamente.
         """
         declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
+        owner_id, group_id = self.resolve_actor_job_scope(self.request)
         prepare_result = declarative_api.prepare_job(
             plugin=self.plugin_name,
             version=version_value,
             parameters=parameters_payload,
+            owner_id=owner_id,
+            group_id=group_id,
         ).run()
 
         if prepare_result.is_failure():

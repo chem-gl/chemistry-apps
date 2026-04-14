@@ -29,6 +29,9 @@ export class JobHistoryTableComponent {
   /** Etiqueta aria para la sección (accesibilidad). */
   @Input() ariaLabel: string = 'Historical jobs';
 
+  /** Resolvedor opcional de nombre visible del job. */
+  @Input() jobDisplayNameResolver: ((jobItem: ScientificJobView) => string) | null = null;
+
   /** Emitido al pulsar "Reload history". */
   @Output() reload = new EventEmitter<void>();
 
@@ -45,6 +48,10 @@ export class JobHistoryTableComponent {
 
   canDeleteJob(jobItem: ScientificJobView): boolean {
     return this.isTerminalJob(jobItem);
+  }
+
+  displayJobName(jobItem: ScientificJobView): string {
+    return this.jobDisplayNameResolver?.(jobItem) ?? jobItem.id;
   }
 
   private isTerminalJob(jobItem: ScientificJobView): boolean {

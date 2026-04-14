@@ -1,12 +1,8 @@
 // molar-fractions-workflow.service.ts: Orquesta formulario, progreso y resultados de molar fractions.
 
 import { Injectable, computed, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import {
-  DownloadedReportFile,
-  MolarFractionsParams,
-  ScientificJobView,
-} from '../api/jobs-api.service';
+import { generateSpeciesLabels } from '../../molar-fractions/molar-fractions-computation';
+import { MolarFractionsParams, ScientificJobView } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 type MolarFractionsPhMode = 'single' | 'range';
@@ -19,6 +15,8 @@ export interface MolarFractionsResultRow {
 
 export interface MolarFractionsResultMetadata {
   pkaValues: number[];
+  initialCharge: number | string;
+  label: string;
   phMode: MolarFractionsPhMode;
   phMin: number;
   phMax: number;
@@ -31,8 +29,6 @@ export interface MolarFractionsResultData {
   speciesLabels: string[];
   rows: MolarFractionsResultRow[];
   metadata: MolarFractionsResultMetadata;
-  isHistoricalSummary: boolean;
-  summaryMessage: string | null;
 }
 
 @Injectable()
@@ -43,6 +39,8 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
   readonly pkaCount = signal<number>(3);
   readonly pkaValues = signal<number[]>([2.2, 7.2, 12.3, 0, 0, 0]);
+  readonly initialCharge = signal<string>('');
+  readonly speciesLabel = signal<string>('');
   readonly phMode = signal<MolarFractionsPhMode>('range');
   readonly phValue = signal<number>(7);
   readonly phMin = signal<number>(0);
@@ -77,7 +75,7 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
     this.jobsApiService.dispatchMolarFractionsJob(dispatchParams).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        this.handleDispatchJobResponse(
+        this.handleTransientDispatchJobResponse(
           jobResponse,
           (job) => this.extractResultData(job),
           'molar fractions',
@@ -90,50 +88,23 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
     });
   }
 
-  openHistoricalJob(jobId: string): void {
-    this.prepareForDispatch();
-    this.currentJobId.set(jobId);
-
-    this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJobView) => {
-        this.handleJobOutcome(
-          jobId,
-          jobResponse,
-          (job) => this.extractResultData(job) ?? this.extractSummaryData(job),
-          { loadHistoryAfter: false },
-        );
-      },
-      error: (statusError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to recover historical job: ${statusError.message}`);
-      },
-    });
-  }
-
   override loadHistory(): void {
-    this.loadHistoryForPlugin('molar-fractions');
-  }
-
-  downloadCsvReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadMolarFractionsCsvReport(this.currentJobId()!),
-      'CSV report',
-    );
-  }
-
-  downloadLogReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadMolarFractionsLogReport(this.currentJobId()!),
-      'LOG report',
-    );
+    this.historyJobs.set([]);
+    this.isHistoryLoading.set(false);
   }
 
   private buildDispatchParams(): MolarFractionsParams {
     const selectedMode: MolarFractionsPhMode = this.phMode();
+    const initialCharge: number | string | undefined = this.parseInitialChargeInput(
+      this.initialCharge(),
+    );
+    const label: string | undefined = this.normalizeSpeciesLabel(this.speciesLabel());
 
     if (selectedMode === 'single') {
       return {
         pkaValues: this.activePkaValues(),
+        initialCharge,
+        label,
         phMode: 'single',
         phValue: this.phValue(),
       };
@@ -141,6 +112,8 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
     return {
       pkaValues: this.activePkaValues(),
+      initialCharge,
+      label,
       phMode: 'range',
       phMin: this.phMin(),
       phMax: this.phMax(),
@@ -151,7 +124,10 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
   protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
+          loadLogs: false,
+          loadHistoryAfter: false,
+        });
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -162,6 +138,7 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
   private extractResultData(jobResponse: ScientificJobView): MolarFractionsResultData | null {
     const rawResults: unknown = jobResponse.results;
+    const rawParameters: unknown = jobResponse.parameters;
     if (!this.isRecord(rawResults)) {
       return null;
     }
@@ -175,14 +152,6 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       !Array.isArray(rawRows) ||
       !this.isRecord(rawMetadata)
     ) {
-      return null;
-    }
-
-    const speciesLabels: string[] = rawSpeciesLabels.filter(
-      (value: unknown): value is string => typeof value === 'string',
-    );
-
-    if (speciesLabels.length === 0) {
       return null;
     }
 
@@ -211,8 +180,16 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       });
     }
 
-    const metadata: MolarFractionsResultMetadata | null = this.parseMetadata(rawMetadata);
+    const metadata: MolarFractionsResultMetadata | null = this.parseMetadata(
+      rawMetadata,
+      this.isRecord(rawParameters) ? rawParameters : null,
+    );
     if (metadata === null) {
+      return null;
+    }
+
+    const speciesLabels: string[] = this.resolveSpeciesLabels(rawSpeciesLabels, metadata);
+    if (speciesLabels.length === 0) {
       return null;
     }
 
@@ -220,84 +197,17 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       speciesLabels,
       rows: parsedRows,
       metadata,
-      isHistoricalSummary: false,
-      summaryMessage: null,
     };
   }
 
-  private extractSummaryData(jobResponse: ScientificJobView): MolarFractionsResultData | null {
-    const rawParameters: unknown = jobResponse.parameters;
-    if (!this.isRecord(rawParameters)) {
-      return null;
-    }
-
-    const rawPkaValues: unknown = rawParameters['pka_values'];
-    const rawPhMode: unknown = rawParameters['ph_mode'];
-
-    if (!Array.isArray(rawPkaValues) || (rawPhMode !== 'single' && rawPhMode !== 'range')) {
-      return null;
-    }
-
-    const pkaValues: number[] = rawPkaValues.filter(
-      (value: unknown): value is number => typeof value === 'number',
-    );
-    if (pkaValues.length < 1) {
-      return null;
-    }
-
-    let phMin: number;
-    let phMax: number;
-    let phStep: number;
-
-    if (rawPhMode === 'single') {
-      const phValue: unknown = rawParameters['ph_value'];
-      if (typeof phValue !== 'number') {
-        return null;
-      }
-      phMin = phValue;
-      phMax = phValue;
-      phStep = 0.1;
-    } else {
-      const rawPhMin: unknown = rawParameters['ph_min'];
-      const rawPhMax: unknown = rawParameters['ph_max'];
-      const rawPhStep: unknown = rawParameters['ph_step'];
-      if (
-        typeof rawPhMin !== 'number' ||
-        typeof rawPhMax !== 'number' ||
-        typeof rawPhStep !== 'number'
-      ) {
-        return null;
-      }
-      phMin = Math.min(rawPhMin, rawPhMax);
-      phMax = Math.max(rawPhMin, rawPhMax);
-      phStep = rawPhStep;
-    }
-
-    const speciesLabels: string[] = Array.from(
-      { length: pkaValues.length + 1 },
-      (_v, index) => `f${index}`,
-    );
-    const summaryMessage: string = this.buildHistoricalSummaryMessage(jobResponse.status);
-
-    return {
-      speciesLabels,
-      rows: [],
-      metadata: {
-        pkaValues,
-        phMode: rawPhMode,
-        phMin,
-        phMax,
-        phStep,
-        totalSpecies: speciesLabels.length,
-        totalPoints: 0,
-      },
-      isHistoricalSummary: true,
-      summaryMessage,
-    };
-  }
-
-  private parseMetadata(rawMetadata: Record<string, unknown>): MolarFractionsResultMetadata | null {
+  private parseMetadata(
+    rawMetadata: Record<string, unknown>,
+    rawParameters: Record<string, unknown> | null,
+  ): MolarFractionsResultMetadata | null {
     const rawPkaValues: unknown = rawMetadata['pka_values'];
+    const rawInitialCharge: unknown =
+      rawMetadata['initial_charge'] ?? rawParameters?.['initial_charge'];
+    const rawLabel: unknown = rawMetadata['label'] ?? rawParameters?.['label'];
     const rawPhMode: unknown = rawMetadata['ph_mode'];
     const rawPhMin: unknown = rawMetadata['ph_min'];
     const rawPhMax: unknown = rawMetadata['ph_max'];
@@ -320,9 +230,13 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
     const pkaValues: number[] = rawPkaValues.filter(
       (value: unknown): value is number => typeof value === 'number',
     );
+    const initialCharge: number | string = this.resolveInitialCharge(rawInitialCharge);
+    const label: string = this.resolveLabel(rawLabel);
 
     return {
       pkaValues,
+      initialCharge,
+      label,
       phMode: rawPhMode,
       phMin: rawPhMin,
       phMax: rawPhMax,
@@ -334,5 +248,87 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  private parseInitialChargeInput(rawValue: string): number | string | undefined {
+    const normalizedValue: string = rawValue.trim();
+    if (normalizedValue === '') {
+      return undefined;
+    }
+
+    if (normalizedValue === 'q') {
+      return 'q';
+    }
+
+    const parsedValue: number = Number(normalizedValue);
+    if (!Number.isInteger(parsedValue)) {
+      return undefined;
+    }
+
+    return parsedValue;
+  }
+
+  private normalizeSpeciesLabel(rawValue: string): string | undefined {
+    const normalizedValue: string = rawValue.trim();
+    return normalizedValue.length > 0 ? normalizedValue : undefined;
+  }
+
+  private resolveInitialCharge(rawValue: unknown): number | string {
+    if (rawValue === 'q' || typeof rawValue === 'number') {
+      return rawValue;
+    }
+
+    if (typeof rawValue === 'string') {
+      const normalizedValue: string = rawValue.trim();
+      if (normalizedValue === '' || normalizedValue === 'q') {
+        return 'q';
+      }
+
+      const parsedValue: number = Number(normalizedValue);
+      if (Number.isInteger(parsedValue)) {
+        return parsedValue;
+      }
+    }
+
+    return 'q';
+  }
+
+  private resolveLabel(rawValue: unknown): string {
+    if (typeof rawValue !== 'string') {
+      return 'A';
+    }
+
+    const normalizedValue: string = rawValue.trim();
+    return normalizedValue.length > 0 ? normalizedValue : 'A';
+  }
+
+  private resolveSpeciesLabels(
+    rawSpeciesLabels: unknown[],
+    metadata: MolarFractionsResultMetadata,
+  ): string[] {
+    const parsedLabels: string[] = rawSpeciesLabels.filter(
+      (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0,
+    );
+
+    // Algunos resultados antiguos o cacheados aún llegan con f0..fn; en ese caso
+    // regeneramos las etiquetas visibles usando la metadata vigente del cálculo.
+    const shouldRegenerateLabels: boolean =
+      parsedLabels.length !== metadata.totalSpecies ||
+      parsedLabels.every((labelValue) => /^f\d+$/iu.test(labelValue));
+
+    if (!shouldRegenerateLabels) {
+      return parsedLabels;
+    }
+
+    try {
+      const regeneratedLabels = generateSpeciesLabels(
+        metadata.pkaValues,
+        metadata.initialCharge,
+        metadata.label,
+      ).labelsPretty;
+      return regeneratedLabels.length === metadata.totalSpecies ? regeneratedLabels : parsedLabels;
+    } catch {
+      return parsedLabels;
+    }
   }
 }

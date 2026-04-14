@@ -188,7 +188,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
     }
 
     /**
-     * Expone apps disponibles para el usuario actual con RBAC resuelto.
+     * Expone apps disponibles para el usuario actual con RBAC resuelto.  Acepta &#x60;?group_id&#x3D;X&#x60; para evaluar acceso estrictamente desde el grupo activo.
      * @endpoint get /api/auth/apps/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

@@ -16,7 +16,10 @@ from typing import cast
 from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
+from ._species_labels import generate_species_labels
 from .definitions import (
+    DEFAULT_INITIAL_CHARGE,
+    DEFAULT_LABEL,
     DEFAULT_SINGLE_PH_STEP,
     MAX_PH_POINTS,
     MAX_PKA_VALUES,
@@ -24,6 +27,7 @@ from .definitions import (
     PLUGIN_NAME,
 )
 from .types import (
+    InitialChargeValue,
     MolarFractionRow,
     MolarFractionsInput,
     MolarFractionsMetadata,
@@ -33,6 +37,46 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 PLUGIN_LOG_SOURCE = "molar_fractions.plugin"
+
+
+def _parse_initial_charge(parameters: JSONMap) -> InitialChargeValue:
+    """Normaliza la carga inicial recibida desde el payload persistido."""
+    raw_initial_charge = parameters.get("initial_charge", DEFAULT_INITIAL_CHARGE)
+    if isinstance(raw_initial_charge, str):
+        normalized_initial_charge: str = raw_initial_charge.strip()
+        if normalized_initial_charge == "q":
+            return "q"
+        return int(normalized_initial_charge)
+    return int(raw_initial_charge)
+
+
+def _parse_label(parameters: JSONMap) -> str:
+    """Normaliza la etiqueta base de la especie evitando cadenas vacías."""
+    raw_label = parameters.get("label", DEFAULT_LABEL)
+    return str(raw_label).strip() or DEFAULT_LABEL
+
+
+def _build_single_mode_input(
+    pka_values: list[float],
+    initial_charge: InitialChargeValue,
+    label: str,
+    parameters: JSONMap,
+    mode: MolarFractionsMode,
+) -> MolarFractionsInput:
+    """Construye la entrada normalizada cuando se calcula un solo valor de pH."""
+    raw_ph_value = parameters.get("ph_value")
+    if raw_ph_value is None:
+        raise ValueError("ph_value es obligatorio cuando ph_mode=single.")
+    normalized_ph_value: float = float(raw_ph_value)
+    return {
+        "pka_values": pka_values,
+        "initial_charge": initial_charge,
+        "label": label,
+        "ph_mode": mode,
+        "ph_min": normalized_ph_value,
+        "ph_max": normalized_ph_value,
+        "ph_step": DEFAULT_SINGLE_PH_STEP,
+    }
 
 
 def _build_molar_fractions_input(parameters: JSONMap) -> MolarFractionsInput:
@@ -47,23 +91,22 @@ def _build_molar_fractions_input(parameters: JSONMap) -> MolarFractionsInput:
             f"pka_values debe contener entre {MIN_PKA_VALUES} y {MAX_PKA_VALUES} valores."
         )
 
+    initial_charge: InitialChargeValue = _parse_initial_charge(parameters)
+    label: str = _parse_label(parameters)
+
     raw_mode: str = str(parameters.get("ph_mode", "range"))
     if raw_mode not in {"single", "range"}:
         raise ValueError("ph_mode debe ser 'single' o 'range'.")
     mode: MolarFractionsMode = cast(MolarFractionsMode, raw_mode)
 
     if mode == "single":
-        raw_ph_value = parameters.get("ph_value")
-        if raw_ph_value is None:
-            raise ValueError("ph_value es obligatorio cuando ph_mode=single.")
-        normalized_ph_value: float = float(raw_ph_value)
-        return {
-            "pka_values": pka_values,
-            "ph_mode": mode,
-            "ph_min": normalized_ph_value,
-            "ph_max": normalized_ph_value,
-            "ph_step": DEFAULT_SINGLE_PH_STEP,
-        }
+        return _build_single_mode_input(
+            pka_values=pka_values,
+            initial_charge=initial_charge,
+            label=label,
+            parameters=parameters,
+            mode=mode,
+        )
 
     raw_ph_min = parameters.get("ph_min")
     raw_ph_max = parameters.get("ph_max")
@@ -91,6 +134,8 @@ def _build_molar_fractions_input(parameters: JSONMap) -> MolarFractionsInput:
 
     return {
         "pka_values": pka_values,
+        "initial_charge": initial_charge,
+        "label": label,
         "ph_mode": mode,
         "ph_min": normalized_min,
         "ph_max": normalized_max,
@@ -182,6 +227,8 @@ def molar_fractions_plugin(
 
     normalized_input: MolarFractionsInput = _build_molar_fractions_input(parameters)
     pka_values: list[float] = normalized_input["pka_values"]
+    initial_charge: InitialChargeValue = normalized_input["initial_charge"]
+    label: str = normalized_input["label"]
     ph_mode: MolarFractionsMode = normalized_input["ph_mode"]
     ph_min: float = normalized_input["ph_min"]
     ph_max: float = normalized_input["ph_max"]
@@ -193,6 +240,8 @@ def molar_fractions_plugin(
         "Parámetros validados correctamente; se iniciará el cálculo por malla de pH.",
         {
             "pka_values": pka_values,
+            "initial_charge": initial_charge,
+            "label": label,
             "ph_mode": ph_mode,
             "ph_min": ph_min,
             "ph_max": ph_max,
@@ -202,7 +251,12 @@ def molar_fractions_plugin(
 
     ph_values: list[float] = _build_ph_grid(ph_min, ph_max, ph_step)
     beta_values: list[float] = _compute_beta_values(pka_values)
-    species_labels: list[str] = [f"f{index}" for index in range(len(pka_values) + 1)]
+    label_payload = generate_species_labels(
+        pka_values=pka_values,
+        initial_charge=initial_charge,
+        label=label,
+    )
+    species_labels: list[str] = cast(list[str], label_payload["labels_pretty"])
 
     emit_log(
         "info",
@@ -263,6 +317,8 @@ def molar_fractions_plugin(
 
     metadata: MolarFractionsMetadata = {
         "pka_values": pka_values,
+        "initial_charge": initial_charge,
+        "label": label,
         "ph_mode": ph_mode,
         "ph_min": ph_min,
         "ph_max": ph_max,

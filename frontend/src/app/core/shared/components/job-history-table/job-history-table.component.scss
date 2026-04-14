@@ -48,6 +48,13 @@
   word-break: break-all;
 }
 
+.job-display-name {
+  color: var(--chem-ink);
+  font-weight: 700;
+  font-size: var(--chem-text-sm);
+  word-break: break-word;
+}
+
 .history-open-btn {
   border-radius: var(--chem-radius-pill);
   padding: 0.35rem 0.78rem;

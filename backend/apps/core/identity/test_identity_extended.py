@@ -200,6 +200,16 @@ class IdentityRouterExtendedTests(TestCase):
     def _auth(self, user) -> None:
         self.client.force_authenticate(user=user)
 
+    def _ensure_single_active_root(self) -> None:
+        """Deja a root_user como único root activo para pruebas de invariantes."""
+        self.user_model.objects.exclude(id=self.root_user.id).filter(
+            role=UserIdentityProfile.ROLE_ROOT,
+            account_status=UserIdentityProfile.STATUS_ACTIVE,
+        ).update(
+            account_status=UserIdentityProfile.STATUS_INACTIVE,
+            is_active=False,
+        )
+
     # ── Usuarios: listado ──
 
     def test_root_can_list_users(self) -> None:
@@ -209,13 +219,15 @@ class IdentityRouterExtendedTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 3)
 
-    def test_admin_lists_filtered_users(self) -> None:
-        """Admin solo ve usuarios de sus grupos administrados."""
+    def test_admin_can_list_all_users(self) -> None:
+        """Admin obtiene listado completo de usuarios para administración global."""
         self._auth(self.admin_user)
         response = self.client.get("/api/identity/users/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         usernames = [u["username"] for u in response.data]
         self.assertIn("admin-ext", usernames)
+        self.assertIn("root-ext", usernames)
+        self.assertIn("user-ext", usernames)
 
     def test_standard_user_cannot_list_users(self) -> None:
         """Usuario estándar no puede listar usuarios."""
@@ -260,6 +272,62 @@ class IdentityRouterExtendedTests(TestCase):
         profile = UserIdentityProfile.objects.get(user=self.standard_user)
         self.assertEqual(profile.account_status, UserIdentityProfile.STATUS_INACTIVE)
 
+    def test_root_cannot_deactivate_last_active_root(self) -> None:
+        """No permite desactivar el ultimo root activo para evitar bloqueo."""
+        self._ensure_single_active_root()
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ultimo usuario root activo", response.data["detail"])
+
+        self.root_user.refresh_from_db()
+        self.assertTrue(self.root_user.is_active)
+
+    def test_root_cannot_demote_last_active_root_role(self) -> None:
+        """No permite degradar a admin al ultimo root activo."""
+        self._ensure_single_active_root()
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"role": "admin"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ultimo usuario root activo", response.data["detail"])
+
+        self.root_user.refresh_from_db()
+        self.assertTrue(self.root_user.is_superuser)
+
+    def test_root_can_deactivate_root_when_another_active_root_exists(self) -> None:
+        """Permite desactivar root si existe al menos otro root activo."""
+        secondary_root = self.user_model.objects.create_user(
+            username="second-root-ext",
+            email="second-root-ext@test.local",
+            password="root-pwd",
+            is_superuser=True,
+            is_staff=True,
+        )
+        UserIdentityProfile.objects.create(
+            user=secondary_root,
+            role=UserIdentityProfile.ROLE_ROOT,
+            primary_group=self.group,
+        )
+
+        self._auth(self.root_user)
+        response = self.client.patch(
+            f"/api/identity/users/{self.root_user.id}/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.root_user.refresh_from_db()
+        self.assertFalse(self.root_user.is_active)
+
     def test_root_can_change_user_staff_flag(self) -> None:
         """Root puede promover is_staff y se ajusta role si estaba en user."""
         self._auth(self.root_user)
@@ -296,6 +364,31 @@ class IdentityRouterExtendedTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         profile = UserIdentityProfile.objects.get(user=self.standard_user)
         self.assertEqual(profile.primary_group_id, other_group.id)
+        self.assertTrue(
+            GroupMembership.objects.filter(
+                user=self.standard_user,
+                group=other_group,
+            ).exists()
+        )
+
+    def test_root_promoting_user_to_admin_updates_primary_group_membership_role(
+        self,
+    ) -> None:
+        """Al promover a admin, su membresía del grupo primario debe pasar a admin."""
+        self._auth(self.root_user)
+
+        response = self.client.patch(
+            f"/api/identity/users/{self.standard_user.id}/",
+            {"role": "admin"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        primary_membership = GroupMembership.objects.get(
+            user=self.standard_user,
+            group=self.group,
+        )
+        self.assertEqual(primary_membership.role_in_group, GroupMembership.ROLE_ADMIN)
 
     def test_root_can_change_account_status(self) -> None:
         """Root puede cambiar account_status explícitamente."""
@@ -349,6 +442,19 @@ class IdentityRouterExtendedTests(TestCase):
         response = self.client.get("/api/identity/memberships/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_admin_cannot_assign_primary_group_outside_managed_scope(self) -> None:
+        """Admin no puede mover usuarios a grupos que no administra."""
+        foreign_group = WorkGroup.objects.create(name="Foreign", slug="foreign-ext")
+        self._auth(self.admin_user)
+
+        response = self.client.patch(
+            f"/api/identity/users/{self.standard_user.id}/",
+            {"primary_group_id": foreign_group.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_standard_user_cannot_list_memberships(self) -> None:
         """Usuario estándar no puede listar membresías."""
         self._auth(self.standard_user)
@@ -360,12 +466,34 @@ class IdentityRouterExtendedTests(TestCase):
     def test_root_can_list_permissions(self) -> None:
         """Root obtiene todas las reglas de acceso."""
         AppPermission.objects.create(
-            app_name="random-numbers", group=self.group, is_enabled=True
+            app_name="molar-fractions", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.get("/api/identity/app-permissions/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
+
+    def test_admin_lists_permissions_only_for_managed_groups(self) -> None:
+        """Admin no debe ver reglas de permisos de grupos fuera de su alcance."""
+        foreign_group = WorkGroup.objects.create(name="Foreign2", slug="foreign2-ext")
+        AppPermission.objects.create(
+            app_name="molar-fractions",
+            group=self.group,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=foreign_group,
+            is_enabled=False,
+        )
+        self._auth(self.admin_user)
+
+        response = self.client.get("/api/identity/app-permissions/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_group_ids = {item["group"] for item in response.data}
+        self.assertIn(self.group.id, returned_group_ids)
+        self.assertNotIn(foreign_group.id, returned_group_ids)
 
     def test_root_can_create_permission(self) -> None:
         """Root crea una regla de acceso para una app."""
@@ -373,7 +501,7 @@ class IdentityRouterExtendedTests(TestCase):
         response = self.client.post(
             "/api/identity/app-permissions/",
             {
-                "app_name": "random-numbers",
+                "app_name": "molar-fractions",
                 "group": self.group.id,
                 "is_enabled": True,
             },
@@ -381,24 +509,24 @@ class IdentityRouterExtendedTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_admin_cannot_create_permission(self) -> None:
-        """Solo root puede crear reglas de acceso."""
+    def test_admin_can_create_permission_for_managed_group(self) -> None:
+        """Admin del grupo puede crear reglas de acceso para su grupo."""
         self._auth(self.admin_user)
         response = self.client.post(
             "/api/identity/app-permissions/",
             {
-                "app_name": "random-numbers",
+                "app_name": "molar-fractions",
                 "group": self.group.id,
                 "is_enabled": True,
             },
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_root_can_update_permission(self) -> None:
         """Root puede actualizar una regla de acceso existente."""
         perm = AppPermission.objects.create(
-            app_name="random-numbers", group=self.group, is_enabled=True
+            app_name="molar-fractions", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.patch(
@@ -410,10 +538,10 @@ class IdentityRouterExtendedTests(TestCase):
         perm.refresh_from_db()
         self.assertFalse(perm.is_enabled)
 
-    def test_admin_cannot_update_permission(self) -> None:
-        """Solo root puede actualizar reglas de acceso."""
+    def test_admin_can_update_permission(self) -> None:
+        """Admin del grupo puede actualizar reglas de acceso de su grupo."""
         perm = AppPermission.objects.create(
-            app_name="random-numbers", group=self.group, is_enabled=True
+            app_name="molar-fractions", group=self.group, is_enabled=True
         )
         self._auth(self.admin_user)
         response = self.client.patch(
@@ -421,26 +549,26 @@ class IdentityRouterExtendedTests(TestCase):
             {"is_enabled": False},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_root_can_delete_permission(self) -> None:
         """Root puede eliminar una regla de acceso."""
         perm = AppPermission.objects.create(
-            app_name="random-numbers", group=self.group, is_enabled=True
+            app_name="molar-fractions", group=self.group, is_enabled=True
         )
         self._auth(self.root_user)
         response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(AppPermission.objects.filter(id=perm.id).exists())
 
-    def test_admin_cannot_delete_permission(self) -> None:
-        """Solo root puede eliminar reglas de acceso."""
+    def test_admin_can_delete_permission(self) -> None:
+        """Admin del grupo puede eliminar reglas de acceso de su grupo."""
         perm = AppPermission.objects.create(
-            app_name="random-numbers", group=self.group, is_enabled=True
+            app_name="molar-fractions", group=self.group, is_enabled=True
         )
         self._auth(self.admin_user)
         response = self.client.delete(f"/api/identity/app-permissions/{perm.id}/")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     # ── Configuración de app por usuario ──
 
@@ -448,7 +576,7 @@ class IdentityRouterExtendedTests(TestCase):
         """El usuario puede guardar su configuración personal de app."""
         self._auth(self.standard_user)
         response = self.client.patch(
-            "/api/auth/app-configs/random-numbers/",
+            "/api/auth/app-configs/molar-fractions/",
             {"config": {"theme": "dark"}},
             format="json",
         )
@@ -460,11 +588,11 @@ class IdentityRouterExtendedTests(TestCase):
     def test_admin_can_get_group_app_config(self) -> None:
         """Admin del grupo puede consultar configuración de app grupal."""
         GroupAppConfig.objects.create(
-            group=self.group, app_name="random-numbers", config={"mode": "basic"}
+            group=self.group, app_name="molar-fractions", config={"mode": "basic"}
         )
         self._auth(self.admin_user)
         response = self.client.get(
-            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/"
+            f"/api/identity/groups/{self.group.id}/app-configs/molar-fractions/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["config"]["mode"], "basic")
@@ -473,7 +601,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Usuario sin rol admin no puede consultar config grupal."""
         self._auth(self.standard_user)
         response = self.client.get(
-            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/"
+            f"/api/identity/groups/{self.group.id}/app-configs/molar-fractions/"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -481,7 +609,7 @@ class IdentityRouterExtendedTests(TestCase):
         """Usuario sin rol admin no puede modificar config grupal."""
         self._auth(self.standard_user)
         response = self.client.patch(
-            f"/api/identity/groups/{self.group.id}/app-configs/random-numbers/",
+            f"/api/identity/groups/{self.group.id}/app-configs/molar-fractions/",
             {"config": {"mode": "advanced"}},
             format="json",
         )
@@ -495,8 +623,8 @@ class IdentityRouterExtendedTests(TestCase):
 
     # ── Admin no puede crear usuarios ──
 
-    def test_admin_cannot_create_user(self) -> None:
-        """Solo root puede crear usuarios administrativos."""
+    def test_admin_cannot_create_user_without_primary_group(self) -> None:
+        """La creación de usuarios exige grupo primario para mantener el invariante."""
         self._auth(self.admin_user)
         response = self.client.post(
             "/api/identity/users/",
@@ -508,7 +636,16 @@ class IdentityRouterExtendedTests(TestCase):
             },
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_cannot_delete_last_user_membership(self) -> None:
+        """Evita dejar a un usuario no-root sin grupos asignados."""
+        membership = GroupMembership.objects.get(
+            user=self.standard_user, group=self.group
+        )
+        self._auth(self.admin_user)
+        response = self.client.delete(f"/api/identity/memberships/{membership.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # ── Grupos: actualización y eliminación ──
 
@@ -525,20 +662,80 @@ class IdentityRouterExtendedTests(TestCase):
         self.assertEqual(self.group.name, "Renamed")
 
     def test_root_can_delete_group(self) -> None:
-        """Root puede eliminar un grupo de trabajo."""
+        """Root puede eliminar un grupo si no deja usuarios no-root sin grupo."""
         target = WorkGroup.objects.create(
             name="Disposable", slug="disposable-ext", created_by=self.root_user
+        )
+        extra_user = self.user_model.objects.create_user(
+            username="disposable-user",
+            email="disposable-user@test.local",
+            password="user-pwd",
+        )
+        UserIdentityProfile.objects.create(
+            user=extra_user,
+            role=UserIdentityProfile.ROLE_USER,
+            primary_group=target,
+        )
+        GroupMembership.objects.create(
+            user=extra_user,
+            group=target,
+            role_in_group=GroupMembership.ROLE_MEMBER,
+        )
+        fallback_group = WorkGroup.objects.create(
+            name="Fallback",
+            slug="fallback-ext",
+            created_by=self.root_user,
+        )
+        GroupMembership.objects.create(
+            user=extra_user,
+            group=fallback_group,
+            role_in_group=GroupMembership.ROLE_MEMBER,
         )
         self._auth(self.root_user)
         response = self.client.delete(f"/api/identity/groups/{target.id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(WorkGroup.objects.filter(id=target.id).exists())
+        migrated_profile = UserIdentityProfile.objects.get(user=extra_user)
+        self.assertEqual(migrated_profile.primary_group_id, fallback_group.id)
 
-    def test_admin_cannot_delete_group(self) -> None:
-        """Solo root puede eliminar grupos."""
+    def test_admin_can_delete_managed_group_with_fallback_membership(self) -> None:
+        """Admin puede eliminar su grupo si todos los usuarios conservan otro grupo."""
+        deletable_group = WorkGroup.objects.create(
+            name="Managed Disposable",
+            slug="managed-disposable-ext",
+            created_by=self.admin_user,
+        )
+        GroupMembership.objects.create(
+            user=self.admin_user,
+            group=deletable_group,
+            role_in_group=GroupMembership.ROLE_ADMIN,
+        )
+        UserIdentityProfile.objects.filter(user=self.admin_user).update(
+            primary_group=deletable_group
+        )
+        fallback_group = WorkGroup.objects.create(
+            name="Admin Fallback",
+            slug="admin-fallback-ext",
+            created_by=self.root_user,
+        )
+        GroupMembership.objects.create(
+            user=self.admin_user,
+            group=fallback_group,
+            role_in_group=GroupMembership.ROLE_ADMIN,
+        )
+
+        self._auth(self.admin_user)
+        response = self.client.delete(f"/api/identity/groups/{deletable_group.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(WorkGroup.objects.filter(id=deletable_group.id).exists())
+        updated_profile = UserIdentityProfile.objects.get(user=self.admin_user)
+        self.assertEqual(updated_profile.primary_group_id, fallback_group.id)
+
+    def test_admin_cannot_delete_group_if_it_orphans_user(self) -> None:
+        """Bloquea el borrado si algún usuario perdería su último grupo."""
         self._auth(self.admin_user)
         response = self.client.delete(f"/api/identity/groups/{self.group.id}/")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # ── Membresías: creación, actualización y eliminación ──
 
@@ -574,6 +771,16 @@ class IdentityRouterExtendedTests(TestCase):
 
     def test_admin_can_delete_membership(self) -> None:
         """Admin puede remover un miembro de su grupo."""
+        auxiliary_group = WorkGroup.objects.create(
+            name="Auxiliary",
+            slug="auxiliary-ext",
+            created_by=self.root_user,
+        )
+        GroupMembership.objects.create(
+            user=self.standard_user,
+            group=auxiliary_group,
+            role_in_group=GroupMembership.ROLE_MEMBER,
+        )
         membership = GroupMembership.objects.get(
             user=self.standard_user, group=self.group
         )

@@ -1,4 +1,4 @@
-<!-- molar-fractions.component.html: Molar fractions app UI with export actions. -->
+<!-- molar-fractions.component.html: Molar fractions app UI with side-by-side workspace and chart below the result table. -->
 <section class="molar-shell" [attr.aria-label]="'molarFractions.header.eyebrow' | transloco">
   <header class="molar-header">
     <p class="eyebrow">{{ 'molarFractions.header.eyebrow' | transloco }}</p>
@@ -6,213 +6,355 @@
     <p>{{ 'molarFractions.header.subtitle' | transloco }}</p>
   </header>
 
-  <section class="form-card" [attr.aria-label]="'molarFractions.form.title' | transloco">
-    <h3>{{ 'molarFractions.form.title' | transloco }}</h3>
+  <div class="workspace-grid">
+    <div class="form-card entry-panel" [attr.aria-label]="'molarFractions.form.title' | transloco">
+      <div class="panel-heading">
+        <p class="panel-kicker">{{ 'molarFractions.form.ariaLabel' | transloco }}</p>
+        <h3>{{ 'molarFractions.form.title' | transloco }}</h3>
+      </div>
 
-    <div class="field-group">
-      <label for="pka-count">{{ 'molarFractions.form.pkaCount' | transloco }}</label>
-      <select id="pka-count" [ngModel]="workflow.pkaCount()" (ngModelChange)="onPkaCountChange($event)"
-        [disabled]="workflow.isProcessing()">
-        @for (option of pkaCountOptions; track option) {
-        <option [ngValue]="option">{{ option }} pKa</option>
-        }
-      </select>
-    </div>
+      <div class="mode-toggle" [attr.aria-label]="'molarFractions.form.inputMode' | transloco">
+        <button type="button" class="mode-toggle-btn" [attr.aria-pressed]="inputMode() === 'single'"
+          [class.is-active]="inputMode() === 'single'" (click)="onInputModeChange('single')">
+          {{ 'molarFractions.form.singleMode' | transloco }}
+        </button>
+        <button type="button" class="mode-toggle-btn" [attr.aria-pressed]="inputMode() === 'batch'"
+          [class.is-active]="inputMode() === 'batch'" (click)="onInputModeChange('batch')">
+          {{ 'molarFractions.form.batchMode' | transloco }}
+        </button>
+      </div>
 
-    <div class="pka-block">
-      <h4>{{ 'molarFractions.form.pkaValues' | transloco }}</h4>
-      <div class="pka-grid">
-        @for (slotIndex of workflow.pkaInputSlots(); track slotIndex) {
+      @if (inputMode() === 'single') {
+      <div class="field-group">
+        <label for="pka-count">{{ 'molarFractions.form.pkaCount' | transloco }}</label>
+        <select id="pka-count" [ngModel]="workflow.pkaCount()" (ngModelChange)="onPkaCountChange($event)"
+          [disabled]="workflow.isProcessing()">
+          @for (option of pkaCountOptions; track option) {
+          <option [ngValue]="option">{{ option }} pKa</option>
+          }
+        </select>
+      </div>
+
+      <div class="pka-block">
+        <h4>{{ 'molarFractions.form.pkaValues' | transloco }}</h4>
+        <div class="pka-grid">
+          @for (slotIndex of workflow.pkaInputSlots(); track slotIndex) {
+          <label>
+            pKa{{ slotIndex + 1 }}
+            <input type="number" step="0.01" [ngModel]="workflow.pkaValues()[slotIndex]"
+              (ngModelChange)="workflow.updatePkaValue(slotIndex, toNumber($event))"
+              [disabled]="workflow.isProcessing()" />
+          </label>
+          }
+        </div>
+      </div>
+
+      <div class="range-block species-meta-block">
+        <h4>{{ 'molarFractions.form.speciesSettings' | transloco }}</h4>
+        <p class="field-hint">{{ 'molarFractions.form.speciesSettingsOptional' | transloco }}</p>
+        <div class="species-meta-grid">
+          <label>
+            {{ 'molarFractions.form.initialCharge' | transloco }}
+            <input type="text" [ngModel]="workflow.initialCharge()"
+              (ngModelChange)="workflow.initialCharge.set(toText($event))" [disabled]="workflow.isProcessing()"
+              [placeholder]="'molarFractions.form.initialChargePlaceholder' | transloco" />
+          </label>
+          <label>
+            {{ 'molarFractions.form.speciesLabel' | transloco }}
+            <input type="text" maxlength="20" [ngModel]="workflow.speciesLabel()"
+              (ngModelChange)="workflow.speciesLabel.set(toText($event))" [disabled]="workflow.isProcessing()"
+              [placeholder]="'molarFractions.form.speciesLabelPlaceholder' | transloco" />
+          </label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="ph-mode">{{ 'molarFractions.form.phMode' | transloco }}</label>
+        <select id="ph-mode" [ngModel]="workflow.phMode()" (ngModelChange)="workflow.phMode.set($event)"
+          [disabled]="workflow.isProcessing()">
+          <option value="single">{{ 'molarFractions.form.phSingle' | transloco }}</option>
+          <option value="range">{{ 'molarFractions.form.phRange' | transloco }}</option>
+        </select>
+      </div>
+
+      @if (workflow.phMode() === 'single') {
+      <div class="single-ph-block">
         <label>
-          pKa{{ slotIndex + 1 }}
-          <input type="number" step="0.01" [ngModel]="workflow.pkaValues()[slotIndex]"
-            (ngModelChange)="workflow.updatePkaValue(slotIndex, toNumber($event))"
-            [disabled]="workflow.isProcessing()" />
+          {{ 'molarFractions.form.singlePh' | transloco }}
+          <input type="number" step="0.01" [ngModel]="workflow.phValue()"
+            (ngModelChange)="workflow.phValue.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
         </label>
+      </div>
+      }
+      @if (workflow.phMode() !== 'single') {
+      <div class="range-block">
+        <h4>{{ 'molarFractions.form.phRange' | transloco }}</h4>
+        <div class="range-grid">
+          <label>
+            {{ 'molarFractions.form.phMin' | transloco }}
+            <input type="number" step="0.01" [ngModel]="workflow.phMin()"
+              (ngModelChange)="workflow.phMin.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+          </label>
+          <label>
+            {{ 'molarFractions.form.phMax' | transloco }}
+            <input type="number" step="0.01" [ngModel]="workflow.phMax()"
+              (ngModelChange)="workflow.phMax.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+          </label>
+          <label>
+            {{ 'molarFractions.form.phStep' | transloco }}
+            <input type="number" step="0.01" min="0.01" [ngModel]="workflow.phStep()"
+              (ngModelChange)="workflow.phStep.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+          </label>
+        </div>
+      </div>
+      }
+
+      <div class="action-row form-actions">
+        <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+          {{ workflow.isProcessing() ? ('molarFractions.actions.processing' | transloco) :
+          ('molarFractions.actions.run' | transloco) }}
+        </button>
+        <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+          {{ 'molarFractions.actions.reset' | transloco }}
+        </button>
+      </div>
+      }
+
+      @if (inputMode() === 'batch') {
+      <div class="batch-copy-card">
+        <p>{{ 'molarFractions.batch.description' | transloco }}</p>
+        <p>{{ 'molarFractions.batch.studentNote' | transloco }}</p>
+      </div>
+
+      <div class="csv-example-card">
+        <p class="csv-example-title">{{ 'molarFractions.batch.csvExampleTitle' | transloco }}</p>
+        <pre class="csv-example">{{ 'molarFractions.batch.csvExample.header' | transloco }}
+{{ 'molarFractions.batch.csvExample.row1' | transloco }}
+{{ 'molarFractions.batch.csvExample.row2' | transloco }}
+{{ 'molarFractions.batch.csvExample.row3' | transloco }}</pre>
+      </div>
+
+      <div class="field-group">
+        <label for="batch-csv-file">{{ 'molarFractions.batch.fileLabel' | transloco }}</label>
+        <input id="batch-csv-file" class="batch-file-input" type="file" accept=".csv,text/csv"
+          (change)="onCsvFileChange($event)" [disabled]="isBatchProcessing()" />
+        @if (selectedBatchFileName()) {
+        <p class="batch-file-name">{{ selectedBatchFileName() }}</p>
         }
       </div>
-    </div>
 
-    <div class="field-group">
-      <label for="ph-mode">{{ 'molarFractions.form.phMode' | transloco }}</label>
-      <select id="ph-mode" [ngModel]="workflow.phMode()" (ngModelChange)="workflow.phMode.set($event)"
-        [disabled]="workflow.isProcessing()">
-        <option value="single">{{ 'molarFractions.form.phSingle' | transloco }}</option>
-        <option value="range">{{ 'molarFractions.form.phRange' | transloco }}</option>
-      </select>
-    </div>
-
-    @if (workflow.phMode() === 'single') {
-    <div class="single-ph-block">
-      <label>
-        {{ 'molarFractions.form.singlePh' | transloco }}
-        <input type="number" step="0.01" [ngModel]="workflow.phValue()"
-          (ngModelChange)="workflow.phValue.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
-      </label>
-    </div>
-    } @else {
-    <div class="range-block">
-      <h4>{{ 'molarFractions.form.phRange' | transloco }}</h4>
-      <div class="range-grid">
-        <label>
-          {{ 'molarFractions.form.phMin' | transloco }}
-          <input type="number" step="0.01" [ngModel]="workflow.phMin()"
-            (ngModelChange)="workflow.phMin.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
-        </label>
-        <label>
-          {{ 'molarFractions.form.phMax' | transloco }}
-          <input type="number" step="0.01" [ngModel]="workflow.phMax()"
-            (ngModelChange)="workflow.phMax.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
-        </label>
-        <label>
-          {{ 'molarFractions.form.phStep' | transloco }}
-          <input type="number" step="0.01" min="0.01" [ngModel]="workflow.phStep()"
-            (ngModelChange)="workflow.phStep.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
-        </label>
+      <div class="range-block batch-parameter-block">
+        <h4>{{ 'molarFractions.batch.parameters' | transloco }}</h4>
+        <div class="range-grid batch-grid">
+          <label>
+            {{ 'molarFractions.batch.targetPh' | transloco }}
+            <input type="number" step="0.01" [ngModel]="batchTargetPh()"
+              (ngModelChange)="batchTargetPh.set(toNumber($event))" [disabled]="isBatchProcessing()" />
+          </label>
+          <label>
+            {{ 'molarFractions.batch.threshold' | transloco }}
+            <input type="number" step="0.0001" min="0" [ngModel]="batchThreshold()"
+              (ngModelChange)="batchThreshold.set(toNumber($event))" [disabled]="isBatchProcessing()" />
+          </label>
+        </div>
+        <p class="batch-threshold-hint">{{ 'molarFractions.batch.thresholdHint' | transloco }}</p>
       </div>
+
+      <div class="action-row form-actions">
+        <button class="btn-primary" (click)="dispatchBatch()" [disabled]="isBatchProcessing()">
+          {{ isBatchProcessing() ? ('molarFractions.actions.processing' | transloco) :
+          ('molarFractions.batch.run' | transloco) }}
+        </button>
+        <button class="btn-secondary" (click)="resetBatch()" [disabled]="isBatchProcessing()">
+          {{ 'molarFractions.actions.reset' | transloco }}
+        </button>
+      </div>
+      }
     </div>
-    }
 
-    <div class="action-row">
-      <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
-        {{ workflow.isProcessing() ? ('molarFractions.actions.processing' | transloco) :
-        ('molarFractions.actions.run' | transloco) }}
-      </button>
-      <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
-        {{ 'molarFractions.actions.reset' | transloco }}
-      </button>
+    <div class="result-panel" [attr.aria-label]="'molarFractions.result.ariaLabel' | transloco">
+      <div class="panel-heading result-heading">
+        <p class="panel-kicker">{{ 'molarFractions.result.ariaLabel' | transloco }}</p>
+        <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
+      </div>
+
+      @if (inputMode() === 'single') {
+      @if (workflow.activeSection() === 'dispatching') {
+      <p class="status-message status-card">{{ 'molarFractions.result.submitting' | transloco }}</p>
+      }
+
+      @if (workflow.activeSection() === 'progress') {
+      <p class="status-message status-card">{{ workflow.progressMessage() }}</p>
+      }
+
+      @if (workflow.activeSection() === 'result') {
+      @if (workflow.resultData(); as resultData) {
+      <div class="metadata-grid">
+        <p><strong>{{ 'molarFractions.result.metadata.label' | transloco }}</strong> {{
+          resultData.metadata.label }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.initialCharge' | transloco }}</strong> {{
+          resultData.metadata.initialCharge }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.mode' | transloco }}</strong> {{
+          resultData.metadata.phMode }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.pkaValues' | transloco }}</strong> {{
+          resultData.metadata.pkaValues.join(', ') }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.range' | transloco }}</strong> {{
+          resultData.metadata.phMin }} {{ 'molarFractions.result.metadata.to' | transloco }} {{
+          resultData.metadata.phMax }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.step' | transloco }}</strong> {{
+          resultData.metadata.phStep }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.species' | transloco }}</strong> {{
+          resultData.metadata.totalSpecies }}</p>
+        <p><strong>{{ 'molarFractions.result.metadata.points' | transloco }}</strong> {{
+          resultData.metadata.totalPoints }}</p>
+      </div>
+
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="resultData === null">
+          {{ 'molarFractions.actions.exportCsv' | transloco }}
+        </button>
+      </div>
+
+      @if (resultData.rows.length === 0) {
+      <p class="status-message status-card">{{ 'molarFractions.result.noRows' | transloco }}</p>
+      }
+
+      @if (resultData.rows.length > 0) {
+      <div class="table-wrap result-table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
+              @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
+              <th>{{ speciesLabel }}</th>
+              }
+              <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of resultData.rows; track $index) {
+            <tr>
+              <td>{{ formatPh(row) }}</td>
+              @for (fractionValue of row.fractions; track $index) {
+              <td>{{ formatFractionValue(fractionValue) }}</td>
+              }
+              <td>{{ formatFractionValue(row.sumFraction) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (showResultChart()) {
+      @if (chartOptions()) {
+      <div class="chart-card" [attr.aria-label]="'molarFractions.result.chart.ariaLabel' | transloco">
+        <div class="chart-header">
+          <h4>{{ 'molarFractions.result.chart.title' | transloco }}</h4>
+          <p>{{ 'molarFractions.result.chart.subtitle' | transloco }}</p>
+        </div>
+
+        <div class="probe-card">
+          <div class="probe-controls">
+            <label class="probe-field">
+              <span>{{ 'molarFractions.result.chart.probe.label' | transloco }}</span>
+              <input type="number" step="0.01" [ngModel]="resolvedProbePh()" (ngModelChange)="onProbePhChange($event)"
+                [min]="resultData.metadata.phMin" [max]="resultData.metadata.phMax" />
+            </label>
+
+            <label class="probe-field probe-slider-field">
+              <span>{{ 'molarFractions.result.chart.probe.slider' | transloco }}</span>
+              <input type="range" step="0.01" [ngModel]="resolvedProbePh()" (ngModelChange)="onProbePhChange($event)"
+                [min]="resultData.metadata.phMin" [max]="resultData.metadata.phMax" />
+            </label>
+          </div>
+
+          <div class="probe-readings">
+            <p class="probe-summary">
+              <strong>{{ 'molarFractions.result.chart.probe.fixed' | transloco }}</strong>
+              {{ formatPh({ ph: resolvedProbePh(), fractions: [], sumFraction: 0 }) }}
+            </p>
+
+            <div class="probe-grid">
+              @for (probeReading of probeReadings(); track probeReading.speciesLabel) {
+              <p>
+                <strong>{{ probeReading.speciesLabel }}</strong>
+                {{ formatFractionValue(probeReading.fraction) }}
+              </p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <app-scientific-chart [options]="chartOptions()!"
+          [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="340px"></app-scientific-chart>
+      </div>
+      }
+      }
+      }
+      }
+      }
+
+      @if (workflow.activeSection() === 'error') {
+      @if (workflow.errorMessage()) {
+      <p class="error-message" role="alert">{{ workflow.errorMessage() }}</p>
+      }
+      }
+      }
+
+      @if (inputMode() === 'batch') {
+      @if (batchErrorMessage()) {
+      <p class="error-message" role="alert">{{ batchErrorMessage() }}</p>
+      }
+
+      @if (batchRows() !== null) {
+      <div class="metadata-grid batch-metadata-grid">
+        <p><strong>{{ 'molarFractions.batch.summary.rows' | transloco }}</strong> {{ batchRows()!.length }}</p>
+        <p><strong>{{ 'molarFractions.batch.summary.ph' | transloco }}</strong> {{ batchTargetPh() }}</p>
+      </div>
+
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportBatchCsv()" [disabled]="!hasBatchRows()">
+          {{ 'molarFractions.batch.exportCsv' | transloco }}
+        </button>
+      </div>
+
+      @if (!hasBatchRows()) {
+      <p class="status-message status-card">{{ 'molarFractions.batch.noRows' | transloco }}</p>
+      }
+
+      @if (hasBatchRows()) {
+      <div class="table-wrap result-table-wrap">
+        <table class="result-table batch-result-table">
+          <thead>
+            <tr>
+              <th>{{ 'molarFractions.batch.table.acronym' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.smiles' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.pkaValues' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.initialCharge' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.species' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.charge' | transloco }}</th>
+              <th>{{ 'molarFractions.batch.table.fraction' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of batchRows()!; track $index) {
+            <tr>
+              <td>{{ row.acronym }}</td>
+              <td>{{ row.smiles }}</td>
+              <td>{{ row.pkaValuesText }}</td>
+              <td>{{ row.initialCharge }}</td>
+              <td>{{ row.species }}</td>
+              <td>{{ row.charge }}</td>
+              <td>{{ formatFractionValue(row.fraction) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      }
+      }
     </div>
-  </section>
-</section>
-
-<section class="result-panel" [attr.aria-label]="'molarFractions.result.ariaLabel' | transloco">
-  <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
-
-  @if (workflow.activeSection() === 'dispatching') {
-  <p class="status-message">{{ 'molarFractions.result.submitting' | transloco }}</p>
-  }
-
-  @if (workflow.activeSection() === 'progress') {
-  <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
-    [progressMessage]="workflow.progressMessage()"
-    [progressAriaLabel]="'molarFractions.result.ariaLabel' | transloco"></app-job-progress-card>
-  }
-
-  @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
-  @if (resultData.isHistoricalSummary && resultData.summaryMessage !== null) {
-  <p class="summary-banner">{{ resultData.summaryMessage }}</p>
-  }
-
-  <div class="metadata-grid">
-    <p><strong>{{ 'molarFractions.result.metadata.mode' | transloco }}</strong> {{ resultData.metadata.phMode }}</p>
-    <p><strong>{{ 'molarFractions.result.metadata.pkaValues' | transloco }}</strong> {{
-      resultData.metadata.pkaValues.join(', ') }}</p>
-    <p>
-      <strong>{{ 'molarFractions.result.metadata.range' | transloco }}</strong> {{ resultData.metadata.phMin }} {{
-      'molarFractions.result.metadata.to' | transloco }}
-      {{ resultData.metadata.phMax }}
-    </p>
-    <p><strong>{{ 'molarFractions.result.metadata.step' | transloco }}</strong> {{ resultData.metadata.phStep }}</p>
-    <p><strong>{{ 'molarFractions.result.metadata.species' | transloco }}</strong> {{
-      resultData.metadata.totalSpecies }}</p>
-    <p><strong>{{ 'molarFractions.result.metadata.points' | transloco }}</strong> {{ resultData.metadata.totalPoints
-      }}</p>
   </div>
 
-  <div class="action-row export-row">
-    <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
-      {{ workflow.isExporting() ? ('tunnel.actions.exporting' | transloco) : ('tunnel.actions.exportCsv' |
-      transloco) }}
-    </button>
-    <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
-      {{ 'molarFractions.result.exportLog' | transloco }}
-    </button>
-  </div>
-
-  @if (workflow.exportErrorMessage(); as exportErrorMessage) {
-  <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
-  }
-
-  @if (resultData.rows.length === 0) {
-  <p class="status-message">{{ 'molarFractions.result.noRows' | transloco }}</p>
-  } @else {
-  <div class="table-wrap">
-    <table class="result-table">
-      <thead>
-        <tr>
-          <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
-          @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
-          <th>{{ speciesLabel }}</th>
-          }
-          <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of resultData.rows; track $index) {
-        <tr>
-          <td>{{ formatPh(row) }}</td>
-          @for (fractionValue of row.fractions; track $index) {
-          <td>{{ formatFractionValue(fractionValue) }}</td>
-          }
-          <td>{{ formatFractionValue(row.sumFraction) }}</td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-  }
-  }
-
-  @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-  <p class="error-message" role="alert">{{ currentError }}</p>
-  }
-</section>
-
-<app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
-
-<section class="history-card" [attr.aria-label]="'molarFractions.history.ariaLabel' | transloco">
-  <div class="history-header">
-    <h3>{{ 'shared.jobHistoryTable.title' | transloco }}</h3>
-    <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-      {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) :
-      ('shared.jobHistoryTable.reload' | transloco) }}
-    </button>
-  </div>
-
-  @if (workflow.historyJobs().length === 0) {
-  <p class="status-message">{{ 'molarFractions.history.empty' | transloco }}</p>
-  } @else {
-  <div class="table-wrap">
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th>
-          <th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th>
-          <th>{{ 'molarFractions.history.columns.mode' | transloco }}</th>
-          <th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th>
-          <th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-        <tr>
-          <td class="mono">{{ historyJob.id }}</td>
-          <td>
-            <span [class]="historicalStatusClass(historyJob.status)">{{
-              historyJob.status
-              }}</span>
-          </td>
-          <td>{{ historicalModeLabel(historyJob) }}</td>
-          <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-          <td>
-            <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-              {{ 'molarFractions.history.open' | transloco }}
-            </button>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-  }
 </section>

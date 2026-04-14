@@ -106,8 +106,8 @@ class IdentityApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["name"], "Gamma")
 
-    def test_admin_cannot_create_work_group(self) -> None:
-        """Comprueba que la creación de grupos se restringe al rol root."""
+    def test_admin_can_create_work_group(self) -> None:
+        """Comprueba que un admin puede crear un grupo y quedar como admin del mismo."""
         self._authenticate(self.admin_user)
 
         response = self.client.post(
@@ -116,7 +116,14 @@ class IdentityApiTests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            GroupMembership.objects.filter(
+                user=self.admin_user,
+                group_id=response.data["id"],
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).exists()
+        )
 
     def test_root_can_create_user_with_identity_profile(self) -> None:
         """Asegura que root crea usuarios y perfil transversal en una sola operación."""
@@ -140,6 +147,39 @@ class IdentityApiTests(TestCase):
         created_profile = UserIdentityProfile.objects.get(user=created_user)
         self.assertEqual(created_profile.role, UserIdentityProfile.ROLE_ADMIN)
         self.assertEqual(created_profile.primary_group_id, self.group_alpha.id)
+        self.assertTrue(
+            GroupMembership.objects.filter(
+                user=created_user,
+                group=self.group_alpha,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).exists()
+        )
+
+    def test_admin_can_create_user_in_managed_group(self) -> None:
+        """Asegura que un admin puede crear usuarios si el grupo pertenece a su alcance."""
+        self._authenticate(self.admin_user)
+
+        response = self.client.post(
+            "/api/identity/users/",
+            {
+                "username": "new-member",
+                "email": "new-member@test.local",
+                "password": "secure-password",
+                "role": "user",
+                "primary_group_id": self.group_alpha.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_user = self.user_model.objects.get(username="new-member")
+        self.assertTrue(
+            GroupMembership.objects.filter(
+                user=created_user,
+                group=self.group_alpha,
+                role_in_group=GroupMembership.ROLE_MEMBER,
+            ).exists()
+        )
 
     def test_admin_can_manage_user_in_shared_group(self) -> None:
         """Valida que admin puede actualizar usuarios de su mismo grupo."""
@@ -154,6 +194,18 @@ class IdentityApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_profile = UserIdentityProfile.objects.get(user=self.standard_user)
         self.assertEqual(updated_profile.role, UserIdentityProfile.ROLE_ADMIN)
+
+    def test_admin_can_list_all_users(self) -> None:
+        """Garantiza que el admin puede ver usuarios fuera de sus grupos para asignarlos."""
+        self._authenticate(self.admin_user)
+
+        response = self.client.get("/api/identity/users/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        usernames = {user_item["username"] for user_item in response.data}
+        self.assertIn("admin-test", usernames)
+        self.assertIn("user-test", usernames)
+        self.assertIn("other-test", usernames)
 
     def test_admin_cannot_manage_user_from_other_group(self) -> None:
         """Comprueba aislamiento entre grupos para administración por admins."""
@@ -221,11 +273,12 @@ class IdentityApiTests(TestCase):
             response = self.client.post(
                 "/api/jobs/",
                 {
-                    "plugin_name": "random-numbers",
+                    "plugin_name": "molar-fractions",
                     "version": "1.0.0",
                     "parameters": {
-                        "seed_url": "https://example.com/seed.txt",
-                        "total_numbers": 3,
+                        "pka_values": [4.5, 8.1],
+                        "ph_mode": "single",
+                        "ph_value": 7.4,
                     },
                 },
                 format="json",
@@ -253,6 +306,29 @@ class IdentityApiTests(TestCase):
         self.assertFalse(smileit_entry["enabled"])
         self.assertFalse(smileit_entry["group_permission"])
 
+    def test_current_user_accessible_apps_require_explicit_permission(self) -> None:
+        """Comprueba que un usuario no obtiene apps sin una regla explícita para su grupo."""
+        self._authenticate(self.standard_user)
+
+        response = self.client.get(f"/api/auth/apps/?group_id={self.group_alpha.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        molar_fractions_entry = next(
+            app_item
+            for app_item in response.data
+            if app_item["app_name"] == "molar-fractions"
+        )
+        self.assertFalse(molar_fractions_entry["enabled"])
+        self.assertIsNone(molar_fractions_entry["group_permission"])
+
+    def test_current_user_accessible_apps_reject_foreign_group(self) -> None:
+        """Evita consultar permisos usando un grupo ajeno al usuario autenticado."""
+        self._authenticate(self.standard_user)
+
+        response = self.client.get(f"/api/auth/apps/?group_id={self.group_beta.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_current_user_app_config_merges_group_and_user_layers(self) -> None:
         """Confirma precedencia de configuración grupo -> usuario para una app."""
         GroupAppConfig.objects.create(
@@ -276,6 +352,41 @@ class IdentityApiTests(TestCase):
         self.assertEqual(response.data["effective_config"]["catalog_scope"], "shared")
         self.assertEqual(response.data["effective_config"]["page_size"], 25)
 
+    def test_current_user_app_config_uses_primary_group_scope_only(self) -> None:
+        """Evita que reglas de un grupo secundario sobreescriban el grupo primario."""
+        GroupMembership.objects.create(
+            user=self.standard_user,
+            group=self.group_beta,
+            role_in_group=GroupMembership.ROLE_MEMBER,
+        )
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_beta,
+            is_enabled=False,
+        )
+        GroupAppConfig.objects.create(
+            group=self.group_alpha,
+            app_name="smileit",
+            config={"catalog_scope": "alpha-scope"},
+        )
+        GroupAppConfig.objects.create(
+            group=self.group_beta,
+            app_name="smileit",
+            config={"catalog_scope": "beta-scope"},
+        )
+        self._authenticate(self.standard_user)
+
+        response = self.client.get("/api/auth/app-configs/smileit/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["enabled"])
+        self.assertEqual(response.data["group_config"]["catalog_scope"], "alpha-scope")
+
     def test_admin_can_update_group_app_config_for_managed_group(self) -> None:
         """Valida que admin del grupo puede ajustar configuración grupal de apps."""
         self._authenticate(self.admin_user)
@@ -292,3 +403,12 @@ class IdentityApiTests(TestCase):
             app_name="smileit",
         )
         self.assertEqual(created_group_config.config["catalog_scope"], "group-only")
+
+    def test_admin_cannot_delete_group_if_it_is_its_only_group(self) -> None:
+        """Evita dejar a un admin sin grupo cuando intenta borrar su único grupo."""
+        self._authenticate(self.admin_user)
+
+        response = self.client.delete(f"/api/identity/groups/{self.group_alpha.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ultimo grupo", response.data["detail"])

@@ -28,6 +28,7 @@ describe('ToxicityPropertiesComponent', () => {
     smilesInput: signal<string>('CCO'),
     inputRows: signal<Array<{ name: string; smiles: string }>>([{ name: 'CCO', smiles: 'CCO' }]),
     customNamesEnabled: signal<boolean>(false),
+    jobNameInput: signal<string>(''),
     activeSection: signal<'idle' | 'dispatching' | 'progress' | 'result' | 'error'>('idle'),
     currentJobId: signal<string | null>(null),
     progressSnapshot: signal<JobProgressSnapshotView | null>(null),
@@ -35,6 +36,10 @@ describe('ToxicityPropertiesComponent', () => {
     resultData: signal<ToxicityPropertiesResultData | null>(null),
     errorMessage: signal<string | null>(null),
     exportErrorMessage: signal<string | null>(null),
+    currentJobDisplayName: signal<string | null>(null),
+    isInputValidationPending: signal<boolean>(false),
+    hasInvalidSmiles: signal<boolean>(false),
+    inputValidationMessage: signal<string | null>(null),
     isExporting: signal<boolean>(false),
     historyJobs: signal<ToxicityHistoryJobView[]>([]),
     isHistoryLoading: signal<boolean>(false),
@@ -54,6 +59,15 @@ describe('ToxicityPropertiesComponent', () => {
       workflowMock.smilesInput.set(normalizedRows.map((row) => row.smiles).join('\n'));
       workflowMock.inputRows.set(normalizedRows);
     }),
+    setInputRows: vi.fn(
+      (rows: Array<{ name: string; smiles: string }>, enableCustomNames: boolean = false) => {
+        workflowMock.inputRows.set(rows);
+        workflowMock.smilesInput.set(rows.map((row) => row.smiles).join('\n'));
+        if (enableCustomNames) {
+          workflowMock.customNamesEnabled.set(true);
+        }
+      },
+    ),
     updateInputRowName: vi.fn((rowIndex: number, nextName: string) => {
       workflowMock.inputRows.update((currentRows) =>
         currentRows.map((rowValue, index) =>
@@ -87,6 +101,7 @@ describe('ToxicityPropertiesComponent', () => {
     workflowMock.smilesInput.set('CCO');
     workflowMock.inputRows.set([{ name: 'CCO', smiles: 'CCO' }]);
     workflowMock.customNamesEnabled.set(false);
+    workflowMock.jobNameInput.set('');
     workflowMock.activeSection.set('idle');
     workflowMock.currentJobId.set(null);
     workflowMock.progressSnapshot.set(null);
@@ -94,6 +109,7 @@ describe('ToxicityPropertiesComponent', () => {
     workflowMock.resultData.set(null);
     workflowMock.errorMessage.set(null);
     workflowMock.exportErrorMessage.set(null);
+    workflowMock.currentJobDisplayName.set(null);
     workflowMock.isExporting.set(false);
     workflowMock.historyJobs.set([]);
     workflowMock.isHistoryLoading.set(false);
@@ -185,6 +201,65 @@ describe('ToxicityPropertiesComponent', () => {
         error_message: 'invalid molecule',
       }),
     ).toBe(true);
+  });
+
+  it('construye el nombre visible del job actual e histórico cuando existe nombre', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.currentJobId.set('tox-job-77');
+    workflowMock.currentJobDisplayName.set('Panel tox');
+
+    expect(component.currentJobDisplayLabel()).toBe('Panel tox_tox-job-77');
+    expect(
+      component.resolveHistoryJobDisplayName({
+        id: 'tox-history-1',
+        parameters: { molecules: [{ name: 'CSV tox', smiles: 'CCO' }] },
+      }),
+    ).toBe('CSV tox_tox-history-1');
+  });
+
+  it('filtra por nombre o SMILES y ordena columnas numéricas y categóricas', () => {
+    const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set({
+      total: 2,
+      molecules: [
+        {
+          name: 'benzene',
+          smiles: 'c1ccccc1',
+          LD50_mgkg: 120.4,
+          mutagenicity: 'Positive',
+          ames_score: 0.91,
+          DevTox: 'High',
+          devtox_score: 0.88,
+          error_message: null,
+        },
+        {
+          name: 'ethanol',
+          smiles: 'CCO',
+          LD50_mgkg: 430.2,
+          mutagenicity: 'Negative',
+          ames_score: 0.14,
+          DevTox: 'Low',
+          devtox_score: 0.02,
+          error_message: null,
+        },
+      ],
+      scientificReferences: [],
+    });
+
+    component.updateTableSearch('cco');
+    expect(component.visibleMolecules().map((row) => row.name)).toEqual(['ethanol']);
+
+    component.updateTableSearch('');
+    component.toggleTableSort('LD50_mgkg');
+    component.toggleTableSort('LD50_mgkg');
+    expect(component.visibleMolecules().map((row) => row.name)).toEqual(['ethanol', 'benzene']);
+
+    expect(component.classificationBadgeClass('Positive')).toContain('negative');
+    expect(component.classificationBadgeClass('Low')).toContain('positive');
   });
 
   it('opens and closes the sketch dialog', () => {

@@ -26,6 +26,10 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
     super('CCO\nCC(=O)O\nc1ccccc1');
   }
 
+  protected override get workflowPluginName(): string {
+    return 'sa-score';
+  }
+
   protected override get defaultProgressMessage(): string {
     return 'Preparing SA score calculation...';
   }
@@ -54,6 +58,13 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
   });
 
   override dispatch(): void {
+    const preDispatchValidationError: string | null = this.getPreDispatchSmilesValidationError();
+    if (preDispatchValidationError !== null) {
+      this.activeSection.set('error');
+      this.errorMessage.set(preDispatchValidationError);
+      return;
+    }
+
     this.prepareForDispatch();
 
     const normalizedRows = this.buildNamedInputRows();
@@ -88,6 +99,7 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
 
           this.jobsApiService.dispatchSaScoreJob(dispatchParams).subscribe({
             next: (jobResponse: SaScoreJobResponseView) => {
+              this.rememberDispatchedJobDisplayName(jobResponse.id);
               this.handleDispatchJobResponse(
                 jobResponse,
                 (job) => this.extractResultData(job),
@@ -119,6 +131,7 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
 
     this.jobsApiService.getSaScoreJobStatus(jobId).subscribe({
       next: (jobResponse: SaScoreJobResponseView) => {
+        this.hydrateCurrentJobDisplayName(jobId, jobResponse.parameters);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           loadHistoryAfter: false,
         });
@@ -154,6 +167,7 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
   protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getSaScoreJobStatus(jobId).subscribe({
       next: (jobResponse: SaScoreJobResponseView) => {
+        this.hydrateCurrentJobDisplayName(jobId, jobResponse.parameters);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           checkFailed: false,
           loadLogs: false,

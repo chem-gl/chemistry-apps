@@ -1,0 +1,33 @@
+<!-- active-group-selector.component.html: Dropdown para seleccionar el contexto de grupo activo. -->
+@if (isVisible()) {
+<div class="group-selector" [class.is-open]="isDropdownOpen()">
+    <button class="selector-trigger" type="button" (click)="toggleDropdown()" [attr.aria-expanded]="isDropdownOpen()"
+        aria-haspopup="menu" data-testid="active-group-selector-trigger">
+        <span class="selector-icon" aria-hidden="true">◈</span>
+        <span class="selector-label">{{ activeGroupLabel() }}</span>
+        <span class="selector-caret" aria-hidden="true">▾</span>
+    </button>
+
+    @if (isDropdownOpen()) {
+    <!-- Capa de cierre al hacer clic fuera del menú -->
+    <div class="selector-backdrop" (click)="closeDropdown()" (keydown.escape)="closeDropdown()" tabindex="-1"
+        aria-hidden="true"></div>
+    <nav class="selector-menu" aria-label="Seleccionar grupo activo">
+        @for (option of groupOptions(); track option.id) {
+        <div class="menu-item">
+            <button class="menu-option" type="button" [class.is-selected]="isSelected(option)"
+                [class.is-root]="option.isRootOption" [attr.aria-current]="isSelected(option) ? 'true' : null"
+                [attr.data-testid]="option.isRootOption ? 'group-option-root' : 'group-option-' + option.id"
+                (click)="selectOption(option)">
+                <span class="option-label">{{ option.label }}</span>
+                <span class="option-sub">{{ option.sublabel }}</span>
+                @if (isSelected(option)) {
+                <span class="option-check" aria-hidden="true">✓</span>
+                }
+            </button>
+        </div>
+        }
+    </nav>
+    }
+</div>
+}

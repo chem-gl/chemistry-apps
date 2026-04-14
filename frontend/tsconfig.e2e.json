@@ -1,0 +1,11 @@
+/* tsconfig.e2e.json: Configuracion TypeScript para Playwright y utilidades E2E basadas en Node. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["playwright.config.ts", "e2e/**/*.ts"]
+}

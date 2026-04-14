@@ -1,0 +1,5 @@
+/* e2e/tsconfig.json: Configuracion local para que TypeScript resuelva Playwright y APIs de Node en pruebas E2E. */
+{
+  "extends": "../tsconfig.e2e.json",
+  "include": ["./**/*.ts", "../playwright.config.ts"]
+}

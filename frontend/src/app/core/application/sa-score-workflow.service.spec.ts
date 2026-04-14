@@ -125,6 +125,7 @@ describe('SaScoreWorkflowService', () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
     jobsApiServiceMock = {
       dispatchSaScoreJob: vi.fn(
         (): Observable<SaScoreJobResponseView> => of(makeSaScoreJobResponse()),
@@ -157,9 +158,15 @@ describe('SaScoreWorkflowService', () => {
     workflowService = TestBed.inject(SaScoreWorkflowService);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('dispatches SA score job when smiles are compatible', () => {
     workflowService.setBatchInputText('CCO');
+    workflowService.jobNameInput.set('Mi lote SA');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -171,6 +178,7 @@ describe('SaScoreWorkflowService', () => {
     });
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.total).toBe(1);
+    expect(workflowService.currentJobDisplayName()).toBe('Mi lote SA');
   });
 
   it('blocks dispatch when a smiles is incompatible', () => {
@@ -181,6 +189,7 @@ describe('SaScoreWorkflowService', () => {
       }),
     );
     workflowService.setBatchInputText('CCO\nnot_a_smiles');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -192,6 +201,8 @@ describe('SaScoreWorkflowService', () => {
   it('blocks dispatch when no methods are enabled', () => {
     workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: false, brsa: false, rdkit: false });
+    vi.runAllTimers();
+    jobsApiServiceMock.validateSmilesCompatibility.mockClear();
 
     workflowService.dispatch();
 
@@ -217,11 +228,32 @@ describe('SaScoreWorkflowService', () => {
       }),
     );
     workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('validator unavailable');
+  });
+
+  it('prevalidates smiles input and blocks dispatch before job creation when invalid', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      of({
+        compatible: false,
+        issues: [{ smiles: 'bad_smiles', reason: 'Unsupported SMILES' }],
+      }),
+    );
+
+    workflowService.setBatchInputText('bad_smiles');
+    vi.runAllTimers();
+
+    expect(workflowService.hasInvalidSmiles()).toBe(true);
+    expect(workflowService.inputValidationMessage()).toContain('bad_smiles');
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSaScoreJob).not.toHaveBeenCalled();
+    expect(workflowService.errorMessage()).toContain('bad_smiles');
   });
 
   it('opens historical failed job and exposes generic error state', () => {
@@ -339,6 +371,7 @@ describe('SaScoreWorkflowService', () => {
     );
     workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -385,6 +418,7 @@ describe('SaScoreWorkflowService', () => {
     );
     workflowService.setBatchInputText('CCO');
     workflowService.selectedMethods.set({ ambit: true, brsa: false, rdkit: false });
+    vi.runAllTimers();
 
     workflowService.dispatch();
     progressEvents$.complete();

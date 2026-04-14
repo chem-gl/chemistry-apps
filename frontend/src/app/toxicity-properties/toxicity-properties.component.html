@@ -14,12 +14,23 @@
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
         [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
         [customNamesEnabled]="workflow.customNamesEnabled()" (smilesChange)="workflow.setBatchInputText($event)"
+        [isValidatingSmiles]="workflow.isInputValidationPending()"
+        [validationMessage]="workflow.inputValidationMessage()"
         (customNamesEnabledChange)="workflow.customNamesEnabled.set($event)"
         (rowNameChange)="workflow.updateInputRowName($event.index, $event.name)" (openSketch)="openSketchDialog()"
         (fileUpload)="onFileUpload($event)"></app-smiles-batch-input>
 
+      <label class="job-name-field">
+        <span>{{ 'toxicityProperties.form.jobNameLabel' | transloco }}</span>
+        <input class="job-name-input" type="text" [ngModel]="workflow.jobNameInput()"
+          (ngModelChange)="workflow.jobNameInput.set($event)" [disabled]="workflow.isProcessing()"
+          [placeholder]="'toxicityProperties.form.jobNamePlaceholder' | transloco" />
+        <small class="job-name-hint">{{ 'toxicityProperties.form.jobNameHint' | transloco }}</small>
+      </label>
+
       <div class="action-row">
-        <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+        <button class="btn-primary" (click)="dispatch()"
+          [disabled]="workflow.isProcessing() || workflow.isInputValidationPending() || workflow.hasInvalidSmiles()">
           {{ workflow.isProcessing() ? ('toxicityProperties.actions.processing' | transloco) :
           ('toxicityProperties.actions.run' | transloco) }}
         </button>
@@ -46,6 +57,9 @@
       <div class="metadata-grid">
         <p><strong>{{ 'toxicityProperties.result.totalMolecules' | transloco }}</strong> {{ resultData.total }}</p>
         <p><strong>{{ 'toxicityProperties.result.modelLabel' | transloco }}</strong></p>
+        @if (currentJobDisplayLabel(); as currentJobDisplayLabel) {
+        <p><strong>{{ 'toxicityProperties.result.jobNameLabel' | transloco }}</strong> {{ currentJobDisplayLabel }}</p>
+        }
         <p>
           <strong>{{ 'toxicityProperties.result.jobIdLabel' | transloco }}</strong> <span class="mono">{{
             workflow.currentJobId() }}</span>
@@ -63,22 +77,70 @@
       <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
       }
 
+      <div class="table-toolbar">
+        <label class="table-search-field">
+          <span>{{ 'toxicityProperties.result.searchLabel' | transloco }}</span>
+          <input class="table-search-input" type="search" [ngModel]="tableSearchTerm()"
+            (ngModelChange)="updateTableSearch($event)"
+            [placeholder]="'toxicityProperties.result.searchPlaceholder' | transloco" />
+        </label>
+        <p class="table-summary-pill">
+          {{ filteredMoleculeCount() }} / {{ resultData.total }} {{ 'toxicityProperties.result.filteredCount' |
+          transloco }}
+        </p>
+      </div>
+
       <div class="table-wrap">
         <table class="result-table">
           <thead>
             <tr>
-              <th>{{ 'toxicityProperties.result.tableName' | transloco }}</th>
-              <th>{{ 'toxicityProperties.result.tableSMILES' | transloco }}</th>
-              <th>LD50_mgkg</th>
-              <th>mutagenicity</th>
-              <th>ames_score</th>
-              <th>DevTox</th>
-              <th>devtox_score</th>
+              <th [attr.aria-sort]="ariaSort('name')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('name')">
+                  <span>{{ 'toxicityProperties.result.tableName' | transloco }}</span>
+                  <span class="sort-indicator">{{ sortIndicator('name') }}</span>
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('smiles')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('smiles')">
+                  <span>{{ 'toxicityProperties.result.tableSMILES' | transloco }}</span>
+                  <span class="sort-indicator">{{ sortIndicator('smiles') }}</span>
+                </button>
+              </th>
+              <th class="numeric-head" [attr.aria-sort]="ariaSort('LD50_mgkg')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('LD50_mgkg')">
+                  <span>LD50_mgkg</span>
+                  <span class="sort-indicator">{{ sortIndicator('LD50_mgkg') }}</span>
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('mutagenicity')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('mutagenicity')">
+                  <span>mutagenicity</span>
+                  <span class="sort-indicator">{{ sortIndicator('mutagenicity') }}</span>
+                </button>
+              </th>
+              <th class="numeric-head" [attr.aria-sort]="ariaSort('ames_score')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('ames_score')">
+                  <span>ames_score</span>
+                  <span class="sort-indicator">{{ sortIndicator('ames_score') }}</span>
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('DevTox')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('DevTox')">
+                  <span>DevTox</span>
+                  <span class="sort-indicator">{{ sortIndicator('DevTox') }}</span>
+                </button>
+              </th>
+              <th class="numeric-head" [attr.aria-sort]="ariaSort('devtox_score')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('devtox_score')">
+                  <span>devtox_score</span>
+                  <span class="sort-indicator">{{ sortIndicator('devtox_score') }}</span>
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
-            <tr>
+            @for (molecule of visibleMolecules(); track molecule.smiles + '_' + $index) {
+            <tr [class.result-row-with-error]="rowHasError(molecule)">
               <td>{{ molecule.name }}</td>
               <td>
                 <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
@@ -86,11 +148,16 @@
                   {{ molecule.smiles }}
                 </button>
               </td>
-              <td>{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
-              <td>{{ molecule.mutagenicity ?? '-' }}</td>
-              <td>{{ formatDecimal(molecule.ames_score, 4) }}</td>
-              <td>{{ molecule.DevTox ?? '-' }}</td>
-              <td>{{ formatDecimal(molecule.devtox_score, 4) }}</td>
+              <td class="numeric-cell">{{ formatDecimal(molecule.LD50_mgkg, 4) }}</td>
+              <td>
+                <span [class]="classificationBadgeClass(molecule.mutagenicity)">{{ molecule.mutagenicity ?? '-'
+                  }}</span>
+              </td>
+              <td class="numeric-cell">{{ formatDecimal(molecule.ames_score, 4) }}</td>
+              <td>
+                <span [class]="classificationBadgeClass(molecule.DevTox)">{{ molecule.DevTox ?? '-' }}</span>
+              </td>
+              <td class="numeric-cell">{{ formatDecimal(molecule.devtox_score, 4) }}</td>
             </tr>
             @if (rowHasError(molecule)) {
             <tr>
@@ -99,6 +166,13 @@
               </td>
             </tr>
             }
+            }
+            @if (visibleMolecules().length === 0) {
+            <tr>
+              <td class="empty-table-cell" [attr.colspan]="resultTableColspan()">
+                {{ 'toxicityProperties.result.emptySearch' | transloco }}
+              </td>
+            </tr>
             }
           </tbody>
         </table>
@@ -123,6 +197,7 @@
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
   <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+    [jobDisplayNameResolver]="resolveHistoryJobDisplayName"
     [emptyMessage]="'toxicityProperties.history.empty' | transloco"
     [sectionTitle]="'toxicityProperties.history.title' | transloco"
     [ariaLabel]="'toxicityProperties.history.ariaLabel' | transloco" (reload)="workflow.loadHistory()"

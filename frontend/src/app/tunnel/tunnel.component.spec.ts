@@ -1,17 +1,9 @@
 // tunnel.component.spec.ts: Pruebas unitarias del componente Tunnel Effect.
-// Cubre delegaciones al workflow, formateo de resultados y verificación de valores de salida.
+// Verifica delegación básica, formato de resultados y export CSV local sin historial ni trazabilidad.
 
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-import { afterEach, vi } from 'vitest';
-import {
-  JobLogEntryView,
-  JobProgressSnapshotView,
-  ScientificJobView,
-  TunnelInputChangeEvent,
-} from '../core/api/jobs-api.service';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   TunnelResultData,
   TunnelWorkflowService,
@@ -24,31 +16,17 @@ describe('TunnelComponent', () => {
     imaginaryFrequency: signal<number>(625),
     reactionEnergyZpe: signal<number>(-8.2),
     temperature: signal<number>(298.15),
-    inputChangeEvents: signal<TunnelInputChangeEvent[]>([]),
     activeSection: signal<string>('idle'),
-    currentJobId: signal<string | null>(null),
-    progressSnapshot: signal<JobProgressSnapshotView | null>(null),
-    jobLogs: signal<JobLogEntryView[]>([]),
     resultData: signal<TunnelResultData | null>(null),
     errorMessage: signal<string | null>(null),
-    exportErrorMessage: signal<string | null>(null),
-    isExporting: signal<boolean>(false),
-    historyJobs: signal<ScientificJobView[]>([]),
-    isHistoryLoading: signal<boolean>(false),
     isProcessing: signal<boolean>(false),
-    progressPercentage: signal<number>(0),
     progressMessage: signal<string>('Preparing tunnel effect calculation...'),
-    loadHistory: vi.fn(),
     dispatch: vi.fn(),
     reset: vi.fn(),
-    clearInputHistory: vi.fn(),
-    openHistoricalJob: vi.fn(),
-    downloadCsvReport: vi.fn(() =>
-      of({ filename: 'tunnel.csv', blob: new Blob(['data'], { type: 'text/csv' }) }),
-    ),
-    downloadLogReport: vi.fn(() =>
-      of({ filename: 'tunnel.log', blob: new Blob(['log'], { type: 'text/plain' }) }),
-    ),
+    updateReactionBarrierZpe: vi.fn(),
+    updateImaginaryFrequency: vi.fn(),
+    updateReactionEnergyZpe: vi.fn(),
+    updateTemperature: vi.fn(),
   };
 
   afterEach(() => vi.unstubAllGlobals());
@@ -61,84 +39,35 @@ describe('TunnelComponent', () => {
       revokeObjectURL: vi.fn(),
     });
 
-    workflowMock.currentJobId.set(null);
-    workflowMock.isExporting.set(false);
     workflowMock.activeSection.set('idle');
+    workflowMock.resultData.set(null);
 
     TestBed.configureTestingModule({
       imports: [TunnelComponent],
-      providers: [
-        {
-          provide: ActivatedRoute,
-          useValue: { queryParamMap: of(convertToParamMap({})) },
-        },
-      ],
     });
 
     TestBed.overrideComponent(TunnelComponent, {
       set: {
-        providers: [
-          { provide: TunnelWorkflowService, useValue: workflowMock },
-          {
-            provide: ActivatedRoute,
-            useValue: { queryParamMap: of(convertToParamMap({})) },
-          },
-        ],
+        providers: [{ provide: TunnelWorkflowService, useValue: workflowMock }],
       },
     });
   });
 
-  it('llama loadHistory al inicializar', () => {
+  it('crea el componente sin historial ni trazabilidad', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
     fixture.detectChanges();
-    expect(workflowMock.loadHistory).toHaveBeenCalled();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('abre job histórico cuando llega jobId por queryParams', () => {
-    TestBed.overrideComponent(TunnelComponent, {
-      set: {
-        providers: [
-          { provide: TunnelWorkflowService, useValue: workflowMock },
-          {
-            provide: ActivatedRoute,
-            useValue: { queryParamMap: of(convertToParamMap({ jobId: 'tunnel-77' })) },
-          },
-        ],
-      },
-    });
-    const fixture = TestBed.createComponent(TunnelComponent);
-    fixture.detectChanges();
-    expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tunnel-77');
-  });
-
-  it('delega dispatch, reset, clearInputHistory y openHistoricalJob al workflow', () => {
+  it('delega dispatch y reset al workflow', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
     const component = fixture.componentInstance;
 
     component.dispatch();
     component.reset();
-    component.clearInputHistory();
-    component.openHistoricalJob('tunnel-3');
 
     expect(workflowMock.dispatch).toHaveBeenCalled();
     expect(workflowMock.reset).toHaveBeenCalled();
-    expect(workflowMock.clearInputHistory).toHaveBeenCalled();
-    expect(workflowMock.openHistoricalJob).toHaveBeenCalledWith('tunnel-3');
-  });
-
-  it('canExportRows retorna false cuando no hay jobId actual', () => {
-    const fixture = TestBed.createComponent(TunnelComponent);
-    const component = fixture.componentInstance;
-    workflowMock.currentJobId.set(null);
-    expect(component.canExportRows()).toBe(false);
-  });
-
-  it('canExportRows retorna true cuando hay jobId y no está exportando', () => {
-    const fixture = TestBed.createComponent(TunnelComponent);
-    const component = fixture.componentInstance;
-    workflowMock.currentJobId.set('tunnel-001');
-    workflowMock.isExporting.set(false);
-    expect(component.canExportRows()).toBe(true);
   });
 
   it('formatOutputValue retorna -- para null y notación exponencial para números', () => {
@@ -150,7 +79,7 @@ describe('TunnelComponent', () => {
     );
   });
 
-  it('hasResultValues retorna true cuando todos los campos de resultado no son null', () => {
+  it('hasResultValues retorna true cuando todos los campos no son null', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
     const component = fixture.componentInstance;
 
@@ -166,9 +95,6 @@ describe('TunnelComponent', () => {
       kappaTst: 1.5,
       modelName: 'wigner',
       sourceLibrary: 'tunnel',
-      inputEventCount: 0,
-      isHistoricalSummary: false,
-      summaryMessage: null,
     };
 
     const partial: TunnelResultData = { ...full, u: null };
@@ -177,35 +103,34 @@ describe('TunnelComponent', () => {
     expect(component.hasResultValues(partial)).toBe(false);
   });
 
-  it('exportCsv llama downloadCsvReport y activa la descarga', () => {
+  it('exporta CSV local a partir del resultado actual', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
-    fixture.detectChanges();
     const component = fixture.componentInstance;
+    workflowMock.resultData.set({
+      reactionBarrierZpe: 3.5,
+      imaginaryFrequency: 625,
+      reactionEnergyZpe: -8.2,
+      temperature: 298.15,
+      u: 0.4,
+      alpha1: 1.2,
+      alpha2: 0.9,
+      g: 0.6,
+      kappaTst: 1.05,
+      modelName: 'Asymmetric Eckart',
+      sourceLibrary: 'legacy-fortran',
+    });
+
+    const clickSpy = vi.fn();
     const createSpy = vi.spyOn(document, 'createElement').mockReturnValue({
       href: '',
       download: '',
-      click: vi.fn(),
+      click: clickSpy,
     } as unknown as HTMLAnchorElement);
 
     component.exportCsv();
 
-    expect(workflowMock.downloadCsvReport).toHaveBeenCalled();
-    createSpy.mockRestore();
-  });
-
-  it('exportLog llama downloadLogReport y activa la descarga', () => {
-    const fixture = TestBed.createComponent(TunnelComponent);
-    fixture.detectChanges();
-    const component = fixture.componentInstance;
-    const createSpy = vi.spyOn(document, 'createElement').mockReturnValue({
-      href: '',
-      download: '',
-      click: vi.fn(),
-    } as unknown as HTMLAnchorElement);
-
-    component.exportLog();
-
-    expect(workflowMock.downloadLogReport).toHaveBeenCalled();
+    expect(createSpy).toHaveBeenCalledWith('a');
+    expect(clickSpy).toHaveBeenCalled();
     createSpy.mockRestore();
   });
 });

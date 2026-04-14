@@ -17,7 +17,8 @@ COPY . .
 RUN sed -i "s|http://localhost:8000|${API_BASE_URL}|g" src/environments/environment.production.ts \
     && npm run build \
     && mkdir -p /tmp/frontend-dist \
-    && if [ -d dist/frontend/browser ]; then cp -r dist/frontend/browser/. /tmp/frontend-dist/; else cp -r dist/frontend/. /tmp/frontend-dist/; fi
+    && if [ -d dist/frontend/browser ]; \
+    then cp -r dist/frontend/browser/. /tmp/frontend-dist/; else cp -r dist/frontend/. /tmp/frontend-dist/; fi
 
 FROM nginx:1.27-alpine AS prod
 COPY nginx.conf /etc/nginx/conf.d/default.conf

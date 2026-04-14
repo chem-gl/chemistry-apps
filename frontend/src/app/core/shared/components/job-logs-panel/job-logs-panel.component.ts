@@ -1,7 +1,7 @@
 // job-logs-panel.component.ts: Componente reutilizable para visualizar logs de ejecución de jobs.
 
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { JobLogEntryView } from '../../../api/jobs-api.service';
 
@@ -15,6 +15,12 @@ import { JobLogEntryView } from '../../../api/jobs-api.service';
 export class JobLogsPanelComponent {
   @Input() title: string = 'Execution logs';
   @Input() logs: ReadonlyArray<JobLogEntryView> = [];
+
+  readonly isExpanded = signal<boolean>(false);
+
+  toggleExpanded(): void {
+    this.isExpanded.update((currentValue) => !currentValue);
+  }
 
   hasPayload(logEntry: JobLogEntryView): boolean {
     return Object.keys(logEntry.payload).length > 0;
