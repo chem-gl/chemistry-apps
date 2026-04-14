@@ -1,6 +1,8 @@
 # backend/Dockerfile: Imagenes Docker para produccion del backend Django.
 
-FROM python:3.14.0 AS base
+# Python 3.12 (LTS estable, versión con soporte a largo plazo disponible en Docker Hub).
+# Se prefiere sobre 3.14.0 que podría no estar disponible en todos los registros.
+FROM python:3.12 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
