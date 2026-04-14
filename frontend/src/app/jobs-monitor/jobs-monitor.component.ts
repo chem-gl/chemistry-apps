@@ -170,7 +170,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     );
   }
 
-  resultActionLabel(jobItem: ScientificJobView): string {
+  resultActionLabel(_jobItem: ScientificJobView): string {
     return this.translateOrFallback('common.actions.openResult', 'Open result');
   }
 

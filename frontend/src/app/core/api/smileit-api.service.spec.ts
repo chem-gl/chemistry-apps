@@ -198,6 +198,7 @@ describe('SmileitApiService', () => {
         source_reference: 'literature',
         provenance_metadata: { origin: 'manual' },
       },
+      undefined,
       'body',
       false,
       expect.objectContaining({ context: expect.any(Object) }),
