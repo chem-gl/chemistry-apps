@@ -136,7 +136,10 @@ jobs:
             local raw_value="$1"
             local normalized=""
             while IFS= read -r entry; do
-              entry="$(printf '%s' "$entry" | tr -d '\r' | sed -E "s/^\s+|\s+$//g" | sed -E "s#/$##")"
+              entry="${entry//$'\r'/}"
+              entry="${entry#${entry%%[![:space:]]*}}"
+              entry="${entry%${entry##*[![:space:]]}}"
+              entry="${entry%/}"
               [ -z "$entry" ] && continue
               case "$entry" in
                 http://*|https://*) ;;
@@ -145,7 +148,7 @@ jobs:
                   exit 1
                   ;;
               esac
-              entry="$(printf '%s' "$entry" | sed -E 's#(https?://[^/]+).*#\1#')"
+              entry="$(printf '%s' "$entry" | cut -d/ -f1-3)"
               if [ -z "$normalized" ]; then
                 normalized="$entry"
               elif ! printf ',%s,' "$normalized" | grep -Fq ",$entry,"; then
