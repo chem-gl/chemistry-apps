@@ -481,7 +481,9 @@ jobs:
 
             cd "$VM_PROJECT_PATH"
 
-            $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build backend frontend
+            # --no-cache: evita reusar capas cacheadas con versiones anteriores de Poetry / dependencias.
+            # --pull:     fuerza re-pull de la imagen base para no usar capas locales obsoletas.
+            $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build --no-cache --pull backend frontend
 
             if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
               echo "Deploy failed, collecting compose diagnostics..."
