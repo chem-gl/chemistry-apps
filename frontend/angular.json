@@ -86,6 +86,7 @@
               "src/**/*.html",
               "src/main.ts",
               "src/polyfills.ts",
+              "src/test-setup.ts",
               "src/test.ts",
               "src/**/*.module.ts",
               "src/**/*.routing.ts",

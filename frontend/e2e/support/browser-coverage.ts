@@ -16,10 +16,14 @@ const SHOULD_COLLECT_BROWSER_COVERAGE = process.env['PLAYWRIGHT_COLLECT_COVERAGE
 const RAW_COVERAGE_DIRECTORY = path.resolve(process.cwd(), 'coverage/e2e/raw');
 
 function sanitizeCoverageLabel(label: string): string {
-  return label
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '-')
-    .replaceAll(/^-+|-+$/g, '');
+  let sanitized = label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+  while (sanitized.startsWith('-')) {
+    sanitized = sanitized.slice(1);
+  }
+  while (sanitized.endsWith('-')) {
+    sanitized = sanitized.slice(0, -1);
+  }
+  return sanitized;
 }
 
 export async function startBrowserCoverage(page: Page, label: string): Promise<boolean> {
