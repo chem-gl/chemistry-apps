@@ -51,6 +51,8 @@
     "zone.js": "^0.16.1"
   },
   "devDependencies": {
+    "@emnapi/core": "1.9.2",
+    "@emnapi/runtime": "1.9.2",
     "@angular/cli": "^21.2.3",
     "@angular/compiler-cli": "^21.2.5",
     "@cspell/dict-es-es": "^3.0.8",
