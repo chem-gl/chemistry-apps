@@ -384,8 +384,17 @@
     "form": {
       "title": "Data Entry",
       "ariaLabel": "Input parameters",
+      "inputMode": "Input mode",
+      "singleMode": "Single species",
+      "batchMode": "Batch CSV",
       "pkaCount": "Number of acid-base equilibria",
       "pkaValues": "Enter pKa values",
+        "speciesSettings": "Species configuration",
+        "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
+        "initialCharge": "Charge of the most protonated species",
+        "initialChargePlaceholder": "q",
+        "speciesLabel": "Species label",
+        "speciesLabelPlaceholder": "A",
       "phMode": "pH values",
       "phSingle": "One pH value",
       "phRange": "pH range",
@@ -397,7 +406,40 @@
     "actions": {
       "run": "Run Molar Fractions",
       "processing": "Processing...",
-      "reset": "Reset"
+      "reset": "Reset",
+      "exportCsv": "Export CSV"
+    },
+    "batch": {
+      "description": "Upload a CSV file with multiple compounds to calculate species fractions at one fixed pH value.",
+      "studentNote": "Students usually estimate pKa values outside the platform and then upload the final curated table here.",
+      "csvExampleTitle": "Expected CSV example",
+      "fileLabel": "CSV file",
+      "parameters": "Batch parameters",
+      "targetPh": "Target pH",
+      "threshold": "Minimum fraction threshold",
+      "thresholdHint": "Only species with fraction greater than or equal to this value will remain in the final table.",
+      "run": "Calculate from CSV",
+      "exportCsv": "Export batch CSV",
+      "noRows": "No species met the selected threshold for this file.",
+      "summary": {
+        "rows": "Visible rows:",
+        "ph": "Target pH:"
+      },
+      "table": {
+        "acronym": "Acronym",
+        "smiles": "SMILES",
+        "pkaValues": "pKa values",
+        "initialCharge": "Initial charge",
+        "species": "Species",
+        "charge": "Charge",
+        "fraction": "Fraction"
+      },
+      "csvExample": {
+        "header": "Acronym,SMILES,InitialCharge,pKaValues",
+        "row1": "EDA,NCCN,2,6.16;10.26",
+        "row2": "GLY,NCC(=O)O,-1,2.35;9.78",
+        "row3": "AMPH,CC(N)CC1=CC=CC=C1,q,9.9"
+      }
     },
     "result": {
       "title": "Results",
@@ -415,6 +457,8 @@
         }
       },
       "metadata": {
+        "label": "Label:",
+        "initialCharge": "Initial charge:",
         "mode": "Mode:",
         "pkaValues": "pKa values:",
         "range": "Range:",

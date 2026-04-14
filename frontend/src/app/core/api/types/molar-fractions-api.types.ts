@@ -4,6 +4,8 @@
 /** Parámetros de entrada para crear un job de fracciones molares */
 export interface MolarFractionsParams {
   pkaValues: number[];
+  initialCharge?: number | string;
+  label?: string;
   phMode: 'single' | 'range';
   phValue?: number;
   phMin?: number;

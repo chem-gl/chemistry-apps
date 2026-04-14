@@ -384,8 +384,17 @@
     "form": {
       "title": "Entrada de datos",
       "ariaLabel": "Parámetros de entrada",
+      "inputMode": "Modo de entrada",
+      "singleMode": "Una especie",
+      "batchMode": "CSV por lote",
       "pkaCount": "Número de equilibrios ácido-base",
       "pkaValues": "Ingresar valores pKa",
+      "speciesSettings": "Configuración de la especie",
+      "speciesSettingsOptional": "Opcional. Si lo dejas vacío se usa la configuración estándar del modelo.",
+      "initialCharge": "Carga de la especie máximamente protonada",
+      "initialChargePlaceholder": "q",
+      "speciesLabel": "Etiqueta de la especie",
+      "speciesLabelPlaceholder": "A",
       "phMode": "Valores de pH",
       "phSingle": "Un valor de pH",
       "phRange": "Rango de pH",
@@ -397,7 +406,40 @@
     "actions": {
       "run": "Ejecutar Fracciones Molares",
       "processing": "Procesando...",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "exportCsv": "Exportar CSV"
+    },
+    "batch": {
+      "description": "Carga un archivo CSV con muchos compuestos para calcular las fracciones de especies en un único valor de pH.",
+      "studentNote": "Los estudiantes suelen estimar los valores de pKa fuera de la plataforma y después subir aquí la tabla final ya curada.",
+      "csvExampleTitle": "Ejemplo de CSV esperado",
+      "fileLabel": "Archivo CSV",
+      "parameters": "Parámetros del lote",
+      "targetPh": "pH objetivo",
+      "threshold": "Umbral mínimo de fracción",
+      "thresholdHint": "Solo se conservarán en la tabla final las especies con fracción mayor o igual a este valor.",
+      "run": "Calcular desde CSV",
+      "exportCsv": "Exportar CSV del lote",
+      "noRows": "Ninguna especie superó el umbral seleccionado para este archivo.",
+      "summary": {
+        "rows": "Filas visibles:",
+        "ph": "pH objetivo:"
+      },
+      "table": {
+        "acronym": "Acrónimo",
+        "smiles": "SMILES",
+        "pkaValues": "Valores pKa",
+        "initialCharge": "Carga inicial",
+        "species": "Especie",
+        "charge": "Carga",
+        "fraction": "Fracción"
+      },
+      "csvExample": {
+        "header": "Acrónimo,SMILES,carga de la especie máximamente protonada,valores de pka",
+        "row1": "EDA,NCCN,2,6.16;10.26",
+        "row2": "GLY,NCC(=O)O,-1,2.35;9.78",
+        "row3": "AMPH,CC(N)CC1=CC=CC=C1,q,9.9"
+      }
     },
     "result": {
       "title": "Resultados",
@@ -415,6 +457,8 @@
         }
       },
       "metadata": {
+        "label": "Etiqueta:",
+        "initialCharge": "Carga inicial:",
         "mode": "Modo:",
         "pkaValues": "Valores pKa:",
         "range": "Rango:",

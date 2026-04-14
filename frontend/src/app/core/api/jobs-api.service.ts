@@ -271,6 +271,17 @@ export class JobsApiService {
       ph_mode: params.phMode,
     };
 
+    if (params.initialCharge !== undefined) {
+      payloadParameters['initial_charge'] = params.initialCharge;
+    }
+
+    if (params.label !== undefined) {
+      const normalizedLabel: string = params.label.toString().trim();
+      if (normalizedLabel.length > 0) {
+        payloadParameters['label'] = normalizedLabel;
+      }
+    }
+
     if (params.phMode === 'single') {
       if (params.phValue === undefined) {
         throw new Error('phValue es obligatorio cuando phMode=single.');

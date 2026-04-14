@@ -95,6 +95,8 @@ class MolarFractionsJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
         parameters_payload: JSONMap = {
             "pka_values": validated_payload["pka_values"],
+            "initial_charge": validated_payload["initial_charge"],
+            "label": validated_payload["label"],
             "ph_mode": ph_mode,
         }
         if ph_mode == "single":

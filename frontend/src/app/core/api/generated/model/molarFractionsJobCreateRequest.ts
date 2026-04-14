@@ -20,6 +20,14 @@ export interface MolarFractionsJobCreateRequest {
      */
     pka_values: Array<number>;
     /**
+     * Carga de la especie máximamente protonada. Acepta entero o \'q\'.
+     */
+    initial_charge?: string;
+    /**
+     * Etiqueta base de la especie, por ejemplo A o EDA.
+     */
+    label?: string;
+    /**
      * Modo de cálculo: single para un pH o range para barrido.  * `single` - single * `range` - range
      */
     ph_mode: PhModeEnum;

@@ -16,7 +16,7 @@ import { MolarFractionRow } from './molarFractionRow';
  */
 export interface MolarFractionsResult { 
     /**
-     * Etiquetas de especies en formato f0..fn.
+     * Etiquetas formateadas de especies ácido-base.
      */
     species_labels: Array<string>;
     rows: Array<MolarFractionRow>;

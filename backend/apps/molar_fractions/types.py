@@ -11,12 +11,15 @@ Cómo se usa:
 from typing import Literal, NotRequired, TypedDict
 
 MolarFractionsMode = Literal["single", "range"]
+InitialChargeValue = int | str
 
 
 class MolarFractionsInput(TypedDict):
     """Parámetros normalizados para ejecutar fracciones molares."""
 
     pka_values: list[float]
+    initial_charge: InitialChargeValue
+    label: str
     ph_mode: MolarFractionsMode
     ph_min: float
     ph_max: float
@@ -28,6 +31,8 @@ class MolarFractionsJobCreatePayload(TypedDict):
 
     version: str
     pka_values: list[float]
+    initial_charge: InitialChargeValue
+    label: str
     ph_mode: MolarFractionsMode
     ph_value: NotRequired[float | None]
     ph_min: NotRequired[float | None]
@@ -47,6 +52,8 @@ class MolarFractionsMetadata(TypedDict):
     """Metadatos de trazabilidad del cálculo de fracciones molares."""
 
     pka_values: list[float]
+    initial_charge: InitialChargeValue
+    label: str
     ph_mode: MolarFractionsMode
     ph_min: float
     ph_max: float

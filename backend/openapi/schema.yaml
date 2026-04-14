@@ -1647,6 +1647,8 @@ paths:
                   - 2.2
                   - 7.2
                   - 12.3
+                  initial_charge: q
+                  label: A
                   ph_mode: range
                   ph_min: 0.0
                   ph_max: 14.0
@@ -1659,6 +1661,8 @@ paths:
                   version: 1.0.0
                   pka_values:
                   - 4.75
+                  initial_charge: -1
+                  label: Ac
                   ph_mode: single
                   ph_value: 7.4
                 summary: Crear job molar fractions en un solo pH
@@ -5072,6 +5076,18 @@ components:
           description: Lista de pKa en el orden químico definido por el usuario.
           maxItems: 6
           minItems: 1
+        initial_charge:
+          type: string
+          minLength: 1
+          default: q
+          description: Carga de la especie máximamente protonada. Acepta entero o
+            'q'.
+        label:
+          type: string
+          minLength: 1
+          default: A
+          description: Etiqueta base de la especie, por ejemplo A o EDA.
+          maxLength: 20
         ph_mode:
           allOf:
           - $ref: '#/components/schemas/PhModeEnum'
@@ -5189,6 +5205,13 @@ components:
           items:
             type: number
             format: double
+        initial_charge:
+          type: string
+          default: q
+        label:
+          type: string
+          default: A
+          maxLength: 20
         ph_mode:
           $ref: '#/components/schemas/PhModeEnum'
         ph_min:
@@ -5225,6 +5248,13 @@ components:
             format: double
           maxItems: 6
           minItems: 1
+        initial_charge:
+          type: string
+          default: q
+        label:
+          type: string
+          default: A
+          maxLength: 20
         ph_mode:
           $ref: '#/components/schemas/PhModeEnum'
         ph_value:
@@ -5255,7 +5285,7 @@ components:
           items:
             type: string
             maxLength: 20
-          description: Etiquetas de especies en formato f0..fn.
+          description: Etiquetas formateadas de especies ácido-base.
         rows:
           type: array
           items:

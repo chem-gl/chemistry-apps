@@ -18,6 +18,8 @@ APP_API_BASE_PATH: Final[str] = "/api/molar-fractions/jobs/"
 
 PLUGIN_NAME: Final[str] = "molar-fractions"
 DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0.0"
+DEFAULT_LABEL: Final[str] = "A"
+DEFAULT_INITIAL_CHARGE: Final[str] = "q"
 
 MAX_PKA_VALUES: Final[int] = 6
 MIN_PKA_VALUES: Final[int] = 1

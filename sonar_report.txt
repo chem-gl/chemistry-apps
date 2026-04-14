@@ -1,3 +1,53 @@
+Problema 1
+Archivo: chemistry-apps:frontend/src/app/molar-fractions/molar-fractions-computation.ts
+
+Problema:
+Remove this assignment of "index".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S2310
+Severidad: MAJOR
+Línea: 112
+
+Cómo solucionarlo:
+Loop counters, such as variables used to track the iteration count in loops, should not be assigned from within the loop body to avoid unexpected
+behavior and bugs. It can inadvertently lead to an infinite loop or make the loop behavior more complex and harder to reason about.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    i = names.length; // Noncompliant: The loop counter i is assigned within the loop body
+  } else {
+    console.log(names[i]);
+  }
+}
+
+To avoid these issues, you should update the loop counter only in the loop’s update statement, typically located at the end of the loop body or
+within the loop header.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    break;
+  } else {
+    console.log(names[i]);
+  }
+}
+
+Alternatively, you should use the for…​of statement if your intention is only to iterate over the values of an iterable object.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (const name of names) {
+  if (!name) {
+    break;
+  } else {
+    console.log(name);
+  }
+}
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
 Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
 No se encontraron archivos con duplicación visible en la respuesta de Sonar.

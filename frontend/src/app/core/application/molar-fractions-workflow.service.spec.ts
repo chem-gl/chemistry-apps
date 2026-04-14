@@ -3,7 +3,8 @@
 
 import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import '../../../test-setup';
 import { JobLogsPageView, JobsApiService, ScientificJobView } from '../api/jobs-api.service';
 import { MolarFractionsWorkflowService } from './molar-fractions-workflow.service';
 
@@ -17,7 +18,6 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     cache_hit: false,
     cache_miss: true,
     progress_percentage: 100,
-    progress_stage: 'completed',
     progress_message: 'Completed',
     progress_event_index: 4,
     supports_pause_resume: false,
@@ -27,6 +27,8 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     resumed_at: null,
     parameters: {
       pka_values: [2.2, 7.2, 12.3],
+      initial_charge: 'q',
+      label: 'sdf',
       ph_mode: 'range',
       ph_min: 0,
       ph_max: 14,
@@ -60,6 +62,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
 
 describe('MolarFractionsWorkflowService', () => {
   let workflowService: MolarFractionsWorkflowService;
+
   const emptyLogsPage: JobLogsPageView = {
     jobId: 'molar-job-1',
     count: 0,
@@ -101,6 +104,10 @@ describe('MolarFractionsWorkflowService', () => {
     workflowService = TestBed.inject(MolarFractionsWorkflowService);
   });
 
+  afterEach(() => {
+    TestBed.resetTestingModule();
+  });
+
   it('dispatches range job and stores completed table result', () => {
     workflowService.setPkaCount(3);
     workflowService.updatePkaValue(0, 2.2);
@@ -121,9 +128,53 @@ describe('MolarFractionsWorkflowService', () => {
       phStep: 1,
     });
     expect(workflowService.activeSection()).toBe('result');
-    expect(workflowService.resultData()?.speciesLabels).toEqual(['f0', 'f1', 'f2', 'f3']);
+    expect(workflowService.resultData()?.speciesLabels).toEqual([
+      'H₃sdfq',
+      'H₂sdfq⁻¹',
+      'Hsdfq⁻²',
+      'sdfq⁻³',
+    ]);
     expect(workflowService.historyJobs()).toEqual([]);
     expect(jobsApiServiceMock.getJobLogs).not.toHaveBeenCalled();
+  });
+
+  it('preserves backend species labels when they are already descriptive', () => {
+    jobsApiServiceMock.dispatchMolarFractionsJob.mockReturnValue(
+      of(
+        makeScientificJob({
+          results: {
+            species_labels: ['H₃EDA²⁺', 'H₂EDA⁺', 'HEDA', 'EDA⁻'],
+            rows: [
+              {
+                ph: 7,
+                fractions: [0.1, 0.2, 0.3, 0.4],
+                sum_fraction: 1,
+              },
+            ],
+            metadata: {
+              pka_values: [2.2, 7.2, 12.3],
+              initial_charge: 2,
+              label: 'EDA',
+              ph_mode: 'range',
+              ph_min: 0,
+              ph_max: 14,
+              ph_step: 1,
+              total_species: 4,
+              total_points: 15,
+            },
+          },
+        }),
+      ),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.resultData()?.speciesLabels).toEqual([
+      'H₃EDA²⁺',
+      'H₂EDA⁺',
+      'HEDA',
+      'EDA⁻',
+    ]);
   });
 
   it('falls back to polling and resolves the final result without logs', () => {

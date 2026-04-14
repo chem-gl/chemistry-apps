@@ -15,6 +15,8 @@ import { PhModeEnum } from './phModeEnum';
  */
 export interface MolarFractionsMetadata { 
     pka_values: Array<number>;
+    initial_charge?: string;
+    label?: string;
     ph_mode: PhModeEnum;
     ph_min: number;
     ph_max: number;

@@ -1,9 +1,11 @@
 // molar-fractions.component.spec.ts: Pruebas unitarias del componente Molar Fractions.
 // Verifica delegación básica, render de gráfica y export CSV local sin historial persistido.
 
+import '../../test-setup';
+
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   MolarFractionsResultData,
   MolarFractionsResultRow,
@@ -27,6 +29,8 @@ function buildResultData(options: {
     })),
     metadata: {
       pkaValues: [2.2, 7.2],
+      initialCharge: 'q',
+      label: 'A',
       phMode,
       phMin: 0,
       phMax: Math.max(0, rowCount - 1),
@@ -41,6 +45,8 @@ describe('MolarFractionsComponent', () => {
   const workflowMock = {
     pkaCount: signal<number>(3),
     pkaValues: signal<number[]>([2.2, 7.2, 12.3, 0, 0, 0]),
+    initialCharge: signal<string>('q'),
+    speciesLabel: signal<string>('A'),
     phMode: signal<'single' | 'range'>('range'),
     phValue: signal<number>(7),
     phMin: signal<number>(0),
@@ -104,6 +110,17 @@ describe('MolarFractionsComponent', () => {
     const component = fixture.componentInstance;
     component.onPkaCountChange('4');
     expect(workflowMock.setPkaCount).toHaveBeenCalledWith(4);
+  });
+
+  it('cambia entre modo single y batch en estado local', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    component.onInputModeChange('batch');
+    expect(component.inputMode()).toBe('batch');
+
+    component.onInputModeChange('single');
+    expect(component.inputMode()).toBe('single');
   });
 
   it('formatea pH con dos decimales', () => {
