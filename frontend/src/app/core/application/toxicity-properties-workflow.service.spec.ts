@@ -121,6 +121,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
     jobsApiServiceMock = {
       dispatchToxicityPropertiesJob: vi.fn(
         (): Observable<ToxicityJobResponseView> => of(makeToxicityJobResponse()),
@@ -152,8 +153,14 @@ describe('ToxicityPropertiesWorkflowService', () => {
     workflowService = TestBed.inject(ToxicityPropertiesWorkflowService);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('dispatches toxicity job and stores completed result', () => {
     workflowService.setBatchInputText('CCO');
+    workflowService.jobNameInput.set('Lote toxicidad');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -165,10 +172,12 @@ describe('ToxicityPropertiesWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.total).toBe(1);
     expect(workflowService.resultData()?.molecules[0]?.smiles).toBe('CCO');
+    expect(workflowService.currentJobDisplayName()).toBe('Lote toxicidad');
   });
 
   it('keeps error section when smiles input is empty', () => {
     workflowService.setBatchInputText('\n   \n\t');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -239,6 +248,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
       }),
     );
     workflowService.setBatchInputText('CCO\nnot_a_smiles');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -252,11 +262,32 @@ describe('ToxicityPropertiesWorkflowService', () => {
       throwError(() => new Error('validator unavailable')),
     );
     workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('validator unavailable');
+  });
+
+  it('prevalidates smiles input and blocks dispatch before job creation when invalid', () => {
+    jobsApiServiceMock.validateSmilesCompatibility.mockReturnValue(
+      of({
+        compatible: false,
+        issues: [{ smiles: 'bad_smiles', reason: 'Unsupported SMILES' }],
+      }),
+    );
+
+    workflowService.setBatchInputText('bad_smiles');
+    vi.runAllTimers();
+
+    expect(workflowService.hasInvalidSmiles()).toBe(true);
+    expect(workflowService.inputValidationMessage()).toContain('bad_smiles');
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).not.toHaveBeenCalled();
+    expect(workflowService.errorMessage()).toContain('bad_smiles');
   });
 
   it('keeps error section when historical payload cannot be reconstructed', () => {
@@ -315,6 +346,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
       of(makeToxicityJobResponse({ id: 'tox-progress-1' })),
     );
     workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
 
     workflowService.dispatch();
 
@@ -360,6 +392,7 @@ describe('ToxicityPropertiesWorkflowService', () => {
       throwError(() => new Error('gateway timeout')),
     );
     workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
 
     workflowService.dispatch();
     progressEvents$.complete();

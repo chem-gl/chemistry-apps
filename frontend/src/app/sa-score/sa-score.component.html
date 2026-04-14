@@ -14,9 +14,19 @@
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
         [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
         [customNamesEnabled]="workflow.customNamesEnabled()" (smilesChange)="workflow.setBatchInputText($event)"
+        [isValidatingSmiles]="workflow.isInputValidationPending()"
+        [validationMessage]="workflow.inputValidationMessage()"
         (customNamesEnabledChange)="workflow.customNamesEnabled.set($event)"
         (rowNameChange)="workflow.updateInputRowName($event.index, $event.name)" (openSketch)="openSketchDialog()"
         (fileUpload)="onFileUpload($event)"></app-smiles-batch-input>
+
+      <label class="job-name-field">
+        <span>{{ 'saScore.form.jobNameLabel' | transloco }}</span>
+        <input class="job-name-input" type="text" [ngModel]="workflow.jobNameInput()"
+          (ngModelChange)="workflow.jobNameInput.set($event)" [disabled]="workflow.isProcessing()"
+          [placeholder]="'saScore.form.jobNamePlaceholder' | transloco" />
+        <small class="job-name-hint">{{ 'saScore.form.jobNameHint' | transloco }}</small>
+      </label>
 
       <fieldset class="methods-fieldset">
         <legend>{{ 'saScore.form.methodsLegend' | transloco }}</legend>
@@ -32,7 +42,8 @@
       </fieldset>
 
       <div class="action-row">
-        <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+        <button class="btn-primary" (click)="dispatch()"
+          [disabled]="workflow.isProcessing() || workflow.isInputValidationPending() || workflow.hasInvalidSmiles()">
           {{ workflow.isProcessing() ? ('saScore.actions.processing' | transloco) : ('saScore.actions.run' | transloco)
           }}
         </button>
@@ -60,6 +71,9 @@
         <p><strong>{{ 'saScore.result.totalMolecules' | transloco }}</strong> {{ resultData.total }}</p>
         <p><strong>{{ 'saScore.result.methodsLabel' | transloco }}</strong> {{ resultData.requestedMethods.join(', ') }}
         </p>
+        @if (currentJobDisplayLabel(); as currentJobDisplayLabel) {
+        <p><strong>{{ 'saScore.result.jobNameLabel' | transloco }}</strong> {{ currentJobDisplayLabel }}</p>
+        }
         <p>
           <strong>{{ 'saScore.result.jobIdLabel' | transloco }}</strong> <span class="mono">{{ workflow.currentJobId()
             }}</span>
@@ -85,22 +99,49 @@
       <p class="error-message" role="alert">{{ exportErrorMessage }}</p>
       }
 
+      <div class="table-toolbar">
+        <label class="table-search-field">
+          <span>{{ 'saScore.result.searchLabel' | transloco }}</span>
+          <input class="table-search-input" type="search" [ngModel]="tableSearchTerm()"
+            (ngModelChange)="updateTableSearch($event)"
+            [placeholder]="'saScore.result.searchPlaceholder' | transloco" />
+        </label>
+        <p class="table-summary-pill">
+          {{ filteredMoleculeCount() }} / {{ resultData.total }} {{ 'saScore.result.filteredCount' | transloco }}
+        </p>
+      </div>
+
       <div class="table-wrap">
         <table class="result-table">
           <thead>
             <tr>
-              <th>{{ 'saScore.result.tableName' | transloco }}</th>
-              <th>{{ 'saScore.result.tableSMILES' | transloco }}</th>
+              <th [attr.aria-sort]="ariaSort('name')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('name')">
+                  <span>{{ 'saScore.result.tableName' | transloco }}</span>
+                  <span class="sort-indicator">{{ sortIndicator('name') }}</span>
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('smiles')">
+                <button class="sort-button" type="button" (click)="toggleTableSort('smiles')">
+                  <span>{{ 'saScore.result.tableSMILES' | transloco }}</span>
+                  <span class="sort-indicator">{{ sortIndicator('smiles') }}</span>
+                </button>
+              </th>
               @for (methodItem of methodItems; track methodItem.key) {
               @if (resultData.requestedMethods.includes(methodItem.key)) {
-              <th>{{ methodItem.label }}</th>
+              <th class="numeric-head" [attr.aria-sort]="ariaSort(methodItem.key)">
+                <button class="sort-button" type="button" (click)="toggleTableSort(methodItem.key)">
+                  <span>{{ methodItem.label }}</span>
+                  <span class="sort-indicator">{{ sortIndicator(methodItem.key) }}</span>
+                </button>
+              </th>
               }
               }
             </tr>
           </thead>
           <tbody>
-            @for (molecule of resultData.molecules; track molecule.smiles + '_' + $index) {
-            <tr>
+            @for (molecule of visibleMolecules(); track molecule.smiles + '_' + $index) {
+            <tr [class.result-row-with-error]="hasMethodError(molecule)">
               <td>{{ molecule.name }}</td>
               <td>
                 <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
@@ -110,7 +151,7 @@
               </td>
               @for (methodItem of methodItems; track methodItem.key) {
               @if (resultData.requestedMethods.includes(methodItem.key)) {
-              <td>
+              <td class="numeric-cell">
                 @if (methodError(molecule, methodItem.key); as rowError) {
                 <span class="cell-error" [title]="rowError">ERROR</span>
                 } @else {
@@ -119,6 +160,13 @@
               </td>
               }
               }
+            </tr>
+            }
+            @if (visibleMolecules().length === 0) {
+            <tr>
+              <td class="empty-table-cell" [attr.colspan]="resultTableColspan(resultData.requestedMethods)">
+                {{ 'saScore.result.emptySearch' | transloco }}
+              </td>
             </tr>
             }
           </tbody>
@@ -135,9 +183,10 @@
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
   <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
-    [emptyMessage]="'saScore.history.empty' | transloco" [sectionTitle]="'saScore.history.title' | transloco"
-    [ariaLabel]="'saScore.history.ariaLabel' | transloco" (reload)="workflow.loadHistory()"
-    (openJob)="openHistoricalJob($event)" (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
+    [jobDisplayNameResolver]="resolveHistoryJobDisplayName" [emptyMessage]="'saScore.history.empty' | transloco"
+    [sectionTitle]="'saScore.history.title' | transloco" [ariaLabel]="'saScore.history.ariaLabel' | transloco"
+    (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"
+    (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
 </section>
 <!-- ── Sketch dialog (Ketcher) ─────────────────────────────────────────── -->
 <dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"

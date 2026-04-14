@@ -23,7 +23,6 @@ import {
   HistoricalJobWorkflowPort,
   NamedSmilesInputRow,
   SmilesMoleculeWorkflowPort,
-  buildSmilesTextFromRows,
   closeDialogOnBackdropClick,
   parseNamedSmilesBatch,
   subscribeToRouteHistoricalJob,
@@ -214,8 +213,7 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
       ...this.workflowInputRows(),
       { name: smilesLine, smiles: smilesLine },
     ];
-    this.workflowInputRows.set(nextRows);
-    this.workflowSmilesInput.set(buildSmilesTextFromRows(nextRows));
+    this.workflow.setInputRows(nextRows, this.workflowCustomNamesEnabled());
     this.closeSketchDialog();
   }
 
@@ -259,11 +257,7 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
 
     void file.text().then((rawContent: string) => {
       const parsedBatch = parseNamedSmilesBatch(rawContent);
-      this.workflowInputRows.set(parsedBatch.rows);
-      this.workflowSmilesInput.set(buildSmilesTextFromRows(parsedBatch.rows));
-      if (parsedBatch.containsExplicitNames) {
-        this.workflowCustomNamesEnabled.set(true);
-      }
+      this.workflow.setInputRows(parsedBatch.rows, parsedBatch.containsExplicitNames);
     });
 
     input.value = '';

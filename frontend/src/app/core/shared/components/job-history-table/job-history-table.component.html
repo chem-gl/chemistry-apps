@@ -24,7 +24,14 @@
             <tbody>
                 @for (historyJob of jobs; track historyJob.id) {
                 <tr>
-                    <td class="mono">{{ historyJob.id }}</td>
+                    <td>
+                        @if (displayJobName(historyJob) !== historyJob.id) {
+                        <div class="job-display-name">{{ displayJobName(historyJob) }}</div>
+                        <div class="mono">{{ historyJob.id }}</div>
+                        } @else {
+                        <div class="mono">{{ historyJob.id }}</div>
+                        }
+                    </td>
                     <td>
                         <span [class]="statusClass(historyJob.status)">{{
                             historyJob.status

@@ -2,5 +2,5 @@ projectKey=chemistry-apps
 serverUrl=http://localhost:9000
 serverVersion=26.3.0.120487
 dashboardUrl=http://localhost:9000/dashboard?id=chemistry-apps
-ceTaskId=5a0c72a1-58e0-415a-a648-51caad29f7e2
-ceTaskUrl=http://localhost:9000/api/ce/task?id=5a0c72a1-58e0-415a-a648-51caad29f7e2
+ceTaskId=c2c238ba-54ae-4611-ae5e-8462c0dffc40
+ceTaskUrl=http://localhost:9000/api/ce/task?id=c2c238ba-54ae-4611-ae5e-8462c0dffc40

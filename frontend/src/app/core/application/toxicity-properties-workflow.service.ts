@@ -23,11 +23,22 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
     super('CCO\nCC(=O)O\nc1ccccc1');
   }
 
+  protected override get workflowPluginName(): string {
+    return 'toxicity-properties';
+  }
+
   protected override get defaultProgressMessage(): string {
     return 'Preparing toxicity prediction...';
   }
 
   override dispatch(): void {
+    const preDispatchValidationError: string | null = this.getPreDispatchSmilesValidationError();
+    if (preDispatchValidationError !== null) {
+      this.activeSection.set('error');
+      this.errorMessage.set(preDispatchValidationError);
+      return;
+    }
+
     this.prepareForDispatch();
 
     const normalizedRows = this.buildNamedInputRows();
@@ -54,6 +65,7 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
             })
             .subscribe({
               next: (jobResponse: ToxicityJobResponseView) => {
+                this.rememberDispatchedJobDisplayName(jobResponse.id);
                 this.currentJobId.set(jobResponse.id);
 
                 if (jobResponse.status === 'completed') {
@@ -104,6 +116,7 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
 
     this.jobsApiService.getToxicityPropertiesJobStatus(jobId).subscribe({
       next: (jobResponse: ToxicityJobResponseView) => {
+        this.hydrateCurrentJobDisplayName(jobId, jobResponse.parameters);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           loadHistoryAfter: false,
         });
@@ -125,6 +138,7 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
   protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getToxicityPropertiesJobStatus(jobId).subscribe({
       next: (jobResponse: ToxicityJobResponseView) => {
+        this.hydrateCurrentJobDisplayName(jobId, jobResponse.parameters);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           checkFailed: false,
           loadLogs: false,

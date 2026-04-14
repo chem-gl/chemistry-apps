@@ -637,6 +637,9 @@
     "form": {
       "title": "Input",
       "ariaLabel": "Input parameters",
+      "jobNameLabel": "Job name",
+      "jobNamePlaceholder": "Optional: visible job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
       "methodsLegend": "Methods"
     },
     "actions": {
@@ -651,9 +654,14 @@
       "ariaLabel": "Results and progress",
       "submitting": "Submitting SA score job to backend...",
       "ariaProgressLabel": "SA score job progress",
+      "searchLabel": "Search table",
+      "searchPlaceholder": "Search by name or SMILES",
+      "filteredCount": "visible rows",
+      "emptySearch": "No SA Score rows match the current search.",
       "exportTargetLabel": "Export target",
       "totalMolecules": "Total molecules:",
       "methodsLabel": "Methods:",
+      "jobNameLabel": "Visible name:",
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
       "tableSMILES": "SMILES"
@@ -683,7 +691,10 @@
     },
     "form": {
       "title": "Input",
-      "ariaLabel": "Input parameters"
+      "ariaLabel": "Input parameters",
+      "jobNameLabel": "Job name",
+      "jobNamePlaceholder": "Optional: visible job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved."
     },
     "actions": {
       "run": "Run Toxicity Properties",
@@ -697,8 +708,13 @@
       "ariaLabel": "Results and progress",
       "submitting": "Submitting toxicity job to backend...",
       "ariaProgressLabel": "Toxicity job progress",
+      "searchLabel": "Search table",
+      "searchPlaceholder": "Search by name or SMILES",
+      "filteredCount": "visible rows",
+      "emptySearch": "No toxicity rows match the current search.",
       "totalMolecules": "Total molecules:",
       "modelLabel": "Model: ADMET-AI",
+      "jobNameLabel": "Visible name:",
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
       "tableSMILES": "SMILES",
@@ -1192,7 +1208,8 @@
       "tableSMILES": "SMILES",
       "drawSmilesTitle": "Draw a molecule with Ketcher and add it to the list",
       "uploadFileTitle": "Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs",
-      "fileFormats": ".smi, .txt or .csv file"
+      "fileFormats": ".smi, .txt or .csv file",
+      "validating": "Validating SMILES before submission..."
     },
     "jobArtifactExport": {
       "persistedFiles": "Persisted Input Files",

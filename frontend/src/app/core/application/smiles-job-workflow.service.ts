@@ -2,10 +2,12 @@
 // Centraliza parseo de entrada, validación de compatibilidad y carga de logs históricos.
 // SaScoreWorkflowService y ToxicityPropertiesWorkflowService extienden esta clase.
 
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, OnDestroy, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import {
   JobLogEntryView,
   JobLogsPageView,
+  SmilesCompatibilityIssueView,
   SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
 import {
@@ -13,6 +15,12 @@ import {
   NamedSmilesInputRow,
   parseNamedSmilesBatch,
 } from '../shared/scientific-app-ui.utils';
+import {
+  extractScientificJobNameFromParameters,
+  persistScientificJobName,
+  resolveScientificJobNameCandidate,
+  resolveScientificJobNameForHistory,
+} from '../shared/scientific-job-name.utils';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 /**
@@ -21,16 +29,57 @@ import { BaseJobWorkflowService } from './base-job-workflow.service';
  * ordenamiento por índice de evento.
  */
 @Injectable()
-export abstract class SmilesJobWorkflowService<
-  TResultData,
-> extends BaseJobWorkflowService<TResultData> {
+export abstract class SmilesJobWorkflowService<TResultData>
+  extends BaseJobWorkflowService<TResultData>
+  implements OnDestroy
+{
   readonly smilesInput = signal<string>('');
   readonly inputRows = signal<NamedSmilesInputRow[]>([]);
   readonly customNamesEnabled = signal<boolean>(false);
+  readonly jobNameInput = signal<string>('');
+  readonly currentJobDisplayName = signal<string | null>(null);
+  readonly invalidSmilesIssues = signal<SmilesCompatibilityIssueView[]>([]);
+  readonly isInputValidationPending = signal<boolean>(false);
+  readonly resolvedJobName = computed<string | null>(() =>
+    resolveScientificJobNameCandidate(this.jobNameInput(), this.inputRows()),
+  );
+  readonly hasInvalidSmiles = computed<boolean>(() => this.invalidSmilesIssues().length > 0);
+  readonly inputValidationMessage = computed<string | null>(() => {
+    const issues: SmilesCompatibilityIssueView[] = this.invalidSmilesIssues();
+    if (issues.length === 0) {
+      return null;
+    }
+
+    return this.buildSmilesCompatibilityErrorMessage({ compatible: false, issues });
+  });
+
+  private inputValidationSubscription: Subscription | null = null;
+  private inputValidationTimer: ReturnType<typeof setTimeout> | null = null;
+  private latestValidationToken: number = 0;
 
   protected constructor(initialInput: string) {
     super();
-    this.setBatchInputText(initialInput);
+    this.applyParsedBatch(parseNamedSmilesBatch(initialInput), false);
+  }
+
+  protected abstract get workflowPluginName(): string;
+
+  override ngOnDestroy(): void {
+    this.inputValidationSubscription?.unsubscribe();
+    if (this.inputValidationTimer !== null) {
+      clearTimeout(this.inputValidationTimer);
+    }
+    super.ngOnDestroy();
+  }
+
+  override reset(): void {
+    super.reset();
+    this.currentJobDisplayName.set(null);
+  }
+
+  protected override prepareForDispatch(): void {
+    super.prepareForDispatch();
+    this.currentJobDisplayName.set(null);
   }
 
   /**
@@ -63,12 +112,7 @@ export abstract class SmilesJobWorkflowService<
   }
 
   setBatchInputText(rawInput: string): void {
-    const parsedBatch = parseNamedSmilesBatch(rawInput);
-    this.inputRows.set(parsedBatch.rows);
-    this.smilesInput.set(buildSmilesTextFromRows(parsedBatch.rows));
-    if (parsedBatch.containsExplicitNames) {
-      this.customNamesEnabled.set(true);
-    }
+    this.applyParsedBatch(parseNamedSmilesBatch(rawInput), true);
   }
 
   setInputRows(rows: NamedSmilesInputRow[], enableCustomNames: boolean = false): void {
@@ -77,6 +121,7 @@ export abstract class SmilesJobWorkflowService<
     if (enableCustomNames || rows.some((rowValue) => rowValue.name !== rowValue.smiles)) {
       this.customNamesEnabled.set(true);
     }
+    this.scheduleInputValidation(rows);
   }
 
   updateInputRowName(rowIndex: number, nextName: string): void {
@@ -96,6 +141,14 @@ export abstract class SmilesJobWorkflowService<
       .filter((rowValue: NamedSmilesInputRow) => rowValue.smiles.length > 0);
   }
 
+  protected getPreDispatchSmilesValidationError(): string | null {
+    if (this.isInputValidationPending()) {
+      return 'Wait until SMILES validation finishes.';
+    }
+
+    return this.inputValidationMessage();
+  }
+
   /**
    * Construye un mensaje de error legible cuando algunos SMILES no son compatibles.
    * Muestra hasta 3 ejemplos con sus razones y el conteo de problemas restantes.
@@ -109,6 +162,77 @@ export abstract class SmilesJobWorkflowService<
       .join('; ');
     const overflowCount: number = Math.max(validationResult.issues.length - 3, 0);
     const overflowMessage: string = overflowCount > 0 ? `; +${overflowCount} more.` : '.';
-    return `Some SMILES are not compatible and were not sent: ${issuePreview}${overflowMessage}`;
+    return `Some SMILES are invalid or unsupported and were not sent: ${issuePreview}${overflowMessage}`;
+  }
+
+  protected rememberDispatchedJobDisplayName(jobId: string): void {
+    const resolvedJobName: string | null = this.resolvedJobName();
+    this.currentJobDisplayName.set(resolvedJobName);
+    persistScientificJobName(this.workflowPluginName, jobId, resolvedJobName);
+  }
+
+  protected hydrateCurrentJobDisplayName(jobId: string, parameters: unknown): void {
+    const resolvedJobName: string | null =
+      resolveScientificJobNameForHistory(this.workflowPluginName, jobId, parameters) ??
+      extractScientificJobNameFromParameters(parameters);
+    this.currentJobDisplayName.set(resolvedJobName);
+    persistScientificJobName(this.workflowPluginName, jobId, resolvedJobName);
+  }
+
+  private applyParsedBatch(
+    parsedBatch: ReturnType<typeof parseNamedSmilesBatch>,
+    shouldValidate: boolean,
+  ): void {
+    this.inputRows.set(parsedBatch.rows);
+    this.smilesInput.set(buildSmilesTextFromRows(parsedBatch.rows));
+    if (parsedBatch.containsExplicitNames) {
+      this.customNamesEnabled.set(true);
+    }
+    if (shouldValidate) {
+      this.scheduleInputValidation(parsedBatch.rows);
+    }
+  }
+
+  private scheduleInputValidation(rows: NamedSmilesInputRow[]): void {
+    const smilesList: string[] = rows
+      .map((rowValue: NamedSmilesInputRow) => rowValue.smiles.trim())
+      .filter((smilesValue: string) => smilesValue.length > 0);
+
+    this.latestValidationToken += 1;
+    const validationToken: number = this.latestValidationToken;
+
+    if (this.inputValidationTimer !== null) {
+      clearTimeout(this.inputValidationTimer);
+      this.inputValidationTimer = null;
+    }
+    this.inputValidationSubscription?.unsubscribe();
+
+    if (smilesList.length === 0) {
+      this.invalidSmilesIssues.set([]);
+      this.isInputValidationPending.set(false);
+      return;
+    }
+
+    this.isInputValidationPending.set(true);
+    this.inputValidationTimer = setTimeout(() => {
+      this.inputValidationSubscription = this.jobsApiService
+        .validateSmilesCompatibility(smilesList)
+        .subscribe({
+          next: (validationResult: SmilesCompatibilityResultView) => {
+            if (validationToken !== this.latestValidationToken) {
+              return;
+            }
+            this.invalidSmilesIssues.set(validationResult.issues);
+            this.isInputValidationPending.set(false);
+          },
+          error: () => {
+            if (validationToken !== this.latestValidationToken) {
+              return;
+            }
+            this.invalidSmilesIssues.set([]);
+            this.isInputValidationPending.set(false);
+          },
+        });
+    }, 250);
   }
 }

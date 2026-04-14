@@ -637,6 +637,9 @@
     "form": {
       "title": "Entrada",
       "ariaLabel": "Parámetros de entrada",
+      "jobNameLabel": "Nombre del trabajo",
+      "jobNamePlaceholder": "Opcional: nombre visible del job",
+      "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual.",
       "methodsLegend": "Métodos"
     },
     "actions": {
@@ -651,9 +654,14 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de SA score al backend...",
       "ariaProgressLabel": "Progreso del job SA score",
+      "searchLabel": "Buscar en tabla",
+      "searchPlaceholder": "Buscar por nombre o SMILES",
+      "filteredCount": "filas visibles",
+      "emptySearch": "No hay filas de SA Score que coincidan con la búsqueda actual.",
       "exportTargetLabel": "Destino de exportación",
       "totalMolecules": "Total de moléculas:",
       "methodsLabel": "Métodos:",
+      "jobNameLabel": "Nombre visible:",
       "jobIdLabel": "ID de job:",
       "tableName": "Nombre",
       "tableSMILES": "SMILES"
@@ -683,7 +691,10 @@
     },
     "form": {
       "title": "Entrada",
-      "ariaLabel": "Parámetros de entrada"
+      "ariaLabel": "Parámetros de entrada",
+      "jobNameLabel": "Nombre del trabajo",
+      "jobNamePlaceholder": "Opcional: nombre visible del job",
+      "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual."
     },
     "actions": {
       "run": "Ejecutar Propiedades de Toxicidad",
@@ -697,8 +708,13 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de toxicidad al backend...",
       "ariaProgressLabel": "Progreso del job de toxicidad",
+      "searchLabel": "Buscar en tabla",
+      "searchPlaceholder": "Buscar por nombre o SMILES",
+      "filteredCount": "filas visibles",
+      "emptySearch": "No hay filas de toxicidad que coincidan con la búsqueda actual.",
       "totalMolecules": "Total de moléculas:",
       "modelLabel": "Modelo: ADMET-AI",
+      "jobNameLabel": "Nombre visible:",
       "jobIdLabel": "ID de job:",
       "tableName": "Nombre",
       "tableSMILES": "SMILES",
@@ -1192,7 +1208,8 @@
       "tableSMILES": "SMILES",
       "drawSmilesTitle": "Dibuja una molécula con Ketcher y agrégala a la lista",
       "uploadFileTitle": "Sube un archivo .smi, .txt o .csv con SMILES o pares nombre/SMILES",
-      "fileFormats": "Archivo .smi, .txt o .csv"
+      "fileFormats": "Archivo .smi, .txt o .csv",
+      "validating": "Validando los SMILES antes del envío..."
     },
     "jobArtifactExport": {
       "persistedFiles": "Archivos de entrada persistidos",

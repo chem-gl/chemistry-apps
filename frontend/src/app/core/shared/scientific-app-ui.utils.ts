@@ -22,6 +22,7 @@ export interface HistoricalJobWorkflowPort {
 export interface SmilesMoleculeWorkflowPort extends HistoricalJobWorkflowPort {
   dispatch(): void;
   reset(): void;
+  setInputRows(rows: NamedSmilesInputRow[], enableCustomNames?: boolean): void;
 }
 
 export interface DownloadedReportFile {
@@ -120,9 +121,25 @@ function normalizeHeaderToken(rawValue: string): string {
     .replaceAll(/[\s_-]+/g, '');
 }
 
+function isSmilesHeaderToken(normalizedToken: string): boolean {
+  return (
+    ['smiles', 'smile', 'smi'].includes(normalizedToken) ||
+    normalizedToken.includes('smiles') ||
+    normalizedToken.endsWith('smile')
+  );
+}
+
+function isNameHeaderToken(normalizedToken: string): boolean {
+  return (
+    ['name', 'nombre', 'label'].includes(normalizedToken) ||
+    normalizedToken.endsWith('name') ||
+    normalizedToken.endsWith('label')
+  );
+}
+
 function isSingleColumnHeaderLine(lineValue: string): boolean {
   const normalizedToken: string = normalizeHeaderToken(lineValue);
-  return ['smiles', 'smile', 'smi', 'name', 'nombre', 'label'].includes(normalizedToken);
+  return isSmilesHeaderToken(normalizedToken) || isNameHeaderToken(normalizedToken);
 }
 
 function detectStructuredDelimiter(lines: string[]): string | null {
@@ -145,10 +162,10 @@ function isHeaderRow(cells: string[]): boolean {
 
   const firstCell: string = normalizeHeaderToken(cells[0] ?? '');
   const secondCell: string = normalizeHeaderToken(cells[1] ?? '');
-  const firstIsName: boolean = ['name', 'nombre', 'label'].includes(firstCell);
-  const secondIsSmiles: boolean = ['smiles', 'smile', 'smi'].includes(secondCell);
-  const firstIsSmiles: boolean = ['smiles', 'smile', 'smi'].includes(firstCell);
-  const secondIsName: boolean = ['name', 'nombre', 'label'].includes(secondCell);
+  const firstIsName: boolean = isNameHeaderToken(firstCell);
+  const secondIsSmiles: boolean = isSmilesHeaderToken(secondCell);
+  const firstIsSmiles: boolean = isSmilesHeaderToken(firstCell);
+  const secondIsName: boolean = isNameHeaderToken(secondCell);
   return (firstIsName && secondIsSmiles) || (firstIsSmiles && secondIsName);
 }
 
@@ -213,10 +230,7 @@ export function parseNamedSmilesBatch(rawContent: string): ParsedNamedSmilesBatc
       return { name: firstCell, smiles: firstCell };
     }
 
-    if (
-      hasHeader &&
-      ['smiles', 'smile', 'smi'].includes(normalizeHeaderToken(firstRowCells[0] ?? ''))
-    ) {
+    if (hasHeader && isSmilesHeaderToken(normalizeHeaderToken(firstRowCells[0] ?? ''))) {
       return {
         name: secondCell,
         smiles: firstCell,

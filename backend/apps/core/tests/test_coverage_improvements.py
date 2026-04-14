@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import hashlib
 import os
+from unittest.mock import patch
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.utils import OperationalError
 from django.test import TestCase, override_settings
 
 from apps.core.adapters import (
@@ -25,6 +27,7 @@ from apps.core.artifacts import (
 )
 from apps.core.models import ScientificCacheEntry, ScientificJob, ScientificJobLogEvent
 from apps.core.ports import JobLogUpdate
+from apps.core.services.log_helpers import publish_job_log
 
 
 class ArtifactsUtilsTest(TestCase):
@@ -190,6 +193,27 @@ class AdaptersTest(TestCase):
 
         entry.refresh_from_db()
         assert entry.hit_count >= 1
+
+    def test_publish_job_log_tolerates_transient_database_lock(self) -> None:
+        """Verifica que un lock transitorio de SQLite no rompa el flujo del job."""
+        job = ScientificJob.objects.create(job_hash="h2", plugin_name="p2")
+        adapter = DjangoJobLogPublisherAdapter()
+
+        with patch.object(
+            adapter,
+            "publish",
+            side_effect=OperationalError("database is locked"),
+        ):
+            publish_job_log(
+                job,
+                level="warning",
+                source="tests.lock",
+                message="lock simulado",
+                payload={"locked": True},
+                log_publisher=adapter,
+            )
+
+        assert ScientificJobLogEvent.objects.filter(job=job).count() == 0
 
 
 class AppsHelpersTest(TestCase):
