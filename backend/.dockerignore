@@ -1,0 +1,36 @@
+# backend/.dockerignore: Excluye archivos del contexto de build de Docker.
+#
+# El más crítico es .venv: el deploy script crea un .venv en el host via
+# "poetry install" para correr migrations. Sin este ignore, COPY . /app
+# sobreescribiría el .venv correcto que Poetry construye dentro del stage
+# deps-prod, dejando el contenedor sin dependencias (No module named 'django').
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Artefactos de testing / cobertura
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+
+# Base de datos local de desarrollo
+db.sqlite3
+celerybeat-schedule
+dump.rdb
+
+# Archivos de entorno locales
+.env
+.env.*
+!.env.example
+
+# Directorios de media (se montan como volumen en producción)
+media/
+
+# Herramientas externas pesadas (se descargan al iniciar el contenedor)
+tools/
