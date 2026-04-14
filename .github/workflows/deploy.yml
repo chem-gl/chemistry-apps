@@ -431,13 +431,25 @@ jobs:
             "$PYTHON_BIN" -m pip install --upgrade pip
             "$PYTHON_BIN" -m pip install poetry
 
-            poetry config virtualenvs.in-project true
-            poetry env use "$PYTHON_BIN"
-            poetry install --only main --no-interaction --no-ansi
+            export PATH="$HOME/.local/bin:$PATH"
+            POETRY_BIN="$(command -v poetry || true)"
+            if [ -z "$POETRY_BIN" ] && [ -x "$HOME/.local/bin/poetry" ]; then
+              POETRY_BIN="$HOME/.local/bin/poetry"
+            fi
+
+            if [ -z "$POETRY_BIN" ]; then
+              echo "ERROR: no se encontró el binario de poetry después de instalarlo."
+              echo "Revisa que ~/.local/bin exista en el host remoto."
+              exit 1
+            fi
+
+            "$POETRY_BIN" config virtualenvs.in-project true
+            "$POETRY_BIN" env use "$PYTHON_BIN"
+            "$POETRY_BIN" install --only main --no-interaction --no-ansi
 
             MIGRATION_LOG_FILE="$DEPLOY_STAGING_DIR/django-migrate.log"
             set +e
-            poetry run python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
+            "$POETRY_BIN" run python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
             MIGRATE_EXIT_CODE=${PIPESTATUS[0]}
             set -e
 
