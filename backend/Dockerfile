@@ -18,7 +18,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MPLCONFIGDIR=/tmp/matplotlib-cache \
     TORCHINDUCTOR_CACHE_DIR=/tmp/torchinductor-cache
 
-ENV PATH="${POETRY_HOME}/bin:${PATH}"
+# /app/.venv/bin va primero para que 'python' apunte al entorno virtual,
+# incluso cuando el contenedor corre con un UID arbitrario sin activar el venv.
+ENV PATH="/app/.venv/bin:${POETRY_HOME}/bin:${PATH}"
 
 WORKDIR /app
 
@@ -54,4 +56,7 @@ CMD ["poetry", "run", "python", "manage.py", "up", "--without-celery", "--host",
 
 FROM deps-prod AS prod
 COPY . /app
-CMD ["poetry", "run", "python", "config/startup_production.py"]
+# Permisos world-readable+executable para que cualquier UID (HOST_UID en compose)
+# pueda usar el venv sin que Poetry intente recrearlo con permisos de root.
+RUN chmod -R a+rX /app/.venv
+CMD ["python", "config/startup_production.py"]
