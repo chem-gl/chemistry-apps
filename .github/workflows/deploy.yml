@@ -355,13 +355,14 @@ jobs:
             mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
             cd "$VM_PROJECT_PATH"
 
-            # Reparar permisos del directorio antes de extraer.
-            # El daemon de Docker corre como root, por eso se puede usar un contenedor
-            # efímero para hacer chown sin necesitar sudo en el host remoto.
+            # Reparar permisos de archivos de código fuente antes de extraer,
+            # evitando "Permission denied" en deploys previos con archivos de otro owner.
+            # Se excluye docker-data/ porque PostgreSQL y Redis necesitan mantener
+            # la propiedad interna del contenedor (uid 70 para postgres en Alpine).
             docker run --rm \
               -v "$VM_PROJECT_PATH:/work" \
               alpine \
-              chown -R "$(id -u):$(id -g)" /work 2>/dev/null || true
+              sh -c "find /work -maxdepth 1 -mindepth 1 ! -name 'docker-data' -exec chown -R $(id -u):$(id -g) {} \; 2>/dev/null; true"
 
             # --no-same-owner: ignorar el propietario almacenado en el tar
             tar --no-same-owner -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
