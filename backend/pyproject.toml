@@ -14,7 +14,7 @@ authors = ["Chem GL <cesar-gerardo@guzman-lopez.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.14,<3.15"
+python = ">=3.12,<3.15"
 asgiref = "3.11.1"
 admet_ai = "2.0.1"
 backend = "0.2.4.1"
@@ -40,7 +40,7 @@ flake8 = "7.3.0"
 coverage = "7.13.5"
 pytest = "9.0.2"
 pytest-cov = "7.1.0"
-ipython = "9.12.0"
+ipython = "8.12.3"
 pipreqs = { version = "0.5.0", python = "<3.13" }
 ruff = "0.15.8"
 beautifulsoup4 = "4.14.3"
@@ -100,7 +100,7 @@ exclude_lines = [
 
 [tool.black]
 line-length = 120
-target-version = ['py314']
+target-version = ['py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
