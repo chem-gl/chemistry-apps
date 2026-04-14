@@ -142,9 +142,11 @@ export class SmileitWorkflowService implements OnDestroy {
     this.smileitApiService.inspectSmileitStructure(rawSmiles).subscribe({
       next: (inspectionResult: SmileitStructureInspectionView) => {
         this.state.inspection.set(inspectionResult);
+        const previousSelectionCount: number = this.state.selectedAtomIndices().length;
         this.state.selectedAtomIndices.update((currentSelection: number[]) =>
           currentSelection.filter((atomIndex: number) => atomIndex < inspectionResult.atomCount),
         );
+        this.syncRSubstitutesWithSelectedSites(previousSelectionCount);
         this.blocks.pruneBlocksToSelectedSites();
         this.state.activeSection.set('idle');
       },
@@ -159,12 +161,14 @@ export class SmileitWorkflowService implements OnDestroy {
 
   /** Alterna la selección de un átomo en la estructura principal. */
   toggleSelectedAtom(atomIndex: number): void {
+    const previousSelectionCount: number = this.state.selectedAtomIndices().length;
     this.state.selectedAtomIndices.update((currentSelection: number[]) => {
       const nextSelection: number[] = currentSelection.includes(atomIndex)
         ? currentSelection.filter((item: number) => item !== atomIndex)
         : [...currentSelection, atomIndex];
       return nextSelection.sort((left: number, right: number) => left - right);
     });
+    this.syncRSubstitutesWithSelectedSites(previousSelectionCount);
     this.blocks.pruneBlocksToSelectedSites();
   }
 
@@ -174,6 +178,35 @@ export class SmileitWorkflowService implements OnDestroy {
     const maxAllowed: number = this.state.maxRSubstitutesByPositions();
     const clampedValue: number = Math.max(1, Math.min(maxAllowed, Math.trunc(rawValue)));
     this.state.rSubstitutes.set(clampedValue);
+  }
+
+  /**
+   * Mantiene `rSubstitutes` sincronizado con los sitios seleccionados.
+   *
+   * Regla: si el usuario venía usando el máximo permitido por la selección
+   * anterior, al ampliar la selección también ampliamos el número de rondas.
+   * Si el usuario eligió un valor menor manualmente, se respeta.
+   */
+  private syncRSubstitutesWithSelectedSites(previousSelectionCount: number): void {
+    const nextSelectionCount: number = this.state.selectedAtomIndices().length;
+    const nextMaxAllowed: number = this.state.maxRSubstitutesByPositions();
+    const currentRSubstitutes: number = this.state.rSubstitutes();
+
+    if (nextSelectionCount === 0) {
+      this.state.rSubstitutes.set(1);
+      return;
+    }
+
+    if (currentRSubstitutes > nextMaxAllowed) {
+      this.state.rSubstitutes.set(nextMaxAllowed);
+      return;
+    }
+
+    const previousMaxAllowed: number = Math.min(Math.max(previousSelectionCount, 1), 10);
+    const selectionExpanded: boolean = nextSelectionCount > previousSelectionCount;
+    if (selectionExpanded && currentRSubstitutes === previousMaxAllowed) {
+      this.state.rSubstitutes.set(nextMaxAllowed);
+    }
   }
 
   setNumBonds(): void {

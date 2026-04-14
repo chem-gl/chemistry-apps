@@ -1000,7 +1000,7 @@
   "identityAdmin": {
     "ariaLabel": "Administración de identidad",
     "header": {
-      "eyebrow": "Consola Administrativa"
+      "eyebrow": "Consola Administrativa",
       "title": "Identidad y Acceso",
       "subtitle": "Administra usuarios, grupos, membresías y RBAC a nivel de apps en un espacio de trabajo consistente.",
       "myProfile": "Mi perfil",

@@ -5,8 +5,8 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { startBrowserCoverage, stopBrowserCoverage } from './support/browser-coverage';
 
 const BACKEND_BASE_URL = 'http://127.0.0.1:8000';
-const ROOT_USERNAME = process.env.E2E_ROOT_USERNAME ?? 'root';
-const ROOT_PASSWORD = process.env.E2E_ROOT_PASSWORD ?? 'admin123';
+const ROOT_USERNAME = process.env['E2E_ROOT_USERNAME'] ?? 'root';
+const ROOT_PASSWORD = process.env['E2E_ROOT_PASSWORD'] ?? 'admin123';
 
 interface AuthTokens {
   access: string;

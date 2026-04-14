@@ -340,6 +340,28 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.resultData()?.traceabilityRows.length).toBe(1);
   });
 
+  it('dispatches the user-selected rSubstitutes value when multiple sites are configured', () => {
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1, 2, 3]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        siteAtomIndices: [1, 2, 3],
+        manualSubstituents: [],
+      },
+    ]);
+    workflowService.setRSubstitutes(3);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedAtomIndices: [1, 2, 3],
+        rSubstitutes: 3,
+      }),
+    );
+  });
+
   it('loads catalog, categories and patterns together for the Smile-it workspace', () => {
     workflowService.catalog.loadInitialData();
 
@@ -981,6 +1003,28 @@ describe('SmileitWorkflowService', () => {
     workflowService.state.selectedAtomIndices.set([1, 2, 3]);
 
     workflowService.setRSubstitutes(0);
+
+    expect(workflowService.rSubstitutes()).toBe(1);
+  });
+
+  it('expands rSubstitutes when the user keeps selecting more sites using the current max', () => {
+    workflowService.toggleSelectedAtom(1);
+    expect(workflowService.rSubstitutes()).toBe(1);
+
+    workflowService.toggleSelectedAtom(2);
+    expect(workflowService.rSubstitutes()).toBe(2);
+
+    workflowService.toggleSelectedAtom(3);
+    expect(workflowService.rSubstitutes()).toBe(3);
+  });
+
+  it('preserves a manual lower rSubstitutes value when the selection grows', () => {
+    workflowService.toggleSelectedAtom(1);
+    workflowService.toggleSelectedAtom(2);
+    workflowService.toggleSelectedAtom(3);
+    workflowService.setRSubstitutes(1);
+
+    workflowService.toggleSelectedAtom(4);
 
     expect(workflowService.rSubstitutes()).toBe(1);
   });

@@ -12,7 +12,7 @@ interface BrowserCoverageState {
 }
 
 const COVERAGE_STATE = new WeakMap<Page, BrowserCoverageState>();
-const SHOULD_COLLECT_BROWSER_COVERAGE = process.env.PLAYWRIGHT_COLLECT_COVERAGE === '1';
+const SHOULD_COLLECT_BROWSER_COVERAGE = process.env['PLAYWRIGHT_COLLECT_COVERAGE'] === '1';
 const RAW_COVERAGE_DIRECTORY = path.resolve(process.cwd(), 'coverage/e2e/raw');
 
 function sanitizeCoverageLabel(label: string): string {

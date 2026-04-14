@@ -55,6 +55,7 @@
     "@eslint/js": "^9.35.0",
     "@openapitools/openapi-generator-cli": "^0.0.6",
     "@playwright/test": "^1.54.2",
+    "@types/node": "^24.12.2",
     "@vitest/coverage-v8": "^4.1.2",
     "angular-eslint": "^21.0.0",
     "eslint": "^9.35.0",
@@ -62,7 +63,7 @@
     "jsdom": "^27.1.0",
     "monocart-coverage-reports": "^2.12.9",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "typescript-eslint": "^8.43.0",
     "vitest": "^4.0.8"
   }
