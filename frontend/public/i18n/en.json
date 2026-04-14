@@ -404,6 +404,16 @@
       "ariaLabel": "Results and progress",
       "submitting": "Submitting molar fractions job to backend...",
       "noRows": "No final rows available yet for this historical job.",
+      "chart": {
+        "title": "Fraction curves",
+        "subtitle": "Each species is drawn as a curve across the computed pH range.",
+        "ariaLabel": "Molar fractions chart",
+        "probe": {
+          "label": "Reference pH",
+          "slider": "Move reference line",
+          "fixed": "Interpolated readings at pH"
+        }
+      },
       "metadata": {
         "mode": "Mode:",
         "pkaValues": "pKa values:",

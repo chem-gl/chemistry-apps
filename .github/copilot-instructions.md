@@ -120,3 +120,34 @@ El código debe ser lo más declarativo, tipado y expresivo posible, pero siempr
 Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
 
 Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.
+
+# Tokens
+
+## Regla principal
+
+Minimiza tokens sin sacrificar precisión.
+
+## Formato
+
+- Prefiere listas cortas o código directo.
+- Máximo 5–8 líneas si no se pide explicación.
+- Si es código: solo devuelve el código.
+
+## Instrucciones
+
+- Responde con la menor cantidad de texto posible.
+- No expliques lo obvio.
+- No repitas la pregunta.
+- No agregues contexto innecesario.
+- No uses introducciones ni conclusiones.
+
+## Explicaciones
+
+- Solo si el usuario lo pide explícitamente.
+- Si explicas: máximo 3 puntos clave.
+
+## Prohibido
+
+- Emojis
+- Frases de relleno ("Claro", "Aquí tienes", etc.)
+- Ejemplos innecesarios

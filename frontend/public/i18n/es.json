@@ -404,6 +404,16 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de fracciones molares al backend...",
       "noRows": "Aún no hay filas finales disponibles para este job histórico.",
+      "chart": {
+        "title": "Curvas de fracción",
+        "subtitle": "Cada especie se dibuja como una curva a lo largo del rango de pH calculado.",
+        "ariaLabel": "Gráfica de fracciones molares",
+        "probe": {
+          "label": "pH de referencia",
+          "slider": "Mover línea de referencia",
+          "fixed": "Lecturas interpoladas en pH"
+        }
+      },
       "metadata": {
         "mode": "Modo:",
         "pkaValues": "Valores pKa:",

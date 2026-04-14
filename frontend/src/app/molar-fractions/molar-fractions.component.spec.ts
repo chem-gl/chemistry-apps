@@ -18,6 +18,34 @@ import {
 } from '../core/application/molar-fractions-workflow.service';
 import { MolarFractionsComponent } from './molar-fractions.component';
 
+function buildResultData(options: {
+  rowCount: number;
+  phMode?: 'single' | 'range';
+}): MolarFractionsResultData {
+  const rowCount = options.rowCount;
+  const phMode = options.phMode ?? 'range';
+
+  return {
+    speciesLabels: ['H2A', 'HA-', 'A2-'],
+    rows: Array.from({ length: rowCount }, (_value, index) => ({
+      ph: index,
+      fractions: [0.75, 0.2, 0.05],
+      sumFraction: 1,
+    })),
+    metadata: {
+      pkaValues: [2.2, 7.2],
+      phMode,
+      phMin: 0,
+      phMax: Math.max(0, rowCount - 1),
+      phStep: 1,
+      totalSpecies: 3,
+      totalPoints: rowCount,
+    },
+    isHistoricalSummary: false,
+    summaryMessage: null,
+  };
+}
+
 describe('MolarFractionsComponent', () => {
   const workflowMock = {
     pkaCount: signal<number>(3),
@@ -67,6 +95,7 @@ describe('MolarFractionsComponent', () => {
     workflowMock.currentJobId.set(null);
     workflowMock.isExporting.set(false);
     workflowMock.activeSection.set('idle');
+    workflowMock.resultData.set(null);
 
     TestBed.configureTestingModule({
       imports: [MolarFractionsComponent],
@@ -187,6 +216,107 @@ describe('MolarFractionsComponent', () => {
     workflowMock.currentJobId.set('mf-001');
     workflowMock.isExporting.set(false);
     expect(component.canExportRows()).toBe(true);
+  });
+
+  it('muestra gráfica cuando el resultado es range y tiene más de 5 puntos', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 6 }));
+
+    expect(component.showResultChart()).toBe(true);
+  });
+
+  it('oculta gráfica cuando el resultado tiene 5 puntos o menos', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 5 }));
+
+    expect(component.showResultChart()).toBe(false);
+  });
+
+  it('oculta gráfica cuando el modo es single aunque existan varias filas', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 8, phMode: 'single' }));
+
+    expect(component.showResultChart()).toBe(false);
+  });
+
+  it('construye una serie por cada etiqueta para la gráfica', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 6 }));
+
+    const chartOptions = component.chartOptions();
+    const chartSeries = Array.isArray(chartOptions?.['series']) ? chartOptions['series'] : [];
+    const speciesSeries = chartSeries.filter(
+      (seriesItem) =>
+        typeof seriesItem === 'object' && seriesItem !== null && seriesItem['name'] !== '__probe__',
+    );
+
+    expect(speciesSeries).toHaveLength(3);
+  });
+
+  it('usa curvas suavizadas en la gráfica', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 6 }));
+
+    const chartOptions = component.chartOptions();
+    const chartSeries = Array.isArray(chartOptions?.['series']) ? chartOptions['series'] : [];
+
+    expect(chartSeries[0]).toMatchObject({ smooth: true });
+  });
+
+  it('agrega una serie dedicada para la línea de referencia del pH', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 15 }));
+    component.onProbePhChange('7.4');
+
+    const chartOptions = component.chartOptions();
+    const chartSeries = Array.isArray(chartOptions?.['series']) ? chartOptions['series'] : [];
+    const probeSeries = chartSeries.find(
+      (seriesItem) =>
+        typeof seriesItem === 'object' && seriesItem !== null && seriesItem['name'] === '__probe__',
+    );
+
+    expect(probeSeries).toMatchObject({
+      type: 'line',
+      silent: true,
+      lineStyle: { type: 'dashed' },
+      data: [
+        [7.4, 0],
+        [7.4, 1],
+      ],
+    });
+  });
+
+  it('ajusta el pH de referencia al cambiar la sonda', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 15 }));
+    component.onProbePhChange('7.4');
+
+    expect(component.resolvedProbePh()).toBe(7.4);
+    expect(component.probeReadings()).toHaveLength(3);
+  });
+
+  it('clampa el pH de referencia al máximo disponible', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    workflowMock.resultData.set(buildResultData({ rowCount: 6 }));
+    component.onProbePhChange('99');
+
+    expect(component.resolvedProbePh()).toBe(5);
   });
 
   it('exportCsv llama downloadCsvReport y dispara la descarga', () => {

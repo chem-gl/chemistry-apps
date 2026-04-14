@@ -1,10 +1,11 @@
 // molar-fractions.component.ts: Molar fractions screen with table rendering and export actions.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import type { EChartsCoreOption } from 'echarts/core';
 import { Subscription } from 'rxjs';
 import { DownloadedReportFile, ScientificJobView } from '../core/api/jobs-api.service';
 import {
@@ -13,7 +14,17 @@ import {
 } from '../core/application/molar-fractions-workflow.service';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
+import { ScientificChartComponent } from '../core/shared/components/scientific-chart/scientific-chart.component';
 import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.utils';
+import {
+  DEFAULT_PROBE_PH,
+  ProbeSpeciesReading,
+  buildMolarFractionsChartOptions,
+  buildProbeReadings,
+  clampProbePh,
+  formatFractionValue,
+  shouldRenderMolarFractionsChart,
+} from './molar-fractions-chart.options';
 
 @Component({
   selector: 'app-molar-fractions',
@@ -23,6 +34,7 @@ import { subscribeToRouteHistoricalJob } from '../core/shared/scientific-app-ui.
     TranslocoPipe,
     JobProgressCardComponent,
     JobLogsPanelComponent,
+    ScientificChartComponent,
   ],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
@@ -34,6 +46,29 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
 
   readonly pkaCountOptions: number[] = [1, 2, 3, 4, 5, 6];
+  readonly probePh = signal<number>(DEFAULT_PROBE_PH);
+  readonly showResultChart = computed<boolean>(() =>
+    shouldRenderMolarFractionsChart(this.workflow.resultData()),
+  );
+  readonly resolvedProbePh = computed<number>(() =>
+    clampProbePh(this.workflow.resultData(), this.probePh()),
+  );
+  readonly probeReadings = computed<ProbeSpeciesReading[]>(() => {
+    const resultData = this.workflow.resultData();
+    if (!shouldRenderMolarFractionsChart(resultData)) {
+      return [];
+    }
+
+    return buildProbeReadings(resultData!, this.resolvedProbePh());
+  });
+  readonly chartOptions = computed<EChartsCoreOption | null>(() => {
+    const resultData = this.workflow.resultData();
+    if (!shouldRenderMolarFractionsChart(resultData)) {
+      return null;
+    }
+
+    return buildMolarFractionsChartOptions(resultData!, this.resolvedProbePh());
+  });
 
   ngOnInit(): void {
     this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
@@ -82,7 +117,16 @@ export class MolarFractionsComponent implements OnInit, OnDestroy {
   }
 
   formatFractionValue(value: number): string {
-    return value.toExponential(3).toUpperCase();
+    return formatFractionValue(value);
+  }
+
+  onProbePhChange(rawValue: number | string): void {
+    const nextValue = this.toNumber(rawValue);
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+
+    this.probePh.set(clampProbePh(this.workflow.resultData(), nextValue));
   }
 
   canExportRows(): boolean {

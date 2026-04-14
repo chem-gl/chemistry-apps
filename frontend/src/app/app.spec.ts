@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { IdentitySessionService } from './core/auth/identity-session.service';
+import { provideTestingTransloco } from './core/i18n/testing-transloco.provider';
 
 describe('App', () => {
   const sessionServiceMock = {
@@ -28,6 +29,7 @@ describe('App', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideTestingTransloco(),
         { provide: IdentitySessionService, useValue: sessionServiceMock },
       ],
     }).compileComponents();
