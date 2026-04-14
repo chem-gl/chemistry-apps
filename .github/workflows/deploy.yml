@@ -355,7 +355,17 @@ jobs:
             mkdir -p "$VM_PROJECT_PATH" "$DEPLOY_STAGING_DIR"
             cd "$VM_PROJECT_PATH"
 
-            tar -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
+            # Reparar permisos del directorio antes de extraer para evitar
+            # "Permission denied" en archivos de deploys anteriores (propiedad de root u otro usuario).
+            if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+              sudo chown -R "$(id -u):$(id -g)" "$VM_PROJECT_PATH" || true
+            else
+              chmod -R u+rw "$VM_PROJECT_PATH" 2>/dev/null || true
+            fi
+
+            # --overwrite: sobreescribir ficheros existentes
+            # --no-same-owner: ignorar la propiedad almacenada en el tar (siempre escribe como el usuario actual)
+            tar --overwrite --no-same-owner -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
 
             mkdir -p docker-data/postgres docker-data/redis backend/media
             chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
