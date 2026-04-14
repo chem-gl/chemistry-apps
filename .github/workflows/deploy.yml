@@ -411,6 +411,23 @@ jobs:
             fi
 
             cd "$VM_PROJECT_PATH/backend"
+
+            if ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
+              if ! "$PYTHON_BIN" -m ensurepip --upgrade >/dev/null 2>&1; then
+                if command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+                  echo "pip no estaba disponible; intentando instalar python3-pip en el host remoto..."
+                  sudo apt-get update
+                  sudo apt-get install -y python3-pip
+                fi
+              fi
+            fi
+
+            if ! "$PYTHON_BIN" -m pip --version >/dev/null 2>&1; then
+              echo "ERROR: no se pudo inicializar pip para $PYTHON_BIN en el host remoto."
+              echo "Instala el soporte de pip/ensurepip para esa versión de Python antes de desplegar."
+              exit 1
+            fi
+
             "$PYTHON_BIN" -m pip install --upgrade pip
             "$PYTHON_BIN" -m pip install poetry
 
