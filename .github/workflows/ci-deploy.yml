@@ -14,7 +14,8 @@ jobs:
   tests:
     name: Test matrix (${{ matrix.service }})
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    # Los tests solo corren en push a dev; en main y PRs ya debieron pasar en dev.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     strategy:
       fail-fast: false
       matrix:
@@ -69,7 +70,11 @@ jobs:
 
   build:
     name: Build reusable workflow
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    # Corre en dev, main y PRs; acepta tests skipped (solo corren en dev).
+    if: |
+      always() &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
+      (github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     needs: [tests]
     permissions:
       contents: write
@@ -80,8 +85,8 @@ jobs:
 
   deploy:
     name: Deploy reusable workflow
-    if: github.ref == 'refs/heads/main'
-    needs: [tests, build]
+    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
+    needs: [build]
     uses: ./.github/workflows/deploy.yml
     with:
       image_tag: ${{ needs.build.outputs.image_tag }}
