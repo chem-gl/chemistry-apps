@@ -217,7 +217,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "apps.accounts.apps.AccountsConfig",
     "apps.core",
-    "apps.random_numbers.apps.RandomNumbersConfig",
     "apps.molar_fractions.apps.MolarFractionsConfig",
     "apps.tunnel.apps.TunnelConfig",
     "apps.easy_rate.apps.EasyRateConfig",
@@ -275,7 +274,7 @@ OPENAPI_DESCRIPTION: str = os.getenv(
     "OPENAPI_DESCRIPTION",
     (
         "API de plataforma científica modular para ejecutar jobs asíncronos "
-        "por plugins (random-numbers y molar-fractions), con observabilidad de progreso "
+        "por plugins científicos, con observabilidad de progreso "
         "y logs en tiempo real, cache por hash y recuperación activa automática."
     ),
 )
@@ -303,10 +302,6 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Jobs",
             "description": "Operaciones genéricas para consulta, progreso, eventos SSE y logs de jobs.",
-        },
-        {
-            "name": "RandomNumbers",
-            "description": "Endpoints de generación por lotes de números aleatorios con semilla externa.",
         },
         {
             "name": "MolarFractions",

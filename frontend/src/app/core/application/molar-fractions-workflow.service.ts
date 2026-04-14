@@ -1,12 +1,7 @@
 // molar-fractions-workflow.service.ts: Orquesta formulario, progreso y resultados de molar fractions.
 
 import { Injectable, computed, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import {
-  DownloadedReportFile,
-  MolarFractionsParams,
-  ScientificJobView,
-} from '../api/jobs-api.service';
+import { MolarFractionsParams, ScientificJobView } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
 type MolarFractionsPhMode = 'single' | 'range';
@@ -31,8 +26,6 @@ export interface MolarFractionsResultData {
   speciesLabels: string[];
   rows: MolarFractionsResultRow[];
   metadata: MolarFractionsResultMetadata;
-  isHistoricalSummary: boolean;
-  summaryMessage: string | null;
 }
 
 @Injectable()
@@ -77,7 +70,7 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
 
     this.jobsApiService.dispatchMolarFractionsJob(dispatchParams).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        this.handleDispatchJobResponse(
+        this.handleTransientDispatchJobResponse(
           jobResponse,
           (job) => this.extractResultData(job),
           'molar fractions',
@@ -90,42 +83,9 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
     });
   }
 
-  openHistoricalJob(jobId: string): void {
-    this.prepareForDispatch();
-    this.currentJobId.set(jobId);
-
-    this.jobsApiService.getScientificJobStatus(jobId).subscribe({
-      next: (jobResponse: ScientificJobView) => {
-        this.handleJobOutcome(
-          jobId,
-          jobResponse,
-          (job) => this.extractResultData(job) ?? this.extractSummaryData(job),
-          { loadHistoryAfter: false },
-        );
-      },
-      error: (statusError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to recover historical job: ${statusError.message}`);
-      },
-    });
-  }
-
   override loadHistory(): void {
-    this.loadHistoryForPlugin('molar-fractions');
-  }
-
-  downloadCsvReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadMolarFractionsCsvReport(this.currentJobId()!),
-      'CSV report',
-    );
-  }
-
-  downloadLogReport(): Observable<DownloadedReportFile> {
-    return this.buildDownloadStream(
-      this.jobsApiService.downloadMolarFractionsLogReport(this.currentJobId()!),
-      'LOG report',
-    );
+    this.historyJobs.set([]);
+    this.isHistoryLoading.set(false);
   }
 
   private buildDispatchParams(): MolarFractionsParams {
@@ -151,7 +111,10 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
   protected override fetchFinalResult(jobId: string): void {
     this.jobsApiService.getScientificJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
-        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job));
+        this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
+          loadLogs: false,
+          loadHistoryAfter: false,
+        });
       },
       error: (statusError: Error) => {
         this.activeSection.set('error');
@@ -220,79 +183,6 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       speciesLabels,
       rows: parsedRows,
       metadata,
-      isHistoricalSummary: false,
-      summaryMessage: null,
-    };
-  }
-
-  private extractSummaryData(jobResponse: ScientificJobView): MolarFractionsResultData | null {
-    const rawParameters: unknown = jobResponse.parameters;
-    if (!this.isRecord(rawParameters)) {
-      return null;
-    }
-
-    const rawPkaValues: unknown = rawParameters['pka_values'];
-    const rawPhMode: unknown = rawParameters['ph_mode'];
-
-    if (!Array.isArray(rawPkaValues) || (rawPhMode !== 'single' && rawPhMode !== 'range')) {
-      return null;
-    }
-
-    const pkaValues: number[] = rawPkaValues.filter(
-      (value: unknown): value is number => typeof value === 'number',
-    );
-    if (pkaValues.length < 1) {
-      return null;
-    }
-
-    let phMin: number;
-    let phMax: number;
-    let phStep: number;
-
-    if (rawPhMode === 'single') {
-      const phValue: unknown = rawParameters['ph_value'];
-      if (typeof phValue !== 'number') {
-        return null;
-      }
-      phMin = phValue;
-      phMax = phValue;
-      phStep = 0.1;
-    } else {
-      const rawPhMin: unknown = rawParameters['ph_min'];
-      const rawPhMax: unknown = rawParameters['ph_max'];
-      const rawPhStep: unknown = rawParameters['ph_step'];
-      if (
-        typeof rawPhMin !== 'number' ||
-        typeof rawPhMax !== 'number' ||
-        typeof rawPhStep !== 'number'
-      ) {
-        return null;
-      }
-      phMin = Math.min(rawPhMin, rawPhMax);
-      phMax = Math.max(rawPhMin, rawPhMax);
-      phStep = rawPhStep;
-    }
-
-    const speciesLabels: string[] = Array.from(
-      { length: pkaValues.length + 1 },
-      (_v, index) => `f${index}`,
-    );
-    const summaryMessage: string = this.buildHistoricalSummaryMessage(jobResponse.status);
-
-    return {
-      speciesLabels,
-      rows: [],
-      metadata: {
-        pkaValues,
-        phMode: rawPhMode,
-        phMin,
-        phMax,
-        phStep,
-        totalSpecies: speciesLabels.length,
-        totalPoints: 0,
-      },
-      isHistoricalSummary: true,
-      summaryMessage,
     };
   }
 

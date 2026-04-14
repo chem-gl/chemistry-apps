@@ -574,60 +574,6 @@
       "ariaLabel": "Historical Marcus jobs"
     }
   },
-  "randomNumbers": {
-    "header": {
-      "eyebrow": "Random Numbers",
-      "title": "Asynchronous Batch Generation",
-      "subtitle": "Configure the source URL, batch size, interval, and total output size."
-    },
-    "form": {
-      "ariaLabel": "Generation parameters",
-      "seedUrl": "Seed URL",
-      "seedUrlPlaceholder": "https://example.com/seed.txt",
-      "numbersPerBatch": "Numbers per batch",
-      "batchInterval": "Batch interval (seconds)",
-      "totalNumbers": "Total numbers"
-    },
-    "actions": {
-      "generate": "Generate",
-      "processing": "Processing...",
-      "clear": "Clear",
-      "resuming": "Resuming...",
-      "resumeJob": "Resume job",
-      "pausing": "Pausing...",
-      "pauseJob": "Pause job"
-    },
-    "progress": {
-      "title": "Job in Progress",
-      "ariaLabel": "Random numbers job progress",
-      "stage": "Stage:"
-    },
-    "logs": { "title": "Execution Logs" },
-    "result": {
-      "title": "Generated Result",
-      "ariaLabel": "Random numbers result",
-      "seedUrlLabel": "Seed URL:",
-      "digestLabel": "Digest:",
-      "batchLabel": "Batch:",
-      "intervalLabel": "Interval:",
-      "totalLabel": "Total:",
-      "numbersTitle": "Random Numbers"
-    },
-    "history": {
-      "title": "Result History",
-      "ariaLabel": "Random numbers job history",
-      "empty": "No historical random numbers jobs yet.",
-      "reload": "Reload history",
-      "reloading": "Loading...",
-      "columns": {
-        "jobId": "Job ID",
-        "status": "Status",
-        "numbers": "Numbers",
-        "updated": "Updated",
-        "action": "Action"
-      }
-    }
-  },
   "saScore": {
     "header": {
       "eyebrow": "SA Score",

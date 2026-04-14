@@ -33,6 +33,13 @@ describe('JobLogsPanelComponent', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Execution logs');
+    expect(element.textContent).toContain('1');
+    expect(element.textContent).not.toContain('Started');
+
+    component.toggleExpanded();
+    fixture.detectChanges();
+
     expect(element.textContent).toContain('Started');
     expect(element.textContent).toContain('worker');
     expect(element.querySelector('.log-payload')).not.toBeNull();

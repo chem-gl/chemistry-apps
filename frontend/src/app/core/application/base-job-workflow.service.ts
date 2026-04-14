@@ -98,6 +98,15 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     });
   }
 
+  /** Inicia el stream de progreso SSE sin enganchar logs para apps transitorias. */
+  protected startProgressOnlyStream(jobId: string): void {
+    this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
+      next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
+      complete: () => this.fetchFinalResult(jobId),
+      error: () => this.startPollingFallback(jobId),
+    });
+  }
+
   /** Inicia el stream SSE de logs del job, deduplicando por eventIndex. */
   protected startLogsStream(jobId: string): void {
     this.logsSubscription?.unsubscribe();
@@ -302,5 +311,30 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
     this.activeSection.set('progress');
     this.startProgressStream(jobResponse.id);
+  }
+
+  /** Maneja el dispatch de apps inmediatas que no exponen logs ni historial persistido. */
+  protected handleTransientDispatchJobResponse<T extends { id: string; status?: string }>(
+    jobResponse: T,
+    extract: (job: T) => TResultData | null,
+    errorLabel: string,
+  ): void {
+    this.currentJobId.set(jobResponse.id);
+
+    if (jobResponse.status === 'completed') {
+      const immediateResult = extract(jobResponse);
+      if (immediateResult === null) {
+        this.activeSection.set('error');
+        this.errorMessage.set(`The completed job payload is invalid for ${errorLabel}.`);
+        return;
+      }
+
+      this.resultData.set(immediateResult);
+      this.activeSection.set('result');
+      return;
+    }
+
+    this.activeSection.set('progress');
+    this.startProgressOnlyStream(jobResponse.id);
   }
 }

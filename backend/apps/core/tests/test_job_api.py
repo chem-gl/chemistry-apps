@@ -13,10 +13,7 @@ from uuid import uuid4
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from ..models import (
-    ScientificJob,
-    ScientificJobLogEvent,
-)
+from ..models import ScientificJob, ScientificJobLogEvent
 from ..services import JobService
 from ..types import JSONMap
 
@@ -250,7 +247,7 @@ class JobApiTests(TestCase):
 
     def test_logs_endpoint_returns_events_for_running_job(self) -> None:
         job: ScientificJob = self._create_job_record(
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             status_value="running",
         )
         ScientificJob.objects.filter(id=job.id).update(
@@ -298,7 +295,7 @@ class JobApiTests(TestCase):
     def test_pause_endpoint_pauses_supported_job(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="pending",
             supports_pause_resume=True,
@@ -320,7 +317,7 @@ class JobApiTests(TestCase):
     def test_resume_endpoint_requeues_paused_job(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="paused",
             supports_pause_resume=True,
@@ -416,7 +413,7 @@ class JobApiTests(TestCase):
         """Verifica que se puede cancelar un job en estado paused."""
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="paused",
             supports_pause_resume=True,
@@ -507,7 +504,7 @@ class JobApiTests(TestCase):
         """Verifica que no se puede reanudar un job cancelado."""
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="cancelled",
             supports_pause_resume=True,

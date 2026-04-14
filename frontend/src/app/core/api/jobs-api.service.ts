@@ -311,12 +311,14 @@ export class JobsApiService {
       imaginary_frequency: Number(params.imaginaryFrequency),
       reaction_energy_zpe: Number(params.reactionEnergyZpe),
       temperature: Number(params.temperature),
-      input_change_events: params.inputChangeEvents.map((eventItem: TunnelInputChangeEvent) => ({
-        field_name: eventItem.fieldName,
-        previous_value: Number(eventItem.previousValue),
-        new_value: Number(eventItem.newValue),
-        changed_at: eventItem.changedAt,
-      })),
+      input_change_events: (params.inputChangeEvents ?? []).map(
+        (eventItem: TunnelInputChangeEvent) => ({
+          field_name: eventItem.fieldName,
+          previous_value: Number(eventItem.previousValue),
+          new_value: Number(eventItem.newValue),
+          changed_at: eventItem.changedAt,
+        }),
+      ),
     };
 
     return this.dispatchScientificJob({

@@ -238,7 +238,7 @@ class FinishWithPauseTests(TestCase):
 
     def test_job_marked_paused_with_checkpoint(self) -> None:
         job = ScientificJob.objects.create(
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             job_hash="terminal-pause-test",
             parameters={"count": 100},
@@ -263,7 +263,7 @@ class FinishWithPauseTests(TestCase):
 
     def test_pause_with_none_checkpoint_uses_empty_dict(self) -> None:
         job = ScientificJob.objects.create(
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             job_hash="terminal-pause-no-checkpoint",
             parameters={"count": 10},

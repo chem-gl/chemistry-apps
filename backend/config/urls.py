@@ -35,13 +35,6 @@ from apps.molar_fractions.definitions import (
     APP_ROUTE_PREFIX as MOLAR_FRACTIONS_ROUTE_PREFIX,
 )
 from apps.molar_fractions.routers import MolarFractionsJobViewSet
-from apps.random_numbers.definitions import (
-    APP_ROUTE_BASENAME as RANDOM_NUMBERS_ROUTE_BASENAME,
-)
-from apps.random_numbers.definitions import (
-    APP_ROUTE_PREFIX as RANDOM_NUMBERS_ROUTE_PREFIX,
-)
-from apps.random_numbers.routers import RandomNumbersJobViewSet
 from apps.sa_score.definitions import APP_ROUTE_BASENAME as SA_SCORE_ROUTE_BASENAME
 from apps.sa_score.definitions import APP_ROUTE_PREFIX as SA_SCORE_ROUTE_PREFIX
 from apps.sa_score.routers import SaScoreJobViewSet
@@ -70,11 +63,6 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.trailing_slash = "/?"
 router.register(CORE_JOBS_ROUTE_PREFIX, JobViewSet, basename=CORE_JOBS_ROUTE_BASENAME)
-router.register(
-    RANDOM_NUMBERS_ROUTE_PREFIX,
-    RandomNumbersJobViewSet,
-    basename=RANDOM_NUMBERS_ROUTE_BASENAME,
-)
 router.register(
     MOLAR_FRACTIONS_ROUTE_PREFIX,
     MolarFractionsJobViewSet,

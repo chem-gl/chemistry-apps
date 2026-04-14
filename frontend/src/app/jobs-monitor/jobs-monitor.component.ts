@@ -171,34 +171,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   }
 
   resultActionLabel(jobItem: ScientificJobView): string {
-    if (jobItem.plugin_name === 'random-numbers' && !this.hasFinalRandomNumbersResult(jobItem)) {
-      return this.translateOrFallback('jobsMonitor.actions.viewSummary', 'View summary');
-    }
-
     return this.translateOrFallback('common.actions.openResult', 'Open result');
-  }
-
-  private hasFinalRandomNumbersResult(jobItem: ScientificJobView): boolean {
-    if (jobItem.plugin_name !== 'random-numbers') {
-      return true;
-    }
-
-    const rawResults: unknown = jobItem.results;
-    if (rawResults === null || typeof rawResults !== 'object' || Array.isArray(rawResults)) {
-      return false;
-    }
-
-    const resultRecord: { generated_numbers?: unknown; metadata?: unknown } = rawResults as {
-      generated_numbers?: unknown;
-      metadata?: unknown;
-    };
-
-    return (
-      Array.isArray(resultRecord.generated_numbers) &&
-      resultRecord.metadata !== null &&
-      typeof resultRecord.metadata === 'object' &&
-      !Array.isArray(resultRecord.metadata)
-    );
   }
 
   private translateOrFallback(translationKey: string, fallbackText: string): string {

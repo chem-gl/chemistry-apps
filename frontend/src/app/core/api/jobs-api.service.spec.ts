@@ -48,7 +48,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
   return {
     id: 'job-id-1',
     job_hash: 'hash-value',
-    plugin_name: 'random-numbers',
+    plugin_name: 'molar-fractions',
     algorithm_version: '1.0.0',
     status: StatusEnum.Pending,
     cache_hit: false,
@@ -81,8 +81,8 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
         job_id: 'job-id-1',
         event_index: 7,
         level: 'info',
-        source: 'random_numbers.plugin',
-        message: 'Iniciando generación de números aleatorios.',
+        source: 'molar_fractions.plugin',
+        message: 'Iniciando cálculo de fracciones molares.',
         payload: { operation: 'add' },
         created_at: new Date().toISOString(),
       },
@@ -90,8 +90,8 @@ function makeJobLogsResponse(overrides: Partial<JobLogList> = {}): JobLogList {
         job_id: 'job-id-1',
         event_index: 8,
         level: 'info',
-        source: 'random_numbers.plugin',
-        message: 'Generación de números completada.',
+        source: 'molar_fractions.plugin',
+        message: 'Cálculo de fracciones molares completado.',
         payload: { result: 7 },
         created_at: new Date().toISOString(),
       },
@@ -352,13 +352,13 @@ describe('JobsApiService', () => {
   });
 
   it('should list jobs with status and plugin filters', () => {
-    service.listJobs({ status: 'completed', pluginName: 'random-numbers' }).subscribe();
+    service.listJobs({ status: 'completed', pluginName: 'molar-fractions' }).subscribe();
 
     const req = httpMock.expectOne(
       (request) =>
         request.url === JOBS_LIST_URL &&
         request.params.get('status') === 'completed' &&
-        request.params.get('plugin_name') === 'random-numbers',
+        request.params.get('plugin_name') === 'molar-fractions',
     );
     expect(req.request.method).toBe('GET');
     req.flush([]);
@@ -380,26 +380,28 @@ describe('JobsApiService', () => {
   });
 
   it('should dispatch a generic scientific job', () => {
-    const scientificJob = makeScientificJob({ id: 'random-job-1', plugin_name: 'random-numbers' });
+    const scientificJob = makeScientificJob({
+      id: 'molar-job-1',
+      plugin_name: 'molar-fractions',
+    });
 
     service
       .dispatchScientificJob({
-        pluginName: 'random-numbers',
+        pluginName: 'molar-fractions',
         version: '1.0.0',
         parameters: {
-          seed_url: 'https://example.com/seed.txt',
-          numbers_per_batch: 5,
-          interval_seconds: 120,
-          total_numbers: 55,
+          pka_values: [4.5, 8.1],
+          ph_mode: 'single',
+          ph_value: 7.4,
         },
       })
       .subscribe((job) => {
-        expect(job.plugin_name).toBe('random-numbers');
+        expect(job.plugin_name).toBe('molar-fractions');
       });
 
     const req = httpMock.expectOne(JOBS_LIST_URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body['plugin_name']).toBe('random-numbers');
+    expect(req.request.body['plugin_name']).toBe('molar-fractions');
     req.flush(scientificJob);
   });
 
@@ -437,14 +439,14 @@ describe('JobsApiService', () => {
   });
 
   it('should get generic scientific job status', () => {
-    const scientificJob = makeScientificJob({ id: 'random-job-2', plugin_name: 'random-numbers' });
+    const scientificJob = makeScientificJob({ id: 'molar-job-2', plugin_name: 'molar-fractions' });
 
-    service.getScientificJobStatus('random-job-2').subscribe((job) => {
-      expect(job.id).toBe('random-job-2');
-      expect(job.plugin_name).toBe('random-numbers');
+    service.getScientificJobStatus('molar-job-2').subscribe((job) => {
+      expect(job.id).toBe('molar-job-2');
+      expect(job.plugin_name).toBe('molar-fractions');
     });
 
-    const req = httpMock.expectOne(`${JOBS_LIST_URL}random-job-2/`);
+    const req = httpMock.expectOne(`${JOBS_LIST_URL}molar-job-2/`);
     expect(req.request.method).toBe('GET');
     req.flush(scientificJob);
   });
@@ -456,7 +458,7 @@ describe('JobsApiService', () => {
       expect(logsPage.jobId).toBe('job-id-1');
       expect(logsPage.count).toBe(2);
       expect(logsPage.results[0].eventIndex).toBe(7);
-      expect(logsPage.results[0].source).toBe('random_numbers.plugin');
+      expect(logsPage.results[0].source).toBe('molar_fractions.plugin');
       expect(logsPage.results[0].payload['operation']).toBe('add');
     });
 
@@ -473,14 +475,14 @@ describe('JobsApiService', () => {
   it('should open jobs realtime websocket and map snapshot and updates', () => {
     const receivedEvents: Array<string> = [];
 
-    service.streamJobsRealtime({ pluginName: 'random-numbers', includeLogs: false }).subscribe({
+    service.streamJobsRealtime({ pluginName: 'molar-fractions', includeLogs: false }).subscribe({
       next: (event) => {
         receivedEvents.push(event.event);
       },
     });
 
     expect(capturedWebSocketUrls.length).toBe(1);
-    expect(capturedWebSocketUrls[0]).toContain('plugin_name=random-numbers');
+    expect(capturedWebSocketUrls[0]).toContain('plugin_name=molar-fractions');
     expect(capturedWebSocketUrls[0]).toContain('include_logs=false');
 
     mockSocketInstance.onmessage?.(
@@ -1051,7 +1053,7 @@ describe('JobsApiService', () => {
   });
 
   it('should normalize pause, resume and cancel actions for jobs', () => {
-    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'random-numbers' });
+    const controlJob = makeScientificJob({ id: 'control-job', plugin_name: 'molar-fractions' });
 
     service.pauseJob('control-job').subscribe((result) => {
       expect(result.job.id).toBe('control-job');

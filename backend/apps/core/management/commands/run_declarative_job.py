@@ -14,9 +14,10 @@ from __future__ import annotations
 import json
 from typing import cast
 
+from django.core.management.base import BaseCommand, CommandError, CommandParser
+
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.types import JSONMap
-from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 
 class Command(BaseCommand):
@@ -32,7 +33,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "plugin",
             type=str,
-            help="Nombre del plugin registrado, por ejemplo: calculator o random_numbers.",
+            help="Nombre del plugin registrado, por ejemplo: calculator o molar-fractions.",
         )
         parser.add_argument(
             "--version",

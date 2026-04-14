@@ -273,11 +273,12 @@ class IdentityApiTests(TestCase):
             response = self.client.post(
                 "/api/jobs/",
                 {
-                    "plugin_name": "random-numbers",
+                    "plugin_name": "molar-fractions",
                     "version": "1.0.0",
                     "parameters": {
-                        "seed_url": "https://example.com/seed.txt",
-                        "total_numbers": 3,
+                        "pka_values": [4.5, 8.1],
+                        "ph_mode": "single",
+                        "ph_value": 7.4,
                     },
                 },
                 format="json",
@@ -312,13 +313,13 @@ class IdentityApiTests(TestCase):
         response = self.client.get(f"/api/auth/apps/?group_id={self.group_alpha.id}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        random_numbers_entry = next(
+        molar_fractions_entry = next(
             app_item
             for app_item in response.data
-            if app_item["app_name"] == "random-numbers"
+            if app_item["app_name"] == "molar-fractions"
         )
-        self.assertFalse(random_numbers_entry["enabled"])
-        self.assertIsNone(random_numbers_entry["group_permission"])
+        self.assertFalse(molar_fractions_entry["enabled"])
+        self.assertIsNone(molar_fractions_entry["group_permission"])
 
     def test_current_user_accessible_apps_reject_foreign_group(self) -> None:
         """Evita consultar permisos usando un grupo ajeno al usuario autenticado."""

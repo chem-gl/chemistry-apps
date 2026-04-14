@@ -30,12 +30,6 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
 
 const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   {
-    key: 'random-numbers',
-    title: 'Random Numbers',
-    description: 'Batch random number generation with URL seed and progress tracking.',
-    visibleInMenus: false,
-  },
-  {
     key: 'molar-fractions',
     title: 'Molar Fractions',
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
@@ -89,7 +83,6 @@ export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
 const SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP: Readonly<Record<string, string>> = {
-  'random-numbers': 'random-numbers',
   'molar-fractions': 'molar-fractions',
   'tunnel-effect': 'tunnel',
   'easy-rate': 'easy-rate',

@@ -28,7 +28,6 @@ describe('scientific-apps.config', () => {
 
     expect(actualVisibleKeys).toEqual(expectedVisibleKeys);
     expect(actualVisibleKeys).not.toContain('calculator');
-    expect(actualVisibleKeys).not.toContain('random-numbers');
   });
 
   it('keeps route keys unique to avoid menu/router collisions', () => {

@@ -100,17 +100,11 @@
       }
 
       @if (workflow.activeSection() === 'progress') {
-      <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
-        [progressMessage]="workflow.progressMessage()"
-        [progressAriaLabel]="'molarFractions.result.ariaLabel' | transloco"></app-job-progress-card>
+      <p class="status-message status-card">{{ workflow.progressMessage() }}</p>
       }
 
       @if (workflow.activeSection() === 'result') {
       @if (workflow.resultData()) {
-      @if (workflow.resultData()!.isHistoricalSummary && workflow.resultData()!.summaryMessage !== null) {
-      <p class="summary-banner">{{ workflow.resultData()!.summaryMessage }}</p>
-      }
-
       <div class="metadata-grid">
         <p><strong>{{ 'molarFractions.result.metadata.mode' | transloco }}</strong> {{
           workflow.resultData()!.metadata.phMode }}</p>
@@ -128,18 +122,10 @@
       </div>
 
       <div class="action-row export-row">
-        <button class="btn-secondary" (click)="exportCsv()" [disabled]="!canExportRows()">
-          {{ workflow.isExporting() ? ('tunnel.actions.exporting' | transloco) : ('tunnel.actions.exportCsv' |
-          transloco) }}
-        </button>
-        <button class="btn-secondary" (click)="exportLog()" [disabled]="!canExportRows()">
-          {{ 'molarFractions.result.exportLog' | transloco }}
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.resultData() === null">
+          {{ 'tunnel.actions.exportCsv' | transloco }}
         </button>
       </div>
-
-      @if (workflow.exportErrorMessage()) {
-      <p class="error-message" role="alert">{{ workflow.exportErrorMessage() }}</p>
-      }
 
       @if (workflow.resultData()!.rows.length === 0) {
       <p class="status-message status-card">{{ 'molarFractions.result.noRows' | transloco }}</p>
@@ -228,52 +214,4 @@
     </div>
   </div>
 
-  <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
-
-  <div class="history-card" [attr.aria-label]="'molarFractions.history.ariaLabel' | transloco">
-    <div class="history-header">
-      <h3>{{ 'shared.jobHistoryTable.title' | transloco }}</h3>
-      <button class="btn-secondary" (click)="workflow.loadHistory()" [disabled]="workflow.isHistoryLoading()">
-        {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) :
-        ('shared.jobHistoryTable.reload' | transloco) }}
-      </button>
-    </div>
-
-    @if (workflow.historyJobs().length === 0) {
-    <p class="status-message">{{ 'molarFractions.history.empty' | transloco }}</p>
-    }
-
-    @if (workflow.historyJobs().length > 0) {
-    <div class="table-wrap">
-      <table class="history-table">
-        <thead>
-          <tr>
-            <th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th>
-            <th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th>
-            <th>{{ 'molarFractions.history.columns.mode' | transloco }}</th>
-            <th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th>
-            <th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (historyJob of workflow.historyJobs(); track historyJob.id) {
-          <tr>
-            <td class="mono">{{ historyJob.id }}</td>
-            <td>
-              <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-            </td>
-            <td>{{ historicalModeLabel(historyJob) }}</td>
-            <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-            <td>
-              <button class="history-open-btn" (click)="openHistoricalJob(historyJob.id)">
-                {{ 'molarFractions.history.open' | transloco }}
-              </button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-  </div>
 </section>

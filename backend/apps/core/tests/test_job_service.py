@@ -385,7 +385,7 @@ class JobServiceTests(TestCase):
     def test_request_pause_on_pending_job_sets_paused_status(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="pending",
             supports_pause_resume=True,
@@ -407,7 +407,7 @@ class JobServiceTests(TestCase):
     def test_resume_job_moves_paused_job_to_pending(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="paused",
             supports_pause_resume=True,

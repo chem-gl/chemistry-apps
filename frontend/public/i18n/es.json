@@ -574,60 +574,6 @@
       "ariaLabel": "Jobs históricos de Marcus"
     }
   },
-  "randomNumbers": {
-    "header": {
-      "eyebrow": "Números Aleatorios",
-      "title": "Generación Asíncrona por Lotes",
-      "subtitle": "Configura la URL fuente, el tamaño de lote, el intervalo y el tamaño de salida total."
-    },
-    "form": {
-      "ariaLabel": "Parámetros de generación",
-      "seedUrl": "URL semilla",
-      "seedUrlPlaceholder": "https://ejemplo.com/semilla.txt",
-      "numbersPerBatch": "Números por lote",
-      "batchInterval": "Intervalo de lote (segundos)",
-      "totalNumbers": "Total de números"
-    },
-    "actions": {
-      "generate": "Generar",
-      "processing": "Procesando...",
-      "clear": "Limpiar",
-      "resuming": "Reanudando...",
-      "resumeJob": "Reanudar job",
-      "pausing": "Pausando...",
-      "pauseJob": "Pausar job"
-    },
-    "progress": {
-      "title": "Job en Progreso",
-      "ariaLabel": "Progreso del job de números aleatorios",
-      "stage": "Etapa:"
-    },
-    "logs": { "title": "Logs de ejecución" },
-    "result": {
-      "title": "Resultado Generado",
-      "ariaLabel": "Resultado de números aleatorios",
-      "seedUrlLabel": "URL semilla:",
-      "digestLabel": "Resumen:",
-      "batchLabel": "Lote:",
-      "intervalLabel": "Intervalo:",
-      "totalLabel": "Total:",
-      "numbersTitle": "Números Aleatorios"
-    },
-    "history": {
-      "title": "Historial de Resultados",
-      "ariaLabel": "Historial de jobs de números aleatorios",
-      "empty": "Aún no hay jobs históricos de números aleatorios.",
-      "reload": "Recargar historial",
-      "reloading": "Cargando...",
-      "columns": {
-        "jobId": "ID de Job",
-        "status": "Estado",
-        "numbers": "Números",
-        "updated": "Actualizado",
-        "action": "Acción"
-      }
-    }
-  },
   "saScore": {
     "header": {
       "eyebrow": "SA Score",

@@ -160,6 +160,14 @@ export interface IdentityServiceInterface {
 
     /**
      * 
+     * Elimina un usuario del sistema. Solo root puede eliminar.
+     * @endpoint delete /api/identity/users/{user_id}/
+     * @param userId 
+     */
+    identityUsersDestroy(userId: number, extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * 
      * Lista usuarios o crea usuarios para administración transversal.
      * @endpoint get /api/identity/users/
      */
@@ -167,7 +175,7 @@ export interface IdentityServiceInterface {
 
     /**
      * 
-     * Actualiza identidad y estado administrativo de un usuario.
+     * Actualiza o elimina identidad y estado administrativo de un usuario.
      * @endpoint patch /api/identity/users/{user_id}/
      * @param userId 
      * @param patchedIdentityUserUpdateRequest 

@@ -63,7 +63,7 @@ class RealtimeHelpersTests(TestCase):
     def test_build_progress_and_log_payloads_preserve_contract_shape(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="running",
             cache_hit=False,

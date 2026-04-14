@@ -96,7 +96,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
   return {
     id: 'job-1',
     job_hash: 'hash-1',
-    plugin_name: 'random-numbers',
+    plugin_name: 'molar-fractions',
     algorithm_version: '1.0.0',
     status: StatusEnum.Pending,
     cache_hit: false,

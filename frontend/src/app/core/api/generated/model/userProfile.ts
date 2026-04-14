@@ -7,10 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserMembershipSummary } from './userMembershipSummary';
 
 
 /**
- * Serializer de lectura para perfil del usuario autenticado.
+ * Serializer de lectura para perfil del usuario autenticado. Incluye membresías.
  */
 export interface UserProfile { 
     readonly id: number;
@@ -25,5 +26,6 @@ export interface UserProfile {
     readonly primary_group_id: number | null;
     readonly created_at: string | null;
     readonly updated_at: string | null;
+    readonly memberships: Array<UserMembershipSummary>;
 }
 

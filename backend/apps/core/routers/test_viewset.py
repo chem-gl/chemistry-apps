@@ -157,7 +157,7 @@ class PauseJobViewTests(TestCase):
 
     def test_pause_pending_job_returns_200(self) -> None:
         job = ScientificJob.objects.create(
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             job_hash="testhash-rng-pause",
             parameters={"count": 5},
@@ -199,7 +199,7 @@ class ResumeJobViewTests(TestCase):
 
     def test_resume_paused_job_returns_200(self) -> None:
         job = ScientificJob.objects.create(
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             job_hash="testhash-rng-resume",
             parameters={"count": 5},

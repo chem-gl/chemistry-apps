@@ -111,7 +111,7 @@ class RequestPauseEdgeCaseTests(TestCase):
     def test_pause_already_paused_job_returns_same_job(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="paused",
             supports_pause_resume=True,
@@ -126,7 +126,7 @@ class RequestPauseEdgeCaseTests(TestCase):
     def test_pause_running_job_sets_pause_requested_flag(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="running",
             supports_pause_resume=True,
@@ -141,7 +141,7 @@ class RequestPauseEdgeCaseTests(TestCase):
     def test_pause_completed_job_raises_value_error(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="completed",
             supports_pause_resume=True,
@@ -178,7 +178,7 @@ class ResumeJobEdgeCaseTests(TestCase):
     def test_resume_running_job_raises_value_error(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="running",
             supports_pause_resume=True,
@@ -192,7 +192,7 @@ class ResumeJobEdgeCaseTests(TestCase):
     def test_resume_cancelled_job_raises_value_error(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="cancelled",
             supports_pause_resume=True,

@@ -106,7 +106,7 @@ export class SmileitApiService {
   ): Observable<SmileitPatternEntryView[]> {
     const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
-      .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params), 'body', false, {
+      .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params), undefined, 'body', false, {
         context: requestContext,
       })
       .pipe(shareReplay(1));

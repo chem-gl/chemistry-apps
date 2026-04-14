@@ -222,7 +222,7 @@ class PluginControlCallbackTests(TestCase):
     def test_control_returns_continue_for_running_job(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="running",
             supports_pause_resume=True,
@@ -237,7 +237,7 @@ class PluginControlCallbackTests(TestCase):
     def test_control_returns_pause_when_pause_requested(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="running",
             supports_pause_resume=True,
@@ -252,7 +252,7 @@ class PluginControlCallbackTests(TestCase):
     def test_control_returns_pause_for_paused_status(self) -> None:
         job: ScientificJob = ScientificJob.objects.create(
             job_hash=uuid4().hex,
-            plugin_name="random-numbers",
+            plugin_name="molar-fractions",
             algorithm_version="1.0.0",
             status="paused",
             supports_pause_resume=True,

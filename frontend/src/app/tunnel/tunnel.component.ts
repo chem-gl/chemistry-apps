@@ -1,50 +1,24 @@
 // tunnel.component.ts: Tunnel effect screen with Tkinter-equivalent inputs and result panel.
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
-import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import {
   TunnelResultData,
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
-import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
-import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
-import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
-import {
-  downloadBlobFile,
-  subscribeToRouteHistoricalJob,
-} from '../core/shared/scientific-app-ui.utils';
+import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [
-    CommonModule,
-    FormsModule,
-    TranslocoPipe,
-    JobProgressCardComponent,
-    JobLogsPanelComponent,
-    JobHistoryTableComponent,
-  ],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',
 })
-export class TunnelComponent implements OnInit, OnDestroy {
+export class TunnelComponent {
   readonly workflow = inject(TunnelWorkflowService);
-  private readonly route = inject(ActivatedRoute);
-  private routeSubscription: Subscription | null = null;
-
-  ngOnInit(): void {
-    this.routeSubscription = subscribeToRouteHistoricalJob(this.route, this.workflow);
-  }
-
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-  }
 
   dispatch(): void {
     this.workflow.dispatch();
@@ -54,38 +28,33 @@ export class TunnelComponent implements OnInit, OnDestroy {
     this.workflow.reset();
   }
 
-  clearInputHistory(): void {
-    this.workflow.clearInputHistory();
-  }
-
-  openHistoricalJob(jobId: string): void {
-    this.workflow.openHistoricalJob(jobId);
-  }
-
-  canExportRows(): boolean {
-    return this.workflow.currentJobId() !== null && !this.workflow.isExporting();
-  }
-
   exportCsv(): void {
-    this.workflow.downloadCsvReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {
-        // El workflow ya expone mensaje de error en UI.
-      },
-    });
-  }
+    const resultData = this.workflow.resultData();
+    if (resultData === null) {
+      return;
+    }
 
-  exportLog(): void {
-    this.workflow.downloadLogReport().subscribe({
-      next: (downloadedFile: DownloadedReportFile) => {
-        downloadBlobFile(downloadedFile.filename, downloadedFile.blob);
-      },
-      error: () => {
-        // El workflow ya expone mensaje de error en UI.
-      },
-    });
+    const csvContent = [
+      'reaction_barrier_zpe,imaginary_frequency,reaction_energy_zpe,temperature,model_name,source_library,u,alpha_1,alpha_2,g,kappa_tst',
+      [
+        resultData.reactionBarrierZpe,
+        resultData.imaginaryFrequency,
+        resultData.reactionEnergyZpe,
+        resultData.temperature,
+        resultData.modelName ?? '',
+        resultData.sourceLibrary ?? '',
+        resultData.u ?? '',
+        resultData.alpha1 ?? '',
+        resultData.alpha2 ?? '',
+        resultData.g ?? '',
+        resultData.kappaTst ?? '',
+      ].join(','),
+    ].join('\n');
+
+    downloadBlobFile(
+      'tunnel_effect_report.csv',
+      new Blob([csvContent], { type: 'text/csv;charset=utf-8' }),
+    );
   }
 
   readonly toNumber = Number;
