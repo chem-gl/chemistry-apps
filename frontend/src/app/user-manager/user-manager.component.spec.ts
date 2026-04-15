@@ -23,6 +23,7 @@ describe('UserManagerComponent', () => {
     resolveManagedGroupIds: vi.fn(() => [1]),
     resolveVisibleGroups: vi.fn((groups: unknown[]) => groups),
     hasAdminAccess: vi.fn(() => true),
+    setKnownGroups: vi.fn(),
   };
 
   const users = [
@@ -84,6 +85,12 @@ describe('UserManagerComponent', () => {
     expect(component.visibleUsers()).toEqual(users);
     component.filterGroupId.set('1');
     expect(component.visibleUsers().map((user) => user.id)).toEqual([1]);
+    component.userSearchQuery.set('bob');
+    component.filterGroupId.set('');
+    expect(component.visibleUsers().map((user) => user.id)).toEqual([2]);
+    component.groupSearchQuery.set('alp');
+    expect(component.filteredGroups().map((group) => group.id)).toEqual([1]);
+    expect(component.filteredUsers().map((user) => user.id)).toEqual([2]);
     expect(component.groupName(1)).toBe('Alpha');
     expect(component.groupName(999)).toBe('999');
     expect(component.membershipsForUser(1)).toEqual([memberships[0]]);

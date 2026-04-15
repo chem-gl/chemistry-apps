@@ -2,12 +2,18 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_RANGE_PH_POINTS,
+  MIN_RANGE_PH_POINTS,
+  MIN_RANGE_PH_STEP,
   buildBatchCsvContent,
   buildBatchSpeciesRows,
+  estimatePhRangePointCount,
   generateSpeciesLabels,
   parseInitialCharge,
   parsePkaList,
   speciesFractions,
+  splitSpeciesLabelForDisplay,
+  validatePhRangeConstraints,
 } from './molar-fractions-computation';
 
 describe('molar-fractions-computation', () => {
@@ -24,6 +30,40 @@ describe('molar-fractions-computation', () => {
 
     expect(labelPayload.labelsPretty).toEqual(['H₂Aq', 'HAq⁻¹', 'Aq⁻²']);
     expect(labelPayload.labelsAscii).toEqual(['H2Aq', 'HAq-1', 'Aq-2']);
+  });
+
+  it('separa la carga simbólica para renderizarla como superíndice real', () => {
+    expect(splitSpeciesLabelForDisplay('H₂Aq')).toEqual({
+      baseLabel: 'H₂A',
+      chargeLabel: 'q',
+    });
+    expect(splitSpeciesLabelForDisplay('HAq⁻¹')).toEqual({
+      baseLabel: 'HA',
+      chargeLabel: 'q-1',
+    });
+  });
+
+  it('separa la carga numérica unicode para mostrarla en superíndice', () => {
+    expect(splitSpeciesLabelForDisplay('HEDA⁺')).toEqual({
+      baseLabel: 'HEDA',
+      chargeLabel: '+',
+    });
+    expect(splitSpeciesLabelForDisplay('EDA')).toEqual({
+      baseLabel: 'EDA',
+      chargeLabel: null,
+    });
+  });
+
+  it('estima correctamente la cantidad de puntos del rango de pH', () => {
+    expect(estimatePhRangePointCount(0, 0.35, MIN_RANGE_PH_STEP)).toBe(MIN_RANGE_PH_POINTS);
+    expect(estimatePhRangePointCount(0, 14, 1)).toBe(15);
+  });
+
+  it('valida que el rango genere entre 8 y 350 datos', () => {
+    expect(validatePhRangeConstraints(0, 1, 0.01)).toContain(String(MIN_RANGE_PH_STEP));
+    expect(validatePhRangeConstraints(0, 1, 0.5)).toContain(String(MIN_RANGE_PH_POINTS));
+    expect(validatePhRangeConstraints(0, 20, 0.05)).toContain(String(MAX_RANGE_PH_POINTS));
+    expect(validatePhRangeConstraints(0, 14, 0.05)).toBeNull();
   });
 
   it('calcula fracciones molares para EDA a pH 7.4', () => {

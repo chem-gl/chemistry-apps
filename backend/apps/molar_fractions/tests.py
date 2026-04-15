@@ -137,6 +137,60 @@ class MolarFractionsContractApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("ph_step", response.data)
 
+    def test_create_molar_fractions_rejects_step_smaller_than_point_zero_five(
+        self,
+    ) -> None:
+        invalid_payload: JSONMap = {
+            "version": "1.0.0",
+            "pka_values": [2.2, 7.2, 12.3],
+            "ph_mode": "range",
+            "ph_min": 0.0,
+            "ph_max": 1.0,
+            "ph_step": 0.01,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, invalid_payload, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("ph_step", response.data)
+        self.assertIn("0.05", str(response.data["ph_step"]))
+
+    def test_create_molar_fractions_requires_at_least_eight_points_in_range(
+        self,
+    ) -> None:
+        invalid_payload: JSONMap = {
+            "version": "1.0.0",
+            "pka_values": [2.2, 7.2, 12.3],
+            "ph_mode": "range",
+            "ph_min": 0.0,
+            "ph_max": 1.0,
+            "ph_step": 0.5,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, invalid_payload, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("ph_step", response.data)
+        self.assertIn("8", str(response.data["ph_step"]))
+
+    def test_create_molar_fractions_rejects_more_than_three_hundred_fifty_points(
+        self,
+    ) -> None:
+        invalid_payload: JSONMap = {
+            "version": "1.0.0",
+            "pka_values": [2.2, 7.2, 12.3],
+            "ph_mode": "range",
+            "ph_min": 0.0,
+            "ph_max": 20.0,
+            "ph_step": 0.05,
+        }
+
+        response = self.client.post(APP_API_BASE_PATH, invalid_payload, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("ph_step", response.data)
+        self.assertIn("350", str(response.data["ph_step"]))
+
     def test_create_molar_fractions_swaps_reversed_ph_range(self) -> None:
         request_payload: JSONMap = {
             "version": "1.0.0",
@@ -218,7 +272,7 @@ class MolarFractionsContractApiTests(TestCase):
             "label": "EDA",
             "ph_mode": "range",
             "ph_min": 0.0,
-            "ph_max": 2.0,
+            "ph_max": 7.0,
             "ph_step": 1.0,
         }
 

@@ -18,6 +18,7 @@ from apps.core.identity.routers import (
     GroupMembershipsView,
     IdentityUserDetailView,
     IdentityUsersView,
+    ScientificAppCatalogView,
     WorkGroupDetailView,
     WorkGroupsView,
 )
@@ -133,6 +134,11 @@ urlpatterns = [
         "api/identity/groups/<int:group_id>/app-configs/<str:app_name>/",
         GroupAppConfigDetailView.as_view(),
         name="identity-group-app-config",
+    ),
+    path(
+        "api/identity/scientific-apps/",
+        ScientificAppCatalogView.as_view(),
+        name="identity-scientific-apps",
     ),
     path(
         "api/identity/memberships/",

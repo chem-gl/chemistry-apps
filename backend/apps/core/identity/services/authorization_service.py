@@ -137,6 +137,11 @@ class AuthorizationService:
 
     @staticmethod
     def can_access_app(actor: AbstractUser, app_name: str) -> bool:
+        resolved_definition = ScientificAppRegistry.resolve_definition(app_name)
+        if resolved_definition is None:
+            return False
+        canonical_app_name = resolved_definition.plugin_name
+
         # Root/Admin siempre pueden acceder al catálogo completo.
         if AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor):
             return True
@@ -144,7 +149,7 @@ class AuthorizationService:
         primary_group_id = AuthorizationService.get_primary_group_id(actor)
         if primary_group_id is not None:
             primary_group_rule = AppPermission.objects.filter(
-                app_name=app_name,
+                app_name=canonical_app_name,
                 group_id=int(primary_group_id),
             ).first()
             if primary_group_rule is not None:
@@ -152,7 +157,7 @@ class AuthorizationService:
 
         user_rule = AuthorizationService._get_user_app_permission(
             actor_id=actor.id,
-            app_name=app_name,
+            app_name=canonical_app_name,
         )
         if user_rule is not None:
             return bool(user_rule.is_enabled)
@@ -188,7 +193,7 @@ class AuthorizationService:
                 active_group_id=active_group_id,
                 effective_group_ids=effective_group_ids,
                 app_name=definition.plugin_name,
-                route_key=definition.api_route_prefix.removesuffix("/jobs"),
+                route_key=definition.route_key,
                 api_base_path=definition.api_base_path,
                 supports_pause_resume=bool(definition.supports_pause_resume),
                 available_features=list(definition.available_features),
@@ -231,9 +236,7 @@ class AuthorizationService:
             "group_permission": AuthorizationService._resolve_permission_flag(
                 group_rule
             ),
-            "user_permission": AuthorizationService._resolve_permission_flag(
-                user_rule
-            ),
+            "user_permission": AuthorizationService._resolve_permission_flag(user_rule),
         }
 
     @staticmethod
@@ -269,11 +272,7 @@ class AuthorizationService:
         if active_group_id is not None:
             return {active_group_id}
 
-        if AuthorizationService.is_root(actor):
-            return AuthorizationService._group_ids_for_user(actor)
-
-        if AuthorizationService.is_admin(actor):
-            # Admin sin filtro ve catálogo completo, sin restricción de grupo.
+        if AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor):
             return set()
 
         primary_group_id = AuthorizationService.get_primary_group_id(actor)
@@ -289,21 +288,22 @@ class AuthorizationService:
         user_rule: AppPermission | None,
     ) -> bool:
         """Determina el estado final de habilitación de una app para el actor."""
-        if AuthorizationService.is_root(actor):
-            return True
-
-        if AuthorizationService._is_admin_catalog_view(
-            actor=actor,
-            active_group_id=active_group_id,
-            effective_group_ids=effective_group_ids,
-        ):
-            return True
-
         if group_rule is not None:
             return bool(group_rule.is_enabled)
 
         if user_rule is not None:
             return bool(user_rule.is_enabled)
+
+        if active_group_id is None:
+            if AuthorizationService.is_root(actor):
+                return True
+
+            if AuthorizationService._is_admin_catalog_view(
+                actor=actor,
+                active_group_id=active_group_id,
+                effective_group_ids=effective_group_ids,
+            ):
+                return True
 
         # Sin regla explícita: sin acceso para usuarios no-root.
         return False
@@ -327,14 +327,22 @@ class AuthorizationService:
         actor: AbstractUser, app_name: str
     ) -> dict[str, object]:
         """Resuelve configuración efectiva usando precedencia grupo -> usuario."""
-        group_config = AuthorizationService._get_group_app_config(actor, app_name)
-        user_config = AuthorizationService._get_user_app_config(actor, app_name)
+        resolved_definition = ScientificAppRegistry.resolve_definition(app_name)
+        canonical_app_name = (
+            app_name if resolved_definition is None else resolved_definition.plugin_name
+        )
+        group_config = AuthorizationService._get_group_app_config(
+            actor, canonical_app_name
+        )
+        user_config = AuthorizationService._get_user_app_config(
+            actor, canonical_app_name
+        )
         effective_config: dict[str, object] = {}
         effective_config.update(group_config)
         effective_config.update(user_config)
         return {
-            "app_name": app_name,
-            "enabled": AuthorizationService.can_access_app(actor, app_name),
+            "app_name": canonical_app_name,
+            "enabled": AuthorizationService.can_access_app(actor, canonical_app_name),
             "effective_config": effective_config,
             "group_config": group_config,
             "user_config": user_config,

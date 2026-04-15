@@ -11,6 +11,7 @@ import { GroupManagerComponent } from './group-manager.component';
 describe('GroupManagerComponent', () => {
   const identityApiServiceMock = {
     listGroups: vi.fn(),
+    listScientificApps: vi.fn(),
     listUsers: vi.fn(),
     listMemberships: vi.fn(),
     listAppPermissions: vi.fn(),
@@ -29,9 +30,18 @@ describe('GroupManagerComponent', () => {
     ),
     resolveVisibleGroups: vi.fn((groups: unknown[]) => groups),
     reloadSessionData: vi.fn(() => of(void 0)),
+    setKnownGroups: vi.fn(),
   };
 
   const groups = [{ id: 1, name: 'Alpha', slug: 'alpha', description: '' }];
+  const scientificApps = [
+    { plugin_name: 'smileit', route_key: 'smileit', api_base_path: '/api/smileit/jobs/' },
+    {
+      plugin_name: 'marcus-kinetics',
+      route_key: 'marcus',
+      api_base_path: '/api/marcus/jobs/',
+    },
+  ];
   const users = [{ id: 4, username: 'alice' }];
   const memberships = [{ id: 7, user: 4, group: 1, role_in_group: 'member' }];
   const permissions = [{ id: 10, app_name: 'smileit', group: 1, user: null, is_enabled: true }];
@@ -39,6 +49,7 @@ describe('GroupManagerComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     identityApiServiceMock.listGroups.mockReturnValue(of(groups));
+    identityApiServiceMock.listScientificApps.mockReturnValue(of(scientificApps));
     identityApiServiceMock.listUsers.mockReturnValue(of(users));
     identityApiServiceMock.listMemberships.mockReturnValue(of(memberships));
     identityApiServiceMock.listAppPermissions.mockReturnValue(of(permissions));
@@ -78,6 +89,7 @@ describe('GroupManagerComponent', () => {
     expect(component.users()).toEqual(users);
     expect(component.memberships()).toEqual(memberships);
     expect(component.appPermissions()).toEqual(permissions);
+    expect(component.scientificApps()).toEqual(scientificApps);
     expect(component.visibleGroups()).toEqual(groups);
     expect(component.managedGroupIds()).toEqual([1]);
     expect(component.isLoading()).toBe(false);
@@ -110,7 +122,16 @@ describe('GroupManagerComponent', () => {
     expect(component.userName(4)).toBe('alice');
     expect(component.userName(999)).toBe('999');
     expect(component.appPermissionEnabled(1, 'smileit')).toBe(true);
-    expect(component.appPermissionEnabled(1, 'sa-score')).toBe(false);
+    expect(component.appPermissionEnabled(1, 'marcus-kinetics')).toBe(false);
+    expect(component.appLabel(scientificApps[1] as never)).toBe('Marcus Theory');
+    expect(component.appTestIdKey(scientificApps[1] as never)).toBe('marcus');
+
+    component.groupSearchQuery.set('alp');
+    expect(component.filteredGroups().map((group) => group.id)).toEqual([1]);
+
+    component.memberSearchQuery.set('ali');
+    expect(component.visibleMembershipsForGroup(1).map((membership) => membership.id)).toEqual([7]);
+    expect(component.availableUsersForGroup(1)).toEqual([]);
   });
 
   it('crea grupos y miembros reseteando formularios y mensajes', () => {
@@ -172,9 +193,9 @@ describe('GroupManagerComponent', () => {
       is_enabled: false,
     });
 
-    component.toggleAppPermission(1, 'sa-score');
+    component.toggleAppPermission(1, 'marcus-kinetics');
     expect(identityApiServiceMock.createAppPermission).toHaveBeenCalledWith({
-      app_name: 'sa-score',
+      app_name: 'marcus-kinetics',
       group: 1,
       is_enabled: true,
     });

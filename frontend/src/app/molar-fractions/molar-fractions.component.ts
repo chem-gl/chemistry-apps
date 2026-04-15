@@ -24,6 +24,7 @@ import {
   BatchSpeciesRow,
   buildBatchCsvContent,
   buildBatchSpeciesRows,
+  splitSpeciesLabelForDisplay,
 } from './molar-fractions-computation';
 
 @Component({
@@ -98,6 +99,14 @@ export class MolarFractionsComponent {
 
   formatFractionValue(value: number): string {
     return formatFractionValue(value);
+  }
+
+  speciesLabelBase(speciesLabel: string): string {
+    return splitSpeciesLabelForDisplay(speciesLabel).baseLabel;
+  }
+
+  speciesLabelCharge(speciesLabel: string): string | null {
+    return splitSpeciesLabelForDisplay(speciesLabel).chargeLabel;
   }
 
   onProbePhChange(rawValue: number | string): void {

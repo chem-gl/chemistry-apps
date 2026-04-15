@@ -11,10 +11,14 @@ import {
   GroupMembershipView,
   IdentityApiService,
   IdentityUserSummaryView,
+  ScientificAppCatalogItemView,
   WorkGroupView,
 } from '../core/api/identity-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
-import { SCIENTIFIC_APP_ROUTE_ITEMS } from '../core/shared/scientific-apps.config';
+import {
+  findScientificAppRouteItemByRouteKey,
+  type ScientificAppRouteItem,
+} from '../core/shared/scientific-apps.config';
 
 type GroupRoleOption = 'admin' | 'member';
 
@@ -47,10 +51,11 @@ export class GroupManagerComponent implements OnInit {
   readonly users = signal<IdentityUserSummaryView[]>([]);
   readonly memberships = signal<GroupMembershipView[]>([]);
   readonly appPermissions = signal<AppPermissionView[]>([]);
+  readonly scientificApps = signal<ScientificAppCatalogItemView[]>([]);
   readonly expandedGroupId = signal<number | null>(null);
-
-  /** Todas las keys de apps científicas disponibles en el sistema. */
-  readonly availableAppKeys = SCIENTIFIC_APP_ROUTE_ITEMS.map((item) => item.key);
+  readonly groupFilterId = signal<string>('');
+  readonly groupSearchQuery = signal<string>('');
+  readonly memberSearchQuery = signal<string>('');
 
   /** IDs de grupos que el usuario actual puede administrar. */
   readonly managedGroupIds = computed<number[]>(() => {
@@ -60,6 +65,26 @@ export class GroupManagerComponent implements OnInit {
   /** Grupos visibles para el usuario (root ve todos, admin ve los suyos). */
   readonly visibleGroups = computed<WorkGroupView[]>(() => {
     return this.sessionService.resolveVisibleGroups(this.groups(), this.managedGroupIds());
+  });
+
+  /** Grupos visibles tras aplicar filtro rápido y selector de contexto administrativo. */
+  readonly filteredGroups = computed<WorkGroupView[]>(() => {
+    const normalizedSearch = this.groupSearchQuery().trim().toLocaleLowerCase();
+    const selectedGroupId = this.groupFilterId();
+
+    return this.visibleGroups().filter((groupItem) => {
+      const matchesSelectedGroup =
+        selectedGroupId === '' || groupItem.id === Number.parseInt(selectedGroupId, 10);
+      if (!matchesSelectedGroup) {
+        return false;
+      }
+
+      if (normalizedSearch === '') {
+        return true;
+      }
+
+      return this._groupMatchesSearch(groupItem, normalizedSearch);
+    });
   });
 
   readonly createGroupForm = signal<CreateGroupForm>({ name: '', slug: '', description: '' });
@@ -77,12 +102,15 @@ export class GroupManagerComponent implements OnInit {
       users: this.identityApiService.listUsers(),
       memberships: this.identityApiService.listMemberships(),
       appPermissions: this.identityApiService.listAppPermissions(),
+      scientificApps: this.identityApiService.listScientificApps(),
     }).subscribe({
-      next: ({ groups, users, memberships, appPermissions }) => {
+      next: ({ groups, users, memberships, appPermissions, scientificApps }) => {
         this.groups.set(groups);
         this.users.set(users);
         this.memberships.set(memberships);
         this.appPermissions.set(appPermissions);
+        this.scientificApps.set(scientificApps);
+        this.sessionService.setKnownGroups(groups);
         this.isLoading.set(false);
       },
       error: () => {
@@ -93,11 +121,26 @@ export class GroupManagerComponent implements OnInit {
   }
 
   toggleExpand(groupId: number): void {
+    this.memberSearchQuery.set('');
     this.expandedGroupId.update((current) => (current === groupId ? null : groupId));
   }
 
   membershipsForGroup(groupId: number): GroupMembershipView[] {
     return this.memberships().filter((m) => m.group === groupId);
+  }
+
+  visibleMembershipsForGroup(groupId: number): GroupMembershipView[] {
+    const normalizedSearch = this.memberSearchQuery().trim().toLocaleLowerCase();
+    const membershipsForGroup = this.membershipsForGroup(groupId);
+
+    if (normalizedSearch === '') {
+      return membershipsForGroup;
+    }
+
+    return membershipsForGroup.filter((membershipItem) => {
+      const userItem = this.users().find((candidate) => candidate.id === membershipItem.user);
+      return userItem !== undefined && this._userMatchesSearch(userItem, normalizedSearch);
+    });
   }
 
   permissionsForGroup(groupId: number): AppPermissionView[] {
@@ -108,12 +151,39 @@ export class GroupManagerComponent implements OnInit {
     return this.users().find((u) => u.id === userId)?.username ?? String(userId);
   }
 
-  appPermissionEnabled(groupId: number, appKey: string): boolean {
+  availableUsersForGroup(groupId: number): IdentityUserSummaryView[] {
+    const normalizedSearch = this.memberSearchQuery().trim().toLocaleLowerCase();
+    const assignedUserIds = new Set(
+      this.membershipsForGroup(groupId).map((membership) => membership.user),
+    );
+
+    return this.users().filter((userItem) => {
+      if (assignedUserIds.has(userItem.id)) {
+        return false;
+      }
+
+      if (normalizedSearch === '') {
+        return true;
+      }
+
+      return this._userMatchesSearch(userItem, normalizedSearch);
+    });
+  }
+
+  appPermissionEnabled(groupId: number, pluginName: string): boolean {
     const perm = this.appPermissions().find(
-      (p) => p.group === groupId && p.app_name === appKey && p.user === null,
+      (p) => p.group === groupId && p.app_name === pluginName && p.user === null,
     );
     // Sin regla explícita: denegado por defecto hasta que exista una regla del grupo.
     return perm?.is_enabled ?? false;
+  }
+
+  appLabel(appItem: ScientificAppCatalogItemView): string {
+    return this._resolvePresentationApp(appItem)?.title ?? appItem.route_key;
+  }
+
+  appTestIdKey(appItem: ScientificAppCatalogItemView): string {
+    return appItem.route_key;
   }
 
   submitCreateGroup(): void {
@@ -181,13 +251,13 @@ export class GroupManagerComponent implements OnInit {
     });
   }
 
-  toggleAppPermission(groupId: number, appKey: string): void {
+  toggleAppPermission(groupId: number, pluginName: string): void {
     const existing = this.appPermissions().find(
-      (p) => p.group === groupId && p.app_name === appKey && p.user === null,
+      (p) => p.group === groupId && p.app_name === pluginName && p.user === null,
     );
     if (existing === undefined) {
       this.identityApiService
-        .createAppPermission({ app_name: appKey, group: groupId, is_enabled: true })
+        .createAppPermission({ app_name: pluginName, group: groupId, is_enabled: true })
         .subscribe({
           next: (created) => {
             this.appPermissions.update((list) => [...list, created]);
@@ -212,6 +282,12 @@ export class GroupManagerComponent implements OnInit {
     }
   }
 
+  private _resolvePresentationApp(
+    appItem: ScientificAppCatalogItemView,
+  ): ScientificAppRouteItem | undefined {
+    return findScientificAppRouteItemByRouteKey(appItem.route_key);
+  }
+
   deleteGroup(groupId: number): void {
     if (!confirm('¿Seguro que deseas eliminar este grupo? Esta acción es irreversible.')) return;
     this.isSubmitting.set(true);
@@ -230,5 +306,19 @@ export class GroupManagerComponent implements OnInit {
           this.isSubmitting.set(false);
         },
       });
+  }
+
+  private _groupMatchesSearch(group: WorkGroupView, normalizedSearch: string): boolean {
+    return [group.name, group.slug, group.description]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(normalizedSearch);
+  }
+
+  private _userMatchesSearch(userItem: IdentityUserSummaryView, normalizedSearch: string): boolean {
+    return [userItem.username, userItem.email, userItem.first_name, userItem.last_name]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(normalizedSearch);
   }
 }

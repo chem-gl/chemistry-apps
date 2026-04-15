@@ -200,7 +200,7 @@ describe('JobsMonitorComponent', () => {
       ['molar-fractions', '/molar-fractions'],
       ['tunnel-effect', '/tunnel'],
       ['easy-rate', '/easy-rate'],
-      ['marcus', '/marcus'],
+      ['marcus-kinetics', '/marcus'],
       ['smileit', '/smileit'],
       ['unknown-plugin', null],
     ];

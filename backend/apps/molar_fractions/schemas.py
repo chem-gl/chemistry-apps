@@ -8,6 +8,8 @@ Cómo se usa:
 - El serializer de respuesta documenta estructura estable para frontend.
 """
 
+import math
+
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
@@ -19,6 +21,8 @@ from .definitions import (
     DEFAULT_LABEL,
     MAX_PH_POINTS,
     MAX_PKA_VALUES,
+    MIN_PH_RANGE_POINTS,
+    MIN_PH_STEP,
     MIN_PKA_VALUES,
 )
 
@@ -175,11 +179,27 @@ class MolarFractionsJobCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"ph_step": "ph_step debe ser mayor que cero."}
             )
+        if normalized_step < MIN_PH_STEP:
+            raise serializers.ValidationError(
+                {"ph_step": (f"ph_step debe ser de al menos {MIN_PH_STEP}.")}
+            )
 
-        normalized_min: float = float(ph_min_value)
-        normalized_max: float = float(ph_max_value)
-        span_value: float = abs(normalized_max - normalized_min)
-        estimated_points: int = int(span_value / normalized_step) + 1
+        normalized_min: float = min(float(ph_min_value), float(ph_max_value))
+        normalized_max: float = max(float(ph_min_value), float(ph_max_value))
+        attrs["ph_min"] = normalized_min
+        attrs["ph_max"] = normalized_max
+        attrs["ph_step"] = normalized_step
+
+        span_value: float = normalized_max - normalized_min
+        estimated_points: int = math.floor((span_value / normalized_step) + 1e-9) + 1
+        if estimated_points < MIN_PH_RANGE_POINTS:
+            raise serializers.ValidationError(
+                {
+                    "ph_step": (
+                        f"La malla de pH debe generar al menos {MIN_PH_RANGE_POINTS} datos."
+                    )
+                }
+            )
         if estimated_points > MAX_PH_POINTS:
             raise serializers.ValidationError(
                 {

@@ -1,7 +1,11 @@
 // molar-fractions-workflow.service.ts: Orquesta formulario, progreso y resultados de molar fractions.
 
 import { Injectable, computed, signal } from '@angular/core';
-import { generateSpeciesLabels } from '../../molar-fractions/molar-fractions-computation';
+import {
+  MIN_RANGE_PH_STEP,
+  generateSpeciesLabels,
+  validatePhRangeConstraints,
+} from '../../molar-fractions/molar-fractions-computation';
 import { MolarFractionsParams, ScientificJobView } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
 
@@ -68,10 +72,30 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
     });
   }
 
+  setPhStep(rawValue: number): void {
+    const normalizedValue: number = Number(rawValue);
+    if (!Number.isFinite(normalizedValue)) {
+      return;
+    }
+
+    this.phStep.set(Math.max(MIN_RANGE_PH_STEP, normalizedValue));
+  }
+
   override dispatch(): void {
     this.prepareForDispatch();
 
-    const dispatchParams: MolarFractionsParams = this.buildDispatchParams();
+    let dispatchParams: MolarFractionsParams;
+    try {
+      dispatchParams = this.buildDispatchParams();
+    } catch (validationError) {
+      const message =
+        validationError instanceof Error
+          ? validationError.message
+          : 'Invalid molar fractions parameters.';
+      this.activeSection.set('error');
+      this.errorMessage.set(message);
+      return;
+    }
 
     this.jobsApiService.dispatchMolarFractionsJob(dispatchParams).subscribe({
       next: (jobResponse: ScientificJobView) => {
@@ -110,14 +134,26 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       };
     }
 
+    const currentPhMin: number = this.phMin();
+    const currentPhMax: number = this.phMax();
+    const currentPhStep: number = this.phStep();
+    const rangeValidationMessage = validatePhRangeConstraints(
+      currentPhMin,
+      currentPhMax,
+      currentPhStep,
+    );
+    if (rangeValidationMessage !== null) {
+      throw new Error(rangeValidationMessage);
+    }
+
     return {
       pkaValues: this.activePkaValues(),
       initialCharge,
       label,
       phMode: 'range',
-      phMin: this.phMin(),
-      phMax: this.phMax(),
-      phStep: this.phStep(),
+      phMin: currentPhMin,
+      phMax: currentPhMax,
+      phStep: currentPhStep,
     };
   }
 

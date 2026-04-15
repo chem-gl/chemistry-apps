@@ -37,7 +37,7 @@ describe('DashboardComponent', () => {
 
   const jobs = [
     { id: 'job-1', status: 'running', plugin_name: 'smileit', owner: 1, group: 2 },
-    { id: 'job-2', status: 'completed', plugin_name: 'molar-fractions', owner: 1, group: 2 },
+    { id: 'job-2', status: 'completed', plugin_name: 'marcus-kinetics', owner: 1, group: 2 },
     { id: 'job-3', status: 'paused', plugin_name: 'unknown', owner: 3, group: 4 },
   ];
 
@@ -47,7 +47,7 @@ describe('DashboardComponent', () => {
     sessionServiceMock.hasAdminAccess.mockReturnValue(true);
     sessionServiceMock.accessibleApps.mockReturnValue([
       { route_key: 'smileit', enabled: true },
-      { route_key: 'molar-fractions', enabled: true },
+      { route_key: 'marcus', enabled: true },
     ]);
     sessionServiceMock.canAccessRoute.mockReturnValue(true);
     sessionServiceMock.canDeleteJob.mockReturnValue(true);
@@ -85,6 +85,7 @@ describe('DashboardComponent', () => {
     expect(component.recentJobs()).toHaveLength(3);
     expect(component.enabledApps()).toHaveLength(2);
     expect(component.isLoading()).toBe(false);
+    expect(component.recentJobRoutePath(jobs[1] as never)).toBe('/marcus');
   });
 
   it('corta la carga cuando initializeSession devuelve falso', () => {

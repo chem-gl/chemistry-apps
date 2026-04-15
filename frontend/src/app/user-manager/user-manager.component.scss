@@ -86,6 +86,11 @@ h1 {
   color: var(--chem-ink);
 }
 
+.filter-search {
+  min-width: min(24rem, 100%);
+  flex: 1 1 18rem;
+}
+
 /* ─── Secciones ─── */
 .section-block {
   padding: 1.25rem 1.5rem;

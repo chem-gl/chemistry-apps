@@ -50,6 +50,8 @@ export class UserManagerComponent implements OnInit {
   readonly groups = signal<WorkGroupView[]>([]);
   readonly memberships = signal<GroupMembershipView[]>([]);
   readonly filterGroupId = signal<string>('');
+  readonly userSearchQuery = signal<string>('');
+  readonly groupSearchQuery = signal<string>('');
 
   /** IDs de grupos manejados por el usuario actual (root ve todos). */
   readonly managedGroupIds = computed<number[]>(() => {
@@ -61,18 +63,39 @@ export class UserManagerComponent implements OnInit {
     return this.sessionService.resolveVisibleGroups(this.groups(), this.managedGroupIds());
   });
 
+  /** Grupos visibles tras aplicar búsqueda rápida en formularios y filtros. */
+  readonly filteredGroups = computed<WorkGroupView[]>(() => {
+    const normalizedSearch = this.groupSearchQuery().trim().toLocaleLowerCase();
+    if (normalizedSearch === '') {
+      return this.visibleGroups();
+    }
+
+    return this.visibleGroups().filter((groupItem) =>
+      this._groupMatchesSearch(groupItem, normalizedSearch),
+    );
+  });
+
   /** Usuarios visibles según rol y filtro de grupo activo. */
   readonly visibleUsers = computed<IdentityUserSummaryView[]>(() => {
     const groupFilter = this.filterGroupId();
+    const normalizedSearch = this.userSearchQuery().trim().toLocaleLowerCase();
+
+    const applyUserSearch = (userItems: ReadonlyArray<IdentityUserSummaryView>) => {
+      if (normalizedSearch === '') {
+        return [...userItems];
+      }
+
+      return userItems.filter((userItem) => this._userMatchesSearch(userItem, normalizedSearch));
+    };
 
     // Root y admin ven todos los usuarios cuando no aplican filtro explícito.
     if (this.sessionService.hasAdminAccess() && groupFilter === '') {
-      return this.users();
+      return applyUserSearch(this.users());
     }
 
     const targetGroupIds = groupFilter ? [Number(groupFilter)] : this.managedGroupIds();
     if (targetGroupIds.length === 0) {
-      return this.users();
+      return applyUserSearch(this.users());
     }
 
     const usersInGroups = new Set(
@@ -81,7 +104,17 @@ export class UserManagerComponent implements OnInit {
         .map((membershipItem) => membershipItem.user),
     );
 
-    return this.users().filter((userItem) => usersInGroups.has(userItem.id));
+    return applyUserSearch(this.users().filter((userItem) => usersInGroups.has(userItem.id)));
+  });
+
+  /** Usuarios filtrados para los selectores administrativos voluminosos. */
+  readonly filteredUsers = computed<IdentityUserSummaryView[]>(() => {
+    const normalizedSearch = this.userSearchQuery().trim().toLocaleLowerCase();
+    if (normalizedSearch === '') {
+      return this.users();
+    }
+
+    return this.users().filter((userItem) => this._userMatchesSearch(userItem, normalizedSearch));
   });
 
   readonly createUserForm = signal<CreateUserForm>({
@@ -116,6 +149,7 @@ export class UserManagerComponent implements OnInit {
         this.users.set(users);
         this.groups.set(groups);
         this.memberships.set(memberships);
+        this.sessionService.setKnownGroups(groups);
         this.isLoading.set(false);
       },
       error: () => {
@@ -230,5 +264,19 @@ export class UserManagerComponent implements OnInit {
         this.errorMessage.set(err?.error?.detail ?? 'Error al eliminar membresía.');
       },
     });
+  }
+
+  private _groupMatchesSearch(groupItem: WorkGroupView, normalizedSearch: string): boolean {
+    return [groupItem.name, groupItem.slug, groupItem.description]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(normalizedSearch);
+  }
+
+  private _userMatchesSearch(userItem: IdentityUserSummaryView, normalizedSearch: string): boolean {
+    return [userItem.username, userItem.email, userItem.first_name, userItem.last_name]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(normalizedSearch);
   }
 }

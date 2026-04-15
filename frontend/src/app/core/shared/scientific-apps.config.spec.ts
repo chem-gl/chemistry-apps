@@ -3,6 +3,8 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  findScientificAppRouteItemByPluginName,
+  resolveScientificJobRouteKey,
   SCIENTIFIC_APP_ROUTE_ITEMS,
   VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS,
 } from './scientific-apps.config';
@@ -12,6 +14,7 @@ describe('scientific-apps.config', () => {
     for (const appRouteItem of SCIENTIFIC_APP_ROUTE_ITEMS) {
       expect(appRouteItem.routePath).toBe(`/${appRouteItem.key}`);
       expect(appRouteItem.available).toBe(true);
+      expect(appRouteItem.pluginName.length).toBeGreaterThan(0);
       expect(appRouteItem.title.length).toBeGreaterThan(0);
       expect(appRouteItem.description.length).toBeGreaterThan(0);
     }
@@ -35,5 +38,11 @@ describe('scientific-apps.config', () => {
     const uniqueKeys = new Set(allKeys);
 
     expect(uniqueKeys.size).toBe(allKeys.length);
+  });
+
+  it('resolves plugin names to route keys without manual drift', () => {
+    expect(resolveScientificJobRouteKey('marcus-kinetics')).toBe('marcus');
+    expect(resolveScientificJobRouteKey('tunnel-effect')).toBe('tunnel');
+    expect(findScientificAppRouteItemByPluginName('marcus-kinetics')?.routePath).toBe('/marcus');
   });
 });

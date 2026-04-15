@@ -136,6 +136,54 @@ describe('MolarFractionsComponent', () => {
     expect(component.formatFractionValue(0.00123)).toBe('1.230E-3');
   });
 
+  it('renderiza la carga simbólica q como superíndice en los encabezados de especies', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+
+    workflowMock.resultData.set({
+      ...buildResultData({ rowCount: 2 }),
+      speciesLabels: ['H₃Aq', 'H₂Aq⁻¹', 'HAq⁻²'],
+    });
+
+    fixture.detectChanges();
+
+    const superscriptNodes = Array.from(
+      fixture.nativeElement.querySelectorAll('.result-table thead th sup'),
+    ) as HTMLElement[];
+
+    expect(superscriptNodes.map((node) => node.textContent?.trim())).toEqual(['q', 'q-1', 'q-2']);
+  });
+
+  it('renderiza la especie del batch con la carga simbólica en superíndice', () => {
+    const fixture = TestBed.createComponent(MolarFractionsComponent);
+    const component = fixture.componentInstance;
+
+    component.batchRows.set([
+      {
+        acronym: 'TEST',
+        smiles: 'O',
+        pkaValues: [2],
+        pkaValuesText: '2',
+        initialCharge: 'q',
+        pH: 7.4,
+        speciesIndex: 0,
+        totalPkaCount: 1,
+        protonCount: 1,
+        species: 'HAq⁻¹',
+        speciesAscii: 'HAq-1',
+        charge: 'q-1',
+        fraction: 0.5,
+      },
+    ]);
+    component.onInputModeChange('batch');
+    fixture.detectChanges();
+
+    const batchSuperscript = fixture.nativeElement.querySelector(
+      '.batch-result-table tbody tr td:nth-child(5) sup',
+    ) as HTMLElement | null;
+
+    expect(batchSuperscript?.textContent?.trim()).toBe('q-1');
+  });
+
   it('muestra gráfica cuando el resultado es range y tiene más de 5 puntos', () => {
     const fixture = TestBed.createComponent(MolarFractionsComponent);
     const component = fixture.componentInstance;

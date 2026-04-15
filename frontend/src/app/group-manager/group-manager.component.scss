@@ -94,6 +94,27 @@ h1 {
   font-size: 0.88rem;
 }
 
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+.filter-search {
+  min-width: min(26rem, 100%);
+  flex: 1 1 18rem;
+}
+
 /* ─── Tabla principal ─── */
 .table-wrap {
   overflow-x: auto;
@@ -188,6 +209,10 @@ table {
   align-items: center;
   flex-wrap: wrap;
   margin-top: 0.5rem;
+}
+
+.inline-search {
+  max-width: 28rem;
 }
 
 /* ─── Permisos de apps ─── */

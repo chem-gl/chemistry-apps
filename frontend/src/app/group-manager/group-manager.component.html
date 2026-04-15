@@ -27,6 +27,25 @@
     <section class="section-block">
         <h2 class="section-title">{{ 'groupManager.groups.title' | transloco }}</h2>
 
+        <div class="filter-bar">
+            <label class="filter-label">
+                Grupo administrativo
+                <select class="form-select" [ngModel]="groupFilterId()" (ngModelChange)="groupFilterId.set($event)">
+                    <option value="">Todos los grupos administrables</option>
+                    @for (group of visibleGroups(); track group.id) {
+                    <option [value]="group.id">{{ group.name }}</option>
+                    }
+                </select>
+            </label>
+
+            <label class="filter-label filter-search">
+                Fast search de grupos
+                <input class="form-input" type="search" [ngModel]="groupSearchQuery()"
+                    (ngModelChange)="groupSearchQuery.set($event)"
+                    placeholder="Buscar por nombre, slug o descripción" />
+            </label>
+        </div>
+
         <div class="table-wrap">
             <table>
                 <thead>
@@ -38,7 +57,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (group of visibleGroups(); track group.id) {
+                    @for (group of filteredGroups(); track group.id) {
                     <tr [attr.data-testid]="'group-row-' + group.id">
                         <td><strong>{{ group.name }}</strong><br /><small class="hint">{{ group.description }}</small>
                         </td>
@@ -67,6 +86,14 @@
                                 <!-- Subsección: miembros -->
                                 <div class="sub-section">
                                     <h3 class="sub-title">{{ 'groupManager.members.title' | transloco }}</h3>
+
+                                    <label class="filter-label filter-search inline-search">
+                                        Fast search de usuarios
+                                        <input class="form-input" type="search" [ngModel]="memberSearchQuery()"
+                                            (ngModelChange)="memberSearchQuery.set($event)"
+                                            placeholder="Buscar usuario por nombre o correo" />
+                                    </label>
+
                                     <table class="inner-table">
                                         <thead>
                                             <tr>
@@ -76,7 +103,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @for (member of membershipsForGroup(group.id); track member.id) {
+                                            @for (member of visibleMembershipsForGroup(group.id); track member.id) {
                                             <tr>
                                                 <td>{{ userName(member.user) }}</td>
                                                 <td>
@@ -105,7 +132,7 @@
                                             name="userId" required>
                                             <option value="">{{ 'groupManager.members.selectUser' | transloco }}
                                             </option>
-                                            @for (user of users(); track user.id) {
+                                            @for (user of availableUsersForGroup(group.id); track user.id) {
                                             <option [value]="user.id">{{ user.username }}</option>
                                             }
                                         </select>
@@ -127,12 +154,13 @@
                                 <div class="sub-section">
                                     <h3 class="sub-title">{{ 'groupManager.permissions.title' | transloco }}</h3>
                                     <div class="app-permissions-grid">
-                                        @for (appKey of availableAppKeys; track appKey) {
+                                        @for (appItem of scientificApps(); track appItem.plugin_name) {
                                         <label class="app-toggle">
-                                            <input type="checkbox" [checked]="appPermissionEnabled(group.id, appKey)"
-                                                [attr.data-testid]="'toggle-app-' + group.id + '-' + appKey"
-                                                (change)="toggleAppPermission(group.id, appKey)" />
-                                            <span>{{ appKey }}</span>
+                                            <input type="checkbox"
+                                                [checked]="appPermissionEnabled(group.id, appItem.plugin_name)"
+                                                [attr.data-testid]="'toggle-app-' + group.id + '-' + appTestIdKey(appItem)"
+                                                (change)="toggleAppPermission(group.id, appItem.plugin_name)" />
+                                            <span>{{ appLabel(appItem) }}</span>
                                         </label>
                                         }
                                     </div>

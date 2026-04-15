@@ -551,6 +551,16 @@
   font-size: 0.78rem;
 }
 
+.formatted-species-label {
+  white-space: nowrap;
+}
+
+.formatted-species-label sup {
+  margin-left: 0.05rem;
+  font-size: 0.78em;
+  line-height: 0;
+}
+
 .result-table th,
 .history-table th {
   background: rgba(237, 233, 240, 0.82);

@@ -77,6 +77,31 @@
                 (ngModelChange)="workflow.blocks.updateBlockLabel(block.id, $event)"
                 [disabled]="workflow.isProcessing()" />
             </div>
+
+            <div class="block-section block-placement-section block-placement-section-inline">
+              <h4>{{ 'smileit.blocks.assignPositions' | transloco }}</h4>
+              @if (workflow.selectedAtomIndices().length === 0) {
+              <p class="hint">
+                {{ 'smileit.blocks.noAtomsHint' | transloco }}
+              </p>
+              } @else {
+              <div class="atom-grid compact-grid">
+                @for (atomIndex of workflow.selectedAtomIndices(); track atomIndex) {
+                <button type="button" class="atom-chip compact" [class.selected]="isBlockSiteSelected(block, atomIndex)"
+                  (click)="workflow.blocks.toggleBlockSite(block.id, atomIndex)" [disabled]="workflow.isProcessing()">
+                  {{ 'smileit.blocks.siteLabel' | transloco }} {{ atomIndex }}
+                </button>
+                }
+              </div>
+              }
+
+              @if (block.siteAtomIndices.length === 0) {
+              <p class="hint guidance-hint">
+                {{ 'smileit.blocks.noPositionsAssigned' | transloco }}
+              </p>
+              }
+            </div>
+
             <div class="block-actions">
               <button class="btn-secondary small" (click)="workflow.blocks.moveAssignmentBlock(block.id, -1)"
                 [disabled]="blockIndex === 0 || workflow.isProcessing()">
@@ -237,28 +262,6 @@
               }
             </div>
             }
-          </div>
-          <div class="block-section block-placement-section">
-            <h4>{{ 'smileit.blocks.assignPositions' | transloco }}</h4>
-            @if (workflow.selectedAtomIndices().length === 0) {
-            <p class="hint">
-              {{ 'smileit.blocks.noAtomsHint' | transloco }}
-            </p>
-            } @else {
-            <div class="atom-grid compact-grid">
-              @for (atomIndex of workflow.selectedAtomIndices(); track atomIndex) {
-              <button type="button" class="atom-chip compact" [class.selected]="isBlockSiteSelected(block, atomIndex)"
-                (click)="workflow.blocks.toggleBlockSite(block.id, atomIndex)" [disabled]="workflow.isProcessing()">
-                {{ 'smileit.blocks.siteLabel' | transloco }} {{ atomIndex }}
-              </button>
-              }
-            </div>
-            }
-
-            @if (block.siteAtomIndices.length === 0) {
-            <p class="hint guidance-hint">
-              {{ 'smileit.blocks.noPositionsAssigned' | transloco }}
-              }
           </div>
           }
         </article>

@@ -56,6 +56,7 @@ export class IdentitySessionService {
   readonly currentUser = signal<CurrentUserProfileView | null>(null);
   readonly accessibleApps = signal<AccessibleScientificAppView[]>([]);
   readonly lastAuthenticationError = signal<string | null>(null);
+  readonly knownGroups = signal<WorkGroupView[]>([]);
 
   /**
    * ID del grupo activo seleccionado por el usuario. Se persiste en localStorage.
@@ -121,6 +122,18 @@ export class IdentitySessionService {
 
     const membership = this.userMemberships().find((m) => m.group_id === activeId);
     if (membership === undefined) {
+      if (this.hasRootAccess()) {
+        const knownGroup = this.knownGroups().find((groupItem) => groupItem.id === activeId);
+        if (knownGroup !== undefined) {
+          return {
+            groupId: knownGroup.id,
+            groupName: knownGroup.name,
+            groupSlug: knownGroup.slug,
+            roleInGroup: 'admin',
+          };
+        }
+      }
+
       // El grupo almacenado ya no existe o el usuario fue removido; limpiar estado.
       this._autoSelectFirstValidGroup();
       return null;
@@ -175,6 +188,19 @@ export class IdentitySessionService {
       const groupId = isRootView ? undefined : (this.activeGroupId() ?? undefined);
       this.refreshAccessibleApps(groupId);
     }
+  }
+
+  /**
+   * Sincroniza el catálogo de grupos conocido por el frontend para resolver contexto
+   * de root incluso cuando no existen membresías explícitas en cada grupo.
+   */
+  setKnownGroups(groups: ReadonlyArray<WorkGroupView>): void {
+    const uniqueGroups = new Map<number, WorkGroupView>();
+    for (const groupItem of groups) {
+      uniqueGroups.set(groupItem.id, groupItem);
+    }
+
+    this.knownGroups.set(Array.from(uniqueGroups.values()));
   }
 
   initializeSession(): Observable<boolean> {
@@ -434,6 +460,28 @@ export class IdentitySessionService {
   }> {
     return this.authApiService.getCurrentUserProfile().pipe(
       switchMap((currentUser: CurrentUserProfileView) => {
+        if (currentUser.role === 'root') {
+          return this.identityApiService.listGroups().pipe(
+            catchError(() => of([] as WorkGroupView[])),
+            switchMap((groups: WorkGroupView[]) => {
+              this.setKnownGroups(groups);
+              const resolvedGroupId = this._resolvePreferredGroupId(currentUser, groups);
+              const requestedGroupId = this._shouldUseRootGlobalView(currentUser)
+                ? undefined
+                : (resolvedGroupId ?? undefined);
+
+              return this.identityApiService.listAccessibleApps(requestedGroupId).pipe(
+                map((accessibleApps: AccessibleScientificAppView[]) => ({
+                  currentUser,
+                  accessibleApps,
+                  resolvedGroupId,
+                })),
+              );
+            }),
+          );
+        }
+
+        this.knownGroups.set([]);
         const resolvedGroupId = this._resolvePreferredGroupId(currentUser);
         const requestedGroupId = this._shouldUseRootGlobalView(currentUser)
           ? undefined
@@ -454,8 +502,16 @@ export class IdentitySessionService {
    * Resuelve el grupo activo preferido usando grupo almacenado, grupo primario o
    * el primer grupo administrable/disponible del usuario.
    */
-  private _resolvePreferredGroupId(user: CurrentUserProfileView): number | null {
+  private _resolvePreferredGroupId(
+    user: CurrentUserProfileView,
+    rootGroups: ReadonlyArray<WorkGroupView> = [],
+  ): number | null {
     const storedId = this.activeGroupId();
+
+    if (user.role === 'root') {
+      return this._resolveRootPreferredGroupId(user, rootGroups, storedId);
+    }
+
     const memberships = user.memberships ?? [];
 
     if (memberships.length === 0) {
@@ -483,12 +539,52 @@ export class IdentitySessionService {
     return selectedId;
   }
 
+  private _resolveRootPreferredGroupId(
+    user: CurrentUserProfileView,
+    rootGroups: ReadonlyArray<WorkGroupView>,
+    storedId: number | null,
+  ): number | null {
+    const rootGroupIds = new Set(rootGroups.map((groupItem) => groupItem.id));
+    if (rootGroupIds.size === 0) {
+      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, null);
+      return null;
+    }
+
+    if (storedId !== null && rootGroupIds.has(storedId)) {
+      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, String(storedId));
+      return storedId;
+    }
+
+    const primaryGroupId = user.primary_group_id;
+    if (primaryGroupId !== null && rootGroupIds.has(primaryGroupId)) {
+      this.writeStorageValue(ACTIVE_GROUP_ID_STORAGE_KEY, String(primaryGroupId));
+      return primaryGroupId;
+    }
+
+    const firstRootGroupId = rootGroups[0]?.id ?? null;
+    this.writeStorageValue(
+      ACTIVE_GROUP_ID_STORAGE_KEY,
+      firstRootGroupId === null ? null : String(firstRootGroupId),
+    );
+    return firstRootGroupId;
+  }
+
   private _shouldUseRootGlobalView(user: CurrentUserProfileView): boolean {
     return user.role === 'root' && this.isRootViewContext();
   }
 
   /** Si el grupo activo no es válido, auto-selecciona el primer disponible. */
   private _autoSelectFirstValidGroup(): void {
+    if (this.hasRootAccess()) {
+      const firstKnownGroupId = this.knownGroups()[0]?.id ?? null;
+      this.activeGroupId.set(firstKnownGroupId);
+      this.writeStorageValue(
+        ACTIVE_GROUP_ID_STORAGE_KEY,
+        firstKnownGroupId === null ? null : String(firstKnownGroupId),
+      );
+      return;
+    }
+
     const memberships = this.userMemberships();
     if (memberships.length === 0) {
       this.activeGroupId.set(null);
@@ -520,6 +616,7 @@ export class IdentitySessionService {
     this.clearScheduledTokenRefresh();
     this.status.set('anonymous');
     this.currentUser.set(null);
+    this.knownGroups.set([]);
     this.accessibleApps.set([]);
     this.accessToken.set(null);
     this.refreshToken.set(null);
