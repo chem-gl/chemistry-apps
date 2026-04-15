@@ -73,15 +73,17 @@ class ScientificAppRegistry:
         idempotente. Si detecta otro origen con los mismos identificadores,
         lanza excepción para forzar corrección inmediata.
         """
+        cls._sync_route_key_index()
+
         cls._validate_unique_plugin(definition)
         cls._validate_unique_route_key(definition)
         cls._validate_unique_route_prefix(definition)
         cls._validate_unique_api_base_path(definition)
 
         cls._definitions_by_plugin[definition.plugin_name] = definition
-        cls._definitions_by_route_key[definition.route_key] = definition
         cls._definitions_by_route_prefix[definition.api_route_prefix] = definition
         cls._definitions_by_api_base_path[definition.api_base_path] = definition
+        cls._sync_route_key_index()
 
     @classmethod
     def supports_pause_resume(cls, plugin_name: str) -> bool:
@@ -105,6 +107,7 @@ class ScientificAppRegistry:
         cls, route_key: str
     ) -> ScientificAppDefinition | None:
         """Obtiene definición de app por clave de ruta de frontend."""
+        cls._sync_route_key_index()
         return cls._definitions_by_route_key.get(route_key)
 
     @classmethod
@@ -139,6 +142,19 @@ class ScientificAppRegistry:
     ) -> Callable[[JSONMap], bool] | None:
         """Obtiene el validador de cache de un plugin, si fue registrado."""
         return cls._cache_payload_validators_by_plugin.get(plugin_name)
+
+    @classmethod
+    def _sync_route_key_index(cls) -> None:
+        """Reconstruye el índice derivado de route_key desde los prefijos reales.
+
+        Este índice es redundante respecto a `_definitions_by_route_prefix`, por lo que
+        se vuelve a generar para evitar estados inconsistentes si algún test o rutina de
+        bootstrap limpia parcialmente los diccionarios internos del registry.
+        """
+        cls._definitions_by_route_key = {
+            registered_definition.route_key: registered_definition
+            for registered_definition in cls._definitions_by_route_prefix.values()
+        }
 
     @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:

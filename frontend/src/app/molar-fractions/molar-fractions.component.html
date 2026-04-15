@@ -297,8 +297,10 @@
           </div>
         </div>
 
-        <app-scientific-chart [options]="chartOptions()!"
-          [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="340px"></app-scientific-chart>
+        <div class="chart-frame">
+          <app-scientific-chart [options]="chartOptions()!"
+            [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="100%"></app-scientific-chart>
+        </div>
       </div>
       }
       }
