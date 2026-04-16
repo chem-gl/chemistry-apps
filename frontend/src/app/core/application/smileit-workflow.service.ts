@@ -320,6 +320,8 @@ export class SmileitWorkflowService implements OnDestroy {
 
     this.smileitApiService.getSmileitJobStatus(jobId).subscribe({
       next: (jobResponse: SmileitJobResponseView) => {
+        this.rehydrateHistoricalInputState(jobResponse);
+
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
           this.state.activeSection.set('error');
@@ -571,6 +573,114 @@ export class SmileitWorkflowService implements OnDestroy {
         this.loadHistory();
       },
     });
+  }
+
+  private rehydrateHistoricalInputState(jobResponse: SmileitJobResponseView): void {
+    const rawParameters = jobResponse.parameters as unknown as
+      | Record<string, unknown>
+      | null
+      | undefined;
+    if (rawParameters === null || rawParameters === undefined) {
+      return;
+    }
+
+    const principalSmiles = this.pickString(rawParameters, 'principal_smiles', 'principalSmiles');
+    this.state.selectedAtomIndices.set(
+      this.pickNumberArray(rawParameters, 'selected_atom_indices', 'selectedAtomIndices'),
+    );
+
+    if (principalSmiles !== '') {
+      this.state.principalSmiles.set(principalSmiles);
+      const inspectionRequest = this.smileitApiService.inspectSmileitStructure(principalSmiles);
+      if (inspectionRequest && typeof inspectionRequest.subscribe === 'function') {
+        inspectionRequest.subscribe({
+          next: (inspectionResult: SmileitStructureInspectionView) => {
+            this.state.inspection.set(inspectionResult);
+          },
+          error: () => {},
+        });
+      }
+    }
+    this.state.assignmentBlocks.set(
+      this.restoreHistoricalBlocks(
+        rawParameters['assignment_blocks'] ?? rawParameters['assignmentBlocks'] ?? [],
+      ),
+    );
+
+    const rSubstitutes = this.pickNumber(rawParameters, 'r_substitutes', 'rSubstitutes');
+    if (rSubstitutes !== null) this.state.rSubstitutes.set(rSubstitutes);
+
+    const maxStructures = this.pickNumber(rawParameters, 'max_structures', 'maxStructures');
+    if (maxStructures !== null) this.state.maxStructures.set(maxStructures);
+
+    const exportNameBase = this.pickString(rawParameters, 'export_name_base', 'exportNameBase');
+    if (exportNameBase !== '') this.state.exportNameBase.set(exportNameBase);
+  }
+
+  private restoreHistoricalBlocks(rawBlocks: unknown): SmileitAssignmentBlockDraft[] {
+    if (!Array.isArray(rawBlocks)) {
+      return [];
+    }
+
+    return rawBlocks
+      .map((rawBlock: unknown, index: number): SmileitAssignmentBlockDraft | null => {
+        if (!this.isRecord(rawBlock)) {
+          return null;
+        }
+
+        return {
+          id: `historical-block-${index + 1}`,
+          label: this.pickString(rawBlock, 'label') || `Recovered block ${index + 1}`,
+          siteAtomIndices: this.pickNumberArray(rawBlock, 'site_atom_indices', 'siteAtomIndices'),
+          categoryKeys: this.pickStringArray(rawBlock, 'category_keys', 'categoryKeys'),
+          catalogRefs: [],
+          manualSubstituents: [],
+          draftManualName: '',
+          draftManualSmiles: '',
+          draftManualAnchorIndicesText: '',
+          draftManualSourceReference: 'manual-ui',
+          draftManualCategoryKeys: [],
+        };
+      })
+      .filter((block): block is SmileitAssignmentBlockDraft => block !== null);
+  }
+
+  private pickString(rawRecord: Record<string, unknown>, ...keys: string[]): string {
+    for (const key of keys) {
+      const value = rawRecord[key];
+      if (typeof value === 'string') return value;
+    }
+    return '';
+  }
+
+  private pickNumber(rawRecord: Record<string, unknown>, ...keys: string[]): number | null {
+    for (const key of keys) {
+      const value = rawRecord[key];
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+    }
+    return null;
+  }
+
+  private pickNumberArray(rawRecord: Record<string, unknown>, ...keys: string[]): number[] {
+    for (const key of keys) {
+      const value = rawRecord[key];
+      if (Array.isArray(value))
+        return value.filter((item): item is number => typeof item === 'number');
+    }
+    return [];
+  }
+
+  private pickStringArray(rawRecord: Record<string, unknown>, ...keys: string[]): string[] {
+    for (const key of keys) {
+      const value = rawRecord[key];
+      if (Array.isArray(value))
+        return value.filter((item): item is string => typeof item === 'string');
+    }
+    return [];
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   private extractResultData(jobResponse: SmileitJobResponseView): SmileitResultData | null {

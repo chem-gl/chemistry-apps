@@ -4,7 +4,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobLogEntryView, ScientificJobView } from '../core/api/jobs-api.service';
 import { JobsMonitorFacadeService } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
@@ -210,9 +210,11 @@ describe('JobsMonitorComponent', () => {
     }
   });
 
-  it('resultActionLabel retorna "Open result" para cualquier app científica', () => {
+  it('resultActionLabel retorna "Resume" para jobs pausados y "Open result" para el resto', () => {
     const fixture = TestBed.createComponent(JobsMonitorComponent);
     const component = fixture.componentInstance;
+
+    expect(component.resultActionLabel(makeJob({ status: 'paused' }))).toBe('Resume');
     expect(component.resultActionLabel(makeJob({ results: null }))).toBe('Open result');
   });
 

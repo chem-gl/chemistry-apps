@@ -1,0 +1,407 @@
+<!-- cadma-py-family-detail.component.html: Panel de detalle de familia de referencia con promedios, trazabilidad y scope. -->
+<div class="family-detail">
+
+    <!-- Cabecera: scope, creador, permisos, fecha + botón editar -->
+    <div class="detail-header">
+        @if (mode() === 'browsing') {
+        <button class="btn-back-browse" type="button" (click)="closeBrowsing.emit()" title="Back to list">
+            ← Back
+        </button>
+        }
+        <div class="scope-badge" [class]="scopeConfig().cssClass">
+            <span class="scope-icon">{{ scopeConfig().icon }}</span>
+            <span class="scope-text">{{ scopeConfig().label }}</span>
+        </div>
+        <div class="header-meta">
+            <span class="meta-item">
+                <span class="meta-label">Created by</span>
+                <strong>{{ library().created_by_name || '—' }}</strong>
+            </span>
+            <span class="meta-sep">·</span>
+            <span class="meta-item">
+                <span class="meta-label">Date</span>
+                <strong>{{ createdDate() }}</strong>
+            </span>
+            <span class="meta-sep">·</span>
+            <span class="meta-item">
+                <span class="meta-label">Access</span>
+                <strong [class.editable]="library().editable" [class.readonly]="!library().editable">
+                    {{ editableLabel() }}
+                </strong>
+            </span>
+        </div>
+        @if (library().editable && !editingFamily()) {
+        <button class="btn-edit-family" type="button" (click)="startFamilyEdit()" title="Edit family metadata">
+            ✏️ Edit family
+        </button>
+        }
+        @if (canForkFamily() && !editingFamily()) {
+        <button class="btn-edit-family" type="button" (click)="forkFamily()" [disabled]="forkBusy()"
+            title="Copy this family into your own editable workspace">
+            @if (forkBusy()) { Copying… } @else { {{ copyActionLabel() }} }
+        </button>
+        }
+        @if (mode() === 'browsing') {
+        <button class="btn-select-reference" type="button" (click)="selectAsReference.emit()">
+            {{ selectionActionLabel() }}
+        </button>
+        }
+    </div>
+
+    <!-- Modo edición de metadatos de la familia -->
+    @if (editingFamily()) {
+    <div class="family-edit-form">
+        <div class="edit-grid">
+            <label class="edit-label">
+                <span>Name *</span>
+                <input type="text" class="edit-input" [ngModel]="familyDraft().name"
+                    (ngModelChange)="familyDraft.set({...familyDraft(), name: $event})" />
+            </label>
+            <label class="edit-label">
+                <span>Disease *</span>
+                <input type="text" class="edit-input" [ngModel]="familyDraft().disease_name"
+                    (ngModelChange)="familyDraft.set({...familyDraft(), disease_name: $event})" />
+            </label>
+        </div>
+        <label class="edit-label full">
+            <span>Description</span>
+            <textarea class="edit-input" rows="2" [ngModel]="familyDraft().description"
+                (ngModelChange)="familyDraft.set({...familyDraft(), description: $event})"></textarea>
+        </label>
+        <div class="edit-grid">
+            <label class="edit-label">
+                <span>Paper reference</span>
+                <input type="text" class="edit-input" [ngModel]="familyDraft().paper_reference"
+                    (ngModelChange)="familyDraft.set({...familyDraft(), paper_reference: $event})"
+                    placeholder="Author et al. (2025)" />
+            </label>
+            <label class="edit-label">
+                <span>Paper URL / DOI</span>
+                <input type="text" class="edit-input" [ngModel]="familyDraft().paper_url"
+                    (ngModelChange)="familyDraft.set({...familyDraft(), paper_url: $event})"
+                    placeholder="https://doi.org/..." />
+            </label>
+        </div>
+        @if (familyEditError()) {
+        <p class="edit-error">{{ familyEditError() }}</p>
+        }
+        <div class="edit-actions">
+            <button class="btn-save-family" type="button" (click)="saveFamilyEdit()" [disabled]="familyEditBusy()">
+                @if (familyEditBusy()) { Saving… } @else { Save changes }
+            </button>
+            <button class="btn-cancel-family" type="button" (click)="cancelFamilyEdit()">Cancel</button>
+        </div>
+    </div>
+    } @else {
+
+    <!-- Trazabilidad bibliográfica (modo lectura) -->
+    @if (library().paper_reference || library().paper_url) {
+    <div class="traceability-bar">
+        <span class="trace-icon">📄</span>
+        <div class="trace-content">
+            @if (library().paper_reference) {
+            <span class="trace-ref">{{ library().paper_reference }}</span>
+            }
+            @if (paperUrl(); as url) {
+            <a class="trace-link" [href]="url" target="_blank" rel="noopener noreferrer">
+                {{ library().paper_url }}
+            </a>
+            }
+        </div>
+    </div>
+    }
+
+    @if (forkError()) {
+    <p class="edit-error">{{ forkError() }}</p>
+    }
+
+    @if (showCopyForm()) {
+    <div class="copy-family-form">
+        <label class="edit-label full">
+            <span>New family name</span>
+            <input type="text" class="edit-input" [ngModel]="copyDraftName()"
+                (ngModelChange)="copyDraftName.set($event)" placeholder="Editable copy name" />
+        </label>
+        <div class="edit-actions">
+            <button class="btn-save-family" type="button" (click)="confirmForkFamily()" [disabled]="forkBusy()">
+                @if (forkBusy()) { Copying… } @else { Create copy }
+            </button>
+            <button class="btn-cancel-family" type="button" (click)="cancelForkFamily()">Cancel</button>
+        </div>
+    </div>
+    }
+
+    @if (!library().editable && canForkFamily()) {
+    <p class="detail-desc">{{ readOnlyGuidance() }} Selecting the family keeps the original creator; copying creates
+        your own editable version.</p>
+    }
+
+    @if (library().description) {
+    <p class="detail-desc">{{ library().description }}</p>
+    }
+    }
+
+    <!-- Promedios de métricas -->
+    <div class="metrics-section">
+        <h4 class="section-title">Reference band averages
+            <span class="compound-count">{{ library().row_count }} compounds</span>
+        </h4>
+        <div class="metrics-grid">
+            @for (stat of metricStats(); track stat.key) {
+            <div class="metric-card" [class.has-nulls]="stat.nullCount > 0">
+                <span class="metric-name">{{ stat.label }}</span>
+                <strong class="metric-mean">{{ formatNumber(stat.mean) }}</strong>
+                <span class="metric-range">± {{ formatNumber(stat.stdev) }}</span>
+                <span class="metric-minmax">{{ formatNumber(stat.min) }} — {{ formatNumber(stat.max) }}</span>
+                @if (stat.nullCount > 0) {
+                <span class="metric-null">{{ stat.nullCount }} null</span>
+                }
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Archivos fuente -->
+    @if (library().source_files.length > 0) {
+    <div class="source-files-section">
+        <h4 class="section-title">Source files
+            <span class="compound-count">{{ library().source_file_count }} files</span>
+        </h4>
+        <div class="source-files-list">
+            @for (sf of library().source_files; track sf.id) {
+            <div class="source-file-row">
+                <span class="sf-field">{{ sf.field_name }}</span>
+                <span class="sf-name">{{ sf.original_filename }}</span>
+                <span class="sf-meta">{{ formatFileSize(sf.size_bytes) }}</span>
+                <span class="sf-hash" title="SHA-256: {{ sf.sha256 }}">{{ sf.sha256.slice(0, 8) }}…</span>
+            </div>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- Aviso de nulos -->
+    @if (hasAnyNulls()) {
+    <div class="null-warning">
+        <span class="null-icon">⚠</span>
+        Some metrics have null values — compounds missing that field are excluded from its average.
+    </div>
+    }
+
+    <!-- Tabla de compuestos con edición inline de referencias -->
+    <div class="compounds-section">
+        <h4 class="section-title">
+            <button class="btn-toggle-compounds" type="button" (click)="toggleCompoundsTable()">
+                {{ showCompoundsTable() ? '▾' : '▸' }} Compounds &amp; references
+            </button>
+            <span class="compound-count">{{ library().row_count }} rows</span>
+            <button class="btn-download-family" type="button" (click)="exportFamilyCsv()"
+                title="Download family data as CSV">
+                ⬇ Download CSV
+            </button>
+            @if (library().editable) {
+            <button class="btn-add-compound" type="button" (click)="toggleAddForm()">
+                {{ showAddForm() ? '✕ Cancel' : '+ Add compound' }}
+            </button>
+            }
+        </h4>
+
+        <!-- Formulario agregar compuesto -->
+        @if (showAddForm()) {
+        <div class="add-compound-form">
+            <div class="add-row">
+                <label class="add-label">SMILES *
+                    <input type="text" class="add-input mono" [ngModel]="addSmiles()"
+                        (ngModelChange)="addSmiles.set($event)" placeholder="e.g. CCO" />
+                </label>
+                <label class="add-label">Name
+                    <input type="text" class="add-input" [ngModel]="addName()" (ngModelChange)="addName.set($event)"
+                        placeholder="Compound name" />
+                </label>
+            </div>
+            <div class="add-row">
+                <label class="add-label">Paper reference
+                    <input type="text" class="add-input" [ngModel]="addPaperRef()"
+                        (ngModelChange)="addPaperRef.set($event)" placeholder="Author et al. (2025)" />
+                </label>
+                <label class="add-label">Paper URL / DOI
+                    <input type="text" class="add-input" [ngModel]="addPaperUrl()"
+                        (ngModelChange)="addPaperUrl.set($event)" placeholder="https://doi.org/..." />
+                </label>
+            </div>
+            <div class="add-row">
+                <label class="add-label full">Evidence note
+                    <input type="text" class="add-input" [ngModel]="addNote()" (ngModelChange)="addNote.set($event)"
+                        placeholder="Optional note" />
+                </label>
+            </div>
+            @if (addError()) {
+            <p class="add-error">{{ addError() }}</p>
+            }
+            <button class="btn-submit-compound" type="button" (click)="submitAddCompound()" [disabled]="addBusy()">
+                @if (addBusy()) { Adding… } @else { Add compound (ADME auto-computed) }
+            </button>
+        </div>
+        }
+
+        @if (rowActionError()) {
+        <p class="edit-error">{{ rowActionError() }}</p>
+        }
+
+        <!-- Tabla de compuestos -->
+        @if (showCompoundsTable()) {
+        <div class="compounds-table-wrap">
+            <table class="compounds-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>SMILES</th>
+                        <th>Reference</th>
+                        <th>URL / DOI</th>
+                        <th>Note</th>
+                        @if (library().editable) {
+                        <th class="act-col"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of library().rows; track row.smiles; let i = $index) {
+                    <tr>
+                        <td class="rank-num">{{ i + 1 }}</td>
+                        <td>
+                            <button class="compound-open-btn" type="button" (click)="openCompoundDetail(row, i)"
+                                title="Open compound details">
+                                {{ row.name || 'Unnamed compound' }}
+                            </button>
+                        </td>
+                        <td class="smiles-cell mono">
+                            <button class="compound-open-btn mono" type="button" (click)="openCompoundDetail(row, i)"
+                                title="Open molecule preview">
+                                {{ row.smiles }}
+                            </button>
+                        </td>
+                        <td class="ref-cell">{{ row.paper_reference || '—' }}</td>
+                        <td class="ref-cell">
+                            @if (row.paper_url) {
+                            <a class="ref-link" [href]="rowPaperUrl(row)" target="_blank" rel="noopener noreferrer">{{
+                                row.paper_url }}</a>
+                            } @else { — }
+                        </td>
+                        <td class="ref-cell">{{ row.evidence_note || '—' }}</td>
+                        @if (library().editable) {
+                        <td class="act-col">
+                            <button class="btn-row-edit" type="button" title="Edit reference"
+                                (click)="startEditRow(i, row)">✏️</button>
+                            <button class="btn-row-delete" type="button" title="Remove compound" (click)="removeRow(i)"
+                                [disabled]="deletingRowIndex() === i">🗑️</button>
+                        </td>
+                        }
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+
+    <dialog #compoundDetailDialog class="compound-dialog" (click)="onCompoundDialogBackdropClick($event)"
+        (keydown)="onCompoundDialogBackdropClick($event)">
+        <section class="compound-modal" aria-label="Compound details">
+            <div class="compound-modal-header">
+                <div class="compound-modal-heading">
+                    <h4>{{ selectedCompound()?.name || 'Compound details' }}</h4>
+                    <p class="compound-modal-smiles mono">{{ selectedCompound()?.smiles || '—' }}</p>
+                </div>
+                <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
+                    aria-label="Close compound details">
+                    ✕
+                </button>
+            </div>
+
+            <div class="compound-modal-grid">
+                <div class="compound-card">
+                    <h5 class="compound-card-title">RDKit preview</h5>
+                    @if (compoundModalBusy()) {
+                    <p class="status-message">Generating molecule preview…</p>
+                    } @else if (compoundModalError()) {
+                    <p class="edit-error">{{ compoundModalError() }}</p>
+                    } @else if (compoundModalSvg(); as svgContent) {
+                    <div class="molecule-svg-wrap" [innerHTML]="svgContent"></div>
+                    }
+                </div>
+
+                <div class="compound-card">
+                    <div class="compound-card-header-row">
+                        <h5 class="compound-card-title">Scientific context</h5>
+                        @if (library().editable && !isEditingCompound()) {
+                        <button class="btn-modal-edit" type="button" (click)="startEditCurrentCompound()">
+                            ✏️ Edit
+                        </button>
+                        }
+                    </div>
+
+                    @if (isEditingCompound()) {
+                    <div class="compound-edit-form">
+                        <label class="edit-label full">
+                            <span>Name</span>
+                            <input type="text" class="edit-input" [ngModel]="editDraft().name ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), name: $event})" />
+                        </label>
+                        <label class="edit-label full">
+                            <span>Paper reference</span>
+                            <input type="text" class="edit-input" [ngModel]="editDraft().paper_reference ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), paper_reference: $event})" />
+                        </label>
+                        <label class="edit-label full">
+                            <span>Paper URL / DOI</span>
+                            <input type="text" class="edit-input" [ngModel]="editDraft().paper_url ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), paper_url: $event})" />
+                        </label>
+                        <label class="edit-label full">
+                            <span>Evidence note</span>
+                            <textarea class="edit-input" rows="4" [ngModel]="editDraft().evidence_note ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), evidence_note: $event})"></textarea>
+                        </label>
+                        @if (rowActionError()) {
+                        <p class="edit-error">{{ rowActionError() }}</p>
+                        }
+                        <div class="edit-actions">
+                            <button class="btn-save-family" type="button" (click)="saveRowEdit()"
+                                [disabled]="editBusy()">
+                                @if (editBusy()) { Saving… } @else { Save compound }
+                            </button>
+                            <button class="btn-cancel-family" type="button" (click)="cancelEdit()">Cancel edit</button>
+                        </div>
+                    </div>
+                    } @else {
+                    @if (selectedCompound()?.paper_reference || selectedCompound()?.paper_url) {
+                    <div class="compound-reference-box">
+                        @if (selectedCompound()?.paper_reference) {
+                        <p class="compound-reference-text">{{ selectedCompound()?.paper_reference }}</p>
+                        }
+                        @if (selectedCompoundPaperUrl(); as url) {
+                        <a class="trace-link" [href]="url" target="_blank" rel="noopener noreferrer">
+                            {{ selectedCompound()?.paper_url }}
+                        </a>
+                        }
+                    </div>
+                    }
+                    @if (selectedCompound()?.evidence_note) {
+                    <p class="compound-evidence">{{ selectedCompound()?.evidence_note }}</p>
+                    }
+                    }
+
+                    <div class="compound-metric-grid">
+                        @for (metric of selectedCompoundMetrics(); track metric.key) {
+                        <div class="compound-metric-card">
+                            <span class="compound-metric-label">{{ metric.label }}</span>
+                            <strong class="compound-metric-value">{{ formatNumber(metric.value) }}</strong>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+    </dialog>
+</div>

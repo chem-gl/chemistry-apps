@@ -23,6 +23,7 @@ import { PatchedGroupAppConfigRequest } from '../model/models';
 import { PatchedGroupMembershipRequest } from '../model/models';
 import { PatchedIdentityUserUpdateRequest } from '../model/models';
 import { PatchedWorkGroupRequest } from '../model/models';
+import { ScientificAppCatalog } from '../model/models';
 import { WorkGroup } from '../model/models';
 import { WorkGroupRequest } from '../model/models';
 
@@ -149,6 +150,13 @@ export interface IdentityServiceInterface {
      * @param patchedGroupMembershipRequest 
      */
     identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, extraHttpRequestParams?: any): Observable<GroupMembership>;
+
+    /**
+     * 
+     * Expone el catálogo canónico de apps científicas registradas.
+     * @endpoint get /api/identity/scientific-apps/
+     */
+    identityScientificAppsList(extraHttpRequestParams?: any): Observable<Array<ScientificAppCatalog>>;
 
     /**
      * 

@@ -1,21 +1,753 @@
+Problema 1
+Archivo: chemistry-apps:backend/apps/cadma_py/services.py
+
+Problema:
+Refactor this function to reduce its Cognitive Complexity from 42 to the 15 allowed.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: python:S3776
+Severidad: CRITICAL
+Línea: 551
+
+Cómo solucionarlo:
+Reducing cognitive complexity can be challenging.
+  
+  Here are a few suggestions:
+
+  Extract complex conditions in a new function.
+    
+    Mixed operators in condition will increase complexity. Extracting the condition in a new function with an appropriate name will reduce cognitive
+    load.
+  Break down large functions.
+    
+    Large functions can be hard to understand and maintain. If a function is doing too many things, consider breaking it down into smaller, more
+    manageable functions. Each function should have a single responsibility.
+  Avoid deep nesting by returning early.
+    
+    To avoid the nesting of conditions, process exceptional cases first and return early.
+
+Extraction of a complex condition in a new function.
+Noncompliant code example
+The code is using a complex condition and has a cognitive cost of 5.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if ((user.is_active and    # +1 (if) +1 (nested) +1 (multiple conditions)
+            user.has_profile) or   # +1 (mixed operator)
+            user.age &gt; 18 ):
+            user.process()
+
+Compliant solution
+Even if the cognitive complexity of the whole program did not change, it is easier for a reader to understand the code of the
+process_eligible_users function, which now only has a cognitive cost of 3.
+
+def process_eligible_users(users):
+    for user in users:             # +1 (for)
+        if is_eligible_user(user): # +1 (if) +1 (nested)
+            user.process()
+
+def is_eligible_user(user):
+    return ((user.is_active and user.has_profile) or user.age &gt; 18) # +1 (multiple conditions) +1 (mixed operators)
+
+Break down large functions.
+Noncompliant code example
+Note: The code is simplified here, to illustrate the purpose. Please imagine there is more happening in the process.
+  
+The bellow code has a cognitive complexity score of 8.
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process active user with profile
+        else:                        # +1 (else)
+            ... # process active user without profile
+    else:                            # +1 (else)
+        if user.has_profile():       # +1 (if) +1 (nested)
+            ... # process inactive user with profile
+        else:                        # +1 (else)
+            ... # process inactive user without profile
+
+This function could be refactored into smaller functions: The complexity is spread over multiple functions and the breaks in flow are no more
+nested.
+  
+  The process_user has now a complexity score of two.
+Compliant solution
+
+def process_user(user):
+    if user.is_active():             # +1 (if)
+        process_active_user(user)
+    else:                            # +1 (else)
+        process_inactive_user(user)
+
+def process_active_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process active user with profile
+    else:                            # +1 (else)
+        ... # process active user without profile
+
+def process_inactive_user(user):
+    if user.has_profile():           # +1 (if) +1 (nested)
+        ... # process inactive user with profile
+    else:                            # +1 (else)
+        ... # process inactive user without profile
+
+Avoid deep nesting by returning early.
+Noncompliant code example
+The below code has a cognitive complexity of 6.
+
+def calculate(data):
+    if data is not None:  # +1 (if)
+        total = 0
+        for item in data: # +1 (for) +1 (nested)
+            if item &gt; 0:  # +1 (if)  +2 (nested)
+                total += item * 2
+        return total
+
+Compliant solution
+Checking for the edge case first flattens the if statements and reduces the cognitive complexity to 4.
+
+def calculate(data):
+    if data is None:      # +1 (if)
+        return None
+    total = 0
+    for item in data:     # +1 (for)
+        if item &gt; 0:      # +1 (if) +1 (nested)
+            total += item * 2
+    return total
+
+Pitfalls
+As this code is complex, ensure that you have unit tests that cover the code before refactoring.
+
+----------------------------------------
+
+Problema 2
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 59
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 3
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 153
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 4
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 235
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 5
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 334
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 6
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 395
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 7
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 574
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 8
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
+
+Problema:
+Group parts of the regex together to make the intended operator precedence explicit.
+
+Razón:
+Tipo: BUG
+Regla: typescript:S5850
+Severidad: MAJOR
+Línea: 166
+
+Cómo solucionarlo:
+Regular expressions are used for pattern matching within strings. They can be defined upon special characters, meaning symbols or metacharacters
+with a reserved meaning that convey specific instructions to the regex engine. These characters are not treated as literals but have special functions
+in defining patterns, among which stand out anchors and disjunctions.
+
+   An anchor allows you to match positions in the input string rather than matching specific characters. Anchors help you identify specific
+  locations within the string where a pattern should start (^) or end ($). 
+   A disjunction, also known as alternatives, represented by the vertical bar (|) allows you to specify multiple alternative patterns
+  that the regex engine will attempt to match in the input string. 
+
+Mixing anchors with alternatives in regular expressions can lead to confusion due to their precedence rules. Alternatives (|) have a
+lower precedence than anchors (^ and $). As a result, if you don’t use non-capturing groups (?:...) to group
+the alternatives properly, the anchors might apply to the ends only rather than the entire disjunction, which could not be the initial intent.
+
+const regex = /^a|b|c$/; // Noncompliant: '^' applies to 'a' and '$' applies to 'c'
+
+You should group the disjunction with parentheses denoting non-capturing groups so that the anchors apply to all alternatives.
+
+const regex = /^(?:a|b|c)$/;
+
+Alternatively, you can distribute the anchors to each alternative of the disjunction.
+
+const regex = /^a$|^b$|^c$/;
+
+If the precedence of the operators is understood and the intention is to apply the anchors to only the ends, use parentheses to make it
+explicit.
+
+const regex = /(?:^a)|b|(?:c$)/;
+
+----------------------------------------
+
+Problema 9
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
+
+Problema:
+Remove this assignment of "index".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S2310
+Severidad: MAJOR
+Línea: 114
+
+Cómo solucionarlo:
+Loop counters, such as variables used to track the iteration count in loops, should not be assigned from within the loop body to avoid unexpected
+behavior and bugs. It can inadvertently lead to an infinite loop or make the loop behavior more complex and harder to reason about.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    i = names.length; // Noncompliant: The loop counter i is assigned within the loop body
+  } else {
+    console.log(names[i]);
+  }
+}
+
+To avoid these issues, you should update the loop counter only in the loop’s update statement, typically located at the end of the loop body or
+within the loop header.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    break;
+  } else {
+    console.log(names[i]);
+  }
+}
+
+Alternatively, you should use the for…​of statement if your intention is only to iterate over the values of an iterable object.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (const name of names) {
+  if (!name) {
+    break;
+  } else {
+    console.log(name);
+  }
+}
+
+----------------------------------------
+
+Problema 10
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
+
+Problema:
+This assertion is unnecessary since it does not change the type of the expression.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S4325
+Severidad: MINOR
+Línea: 294
+
+Cómo solucionarlo:
+In TypeScript, casts and non-null assertions are two mechanisms used to inform the TypeScript compiler about the intended types of variables,
+expressions, or values in the code. They are used to help the compiler understand the types more accurately and to handle certain situations where
+type inference might not be sufficient:
+
+   A type assertion tells the compiler to treat the value as the specified type, even if the compiler’s type inference suggests a different type.
+  
+   A non-null assertion is a way to tell the TypeScript compiler explicitly that you are certain that a variable will not be null or
+  undefined, and you want to access its properties or methods without any null checks. 
+
+However, a redundant cast occurs when you perform a type assertion that is not needed because the compiler already knows the type based on the
+context or explicit type declarations. Similarly, a redundant non-null assertion occurs when you use the non-null assertion operator ! to
+assert that a variable is not null or undefined, but the compiler already knows that based on the context.
+Both redundant casts and redundant non-null assertions should be avoided in TypeScript code, as they add unnecessary noise, clutter the code, and
+lead to confusion.
+
+function getName(x?: string | Person) {
+  if (x) {
+    console.log("Getting name for " + x!); // Noncompliant: 'x' is known to be defined here
+
+    if (typeof x === "string") {
+      return (x as string); // Noncompliant: 'x' is known to be a string here
+    } else {
+      return (x as Person).name; // Noncompliant: 'x' is defined and not a string, thus a 'Person' here
+    }
+  }
+  return "NoName";
+}
+
+Remove all the redundant casts and non-null assertions based on the contextual typing information, as inferred by the TypeScript compiler.
+
+function getName(x?: string | Person) {
+  if (x) {
+    console.log("Getting name for " + x);
+
+    if (typeof x === "string") {
+      return x;
+    } else {
+      return x.name;
+    }
+  }
+  return "NoName";
+}
+
+----------------------------------------
+
+Problema 11
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 99
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 12
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 141
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 13
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 258
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 14
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 266
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 15
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 304
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
+Problema 16
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
+
+Problema:
+Text does not meet the minimal contrast requirement with its background.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: css:S7924
+Severidad: MAJOR
+Línea: 1315
+
+Cómo solucionarlo:
+Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
+color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
+
+Noncompliant code example
+
+.text {
+  color: #777777; /* Light gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
+}
+
+Compliant solution
+
+.text {
+  color: #595959; /* Darker gray text */
+  background-color: #ffffff; /* White background */
+  /* Contrast ratio: 7.0:1 - passes WCAG AA */
+}
+
+----------------------------------------
+
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=2 | líneas=52 | densidad=0.1%
+Resumen del proyecto: bloques=4 | líneas=102 | densidad=0.1%
 
 Archivos con densidad de duplicación > 3.5%:
+  - backend/apps/cadma_py/schemas.py | densidad=21.0% | líneas=50 | bloques=2
   - frontend/src/app/core/shared/scientific-app-ui.utils.ts | densidad=10.2% | líneas=26 | bloques=1
-  - frontend/src/app/molar-fractions/molar-fractions-computation.ts | densidad=5.4% | líneas=26 | bloques=1
+  - frontend/src/app/molar-fractions/molar-fractions-computation.ts | densidad=4.4% | líneas=26 | bloques=1
 
 Archivo: frontend/src/app/molar-fractions/molar-fractions-computation.ts
-Duplicated blocks: 1 | Duplicated lines: 26 | Density: 5.4%
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions-computation.ts | líneas 110-110 | tamaño 26
+Duplicated blocks: 1 | Duplicated lines: 26 | Density: 4.4%
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions-computation.ts | líneas 213-213 | tamaño 26
   - chemistry-apps:frontend/src/app/core/shared/scientific-app-ui.utils.ts | líneas 94-94 | tamaño 26
+----------------------------------------
+
+Archivo: backend/apps/cadma_py/schemas.py
+Duplicated blocks: 2 | Duplicated lines: 50 | Density: 21.0%
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 21-21 | tamaño 25
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 63-63 | tamaño 25
 ----------------------------------------
 
 Archivo: frontend/src/app/core/shared/scientific-app-ui.utils.ts
 Duplicated blocks: 1 | Duplicated lines: 26 | Density: 10.2%
   - chemistry-apps:frontend/src/app/core/shared/scientific-app-ui.utils.ts | líneas 94-94 | tamaño 26
-  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions-computation.ts | líneas 110-110 | tamaño 26
+  - chemistry-apps:frontend/src/app/molar-fractions/molar-fractions-computation.ts | líneas 213-213 | tamaño 26
 ----------------------------------------
 
 === Security Hotspots (SonarQube) ===
-No se encontraron hotspots.
+Total: 1 hotspot(s) encontrado(s).
+
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
+Línea: 365
+Regla: typescript:S6268
+Probabilidad: Alta
+Estado: TO_REVIEW
+Descripción: Recommended Secure Coding Practices
+
+   Avoid including dynamic executable code and thus disabling Angular’s built-in sanitization unless it’s absolutely necessary. Try instead to
+  rely as much as possible on static templates and Angular built-in sanitization to define web page content. 
+   Make sure to understand how the value to consider as trusted is constructed and never concatenate it with user-controlled data. 
+   Make sure to choose the correct DomSanitizer "bypass" method based on the
+  context. For instance, only use bypassSecurityTrustUrl to trust urls in an href attribute context. 
+
+Compliant Solution
+
+import { Component, OnInit } from '@angular/core';
+import { DomSanitizer } from "@angular/platform-browser";
+import { ActivatedRoute } from '@angular/router';
+
+@Component({
+  template: '&lt;div id="hello"&gt;&lt;h1&gt;Hello {{name}}&lt;/h1&gt;&lt;/div&gt;',
+})
+export class HelloComponent implements OnInit {
+  name: string;
+
+  constructor(private sanitizer: DomSanitizer, private route: ActivatedRoute) { }
+
+  ngOnInit(): void {
+    this.name = this.route.snapshot.queryParams.name;
+  }
+}
+
+See
+
+   OWASP - Top 10 2021 Category A3 - Injection 
+   OWASP - Top 10 2017 Category A7 - Cross-Site Scripting
+  (XSS) 
+   CWE - CWE-79 - Improper Neutralization of Input During Web Page Generation ('Cross-site
+  Scripting') 
+   Angular - Best Practices - Security
+Mensaje: Make sure disabling Angular built-in sanitization is safe here.
+----------------------------------------

@@ -224,6 +224,7 @@ INSTALLED_APPS = [
     "apps.smileit.apps.SmileitConfig",
     "apps.sa_score.apps.SaScoreConfig",
     "apps.toxicity_properties.apps.ToxicityPropertiesConfig",
+    "apps.cadma_py.apps.CadmaPyConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.UserAccount"

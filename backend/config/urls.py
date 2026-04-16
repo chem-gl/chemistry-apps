@@ -4,6 +4,9 @@
 Enrutamiento principal del backend y exposición de OpenAPI.
 """
 
+from apps.cadma_py.definitions import APP_ROUTE_BASENAME as CADMA_PY_ROUTE_BASENAME
+from apps.cadma_py.definitions import APP_ROUTE_PREFIX as CADMA_PY_ROUTE_PREFIX
+from apps.cadma_py.routers import CadmaPyJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
 from apps.core.identity.routers import (
     AppPermissionDetailView,
@@ -98,6 +101,11 @@ router.register(
     TOXICITY_PROPERTIES_ROUTE_PREFIX,
     ToxicityPropertiesJobViewSet,
     basename=TOXICITY_PROPERTIES_ROUTE_BASENAME,
+)
+router.register(
+    CADMA_PY_ROUTE_PREFIX,
+    CadmaPyJobViewSet,
+    basename=CADMA_PY_ROUTE_BASENAME,
 )
 
 urlpatterns = [

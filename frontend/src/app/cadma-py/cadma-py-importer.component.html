@@ -1,0 +1,113 @@
+<!-- cadma-py-importer.component.html: UI reutilizable para cargar uno o muchos archivos y mapear columnas. -->
+<section class="guided-importer" [attr.data-mode]="mode()">
+    <div class="importer-toolbar">
+        <label class="single-upload-btn">
+            <span class="upload-btn-title">{{ uploadButtonTitle() }}</span>
+            <span class="upload-btn-subtitle">{{ uploadButtonSubtitle() }}</span>
+            <input type="file" multiple accept=".csv,.smi,text/csv,text/plain" (change)="onFilesSelected($event)" />
+        </label>
+
+        <div class="importer-summary">
+            <strong>{{ summaryText() }}</strong>
+            @if (fallbackNamePrefix().trim() !== '') {
+            <span class="summary-note">Fallback names will use {{ fallbackNamePrefix().trim() }} + counter.</span>
+            }
+        </div>
+    </div>
+
+    @if (importerError(); as errorText) {
+    <p class="importer-error" role="alert">{{ errorText }}</p>
+    }
+
+    @if (sources().length > 0) {
+    <div class="source-list">
+        @for (source of sources(); track source.id; let sourceIndex = $index) {
+        <article class="source-card">
+            <header class="source-card-header">
+                <div>
+                    <span class="source-role">{{ fileRoleLabel(sourceIndex) }}</span>
+                    <h4>{{ source.filename }}</h4>
+                    <p>{{ formatDelimiterLabel(source) }} · {{ source.usableRowCount }} usable rows</p>
+                </div>
+                <button class="btn-remove" type="button" (click)="removeSource(source.id)">Remove</button>
+            </header>
+
+            <div class="source-grid source-grid-meta">
+                <label class="field-block compact-field">
+                    <span>Format</span>
+                    <select [(ngModel)]="source.fileFormat" (ngModelChange)="reparseSource(source.id)">
+                        <option value="csv">CSV</option>
+                        <option value="smi">SMI</option>
+                    </select>
+                </label>
+
+                <label class="field-block compact-field">
+                    <span>Delimiter</span>
+                    <select [(ngModel)]="source.delimiter" (ngModelChange)="reparseSource(source.id)"
+                        [disabled]="source.fileFormat === 'smi'">
+                        <option value=",">Comma</option>
+                        <option value=";">Semicolon</option>
+                        <option value="	">Tab</option>
+                    </select>
+                </label>
+
+                <label class="field-block compact-field">
+                    <span>Dead lines to skip</span>
+                    <input type="number" min="0" [(ngModel)]="source.skipLines"
+                        (ngModelChange)="reparseSource(source.id)" />
+                </label>
+
+                <label class="field-block checkbox-field">
+                    <span>Header row</span>
+                    <input type="checkbox" [(ngModel)]="source.hasHeader" (ngModelChange)="reparseSource(source.id)" />
+                </label>
+            </div>
+
+            <p class="mapping-hint">Use the combobox in each table header to tell the app what every column means.</p>
+
+            @if (source.columns.length > 0) {
+            <div class="preview-table-wrap">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            @for (columnName of columnsFor(source); track columnName) {
+                            <th>
+                                <div class="table-head-cell">
+                                    <span class="column-name">{{ columnName }}</span>
+                                    <select class="column-role-select" title="Assign column meaning"
+                                        [ngModel]="roleForColumn(source, columnName)"
+                                        [attr.aria-label]="'Assign meaning for ' + columnName"
+                                        (ngModelChange)="assignColumnRole(source.id, columnName, $event)">
+                                        @for (roleOption of roleOptions(sourceIndex); track roleOption.label) {
+                                        <option [ngValue]="roleOption.value">{{ roleOption.label }}</option>
+                                        }
+                                    </select>
+                                </div>
+                            </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (source.previewRows.length === 0) {
+                        <tr>
+                            <td class="empty-preview" [attr.colspan]="source.columns.length">No usable rows detected
+                                yet.</td>
+                        </tr>
+                        } @else {
+                        @for (row of source.previewRows; track $index) {
+                        <tr>
+                            @for (columnName of columnsFor(source); track columnName; let columnIndex = $index) {
+                            <td>{{ row[columnIndex] || '—' }}</td>
+                            }
+                        </tr>
+                        }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            }
+        </article>
+        }
+    </div>
+    }
+</section>

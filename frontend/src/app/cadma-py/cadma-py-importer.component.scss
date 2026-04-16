@@ -1,0 +1,219 @@
+/* cadma-py-importer.component.scss: Estilos del importador guiado reutilizable de CADMA Py. */
+
+.guided-importer {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.importer-toolbar {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.single-upload-btn {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.1rem;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 14px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.single-upload-btn:hover {
+  border-color: #1f7a4c;
+  background: #f0fdf4;
+}
+
+.single-upload-btn input[type='file'] {
+  margin-top: 0.25rem;
+}
+
+.upload-btn-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.upload-btn-subtitle,
+.summary-note {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.importer-summary {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.importer-error {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.8rem;
+}
+
+.source-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.source-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.source-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: start;
+  flex-wrap: wrap;
+}
+
+.source-card-header h4 {
+  margin: 0.15rem 0;
+  color: #0f172a;
+}
+
+.source-card-header p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.source-role {
+  display: inline-flex;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.btn-remove {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.source-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.source-grid-meta {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.mapping-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.field-block {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.field-block select,
+.field-block input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.checkbox-field {
+  align-content: end;
+}
+
+.checkbox-field input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.required-field span {
+  color: #065f46;
+}
+
+.required-field em {
+  font-style: normal;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.preview-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  vertical-align: top;
+}
+
+.preview-table th {
+  min-width: 150px;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.table-head-cell {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.column-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.column-role-select {
+  width: 100%;
+  min-width: 138px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.74rem;
+}
+
+.empty-preview {
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}

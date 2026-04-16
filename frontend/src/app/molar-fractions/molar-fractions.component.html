@@ -187,7 +187,6 @@
       <p class="status-message status-card">{{ workflow.progressMessage() }}</p>
       }
 
-      @if (workflow.activeSection() === 'result') {
       @if (workflow.resultData(); as resultData) {
       <div class="metadata-grid">
         <p><strong>{{ 'molarFractions.result.metadata.label' | transloco }}</strong> {{
@@ -302,7 +301,6 @@
             [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="100%"></app-scientific-chart>
         </div>
       </div>
-      }
       }
       }
       }

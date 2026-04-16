@@ -1,6 +1,9 @@
 export * from './auth.service';
 import { AuthService } from './auth.service';
 export * from './auth.serviceInterface';
+export * from './cADMAPy.service';
+import { CADMAPyService } from './cADMAPy.service';
+export * from './cADMAPy.serviceInterface';
 export * from './easyRate.service';
 import { EasyRateService } from './easyRate.service';
 export * from './easyRate.serviceInterface';
@@ -28,4 +31,4 @@ export * from './toxicityProperties.serviceInterface';
 export * from './tunnel.service';
 import { TunnelService } from './tunnel.service';
 export * from './tunnel.serviceInterface';
-export const APIS = [AuthService, EasyRateService, IdentityService, JobsService, MarcusService, MolarFractionsService, SAScoreService, SmileitService, ToxicityPropertiesService, TunnelService];
+export const APIS = [AuthService, CADMAPyService, EasyRateService, IdentityService, JobsService, MarcusService, MolarFractionsService, SAScoreService, SmileitService, ToxicityPropertiesService, TunnelService];

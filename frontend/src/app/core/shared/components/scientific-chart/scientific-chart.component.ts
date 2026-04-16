@@ -2,7 +2,7 @@
 // Se usa desde componentes de features para encapsular la integracion Angular + ECharts.
 
 import { Component, input } from '@angular/core';
-import { LineChart } from 'echarts/charts';
+import { BarChart, LineChart } from 'echarts/charts';
 import {
   AriaComponent,
   DataZoomComponent,
@@ -18,6 +18,7 @@ import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 
 echarts.use([
   AriaComponent,
+  BarChart,
   CanvasRenderer,
   DataZoomComponent,
   GridComponent,
