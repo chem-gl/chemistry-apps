@@ -18,6 +18,12 @@ function makeCadmaResult(): CadmaPyResultView {
     ranking: [],
     score_chart: { categories: [], values: [], reference_line: 0 },
     metric_charts: [],
+    score_config: {
+      adme_intervals: {},
+      weights: { adme: 0.5, toxicity: 0.3, sa: 0.2 },
+      reference_values: { LD50: 0, M: 0, DT: 0, SA: 0 },
+      adme_reference_hits: 0,
+    },
     methodology_note: 'Test payload',
   };
 }
@@ -83,6 +89,12 @@ describe('CadmaPyWorkflowService', () => {
           name_column: 'name',
         },
       ]),
+      scoreConfigJson: JSON.stringify({
+        adme_intervals: {},
+        weights: { adme: 0.5, toxicity: 0.3, sa: 0.2 },
+        reference_values: { LD50: 0, M: 0, DT: 0, SA: 0 },
+        adme_reference_hits: 0,
+      }),
       filenames: ['main-guide.csv'],
       totalFiles: 1,
       totalUsableRows: 1,
