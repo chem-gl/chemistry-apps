@@ -8,12 +8,28 @@ import { CadmaMetricChartView, CadmaScoreChartView } from '../core/api/cadma-py-
 
 export type ChartType = 'bar' | 'line' | 'scatter';
 
+type SeriesBuilder<T> = (
+  values: number[],
+  color: string,
+  markLines: BarSeriesOption['markLine'],
+  markArea?: LineSeriesOption['markArea'],
+) => T;
+
+const SERIES_BUILDERS: Record<
+  ChartType,
+  SeriesBuilder<BarSeriesOption | LineSeriesOption | ScatterSeriesOption>
+> = {
+  bar: (values, color, markLines) => buildBarSeries(values, color, markLines),
+  line: (values, color, markLines, markArea) => buildLineSeries(values, color, markLines, markArea),
+  scatter: (values, color, markLines) => buildScatterSeries(values, color, markLines),
+};
+
 function buildCommonGrid(): NonNullable<EChartsCoreOption['grid']> {
   return {
-    left: 56,
-    right: 24,
-    top: 44,
-    bottom: 72,
+    left: 60,
+    right: 28,
+    top: 52,
+    bottom: 96,
     containLabel: true,
   };
 }
@@ -111,18 +127,14 @@ export function buildCadmaScoreChartOptions(
     ],
   };
 
-  const series =
-    chartType === 'scatter'
-      ? buildScatterSeries(scoreChart.values, '#1f7a4c', markLines)
-      : chartType === 'line'
-        ? buildLineSeries(scoreChart.values, '#1f7a4c', markLines)
-        : buildBarSeries(scoreChart.values, '#1f7a4c', markLines);
+  const series = SERIES_BUILDERS[chartType](scoreChart.values, '#d32f2f', markLines);
 
   return {
     animationDuration: 300,
     grid: buildCommonGrid(),
     tooltip: { trigger: chartType === 'scatter' ? 'item' : 'axis' },
     toolbox: { feature: { saveAsImage: {} } },
+    dataZoom: [{ type: 'inside' }, { type: 'slider', height: 18, bottom: 20 }],
     xAxis: {
       type: 'category',
       data: scoreChart.categories,
@@ -164,21 +176,15 @@ export function buildCadmaMetricChartOptions(
     data: [[{ yAxis: metricChart.reference_low }, { yAxis: metricChart.reference_high }]],
   };
 
-  const series =
-    chartType === 'scatter'
-      ? buildScatterSeries(metricChart.values, '#2f5fb8', markLines)
-      : chartType === 'line'
-        ? buildLineSeries(metricChart.values, '#2f5fb8', markLines, markArea)
-        : {
-            ...buildBarSeries(metricChart.values, '#2f5fb8', markLines),
-            markArea,
-          };
+  const baseSeries = SERIES_BUILDERS[chartType](metricChart.values, '#2f5fb8', markLines, markArea);
+  const series = chartType === 'bar' ? { ...baseSeries, markArea } : baseSeries;
 
   return {
     animationDuration: 300,
     grid: buildCommonGrid(),
     tooltip: { trigger: chartType === 'scatter' ? 'item' : 'axis' },
     toolbox: { feature: { saveAsImage: {} } },
+    dataZoom: [{ type: 'inside' }, { type: 'slider', height: 18, bottom: 20 }],
     xAxis: {
       type: 'category',
       data: metricChart.categories,

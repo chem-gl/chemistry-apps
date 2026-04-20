@@ -124,6 +124,11 @@ class Command(BaseCommand):
             host_value=host_value,
             port_value=port_value,
         )
+        if not self._is_running_under_test():
+            self._ensure_runserver_port_available(
+                host_value=host_value,
+                port_value=port_value,
+            )
 
         redis_process: subprocess.Popen[bytes] | None = None
         celery_process: subprocess.Popen[bytes] | None = None
@@ -165,6 +170,45 @@ class Command(BaseCommand):
             "--noreload",
             f"{host_value}:{port_value}",
         ]
+
+    def _is_running_under_test(self) -> bool:
+        """Detecta ejecución bajo tests para evitar dependencia del estado real del host."""
+        return "test" in sys.argv or os.getenv("PYTEST_CURRENT_TEST", "") != ""
+
+    def _ensure_runserver_port_available(
+        self,
+        *,
+        host_value: str,
+        port_value: str,
+    ) -> None:
+        """Falla temprano con un mensaje claro si el puerto HTTP ya está ocupado."""
+        try:
+            port_number = int(port_value)
+        except ValueError as exc:
+            raise CommandError(f"Puerto inválido para runserver: {port_value}") from exc
+
+        probe_host = "127.0.0.1" if host_value in {"0.0.0.0", "::"} else host_value
+
+        try:
+            addresses = socket.getaddrinfo(
+                probe_host,
+                port_number,
+                type=socket.SOCK_STREAM,
+            )
+        except OSError as exc:
+            raise CommandError(
+                f"No se pudo resolver el host {probe_host} para validar el puerto {port_number}."
+            ) from exc
+
+        for family, socktype, proto, _, sockaddr in addresses:
+            with socket.socket(family, socktype, proto) as probe_socket:
+                probe_socket.settimeout(0.35)
+                if probe_socket.connect_ex(sockaddr) == 0:
+                    raise CommandError(
+                        "El puerto del runserver ya está en uso. "
+                        f"Detén el proceso que escucha en {probe_host}:{port_number} "
+                        "o ejecuta `python manage.py up --port <otro>` antes de volver a intentarlo."
+                    )
 
     def _ensure_broker_available(
         self,

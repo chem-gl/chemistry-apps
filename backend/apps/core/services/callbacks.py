@@ -12,7 +12,13 @@ from uuid import UUID
 
 from ..models import ScientificJob
 from ..ports import JobLogPublisherPort, JobProgressPublisherPort, JobProgressUpdate
-from ..types import JobLogLevel, JobProgressStage, JSONMap, PluginControlAction
+from ..types import (
+    JobLogLevel,
+    JobProgressStage,
+    JSONMap,
+    PluginControlAction,
+    PluginProgressCallback,
+)
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
@@ -21,23 +27,55 @@ logger = logging.getLogger(__name__)
 def build_plugin_progress_callback(
     job: ScientificJob,
     progress_publisher: JobProgressPublisherPort,
-) -> Callable[[int, JobProgressStage, str], None]:
-    """Construye callback de progreso para mapear porcentaje del plugin."""
+) -> PluginProgressCallback:
+    """Construye callback de progreso para mapear porcentaje del plugin.
+
+    Mantiene compatibilidad hacia atrás con plugins legacy que reportan
+    progreso usando ``callback(percent, message)`` en lugar de
+    ``callback(percent, stage, message)``.
+    """
+
+    allowed_stages: tuple[JobProgressStage, ...] = (
+        "pending",
+        "queued",
+        "running",
+        "paused",
+        "recovering",
+        "caching",
+        "completed",
+        "failed",
+        "cancelled",
+    )
 
     def report_plugin_progress(
         plugin_percentage: int,
-        plugin_stage: JobProgressStage,
-        plugin_message: str,
+        plugin_stage_or_message: JobProgressStage | str,
+        plugin_message: str | None = None,
     ) -> None:
         normalized_percentage: int = max(0, min(100, int(plugin_percentage)))
         mapped_runtime_percentage: int = 35 + int(normalized_percentage * 44 / 100)
+
+        if plugin_message is None:
+            normalized_stage: JobProgressStage = (
+                "completed" if normalized_percentage >= 100 else "running"
+            )
+            normalized_message: str = str(plugin_stage_or_message)
+        else:
+            candidate_stage: str = str(plugin_stage_or_message)
+            if candidate_stage in allowed_stages:
+                normalized_stage = candidate_stage
+            elif normalized_percentage >= 100:
+                normalized_stage = "completed"
+            else:
+                normalized_stage = "running"
+            normalized_message = plugin_message
 
         progress_publisher.publish(
             job,
             JobProgressUpdate(
                 percentage=mapped_runtime_percentage,
-                stage=plugin_stage,
-                message=plugin_message,
+                stage=normalized_stage,
+                message=normalized_message,
             ),
         )
 

@@ -56,8 +56,41 @@ class CadmaMetricSummary(TypedDict):
     max_value: float
 
 
+class CadmaIntervalRange(TypedDict):
+    """Intervalo CADMA-Chem editable para una propiedad ADME."""
+
+    min: float
+    max: float
+
+
+class CadmaScoreWeights(TypedDict):
+    """Pesos de la fórmula global S_S del protocolo legado."""
+
+    adme: float
+    toxicity: float
+    sa: float
+
+
+class CadmaReferenceValues(TypedDict):
+    """Valores de referencia editables usados por las fórmulas toxicológicas y SA."""
+
+    LD50: float
+    M: float
+    DT: float
+    SA: float
+
+
+class CadmaScoreConfig(TypedDict):
+    """Configuración editable del modelo de score estilo CADMA.py legado."""
+
+    adme_intervals: dict[str, CadmaIntervalRange]
+    weights: CadmaScoreWeights
+    reference_values: CadmaReferenceValues
+    adme_reference_hits: int
+
+
 class CadmaRankingRow(TypedDict):
-    """Fila de ranking para un compuesto candidato."""
+    """Fila de ranking para un compuesto candidato con score y descriptores completos."""
 
     name: str
     smiles: str
@@ -66,6 +99,18 @@ class CadmaRankingRow(TypedDict):
     toxicity_alignment: float
     sa_alignment: float
     adme_hits_in_band: int
+    MW: float
+    logP: float
+    MR: float
+    AtX: float
+    HBLA: float
+    HBLD: float
+    RB: float
+    PSA: float
+    DT: float
+    M: float
+    LD50: float
+    SA: float
     metrics_in_band: list[str]
     best_fit_summary: str
 
@@ -177,6 +222,7 @@ class CadmaPyResult(TypedDict):
     ranking: list[CadmaRankingRow]
     score_chart: CadmaScoreChart
     metric_charts: list[CadmaMetricChart]
+    score_config: CadmaScoreConfig
     methodology_note: str
 
 
@@ -190,4 +236,5 @@ class CadmaPyJobCreatePayload(TypedDict):
     toxicity_csv_text: NotRequired[str]
     sa_csv_text: NotRequired[str]
     source_configs_json: NotRequired[str]
+    score_config_json: NotRequired[str]
     start_paused: NotRequired[bool]

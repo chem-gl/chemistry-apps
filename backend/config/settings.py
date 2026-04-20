@@ -233,7 +233,7 @@ if ENABLE_CORS:
     INSTALLED_APPS.insert(0, "corsheaders")
 
 ROOT_USERNAME: str = os.getenv("ROOT_USERNAME", "admin")
-ROOT_PASSWORD: str = os.getenv("ROOT_PASSWORD", "admin123")
+ROOT_PASSWORD: str = os.getenv("ROOT_PASSWORD", "")
 ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.local")
 
 REST_FRAMEWORK = {
@@ -383,6 +383,10 @@ CELERY_RESULT_BACKEND = os.getenv(
     "redis://localhost:6379/0",
 )
 JOB_DISPATCH_ENABLED = _get_env_bool("JOB_DISPATCH_ENABLED", True)
+JOB_INLINE_EXECUTION_ON_BROKER_FAILURE = _get_env_bool(
+    "JOB_INLINE_EXECUTION_ON_BROKER_FAILURE",
+    DEBUG,
+)
 
 JOB_RECOVERY_ENABLED = _get_env_bool("JOB_RECOVERY_ENABLED", True)
 JOB_RECOVERY_STALE_SECONDS = max(5, _get_env_int("JOB_RECOVERY_STALE_SECONDS", 60))
@@ -474,7 +478,7 @@ CHANNEL_LAYERS_REDIS_URL = os.getenv(
 )
 USE_INMEMORY_CHANNEL_LAYER = _get_env_bool(
     "USE_INMEMORY_CHANNEL_LAYER",
-    "test" in sys.argv,
+    DEBUG or "test" in sys.argv,
 )
 
 if USE_INMEMORY_CHANNEL_LAYER:

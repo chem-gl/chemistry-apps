@@ -24,6 +24,7 @@ export interface CadmaPyJobCreateRequest {
     toxicity_file?: Blob | null;
     sa_file?: Blob | null;
     source_configs_json?: string;
+    score_config_json?: string;
     start_paused?: boolean;
 }
 

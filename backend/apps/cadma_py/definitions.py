@@ -14,6 +14,22 @@ APP_API_BASE_PATH: Final[str] = "/api/cadma-py/jobs/"
 PLUGIN_NAME: Final[str] = "cadma-py"
 DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0.0"
 
+DEFAULT_ADME_INTERVALS: Final[dict[str, tuple[float, float]]] = {
+    "MW": (200.0, 480.0),
+    "logP": (-0.4, 5.0),
+    "MR": (40.0, 130.0),
+    "AtX": (20.0, 70.0),
+    "HBLA": (0.0, 10.0),
+    "HBLD": (0.0, 5.0),
+    "RB": (0.0, 10.0),
+    "PSA": (0.0, 130.0),
+}
+DEFAULT_SCORE_WEIGHTS: Final[dict[str, float]] = {
+    "adme": 0.40,
+    "toxicity": 0.40,
+    "sa": 0.20,
+}
+
 ADME_METRIC_NAMES: Final[tuple[str, ...]] = (
     "MW",
     "logP",

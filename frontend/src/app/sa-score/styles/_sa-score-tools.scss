@@ -1,0 +1,179 @@
+/* Herramientas de entrada */
+.input-tools-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.38rem 0.78rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
+  font-family: inherit;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
+}
+
+.btn-tool:hover:not(:disabled) {
+  background: var(--chem-surface-inset);
+  border-color: var(--chem-primary);
+}
+
+.btn-tool:disabled,
+.btn-tool.disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Label disfrazado de botón para el input[type=file] */
+.file-upload-label {
+  cursor: pointer;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+}
+
+/* Celda de SMILES clickeable */
+.smiles-cell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-primary);
+  padding: 0;
+  text-align: left;
+  word-break: break-all;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.smiles-cell-btn:hover {
+  color: var(--chem-ink);
+  text-decoration: underline solid;
+}
+
+/* Sketch dialog (Ketcher) */
+.sketch-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(640px, calc(100vw - 2rem));
+  max-width: 640px;
+}
+
+.sketch-dialog::backdrop {
+  background: rgba(44, 37, 51, 0.45);
+}
+
+.sketch-modal {
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sketch-modal h4 {
+  margin: 0;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 1rem;
+}
+
+.ketcher-frame-wrap {
+  position: relative;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  overflow: hidden;
+  background: var(--chem-surface);
+}
+
+.ketcher-frame {
+  width: 100%;
+  min-height: 380px;
+  height: clamp(380px, 50vh, 540px);
+  border: 0;
+  display: block;
+}
+
+.sketch-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Indicador animado de carga mientras Ketcher inicializa */
+.ketcher-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--chem-surface);
+  z-index: var(--z-sticky);
+  gap: 0.75rem;
+}
+
+.ketcher-loading-bar {
+  width: 200px;
+  height: 4px;
+  background: var(--chem-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ketcher-loading-progress {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: var(--chem-primary);
+  border-radius: 999px;
+  animation: ketcher-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes ketcher-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.ketcher-loading-text {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-soft);
+}
+
+/* Precargador fuera de pantalla */
+.ketcher-preloader {
+  position: fixed;
+  top: -2500px;
+  left: -2500px;
+  width: 900px;
+  height: 600px;
+  pointer-events: none;
+  visibility: hidden;
+}
+

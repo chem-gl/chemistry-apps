@@ -18,6 +18,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from ..app_registry import ScientificAppDefinition, ScientificAppRegistry
 from ..models import ScientificJob, ScientificJobLogEvent
@@ -124,6 +125,35 @@ class RealtimeHelpersTests(TestCase):
             broadcast_job_log(log_event)
 
         self.assertEqual(mocked_group_send.await_count, 6)
+
+    def test_broadcast_job_update_is_tolerant_to_redis_outage(self) -> None:
+        """Un error de Channels/Redis no debe tumbar el request HTTP."""
+        job: ScientificJob = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="calculator",
+            algorithm_version="1.0.0",
+            status="pending",
+            cache_hit=False,
+            cache_miss=True,
+            parameters={"op": "add", "a": 1, "b": 2},
+            progress_percentage=0,
+            progress_stage="pending",
+            progress_message="Pendiente.",
+            progress_event_index=0,
+        )
+        mocked_group_send = AsyncMock(side_effect=RedisConnectionError("redis down"))
+        mocked_channel_layer = MagicMock(group_send=mocked_group_send)
+
+        with (
+            patch(
+                "apps.core.realtime.get_channel_layer",
+                return_value=mocked_channel_layer,
+            ),
+            self.assertLogs("apps.core.realtime", level="WARNING") as log_context,
+        ):
+            broadcast_job_update(job)
+
+        self.assertIn("broadcast realtime", "\n".join(log_context.output).lower())
 
 
 class CalculatorTemplateIntegrationTests(TestCase):

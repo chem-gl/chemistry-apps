@@ -17,6 +17,7 @@ export interface CadmaPausedDraftView {
   toxicityCsvText: string;
   saCsvText: string;
   sourceConfigsJson: string;
+  scoreConfigJson: string;
   filenames: string[];
   totalFiles: number;
   totalUsableRows: number;
@@ -39,6 +40,7 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
   readonly toxicityFile = signal<File | null>(null);
   readonly saFile = signal<File | null>(null);
   readonly sourceConfigsJson = signal<string>('');
+  readonly scoreConfigJson = signal<string>('');
   readonly pausedDrafts = signal<CadmaPausedDraftView[]>([]);
   readonly resumedDraftId = signal<string>('');
 
@@ -97,6 +99,7 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
         toxicity_file: this.toxicityFile(),
         sa_file: this.saFile(),
         source_configs_json: this.sourceConfigsJson(),
+        score_config_json: this.scoreConfigJson(),
       })
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
@@ -178,6 +181,7 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
         ? this.buildHistoricalSourceConfigsJson()
         : draft.sourceConfigsJson,
     );
+    this.scoreConfigJson.set(draft.scoreConfigJson);
     this.currentJobId.set(null);
     this.progressSnapshot.set(null);
     this.jobLogs.set([]);
@@ -221,6 +225,14 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
     this.toxicityFile.set(null);
     this.saFile.set(null);
     this.sourceConfigsJson.set('');
+    this.scoreConfigJson.set('');
+    this.currentJobId.set(null);
+    this.progressSnapshot.set(null);
+    this.jobLogs.set([]);
+    this.resultData.set(null);
+    this.errorMessage.set(null);
+    this.exportErrorMessage.set(null);
+    this.activeSection.set('idle');
   }
 
   private loadPausedDrafts(): void {
@@ -287,6 +299,7 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
       toxicityCsvText: this.readStringField(value['toxicityCsvText']),
       saCsvText: this.readStringField(value['saCsvText']),
       sourceConfigsJson: this.readStringField(value['sourceConfigsJson']),
+      scoreConfigJson: this.readStringField(value['scoreConfigJson']),
       filenames,
       totalFiles: this.readNumberField(value['totalFiles'], filenames.length),
       totalUsableRows: this.readNumberField(value['totalUsableRows'], 0),
@@ -374,6 +387,7 @@ export class CadmaPyWorkflowService extends BaseJobWorkflowService<CadmaPyResult
     this.sourceConfigsJson.set(
       persistedConfigs === '' ? this.buildHistoricalSourceConfigsJson() : persistedConfigs,
     );
+    this.scoreConfigJson.set(this.readStringField(rawParameters['score_config_json']));
   }
 
   private buildHistoricalSourceConfigsJson(): string {

@@ -65,15 +65,16 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param toxicityFile 
      * @param saFile 
      * @param sourceConfigsJson 
+     * @param scoreConfigJson 
      * @param startPaused 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, startPaused?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaPyJobResponse>;
-    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, startPaused?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaPyJobResponse>>;
-    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, startPaused?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaPyJobResponse>>;
-    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, startPaused?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, scoreConfigJson?: string, startPaused?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaPyJobResponse>;
+    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, scoreConfigJson?: string, startPaused?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaPyJobResponse>>;
+    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, scoreConfigJson?: string, startPaused?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaPyJobResponse>>;
+    public cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, scoreConfigJson?: string, startPaused?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (referenceLibraryId === null || referenceLibraryId === undefined) {
             throw new Error('Required parameter referenceLibraryId was null or undefined when calling cadmaPyJobsCreate.');
         }
@@ -158,6 +159,9 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
         }
         if (sourceConfigsJson !== undefined) {
             localVarFormParams = localVarFormParams.append('source_configs_json', <any>sourceConfigsJson) as any || localVarFormParams;
+        }
+        if (scoreConfigJson !== undefined) {
+            localVarFormParams = localVarFormParams.append('score_config_json', <any>scoreConfigJson) as any || localVarFormParams;
         }
         if (startPaused !== undefined) {
             localVarFormParams = localVarFormParams.append('start_paused', <any>startPaused) as any || localVarFormParams;

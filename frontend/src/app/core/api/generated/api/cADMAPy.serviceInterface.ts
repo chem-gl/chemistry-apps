@@ -43,9 +43,10 @@ export interface CADMAPyServiceInterface {
      * @param toxicityFile 
      * @param saFile 
      * @param sourceConfigsJson 
+     * @param scoreConfigJson 
      * @param startPaused 
      */
-    cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, startPaused?: boolean, extraHttpRequestParams?: any): Observable<CadmaPyJobResponse>;
+    cadmaPyJobsCreate(referenceLibraryId: string, projectLabel?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, scoreConfigJson?: string, startPaused?: boolean, extraHttpRequestParams?: any): Observable<CadmaPyJobResponse>;
 
     /**
      * Listar o Crear Familias de Referencia CADMA

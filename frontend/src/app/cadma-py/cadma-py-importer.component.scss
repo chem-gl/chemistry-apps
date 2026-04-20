@@ -14,15 +14,15 @@
   display: grid;
   gap: 0.25rem;
   padding: 1rem 1.1rem;
-  border: 1.5px dashed #94a3b8;
-  border-radius: 14px;
-  background: #f8fafc;
+  border: 1.5px dashed var(--chem-ink-soft);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-surface-elevated);
   cursor: pointer;
 }
 
 .single-upload-btn:hover {
-  border-color: #1f7a4c;
-  background: #f0fdf4;
+  border-color: var(--chem-primary);
+  background: var(--chem-primary-light);
 }
 
 .single-upload-btn input[type='file'] {
@@ -32,13 +32,13 @@
 .upload-btn-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--chem-ink);
 }
 
 .upload-btn-subtitle,
 .summary-note {
   font-size: 0.76rem;
-  color: #64748b;
+  color: var(--chem-ink-secondary);
 }
 
 .importer-summary {
@@ -46,16 +46,16 @@
   gap: 0.2rem;
   padding: 0.75rem 0.95rem;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
 }
 
 .importer-error {
   margin: 0;
   padding: 0.7rem 0.9rem;
-  border-radius: 10px;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
   font-size: 0.8rem;
 }
 
@@ -68,7 +68,7 @@
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 16px;
   background: #fff;
 }
@@ -83,30 +83,30 @@
 
 .source-card-header h4 {
   margin: 0.15rem 0;
-  color: #0f172a;
+  color: var(--chem-ink);
 }
 
 .source-card-header p {
   margin: 0;
   font-size: 0.76rem;
-  color: #64748b;
+  color: var(--chem-ink-secondary);
 }
 
 .source-role {
   display: inline-flex;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--chem-accent-light);
+  color: var(--chem-accent);
   font-size: 0.7rem;
   font-weight: 700;
 }
 
 .btn-remove {
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #b91c1c;
-  border-radius: 10px;
+  border: 1px solid var(--chem-error-bg);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius);
   padding: 0.45rem 0.7rem;
   font-size: 0.78rem;
   cursor: pointer;
@@ -124,7 +124,7 @@
 .mapping-hint {
   margin: 0;
   font-size: 0.76rem;
-  color: #64748b;
+  color: var(--chem-ink-secondary);
 }
 
 .field-block {
@@ -132,17 +132,17 @@
   gap: 0.35rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--chem-ink);
 }
 
 .field-block select,
 .field-block input {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
+  border-radius: var(--chem-radius);
+  border: 1px solid var(--chem-border);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
 }
 
 .checkbox-field {
@@ -155,19 +155,20 @@
 }
 
 .required-field span {
-  color: #065f46;
+  color: var(--chem-primary);
 }
 
 .required-field em {
   font-style: normal;
   font-weight: 500;
-  color: #64748b;
+  color: var(--chem-ink-secondary);
 }
 
 .preview-table-wrap {
-  overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  overflow: auto;
+  max-height: 36rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
 }
 
 .preview-table {
@@ -179,15 +180,18 @@
 .preview-table th,
 .preview-table td {
   padding: 0.45rem 0.55rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--chem-surface-inset);
   text-align: left;
   vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .preview-table th {
   min-width: 150px;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink-secondary);
 }
 
 .table-head-cell {
@@ -198,22 +202,22 @@
 .column-name {
   font-size: 0.74rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--chem-ink);
 }
 
 .column-role-select {
   width: 100%;
   min-width: 138px;
   padding: 0.45rem 0.55rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  border-radius: var(--chem-radius-sm);
+  border: 1px solid var(--chem-border);
   background: #fff;
-  color: #0f172a;
+  color: var(--chem-ink);
   font-size: 0.74rem;
 }
 
 .empty-preview {
   text-align: center;
-  color: #64748b;
+  color: var(--chem-ink-secondary);
   font-style: italic;
 }

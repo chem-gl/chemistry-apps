@@ -29,10 +29,10 @@ from ..realtime import broadcast_job_update
 from ..types import (
     JobDeleteResult,
     JobLogLevel,
-    JobProgressStage,
     JobRecoverySummary,
     JSONMap,
     PluginControlAction,
+    PluginProgressCallback,
 )
 from . import cache_operations, callbacks, execution, job_control, recovery
 from .log_helpers import publish_job_log
@@ -356,7 +356,7 @@ class RuntimeJobService:
     def _build_plugin_progress_callback(
         self,
         job: ScientificJob,
-    ) -> Callable[[int, JobProgressStage, str], None]:
+    ) -> PluginProgressCallback:
         """Construye callback de progreso para mapear porcentaje del plugin."""
         return callbacks.build_plugin_progress_callback(job, self.progress_publisher)
 

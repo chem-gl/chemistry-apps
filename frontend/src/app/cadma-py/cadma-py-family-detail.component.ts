@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   CadmaCompoundAddPayload,
   CadmaPyApiService,
@@ -164,7 +165,7 @@ function sanitizeFamilyFileName(name: string): string {
     .trim()
     .toLowerCase()
     .replaceAll(/[^a-z0-9]+/g, '_')
-    .replaceAll(/^_+|_+$/g, '');
+    .replaceAll(/(?:^_+)|(?:_+$)/g, '');
   return normalizedName || 'cadma_reference_family';
 }
 
@@ -178,7 +179,7 @@ const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: s
 @Component({
   selector: 'app-cadma-py-family-detail',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslocoPipe],
   templateUrl: './cadma-py-family-detail.component.html',
   styleUrl: './cadma-py-family-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -385,6 +386,9 @@ export class CadmaPyFamilyDetailComponent {
 
     this.jobsApi.inspectSmileitStructure(row.smiles).subscribe({
       next: (inspection) => {
+        // Seguridad: bypassSecurityTrustHtml es necesario aquí porque el SVG es generado
+        // por el backend (Smileit API) y no proviene de input de usuario directo.
+        // El backend renderiza la molécula con RDKit, produciendo SVG confiable.
         this.compoundModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
         this.compoundModalBusy.set(false);
       },

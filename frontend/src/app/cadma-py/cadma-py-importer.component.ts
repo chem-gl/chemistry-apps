@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export type CadmaImportMode = 'reference' | 'candidate';
 type CadmaFileFormat = 'csv' | 'smi';
@@ -112,16 +113,18 @@ function splitDelimitedLine(lineValue: string, delimiter: string): string[] {
   let currentCell = '';
   let insideQuotes = false;
 
-  for (let index = 0; index < lineValue.length; index += 1) {
+  let index = 0;
+  while (index < lineValue.length) {
     const currentCharacter = lineValue[index] ?? '';
     const nextCharacter = lineValue[index + 1] ?? '';
 
     if (currentCharacter === '"') {
       if (insideQuotes && nextCharacter === '"') {
         currentCell += '"';
-        index += 1;
+        index += 2;
       } else {
         insideQuotes = !insideQuotes;
+        index += 1;
       }
       continue;
     }
@@ -129,10 +132,12 @@ function splitDelimitedLine(lineValue: string, delimiter: string): string[] {
     if (!insideQuotes && currentCharacter === delimiter) {
       cells.push(currentCell.trim());
       currentCell = '';
+      index += 1;
       continue;
     }
 
     currentCell += currentCharacter;
+    index += 1;
   }
 
   cells.push(currentCell.trim());
@@ -241,7 +246,7 @@ function parseCsvPreview(
 
   return {
     columns,
-    previewRows: dataRows.slice(0, 4),
+    previewRows: dataRows,
     usableRowCount: dataRows.length,
     delimiter: resolvedDelimiter,
   };
@@ -260,7 +265,7 @@ function parseSmiPreview(
     .filter((lineValue) => lineValue !== '' && !lineValue.startsWith('#'));
 
   const dataLines = hasHeader ? preparedLines.slice(1) : preparedLines;
-  const previewRows = dataLines.slice(0, 4).map((lineValue) => {
+  const previewRows = dataLines.map((lineValue) => {
     if (lineValue.includes('\t')) {
       const [smilesValue = '', nameValue = ''] = lineValue.split('\t');
       return [smilesValue.trim(), nameValue.trim()];
@@ -299,7 +304,7 @@ function applyColumnRole(
   nextRole: ColumnRole,
 ): GuidedSourceConfig {
   const nextSource: GuidedSourceConfig = { ...source };
-  const mappedProperties = Object.values(ROLE_TO_PROPERTY) as MappedColumnProperty[];
+  const mappedProperties = Object.values(ROLE_TO_PROPERTY);
 
   for (const propertyKey of mappedProperties) {
     if (
@@ -342,7 +347,7 @@ function buildSerializableConfig(
 @Component({
   selector: 'app-cadma-py-importer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './cadma-py-importer.component.html',
   styleUrl: './cadma-py-importer.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

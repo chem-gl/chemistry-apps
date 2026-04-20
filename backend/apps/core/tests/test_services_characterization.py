@@ -212,6 +212,16 @@ class PluginProgressCallbackTests(TestCase):
             published_update = pub_mock.call_args[0][1]
             self.assertEqual(published_update.percentage, 79)
 
+    def test_legacy_two_argument_progress_callback_is_still_supported(self) -> None:
+        """Los plugins legacy como CADMA pueden reportar porcentaje + mensaje."""
+        callback = self.service._build_plugin_progress_callback(self.job)
+        with patch.object(self.service.progress_publisher, "publish") as pub_mock:
+            callback(40, "Calculating CADMA alignment...")
+            published_update = pub_mock.call_args[0][1]
+            self.assertEqual(published_update.percentage, 52)
+            self.assertEqual(published_update.stage, "running")
+            self.assertEqual(published_update.message, "Calculating CADMA alignment...")
+
 
 class PluginControlCallbackTests(TestCase):
     """Verifica callback de control cooperativo pause/continue."""

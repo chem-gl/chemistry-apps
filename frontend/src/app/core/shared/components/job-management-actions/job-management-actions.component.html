@@ -8,14 +8,14 @@
 
     @if (canDelete) {
     <button class="job-action-button delete-action" type="button" [disabled]="isBusy" (click)="deleteRequested.emit()">
-        {{ isBusy ? 'Working...' : deleteLabel }}
+        {{ isBusy ? ('common.actions.working' | transloco) : deleteLabel }}
     </button>
     }
 
     @if (canRestore) {
     <button class="job-action-button restore-action" type="button" [disabled]="isBusy"
         (click)="restoreRequested.emit()">
-        {{ isBusy ? 'Working...' : restoreLabel }}
+        {{ isBusy ? ('common.actions.working' | transloco) : restoreLabel }}
     </button>
     }
 </div>

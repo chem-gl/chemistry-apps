@@ -7,6 +7,8 @@ fisicoquímicas, toxicológicas y de accesibilidad sintética.
 
 from __future__ import annotations
 
+import json
+import math
 import statistics
 from typing import Literal, cast
 
@@ -22,7 +24,9 @@ from apps.core.types import (
 from .definitions import (
     ADME_METRIC_NAMES,
     ALL_METRIC_NAMES,
+    DEFAULT_ADME_INTERVALS,
     DEFAULT_SCORE_REFERENCE_LINE,
+    DEFAULT_SCORE_WEIGHTS,
     PLUGIN_NAME,
 )
 from .types import (
@@ -31,6 +35,8 @@ from .types import (
     CadmaMetricSummary,
     CadmaPyResult,
     CadmaRankingRow,
+    CadmaScoreConfig,
+    CadmaScoreWeights,
     MetricName,
 )
 
@@ -127,74 +133,189 @@ def _metric_summary_map(
     return {summary["metric"]: summary for summary in summaries}
 
 
-def _balanced_alignment(value: float, mean: float, stdev: float) -> float:
-    distance = abs(value - mean)
-    normalized = min(distance / (3.0 * max(stdev, 1e-9)), 1.0)
-    return round((1.0 - normalized) * 100.0, 4)
+def _safe_positive(value: object, fallback: float) -> float:
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return numeric_value if numeric_value > 0 else fallback
 
 
-def _lower_is_better_alignment(value: float, mean: float, stdev: float) -> float:
-    if value <= mean:
-        return 100.0
-    normalized = min((value - mean) / (3.0 * max(stdev, 1e-9)), 1.0)
-    return round((1.0 - normalized) * 100.0, 4)
+def _resolve_weights(raw_weights: object) -> CadmaScoreWeights:
+    fallback = dict(DEFAULT_SCORE_WEIGHTS)
+    if not isinstance(raw_weights, dict):
+        return cast(CadmaScoreWeights, fallback)
+
+    candidate_weights = {
+        "adme": max(float(raw_weights.get("adme", fallback["adme"])), 0.0),
+        "toxicity": max(float(raw_weights.get("toxicity", fallback["toxicity"])), 0.0),
+        "sa": max(float(raw_weights.get("sa", fallback["sa"])), 0.0),
+    }
+    total = sum(candidate_weights.values())
+    if total <= 1e-9:
+        return cast(CadmaScoreWeights, fallback)
+
+    normalized = {
+        key: round(value / total, 4) for key, value in candidate_weights.items()
+    }
+    return cast(CadmaScoreWeights, normalized)
 
 
-def _higher_is_better_alignment(value: float, mean: float, stdev: float) -> float:
-    if value >= mean:
-        return 100.0
-    normalized = min((mean - value) / (3.0 * max(stdev, 1e-9)), 1.0)
-    return round((1.0 - normalized) * 100.0, 4)
+def _decode_score_config(parameters: JSONMap) -> dict[str, object]:
+    raw_config: object = parameters.get("score_config")
+    if isinstance(raw_config, dict):
+        return cast(dict[str, object], raw_config)
+
+    raw_json = parameters.get("score_config_json", "")
+    if not isinstance(raw_json, str) or not raw_json.strip():
+        return {}
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError:
+        return {}
+
+    return cast(dict[str, object], decoded) if isinstance(decoded, dict) else {}
+
+
+def _resolve_interval_map(raw_intervals: object) -> dict[str, dict[str, float]]:
+    interval_map: dict[str, dict[str, float]] = {}
+    for metric_name in ADME_METRIC_NAMES:
+        default_low, default_high = DEFAULT_ADME_INTERVALS[metric_name]
+        raw_metric_range = (
+            raw_intervals.get(metric_name) if isinstance(raw_intervals, dict) else None
+        )
+        if isinstance(raw_metric_range, dict):
+            min_value = float(raw_metric_range.get("min", default_low))
+            max_value = float(raw_metric_range.get("max", default_high))
+        else:
+            min_value = default_low
+            max_value = default_high
+        if min_value > max_value:
+            min_value, max_value = max_value, min_value
+        interval_map[metric_name] = {
+            "min": round(min_value, 4),
+            "max": round(max_value, 4),
+        }
+    return interval_map
+
+
+def _resolve_reference_values(
+    raw_reference_values: object,
+    summary_map: dict[str, CadmaMetricSummary],
+) -> dict[str, float]:
+    return {
+        "LD50": round(
+            _safe_positive(
+                raw_reference_values.get("LD50")
+                if isinstance(raw_reference_values, dict)
+                else None,
+                float(summary_map["LD50"]["mean"]),
+            ),
+            4,
+        ),
+        "M": round(
+            _safe_positive(
+                raw_reference_values.get("M")
+                if isinstance(raw_reference_values, dict)
+                else None,
+                max(float(summary_map["M"]["mean"]), 0.001),
+            ),
+            4,
+        ),
+        "DT": round(
+            _safe_positive(
+                raw_reference_values.get("DT")
+                if isinstance(raw_reference_values, dict)
+                else None,
+                max(float(summary_map["DT"]["mean"]), 0.001),
+            ),
+            4,
+        ),
+        "SA": round(
+            _safe_positive(
+                raw_reference_values.get("SA")
+                if isinstance(raw_reference_values, dict)
+                else None,
+                max(float(summary_map["SA"]["mean"]), 1.0),
+            ),
+            4,
+        ),
+    }
+
+
+def _resolve_score_config(
+    parameters: JSONMap,
+    summary_map: dict[str, CadmaMetricSummary],
+) -> CadmaScoreConfig:
+    raw_config_dict = _decode_score_config(parameters)
+    interval_map = _resolve_interval_map(raw_config_dict.get("adme_intervals"))
+    reference_values = _resolve_reference_values(
+        raw_config_dict.get("reference_values"),
+        summary_map,
+    )
+    adme_reference_hits = max(
+        1,
+        sum(
+            1
+            for metric_name in ADME_METRIC_NAMES
+            if interval_map[metric_name]["min"]
+            <= float(summary_map[metric_name]["mean"])
+            <= interval_map[metric_name]["max"]
+        ),
+    )
+
+    return {
+        "adme_intervals": interval_map,
+        "weights": _resolve_weights(raw_config_dict.get("weights")),
+        "reference_values": reference_values,
+        "adme_reference_hits": adme_reference_hits,
+    }
+
+
+def _safe_log_ratio(numerator: float, denominator: float) -> float:
+    safe_numerator = max(numerator, 0.0)
+    safe_denominator = max(denominator, 0.0)
+    return math.log10((1.0 + safe_numerator) / (1.0 + safe_denominator))
 
 
 def _score_candidate(
     candidate_row: CadmaCompoundRow,
-    summary_map: dict[str, CadmaMetricSummary],
+    score_config: CadmaScoreConfig,
 ) -> CadmaRankingRow:
-    adme_scores: list[float] = []
     metrics_in_band: list[str] = []
-
     for metric_name in ADME_METRIC_NAMES:
-        summary = summary_map[metric_name]
+        interval = score_config["adme_intervals"][metric_name]
         metric_value = float(candidate_row[metric_name])
-        adme_scores.append(
-            _balanced_alignment(metric_value, summary["mean"], summary["stdev"])
-        )
-        if (
-            summary["mean"] - summary["stdev"]
-            <= metric_value
-            <= summary["mean"] + summary["stdev"]
-        ):
+        if interval["min"] <= metric_value <= interval["max"]:
             metrics_in_band.append(metric_name)
 
-    dt_summary = summary_map["DT"]
-    m_summary = summary_map["M"]
-    ld50_summary = summary_map["LD50"]
-    sa_summary = summary_map["SA"]
-
+    reference_values = score_config["reference_values"]
+    weights = score_config["weights"]
+    adme_alignment = round(
+        len(metrics_in_band) / max(score_config["adme_reference_hits"], 1),
+        4,
+    )
     toxicity_alignment = round(
         (
-            _lower_is_better_alignment(
-                candidate_row["DT"], dt_summary["mean"], dt_summary["stdev"]
-            )
-            + _lower_is_better_alignment(
-                candidate_row["M"], m_summary["mean"], m_summary["stdev"]
-            )
-            + _higher_is_better_alignment(
-                candidate_row["LD50"], ld50_summary["mean"], ld50_summary["stdev"]
-            )
+            1.0
+            + _safe_log_ratio(float(candidate_row["LD50"]), reference_values["LD50"])
+            + 1.0
+            - _safe_log_ratio(float(candidate_row["M"]), reference_values["M"])
+            + 1.0
+            - _safe_log_ratio(float(candidate_row["DT"]), reference_values["DT"])
         )
         / 3.0,
         4,
     )
-    sa_alignment = _higher_is_better_alignment(
-        candidate_row["SA"],
-        sa_summary["mean"],
-        sa_summary["stdev"],
+    sa_alignment = round(
+        float(candidate_row["SA"]) / max(reference_values["SA"], 1e-9),
+        4,
     )
-    adme_alignment = round(sum(adme_scores) / max(len(adme_scores), 1), 4)
     selection_score = round(
-        (adme_alignment * 0.50) + (toxicity_alignment * 0.35) + (sa_alignment * 0.15),
+        (adme_alignment * weights["adme"])
+        + (toxicity_alignment * weights["toxicity"])
+        + (sa_alignment * weights["sa"]),
         4,
     )
 
@@ -206,8 +327,22 @@ def _score_candidate(
         "toxicity_alignment": toxicity_alignment,
         "sa_alignment": sa_alignment,
         "adme_hits_in_band": len(metrics_in_band),
+        "MW": float(candidate_row["MW"]),
+        "logP": float(candidate_row["logP"]),
+        "MR": float(candidate_row["MR"]),
+        "AtX": float(candidate_row["AtX"]),
+        "HBLA": float(candidate_row["HBLA"]),
+        "HBLD": float(candidate_row["HBLD"]),
+        "RB": float(candidate_row["RB"]),
+        "PSA": float(candidate_row["PSA"]),
+        "DT": float(candidate_row["DT"]),
+        "M": float(candidate_row["M"]),
+        "LD50": float(candidate_row["LD50"]),
+        "SA": float(candidate_row["SA"]),
         "metrics_in_band": metrics_in_band,
-        "best_fit_summary": f"{len(metrics_in_band)}/8 ADME metrics inside the reference band",
+        "best_fit_summary": (
+            f"{len(metrics_in_band)}/{score_config['adme_reference_hits']} ADME properties inside the CADMA interval"
+        ),
     }
 
 
@@ -215,6 +350,7 @@ def _build_metric_charts(
     ranking_rows: list[CadmaRankingRow],
     candidate_rows: list[CadmaCompoundRow],
     summary_map: dict[str, CadmaMetricSummary],
+    score_config: CadmaScoreConfig,
 ) -> list[CadmaMetricChart]:
     ordered_names = [row["name"] for row in ranking_rows]
     candidate_map = {row["name"]: row for row in candidate_rows}
@@ -229,15 +365,25 @@ def _build_metric_charts(
         elif metric_name in {"LD50", "SA"}:
             better_direction = "higher"
 
+        if metric_name in ADME_METRIC_NAMES:
+            interval = score_config["adme_intervals"][metric_name]
+            reference_low = float(interval["min"])
+            reference_high = float(interval["max"])
+            reference_mean = (reference_low + reference_high) / 2.0
+        else:
+            reference_mean = float(summary["mean"])
+            reference_low = float(summary["mean"] - summary["stdev"])
+            reference_high = float(summary["mean"] + summary["stdev"])
+
         chart_rows.append(
             {
                 "metric": cast(MetricName, metric_name),
                 "label": metric_name,
                 "categories": ordered_names,
                 "values": values,
-                "reference_mean": float(summary["mean"]),
-                "reference_low": float(summary["mean"] - summary["stdev"]),
-                "reference_high": float(summary["mean"] + summary["stdev"]),
+                "reference_mean": reference_mean,
+                "reference_low": reference_low,
+                "reference_high": reference_high,
                 "better_direction": better_direction,
             }
         )
@@ -278,7 +424,8 @@ def cadma_py_plugin(
 
     reference_stats = _build_reference_stats(reference_rows)
     summary_map = _metric_summary_map(reference_stats)
-    progress_callback(40, "Computing reference bands and candidate alignment...")
+    score_config = _resolve_score_config(parameters, summary_map)
+    progress_callback(40, "Computing legacy CADMA intervals and candidate scores...")
     _pause_if_requested(
         control_callback,
         stage_label="computing reference bands",
@@ -286,7 +433,8 @@ def cadma_py_plugin(
     )
 
     ranking = [
-        _score_candidate(candidate_row, summary_map) for candidate_row in candidate_rows
+        _score_candidate(candidate_row, score_config)
+        for candidate_row in candidate_rows
     ]
     ranking.sort(key=lambda row: float(row["selection_score"]), reverse=True)
     progress_callback(70, "Preparing ergonomic chart payloads...")
@@ -296,7 +444,9 @@ def cadma_py_plugin(
         checkpoint={"progress": 70},
     )
 
-    metric_charts = _build_metric_charts(ranking, candidate_rows, summary_map)
+    metric_charts = _build_metric_charts(
+        ranking, candidate_rows, summary_map, score_config
+    )
     score_chart = {
         "categories": [row["name"] for row in ranking],
         "values": [float(row["selection_score"]) for row in ranking],
@@ -312,10 +462,10 @@ def cadma_py_plugin(
         "ranking": ranking,
         "score_chart": score_chart,
         "metric_charts": metric_charts,
+        "score_config": score_config,
         "methodology_note": (
-            "The final score is a CADMA-inspired prioritization heuristic based on "
-            "reference-band alignment for ADME, lower-is-better toxicity risk and "
-            "higher-is-better synthetic accessibility."
+            "The final score follows the legacy CADMA-Chem style formula with editable "
+            "ADME intervals plus weighted contributions from toxicity and synthetic accessibility."
         ),
     }
     progress_callback(100, "CADMA Py comparison completed.")

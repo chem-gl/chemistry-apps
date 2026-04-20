@@ -973,12 +973,48 @@ def fork_reference_library(
 
 
 def _library_has_linked_jobs(library: CadmaReferenceLibrary) -> bool:
-    """Indica si la familia ya quedó asociada a trabajos persistidos de CADMA."""
+    """Indica si la familia ya quedó asociada a trabajos CADMA todavía activos."""
 
     return ScientificJob.objects.filter(
         plugin_name="cadma-py",
         parameters__reference_library_id=str(library.id),
+        deleted_at__isnull=True,
     ).exists()
+
+
+def _get_linked_jobs(library: CadmaReferenceLibrary) -> list[ScientificJob]:
+    """Retorna los jobs de CADMA vinculados a la familia, ordenados por fecha."""
+
+    return list(
+        ScientificJob.objects.filter(
+            plugin_name="cadma-py",
+            parameters__reference_library_id=str(library.id),
+            deleted_at__isnull=True,
+        )
+        .order_by("-created_at")
+        .only("id", "status", "parameters", "created_at")[:50]
+    )
+
+
+def _soft_delete_linked_jobs(
+    library: CadmaReferenceLibrary,
+    actor: AbstractUser,
+) -> int:
+    """Envía a la papelera lógica todos los jobs vinculados a la familia."""
+    from django.utils import timezone
+
+    now = timezone.now()
+    linked_qs = ScientificJob.objects.filter(
+        plugin_name="cadma-py",
+        parameters__reference_library_id=str(library.id),
+        deleted_at__isnull=True,
+    )
+    count = linked_qs.update(
+        deleted_at=now,
+        deleted_by=actor,
+        deletion_mode=ScientificJob.DELETION_MODE_SOFT,
+    )
+    return count
 
 
 def create_reference_library(
@@ -1242,12 +1278,37 @@ def add_compound_to_library(
     return new_row
 
 
+def preview_library_deletion(
+    *,
+    library_id: str,
+    actor: AbstractUser,
+) -> dict[str, object]:
+    """Devuelve información sobre los jobs vinculados a la familia para mostrar antes de eliminar."""
+    library = get_reference_library_for_actor(library_id, actor)
+    linked_jobs = _get_linked_jobs(library)
+    return {
+        "library_id": str(library.id),
+        "library_name": library.name,
+        "linked_job_count": len(linked_jobs),
+        "linked_jobs": [
+            {
+                "id": str(job.id),
+                "status": job.status,
+                "created_at": job.created_at.isoformat() if job.created_at else "",
+                "project_label": job.parameters.get("project_label", ""),
+            }
+            for job in linked_jobs
+        ],
+    }
+
+
 def deactivate_reference_library(
     *,
     library_id: str,
     actor: AbstractUser,
+    cascade: bool = False,
 ) -> None:
-    """Elimina lógicamente una familia de referencia."""
+    """Elimina lógicamente una familia de referencia y, si cascade=True, también sus jobs."""
     library = get_reference_library_for_actor(library_id, actor)
     actor_user_id = getattr(actor, "id", None)
     actor_role = _actor_role(actor)
@@ -1262,10 +1323,14 @@ def deactivate_reference_library(
             "No tienes permisos para eliminar esta familia de referencia."
         )
 
-    if _library_has_linked_jobs(library):
+    has_linked = _library_has_linked_jobs(library)
+    if has_linked and not cascade:
         raise ValueError(
-            "Esta familia es permanente porque ya fue usada en un trabajo CADMA."
+            "Esta familia tiene jobs asociados. Usa cascade=true para eliminarla junto con sus jobs."
         )
+
+    if has_linked:
+        _soft_delete_linked_jobs(library, actor)
 
     library.is_active = False
     library.save(update_fields=["is_active", "updated_at"])

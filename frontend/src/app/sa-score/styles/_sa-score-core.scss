@@ -1,0 +1,567 @@
+/* sa-score.component.scss: Estilos para SA Score con tokens --chem-*. */
+.sa-score-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.sa-score-header {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 1.1rem 1.2rem;
+  background: var(--chem-surface-elevated);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--chem-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--chem-text-xs);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+}
+
+.sa-score-header h2 {
+  margin: 0.2rem 0 0.4rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.sa-score-header p {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.entry-panel,
+.result-panel,
+.logs-card,
+.history-card {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 1rem;
+  min-width: 0;
+}
+
+.entry-panel {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+h3 {
+  margin: 0 0 0.7rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.smiles-label {
+  display: grid;
+  gap: 0.38rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+textarea,
+input,
+button {
+  font-family: inherit;
+}
+
+textarea {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
+  min-height: 180px;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+textarea:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.25);
+  border-color: var(--chem-accent);
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
+.job-name-field {
+  display: grid;
+  gap: 0.38rem;
+  margin-top: 0.9rem;
+  color: var(--chem-ink);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.job-name-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+.job-name-hint {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-xs);
+  font-weight: 500;
+}
+
+.methods-fieldset {
+  margin: 0.9rem 0 0;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.7rem 0.75rem;
+}
+
+.methods-fieldset legend {
+  padding: 0 0.35rem;
+  color: var(--chem-primary);
+  font-weight: 700;
+  font-size: 0.83rem;
+  font-family: var(--chem-font-label);
+}
+
+.method-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.method-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--chem-ink);
+  font-size: 0.9rem;
+}
+
+.action-row {
+  margin-top: 0.95rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.history-open-btn {
+  border-radius: 999px;
+  padding: 0.45rem 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.btn-primary {
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-primary);
+  color: #fff;
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+}
+
+.btn-secondary,
+.history-open-btn {
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  &:hover:not(:disabled) {
+    background: var(--chem-surface-elevated);
+  }
+}
+
+.status-message {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.progress-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id,
+.mono {
+  font-family: var(--chem-font-mono);
+  font-size: 0.8rem;
+  color: var(--chem-ink);
+  word-break: break-all;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--chem-surface-inset);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--chem-gradient-header);
+}
+
+.progress-pct {
+  margin: 0;
+  font-weight: 700;
+  color: var(--chem-primary);
+}
+
+.progress-message {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.metadata-grid {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.metadata-grid p {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.88rem;
+}
+
+.export-row {
+  margin-top: 0.25rem;
+  align-items: center;
+}
+
+.export-select-label {
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
+}
+
+.export-select {
+  border: 1px solid var(--chem-primary);
+  border-radius: 999px;
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  padding: 0.42rem 0.8rem;
+  min-width: 220px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.export-select:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.2);
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.table-search-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 320px);
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table-search-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+  padding: 0.62rem 0.9rem;
+  font-size: var(--chem-text-sm);
+}
+
+.table-search-input:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.18);
+  border-color: var(--chem-accent);
+}
+
+.table-summary-pill {
+  margin: 0;
+  padding: 0.46rem 0.78rem;
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-glass-heavy);
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+}
+
+.table-wrap {
+  margin-top: 0.7rem;
+  overflow: auto;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: linear-gradient(180deg, rgba(250, 248, 252, 0.96), rgba(237, 233, 240, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.result-table,
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.result-table th,
+.result-table td,
+.history-table th,
+.history-table td {
+  padding: 0.55rem 0.62rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.result-table th,
+.history-table th {
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--chem-text-xs);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.result-table tbody tr:nth-child(odd) {
+  background: rgba(250, 248, 252, 0.92);
+}
+
+.result-table tbody tr:hover {
+  background: rgba(123, 90, 158, 0.06);
+}
+
+.result-row-with-error {
+  background: rgba(255, 235, 238, 0.7);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-indicator {
+  color: var(--chem-accent);
+  font-size: 0.8rem;
+}
+
+.numeric-head,
+.numeric-cell {
+  text-align: right;
+}
+
+.numeric-head .sort-button {
+  justify-content: flex-end;
+}
+
+.empty-table-cell {
+  padding: 1rem;
+  text-align: center;
+  color: var(--chem-ink-secondary);
+  font-style: italic;
+}
+
+.cell-error {
+  display: inline-block;
+  border: 1px solid var(--chem-error);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+}
+
+.error-message {
+  margin: 0.55rem 0 0;
+  border: 1px solid var(--chem-error);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  padding: 0.5rem 0.62rem;
+  font-weight: 700;
+  font-size: 0.83rem;
+}
+
+.logs-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.log-item {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+  padding: 0.48rem 0.6rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: var(--chem-text-xs);
+}
+
+.log-level {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.08rem 0.43rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-family: var(--chem-font-label);
+}
+
+.log-level-debug {
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-elevated);
+}
+
+.log-level-info {
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
+}
+
+.log-level-warning {
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
+}
+
+.log-level-error {
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
+}
+
+.log-source,
+.log-index {
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
+}
+
+.log-message,
+.log-payload {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
+.log-payload {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 0.35rem;
+  background: var(--chem-surface);
+  overflow: auto;
+  font-family: var(--chem-font-mono);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.history-status {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.12rem 0.48rem;
+  font-weight: 700;
+  font-size: 0.76rem;
+}
+
+.history-pending,
+.history-running {
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
+}
+
+.history-completed {
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
+}
+
+.history-failed,
+.history-cancelled {
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
+}
+
+.history-paused {
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
+}
+
+@media (max-width: 980px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  @media (max-width: 720px) {
+    .table-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .table-search-field {
+      min-width: 100%;
+    }
+  }
+  .result-table,
+  .history-table {
+    min-width: 620px;
+  }
+}
+

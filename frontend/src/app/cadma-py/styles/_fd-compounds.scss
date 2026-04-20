@@ -1,0 +1,502 @@
+/* _fd-compounds.scss: Tabla de compuestos, formulario agregar, diálogo de detalle y responsive. */
+
+.compounds-section {
+  border-top: 1px solid var(--chem-border-subtle);
+  padding-top: 0.75rem;
+}
+
+.btn-toggle-compounds {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--chem-ink);
+  padding: 0;
+}
+
+.btn-download-family,
+.btn-add-compound {
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  padding: 0.25rem 0.6rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-download-family {
+  margin-left: auto;
+  color: var(--chem-info);
+
+  &:hover {
+    background: var(--chem-info-bg);
+  }
+}
+
+.btn-add-compound {
+  background: var(--chem-primary-light);
+  color: var(--chem-primary);
+  border-color: var(--chem-primary);
+
+  &:hover {
+    background: var(--chem-primary-light);
+  }
+}
+
+/* --- Formulario agregar compuesto --- */
+.add-compound-form {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  margin-bottom: 0.6rem;
+}
+
+.add-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.add-label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+}
+
+.add-input {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  background: #fff;
+  color: var(--chem-ink);
+
+  &.mono {
+    font-family: var(--chem-font-mono);
+    font-size: 0.75rem;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--chem-accent);
+    box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.12);
+  }
+}
+
+.add-error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--chem-error);
+  font-weight: 600;
+}
+
+.btn-submit-compound {
+  justify-self: start;
+  background: var(--chem-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--chem-accent);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* --- Tabla de compuestos --- */
+.compounds-table-wrap {
+  overflow-x: auto;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 8px;
+}
+
+.compounds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+
+  th,
+  td {
+    padding: 0.4rem 0.55rem;
+    text-align: left;
+    border-bottom: 1px solid var(--chem-surface-inset);
+    white-space: nowrap;
+  }
+
+  th {
+    background: var(--chem-surface-inset);
+    font-weight: 700;
+    color: var(--chem-ink-secondary);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .rank-num {
+    color: var(--chem-ink-soft);
+    font-weight: 600;
+    width: 2rem;
+    text-align: center;
+  }
+
+  .smiles-cell {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--chem-ink-secondary);
+  }
+
+  .mono {
+    font-family: var(--chem-font-mono);
+    font-size: var(--chem-text-xs);
+  }
+
+  .ref-cell {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--chem-ink-secondary);
+    font-size: var(--chem-text-xs);
+  }
+
+  .ref-link {
+    color: var(--chem-info);
+    text-decoration: none;
+    font-size: var(--chem-text-xs);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .act-col {
+    width: 4.8rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+  }
+
+  tr.editing {
+    background: var(--chem-warning-bg);
+  }
+
+  tr:hover:not(.editing) {
+    background: var(--chem-surface-elevated);
+  }
+}
+
+.inline-input {
+  width: 100%;
+  min-width: 80px;
+  font-size: 0.76rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--chem-border);
+  border-radius: 4px;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: var(--chem-accent);
+  }
+}
+
+.compound-open-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--chem-info);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  max-width: 100%;
+
+  &:hover {
+    color: var(--chem-info);
+  }
+}
+
+.btn-row-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.15rem;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.btn-row-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0.15rem;
+  color: var(--chem-error);
+  opacity: 0.7;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--chem-error-bg);
+    border-radius: 4px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.btn-row-save,
+.btn-row-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+}
+
+.btn-row-save {
+  color: var(--chem-success);
+  font-weight: 700;
+
+  &:hover {
+    background: var(--chem-success-bg);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.btn-row-cancel {
+  color: var(--chem-error);
+
+  &:hover {
+    background: var(--chem-error-bg);
+  }
+}
+
+.null-icon {
+  flex-shrink: 0;
+}
+
+/* --- Diálogo de detalle de compuesto --- */
+.compound-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(960px, calc(100vw - 2rem));
+  max-width: 960px;
+}
+
+.compound-dialog::backdrop {
+  background: rgba(44, 37, 51, 0.55);
+}
+
+.compound-modal {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+}
+
+.compound-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.compound-modal-heading h4 {
+  margin: 0 0 0.2rem;
+  font-size: var(--chem-text-md);
+  color: var(--chem-ink);
+}
+
+.compound-modal-smiles {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--chem-ink-secondary);
+  word-break: break-all;
+}
+
+.compound-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--chem-ink-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--chem-radius-sm);
+
+  &:hover {
+    background: var(--chem-surface-inset);
+    color: var(--chem-ink);
+  }
+}
+
+.compound-modal-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 1rem;
+}
+
+.compound-card {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 0.9rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 12px;
+  background: var(--chem-surface-elevated);
+}
+
+.compound-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.btn-modal-edit {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--chem-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-modal-edit:hover {
+  background: var(--chem-surface-inset);
+}
+
+.compound-edit-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.compound-card-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.status-message {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--chem-ink-secondary);
+}
+
+.molecule-svg-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+  padding: 0.75rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: #fff;
+}
+
+.molecule-svg-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.compound-reference-box,
+.compound-evidence {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: var(--chem-warning-bg);
+  color: var(--chem-warning-text);
+  border: 1px solid var(--chem-warning-border);
+}
+
+.compound-reference-text {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+}
+
+.compound-evidence {
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.compound-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.55rem;
+}
+
+.compound-metric-card {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.7rem;
+  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+}
+
+.compound-metric-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chem-ink-secondary);
+}
+
+.compound-metric-value {
+  font-size: 0.9rem;
+  color: var(--chem-ink);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 820px) {
+  .compound-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

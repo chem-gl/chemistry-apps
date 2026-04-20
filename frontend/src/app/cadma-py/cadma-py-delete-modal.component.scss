@@ -1,0 +1,263 @@
+/* cadma-py-delete-modal.component.scss: Estilos del modal de confirmación de eliminación.
+   Sigue el patrón glassmorphism del global-error-modal con variantes danger/warning. */
+
+dialog.delete-dialog {
+  border: none;
+  background: transparent;
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+
+  &::backdrop {
+    background: rgba(44, 37, 51, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  &[open] {
+    display: grid;
+    place-items: center;
+    animation: fadeIn 0.18s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.delete-card {
+  width: min(560px, 92vw);
+  max-height: 80vh;
+  overflow: auto;
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-glass-heavy);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--chem-shadow-lg);
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.delete-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+
+  h3 {
+    margin: 0;
+    color: var(--chem-error);
+    font-family: var(--chem-font-heading);
+    font-size: var(--chem-text-lg);
+  }
+}
+
+.delete-close-btn {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.2rem;
+  line-height: 1;
+  border: 1px solid rgba(211, 47, 47, 0.3);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--chem-transition);
+
+  &:hover {
+    background: var(--chem-error);
+    color: #fff;
+  }
+}
+
+/* ── Cuerpo ── */
+
+.delete-body {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.delete-message {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-md);
+  line-height: 1.5;
+}
+
+.delete-warning {
+  color: var(--chem-warning, #e65100);
+  font-weight: 600;
+}
+
+.delete-job-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-surface-inset);
+  padding: 0.5rem;
+}
+
+.delete-job-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-surface);
+  font-size: var(--chem-text-sm);
+}
+
+.job-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--chem-ink);
+  font-weight: 500;
+}
+
+.job-status {
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--chem-radius-sm);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.status-completed {
+  background: var(--chem-success-bg, #e8f5e9);
+  color: var(--chem-success, #2e7d32);
+}
+
+.status-pending,
+.status-running {
+  background: var(--chem-info-bg, #e3f2fd);
+  color: var(--chem-info, #1565c0);
+}
+
+.status-failed,
+.status-cancelled {
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+}
+
+.status-paused {
+  background: var(--chem-faint);
+  color: var(--chem-ink-secondary);
+}
+
+.job-date {
+  color: var(--chem-ink-tertiary);
+  font-size: var(--chem-text-xs);
+  white-space: nowrap;
+}
+
+.delete-cascade-note {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+  font-style: italic;
+}
+
+/* ── Carga ── */
+
+.delete-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+
+  p {
+    margin: 0;
+  }
+}
+
+.delete-spinner {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid var(--chem-border-subtle);
+  border-top-color: var(--chem-accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Error ── */
+
+.delete-error {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+
+.delete-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.3rem;
+}
+
+.btn-cancel {
+  padding: 0.44rem 0.8rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--chem-transition);
+
+  &:hover {
+    background: var(--chem-faint);
+  }
+}
+
+.btn-confirm-delete {
+  padding: 0.44rem 0.8rem;
+  border: 1px solid rgba(211, 47, 47, 0.3);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--chem-transition);
+
+  &:hover {
+    background: #c62828;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

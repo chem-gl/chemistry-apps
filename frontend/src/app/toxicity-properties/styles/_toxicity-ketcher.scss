@@ -1,0 +1,122 @@
+/* Indicador animado de carga mientras Ketcher inicializa */
+.ketcher-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--chem-surface);
+  z-index: var(--z-sticky);
+  gap: 0.75rem;
+}
+
+.ketcher-loading-bar {
+  width: 200px;
+  height: 4px;
+  background: var(--chem-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ketcher-loading-progress {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: var(--chem-primary);
+  border-radius: 999px;
+  animation: ketcher-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes ketcher-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.ketcher-loading-text {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-soft);
+}
+
+/* Precargador fuera de pantalla */
+.ketcher-preloader {
+  position: fixed;
+  top: -2500px;
+  left: -2500px;
+  width: 900px;
+  height: 600px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.molecule-image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--chem-ink-soft);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--chem-radius);
+}
+
+.molecule-modal-smiles {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--chem-ink);
+  word-break: break-all;
+  font-family: var(--chem-font-mono);
+}
+
+.molecule-svg-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+}
+
+.molecule-svg-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 980px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  @media (max-width: 720px) {
+    .table-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .table-search-field {
+      min-width: 100%;
+    }
+  }
+  .result-table,
+  .history-table {
+    min-width: 620px;
+  }
+}

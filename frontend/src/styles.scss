@@ -33,6 +33,10 @@
   --chem-border: #c8c2cc;
   --chem-border-strong: #a8a1b0;
   --chem-border-subtle: #d8d3dc;
+  --chem-border-accent: rgba(123, 90, 158, 0.16);
+  --chem-border-accent-soft: rgba(123, 90, 158, 0.12);
+  --chem-border-accent-dim: rgba(123, 90, 158, 0.14);
+  --chem-border-accent-strong: rgba(123, 90, 158, 0.18);
 
   /* === Sombras === */
   --chem-shadow-sm: 0 1px 3px rgba(44, 37, 51, 0.06);
@@ -65,8 +69,12 @@
   --chem-error-bg: #ffebee;
   --chem-warning: #ef6c00;
   --chem-warning-bg: #fff3e0;
+  --chem-warning-text: #92400e;
+  --chem-warning-border: #fde68a;
   --chem-info: #0277bd;
   --chem-info-bg: #e1f5fe;
+  --chem-info-border: #bae6fd;
+  --chem-accent-border: #ddd6fe;
 
   /* === Status badges (jobs / procesos) === */
   --chem-status-running: var(--chem-primary);

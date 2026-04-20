@@ -1,0 +1,261 @@
+/* molar-fractions.component.scss: Estilos para la app de fracciones molares. */
+
+.molar-shell {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.molar-header {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--chem-border-accent);
+  border-radius: calc(var(--chem-radius-lg) + 2px);
+  background:
+    radial-gradient(circle at top right, var(--chem-border-accent-strong), transparent 36%),
+    linear-gradient(140deg, rgba(250, 248, 252, 0.98), rgba(237, 233, 240, 0.94));
+  box-shadow: var(--chem-shadow);
+}
+
+.molar-header h2 {
+  margin: 0.2rem 0;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+  line-height: 1.05;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-primary);
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+}
+
+.molar-header p {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  max-width: 72ch;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.form-card,
+.entry-panel,
+.result-panel,
+.history-card {
+  border: 1px solid var(--chem-border-accent-dim);
+  background:
+    linear-gradient(180deg, rgba(250, 248, 252, 0.98), rgba(244, 240, 247, 0.96)),
+    var(--chem-surface-elevated);
+  padding: 1rem 1rem 1.05rem;
+  min-width: 0;
+  box-shadow: var(--chem-shadow);
+}
+
+.form-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.panel-heading {
+  display: grid;
+  gap: 0.18rem;
+  margin-bottom: 0.95rem;
+}
+
+.panel-kicker {
+  margin: 0;
+  color: var(--chem-accent);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry-panel h3,
+.result-panel h3,
+.history-card h3 {
+  margin: 0;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+}
+
+.field-group {
+  display: grid;
+  gap: 0.42rem;
+  margin-bottom: 0.9rem;
+}
+
+.field-group label,
+.pka-grid label,
+.range-grid label,
+.single-ph-block label,
+.species-meta-grid label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
+}
+
+.field-group select,
+.field-group input,
+.pka-grid input,
+.range-grid input,
+.single-ph-block input,
+.species-meta-grid input {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid var(--chem-border-accent-strong);
+  background: rgba(250, 248, 252, 0.94);
+  color: var(--chem-ink);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  transition:
+    border-color var(--chem-transition),
+    box-shadow var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.field-group select:focus,
+.field-group input:focus,
+.pka-grid input:focus,
+.range-grid input:focus,
+.single-ph-block input:focus,
+.species-meta-grid input:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+  box-shadow: 0 0 0 3px var(--chem-border-accent);
+}
+
+.field-group select:disabled,
+.field-group input:disabled,
+.pka-grid input:disabled,
+.range-grid input:disabled,
+.single-ph-block input:disabled,
+.species-meta-grid input:disabled {
+  background: var(--chem-input-disabled-bg);
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.mode-toggle-btn {
+  border: 1px solid var(--chem-border-accent);
+  border-radius: 14px;
+  min-height: 2.8rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(250, 248, 252, 0.86);
+  color: var(--chem-ink-secondary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    border-color var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.mode-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+.mode-toggle-btn.is-active {
+  border-color: var(--chem-primary);
+  background: linear-gradient(135deg, rgba(211, 47, 47, 0.14), var(--chem-border-accent-dim));
+  color: var(--chem-ink);
+}
+
+.pka-block,
+.range-block,
+.single-ph-block {
+  border: 1px solid var(--chem-border-accent-dim);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
+    var(--chem-surface);
+  border-radius: 14px;
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.pka-block h4,
+.range-block h4 {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.86rem;
+}
+
+.field-hint {
+  margin: -0.15rem 0 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
+}
+
+.pka-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.range-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.species-meta-grid,
+.batch-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.batch-copy-card,
+.csv-example-card {
+  border: 1px solid var(--chem-border-accent-dim);
+  border-radius: 14px;
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
+    var(--chem-surface);
+}
+
+.batch-copy-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.batch-copy-card p,
+.csv-example-title,
+.batch-file-name,
+.batch-threshold-hint {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+  font-size: 0.8rem;
+}
+
+.csv-example-title {
+  margin-bottom: 0.55rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}

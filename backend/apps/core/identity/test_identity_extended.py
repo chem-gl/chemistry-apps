@@ -6,8 +6,9 @@ que no se alcanzan con los tests principales de test_identity_api.py.
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -18,6 +19,8 @@ from apps.core.models import (
     UserIdentityProfile,
     WorkGroup,
 )
+
+CONFIGURED_ROOT_TEST_VALUE = "root-via-setting"
 
 
 class BootstrapSuperadminGroupTests(TestCase):
@@ -118,7 +121,7 @@ class BootstrapRootUserTests(TestCase):
         user, password, created = ensure_root_user()
 
         self.assertTrue(created)
-        self.assertEqual(user.username, "admin")
+        self.assertEqual(user.username, settings.ROOT_USERNAME)
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
         self.assertIsNotNone(password)
@@ -136,6 +139,35 @@ class BootstrapRootUserTests(TestCase):
 
         self.assertTrue(first_created)
         self.assertFalse(second_created)
+
+    @override_settings(ROOT_PASSWORD="")
+    def test_ensure_root_user_generates_runtime_password_when_missing(self) -> None:
+        """Si no hay password configurada, genera una temporal en lugar de usar una credencial fija."""
+        from apps.core.identity.bootstrap.root_user import ensure_root_user
+
+        user_model = get_user_model()
+        user_model.objects.filter(is_superuser=True).delete()
+
+        user, password, created = ensure_root_user()
+
+        self.assertTrue(created)
+        self.assertIsNotNone(password)
+        self.assertNotEqual(password, "admin123")
+        self.assertTrue(user.check_password(password))
+
+    @override_settings(ROOT_PASSWORD=CONFIGURED_ROOT_TEST_VALUE)
+    def test_ensure_root_user_uses_configured_password_when_provided(self) -> None:
+        """Si el entorno define ROOT_PASSWORD, el bootstrap debe respetarlo."""
+        from apps.core.identity.bootstrap.root_user import ensure_root_user
+
+        user_model = get_user_model()
+        user_model.objects.filter(is_superuser=True).delete()
+
+        user, password, created = ensure_root_user()
+
+        self.assertTrue(created)
+        self.assertEqual(password, CONFIGURED_ROOT_TEST_VALUE)
+        self.assertTrue(user.check_password(CONFIGURED_ROOT_TEST_VALUE))
 
 
 class IdentityRouterExtendedTests(TestCase):

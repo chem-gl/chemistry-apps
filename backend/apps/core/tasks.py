@@ -48,7 +48,30 @@ def dispatch_scientific_job(job_id: str) -> bool:
             job_id,
             error,
         )
-        return False
+
+        should_run_inline: bool = bool(
+            getattr(
+                settings,
+                "JOB_INLINE_EXECUTION_ON_BROKER_FAILURE",
+                bool(getattr(settings, "DEBUG", False)),
+            )
+        )
+        if not should_run_inline:
+            return False
+
+        logger.warning(
+            "Activando ejecución inline de respaldo para job %s por indisponibilidad del broker.",
+            job_id,
+        )
+        try:
+            JobService.run_job(job_id)
+            return True
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "La ejecución inline de respaldo también falló para job %s.",
+                job_id,
+            )
+            return False
 
 
 @shared_task(bind=True)

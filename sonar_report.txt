@@ -1,4 +1,130 @@
 Problema 1
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-chart.options.ts
+
+Problema:
+Extract this nested ternary operation into an independent statement.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S3358
+Severidad: MAJOR
+Línea: 117
+
+Cómo solucionarlo:
+Nested ternaries are hard to read and can make the order of operations complex to understand.
+
+function getReadableStatus(job) {
+  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
+}
+
+Instead, use another line to express the nested operation in a separate statement.
+
+function getReadableStatus(job) {
+  if (job.isRunning()) {
+    return "Running";
+  }
+  return job.hasErrors() ? "Failed" : "Succeeded";
+}
+
+Exceptions
+This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
+JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
+
+return (
+&lt;&gt;
+  {isLoading ? (
+    &lt;Loader active /&gt;
+  ) : (
+    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
+      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
+      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
+    &lt;/Panel&gt;
+  )}
+&lt;/&gt;
+);
+
+If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
+
+function myComponent(condition) {
+  if (condition &lt; 0) {
+    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
+  } else if (condition &gt; 0) {
+    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
+  } else {
+    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
+  }
+}
+
+return (
+  {myComponent(foo)}
+);
+
+----------------------------------------
+
+Problema 2
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-chart.options.ts
+
+Problema:
+Extract this nested ternary operation into an independent statement.
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S3358
+Severidad: MAJOR
+Línea: 170
+
+Cómo solucionarlo:
+Nested ternaries are hard to read and can make the order of operations complex to understand.
+
+function getReadableStatus(job) {
+  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
+}
+
+Instead, use another line to express the nested operation in a separate statement.
+
+function getReadableStatus(job) {
+  if (job.isRunning()) {
+    return "Running";
+  }
+  return job.hasErrors() ? "Failed" : "Succeeded";
+}
+
+Exceptions
+This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
+JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
+
+return (
+&lt;&gt;
+  {isLoading ? (
+    &lt;Loader active /&gt;
+  ) : (
+    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
+      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
+      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
+    &lt;/Panel&gt;
+  )}
+&lt;/&gt;
+);
+
+If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
+
+function myComponent(condition) {
+  if (condition &lt; 0) {
+    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
+  } else if (condition &gt; 0) {
+    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
+  } else {
+    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
+  }
+}
+
+return (
+  {myComponent(foo)}
+);
+
+----------------------------------------
+
+Problema 3
 Archivo: chemistry-apps:backend/apps/cadma_py/services.py
 
 Problema:
@@ -121,7 +247,7 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 2
+Problema 4
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -155,7 +281,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 3
+Problema 5
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -189,7 +315,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 4
+Problema 6
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -223,7 +349,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 5
+Problema 7
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -257,7 +383,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 6
+Problema 8
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -291,7 +417,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 7
+Problema 9
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
 
 Problema:
@@ -325,7 +451,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 8
+Problema 10
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
 
 Problema:
@@ -335,7 +461,7 @@ Razón:
 Tipo: BUG
 Regla: typescript:S5850
 Severidad: MAJOR
-Línea: 166
+Línea: 167
 
 Cómo solucionarlo:
 Regular expressions are used for pattern matching within strings. They can be defined upon special characters, meaning symbols or metacharacters
@@ -368,7 +494,7 @@ const regex = /(?:^a)|b|(?:c$)/;
 
 ----------------------------------------
 
-Problema 9
+Problema 11
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
 
 Problema:
@@ -378,7 +504,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S2310
 Severidad: MAJOR
-Línea: 114
+Línea: 122
 
 Cómo solucionarlo:
 Loop counters, such as variables used to track the iteration count in loops, should not be assigned from within the loop body to avoid unexpected
@@ -418,7 +544,7 @@ for (const name of names) {
 
 ----------------------------------------
 
-Problema 10
+Problema 12
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
 
 Problema:
@@ -428,7 +554,7 @@ Razón:
 Tipo: CODE_SMELL
 Regla: typescript:S4325
 Severidad: MINOR
-Línea: 294
+Línea: 302
 
 Cómo solucionarlo:
 In TypeScript, casts and non-null assertions are two mechanisms used to inform the TypeScript compiler about the intended types of variables,
@@ -476,7 +602,7 @@ function getName(x?: string | Person) {
 
 ----------------------------------------
 
-Problema 11
+Problema 13
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -510,7 +636,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 12
+Problema 14
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -544,7 +670,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 13
+Problema 15
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -578,7 +704,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 14
+Problema 16
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -612,7 +738,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 15
+Problema 17
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -646,7 +772,7 @@ Compliant solution
 
 ----------------------------------------
 
-Problema 16
+Problema 18
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
 
 Problema:
@@ -681,10 +807,10 @@ Compliant solution
 ----------------------------------------
 
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=4 | líneas=102 | densidad=0.1%
+Resumen del proyecto: bloques=4 | líneas=82 | densidad=0.1%
 
 Archivos con densidad de duplicación > 3.5%:
-  - backend/apps/cadma_py/schemas.py | densidad=21.0% | líneas=50 | bloques=2
+  - backend/apps/cadma_py/schemas.py | densidad=12.6% | líneas=30 | bloques=2
   - frontend/src/app/core/shared/scientific-app-ui.utils.ts | densidad=10.2% | líneas=26 | bloques=1
   - frontend/src/app/molar-fractions/molar-fractions-computation.ts | densidad=4.4% | líneas=26 | bloques=1
 
@@ -695,9 +821,9 @@ Duplicated blocks: 1 | Duplicated lines: 26 | Density: 4.4%
 ----------------------------------------
 
 Archivo: backend/apps/cadma_py/schemas.py
-Duplicated blocks: 2 | Duplicated lines: 50 | Density: 21.0%
-  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 21-21 | tamaño 25
-  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 63-63 | tamaño 25
+Duplicated blocks: 2 | Duplicated lines: 30 | Density: 12.6%
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 32-32 | tamaño 15
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 74-74 | tamaño 15
 ----------------------------------------
 
 Archivo: frontend/src/app/core/shared/scientific-app-ui.utils.ts
@@ -710,7 +836,7 @@ Duplicated blocks: 1 | Duplicated lines: 26 | Density: 10.2%
 Total: 1 hotspot(s) encontrado(s).
 
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
-Línea: 365
+Línea: 388
 Regla: typescript:S6268
 Probabilidad: Alta
 Estado: TO_REVIEW

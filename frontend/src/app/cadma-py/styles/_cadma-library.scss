@@ -1,0 +1,629 @@
+/* _cadma-library.scss: Seed cards, grilla de biblioteca, preview panels y acordeón de creación. */
+
+/* ============================================================
+   SEED CARDS
+   ============================================================ */
+.subsection-label {
+  margin: 0 0 0.75rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chem-ink-secondary);
+}
+
+.seed-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.seed-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1.5px solid var(--chem-border-subtle);
+  border-radius: 18px;
+  background: var(--chem-surface-elevated);
+  align-items: center;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.seed-card-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.seed-card-main:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.seed-card:hover {
+  box-shadow: var(--chem-shadow);
+}
+
+.seed-card.active-browse {
+  border-color: var(--chem-accent);
+  box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.15);
+}
+
+.seed-card[data-key='neuro'] {
+  background: linear-gradient(135deg, var(--chem-accent-light), #f3e8ff);
+  border-color: #e9d5ff;
+}
+
+.seed-card[data-key='rett'] {
+  background: linear-gradient(135deg, var(--chem-info-bg), #e0f2fe);
+  border-color: #bae6fd;
+}
+
+.seed-card[data-key='neuro']:hover {
+  border-color: var(--chem-accent);
+  box-shadow: 0 4px 20px rgba(123, 90, 158, 0.12);
+}
+
+.seed-card[data-key='rett']:hover {
+  border-color: var(--chem-info);
+  box-shadow: 0 4px 20px rgba(2, 119, 189, 0.12);
+}
+
+.seed-icon-wrap {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--chem-radius-lg);
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 1.75rem;
+}
+
+.seed-body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.seed-disease {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--chem-ink-secondary);
+}
+
+.seed-name {
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-ink);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seed-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--chem-ink-secondary);
+  line-height: 1.35;
+}
+
+.seed-stat {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+}
+
+.seed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.seed-imported-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--chem-radius-sm);
+  margin-top: 0.15rem;
+}
+
+.seed-preview-panel {
+  grid-column: 1 / -1;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  animation: slideDown 0.15s ease-out;
+}
+
+.btn-seed {
+  padding: 0.62rem 1rem;
+  background: var(--chem-primary);
+  color: #fff;
+  border: 0;
+  border-radius: var(--chem-radius);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+  align-self: center;
+}
+
+.btn-seed:hover {
+  background: var(--chem-primary-dark);
+}
+
+.btn-seed:disabled {
+  background: var(--chem-ink-soft);
+  cursor: default;
+}
+
+.seed-card[data-key='neuro'] .btn-seed {
+  background: var(--chem-accent);
+}
+
+.seed-card[data-key='neuro'] .btn-seed:hover {
+  background: #6d28d9;
+}
+
+.seed-card[data-key='rett'] .btn-seed {
+  background: var(--chem-info);
+}
+
+.seed-card[data-key='rett'] .btn-seed:hover {
+  background: #0369a1;
+}
+
+/* ============================================================
+   DIVIDER / LIBRARY LIST
+   ============================================================ */
+.divider-or {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--chem-ink-soft);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.divider-or::before,
+.divider-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--chem-border-subtle);
+}
+
+.library-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.library-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 12px;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.library-row-main {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.library-row-main:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 4px;
+  border-radius: var(--chem-radius);
+}
+
+.library-row:hover {
+  border-color: var(--chem-border-strong);
+  background: var(--chem-surface-inset);
+}
+
+.library-row.active-browse {
+  border-color: var(--chem-accent);
+  background: var(--chem-accent-light);
+  box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.15);
+}
+
+.lib-scope {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.lib-scope.scope-root {
+  background: var(--chem-warning-bg);
+}
+
+.lib-scope.scope-group {
+  background: var(--chem-accent-light);
+}
+
+.lib-scope.scope-personal {
+  background: var(--chem-info-bg);
+}
+
+.lib-scope.scope-unknown {
+  background: var(--chem-surface-inset);
+}
+
+.lib-info {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.lib-disease {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lib-name {
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  color: var(--chem-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-stats {
+  display: grid;
+  gap: 0.1rem;
+  text-align: right;
+}
+
+.lib-compounds {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+}
+
+.lib-creator {
+  font-size: 0.7rem;
+  color: var(--chem-ink-soft);
+}
+
+.lib-access-icons {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.lib-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.lib-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--chem-radius-sm);
+  background: transparent;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0.55;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.lib-action-btn:hover {
+  opacity: 1;
+  background: var(--chem-surface-inset);
+  border-color: var(--chem-border);
+}
+
+.lib-action-btn.preview.active {
+  opacity: 1;
+  background: var(--chem-info-bg);
+  border-color: #7dd3fc;
+}
+
+.lib-action-btn.danger:hover {
+  background: var(--chem-error-bg);
+  border-color: #fca5a5;
+}
+
+.access-icon {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.access-icon.locked {
+  opacity: 0.4;
+}
+
+/* --- Panel de vista previa de SMILES --- */
+.lib-preview-panel {
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  margin-top: -0.5rem;
+  padding: 0.75rem 1rem;
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--chem-ink);
+}
+
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+}
+
+.preview-table-wrap {
+  max-height: 260px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--chem-border-subtle);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.preview-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.preview-table th {
+  background: var(--chem-surface-inset);
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--chem-border-subtle);
+}
+
+.preview-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--chem-surface-inset);
+  color: var(--chem-ink);
+}
+
+.preview-table .smiles-cell {
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink-secondary);
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-table .rank-num {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-xs);
+  width: 2rem;
+}
+
+.preview-empty {
+  text-align: center;
+  color: var(--chem-ink-soft);
+  font-size: 0.8rem;
+  padding: 1rem;
+}
+
+.lib-arrow {
+  color: var(--chem-ink-soft);
+  font-size: 0.95rem;
+}
+
+/* ============================================================
+   CREATE ACCORDION — Formulario prominente de creación
+   ============================================================ */
+.create-accordion {
+  border: 2px dashed var(--chem-accent);
+  border-radius: var(--chem-radius-lg);
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(123, 90, 158, 0.03), rgba(123, 90, 158, 0.06));
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.create-accordion[open] {
+  border-style: solid;
+  border-color: var(--chem-accent);
+  background: linear-gradient(135deg, rgba(123, 90, 158, 0.04), rgba(123, 90, 158, 0.08));
+}
+
+.create-accordion summary {
+  padding: 0.95rem 1.15rem;
+  cursor: pointer;
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.create-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.create-accordion summary:hover {
+  background: var(--chem-surface-elevated);
+}
+
+.plus-icon {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--chem-primary);
+}
+
+.create-form {
+  padding: 0 1rem 1.25rem;
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--chem-surface-inset);
+}
+
+.upload-hint-text {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--chem-ink-secondary);
+}
+
+.project-label-field {
+  max-width: 380px;
+}
+
+/* ============================================================
+   RESPONSIVE — Library & seed cards
+   ============================================================ */
+@media (max-width: 880px) {
+  .seed-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seed-card {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .seed-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .library-row-main {
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem;
+  }
+
+  .lib-stats {
+    grid-column: 1 / -1;
+    text-align: left;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .lib-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .seed-card {
+    padding: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .seed-card-main {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .seed-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.35rem;
+  }
+
+  .library-row {
+    padding: 0.7rem 0.75rem;
+    border-radius: 10px;
+  }
+
+  .library-row-main {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .lib-scope {
+    display: none;
+  }
+
+  .create-accordion summary {
+    padding: 0.7rem 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .create-form {
+    padding: 0 0.75rem 1rem;
+  }
+}

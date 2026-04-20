@@ -30,6 +30,8 @@ from .services import (
     update_reference_library,
 )
 
+TEST_AUTH_VALUE = "unused-auth-fixture"
+
 
 class CadmaPyServiceTests(TestCase):
     """Pruebas focalizadas en parsing y cálculo de ranking."""
@@ -75,8 +77,65 @@ class CadmaPyServiceTests(TestCase):
 
         self.assertEqual(result["candidate_count"], 1)
         self.assertEqual(len(result["ranking"]), 1)
+        ranking_row = result["ranking"][0]
         self.assertIn("score_chart", result)
+        self.assertIn("score_config", result)
         self.assertEqual(result["score_chart"]["reference_line"], 1.0)
+        self.assertGreater(ranking_row["MW"], 0)
+        self.assertGreaterEqual(ranking_row["SA"], 0)
+        self.assertIn("metrics_in_band", ranking_row)
+
+    def test_plugin_accepts_custom_legacy_score_config(self) -> None:
+        """Los intervalos y pesos editados desde la UI deben afectar el score final."""
+        reference_rows = build_compound_rows_from_sources(
+            combined_csv_text=(
+                "name,smiles,DT,M,LD50,SA,paper_reference\n"
+                "Ref A,CCO,0.20,0.10,450.0,84.0,Paper A\n"
+                "Ref B,CCN,0.25,0.15,470.0,80.0,Paper B"
+            ),
+            require_evidence=True,
+        )
+        candidate_rows = build_compound_rows_from_sources(
+            combined_csv_text=(
+                "name,smiles,DT,M,LD50,SA\nHit 1,CCO,0.18,0.08,500.0,88.0"
+            ),
+            require_evidence=False,
+        )
+
+        result = cadma_py_plugin(
+            {
+                "library_name": "Neuro Reference",
+                "disease_name": "Neuro",
+                "reference_rows": reference_rows,
+                "candidate_rows": candidate_rows,
+                "score_config_json": json.dumps(
+                    {
+                        "adme_intervals": {
+                            "MW": {"min": 40, "max": 80},
+                            "logP": {"min": -1, "max": 2},
+                            "MR": {"min": 10, "max": 40},
+                            "AtX": {"min": 1, "max": 10},
+                            "HBLA": {"min": 0, "max": 6},
+                            "HBLD": {"min": 0, "max": 3},
+                            "RB": {"min": 0, "max": 5},
+                            "PSA": {"min": 0, "max": 60},
+                        },
+                        "weights": {"adme": 0.5, "toxicity": 0.3, "sa": 0.2},
+                        "reference_values": {
+                            "LD50": 450.0,
+                            "M": 0.10,
+                            "DT": 0.20,
+                            "SA": 84.0,
+                        },
+                    }
+                ),
+            },
+            lambda _percent, _message: None,
+        )
+
+        ranking_row = result["ranking"][0]
+        self.assertGreater(ranking_row["selection_score"], 0)
+        self.assertEqual(result["score_config"]["weights"]["adme"], 0.5)
 
     def test_mapped_sources_support_row_order_fallback_without_secondary_smiles(
         self,
@@ -150,13 +209,13 @@ class CadmaPyOwnershipTests(TestCase):
         user_model = get_user_model()
         self.root_user = user_model.objects.create_user(
             username="cadma-root",
-            password="root123",
+            password=TEST_AUTH_VALUE,
         )
         self.root_user.role = "root"
 
         self.normal_user = user_model.objects.create_user(
             username="cadma-user",
-            password="user123",
+            password=TEST_AUTH_VALUE,
         )
         self.normal_user.role = "user"
 
@@ -224,7 +283,7 @@ class CadmaPyOwnershipTests(TestCase):
         )
         admin_user = get_user_model().objects.create_user(
             username="cadma-admin",
-            password="admin123",
+            password=TEST_AUTH_VALUE,
         )
         admin_user.role = "admin"
         GroupMembership.objects.create(
@@ -290,7 +349,7 @@ class CadmaPyOwnershipTests(TestCase):
             results={"ok": True},
         )
 
-        with self.assertRaisesMessage(ValueError, "permanente"):
+        with self.assertRaisesMessage(ValueError, "jobs asociados"):
             deactivate_reference_library(
                 library_id=str(self.root_library.id),
                 actor=self.root_user,
@@ -436,6 +495,27 @@ class CadmaPyApiTests(TestCase):
                         "sa_column": "SA",
                     }
                 ]
+            ),
+        }
+
+        response = self.client.post(self.URL, payload, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["plugin_name"], "cadma-py")
+
+    @patch(
+        "apps.cadma_py.routers.CadmaPyJobViewSet.prepare_and_dispatch_with_artifacts",
+        return_value=Response(
+            {"plugin_name": "cadma-py"}, status=status.HTTP_201_CREATED
+        ),
+    )
+    def test_create_cadma_job_accepts_bundled_sample_without_import(
+        self, _mock_dispatch: object
+    ) -> None:
+        payload = {
+            "reference_library_id": "sample-neuro",
+            "combined_csv_text": (
+                "name,smiles,DT,M,LD50,SA\nCandidate A,CCO,0.18,0.12,420.0,86.0"
             ),
         }
 

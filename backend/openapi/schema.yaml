@@ -4697,6 +4697,8 @@ components:
           nullable: true
         source_configs_json:
           type: string
+        score_config_json:
+          type: string
         start_paused:
           type: boolean
           default: false

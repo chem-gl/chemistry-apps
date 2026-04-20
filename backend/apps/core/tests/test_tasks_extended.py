@@ -51,7 +51,10 @@ class DispatchScientificJobTests(SimpleTestCase):
         self.assertTrue(dispatched)
         mocked_delay.assert_called_once_with("job-1")
 
-    @override_settings(JOB_DISPATCH_ENABLED=True)
+    @override_settings(
+        JOB_DISPATCH_ENABLED=True,
+        JOB_INLINE_EXECUTION_ON_BROKER_FAILURE=False,
+    )
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_false_for_operational_error(
         self,
@@ -63,7 +66,10 @@ class DispatchScientificJobTests(SimpleTestCase):
 
         self.assertFalse(dispatched)
 
-    @override_settings(JOB_DISPATCH_ENABLED=True)
+    @override_settings(
+        JOB_DISPATCH_ENABLED=True,
+        JOB_INLINE_EXECUTION_ON_BROKER_FAILURE=False,
+    )
     @patch("apps.core.tasks.execute_scientific_job.delay")
     def test_dispatch_returns_false_for_redis_connection_error(
         self,
@@ -74,6 +80,25 @@ class DispatchScientificJobTests(SimpleTestCase):
         dispatched = dispatch_scientific_job("job-3")
 
         self.assertFalse(dispatched)
+
+    @override_settings(
+        JOB_DISPATCH_ENABLED=True,
+        JOB_INLINE_EXECUTION_ON_BROKER_FAILURE=True,
+    )
+    @patch("apps.core.tasks.JobService.run_job")
+    @patch("apps.core.tasks.execute_scientific_job.delay")
+    def test_dispatch_runs_inline_when_broker_is_unavailable_and_fallback_is_enabled(
+        self,
+        mocked_delay: MagicMock,
+        mocked_run_job: MagicMock,
+    ) -> None:
+        """En desarrollo local debe haber fallback confiable si Redis está caído."""
+        mocked_delay.side_effect = RedisConnectionError("redis down")
+
+        dispatched = dispatch_scientific_job("job-inline")
+
+        self.assertTrue(dispatched)
+        mocked_run_job.assert_called_once_with("job-inline")
 
 
 class ExecuteScientificJobTests(SimpleTestCase):

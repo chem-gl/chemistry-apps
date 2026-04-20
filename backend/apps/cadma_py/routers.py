@@ -27,6 +27,7 @@ from .definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
 from .schemas import (
     CadmaCompoundAddSerializer,
     CadmaCompoundRowResponseSerializer,
+    CadmaDeletionPreviewSerializer,
     CadmaPyJobCreateSerializer,
     CadmaPyJobResponseSerializer,
     CadmaReferenceLibraryForkSerializer,
@@ -48,6 +49,7 @@ from .services import (
     get_reference_library_for_actor,
     list_reference_samples,
     list_visible_reference_libraries,
+    preview_library_deletion,
     preview_reference_sample,
     preview_reference_sample_detail,
     ranking_to_csv_rows,
@@ -142,13 +144,28 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
         start_paused = bool(payload.get("start_paused", False))
 
+        reference_library_id = str(payload["reference_library_id"]).strip()
+
         try:
-            reference_library = get_reference_library_for_actor(
-                str(payload["reference_library_id"]),
-                request.user,
-            )
+            if reference_library_id.startswith("sample-"):
+                sample_detail = preview_reference_sample_detail(
+                    reference_library_id.removeprefix("sample-")
+                )
+                library_name = str(sample_detail["name"])
+                disease_name = str(sample_detail["disease_name"])
+                reference_rows = cast(JSONMap, sample_detail["rows"])
+            else:
+                reference_library = get_reference_library_for_actor(
+                    reference_library_id,
+                    request.user,
+                )
+                library_name = reference_library.name
+                disease_name = reference_library.disease_name
+                reference_rows = cast(JSONMap, reference_library.reference_rows)
         except PermissionError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         candidate_rows: list[JSONMap] = []
         if not start_paused:
@@ -178,16 +195,17 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         ]
         parameters_payload: JSONMap = {
             "project_label": str(payload.get("project_label", "")).strip(),
-            "reference_library_id": str(payload["reference_library_id"]),
-            "library_name": reference_library.name,
-            "disease_name": reference_library.disease_name,
-            "reference_rows": cast(JSONMap, reference_library.reference_rows),
+            "reference_library_id": reference_library_id,
+            "library_name": library_name,
+            "disease_name": disease_name,
+            "reference_rows": reference_rows,
             "candidate_rows": cast(JSONMap, candidate_rows),
             "combined_csv_text": source_texts.get("combined_csv_text", ""),
             "smiles_csv_text": source_texts.get("smiles_csv_text", ""),
             "toxicity_csv_text": source_texts.get("toxicity_csv_text", ""),
             "sa_csv_text": source_texts.get("sa_csv_text", ""),
             "source_configs_json": str(payload.get("source_configs_json", "")),
+            "score_config_json": str(payload.get("score_config_json", "")),
             "file_descriptors": cast(JSONMap, {"items": file_descriptors})["items"],
             "start_paused": start_paused,
         }
@@ -288,7 +306,16 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if request.method.lower() == "delete":
-                deactivate_reference_library(library_id=library_id, actor=request.user)
+                cascade = str(request.query_params.get("cascade", "false")).lower() in (
+                    "true",
+                    "1",
+                    "yes",
+                )
+                deactivate_reference_library(
+                    library_id=library_id,
+                    actor=request.user,
+                    cascade=cascade,
+                )
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             serializer = CadmaReferenceLibraryWriteSerializer(
@@ -315,6 +342,45 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
                 serialize_reference_library(updated_library, request.user)
             )
             return Response(response_serializer.data, status=status.HTTP_200_OK)
+        except PermissionError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+        except ValueError as exc:
+            error_status = (
+                status.HTTP_404_NOT_FOUND
+                if _NOT_FOUND_MARKER in str(exc)
+                else status.HTTP_400_BAD_REQUEST
+            )
+            return Response({"detail": str(exc)}, status=error_status)
+
+    @extend_schema(
+        summary="Vista previa de eliminación de una familia con sus jobs vinculados",
+        responses={
+            200: CadmaDeletionPreviewSerializer,
+            403: OpenApiResponse(response=ErrorResponseSerializer),
+            404: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path=r"reference-libraries/(?P<library_id>[^/.]+)/deletion-preview",
+    )
+    def reference_library_deletion_preview(
+        self, request: Request, library_id: str | None = None
+    ) -> Response:
+        """Retorna los jobs vinculados a la familia para confirmar eliminación."""
+        if library_id is None:
+            return Response(
+                {"detail": MISSING_LIBRARY_ID_MESSAGE},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            preview = preview_library_deletion(
+                library_id=library_id,
+                actor=request.user,
+            )
+            serializer = CadmaDeletionPreviewSerializer(preview)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except PermissionError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_403_FORBIDDEN)
         except ValueError as exc:

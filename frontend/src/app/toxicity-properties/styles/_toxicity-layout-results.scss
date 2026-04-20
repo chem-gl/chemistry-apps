@@ -1,0 +1,287 @@
+.classification-badge-positive {
+  background: var(--chem-success-bg);
+  color: var(--chem-success);
+}
+
+.classification-badge-negative {
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+}
+
+.classification-badge-warning {
+  background: var(--chem-warning-bg);
+  color: var(--chem-warning);
+}
+
+.classification-badge-neutral {
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
+}
+
+.empty-table-cell {
+  padding: 1rem;
+  text-align: center;
+  color: var(--chem-ink-secondary);
+  font-style: italic;
+}
+
+.row-error {
+  margin: 0;
+  border: 1px solid var(--chem-error);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  border-radius: var(--chem-radius);
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.error-message {
+  margin: 0.55rem 0 0;
+  border: 1px solid var(--chem-error);
+  border-radius: var(--chem-radius);
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+  padding: 0.5rem 0.62rem;
+  font-weight: 700;
+  font-size: 0.83rem;
+}
+
+.references-card {
+  margin-top: 0.75rem;
+}
+
+.references-card h4 {
+  margin: 0 0 0.45rem;
+  color: var(--chem-primary);
+  font-family: var(--chem-font-heading);
+}
+
+.references-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.references-list p {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.84rem;
+}
+
+.logs-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.log-item {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+  padding: 0.48rem 0.6rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: var(--chem-text-xs);
+}
+
+.log-level {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.08rem 0.43rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-family: var(--chem-font-label);
+}
+
+.log-level-debug {
+  color: var(--chem-ink-soft);
+  background: var(--chem-surface-elevated);
+}
+
+.log-level-info {
+  color: var(--chem-info);
+  background: var(--chem-info-bg);
+}
+
+.log-level-warning {
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
+}
+
+.log-level-error {
+  color: var(--chem-error);
+  background: var(--chem-error-bg);
+}
+
+.log-source,
+.log-index {
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
+}
+
+.log-message,
+.log-payload {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
+.log-payload {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 0.35rem;
+  background: var(--chem-surface);
+  overflow: auto;
+  font-family: var(--chem-font-mono);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.history-status {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.12rem 0.48rem;
+  font-weight: 700;
+  font-size: 0.76rem;
+}
+
+.history-pending,
+.history-running {
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
+}
+
+.history-completed {
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
+}
+
+.history-failed,
+.history-cancelled {
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
+}
+
+.history-paused {
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
+}
+
+.input-tools-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.38rem 0.78rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
+  font-family: inherit;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition);
+}
+
+.btn-tool:disabled,
+.btn-tool.disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.file-upload-label {
+  cursor: pointer;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+}
+
+.smiles-cell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-primary);
+  padding: 0;
+  text-align: left;
+  word-break: break-all;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.sketch-dialog,
+.molecule-image-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(640px, calc(100vw - 2rem));
+  max-width: 640px;
+}
+
+.sketch-dialog::backdrop,
+.molecule-image-dialog::backdrop {
+  background: rgba(44, 37, 51, 0.45);
+}
+
+.sketch-modal,
+.molecule-image-modal {
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.ketcher-frame-wrap {
+  position: relative;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  overflow: hidden;
+  background: var(--chem-surface);
+}
+
+.ketcher-frame {
+  width: 100%;
+  min-height: 380px;
+  height: clamp(380px, 50vh, 540px);
+  border: 0;
+  display: block;
+}
+
+.sketch-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

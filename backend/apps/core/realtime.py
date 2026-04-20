@@ -11,6 +11,7 @@ Cómo se usa:
 
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from asgiref.sync import async_to_sync
@@ -18,6 +19,8 @@ from channels.layers import get_channel_layer
 
 from .models import ScientificJob, ScientificJobLogEvent
 from .types import JobLogEntry, JobProgressSnapshot, JobStatus, JSONMap
+
+logger = logging.getLogger(__name__)
 
 UTC_OFFSET_SUFFIX = "+00:00"
 UTC_SUFFIX = "Z"
@@ -148,14 +151,23 @@ def _broadcast_event(
     )
 
     for group_name in target_groups:
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                "type": "jobs.stream.event",
-                "event_name": event_name,
-                "payload": payload,
-            },
-        )
+        try:
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    "type": "jobs.stream.event",
+                    "event_name": event_name,
+                    "payload": payload,
+                },
+            )
+        except Exception as error:  # noqa: BLE001
+            logger.warning(
+                "Se omite broadcast realtime para %s en %s por error de infraestructura: %s",
+                event_name,
+                group_name,
+                error,
+            )
+            return
 
 
 def broadcast_job_update(job: ScientificJob) -> None:

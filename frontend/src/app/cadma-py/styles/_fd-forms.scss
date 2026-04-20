@@ -1,0 +1,100 @@
+/* _fd-forms.scss: Formularios de edición y copia de metadatos de familia. */
+
+.family-edit-form,
+.copy-family-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.edit-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+}
+
+.edit-input {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  background: #fff;
+  color: var(--chem-ink);
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: var(--chem-accent);
+    box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.12);
+  }
+}
+
+textarea.edit-input {
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+.edit-error {
+  color: var(--chem-error);
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-save-family {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--chem-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--chem-primary-dark);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-cancel-family {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--chem-ink-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--chem-surface-inset);
+  }
+}

@@ -59,6 +59,20 @@ export interface CadmaReferenceLibraryView {
   updated_at: string;
 }
 
+export interface CadmaLinkedJobView {
+  id: string;
+  status: string;
+  created_at: string;
+  project_label: string;
+}
+
+export interface CadmaDeletionPreview {
+  library_id: string;
+  library_name: string;
+  linked_job_count: number;
+  linked_jobs: CadmaLinkedJobView[];
+}
+
 export interface CadmaReferenceSampleView {
   key: string;
   name: string;
@@ -106,6 +120,18 @@ export interface CadmaRankingRowView {
   toxicity_alignment: number;
   sa_alignment: number;
   adme_hits_in_band: number;
+  MW?: number;
+  logP?: number;
+  MR?: number;
+  AtX?: number;
+  HBLA?: number;
+  HBLD?: number;
+  RB?: number;
+  PSA?: number;
+  DT?: number;
+  M?: number;
+  LD50?: number;
+  SA?: number;
   metrics_in_band: string[];
   best_fit_summary: string;
 }
@@ -127,6 +153,31 @@ export interface CadmaMetricChartView {
   better_direction: 'balanced' | 'higher' | 'lower';
 }
 
+export interface CadmaIntervalRangeView {
+  min: number;
+  max: number;
+}
+
+export interface CadmaScoreWeightsView {
+  adme: number;
+  toxicity: number;
+  sa: number;
+}
+
+export interface CadmaReferenceValuesView {
+  LD50: number;
+  M: number;
+  DT: number;
+  SA: number;
+}
+
+export interface CadmaScoreConfigView {
+  adme_intervals: Record<string, CadmaIntervalRangeView>;
+  weights: CadmaScoreWeightsView;
+  reference_values: CadmaReferenceValuesView;
+  adme_reference_hits: number;
+}
+
 export interface CadmaPyResultView {
   library_name: string;
   disease_name: string;
@@ -136,6 +187,7 @@ export interface CadmaPyResultView {
   ranking: CadmaRankingRowView[];
   score_chart: CadmaScoreChartView;
   metric_charts: CadmaMetricChartView[];
+  score_config: CadmaScoreConfigView;
   methodology_note: string;
 }
 
@@ -151,6 +203,7 @@ export interface CadmaPyJobCreatePayload {
   toxicity_file?: File | null;
   sa_file?: File | null;
   source_configs_json?: string;
+  score_config_json?: string;
   start_paused?: boolean;
 }
 
@@ -243,8 +296,15 @@ export class CadmaPyApiService {
     );
   }
 
-  deleteReferenceLibrary(libraryId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/reference-libraries/${libraryId}/`);
+  deleteReferenceLibrary(libraryId: string, cascade: boolean = false): Observable<void> {
+    const params = cascade ? { params: { cascade: 'true' } } : {};
+    return this.http.delete<void>(`${this.baseUrl}/reference-libraries/${libraryId}/`, params);
+  }
+
+  previewLibraryDeletion(libraryId: string): Observable<CadmaDeletionPreview> {
+    return this.http.get<CadmaDeletionPreview>(
+      `${this.baseUrl}/reference-libraries/${libraryId}/deletion-preview/`,
+    );
   }
 
   forkReferenceLibrary(libraryId: string, newName?: string): Observable<CadmaReferenceLibraryView> {

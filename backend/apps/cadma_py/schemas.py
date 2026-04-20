@@ -6,6 +6,8 @@ manteniendo el contrato OpenAPI alineado con la UI del frontend.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from rest_framework import serializers
 
 from apps.core.models import ScientificJob
@@ -14,7 +16,7 @@ from apps.core.models import ScientificJob
 class CadmaPyJobCreateSerializer(serializers.Serializer):
     """Valida la creación de un job CADMA Py a partir de una familia y CSVs."""
 
-    reference_library_id = serializers.UUIDField()
+    reference_library_id = serializers.CharField(max_length=80)
     project_label = serializers.CharField(
         required=False, allow_blank=True, max_length=160
     )
@@ -27,7 +29,21 @@ class CadmaPyJobCreateSerializer(serializers.Serializer):
     toxicity_file = serializers.FileField(required=False, allow_null=True)
     sa_file = serializers.FileField(required=False, allow_null=True)
     source_configs_json = serializers.CharField(required=False, allow_blank=True)
+    score_config_json = serializers.CharField(required=False, allow_blank=True)
     start_paused = serializers.BooleanField(required=False, default=False)
+
+    def validate_reference_library_id(self, value: str) -> str:
+        normalized_value = value.strip()
+        if normalized_value in {"sample-neuro", "sample-rett"}:
+            return normalized_value
+
+        try:
+            UUID(normalized_value)
+        except ValueError as exc:
+            raise serializers.ValidationError(
+                "reference_library_id debe ser un UUID válido o una seed sample soportada."
+            ) from exc
+        return normalized_value
 
     def validate(self, attrs: dict[str, object]) -> dict[str, object]:
         text_fields = (
@@ -214,6 +230,24 @@ class CadmaCompoundRowResponseSerializer(serializers.Serializer):
     paper_reference = serializers.CharField(read_only=True)
     paper_url = serializers.CharField(read_only=True)
     evidence_note = serializers.CharField(read_only=True)
+
+
+class CadmaLinkedJobSerializer(serializers.Serializer):
+    """Serializer de salida para un job vinculado a una familia de referencia."""
+
+    id = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    created_at = serializers.CharField(read_only=True)
+    project_label = serializers.CharField(read_only=True)
+
+
+class CadmaDeletionPreviewSerializer(serializers.Serializer):
+    """Serializer de salida para la vista previa de eliminación de una familia."""
+
+    library_id = serializers.CharField(read_only=True)
+    library_name = serializers.CharField(read_only=True)
+    linked_job_count = serializers.IntegerField(read_only=True)
+    linked_jobs = CadmaLinkedJobSerializer(many=True, read_only=True)
 
 
 class CadmaPyJobResponseSerializer(serializers.ModelSerializer):

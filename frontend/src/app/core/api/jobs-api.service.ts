@@ -148,6 +148,16 @@ export class JobsApiService {
     return this.smileitApi.inspectSmileitStructure(smiles);
   }
 
+  /** Descarga el CSV tabular principal de Smile-it para reutilizarlo en otras apps. */
+  downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitApi.downloadSmileitCsvReport(jobId);
+  }
+
+  /** Descarga el archivo SMILES enumerado de Smile-it para usarlo como guía principal. */
+  downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
+    return this.smileitApi.downloadSmileitSmilesReport(jobId);
+  }
+
   /** Descarga ZIP server-side con imágenes SVG de Smileit */
   downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
     return this.smileitApi.downloadSmileitImagesZipServer(jobId);

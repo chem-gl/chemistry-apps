@@ -4,8 +4,9 @@
     <!-- Cabecera: scope, creador, permisos, fecha + botón editar -->
     <div class="detail-header">
         @if (mode() === 'browsing') {
-        <button class="btn-back-browse" type="button" (click)="closeBrowsing.emit()" title="Back to list">
-            ← Back
+        <button class="btn-back-browse" type="button" (click)="closeBrowsing.emit()"
+            [title]="'cadmaPy.familyDetail.backToList' | transloco">
+            {{ 'cadmaPy.familyDetail.back' | transloco }}
         </button>
         }
         <div class="scope-badge" [class]="scopeConfig().cssClass">
@@ -14,31 +15,32 @@
         </div>
         <div class="header-meta">
             <span class="meta-item">
-                <span class="meta-label">Created by</span>
+                <span class="meta-label">{{ 'cadmaPy.familyDetail.createdBy' | transloco }}</span>
                 <strong>{{ library().created_by_name || '—' }}</strong>
             </span>
             <span class="meta-sep">·</span>
             <span class="meta-item">
-                <span class="meta-label">Date</span>
+                <span class="meta-label">{{ 'cadmaPy.familyDetail.date' | transloco }}</span>
                 <strong>{{ createdDate() }}</strong>
             </span>
             <span class="meta-sep">·</span>
             <span class="meta-item">
-                <span class="meta-label">Access</span>
+                <span class="meta-label">{{ 'cadmaPy.familyDetail.access' | transloco }}</span>
                 <strong [class.editable]="library().editable" [class.readonly]="!library().editable">
                     {{ editableLabel() }}
                 </strong>
             </span>
         </div>
         @if (library().editable && !editingFamily()) {
-        <button class="btn-edit-family" type="button" (click)="startFamilyEdit()" title="Edit family metadata">
-            ✏️ Edit family
+        <button class="btn-edit-family" type="button" (click)="startFamilyEdit()"
+            [title]="'cadmaPy.familyDetail.editFamilyTitle' | transloco">
+            ✏️ {{ 'cadmaPy.familyDetail.editFamily' | transloco }}
         </button>
         }
         @if (canForkFamily() && !editingFamily()) {
         <button class="btn-edit-family" type="button" (click)="forkFamily()" [disabled]="forkBusy()"
-            title="Copy this family into your own editable workspace">
-            @if (forkBusy()) { Copying… } @else { {{ copyActionLabel() }} }
+            [title]="'cadmaPy.familyDetail.copyTitle' | transloco">
+            @if (forkBusy()) { {{ 'cadmaPy.familyDetail.copying' | transloco }} } @else { {{ copyActionLabel() }} }
         </button>
         }
         @if (mode() === 'browsing') {
@@ -53,33 +55,33 @@
     <div class="family-edit-form">
         <div class="edit-grid">
             <label class="edit-label">
-                <span>Name *</span>
+                <span>{{ 'cadmaPy.familyDetail.name' | transloco }}</span>
                 <input type="text" class="edit-input" [ngModel]="familyDraft().name"
                     (ngModelChange)="familyDraft.set({...familyDraft(), name: $event})" />
             </label>
             <label class="edit-label">
-                <span>Disease *</span>
+                <span>{{ 'cadmaPy.familyDetail.disease' | transloco }}</span>
                 <input type="text" class="edit-input" [ngModel]="familyDraft().disease_name"
                     (ngModelChange)="familyDraft.set({...familyDraft(), disease_name: $event})" />
             </label>
         </div>
         <label class="edit-label full">
-            <span>Description</span>
+            <span>{{ 'cadmaPy.familyDetail.description' | transloco }}</span>
             <textarea class="edit-input" rows="2" [ngModel]="familyDraft().description"
                 (ngModelChange)="familyDraft.set({...familyDraft(), description: $event})"></textarea>
         </label>
         <div class="edit-grid">
             <label class="edit-label">
-                <span>Paper reference</span>
+                <span>{{ 'cadmaPy.familyDetail.paperReference' | transloco }}</span>
                 <input type="text" class="edit-input" [ngModel]="familyDraft().paper_reference"
                     (ngModelChange)="familyDraft.set({...familyDraft(), paper_reference: $event})"
-                    placeholder="Author et al. (2025)" />
+                    [placeholder]="'cadmaPy.familyDetail.paperReferencePlaceholder' | transloco" />
             </label>
             <label class="edit-label">
-                <span>Paper URL / DOI</span>
+                <span>{{ 'cadmaPy.familyDetail.paperUrl' | transloco }}</span>
                 <input type="text" class="edit-input" [ngModel]="familyDraft().paper_url"
                     (ngModelChange)="familyDraft.set({...familyDraft(), paper_url: $event})"
-                    placeholder="https://doi.org/..." />
+                    [placeholder]="'cadmaPy.familyDetail.paperUrlPlaceholder' | transloco" />
             </label>
         </div>
         @if (familyEditError()) {
@@ -87,9 +89,11 @@
         }
         <div class="edit-actions">
             <button class="btn-save-family" type="button" (click)="saveFamilyEdit()" [disabled]="familyEditBusy()">
-                @if (familyEditBusy()) { Saving… } @else { Save changes }
+                @if (familyEditBusy()) { {{ 'cadmaPy.familyDetail.saving' | transloco }} } @else { {{
+                'cadmaPy.familyDetail.saveChanges' | transloco }} }
             </button>
-            <button class="btn-cancel-family" type="button" (click)="cancelFamilyEdit()">Cancel</button>
+            <button class="btn-cancel-family" type="button" (click)="cancelFamilyEdit()">{{
+                'cadmaPy.familyDetail.cancel' | transloco }}</button>
         </div>
     </div>
     } @else {
@@ -118,22 +122,24 @@
     @if (showCopyForm()) {
     <div class="copy-family-form">
         <label class="edit-label full">
-            <span>New family name</span>
+            <span>{{ 'cadmaPy.familyDetail.newFamilyName' | transloco }}</span>
             <input type="text" class="edit-input" [ngModel]="copyDraftName()"
-                (ngModelChange)="copyDraftName.set($event)" placeholder="Editable copy name" />
+                (ngModelChange)="copyDraftName.set($event)"
+                [placeholder]="'cadmaPy.familyDetail.copyPlaceholder' | transloco" />
         </label>
         <div class="edit-actions">
             <button class="btn-save-family" type="button" (click)="confirmForkFamily()" [disabled]="forkBusy()">
-                @if (forkBusy()) { Copying… } @else { Create copy }
+                @if (forkBusy()) { {{ 'cadmaPy.familyDetail.copying' | transloco }} } @else { {{
+                'cadmaPy.familyDetail.createCopy' | transloco }} }
             </button>
-            <button class="btn-cancel-family" type="button" (click)="cancelForkFamily()">Cancel</button>
+            <button class="btn-cancel-family" type="button" (click)="cancelForkFamily()">{{
+                'cadmaPy.familyDetail.cancel' | transloco }}</button>
         </div>
     </div>
     }
 
     @if (!library().editable && canForkFamily()) {
-    <p class="detail-desc">{{ readOnlyGuidance() }} Selecting the family keeps the original creator; copying creates
-        your own editable version.</p>
+    <p class="detail-desc">{{ readOnlyGuidance() }} {{ 'cadmaPy.familyDetail.readOnlyGuidance' | transloco }}</p>
     }
 
     @if (library().description) {
@@ -143,8 +149,9 @@
 
     <!-- Promedios de métricas -->
     <div class="metrics-section">
-        <h4 class="section-title">Reference band averages
-            <span class="compound-count">{{ library().row_count }} compounds</span>
+        <h4 class="section-title">{{ 'cadmaPy.familyDetail.refBandAverages' | transloco }}
+            <span class="compound-count">{{ library().row_count }} {{ 'cadmaPy.step1.referenceCompounds' | transloco
+                }}</span>
         </h4>
         <div class="metrics-grid">
             @for (stat of metricStats(); track stat.key) {
@@ -164,8 +171,9 @@
     <!-- Archivos fuente -->
     @if (library().source_files.length > 0) {
     <div class="source-files-section">
-        <h4 class="section-title">Source files
-            <span class="compound-count">{{ library().source_file_count }} files</span>
+        <h4 class="section-title">{{ 'cadmaPy.familyDetail.sourceFiles' | transloco }}
+            <span class="compound-count">{{ library().source_file_count }} {{ 'cadmaPy.familyDetail.files' | transloco
+                }}</span>
         </h4>
         <div class="source-files-list">
             @for (sf of library().source_files; track sf.id) {
@@ -184,7 +192,7 @@
     @if (hasAnyNulls()) {
     <div class="null-warning">
         <span class="null-icon">⚠</span>
-        Some metrics have null values — compounds missing that field are excluded from its average.
+        {{ 'cadmaPy.familyDetail.nullWarning' | transloco }}
     </div>
     }
 
@@ -192,16 +200,17 @@
     <div class="compounds-section">
         <h4 class="section-title">
             <button class="btn-toggle-compounds" type="button" (click)="toggleCompoundsTable()">
-                {{ showCompoundsTable() ? '▾' : '▸' }} Compounds &amp; references
+                {{ showCompoundsTable() ? '▾' : '▸' }} {{ 'cadmaPy.familyDetail.compoundsAndReferences' | transloco }}
             </button>
-            <span class="compound-count">{{ library().row_count }} rows</span>
+            <span class="compound-count">{{ library().row_count }} {{ 'cadmaPy.familyDetail.rows' | transloco }}</span>
             <button class="btn-download-family" type="button" (click)="exportFamilyCsv()"
-                title="Download family data as CSV">
-                ⬇ Download CSV
+                [title]="'cadmaPy.familyDetail.downloadCsv' | transloco">
+                ⬇ {{ 'cadmaPy.familyDetail.downloadCsv' | transloco }}
             </button>
             @if (library().editable) {
             <button class="btn-add-compound" type="button" (click)="toggleAddForm()">
-                {{ showAddForm() ? '✕ Cancel' : '+ Add compound' }}
+                {{ showAddForm() ? ('cadmaPy.familyDetail.cancelAdd' | transloco) : ('cadmaPy.familyDetail.addCompound'
+                | transloco) }}
             </button>
             }
         </h4>
@@ -210,36 +219,40 @@
         @if (showAddForm()) {
         <div class="add-compound-form">
             <div class="add-row">
-                <label class="add-label">SMILES *
+                <label class="add-label">{{ 'cadmaPy.familyDetail.smilesLabel' | transloco }}
                     <input type="text" class="add-input mono" [ngModel]="addSmiles()"
-                        (ngModelChange)="addSmiles.set($event)" placeholder="e.g. CCO" />
+                        (ngModelChange)="addSmiles.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.smilesPlaceholder' | transloco" />
                 </label>
-                <label class="add-label">Name
+                <label class="add-label">{{ 'cadmaPy.familyDetail.nameLabel' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addName()" (ngModelChange)="addName.set($event)"
-                        placeholder="Compound name" />
+                        [placeholder]="'cadmaPy.familyDetail.compoundNamePlaceholder' | transloco" />
                 </label>
             </div>
             <div class="add-row">
-                <label class="add-label">Paper reference
+                <label class="add-label">{{ 'cadmaPy.familyDetail.paperReference' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addPaperRef()"
-                        (ngModelChange)="addPaperRef.set($event)" placeholder="Author et al. (2025)" />
+                        (ngModelChange)="addPaperRef.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.paperReferencePlaceholder' | transloco" />
                 </label>
-                <label class="add-label">Paper URL / DOI
+                <label class="add-label">{{ 'cadmaPy.familyDetail.paperUrl' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addPaperUrl()"
-                        (ngModelChange)="addPaperUrl.set($event)" placeholder="https://doi.org/..." />
+                        (ngModelChange)="addPaperUrl.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.paperUrlPlaceholder' | transloco" />
                 </label>
             </div>
             <div class="add-row">
-                <label class="add-label full">Evidence note
+                <label class="add-label full">{{ 'cadmaPy.familyDetail.evidenceNote' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addNote()" (ngModelChange)="addNote.set($event)"
-                        placeholder="Optional note" />
+                        [placeholder]="'cadmaPy.familyDetail.optionalNote' | transloco" />
                 </label>
             </div>
             @if (addError()) {
             <p class="add-error">{{ addError() }}</p>
             }
             <button class="btn-submit-compound" type="button" (click)="submitAddCompound()" [disabled]="addBusy()">
-                @if (addBusy()) { Adding… } @else { Add compound (ADME auto-computed) }
+                @if (addBusy()) { {{ 'cadmaPy.familyDetail.adding' | transloco }} } @else { {{
+                'cadmaPy.familyDetail.addCompoundAdme' | transloco }} }
             </button>
         </div>
         }
@@ -254,12 +267,12 @@
             <table class="compounds-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>SMILES</th>
-                        <th>Reference</th>
-                        <th>URL / DOI</th>
-                        <th>Note</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderRank' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderName' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderSmiles' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderReference' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderUrl' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderNote' | transloco }}</th>
                         @if (library().editable) {
                         <th class="act-col"></th>
                         }
@@ -271,13 +284,13 @@
                         <td class="rank-num">{{ i + 1 }}</td>
                         <td>
                             <button class="compound-open-btn" type="button" (click)="openCompoundDetail(row, i)"
-                                title="Open compound details">
-                                {{ row.name || 'Unnamed compound' }}
+                                [title]="'cadmaPy.familyDetail.openDetails' | transloco">
+                                {{ row.name || ('cadmaPy.familyDetail.unnamedCompound' | transloco) }}
                             </button>
                         </td>
                         <td class="smiles-cell mono">
                             <button class="compound-open-btn mono" type="button" (click)="openCompoundDetail(row, i)"
-                                title="Open molecule preview">
+                                [title]="'cadmaPy.familyDetail.openPreview' | transloco">
                                 {{ row.smiles }}
                             </button>
                         </td>
@@ -291,9 +304,11 @@
                         <td class="ref-cell">{{ row.evidence_note || '—' }}</td>
                         @if (library().editable) {
                         <td class="act-col">
-                            <button class="btn-row-edit" type="button" title="Edit reference"
+                            <button class="btn-row-edit" type="button"
+                                [title]="'cadmaPy.familyDetail.editReference' | transloco"
                                 (click)="startEditRow(i, row)">✏️</button>
-                            <button class="btn-row-delete" type="button" title="Remove compound" (click)="removeRow(i)"
+                            <button class="btn-row-delete" type="button"
+                                [title]="'cadmaPy.familyDetail.removeCompound' | transloco" (click)="removeRow(i)"
                                 [disabled]="deletingRowIndex() === i">🗑️</button>
                         </td>
                         }
@@ -307,23 +322,23 @@
 
     <dialog #compoundDetailDialog class="compound-dialog" (click)="onCompoundDialogBackdropClick($event)"
         (keydown)="onCompoundDialogBackdropClick($event)">
-        <section class="compound-modal" aria-label="Compound details">
+        <section class="compound-modal" [attr.aria-label]="'cadmaPy.familyDetail.compoundDetailsTitle' | transloco">
             <div class="compound-modal-header">
                 <div class="compound-modal-heading">
-                    <h4>{{ selectedCompound()?.name || 'Compound details' }}</h4>
+                    <h4>{{ selectedCompound()?.name || ('cadmaPy.familyDetail.compoundDetailsTitle' | transloco) }}</h4>
                     <p class="compound-modal-smiles mono">{{ selectedCompound()?.smiles || '—' }}</p>
                 </div>
                 <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
-                    aria-label="Close compound details">
+                    [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
                     ✕
                 </button>
             </div>
 
             <div class="compound-modal-grid">
                 <div class="compound-card">
-                    <h5 class="compound-card-title">RDKit preview</h5>
+                    <h5 class="compound-card-title">{{ 'cadmaPy.familyDetail.rdkitPreview' | transloco }}</h5>
                     @if (compoundModalBusy()) {
-                    <p class="status-message">Generating molecule preview…</p>
+                    <p class="status-message">{{ 'cadmaPy.familyDetail.generatingPreview' | transloco }}</p>
                     } @else if (compoundModalError()) {
                     <p class="edit-error">{{ compoundModalError() }}</p>
                     } @else if (compoundModalSvg(); as svgContent) {
@@ -333,10 +348,10 @@
 
                 <div class="compound-card">
                     <div class="compound-card-header-row">
-                        <h5 class="compound-card-title">Scientific context</h5>
+                        <h5 class="compound-card-title">{{ 'cadmaPy.familyDetail.scientificContext' | transloco }}</h5>
                         @if (library().editable && !isEditingCompound()) {
                         <button class="btn-modal-edit" type="button" (click)="startEditCurrentCompound()">
-                            ✏️ Edit
+                            ✏️ {{ 'cadmaPy.familyDetail.edit' | transloco }}
                         </button>
                         }
                     </div>
@@ -344,22 +359,22 @@
                     @if (isEditingCompound()) {
                     <div class="compound-edit-form">
                         <label class="edit-label full">
-                            <span>Name</span>
+                            <span>{{ 'cadmaPy.familyDetail.nameLabel' | transloco }}</span>
                             <input type="text" class="edit-input" [ngModel]="editDraft().name ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), name: $event})" />
                         </label>
                         <label class="edit-label full">
-                            <span>Paper reference</span>
+                            <span>{{ 'cadmaPy.familyDetail.paperReference' | transloco }}</span>
                             <input type="text" class="edit-input" [ngModel]="editDraft().paper_reference ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), paper_reference: $event})" />
                         </label>
                         <label class="edit-label full">
-                            <span>Paper URL / DOI</span>
+                            <span>{{ 'cadmaPy.familyDetail.paperUrl' | transloco }}</span>
                             <input type="text" class="edit-input" [ngModel]="editDraft().paper_url ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), paper_url: $event})" />
                         </label>
                         <label class="edit-label full">
-                            <span>Evidence note</span>
+                            <span>{{ 'cadmaPy.familyDetail.evidenceNote' | transloco }}</span>
                             <textarea class="edit-input" rows="4" [ngModel]="editDraft().evidence_note ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), evidence_note: $event})"></textarea>
                         </label>
@@ -369,9 +384,11 @@
                         <div class="edit-actions">
                             <button class="btn-save-family" type="button" (click)="saveRowEdit()"
                                 [disabled]="editBusy()">
-                                @if (editBusy()) { Saving… } @else { Save compound }
+                                @if (editBusy()) { {{ 'cadmaPy.familyDetail.saving' | transloco }} } @else { {{
+                                'cadmaPy.familyDetail.saveCompound' | transloco }} }
                             </button>
-                            <button class="btn-cancel-family" type="button" (click)="cancelEdit()">Cancel edit</button>
+                            <button class="btn-cancel-family" type="button" (click)="cancelEdit()">{{
+                                'cadmaPy.familyDetail.cancelEdit' | transloco }}</button>
                         </div>
                     </div>
                     } @else {
