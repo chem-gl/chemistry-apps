@@ -12,6 +12,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from ..app_registry import ScientificAppRegistry
 from ..models import (
     AppPermission,
     GroupAppConfig,
@@ -30,6 +31,7 @@ from .schemas import (
     IdentityBootstrapUserSerializer,
     IdentityUserSummarySerializer,
     IdentityUserUpdateSerializer,
+    ScientificAppCatalogSerializer,
     UserAppConfigSerializer,
     UserProfileSerializer,
     WorkGroupSerializer,
@@ -43,6 +45,14 @@ def _require_admin_or_root(actor) -> bool:
 
 def _is_group_admin(actor, group_id: int) -> bool:
     return AuthorizationService.can_manage_group(actor=actor, group_id=group_id)
+
+
+def _resolve_app_definition_or_400(app_name: str):
+    """Resuelve una app registrada por plugin_name o route_key legado."""
+    resolved_definition = ScientificAppRegistry.resolve_definition(app_name)
+    if resolved_definition is None:
+        raise ValidationError("La app indicada no está registrada en el sistema.")
+    return resolved_definition
 
 
 def _resolve_replacement_primary_group_id(
@@ -185,6 +195,29 @@ class CurrentUserAccessibleAppsView(views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Identity"])
+class ScientificAppCatalogView(views.APIView):
+    """Expone el catálogo canónico de apps científicas registradas."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ScientificAppCatalogSerializer
+
+    @extend_schema(responses=ScientificAppCatalogSerializer(many=True))
+    def get(self, request: Request) -> Response:
+        payload = [
+            {
+                "plugin_name": definition.plugin_name,
+                "route_key": definition.route_key,
+                "api_base_path": definition.api_base_path,
+                "supports_pause_resume": bool(definition.supports_pause_resume),
+                "available_features": list(definition.available_features),
+            }
+            for definition in ScientificAppRegistry.list_definitions()
+        ]
+        serializer = ScientificAppCatalogSerializer(payload, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @extend_schema(tags=["Auth"])
 class CurrentUserAppConfigView(views.APIView):
     """Consulta y actualiza configuración de app del usuario actual."""
@@ -194,15 +227,20 @@ class CurrentUserAppConfigView(views.APIView):
 
     @extend_schema(responses=EffectiveAppConfigSerializer)
     def get(self, request: Request, app_name: str) -> Response:
-        payload = AuthorizationService.get_effective_app_config(request.user, app_name)
+        resolved_definition = _resolve_app_definition_or_400(app_name)
+        payload = AuthorizationService.get_effective_app_config(
+            request.user,
+            resolved_definition.plugin_name,
+        )
         serializer = EffectiveAppConfigSerializer(payload)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(request=UserAppConfigSerializer, responses=UserAppConfigSerializer)
     def patch(self, request: Request, app_name: str) -> Response:
+        resolved_definition = _resolve_app_definition_or_400(app_name)
         user_app_config, _ = UserAppConfig.objects.update_or_create(
             user=request.user,
-            app_name=app_name,
+            app_name=resolved_definition.plugin_name,
             defaults={"config": request.data.get("config", {})},
         )
         serializer = UserAppConfigSerializer(user_app_config)
@@ -909,13 +947,19 @@ class GroupAppConfigDetailView(views.APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        resolved_definition = _resolve_app_definition_or_400(app_name)
+
         group_app_config = GroupAppConfig.objects.filter(
             group_id=group_id,
-            app_name=app_name,
+            app_name=resolved_definition.plugin_name,
         ).first()
         if group_app_config is None:
             return Response(
-                {"group": group_id, "app_name": app_name, "config": {}},
+                {
+                    "group": group_id,
+                    "app_name": resolved_definition.plugin_name,
+                    "config": {},
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -936,9 +980,11 @@ class GroupAppConfigDetailView(views.APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        resolved_definition = _resolve_app_definition_or_400(app_name)
+
         group_app_config, _ = GroupAppConfig.objects.update_or_create(
             group_id=group_id,
-            app_name=app_name,
+            app_name=resolved_definition.plugin_name,
             defaults={"config": request.data.get("config", {})},
         )
         serializer = GroupAppConfigSerializer(group_app_config)

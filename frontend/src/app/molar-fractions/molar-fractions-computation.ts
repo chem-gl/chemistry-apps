@@ -3,6 +3,10 @@
 
 export type InitialChargeValue = number | string;
 
+export const MIN_RANGE_PH_STEP = 0.05;
+export const MIN_RANGE_PH_POINTS = 8;
+export const MAX_RANGE_PH_POINTS = 350;
+
 export interface BatchSpeciesRow {
   acronym: string;
   smiles: string;
@@ -30,6 +34,11 @@ interface SpeciesLabelPayload {
   labelsPretty: string[];
   labelsAscii: string[];
   charges: InitialChargeValue[];
+}
+
+export interface SpeciesLabelDisplayParts {
+  baseLabel: string;
+  chargeLabel: string | null;
 }
 
 function getNonEmptyLines(csvText: string): string[] {
@@ -74,11 +83,63 @@ const SUPERSCRIPT_MAP: Record<string, string> = {
   ')': '⁾',
 };
 
+const SUPERSCRIPT_TO_PLAIN_MAP: Record<string, string> = {
+  '⁰': '0',
+  '¹': '1',
+  '²': '2',
+  '³': '3',
+  '⁴': '4',
+  '⁵': '5',
+  '⁶': '6',
+  '⁷': '7',
+  '⁸': '8',
+  '⁹': '9',
+  '⁻': '-',
+  '⁺': '+',
+  '⁽': '(',
+  '⁾': ')',
+};
+
+const SYMBOLIC_CHARGE_SUFFIX_REGEX = /q[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺⁽⁾]*$/u;
+const NUMERIC_CHARGE_SUFFIX_REGEX = /[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺⁽⁾]+$/u;
+
 function translateDigits(value: string, map: Record<string, string>): string {
   return value
     .split('')
     .map((character) => map[character] ?? character)
     .join('');
+}
+
+function normalizeSuperscriptText(value: string): string {
+  return value
+    .split('')
+    .map((character) => SUPERSCRIPT_TO_PLAIN_MAP[character] ?? character)
+    .join('');
+}
+
+export function splitSpeciesLabelForDisplay(speciesLabel: string): SpeciesLabelDisplayParts {
+  const trimmedLabel = speciesLabel.trim();
+  if (trimmedLabel === '') {
+    return { baseLabel: '', chargeLabel: null };
+  }
+
+  const symbolicChargeMatch = SYMBOLIC_CHARGE_SUFFIX_REGEX.exec(trimmedLabel);
+  if (symbolicChargeMatch?.index !== undefined) {
+    return {
+      baseLabel: trimmedLabel.slice(0, symbolicChargeMatch.index),
+      chargeLabel: normalizeSuperscriptText(symbolicChargeMatch[0]),
+    };
+  }
+
+  const numericChargeMatch = NUMERIC_CHARGE_SUFFIX_REGEX.exec(trimmedLabel);
+  if (numericChargeMatch?.index !== undefined) {
+    return {
+      baseLabel: trimmedLabel.slice(0, numericChargeMatch.index),
+      chargeLabel: normalizeSuperscriptText(numericChargeMatch[0]),
+    };
+  }
+
+  return { baseLabel: trimmedLabel, chargeLabel: null };
 }
 
 function validatePkaValues(pkaValues: number[]): void {
@@ -95,6 +156,48 @@ function validatePkaValues(pkaValues: number[]): void {
       throw new Error('pKa values must be in ascending order.');
     }
   }
+}
+
+export function estimatePhRangePointCount(phMin: number, phMax: number, phStep: number): number {
+  if (
+    !Number.isFinite(phMin) ||
+    !Number.isFinite(phMax) ||
+    !Number.isFinite(phStep) ||
+    phStep <= 0
+  ) {
+    return 0;
+  }
+
+  const normalizedMin = Math.min(phMin, phMax);
+  const normalizedMax = Math.max(phMin, phMax);
+  const span = normalizedMax - normalizedMin;
+  const epsilon = Math.max(phStep * 1e-6, 1e-9);
+  return Math.floor((span + epsilon) / phStep) + 1;
+}
+
+export function validatePhRangeConstraints(
+  phMin: number,
+  phMax: number,
+  phStep: number,
+): string | null {
+  if (!Number.isFinite(phMin) || !Number.isFinite(phMax) || !Number.isFinite(phStep)) {
+    return 'Los valores del rango de pH deben ser numéricos.';
+  }
+
+  if (phStep < MIN_RANGE_PH_STEP) {
+    return `El paso de pH debe ser de al menos ${MIN_RANGE_PH_STEP}.`;
+  }
+
+  const totalPoints = estimatePhRangePointCount(phMin, phMax, phStep);
+  if (totalPoints < MIN_RANGE_PH_POINTS) {
+    return `El rango de pH debe generar al menos ${MIN_RANGE_PH_POINTS} datos.`;
+  }
+
+  if (totalPoints > MAX_RANGE_PH_POINTS) {
+    return `El rango de pH no puede generar más de ${MAX_RANGE_PH_POINTS} datos.`;
+  }
+
+  return null;
 }
 
 function splitDelimitedLine(lineValue: string, delimiter: string): string[] {

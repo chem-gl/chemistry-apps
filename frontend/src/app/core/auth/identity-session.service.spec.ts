@@ -41,6 +41,7 @@ describe('IdentitySessionService', () => {
 
   const identityApiServiceMock = {
     listAccessibleApps: vi.fn(),
+    listGroups: vi.fn(),
   };
 
   const currentUserProfile = {
@@ -72,6 +73,34 @@ describe('IdentitySessionService', () => {
     ],
   };
 
+  const rootUserProfile = {
+    id: 99,
+    username: 'root',
+    email: 'root@test.local',
+    role: 'root' as const,
+    account_status: 'active' as const,
+    first_name: 'Root',
+    last_name: 'User',
+    avatar: '',
+    email_verified: true,
+    primary_group_id: 3,
+    created_at: null,
+    updated_at: null,
+    memberships: [
+      {
+        group_id: 1,
+        group_name: 'Superadmin',
+        group_slug: 'superadmin',
+        role_in_group: 'admin' as const,
+      },
+    ],
+  };
+
+  const rootGroups = [
+    { id: 1, name: 'Superadmin', slug: 'superadmin', description: '' },
+    { id: 3, name: 'Marcus Lab', slug: 'marcus-lab', description: '' },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
@@ -92,6 +121,7 @@ describe('IdentitySessionService', () => {
         },
       ]),
     );
+    identityApiServiceMock.listGroups.mockReturnValue(of(rootGroups));
 
     TestBed.configureTestingModule({
       providers: [
@@ -193,5 +223,30 @@ describe('IdentitySessionService', () => {
 
     expect(authApiServiceMock.refresh).toHaveBeenCalledWith('refresh-token');
     expect(service.accessToken()).toBe(refreshedToken);
+  });
+
+  it('permite a root conservar un grupo activo conocido aunque no tenga membresía explícita', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    localStorage.setItem('chemistry-apps.active-group-id', '3');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValueOnce(of(rootUserProfile));
+
+    const service = TestBed.inject(IdentitySessionService);
+    let result = false;
+
+    service.initializeSession().subscribe((isAuthenticated) => {
+      result = isAuthenticated;
+    });
+
+    expect(result).toBe(true);
+    expect(identityApiServiceMock.listGroups).toHaveBeenCalled();
+    expect(identityApiServiceMock.listAccessibleApps).toHaveBeenCalledWith(3);
+    expect(service.activeGroupId()).toBe(3);
+    expect(service.activeGroupContext()).toEqual({
+      groupId: 3,
+      groupName: 'Marcus Lab',
+      groupSlug: 'marcus-lab',
+      roleInGroup: 'admin',
+    });
   });
 });

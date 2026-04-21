@@ -102,8 +102,8 @@
           </label>
           <label>
             {{ 'molarFractions.form.phStep' | transloco }}
-            <input type="number" step="0.01" min="0.01" [ngModel]="workflow.phStep()"
-              (ngModelChange)="workflow.phStep.set(toNumber($event))" [disabled]="workflow.isProcessing()" />
+            <input type="number" step="0.05" min="0.05" [ngModel]="workflow.phStep()"
+              (ngModelChange)="workflow.setPhStep(toNumber($event))" [disabled]="workflow.isProcessing()" />
           </label>
         </div>
       </div>
@@ -187,7 +187,6 @@
       <p class="status-message status-card">{{ workflow.progressMessage() }}</p>
       }
 
-      @if (workflow.activeSection() === 'result') {
       @if (workflow.resultData(); as resultData) {
       <div class="metadata-grid">
         <p><strong>{{ 'molarFractions.result.metadata.label' | transloco }}</strong> {{
@@ -226,7 +225,14 @@
             <tr>
               <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
               @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
-              <th>{{ speciesLabel }}</th>
+              <th>
+                <span class="formatted-species-label">
+                  {{ speciesLabelBase(speciesLabel) }}
+                  @if (speciesLabelCharge(speciesLabel); as chargeLabel) {
+                  <sup>{{ chargeLabel }}</sup>
+                  }
+                </span>
+              </th>
               }
               <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
             </tr>
@@ -277,7 +283,12 @@
             <div class="probe-grid">
               @for (probeReading of probeReadings(); track probeReading.speciesLabel) {
               <p>
-                <strong>{{ probeReading.speciesLabel }}</strong>
+                <strong class="formatted-species-label">
+                  {{ speciesLabelBase(probeReading.speciesLabel) }}
+                  @if (speciesLabelCharge(probeReading.speciesLabel); as chargeLabel) {
+                  <sup>{{ chargeLabel }}</sup>
+                  }
+                </strong>
                 {{ formatFractionValue(probeReading.fraction) }}
               </p>
               }
@@ -285,10 +296,11 @@
           </div>
         </div>
 
-        <app-scientific-chart [options]="chartOptions()!"
-          [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="340px"></app-scientific-chart>
+        <div class="chart-frame">
+          <app-scientific-chart [options]="chartOptions()!"
+            [ariaLabel]="'molarFractions.result.chart.ariaLabel' | transloco" chartHeight="100%"></app-scientific-chart>
+        </div>
       </div>
-      }
       }
       }
       }
@@ -343,7 +355,14 @@
               <td>{{ row.smiles }}</td>
               <td>{{ row.pkaValuesText }}</td>
               <td>{{ row.initialCharge }}</td>
-              <td>{{ row.species }}</td>
+              <td>
+                <span class="formatted-species-label">
+                  {{ speciesLabelBase(row.species) }}
+                  @if (speciesLabelCharge(row.species); as chargeLabel) {
+                  <sup>{{ chargeLabel }}</sup>
+                  }
+                </span>
+              </td>
               <td>{{ row.charge }}</td>
               <td>{{ formatFractionValue(row.fraction) }}</td>
             </tr>

@@ -1,0 +1,74 @@
+/* Molecule image modal */
+.molecule-image-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(520px, calc(100vw - 2rem));
+  max-width: 520px;
+}
+
+.molecule-image-dialog::backdrop {
+  background: rgba(44, 37, 51, 0.45);
+}
+
+.molecule-image-modal {
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.molecule-image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.molecule-image-header h4 {
+  margin: 0;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 1rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--chem-ink-soft);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--chem-radius);
+}
+
+.close-btn:hover {
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+}
+
+.molecule-modal-smiles {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--chem-ink);
+  word-break: break-all;
+  font-family: var(--chem-font-mono);
+}
+
+.molecule-svg-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+}
+
+.molecule-svg-wrap svg {
+  max-width: 100%;
+  height: auto;
+}

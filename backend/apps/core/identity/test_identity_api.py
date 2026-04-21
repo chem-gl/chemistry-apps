@@ -329,6 +329,125 @@ class IdentityApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_root_group_filter_is_strict_for_selected_group(self) -> None:
+        """Root debe respetar estrictamente el grupo seleccionado al resolver apps visibles."""
+        AppPermission.objects.create(
+            app_name="marcus-kinetics",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="tunnel-effect",
+            group=self.group_alpha,
+            is_enabled=False,
+        )
+        AppPermission.objects.create(
+            app_name="tunnel-effect",
+            group=self.group_beta,
+            is_enabled=True,
+        )
+        self._authenticate(self.root_user)
+
+        response = self.client.get(f"/api/auth/apps/?group_id={self.group_alpha.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        entries_by_app = {entry["app_name"]: entry for entry in response.data}
+        self.assertTrue(entries_by_app["marcus-kinetics"]["enabled"])
+        self.assertTrue(entries_by_app["smileit"]["enabled"])
+        self.assertFalse(entries_by_app["tunnel-effect"]["enabled"])
+        self.assertFalse(entries_by_app["tunnel-effect"]["group_permission"])
+
+    def test_current_user_accessible_apps_enable_marcus_only_when_group_rule_exists(
+        self,
+    ) -> None:
+        """Un usuario con permiso exclusivo de Marcus no debe heredar acceso a otras apps."""
+        AppPermission.objects.create(
+            app_name="marcus-kinetics",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=False,
+        )
+        AppPermission.objects.create(
+            app_name="tunnel-effect",
+            group=self.group_alpha,
+            is_enabled=False,
+        )
+        self._authenticate(self.standard_user)
+
+        response = self.client.get(f"/api/auth/apps/?group_id={self.group_alpha.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        entries_by_app = {entry["app_name"]: entry for entry in response.data}
+        self.assertTrue(entries_by_app["marcus-kinetics"]["enabled"])
+        self.assertEqual(entries_by_app["marcus-kinetics"]["route_key"], "marcus")
+        self.assertFalse(entries_by_app["smileit"]["enabled"])
+        self.assertFalse(entries_by_app["tunnel-effect"]["enabled"])
+
+    def test_scientific_app_catalog_lists_canonical_plugin_names_and_route_keys(
+        self,
+    ) -> None:
+        """El catálogo administrativo debe exponer plugin_name y route_key alineados."""
+        self._authenticate(self.admin_user)
+
+        response = self.client.get("/api/identity/scientific-apps/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        entries_by_plugin = {entry["plugin_name"]: entry for entry in response.data}
+        self.assertEqual(entries_by_plugin["marcus-kinetics"]["route_key"], "marcus")
+        self.assertEqual(entries_by_plugin["tunnel-effect"]["route_key"], "tunnel")
+
+    def test_app_permission_creation_normalizes_route_key_to_canonical_plugin_name(
+        self,
+    ) -> None:
+        """Crear permisos con route_key legado debe persistir el plugin_name canónico."""
+        self._authenticate(self.root_user)
+
+        response = self.client.post(
+            "/api/identity/app-permissions/",
+            {
+                "app_name": "marcus",
+                "group": self.group_alpha.id,
+                "is_enabled": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["app_name"], "marcus-kinetics")
+        self.assertTrue(
+            AppPermission.objects.filter(
+                app_name="marcus-kinetics",
+                group=self.group_alpha,
+                is_enabled=True,
+            ).exists()
+        )
+
+    def test_app_permission_creation_rejects_unknown_app_name(self) -> None:
+        """No se deben aceptar permisos para apps no registradas."""
+        self._authenticate(self.root_user)
+
+        response = self.client.post(
+            "/api/identity/app-permissions/",
+            {
+                "app_name": "non-existent-app",
+                "group": self.group_alpha.id,
+                "is_enabled": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("app_name", response.data)
+
     def test_current_user_app_config_merges_group_and_user_layers(self) -> None:
         """Confirma precedencia de configuración grupo -> usuario para una app."""
         GroupAppConfig.objects.create(

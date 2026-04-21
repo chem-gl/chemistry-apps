@@ -1,0 +1,157 @@
+/* _fd-header.scss: Encabezado del detalle de familia — scope badges, meta y botones de acción. */
+
+.family-detail {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--chem-border-subtle);
+}
+
+/* ============================================================
+   HEADER: scope + meta
+   ============================================================ */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.scope-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.scope-icon {
+  font-size: 0.9rem;
+}
+
+.scope-root {
+  background: var(--chem-warning-bg);
+  color: var(--chem-warning-text);
+  border: 1px solid var(--chem-warning-border);
+}
+
+.scope-group {
+  background: var(--chem-accent-light);
+  color: var(--chem-accent);
+  border: 1px solid var(--chem-accent-border);
+}
+
+.scope-personal {
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  border: 1px solid var(--chem-info-border);
+}
+
+.scope-unknown {
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
+  border: 1px solid var(--chem-border-subtle);
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--chem-ink-secondary);
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: baseline;
+}
+
+.meta-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chem-ink-soft);
+}
+
+.meta-item strong {
+  color: var(--chem-ink);
+  font-weight: 600;
+}
+
+.meta-item strong.editable {
+  color: var(--chem-success);
+}
+
+.meta-item strong.readonly {
+  color: var(--chem-ink-soft);
+}
+
+.meta-sep {
+  color: var(--chem-border);
+}
+
+/* ============================================================
+   BOTONES DE ACCIÓN: navegar, editar, seleccionar, fork
+   ============================================================ */
+.btn-back-browse {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--chem-ink-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: var(--chem-surface-inset);
+    border-color: var(--chem-border-strong);
+  }
+}
+
+.btn-edit-family {
+  margin-left: auto;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--chem-ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: var(--chem-surface-inset);
+    border-color: var(--chem-border-strong);
+  }
+}
+
+.btn-select-reference {
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  background: var(--chem-primary);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--chem-primary-dark);
+  }
+}

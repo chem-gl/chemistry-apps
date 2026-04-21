@@ -4,13 +4,11 @@
     <div class="catalog-card-header">
       <div>
         <h3>{{ 'smileit.step2.title' | transloco }}</h3>
-        <p class="panel-caption">
-          {{ 'smileit.step2.description' | transloco }}
-        </p>
+
       </div>
       <div class="catalog-card-header-actions">
         <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
-          Manage substituents
+          {{ 'smileit.step2.manageCatalog' | transloco }}
         </button>
       </div>
     </div>

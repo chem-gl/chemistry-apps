@@ -1,0 +1,301 @@
+/* _smileit-split-01.scss: fragmento modular de estilos de Smile-it. */
+/* smileit.component.scss: Estilos de la experiencia Smile-it con tokens --chem-*. */
+.smileit-shell {
+  display: grid;
+  gap: 1.2rem;
+  padding-bottom: 1rem;
+}
+
+.smileit-header {
+  grid-row: 1;
+  padding: 1.4rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+}
+
+.smileit-header h2 {
+  margin: 0.2rem 0 0.45rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.8rem, 2.5vw, 2.8rem);
+  letter-spacing: -0.03em;
+}
+
+.smileit-header p {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--chem-ink-secondary);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--chem-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: var(--chem-text-xs);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+}
+
+.hero-strip {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.catalog-overview-strip {
+  grid-row: auto;
+}
+
+.hero-card,
+.catalog-panel,
+.entry-panel,
+.library-panel,
+.pattern-panel,
+.result-panel,
+.advanced-panel,
+.logs-card,
+.history-card {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+}
+
+.hero-card {
+  padding: 1rem 1.1rem;
+  background: var(--chem-surface-elevated);
+}
+
+.hero-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.5rem;
+  color: var(--chem-ink);
+}
+
+.hero-card p,
+.hero-label {
+  margin: 0;
+  color: var(--chem-ink-secondary);
+}
+
+.hero-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--chem-font-label);
+}
+
+.floating-workspace-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.workspace-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.workspace-left-column,
+.workspace-right-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.workspace-side-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.workspace-main-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.inspection-floating-panel {
+  min-width: 0;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 1.1rem;
+}
+
+/* Dentro del panel flotante, la tarjeta de inspección ya no necesita borde propio */
+.inspection-floating-panel .inspection-card {
+  border: none;
+  padding: 0;
+  margin-top: 0;
+  background: transparent;
+}
+
+.library-panel {
+  order: 0;
+}
+
+.entry-panel {
+  order: 0;
+}
+
+.pattern-panel {
+  order: 3;
+}
+
+.catalog-panel,
+.entry-panel,
+.library-panel,
+.pattern-panel,
+.result-panel,
+.advanced-panel,
+.logs-card,
+.history-card {
+  padding: 1.1rem;
+}
+
+.advanced-grid {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.pattern-panel .catalog-card {
+  margin-top: 0;
+}
+
+.panel-header-row,
+.subsection-header,
+.block-header,
+.history-header,
+.structure-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.principal-inspect-action {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.principal-pattern-action {
+  margin-top: 0.8rem;
+  padding-top: 0.35rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.principal-pattern-action .hint {
+  margin: 0;
+  max-width: 42ch;
+  text-align: left;
+}
+
+.principal-pattern-action .pattern-open-button {
+  align-self: flex-end;
+  border-radius: 0;
+  border-color: transparent;
+  background: linear-gradient(
+    90deg,
+    rgba(46, 125, 50, 0.8) 0%,
+    rgba(211, 47, 47, 0.72) 68%,
+    rgba(211, 47, 47, 0.46) 100%
+  );
+  color: #fff;
+  margin-left: auto;
+}
+
+.guided-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.guided-action .hint {
+  margin: 0;
+  max-width: 250px;
+  text-align: right;
+}
+
+.site-toolbar-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: auto;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 10px;
+  background: var(--chem-surface-elevated);
+}
+
+.site-toolbar-summary strong {
+  color: var(--chem-ink);
+}
+
+.site-toolbar-main {
+  min-width: 220px;
+}
+
+.site-toolbar-summary-value {
+  align-self: start;
+  justify-self: start;
+  white-space: nowrap;
+}
+
+.site-toolbar-summary-note {
+  margin: 0;
+  text-align: left;
+}
+
+.atom-selection-sticky .site-toolbar {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.panel-caption,
+.hint,
+.summary-banner,
+.status-message,
+.catalog-description,
+.structure-smiles,
+.log-message,
+.log-payload,
+small {
+  color: var(--chem-ink-secondary);
+}
+
+.panel-caption,
+.hint,
+.catalog-description,
+.structure-smiles,
+.log-message,
+.log-payload,
+small {
+  margin: 0.18rem 0 0;
+  font-size: 0.84rem;
+}

@@ -1,0 +1,11 @@
+/* cadma-py.component.scss: Orquestador — importa parciales con tokens --chem-*. */
+
+@use './styles/cadma-hero';
+@use './styles/cadma-steps';
+@use './styles/cadma-library';
+@use './styles/cadma-forms';
+@use './styles/cadma-results';
+
+:host {
+  display: block;
+}

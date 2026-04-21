@@ -1,0 +1,10 @@
+/* cadma-py-family-detail.component.scss: Orquestador — importa parciales con tokens --chem-*. */
+
+@use './styles/fd-header';
+@use './styles/fd-forms';
+@use './styles/fd-metrics';
+@use './styles/fd-compounds';
+
+:host {
+  display: block;
+}

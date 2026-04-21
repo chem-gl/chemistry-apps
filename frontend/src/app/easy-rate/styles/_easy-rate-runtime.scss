@@ -1,0 +1,132 @@
+/* Cuadrícula de parámetros */
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 0.75rem;
+
+  label {
+    display: grid;
+    gap: 0.3rem;
+    font-size: var(--chem-text-sm);
+    font-weight: 700;
+    color: var(--chem-ink);
+    font-family: var(--chem-font-label);
+  }
+
+  &.diffusion-fields {
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--chem-border-subtle);
+  }
+}
+
+/* Checkboxes */
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--chem-accent);
+    cursor: pointer;
+  }
+}
+
+/* Botones */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  &.export-row {
+    margin-top: 0.5rem;
+  }
+}
+
+.btn-primary,
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.42rem 0.9rem;
+  font-weight: 700;
+  font-size: var(--chem-text-sm);
+  cursor: pointer;
+  transition: opacity var(--chem-transition), background var(--chem-transition), border-color var(--chem-transition), color var(--chem-transition);
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: var(--chem-primary);
+  border: 1px solid var(--chem-primary);
+  color: #fff;
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+}
+
+.btn-secondary {
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border);
+  color: var(--chem-ink-secondary);
+  &:hover:not(:disabled) {
+    border-color: var(--chem-primary);
+    color: var(--chem-primary);
+  }
+}
+
+/* Progreso */
+.progress-card {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id {
+  margin: 0;
+  word-break: break-all;
+  font-family: var(--chem-font-mono);
+  font-size: 0.74rem;
+  color: var(--chem-ink-soft);
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--chem-surface-inset);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--chem-gradient-header);
+  transition: width 0.3s ease;
+}
+
+.progress-pct {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-primary);
+}
+
+.progress-message {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-secondary);
+}
+

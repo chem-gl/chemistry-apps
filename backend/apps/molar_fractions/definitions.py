@@ -23,5 +23,7 @@ DEFAULT_INITIAL_CHARGE: Final[str] = "q"
 
 MAX_PKA_VALUES: Final[int] = 6
 MIN_PKA_VALUES: Final[int] = 1
-MAX_PH_POINTS: Final[int] = 2000
+MIN_PH_STEP: Final[float] = 0.05
+MIN_PH_RANGE_POINTS: Final[int] = 8
+MAX_PH_POINTS: Final[int] = 350
 DEFAULT_SINGLE_PH_STEP: Final[float] = 0.1

@@ -4,6 +4,9 @@
 Enrutamiento principal del backend y exposición de OpenAPI.
 """
 
+from apps.cadma_py.definitions import APP_ROUTE_BASENAME as CADMA_PY_ROUTE_BASENAME
+from apps.cadma_py.definitions import APP_ROUTE_PREFIX as CADMA_PY_ROUTE_PREFIX
+from apps.cadma_py.routers import CadmaPyJobViewSet
 from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREFIX
 from apps.core.identity.routers import (
     AppPermissionDetailView,
@@ -18,6 +21,7 @@ from apps.core.identity.routers import (
     GroupMembershipsView,
     IdentityUserDetailView,
     IdentityUsersView,
+    ScientificAppCatalogView,
     WorkGroupDetailView,
     WorkGroupsView,
 )
@@ -98,6 +102,11 @@ router.register(
     ToxicityPropertiesJobViewSet,
     basename=TOXICITY_PROPERTIES_ROUTE_BASENAME,
 )
+router.register(
+    CADMA_PY_ROUTE_PREFIX,
+    CadmaPyJobViewSet,
+    basename=CADMA_PY_ROUTE_BASENAME,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -133,6 +142,11 @@ urlpatterns = [
         "api/identity/groups/<int:group_id>/app-configs/<str:app_name>/",
         GroupAppConfigDetailView.as_view(),
         name="identity-group-app-config",
+    ),
+    path(
+        "api/identity/scientific-apps/",
+        ScientificAppCatalogView.as_view(),
+        name="identity-scientific-apps",
     ),
     path(
         "api/identity/memberships/",

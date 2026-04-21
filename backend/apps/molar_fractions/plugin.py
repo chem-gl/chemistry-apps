@@ -23,6 +23,8 @@ from .definitions import (
     DEFAULT_SINGLE_PH_STEP,
     MAX_PH_POINTS,
     MAX_PKA_VALUES,
+    MIN_PH_RANGE_POINTS,
+    MIN_PH_STEP,
     MIN_PKA_VALUES,
     PLUGIN_NAME,
 )
@@ -123,10 +125,19 @@ def _build_molar_fractions_input(parameters: JSONMap) -> MolarFractionsInput:
 
     if ph_step <= 0:
         raise ValueError("ph_step debe ser mayor que cero.")
+    if ph_step < MIN_PH_STEP:
+        raise ValueError(f"ph_step debe ser de al menos {MIN_PH_STEP}.")
 
     normalized_min: float = min(ph_min, ph_max)
     normalized_max: float = max(ph_min, ph_max)
-    estimated_points: int = int(((normalized_max - normalized_min) / ph_step) + 1) + 1
+    epsilon_value: float = max(ph_step * 1e-6, 1e-9)
+    estimated_points: int = (
+        int(((normalized_max - normalized_min + epsilon_value) / ph_step)) + 1
+    )
+    if estimated_points < MIN_PH_RANGE_POINTS:
+        raise ValueError(
+            f"La malla de pH debe generar al menos {MIN_PH_RANGE_POINTS} datos."
+        )
     if estimated_points > MAX_PH_POINTS:
         raise ValueError(
             f"La malla de pH excede el máximo permitido de {MAX_PH_POINTS} puntos."

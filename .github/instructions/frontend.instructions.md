@@ -1,522 +1,362 @@
-## applyTo: "frontend/src/\*_/_.{ts,html,scss}"
-
-# 🧠 GUÍA INTEGRAL FRONTEND (ANGULAR + TYPESCRIPT MODERNO)
-
-## 🎯 OBJETIVO
-
-- simpre se puede usar el navegador web integrado para verificar los cambios del frontend
-
-El agente debe generar código:
-
-- legible
-- tipado estrictamente
-- consistente
-- mantenible
-- alineado con Angular moderno
-
+---
+  name: Frontend (Angular + TypeScript moderno)
+  description: Guía de estilo y arquitectura para el frontend (Angular + TypeScript moderno).
+  applyTo: "frontend/src/**/*.{ts,html,scss}"
 ---
 
-# 1. ARQUITECTURA Y ORGANIZACIÓN
+# GUÍA FRONTEND (ANGULAR + TYPESCRIPT MODERNO)
 
-## 1.1 Separación de responsabilidades
+> Usar el navegador web integrado para verificar cambios del frontend.
 
-- Cada componente debe tener:
-  - `.ts` → lógica
-  - `.html` → vista
-  - `.scss` → estilos
+Generar código: legible, tipado estrictamente, consistente, mantenible, alineado con Angular moderno.
 
-- PROHIBIDO mezclar lógica en templates
+## 1. ARQUITECTURA
 
----
+**Capas obligatorias** (separación estricta):
 
-## 1.2 Capas obligatorias
+- Componentes → UI + signals únicamente; **PROHIBIDO** lógica compleja
+- Servicios → lógica de negocio; inyección de dependencias obligatoria
+- API layer → comunicación externa; wrapping de código generado
 
-- Componentes → UI únicamente
-- Servicios → lógica de negocio
-- API layer → comunicación externa
+Cada componente: `.ts` (lógica) · `.html` (vista) · `.scss` (estilos). **PROHIBIDO** mezclar lógica en templates.
 
----
+MVC adaptado: Model = interfaces/tipos · View = `.html` · Controller = `.ts` · Lógica real = servicios.
 
-## 1.3 Servicios
+Tests requeridos cuando haya: lógica de negocio, transformación de datos, integración con APIs.
 
-- Toda lógica de negocio debe vivir en servicios
-- Los componentes NO deben contener lógica compleja
-- Uso obligatorio de inyección de dependencias
+**> TAMAÑO DE ARCHIVOS — REGLA CRÍTICA:** ideal 300–400 líneas · mínimo 100 · **MÁXIMO ABSOLUTO 600** (nunca superar). Si crece: dividir en componentes/servicios/utilidades. Si es muy pequeño: fusionar con módulos relacionados.
 
----
+## 2. OPENAPI
 
-## 1.4 Tests
+- Código generado → `frontend/src/app/core/api/generated/` — **PROHIBIDO editar manualmente**
+- Wrappers → `frontend/src/app/core/api/` — **NUNCA** usar `generated/` directamente; mapear a modelos internos
+- Generación via `npm run api:generate`; **PROHIBIDO** procesos manuales
+- **PROHIBIDO** hardcodear URLs; usar `environments` o constantes
+- Flujo al cambiar backend: regenerar OpenAPI → regenerar cliente → actualizar wrappers → validar build+tests
 
-- Agregar tests cuando:
-  - haya lógica de negocio
-  - transformación de datos
-  - integración con APIs
+## 3. ANGULAR v21+ — ESTÁNDARES ACTUALES OBLIGATORIOS
 
----
+> Versión de referencia: Angular **v21** . Todas las APIs marcadas son estables
 
-## 1.5 Documentación
+### 3.1 Fundamentos (siempre aplicar)
 
-- Funciones públicas deben documentarse
-- El código debe ser autoexplicativo
+| Práctica         | Regla                                                                           |
+| ---------------- | ------------------------------------------------------------------------------- |
+| Standalone-first | **NO** NgModules en código nuevo                                                |
+| Control flow     | `@if` `@for` `@switch`; **REEMPLAZAR** `*ngIf` `*ngFor`                         |
+| Deferrable views | `@defer` con triggers (`on viewport`, `on idle`, `on interaction`, `when cond`) |
+| Zoneless         | Reducir dependencia de `zone.js`; usar `ChangeDetectionStrategy.OnPush`         |
+| SSR              | Hidratación parcial y render incremental                                        |
+| Build            | Vite + esbuild (pipeline moderno, no webpack legacy)                            |
 
----
+### 3.2 Signals API — PRIORIDAD MÁXIMA sobre RxJS
 
-## 1.6 Tamaño de archivos (REGLA ESTRICTA)
+**> Usar signals para todo estado reactivo. RxJS solo para streams async complejos o interop.**
 
-- Tamaño ideal: **300–400 líneas**
-- Mínimo recomendado: **100 líneas**
-- Máximo permitido: **600 líneas**
-
-Reglas:
-
-- PROHIBIDO exceder 600 líneas
-- EVITAR archivos menores a 100 líneas (sobre-modularización)
-- Si un archivo crece:
-  - dividir en componentes
-  - extraer servicios
-  - crear utilidades reutilizables
-
-- Si un archivo es demasiado pequeño:
-  - evaluar fusión lógica con módulos relacionados
-
----
-
-# 2. PRINCIPIOS DE DISEÑO
-
-## 2.1 Principio de Liskov (LSP)
-
-- Una clase hija debe poder sustituir a su clase padre sin romper el sistema
-- No alterar contratos esperados
-- No introducir comportamientos inesperados
-
----
-
-## 2.2 Modularización
-
-El agente debe diseñar sistemas:
-
-- desacoplados
-- cohesivos
-- reutilizables
-
----
-
-## 2.3 Arquitectura en capas
-
-Separación clara:
-
-- presentación → componentes
-- dominio → servicios
-- infraestructura → API / adaptadores
-
----
-
-## 2.4 Patrón MVC (adaptado a Angular)
-
-- Model → interfaces / tipos
-- View → templates (.html)
-- Controller → componente (.ts)
-- Services → lógica real (fuera del controller)
-
----
-
-# 3. INTEGRACIÓN OPENAPI
-
-## 3.1 Código generado
-
-- Ubicación obligatoria:
-
-  ```
-  frontend/src/app/core/api/generated/
-  ```
-
-- PROHIBIDO editar código generado manualmente
-
----
-
-## 3.2 Generación
-
-- Usar scripts de `package.json`
-
-- Si no existe:
-  - crear `npm run api:generate`
-
-- PROHIBIDO procesos manuales fuera de scripts
-
----
-
-## 3.3 Wrappers
-
-- Ubicación:
-
-  ```
-  frontend/src/app/core/api/
-  ```
-
-- Reglas:
-  - Nunca usar `generated/` directamente
-  - Mapear modelos a modelos internos
-
----
-
-## 3.4 Configuración
-
-- PROHIBIDO hardcodear URLs
-- Usar:
-  - environments
-  - constantes compartidas
-
----
-
-## 3.5 Flujo backend
-
-1. regenerar OpenAPI
-2. regenerar cliente
-3. actualizar wrappers
-4. validar build + tests
-
----
-
-# 4. ANGULAR MODERNO (2024–2026)
-
-El agente DEBE usar las prácticas modernas:
-
-## 4.1 Standalone-first
-
-- NO usar NgModules en código nuevo
-- Usar standalone components por defecto ([angularreleases.hashnode.dev][1])
-
----
-
-## 4.2 Signals (reactividad principal)
-
-- Usar `signal`, `computed`, `effect`
-- Evitar estado mutable tradicional
-- Preferir signals sobre RxJS cuando sea posible ([DEV Community][2])
-
----
-
-## 4.3 Control flow moderno
-
-- Usar:
-  - `@if`
-  - `@for`
-  - `@switch`
-
-- Reemplazar:
-  - `*ngIf`
-  - `*ngFor` ([geeksforgeeks.org][3])
-
----
-
-## 4.4 Deferrable views
-
-- Usar `@defer` para lazy rendering
-- Optimizar LCP y performance ([geeksforgeeks.org][3])
-
----
-
-## 4.5 SSR e hidratación
-
-- Soporte para:
-  - SSR moderno
-  - hidratación parcial
-  - render incremental ([angularreleases.hashnode.dev][1])
-
----
-
-## 4.6 Zoneless (cuando sea posible)
-
-- Reducir dependencia de `zone.js`
-- Mejorar performance
-
----
-
-## 4.7 Templates más expresivos
-
-- Templates con capacidades cercanas a TypeScript
-- Mejor type-checking en templates ([angularreleases.hashnode.dev][1])
-
----
-
-# 5. TYPESCRIPT MODERNO (5.x+)
-
-## 5.1 Tipado avanzado obligatorio
-
-Usar:
-
-- `satisfies`
-- `as const`
-- `readonly`
-- `unknown` sobre `any`
-- preferir no usar unknown, pero si se usa, manejarlo adecuadamente
-- `never` para exhaustividad
-- discriminated unions
-- template literal types
-- `infer`
-- utility types (`Pick`, `Omit`, `ReturnType`)
-
----
-
-Aquí tienes la versión ajustada:
-
----
-
-# Instrucciones de tipado en TypeScript
-
-## Uso de tipos
-
-- No uses `any`.
-  Usa tipos concretos (`string`, `number`, etc.), uniones (`A | B`), `unknown` o genéricos (`T`).
-
-- No uses `unknown` como reemplazo automático de `any`.
-  Solo úsalo cuando el tipo realmente no se conoce y valida antes de usarlo.
-
----
-
-## Colecciones tipadas
-
-- No uses `Array` sin tipo.
-  Usa `Array<T>` o `T[]`.
-
-- No uses objetos sin tipar.
-  Usa interfaces, `type` o `Record<K, V>`.
-
-- No uses `{}` como tipo.
-  Usa un tipo definido o `Record<string, unknown>` si es necesario.
-
----
-
-## Funciones
-
-- No omitas tipos en parámetros o retorno.
-  Define siempre los tipos de entrada y salida.
-
-- No uses `Function` como tipo.
-  Usa firmas explícitas: `(args: T) => R`.
-
----
-
-## Diseño de tipos
-
-- No uses uniones excesivas (`A | B | C | D...`).
-  Modela los datos con tipos discriminados o interfaces.
-
-- No uses objetos dinámicos para datos estructurados.
-  Define interfaces o tipos claros.
-
----
-
-## Genéricos
-
-- No uses genéricos sin restricción cuando no es necesario.
-  Usa `<T>` solo si realmente hay relación entre entrada y salida.
-
-- No pierdas inferencia de tipos.
-  Mantén el tipo genérico en el retorno (`function fn<T>(x: T): T`).
-
----
-
-## Conversiones y assertions
-
-- No abuses de `as`.
-  Evita forzar tipos incorrectos.
-
-- No uses doble assertion (`as unknown as T`).
-  Es equivalente a `any` y rompe el sistema de tipos.
-
----
-
-## Manejo de errores de tipo
-
-- No uses `// @ts-ignore`.
-  Corrige el tipo o refactoriza.
-
-- No uses `// @ts-nocheck`.
-  No desactives el sistema de tipos en archivos.
-
----
-
-## Tipos peligrosos
-
-- No uses `any` en APIs públicas.
-  Define contratos claros.
-
-- No uses `Partial` o `Record<string, any>` sin control.
-  Limita su uso y tipa correctamente.
-
----
-
-## Reglas de calidad
-
-- No uses supresiones como `eslint-disable`, `ts-ignore` o `NOSONAR` para ocultar errores de tipado.
-
-- No ignores advertencias del linter relacionadas con tipos.
-  Deben resolverse correctamente.
-
----
-
-## Regla general
-
-Si necesitas usar `any`, `as`, `ts-ignore` o desactivar reglas del linter, se debe asumir que el diseño de tipos es incorrecto y debe refactorizarse.
-
-Si el refactor es demasiado grande o costoso en ese momento, agrega un `TODO` explicando la deuda técnica y pregunta al usuario o al equipo si desea abordar ese refactor antes de continuar.
-
-## 5.2 Mejoras recientes
-
-- mejor análisis de control de flujo
-- type narrowing más preciso
-- enums y literals mejorados
-- mayor seguridad en tipos ([geeksforgeeks.org][3])
-
----
-
-## 5.3 Ejemplo moderno
+| API                                  | Uso                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `signal<T>(value)`                   | estado local mutable                                                                  |
+| `computed(() => ...)`                | derivaciones lazy memoizadas; solo lectura                                            |
+| `linkedSignal(() => ...)`            | estado derivado **y escribible**; se resetea cuando cambia la fuente                  |
+| `effect(() => ...)`                  | efectos secundarios sobre APIs no reactivas; **nunca** para derivar estado            |
+| `untracked(() => signal())`          | leer signal sin crear dependencia en un contexto reactivo                             |
+| `resource({ params, loader })`       | datos async reactivos (**experimental**); estado con `.value`, `.isLoading`, `.error` |
+| `httpResource(() => url)`            | wrapper de `HttpClient` con respuesta como signal (**experimental**)                  |
+| `input<T>()` / `input.required<T>()` | reemplaza `@Input()` — signal de solo lectura                                         |
+| `output<T>()`                        | reemplaza `@Output()` / `EventEmitter`                                                |
+| `model<T>()`                         | two-way binding como signal escribible                                                |
 
 ```ts
-const config = {
-  apiUrl: "/api",
-} as const satisfies Record<string, string>
+// ✅ linkedSignal: estado dependiente y escribible
+selectedOption = linkedSignal(() => this.options()[0])
+
+// ✅ resource: datos async con signals
+userResource = resource({
+  params: () => ({ id: this.userId() }),
+  loader: ({ params, abortSignal }) =>
+    fetch(`/api/users/${params.id}`, { signal: abortSignal }).then(
+      (r) => r.json() as Promise<User>,
+    ),
+})
+
+// ✅ Signal inputs/outputs modernos
+userId = input.required<number>()
+userSelected = output<User>()
+value = model<string>("")
 ```
 
----
+**> PROHIBIDO en código nuevo:** `@Input()` / `@Output()` / `EventEmitter` / `Subject` para estado simple.
 
-# 6. ESTILO GENERAL
+## 4. TYPESCRIPT 5.8+ — TIPADO ESTRICTO
 
-## 6.1 Tipado estricto
+> Versión de referencia: TypeScript **5.8** (abril 2026).
+
+**Usar:** `satisfies` · `as const` · `readonly` · `never` (exhaustividad) · discriminated unions · template literal types · `infer` · utility types (`Pick`, `Omit`, `ReturnType`)
+
+**Novedades TS 5.8 a aprovechar:**
+
+- **Granular checks en return ternarios**: TS 5.8 detecta bugs en `return cond ? a : b` con `any`; **no usar `any` en caches o maps intermedios**
+- **Import attributes** (`with` keyword): usar `import data from './data.json' with { type: 'json' }` — la sintaxis `assert` está obsoleta
+- **`--erasableSyntaxOnly`**: evitar `enum`, parameter properties en clases, `namespace` con runtime code (preferir `const` objects sobre `enum`)
+
+**> REGLAS CRÍTICAS DE TIPADO (nunca ignorar sin justificación):**
+
+| Prohibido                                                 | En su lugar                                                       |
+| --------------------------------------------------------- | ----------------------------------------------------------------- |
+| `any`                                                     | tipos concretos, uniones `A\|B`, genéricos `T`                    |
+| `unknown` sin validar                                     | solo cuando el tipo realmente no se conoce; validar antes de usar |
+| `Array` sin tipo                                          | `T[]` o `Array<T>`                                                |
+| `{}` como tipo                                            | interfaz definida o `Record<string, unknown>`                     |
+| `Function` como tipo                                      | firma explícita `(args: T) => R`                                  |
+| `as` abusivo / doble assertion                            | corregir el diseño de tipos                                       |
+| `// @ts-ignore` / `@ts-nocheck`                           | refactorizar el tipo                                              |
+| `eslint-disable` / `NOSONAR` para ocultar errores de tipo | resolver el error correctamente                                   |
+| `Partial<T>` / `Record<string, any>` sin control          | tipar correctamente                                               |
+| uniones excesivas `A\|B\|C\|D...`                         | tipos discriminados o interfaces                                  |
+
+**> Si necesitas usar `any`, `as`, `ts-ignore` o deshabilitar linter → el diseño de tipos es incorrecto: refactorizar.** Si el refactor es avisar pero se debe hacer de inmediato, justificar claramente en un comentario por qué es necesario y cómo se resolverá a futuro.
+
+Ejemplo moderno:
 
 ```ts
-let data: User | null = null
+const config = { apiUrl: "/api" } as const satisfies Record<string, string>
 ```
 
----
+## 5. PROGRAMACIÓN FUNCIONAL Y MODULAR — PRIORIDAD ALTA
 
-## 6.2 Nombres claros
+> El tipado y la programación funcional son **primera prioridad**. Antes de escribir cualquier lógica, definir los tipos. Toda transformación de datos debe seguir el paradigma funcional.
+
+### 5.1 Paradigma: diferencias clave
+
+| Paradigma       | Enfoque                               | Aplicación en este proyecto                 |
+| --------------- | ------------------------------------- | ------------------------------------------- |
+| **Modular**     | Organización del código               | Separar responsabilidades en archivos/capas |
+| **Declarativa** | Qué hacer (no cómo)                   | Templates Angular, operadores RxJS/señales  |
+| **Funcional**   | Transformar datos con funciones puras | Servicios, utilidades, lógica de negocio    |
+
+### 5.2 Programación funcional estricta
+
+**> REGLAS CRÍTICAS (nunca ignorar sin justificación):**
+
+- **Funciones puras obligatorias**: mismo input → siempre mismo output, sin efectos secundarios ocultos
+- **Inmutabilidad**: nunca mutar estado; usar `readonly`, spread `{...obj}`, `[...arr]`
+- **Composición sobre herencia**: encadenar funciones pequeñas en lugar de clases grandes
+- **Declarativo sobre imperativo**: describir _qué_ se quiere, no _cómo_ hacerlo paso a paso
 
 ```ts
-const userList = getUsers()
+// ❌ Imperativo
+const results: User[] = []
+for (const user of users) {
+  if (user.active) results.push({ ...user, name: user.name.toUpperCase() })
+}
+
+// ✅ Funcional declarativo
+const results = users
+  .filter((user) => user.active)
+  .map((user) => ({ ...user, name: user.name.toUpperCase() }) satisfies User)
 ```
 
----
+### 5.3 Mónadas para manejo de errores — OBLIGATORIO
 
-## 6.3 Sin abreviaciones
+**> Nunca usar `throw`/`try-catch` como flujo de control principal.** Usar tipos que representen éxito y error de forma explícita.
+
+Patrón `Result<T, E>` obligatorio en operaciones que pueden fallar:
 
 ```ts
-;(user, config, response)
+// Tipo Result — definir en shared/types/result.type.ts
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E }
+
+// Uso en servicios
+const parseSmiles = (input: string): Result<Molecule, ParseError> => {
+  if (!input.trim()) return { ok: false, error: new ParseError("empty input") }
+  return { ok: true, value: parseMolecule(input) }
+}
+
+// Consumo — sin try/catch
+const result = parseSmiles(rawInput)
+if (!result.ok) {
+  // manejar error tipado
+  return
+}
+// result.value está disponible y tipado
 ```
 
----
+- **Encadenar** con `map`/`flatMap` en lugar de `if` anidados
+- **Nunca retornar `null`/`undefined`** para indicar fallo; usar `Result` o `Option<T>`
+- Los errores son **datos tipados**, no strings o códigos ambiguos
+- En RxJS: usar `catchError` + `of({ ok: false, error })` en lugar de propagar excepciones
 
-# 7. FUNCIONES
+### 5.4 Modularidad estricta
 
-- Máx 20–30 líneas
-- Una responsabilidad
-- Tipadas
-- Arrow functions
+- Un archivo = una responsabilidad clara y específica
+- Funciones pequeñas (máx 20–30 líneas), reutilizables, sin efectos secundarios
+- Extraer utilidades puras a `shared/utils/` cuando se usan en más de un lugar
+- Composición de funciones para construir transformaciones complejas:
 
----
+```ts
+// ✅ Composición funcional tipada
+const processUserData = (raw: RawUser[]): ProcessedUser[] =>
+  raw.filter(isActiveUser).map(normalizeUser).map(enrichWithPermissions)
+```
 
-# 8. VARIABLES
+## 6. PATRONES DE DISEÑO Y POO — OBLIGATORIO
 
-- `const` por defecto
-- Tipos explícitos en estructuras complejas
+> El código debe seguir principios de **encapsulamiento, abstracción y bajo acoplamiento**. Los patrones son herramientas, no decoración — aplicar solo cuando aporten claridad real.
 
----
+### 6.1 Principios OOP que siempre aplican
 
-# 9. COMPONENTES
+| Principio                 | Regla en Angular/TS                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Encapsulamiento**       | Estado interno `private readonly`; exponer solo lo necesario via getters o `asReadonly()` |
+| **Abstracción**           | Interfaces/tipos para contratos; el consumidor no conoce la implementación                |
+| **Cohesión**              | Cada clase/servicio tiene una sola razón para cambiar (SRP)                               |
+| **Bajo acoplamiento**     | Depender de abstracciones (interfaces), no de implementaciones concretas                  |
+| **Sustitución de Liskov** | Implementaciones deben respetar el contrato de la interfaz sin sorpresas                  |
 
-- Sin lógica compleja
-- Solo UI + signals
+```ts
+// ✅ Encapsulamiento correcto en servicio con signals
+@Injectable({ providedIn: "root" })
+export class UserStateService {
+  private readonly _currentUser = signal<User | null>(null)
+  readonly currentUser = this._currentUser.asReadonly() // solo lectura pública
 
----
+  setUser(user: User): void {
+    this._currentUser.set(user)
+  }
+}
+```
 
-# 10. TEMPLATES
+### 6.2 Patrones de diseño — cuándo y cómo aplicar
 
-- Sin lógica compleja
-- Usar control flow moderno
+**> Aplicar el patrón más simple que resuelva el problema. No sobre-ingenierizar.**
 
----
+| Patrón                   | Cuándo usarlo                                              | Implementación en Angular                                           |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Factory**              | Crear objetos complejos sin exponer lógica de construcción | Función factoría tipada o servicio con método `create*`             |
+| **Builder**              | Construir objetos con muchos parámetros opcionales         | Clase con métodos encadenables (`withX().withY().build()`)          |
+| **Adapter**              | Integrar APIs externas/generadas con modelos internos      | Wrapper services sobre `generated/`; mappers tipados                |
+| **Facade**               | Simplificar acceso a subsistemas complejos                 | Servicio que agrupa múltiples servicios internos                    |
+| **Repository**           | Abstraer el acceso a datos del dominio                     | Servicio que encapsula llamadas HTTP; componentes no conocen la API |
+| **Strategy**             | Intercambiar algoritmos/comportamientos en runtime         | Interfaz + implementaciones inyectables via DI                      |
+| **Observer**             | Reaccionar a cambios de estado                             | Signals + `effect`; RxJS para streams externos                      |
+| **Dependency Injection** | Desacoplar dependencias                                    | Angular DI estándar; `inject()` en lugar de constructores largos    |
 
-# 11. IMPORTS
+```ts
+// ✅ Factory: crear entidades del dominio
+const createMolecule = (
+  smiles: string,
+  name: string,
+): Result<Molecule, ValidationError> => {
+  if (!isValidSmiles(smiles))
+    return { ok: false, error: new ValidationError("invalid SMILES") }
+  return {
+    ok: true,
+    value: {
+      id: crypto.randomUUID(),
+      smiles,
+      name,
+      createdAt: new Date(),
+    } satisfies Molecule,
+  }
+}
 
-Orden:
+// ✅ Adapter: wrapper sobre generated/ con mapeo a modelo interno
+@Injectable({ providedIn: "root" })
+export class MoleculeApiAdapter {
+  private readonly api = inject(MoleculeControllerService) // generated
 
-1. Angular
-2. externos
-3. internos
+  getMolecule(id: string): Observable<Result<Molecule, ApiError>> {
+    return this.api.retrieve({ id }).pipe(
+      map(
+        (dto) =>
+          ({ ok: true, value: mapDtoToMolecule(dto) }) satisfies Result<
+            Molecule,
+            ApiError
+          >,
+      ),
+      catchError((err) =>
+        of({ ok: false, error: mapHttpError(err) } satisfies Result<
+          Molecule,
+          ApiError
+        >),
+      ),
+    )
+  }
+}
 
----
+// ✅ Facade: simplificar acceso a múltiples servicios
+@Injectable({ providedIn: "root" })
+export class ChemistryFacade {
+  private readonly molecules = inject(MoleculeApiAdapter)
+  private readonly properties = inject(PropertyCalculatorService)
 
-# 12. FORMATO
+  analyzeCompound(smiles: string): Observable<Result<Analysis, AppError>> {
+    // componentes solo interactúan con esta facade
+    return this.molecules
+      .getBySmiles(smiles)
+      .pipe(
+        switchMap((result) =>
+          result.ok ? this.properties.calculate(result.value) : of(result),
+        ),
+      )
+  }
+}
 
-- 2 espacios
-- `'`
-- semicolons consistentes
+// ✅ Strategy: comportamiento intercambiable via DI
+interface ExportStrategy {
+  export(data: MoleculeData[]): Blob
+}
+// Implementaciones: CsvExportStrategy, JsonExportStrategy, SdfExportStrategy
+// Inyectar la estrategia correcta según contexto
+```
 
----
+### 6.3 Estructura de carpetas que refleja los patrones
 
-# 13. ERRORES
+```
+core/
+  api/
+    generated/        ← NUNCA tocar directamente
+    adapters/         ← Adapter pattern: mapean generated/ → modelos internos
+  facades/            ← Facade pattern: simplifican acceso a subsistemas
+  repositories/       ← Repository pattern: abstraen acceso a datos
+shared/
+  factories/          ← Factory/Builder: creación de entidades del dominio
+  strategies/         ← Strategy: algoritmos intercambiables
+  types/              ← Result<T,E>, Option<T>, contratos/interfaces
+```
 
-- Manejo explícito
-- Nunca ignorar
+## 7. ESTILO Y CONVENCIONES
 
----
+- Nombres descriptivos, sin abreviaciones: `userList`, `apiResponse`, `currentConfig`
+- Funciones: máx 20–30 líneas · una responsabilidad · arrow functions · tipadas
+- Variables: `const` por defecto · tipos explícitos en estructuras complejas
+- Imports: Angular → externos → internos
+- Formato: 2 espacios · comillas simples `'` · semicolons consistentes
+- Comentarios solo si agregan valor; documentar funciones públicas
+- Errores: manejo explícito, nunca ignorar
 
-# 14. COMENTARIOS
+## 8. ANTI-PATTERNS — NUNCA HACER
 
-- Solo si agregan valor
-- Documentar APIs públicas
+`any` · lógica en templates · clases/funciones gigantes · `subscribe()` innecesario · uso directo de `generated/` · `new` en servicios (usar `inject()`) · código muerto · imports no usados · duplicación · `*ngIf`/`*ngFor` · `throw`/`try-catch` como flujo principal · mutar estado directamente · funciones con efectos secundarios ocultos · retornar `null`/`undefined` para indicar error · estado público mutable en servicios (`signal` sin `asReadonly()`) · implementar patrones sin necesidad real
 
----
+## 9. I18N Y MULTIIDIOMA
 
-# 15. CONSISTENCIA
+- **Código siempre en inglés** (variables, funciones, clases, tipos)
+- Comentarios e instrucciones pueden ser en español
+- Usar claves de traducción en lugar de texto hardcodeado (preparar para i18n futuro)
+- Traducciones de baja prioridad; el foco es calidad de código y arquitectura
 
-- mismo estilo
-- mismos nombres
-- mismas estructuras
+## REGLA META
 
----
+**Orden de prioridades:**
 
-# 16. LIMPIEZA
+1. **Tipado completo y correcto** — siempre, sin excepciones
+2. **Programación funcional** — funciones puras, inmutabilidad, `Result<T,E>` para errores
+3. **Patrones de diseño y encapsulamiento** — OOP bien aplicado, estado encapsulado
+4. **Modularidad** — un archivo, una responsabilidad
+5. **Declarativo sobre imperativo**
+6. El resto de convenciones de estilo
 
-- eliminar código muerto
-- eliminar imports no usados
-- evitar duplicación
+Todas las reglas pueden ignorarse **solo si** se justifica claramente en un comentario en el código por qué hacerlo mejora la claridad o mantenibilidad en ese caso específico. Sin justificación, las reglas son absolutas.
 
----
-
-# 17. ANTI-PATTERNS
-
-- `any`
-- lógica en templates
-- clases gigantes
-- funciones largas
-- `subscribe()` innecesario
-- uso directo de `generated/`
-- `new` en servicios
-
----
-
-# ⚡ RESULTADO ESPERADO
-
-Código:
-
-- moderno (Angular 17–20+)
-- basado en signals
-- standalone-first
-- completamente tipado
-- modular sin sobre-fragmentación
-- consistente y limpio
-- alineado con mejores prácticas actuales
-
-# El frontend es multiidioma, pero el código debe ser en inglés. Las instrucciones y comentarios pueden estar en español, pero el código, nombres de variables, funciones, clases, etc., deben estar en inglés para mantener la consistencia y legibilidad a nivel global.
-
-las traducciones son de baja prioridad y pueden ser aproximadas, pero el código debe ser claro y profesional en inglés.
-al igual que la version de salidas a ingles siempre debe estar preparadon para el i18n, usando claves de traducción en lugar de texto hardcodeado, y aplicando las mejores prácticas para la internacionalización en Angular, pero no centrandose en hacer la tradiccion inmediata, sino asegurando que el código esté estructurado para soportar múltiples idiomas de manera eficiente en el futuro. en ingles ya cuando sea necesario, pero sin perder de vista que el enfoque principal es la calidad del código y la arquitectura, no la traducción inmediata.
-
-Si el uso de mónadas o abstracciones funcionales reduce la legibilidad o complica el código innecesariamente, se debe preferir una solución más simple.
-Todas las reglas pueden ser ignoradas si se justifica claramente que hacerlo mejora la claridad o la mantenibilidad del código en ese caso específico, pero no se deben ignorar sin una razón de peso y una justificación clara bien comentada en el lugar del código donde se ignore la regla, explicando por qué se decidió ignorar esa regla en ese caso específico, y cómo esa decisión mejora la claridad o la mantenibilidad del código en ese contexto particular.
-
-[1]: https://angularreleases.hashnode.dev/what-is-angular-latest-angular-releases?utm_source=chatgpt.com "What is Angular? Latest Releases Explained (2025)"
-[2]: https://dev.to/genildocs/angular-17-essential-guide-master-the-revolutionary-changes-that-transformed-modern-development-51ad?utm_source=chatgpt.com "Angular 17+ Essential Guide: Master the Revolutionary Changes That Transformed Modern Development - DEV Community"
-[3]: https://www.geeksforgeeks.org/angular-17-whats-new/?utm_source=chatgpt.com "Angular 17: A Comprehensive Look at What's New - GeeksforGeeks"
+Si mónadas/abstracciones funcionales complican innecesariamente el código → preferir solución más simple, pero **siempre manteniendo tipado completo y manejo explícito de errores**.

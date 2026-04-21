@@ -5,6 +5,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { startBrowserCoverage, stopBrowserCoverage } from './support/browser-coverage';
 
 const BACKEND_BASE_URL = 'http://127.0.0.1:8000';
+const FRONTEND_BASE_URL = 'http://127.0.0.1:4200';
 const ROOT_USERNAME = process.env['E2E_ROOT_USERNAME'] ?? 'root';
 const ROOT_PASSWORD = process.env['E2E_ROOT_PASSWORD'] ?? 'admin123';
 
@@ -112,7 +113,7 @@ async function createAppPermission(
 }
 
 async function loginThroughUi(page: Page, username: string, password: string): Promise<void> {
-  await page.goto('/login');
+  await page.goto(`${FRONTEND_BASE_URL}/login`);
   await page.getByRole('textbox', { name: /username/i }).fill(username);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
@@ -169,15 +170,26 @@ test.describe('Identity groups e2e', () => {
       is_enabled: true,
     });
     await createAppPermission(request, rootAccessToken, {
-      app_name: 'tunnel',
+      app_name: 'marcus-kinetics',
       group: betaGroup.id,
       is_enabled: true,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'tunnel-effect',
+      group: alphaGroup.id,
+      is_enabled: false,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'tunnel-effect',
+      group: betaGroup.id,
+      is_enabled: false,
     });
 
     await loginThroughUi(page, memberUser.username, memberPassword);
 
     const navigation = page.locator('.main-nav');
     await expect(navigation).toContainText('Smileit');
+    await expect(navigation).not.toContainText('Marcus Theory');
     await expect(navigation).not.toContainText('Tunnel Effect');
 
     await page.route('**/api/auth/apps/**', async (route) => {
@@ -195,6 +207,96 @@ test.describe('Identity groups e2e', () => {
 
     await expect(page.getByTestId('active-group-selector-trigger')).toContainText(alphaGroup.name);
     await expect(navigation).toContainText('Smileit');
+    await expect(navigation).not.toContainText('Marcus Theory');
+    await expect(navigation).not.toContainText('Tunnel Effect');
+  });
+
+  // Verifica que un grupo con Marcus y Smileit no muestra Tunnel si no está habilitada.
+  test('shows only the enabled Marcus and Smileit apps for the active group', async ({
+    page,
+    request,
+  }) => {
+    const rootAccessToken = await authenticateAsRoot(request);
+    const uniqueSuffix = `${Date.now()}-dual`;
+    const alphaGroup = await createGroup(
+      request,
+      rootAccessToken,
+      `Dual Alpha ${uniqueSuffix}`,
+      `dual-alpha-${uniqueSuffix}`,
+    );
+    const memberPassword = `Pass-${uniqueSuffix}`;
+    const memberUser = await createUser(request, rootAccessToken, {
+      username: `dual_member_${uniqueSuffix}`,
+      email: `dual_member_${uniqueSuffix}@test.local`,
+      password: memberPassword,
+      role: 'user',
+      primary_group_id: alphaGroup.id,
+    });
+
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'marcus-kinetics',
+      group: alphaGroup.id,
+      is_enabled: true,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'smileit',
+      group: alphaGroup.id,
+      is_enabled: true,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'tunnel-effect',
+      group: alphaGroup.id,
+      is_enabled: false,
+    });
+
+    await loginThroughUi(page, memberUser.username, memberPassword);
+
+    const navigation = page.locator('.main-nav');
+    await expect(navigation).toContainText('Marcus Theory');
+    await expect(navigation).toContainText('Smileit');
+    await expect(navigation).not.toContainText('Tunnel Effect');
+  });
+
+  // Verifica que Marcus aparece incluso cuando es la única app científica habilitada del grupo.
+  test('shows Marcus when it is the only enabled scientific app', async ({ page, request }) => {
+    const rootAccessToken = await authenticateAsRoot(request);
+    const uniqueSuffix = `${Date.now()}-marcus-only`;
+    const alphaGroup = await createGroup(
+      request,
+      rootAccessToken,
+      `Marcus Alpha ${uniqueSuffix}`,
+      `marcus-alpha-${uniqueSuffix}`,
+    );
+    const memberPassword = `Pass-${uniqueSuffix}`;
+    const memberUser = await createUser(request, rootAccessToken, {
+      username: `marcus_member_${uniqueSuffix}`,
+      email: `marcus_member_${uniqueSuffix}@test.local`,
+      password: memberPassword,
+      role: 'user',
+      primary_group_id: alphaGroup.id,
+    });
+
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'marcus-kinetics',
+      group: alphaGroup.id,
+      is_enabled: true,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'smileit',
+      group: alphaGroup.id,
+      is_enabled: false,
+    });
+    await createAppPermission(request, rootAccessToken, {
+      app_name: 'tunnel-effect',
+      group: alphaGroup.id,
+      is_enabled: false,
+    });
+
+    await loginThroughUi(page, memberUser.username, memberPassword);
+
+    const navigation = page.locator('.main-nav');
+    await expect(navigation).toContainText('Marcus Theory');
+    await expect(navigation).not.toContainText('Smileit');
     await expect(navigation).not.toContainText('Tunnel Effect');
   });
 
@@ -230,7 +332,7 @@ test.describe('Identity groups e2e', () => {
     });
 
     await loginThroughUi(page, adminUser.username, adminPassword);
-    await page.goto('/admin/groups');
+    await page.goto(`${FRONTEND_BASE_URL}/admin/groups`);
 
     await page.getByTestId(`manage-group-${alphaGroup.id}`).click();
 

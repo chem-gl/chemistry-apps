@@ -91,6 +91,12 @@ export const routes: Routes = [
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
+    path: 'cadma-py',
+    canActivate: [authGuard, appAccessGuard],
+    data: { appKey: 'cadma-py' },
+    loadComponent: () => import('./cadma-py/cadma-py.component').then((m) => m.CadmaPyComponent),
+  },
+  {
     path: 'toxicity-properties',
     canActivate: [authGuard, appAccessGuard],
     data: { appKey: 'toxicity-properties' },

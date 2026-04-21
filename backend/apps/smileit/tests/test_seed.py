@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import uuid
 
+from django.core.management import call_command
 from django.test import TestCase
 
 from ..models import (
@@ -21,6 +22,12 @@ from ..models import (
     SmileitPattern,
     SmileitSubstituent,
     SmileitSubstituentCategory,
+)
+from ..seed_bootstrap import apply_smileit_seed_data
+from ..seed_data import (
+    CATEGORY_SEED_DEFINITIONS,
+    PATTERN_SEED_DEFINITIONS,
+    SUBSTITUENT_SEED_DEFINITIONS,
 )
 
 
@@ -278,3 +285,66 @@ class SmileitSeedTestCase(TestCase):
             )
 
         return pattern
+
+
+class SmileitSeedBootstrapTests(TestCase):
+    """Valida el bootstrap compartido de seeds reales del catálogo Smile-it."""
+
+    def test_apply_smileit_seed_data_is_idempotent(self) -> None:
+        """Reaplicar los seeds no debe duplicar categorías, sustituyentes ni patrones."""
+        SmileitSubstituentCategory.objects.all().delete()
+        SmileitSubstituent.objects.all().delete()
+        SmileitPattern.objects.all().delete()
+        SmileitCategory.objects.all().delete()
+
+        apply_smileit_seed_data(
+            category_model=SmileitCategory,
+            substituent_model=SmileitSubstituent,
+            link_model=SmileitSubstituentCategory,
+            pattern_model=SmileitPattern,
+        )
+        apply_smileit_seed_data(
+            category_model=SmileitCategory,
+            substituent_model=SmileitSubstituent,
+            link_model=SmileitSubstituentCategory,
+            pattern_model=SmileitPattern,
+        )
+
+        self.assertEqual(
+            SmileitCategory.objects.filter(version=1).count(),
+            len(CATEGORY_SEED_DEFINITIONS),
+        )
+        self.assertEqual(
+            SmileitSubstituent.objects.filter(version=1).count(),
+            len(SUBSTITUENT_SEED_DEFINITIONS),
+        )
+        self.assertEqual(
+            SmileitPattern.objects.filter(version=1).count(),
+            len(PATTERN_SEED_DEFINITIONS),
+        )
+        self.assertEqual(
+            SmileitSubstituentCategory.objects.count(),
+            sum(len(seed.categories) for seed in SUBSTITUENT_SEED_DEFINITIONS),
+        )
+
+    def test_regenerate_smileit_seed_reset_restores_catalog(self) -> None:
+        """El comando de gestión debe poder reconstruir el catálogo desde cero."""
+        SmileitSubstituentCategory.objects.all().delete()
+        SmileitSubstituent.objects.all().delete()
+        SmileitPattern.objects.all().delete()
+        SmileitCategory.objects.all().delete()
+
+        call_command("regenerate_smileit_seed", "--reset")
+
+        self.assertEqual(
+            SmileitCategory.objects.filter(is_latest=True, is_active=True).count(),
+            len(CATEGORY_SEED_DEFINITIONS),
+        )
+        self.assertEqual(
+            SmileitSubstituent.objects.filter(is_latest=True, is_active=True).count(),
+            len(SUBSTITUENT_SEED_DEFINITIONS),
+        )
+        self.assertEqual(
+            SmileitPattern.objects.filter(is_latest=True, is_active=True).count(),
+            len(PATTERN_SEED_DEFINITIONS),
+        )

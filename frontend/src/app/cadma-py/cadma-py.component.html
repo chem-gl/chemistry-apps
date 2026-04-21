@@ -1,0 +1,849 @@
+<!-- cadma-py.component.html: Interfaz principal CADMA Py — wizard de 4 pasos con barras de contexto. -->
+<section class="cadma-shell" [attr.aria-label]="'cadmaPy.hero.tag' | transloco">
+
+  <!-- HERO -->
+  <header class="cadma-hero">
+    <div class="hero-left">
+      <p class="hero-tag">{{ 'cadmaPy.hero.tag' | transloco }}</p>
+      <h2 class="hero-title">CADMA<span>Py</span></h2>
+      <p class="hero-desc">{{ 'cadmaPy.hero.desc' | transloco }}</p>
+    </div>
+    <ol class="hero-protocol">
+      <li><span [innerHTML]="'cadmaPy.hero.step1' | transloco"></span></li>
+      <li><span [innerHTML]="'cadmaPy.hero.step2' | transloco"></span></li>
+      <li><span>Configure your ranking formula</span></li>
+      <li><span>View scores &amp; export results</span></li>
+    </ol>
+  </header>
+
+  <!-- STEP TRACKER — 4 pasos -->
+  <nav class="step-tracker" [attr.aria-label]="'cadmaPy.steps.ariaLabel' | transloco">
+    <div class="step-item" [class.active]="activeStep() >= 1" [class.done]="activeStep() > 1">
+      <span class="step-bubble">@if (activeStep() > 1) { ✓ } @else { 1 }</span>
+      <span class="step-label">{{ 'cadmaPy.steps.referenceFamily' | transloco }}</span>
+    </div>
+    <div class="step-connector" [class.filled]="activeStep() > 1"></div>
+    <div class="step-item" [class.active]="activeStep() >= 2" [class.done]="activeStep() > 2">
+      <span class="step-bubble">@if (activeStep() > 2) { ✓ } @else { 2 }</span>
+      <span class="step-label">{{ 'cadmaPy.steps.candidateFiles' | transloco }}</span>
+    </div>
+    <div class="step-connector" [class.filled]="activeStep() > 2"></div>
+    <div class="step-item" [class.active]="activeStep() >= 3" [class.done]="activeStep() > 3">
+      <span class="step-bubble">@if (activeStep() > 3) { ✓ } @else { 3 }</span>
+      <span class="step-label">{{ 'cadmaPy.steps.configureFormula' | transloco }}</span>
+    </div>
+    <div class="step-connector" [class.filled]="activeStep() > 3"></div>
+    <div class="step-item" [class.active]="activeStep() >= 4">
+      <span class="step-bubble">4</span>
+      <span class="step-label">{{ 'cadmaPy.steps.results' | transloco }}</span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ PASO 1: Familia de referencia ═══════════════ -->
+  <section class="step-section">
+    <div class="step-section-header">
+      <div class="step-section-num" [class.success]="activeStep() > 1">
+        @if (activeStep() > 1) { ✓ } @else { 1 }
+      </div>
+      <div class="step-section-info">
+        <h3>{{ 'cadmaPy.step1.title' | transloco }}</h3>
+        <p>{{ 'cadmaPy.step1.desc' | transloco }}</p>
+      </div>
+      @if (selectedLibrary(); as lib) {
+      <div class="selected-summary">
+        <div class="selected-summary-badges">
+          <span class="check-badge">✓ {{ 'cadmaPy.step1.selected' | transloco }}</span>
+          <span class="selected-scope" [class]="scopeCssClass(lib.source_reference)">
+            {{ scopeIcon(lib.source_reference) }} {{ scopeLabel(lib.source_reference) }}
+          </span>
+        </div>
+        <div class="selected-summary-text">
+          <strong>{{ lib.disease_name }}</strong>
+          <span class="selected-summary-name">{{ lib.name }}</span>
+        </div>
+        <div class="selected-summary-meta">
+          <span class="meta-pill">{{ lib.row_count }} {{ 'cadmaPy.step1.compounds' | transloco }}</span>
+          @if (!lib.editable){
+          <span class="meta-pill readonly-pill">🔒 {{ 'cadmaPy.step1.readOnly' | transloco }}</span>
+          }
+        </div>
+        <button class="btn-ghost selected-summary-action" type="button" (click)="clearReferenceSelection()">
+          {{ 'cadmaPy.step1.change' | transloco }}
+        </button>
+      </div>
+      }
+    </div>
+
+    @if (!selectedLibrary()){
+    <!-- Seeds: familias pre-construidas -->
+    @if (samples().length > 0) {
+    <div class="seed-section">
+      <p class="subsection-label">{{ 'cadmaPy.step1.quickStart' | transloco }}</p>
+      <div class="seed-grid">
+        @for (sample of samples(); track sample.key) {
+        <div class="seed-card" [attr.data-key]="sample.key" [class.active-browse]="browsingSampleKey() === sample.key">
+          <button class="seed-card-main" type="button" (click)="browseSample(sample.key)">
+            <div class="seed-icon-wrap">
+              <span class="seed-icon">{{ sample.key === 'neuro' ? '🧠' : '🧬' }}</span>
+            </div>
+            <div class="seed-body">
+              <span class="seed-disease">{{ sample.disease_name }}</span>
+              <strong class="seed-name">{{ sample.name }}</strong>
+              <p class="seed-note">{{ sample.source_note }}</p>
+              <span class="seed-stat">{{ sample.row_count }} {{ 'cadmaPy.step1.referenceCompounds' | transloco }}</span>
+              @if (sampleImportCounts()[sample.key] > 0) {
+              <span class="seed-imported-badge">
+                {{ 'cadmaPy.step1.alreadyImported' | transloco }} {{ sampleImportCounts()[sample.key] }}×
+              </span>
+              }
+            </div>
+          </button>
+          <div class="seed-actions">
+            <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
+              [class.active]="previewSampleKey() === sample.key"
+              (click)="toggleSamplePreview(sample.key, $event)">👁️</button>
+            <button class="btn-seed" type="button" (click)="selectBundledSample(sample.key)" [disabled]="isBusy()">
+              @if (isBusy()) { {{ 'cadmaPy.step1.loading' | transloco }} } @else { {{ 'cadmaPy.step1.selectFamily' |
+              transloco }} }
+            </button>
+          </div>
+        </div>
+        @if (previewSampleKey() === sample.key) {
+        <div class="seed-preview-panel">
+          @if (browsingSampleLibrary(); as lib) {
+          <app-cadma-py-family-detail [library]="lib" [mode]="'browsing'" [autoOpenEditorLibraryId]="copiedLibraryId()"
+            (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)"
+            (selectAsReference)="confirmBrowsingSelection()" (closeBrowsing)="closeSampleBrowsing()" />
+          } @else {
+          <p class="preview-empty">{{ 'cadmaPy.step1.loadingDetail' | transloco }}</p>
+          }
+        </div>
+        }
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Familias guardadas -->
+    @if (libraries().length > 0) {
+    <div class="divider-or"><span>{{ 'cadmaPy.step1.orSavedFamily' | transloco }}</span></div>
+    <div class="library-grid">
+      @for (lib of libraries(); track lib.id) {
+      <div class="library-row" [class.active-browse]="browsingLibraryId() === lib.id">
+        <button class="library-row-main" type="button" (click)="browseLibrary(lib.id)">
+          <span class="lib-scope" [class]="scopeCssClass(lib.source_reference)">
+            {{ scopeIcon(lib.source_reference) }}
+          </span>
+          <div class="lib-info">
+            <span class="lib-disease">{{ lib.disease_name }}</span>
+            <span class="lib-name">{{ lib.name }}</span>
+          </div>
+          <div class="lib-stats">
+            <span class="lib-compounds">{{ lib.row_count }} {{ 'cadmaPy.step1.compounds' | transloco }}</span>
+            <span class="lib-creator">{{ lib.created_by_name || '—' }}</span>
+          </div>
+          <span class="lib-arrow">→</span>
+        </button>
+        <div class="lib-actions">
+          <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
+            [class.active]="previewLibraryId() === lib.id" (click)="togglePreview(lib.id, $event)">👁️</button>
+          @if (lib.deletable) {
+          <button class="lib-action-btn danger" type="button" [title]="'cadmaPy.step1.deleteFamily' | transloco"
+            (click)="deleteLibrary(lib, $event)">🗑️</button>
+          }
+          @if (!lib.editable){
+          <span class="access-icon locked" [title]="'cadmaPy.step1.readOnly' | transloco">🔒</span>
+          }
+        </div>
+      </div>
+      @if (previewLibraryId() === lib.id && browsingLibraryId() !== lib.id) {
+      <div class="lib-preview-panel">
+        <div class="preview-header">
+          <strong>{{ lib.row_count }} compounds — {{ lib.disease_name }}</strong>
+          <button class="btn-ghost btn-sm" type="button" (click)="browseLibrary(lib.id)">
+            {{ 'cadmaPy.step1.viewFullDetail' | transloco }}</button>
+        </div>
+        <app-cadma-py-family-detail [library]="lib" [autoOpenEditorLibraryId]="copiedLibraryId()"
+          (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)" />
+      </div>
+      }
+      @if (browsingLibraryId() === lib.id) {
+      <app-cadma-py-family-detail [library]="lib" [mode]="'browsing'" [autoOpenEditorLibraryId]="copiedLibraryId()"
+        (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)"
+        (selectAsReference)="confirmBrowsingSelection()" (closeBrowsing)="closeBrowsing()" />
+      }
+      }
+    </div>
+    }
+
+    @if (libraries().length === 0 && samples().length === 0) {
+    <p class="empty-hint">{{ 'cadmaPy.step1.noFamilies' | transloco }}</p>
+    }
+
+    <!-- Formulario de creación colapsable -->
+    <details class="create-accordion" [open]="showCreateForm()">
+      <summary (click)="showCreateForm.set(!showCreateForm())">
+        <span class="plus-icon">+</span> {{ 'cadmaPy.step1.createNew' | transloco }}
+      </summary>
+      <div class="create-form">
+        <div class="grid-2">
+          <label class="field-block">
+            <span>{{ 'cadmaPy.step1.familyName' | transloco }}</span>
+            <input type="text" [ngModel]="libraryName()" (ngModelChange)="libraryName.set($event)"
+              [placeholder]="'cadmaPy.step1.familyNamePlaceholder' | transloco" />
+          </label>
+          <label class="field-block">
+            <span>{{ 'cadmaPy.step1.diseaseTarget' | transloco }}</span>
+            <input type="text" [ngModel]="diseaseName()" (ngModelChange)="diseaseName.set($event)"
+              [placeholder]="'cadmaPy.step1.diseaseTargetPlaceholder' | transloco" />
+          </label>
+        </div>
+        <label class="field-block">
+          <span>{{ 'cadmaPy.step1.traceabilitySummary' | transloco }}</span>
+          <textarea rows="2" [ngModel]="description()" (ngModelChange)="description.set($event)"
+            [placeholder]="'cadmaPy.step1.traceabilityPlaceholder' | transloco"></textarea>
+        </label>
+        <div class="grid-2">
+          <label class="field-block">
+            <span>{{ 'cadmaPy.step1.paperReference' | transloco }}</span>
+            <input type="text" [ngModel]="paperReference()" (ngModelChange)="paperReference.set($event)"
+              [placeholder]="'cadmaPy.step1.paperReferencePlaceholder' | transloco" />
+          </label>
+          <label class="field-block">
+            <span>{{ 'cadmaPy.step1.doiUrl' | transloco }}</span>
+            <input type="text" [ngModel]="paperUrl()" (ngModelChange)="paperUrl.set($event)"
+              [placeholder]="'cadmaPy.step1.doiUrlPlaceholder' | transloco" />
+          </label>
+        </div>
+        <p class="upload-hint-text">{{ 'cadmaPy.step1.uploadHint' | transloco }}</p>
+        <app-cadma-py-importer [mode]="'reference'" [fallbackNamePrefix]="libraryName()"
+          (stateChanged)="onReferenceImportChanged($event)" />
+        <div class="action-row">
+          <button class="btn-primary" type="button" (click)="saveReferenceLibrary()" [disabled]="isBusy()">
+            {{ canEditSelected() ? ('cadmaPy.step1.updateFamily' | transloco) : ('cadmaPy.step1.saveReferenceFamily' |
+            transloco) }}
+          </button>
+          <button class="btn-ghost" type="button" (click)="resetReferenceForm()" [disabled]="isBusy()">
+            {{ 'cadmaPy.step1.clear' | transloco }}</button>
+          <button class="btn-danger" type="button" (click)="deleteSelectedLibrary()"
+            [disabled]="isBusy() || !canDeleteSelected()">{{'cadmaPy.step1.deleteSelected'|transloco}}</button>
+        </div>
+      </div>
+    </details>
+    }
+
+    @if (libraryErrorMessage(); as errMsg) {
+    <p class="error-msg" role="alert">{{ errMsg }}</p>
+    }
+  </section>
+
+  <!-- ═══════════════ PASO 2: Datos del candidato ═══════════════ -->
+  @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 2) {
+  <section class="step-section">
+    @if (step1Summary(); as summary) {
+    <div class="context-bar" (click)="clearReferenceSelection()">
+      <span class="context-bar-icon">🧬</span>
+      <span class="context-bar-text">{{ summary }}</span>
+      <button class="btn-ghost btn-sm" type="button">Change</button>
+    </div>
+    }
+
+    <div class="step-section-header">
+      <div class="step-section-num">2</div>
+      <div class="step-section-info">
+        <h3>{{ 'cadmaPy.step2.title' | transloco }}</h3>
+        <p>{{ 'cadmaPy.step2.desc' | transloco }}</p>
+      </div>
+    </div>
+
+    <label class="field-block project-label-field">
+      <span>{{ 'cadmaPy.step2.projectLabel' | transloco }}</span>
+      <input type="text" [ngModel]="workflow.projectLabel()" (ngModelChange)="workflow.projectLabel.set($event)"
+        [placeholder]="'cadmaPy.step2.projectLabelPlaceholder' | transloco" />
+    </label>
+
+    <!-- Pathway selector — 3 vías mutuamente excluyentes -->
+    <div class="pathway-selector">
+      <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'generate'"
+        (click)="candidatePathway.set('generate')">
+        <span class="pathway-icon">⚡</span>
+        <div class="pathway-card-body">
+          <strong>Generate from Smile-it</strong>
+          <p>Pick a completed Smile-it job and auto-launch Toxicity + SA Score jobs.</p>
+        </div>
+      </button>
+      <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'reuse'"
+        (click)="candidatePathway.set('reuse')">
+        <span class="pathway-icon">📦</span>
+        <div class="pathway-card-body">
+          <strong>Reuse completed jobs</strong>
+          <p>Pick existing Smile-it, Toxicity and SA Score jobs to combine their results.</p>
+        </div>
+      </button>
+      <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'manual'"
+        (click)="candidatePathway.set('manual')">
+        <span class="pathway-icon">📄</span>
+        <div class="pathway-card-body">
+          <strong>Manual CSV import</strong>
+          <p>Upload your own CSV files with candidate SMILES, toxicity and SA data.</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- ── Pathway A: Generar desde Smile-it ── -->
+    @if (candidatePathway() === 'generate') {
+    <div class="pathway-panel">
+      <div class="pathway-panel-header">
+        <h4>Generate from Smile-it</h4>
+        <p>Select the Smile-it run that contains your candidate SMILES. CADMA will launch new Toxicity Properties and SA
+          Score jobs automatically.</p>
+      </div>
+      <div class="grid-2">
+        <label class="field-block">
+          <span>{{ 'cadmaPy.step2.quickFillSmileit' | transloco }}</span>
+          <select [ngModel]="quickFillSmileitJobId()" (ngModelChange)="updateQuickFillSmileitJob($event)">
+            <option value="">Select a Smile-it job...</option>
+            @for (job of quickFillSmileitJobs(); track job.id) {
+            <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field-block">
+          <span>SA method</span>
+          <select [ngModel]="quickFillSaMethod()" (ngModelChange)="updateQuickFillSaMethod($event)">
+            <option value="">Select SA method...</option>
+            @for (method of quickFillAvailableSaMethods(); track method) {
+            <option [ngValue]="method">{{ method.toUpperCase() }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="action-row">
+        <button class="btn-primary" type="button" (click)="launchQuickFillFromSelectedSmileit()"
+          [disabled]="!canGenerateFromSelectedSmileit()">
+          @if (quickFillApplying()) { Working... } @else { Generate Toxicity + SA }
+        </button>
+        <button class="btn-ghost btn-sm" type="button" (click)="loadQuickFillJobs()"
+          [disabled]="quickFillLoading() || quickFillApplying()">
+          @if (quickFillLoading()) { Loading... } @else { Reload job list }
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- ── Pathway B: Reusar jobs existentes ── -->
+    @if (candidatePathway() === 'reuse') {
+    <div class="pathway-panel">
+      <div class="pathway-panel-header">
+        <h4>Reuse completed jobs</h4>
+        <p>Select between your completed analysis jobs. A Smile-it job provides the candidate SMILES; Toxicity and SA
+          Score jobs are optional but recommended.</p>
+      </div>
+      <div class="pathway-reuse-grid">
+        <div class="reuse-block reuse-required">
+          <span class="reuse-block-label">Smile-it job · required</span>
+          <select [ngModel]="quickFillSmileitJobId()" (ngModelChange)="updateQuickFillSmileitJob($event)">
+            <option value="">Select a Smile-it job...</option>
+            @for (job of quickFillSmileitJobs(); track job.id) {
+            <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
+            }
+          </select>
+        </div>
+        <div class="reuse-block">
+          <span class="reuse-block-label">Toxicity Properties job · optional</span>
+          <select [ngModel]="quickFillToxicityJobId()" (ngModelChange)="quickFillToxicityJobId.set($event)">
+            <option value="">Skip — no toxicity data</option>
+            @for (job of quickFillToxicityJobs(); track job.id) {
+            <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
+            }
+          </select>
+        </div>
+        <div class="reuse-block">
+          <span class="reuse-block-label">SA Score job · optional</span>
+          <select [ngModel]="quickFillSaScoreJobId()" (ngModelChange)="updateQuickFillSaJob($event)">
+            <option value="">Skip — no SA data</option>
+            @for (job of quickFillSaScoreJobs(); track job.id) {
+            <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
+            }
+          </select>
+        </div>
+        <div class="reuse-block reuse-required">
+          <span class="reuse-block-label">SA method · required</span>
+          <select [ngModel]="quickFillSaMethod()" (ngModelChange)="updateQuickFillSaMethod($event)">
+            <option value="">Select SA method...</option>
+            @for (method of quickFillAvailableSaMethods(); track method) {
+            <option [ngValue]="method">{{ method.toUpperCase() }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-primary" type="button" (click)="applyQuickFillFromPreviousJobs()"
+          [disabled]="!canApplyQuickFill()">
+          @if (quickFillApplying()) { Working... } @else { Apply selected jobs }
+        </button>
+        <button class="btn-ghost btn-sm" type="button" (click)="loadQuickFillJobs()"
+          [disabled]="quickFillLoading() || quickFillApplying()">
+          @if (quickFillLoading()) { Loading... } @else { Reload job list }
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- ── Pathway C: Importar CSV manualmente ── -->
+    @if (candidatePathway() === 'manual') {
+    <div class="pathway-panel">
+      <div class="pathway-panel-header">
+        <h4>Manual CSV import</h4>
+        <p>Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.</p>
+      </div>
+      <app-cadma-py-importer [mode]="'candidate'" [fallbackNamePrefix]="workflow.projectLabel()"
+        [initialSourceConfigsJson]="workflow.sourceConfigsJson()" (stateChanged)="onCandidateImportChanged($event)" />
+    </div>
+    }
+
+    @if (quickFillGuideSummary(); as guideSummary) {
+    @if (guideSummary.hasGuide) {
+    <div class="candidate-status-bar">
+      <span class="meta-pill">{{ guideSummary.moleculeCount }} candidates loaded</span>
+      @if (guideSummary.hasToxicityData) {
+      <span class="meta-pill pill-ok">Toxicity ✓</span>
+      } @else {
+      <span class="meta-pill pill-missing">Toxicity missing</span>
+      }
+      @if (guideSummary.hasSaData) {
+      <span class="meta-pill pill-ok">SA ✓</span>
+      } @else {
+      <span class="meta-pill pill-missing">SA missing</span>
+      }
+      @if (!guideSummary.hasToxicityData || !guideSummary.hasSaData) {
+      <button class="btn-ghost btn-sm" type="button" (click)="launchQuickFillFromCurrentGuide()"
+        [disabled]="!canLaunchQuickFillFromCurrentGuide()">
+        @if (quickFillApplying()) { Launching... } @else { Launch missing jobs }
+      </button>
+      }
+    </div>
+    }
+    }
+
+    @if (quickFillErrorMessage(); as quickFillError) {
+    <p class="error-msg" role="alert">{{ quickFillError }}</p>
+    }
+
+    @if (candidatePayloadPreview(); as payloadPreview) {
+    @if (payloadPreview.hasGuide) {
+    <div class="formula-card">
+      <div class="formula-card-header">
+        <div>
+          <h4>Final candidate payload preview</h4>
+          <p>This is the candidate set that will be carried into step 3.</p>
+        </div>
+        <div class="selected-summary-meta">
+          <span class="meta-pill">{{ payloadPreview.moleculeCount }} candidates</span>
+          @if (payloadPreview.hasToxicityData) {
+          <span class="meta-pill pill-ok">Toxicity ✓</span>
+          }
+          @if (payloadPreview.hasSaData) {
+          <span class="meta-pill pill-ok">SA ✓</span>
+          }
+        </div>
+      </div>
+
+      <p class="chart-hint">Source guide: {{ payloadPreview.guideFilename }}</p>
+      @if (candidateImportedFilenames().length > 0) {
+      <p class="chart-hint">Files: {{ candidateImportedFilenames().join(' · ') }}</p>
+      }
+
+      <div class="table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Candidate</th>
+              <th>SMILES</th>
+              <th>DT</th>
+              <th>M</th>
+              <th>LD50</th>
+              <th>SA</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of payloadPreview.rows; track row.smiles + row.name + $index) {
+            <tr>
+              <td>{{ $index + 1 }}</td>
+              <td>{{ row.name || 'Unnamed candidate' }}</td>
+              <td>{{ row.smiles }}</td>
+              <td>{{ formatPreviewMetric(row.dt, true) }}</td>
+              <td>{{ formatPreviewMetric(row.m, true) }}</td>
+              <td>{{ formatPreviewMetric(row.ld50) }}</td>
+              <td>{{ formatPreviewMetric(row.sa) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (payloadPreview.moleculeCount > payloadPreview.rows.length) {
+      <p class="chart-hint">Showing the first {{ payloadPreview.rows.length }} of {{ payloadPreview.moleculeCount }}
+        candidates.</p>
+      }
+    </div>
+    }
+    }
+
+    <div class="action-row">
+      <button class="btn-secondary" type="button" (click)="acceptCandidateInputs()"
+        [disabled]="!canAdvanceToFormulaStep() || workflow.isProcessing() || isBusy()">
+        Accept and continue to formula
+      </button>
+    </div>
+
+    @if (candidateDraftMessage(); as draftMessage) {
+    <p class="draft-message" role="alert">{{ draftMessage }}</p>
+    }
+
+    @if (workflow.activeSection() === 'dispatching') {
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-label">{{ 'cadmaPy.step2.submitting' | transloco }}</div>
+      <div class="progress-bar">
+        <div class="progress-fill indeterminate"></div>
+      </div>
+    </div>
+    }
+    @if (workflow.activeSection() === 'progress') {
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-label">{{ workflow.progressMessage() }} · {{ workflow.progressPercentage() }}%</div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+      </div>
+    </div>
+    }
+    @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+    <p class="error-msg" role="alert">{{ currentError }}</p>
+    }
+  </section>
+  }
+
+  <!-- ═══════════════ PASO 3: Configurar fórmula ═══════════════ -->
+  @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 3) {
+  <section class="step-section">
+    @if (step1Summary(); as summary) {
+    <div class="context-bar" (click)="clearReferenceSelection()">
+      <span class="context-bar-icon">🧬</span>
+      <span class="context-bar-text">{{ summary }}</span>
+      <button class="btn-ghost btn-sm" type="button">Change</button>
+    </div>
+    }
+    @if (step2Summary(); as summary) {
+    <div class="context-bar" (click)="returnToCandidateInputs()">
+      <span class="context-bar-icon">📋</span>
+      <span class="context-bar-text">{{ summary }}</span>
+      <button class="btn-ghost btn-sm" type="button">Back to step 2</button>
+    </div>
+    }
+
+    <div class="step-section-header">
+      <div class="step-section-num">3</div>
+      <div class="step-section-info">
+        <h3>{{ 'cadmaPy.steps.configureFormula' | transloco }}</h3>
+        <p>Adjust reference values, weights, and ADME intervals, then run the CADMA Py ranking.</p>
+      </div>
+    </div>
+
+    <div class="formula-card">
+      <div class="formula-card-header">
+        <div>
+          <h4>Legacy CADMA formula controls</h4>
+          <p>These values mirror the deprecated desktop workflow and are applied to the next ranking run.</p>
+        </div>
+        <button class="btn-ghost" type="button" (click)="resetLegacyScoreConfig()">Reset defaults</button>
+      </div>
+
+      <div class="formula-grid formula-reference-grid">
+        <label class="field-block">
+          <span>LD50_ref</span>
+          <input type="number" [ngModel]="formulaReferences().LD50"
+            (ngModelChange)="updateFormulaReference('LD50', $event)" step="0.01" />
+        </label>
+        <label class="field-block">
+          <span>M_ref</span>
+          <input type="number" [ngModel]="formulaReferences().M" (ngModelChange)="updateFormulaReference('M', $event)"
+            step="0.01" />
+        </label>
+        <label class="field-block">
+          <span>DT_ref</span>
+          <input type="number" [ngModel]="formulaReferences().DT" (ngModelChange)="updateFormulaReference('DT', $event)"
+            step="0.01" />
+        </label>
+        <label class="field-block">
+          <span>SA_ref</span>
+          <input type="number" [ngModel]="formulaReferences().SA" (ngModelChange)="updateFormulaReference('SA', $event)"
+            step="0.01" />
+        </label>
+        <label class="field-block">
+          <span>Weight ADME</span>
+          <input type="number" [ngModel]="formulaWeights().adme" (ngModelChange)="updateFormulaWeight('adme', $event)"
+            step="0.05" min="0" />
+        </label>
+        <label class="field-block">
+          <span>Weight Toxicity</span>
+          <input type="number" [ngModel]="formulaWeights().toxicity"
+            (ngModelChange)="updateFormulaWeight('toxicity', $event)" step="0.05" min="0" />
+        </label>
+        <label class="field-block">
+          <span>Weight SA</span>
+          <input type="number" [ngModel]="formulaWeights().sa" (ngModelChange)="updateFormulaWeight('sa', $event)"
+            step="0.05" min="0" />
+        </label>
+        <div class="weight-total-pill" [class.warning]="scoreWeightTotal() < 0.99 || scoreWeightTotal() > 1.01">
+          Total weight {{ scoreWeightTotal() | number:'1.0-2' }}
+        </div>
+      </div>
+
+      <div class="interval-editor">
+        <h4>Legacy ADME interval window</h4>
+        <div class="interval-table">
+          <div class="interval-row interval-head">
+            <span>Metric</span><span>Min</span><span>Max</span>
+          </div>
+          @for (row of formulaIntervalRows(); track row.metric) {
+          <div class="interval-row">
+            <strong>{{ row.metric }}</strong>
+            <input type="number" [ngModel]="row.min" (ngModelChange)="updateFormulaInterval(row.metric, 'min', $event)"
+              step="0.01" [attr.title]="row.metric + ' minimum'" placeholder="Min" />
+            <input type="number" [ngModel]="row.max" (ngModelChange)="updateFormulaInterval(row.metric, 'max', $event)"
+              step="0.01" [attr.title]="row.metric + ' maximum'" placeholder="Max" />
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-run" type="button" (click)="runComparison()"
+          [disabled]="workflow.isProcessing() || isBusy()">
+          @if (workflow.isProcessing()) { {{ 'cadmaPy.step2.running' | transloco }} } @else { {{
+          'cadmaPy.step2.runCadmaPy' | transloco }} }
+        </button>
+        <button class="btn-secondary" type="button" (click)="savePausedProgress()"
+          [disabled]="workflow.isProcessing() || isBusy()">
+          {{ 'cadmaPy.step2.saveProgress' | transloco }}
+        </button>
+        <button class="btn-ghost" type="button" (click)="clearCandidateFiles()"
+          [disabled]="workflow.isProcessing() || isBusy()">{{ 'cadmaPy.step2.clearFiles' | transloco }}</button>
+      </div>
+    </div>
+
+    @if (candidateDraftMessage(); as draftMessage) {
+    <p class="draft-message" role="alert">{{ draftMessage }}</p>
+    }
+
+    @if (workflow.activeSection() === 'dispatching') {
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-label">{{ 'cadmaPy.step2.submitting' | transloco }}</div>
+      <div class="progress-bar">
+        <div class="progress-fill indeterminate"></div>
+      </div>
+    </div>
+    }
+    @if (workflow.activeSection() === 'progress') {
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-label">{{ workflow.progressMessage() }} · {{ workflow.progressPercentage() }}%</div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="workflow.progressPercentage()"></div>
+      </div>
+    </div>
+    }
+    @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+    <p class="error-msg" role="alert">{{ currentError }}</p>
+    }
+  </section>
+  }
+
+  <!-- ═══════════════ PASO 4: Resultados ═══════════════ -->
+  @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 4) {
+  <section class="step-section results-section">
+    @if (step1Summary(); as summary) {
+    <div class="context-bar">
+      <span class="context-bar-icon">🧬</span>
+      <span class="context-bar-text">{{ summary }}</span>
+    </div>
+    }
+    @if (step2Summary(); as summary) {
+    <div class="context-bar">
+      <span class="context-bar-icon">📋</span>
+      <span class="context-bar-text">{{ summary }}</span>
+    </div>
+    }
+
+    <div class="step-section-header">
+      <div class="step-section-num success">4</div>
+      <div class="step-section-info">
+        <h3>{{ 'cadmaPy.steps.results' | transloco }}</h3>
+        @if (workflow.resultData(); as resultData) {
+        <p>{{ resultData.methodology_note }}</p>
+        } @else {
+        <p>Waiting for CADMA Py results...</p>
+        }
+      </div>
+      <div class="action-row">
+        <button class="btn-ghost" type="button" (click)="returnToFormulaStep()">Back to formula</button>
+        @if (workflow.resultData() !== null) {
+        <button class="btn-secondary" type="button" (click)="exportSelectionCsv()">
+          {{ 'cadmaPy.step2.exportCsv' | transloco }}
+        </button>
+        }
+      </div>
+    </div>
+
+    @if (workflow.resultData(); as resultData) {
+    <div class="results-kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">{{ 'cadmaPy.step3.referenceFamily' | transloco }}</span>
+        <strong class="kpi-value">{{ resultData.library_name }}</strong>
+        <span class="kpi-meta">{{ resultData.reference_count }} {{ 'cadmaPy.step1.referenceCompounds' | transloco
+          }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">{{ 'cadmaPy.step3.candidatesEvaluated' | transloco }}</span>
+        <strong class="kpi-value kpi-num">{{ resultData.candidate_count }}</strong>
+      </div>
+      <div class="kpi-card kpi-highlight">
+        <span class="kpi-label">{{ 'cadmaPy.step3.topCandidate' | transloco }}</span>
+        <strong class="kpi-value">{{ topCandidate()?.name ?? '—' }}</strong>
+        <span class="kpi-score">{{ topCandidate()?.selection_score ?? 0 | number:'1.0-2' }}</span>
+        <span class="kpi-meta">{{ 'cadmaPy.step3.selectionScore' | transloco }}</span>
+      </div>
+    </div>
+
+    @if (scoreChartOptions()) {
+    <div class="chart-card chart-card-tall">
+      <div class="chart-header">
+        <div>
+          <h4>{{ 'cadmaPy.step3.globalRanking' | transloco }}</h4>
+          <p class="chart-hint">{{ 'cadmaPy.step3.barHint' | transloco }}</p>
+        </div>
+        <label class="chart-type-selector">
+          <span>{{ 'cadmaPy.step3.chartType' | transloco }}</span>
+          <select [ngModel]="scoreChartType()" (ngModelChange)="scoreChartType.set($event)">
+            <option value="bar">{{ 'cadmaPy.step3.barChart' | transloco }}</option>
+            <option value="line">{{ 'cadmaPy.step3.lineChart' | transloco }}</option>
+            <option value="scatter">{{ 'cadmaPy.step3.scatterPlot' | transloco }}</option>
+          </select>
+        </label>
+      </div>
+      <app-scientific-chart [ariaLabel]="'CADMA Py ranking chart'" [options]="scoreChartOptions()!"
+        [chartHeight]="'520px'"></app-scientific-chart>
+    </div>
+    }
+
+    <div class="metric-toolbar">
+      <label class="field-block">
+        <span>{{ 'cadmaPy.step3.metricFocus' | transloco }}</span>
+        <select [ngModel]="selectedMetric()" (ngModelChange)="selectedMetric.set($event)">
+          @for (m of metricOptions(); track m) {
+          <option [ngValue]="m">{{ m }}</option>
+          }
+        </select>
+      </label>
+      <label class="field-block">
+        <span>{{ 'cadmaPy.step3.chartType' | transloco }}</span>
+        <select [ngModel]="metricChartType()" (ngModelChange)="metricChartType.set($event)">
+          <option value="bar">{{ 'cadmaPy.step3.barChart' | transloco }}</option>
+          <option value="line">{{ 'cadmaPy.step3.lineChart' | transloco }}</option>
+          <option value="scatter">{{ 'cadmaPy.step3.scatterPlot' | transloco }}</option>
+        </select>
+      </label>
+    </div>
+
+    @if (metricChartOptions()) {
+    <div class="chart-card chart-card-tall">
+      <h4>{{ 'cadmaPy.step3.candidateVsReference' | transloco }} — {{ selectedMetric() }}</h4>
+      <p class="chart-hint">{{ 'cadmaPy.step3.shadedHint' | transloco }}</p>
+      <app-scientific-chart [ariaLabel]="'CADMA Py metric comparison chart'" [options]="metricChartOptions()!"
+        [chartHeight]="'460px'"></app-scientific-chart>
+    </div>
+    }
+
+    <h4 class="table-title">{{ 'cadmaPy.step3.fullRanking' | transloco }}</h4>
+    <div class="table-wrap">
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'cadmaPy.step3.candidate' | transloco }}</th>
+            <th>S_S</th>
+            <th>S_ADME</th>
+            <th>{{ 'cadmaPy.step3.toxicity' | transloco }}</th>
+            <th>SA</th>
+            <th>{{ 'cadmaPy.step3.admeHits' | transloco }}</th>
+            <th>MW</th>
+            <th>logP</th>
+            <th>MR</th>
+            <th>AtX</th>
+            <th>HBLA</th>
+            <th>HBLD</th>
+            <th>RB</th>
+            <th>PSA</th>
+            <th>DT</th>
+            <th>M</th>
+            <th>LD50</th>
+            <th>SA raw</th>
+            <th>In-band metrics</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of resultData.ranking; track row.name + row.smiles; let i = $index) {
+          <tr [class.top-row]="i === 0">
+            <td class="rank-num">{{ i + 1 }}</td>
+            <td>
+              <strong>{{ row.name }}</strong>
+              <small class="smiles-cell">{{ row.smiles }}</small>
+            </td>
+            <td>
+              <span class="score-badge" [class.score-good]="row.selection_score >= 0.6"
+                [class.score-mid]="row.selection_score >= 0.4 && row.selection_score < 0.6"
+                [class.score-low]="row.selection_score < 0.4">
+                {{ row.selection_score | number:'1.0-2' }}
+              </span>
+            </td>
+            <td>{{ row.adme_alignment | number:'1.0-2' }}</td>
+            <td>{{ row.toxicity_alignment | number:'1.0-2' }}</td>
+            <td>{{ row.sa_alignment | number:'1.0-2' }}</td>
+            <td>{{ row.adme_hits_in_band }}/{{ resultData.score_config.adme_reference_hits ?? '?' }}</td>
+            <td>{{ row.MW === undefined ? '—' : (row.MW | number:'1.0-2') }}</td>
+            <td>{{ row.logP === undefined ? '—' : (row.logP | number:'1.0-2') }}</td>
+            <td>{{ row.MR === undefined ? '—' : (row.MR | number:'1.0-2') }}</td>
+            <td>{{ row.AtX === undefined ? '—' : (row.AtX | number:'1.0-2') }}</td>
+            <td>{{ row.HBLA === undefined ? '—' : (row.HBLA | number:'1.0-2') }}</td>
+            <td>{{ row.HBLD === undefined ? '—' : (row.HBLD | number:'1.0-2') }}</td>
+            <td>{{ row.RB === undefined ? '—' : (row.RB | number:'1.0-2') }}</td>
+            <td>{{ row.PSA === undefined ? '—' : (row.PSA | number:'1.0-2') }}</td>
+            <td>{{ row.DT === undefined ? '—' : (row.DT | number:'1.0-2') }}</td>
+            <td>{{ row.M === undefined ? '—' : (row.M | number:'1.0-2') }}</td>
+            <td>{{ row.LD50 === undefined ? '—' : (row.LD50 | number:'1.0-2') }}</td>
+            <td>{{ row.SA === undefined ? '—' : (row.SA | number:'1.0-2') }}</td>
+            <td>{{ row.metrics_in_band.length > 0 ? row.metrics_in_band.join(', ') : '—' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    } @else {
+    <p class="draft-hint">Running CADMA Py comparison... Results will appear here when the job completes.</p>
+    }
+  </section>
+  }
+
+  <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
+
+  <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+    [jobDisplayNameResolver]="resolveHistoryJobDisplayName" [emptyMessage]="'cadmaPy.history.empty' | transloco"
+    [sectionTitle]="'cadmaPy.history.title' | transloco" [ariaLabel]="'cadmaPy.history.ariaLabel' | transloco"
+    (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"
+    (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
+
+  <app-cadma-py-delete-modal [libraryName]="deleteModalLibraryName()" [linkedJobs]="deleteModalLinkedJobs()"
+    [loading]="deleteModalLoading()" (confirmed)="confirmDelete($event)" (dismissed)="onDeleteDismissed()">
+  </app-cadma-py-delete-modal>
+
+</section>

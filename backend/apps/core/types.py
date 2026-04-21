@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing import Literal, Protocol, TypedDict
 
 type JSONPrimitive = str | int | float | bool | None
 type JSONValue = JSONPrimitive | list[JSONValue] | dict[str, JSONValue]
@@ -42,7 +42,24 @@ type JobProgressStage = Literal[
     "failed",
     "cancelled",
 ]
-type PluginProgressCallback = Callable[[int, JobProgressStage, str], None]
+
+
+class PluginProgressCallback(Protocol):
+    """Contrato flexible para progreso de plugins científicos.
+
+    Acepta tanto la forma moderna
+    ``callback(percent, stage, message)`` como la forma legacy
+    ``callback(percent, message)`` usada por algunos plugins históricos.
+    """
+
+    def __call__(
+        self,
+        plugin_percentage: int,
+        plugin_stage_or_message: JobProgressStage | str,
+        plugin_message: str | None = None,
+    ) -> None: ...
+
+
 type JobLogLevel = Literal["debug", "info", "warning", "error"]
 type PluginLogCallback = Callable[[JobLogLevel, str, str, JSONMap | None], None]
 type PluginControlAction = Literal["continue", "pause"]

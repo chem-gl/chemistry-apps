@@ -1,0 +1,347 @@
+/* _cadma-steps.scss: Step tracker, secciones de paso y barra de selección activa. */
+
+/* ============================================================
+   STEP TRACKER
+   ============================================================ */
+.step-tracker {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.5rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0;
+  white-space: nowrap;
+  opacity: 0.38;
+  transition: opacity 0.25s;
+}
+
+.step-item.active {
+  opacity: 1;
+}
+
+.step-bubble {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--chem-border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--chem-ink-soft);
+  background: #fff;
+  transition: all 0.25s;
+}
+
+.step-item.active .step-bubble {
+  border-color: var(--chem-primary);
+  color: var(--chem-primary);
+  background: var(--chem-primary-light);
+}
+
+.step-item.done .step-bubble {
+  border-color: var(--chem-primary);
+  background: var(--chem-primary);
+  color: #fff;
+}
+
+.step-label {
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  color: var(--chem-ink-soft);
+}
+
+.step-item.active .step-label {
+  color: var(--chem-ink);
+}
+
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--chem-border-subtle);
+  margin: 0 0.5rem;
+  min-width: 2rem;
+  transition: background 0.25s;
+}
+
+.step-connector.filled {
+  background: var(--chem-primary);
+}
+
+/* ============================================================
+   STEP SECTIONS
+   ============================================================ */
+
+/* Barra de contexto — muestra resumen de pasos anteriores */
+.context-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--chem-ink-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.context-bar:hover {
+  border-color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+.context-bar-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.context-bar-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-bar .btn-ghost {
+  flex-shrink: 0;
+}
+
+/* Secciones principales de cada paso */
+.step-section {
+  background: var(--chem-glass-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+  transition: border-color 0.25s;
+}
+
+.results-section {
+  border-color: var(--chem-success);
+}
+
+.step-section-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.95rem 1rem;
+  align-items: start;
+}
+
+.step-section-num {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--chem-primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  transition: background 0.25s;
+}
+
+.step-section-num.success {
+  background: var(--chem-success);
+}
+
+.step-section-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-section-info h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.step-section-info p {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-secondary);
+}
+
+/* Barra de selección activa */
+.selected-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem 1rem;
+  align-items: center;
+  padding: 0.8rem 0.95rem;
+  background: linear-gradient(135deg, rgba(211, 47, 47, 0.06), rgba(123, 90, 158, 0.05));
+  border: 1px solid rgba(211, 47, 47, 0.35);
+  border-radius: 14px;
+  font-size: var(--chem-text-sm);
+}
+
+.selected-summary-badges,
+.selected-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.selected-summary-badges {
+  grid-column: 1 / -1;
+}
+
+.selected-summary-text {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.selected-summary-text strong {
+  color: var(--chem-ink);
+}
+
+.selected-summary-name {
+  color: var(--chem-ink-secondary);
+  overflow-wrap: anywhere;
+}
+
+.selected-summary-action {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.check-badge {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  color: var(--chem-success);
+  background: var(--chem-success-bg);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--chem-radius-sm);
+}
+
+.meta-pill {
+  font-size: 0.75rem;
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface-inset);
+  padding: 0.15rem 0.45rem;
+  border-radius: 8px;
+}
+
+.meta-pill.readonly-pill {
+  color: #92400e;
+  background: var(--chem-warning-bg);
+}
+
+/* Scope badge en selección */
+.selected-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--chem-radius-sm);
+}
+
+.selected-scope.scope-root {
+  background: var(--chem-warning-bg);
+  color: #92400e;
+}
+
+.selected-scope.scope-group {
+  background: var(--chem-accent-light);
+  color: var(--chem-accent);
+}
+
+.selected-scope.scope-personal {
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+}
+
+.selected-scope.scope-unknown {
+  background: var(--chem-surface-inset);
+  color: var(--chem-ink-secondary);
+}
+
+@media (max-width: 720px) {
+  .step-section {
+    padding: 1rem;
+  }
+
+  .step-section-header {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-summary-action {
+    justify-self: stretch;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — Step tracker scroll + compact
+   ============================================================ */
+@media (max-width: 880px) {
+  .step-tracker {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem 1rem;
+    scrollbar-width: thin;
+  }
+
+  .step-label {
+    font-size: 0.72rem;
+  }
+
+  .step-bubble {
+    width: 1.65rem;
+    height: 1.65rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-tracker {
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--chem-radius);
+  }
+
+  .step-section {
+    padding: 0.85rem 0.75rem;
+    border-radius: 14px;
+  }
+
+  .step-section-num {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: 0.78rem;
+  }
+
+  .step-section-info h3 {
+    font-size: 0.95rem;
+  }
+
+  .context-bar {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.65rem;
+  }
+}

@@ -1,0 +1,279 @@
+/* easy-rate.component.scss: Estilos del módulo Easy-rate con sistema de tokens --chem-*. */
+.easy-rate-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.easy-rate-header {
+  h2 {
+    margin: 0.2rem 0;
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
+    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  }
+  p {
+    margin: 0;
+    color: var(--chem-ink-secondary);
+    max-width: 62ch;
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-primary);
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(280px, 450px) minmax(0, 1fr);
+  align-items: start;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.entry-panel,
+.result-panel,
+.logs-card {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
+  padding: 1rem;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 0.8rem;
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    &.section-sub {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.file-slot-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
+/* Zona de carga de archivos */
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.6rem 0.7rem;
+  border: 1.5px dashed var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  cursor: pointer;
+  transition: border-color var(--chem-transition), background var(--chem-transition);
+
+  // Oculta el input nativo pero lo mantiene funcional via el label clicleable
+  input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  &:hover:not(.is-disabled) {
+    border-color: var(--chem-primary);
+    background: var(--chem-surface-elevated);
+  }
+
+  &.has-file {
+    border-color: var(--chem-primary);
+    border-style: solid;
+    background: var(--chem-surface-elevated);
+  }
+
+  &.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.upload-label {
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+  color: var(--chem-ink);
+
+  .req-mark {
+    color: var(--chem-error);
+    margin-left: 0.1rem;
+  }
+
+  .opt-mark {
+    font-weight: 500;
+    color: var(--chem-ink-soft);
+    margin-left: 0.1rem;
+  }
+}
+
+.file-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--chem-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &::before {
+    content: '📎';
+    flex-shrink: 0;
+  }
+}
+
+.upload-hint {
+  font-size: 0.74rem;
+  color: var(--chem-ink-soft);
+}
+
+.inspection-card {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.65rem 0.75rem;
+}
+
+.inspection-header-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  strong {
+    color: var(--chem-ink);
+    font-size: var(--chem-text-sm);
+  }
+}
+
+.inspection-meta {
+  margin: 0.15rem 0 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.74rem;
+}
+
+.execution-selector {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+
+  select {
+    min-width: min(100%, 320px);
+  }
+}
+
+.inspection-status,
+.inspection-warning,
+.inspection-error {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.inspection-status {
+  color: var(--chem-primary);
+  font-weight: 700;
+}
+
+.inspection-warning {
+  color: var(--chem-warning);
+}
+
+.inspection-error {
+  color: var(--chem-error);
+  font-weight: 700;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.28rem 0.75rem;
+}
+
+.preview-label {
+  color: var(--chem-ink-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+  white-space: nowrap;
+}
+
+.preview-value {
+  color: var(--chem-ink);
+  font-size: 0.78rem;
+}
+
+/* Solvent tag */
+.result-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--chem-ink);
+  }
+}
+
+.solvent-tag {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  border: 1px solid var(--chem-info);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+/* Tabla termodinámica */
+.thermo-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr 1fr;
+  gap: 0.25rem 0.85rem;
+  font-size: var(--chem-text-sm);
+
+  .thermo-header {
+    font-weight: 700;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
+    text-align: right;
+  }
+  .thermo-row-label {
+    font-weight: 600;
+    color: var(--chem-ink-secondary);
+    white-space: nowrap;
+  }
+  span:not(.thermo-header):not(.thermo-row-label) {
+    text-align: right;
+    font-family: var(--chem-font-mono);
+    color: var(--chem-ink);
+  }
+}
+

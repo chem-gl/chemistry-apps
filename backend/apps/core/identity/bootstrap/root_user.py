@@ -5,6 +5,8 @@ Se ejecuta en primer arranque para garantizar una cuenta administrativa base.
 
 from __future__ import annotations
 
+import secrets
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -30,7 +32,9 @@ def ensure_root_user() -> tuple[AbstractUser, str | None, bool]:
 
 
 def _build_initial_root_password() -> str:
+    """Obtiene un password inicial seguro sin depender de credenciales fijas."""
     configured_password = getattr(settings, "ROOT_PASSWORD", "") or ""
-    if configured_password.strip() != "":
-        return configured_password
-    return "admin123"
+    normalized_password = configured_password.strip()
+    if normalized_password != "":
+        return normalized_password
+    return secrets.token_urlsafe(18)

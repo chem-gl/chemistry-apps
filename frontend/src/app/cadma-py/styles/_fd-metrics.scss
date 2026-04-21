@@ -1,0 +1,201 @@
+/* _fd-metrics.scss: Trazabilidad, métricas, archivos fuente y advertencia de nulos. */
+
+/* ============================================================
+   TRACEABILITY BAR
+   ============================================================ */
+.traceability-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--chem-warning-bg);
+  border: 1px solid var(--chem-warning-border);
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.trace-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.trace-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.trace-ref {
+  color: var(--chem-warning-text);
+  font-weight: 500;
+}
+
+.trace-link {
+  color: var(--chem-info);
+  text-decoration: none;
+  word-break: break-all;
+  font-size: 0.78rem;
+}
+
+.trace-link:hover {
+  text-decoration: underline;
+}
+
+.detail-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--chem-ink-secondary);
+  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  background: var(--chem-surface-elevated);
+  border-radius: 8px;
+}
+
+/* ============================================================
+   METRICS AVERAGES
+   ============================================================ */
+.section-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compound-count {
+  font-size: var(--chem-text-xs);
+  font-weight: 500;
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface-inset);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--chem-radius-sm);
+}
+
+.metrics-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
+.metric-card {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.metric-card:hover {
+  border-color: var(--chem-border-strong);
+}
+
+.metric-card.has-nulls {
+  border-color: var(--chem-warning-border);
+  background: var(--chem-warning-bg);
+}
+
+.metric-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chem-ink-secondary);
+}
+
+.metric-mean {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--chem-ink);
+  display: block;
+}
+
+.metric-range {
+  font-size: var(--chem-text-xs);
+  color: var(--chem-accent);
+  font-weight: 600;
+}
+
+.metric-minmax {
+  font-size: 0.68rem;
+  color: var(--chem-ink-soft);
+}
+
+.metric-null {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  justify-self: center;
+}
+
+/* ============================================================
+   SOURCE FILES
+   ============================================================ */
+.source-files-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.source-file-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.45rem 0.65rem;
+  background: var(--chem-surface-elevated);
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
+.sf-field {
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--chem-border-subtle);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.sf-name {
+  color: var(--chem-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-meta {
+  color: var(--chem-ink-soft);
+  white-space: nowrap;
+}
+
+.sf-hash {
+  font-family: var(--chem-font-mono);
+  font-size: 0.7rem;
+  color: var(--chem-ink-soft);
+  cursor: help;
+}
+
+/* ============================================================
+   NULL WARNING
+   ============================================================ */
+.null-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--chem-warning-bg);
+  border: 1px solid var(--chem-warning-border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--chem-warning-text);
+}

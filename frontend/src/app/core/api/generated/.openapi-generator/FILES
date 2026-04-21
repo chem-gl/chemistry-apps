@@ -5,6 +5,8 @@ api.module.ts
 api/api.ts
 api/auth.service.ts
 api/auth.serviceInterface.ts
+api/cADMAPy.service.ts
+api/cADMAPy.serviceInterface.ts
 api/easyRate.service.ts
 api/easyRate.serviceInterface.ts
 api/identity.service.ts
@@ -32,6 +34,16 @@ model/accountStatusEnum.ts
 model/appPermission.ts
 model/appPermissionRequest.ts
 model/blankEnum.ts
+model/cadmaCompoundAddRequest.ts
+model/cadmaCompoundRowResponse.ts
+model/cadmaPyJobCreateRequest.ts
+model/cadmaPyJobResponse.ts
+model/cadmaReferenceLibraryForkRequest.ts
+model/cadmaReferenceLibraryResponse.ts
+model/cadmaReferenceLibraryWriteRequest.ts
+model/cadmaReferenceSample.ts
+model/cadmaReferenceSampleImportRequest.ts
+model/cadmaReferenceSamplePreviewRow.ts
 model/domainTokenObtainPairRequest.ts
 model/easyRateArtifactDescriptor.ts
 model/easyRateInspectionExecution.ts
@@ -73,6 +85,8 @@ model/molarFractionsMetadata.ts
 model/molarFractionsParameters.ts
 model/molarFractionsResult.ts
 model/patchedAppPermissionRequest.ts
+model/patchedCadmaReferenceLibraryWriteRequest.ts
+model/patchedCadmaReferenceRowPatchRequest.ts
 model/patchedGroupAppConfigRequest.ts
 model/patchedGroupMembershipRequest.ts
 model/patchedIdentityUserUpdateRequest.ts
@@ -90,6 +104,8 @@ model/saScoreJobCreateRequest.ts
 model/saScoreJobResponse.ts
 model/saScoreMoleculeInputRequest.ts
 model/saScoreResults.ts
+model/sampleKeyEnum.ts
+model/scientificAppCatalog.ts
 model/scientificJob.ts
 model/scientificJobDeletionModeEnum.ts
 model/siteOverlapPolicyEnum.ts

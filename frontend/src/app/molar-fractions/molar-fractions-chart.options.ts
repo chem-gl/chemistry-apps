@@ -6,7 +6,9 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { MolarFractionsResultData } from '../core/application/molar-fractions-workflow.service';
 
 const DEFAULT_PROBE_PH = 7.4;
-const INTERPOLATION_SAMPLES_PER_SEGMENT = 10;
+const INTERPOLATION_SAMPLES_PER_PH_UNIT = 24;
+const MIN_INTERPOLATION_SAMPLES_PER_SEGMENT = 24;
+const MAX_INTERPOLATION_SAMPLES_PER_SEGMENT = 120;
 
 interface CurveDefinition {
   readonly speciesLabel: string;
@@ -151,6 +153,19 @@ function evaluateCurveAtPh(curve: CurveDefinition, phValue: number): number {
   return sanitizeFraction(interpolatedValue);
 }
 
+function resolveSegmentSampleCount(segmentStart: number, segmentEnd: number): number {
+  const phSpan = Math.abs(segmentEnd - segmentStart);
+  const requestedSamples = Math.ceil(phSpan * INTERPOLATION_SAMPLES_PER_PH_UNIT);
+
+  return Math.round(
+    clampValue(
+      requestedSamples,
+      MIN_INTERPOLATION_SAMPLES_PER_SEGMENT,
+      MAX_INTERPOLATION_SAMPLES_PER_SEGMENT,
+    ),
+  );
+}
+
 function buildInterpolatedSeriesData(curve: CurveDefinition): Array<[number, number]> {
   const densePoints: Array<[number, number]> = [];
   const { xValues } = curve;
@@ -158,7 +173,7 @@ function buildInterpolatedSeriesData(curve: CurveDefinition): Array<[number, num
   for (let index = 0; index < xValues.length - 1; index += 1) {
     const segmentStart = xValues[index] ?? 0;
     const segmentEnd = xValues[index + 1] ?? segmentStart;
-    const segmentSamples = Math.max(INTERPOLATION_SAMPLES_PER_SEGMENT, 2);
+    const segmentSamples = Math.max(resolveSegmentSampleCount(segmentStart, segmentEnd), 2);
 
     for (let sampleIndex = 0; sampleIndex < segmentSamples; sampleIndex += 1) {
       const ratio = sampleIndex / segmentSamples;
@@ -216,10 +231,11 @@ export function buildMolarFractionsChartOptions(
     name: curve.speciesLabel,
     type: 'line',
     data: buildInterpolatedSeriesData(curve),
-    smooth: true,
+    smooth: 0.28,
+    smoothMonotone: 'x',
     showSymbol: false,
     lineStyle: {
-      width: 2.4,
+      width: 2.6,
     },
     emphasis: {
       focus: 'series',
@@ -292,18 +308,30 @@ export function buildMolarFractionsChartOptions(
       },
     ],
     grid: {
-      top: 52,
-      right: 28,
-      bottom: 72,
-      left: 58,
+      top: 86,
+      right: 32,
+      bottom: 92,
+      left: 66,
+      containLabel: true,
     },
     legend: {
       type: 'scroll',
       top: 12,
+      left: 'center',
+      itemGap: 14,
+      itemWidth: 18,
+      itemHeight: 10,
+      textStyle: {
+        color: '#5a5163',
+        fontSize: 13,
+        fontWeight: 700,
+      },
       data: [...resultData.speciesLabels],
     },
     toolbox: {
+      top: 10,
       right: 8,
+      itemSize: 18,
       feature: {
         dataZoom: {
           yAxisIndex: 'none',
@@ -350,9 +378,18 @@ export function buildMolarFractionsChartOptions(
       min: resultData.metadata.phMin,
       max: resultData.metadata.phMax,
       nameLocation: 'middle',
-      nameGap: 34,
+      nameGap: 42,
+      nameTextStyle: {
+        color: '#5a5163',
+        fontSize: 14,
+        fontWeight: 700,
+        padding: [14, 0, 0, 0],
+      },
       axisLabel: {
         formatter: (axisValue: number) => formatAxisValue(axisValue),
+        color: '#5a5163',
+        fontSize: 13,
+        margin: 12,
       },
       axisPointer: {
         show: true,
@@ -366,9 +403,18 @@ export function buildMolarFractionsChartOptions(
       min: 0,
       max: 1,
       nameLocation: 'middle',
-      nameGap: 48,
+      nameGap: 56,
+      nameTextStyle: {
+        color: '#5a5163',
+        fontSize: 14,
+        fontWeight: 700,
+        padding: [0, 0, 12, 0],
+      },
       axisLabel: {
         formatter: (axisValue: number) => formatAxisValue(axisValue),
+        color: '#5a5163',
+        fontSize: 13,
+        margin: 12,
       },
     },
     series,

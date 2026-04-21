@@ -50,6 +50,7 @@ export class ActiveGroupSelectorComponent {
     }));
 
     if (this.sessionService.hasRootAccess()) {
+      const knownGroups = this.sessionService.knownGroups();
       return [
         {
           id: null,
@@ -57,7 +58,16 @@ export class ActiveGroupSelectorComponent {
           sublabel: 'Ver y crear en todos los grupos',
           isRootOption: true,
         },
-        ...baseOptions,
+        ...knownGroups.map((groupItem) => {
+          const explicitMembership = memberships.find((item) => item.group_id === groupItem.id);
+
+          return {
+            id: groupItem.id,
+            label: groupItem.name,
+            sublabel: this._resolveRootGroupSublabel(explicitMembership),
+            isRootOption: false,
+          };
+        }),
       ];
     }
 
@@ -106,5 +116,17 @@ export class ActiveGroupSelectorComponent {
     }
 
     return option.id === this.sessionService.activeGroupId();
+  }
+
+  private _resolveRootGroupSublabel(membership: UserMembershipSummary | undefined): string {
+    if (membership?.role_in_group === 'admin') {
+      return 'Administrador explícito';
+    }
+
+    if (membership?.role_in_group === 'member') {
+      return 'Miembro explícito';
+    }
+
+    return 'Administración root';
   }
 }

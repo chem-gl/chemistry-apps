@@ -1,0 +1,128 @@
+/* _cadma-hero.scss: Sección hero con glassmorphism del protocolo CADMA-Chem. */
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+.cadma-shell {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1rem 1rem 2.5rem;
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .cadma-shell {
+    padding: 0.75rem 0.5rem 2rem;
+    gap: 1rem;
+  }
+}
+
+/* ============================================================
+   HERO — glassmorphic
+   ============================================================ */
+.cadma-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem 2.5rem;
+  background: var(--chem-glass-heavy);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius-lg);
+  color: var(--chem-ink);
+}
+
+@media (max-width: 880px) {
+  .cadma-hero {
+    grid-template-columns: 1fr;
+    padding: 1.5rem 1.25rem;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cadma-hero {
+    padding: 1.15rem 1rem;
+    gap: 1rem;
+    border-radius: var(--chem-radius);
+  }
+
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .hero-desc {
+    font-size: 0.85rem;
+  }
+}
+
+.hero-tag {
+  margin: 0 0 0.5rem;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chem-primary);
+}
+
+.hero-title {
+  margin: 0 0 0.75rem;
+  font-size: var(--chem-text-2xl);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.hero-title span {
+  font-weight: 800;
+  color: var(--chem-primary);
+}
+
+.hero-desc {
+  margin: 0;
+  font-size: 0.925rem;
+  line-height: 1.65;
+  color: var(--chem-ink-secondary);
+}
+
+.hero-protocol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+  counter-reset: proto;
+  align-content: center;
+}
+
+.hero-protocol li {
+  counter-increment: proto;
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.6rem;
+  align-items: start;
+  font-size: var(--chem-text-sm);
+  line-height: 1.5;
+  color: var(--chem-ink);
+}
+
+.hero-protocol li::before {
+  content: counter(proto);
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chem-primary-light);
+  border: 1px solid var(--chem-primary);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--chem-primary);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}

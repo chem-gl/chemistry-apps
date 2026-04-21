@@ -43,6 +43,11 @@ class ScientificAppDefinition:
     supports_pause_resume: bool = False
     available_features: tuple[str, ...] = ()
 
+    @property
+    def route_key(self) -> str:
+        """Retorna la clave de navegación derivada del prefijo API registrado."""
+        return self.api_route_prefix.removesuffix("/jobs")
+
 
 class ScientificAppRegistry:
     """Registry global para validar unicidad de plugins y rutas por app.
@@ -54,6 +59,7 @@ class ScientificAppRegistry:
     """
 
     _definitions_by_plugin: dict[str, ScientificAppDefinition] = {}
+    _definitions_by_route_key: dict[str, ScientificAppDefinition] = {}
     _definitions_by_route_prefix: dict[str, ScientificAppDefinition] = {}
     _definitions_by_api_base_path: dict[str, ScientificAppDefinition] = {}
     _cache_payload_validators_by_plugin: dict[str, Callable[[JSONMap], bool]] = {}
@@ -67,13 +73,17 @@ class ScientificAppRegistry:
         idempotente. Si detecta otro origen con los mismos identificadores,
         lanza excepción para forzar corrección inmediata.
         """
+        cls._sync_route_key_index()
+
         cls._validate_unique_plugin(definition)
+        cls._validate_unique_route_key(definition)
         cls._validate_unique_route_prefix(definition)
         cls._validate_unique_api_base_path(definition)
 
         cls._definitions_by_plugin[definition.plugin_name] = definition
         cls._definitions_by_route_prefix[definition.api_route_prefix] = definition
         cls._definitions_by_api_base_path[definition.api_base_path] = definition
+        cls._sync_route_key_index()
 
     @classmethod
     def supports_pause_resume(cls, plugin_name: str) -> bool:
@@ -91,6 +101,22 @@ class ScientificAppRegistry:
     ) -> ScientificAppDefinition | None:
         """Obtiene definición de app por nombre de plugin."""
         return cls._definitions_by_plugin.get(plugin_name)
+
+    @classmethod
+    def get_definition_by_route_key(
+        cls, route_key: str
+    ) -> ScientificAppDefinition | None:
+        """Obtiene definición de app por clave de ruta de frontend."""
+        cls._sync_route_key_index()
+        return cls._definitions_by_route_key.get(route_key)
+
+    @classmethod
+    def resolve_definition(cls, app_identifier: str) -> ScientificAppDefinition | None:
+        """Resuelve una app por plugin_name canónico o por route_key legado."""
+        definition = cls.get_definition_by_plugin(app_identifier)
+        if definition is not None:
+            return definition
+        return cls.get_definition_by_route_key(app_identifier)
 
     @classmethod
     def list_definitions(cls) -> list[ScientificAppDefinition]:
@@ -118,6 +144,19 @@ class ScientificAppRegistry:
         return cls._cache_payload_validators_by_plugin.get(plugin_name)
 
     @classmethod
+    def _sync_route_key_index(cls) -> None:
+        """Reconstruye el índice derivado de route_key desde los prefijos reales.
+
+        Este índice es redundante respecto a `_definitions_by_route_prefix`, por lo que
+        se vuelve a generar para evitar estados inconsistentes si algún test o rutina de
+        bootstrap limpia parcialmente los diccionarios internos del registry.
+        """
+        cls._definitions_by_route_key = {
+            registered_definition.route_key: registered_definition
+            for registered_definition in cls._definitions_by_route_prefix.values()
+        }
+
+    @classmethod
     def _validate_unique_plugin(cls, definition: ScientificAppDefinition) -> None:
         existing_definition: ScientificAppDefinition | None = (
             cls._definitions_by_plugin.get(definition.plugin_name)
@@ -128,6 +167,20 @@ class ScientificAppRegistry:
         raise ImproperlyConfigured(
             "Plugin name duplicated during startup: "
             f"'{definition.plugin_name}' in '{definition.app_config_name}' already "
+            f"registered by '{existing_definition.app_config_name}'."
+        )
+
+    @classmethod
+    def _validate_unique_route_key(cls, definition: ScientificAppDefinition) -> None:
+        existing_definition: ScientificAppDefinition | None = (
+            cls._definitions_by_route_key.get(definition.route_key)
+        )
+        if existing_definition is None or existing_definition == definition:
+            return
+
+        raise ImproperlyConfigured(
+            "Route key duplicated during startup: "
+            f"'{definition.route_key}' in '{definition.app_config_name}' already "
             f"registered by '{existing_definition.app_config_name}'."
         )
 

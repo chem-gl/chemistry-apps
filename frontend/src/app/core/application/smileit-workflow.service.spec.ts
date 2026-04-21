@@ -760,6 +760,53 @@ describe('SmileitWorkflowService', () => {
     });
   });
 
+  it('rehydrates the historical Smileit input state before showing the recovered result', () => {
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-history-restore-1',
+          parameters: {
+            principal_smiles: 'CCN(CC)CC',
+            selected_atom_indices: [2, 5],
+            assignment_blocks: [
+              {
+                label: 'Recovered block',
+                priority: 1,
+                site_atom_indices: [2, 5],
+                resolved_substituents: [],
+              },
+            ],
+            r_substitutes: 2,
+            num_bonds: 1,
+            max_structures: 128,
+            site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
+            export_name_base: 'history_bundle',
+            export_padding: 5,
+            references: {
+              catalog: [{ stable_id: 'entry-1', name: 'Recovered entry' }],
+              patterns: [],
+            },
+          },
+        }),
+      ),
+    );
+
+    workflowService.principalSmiles.set('stale-smiles');
+    workflowService.selectedAtomIndices.set([9]);
+    workflowService.assignmentBlocks.set([]);
+    workflowService.maxStructures.set(0);
+    workflowService.exportNameBase.set('stale_export');
+
+    workflowService.openHistoricalJob('smileit-history-restore-1');
+
+    expect(workflowService.principalSmiles()).toBe('CCN(CC)CC');
+    expect(workflowService.selectedAtomIndices()).toEqual([2, 5]);
+    expect(workflowService.assignmentBlocks()).toHaveLength(1);
+    expect(workflowService.maxStructures()).toBe(128);
+    expect(workflowService.exportNameBase()).toBe('history_bundle');
+    expect(workflowService.activeSection()).toBe('result');
+  });
+
   it('falls back to polling, de-duplicates log events and resolves the final Smileit result', () => {
     const progressEvents$ = new Subject<{
       progress_percentage: number;

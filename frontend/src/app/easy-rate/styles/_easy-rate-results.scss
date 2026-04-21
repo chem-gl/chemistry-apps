@@ -1,0 +1,212 @@
+/* Resultado */
+.summary-banner {
+  margin: 0;
+  border: 1px solid var(--chem-info);
+  border-radius: var(--chem-radius);
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.result-section {
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--chem-border-subtle);
+
+  h4 {
+    font-size: var(--chem-text-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
+    margin: 0 0 0.5rem;
+  }
+}
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.2rem 0.8rem;
+  align-items: baseline;
+}
+
+.kv-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+  white-space: nowrap;
+}
+.kv-value {
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink);
+  &.mono {
+    font-family: var(--chem-font-mono);
+  }
+}
+.mono {
+  font-family: var(--chem-font-mono);
+}
+
+/* Flags */
+.flag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.flag-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  &.flag-on {
+    background: var(--chem-info-bg);
+    color: var(--chem-info);
+    border: 1px solid var(--chem-info);
+  }
+  &.flag-warn {
+    background: var(--chem-warning-bg);
+    color: var(--chem-warning);
+    border: 1px solid var(--chem-warning);
+  }
+}
+
+/* Descriptores de archivos */
+.file-descriptors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fd-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 0.3rem 0.5rem;
+  background: var(--chem-surface);
+
+  .fd-field {
+    font-weight: 700;
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
+    white-space: nowrap;
+    min-width: 110px;
+  }
+  .fd-name {
+    color: var(--chem-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .fd-size {
+    color: var(--chem-ink-soft);
+    white-space: nowrap;
+  }
+}
+
+/* Error y estados */
+.error-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-message {
+  margin: 0;
+  color: var(--chem-error);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.status-message {
+  margin: 0;
+  color: var(--chem-ink-soft);
+  font-size: 0.86rem;
+}
+
+/* Logs */
+.logs-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.log-item {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 0.5rem;
+  background: var(--chem-surface);
+  display: grid;
+  gap: 0.3rem;
+}
+
+.log-header {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.log-level {
+  border-radius: 999px;
+  padding: 0.08rem 0.4rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  border: 1px solid transparent;
+  font-family: var(--chem-font-label);
+
+  &.level-debug {
+    color: var(--chem-ink-soft);
+    background: var(--chem-surface-elevated);
+  }
+  &.level-info {
+    color: var(--chem-info);
+    background: var(--chem-info-bg);
+  }
+  &.level-warning {
+    color: var(--chem-warning);
+    background: var(--chem-warning-bg);
+  }
+  &.level-error {
+    color: var(--chem-error);
+    background: var(--chem-error-bg);
+  }
+}
+
+.log-source,
+.log-index {
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-xs);
+}
+.log-index {
+  margin-left: auto;
+}
+.log-message {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.8rem;
+}
+.log-payload {
+  margin: 0;
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  border-radius: var(--chem-radius);
+  padding: 0.45rem;
+  color: var(--chem-ink-secondary);
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  font-family: var(--chem-font-mono);
+}
+
+

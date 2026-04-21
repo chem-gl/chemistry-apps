@@ -149,6 +149,839 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
+  /api/cadma-py/jobs/:
+    post:
+      operationId: cadma_py_jobs_create
+      description: Encola un job de comparación contra una familia de referencia.
+      summary: Crear Job de CADMA Py
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CadmaPyJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CadmaPyJobCreateRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadmaPyJobCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaPyJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/{id}/:
+    get:
+      operationId: cadma_py_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/{id}/report-csv/:
+    get:
+      operationId: cadma_py_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/{id}/report-error/:
+    get:
+      operationId: cadma_py_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/{id}/report-inputs/:
+    get:
+      operationId: cadma_py_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/cadma-py/jobs/{id}/report-log/:
+    get:
+      operationId: cadma_py_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/:
+    get:
+      operationId: cadma_py_jobs_reference_libraries_list
+      description: Lista o crea familias de referencia visibles para el actor.
+      summary: Listar o Crear Familias de Referencia CADMA
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: cadma_py_jobs_reference_libraries_create
+      description: Lista o crea familias de referencia visibles para el actor.
+      summary: Listar o Crear Familias de Referencia CADMA
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryWriteRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/{library_id}/:
+    get:
+      operationId: cadma_py_jobs_reference_libraries_retrieve
+      description: Opera sobre una familia concreta manteniendo las reglas RBAC.
+      summary: Consultar, actualizar o eliminar una familia CADMA
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '204':
+          description: Familia eliminada correctamente.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    patch:
+      operationId: cadma_py_jobs_reference_libraries_partial_update
+      description: Opera sobre una familia concreta manteniendo las reglas RBAC.
+      summary: Consultar, actualizar o eliminar una familia CADMA
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceLibraryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceLibraryWriteRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceLibraryWriteRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '204':
+          description: Familia eliminada correctamente.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: cadma_py_jobs_reference_libraries_destroy
+      description: Opera sobre una familia concreta manteniendo las reglas RBAC.
+      summary: Consultar, actualizar o eliminar una familia CADMA
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '204':
+          description: Familia eliminada correctamente.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/{library_id}/fork/:
+    post:
+      operationId: cadma_py_jobs_reference_libraries_fork_create
+      description: Genera una copia editable para el actor sin alterar la familia
+        compartida original.
+      summary: Crear una copia editable de una familia compartida de solo lectura
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryForkRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryForkRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceLibraryForkRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/{library_id}/report-inputs/:
+    get:
+      operationId: cadma_py_jobs_reference_libraries_report_inputs_retrieve
+      description: Entrega un ZIP con todos los archivos fuente guardados para una
+        familia.
+      summary: Descargar ZIP de archivos fuente de una familia de referencia
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/{library_id}/rows/:
+    post:
+      operationId: cadma_py_jobs_reference_libraries_rows_create
+      description: Agrega un compuesto con ADME auto-calculado por RDKit.
+      summary: Agregar un compuesto nuevo a una familia de referencia
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CadmaCompoundAddRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CadmaCompoundAddRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadmaCompoundAddRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaCompoundRowResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-libraries/{library_id}/rows/{row_index}/:
+    patch:
+      operationId: cadma_py_jobs_reference_libraries_rows_partial_update
+      description: Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
+      summary: Editar o eliminar una fila de compuesto por índice
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: row_index
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceRowPatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceRowPatchRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCadmaReferenceRowPatchRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaCompoundRowResponse'
+          description: ''
+        '204':
+          description: Compuesto eliminado correctamente.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: cadma_py_jobs_reference_libraries_rows_destroy
+      description: Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
+      summary: Editar o eliminar una fila de compuesto por índice
+      parameters:
+      - in: path
+        name: library_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: row_index
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaCompoundRowResponse'
+          description: ''
+        '204':
+          description: Compuesto eliminado correctamente.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-samples/:
+    get:
+      operationId: cadma_py_jobs_reference_samples_list
+      description: Expone datasets de ejemplo tomados del directorio deprecated.
+      summary: Listar muestras legacy disponibles para CADMA Py
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CadmaReferenceSample'
+          description: ''
+  /api/cadma-py/jobs/reference-samples/{sample_key}/detail/:
+    get:
+      operationId: cadma_py_jobs_reference_samples_detail_retrieve
+      description: Entrega el mismo detalle rico de familia para las muestras bundled
+        seed.
+      summary: Ver detalle completo de una muestra legacy sin importarla
+      parameters:
+      - in: path
+        name: sample_key
+        schema:
+          type: string
+          pattern: ^[a-z]+$
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-samples/{sample_key}/preview/:
+    get:
+      operationId: cadma_py_jobs_reference_samples_preview_list
+      description: Devuelve name + SMILES de cada fila del CSV legacy para vista previa.
+      summary: Vista previa de compuestos de una muestra legacy
+      parameters:
+      - in: path
+        name: sample_key
+        schema:
+          type: string
+          pattern: ^[a-z]+$
+        required: true
+      tags:
+      - CADMAPy
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CadmaReferenceSamplePreviewRow'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/cadma-py/jobs/reference-samples/import/:
+    post:
+      operationId: cadma_py_jobs_reference_samples_import_create
+      description: Crea una familia visible para el actor a partir de un CSV example.
+      summary: Importar una muestra legacy como familia de referencia
+      tags:
+      - CADMAPy
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceSampleImportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceSampleImportRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadmaReferenceSampleImportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadmaReferenceLibraryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/easy-rate/jobs/:
     post:
       operationId: easy_rate_jobs_create
@@ -752,6 +1585,24 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/identity/scientific-apps/:
+    get:
+      operationId: identity_scientific_apps_list
+      description: Expone el catálogo canónico de apps científicas registradas.
+      tags:
+      - Identity
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScientificAppCatalog'
+          description: ''
   /api/identity/users/:
     get:
       operationId: identity_users_list
@@ -3686,6 +4537,414 @@ components:
     BlankEnum:
       enum:
       - ''
+    CadmaCompoundAddRequest:
+      type: object
+      description: Valida la adición de un compuesto nuevo a una familia existente.
+      properties:
+        smiles:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        name:
+          type: string
+          maxLength: 200
+        paper_reference:
+          type: string
+          maxLength: 300
+        paper_url:
+          type: string
+          maxLength: 500
+        evidence_note:
+          type: string
+          maxLength: 1000
+        toxicity_dt:
+          type: number
+          format: double
+          nullable: true
+        toxicity_m:
+          type: number
+          format: double
+          nullable: true
+        toxicity_ld50:
+          type: number
+          format: double
+          nullable: true
+        sa_score:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - smiles
+    CadmaCompoundRowResponse:
+      type: object
+      description: Serializer de salida para una fila de compuesto individual.
+      properties:
+        name:
+          type: string
+          readOnly: true
+        smiles:
+          type: string
+          readOnly: true
+        MW:
+          type: number
+          format: double
+          readOnly: true
+        logP:
+          type: number
+          format: double
+          readOnly: true
+        MR:
+          type: number
+          format: double
+          readOnly: true
+        AtX:
+          type: number
+          format: double
+          readOnly: true
+        HBLA:
+          type: number
+          format: double
+          readOnly: true
+        HBLD:
+          type: number
+          format: double
+          readOnly: true
+        RB:
+          type: number
+          format: double
+          readOnly: true
+        PSA:
+          type: number
+          format: double
+          readOnly: true
+        DT:
+          type: number
+          format: double
+          readOnly: true
+        M:
+          type: number
+          format: double
+          readOnly: true
+        LD50:
+          type: number
+          format: double
+          readOnly: true
+        SA:
+          type: number
+          format: double
+          readOnly: true
+        paper_reference:
+          type: string
+          readOnly: true
+        paper_url:
+          type: string
+          readOnly: true
+        evidence_note:
+          type: string
+          readOnly: true
+      required:
+      - AtX
+      - DT
+      - HBLA
+      - HBLD
+      - LD50
+      - M
+      - MR
+      - MW
+      - PSA
+      - RB
+      - SA
+      - evidence_note
+      - logP
+      - name
+      - paper_reference
+      - paper_url
+      - smiles
+    CadmaPyJobCreateRequest:
+      type: object
+      description: Valida la creación de un job CADMA Py a partir de una familia y
+        CSVs.
+      properties:
+        reference_library_id:
+          type: string
+          format: uuid
+        project_label:
+          type: string
+          maxLength: 160
+        combined_csv_text:
+          type: string
+        smiles_csv_text:
+          type: string
+        toxicity_csv_text:
+          type: string
+        sa_csv_text:
+          type: string
+        combined_file:
+          type: string
+          format: binary
+          nullable: true
+        smiles_file:
+          type: string
+          format: binary
+          nullable: true
+        toxicity_file:
+          type: string
+          format: binary
+          nullable: true
+        sa_file:
+          type: string
+          format: binary
+          nullable: true
+        source_configs_json:
+          type: string
+        score_config_json:
+          type: string
+        start_paused:
+          type: boolean
+          default: false
+      required:
+      - reference_library_id
+    CadmaPyJobResponse:
+      type: object
+      description: Serializa un ScientificJob completo para CADMA Py.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        owner:
+          type: integer
+          nullable: true
+        group:
+          type: integer
+          nullable: true
+        plugin_name:
+          type: string
+          maxLength: 100
+        algorithm_version:
+          type: string
+          maxLength: 50
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        parameters: {}
+        results:
+          nullable: true
+        error_trace:
+          type: string
+        progress_message:
+          type: string
+          description: Mensaje corto y legible del estado de progreso.
+          maxLength: 255
+        progress_percentage:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Porcentaje de progreso entre 0 y 100.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - plugin_name
+      - updated_at
+    CadmaReferenceLibraryForkRequest:
+      type: object
+      description: Valida la copia explícita de una familia con nombre opcional.
+      properties:
+        new_name:
+          type: string
+          maxLength: 160
+    CadmaReferenceLibraryResponse:
+      type: object
+      description: Serializer de salida para una familia de referencia visible.
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        disease_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        source_reference:
+          type: string
+          readOnly: true
+        group_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        editable:
+          type: boolean
+          readOnly: true
+        deletable:
+          type: boolean
+          readOnly: true
+        forkable:
+          type: boolean
+          readOnly: true
+        row_count:
+          type: integer
+          readOnly: true
+        rows:
+          readOnly: true
+        source_file_count:
+          type: integer
+          readOnly: true
+        source_files:
+          readOnly: true
+        paper_reference:
+          type: string
+          readOnly: true
+        paper_url:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          readOnly: true
+        updated_at:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - created_by_id
+      - created_by_name
+      - deletable
+      - description
+      - disease_name
+      - editable
+      - forkable
+      - group_id
+      - id
+      - name
+      - paper_reference
+      - paper_url
+      - row_count
+      - rows
+      - source_file_count
+      - source_files
+      - source_reference
+      - updated_at
+    CadmaReferenceLibraryWriteRequest:
+      type: object
+      description: Valida creación o actualización de una familia de referencia.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        disease_name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+        paper_reference:
+          type: string
+          maxLength: 300
+        paper_url:
+          type: string
+          maxLength: 500
+        combined_csv_text:
+          type: string
+        smiles_csv_text:
+          type: string
+        toxicity_csv_text:
+          type: string
+        sa_csv_text:
+          type: string
+        combined_file:
+          type: string
+          format: binary
+          nullable: true
+        smiles_file:
+          type: string
+          format: binary
+          nullable: true
+        toxicity_file:
+          type: string
+          format: binary
+          nullable: true
+        sa_file:
+          type: string
+          format: binary
+          nullable: true
+        source_configs_json:
+          type: string
+      required:
+      - disease_name
+      - name
+    CadmaReferenceSample:
+      type: object
+      description: Serializer de salida para datasets legacy disponibles.
+      properties:
+        key:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        disease_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        row_count:
+          type: integer
+          readOnly: true
+        source_note:
+          type: string
+          readOnly: true
+      required:
+      - description
+      - disease_name
+      - key
+      - name
+      - row_count
+      - source_note
+    CadmaReferenceSampleImportRequest:
+      type: object
+      description: Valida la importación/copia de un dataset sample incluido en el
+        repositorio.
+      properties:
+        sample_key:
+          $ref: '#/components/schemas/SampleKeyEnum'
+        new_name:
+          type: string
+          maxLength: 160
+      required:
+      - sample_key
+    CadmaReferenceSamplePreviewRow:
+      type: object
+      description: Serializer con name + SMILES para vista previa de muestra legacy.
+      properties:
+        name:
+          type: string
+          readOnly: true
+        smiles:
+          type: string
+          readOnly: true
+      required:
+      - name
+      - smiles
     DomainTokenObtainPairRequest:
       type: object
       description: Extiende claims JWT con rol y grupo primario.
@@ -5312,6 +6571,69 @@ components:
           nullable: true
         is_enabled:
           type: boolean
+    PatchedCadmaReferenceLibraryWriteRequest:
+      type: object
+      description: Valida creación o actualización de una familia de referencia.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        disease_name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+        paper_reference:
+          type: string
+          maxLength: 300
+        paper_url:
+          type: string
+          maxLength: 500
+        combined_csv_text:
+          type: string
+        smiles_csv_text:
+          type: string
+        toxicity_csv_text:
+          type: string
+        sa_csv_text:
+          type: string
+        combined_file:
+          type: string
+          format: binary
+          nullable: true
+        smiles_file:
+          type: string
+          format: binary
+          nullable: true
+        toxicity_file:
+          type: string
+          format: binary
+          nullable: true
+        sa_file:
+          type: string
+          format: binary
+          nullable: true
+        source_configs_json:
+          type: string
+    PatchedCadmaReferenceRowPatchRequest:
+      type: object
+      description: Valida la edición parcial de una fila de referencia existente.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        paper_reference:
+          type: string
+          maxLength: 300
+        paper_url:
+          type: string
+          maxLength: 500
+        evidence_note:
+          type: string
+          maxLength: 1000
     PatchedGroupAppConfigRequest:
       type: object
       description: Serializer CRUD para configuración de app por grupo.
@@ -5671,6 +6993,41 @@ components:
       - molecules
       - requested_methods
       - total
+    SampleKeyEnum:
+      enum:
+      - neuro
+      - rett
+      type: string
+      description: |-
+        * `neuro` - neuro
+        * `rett` - rett
+    ScientificAppCatalog:
+      type: object
+      description: Serializer del catálogo canónico de apps científicas registradas.
+      properties:
+        plugin_name:
+          type: string
+          readOnly: true
+        route_key:
+          type: string
+          readOnly: true
+        api_base_path:
+          type: string
+          readOnly: true
+        supports_pause_resume:
+          type: boolean
+          readOnly: true
+        available_features:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - api_base_path
+      - available_features
+      - plugin_name
+      - route_key
+      - supports_pause_resume
     ScientificJob:
       type: object
       description: |-

@@ -20,9 +20,12 @@ Cómo se usa:
 
 from __future__ import annotations
 
+from typing import Literal
+
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -38,6 +41,7 @@ from .artifacts import ScientificInputArtifactStorageService
 from .declarative_api import DeclarativeJobAPI
 from .identity.services import AuthorizationService
 from .models import ScientificJob
+from .realtime import broadcast_job_update
 from .reporting import (
     build_download_filename,
     build_job_error_report,
@@ -298,18 +302,19 @@ class ScientificAppViewSetMixin:
         response_serializer = response_serializer_class(job)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-    def persist_artifacts_and_dispatch(
+    def persist_artifacts_and_finalize(
         self,
         created_job: ScientificJob,
         uploaded_files: list[tuple[str, UploadedFile]],
         job_handle: JobHandle[JSONMap],
+        *,
+        final_action: Literal["dispatch", "pause"] = "dispatch",
     ) -> Response | None:
-        """Persiste archivos de entrada en DB y despacha el job al broker.
+        """Persiste artefactos y deja el job listo para ejecución o pausa inicial.
 
-        Retorna None si todo fue correcto.
-        Retorna Response de error 400 si falla la persistencia de artefactos
-        (y marca el job como failed).
-        Elimina el bloque de 60+ líneas duplicado entre easy_rate y marcus.
+        - ``dispatch``: comportamiento estándar, persiste archivos y encola el job.
+        - ``pause``: persiste archivos y deja el job en estado paused sin ejecutarlo,
+          útil para borradores reanudables visibles desde Jobs Monitor.
         """
         artifact_storage_service = ScientificInputArtifactStorageService()
         try:
@@ -341,7 +346,25 @@ class ScientificAppViewSetMixin:
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Despachar al broker ahora que los artefactos están persistidos
+        if final_action == "pause":
+            created_job.status = "paused"
+            created_job.progress_stage = "paused"
+            created_job.progress_message = (
+                "Borrador guardado y pausado antes de la ejecución."
+            )
+            created_job.paused_at = timezone.now()
+            created_job.save(
+                update_fields=[
+                    "status",
+                    "progress_stage",
+                    "progress_message",
+                    "paused_at",
+                    "updated_at",
+                ]
+            )
+            broadcast_job_update(created_job)
+            return None
+
         job_handle.dispatch_if_pending().run()
         return None
 
@@ -380,10 +403,52 @@ class ScientificAppViewSetMixin:
             ScientificJob, pk=job_handle.job_id
         )
 
-        artifact_error = self.persist_artifacts_and_dispatch(
+        artifact_error = self.persist_artifacts_and_finalize(
             created_job=created_job,
             uploaded_files=uploaded_files,
             job_handle=job_handle,
+            final_action="dispatch",
+        )
+        if artifact_error is not None:
+            return artifact_error
+
+        created_job.refresh_from_db()
+        response_serializer = self.response_serializer_class(created_job)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    def prepare_and_pause_with_artifacts(
+        self,
+        parameters_payload: JSONMap,
+        version_value: str,
+        uploaded_files: list[tuple[str, UploadedFile]],
+    ) -> Response:
+        """Crea un job real, persiste artefactos y lo deja pausado sin ejecutarlo."""
+        declarative_api = DeclarativeJobAPI(dispatch_callback=dispatch_scientific_job)
+        owner_id, group_id = self.resolve_actor_job_scope(self.request)
+        prepare_result = declarative_api.prepare_job(
+            plugin=self.plugin_name,
+            version=version_value,
+            parameters=parameters_payload,
+            owner_id=owner_id,
+            group_id=group_id,
+        ).run()
+
+        if prepare_result.is_failure():
+            return Response(
+                {"detail": "No fue posible crear el job pausado."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        job_handle = prepare_result.get_or_else(None)
+        created_job: ScientificJob = get_object_or_404(
+            ScientificJob, pk=job_handle.job_id
+        )
+
+        artifact_error = self.persist_artifacts_and_finalize(
+            created_job=created_job,
+            uploaded_files=uploaded_files,
+            job_handle=job_handle,
+            final_action="pause",
         )
         if artifact_error is not None:
             return artifact_error

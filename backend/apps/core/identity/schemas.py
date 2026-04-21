@@ -10,6 +10,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from ..app_registry import ScientificAppRegistry
 from ..models import (
     AppPermission,
     GroupAppConfig,
@@ -294,6 +295,9 @@ class AppPermissionSerializer(serializers.ModelSerializer):
         group_value = attrs.get("group", getattr(self.instance, "group", None))
         user_value = attrs.get("user", getattr(self.instance, "user", None))
         app_name_value = attrs.get("app_name", getattr(self.instance, "app_name", ""))
+        resolved_definition = ScientificAppRegistry.resolve_definition(
+            str(app_name_value)
+        )
 
         if group_value is None and user_value is None:
             raise serializers.ValidationError(
@@ -303,6 +307,14 @@ class AppPermissionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "La regla de acceso debe estar asociada a usuario o a grupo, no a ambos."
             )
+
+        if resolved_definition is None:
+            raise serializers.ValidationError(
+                {"app_name": "La app indicada no está registrada en el sistema."}
+            )
+
+        attrs["app_name"] = resolved_definition.plugin_name
+        app_name_value = resolved_definition.plugin_name
 
         # Valida unicidad por sujeto+app de forma explícita para evitar ambigüedad.
         duplicated_permission_query = AppPermission.objects.filter(
@@ -433,6 +445,18 @@ class AccessibleScientificAppSerializer(serializers.Serializer):
     enabled = serializers.BooleanField(read_only=True)
     group_permission = serializers.BooleanField(read_only=True, allow_null=True)
     user_permission = serializers.BooleanField(read_only=True, allow_null=True)
+
+
+class ScientificAppCatalogSerializer(serializers.Serializer):
+    """Serializer del catálogo canónico de apps científicas registradas."""
+
+    plugin_name = serializers.CharField(read_only=True)
+    route_key = serializers.CharField(read_only=True)
+    api_base_path = serializers.CharField(read_only=True)
+    supports_pause_resume = serializers.BooleanField(read_only=True)
+    available_features = serializers.ListField(
+        child=serializers.CharField(), read_only=True
+    )
 
 
 class EffectiveAppConfigSerializer(serializers.Serializer):

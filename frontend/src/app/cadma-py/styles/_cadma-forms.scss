@@ -1,0 +1,690 @@
+/* _cadma-forms.scss: Campos, botones, progreso, guía de inputs y estados de error/vacío. */
+
+/* ============================================================
+   FIELDS & UPLOAD
+   ============================================================ */
+.grid-2 {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.field-block {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+}
+
+.field-block input,
+.field-block textarea,
+.field-block select {
+  width: 100%;
+  padding: 0.72rem 0.85rem;
+  border-radius: var(--chem-radius);
+  border: 1.5px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink);
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.field-block input:focus,
+.field-block textarea:focus,
+.field-block select:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+  background: #fff;
+}
+
+.upload-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.upload-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border: 1.5px dashed var(--chem-border);
+  border-radius: 12px;
+  background: var(--chem-surface-elevated);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.upload-card:hover {
+  border-color: var(--chem-border-strong);
+  background: var(--chem-surface-inset);
+}
+
+.upload-card input[type='file'] {
+  font-size: 0.78rem;
+  color: var(--chem-ink-secondary);
+}
+
+.upload-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.upload-desc {
+  font-size: 0.75rem;
+  color: var(--chem-ink-soft);
+}
+
+.upload-done {
+  font-size: 0.75rem;
+  color: var(--chem-success);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* ============================================================
+   MANUAL IMPORT ACCORDION
+   ============================================================ */
+.manual-import-accordion {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 12px;
+  background: var(--chem-surface-elevated);
+  overflow: hidden;
+}
+
+.manual-import-accordion summary {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.manual-import-accordion summary::before {
+  content: '▸';
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.manual-import-accordion[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.manual-import-accordion > :not(summary) {
+  padding: 0.25rem 1rem 1rem;
+}
+
+/* ============================================================
+   PATHWAY SELECTOR — 3 vías mutuamente excluyentes
+   ============================================================ */
+.pathway-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem;
+}
+
+.pathway-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 0.95rem;
+  border: 2px solid var(--chem-border-subtle);
+  border-radius: 14px;
+  background: var(--chem-surface-elevated);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.pathway-card:hover {
+  border-color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+.pathway-card.active {
+  border-color: var(--chem-primary);
+  background: rgba(211, 47, 47, 0.04);
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+.pathway-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pathway-card-body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.pathway-card-body strong {
+  font-size: 0.88rem;
+  color: var(--chem-ink);
+}
+
+.pathway-card-body p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--chem-ink-secondary);
+  line-height: 1.35;
+}
+
+/* ============================================================
+   PATHWAY PANEL — Contenido expandido de cada vía
+   ============================================================ */
+.pathway-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 14px;
+  background: var(--chem-surface-elevated);
+}
+
+.pathway-panel-header h4 {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  color: var(--chem-ink);
+}
+
+.pathway-panel-header p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--chem-ink-secondary);
+}
+
+/* Grilla del pathway "Reuse" — vertical stack claro */
+.pathway-reuse-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.reuse-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.reuse-block-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+}
+
+.reuse-block.reuse-required .reuse-block-label {
+  color: var(--chem-ink);
+}
+
+.reuse-block select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--chem-radius);
+  border: 1.5px solid var(--chem-border-subtle);
+  background: #fff;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink);
+  transition: border-color 0.15s;
+}
+
+.reuse-block select:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+}
+
+/* ============================================================
+   CANDIDATE STATUS BAR — Estado del guide cargado
+   ============================================================ */
+.candidate-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.85rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.pill-ok {
+  color: var(--chem-success);
+  background: var(--chem-success-bg);
+}
+
+.pill-missing {
+  color: var(--chem-warning);
+  background: var(--chem-warning-bg);
+}
+
+/* ============================================================
+   QUICK-FILL (legacy classes mantenidas por compatibilidad)
+   ============================================================ */
+.quick-fill-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 12px;
+  background: var(--chem-surface-elevated);
+}
+
+.quick-fill-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.quick-fill-header strong {
+  color: var(--chem-ink);
+}
+
+.quick-fill-header p,
+.quick-fill-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--chem-ink-secondary);
+}
+
+.project-label-help {
+  margin-top: -0.25rem;
+}
+
+.quick-fill-status-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quick-fill-divider {
+  height: 1px;
+  background: var(--chem-border-subtle);
+}
+
+.quick-fill-grid {
+  align-items: end;
+}
+
+.legacy-order-note {
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--chem-ink);
+}
+
+.quick-fill-actions {
+  justify-content: flex-start;
+}
+
+.formula-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+}
+
+.formula-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.formula-card-header h4,
+.interval-editor h4 {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.formula-card-header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--chem-ink-secondary);
+}
+
+.formula-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.weight-total-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: auto;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.weight-total-pill.warning {
+  background: var(--chem-warning-bg);
+  color: #854d0e;
+}
+
+.interval-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.interval-table {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.interval-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.8fr) 1fr 1fr;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.interval-row input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--chem-border-subtle);
+  background: #fff;
+}
+
+.interval-head {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chem-ink-soft);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.action-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-run,
+.btn-ghost,
+.btn-danger {
+  border: 0;
+  border-radius: var(--chem-radius);
+  padding: 0.72rem 1.1rem;
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: var(--chem-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--chem-primary-dark);
+}
+
+.btn-run {
+  background: linear-gradient(90deg, var(--chem-primary) 0%, var(--chem-primary-dark) 100%);
+  color: #fff;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.25);
+}
+
+.btn-run:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-run:disabled {
+  background: var(--chem-ink-soft);
+  box-shadow: none;
+  cursor: default;
+}
+
+.btn-secondary {
+  background: var(--chem-border-subtle);
+  color: var(--chem-ink);
+}
+
+.btn-secondary:hover {
+  background: var(--chem-border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--chem-ink-secondary);
+  border: 1px solid var(--chem-border-subtle);
+}
+
+.btn-ghost:hover {
+  background: var(--chem-surface-inset);
+}
+
+.btn-danger {
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+}
+
+.btn-danger:hover {
+  background: #fecaca;
+}
+
+.btn-danger:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.progress-bar-wrap {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.progress-bar-label {
+  font-size: 0.82rem;
+  color: var(--chem-ink-secondary);
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--chem-border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--chem-primary);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.progress-fill.indeterminate {
+  width: 40%;
+  animation: indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-150%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+/* ============================================================
+   ERROR / EMPTY
+   ============================================================ */
+.error-msg {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  background: var(--chem-error-bg);
+  border-radius: var(--chem-radius);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-error);
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-soft);
+  padding: 0.25rem 0;
+}
+
+.draft-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--chem-ink-secondary);
+}
+
+.draft-message {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--chem-radius);
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  font-size: 0.82rem;
+}
+
+/* ============================================================
+   RESPONSIVE — Forms, pathways, formula
+   ============================================================ */
+@media (max-width: 880px) {
+  .pathway-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .pathway-reuse-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .formula-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .formula-card {
+    padding: 0.85rem;
+  }
+
+  .formula-card-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .interval-row {
+    grid-template-columns: minmax(60px, 0.7fr) 1fr 1fr;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pathway-card {
+    padding: 0.72rem 0.78rem;
+    border-radius: 10px;
+  }
+
+  .pathway-icon {
+    font-size: 1.25rem;
+  }
+
+  .pathway-card-body strong {
+    font-size: 0.82rem;
+  }
+
+  .pathway-panel {
+    padding: 0.75rem 0.8rem;
+    border-radius: 10px;
+  }
+
+  .pathway-reuse-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .action-row .btn-primary,
+  .action-row .btn-secondary,
+  .action-row .btn-run,
+  .action-row .btn-ghost,
+  .action-row .btn-danger {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .candidate-status-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .formula-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .interval-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .interval-row input {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .weight-total-pill {
+    grid-column: 1 / -1;
+  }
+
+  .field-block input,
+  .field-block textarea,
+  .field-block select {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.82rem;
+  }
+}

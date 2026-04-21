@@ -1,50 +1,109 @@
 ---
 applyTo: "**/*"
+name: "SonarQube MCP - Chemistry Apps"
+description: "Guía práctica para usar SonarQube MCP en este monorepo sin ruido ni falsos positivos."
 ---
 
-These are some guidelines when using the SonarQube MCP server.
+# SONARQUBE MCP — REGLAS PARA CHEMISTRY APPS
 
-# Important Tool Guidelines
+Usar SonarQube como apoyo de **calidad**, no como sustituto de pruebas reales, build o revisión arquitectónica.
 
-## Basic usage
+---
 
-- **IMPORTANT**: After you finish generating or modifying any code files at the very end of the task, you MUST call the `analyze_file_list` tool (if it exists) to analyze the files you created or modified.
-- **IMPORTANT**: When starting a new task, you MUST disable automatic analysis with the `toggle_automatic_analysis` tool if it exists.
-- **IMPORTANT**: When you are done generating code at the very end of the task, you MUST re-enable automatic analysis with the `toggle_automatic_analysis` tool if it exists.
+## 1. FLUJO BÁSICO
 
-## Project Keys
+- Al empezar una tarea, desactivar análisis automático **si la herramienta existe**.
+- Al terminar cambios de código, analizar los archivos modificados **si la herramienta existe**.
+- Al final, reactivar el análisis automático **si la herramienta existe**.
+- No afirmar que un problema quedó resuelto solo por una sugerencia de Sonar: verificar con tests, build o ejecución real.
 
-- When a user mentions a project key, use `search_my_sonarqube_projects` first to find the exact project key
-- Don't guess project keys - always look them up
+---
 
-## Code Language Detection
+## 2. ALCANCE CORRECTO EN ESTE REPOSITORIO
 
-- When analyzing code snippets, try to detect the programming language from the code syntax
-- If unclear, ask the user or make an educated guess based on syntax
+### Analizar con prioridad
 
-## Branch and Pull Request Context
+- `backend/apps/`
+- `backend/config/`
+- `frontend/src/`
 
-- Many operations support branch-specific analysis
-- If user mentions working on a feature branch, include the branch parameter
+### Evitar ruido o edición manual en
 
-## Code Issues and Violations
+- `frontend/src/app/core/api/generated/`
+- `backend/apps/**/migrations/`
+- `frontend/coverage/`, `frontend/dist/`, `frontend/node_modules/`
+- `backend/.venv/`, `backend/media/`
+- `tools/`, `deprecated/`, artefactos de build
 
-- After fixing issues, do not attempt to verify them using `search_sonar_issues_in_projects`, as the server will not yet reflect the updates
+Si Sonar marca algo en código generado o volátil, **no editarlo manualmente**: corregir la fuente o ajustar exclusiones del análisis cuando corresponda.
 
-# Common Troubleshooting
+---
 
-## Authentication Issues
+## 3. REGLAS ESPECÍFICAS DEL PROYECTO
 
-- SonarQube requires USER tokens (not project tokens)
-- When the error `SonarQube answered with Not authorized` occurs, verify the token type
+- El proyecto usa el key **`chemistry-apps`**; si el usuario menciona un project key, primero buscarlo, no adivinarlo.
+- El backend produce reportes en:
+  - `backend/ruff.json`
+  - `backend/coverage.xml`
+- El frontend produce reportes en:
+  - `frontend/eslint.json`
+  - `frontend/coverage/frontend/lcov-sonar.info`
+- El flujo estándar para preparar Sonar en este repo es ejecutar `scripts/generate_sonar_coverage.sh`.
 
-## Project Not Found
+---
 
-- Use `search_my_sonarqube_projects` to find available projects
-- Verify project key spelling and format
+## 4. CÓMO INTERPRETAR HALLAZGOS
 
-## Code Analysis Issues
+### Prioridad alta
 
-- Ensure programming language is correctly specified
-- Remind users that snippet analysis doesn't replace full project scans
-- Provide full file content for better analysis results
+- bugs reales
+- vulnerabilidades
+- problemas de tipado
+- duplicación significativa en código fuente real
+- validaciones ausentes en endpoints, serializers, plugins o wrappers
+
+### Prioridad baja o a revisar antes de tocar
+
+- hallazgos en archivos generados
+- issues sobre HTTP local de desarrollo
+- duplicaciones inevitables en tests o fixtures
+- reglas que chocan con decisiones conscientes del proyecto ya justificadas
+
+No introducir `NOSONAR`, suppressions o ignores para ocultar problemas reales. Corregir la causa raíz primero.
+
+---
+
+## 5. VERIFICACIÓN DESPUÉS DE CORREGIR
+
+Después de corregir issues:
+
+1. verificar el archivo o módulo real afectado
+2. ejecutar los checks relevantes (`manage.py check`, tests, build, lint)
+3. solo entonces concluir que la corrección está bien
+
+No usar búsquedas globales de issues del servidor para “confirmar” una corrección recién hecha: el estado puede tardar en reflejarse.
+
+---
+
+## 6. TROUBLESHOOTING
+
+### Not authorized
+
+- usar **USER token**, no project token
+- revisar `SONAR_TOKEN`
+
+### Project not found
+
+- buscar primero el proyecto disponible
+- no asumir nombres o keys
+
+### Analysis mismatch
+
+- recordar que el análisis de snippet/archivo **no reemplaza** un scan completo del proyecto
+- si hace falta contexto, proporcionar el archivo completo o el bloque relevante
+
+---
+
+## 7. REGLA META
+
+Usar SonarQube MCP para mejorar **calidad, seguridad y mantenibilidad** del código fuente real del sistema, sin tocar archivos generados ni crear falsos positivos por falta de contexto.

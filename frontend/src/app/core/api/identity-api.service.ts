@@ -20,6 +20,14 @@ export interface AccessibleScientificAppView {
   user_permission: boolean | null;
 }
 
+export interface ScientificAppCatalogItemView {
+  plugin_name: string;
+  route_key: string;
+  api_base_path: string;
+  supports_pause_resume: boolean;
+  available_features: string[];
+}
+
 export interface EffectiveAppConfigView {
   app_name: string;
   enabled: boolean;
@@ -160,6 +168,12 @@ export class IdentityApiService {
 
   listGroups(): Observable<WorkGroupView[]> {
     return this.httpClient.get<WorkGroupView[]>(`${this.identityBaseUrl}/groups/`);
+  }
+
+  listScientificApps(): Observable<ScientificAppCatalogItemView[]> {
+    return this.httpClient.get<ScientificAppCatalogItemView[]>(
+      `${this.identityBaseUrl}/scientific-apps/`,
+    );
   }
 
   createGroup(payload: {

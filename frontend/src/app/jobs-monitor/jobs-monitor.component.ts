@@ -170,7 +170,11 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
     );
   }
 
-  resultActionLabel(_jobItem: ScientificJobView): string {
+  resultActionLabel(jobItem: ScientificJobView): string {
+    if (jobItem.status === 'paused') {
+      return this.translateOrFallback('jobsMonitor.actions.resume', 'Resume');
+    }
+
     return this.translateOrFallback('common.actions.openResult', 'Open result');
   }
 

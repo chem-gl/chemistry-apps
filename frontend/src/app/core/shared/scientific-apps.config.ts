@@ -2,6 +2,7 @@
 
 export interface ScientificAppRouteItem {
   key: string;
+  pluginName: string;
   title: string;
   description: string;
   routePath: string;
@@ -12,6 +13,7 @@ export interface ScientificAppRouteItem {
 
 interface ScientificAppDefinition {
   key: string;
+  pluginName: string;
   title: string;
   description: string;
   visibleInMenus: boolean;
@@ -20,6 +22,7 @@ interface ScientificAppDefinition {
 function createScientificAppRouteItem(definition: ScientificAppDefinition): ScientificAppRouteItem {
   return {
     key: definition.key,
+    pluginName: definition.pluginName,
     title: definition.title,
     description: definition.description,
     routePath: `/${definition.key}`,
@@ -31,12 +34,14 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
 const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   {
     key: 'molar-fractions',
+    pluginName: 'molar-fractions',
     title: 'Molar Fractions',
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
     visibleInMenus: true,
   },
   {
     key: 'tunnel',
+    pluginName: 'tunnel-effect',
     title: 'Tunnel Effect',
     description:
       'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
@@ -44,6 +49,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   },
   {
     key: 'easy-rate',
+    pluginName: 'easy-rate',
     title: 'Easy-rate',
     description:
       'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
@@ -51,6 +57,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   },
   {
     key: 'marcus',
+    pluginName: 'marcus-kinetics',
     title: 'Marcus Theory',
     description:
       'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
@@ -58,6 +65,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   },
   {
     key: 'smileit',
+    pluginName: 'smileit',
     title: 'Smileit',
     description:
       'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
@@ -65,13 +73,23 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
   },
   {
     key: 'sa-score',
+    pluginName: 'sa-score',
     title: 'SA Score',
     description:
       'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
     visibleInMenus: true,
   },
   {
+    key: 'cadma-py',
+    pluginName: 'cadma-py',
+    title: 'CADMA Py',
+    description:
+      'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
+    visibleInMenus: true,
+  },
+  {
     key: 'toxicity-properties',
+    pluginName: 'toxicity-properties',
     title: 'Toxicity Properties',
     description:
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
@@ -82,18 +100,20 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
 export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_DEFINITIONS.map(createScientificAppRouteItem);
 
-const SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP: Readonly<Record<string, string>> = {
-  'molar-fractions': 'molar-fractions',
-  'tunnel-effect': 'tunnel',
-  'easy-rate': 'easy-rate',
-  marcus: 'marcus',
-  smileit: 'smileit',
-  'sa-score': 'sa-score',
-  'toxicity-properties': 'toxicity-properties',
-};
+export function findScientificAppRouteItemByRouteKey(
+  routeKey: string,
+): ScientificAppRouteItem | undefined {
+  return SCIENTIFIC_APP_ROUTE_ITEMS.find((appItem) => appItem.key === routeKey);
+}
+
+export function findScientificAppRouteItemByPluginName(
+  pluginName: string,
+): ScientificAppRouteItem | undefined {
+  return SCIENTIFIC_APP_ROUTE_ITEMS.find((appItem) => appItem.pluginName === pluginName);
+}
 
 export function resolveScientificJobRouteKey(pluginName: string): string | null {
-  return SCIENTIFIC_JOB_PLUGIN_ROUTE_KEY_MAP[pluginName] ?? null;
+  return findScientificAppRouteItemByPluginName(pluginName)?.key ?? null;
 }
 
 export function resolveScientificJobRoutePath(pluginName: string): string | null {
@@ -102,7 +122,7 @@ export function resolveScientificJobRoutePath(pluginName: string): string | null
     return null;
   }
 
-  return SCIENTIFIC_APP_ROUTE_ITEMS.find((appItem) => appItem.key === routeKey)?.routePath ?? null;
+  return findScientificAppRouteItemByRouteKey(routeKey)?.routePath ?? null;
 }
 
 /** Lista filtrada: solo las apps visibles en menus y en el hub. */

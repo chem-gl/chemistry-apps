@@ -29,10 +29,22 @@
             {{ 'userManager.users.filterGroup' | transloco }}
             <select class="form-select" [ngModel]="filterGroupId()" (ngModelChange)="filterGroupId.set($event)">
                 <option value="">{{ 'userManager.users.allGroups' | transloco }}</option>
-                @for (group of visibleGroups(); track group.id) {
+                @for (group of filteredGroups(); track group.id) {
                 <option [value]="group.id">{{ group.name }}</option>
                 }
             </select>
+        </label>
+
+        <label class="filter-label filter-search">
+            Fast search de grupos
+            <input class="form-input" type="search" [ngModel]="groupSearchQuery()"
+                (ngModelChange)="groupSearchQuery.set($event)" placeholder="Buscar grupo por nombre o slug" />
+        </label>
+
+        <label class="filter-label filter-search">
+            Fast search de usuarios
+            <input class="form-input" type="search" [ngModel]="userSearchQuery()"
+                (ngModelChange)="userSearchQuery.set($event)" placeholder="Buscar por usuario, nombre o correo" />
         </label>
     </div>
 
@@ -115,14 +127,14 @@
             <select class="form-select" title="Usuario" [ngModel]="addMembershipForm().userId"
                 (ngModelChange)="addMembershipForm.update(f => ({ ...f, userId: $event }))" name="userId" required>
                 <option value="">{{ 'userManager.addMembership.selectUser' | transloco }}</option>
-                @for (user of users(); track user.id) {
+                @for (user of filteredUsers(); track user.id) {
                 <option [value]="user.id">{{ user.username }}</option>
                 }
             </select>
             <select class="form-select" title="Grupo" [ngModel]="addMembershipForm().groupId"
                 (ngModelChange)="addMembershipForm.update(f => ({ ...f, groupId: $event }))" name="groupId" required>
                 <option value="">{{ 'userManager.addMembership.selectGroup' | transloco }}</option>
-                @for (group of visibleGroups(); track group.id) {
+                @for (group of filteredGroups(); track group.id) {
                 <option [value]="group.id">{{ group.name }}</option>
                 }
             </select>
@@ -188,7 +200,7 @@
                         (ngModelChange)="createUserForm.update(f => ({ ...f, primary_group_id: $event }))"
                         name="primary_group_id" required>
                         <option value="" disabled>{{ 'userManager.createUser.noPrimaryGroup' | transloco }}</option>
-                        @for (group of visibleGroups(); track group.id) {
+                        @for (group of filteredGroups(); track group.id) {
                         <option [value]="group.id">{{ group.name }}</option>
                         }
                     </select>

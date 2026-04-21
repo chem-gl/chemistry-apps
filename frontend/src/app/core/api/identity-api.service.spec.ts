@@ -69,6 +69,7 @@ describe('IdentityApiService', () => {
     service.updateUser(8, { is_active: false }).subscribe();
     service.deleteUser(8).subscribe();
     service.listGroups().subscribe();
+    service.listScientificApps().subscribe();
     service.createGroup({ name: 'Alpha', slug: 'alpha', description: 'Main group' }).subscribe();
     service.updateGroup(3, { description: 'Updated' }).subscribe();
     service.deleteGroup(3).subscribe();
@@ -93,6 +94,10 @@ describe('IdentityApiService', () => {
       (request) =>
         request.method === 'GET' && request.url === `${API_BASE_URL}/api/identity/groups/`,
     );
+    const listScientificAppsRequest = httpMock.expectOne(
+      (request) =>
+        request.method === 'GET' && request.url === `${API_BASE_URL}/api/identity/scientific-apps/`,
+    );
     const createGroupRequest = httpMock.expectOne(
       (request) =>
         request.method === 'POST' && request.url === `${API_BASE_URL}/api/identity/groups/`,
@@ -116,6 +121,7 @@ describe('IdentityApiService', () => {
     expect(updateUserRequest.request.body).toEqual({ is_active: false });
     expect(deleteUserRequest.request.method).toBe('DELETE');
     expect(listGroupsRequest.request.method).toBe('GET');
+    expect(listScientificAppsRequest.request.method).toBe('GET');
     expect(createGroupRequest.request.body).toEqual({
       name: 'Alpha',
       slug: 'alpha',
@@ -129,6 +135,7 @@ describe('IdentityApiService', () => {
     updateUserRequest.flush({});
     deleteUserRequest.flush({});
     listGroupsRequest.flush([]);
+    listScientificAppsRequest.flush([]);
     createGroupRequest.flush({});
     updateGroupRequest.flush({});
     deleteGroupRequest.flush({});

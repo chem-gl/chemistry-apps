@@ -1,0 +1,353 @@
+/* toxicity-properties.component.scss: Estilos con tokens --chem-*. */
+.toxicity-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.toxicity-header {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 1.1rem 1.2rem;
+  background: var(--chem-surface-elevated);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--chem-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--chem-text-xs);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+}
+
+.toxicity-header p {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.entry-panel,
+.result-panel,
+.logs-card,
+.history-card,
+.references-card {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 1rem;
+  min-width: 0;
+}
+
+.entry-panel {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+h3 {
+  margin: 0 0 0.7rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+}
+
+.smiles-label {
+  display: grid;
+  gap: 0.38rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+textarea,
+input,
+button {
+  font-family: inherit;
+}
+
+textarea {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
+  min-height: 180px;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+textarea:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.25);
+  border-color: var(--chem-accent);
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  color: var(--chem-ink);
+  font-size: var(--chem-text-sm);
+}
+
+.job-name-field {
+  display: grid;
+  gap: 0.38rem;
+  margin-top: 0.9rem;
+  color: var(--chem-ink);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.job-name-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.94rem;
+  background: var(--chem-surface-elevated);
+}
+
+.job-name-hint {
+  color: var(--chem-ink-soft);
+  font-size: var(--chem-text-xs);
+  font-weight: 500;
+}
+
+.action-row {
+  margin-top: 0.95rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.history-open-btn {
+  border-radius: 999px;
+  padding: 0.45rem 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity var(--chem-transition),
+    background var(--chem-transition);
+}
+
+.btn-primary {
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-primary);
+  color: #fff;
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+}
+
+.btn-secondary,
+.history-open-btn {
+  border: 1px solid var(--chem-primary);
+  background: var(--chem-surface);
+  color: var(--chem-primary);
+  &:hover:not(:disabled) {
+    background: var(--chem-surface-elevated);
+  }
+}
+
+.status-message {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.progress-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.job-id,
+.mono {
+  font-family: var(--chem-font-mono);
+  font-size: 0.8rem;
+  color: var(--chem-ink);
+  word-break: break-all;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--chem-surface-inset);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--chem-gradient-header);
+}
+
+.progress-pct {
+  margin: 0;
+  font-weight: 700;
+  color: var(--chem-primary);
+}
+
+.progress-message {
+  margin: 0;
+  color: var(--chem-ink-soft);
+}
+
+.metadata-grid {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.metadata-grid p {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.88rem;
+}
+
+.export-row {
+  margin-top: 0.25rem;
+  align-items: center;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.table-search-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 320px);
+  color: var(--chem-ink);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table-search-input {
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+  padding: 0.62rem 0.9rem;
+  font-size: var(--chem-text-sm);
+}
+
+.table-search-input:focus {
+  outline: 2px solid rgba(123, 90, 158, 0.18);
+  border-color: var(--chem-accent);
+}
+
+.table-summary-pill {
+  margin: 0;
+  padding: 0.46rem 0.78rem;
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-glass-heavy);
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+  font-weight: 700;
+}
+
+.table-wrap {
+  margin-top: 0.7rem;
+  overflow: auto;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: linear-gradient(180deg, rgba(250, 248, 252, 0.96), rgba(237, 233, 240, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.result-table,
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.result-table th,
+.result-table td,
+.history-table th,
+.history-table td {
+  padding: 0.55rem 0.62rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.result-table th,
+.history-table th {
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+  font-weight: 800;
+  font-family: var(--chem-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--chem-text-xs);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.result-table tbody tr:nth-child(odd) {
+  background: rgba(250, 248, 252, 0.92);
+}
+
+.result-table tbody tr:hover {
+  background: rgba(123, 90, 158, 0.06);
+}
+
+.result-row-with-error {
+  background: rgba(255, 235, 238, 0.7);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-indicator {
+  color: var(--chem-accent);
+  font-size: 0.8rem;
+}
+
+.numeric-head,
+.numeric-cell {
+  text-align: right;
+}
+
+.numeric-head .sort-button {
+  justify-content: flex-end;
+}
+
+.classification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 0.22rem 0.58rem;
+  border-radius: var(--chem-radius-pill);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}

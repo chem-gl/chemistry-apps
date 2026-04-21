@@ -1,0 +1,374 @@
+/* _cadma-results.scss: KPI cards, gráficas, tabla de ranking y estados de resultado. */
+
+/* ============================================================
+   RESULTS KPI
+   ============================================================ */
+.results-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpi-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.15rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+}
+
+.kpi-card.kpi-highlight {
+  background: var(--chem-primary-light);
+  border-color: var(--chem-primary);
+}
+
+.kpi-label {
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--chem-ink-secondary);
+}
+
+.kpi-value {
+  font-size: var(--chem-text-md);
+  font-weight: 700;
+  color: var(--chem-ink);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-num {
+  font-size: 1.6rem;
+  color: var(--chem-primary);
+}
+
+.kpi-meta {
+  font-size: 0.75rem;
+  color: var(--chem-ink-soft);
+}
+
+.kpi-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--chem-primary);
+  display: block;
+}
+
+/* ============================================================
+   CHART CARDS
+   ============================================================ */
+.chart-card {
+  padding: 1.25rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-glass-bg);
+  backdrop-filter: blur(6px);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.chart-card-tall {
+  min-height: 560px;
+}
+
+.chart-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.chart-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--chem-ink-soft);
+}
+
+.metric-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.metric-toolbar .field-block {
+  min-width: 200px;
+}
+
+.chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.chart-type-selector {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-ink-secondary);
+  min-width: 140px;
+}
+
+.chart-type-selector select {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  font-size: 0.82rem;
+  color: var(--chem-ink);
+  cursor: pointer;
+}
+
+.chart-type-selector select:focus {
+  outline: none;
+  border-color: var(--chem-accent);
+  background: #fff;
+}
+
+/* ============================================================
+   RESULT TABLE
+   ============================================================ */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+}
+
+.table-wrap h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.table-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--chem-text-sm);
+  min-width: 1200px;
+}
+
+.result-table th {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 2px solid var(--chem-border-subtle);
+  text-align: left;
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  background: var(--chem-surface-inset);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Columna pegajosa: rank + name */
+.result-table th:first-child,
+.result-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #fff;
+}
+
+.result-table th:first-child {
+  z-index: 4;
+  background: var(--chem-surface-inset);
+}
+
+.result-table th:nth-child(2),
+.result-table td:nth-child(2) {
+  position: sticky;
+  left: 2.8rem;
+  z-index: 3;
+  background: #fff;
+  min-width: 140px;
+  max-width: 220px;
+  border-right: 2px solid var(--chem-border-subtle);
+  overflow: hidden;
+}
+
+.result-table td:nth-child(2) strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.result-table th:nth-child(2) {
+  z-index: 4;
+  background: var(--chem-surface-inset);
+}
+
+.result-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--chem-surface-inset);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* Zebra striping */
+.result-table tbody tr:nth-child(even) td {
+  background: rgba(248, 250, 252, 0.6);
+}
+
+.result-table tbody tr:nth-child(even) td:first-child,
+.result-table tbody tr:nth-child(even) td:nth-child(2) {
+  background: rgba(248, 250, 252, 0.95);
+}
+
+.result-table tr.top-row td {
+  background: var(--chem-primary-light);
+}
+
+.result-table tr.top-row td:first-child,
+.result-table tr.top-row td:nth-child(2) {
+  background: var(--chem-primary-light);
+}
+
+.result-table tr:hover td {
+  background: var(--chem-surface-elevated);
+}
+
+.result-table tr:hover td:first-child,
+.result-table tr:hover td:nth-child(2) {
+  background: var(--chem-surface-elevated);
+}
+
+.rank-num {
+  font-weight: 700;
+  color: var(--chem-ink-soft);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.result-table tr.top-row .rank-num {
+  color: var(--chem-primary);
+  font-size: 0.95rem;
+}
+
+.smiles-cell {
+  display: block;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-mono);
+  word-break: break-all;
+  max-width: 200px;
+}
+
+.score-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.score-good {
+  background: var(--chem-success-bg);
+  color: var(--chem-success);
+}
+
+.score-mid {
+  background: var(--chem-warning-bg);
+  color: #854d0e;
+}
+
+.score-low {
+  background: var(--chem-error-bg);
+  color: var(--chem-error);
+}
+
+.null-cell {
+  color: var(--chem-warning);
+  font-style: italic;
+  font-size: 0.78rem;
+  background: var(--chem-warning-bg);
+}
+
+/* ============================================================
+   RESPONSIVE — Results, KPI, charts, table
+   ============================================================ */
+@media (max-width: 880px) {
+  .results-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chart-card-tall {
+    min-height: 400px;
+  }
+
+  .metric-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .metric-toolbar .field-block {
+    min-width: unset;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .results-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: 0.85rem 0.95rem;
+  }
+
+  .chart-card {
+    padding: 0.85rem;
+    border-radius: var(--chem-radius);
+  }
+
+  .chart-card-tall {
+    min-height: 320px;
+  }
+
+  .table-wrap {
+    border-radius: 8px;
+  }
+
+  .table-wrap h4 {
+    font-size: 0.88rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-table {
+    font-size: 0.75rem;
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .smiles-cell {
+    max-width: 120px;
+    font-size: 0.65rem;
+  }
+}
