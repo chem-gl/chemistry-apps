@@ -809,7 +809,7 @@
             <td>{{ row.adme_alignment | number:'1.0-2' }}</td>
             <td>{{ row.toxicity_alignment | number:'1.0-2' }}</td>
             <td>{{ row.sa_alignment | number:'1.0-2' }}</td>
-            <td>{{ row.adme_hits_in_band }}/{{ resultData.score_config?.adme_reference_hits ?? '?' }}</td>
+            <td>{{ row.adme_hits_in_band }}/{{ resultData.score_config.adme_reference_hits ?? '?' }}</td>
             <td>{{ row.MW === undefined ? '—' : (row.MW | number:'1.0-2') }}</td>
             <td>{{ row.logP === undefined ? '—' : (row.logP | number:'1.0-2') }}</td>
             <td>{{ row.MR === undefined ? '—' : (row.MR | number:'1.0-2') }}</td>

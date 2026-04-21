@@ -1,130 +1,228 @@
 Problema 1
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-chart.options.ts
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.html
 
 Problema:
-Extract this nested ternary operation into an independent statement.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: typescript:S3358
-Severidad: MAJOR
-Línea: 117
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 244
 
 Cómo solucionarlo:
-Nested ternaries are hard to read and can make the order of operations complex to understand.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
-function getReadableStatus(job) {
-  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
-}
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
 
-Instead, use another line to express the nested operation in a separate statement.
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
 
-function getReadableStatus(job) {
-  if (job.isRunning()) {
-    return "Running";
-  }
-  return job.hasErrors() ? "Failed" : "Succeeded";
-}
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
 
 Exceptions
-This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
-JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
-
-return (
-&lt;&gt;
-  {isLoading ? (
-    &lt;Loader active /&gt;
-  ) : (
-    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
-      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
-      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
-    &lt;/Panel&gt;
-  )}
-&lt;/&gt;
-);
-
-If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
-
-function myComponent(condition) {
-  if (condition &lt; 0) {
-    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
-  } else if (condition &gt; 0) {
-    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
-  } else {
-    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
-  }
-}
-
-return (
-  {myComponent(foo)}
-);
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
 Problema 2
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-chart.options.ts
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.html
 
 Problema:
-Extract this nested ternary operation into an independent statement.
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
 
 Razón:
-Tipo: CODE_SMELL
-Regla: typescript:S3358
-Severidad: MAJOR
-Línea: 170
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 531
 
 Cómo solucionarlo:
-Nested ternaries are hard to read and can make the order of operations complex to understand.
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
 
-function getReadableStatus(job) {
-  return job.isRunning() ? "Running" : job.hasErrors() ? "Failed" : "Succeeded ";  // Noncompliant
-}
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
 
-Instead, use another line to express the nested operation in a separate statement.
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
 
-function getReadableStatus(job) {
-  if (job.isRunning()) {
-    return "Running";
-  }
-  return job.hasErrors() ? "Failed" : "Succeeded";
-}
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
 
 Exceptions
-This rule does not apply in JSX expressions to support conditional rendering and conditional attributes as long as the nesting happens in separate
-JSX expression containers, i.e. JSX elements embedding JavaScript code, as shown below:
-
-return (
-&lt;&gt;
-  {isLoading ? (
-    &lt;Loader active /&gt;
-  ) : (
-    &lt;Panel label={isEditing ? 'Open' : 'Not open'}&gt;
-      &lt;a&gt;{isEditing ? 'Close now' : 'Start now'}&lt;/a&gt;
-      &lt;Checkbox onClick={!saving ? setSaving(saving =&gt; !saving) : null} /&gt;
-    &lt;/Panel&gt;
-  )}
-&lt;/&gt;
-);
-
-If you have nested ternaries in the same JSX expression container, refactor your logic into a separate function like that:
-
-function myComponent(condition) {
-  if (condition &lt; 0) {
-    return '&lt;DownSign&gt;it is negative&lt;/DownSign&gt;';
-  } else if (condition &gt; 0) {
-    return '&lt;UpSign&gt;it is positive&lt;/UpSign&gt;';
-  } else {
-    return '&lt;BarSign&gt;it is zero&lt;/BarSign&gt;';
-  }
-}
-
-return (
-  {myComponent(foo)}
-);
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
 
 ----------------------------------------
 
 Problema 3
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.html
+
+Problema:
+Add a 'onKeyPress|onKeyDown|onKeyUp' attribute to this <div> tag.
+
+Razón:
+Tipo: BUG
+Regla: Web:MouseEventWithoutKeyboardEquivalentCheck
+Severidad: MINOR
+Línea: 538
+
+Cómo solucionarlo:
+Offering the same experience with the mouse and the keyboard allow users to pick their preferred devices.
+Additionally, users of assistive technology will also be able to browse the site even if they cannot use the mouse.
+This rule raises an issue when:
+
+   an HTML element with an onMouseover attribute doesn’t also have an&nbsp;onFocus&nbsp;attribute. 
+   an HTML element with an onMouseout attribute doesn’t also have an&nbsp;onBlur&nbsp;attribute. 
+   an HTML element with an onClick attribute doesn’t also have one of the following attributes: onKeyDown,
+  onKeyUp, onKeyPress. 
+
+Note that in the case of&nbsp;onClick, the equivalent keyboard handler should support both the "Enter" and "Space" keys as these are
+usually used by screen-readers.
+Noncompliant code example
+
+&lt;div onClick="doSomething();" ...&gt;                                &lt;!-- Noncompliant - 'onKeyDown/onKeyUp/onKeyPress' missing --&gt;
+&lt;a onMouseover="doSomething();" ...&gt;                            &lt;!-- Noncompliant - 'onFocus' missing --&gt;
+&lt;a onMouseout="doSomething();" ...&gt;                             &lt;!-- Noncompliant - 'onBlur' missing --&gt;
+
+Compliant solution
+Note that setting the tabindex attribute is necessary to make the &lt;div&gt; element focusable.
+
+&lt;div onClick="doSomething();" onKeyDown="doSomething();" tabindex="0" ...&gt;    &lt;!-- Compliant --&gt;
+&lt;a onMouseover="doSomething();" onFocus="doSomething();" ...&gt;   &lt;!-- Compliant --&gt;
+&lt;a onMouseout="doSomething();" onBlur="doSomething();" ...&gt;     &lt;!-- Compliant --&gt;
+
+Exceptions
+For the following elements, pressing a key will trigger the onClick
+attribute: &lt;input type="button"&gt;, &lt;input type="submit"&gt;, &lt;button&gt;,
+&lt;a&gt;. Thus no issue will be raised when an onClick attribute is found in these elements without a
+onKeyDown/onKeyUp/onKeyPress.
+An issue will still be raised for elements with the
+role="button" attribute as they don’t behave the same way.
+
+----------------------------------------
+
+Problema 4
+Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-delete-modal.component.scss
+
+Problema:
+Unexpected duplicate "padding"
+
+Razón:
+Tipo: BUG
+Regla: css:S4656
+Severidad: MAJOR
+Línea: 104
+
+Cómo solucionarlo:
+CSS allows duplicate property names but only the last instance of a duplicated name determines the actual value that will be used for it.
+Therefore, changing values of other occurrences of a duplicated name will have no effect and may cause misunderstandings and bugs.
+This rule ignores $sass, @less, and var(--custom-property) variable syntaxes.
+Noncompliant code example
+
+a {
+  color: pink;
+  background: orange;
+  color: orange
+}
+
+Compliant solution
+
+a {
+  color: pink;
+  background: orange
+}
+
+----------------------------------------
+
+Problema 5
+Archivo: chemistry-apps:frontend/src/app/core/application/cadma-py-quick-fill.service.ts
+
+Problema:
+Remove this assignment of "index".
+
+Razón:
+Tipo: CODE_SMELL
+Regla: typescript:S2310
+Severidad: MAJOR
+Línea: 157
+
+Cómo solucionarlo:
+Loop counters, such as variables used to track the iteration count in loops, should not be assigned from within the loop body to avoid unexpected
+behavior and bugs. It can inadvertently lead to an infinite loop or make the loop behavior more complex and harder to reason about.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    i = names.length; // Noncompliant: The loop counter i is assigned within the loop body
+  } else {
+    console.log(names[i]);
+  }
+}
+
+To avoid these issues, you should update the loop counter only in the loop’s update statement, typically located at the end of the loop body or
+within the loop header.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (let i = 0; i &lt; names.length; i++) {
+  if (!names[i]) {
+    break;
+  } else {
+    console.log(names[i]);
+  }
+}
+
+Alternatively, you should use the for…​of statement if your intention is only to iterate over the values of an iterable object.
+
+const names = [ "Jack", "Jim", "", "John" ];
+for (const name of names) {
+  if (!name) {
+    break;
+  } else {
+    console.log(name);
+  }
+}
+
+----------------------------------------
+
+Problema 6
 Archivo: chemistry-apps:backend/apps/cadma_py/services.py
 
 Problema:
@@ -247,572 +345,27 @@ As this code is complex, ensure that you have unit tests that cover the code bef
 
 ----------------------------------------
 
-Problema 4
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 59
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 5
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 153
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 6
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 235
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 7
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 334
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 8
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 395
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 9
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 574
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 10
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
-
-Problema:
-Group parts of the regex together to make the intended operator precedence explicit.
-
-Razón:
-Tipo: BUG
-Regla: typescript:S5850
-Severidad: MAJOR
-Línea: 167
-
-Cómo solucionarlo:
-Regular expressions are used for pattern matching within strings. They can be defined upon special characters, meaning symbols or metacharacters
-with a reserved meaning that convey specific instructions to the regex engine. These characters are not treated as literals but have special functions
-in defining patterns, among which stand out anchors and disjunctions.
-
-   An anchor allows you to match positions in the input string rather than matching specific characters. Anchors help you identify specific
-  locations within the string where a pattern should start (^) or end ($). 
-   A disjunction, also known as alternatives, represented by the vertical bar (|) allows you to specify multiple alternative patterns
-  that the regex engine will attempt to match in the input string. 
-
-Mixing anchors with alternatives in regular expressions can lead to confusion due to their precedence rules. Alternatives (|) have a
-lower precedence than anchors (^ and $). As a result, if you don’t use non-capturing groups (?:...) to group
-the alternatives properly, the anchors might apply to the ends only rather than the entire disjunction, which could not be the initial intent.
-
-const regex = /^a|b|c$/; // Noncompliant: '^' applies to 'a' and '$' applies to 'c'
-
-You should group the disjunction with parentheses denoting non-capturing groups so that the anchors apply to all alternatives.
-
-const regex = /^(?:a|b|c)$/;
-
-Alternatively, you can distribute the anchors to each alternative of the disjunction.
-
-const regex = /^a$|^b$|^c$/;
-
-If the precedence of the operators is understood and the intention is to apply the anchors to only the ends, use parentheses to make it
-explicit.
-
-const regex = /(?:^a)|b|(?:c$)/;
-
-----------------------------------------
-
-Problema 11
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
-
-Problema:
-Remove this assignment of "index".
-
-Razón:
-Tipo: CODE_SMELL
-Regla: typescript:S2310
-Severidad: MAJOR
-Línea: 122
-
-Cómo solucionarlo:
-Loop counters, such as variables used to track the iteration count in loops, should not be assigned from within the loop body to avoid unexpected
-behavior and bugs. It can inadvertently lead to an infinite loop or make the loop behavior more complex and harder to reason about.
-
-const names = [ "Jack", "Jim", "", "John" ];
-for (let i = 0; i &lt; names.length; i++) {
-  if (!names[i]) {
-    i = names.length; // Noncompliant: The loop counter i is assigned within the loop body
-  } else {
-    console.log(names[i]);
-  }
-}
-
-To avoid these issues, you should update the loop counter only in the loop’s update statement, typically located at the end of the loop body or
-within the loop header.
-
-const names = [ "Jack", "Jim", "", "John" ];
-for (let i = 0; i &lt; names.length; i++) {
-  if (!names[i]) {
-    break;
-  } else {
-    console.log(names[i]);
-  }
-}
-
-Alternatively, you should use the for…​of statement if your intention is only to iterate over the values of an iterable object.
-
-const names = [ "Jack", "Jim", "", "John" ];
-for (const name of names) {
-  if (!name) {
-    break;
-  } else {
-    console.log(name);
-  }
-}
-
-----------------------------------------
-
-Problema 12
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-importer.component.ts
-
-Problema:
-This assertion is unnecessary since it does not change the type of the expression.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: typescript:S4325
-Severidad: MINOR
-Línea: 302
-
-Cómo solucionarlo:
-In TypeScript, casts and non-null assertions are two mechanisms used to inform the TypeScript compiler about the intended types of variables,
-expressions, or values in the code. They are used to help the compiler understand the types more accurately and to handle certain situations where
-type inference might not be sufficient:
-
-   A type assertion tells the compiler to treat the value as the specified type, even if the compiler’s type inference suggests a different type.
-  
-   A non-null assertion is a way to tell the TypeScript compiler explicitly that you are certain that a variable will not be null or
-  undefined, and you want to access its properties or methods without any null checks. 
-
-However, a redundant cast occurs when you perform a type assertion that is not needed because the compiler already knows the type based on the
-context or explicit type declarations. Similarly, a redundant non-null assertion occurs when you use the non-null assertion operator ! to
-assert that a variable is not null or undefined, but the compiler already knows that based on the context.
-Both redundant casts and redundant non-null assertions should be avoided in TypeScript code, as they add unnecessary noise, clutter the code, and
-lead to confusion.
-
-function getName(x?: string | Person) {
-  if (x) {
-    console.log("Getting name for " + x!); // Noncompliant: 'x' is known to be defined here
-
-    if (typeof x === "string") {
-      return (x as string); // Noncompliant: 'x' is known to be a string here
-    } else {
-      return (x as Person).name; // Noncompliant: 'x' is defined and not a string, thus a 'Person' here
-    }
-  }
-  return "NoName";
-}
-
-Remove all the redundant casts and non-null assertions based on the contextual typing information, as inferred by the TypeScript compiler.
-
-function getName(x?: string | Person) {
-  if (x) {
-    console.log("Getting name for " + x);
-
-    if (typeof x === "string") {
-      return x;
-    } else {
-      return x.name;
-    }
-  }
-  return "NoName";
-}
-
-----------------------------------------
-
-Problema 13
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 99
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 14
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 141
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 15
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 258
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 16
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 266
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 17
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 304
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
-Problema 18
-Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.scss
-
-Problema:
-Text does not meet the minimal contrast requirement with its background.
-
-Razón:
-Tipo: CODE_SMELL
-Regla: css:S7924
-Severidad: MAJOR
-Línea: 1315
-
-Cómo solucionarlo:
-Increase the contrast by using darker text on light backgrounds or lighter text on dark backgrounds. Use online contrast checkers to verify your
-color combinations meet WCAG standards. To check your contrast as you make your color choices, use a tool such as WebAIM’s Color Contrast Checker.
-
-Noncompliant code example
-
-.text {
-  color: #777777; /* Light gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 4.48:1 - fails WCAG AA for normal text */ // Noncompliant
-}
-
-Compliant solution
-
-.text {
-  color: #595959; /* Darker gray text */
-  background-color: #ffffff; /* White background */
-  /* Contrast ratio: 7.0:1 - passes WCAG AA */
-}
-
-----------------------------------------
-
 === Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=4 | líneas=82 | densidad=0.1%
+Resumen del proyecto: bloques=9 | líneas=169 | densidad=0.2%
 
 Archivos con densidad de duplicación > 3.5%:
-  - backend/apps/cadma_py/schemas.py | densidad=12.6% | líneas=30 | bloques=2
+  - backend/apps/cadma_py/schemas.py | densidad=11.0% | líneas=30 | bloques=2
   - frontend/src/app/core/shared/scientific-app-ui.utils.ts | densidad=10.2% | líneas=26 | bloques=1
+  - frontend/src/app/cadma-py/cadma-py.component.html | densidad=6.4% | líneas=54 | bloques=2
   - frontend/src/app/molar-fractions/molar-fractions-computation.ts | densidad=4.4% | líneas=26 | bloques=1
+
+Archivo: frontend/src/app/cadma-py/cadma-py.component.html
+Duplicated blocks: 2 | Duplicated lines: 54 | Density: 6.4%
+  - chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.html | líneas 499-499 | tamaño 27
+  - chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.html | líneas 634-634 | tamaño 27
+----------------------------------------
+
+Archivo: frontend/src/app/cadma-py/cadma-py.component.ts
+Duplicated blocks: 3 | Duplicated lines: 33 | Density: 2.1%
+  - chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.ts | líneas 588-588 | tamaño 11
+  - chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.ts | líneas 648-648 | tamaño 11
+  - chemistry-apps:frontend/src/app/cadma-py/cadma-py.component.ts | líneas 706-706 | tamaño 11
+----------------------------------------
 
 Archivo: frontend/src/app/molar-fractions/molar-fractions-computation.ts
 Duplicated blocks: 1 | Duplicated lines: 26 | Density: 4.4%
@@ -821,9 +374,9 @@ Duplicated blocks: 1 | Duplicated lines: 26 | Density: 4.4%
 ----------------------------------------
 
 Archivo: backend/apps/cadma_py/schemas.py
-Duplicated blocks: 2 | Duplicated lines: 30 | Density: 12.6%
-  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 32-32 | tamaño 15
-  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 74-74 | tamaño 15
+Duplicated blocks: 2 | Duplicated lines: 30 | Density: 11.0%
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 48-48 | tamaño 15
+  - chemistry-apps:backend/apps/cadma_py/schemas.py | líneas 90-90 | tamaño 15
 ----------------------------------------
 
 Archivo: frontend/src/app/core/shared/scientific-app-ui.utils.ts
@@ -836,7 +389,7 @@ Duplicated blocks: 1 | Duplicated lines: 26 | Density: 10.2%
 Total: 1 hotspot(s) encontrado(s).
 
 Archivo: chemistry-apps:frontend/src/app/cadma-py/cadma-py-family-detail.component.ts
-Línea: 388
+Línea: 392
 Regla: typescript:S6268
 Probabilidad: Alta
 Estado: TO_REVIEW
