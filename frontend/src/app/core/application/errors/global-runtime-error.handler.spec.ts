@@ -1,15 +1,17 @@
 // global-runtime-error.handler.spec.ts: Pruebas unitarias del manejador global de errores de runtime.
 
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ERROR_NOTIFIER_PORT, ErrorNotifierPort } from './error-notifier.port';
 import { GlobalRuntimeErrorHandler } from './global-runtime-error.handler';
 
 describe('GlobalRuntimeErrorHandler', () => {
   let handler: GlobalRuntimeErrorHandler;
   let mockNotifier: ErrorNotifierPort;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNotifier = {
       showError: vi.fn(),
       showMessage: vi.fn(),
@@ -25,6 +27,10 @@ describe('GlobalRuntimeErrorHandler', () => {
     });
 
     handler = TestBed.inject(GlobalRuntimeErrorHandler);
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it('extrae el mensaje de un Error estándar y lo pasa al notifier', () => {

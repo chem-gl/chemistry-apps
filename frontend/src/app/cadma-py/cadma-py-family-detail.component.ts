@@ -15,7 +15,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   CadmaCompoundAddPayload,
@@ -187,7 +186,6 @@ const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: s
 export class CadmaPyFamilyDetailComponent {
   private readonly cadmaApi = inject(CadmaPyApiService);
   private readonly jobsApi = inject(JobsApiService);
-  private readonly sanitizer = inject(DomSanitizer);
 
   @ViewChild('compoundDetailDialog')
   protected readonly compoundDetailDialogRef?: ElementRef<HTMLDialogElement>;
@@ -239,7 +237,7 @@ export class CadmaPyFamilyDetailComponent {
 
   /** Modal con el detalle completo de un compuesto específico. */
   readonly selectedCompound = signal<CadmaReferenceRowView | null>(null);
-  readonly compoundModalSvg = signal<SafeHtml | null>(null);
+  readonly compoundModalSvg = signal<string | null>(null);
   readonly compoundModalBusy = signal<boolean>(false);
   readonly compoundModalError = signal<string>('');
   readonly isEditingCompound = computed<boolean>(() => this.editingRowIndex() >= 0);
@@ -386,10 +384,7 @@ export class CadmaPyFamilyDetailComponent {
 
     this.jobsApi.inspectSmileitStructure(row.smiles).subscribe({
       next: (inspection) => {
-        // Seguridad: bypassSecurityTrustHtml es necesario aquí porque el SVG es generado
-        // por el backend (Smileit API) y no proviene de input de usuario directo.
-        // El backend renderiza la molécula con RDKit, produciendo SVG confiable.
-        this.compoundModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
+        this.compoundModalSvg.set(inspection.svg);
         this.compoundModalBusy.set(false);
       },
       error: () => {

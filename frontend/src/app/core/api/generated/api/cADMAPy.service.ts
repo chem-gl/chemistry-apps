@@ -19,6 +19,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { CadmaCompoundRowResponse } from '../model/cadmaCompoundRowResponse';
 // @ts-ignore
+import { CadmaDeletionPreview } from '../model/cadmaDeletionPreview';
+// @ts-ignore
 import { CadmaPyJobResponse } from '../model/cadmaPyJobResponse';
 // @ts-ignore
 import { CadmaReferenceLibraryResponse } from '../model/cadmaReferenceLibraryResponse';
@@ -346,10 +348,72 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
     }
 
     /**
+     * Vista previa de eliminación de una familia con sus jobs vinculados
+     * Retorna los jobs vinculados a la familia para confirmar eliminación.
+     * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/deletion-preview/
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve(libraryId: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaDeletionPreview>;
+    public cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve(libraryId: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaDeletionPreview>>;
+    public cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve(libraryId: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaDeletionPreview>>;
+    public cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve(libraryId: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (libraryId === null || libraryId === undefined) {
+            throw new Error('Required parameter libraryId was null or undefined when calling cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/cadma-py/jobs/reference-libraries/${this.configuration.encodeParam({name: "libraryId", value: libraryId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/deletion-preview/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<CadmaDeletionPreview>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint delete /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -411,7 +475,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Crear una copia editable de una familia compartida de solo lectura
      * Genera una copia editable para el actor sin alterar la familia compartida original.
      * @endpoint post /api/cadma-py/jobs/reference-libraries/{library_id}/fork/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param newName 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -554,7 +618,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint patch /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param name 
      * @param diseaseName 
      * @param description 
@@ -703,7 +767,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Descargar ZIP de archivos fuente de una familia de referencia
      * Entrega un ZIP con todos los archivos fuente guardados para una familia.
      * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/report-inputs/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -754,7 +818,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -816,7 +880,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Agregar un compuesto nuevo a una familia de referencia
      * Agrega un compuesto con ADME auto-calculado por RDKit.
      * @endpoint post /api/cadma-py/jobs/reference-libraries/{library_id}/rows/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param smiles 
      * @param name 
      * @param paperReference 
@@ -936,16 +1000,16 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Editar o eliminar una fila de compuesto por índice
      * Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
      * @endpoint delete /api/cadma-py/jobs/reference-libraries/{library_id}/rows/{row_index}/
-     * @param libraryId 
-     * @param rowIndex 
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
-    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
+    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (libraryId === null || libraryId === undefined) {
             throw new Error('Required parameter libraryId was null or undefined when calling cadmaPyJobsReferenceLibrariesRowsDestroy.');
         }
@@ -983,7 +1047,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
             }
         }
 
-        let localVarPath = `/api/cadma-py/jobs/reference-libraries/${this.configuration.encodeParam({name: "libraryId", value: libraryId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rows/${this.configuration.encodeParam({name: "rowIndex", value: rowIndex, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        let localVarPath = `/api/cadma-py/jobs/reference-libraries/${this.configuration.encodeParam({name: "libraryId", value: libraryId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rows/${this.configuration.encodeParam({name: "rowIndex", value: rowIndex, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<CadmaCompoundRowResponse>('delete', `${basePath}${localVarPath}`,
             {
@@ -1002,8 +1066,8 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * Editar o eliminar una fila de compuesto por índice
      * Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
      * @endpoint patch /api/cadma-py/jobs/reference-libraries/{library_id}/rows/{row_index}/
-     * @param libraryId 
-     * @param rowIndex 
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      * @param name 
      * @param paperReference 
      * @param paperUrl 
@@ -1012,10 +1076,10 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (libraryId === null || libraryId === undefined) {
             throw new Error('Required parameter libraryId was null or undefined when calling cadmaPyJobsReferenceLibrariesRowsPartialUpdate.');
         }
@@ -1083,7 +1147,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
             }
         }
 
-        let localVarPath = `/api/cadma-py/jobs/reference-libraries/${this.configuration.encodeParam({name: "libraryId", value: libraryId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rows/${this.configuration.encodeParam({name: "rowIndex", value: rowIndex, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
+        let localVarPath = `/api/cadma-py/jobs/reference-libraries/${this.configuration.encodeParam({name: "libraryId", value: libraryId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/rows/${this.configuration.encodeParam({name: "rowIndex", value: rowIndex, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<CadmaCompoundRowResponse>('patch', `${basePath}${localVarPath}`,
             {

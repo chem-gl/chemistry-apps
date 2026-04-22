@@ -7,6 +7,7 @@ requerir ejecución Celery real.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -443,6 +444,60 @@ class CadmaPyApiTests(TestCase):
             source_reference="root",
             reference_rows=reference_rows,
         )
+        self.reference_samples_url = f"{self.URL}reference-samples/"
+        self.reference_samples_detail_url = (
+            f"{self.URL}reference-samples/neuro/detail/"
+        )
+        self.reference_samples_import_url = f"{self.URL}reference-samples/import/"
+
+    def test_reference_samples_returns_rows(self) -> None:
+        response = self.client.get(self.reference_samples_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+        self.assertTrue(
+            all(int(sample.get("row_count", 0)) > 0 for sample in response.data)
+        )
+
+    @patch(
+        "apps.cadma_py.services._resolve_sample_path",
+        return_value=Path("/__cadma_py_missing_sample__.csv"),
+    )
+    def test_reference_samples_returns_400_when_sample_file_is_missing(
+        self, _mock_resolve_sample_path: object
+    ) -> None:
+        response = self.client.get(self.reference_samples_url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("no está disponible", str(response.data["detail"]).lower())
+
+    @patch(
+        "apps.cadma_py.services._resolve_sample_path",
+        return_value=Path("/__cadma_py_missing_sample__.csv"),
+    )
+    def test_reference_sample_detail_returns_400_when_sample_file_is_missing(
+        self, _mock_resolve_sample_path: object
+    ) -> None:
+        response = self.client.get(self.reference_samples_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("no está disponible", str(response.data["detail"]).lower())
+
+    @patch(
+        "apps.cadma_py.services._resolve_sample_path",
+        return_value=Path("/__cadma_py_missing_sample__.csv"),
+    )
+    def test_reference_sample_import_returns_400_when_sample_file_is_missing(
+        self, _mock_resolve_sample_path: object
+    ) -> None:
+        response = self.client.post(
+            self.reference_samples_import_url,
+            {"sample_key": "neuro"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("no está disponible", str(response.data["detail"]).lower())
 
     @patch(
         "apps.cadma_py.routers.CadmaPyJobViewSet.prepare_and_dispatch_with_artifacts",

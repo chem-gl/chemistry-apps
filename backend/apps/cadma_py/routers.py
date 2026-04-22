@@ -10,7 +10,12 @@ from typing import cast
 
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.http import HttpResponse
-from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiTypes,
+    extend_schema,
+)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -69,6 +74,20 @@ SOURCE_FILE_FIELDS: tuple[tuple[str, str], ...] = (
     ("sa_file", "sa_csv_text"),
 )
 MISSING_LIBRARY_ID_MESSAGE = "Debes indicar el ID de la familia de referencia."
+LIBRARY_ID_PATH_PARAMETER = OpenApiParameter(
+    name="library_id",
+    type=OpenApiTypes.STR,
+    location=OpenApiParameter.PATH,
+    required=True,
+    description="ID de la familia de referencia CADMA Py.",
+)
+ROW_INDEX_PATH_PARAMETER = OpenApiParameter(
+    name="row_index",
+    type=OpenApiTypes.INT,
+    location=OpenApiParameter.PATH,
+    required=True,
+    description="Índice de la fila dentro de `reference_rows`.",
+)
 
 
 def _read_uploaded_text(uploaded_file: UploadedFile) -> str:
@@ -273,6 +292,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Consultar, actualizar o eliminar una familia CADMA",
+        parameters=[LIBRARY_ID_PATH_PARAMETER],
         request=CadmaReferenceLibraryWriteSerializer,
         responses={
             200: CadmaReferenceLibraryResponseSerializer,
@@ -354,6 +374,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Vista previa de eliminación de una familia con sus jobs vinculados",
+        parameters=[LIBRARY_ID_PATH_PARAMETER],
         responses={
             200: CadmaDeletionPreviewSerializer,
             403: OpenApiResponse(response=ErrorResponseSerializer),
@@ -393,6 +414,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Editar o eliminar una fila de compuesto por índice",
+        parameters=[LIBRARY_ID_PATH_PARAMETER, ROW_INDEX_PATH_PARAMETER],
         request=CadmaReferenceRowPatchSerializer,
         responses={
             200: CadmaCompoundRowResponseSerializer,
@@ -450,6 +472,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Agregar un compuesto nuevo a una familia de referencia",
+        parameters=[LIBRARY_ID_PATH_PARAMETER],
         request=CadmaCompoundAddSerializer,
         responses={
             201: CadmaCompoundRowResponseSerializer,
@@ -503,6 +526,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Crear una copia editable de una familia compartida de solo lectura",
+        parameters=[LIBRARY_ID_PATH_PARAMETER],
         request=CadmaReferenceLibraryForkSerializer,
         responses={
             201: CadmaReferenceLibraryResponseSerializer,
@@ -546,6 +570,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
 
     @extend_schema(
         summary="Descargar ZIP de archivos fuente de una familia de referencia",
+        parameters=[LIBRARY_ID_PATH_PARAMETER],
         responses={
             200: OpenApiResponse(response=OpenApiTypes.BINARY),
             403: OpenApiResponse(response=ErrorResponseSerializer),
@@ -595,7 +620,11 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="reference-samples")
     def reference_samples(self, request: Request) -> Response:
         """Expone datasets de ejemplo tomados del directorio deprecated."""
-        serializer = CadmaReferenceSampleSerializer(list_reference_samples(), many=True)
+        try:
+            samples = list_reference_samples()
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CadmaReferenceSampleSerializer(samples, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(

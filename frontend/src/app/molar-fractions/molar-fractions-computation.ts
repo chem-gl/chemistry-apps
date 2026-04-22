@@ -1,6 +1,8 @@
 // molar-fractions-computation.ts: Utilidades puras para etiquetas, cálculo y procesamiento batch CSV.
 // Mantiene la lógica alineada con el notebook legado para reutilizarla desde la UI sin persistencia.
 
+import { splitDelimitedLine } from '../core/shared/csv-parsing.utils';
+
 export type InitialChargeValue = number | string;
 
 export const MIN_RANGE_PH_STEP = 0.05;
@@ -198,37 +200,6 @@ export function validatePhRangeConstraints(
   }
 
   return null;
-}
-
-function splitDelimitedLine(lineValue: string, delimiter: string): string[] {
-  const cells: string[] = [];
-  let currentCell = '';
-  let insideQuotes = false;
-
-  let index = 0;
-  while (index < lineValue.length) {
-    const currentCharacter = lineValue[index] ?? '';
-    const nextCharacter = lineValue[index + 1] ?? '';
-
-    if (currentCharacter === '"') {
-      if (insideQuotes && nextCharacter === '"') {
-        currentCell += '"';
-        index += 1;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-    } else if (!insideQuotes && currentCharacter === delimiter) {
-      cells.push(currentCell.trim());
-      currentCell = '';
-    } else {
-      currentCell += currentCharacter;
-    }
-
-    index += 1;
-  }
-
-  cells.push(currentCell.trim());
-  return cells;
 }
 
 function normalizeHeaderToken(rawValue: string): string {
