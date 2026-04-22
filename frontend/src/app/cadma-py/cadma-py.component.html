@@ -241,10 +241,7 @@
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 2) {
   <section class="step-section">
     @if (step1Summary(); as summary) {
-    <button
-      class="context-bar"
-      type="button"
-      (click)="clearReferenceSelection()"
+    <button class="context-bar" type="button" (click)="clearReferenceSelection()"
       aria-label="Clear reference selection">
       <span class="context-bar-icon">🧬</span>
       <span class="context-bar-text">{{ summary }}</span>
@@ -346,7 +343,8 @@
       <div class="pathway-reuse-grid">
         <div class="reuse-block reuse-required">
           <span class="reuse-block-label">Smile-it job · required</span>
-          <select [ngModel]="quickFillSmileitJobId()" (ngModelChange)="updateQuickFillSmileitJob($event)">
+          <select [ngModel]="quickFillSmileitJobId()" (ngModelChange)="updateQuickFillSmileitJob($event)"
+            title="Select a Smile-it job">
             <option value="">Select a Smile-it job...</option>
             @for (job of quickFillSmileitJobs(); track job.id) {
             <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
@@ -355,7 +353,8 @@
         </div>
         <div class="reuse-block">
           <span class="reuse-block-label">Toxicity Properties job · optional</span>
-          <select [ngModel]="quickFillToxicityJobId()" (ngModelChange)="quickFillToxicityJobId.set($event)">
+          <select [ngModel]="quickFillToxicityJobId()" (ngModelChange)="quickFillToxicityJobId.set($event)"
+            title="Select a Toxicity Properties job">
             <option value="">Skip — no toxicity data</option>
             @for (job of quickFillToxicityJobs(); track job.id) {
             <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
@@ -364,7 +363,8 @@
         </div>
         <div class="reuse-block">
           <span class="reuse-block-label">SA Score job · optional</span>
-          <select [ngModel]="quickFillSaScoreJobId()" (ngModelChange)="updateQuickFillSaJob($event)">
+          <select [ngModel]="quickFillSaScoreJobId()" (ngModelChange)="updateQuickFillSaJob($event)"
+            title="Select an SA Score job">
             <option value="">Skip — no SA data</option>
             @for (job of quickFillSaScoreJobs(); track job.id) {
             <option [ngValue]="job.id">{{ quickFillJobLabel(job) }}</option>
@@ -373,7 +373,8 @@
         </div>
         <div class="reuse-block reuse-required">
           <span class="reuse-block-label">SA method · required</span>
-          <select [ngModel]="quickFillSaMethod()" (ngModelChange)="updateQuickFillSaMethod($event)">
+          <select [ngModel]="quickFillSaMethod()" (ngModelChange)="updateQuickFillSaMethod($event)"
+            title="Select an SA method">
             <option value="">Select SA method...</option>
             @for (method of quickFillAvailableSaMethods(); track method) {
             <option [ngValue]="method">{{ method.toUpperCase() }}</option>
@@ -510,10 +511,7 @@
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 3) {
   <section class="step-section">
     @if (step1Summary(); as summary) {
-    <button
-      class="context-bar"
-      type="button"
-      (click)="clearReferenceSelection()"
+    <button class="context-bar" type="button" (click)="clearReferenceSelection()"
       aria-label="Clear reference selection">
       <span class="context-bar-icon">🧬</span>
       <span class="context-bar-text">{{ summary }}</span>
@@ -521,11 +519,7 @@
     </button>
     }
     @if (step2Summary(); as summary) {
-    <button
-      class="context-bar"
-      type="button"
-      (click)="returnToCandidateInputs()"
-      aria-label="Back to candidate inputs">
+    <button class="context-bar" type="button" (click)="returnToCandidateInputs()" aria-label="Back to candidate inputs">
       <span class="context-bar-icon">📋</span>
       <span class="context-bar-text">{{ summary }}</span>
       <span class="btn-ghost btn-sm">Back to step 2</span>
