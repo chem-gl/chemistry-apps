@@ -4,6 +4,7 @@ import { inject, Injectable } from '@angular/core';
 import { forkJoin, from, last, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { JobsApiService, SaScoreMethod, ScientificJobView } from '../api/jobs-api.service';
 import type { NamedSmilesJobMolecule } from '../api/types/named-smiles-api.types';
+import { splitDelimitedLine } from '../shared/csv-parsing.utils';
 
 export interface CadmaQuickFillSources {
   smileitJobs: ScientificJobView[];
@@ -140,38 +141,6 @@ function detectDelimiter(rawContent: string): string {
       ',',
     ) ?? ','
   );
-}
-
-function splitDelimitedLine(lineValue: string, delimiter: string): string[] {
-  const cells: string[] = [];
-  let currentCell = '';
-  let insideQuotes = false;
-
-  for (let index = 0; index < lineValue.length; index += 1) {
-    const currentCharacter = lineValue[index] ?? '';
-    const nextCharacter = lineValue[index + 1] ?? '';
-
-    if (currentCharacter === '"') {
-      if (insideQuotes && nextCharacter === '"') {
-        currentCell += '"';
-        index += 1;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-      continue;
-    }
-
-    if (!insideQuotes && currentCharacter === delimiter) {
-      cells.push(currentCell.trim());
-      currentCell = '';
-      continue;
-    }
-
-    currentCell += currentCharacter;
-  }
-
-  cells.push(currentCell.trim());
-  return cells;
 }
 
 function looksLikeHeader(columns: string[]): boolean {

@@ -548,6 +548,111 @@ def _build_compound_rows_from_normalized_rows(
     return normalized_rows
 
 
+def _validate_mapped_source_configs(
+    source_configs: list[CadmaMappedSourceConfig],
+) -> None:
+    if len(source_configs) == 0:
+        raise ValueError(
+            "Debes cargar al menos un archivo con configuración de importación."
+        )
+    if not _source_has_explicit_smiles(source_configs[0]):
+        raise ValueError(
+            "El primer archivo debe definir la columna principal de SMILES o ser un archivo .smi."
+        )
+
+
+def _build_guide_source_index(
+    projected_rows: list[dict[str, str]],
+) -> tuple[list[str], dict[str, dict[str, str]]]:
+    guide_order: list[str] = []
+    merged_by_smiles: dict[str, dict[str, str]] = {}
+    for projected_row in projected_rows:
+        smiles_value = _get_alias_value(projected_row, "smiles")
+        if smiles_value == "":
+            raise ValueError(
+                "El archivo guía debe incluir una columna principal de SMILES en todas las filas utilizables."
+            )
+        canonical_smiles = _canonicalize_smiles(smiles_value)
+        if canonical_smiles in merged_by_smiles:
+            raise ValueError(
+                "El archivo guía contiene SMILES duplicados; corrígelo antes de continuar."
+            )
+        guide_order.append(canonical_smiles)
+        merged_by_smiles[canonical_smiles] = dict(projected_row)
+    return guide_order, merged_by_smiles
+
+
+def _build_source_matches(
+    projected_rows: list[dict[str, str]],
+    filename: str,
+) -> dict[str, dict[str, str]]:
+    source_matches: dict[str, dict[str, str]] = {}
+    for projected_row in projected_rows:
+        smiles_value = _get_alias_value(projected_row, "smiles")
+        if smiles_value == "":
+            raise ValueError(
+                f"El archivo {filename} no incluye SMILES en una de sus filas utilizables."
+            )
+        canonical_smiles = _canonicalize_smiles(smiles_value)
+        if canonical_smiles in source_matches:
+            raise ValueError(
+                f"El archivo {filename} contiene SMILES duplicados tras la normalización."
+            )
+        source_matches[canonical_smiles] = projected_row
+    return source_matches
+
+
+def _validate_source_matches_guide(
+    *,
+    source_matches: dict[str, dict[str, str]],
+    guide_order: list[str],
+    merged_by_smiles: dict[str, dict[str, str]],
+    filename: str,
+) -> None:
+    missing_smiles = [smiles for smiles in guide_order if smiles not in source_matches]
+    extra_smiles = [smiles for smiles in source_matches if smiles not in merged_by_smiles]
+    if missing_smiles or extra_smiles:
+        raise ValueError(
+            f"El archivo {filename} no coincide con la guía de SMILES seleccionada."
+        )
+
+
+def _merge_rows_with_explicit_smiles(
+    *,
+    projected_rows: list[dict[str, str]],
+    filename: str,
+    guide_order: list[str],
+    merged_by_smiles: dict[str, dict[str, str]],
+) -> None:
+    source_matches = _build_source_matches(projected_rows, filename)
+    _validate_source_matches_guide(
+        source_matches=source_matches,
+        guide_order=guide_order,
+        merged_by_smiles=merged_by_smiles,
+        filename=filename,
+    )
+    for canonical_smiles in guide_order:
+        _merge_non_empty_values(
+            merged_by_smiles[canonical_smiles],
+            source_matches[canonical_smiles],
+        )
+
+
+def _merge_rows_by_position(
+    *,
+    projected_rows: list[dict[str, str]],
+    filename: str,
+    guide_order: list[str],
+    merged_by_smiles: dict[str, dict[str, str]],
+) -> None:
+    if len(projected_rows) != len(guide_order):
+        raise ValueError(
+            f"El archivo {filename} no tiene columna de SMILES y su número de filas utilizables no coincide con la guía."
+        )
+    for canonical_smiles, projected_row in zip(guide_order, projected_rows, strict=True):
+        _merge_non_empty_values(merged_by_smiles[canonical_smiles], projected_row)
+
+
 def build_compound_rows_from_mapped_sources(
     *,
     source_configs: list[CadmaMappedSourceConfig],
@@ -558,14 +663,7 @@ def build_compound_rows_from_mapped_sources(
     require_evidence: bool,
 ) -> list[CadmaCompoundRow]:
     """Construye filas CADMA a partir de archivos guiados con mapeo de columnas."""
-    if len(source_configs) == 0:
-        raise ValueError(
-            "Debes cargar al menos un archivo con configuración de importación."
-        )
-    if not _source_has_explicit_smiles(source_configs[0]):
-        raise ValueError(
-            "El primer archivo debe definir la columna principal de SMILES o ser un archivo .smi."
-        )
+    _validate_mapped_source_configs(source_configs)
 
     merged_by_smiles: dict[str, dict[str, str]] = {}
     guide_order: list[str] = []
@@ -581,63 +679,24 @@ def build_compound_rows_from_mapped_sources(
         filename = str(source_config.get("filename", f"source_{source_index + 1}.csv"))
 
         if source_index == 0:
-            for projected_row in projected_rows:
-                smiles_value = _get_alias_value(projected_row, "smiles")
-                if smiles_value == "":
-                    raise ValueError(
-                        "El archivo guía debe incluir una columna principal de SMILES en todas las filas utilizables."
-                    )
-                canonical_smiles = _canonicalize_smiles(smiles_value)
-                if canonical_smiles in merged_by_smiles:
-                    raise ValueError(
-                        "El archivo guía contiene SMILES duplicados; corrígelo antes de continuar."
-                    )
-                guide_order.append(canonical_smiles)
-                merged_by_smiles[canonical_smiles] = dict(projected_row)
+            guide_order, merged_by_smiles = _build_guide_source_index(projected_rows)
             continue
 
         if _source_has_explicit_smiles(source_config):
-            source_matches: dict[str, dict[str, str]] = {}
-            for projected_row in projected_rows:
-                smiles_value = _get_alias_value(projected_row, "smiles")
-                if smiles_value == "":
-                    raise ValueError(
-                        f"El archivo {filename} no incluye SMILES en una de sus filas utilizables."
-                    )
-                canonical_smiles = _canonicalize_smiles(smiles_value)
-                if canonical_smiles in source_matches:
-                    raise ValueError(
-                        f"El archivo {filename} contiene SMILES duplicados tras la normalización."
-                    )
-                source_matches[canonical_smiles] = projected_row
-
-            missing_smiles = [
-                smiles for smiles in guide_order if smiles not in source_matches
-            ]
-            extra_smiles = [
-                smiles for smiles in source_matches if smiles not in merged_by_smiles
-            ]
-            if missing_smiles or extra_smiles:
-                raise ValueError(
-                    f"El archivo {filename} no coincide con la guía de SMILES seleccionada."
-                )
-
-            for canonical_smiles in guide_order:
-                _merge_non_empty_values(
-                    merged_by_smiles[canonical_smiles],
-                    source_matches[canonical_smiles],
-                )
+            _merge_rows_with_explicit_smiles(
+                projected_rows=projected_rows,
+                filename=filename,
+                guide_order=guide_order,
+                merged_by_smiles=merged_by_smiles,
+            )
             continue
 
-        if len(projected_rows) != len(guide_order):
-            raise ValueError(
-                f"El archivo {filename} no tiene columna de SMILES y su número de filas utilizables no coincide con la guía."
-            )
-
-        for canonical_smiles, projected_row in zip(
-            guide_order, projected_rows, strict=True
-        ):
-            _merge_non_empty_values(merged_by_smiles[canonical_smiles], projected_row)
+        _merge_rows_by_position(
+            projected_rows=projected_rows,
+            filename=filename,
+            guide_order=guide_order,
+            merged_by_smiles=merged_by_smiles,
+        )
 
     return _build_compound_rows_from_normalized_rows(
         merged_rows=[
@@ -1336,8 +1395,8 @@ def deactivate_reference_library(
     library.save(update_fields=["is_active", "updated_at"])
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+def _sample_assets_dir() -> Path:
+    return Path(__file__).resolve().parent / "data" / "samples"
 
 
 def list_reference_samples() -> list[CadmaReferenceSample]:
@@ -1345,18 +1404,15 @@ def list_reference_samples() -> list[CadmaReferenceSample]:
     sample_rows: list[CadmaReferenceSample] = []
     for sample_item in SAMPLE_DEFINITIONS:
         sample_copy: CadmaReferenceSample = dict(sample_item)
-        csv_path = _resolve_sample_path(sample_item["key"])
-        sample_copy["row_count"] = len(
-            _parse_table_text(csv_path.read_text(encoding="utf-8"))
-        )
+        sample_text = _read_sample_text(sample_item["key"])
+        sample_copy["row_count"] = len(_parse_table_text(sample_text))
         sample_rows.append(sample_copy)
     return sample_rows
 
 
 def preview_reference_sample(sample_key: str) -> list[dict[str, str]]:
     """Devuelve las filas name + SMILES de una muestra legacy para vista previa."""
-    csv_path = _resolve_sample_path(sample_key)
-    rows = _parse_table_text(csv_path.read_text(encoding="utf-8"))
+    rows = _parse_table_text(_read_sample_text(sample_key))
     preview_rows: list[dict[str, str]] = []
     for index, row in enumerate(rows):
         name = _get_alias_value(row, "name") or f"Compound {index + 1}"
@@ -1372,11 +1428,12 @@ def preview_reference_sample_detail(sample_key: str) -> CadmaReferenceLibraryVie
     antes de seleccionar la familia como baseline.
     """
     sample_path = _resolve_sample_path(sample_key)
+    sample_text = _read_sample_text(sample_key, sample_path=sample_path)
+    sample_bytes = sample_text.encode("utf-8")
     sample_meta = next(item for item in SAMPLE_DEFINITIONS if item["key"] == sample_key)
     sample_literature = get_sample_literature(sample_key)
-    sample_bytes = sample_path.read_bytes()
     rows = build_compound_rows_from_sources(
-        combined_csv_text=sample_path.read_text(encoding="utf-8"),
+        combined_csv_text=sample_text,
         default_paper_reference=sample_literature["paper_reference"],
         default_paper_url=sample_literature["paper_url"],
         default_evidence_note=sample_literature["default_evidence_note"],
@@ -1418,8 +1475,8 @@ def preview_reference_sample_detail(sample_key: str) -> CadmaReferenceLibraryVie
 
 def _resolve_sample_path(sample_key: str) -> Path:
     sample_map = {
-        "neuro": _repo_root() / "deprecated" / "CADMA" / "Neuro_RefSet.csv",
-        "rett": _repo_root() / "deprecated" / "CADMA" / "RETT_RefSet.csv",
+        "neuro": _sample_assets_dir() / "Neuro_RefSet.csv",
+        "rett": _sample_assets_dir() / "RETT_RefSet.csv",
     }
     try:
         return sample_map[sample_key]
@@ -1427,11 +1484,23 @@ def _resolve_sample_path(sample_key: str) -> Path:
         raise ValueError("No existe la muestra CADMA solicitada.") from exc
 
 
+def _read_sample_text(sample_key: str, *, sample_path: Path | None = None) -> str:
+    resolved_path = sample_path or _resolve_sample_path(sample_key)
+    try:
+        return resolved_path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise ValueError(
+            "La muestra CADMA solicitada no está disponible en este despliegue."
+        ) from exc
+
+
 def create_library_from_sample(
     *, sample_key: str, actor: AbstractUser, new_name: str = ""
 ) -> CadmaReferenceLibrary:
     """Crea una familia a partir de los CSVs de ejemplo del repositorio."""
     sample_path = _resolve_sample_path(sample_key)
+    sample_text = _read_sample_text(sample_key, sample_path=sample_path)
+    sample_bytes = sample_text.encode("utf-8")
     sample_meta = next(item for item in SAMPLE_DEFINITIONS if item["key"] == sample_key)
     sample_literature = get_sample_literature(sample_key)
     payload: dict[str, str] = {
@@ -1440,7 +1509,7 @@ def create_library_from_sample(
         "description": sample_literature["description"],
         "paper_reference": sample_literature["paper_reference"],
         "paper_url": sample_literature["paper_url"],
-        "combined_csv_text": sample_path.read_text(encoding="utf-8"),
+        "combined_csv_text": sample_text,
     }
     library = create_reference_library(payload=payload, actor=actor)
     library.description = sample_literature["description"]
@@ -1463,7 +1532,7 @@ def create_library_from_sample(
         library=library,
         field_name="combined_file",
         original_filename=sample_path.name,
-        content_bytes=sample_path.read_bytes(),
+        content_bytes=sample_bytes,
         content_type=CSV_CONTENT_TYPE,
     )
     return library

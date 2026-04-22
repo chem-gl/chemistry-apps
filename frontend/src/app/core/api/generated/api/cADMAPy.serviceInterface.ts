@@ -12,6 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 import { Observable }                                        from 'rxjs';
 
 import { CadmaCompoundRowResponse } from '../model/models';
+import { CadmaDeletionPreview } from '../model/models';
 import { CadmaPyJobResponse } from '../model/models';
 import { CadmaReferenceLibraryResponse } from '../model/models';
 import { CadmaReferenceSample } from '../model/models';
@@ -70,10 +71,18 @@ export interface CADMAPyServiceInterface {
     cadmaPyJobsReferenceLibrariesCreate(name: string, diseaseName: string, description?: string, paperReference?: string, paperUrl?: string, combinedCsvText?: string, smilesCsvText?: string, toxicityCsvText?: string, saCsvText?: string, combinedFile?: Blob, smilesFile?: Blob, toxicityFile?: Blob, saFile?: Blob, sourceConfigsJson?: string, extraHttpRequestParams?: any): Observable<Array<CadmaReferenceLibraryResponse>>;
 
     /**
+     * Vista previa de eliminación de una familia con sus jobs vinculados
+     * Retorna los jobs vinculados a la familia para confirmar eliminación.
+     * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/deletion-preview/
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     */
+    cadmaPyJobsReferenceLibrariesDeletionPreviewRetrieve(libraryId: string, extraHttpRequestParams?: any): Observable<CadmaDeletionPreview>;
+
+    /**
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint delete /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      */
     cadmaPyJobsReferenceLibrariesDestroy(libraryId: string, extraHttpRequestParams?: any): Observable<CadmaReferenceLibraryResponse>;
 
@@ -81,7 +90,7 @@ export interface CADMAPyServiceInterface {
      * Crear una copia editable de una familia compartida de solo lectura
      * Genera una copia editable para el actor sin alterar la familia compartida original.
      * @endpoint post /api/cadma-py/jobs/reference-libraries/{library_id}/fork/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param newName 
      */
     cadmaPyJobsReferenceLibrariesForkCreate(libraryId: string, newName?: string, extraHttpRequestParams?: any): Observable<CadmaReferenceLibraryResponse>;
@@ -97,7 +106,7 @@ export interface CADMAPyServiceInterface {
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint patch /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param name 
      * @param diseaseName 
      * @param description 
@@ -119,7 +128,7 @@ export interface CADMAPyServiceInterface {
      * Descargar ZIP de archivos fuente de una familia de referencia
      * Entrega un ZIP con todos los archivos fuente guardados para una familia.
      * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/report-inputs/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      */
     cadmaPyJobsReferenceLibrariesReportInputsRetrieve(libraryId: string, extraHttpRequestParams?: any): Observable<Blob>;
 
@@ -127,7 +136,7 @@ export interface CADMAPyServiceInterface {
      * Consultar, actualizar o eliminar una familia CADMA
      * Opera sobre una familia concreta manteniendo las reglas RBAC.
      * @endpoint get /api/cadma-py/jobs/reference-libraries/{library_id}/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      */
     cadmaPyJobsReferenceLibrariesRetrieve(libraryId: string, extraHttpRequestParams?: any): Observable<CadmaReferenceLibraryResponse>;
 
@@ -135,7 +144,7 @@ export interface CADMAPyServiceInterface {
      * Agregar un compuesto nuevo a una familia de referencia
      * Agrega un compuesto con ADME auto-calculado por RDKit.
      * @endpoint post /api/cadma-py/jobs/reference-libraries/{library_id}/rows/
-     * @param libraryId 
+     * @param libraryId ID de la familia de referencia CADMA Py.
      * @param smiles 
      * @param name 
      * @param paperReference 
@@ -152,23 +161,23 @@ export interface CADMAPyServiceInterface {
      * Editar o eliminar una fila de compuesto por índice
      * Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
      * @endpoint delete /api/cadma-py/jobs/reference-libraries/{library_id}/rows/{row_index}/
-     * @param libraryId 
-     * @param rowIndex 
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      */
-    cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: string, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
+    cadmaPyJobsReferenceLibrariesRowsDestroy(libraryId: string, rowIndex: number, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
 
     /**
      * Editar o eliminar una fila de compuesto por índice
      * Actualiza campos editables (name, paper_reference, paper_url, evidence_note).
      * @endpoint patch /api/cadma-py/jobs/reference-libraries/{library_id}/rows/{row_index}/
-     * @param libraryId 
-     * @param rowIndex 
+     * @param libraryId ID de la familia de referencia CADMA Py.
+     * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      * @param name 
      * @param paperReference 
      * @param paperUrl 
      * @param evidenceNote 
      */
-    cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
+    cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
 
     /**
      * Ver detalle completo de una muestra legacy sin importarla

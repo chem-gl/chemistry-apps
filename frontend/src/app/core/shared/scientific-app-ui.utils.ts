@@ -3,6 +3,7 @@
 
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
+import { splitDelimitedLine } from './csv-parsing.utils';
 
 export interface NamedSmilesInputRow {
   name: string;
@@ -81,37 +82,6 @@ export function closeDialogOnBackdropClick(
   }
 }
 
-function splitCsvLine(lineValue: string, delimiter: string): string[] {
-  const cells: string[] = [];
-  let currentCell: string = '';
-  let insideQuotes: boolean = false;
-  let index: number = 0;
-
-  while (index < lineValue.length) {
-    const currentCharacter: string = lineValue[index] ?? '';
-    const nextCharacter: string = lineValue[index + 1] ?? '';
-
-    if (currentCharacter === '"') {
-      if (insideQuotes && nextCharacter === '"') {
-        currentCell += '"';
-        index += 1;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-    } else if (!insideQuotes && currentCharacter === delimiter) {
-      cells.push(currentCell.trim());
-      currentCell = '';
-    } else {
-      currentCell += currentCharacter;
-    }
-
-    index += 1;
-  }
-
-  cells.push(currentCell.trim());
-  return cells;
-}
-
 function normalizeHeaderToken(rawValue: string): string {
   return rawValue
     .replaceAll('\uFEFF', '')
@@ -146,7 +116,7 @@ function detectStructuredDelimiter(lines: string[]): string | null {
   const supportedDelimiters: string[] = [',', ';', '\t'];
   for (const delimiter of supportedDelimiters) {
     const hasStructuredRow: boolean = lines.some(
-      (lineValue: string) => splitCsvLine(lineValue, delimiter).length >= 2,
+      (lineValue: string) => splitDelimitedLine(lineValue, delimiter).length >= 2,
     );
     if (hasStructuredRow) {
       return delimiter;
@@ -219,11 +189,11 @@ export function parseNamedSmilesBatch(rawContent: string): ParsedNamedSmilesBatc
     };
   }
 
-  const firstRowCells: string[] = splitCsvLine(contentLines[0] ?? '', detectedDelimiter);
+  const firstRowCells: string[] = splitDelimitedLine(contentLines[0] ?? '', detectedDelimiter);
   const hasHeader: boolean = isHeaderRow(firstRowCells);
   const dataLines: string[] = hasHeader ? contentLines.slice(1) : contentLines;
   const parsedRows: NamedSmilesInputRow[] = dataLines.map((lineValue: string) => {
-    const cells: string[] = splitCsvLine(lineValue, detectedDelimiter);
+    const cells: string[] = splitDelimitedLine(lineValue, detectedDelimiter);
     const firstCell: string = cells[0] ?? '';
     const secondCell: string = cells[1] ?? '';
     if (cells.length < 2) {

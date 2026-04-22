@@ -5,6 +5,8 @@ export * from './appPermissionRequest';
 export * from './blankEnum';
 export * from './cadmaCompoundAddRequest';
 export * from './cadmaCompoundRowResponse';
+export * from './cadmaDeletionPreview';
+export * from './cadmaLinkedJob';
 export * from './cadmaPyJobCreateRequest';
 export * from './cadmaPyJobResponse';
 export * from './cadmaReferenceLibraryForkRequest';

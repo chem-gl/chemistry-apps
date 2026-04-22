@@ -13,6 +13,22 @@ from rest_framework import serializers
 from apps.core.models import ScientificJob
 
 
+def _resolve_source_inputs(attrs: dict[str, object]) -> tuple[bool, bool, bool]:
+    text_fields = (
+        "combined_csv_text",
+        "smiles_csv_text",
+        "toxicity_csv_text",
+        "sa_csv_text",
+    )
+    file_fields = ("combined_file", "smiles_file", "toxicity_file", "sa_file")
+    has_text_input = any(
+        str(attrs.get(field_name, "")).strip() != "" for field_name in text_fields
+    )
+    has_file_input = any(attrs.get(field_name) is not None for field_name in file_fields)
+    has_guided_config = str(attrs.get("source_configs_json", "")).strip() != ""
+    return has_text_input, has_file_input, has_guided_config
+
+
 class CadmaPyJobCreateSerializer(serializers.Serializer):
     """Valida la creación de un job CADMA Py a partir de una familia y CSVs."""
 
@@ -46,20 +62,7 @@ class CadmaPyJobCreateSerializer(serializers.Serializer):
         return normalized_value
 
     def validate(self, attrs: dict[str, object]) -> dict[str, object]:
-        text_fields = (
-            "combined_csv_text",
-            "smiles_csv_text",
-            "toxicity_csv_text",
-            "sa_csv_text",
-        )
-        file_fields = ("combined_file", "smiles_file", "toxicity_file", "sa_file")
-        has_text_input = any(
-            str(attrs.get(field_name, "")).strip() != "" for field_name in text_fields
-        )
-        has_file_input = any(
-            attrs.get(field_name) is not None for field_name in file_fields
-        )
-        has_guided_config = str(attrs.get("source_configs_json", "")).strip() != ""
+        has_text_input, has_file_input, has_guided_config = _resolve_source_inputs(attrs)
         if not has_text_input and not has_file_input and not has_guided_config:
             raise serializers.ValidationError(
                 "Debes proporcionar al menos un CSV para los compuestos candidatos."
@@ -88,20 +91,7 @@ class CadmaReferenceLibraryWriteSerializer(serializers.Serializer):
     source_configs_json = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs: dict[str, object]) -> dict[str, object]:
-        text_fields = (
-            "combined_csv_text",
-            "smiles_csv_text",
-            "toxicity_csv_text",
-            "sa_csv_text",
-        )
-        file_fields = ("combined_file", "smiles_file", "toxicity_file", "sa_file")
-        has_text_input = any(
-            str(attrs.get(field_name, "")).strip() != "" for field_name in text_fields
-        )
-        has_file_input = any(
-            attrs.get(field_name) is not None for field_name in file_fields
-        )
-        has_guided_config = str(attrs.get("source_configs_json", "")).strip() != ""
+        has_text_input, has_file_input, has_guided_config = _resolve_source_inputs(attrs)
         if (
             self.partial
             and not has_text_input

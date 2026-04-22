@@ -36,6 +36,8 @@ model/appPermissionRequest.ts
 model/blankEnum.ts
 model/cadmaCompoundAddRequest.ts
 model/cadmaCompoundRowResponse.ts
+model/cadmaDeletionPreview.ts
+model/cadmaLinkedJob.ts
 model/cadmaPyJobCreateRequest.ts
 model/cadmaPyJobResponse.ts
 model/cadmaReferenceLibraryForkRequest.ts

@@ -30,6 +30,8 @@ import {
 import { SaScoreMethod, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   CadmaPyQuickFillService,
+  type CadmaQuickFillPayload,
+  type CadmaQuickLaunchPayload,
   extractRequestedSaMethods,
   inspectCadmaSourceConfigs,
   pickPreferredHistoricalJobId,
@@ -566,6 +568,22 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.syncScoreConfigToWorkflow();
   }
 
+  private applyQuickFillPayload(payload: CadmaQuickFillPayload): void {
+    this.candidateReviewStep.set(2);
+    this.candidateBundle.set(createEmptyCsvBundle());
+    this.workflow.clearCandidateInputs();
+    this.workflow.sourceConfigsJson.set(payload.sourceConfigsJson);
+    this.candidateSourceConfigsJson.set(payload.sourceConfigsJson);
+    this.candidateImportedFilenames.set(payload.filenames);
+    this.candidateImportedTotalFiles.set(payload.totalFiles);
+    this.candidateImportedTotalUsableRows.set(payload.totalUsableRows);
+  }
+
+  private applyQuickFillSuccess(payload: CadmaQuickFillPayload): void {
+    this.quickFillApplying.set(false);
+    this.applyQuickFillPayload(payload);
+  }
+
   launchQuickFillFromSelectedSmileit(): void {
     if (this.quickFillSmileitJobId().trim() === '') {
       this.quickFillErrorMessage.set('Select a completed Smile-it job before generating reports.');
@@ -586,16 +604,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.quickFillService
       .launchAutoFillFromSmileitJob(this.quickFillSmileitJobId(), selectedSaMethod)
       .subscribe({
-        next: (payload) => {
-          this.quickFillApplying.set(false);
-          this.candidateReviewStep.set(2);
-          this.candidateBundle.set(createEmptyCsvBundle());
-          this.workflow.clearCandidateInputs();
-          this.workflow.sourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateSourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateImportedFilenames.set(payload.filenames);
-          this.candidateImportedTotalFiles.set(payload.totalFiles);
-          this.candidateImportedTotalUsableRows.set(payload.totalUsableRows);
+        next: (payload: CadmaQuickLaunchPayload) => {
+          this.applyQuickFillSuccess(payload);
           this.quickFillToxicityJobId.set(payload.launchedToxicityJobId);
           this.quickFillSaScoreJobId.set(payload.launchedSaScoreJobId);
 
@@ -646,16 +656,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.quickFillService
       .launchAutoFillFromCurrentGuide(this.workflow.sourceConfigsJson(), selectedSaMethod)
       .subscribe({
-        next: (payload) => {
-          this.quickFillApplying.set(false);
-          this.candidateReviewStep.set(2);
-          this.candidateBundle.set(createEmptyCsvBundle());
-          this.workflow.clearCandidateInputs();
-          this.workflow.sourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateSourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateImportedFilenames.set(payload.filenames);
-          this.candidateImportedTotalFiles.set(payload.totalFiles);
-          this.candidateImportedTotalUsableRows.set(payload.totalUsableRows);
+        next: (payload: CadmaQuickLaunchPayload) => {
+          this.applyQuickFillSuccess(payload);
 
           if (payload.launchedToxicityJobId !== '') {
             this.quickFillToxicityJobId.set(payload.launchedToxicityJobId);
@@ -704,16 +706,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
         saMethod: selectedSaMethod,
       })
       .subscribe({
-        next: (payload) => {
-          this.quickFillApplying.set(false);
-          this.candidateReviewStep.set(2);
-          this.candidateBundle.set(createEmptyCsvBundle());
-          this.workflow.clearCandidateInputs();
-          this.workflow.sourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateSourceConfigsJson.set(payload.sourceConfigsJson);
-          this.candidateImportedFilenames.set(payload.filenames);
-          this.candidateImportedTotalFiles.set(payload.totalFiles);
-          this.candidateImportedTotalUsableRows.set(payload.totalUsableRows);
+        next: (payload: CadmaQuickFillPayload) => {
+          this.applyQuickFillSuccess(payload);
 
           this.applyDefaultProjectLabelFromSourceConfigs(payload.sourceConfigsJson);
 
