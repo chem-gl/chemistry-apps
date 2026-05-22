@@ -44,10 +44,27 @@ RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
 COPY pyproject.toml poetry.lock* /app/
 
 FROM base AS deps-prod
-RUN poetry install --only main --no-root --no-ansi
+RUN poetry install --only main,scientific --no-root --no-ansi \
+    && pip uninstall -y \
+        nvidia-cublas nvidia-cuda-cupti nvidia-cuda-nvrtc \
+        nvidia-cuda-runtime nvidia-cudnn-cu13 nvidia-cufft \
+        nvidia-cufile nvidia-curand nvidia-cusolver \
+        nvidia-cusparse nvidia-cusparselt-cu13 nvidia-nccl-cu13 \
+        nvidia-nvjitlink nvidia-nvshmem-cu13 nvidia-nvtx \
+        cuda-toolkit cuda-pathfinder cuda-bindings \
+        2>/dev/null || true \
+    && python -c "import torch; assert not torch.cuda.is_available(); print('CPU-only OK:', torch.__version__)"
 
 FROM base AS deps-dev
-RUN poetry install --with dev --no-root --no-ansi
+RUN poetry install --with dev,scientific --no-root --no-ansi \
+    && pip uninstall -y \
+        nvidia-cublas nvidia-cuda-cupti nvidia-cuda-nvrtc \
+        nvidia-cuda-runtime nvidia-cudnn-cu13 nvidia-cufft \
+        nvidia-cufile nvidia-curand nvidia-cusolver \
+        nvidia-cusparse nvidia-cusparselt-cu13 nvidia-nccl-cu13 \
+        nvidia-nvjitlink nvidia-nvshmem-cu13 nvidia-nvtx \
+        cuda-toolkit cuda-pathfinder cuda-bindings \
+        2>/dev/null || true
 
 FROM deps-dev AS dev
 
