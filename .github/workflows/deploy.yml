@@ -489,6 +489,10 @@ jobs:
               "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
             rmdir "$DEPLOY_STAGING_DIR" 2>/dev/null || true
 
-            docker image prune -f --filter "until=168h"
+            # Eliminar imágenes no usadas (de deploys anteriores). Las imágenes actuales
+            # están referenciadas por los containers running, así que se conservan.
+            docker image prune -a -f
+            # Limpiar cache de build para liberar disco
+            docker builder prune -f
             rm -rf "$VM_PROJECT_PATH/.github/.tmp-ssh" 2>/dev/null || true
             systemctl restart nginx || true
