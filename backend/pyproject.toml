@@ -16,7 +16,6 @@ package-mode = false
 [tool.poetry.dependencies]
 python = ">=3.12,<3.15"
 asgiref = "3.11.1"
-admet_ai = "2.0.1"
 backend = "0.2.4.1"
 channels = "4.3.2"
 channels-redis = "4.3.0"
@@ -36,6 +35,11 @@ redis = "7.4.0"
 psycopg = "3.3.3"
 psycopg-binary = "3.3.3"
 psycopg2-binary = "2.9.11"
+
+# Grupo opcional para apps científicas con dependencias pesadas (torch/cuda/gpu).
+# Se omite en deploy host (migraciones) pero se instala en la imagen Docker.
+[tool.poetry.group.scientific.dependencies]
+admet_ai = "2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "26.3.1"

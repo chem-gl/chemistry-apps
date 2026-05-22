@@ -44,10 +44,21 @@ RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
 COPY pyproject.toml poetry.lock* /app/
 
 FROM base AS deps-prod
-RUN poetry install --only main --no-root --no-ansi
+# Nota: el grupo scientific (admet_ai, torch, etc.) se instala aparte con pip
+# porque poetry resuelve torch desde PyPI con dependencias CUDA, y este
+# servidor no tiene GPU. En su lugar:
+#   1. poetry instala solo main (Django, DRF, celery, rdkit, etc.)
+#   2. pip instala torch CPU-only desde el indice oficial de PyTorch
+#   3. pip instala admet-ai y sus dependencias (usa el torch CPU ya instalado)
+RUN poetry install --only main --no-root --no-ansi \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install admet-ai \
+    && python -c "import torch; assert not torch.cuda.is_available(); print('CPU-only OK:', torch.__version__)"
 
 FROM base AS deps-dev
-RUN poetry install --with dev --no-root --no-ansi
+RUN poetry install --with dev --no-root --no-ansi \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install admet-ai
 
 FROM deps-dev AS dev
 
