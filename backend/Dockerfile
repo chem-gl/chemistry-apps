@@ -44,27 +44,21 @@ RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
 COPY pyproject.toml poetry.lock* /app/
 
 FROM base AS deps-prod
-RUN poetry install --only main,scientific --no-root --no-ansi \
-    && pip uninstall -y \
-        nvidia-cublas nvidia-cuda-cupti nvidia-cuda-nvrtc \
-        nvidia-cuda-runtime nvidia-cudnn-cu13 nvidia-cufft \
-        nvidia-cufile nvidia-curand nvidia-cusolver \
-        nvidia-cusparse nvidia-cusparselt-cu13 nvidia-nccl-cu13 \
-        nvidia-nvjitlink nvidia-nvshmem-cu13 nvidia-nvtx \
-        cuda-toolkit cuda-pathfinder cuda-bindings \
-        2>/dev/null || true \
+# Nota: el grupo scientific (admet_ai, torch, etc.) se instala aparte con pip
+# porque poetry resuelve torch desde PyPI con dependencias CUDA, y este
+# servidor no tiene GPU. En su lugar:
+#   1. poetry instala solo main (Django, DRF, celery, rdkit, etc.)
+#   2. pip instala torch CPU-only desde el indice oficial de PyTorch
+#   3. pip instala admet-ai y sus dependencias (usa el torch CPU ya instalado)
+RUN poetry install --only main --no-root --no-ansi \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install admet-ai \
     && python -c "import torch; assert not torch.cuda.is_available(); print('CPU-only OK:', torch.__version__)"
 
 FROM base AS deps-dev
-RUN poetry install --with dev,scientific --no-root --no-ansi \
-    && pip uninstall -y \
-        nvidia-cublas nvidia-cuda-cupti nvidia-cuda-nvrtc \
-        nvidia-cuda-runtime nvidia-cudnn-cu13 nvidia-cufft \
-        nvidia-cufile nvidia-curand nvidia-cusolver \
-        nvidia-cusparse nvidia-cusparselt-cu13 nvidia-nccl-cu13 \
-        nvidia-nvjitlink nvidia-nvshmem-cu13 nvidia-nvtx \
-        cuda-toolkit cuda-pathfinder cuda-bindings \
-        2>/dev/null || true
+RUN poetry install --with dev --no-root --no-ansi \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install admet-ai
 
 FROM deps-dev AS dev
 
