@@ -111,8 +111,9 @@ describe('HttpAuthTokenInterceptor', () => {
     expect((response as HttpResponse<string>).body).toBe('Bearer refreshed-token');
   });
 
-  it('cierra sesión cuando refresh devuelve null', async () => {
-    // Verifica la ruta de sesión expirada para evitar reintentos silenciosos sin credenciales válidas.
+  it('propaga el error cuando refresh devuelve null sin cerrar sesión', async () => {
+    // Verifica que los tokens se conservan en localStorage para reintentar
+    // en el próximo refresh de página, en lugar de cerrar sesión inmediatamente.
     sessionServiceMock.refreshAccessToken.mockReturnValue(of(null));
     const interceptor = createInterceptor();
     const next: HttpHandler = {
@@ -126,7 +127,7 @@ describe('HttpAuthTokenInterceptor', () => {
         interceptor.intercept(new HttpRequest('GET', `${API_BASE_URL}/api/jobs/`), next),
       ),
     ).rejects.toMatchObject({ status: 401, statusText: 'Session expired' });
-    expect(sessionServiceMock.logout).toHaveBeenCalledTimes(2);
+    expect(sessionServiceMock.logout).not.toHaveBeenCalled();
   });
 
   it('espera un refresh en curso y reintenta con el nuevo token emitido', async () => {
@@ -168,8 +169,9 @@ describe('HttpAuthTokenInterceptor', () => {
     expect((secondResponse as HttpResponse<string>).body).toBe('Bearer queued-token');
   });
 
-  it('cierra sesión si el refresh falla con error', async () => {
-    // Verifica que los errores del endpoint refresh no dejen el interceptor en estado inconsistente.
+  it('propaga el error del refresh sin cerrar sesión', async () => {
+    // Verifica que los errores transitorios de red en el refresh no destruyan
+    // los tokens almacenados; la sesión se recupera en el próximo page load.
     sessionServiceMock.refreshAccessToken.mockReturnValue(
       throwError(() => new Error('refresh failed')),
     );
@@ -185,6 +187,6 @@ describe('HttpAuthTokenInterceptor', () => {
         interceptor.intercept(new HttpRequest('GET', `${API_BASE_URL}/api/jobs/`), next),
       ),
     ).rejects.toThrow('refresh failed');
-    expect(sessionServiceMock.logout).toHaveBeenCalledOnce();
+    expect(sessionServiceMock.logout).not.toHaveBeenCalled();
   });
 });

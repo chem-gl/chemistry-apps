@@ -80,19 +80,19 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
   },
   {
-    key: 'cadma-py',
-    pluginName: 'cadma-py',
-    title: 'CADMA Py',
-    description:
-      'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
-    visibleInMenus: true,
-  },
-  {
     key: 'toxicity-properties',
     pluginName: 'toxicity-properties',
     title: 'Toxicity Properties',
     description:
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
+    visibleInMenus: true,
+  },
+  {
+    key: 'cadma-py',
+    pluginName: 'cadma-py',
+    title: 'CADMA Py',
+    description:
+      'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
   },
 ];

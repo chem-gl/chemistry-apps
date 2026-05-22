@@ -1238,9 +1238,9 @@
       "tag": "Protocolo CADMA-Chem",
       "title": "CADMAPy",
       "desc": "Puntúa moléculas candidatas contra una familia de referencia de fármacos específica de una enfermedad usando propiedades ADMET, toxicidad y accesibilidad sintética — priorizando los mejores candidatos para síntesis y evaluación posterior.",
-      "step1": "<strong>Selecciona una línea base de enfermedad</strong> de los conjuntos de referencia preconstruidos (Neuro o RETT) o crea una familia personalizada.",
-      "step2": "<strong>Sube CSVs de candidatos</strong> exportados de Smile-it, Toxicity Properties y SA Score, o un CSV combinado único.",
-      "step3": "<strong>Clasifica y compara</strong> candidatos por puntaje de selección contra la banda de referencia — exporta los resultados como CSV."
+      "step1": "Selecciona una línea base de enfermedad de los conjuntos de referencia preconstruidos (Neuro o RETT) o crea una familia personalizada.",
+      "step2": "Sube CSVs de candidatos exportados de Smile-it, Toxicity Properties y SA Score, o un CSV combinado único.",
+      "step3": "Clasifica y compara candidatos por puntaje de selección contra la banda de referencia — exporta los resultados como CSV."
     },
     "steps": {
       "ariaLabel": "Pasos del flujo",

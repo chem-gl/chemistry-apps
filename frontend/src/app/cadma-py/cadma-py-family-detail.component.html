@@ -101,7 +101,7 @@
     <!-- Trazabilidad bibliográfica (modo lectura) -->
     @if (library().paper_reference || library().paper_url) {
     <div class="traceability-bar">
-        <span class="trace-icon">📄</span>
+        <span class="trace-icon"></span>
         <div class="trace-content">
             @if (library().paper_reference) {
             <span class="trace-ref">{{ library().paper_reference }}</span>
@@ -191,7 +191,7 @@
     <!-- Aviso de nulos -->
     @if (hasAnyNulls()) {
     <div class="null-warning">
-        <span class="null-icon">⚠</span>
+        <span class="null-icon"></span>
         {{ 'cadmaPy.familyDetail.nullWarning' | transloco }}
     </div>
     }
@@ -330,7 +330,7 @@
                 </div>
                 <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
                     [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
-                    ✕
+                    ×
                 </button>
             </div>
 

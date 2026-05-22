@@ -54,12 +54,6 @@ chemistry-apps/
 ├── backend/               # Django 6, DRF, Celery, Channels
 │   ├── apps/
 │   │   ├── core/                # Infraestructura transversal de jobs e identidad
-│   │   │   ├── identity/        # Módulo RBAC: usuarios, grupos, permisos, JWT
-│   │   │   │   ├── bootstrap/   # Inicialización idempotente de root y Superadmin
-│   │   │   │   └── services/    # AuthorizationService RBAC
-│   │   │   ├── routers/         # ViewSet descompuesto en mixins: control, stream
-│   │   │   └── services/        # Servicios refactorizados en módulos especializados
-│   │   ├── random_numbers/
 │   │   ├── molar_fractions/
 │   │   ├── tunnel/
 │   │   ├── easy_rate/
@@ -89,8 +83,6 @@ chemistry-apps/
 │       ├── jobs-monitor/      # Monitor de jobs visibles para la sesión actual
 │       ├── jobs-trash/        # Papelera de jobs eliminados (admin)
 │       ├── apps-hub/          # Catálogo navegable de apps
-│       ├── profile/           # Perfil propio y cambio de contraseña
-│       ├── random-numbers/
 │       ├── molar-fractions/
 │       ├── tunnel/
 │       ├── easy-rate/
@@ -508,8 +500,6 @@ Cada app científica registra su función de dominio decorándola con `@PluginRe
 ```python
 from apps.core.processing import PluginRegistry
 
-@PluginRegistry.register("random_numbers")
-def random_numbers_plugin(
     parameters: JSONMap,
     report_progress: PluginProgressCallback,
     emit_log: PluginLogCallback,
@@ -566,7 +556,6 @@ Cada app tiene un `AppConfig` en su `apps.py` que llama `ScientificAppRegistry.r
 
 | App                   | Plugin                | Descripción científica                                                                                                                                          |
 | --------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `random_numbers`      | `random_numbers`      | Generación por lotes con semilla determinista desde URL remota, progreso incremental y pausa cooperativa con checkpoint.                                        |
 | `molar_fractions`     | `molar_fractions`     | Fracciones molares ácido-base f0..fn. Parámetros: lista de pKa, pH en modo puntual (`single`) o rango (`range`). Retorna tabla por pH con todas las fracciones. |
 | `tunnel`              | `tunnel`              | Corrección de efecto túnel asimétrica de Eckart. Registra traza completa de modificaciones a los parámetros de entrada y los logs de ajuste.                    |
 | `easy_rate`           | `easy_rate`           | Constantes de velocidad TST + corrección Eckart + difusión opcional. Entrada: archivos de log Gaussian. Produce tabla de k por temperatura.                     |
@@ -597,10 +586,6 @@ backend/apps/<app>/
 La app `calculator` ya no forma parte del catálogo productivo. Para seguir validando el desacoplamiento del `core`, el repositorio conserva un plugin sintético de calculadora solo dentro de la suite de tests del core.
 
 Ese plugin de prueba existe para verificar hashing, ejecución de plugins, caché y contratos genéricos del ciclo de vida de jobs sin depender de una app científica real ni de archivos de entrada complejos.
-
-### Cómo funciona `random_numbers` (pausa cooperativa)
-
-`random_numbers` demuestra el ciclo completo de pausa y reanudación:
 
 1. El plugin recibe `count` (cantidad de números) y opcionalmente `seed_url` remota.
 2. Genera números en lotes de 10. Tras cada lote llama `report_progress()`.
@@ -682,7 +667,6 @@ Ambas apps procesan lotes de SMILES:
 | `/jobs`                | `JobsMonitorComponent`        | `authGuard`       | Monitor de jobs visibles para la sesión |
 | `/jobs/trash`          | `JobsTrashComponent`          | `adminGuard`      | Papelera de jobs eliminados             |
 | `/apps`                | `AppsHubComponent`            | `authGuard`       | Catálogo navegable de apps disponibles  |
-| `/random-numbers`      | `RandomNumbersComponent`      | `appAccessGuard`  | Generación de números aleatorios        |
 | `/molar-fractions`     | `MolarFractionsComponent`     | `appAccessGuard`  | Fracciones molares                      |
 | `/tunnel`              | `TunnelComponent`             | `appAccessGuard`  | Corrección efecto túnel                 |
 | `/easy-rate`           | `EasyRateComponent`           | `appAccessGuard`  | Cinética TST + Eckart                   |
@@ -691,7 +675,7 @@ Ambas apps procesan lotes de SMILES:
 | `/sa-score`            | `SaScoreComponent`            | `appAccessGuard`  | SA Score                                |
 | `/toxicity-properties` | `ToxicityPropertiesComponent` | `appAccessGuard`  | ADMET-AI                                |
 
-La ruta `random-numbers` tiene `visibleInMenus: false` en la configuración de apps: existe y funciona pero no aparece en el menú ni en el hub. Se usa como app mínima de demostración y validación.
+La ruta tiene `visibleInMenus: false` en la configuración de apps: existe y funciona pero no aparece en el menú ni en el hub. Se usa como app mínima de demostración y validación.
 
 ### Guards y navegación condicionada por sesión
 
@@ -741,7 +725,6 @@ frontend/src/app/core/
 │   ├── easy-rate-workflow.service.ts
 │   ├── marcus-workflow.service.ts
 │   ├── molar-fractions-workflow.service.ts
-│   ├── random-numbers-workflow.service.ts
 │   ├── sa-score-workflow.service.ts
 │   ├── smileit-workflow.service.ts
 │   ├── toxicity-properties-workflow.service.ts

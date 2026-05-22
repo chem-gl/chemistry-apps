@@ -1238,9 +1238,9 @@
       "tag": "CADMA-Chem Protocol",
       "title": "CADMAPy",
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
-      "step1": "<strong>Select a disease baseline</strong> from the pre-built reference sets (Neuro or RETT) or create a custom family.",
-      "step2": "<strong>Upload candidate CSVs</strong> exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "step3": "<strong>Rank and compare</strong> candidates by selection score against the reference band — export the results as CSV."
+      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
+      "step3": "Rank and compare candidates by selection score against the reference band — export the results as CSV."
     },
     "steps": {
       "ariaLabel": "Workflow steps",

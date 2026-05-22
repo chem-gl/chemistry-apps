@@ -4,17 +4,32 @@
   <!-- HERO -->
   <header class="cadma-hero">
     <div class="hero-left">
-      <p class="hero-tag">{{ 'cadmaPy.hero.tag' | transloco }}</p>
-      <h2 class="hero-title">CADMA<span>Py</span></h2>
-      <p class="hero-desc">{{ 'cadmaPy.hero.desc' | transloco }}</p>
+      <h2 class="hero-title">
+        CADMA<span>Py</span>
+        <button type="button" class="hero-info-btn" (click)="showInfoModal.set(true)" [attr.aria-label]="'cadmaPy.hero.infoAria' | transloco">👁️</button>
+      </h2>
     </div>
-    <ol class="hero-protocol">
-      <li><span [innerHTML]="'cadmaPy.hero.step1' | transloco"></span></li>
-      <li><span [innerHTML]="'cadmaPy.hero.step2' | transloco"></span></li>
-      <li><span>Configure your ranking formula</span></li>
-      <li><span>View scores &amp; export results</span></li>
-    </ol>
   </header>
+
+  @if (showInfoModal()) {
+  <div class="info-modal-backdrop" (click)="showInfoModal.set(false)" (keydown.escape)="showInfoModal.set(false)">
+    <section class="info-modal-card" role="dialog" aria-modal="true">
+      <header class="info-modal-header">
+        <h2>CADMA<span>Py</span></h2>
+        <button type="button" class="info-modal-close" (click)="showInfoModal.set(false)">×</button>
+      </header>
+      <div class="info-modal-body">
+        <p class="info-modal-desc">{{ 'cadmaPy.hero.desc' | transloco }}</p>
+        <ol class="info-modal-steps">
+          <li><span>{{ 'cadmaPy.hero.step1' | transloco }}</span></li>
+          <li><span>{{ 'cadmaPy.hero.step2' | transloco }}</span></li>
+          <li><span>Configure your ranking formula</span></li>
+          <li><span>View scores & export results</span></li>
+        </ol>
+      </div>
+    </section>
+  </div>
+  }
 
   <!-- STEP TRACKER — 4 pasos -->
   <nav class="step-tracker" [attr.aria-label]="'cadmaPy.steps.ariaLabel' | transloco">
@@ -64,7 +79,7 @@
         <div class="selected-summary-meta">
           <span class="meta-pill">{{ lib.row_count }} {{ 'cadmaPy.step1.compounds' | transloco }}</span>
           @if (!lib.editable){
-          <span class="meta-pill readonly-pill">🔒 {{ 'cadmaPy.step1.readOnly' | transloco }}</span>
+          <span class="meta-pill readonly-pill">{{ 'cadmaPy.step1.readOnly' | transloco }}</span>
           }
         </div>
         <button class="btn-ghost selected-summary-action" type="button" (click)="clearReferenceSelection()">
@@ -83,9 +98,6 @@
         @for (sample of samples(); track sample.key) {
         <div class="seed-card" [attr.data-key]="sample.key" [class.active-browse]="browsingSampleKey() === sample.key">
           <button class="seed-card-main" type="button" (click)="browseSample(sample.key)">
-            <div class="seed-icon-wrap">
-              <span class="seed-icon">{{ sample.key === 'neuro' ? '🧠' : '🧬' }}</span>
-            </div>
             <div class="seed-body">
               <span class="seed-disease">{{ sample.disease_name }}</span>
               <strong class="seed-name">{{ sample.name }}</strong>
@@ -152,7 +164,7 @@
             (click)="deleteLibrary(lib, $event)">🗑️</button>
           }
           @if (!lib.editable){
-          <span class="access-icon locked" [title]="'cadmaPy.step1.readOnly' | transloco">🔒</span>
+          <span class="access-icon locked" [title]="'cadmaPy.step1.readOnly' | transloco"></span>
           }
         </div>
       </div>
@@ -243,7 +255,6 @@
     @if (step1Summary(); as summary) {
     <button class="context-bar" type="button" (click)="clearReferenceSelection()"
       aria-label="Clear reference selection">
-      <span class="context-bar-icon">🧬</span>
       <span class="context-bar-text">{{ summary }}</span>
       <span class="btn-ghost btn-sm">Change</span>
     </button>
@@ -267,7 +278,7 @@
     <div class="pathway-selector">
       <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'generate'"
         (click)="candidatePathway.set('generate')">
-        <span class="pathway-icon">⚡</span>
+        <span class="pathway-icon pathway-icon-generate"></span>
         <div class="pathway-card-body">
           <strong>Generate from Smile-it</strong>
           <p>Pick a completed Smile-it job and auto-launch Toxicity + SA Score jobs.</p>
@@ -275,7 +286,7 @@
       </button>
       <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'reuse'"
         (click)="candidatePathway.set('reuse')">
-        <span class="pathway-icon">📦</span>
+        <span class="pathway-icon pathway-icon-reuse"></span>
         <div class="pathway-card-body">
           <strong>Reuse completed jobs</strong>
           <p>Pick existing Smile-it, Toxicity and SA Score jobs to combine their results.</p>
@@ -283,7 +294,7 @@
       </button>
       <button class="pathway-card" type="button" [class.active]="candidatePathway() === 'manual'"
         (click)="candidatePathway.set('manual')">
-        <span class="pathway-icon">📄</span>
+        <span class="pathway-icon pathway-icon-manual"></span>
         <div class="pathway-card-body">
           <strong>Manual CSV import</strong>
           <p>Upload your own CSV files with candidate SMILES, toxicity and SA data.</p>
@@ -513,14 +524,12 @@
     @if (step1Summary(); as summary) {
     <button class="context-bar" type="button" (click)="clearReferenceSelection()"
       aria-label="Clear reference selection">
-      <span class="context-bar-icon">🧬</span>
       <span class="context-bar-text">{{ summary }}</span>
       <span class="btn-ghost btn-sm">Change</span>
     </button>
     }
     @if (step2Summary(); as summary) {
     <button class="context-bar" type="button" (click)="returnToCandidateInputs()" aria-label="Back to candidate inputs">
-      <span class="context-bar-icon">📋</span>
       <span class="context-bar-text">{{ summary }}</span>
       <span class="btn-ghost btn-sm">Back to step 2</span>
     </button>
@@ -537,8 +546,8 @@
     <div class="formula-card">
       <div class="formula-card-header">
         <div>
-          <h4>Legacy CADMA formula controls</h4>
-          <p>These values mirror the deprecated desktop workflow and are applied to the next ranking run.</p>
+          <h4>CADMA formula controls</h4>
+          <p>These values are applied to the next ranking run.</p>
         </div>
         <button class="btn-ghost" type="button" (click)="resetLegacyScoreConfig()">Reset defaults</button>
       </div>
@@ -585,7 +594,7 @@
       </div>
 
       <div class="interval-editor">
-        <h4>Legacy ADME interval window</h4>
+        <h4>ADME interval window</h4>
         <div class="interval-table">
           <div class="interval-row interval-head">
             <span>Metric</span><span>Min</span><span>Max</span>
@@ -652,13 +661,11 @@
   <section class="step-section results-section">
     @if (step1Summary(); as summary) {
     <div class="context-bar">
-      <span class="context-bar-icon">🧬</span>
       <span class="context-bar-text">{{ summary }}</span>
     </div>
     }
     @if (step2Summary(); as summary) {
     <div class="context-bar">
-      <span class="context-bar-icon">📋</span>
       <span class="context-bar-text">{{ summary }}</span>
     </div>
     }

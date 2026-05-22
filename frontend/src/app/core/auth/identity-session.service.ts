@@ -268,7 +268,7 @@ export class IdentitySessionService {
       }),
       map((tokens: SessionTokens) => tokens.accessToken),
       catchError(() => {
-        this.clearSessionState();
+        this.lastAuthenticationError.set('Unable to refresh the authentication token.');
         return of(null);
       }),
     );
@@ -424,7 +424,6 @@ export class IdentitySessionService {
       catchError(() => {
         const storedRefreshToken = this.refreshToken();
         if (storedRefreshToken === null) {
-          this.clearSessionState();
           return of(false);
         }
 
@@ -442,10 +441,7 @@ export class IdentitySessionService {
                 this.scheduleTokenRefresh();
               }),
               map(() => true),
-              catchError(() => {
-                this.clearSessionState();
-                return of(false);
-              }),
+              catchError(() => of(false)),
             );
           }),
         );
