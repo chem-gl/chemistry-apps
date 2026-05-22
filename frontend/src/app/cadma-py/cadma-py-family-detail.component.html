@@ -161,7 +161,7 @@
                 <span class="metric-range">± {{ formatNumber(stat.stdev) }}</span>
                 <span class="metric-minmax">{{ formatNumber(stat.min) }} — {{ formatNumber(stat.max) }}</span>
                 @if (stat.nullCount > 0) {
-                <span class="metric-null">{{ stat.nullCount }} null</span>
+                <span class="metric-null">{{ stat.nullCount }} {{ 'cadmaPy.familyDetail.nullCount' | transloco }}</span>
                 }
             </div>
             }
@@ -181,7 +181,7 @@
                 <span class="sf-field">{{ sf.field_name }}</span>
                 <span class="sf-name">{{ sf.original_filename }}</span>
                 <span class="sf-meta">{{ formatFileSize(sf.size_bytes) }}</span>
-                <span class="sf-hash" title="SHA-256: {{ sf.sha256 }}">{{ sf.sha256.slice(0, 8) }}…</span>
+                <span class="sf-hash" [title]="('cadmaPy.familyDetail.sha256Prefix' | transloco) + ' ' + sf.sha256">{{ sf.sha256.slice(0, 8) }}…</span>
             </div>
             }
         </div>

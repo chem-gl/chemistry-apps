@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { EChartsCoreOption } from 'echarts/core';
 import { Subscription } from 'rxjs';
 import {
@@ -191,6 +191,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   private readonly cadmaApi = inject(CadmaPyApiService);
   private readonly quickFillService = inject(CadmaPyQuickFillService);
   private readonly route = inject(ActivatedRoute);
+  private readonly translocoService = inject(TranslocoService);
   readonly workflow = inject(CadmaPyWorkflowService);
   private routeSubscription: Subscription | null = null;
 
@@ -1516,9 +1517,9 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   }
 
   scopeLabel(sourceReference: string): string {
-    if (sourceReference === 'root') return 'Root';
-    if (sourceReference.startsWith('admin-')) return 'Group';
-    if (sourceReference === 'local-lab') return 'Personal';
+    if (sourceReference === 'root') return this.translocoService.translate('cadmaPy.scopeLabels.root');
+    if (sourceReference.startsWith('admin-')) return this.translocoService.translate('cadmaPy.scopeLabels.group');
+    if (sourceReference === 'local-lab') return this.translocoService.translate('cadmaPy.scopeLabels.personal');
     return '';
   }
 

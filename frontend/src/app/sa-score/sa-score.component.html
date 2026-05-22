@@ -35,7 +35,7 @@
           <label class="method-item">
             <input type="checkbox" [ngModel]="workflow.selectedMethods()[methodItem.key]"
               (ngModelChange)="workflow.toggleMethod(methodItem.key)" [disabled]="workflow.isProcessing()" />
-            {{ methodItem.label }}
+            {{ methodItem.label | transloco }}
           </label>
           }
         </div>
@@ -131,7 +131,7 @@
               @if (resultData.requestedMethods.includes(methodItem.key)) {
               <th class="numeric-head" [attr.aria-sort]="ariaSort(methodItem.key)">
                 <button class="sort-button" type="button" (click)="toggleTableSort(methodItem.key)">
-                  <span>{{ methodItem.label }}</span>
+                  <span>{{ methodItem.label | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator(methodItem.key) }}</span>
                 </button>
               </th>
@@ -145,7 +145,7 @@
               <td>{{ molecule.name }}</td>
               <td>
                 <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
-                  title="Click to view molecule structure">
+                  [title]="'saScore.result.viewStructure' | transloco">
                   {{ molecule.smiles }}
                 </button>
               </td>
@@ -153,7 +153,7 @@
               @if (resultData.requestedMethods.includes(methodItem.key)) {
               <td class="numeric-cell">
                 @if (methodError(molecule, methodItem.key); as rowError) {
-                <span class="cell-error" [title]="rowError">ERROR</span>
+                <span class="cell-error" [title]="rowError">{{ 'saScore.result.error' | transloco }}</span>
                 } @else {
                 {{ methodScore(molecule, methodItem.key) }}
                 }
@@ -202,7 +202,7 @@
         <p class="ketcher-loading-text">{{ 'saScore.sketch.loading' | transloco }}</p>
       </output>
       }
-      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" [title]="'saScore.sketch.ketcherTitle' | transloco"
         (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 

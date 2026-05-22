@@ -354,7 +354,12 @@
         "energyZpe": "Energía ZPE:",
         "temperature": "Temperatura:",
         "model": "Modelo:",
-        "inputEvents": "Eventos de entrada:"
+        "inputEvents": "Eventos de entrada:",
+        "u": "U:",
+        "alpha1": "Alpha 1:",
+        "alpha2": "Alpha 2:",
+        "g": "G:",
+        "kappaTst": "Kappa TST:"
       }
     },
     "trace": {
@@ -388,6 +393,8 @@
       "singleMode": "Una especie",
       "batchMode": "CSV por lote",
       "pkaCount": "Número de equilibrios ácido-base",
+      "pkaCountOption": "{{ count }} pKa",
+      "pkaSlotLabel": "pKa{{ n }}",
       "pkaValues": "Ingresar valores pKa",
       "speciesSettings": "Configuración de la especie",
       "speciesSettingsOptional": "Opcional. Si lo dejas vacío se usa la configuración estándar del modelo.",
@@ -526,6 +533,7 @@
     "result": {
       "title": "Salida",
       "ariaLabel": "Resultados y progreso",
+      "ariaProgressLabel": "Progreso del job Easy-rate",
       "submitting": "Enviando job de Easy-rate al backend...",
       "defaultTitle": "Resultado Easy-rate",
       "rateConstants": "Constantes de velocidad",
@@ -632,6 +640,11 @@
       "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual.",
       "methodsLegend": "Métodos"
     },
+    "methods": {
+      "ambit": "AMBIT SA",
+      "brsa": "BRSAScore SA",
+      "rdkit": "RDKit SA"
+    },
     "actions": {
       "run": "Ejecutar SA Score",
       "processing": "Procesando...",
@@ -644,6 +657,8 @@
       "ariaLabel": "Resultados y progreso",
       "submitting": "Enviando job de SA score al backend...",
       "ariaProgressLabel": "Progreso del job SA score",
+      "viewStructure": "Click para ver estructura molecular",
+      "error": "ERROR",
       "searchLabel": "Buscar en tabla",
       "searchPlaceholder": "Buscar por nombre o SMILES",
       "filteredCount": "filas visibles",
@@ -657,6 +672,7 @@
       "tableSMILES": "SMILES"
     },
     "sketch": {
+      "ketcherTitle": "Ketcher editor SMILES",
       "title": "Dibujar SMILES",
       "hint": "Usa el sketcher de abajo. Si no carga, pega un SMILES en el textarea de respaldo.",
       "loading": "Cargando editor de moléculas…",
@@ -708,13 +724,16 @@
       "jobIdLabel": "ID de job:",
       "tableName": "Nombre",
       "tableSMILES": "SMILES",
-      "references": "Referencias científicas"
+      "references": "Referencias científicas",
+      "viewStructure": "Click para ver estructura molecular"
     },
     "sketch": {
       "title": "Dibujar SMILES",
       "hint": "Usa el sketcher de abajo. Si no carga, pega un SMILES en el textarea de respaldo.",
       "loading": "Cargando editor de moléculas…",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "addToList": "Añadir a la lista",
+      "ketcherTitle": "Ketcher editor SMILES"
     },
     "history": {
       "empty": "Aún no hay jobs históricos de toxicidad.",
@@ -1102,6 +1121,7 @@
     }
   },
   "groupManager": {
+    "ariaLabel": "Gestión de grupos",
     "header": {
       "eyebrow": "Administración",
       "title": "Gestión de Grupos",
@@ -1112,6 +1132,10 @@
     },
     "groups": {
       "title": "Grupos",
+      "adminGroupLabel": "Grupo administrativo",
+      "allGroupsOption": "Todos los grupos administrables",
+      "fastSearchGroups": "Búsqueda rápida de grupos",
+      "searchGroupsPlaceholder": "Buscar por nombre, slug o descripción",
       "colName": "Nombre",
       "colSlug": "Slug",
       "colMembers": "Miembros",
@@ -1121,11 +1145,17 @@
     },
     "members": {
       "title": "Miembros",
+      "fastSearchUsers": "Búsqueda rápida de usuarios",
+      "searchUsersPlaceholder": "Buscar usuario por nombre o correo",
       "colUser": "Usuario",
       "colRole": "Rol",
       "colActions": "Acciones",
       "selectUser": "Seleccionar usuario",
       "addButton": "Añadir miembro"
+    },
+    "roles": {
+      "member": "Miembro",
+      "admin": "Admin"
     },
     "permissions": {
       "title": "Permisos de Apps"
@@ -1140,6 +1170,7 @@
     }
   },
   "userManager": {
+    "ariaLabel": "Gestión de usuarios",
     "header": {
       "eyebrow": "Administración",
       "title": "Gestión de Usuarios",
@@ -1158,10 +1189,20 @@
       "colStatus": "Estado",
       "colGroups": "Grupos",
       "colActions": "Acciones",
+      "fastSearchGroups": "Búsqueda rápida de grupos",
+      "searchGroupsPlaceholder": "Buscar grupo por nombre o slug",
+      "fastSearchUsers": "Búsqueda rápida de usuarios",
+      "searchUsersPlaceholder": "Buscar por usuario, nombre o correo",
       "active": "Activo",
       "inactive": "Inactivo",
       "activate": "Activar",
-      "deactivate": "Desactivar"
+      "deactivate": "Desactivar",
+      "removeMembershipTitle": "Quitar del grupo"
+    },
+    "roles": {
+      "user": "Usuario",
+      "admin": "Admin",
+      "member": "Miembro"
     },
     "createUser": {
       "title": "Crear usuario",
@@ -1234,18 +1275,27 @@
     }
   },
   "cadmaPy": {
+    "scopeLabels": {
+      "root": "Raíz",
+      "group": "Grupo",
+      "personal": "Personal"
+    },
     "hero": {
       "tag": "Protocolo CADMA-Chem",
       "title": "CADMAPy",
+      "infoAria": "Mostrar visión general del flujo",
       "desc": "Puntúa moléculas candidatas contra una familia de referencia de fármacos específica de una enfermedad usando propiedades ADMET, toxicidad y accesibilidad sintética — priorizando los mejores candidatos para síntesis y evaluación posterior.",
       "step1": "Selecciona una línea base de enfermedad de los conjuntos de referencia preconstruidos (Neuro o RETT) o crea una familia personalizada.",
       "step2": "Sube CSVs de candidatos exportados de Smile-it, Toxicity Properties y SA Score, o un CSV combinado único.",
-      "step3": "Clasifica y compara candidatos por puntaje de selección contra la banda de referencia — exporta los resultados como CSV."
+      "step3": "Configura tu fórmula de ranking",
+      "step4": "Ver puntuaciones y exportar resultados"
     },
     "steps": {
       "ariaLabel": "Pasos del flujo",
       "referenceFamily": "Familia de referencia",
       "candidateFiles": "Archivos candidatos",
+      "configureFormula": "Configurar fórmula",
+      "results": "Resultados",
       "selectionScores": "Puntajes de selección"
     },
     "step1": {
@@ -1286,6 +1336,55 @@
     "step2": {
       "title": "Subir archivos de candidatos",
       "desc": "Carga tus datos moleculares generados por Smile-it, Toxicity Properties y SA Score.",
+      "pathwayGenerateTitle": "Generar desde Smile-it",
+      "pathwayGenerateDesc": "Selecciona un job completado de Smile-it y lanza automáticamente jobs de Toxicity y SA Score.",
+      "pathwayReuseTitle": "Reutilizar jobs completados",
+      "pathwayReuseDesc": "Selecciona jobs existentes de Smile-it, Toxicity y SA Score para combinar sus resultados.",
+      "pathwayManualTitle": "Importación manual CSV",
+      "pathwayManualDesc": "Sube tus propios archivos CSV con SMILES candidatos, toxicidad y datos SA.",
+      "generatePanelTitle": "Generar desde Smile-it",
+      "generatePanelDesc": "Selecciona el job de Smile-it que contiene tus SMILES candidatos. CADMA lanzará automáticamente nuevos jobs de Toxicity Properties y SA Score.",
+      "selectSmileitJobPlaceholder": "Selecciona un job de Smile-it...",
+      "saMethodLabel": "Método SA",
+      "selectSaMethodPlaceholder": "Selecciona método SA...",
+      "generateButton": "Generar Toxicidad + SA",
+      "reloadJobList": "Recargar lista de jobs",
+      "reusePanelTitle": "Reutilizar jobs completados",
+      "reusePanelDesc": "Selecciona entre tus jobs de análisis completados. Un job de Smile-it provee los SMILES candidatos; los jobs de Toxicity y SA Score son opcionales pero recomendados.",
+      "smileitRequired": "Job Smile-it · requerido",
+      "selectSmileitJobTitle": "Seleccionar un job de Smile-it",
+      "toxicityOptional": "Job Toxicity Properties · opcional",
+      "skipToxicity": "Saltar — sin datos de toxicidad",
+      "saScoreOptional": "Job SA Score · opcional",
+      "skipSa": "Saltar — sin datos SA",
+      "saMethodRequired": "Método SA · requerido",
+      "applySelectedJobs": "Aplicar jobs seleccionados",
+      "manualPanelTitle": "Importación manual CSV",
+      "manualPanelDesc": "Sube uno o más archivos CSV. Puedes proporcionar un archivo combinado o archivos separados de SMILES, Toxicidad y SA.",
+      "candidatesLoaded": "candidatos cargados",
+      "toxicityReady": "Toxicidad ✓",
+      "toxicityMissing": "Toxicidad faltante",
+      "saReady": "SA ✓",
+      "saMissing": "SA faltante",
+      "launchMissing": "Lanzar jobs faltantes",
+      "payloadPreviewTitle": "Vista previa final de candidatos",
+      "payloadPreviewDesc": "Este es el conjunto de candidatos que se llevará al paso 3.",
+      "sourceGuide": "Guía de origen",
+      "files": "Archivos",
+      "tableHash": "#",
+      "tableCandidate": "Candidato",
+      "tableSmiles": "SMILES",
+      "tableDt": "DT",
+      "tableM": "M",
+      "tableLd50": "LD50",
+      "tableSa": "SA",
+      "unnamedCandidate": "Candidato sin nombre",
+      "showingFirst": "Mostrando los primeros {{ count }} de {{ total }} candidatos.",
+      "acceptAndContinue": "Aceptar y continuar a la fórmula",
+      "ariaClearReference": "Limpiar selección de referencia",
+      "ariaBackToCandidates": "Volver a datos de candidatos",
+      "backToStep2": "Volver al paso 2",
+      "change": "Cambiar",
       "quickFillTitle": "Carga rápida desde la guía actual de candidatos o ejecuciones previas",
       "quickFillDesc": "Si el archivo actual de candidatos ya contiene nombres y SMILES, CADMA puede lanzar por ti los jobs faltantes de SA Score y Toxicity. También puedes reutilizar jobs completados más abajo.",
       "quickFillSmileit": "Job guía de Smile-it",
@@ -1320,6 +1419,24 @@
     },
     "step3": {
       "title": "Puntajes de selección",
+      "desc": "Ajusta valores de referencia, pesos e intervalos ADME, luego ejecuta el ranking CADMA Py.",
+      "formulaControls": "Controles de fórmula CADMA",
+      "formulaControlsDesc": "Estos valores se aplicarán a la siguiente ejecución del ranking.",
+      "resetDefaults": "Restablecer valores por defecto",
+      "ld50Ref": "LD50_ref",
+      "mRef": "M_ref",
+      "dtRef": "DT_ref",
+      "saRef": "SA_ref",
+      "weightAdme": "Peso ADME",
+      "weightToxicity": "Peso Toxicidad",
+      "weightSa": "Peso SA",
+      "totalWeight": "Peso total",
+      "admeIntervalWindow": "Ventana de intervalos ADME",
+      "intervalMetric": "Métrica",
+      "intervalMin": "Mín",
+      "intervalMax": "Máx",
+      "placeholderMin": "Mín",
+      "placeholderMax": "Máx",
       "referenceFamily": "Familia de referencia",
       "candidatesEvaluated": "Candidatos evaluados",
       "topCandidate": "Mejor candidato",
@@ -1338,12 +1455,46 @@
       "toxicity": "Toxicidad",
       "admeHits": "Aciertos ADME"
     },
+    "step4": {
+      "backToFormula": "Volver a la fórmula",
+      "waitingForResults": "Esperando resultados de CADMA Py...",
+      "runningHint": "Ejecutando comparación CADMA Py... Los resultados aparecerán aquí cuando el job termine.",
+      "rankingChartAria": "Gráfica de ranking CADMA Py",
+      "metricChartAria": "Gráfica de comparación de métricas CADMA Py",
+      "tableSS": "S_S",
+      "tableSAdme": "S_ADME",
+      "tableSa": "SA",
+      "tableMw": "PM",
+      "tableLogp": "logP",
+      "tableMr": "RM",
+      "tableAtx": "AtX",
+      "tableHbla": "HBLA",
+      "tableHbld": "HBLD",
+      "tableRb": "RB",
+      "tablePsa": "PSA",
+      "tableDt": "DT",
+      "tableM": "M",
+      "tableLd50": "LD50",
+      "tableSaRaw": "SA bruto",
+      "tableInband": "Métricas en banda"
+    },
     "history": {
       "empty": "Aún no hay ejecuciones anteriores de CADMA Py.",
       "title": "Ejecuciones anteriores",
       "ariaLabel": "Ejecuciones históricas de CADMA Py"
     },
     "familyDetail": {
+      "selectFamily": "Seleccionar familia →",
+      "copyFamily": "⎘ Copiar familia",
+      "rootReadOnly": "Esta familia raíz es de solo lectura para ti. Crea una copia editable para agregar, eliminar o actualizar compuestos y referencias.",
+      "groupReadOnly": "Esta familia de grupo compartida es de solo lectura para ti. Crea una copia editable para agregar, eliminar o actualizar compuestos y referencias.",
+      "defaultReadOnly": "Esta familia es de solo lectura en tu alcance actual. Crea una copia editable para modificarla de forma segura.",
+      "fullAccess": "Acceso completo",
+      "canEdit": "Puede editar",
+      "readOnlyTemplate": "Plantilla de solo lectura",
+      "readOnly": "Solo lectura",
+      "nullCount": "nulo",
+      "sha256Prefix": "SHA-256:",
       "backToList": "Volver a la lista",
       "back": "← Volver",
       "createdBy": "Creado por",
@@ -1405,6 +1556,10 @@
       "tableHeaderNote": "Nota"
     },
     "importer": {
+      "guideFile": "Archivo guía",
+      "additionalFile": "Archivo adicional",
+      "formatCsvTab": "CSV · tab",
+      "formatCsvDelimiter": "CSV · {{ delimiter }}",
       "fallbackNote": "Los nombres de respaldo usarán {{ prefix }} + contador.",
       "noUsableRows": "Sin filas utilizables detectadas aún.",
       "format": "Formato",

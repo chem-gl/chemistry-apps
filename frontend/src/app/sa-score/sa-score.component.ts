@@ -4,7 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SaScoreMethod, SaScoreMoleculeResultView } from '../core/api/jobs-api.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
 import { JobHistoryTableComponent } from '../core/shared/components/job-history-table/job-history-table.component';
@@ -53,10 +53,12 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
       resolveScientificJobNameForHistory('sa-score', historyJob.id, historyJob.parameters),
     );
 
+  private readonly translocoService = inject(TranslocoService);
+
   readonly methodItems = [
-    { key: 'ambit' as SaScoreMethod, label: 'AMBIT SA' },
-    { key: 'brsa' as SaScoreMethod, label: 'BRSAScore SA' },
-    { key: 'rdkit' as SaScoreMethod, label: 'RDKit SA' },
+    { key: 'ambit' as SaScoreMethod, label: 'saScore.methods.ambit' },
+    { key: 'brsa' as SaScoreMethod, label: 'saScore.methods.brsa' },
+    { key: 'rdkit' as SaScoreMethod, label: 'saScore.methods.rdkit' },
   ];
   readonly selectedExportTarget = signal<ExportTarget>('all');
   readonly tableSearchTerm = signal<string>('');
@@ -75,10 +77,10 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
       .filter((methodItem) => currentResultData.requestedMethods.includes(methodItem.key))
       .map((methodItem) => ({
         value: methodItem.key,
-        label: `${methodItem.label} CSV`,
+        label: `${this.translocoService.translate(methodItem.label)} CSV`,
       }));
 
-    return [{ value: 'all', label: 'All methods CSV' }, ...methodOptions];
+    return [{ value: 'all', label: `${this.translocoService.translate('saScore.export.allMethods')} CSV` }, ...methodOptions];
   });
 
   readonly visibleMolecules = computed<SaScoreMoleculeResultView[]>(() => {

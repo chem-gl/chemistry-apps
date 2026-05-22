@@ -6,12 +6,13 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 export type CadmaImportMode = 'reference' | 'candidate';
 type CadmaFileFormat = 'csv' | 'smi';
@@ -381,6 +382,8 @@ export class CadmaPyImporterComponent {
       : 'The first file must define the main SMILES guide.',
   );
 
+  private readonly translocoService = inject(TranslocoService);
+
   constructor() {
     effect(() => {
       const serializedConfigs = this.initialSourceConfigsJson().trim();
@@ -490,17 +493,19 @@ export class CadmaPyImporterComponent {
   }
 
   fileRoleLabel(index: number): string {
-    return index === 0 ? 'Guide file' : 'Additional file';
+    return index === 0
+      ? this.translocoService.translate('cadmaPy.importer.guideFile')
+      : this.translocoService.translate('cadmaPy.importer.additionalFile');
   }
 
   formatDelimiterLabel(source: GuidedSourceConfig): string {
     if (source.fileFormat === 'smi') {
-      return 'SMI';
+      return this.translocoService.translate('cadmaPy.importer.formatSmi');
     }
     if (source.delimiter === '\t') {
-      return 'CSV · tab';
+      return this.translocoService.translate('cadmaPy.importer.formatCsvTab');
     }
-    return `CSV · ${source.delimiter || ','}`;
+    return this.translocoService.translate('cadmaPy.importer.formatCsvDelimiter', { delimiter: source.delimiter || ',' });
   }
 
   roleForColumn(source: GuidedSourceConfig, columnName: string): ColumnRole {

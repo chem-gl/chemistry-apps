@@ -201,17 +201,17 @@
     </section>
 
     <!-- ── Panel de resultado ────────────────────────────────────── -->
-    <section class="result-panel" aria-label="Results and progress">
-      <h3>Output</h3>
+    <section class="result-panel" [attr.aria-label]="'easyRate.result.ariaLabel' | transloco">
+      <h3>{{ 'easyRate.result.title' | transloco }}</h3>
 
       @if (workflow.activeSection() === 'dispatching') {
-      <p class="status-message">Submitting Easy-rate job to backend...</p>
+      <p class="status-message">{{ 'easyRate.result.submitting' | transloco }}</p>
       }
 
       @if (workflow.activeSection() === 'progress') {
       <app-job-progress-card [jobId]="workflow.currentJobId()" [progressPercentage]="workflow.progressPercentage()"
         [progressMessage]="workflow.progressMessage()"
-        progressAriaLabel="Easy-rate job progress"></app-job-progress-card>
+        [progressAriaLabel]="'easyRate.result.ariaProgressLabel' | transloco"></app-job-progress-card>
       }
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
@@ -220,7 +220,7 @@
       }
 
       <div class="result-title-row">
-        <strong>{{ resultData.title || 'Easy-rate result' }}</strong>
+        <strong>{{ resultData.title || ('easyRate.result.defaultTitle' | transloco) }}</strong>
         <span class="solvent-tag">{{ resultData.solventUsed }}</span>
       </div>
 
@@ -241,7 +241,7 @@
           <span class="kv-label">{{ 'easyRate.result.kDiff' | transloco }}</span>
           <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span>
           }
-          <span class="kv-label">κ (TST)</span>
+          <span class="kv-label">{{ 'easyRate.result.kappaTst' | transloco }}</span>
           <span class="kv-value mono">{{ resultData.kappaTst.toFixed(6) }}</span>
         </div>
       </div>

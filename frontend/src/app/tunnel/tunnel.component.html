@@ -69,11 +69,11 @@
       </div>
 
       <div class="output-block" [class.output-empty]="!hasResultValues(resultData)">
-        <p>U: {{ formatOutputValue(resultData.u) }}</p>
-        <p>Alpha 1: {{ formatOutputValue(resultData.alpha1) }}</p>
-        <p>Alpha 2: {{ formatOutputValue(resultData.alpha2) }}</p>
-        <p>G: {{ formatOutputValue(resultData.g) }}</p>
-        <p>Kappa TST: {{ formatOutputValue(resultData.kappaTst) }}</p>
+        <p>{{ 'tunnel.result.labels.u' | transloco }} {{ formatOutputValue(resultData.u) }}</p>
+        <p>{{ 'tunnel.result.labels.alpha1' | transloco }} {{ formatOutputValue(resultData.alpha1) }}</p>
+        <p>{{ 'tunnel.result.labels.alpha2' | transloco }} {{ formatOutputValue(resultData.alpha2) }}</p>
+        <p>{{ 'tunnel.result.labels.g' | transloco }} {{ formatOutputValue(resultData.g) }}</p>
+        <p>{{ 'tunnel.result.labels.kappaTst' | transloco }} {{ formatOutputValue(resultData.kappaTst) }}</p>
       </div>
 
       <div class="action-row export-row">

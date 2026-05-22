@@ -354,7 +354,12 @@
         "energyZpe": "Energy ZPE:",
         "temperature": "Temperature:",
         "model": "Model:",
-        "inputEvents": "Input events:"
+        "inputEvents": "Input events:",
+        "u": "U:",
+        "alpha1": "Alpha 1:",
+        "alpha2": "Alpha 2:",
+        "g": "G:",
+        "kappaTst": "Kappa TST:"
       }
     },
     "trace": {
@@ -388,6 +393,8 @@
       "singleMode": "Single species",
       "batchMode": "Batch CSV",
       "pkaCount": "Number of acid-base equilibria",
+      "pkaCountOption": "{{ count }} pKa",
+      "pkaSlotLabel": "pKa{{ n }}",
       "pkaValues": "Enter pKa values",
         "speciesSettings": "Species configuration",
         "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
@@ -526,6 +533,7 @@
     "result": {
       "title": "Output",
       "ariaLabel": "Results and progress",
+      "ariaProgressLabel": "Easy-rate job progress",
       "submitting": "Submitting Easy-rate job to backend...",
       "defaultTitle": "Easy-rate result",
       "rateConstants": "Rate Constants",
@@ -632,6 +640,14 @@
       "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
       "methodsLegend": "Methods"
     },
+    "methods": {
+      "ambit": "AMBIT SA",
+      "brsa": "BRSAScore SA",
+      "rdkit": "RDKit SA"
+    },
+    "export": {
+      "allMethods": "All methods"
+    },
     "actions": {
       "run": "Run SA Score",
       "processing": "Processing...",
@@ -654,9 +670,12 @@
       "jobNameLabel": "Visible name:",
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
-      "tableSMILES": "SMILES"
+      "tableSMILES": "SMILES",
+      "viewStructure": "Click to view molecule structure",
+      "error": "ERROR"
     },
     "sketch": {
+      "ketcherTitle": "Ketcher SMILES sketcher",
       "title": "Draw SMILES",
       "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.",
       "loading": "Loading molecule sketcher…",
@@ -708,13 +727,21 @@
       "jobIdLabel": "Job ID:",
       "tableName": "Name",
       "tableSMILES": "SMILES",
-      "references": "Scientific references"
+      "references": "Scientific references",
+      "viewStructure": "Click to view molecule structure",
+      "colLd50": "LD50 (mg/kg)",
+      "colMutagenicity": "Mutagenicity",
+      "colAmesScore": "Ames Score",
+      "colDevTox": "Dev. Toxicity",
+      "colDevtoxScore": "DevTox Score"
     },
     "sketch": {
       "title": "Draw SMILES",
       "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.",
       "loading": "Loading molecule sketcher…",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "addToList": "Add to list",
+      "ketcherTitle": "Ketcher SMILES sketcher"
     },
     "history": {
       "empty": "No historical toxicity jobs yet.",
@@ -1107,11 +1134,16 @@
       "title": "Group Management",
       "subtitle": "Manage scientific groups, their members, and app-level access rules."
     },
+    "ariaLabel": "Group management",
     "feedback": {
       "loading": "Loading groups..."
     },
     "groups": {
       "title": "Groups",
+      "adminGroupLabel": "Administrative group",
+      "allGroupsOption": "All manageable groups",
+      "fastSearchGroups": "Fast search of groups",
+      "searchGroupsPlaceholder": "Search by name, slug or description",
       "colName": "Name",
       "colSlug": "Slug",
       "colMembers": "Members",
@@ -1121,11 +1153,17 @@
     },
     "members": {
       "title": "Members",
+      "fastSearchUsers": "Fast search of users",
+      "searchUsersPlaceholder": "Search user by name or email",
       "colUser": "User",
       "colRole": "Role",
       "colActions": "Actions",
       "selectUser": "Select user",
       "addButton": "Add member"
+    },
+    "roles": {
+      "member": "Member",
+      "admin": "Admin"
     },
     "permissions": {
       "title": "App Permissions"
@@ -1145,6 +1183,7 @@
       "title": "User Management",
       "subtitle": "Manage user accounts, roles, and group memberships."
     },
+    "ariaLabel": "User management",
     "feedback": {
       "loading": "Loading users..."
     },
@@ -1153,6 +1192,10 @@
       "description": "Admins can only manage users in their groups.",
       "filterGroup": "Filter by group",
       "allGroups": "All groups",
+      "fastSearchGroups": "Fast search of groups",
+      "searchGroupsPlaceholder": "Search group by name or slug",
+      "fastSearchUsers": "Fast search of users",
+      "searchUsersPlaceholder": "Search by username, name or email",
       "colUsername": "Username",
       "colRole": "Role",
       "colStatus": "Status",
@@ -1161,7 +1204,13 @@
       "active": "Active",
       "inactive": "Inactive",
       "activate": "Activate",
-      "deactivate": "Deactivate"
+      "deactivate": "Deactivate",
+      "removeMembershipTitle": "Remove from group"
+    },
+    "roles": {
+      "user": "User",
+      "admin": "Admin",
+      "member": "Member"
     },
     "createUser": {
       "title": "Create user",
@@ -1234,13 +1283,20 @@
     }
   },
   "cadmaPy": {
+    "scopeLabels": {
+      "root": "Root",
+      "group": "Group",
+      "personal": "Personal"
+    },
     "hero": {
       "tag": "CADMA-Chem Protocol",
       "title": "CADMAPy",
+      "infoAria": "Show workflow overview",
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
       "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "step3": "Rank and compare candidates by selection score against the reference band — export the results as CSV."
+      "step3": "Configure your ranking formula",
+      "step4": "View scores & export results"
     },
     "steps": {
       "ariaLabel": "Workflow steps",
@@ -1288,7 +1344,58 @@
     "step2": {
       "title": "Upload candidate files",
       "desc": "Load your molecular data generated by Smile-it, Toxicity Properties and SA Score.",
-      "quickFillTitle": "Fast fill from the current candidate guide or previous runs",
+      "pathwayGenerateTitle": "Generate from Smile-it",
+      "pathwayGenerateDesc": "Pick a completed Smile-it job and auto-launch Toxicity + SA Score jobs.",
+      "pathwayReuseTitle": "Reuse completed jobs",
+      "pathwayReuseDesc": "Pick existing Smile-it, Toxicity and SA Score jobs to combine their results.",
+      "pathwayManualTitle": "Manual CSV import",
+      "pathwayManualDesc": "Upload your own CSV files with candidate SMILES, toxicity and SA data.",
+      "generatePanelTitle": "Generate from Smile-it",
+      "generatePanelDesc": "Select the Smile-it run that contains your candidate SMILES. CADMA will launch new Toxicity Properties and SA Score jobs automatically.",
+      "selectSmileitJobPlaceholder": "Select a Smile-it job...",
+      "saMethodLabel": "SA method",
+      "selectSaMethodPlaceholder": "Select SA method...",
+      "generateButton": "Generate Toxicity + SA",
+      "reloadJobList": "Reload job list",
+      "reusePanelTitle": "Reuse completed jobs",
+      "reusePanelDesc": "Select between your completed analysis jobs. A Smile-it job provides the candidate SMILES; Toxicity and SA Score jobs are optional but recommended.",
+      "smileitRequired": "Smile-it job · required",
+      "selectSmileitJobTitle": "Select a Smile-it job",
+      "selectToxicityJobTitle": "Select a Toxicity Properties job",
+      "selectSaScoreJobTitle": "Select an SA Score job",
+      "selectSaMethodTitle": "Select an SA method",
+      "toxicityOptional": "Toxicity Properties job · optional",
+      "skipToxicity": "Skip — no toxicity data",
+      "saScoreOptional": "SA Score job · optional",
+      "skipSa": "Skip — no SA data",
+      "saMethodRequired": "SA method · required",
+      "applySelectedJobs": "Apply selected jobs",
+      "manualPanelTitle": "Manual CSV import",
+      "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
+      "candidatesLoaded": "candidates loaded",
+      "toxicityReady": "Toxicity ✓",
+      "toxicityMissing": "Toxicity missing",
+      "saReady": "SA ✓",
+      "saMissing": "SA missing",
+      "launchMissing": "Launch missing jobs",
+      "payloadPreviewTitle": "Final candidate payload preview",
+      "payloadPreviewDesc": "This is the candidate set that will be carried into step 3.",
+      "sourceGuide": "Source guide",
+      "files": "Files",
+      "tableHash": "#",
+      "tableCandidate": "Candidate",
+      "tableSmiles": "SMILES",
+      "tableDt": "DT",
+      "tableM": "M",
+      "tableLd50": "LD50",
+      "tableSa": "SA",
+      "unnamedCandidate": "Unnamed candidate",
+      "showingFirst": "Showing the first {{ count }} of {{ total }} candidates.",
+      "acceptAndContinue": "Accept and continue to formula",
+      "ariaClearReference": "Clear reference selection",
+      "ariaBackToCandidates": "Back to candidate inputs",
+      "backToStep2": "Back to step 2",
+      "change": "Change",
       "quickFillDesc": "If the current candidate file already contains names and SMILES, CADMA can launch the missing SA Score and Toxicity jobs for you. You can also reuse completed jobs below.",
       "quickFillSmileit": "Smile-it guide job",
       "quickFillNeedSmileit": "Select a completed Smile-it job",
@@ -1322,6 +1429,24 @@
     },
     "step3": {
       "title": "Selection scores",
+      "desc": "Adjust reference values, weights, and ADME intervals, then run the CADMA Py ranking.",
+      "formulaControls": "CADMA formula controls",
+      "formulaControlsDesc": "These values are applied to the next ranking run.",
+      "resetDefaults": "Reset defaults",
+      "ld50Ref": "LD50_ref",
+      "mRef": "M_ref",
+      "dtRef": "DT_ref",
+      "saRef": "SA_ref",
+      "weightAdme": "Weight ADME",
+      "weightToxicity": "Weight Toxicity",
+      "weightSa": "Weight SA",
+      "totalWeight": "Total weight",
+      "admeIntervalWindow": "ADME interval window",
+      "intervalMetric": "Metric",
+      "intervalMin": "Min",
+      "intervalMax": "Max",
+      "placeholderMin": "Min",
+      "placeholderMax": "Max",
       "referenceFamily": "Reference family",
       "candidatesEvaluated": "Candidates evaluated",
       "topCandidate": "Top candidate",
@@ -1340,12 +1465,46 @@
       "toxicity": "Toxicity",
       "admeHits": "ADME hits"
     },
+    "step4": {
+      "backToFormula": "Back to formula",
+      "waitingForResults": "Waiting for CADMA Py results...",
+      "runningHint": "Running CADMA Py comparison... Results will appear here when the job completes.",
+      "rankingChartAria": "CADMA Py ranking chart",
+      "metricChartAria": "CADMA Py metric comparison chart",
+      "tableSS": "S_S",
+      "tableSAdme": "S_ADME",
+      "tableSa": "SA",
+      "tableMw": "MW",
+      "tableLogp": "logP",
+      "tableMr": "MR",
+      "tableAtx": "AtX",
+      "tableHbla": "HBLA",
+      "tableHbld": "HBLD",
+      "tableRb": "RB",
+      "tablePsa": "PSA",
+      "tableDt": "DT",
+      "tableM": "M",
+      "tableLd50": "LD50",
+      "tableSaRaw": "SA raw",
+      "tableInband": "In-band metrics"
+    },
     "history": {
       "empty": "No previous CADMA Py executions yet.",
       "title": "Previous executions",
       "ariaLabel": "CADMA Py historical executions"
     },
     "familyDetail": {
+      "selectFamily": "Select family →",
+      "copyFamily": "⎘ Copy family",
+      "rootReadOnly": "This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
+      "groupReadOnly": "This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
+      "defaultReadOnly": "This family is read-only in your current scope. Create an editable copy to modify it safely.",
+      "fullAccess": "Full access",
+      "canEdit": "Can edit",
+      "readOnlyTemplate": "Read-only template",
+      "readOnly": "Read only",
+      "nullCount": "null",
+      "sha256Prefix": "SHA-256:",
       "backToList": "Back to list",
       "back": "← Back",
       "createdBy": "Created by",
@@ -1407,6 +1566,10 @@
       "tableHeaderNote": "Note"
     },
     "importer": {
+      "guideFile": "Guide file",
+      "additionalFile": "Additional file",
+      "formatCsvTab": "CSV · tab",
+      "formatCsvDelimiter": "CSV · {{ delimiter }}",
       "fallbackNote": "Fallback names will use {{ prefix }} + counter.",
       "noUsableRows": "No usable rows detected yet.",
       "format": "Format",
