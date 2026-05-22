@@ -441,28 +441,20 @@ jobs:
               exit 1
             fi
 
-            "$PYTHON_BIN" -m pip install --upgrade pip
-            "$PYTHON_BIN" -m pip install poetry
+            # Crear virtualenv aislado para evitar conflicto con paquetes apt del sistema
+            # (python3-poetry 1.1.12, python3-cleo 0.8.1, etc.). NO usar pip fuera de venv.
+            "$PYTHON_BIN" -m venv /tmp/chemistry-deploy-venv
+            source /tmp/chemistry-deploy-venv/bin/activate
+            pip install --upgrade pip
+            pip install poetry
 
-            export PATH="$HOME/.local/bin:$PATH"
-            POETRY_BIN="$(command -v poetry || true)"
-            if [ -z "$POETRY_BIN" ] && [ -x "$HOME/.local/bin/poetry" ]; then
-              POETRY_BIN="$HOME/.local/bin/poetry"
-            fi
-
-            if [ -z "$POETRY_BIN" ]; then
-              echo "ERROR: no se encontró el binario de poetry después de instalarlo."
-              echo "Revisa que ~/.local/bin exista en el host remoto."
-              exit 1
-            fi
-
-            "$POETRY_BIN" config virtualenvs.in-project true
-            "$POETRY_BIN" env use "$PYTHON_BIN"
-            "$POETRY_BIN" install --only main --no-interaction --no-ansi
+            poetry config virtualenvs.in-project true
+            poetry env use "$PYTHON_BIN"
+            poetry install --only main --no-interaction --no-ansi
 
             MIGRATION_LOG_FILE="$DEPLOY_STAGING_DIR/django-migrate.log"
             set +e
-            "$POETRY_BIN" run python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
+            poetry run python manage.py migrate --noinput 2>&1 | tee "$MIGRATION_LOG_FILE"
             MIGRATE_EXIT_CODE=${PIPESTATUS[0]}
             set -e
 

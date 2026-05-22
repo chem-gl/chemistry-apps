@@ -15,7 +15,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   CadmaCompoundAddPayload,
   CadmaPyApiService,
@@ -186,6 +186,7 @@ const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: s
 export class CadmaPyFamilyDetailComponent {
   private readonly cadmaApi = inject(CadmaPyApiService);
   private readonly jobsApi = inject(JobsApiService);
+  private readonly translocoService = inject(TranslocoService);
 
   @ViewChild('compoundDetailDialog')
   protected readonly compoundDetailDialogRef?: ElementRef<HTMLDialogElement>;
@@ -289,16 +290,16 @@ export class CadmaPyFamilyDetailComponent {
       this.autoOpenedLibraryId.set(requestedLibraryId);
     });
   }
-  readonly selectionActionLabel = computed<string>(() => 'Select family →');
-  readonly copyActionLabel = computed<string>(() => '⎘ Copy family');
+  readonly selectionActionLabel = computed<string>(() => this.translocoService.translate('cadmaPy.familyDetail.selectFamily'));
+  readonly copyActionLabel = computed<string>(() => this.translocoService.translate('cadmaPy.familyDetail.copyFamily'));
   readonly readOnlyGuidance = computed<string>(() => {
     if (this.scopeKind() === 'root') {
-      return 'This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.';
+      return this.translocoService.translate('cadmaPy.familyDetail.rootReadOnly');
     }
     if (this.scopeKind() === 'group') {
-      return 'This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.';
+      return this.translocoService.translate('cadmaPy.familyDetail.groupReadOnly');
     }
-    return 'This family is read-only in your current scope. Create an editable copy to modify it safely.';
+    return this.translocoService.translate('cadmaPy.familyDetail.defaultReadOnly');
   });
 
   readonly createdDate = computed<string>(() => {
@@ -317,10 +318,10 @@ export class CadmaPyFamilyDetailComponent {
 
   readonly editableLabel = computed<string>(() => {
     const lib = this.library();
-    if (lib.editable && lib.deletable) return 'Full access';
-    if (lib.editable) return 'Can edit';
-    if (lib.forkable) return 'Read-only template';
-    return 'Read only';
+    if (lib.editable && lib.deletable) return this.translocoService.translate('cadmaPy.familyDetail.fullAccess');
+    if (lib.editable) return this.translocoService.translate('cadmaPy.familyDetail.canEdit');
+    if (lib.forkable) return this.translocoService.translate('cadmaPy.familyDetail.readOnlyTemplate');
+    return this.translocoService.translate('cadmaPy.familyDetail.readOnly');
   });
 
   formatNumber(value: number, decimals: number = 2): string {

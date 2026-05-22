@@ -1,5 +1,5 @@
 <!-- group-manager.component.html: Interfaz de manejo de grupos científicos. -->
-<section class="gm-shell" aria-label="Gestión de grupos">
+<section class="gm-shell" [attr.aria-label]="'groupManager.ariaLabel' | transloco">
     <header class="gm-header">
         <div>
             <p class="eyebrow">{{ 'groupManager.header.eyebrow' | transloco }}</p>
@@ -29,9 +29,9 @@
 
         <div class="filter-bar">
             <label class="filter-label">
-                Grupo administrativo
+                {{ 'groupManager.groups.adminGroupLabel' | transloco }}
                 <select class="form-select" [ngModel]="groupFilterId()" (ngModelChange)="groupFilterId.set($event)">
-                    <option value="">Todos los grupos administrables</option>
+                    <option value="">{{ 'groupManager.groups.allGroupsOption' | transloco }}</option>
                     @for (group of visibleGroups(); track group.id) {
                     <option [value]="group.id">{{ group.name }}</option>
                     }
@@ -39,10 +39,10 @@
             </label>
 
             <label class="filter-label filter-search">
-                Fast search de grupos
+                {{ 'groupManager.groups.fastSearchGroups' | transloco }}
                 <input class="form-input" type="search" [ngModel]="groupSearchQuery()"
                     (ngModelChange)="groupSearchQuery.set($event)"
-                    placeholder="Buscar por nombre, slug o descripción" />
+                    [placeholder]="'groupManager.groups.searchGroupsPlaceholder' | transloco" />
             </label>
         </div>
 
@@ -88,10 +88,10 @@
                                     <h3 class="sub-title">{{ 'groupManager.members.title' | transloco }}</h3>
 
                                     <label class="filter-label filter-search inline-search">
-                                        Fast search de usuarios
+                                        {{ 'groupManager.members.fastSearchUsers' | transloco }}
                                         <input class="form-input" type="search" [ngModel]="memberSearchQuery()"
                                             (ngModelChange)="memberSearchQuery.set($event)"
-                                            placeholder="Buscar usuario por nombre o correo" />
+                                            [placeholder]="'groupManager.members.searchUsersPlaceholder' | transloco" />
                                     </label>
 
                                     <table class="inner-table">
@@ -110,8 +110,8 @@
                                                     <select class="small-select" title="Rol del miembro"
                                                         [ngModel]="member.role_in_group"
                                                         (ngModelChange)="updateMemberRole(member.id, $event)">
-                                                        <option value="admin">Admin</option>
-                                                        <option value="member">Member</option>
+                                                        <option value="admin">{{ 'groupManager.roles.admin' | transloco }}</option>
+                                                        <option value="member">{{ 'groupManager.roles.member' | transloco }}</option>
                                                     </select>
                                                 </td>
                                                 <td>
@@ -140,8 +140,8 @@
                                             [ngModel]="addMemberForm().roleInGroup"
                                             (ngModelChange)="addMemberForm.update(f => ({ ...f, roleInGroup: $event }))"
                                             name="roleInGroup">
-                                            <option value="member">Member</option>
-                                            <option value="admin">Admin</option>
+                                            <option value="member">{{ 'groupManager.roles.member' | transloco }}</option>
+                                            <option value="admin">{{ 'groupManager.roles.admin' | transloco }}</option>
                                         </select>
                                         <button class="action-button small primary" type="submit"
                                             [disabled]="isSubmitting()">

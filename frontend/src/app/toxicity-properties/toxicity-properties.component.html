@@ -108,31 +108,31 @@
               </th>
               <th class="numeric-head" [attr.aria-sort]="ariaSort('LD50_mgkg')">
                 <button class="sort-button" type="button" (click)="toggleTableSort('LD50_mgkg')">
-                  <span>LD50_mgkg</span>
+                  <span>{{ 'toxicityProperties.result.colLd50' | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator('LD50_mgkg') }}</span>
                 </button>
               </th>
               <th [attr.aria-sort]="ariaSort('mutagenicity')">
                 <button class="sort-button" type="button" (click)="toggleTableSort('mutagenicity')">
-                  <span>mutagenicity</span>
+                  <span>{{ 'toxicityProperties.result.colMutagenicity' | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator('mutagenicity') }}</span>
                 </button>
               </th>
               <th class="numeric-head" [attr.aria-sort]="ariaSort('ames_score')">
                 <button class="sort-button" type="button" (click)="toggleTableSort('ames_score')">
-                  <span>ames_score</span>
+                  <span>{{ 'toxicityProperties.result.colAmesScore' | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator('ames_score') }}</span>
                 </button>
               </th>
               <th [attr.aria-sort]="ariaSort('DevTox')">
                 <button class="sort-button" type="button" (click)="toggleTableSort('DevTox')">
-                  <span>DevTox</span>
+                  <span>{{ 'toxicityProperties.result.colDevTox' | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator('DevTox') }}</span>
                 </button>
               </th>
               <th class="numeric-head" [attr.aria-sort]="ariaSort('devtox_score')">
                 <button class="sort-button" type="button" (click)="toggleTableSort('devtox_score')">
-                  <span>devtox_score</span>
+                  <span>{{ 'toxicityProperties.result.colDevtoxScore' | transloco }}</span>
                   <span class="sort-indicator">{{ sortIndicator('devtox_score') }}</span>
                 </button>
               </th>
@@ -144,7 +144,7 @@
               <td>{{ molecule.name }}</td>
               <td>
                 <button class="smiles-cell-btn" type="button" (click)="openMoleculeImageModal(molecule.smiles)"
-                  title="Click to view molecule structure">
+                  [title]="'toxicityProperties.result.viewStructure' | transloco">
                   {{ molecule.smiles }}
                 </button>
               </td>
@@ -217,14 +217,14 @@
         <p class="ketcher-loading-text">{{ 'toxicityProperties.sketch.loading' | transloco }}</p>
       </output>
       }
-      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" title="Ketcher SMILES sketcher"
+      <iframe #ketcherFrame class="ketcher-frame" [src]="ketcherPublicUrl" [title]="'toxicityProperties.sketch.ketcherTitle' | transloco"
         (load)="onKetcherFrameLoaded()"></iframe>
     </div>
 
     <div class="sketch-modal-actions">
       <button class="btn-secondary" type="button" (click)="closeSketchDialog()">{{ 'toxicityProperties.sketch.cancel' |
         transloco }}</button>
-      <button class="btn-primary" type="button" (click)="applySketch()">Add to list</button>
+      <button class="btn-primary" type="button" (click)="applySketch()">{{ 'toxicityProperties.sketch.addToList' | transloco }}</button>
     </div>
   </section>
 </dialog>
