@@ -169,10 +169,10 @@ function sanitizeFamilyFileName(name: string): string {
 }
 
 const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: string }> = {
-  root: { icon: '🌐', label: 'Global (Root)', cssClass: 'scope-root' },
-  group: { icon: '👥', label: 'Group', cssClass: 'scope-group' },
-  personal: { icon: '👤', label: 'Personal', cssClass: 'scope-personal' },
-  unknown: { icon: '❓', label: 'Unknown', cssClass: 'scope-unknown' },
+  root: { icon: '', label: 'Global (Root)', cssClass: 'scope-root' },
+  group: { icon: '', label: 'Group', cssClass: 'scope-group' },
+  personal: { icon: '', label: 'Personal', cssClass: 'scope-personal' },
+  unknown: { icon: '', label: 'Unknown', cssClass: 'scope-unknown' },
 };
 
 @Component({

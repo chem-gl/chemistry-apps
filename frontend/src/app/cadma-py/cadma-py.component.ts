@@ -246,6 +246,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly candidateImportedFilenames = signal<string[]>([]);
   readonly candidateImportedTotalFiles = signal<number>(0);
   readonly candidateImportedTotalUsableRows = signal<number>(0);
+  readonly showInfoModal = signal<boolean>(false);
   readonly showCreateForm = signal<boolean>(false);
   readonly previewLibraryId = signal<string>('');
   readonly previewSampleKey = signal<string>('');
@@ -1510,11 +1511,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     );
   }
 
-  scopeIcon(sourceReference: string): string {
-    if (sourceReference === 'root') return '🌐';
-    if (sourceReference.startsWith('admin-')) return '👥';
-    if (sourceReference === 'local-lab') return '👤';
-    return '❓';
+  scopeIcon(_sourceReference: string): string {
+    return '';
   }
 
   scopeLabel(sourceReference: string): string {

@@ -208,7 +208,7 @@ class SmileitSeedTestCase(TestCase):
                 "smiles_input": smiles_input,
                 "smiles_canonical": smiles_canonical,
                 "anchor_atom_indices": anchor_atom_indices,
-                "source_reference": "seed",
+                "source_reference": "smileit-seed",
                 "provenance_metadata": {"seed": True},
             },
         )
@@ -219,7 +219,7 @@ class SmileitSeedTestCase(TestCase):
             substituent.smiles_input = smiles_input
             substituent.smiles_canonical = smiles_canonical
             substituent.anchor_atom_indices = anchor_atom_indices
-            substituent.source_reference = "seed"
+            substituent.source_reference = "smileit-seed"
             substituent.provenance_metadata = {"seed": True}
             substituent.save(
                 update_fields=[

@@ -229,7 +229,7 @@ class CadmaPyOwnershipTests(TestCase):
         )
         self.root_library = CadmaReferenceLibrary.objects.create(
             name="Legacy Neuro Reference",
-            disease_name="Neurodegenerative Disorders",
+            disease_name="Neurodegenerative Drugs",
             description="Original root description",
             paper_reference="Root benchmark review",
             paper_url="https://doi.org/10.1016/S0140-6736(06)69113-7",
@@ -260,7 +260,7 @@ class CadmaPyOwnershipTests(TestCase):
             library_id=str(self.root_library.id),
             payload={
                 "name": "My Neuro Copy",
-                "disease_name": "Neurodegenerative Disorders",
+                "disease_name": "Neurodegenerative Drugs",
                 "description": "Personal working copy",
                 "paper_reference": "Updated personal notes",
             },
@@ -299,7 +299,7 @@ class CadmaPyOwnershipTests(TestCase):
         )
         shared_group_library = CadmaReferenceLibrary.objects.create(
             name="Shared Neuro Group Library",
-            disease_name="Neurodegenerative Disorders",
+            disease_name="Neurodegenerative Drugs",
             description="Shared by admin",
             paper_reference="Admin benchmark",
             paper_url="https://doi.org/10.1007/s12017-019-08558-2",
@@ -317,7 +317,7 @@ class CadmaPyOwnershipTests(TestCase):
             library_id=str(shared_group_library.id),
             payload={
                 "name": "Member editable copy",
-                "disease_name": "Neurodegenerative Disorders",
+                "disease_name": "Neurodegenerative Drugs",
                 "description": "Forked from admin shared library",
             },
             actor=self.normal_user,

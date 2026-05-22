@@ -74,24 +74,24 @@ SAMPLE_DEFINITIONS: tuple[CadmaReferenceSample, ...] = (
     {
         "key": "neuro",
         "name": "Legacy Neuro Reference",
-        "disease_name": "Neurodegenerative Disorders",
+        "disease_name": "Neurodegenerative Drugs",
         "description": (
             "Bundled deprecated CADMA reference set kept only as a reproducible "
             "internal comparison baseline."
         ),
         "row_count": 0,
-        "source_note": "Deprecated CADMA sample stored in the repository.",
+        "source_note": "",
     },
     {
         "key": "rett",
         "name": "Legacy RETT Reference",
-        "disease_name": "RETT Syndrome",
+        "disease_name": "RETT Syndrome drugs",
         "description": (
             "Bundled deprecated CADMA reference set kept only as a reproducible "
             "internal comparison baseline."
         ),
         "row_count": 0,
-        "source_note": "Deprecated CADMA sample stored in the repository.",
+        "source_note": "",
     },
 )
 

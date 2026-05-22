@@ -67,7 +67,6 @@ export class HttpAuthTokenInterceptor implements HttpInterceptor {
         this.isRefreshing = false;
 
         if (newAccessToken === null) {
-          this.identitySessionService.logout();
           return throwError(
             () =>
               new HttpErrorResponse({
@@ -82,7 +81,6 @@ export class HttpAuthTokenInterceptor implements HttpInterceptor {
       }),
       catchError((refreshError: unknown) => {
         this.isRefreshing = false;
-        this.identitySessionService.logout();
         return throwError(() => refreshError);
       }),
     );

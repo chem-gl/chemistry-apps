@@ -48,7 +48,7 @@ export interface DeleteConfirmationResult {
               </p>
             } @else {
               <p class="delete-message delete-warning">
-                ⚠️ <strong>{{ libraryName() }}</strong> has
+                <strong>{{ libraryName() }}</strong> has
                 <strong>{{ linkedJobs().length }}</strong>
                 linked {{ linkedJobs().length === 1 ? 'job' : 'jobs' }}
                 that will also be deleted:
