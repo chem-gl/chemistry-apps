@@ -87,6 +87,18 @@ interface CadmaIntervalEditorRow {
   max: number;
 }
 
+/** Fila unificada para la tabla de familias (seeds + guardadas). */
+interface CadmaCombinedFamilyRow {
+  id: string;
+  diseaseName: string;
+  name: string;
+  rowCount: number;
+  isSeed: boolean;
+  deletable: boolean;
+  libRef: CadmaReferenceLibraryView | null;
+  sampleKey?: string;
+}
+
 const INTERVAL_ORDER: readonly CadmaIntervalMetric[] = [
   'MW',
   'logP',
@@ -261,6 +273,34 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly browsingLibrary = computed<CadmaReferenceLibraryView | null>(() => {
     const browsing = this.browsingLibraryId();
     return browsing ? (this.libraries().find((lib) => lib.id === browsing) ?? null) : null;
+  });
+
+  readonly combinedFamilies = computed<CadmaCombinedFamilyRow[]>(() => {
+    const rows: CadmaCombinedFamilyRow[] = [];
+    for (const sample of this.samples()) {
+      rows.push({
+        id: `seed-${sample.key}`,
+        diseaseName: sample.disease_name,
+        name: sample.name,
+        rowCount: sample.row_count,
+        isSeed: true,
+        deletable: false,
+        libRef: null,
+        sampleKey: sample.key,
+      });
+    }
+    for (const lib of this.libraries()) {
+      rows.push({
+        id: lib.id,
+        diseaseName: lib.disease_name,
+        name: lib.name,
+        rowCount: lib.row_count,
+        isSeed: false,
+        deletable: lib.deletable,
+        libRef: lib,
+      });
+    }
+    return rows;
   });
 
   /** Cuenta cuántas familias guardadas fueron importadas desde muestras semilla. */
@@ -1093,6 +1133,26 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.candidateImportedTotalUsableRows.set(0);
     this.candidateDraftMessage.set('');
     this.showCreateForm.set(false);
+  }
+
+  /** Cambia la familia de referencia desde el dropdown en pasos 2-4. */
+  onReferenceFamilyChange(familyId: string): void {
+    const family = this.combinedFamilies().find((f) => f.id === familyId);
+    if (!family) return;
+
+    // Limpiar datos de pasos posteriores
+    this.workflow.clearCandidateInputs();
+    this.candidateBundle.set(createEmptyCsvBundle());
+    this.candidateImportedFilenames.set([]);
+    this.candidateImportedTotalFiles.set(0);
+    this.candidateImportedTotalUsableRows.set(0);
+    this.candidateDraftMessage.set('');
+
+    if (family.isSeed && family.sampleKey) {
+      this.selectBundledSample(family.sampleKey);
+    } else if (family.libRef) {
+      this.selectLibrary(family.id, family.libRef);
+    }
   }
 
   selectBundledSample(sampleKey: string): void {

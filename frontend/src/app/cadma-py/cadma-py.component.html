@@ -64,133 +64,88 @@
         <h3>{{ 'cadmaPy.step1.title' | transloco }}</h3>
         <p>{{ 'cadmaPy.step1.desc' | transloco }}</p>
       </div>
-      @if (selectedLibrary(); as lib) {
-      <div class="selected-summary">
-        <div class="selected-summary-badges">
-          <span class="check-badge">✓ {{ 'cadmaPy.step1.selected' | transloco }}</span>
-          <span class="selected-scope" [class]="scopeCssClass(lib.source_reference)">
-            {{ scopeIcon(lib.source_reference) }} {{ scopeLabel(lib.source_reference) }}
-          </span>
-        </div>
-        <div class="selected-summary-text">
-          <strong>{{ lib.disease_name }}</strong>
-          <span class="selected-summary-name">{{ lib.name }}</span>
-        </div>
-        <div class="selected-summary-meta">
-          <span class="meta-pill">{{ lib.row_count }} {{ 'cadmaPy.step1.compounds' | transloco }}</span>
-          @if (!lib.editable){
-          <span class="meta-pill readonly-pill">{{ 'cadmaPy.step1.readOnly' | transloco }}</span>
-          }
-        </div>
-        <button class="btn-ghost selected-summary-action" type="button" (click)="clearReferenceSelection()">
-          {{ 'cadmaPy.step1.change' | transloco }}
-        </button>
-      </div>
-      }
     </div>
 
-    @if (!selectedLibrary()){
-    <!-- Seeds: familias pre-construidas -->
-    @if (samples().length > 0) {
-    <div class="seed-section">
-      <p class="subsection-label">{{ 'cadmaPy.step1.quickStart' | transloco }}</p>
-      <div class="seed-grid">
-        @for (sample of samples(); track sample.key) {
-        <div class="seed-card" [attr.data-key]="sample.key" [class.active-browse]="browsingSampleKey() === sample.key">
-          <button class="seed-card-main" type="button" (click)="browseSample(sample.key)">
-            <div class="seed-body">
-              <span class="seed-disease">{{ sample.disease_name }}</span>
-              <strong class="seed-name">{{ sample.name }}</strong>
-              <p class="seed-note">{{ sample.source_note }}</p>
-              <span class="seed-stat">{{ sample.row_count }} {{ 'cadmaPy.step1.referenceCompounds' | transloco }}</span>
-              @if (sampleImportCounts()[sample.key] > 0) {
-              <span class="seed-imported-badge">
-                {{ 'cadmaPy.step1.alreadyImported' | transloco }} {{ sampleImportCounts()[sample.key] }}×
-              </span>
+      <!-- Tabla unificada de familias (seeds + guardadas) -->
+      @if (combinedFamilies().length > 0) {
+      <table class="family-table">
+        <thead>
+          <tr>
+            <th>{{ 'cadmaPy.step1.diseaseColumn' | transloco }}</th>
+            <th>{{ 'cadmaPy.step1.nameColumn' | transloco }}</th>
+            <th class="col-num">{{ 'cadmaPy.step1.compoundsColumn' | transloco }}</th>
+            <th class="col-actions">{{ 'cadmaPy.general.preview' | transloco }}</th>
+            <th class="col-select"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (family of combinedFamilies(); track family.id) {
+          @let isSelected = selectedLibrary()?.id === family.id;
+          @let previewActive = (!family.isSeed && previewLibraryId() === family.id) ||
+            (family.isSeed && previewSampleKey() === family.sampleKey);
+          <tr [class.is-selected]="isSelected" [class.active-browse]="family.isSeed
+            ? (browsingSampleKey() === family.sampleKey)
+            : (browsingLibraryId() === family.id)">
+            <td class="col-disease">{{ family.diseaseName }}</td>
+            <td class="col-name">{{ family.name }}</td>
+            <td class="col-num">{{ family.rowCount }}</td>
+            <td class="col-actions">
+              <button class="btn-ghost btn-sm" type="button"
+                [title]="'cadmaPy.step1.previewCompounds' | transloco"
+                (click)="family.isSeed ? toggleSamplePreview(family.sampleKey!, $event) : togglePreview(family.id, $event)">
+                {{ previewActive ? ('cadmaPy.general.hideDetails' | transloco) : ('cadmaPy.general.showDetails' | transloco) }}
+              </button>
+              @if (!family.isSeed && family.deletable) {
+              <button class="btn-ghost btn-sm btn-danger-ghost" type="button"
+                [title]="'cadmaPy.step1.deleteFamily' | transloco"
+                (click)="deleteLibrary(family.libRef!, $event)">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>
               }
-            </div>
-          </button>
-          <div class="seed-actions">
-            <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
-              [class.active]="previewSampleKey() === sample.key"
-              (click)="toggleSamplePreview(sample.key, $event)">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
-            <button class="btn-seed" type="button" (click)="selectBundledSample(sample.key)" [disabled]="isBusy()">
-              @if (isBusy()) { {{ 'cadmaPy.step1.loading' | transloco }} } @else { {{ 'cadmaPy.step1.selectFamily' |
-              transloco }} }
-            </button>
-          </div>
-        </div>
-        @if (previewSampleKey() === sample.key) {
-        <div class="seed-preview-panel">
-          @if (browsingSampleLibrary(); as lib) {
-          <app-cadma-py-family-detail [library]="lib" [mode]="'browsing'" [autoOpenEditorLibraryId]="copiedLibraryId()"
-            (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)"
-            (selectAsReference)="confirmBrowsingSelection()" (closeBrowsing)="closeSampleBrowsing()" />
-          } @else {
-          <p class="preview-empty">{{ 'cadmaPy.step1.loadingDetail' | transloco }}</p>
+            </td>
+            <td class="col-select">
+              @if (!isSelected) {
+              <button class="btn-primary btn-sm" type="button"
+                (click)="family.isSeed ? selectBundledSample(family.sampleKey!) : selectLibrary(family.id)"
+                [disabled]="isBusy()">
+                {{ (family.isSeed && isBusy()) ? ('cadmaPy.step1.loading' | transloco) : ('cadmaPy.step1.selectFamily' | transloco) }}
+              </button>
+              } @else {
+              <span class="check-badge">✓ {{ 'cadmaPy.step1.selected' | transloco }}</span>
+              }
+            </td>
+          </tr>
+          @if (previewActive) {
+          <tr class="preview-row">
+            <td colspan="5">
+              <!-- Seed preview -->
+              @if (family.isSeed && browsingSampleLibrary(); as sampleLib) {
+              <app-cadma-py-family-detail [library]="sampleLib" [mode]="'browsing'"
+                [autoOpenEditorLibraryId]="copiedLibraryId()"
+                (libraryChanged)="handleLibraryChanged($event)"
+                (copiedLibraryCreated)="handleCopiedLibraryCreated($event)"
+                (selectAsReference)="confirmBrowsingSelection()"
+                (closeBrowsing)="closeSampleBrowsing()" />
+              } @else if (!family.isSeed && family.libRef; as libRef) {
+              <!-- Library preview -->
+              <div class="preview-header">
+                <strong>{{ libRef.row_count }} {{ 'cadmaPy.general.compounds' | transloco }} — {{ libRef.disease_name }}</strong>
+                <button class="btn-ghost btn-sm" type="button" (click)="browseLibrary(libRef.id)">
+                  {{ 'cadmaPy.step1.viewFullDetail' | transloco }}
+                </button>
+              </div>
+              <app-cadma-py-family-detail [library]="libRef"
+                [autoOpenEditorLibraryId]="copiedLibraryId()"
+                (libraryChanged)="handleLibraryChanged($event)"
+                (copiedLibraryCreated)="handleCopiedLibraryCreated($event)" />
+              } @else {
+              <p class="preview-empty">{{ 'cadmaPy.step1.loadingDetail' | transloco }}</p>
+              }
+            </td>
+          </tr>
           }
-        </div>
-        }
-        }
-      </div>
-    </div>
-    }
-
-    <!-- Familias guardadas -->
-    @if (libraries().length > 0) {
-    <div class="divider-or"><span>{{ 'cadmaPy.step1.orSavedFamily' | transloco }}</span></div>
-    <div class="library-grid">
-      @for (lib of libraries(); track lib.id) {
-      <div class="library-row" [class.active-browse]="browsingLibraryId() === lib.id">
-        <button class="library-row-main" type="button" (click)="browseLibrary(lib.id)">
-          <span class="lib-scope" [class]="scopeCssClass(lib.source_reference)">
-            {{ scopeIcon(lib.source_reference) }}
-          </span>
-          <div class="lib-info">
-            <span class="lib-disease">{{ lib.disease_name }}</span>
-            <span class="lib-name">{{ lib.name }}</span>
-          </div>
-          <div class="lib-stats">
-            <span class="lib-compounds">{{ lib.row_count }} {{ 'cadmaPy.step1.compounds' | transloco }}</span>
-            <span class="lib-creator">{{ lib.created_by_name || '—' }}</span>
-          </div>
-          <span class="lib-arrow">→</span>
-        </button>
-        <div class="lib-actions">
-          <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
-            [class.active]="previewLibraryId() === lib.id" (click)="togglePreview(lib.id, $event)">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
-          @if (lib.deletable) {
-          <button class="lib-action-btn danger" type="button" [title]="'cadmaPy.step1.deleteFamily' | transloco"
-            (click)="deleteLibrary(lib, $event)">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>
           }
-          @if (!lib.editable){
-          <span class="access-icon locked" [title]="'cadmaPy.step1.readOnly' | transloco"></span>
-          }
-        </div>
-      </div>
-      @if (previewLibraryId() === lib.id && browsingLibraryId() !== lib.id) {
-      <div class="lib-preview-panel">
-        <div class="preview-header">
-          <strong>{{ lib.row_count }} {{ 'cadmaPy.general.compounds' | transloco }} — {{ lib.disease_name }}</strong>
-          <button class="btn-ghost btn-sm" type="button" (click)="browseLibrary(lib.id)">
-            {{ 'cadmaPy.step1.viewFullDetail' | transloco }}</button>
-        </div>
-        <app-cadma-py-family-detail [library]="lib" [autoOpenEditorLibraryId]="copiedLibraryId()"
-          (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)" />
-      </div>
+        </tbody>
+      </table>
       }
-      @if (browsingLibraryId() === lib.id) {
-      <app-cadma-py-family-detail [library]="lib" [mode]="'browsing'" [autoOpenEditorLibraryId]="copiedLibraryId()"
-        (libraryChanged)="handleLibraryChanged($event)" (copiedLibraryCreated)="handleCopiedLibraryCreated($event)"
-        (selectAsReference)="confirmBrowsingSelection()" (closeBrowsing)="closeBrowsing()" />
-      }
-      }
-    </div>
-    }
-
-    @if (libraries().length === 0 && samples().length === 0) {
-    <p class="empty-hint">{{ 'cadmaPy.step1.noFamilies' | transloco }}</p>
-    }
 
     <!-- Formulario de creación colapsable -->
     <details class="create-accordion" [open]="showCreateForm()">
@@ -242,7 +197,6 @@
         </div>
       </div>
     </details>
-    }
 
     @if (libraryErrorMessage(); as errMsg) {
     <p class="error-msg" role="alert">{{ errMsg }}</p>
@@ -252,13 +206,15 @@
   <!-- ═══════════════ PASO 2: Datos del candidato ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 2) {
   <section class="step-section">
-    @if (step1Summary(); as summary) {
-    <button class="context-bar" type="button" (click)="clearReferenceSelection()"
-      [attr.aria-label]="'cadmaPy.step2.ariaClearReference' | transloco">
-      <span class="context-bar-text">{{ summary }}</span>
-      <span class="btn-ghost btn-sm">{{ 'cadmaPy.step2.change' | transloco }}</span>
-    </button>
-    }
+    <div class="family-selector-row">
+      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
+      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
+        (ngModelChange)="onReferenceFamilyChange($event)">
+        @for (family of combinedFamilies(); track family.id) {
+        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
+        }
+      </select>
+    </div>
 
     <div class="step-section-header">
       <div class="step-section-num">2</div>
@@ -518,13 +474,15 @@
   <!-- ═══════════════ PASO 3: Configurar fórmula ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 3) {
   <section class="step-section">
-    @if (step1Summary(); as summary) {
-    <button class="context-bar" type="button" (click)="clearReferenceSelection()"
-      [attr.aria-label]="'cadmaPy.step2.ariaClearReference' | transloco">
-      <span class="context-bar-text">{{ summary }}</span>
-      <span class="btn-ghost btn-sm">{{ 'cadmaPy.step2.change' | transloco }}</span>
-    </button>
-    }
+    <div class="family-selector-row">
+      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
+      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
+        (ngModelChange)="onReferenceFamilyChange($event)">
+        @for (family of combinedFamilies(); track family.id) {
+        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
+        }
+      </select>
+    </div>
     @if (step2Summary(); as summary) {
     <button class="context-bar" type="button" (click)="returnToCandidateInputs()" [attr.aria-label]="'cadmaPy.step2.ariaBackToCandidates' | transloco">
       <span class="context-bar-text">{{ summary }}</span>
@@ -656,11 +614,15 @@
   <!-- ═══════════════ PASO 4: Resultados ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 4) {
   <section class="step-section results-section">
-    @if (step1Summary(); as summary) {
-    <div class="context-bar">
-      <span class="context-bar-text">{{ summary }}</span>
+    <div class="family-selector-row">
+      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
+      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
+        (ngModelChange)="onReferenceFamilyChange($event)">
+        @for (family of combinedFamilies(); track family.id) {
+        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
+        }
+      </select>
     </div>
-    }
     @if (step2Summary(); as summary) {
     <div class="context-bar">
       <span class="context-bar-text">{{ summary }}</span>

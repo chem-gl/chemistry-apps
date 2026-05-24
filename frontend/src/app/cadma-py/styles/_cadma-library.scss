@@ -621,4 +621,146 @@
   .create-form {
     padding: 0 0.75rem 1rem;
   }
+
+  .family-table th,
+  .family-table td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .family-selector {
+    max-width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   TABLA UNIFICADA DE FAMILIAS
+   ═══════════════════════════════════════════════ */
+.family-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+}
+
+.family-table thead th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chem-ink-secondary);
+  border-bottom: 2px solid var(--chem-border);
+}
+
+.family-table tbody tr {
+  border-bottom: 1px solid var(--chem-border-subtle);
+  transition: background 0.12s;
+}
+
+.family-table tbody tr:hover {
+  background: var(--chem-surface-inset);
+}
+
+.family-table tbody tr.is-selected {
+  background: var(--chem-info-bg);
+  border-left: 3px solid var(--chem-info);
+}
+
+.family-table tbody tr.is-selected + .preview-row {
+  background: var(--chem-info-bg);
+}
+
+.family-table td {
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+}
+
+.family-table .col-disease {
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+.family-table .col-name {
+  color: var(--chem-ink-secondary);
+}
+
+.family-table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.family-table .col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.family-table .col-select {
+  text-align: right;
+  white-space: nowrap;
+  min-width: 7rem;
+}
+
+.family-table .check-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: var(--chem-info-bg);
+  color: var(--chem-info);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.family-table .preview-row td {
+  padding: 0.75rem 0.6rem;
+  background: var(--chem-surface-elevated);
+}
+
+.family-table .preview-row .preview-empty {
+  color: var(--chem-ink-soft);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Family selector dropdown (pasos 2-4) ── */
+.family-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-glass-border);
+  border-radius: var(--chem-radius);
+}
+
+.family-selector-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.family-selector {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  font-size: 0.82rem;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  min-width: 0;
+}
+
+/* ── Botón danger ghost ── */
+.btn-danger-ghost {
+  color: var(--chem-error) !important;
+}
+
+.btn-danger-ghost:hover {
+  background: var(--chem-error-bg) !important;
 }
