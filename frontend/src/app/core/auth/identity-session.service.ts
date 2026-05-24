@@ -208,6 +208,11 @@ export class IdentitySessionService {
       return of(true);
     }
 
+    // Si ya fallo la inicializacion anterior, no reintentar hasta nuevo login
+    if (this.status() === 'anonymous' && this.lastAuthenticationError() !== null) {
+      return of(false);
+    }
+
     const storedRefreshToken = this.refreshToken();
     const storedAccessToken = this.accessToken();
     if (storedAccessToken === null && storedRefreshToken === null) {
@@ -223,6 +228,13 @@ export class IdentitySessionService {
     this.lastAuthenticationError.set(null);
 
     this.sessionInitialization$ = this.loadRemoteSession().pipe(
+      tap((isAuthenticated: boolean) => {
+        if (!isAuthenticated) {
+          // No hay sesion valida: limpiar tokens para evitar reintentos
+          this.clearSessionState();
+          this.lastAuthenticationError.set('Session expired. Please sign in again.');
+        }
+      }),
       finalize(() => {
         this.sessionInitialization$ = null;
       }),
