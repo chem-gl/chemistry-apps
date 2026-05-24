@@ -279,7 +279,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     const rows: CadmaCombinedFamilyRow[] = [];
     for (const sample of this.samples()) {
       rows.push({
-        id: `seed-${sample.key}`,
+        id: `sample-${sample.key}`,
         diseaseName: sample.disease_name,
         name: sample.name,
         rowCount: sample.row_count,
