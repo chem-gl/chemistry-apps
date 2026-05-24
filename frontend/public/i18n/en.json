@@ -1362,7 +1362,10 @@
       "updateFamily": "Update family",
       "saveReferenceFamily": "Save reference family",
       "clear": "Clear",
-      "deleteSelected": "Delete selected"
+      "deleteSelected": "Delete selected",
+      "diseaseColumn": "Disease",
+      "nameColumn": "Name",
+      "compoundsColumn": "Compounds"
     },
     "step2": {
       "title": "Upload candidate files",
