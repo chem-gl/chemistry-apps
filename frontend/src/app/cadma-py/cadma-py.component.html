@@ -147,7 +147,8 @@
       </table>
       }
 
-    <!-- Formulario de creación colapsable -->
+    <!-- Formulario de creación colapsable (solo visible sin seleccion) -->
+    @if (!selectedLibrary()) {
     <details class="create-accordion" [open]="showCreateForm()">
       <summary (click)="showCreateForm.set(!showCreateForm())">
         <span class="plus-icon">+</span> {{ 'cadmaPy.step1.createNew' | transloco }}
@@ -197,6 +198,7 @@
         </div>
       </div>
     </details>
+    }
 
     @if (libraryErrorMessage(); as errMsg) {
     <p class="error-msg" role="alert">{{ errMsg }}</p>
