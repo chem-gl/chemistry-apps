@@ -3,4 +3,5 @@
 export interface FrontendEnvironment {
   production: boolean;
   apiBaseUrl: string;
+  appVersion: string;
 }
