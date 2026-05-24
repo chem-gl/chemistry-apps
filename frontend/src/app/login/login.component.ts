@@ -1,7 +1,7 @@
 // login.component.ts: Pantalla de acceso para iniciar sesión con JWT y rol transversal.
 
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -13,11 +13,18 @@ import { IdentitySessionService } from '../core/auth/identity-session.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
   private readonly translocoService = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  ngOnInit(): void {
+    if (this.sessionService.isAuthenticated()) {
+      const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/dashboard';
+      void this.router.navigateByUrl(redirectTarget);
+    }
+  }
 
   readonly username = signal<string>('');
   readonly password = signal<string>('');
