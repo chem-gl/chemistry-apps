@@ -168,7 +168,7 @@
       "exportCsv": "Export CSV"
     },
     "header": {
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the legacy desktop app.",
+      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app.",
       "eyebrow": "Molar Fractions",
       "title": "Acid-Base Equilibrium Fractions"
     },
@@ -575,7 +575,7 @@
       "exportCsv": "Export CSV"
     },
     "header": {
-      "subtitle": "Enter the same fields from the legacy desktop tool and track each input modification to understand how the final result was produced.",
+      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced.",
       "eyebrow": "Tunnel Effect",
       "title": "Asymmetric Eckart Tunneling Calculator"
     },

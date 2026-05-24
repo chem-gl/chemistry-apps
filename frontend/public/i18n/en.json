@@ -325,7 +325,7 @@
     "header": {
       "eyebrow": "Tunnel Effect",
       "title": "Asymmetric Eckart Tunneling Calculator",
-      "subtitle": "Enter the same fields from the legacy desktop tool and track each input modification to understand how the final result was produced."
+      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced."
     },
     "form": {
       "title": "Data Entry",
@@ -384,7 +384,7 @@
     "header": {
       "eyebrow": "Molar Fractions",
       "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the legacy desktop app."
+      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
     },
     "form": {
       "title": "Data Entry",
