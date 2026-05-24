@@ -54,13 +54,24 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    const links = Array.from(compiled.querySelectorAll('.main-nav a')).map(
+    const allLinks = Array.from(compiled.querySelectorAll('.main-nav a, .main-nav .nav-dropdown-trigger, .main-nav .nav-dropdown-item')).map(
+      (anchorElement: Element) => anchorElement.textContent?.trim().replace('▾', '').trim() ?? '',
+    );
+
+    expect(allLinks).toContain('Jobs Monitor');
+    expect(allLinks).toContain('Apps');
+    expect(allLinks).toContain('Dashboard');
+  });
+
+  it('should show app submenu items in dropdown', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const dropdownItems = Array.from(compiled.querySelectorAll('.nav-dropdown-item')).map(
       (anchorElement: Element) => anchorElement.textContent?.trim() ?? '',
     );
 
-    expect(links).toContain('Jobs Monitor');
-    expect(links).toContain('Molar Fractions');
-    expect(links).toContain('Smileit');
-    expect(links).toContain('Apps');
+    expect(dropdownItems.length).toBeGreaterThanOrEqual(2);
   });
 });

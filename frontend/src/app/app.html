@@ -1,6 +1,6 @@
-<div class="app-shell">
+<div class="app-shell" (click)="closeMobileNav()">
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
-    <div class="top-bar-main">
+    <div class="top-bar-inner">
       <div class="brand-block">
         <p class="brand-kicker">{{ 'app.brand.kicker' | transloco }}</p>
         <div class="brand-copy">
@@ -9,28 +9,65 @@
         </div>
       </div>
 
-      <div class="session-panel">
-        <app-language-switcher />
-        @if (sessionService.isAuthenticated()) {
-        <app-active-group-selector />
-        <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
-        <div class="session-copy">
-          <strong>{{ sessionService.displayName() }}</strong>
-          <span>{{ sessionService.currentRole() }}</span>
+      <div class="top-bar-right">
+        <div class="session-panel">
+          <app-language-switcher />
+          @if (sessionService.isAuthenticated()) {
+          <app-active-group-selector />
+          <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
+          <div class="session-copy">
+            <strong>{{ sessionService.displayName() }}</strong>
+            <span>{{ sessionService.currentRole() }}</span>
+          </div>
+          <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
+          } @else {
+          <a class="session-button" routerLink="/login">{{ 'app.actions.signIn' | transloco }}</a>
+          }
         </div>
-        <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
-        } @else {
-        <a class="session-button" routerLink="/login">{{ 'app.actions.signIn' | transloco }}</a>
-        }
+
+        <button class="hamburger" type="button" (click)="toggleMobileNav($event)"
+          [attr.aria-expanded]="isMobileNavOpen()"
+          [attr.aria-label]="'app.nav.ariaLabel' | transloco">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
       </div>
     </div>
 
-    <nav class="main-nav" [attr.aria-label]="'app.nav.ariaLabel' | transloco">
-      @for (navItem of primaryNavigationItems(); track navItem.path) {
-      <a [routerLink]="navItem.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"
-        [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint">
-        {{ navItem.labelKey ? (navItem.labelKey | transloco) : navItem.label }}
-      </a>
+    <nav class="main-nav" [class.is-open]="isMobileNavOpen()" [attr.aria-label]="'app.nav.ariaLabel' | transloco"
+      (click)="$event.stopPropagation()">
+      @for (navItem of mainNavigationItems(); track navItem.path) {
+        @if (navItem.path === '/apps' && hasApps()) {
+        <!-- Apps dropdown -->
+        <div class="nav-dropdown">
+          <a [routerLink]="navItem.path" routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-dropdown-trigger"
+            [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint"
+            (click)="closeMobileNav()">
+            {{ navItem.labelKey ? (navItem.labelKey | transloco) : navItem.label }}
+            <span class="dropdown-arrow">▾</span>
+          </a>
+          <div class="nav-dropdown-menu">
+            @for (appItem of appsSubmenuItems(); track appItem.path) {
+            <a [routerLink]="appItem.path" routerLinkActive="is-active"
+              class="nav-dropdown-item"
+              [title]="appItem.hintKey ? (appItem.hintKey | transloco) : appItem.hint"
+              (click)="closeMobileNav()">
+              {{ appItem.labelKey ? (appItem.labelKey | transloco) : appItem.label }}
+            </a>
+            }
+          </div>
+        </div>
+        } @else {
+        <a [routerLink]="navItem.path" routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint"
+          (click)="closeMobileNav()">
+          {{ navItem.labelKey ? (navItem.labelKey | transloco) : navItem.label }}
+        </a>
+        }
       }
     </nav>
   </header>
