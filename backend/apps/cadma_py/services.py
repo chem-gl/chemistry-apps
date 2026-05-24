@@ -73,7 +73,7 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
 SAMPLE_DEFINITIONS: tuple[CadmaReferenceSample, ...] = (
     {
         "key": "neuro",
-        "name": "Legacy Neuro Reference",
+        "name": "Neuro Reference",
         "disease_name": "Neurodegenerative Drugs",
         "description": (
             "Bundled deprecated CADMA reference set kept only as a reproducible "
@@ -84,7 +84,7 @@ SAMPLE_DEFINITIONS: tuple[CadmaReferenceSample, ...] = (
     },
     {
         "key": "rett",
-        "name": "Legacy RETT Reference",
+        "name": "RETT Reference",
         "disease_name": "RETT Syndrome drugs",
         "description": (
             "Bundled deprecated CADMA reference set kept only as a reproducible "
@@ -1400,7 +1400,7 @@ def _sample_assets_dir() -> Path:
 
 
 def list_reference_samples() -> list[CadmaReferenceSample]:
-    """Expone los datasets legacy disponibles como punto de partida."""
+    """Expone los datasets de referencia disponibles como punto de partida."""
     sample_rows: list[CadmaReferenceSample] = []
     for sample_item in SAMPLE_DEFINITIONS:
         sample_copy: CadmaReferenceSample = dict(sample_item)

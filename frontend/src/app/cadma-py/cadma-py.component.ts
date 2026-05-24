@@ -87,7 +87,7 @@ interface CadmaIntervalEditorRow {
   max: number;
 }
 
-const LEGACY_INTERVAL_ORDER: readonly CadmaIntervalMetric[] = [
+const INTERVAL_ORDER: readonly CadmaIntervalMetric[] = [
   'MW',
   'logP',
   'MR',
@@ -98,7 +98,7 @@ const LEGACY_INTERVAL_ORDER: readonly CadmaIntervalMetric[] = [
   'PSA',
 ];
 
-const LEGACY_DEFAULT_INTERVALS: Record<CadmaIntervalMetric, { min: number; max: number }> = {
+const DEFAULT_INTERVALS: Record<CadmaIntervalMetric, { min: number; max: number }> = {
   MW: { min: 200, max: 480 },
   logP: { min: -0.4, max: 5 },
   MR: { min: 40, max: 130 },
@@ -122,9 +122,9 @@ const LEGACY_DEFAULT_WEIGHTS: Record<CadmaWeightMetric, number> = {
   sa: 0.2,
 };
 
-function cloneLegacyIntervals(): Record<CadmaIntervalMetric, { min: number; max: number }> {
+function cloneScoreIntervals(): Record<CadmaIntervalMetric, { min: number; max: number }> {
   return Object.fromEntries(
-    LEGACY_INTERVAL_ORDER.map((metric) => [metric, { ...LEGACY_DEFAULT_INTERVALS[metric] }]),
+    INTERVAL_ORDER.map((metric) => [metric, { ...DEFAULT_INTERVALS[metric] }]),
   ) as Record<CadmaIntervalMetric, { min: number; max: number }>;
 }
 
@@ -230,8 +230,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly quickFillSaMethod = signal<QuickFillSelectableSaMethod>('');
   /** Vía activa en paso 2: generar desde Smile-it, reusar jobs previos, o importar CSV manual. */
   readonly candidatePathway = signal<'generate' | 'reuse' | 'manual' | ''>('');
-  readonly legacyIntervals =
-    signal<Record<CadmaIntervalMetric, { min: number; max: number }>>(cloneLegacyIntervals());
+  readonly scoreIntervals =
+    signal<Record<CadmaIntervalMetric, { min: number; max: number }>>(cloneScoreIntervals());
   readonly formulaReferences = signal<Record<CadmaFormulaMetric, number>>({
     ...LEGACY_DEFAULT_REFERENCES,
   });
@@ -263,7 +263,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     return browsing ? (this.libraries().find((lib) => lib.id === browsing) ?? null) : null;
   });
 
-  /** Cuenta cuántas familias guardadas fueron importadas desde muestras legacy. */
+  /** Cuenta cuántas familias guardadas fueron importadas desde muestras semilla. */
   readonly sampleImportCounts = computed<Record<string, number>>(() => {
     const libs = this.libraries();
     const counts: Record<string, number> = {};
@@ -312,8 +312,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
       : buildCadmaMetricChartOptions(metricChart, this.metricChartType());
   });
   readonly formulaIntervalRows = computed<CadmaIntervalEditorRow[]>(() => {
-    const intervals = this.legacyIntervals();
-    return LEGACY_INTERVAL_ORDER.map((metric) => ({
+    const intervals = this.scoreIntervals();
+    return INTERVAL_ORDER.map((metric) => ({
       metric,
       min: intervals[metric].min,
       max: intervals[metric].max,
@@ -534,7 +534,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     bound: 'min' | 'max',
     rawValue: string | number,
   ): void {
-    this.legacyIntervals.update((currentIntervals) => {
+    this.scoreIntervals.update((currentIntervals) => {
       const currentRange = currentIntervals[metric];
       return {
         ...currentIntervals,
@@ -563,8 +563,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.syncScoreConfigToWorkflow();
   }
 
-  resetLegacyScoreConfig(): void {
-    this.legacyIntervals.set(cloneLegacyIntervals());
+  resetScoreConfig(): void {
+    this.scoreIntervals.set(cloneScoreIntervals());
     this.formulaWeights.set({ ...LEGACY_DEFAULT_WEIGHTS });
     this.formulaReferences.set(computeFormulaReferenceValues(this.selectedLibrary()?.rows ?? []));
     this.syncScoreConfigToWorkflow();
@@ -995,7 +995,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.description.set(library.description);
     this.paperReference.set(library.paper_reference);
     this.paperUrl.set(library.paper_url);
-    this.resetLegacyScoreConfig();
+    this.resetScoreConfig();
   }
 
   resetReferenceForm(): void {
@@ -1010,7 +1010,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.referenceBundle.set(createEmptyCsvBundle());
     this.referenceSourceConfigsJson.set('');
     this.libraryErrorMessage.set(null);
-    this.legacyIntervals.set(cloneLegacyIntervals());
+    this.scoreIntervals.set(cloneScoreIntervals());
     this.formulaReferences.set({ ...LEGACY_DEFAULT_REFERENCES });
     this.formulaWeights.set({ ...LEGACY_DEFAULT_WEIGHTS });
     this.workflow.scoreConfigJson.set('');
@@ -1435,7 +1435,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   private buildScoreConfig(): CadmaScoreConfigView {
     const weights = this.formulaWeights();
     return {
-      adme_intervals: this.legacyIntervals(),
+      adme_intervals: this.scoreIntervals(),
       weights: {
         adme: Number(weights.adme.toFixed(4)),
         toxicity: Number(weights.toxicity.toFixed(4)),
@@ -1447,8 +1447,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   }
 
   private applyScoreConfig(config: CadmaScoreConfigView): void {
-    const nextIntervals = cloneLegacyIntervals();
-    for (const metric of LEGACY_INTERVAL_ORDER) {
+    const nextIntervals = cloneScoreIntervals();
+    for (const metric of INTERVAL_ORDER) {
       const interval = config.adme_intervals?.[metric];
       if (interval !== undefined) {
         nextIntervals[metric] = {
@@ -1458,7 +1458,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.legacyIntervals.set(nextIntervals);
+    this.scoreIntervals.set(nextIntervals);
     this.formulaReferences.set({
       LD50: toFiniteNumber(config.reference_values?.LD50 ?? 0, LEGACY_DEFAULT_REFERENCES.LD50),
       M: toFiniteNumber(config.reference_values?.M ?? 0, LEGACY_DEFAULT_REFERENCES.M),
