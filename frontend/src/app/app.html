@@ -60,7 +60,7 @@
             }
           </div>
         </div>
-        } @else {
+        } @else if (!(navItem.path === '/login' && !sessionService.isAuthenticated())) {
         <a [routerLink]="navItem.path" routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: true }"
           [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint"
