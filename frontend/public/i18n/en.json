@@ -1593,7 +1593,11 @@
       "formatBytes": "B",
       "formatKb": "KB",
       "formatMb": "MB",
-      "copySuffix": "Copy"
+      "copySuffix": "Copy",
+      "metricLabel": "Metric",
+      "rangeLabel": "Min — Max",
+      "nullsLabel": "Nulls",
+      "meanSdLabel": "Mean ± SD"
     },
     "importer": {
       "ignoreColumn": "Ignore this column",

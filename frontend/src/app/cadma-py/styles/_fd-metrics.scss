@@ -136,6 +136,81 @@
   justify-self: center;
 }
 
+/* ═══════════════════════════════════════════════
+   BAND AVERAGES TABLE (reemplaza metric-cards)
+   ═══════════════════════════════════════════════ */
+.band-averages-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.band-averages-table thead th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chem-ink-secondary);
+  border-bottom: 2px solid var(--chem-border);
+}
+
+.band-averages-table thead th.col-num {
+  text-align: right;
+}
+
+.band-averages-table tbody tr {
+  border-bottom: 1px solid var(--chem-border-subtle);
+  transition: background 0.12s;
+}
+
+.band-averages-table tbody tr:hover {
+  background: var(--chem-surface-inset);
+}
+
+.band-averages-table tbody tr.has-nulls {
+  background: var(--chem-warning-bg);
+}
+
+.band-averages-table td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: middle;
+}
+
+.band-averages-table td.col-label {
+  font-weight: 600;
+  color: var(--chem-ink);
+  white-space: nowrap;
+}
+
+.band-averages-table td.col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--chem-ink-secondary);
+}
+
+.band-averages-table td.col-mean-sd {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.band-averages-table .mean-value {
+  font-weight: 700;
+  color: var(--chem-ink);
+}
+
+.band-averages-table .sd-value {
+  font-size: 0.75rem;
+  color: var(--chem-accent);
+  font-weight: 600;
+  margin-left: 0.3rem;
+  padding: 0.1rem 0.35rem;
+  background: var(--chem-surface-inset);
+  border-radius: var(--chem-radius-sm);
+}
+
 /* ============================================================
    SOURCE FILES
    ============================================================ */
