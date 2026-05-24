@@ -1,8 +1,11 @@
 // app.ts: Layout principal con navegacion filtrada por sesion, permisos y estado visual del header.
+//         Tambien verifica la version de la app contra version.json para forzar recarga en produccion
+//         cuando hay un nuevo despliegue (cache busting automatico).
 
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { environment } from '../environments/environment';
 import { IdentitySessionService } from './core/auth/identity-session.service';
 import { LanguageService } from './core/i18n/language.service';
 import { ScientificNumberInputLocaleService } from './core/i18n/scientific-number-input-locale.service';
@@ -102,6 +105,11 @@ export class App implements OnInit {
     this.scientificNumberInputLocaleService.initialize();
     this.sessionService.initializeSession().subscribe();
     this.updateScrollState();
+
+    if (environment.production) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.verifyAppVersion();
+    }
   }
 
   @HostListener('window:scroll')
@@ -111,5 +119,35 @@ export class App implements OnInit {
 
   logout(): void {
     this.sessionService.logout();
+  }
+
+  /**
+   * Verifica que la version compilada coincida con version.json del servidor.
+   * Si no coinciden (despliegue nuevo), limpia caches del navegador y recarga.
+   * Solo se ejecuta en produccion para evitar recargas innecesarias en desarrollo.
+   */
+  private async verifyAppVersion(): Promise<void> {
+    try {
+      const cacheBuster: number = Date.now();
+      const response: Response = await fetch(`/version.json?t=${cacheBuster}`);
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = (await response.json()) as { version: string };
+
+      if (data.version !== environment.appVersion) {
+        // Limpia caches de service workers si existen
+        if ('caches' in window) {
+          const cacheKeys: string[] = await caches.keys();
+          await Promise.all(cacheKeys.map((key: string) => caches.delete(key)));
+        }
+
+        window.location.reload();
+      }
+    } catch {
+      // Si falla la verificacion (red, JSON invalido), la app continua normalmente.
+    }
   }
 }
