@@ -17,11 +17,11 @@
           <label class="upload-zone" [class.has-file]="getSelectedFile(slot.fieldName) !== null"
             [class.is-disabled]="workflow.isProcessing()">
             <span class="upload-label">
-              {{ slot.label }}
+              {{ slot.labelKey | transloco }}
               @if (slot.required) {
-              <span class="req-mark">*</span>
-              } @else if (slot.note !== null) {
-              <span class="opt-mark">{{ slot.note }}</span>
+              <span class="req-mark">{{ 'easyRate.fileSlots.required' | transloco }}</span>
+              } @else if (slot.noteKey !== null) {
+              <span class="opt-mark">{{ slot.noteKey | transloco }}</span>
               }
             </span>
             <input type="file" accept=".log,.out,.txt" (change)="onInputFileChange(slot.fieldName, $event)"
@@ -75,7 +75,7 @@
             @if (getSelectedExecution(slot.fieldName); as selectedExecution) {
             <div class="preview-grid">
               <span class="preview-label">{{ 'easyRate.preview.titleLabel' | transloco }}</span>
-              <span class="preview-value">{{ selectedExecution.jobTitle || '--' }}</span>
+              <span class="preview-value">{{ selectedExecution.jobTitle || ('easyRate.results.fallback' | transloco) }}</span>
               <span class="preview-label">{{ 'easyRate.preview.chargeMultiplicity' | transloco }}</span>
               <span class="preview-value">
                 {{ selectedExecution.charge }} / {{ selectedExecution.multiplicity }}
@@ -92,11 +92,11 @@
               </span>
               <span class="preview-label">{{ 'easyRate.preview.temperature' | transloco }}</span>
               <span class="preview-value mono">
-                {{ formatNullableNumber(selectedExecution.temperature, 2) }} K
+                {{ formatNullableNumber(selectedExecution.temperature, 2) }} {{ 'easyRate.results.unitK' | transloco }}
               </span>
               <span class="preview-label">{{ 'easyRate.preview.imaginaryFrequency' | transloco }}</span>
               <span class="preview-value mono">
-                {{ formatNullableNumber(selectedExecution.imaginaryFrequency, 2) }} cm⁻¹
+                {{ formatNullableNumber(selectedExecution.imaginaryFrequency, 2) }} {{ 'easyRate.results.unitCm' | transloco }}
               </span>
               <span class="preview-label">{{ 'easyRate.preview.optimizationTermination' | transloco }}</span>
               <span class="preview-value">
@@ -145,7 +145,7 @@
           <select [ngModel]="workflow.solvent()" (ngModelChange)="workflow.updateSolvent($event)"
             [disabled]="workflow.isProcessing()">
             @for (solventOption of solventOptions; track solventOption) {
-            <option [value]="solventOption">{{ solventOption }}</option>
+            <option [value]="solventOption">{{ solventLabels[solventOption] | transloco }}</option>
             }
           </select>
         </label>
@@ -229,17 +229,17 @@
         <h4>{{ 'easyRate.result.rateConstants' | transloco }}</h4>
         <div class="kv-grid">
           <span class="kv-label">{{ 'easyRate.result.kTst' | transloco }}</span>
-          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }} L·mol⁻¹·s⁻¹</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstantTst) }} {{ 'easyRate.results.unitPerMolPerSec' | transloco }}</span>
           <span class="kv-label">{{ 'easyRate.result.kFinal' | transloco }}</span>
-          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }} L·mol⁻¹·s⁻¹</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.rateConstant) }} {{ 'easyRate.results.unitPerMolPerSec' | transloco }}</span>
           @if (resultData.diffusionApplied) {
           <span class="kv-label">{{ 'easyRate.result.kDiffCorrected' | transloco }}</span>
           <span class="kv-value mono">{{
             formatRateConstant(resultData.rateConstantDiffusionCorrected)
             }}
-            L·mol⁻¹·s⁻¹</span>
+            {{ 'easyRate.results.unitPerMolPerSec' | transloco }}</span>
           <span class="kv-label">{{ 'easyRate.result.kDiff' | transloco }}</span>
-          <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }} L·mol⁻¹·s⁻¹</span>
+          <span class="kv-value mono">{{ formatRateConstant(resultData.kDiff) }} {{ 'easyRate.results.unitPerMolPerSec' | transloco }}</span>
           }
           <span class="kv-label">{{ 'easyRate.result.kappaTst' | transloco }}</span>
           <span class="kv-value mono">{{ resultData.kappaTst.toFixed(6) }}</span>
@@ -289,12 +289,12 @@
         <h4>{{ 'easyRate.result.conditions' | transloco }}</h4>
         <div class="kv-grid">
           <span class="kv-label">{{ 'easyRate.result.condTemperature' | transloco }}</span>
-          <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} K</span>
+          <span class="kv-value">{{ resultData.temperatureK.toFixed(2) }} {{ 'easyRate.results.unitK' | transloco }}</span>
           <span class="kv-label">{{ 'easyRate.result.condPathDegeneracy' | transloco }}</span>
           <span class="kv-value">{{ resultData.reactionPathDegeneracy }}</span>
           @if (resultData.viscosityPaS !== null) {
           <span class="kv-label">{{ 'easyRate.result.condViscosity' | transloco }}</span>
-          <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} Pa·s</span>
+          <span class="kv-value mono">{{ resultData.viscosityPaS.toExponential(4) }} {{ 'easyRate.results.unitPaPerSec' | transloco }}</span>
           }
         </div>
         <div class="flag-row">

@@ -396,12 +396,12 @@
       "pkaCountOption": "{{ count }} pKa",
       "pkaSlotLabel": "pKa{{ n }}",
       "pkaValues": "Enter pKa values",
-        "speciesSettings": "Species configuration",
-        "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
-        "initialCharge": "Charge of the most protonated species",
-        "initialChargePlaceholder": "q",
-        "speciesLabel": "Species label",
-        "speciesLabelPlaceholder": "A",
+      "speciesSettings": "Species configuration",
+      "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
+      "initialCharge": "Charge of the most protonated species",
+      "initialChargePlaceholder": "q",
+      "speciesLabel": "Species label",
+      "speciesLabelPlaceholder": "A",
       "phMode": "pH values",
       "phSingle": "One pH value",
       "phRange": "pH range",
@@ -474,13 +474,18 @@
         "species": "Species:",
         "points": "Points:"
       },
-      "table": { "ph": "pH", "sum": "Sum" },
+      "table": {
+        "ph": "pH",
+        "sum": "Sum"
+      },
       "exportLog": "Export LOG (inputs + CSV)"
     },
     "history": {
       "empty": "No historical jobs yet for molar fractions.",
       "ariaLabel": "Historical jobs",
-      "columns": { "mode": "Mode" },
+      "columns": {
+        "mode": "Mode"
+      },
       "open": "Open"
     }
   },
@@ -565,6 +570,37 @@
     "history": {
       "empty": "No historical Easy-rate jobs yet.",
       "ariaLabel": "Historical Easy-rate jobs"
+    },
+    "fileSlots": {
+      "transitionState": "Transition State",
+      "reactant1": "Reactant 1",
+      "reactant2": "Reactant 2",
+      "product1": "Product 1",
+      "product2": "Product 2",
+      "atLeastOneProduct": "(at least one product)",
+      "required": "*"
+    },
+    "solvents": {
+      "gasPhase": "Gas phase (Air)",
+      "benzene": "Benzene",
+      "pentylEthanoate": "Pentyl ethanoate",
+      "water": "Water",
+      "other": "Other"
+    },
+    "results": {
+      "rateConstant": "Rate constant",
+      "kTST": "k TST",
+      "kFinal": "k Final",
+      "kappa": "κ (kappa)",
+      "diffusionCorrected": "k Diffusion Corrected",
+      "diffusionOnly": "k Diffusion Only",
+      "unitPerMolPerSec": "L·mol⁻¹·s⁻¹",
+      "unitK": "K",
+      "unitCm": "cm⁻¹",
+      "unitPaPerSec": "Pa·s",
+      "multiplicity": "mult",
+      "negFreq": "neg freq",
+      "fallback": "--"
     }
   },
   "marcus": {
@@ -747,6 +783,9 @@
       "empty": "No historical toxicity jobs yet.",
       "title": "History",
       "ariaLabel": "Historical toxicity jobs"
+    },
+    "moleculeModal": {
+      "title": "Molecule preview"
     }
   },
   "smileit": {
@@ -932,33 +971,17 @@
       "pendingAssignment": "Selected sites pending assignment:"
     },
     "patterns": {
-      "title": "Structural patterns",
-      "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
-      "dialogAriaLabel": "Structural pattern catalog",
-      "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
-      "howItWorksTitle": "How it works",
-      "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
-      "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
-      "formName": "Name",
-      "formSmarts": "SMARTS",
-      "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "formType": "Pattern type",
-      "formTypeToxicophore": "Toxicophore",
-      "formTypePrivileged": "Privileged scaffold",
-      "formSource": "Source reference",
-      "formCaption": "Caption",
-      "formSave": "Save structural pattern",
-      "active": "Active",
-      "hidden": "Hidden",
-      "detailAriaLabel": "Pattern detail",
-      "activeInScaffold": "Active in scaffold",
-      "hiddenInScaffold": "Hidden in scaffold",
-      "smartsStructure": "SMARTS structure",
-      "patternType": "Pattern type",
-      "specification": "Specification",
-      "source": "Source",
-      "id": "ID"
+      "toxicophore": "Toxicophore",
+      "privileged": "Privileged scaffold",
+      "atoms": "Atoms",
+      "editing": "Editing",
+      "editingPattern": "Editing pattern:",
+      "stableId": "stable_id",
+      "version": "v",
+      "hidePattern": "Hide pattern",
+      "showPattern": "Show pattern",
+      "noPreview": "No SMILES available for preview.",
+      "previewUnavailable": "Preview unavailable"
     },
     "annotations": {
       "ariaLabel": "Structural annotations",
@@ -1563,29 +1586,120 @@
       "tableHeaderSmiles": "SMILES",
       "tableHeaderReference": "Reference",
       "tableHeaderUrl": "URL / DOI",
-      "tableHeaderNote": "Note"
+      "tableHeaderNote": "Note",
+      "formatBytes": "B",
+      "formatKb": "KB",
+      "formatMb": "MB",
+      "copySuffix": "Copy"
     },
     "importer": {
-      "guideFile": "Guide file",
-      "additionalFile": "Additional file",
-      "formatCsvTab": "CSV · tab",
-      "formatCsvDelimiter": "CSV · {{ delimiter }}",
-      "fallbackNote": "Fallback names will use {{ prefix }} + counter.",
-      "noUsableRows": "No usable rows detected yet.",
-      "format": "Format",
-      "formatCsv": "CSV",
-      "formatSmi": "SMI",
-      "delimiter": "Delimiter",
-      "delimiterComma": "Comma",
-      "delimiterSemicolon": "Semicolon",
-      "delimiterTab": "Tab",
-      "deadLines": "Dead lines to skip",
-      "headerRow": "Header row",
-      "mappingHint": "Use the combobox in each table header to tell the app what every column means.",
-      "assignColumn": "Assign column meaning",
-      "assignFor": "Assign meaning for {{ column }}",
-      "remove": "Remove",
-      "usableRows": "usable rows"
+      "ignoreColumn": "Ignore this column",
+      "mainSmiles": "Main SMILES guide",
+      "smilesMatch": "SMILES match column",
+      "compoundName": "Compound name",
+      "paperReference": "Paper reference",
+      "doiOrUrl": "DOI or URL",
+      "evidenceNote": "Evidence note",
+      "devTox": "Dev tox",
+      "mutagenicity": "Mutagenicity",
+      "ld50": "LD50",
+      "saScore": "SA score"
+    },
+    "metrics": {
+      "molecularWeight": "Molecular Weight",
+      "logP": "LogP",
+      "molarRefractivity": "Molar Refractivity",
+      "heavyAtoms": "Heavy Atoms",
+      "hbAcceptors": "HB Acceptors",
+      "hbDonors": "HB Donors",
+      "rotatableBonds": "Rotatable Bonds",
+      "polarSA": "Polar SA",
+      "devToxicity": "Dev. Toxicity",
+      "mutagenicity": "Mutagenicity",
+      "ld50": "LD50 (mg/kg)",
+      "saScore": "SA Score"
+    },
+    "scope": {
+      "global": "Global (Root)",
+      "group": "Group",
+      "personal": "Personal",
+      "unknown": "Unknown"
+    },
+    "general": {
+      "compounds": "compounds",
+      "candidates": "candidates",
+      "toxicityReady": "Toxicity ready",
+      "saReady": "SA ready",
+      "minimum": "minimum",
+      "maximum": "maximum",
+      "preview": "Preview",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
+      "download": "Download",
+      "edit": "Edit",
+      "delete": "Delete",
+      "add": "Add",
+      "close": "Close",
+      "createFamily": "Create family",
+      "selectFamily": "Select family",
+      "openResult": "Open result",
+      "viewReport": "View report",
+      "comparison": "comparison",
+      "file": "file",
+      "files": "files",
+      "usableRows": "usable rows reviewed",
+      "ready": "ready"
+    },
+    "deleteModal": {
+      "ariaClose": "Close",
+      "loadingJobs": "Loading linked jobs...",
+      "confirmDelete": "Are you sure you want to delete",
+      "cannotUndo": "This action cannot be undone.",
+      "hasLinked": "has",
+      "hasNoLinked": "has no",
+      "linked": "linked",
+      "job": "job",
+      "jobs": "jobs",
+      "cascadeWarning": "All listed jobs and their results will be permanently removed.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete",
+      "deleteFamily": "Delete family",
+      "checkingData": "Checking linked data..."
+    }
+  },
+  "scientificApps": {
+    "molar-fractions": {
+      "title": "Molar Fractions",
+      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+    },
+    "tunnel": {
+      "title": "Tunnel Effect",
+      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+    },
+    "easy-rate": {
+      "title": "Easy-rate",
+      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+    },
+    "marcus": {
+      "title": "Marcus Theory",
+      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+    },
+    "smileit": {
+      "title": "Smileit",
+      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+    },
+    "sa-score": {
+      "title": "SA Score",
+      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+    },
+    "toxicity-properties": {
+      "title": "Toxicity Properties",
+      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+    },
+    "cadma-py": {
+      "title": "CADMA Py",
+      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
     }
   }
 }

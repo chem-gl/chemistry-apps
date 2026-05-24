@@ -5,6 +5,7 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -127,6 +128,19 @@ describe('SmileitComponent', () => {
         },
         // Mock de JobsApiService para evitar dependencia de HttpClient en tests
         { provide: JobsApiService, useValue: {} },
+        // Mock de TranslocoService para pruebas de traduccion aisladas
+        {
+          provide: TranslocoService,
+          useValue: {
+            translate: (key: string) => {
+              const translations: Record<string, string> = {
+                'smileit.patterns.toxicophore': 'Toxicophore',
+                'smileit.patterns.privileged': 'Privileged scaffold',
+              };
+              return translations[key] ?? key;
+            },
+          },
+        },
       ],
     })
       .overrideComponent(SmileitComponent, {

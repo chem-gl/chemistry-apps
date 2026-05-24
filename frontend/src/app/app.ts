@@ -12,7 +12,11 @@ import { ScientificNumberInputLocaleService } from './core/i18n/scientific-numbe
 import { ActiveGroupSelectorComponent } from './core/shared/components/active-group-selector/active-group-selector.component';
 import { GlobalErrorModalComponent } from './core/shared/components/global-error-modal/global-error-modal.component';
 import { LanguageSwitcherComponent } from './core/shared/components/language-switcher/language-switcher.component';
-import { SCIENTIFIC_APP_ROUTE_ITEMS } from './core/shared/scientific-apps.config';
+import {
+  SCIENTIFIC_APP_ROUTE_ITEMS,
+  scientificAppTitleKey,
+  scientificAppDescriptionKey,
+} from './core/shared/scientific-apps.config';
 
 interface PrimaryNavigationItem {
   path: string;
@@ -56,8 +60,10 @@ export class App implements OnInit {
     const scientificNavigationItems = SCIENTIFIC_APP_ROUTE_ITEMS.filter(
       (appItem) => appItem.visibleInMenus && this.sessionService.canAccessRoute(appItem.key),
     ).map((appItem) => ({
+      labelKey: scientificAppTitleKey(appItem.key),
       label: appItem.title,
       path: appItem.routePath,
+      hintKey: scientificAppDescriptionKey(appItem.key),
       hint: appItem.description,
     }));
 

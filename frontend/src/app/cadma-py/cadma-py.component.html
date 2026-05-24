@@ -6,7 +6,7 @@
     <div class="hero-left">
       <h2 class="hero-title">
         CADMA<span>Py</span>
-        <button type="button" class="hero-info-btn" (click)="showInfoModal.set(true)" [attr.aria-label]="'cadmaPy.hero.infoAria' | transloco">👁️</button>
+        <button type="button" class="hero-info-btn" (click)="showInfoModal.set(true)" [attr.aria-label]="'cadmaPy.hero.infoAria' | transloco">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
       </h2>
     </div>
   </header>
@@ -113,7 +113,7 @@
           <div class="seed-actions">
             <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
               [class.active]="previewSampleKey() === sample.key"
-              (click)="toggleSamplePreview(sample.key, $event)">👁️</button>
+              (click)="toggleSamplePreview(sample.key, $event)">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
             <button class="btn-seed" type="button" (click)="selectBundledSample(sample.key)" [disabled]="isBusy()">
               @if (isBusy()) { {{ 'cadmaPy.step1.loading' | transloco }} } @else { {{ 'cadmaPy.step1.selectFamily' |
               transloco }} }
@@ -158,10 +158,10 @@
         </button>
         <div class="lib-actions">
           <button class="lib-action-btn preview" type="button" [title]="'cadmaPy.step1.previewCompounds' | transloco"
-            [class.active]="previewLibraryId() === lib.id" (click)="togglePreview(lib.id, $event)">👁️</button>
+            [class.active]="previewLibraryId() === lib.id" (click)="togglePreview(lib.id, $event)">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
           @if (lib.deletable) {
           <button class="lib-action-btn danger" type="button" [title]="'cadmaPy.step1.deleteFamily' | transloco"
-            (click)="deleteLibrary(lib, $event)">🗑️</button>
+            (click)="deleteLibrary(lib, $event)">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>
           }
           @if (!lib.editable){
           <span class="access-icon locked" [title]="'cadmaPy.step1.readOnly' | transloco"></span>
@@ -171,7 +171,7 @@
       @if (previewLibraryId() === lib.id && browsingLibraryId() !== lib.id) {
       <div class="lib-preview-panel">
         <div class="preview-header">
-          <strong>{{ lib.row_count }} compounds — {{ lib.disease_name }}</strong>
+          <strong>{{ lib.row_count }} {{ 'cadmaPy.general.compounds' | transloco }} — {{ lib.disease_name }}</strong>
           <button class="btn-ghost btn-sm" type="button" (click)="browseLibrary(lib.id)">
             {{ 'cadmaPy.step1.viewFullDetail' | transloco }}</button>
         </div>
@@ -453,12 +453,12 @@
           <p>{{ 'cadmaPy.step2.payloadPreviewDesc' | transloco }}</p>
         </div>
         <div class="selected-summary-meta">
-          <span class="meta-pill">{{ payloadPreview.moleculeCount }} candidates</span>
+          <span class="meta-pill">{{ payloadPreview.moleculeCount }} {{ 'cadmaPy.general.candidates' | transloco }}</span>
           @if (payloadPreview.hasToxicityData) {
-          <span class="meta-pill pill-ok">Toxicity ✓</span>
+          <span class="meta-pill pill-ok">{{ 'cadmaPy.general.toxicityReady' | transloco }}</span>
           }
           @if (payloadPreview.hasSaData) {
-          <span class="meta-pill pill-ok">SA ✓</span>
+          <span class="meta-pill pill-ok">{{ 'cadmaPy.general.saReady' | transloco }}</span>
           }
         </div>
       </div>
@@ -600,9 +600,9 @@
           <div class="interval-row">
             <strong>{{ row.metric }}</strong>
             <input type="number" [ngModel]="row.min" (ngModelChange)="updateFormulaInterval(row.metric, 'min', $event)"
-              step="0.01" [attr.title]="row.metric + ' minimum'" [placeholder]="'cadmaPy.step3.placeholderMin' | transloco" />
-            <input type="number" [ngModel]="row.max" (ngModelChange)="updateFormulaInterval(row.metric, 'max', $event)"
-              step="0.01" [attr.title]="row.metric + ' maximum'" [placeholder]="'cadmaPy.step3.placeholderMax' | transloco" />
+              step="0.01" [attr.title]="row.metric + ' ' + ('cadmaPy.general.minimum' | transloco)" [placeholder]="'cadmaPy.step3.placeholderMin' | transloco" />
+
+              step="0.01" [attr.title]="row.metric + ' ' + ('cadmaPy.general.maximum' | transloco)" [placeholder]="'cadmaPy.step3.placeholderMax' | transloco" />
           </div>
           }
         </div>

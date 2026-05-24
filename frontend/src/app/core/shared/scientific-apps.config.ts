@@ -1,9 +1,14 @@
 // scientific-apps.config.ts: Registro frontend de apps cientificas navegables.
+// Los titulos y descripciones se traducen via i18n usando la clave
+// `scientificApps.<key>.title` y `scientificApps.<key>.description` en los templates.
+// Los campos `title`/`description` sirven como fallback en ingles.
 
 export interface ScientificAppRouteItem {
   key: string;
   pluginName: string;
+  /** Titulo traducible via i18n: `scientificApps.<key>.title` */
   title: string;
+  /** Descripcion traducible via i18n: `scientificApps.<key>.description` */
   description: string;
   routePath: string;
   available: boolean;
@@ -29,6 +34,16 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     available: true,
     visibleInMenus: definition.visibleInMenus,
   };
+}
+
+/** Clave i18n para el titulo de una app. Se usa en templates via `| transloco`. */
+export function scientificAppTitleKey(appKey: string): string {
+  return `scientificApps.${appKey}.title`;
+}
+
+/** Clave i18n para la descripcion de una app. Se usa en templates via `| transloco`. */
+export function scientificAppDescriptionKey(appKey: string): string {
+  return `scientificApps.${appKey}.description`;
 }
 
 const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [

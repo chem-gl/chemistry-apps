@@ -306,10 +306,10 @@
                         <td class="act-col">
                             <button class="btn-row-edit" type="button"
                                 [title]="'cadmaPy.familyDetail.editReference' | transloco"
-                                (click)="startEditRow(i, row)">✏️</button>
+                                (click)="startEditRow(i, row)">✏️ {{ 'cadmaPy.general.edit' | transloco }}</button>
                             <button class="btn-row-delete" type="button"
                                 [title]="'cadmaPy.familyDetail.removeCompound' | transloco" (click)="removeRow(i)"
-                                [disabled]="deletingRowIndex() === i">🗑️</button>
+                                [disabled]="deletingRowIndex() === i">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>
                         </td>
                         }
                     </tr>

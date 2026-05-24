@@ -194,14 +194,14 @@
                             ">
                       {{
                       isAnnotationEnabled(annotation.pattern_stable_id)
-                      ? '👁'
-                      : '👁\u200d🗨'
+                      ? ('smileit.patterns.showPattern' | transloco)
+                      : ('smileit.patterns.hidePattern' | transloco)
                       }}
                     </button>
                   </div>
                   <strong>{{ annotation.name }}</strong>
                   <p>{{ annotation.caption }}</p>
-                  <small>Atoms {{ annotation.atom_indices.join(', ') }}</small>
+                  <small>{{ 'smileit.patterns.atoms' | transloco }} {{ annotation.atom_indices.join(', ') }}</small>
                 </article>
                 }
               </div>
@@ -250,8 +250,8 @@
 
         @if (editingPatternEntry(); as activePatternEdition) {
         <output class="pattern-editing-notice" aria-live="polite">
-          Editing pattern: <strong>{{ activePatternEdition.name }}</strong>
-          <span class="mono">(stable_id {{ activePatternEdition.stable_id }})</span>
+{{ 'smileit.patterns.editingPattern' | transloco }} <strong>{{ activePatternEdition.name }}</strong>
+                    <span class="mono">({{ 'smileit.patterns.stableId' | transloco }} {{ activePatternEdition.stable_id }})</span>
         </output>
         }
 
@@ -321,12 +321,12 @@
                 {{ pattern.name }}
               </button>
               @if (isPatternBeingEdited(pattern)) {
-              <span class="pattern-editing-badge">Editing</span>
+              <span class="pattern-editing-badge">{{ 'smileit.patterns.editing' | transloco }}</span>
               }
               <p class="catalog-smiles mono">{{ pattern.smarts }}</p>
               <p class="catalog-description">{{ pattern.caption }}</p>
-              <small>{{ patternTypeLabel(pattern.pattern_type) }} · stable_id
-                {{ pattern.stable_id }} · v{{ pattern.version }}</small>
+<small>{{ patternTypeLabel(pattern.pattern_type) }} · {{ 'smileit.patterns.stableId' | transloco }}
+              {{ pattern.stable_id }} · {{ 'smileit.patterns.version' | transloco }}{{ pattern.version }}</small>
             </div>
             <div class="pattern-item-toggle">
               <label class="toggle-label pattern-toggle-label">
@@ -383,7 +383,7 @@
             <dt>{{ 'smileit.patterns.source' | transloco }}</dt>
             <dd>{{ detailPattern.source_reference || '—' }}</dd>
             <dt>{{ 'smileit.patterns.id' | transloco }}</dt>
-            <dd>stable_id {{ detailPattern.stable_id }} · v{{ detailPattern.version }}</dd>
+            <dd>{{ 'smileit.patterns.stableId' | transloco }} {{ detailPattern.stable_id }} · {{ 'smileit.patterns.version' | transloco }}{{ detailPattern.version }}</dd>
           </dl>
         </div>
       </section>
