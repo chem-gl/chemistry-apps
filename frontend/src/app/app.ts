@@ -26,6 +26,12 @@ interface PrimaryNavigationItem {
   hintKey?: string;
 }
 
+const SCIENTIFIC_APP_NAV_ITEM: PrimaryNavigationItem = {
+  labelKey: 'app.nav.apps',
+  path: '/apps',
+  hintKey: 'app.navHints.apps',
+};
+
 @Component({
   selector: 'app-root',
   imports: [
@@ -45,19 +51,14 @@ export class App implements OnInit {
   readonly languageService = inject(LanguageService);
   readonly scientificNumberInputLocaleService = inject(ScientificNumberInputLocaleService);
   readonly isScrolled = signal(false);
+  readonly isMobileNavOpen = signal(false);
 
-  readonly primaryNavigationItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
+  /** Items del dropdown de Apps. */
+  readonly appsSubmenuItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
     if (!this.sessionService.isAuthenticated()) {
-      return [
-        {
-          labelKey: 'app.nav.signIn',
-          path: '/login',
-          hintKey: 'app.navHints.signIn',
-        },
-      ];
+      return [];
     }
-
-    const scientificNavigationItems = SCIENTIFIC_APP_ROUTE_ITEMS.filter(
+    return SCIENTIFIC_APP_ROUTE_ITEMS.filter(
       (appItem) => appItem.visibleInMenus && this.sessionService.canAccessRoute(appItem.key),
     ).map((appItem) => ({
       labelKey: scientificAppTitleKey(appItem.key),
@@ -66,45 +67,30 @@ export class App implements OnInit {
       hintKey: scientificAppDescriptionKey(appItem.key),
       hint: appItem.description,
     }));
+  });
+
+  /** Items principales del nav (sin apps ni admin). */
+  readonly mainNavigationItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
+    if (!this.sessionService.isAuthenticated()) {
+      return [{ labelKey: 'app.nav.signIn', path: '/login', hintKey: 'app.navHints.signIn' }];
+    }
 
     return [
-      {
-        labelKey: 'app.nav.dashboard',
-        path: '/dashboard',
-        hintKey: 'app.navHints.dashboard',
-      },
-      {
-        labelKey: 'app.nav.profile',
-        path: '/profile',
-        hintKey: 'app.navHints.profile',
-      },
-      {
-        labelKey: 'app.nav.jobsMonitor',
-        path: '/jobs',
-        hintKey: 'app.navHints.jobsMonitor',
-      },
-      {
-        labelKey: 'app.nav.apps',
-        path: '/apps',
-        hintKey: 'app.navHints.apps',
-      },
-      ...scientificNavigationItems,
+      { labelKey: 'app.nav.dashboard', path: '/dashboard', hintKey: 'app.navHints.dashboard' },
+      { labelKey: 'app.nav.profile', path: '/profile', hintKey: 'app.navHints.profile' },
+      { labelKey: 'app.nav.jobsMonitor', path: '/jobs', hintKey: 'app.navHints.jobsMonitor' },
+      SCIENTIFIC_APP_NAV_ITEM,
       ...(this.sessionService.canAccessAdminArea()
         ? [
-            {
-              labelKey: 'app.nav.groups',
-              path: '/admin/groups',
-              hintKey: 'app.navHints.groups',
-            },
-            {
-              labelKey: 'app.nav.users',
-              path: '/admin/users',
-              hintKey: 'app.navHints.users',
-            },
+            { labelKey: 'app.nav.groups', path: '/admin/groups', hintKey: 'app.navHints.groups' },
+            { labelKey: 'app.nav.users', path: '/admin/users', hintKey: 'app.navHints.users' },
           ]
         : []),
     ];
   });
+
+  /** Apps con submenu tiene items? */
+  readonly hasApps = computed(() => this.appsSubmenuItems().length > 0);
 
   ngOnInit(): void {
     this.languageService.initializeLanguage();
@@ -123,15 +109,26 @@ export class App implements OnInit {
     this.isScrolled.set(window.scrollY > 8);
   }
 
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.isMobileNavOpen()) {
+      this.isMobileNavOpen.set(false);
+    }
+  }
+
+  toggleMobileNav(event: Event): void {
+    event.stopPropagation();
+    this.isMobileNavOpen.update((v) => !v);
+  }
+
+  closeMobileNav(): void {
+    this.isMobileNavOpen.set(false);
+  }
+
   logout(): void {
     this.sessionService.logout();
   }
 
-  /**
-   * Verifica que la version compilada coincida con version.json del servidor.
-   * Si no coinciden (despliegue nuevo), limpia caches del navegador y recarga.
-   * Solo se ejecuta en produccion para evitar recargas innecesarias en desarrollo.
-   */
   private async verifyAppVersion(): Promise<void> {
     try {
       const cacheBuster: number = Date.now();
@@ -144,16 +141,14 @@ export class App implements OnInit {
       const data = (await response.json()) as { version: string };
 
       if (data.version !== environment.appVersion) {
-        // Limpia caches de service workers si existen
         if ('caches' in window) {
           const cacheKeys: string[] = await caches.keys();
           await Promise.all(cacheKeys.map((key: string) => caches.delete(key)));
         }
-
         window.location.reload();
       }
     } catch {
-      // Si falla la verificacion (red, JSON invalido), la app continua normalmente.
+      // Si falla la verificacion, la app continua normalmente.
     }
   }
 }
