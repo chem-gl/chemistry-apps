@@ -1,862 +1,13 @@
 {
-  "common": {
-    "statusFilters": {
-      "all": "Tous"
-    },
-    "flags": {
-      "off": "OFF",
-      "on": "ON"
-    },
-    "jobStatus": {
-      "completed": "Terminé",
-      "paused": "En pause",
-      "failed": "Échoué",
-      "cancelled": "Annulé",
-      "running": "En cours",
-      "pending": "En attente"
-    },
-    "filters": {
-      "all": "Tous",
-      "app": "App",
-      "status": "Statut"
-    },
-    "fallback": {
-      "noGroup": "Aucun groupe",
-      "unknownUser": "Utilisateur inconnu"
-    },
-    "table": {
-      "progress": "Progress",
-      "updated": "Updated",
-      "cache": "Cache",
-      "action": "Action",
-      "app": "App",
-      "status": "Status",
-      "job": "Job",
-      "ownerGroup": "Owner / Group",
-      "id": "ID",
-      "stage": "Stage"
-    },
-    "actions": {
-      "refresh": "Actualiser",
-      "moveToTrash": "Envoyer à la corbeille",
-      "delete": "Supprimer",
-      "openResult": "Ouvrir le résultat",
-      "working": "Traitement...",
-      "restore": "Restaurer",
-      "close": "Fermer",
-      "restoreJob": "Restaurer le job",
-      "deletePermanently": "Supprimer définitivement"
-    }
-  },
-  "login": {
-    "aria": {
-      "signIn": "Sign in",
-      "brandMessage": "Brand message"
-    },
-    "errors": {
-      "unableToAuthenticate": "Unable to authenticate."
-    },
-    "form": {
-      "password": "Mot de passe",
-      "signIn": "Se connecter",
-      "signingIn": "Connexion en cours...",
-      "username": "Nom d'utilisateur"
-    },
-    "hero": {
-      "kicker": "App Chemistry Sense",
-      "copy": "Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure access controls from a single command surface.",
-      "title": "Designing Scientific Workflows with Clarity"
-    },
-    "panel": {
-      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace.",
-      "title": "Accès scientifique",
-      "eyebrow": "Identity Gateway"
-    }
-  },
-  "tunnel": {
-    "history": {
-      "empty": "No historical tunnel effect jobs yet.",
-      "ariaLabel": "Historical tunnel jobs"
-    },
-    "header": {
-      "title": "Asymmetric Eckart Tunneling Calculator",
-      "eyebrow": "Tunnel Effect",
-      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced."
-    },
-    "form": {
-      "title": "Data Entry",
-      "imaginaryFrequency": "Imaginary frequency (cm-1)",
-      "barrierZpe": "Reaction barrier ZPE (kcal/mol)",
-      "ariaLabel": "Input parameters",
-      "energyZpe": "Reaction energy ZPE (kcal/mol)",
-      "temperature": "Temperature (K)"
-    },
-    "actions": {
-      "reset": "Reset",
-      "exportLog": "Export LOG (inputs + results)",
-      "exporting": "Exporting...",
-      "clearTrace": "Clear input trace",
-      "run": "Data ok, Run Tunnel",
-      "processing": "Processing...",
-      "exportCsv": "Export CSV"
-    },
-    "result": {
-      "labels": {
-        "alpha1": "Alpha 1:",
-        "g": "G:",
-        "barrierZpe": "Barrier ZPE:",
-        "model": "Model:",
-        "kappaTst": "Kappa TST:",
-        "energyZpe": "Energy ZPE:",
-        "u": "U:",
-        "alpha2": "Alpha 2:",
-        "inputEvents": "Input events:",
-        "frequency": "Frequency:",
-        "temperature": "Temperature:"
-      },
-      "title": "Output",
-      "ariaLabel": "Results and progress",
-      "submitting": "Submitting tunnel effect job to backend..."
-    },
-    "trace": {
-      "title": "Input Modification Trace",
-      "columns": {
-        "changedAt": "Changed At",
-        "field": "Field",
-        "index": "#",
-        "previous": "Previous",
-        "new": "New"
-      },
-      "ariaLabel": "Input modification events",
-      "eventsCapture": "events captured",
-      "empty": "No input modifications captured yet."
-    }
-  },
-  "smileit": {
-    "step2": {
-      "ariaLabel": "Step 2 substituent catalogs",
-      "edit": "Edit",
-      "collapsedAriaLabel": "Catalog section collapsed summary",
-      "manageCatalog": "Edit catalog",
-      "openDetail": "Open detail for {{name}}",
-      "storedCatalogAriaLabel": "Stored substituent catalog",
-      "title": "2. Catalog of substituents",
-      "noCatalogMolecules": "No catalog molecules available for the selected group.",
-      "expand": "Expand section",
-      "catalogGroups": "Catalog groups:",
-      "validatedCategories": "Validated categories:",
-      "browseHint": "Browse by group, inspect the structure preview, and open the full detail modal on click.",
-      "minimize": "Minimize section",
-      "groupFilter": "Group",
-      "delete": "Delete",
-      "allGroups": "All groups",
-      "storedEntries": "Stored entries:",
-      "description": "",
-      "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "storedSubstituents": "Stored substituents",
-      "groupFilterAria": "Filter stored substituents by group"
-    },
-    "catalogDetail": {
-      "anchorAtoms": "Anchor atoms",
-      "smiles": "SMILES",
-      "ariaLabel": "Substituent detail",
-      "close": "Close",
-      "added": "Added",
-      "zoomOut": "Zoom out",
-      "source": "Source",
-      "zoomIn": "Zoom in",
-      "editInLibrary": "Edit in Library",
-      "id": "ID"
-    },
-    "header": {
-      "title": "Combinatorial Structure Designer",
-      "ariaLabel": "Smileit scientific app",
-      "subtitle": "Inspect scaffolds, assign substitution blocks and generate derivative libraries from SMILES notation.",
-      "eyebrow": "SMILE-IT"
-    },
-    "catalogSketcher": {
-      "ketcherAriaLabel": "Ketcher sketcher frame",
-      "title": "Catalog SMILES sketcher",
-      "iframeTitle": "Catalog SMILES sketcher",
-      "cancelButton": "Cancel",
-      "applyButton": "Apply to draft",
-      "ariaLabel": "Catalog SMILES sketcher",
-      "hint": "Draw the substituent in Ketcher and apply it to the current SMILES draft.",
-      "loadingAriaLabel": "Loading molecule sketcher",
-      "loadingText": "Loading molecule sketcher…"
-    },
-    "catalogForm": {
-      "cancelButton": "Cancel edition",
-      "step5Title": "5. Source reference",
-      "uncategorized": "Uncategorized",
-      "previewSource": "Source:",
-      "sketchButton": "✏ Sketch SMILES",
-      "emptySmartHint": "Enter a SMILES string to unlock the live structure preview.",
-      "step1Hint": "A default name is prepared for each new draft. Replace it if you need a custom label.",
-      "step5Hint": "Keep a short traceable source for this substituent entry.",
-      "previewCategories": "Categories:",
-      "pendingCatalogSmiles": "Pending catalog SMILES",
-      "previewNotation": "Notation detected:",
-      "previewName": "Name:",
-      "smilesLabel": "SMILES",
-      "step4Title": "4. Chemistry categories",
-      "step1Title": "1. Substituent name",
-      "step3Title": "3. Substitution point",
-      "step3AriaLabel": "Catalog draft anchor selector",
-      "addAndClose": "Add and close",
-      "step2Title": "2. SMILES",
-      "updateButton": "Update catalog entry",
-      "previewTitle": "Catalog draft preview",
-      "validationMessagesAria": "Catalog draft validation messages",
-      "previewAriaLabel": "Catalog draft preview",
-      "previewAnchor": "Anchor:",
-      "pending": "Pending",
-      "nameLabel": "Name",
-      "addAnother": "Add another",
-      "sourceRefLabel": "Source reference"
-    },
-    "blocks": {
-      "noPositionsAssigned": "This block still has no scaffold positions assigned. Choose the sites that should receive one of this block's molecules.",
-      "substLibHint": "Browse by group and add a substituent directly to this block.",
-      "totalBlockSources": "Total block sources:",
-      "collapsedSummaryAria": "Collapsed block summary",
-      "assignPositions": "Assign this block to scaffold positions",
-      "openDetail": "Open detail for {{name}}",
-      "noCatalogMolecules": "No catalog molecules available for the selected group.",
-      "autoMatchedTitle": "Auto-matched molecules by functional category",
-      "removeButton": "Remove",
-      "noAutoMatched": "No catalog molecules auto-matched by the selected functional categories.",
-      "manualSubstituentsLabel": "Manual substituents:",
-      "noAtomsHint": "Inspect the principal molecule and select target atoms before assigning this block to positions.",
-      "substituentsAdded": "Substituents added",
-      "categoriesLabel": "Categories:",
-      "siteLabel": "Site",
-      "sitesLabel": "Sites:",
-      "addButton": "Add",
-      "stableIdPrefix": "stable_id",
-      "substLibTitle": "Substituent library",
-      "catalogSubstituentsLabel": "Catalog substituents:",
-      "noSubstituentsYet": "No substituents added to this block yet.",
-      "anchorLabel": "Anchor",
-      "addToBlockAria": "Add {{name}} to this block",
-      "groupFilterAria": "Filter block catalog by group"
-    },
-    "inspection": {
-      "ariaLabel": "Principal inspection context",
-      "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",
-      "canonical": "Canonical:",
-      "patternsVisible": "Patterns visible:",
-      "atoms": "Atoms:"
-    },
-    "catalogStudio": {
-      "title": "SMILES catalog studio",
-      "ariaLabel": "SMILES catalog studio",
-      "hint": "Create or edit substituents without mixing this flow with block mapping."
-    },
-    "principalEditor": {
-      "inspecting": "Inspecting...",
-      "label": "Principal SMILES",
-      "cancelButton": "Cancel",
-      "applyButton": "Apply",
-      "sketchTitle": "Principal sketch modifier",
-      "sketchHint": "Use the sketcher below to edit the principal molecule.",
-      "sketchAriaLabel": "Principal sketch modifier",
-      "sketchLoading": "Loading molecule sketcher…",
-      "sketcherFrameTitle": "Ketcher principal sketcher",
-      "placeholder": "c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O",
-      "openSketch": "✏ Open sketch modifier",
-      "inspect": "Inspect structure",
-      "pending": "Pending principal SMILES"
-    },
-    "annotations": {
-      "showTitleAttr": "Show",
-      "hideTitleAttr": "Hide",
-      "showPatternAria": "Show pattern",
-      "ariaLabel": "Structural annotations",
-      "hidePatternAria": "Hide pattern"
-    },
-    "siteSelection": {
-      "blocksAvailableSuffix": "blocks available",
-      "title": "Select substitution sites on the scaffold",
-      "pendingAssignment": "Selected sites pending assignment:",
-      "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
-      "hint": "Click atoms in the visual preview to mark where later substitutions may be placed."
-    },
-    "step3": {
-      "selectedSites": "Selected sites",
-      "addFromCatalog": "Add from catalog",
-      "newBlock": "New block",
-      "ariaLabel": "Blocks and catalogs",
-      "substLibHint": "Browse by group and add a substituent directly to this block.",
-      "blocks": "Blocks:",
-      "panelMinimized": "Right panel minimized. Use \"Expand right panel\" to continue editing details.",
-      "overviewAriaLabel": "Catalog coverage overview",
-      "effectiveCoverage": "Effective coverage",
-      "noneYet": "None yet",
-      "collapsedAriaLabel": "Right panel minimized summary",
-      "blockPriorityPrefix": "Priority",
-      "title": "3. Block assignment by location",
-      "uncoveredSites": "Uncovered sites:",
-      "coveredSites": "Covered sites:",
-      "uncovered": "uncovered",
-      "blockLabelAria": "Block {{n}} label",
-      "down": "Down",
-      "catalogEntries": "Catalog entries:",
-      "siteAssignment": "Site assignment",
-      "noSitesAssigned": "No sites assigned yet.",
-      "substLibTitle": "Substituent library",
-      "deleteBlock": "Delete block",
-      "createFirstBlock": "Create the first block to define which substituent molecules will be available.",
-      "blockPriority": "Priority",
-      "up": "Up",
-      "blockLabel": "Block label"
-    },
-    "patterns": {
-      "formSource": "Source reference",
-      "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
-      "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "formTypePrivileged": "Privileged scaffold",
-      "formType": "Pattern type",
-      "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
-      "howItWorksTitle": "How it works",
-      "active": "Active",
-      "activeInScaffold": "Active in scaffold",
-      "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
-      "source": "Source",
-      "editing": "Editing",
-      "version": "v",
-      "previewUnavailable": "Preview unavailable",
-      "title": "Structural patterns",
-      "specification": "Specification",
-      "showPattern": "Show pattern",
-      "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
-      "formName": "Name",
-      "formTypeToxicophore": "Toxicophore",
-      "smartsStructure": "SMARTS structure",
-      "noPreview": "No SMILES available for preview.",
-      "dialogAriaLabel": "Structural pattern catalog",
-      "formCaption": "Caption",
-      "privileged": "Privileged scaffold",
-      "editingPattern": "Editing pattern:",
-      "hiddenInScaffold": "Hidden in scaffold",
-      "toxicophore": "Toxicophore",
-      "hidePattern": "Hide pattern",
-      "atoms": "Atoms",
-      "stableId": "stable_id",
-      "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "formSave": "Save structural pattern",
-      "hidden": "Hidden",
-      "patternType": "Pattern type",
-      "formSmarts": "SMARTS",
-      "detailAriaLabel": "Pattern detail",
-      "id": "ID"
-    },
-    "step1": {
-      "title": "1. Principal molecule and scaffold preview",
-      "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
-      "ariaLabel": "Input parameters"
-    },
-    "properties": {
-      "clogpAria": "Calculated logP",
-      "clogpLabel": "cLogP:",
-      "rotatableBondsAria": "Number of rotatable bonds",
-      "aromaticRingsLabel": "Aromatic rings:",
-      "ariaLabel": "Quick physicochemical properties",
-      "rotatableBondsLabel": "Rotatable bonds:",
-      "tpsaLabel": "TPSA:",
-      "tpsaAria": "Topological polar surface area",
-      "hbdLabel": "HBD:",
-      "mwAria": "Molecular weight",
-      "hbdAria": "Hydrogen bond donors",
-      "hbaAria": "Hydrogen bond acceptors",
-      "hbaLabel": "HBA:",
-      "mwLabel": "MW:",
-      "aromaticRingsAria": "Number of aromatic rings"
-    },
-    "step4": {
-      "rSubstitutes": "R substitutes",
-      "exportSmi": "SMI/TXT",
-      "loadingDerivatives": "Loading...",
-      "derivativesAriaLabel": "Generated derivatives list",
-      "currentRunDisplayed": "The current run is already displayed below. This table only lists older jobs.",
-      "loadedInView": "Loaded in current view:",
-      "reloadJobs": "Reload jobs",
-      "downloadSvgZip": "↓ Download SVGs (ZIP)",
-      "reactiveSites": "Reactive sites",
-      "assignmentBlocksLabel": "Assignment blocks",
-      "inspectionHint": "Expand this section to review molecular depictions and SMILES.",
-      "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)",
-      "noBlocks": "No blocks",
-      "noStructures": "No generated structures available in this snapshot.",
-      "downloadZipTitle": "Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after.",
-      "description": "Configure generation, run continuously, and inspect/export resulting structures.",
-      "histColRun": "Run",
-      "exportCsv": "CSV",
-      "enumeratedDerivatives": "Enumerated derivatives",
-      "preparingZip": "Preparing SVG ZIP...",
-      "jobNamePlaceholder": "smileit_run",
-      "histColView": "View",
-      "run": "Generate structures",
-      "maxHint": "max {{max}} (based on {{sites}} selected sites)",
-      "enabled": "Enabled",
-      "inspectionLabel": "Inspection:",
-      "dispatchingJob": "Dispatching Smileit job...",
-      "reset": "Reset",
-      "histColUpdated": "Updated",
-      "ariaLabel": "Result and progress panel",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "progressAriaLabel": "Smileit job progress",
-      "preparingZipHint": "Generating all derivative SVGs on-demand for ZIP export. This may take a while.",
-      "previousJobs": "Previous Jobs",
-      "processing": "Processing...",
-      "histSites": "Sites",
-      "generatedModalAriaLabel": "Generated molecule preview",
-      "title": "4. Continuous generation and outputs",
-      "lockedUntilMapping": "Locked until mapping",
-      "principalSmilesLabel": "Principal SMILES",
-      "availableDerivatives": "Available derivatives:",
-      "placeholderMapping": "Placeholder mapping:",
-      "histAriaLabel": "Previous jobs table",
-      "unknown": "Unknown",
-      "previousEnumAriaLabel": "Previous enumeration jobs",
-      "derivativeVisualTitle": "Generated derivative (substituents highlighted)",
-      "showMore": "Show 100 more",
-      "open": "Open",
-      "noPreviousEnumerations": "No previous enumerations available yet.",
-      "generationSetup": "Generation setup",
-      "histColBlocks": "Blocks",
-      "openBelow": "Open below",
-      "exportLog": "LOG",
-      "setupHint": "Run generation only after block molecules and scaffold positions are fully mapped.",
-      "jobName": "Job name",
-      "principalSmilesAriaLabel": "Principal SMILES summary",
-      "derivativesTitle": "Derivatives",
-      "histColStatus": "Status"
-    }
-  },
-  "appsHub": {
-    "aria": {
-      "library": "Scientific apps library"
-    },
-    "appCard": {
-      "kicker": "Scientific module",
-      "comingSoon": "Bientôt disponible",
-      "open": "Ouvrir l'application"
-    },
-    "header": {
-      "title": "Applications scientifiques",
-      "eyebrow": "Modular Ecosystem",
-      "subtitle": "Access each module from one place and scale your scientific pipeline over time."
-    },
-    "monitorCard": {
-      "kicker": "System layer",
-      "title": "Moniteur de jobs",
-      "subtitle": "Cross-app view for active, paused, completed and failed jobs.",
-      "open": "Ouvrir le moniteur"
-    },
-    "empty": {
-      "title": "No visible apps",
-      "action": "Contact an administrator",
-      "subtitle": "Your current role and group configuration do not expose additional scientific apps yet."
-    }
-  },
-  "trash": {
-    "aria": {
-      "page": "Recycle bin",
-      "filters": "Trash filters"
-    },
-    "states": {
-      "loading": "Chargement de la corbeille...",
-      "empty": "Aucun job supprimé à restaurer."
-    },
-    "header": {
-      "title": "Corbeille",
-      "eyebrow": "Administrative Recovery",
-      "subtitle": "Restore jobs deleted by administrators before automatic removal."
-    },
-    "fallback": {
-      "noDeadline": "No deadline",
-      "unknownActor": "Unknown actor"
-    },
-    "table": {
-      "deletedAt": "Supprimé le",
-      "deletedBy": "Supprimé par",
-      "purgeAt": "Purge le"
-    },
-    "actions": {
-      "backToMonitor": "Retour au moniteur"
-    }
-  },
-  "shared": {
-    "jobArtifactExport": {
-      "exportLog": "Export LOG",
-      "downloadErrorReport": "Download Error Report",
-      "exporting": "Exporting...",
-      "downloadInputsZip": "Download Inputs ZIP",
-      "exportCsv": "Export CSV",
-      "persistedFiles": "Persisted Input Files"
-    },
-    "jobResultFooter": {
-      "historicalJobs": "Historical jobs"
-    },
-    "smilesBatchInput": {
-      "fileFormats": ".smi, .txt or .csv file",
-      "uploadFileTitle": "Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs",
-      "namePlaceholder": "Defaults to SMILES",
-      "label": "SMILES batch input",
-      "tableNumber": "#",
-      "drawSmilesTitle": "Draw a molecule with Ketcher and add it to the list",
-      "tableName": "Name",
-      "validating": "Validating SMILES before submission...",
-      "uploadFile": "↑ Upload file",
-      "detectedRows": "Detected rows:",
-      "hint": "Supports plain SMILES lists, .smi/.txt lists, and CSV files where column 1 is name and column 2 is SMILES.",
-      "editCustomNames": "Edit custom names",
-      "tableSMILES": "SMILES",
-      "drawSmiles": "✏ Draw SMILES"
-    },
-    "jobProgress": {
-      "progressTitle": "Scientific job progress"
-    },
-    "jobLogs": {
-      "ariaLabel": "Execution logs"
-    },
-    "jobHistoryTable": {
-      "reloading": "Loading...",
-      "colUpdated": "Updated",
-      "colJobId": "Job ID",
-      "reload": "Reload history",
-      "colAction": "Action",
-      "colStatus": "Status",
-      "open": "Open"
-    },
-    "diffusionFields": {
-      "radiusReactant2": "Radius reactant 2 (Å)",
-      "radiusReactant1": "Radius reactant 1 (Å)",
-      "reactionDistance": "Reaction distance (Å)"
-    }
-  },
-  "marcus": {
-    "actions": {
-      "reset": "Reset",
-      "run": "Run Marcus",
-      "clearFiles": "Clear files",
-      "processing": "Processing..."
-    },
-    "history": {
-      "empty": "No historical Marcus jobs yet.",
-      "ariaLabel": "Historical Marcus jobs"
-    },
-    "header": {
-      "title": "Marcus Rate Calculator",
-      "eyebrow": "Kinetics — Marcus Theory",
-      "subtitle": "Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute Marcus energies, reorganization energy, barriers, and rate constants."
-    },
-    "form": {
-      "titleField": "Title",
-      "parameters": "Parameters",
-      "titlePlaceholder": "Optional reaction label",
-      "diffusionCorrection": "Diffusion correction"
-    },
-    "fileGroups": {
-      "inputFilesTitle": "Required Input Files",
-      "reactants": "Reactants",
-      "verticalProducts": "Vertical Products",
-      "adiabaticProducts": "Adiabatic Products",
-      "allRequired": "All 6 required"
-    },
-    "result": {
-      "marcusEnergies": "Marcus Energies",
-      "conditions": "Conditions",
-      "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
-      "ariaLabel": "Results and progress",
-      "flagDiffusion": "Diffusion",
-      "condViscosity": "Viscosity",
-      "verticalEnergy": "ΔE vertical (kcal/mol)",
-      "adiabaticEnergyCorrected": "ΔE adiabatic corr. (kcal/mol)",
-      "rateConstants": "Rate Constants",
-      "title": "Output",
-      "kTst": "k (TST)",
-      "kFinal": "k (final)",
-      "kDiff": "k_diff",
-      "reorganizationEnergy": "λ (reorganization, kcal/mol)",
-      "submitting": "Submitting Marcus job to backend...",
-      "defaultTitle": "Marcus result",
-      "condTemperature": "Temperature",
-      "barrier": "ΔG‡ (barrier, kcal/mol)"
-    },
-    "fileSlots": {
-      "browse": "Browse .log / .out / .txt",
-      "product2Adiabatic": "Product 2 Adiabatic",
-      "product1Adiabatic": "Product 1 Adiabatic",
-      "product1Vertical": "Product 1 Vertical",
-      "reactant2": "Reactant 2",
-      "reactant1": "Reactant 1",
-      "product2Vertical": "Product 2 Vertical"
-    }
-  },
-  "toxicityProperties": {
-    "history": {
-      "title": "History",
-      "empty": "No historical toxicity jobs yet.",
-      "ariaLabel": "Historical toxicity jobs"
-    },
-    "header": {
-      "title": "Toxicity Properties Table",
-      "eyebrow": "Toxicity Properties",
-      "subtitle": "Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of SMILES"
-    },
-    "form": {
-      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
-      "jobNameLabel": "Job name",
-      "title": "Input",
-      "jobNamePlaceholder": "Optional: visible job name",
-      "ariaLabel": "Input parameters"
-    },
-    "moleculeModal": {
-      "title": "Molecule preview"
-    },
-    "sketch": {
-      "ketcherTitle": "Ketcher SMILES sketcher",
-      "title": "Draw SMILES",
-      "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.",
-      "loading": "Loading molecule sketcher…",
-      "addToList": "Add to list",
-      "cancel": "Cancel"
-    },
-    "actions": {
-      "reset": "Reset",
-      "exporting": "Exporting...",
-      "run": "Run Toxicity Properties",
-      "processing": "Processing...",
-      "exportCsv": "Export CSV"
-    },
-    "result": {
-      "modelLabel": "Model: ADMET-AI",
-      "ariaLabel": "Results and progress",
-      "colAmesScore": "Ames Score",
-      "colDevTox": "Dev. Toxicity",
-      "emptySearch": "No toxicity rows match the current search.",
-      "searchLabel": "Search table",
-      "tableName": "Name",
-      "title": "Results",
-      "colMutagenicity": "Mutagenicity",
-      "totalMolecules": "Total molecules:",
-      "searchPlaceholder": "Search by name or SMILES",
-      "tableSMILES": "SMILES",
-      "references": "Scientific references",
-      "viewStructure": "Click to view molecule structure",
-      "jobIdLabel": "Job ID:",
-      "jobNameLabel": "Visible name:",
-      "colLd50": "LD50 (mg/kg)",
-      "submitting": "Submitting toxicity job to backend...",
-      "filteredCount": "visible rows",
-      "ariaProgressLabel": "Toxicity job progress",
-      "colDevtoxScore": "DevTox Score"
-    }
-  },
-  "userManager": {
-    "addMembership": {
-      "title": "Add membership",
-      "submit": "Add membership",
-      "selectUser": "Select user",
-      "selectGroup": "Select group",
-      "hint": "Assign an existing user to a group with a specific role."
-    },
-    "header": {
-      "title": "User Management",
-      "eyebrow": "Administration",
-      "subtitle": "Manage user accounts, roles, and group memberships."
-    },
-    "ariaLabel": "User management",
-    "feedback": {
-      "loading": "Loading users..."
-    },
-    "roles": {
-      "user": "User",
-      "admin": "Admin",
-      "member": "Member"
-    },
-    "createUser": {
-      "email": "Email",
-      "primaryGroup": "Primary group",
-      "submit": "Create user",
-      "noPrimaryGroup": "No primary group",
-      "username": "Username",
-      "password": "Password",
-      "title": "Create user",
-      "hint": "Admins can create accounts only for their groups.",
-      "lastName": "Last name",
-      "firstName": "First name",
-      "roleLabel": "Role"
-    },
-    "users": {
-      "colActions": "Actions",
-      "allGroups": "All groups",
-      "searchUsersPlaceholder": "Search by username, name or email",
-      "description": "Admins can only manage users in their groups.",
-      "colRole": "Role",
-      "colUsername": "Username",
-      "active": "Active",
-      "filterGroup": "Filter by group",
-      "title": "Users",
-      "inactive": "Inactive",
-      "fastSearchGroups": "Fast search of groups",
-      "deactivate": "Deactivate",
-      "fastSearchUsers": "Fast search of users",
-      "removeMembershipTitle": "Remove from group",
-      "activate": "Activate",
-      "searchGroupsPlaceholder": "Search group by name or slug",
-      "colStatus": "Status",
-      "colGroups": "Groups"
-    }
-  },
-  "identityAdmin": {
-    "addMembership": {
-      "submit": "Add membership",
-      "selectGroup": "Select group",
-      "group": "Group",
-      "roleInGroup": "Role in group",
-      "roleMember": "Member",
-      "user": "User",
-      "title": "Add membership",
-      "selectUser": "Select user",
-      "hint": "Map users into groups before assigning app-level rules.",
-      "roleAdmin": "Admin"
-    },
-    "groupConfig": {
-      "configLabel": "Configuration entries",
-      "submit": "Save group config",
-      "selectGroup": "Select group",
-      "group": "Group",
-      "key": "Key",
-      "valuePlaceholder": "Value (true, false, number, text)",
-      "app": "Application",
-      "title": "Group app config",
-      "hint": "Store app-specific defaults at group level. Users can still override per app.",
-      "removeButton": "×",
-      "addEntry": "+ Add entry"
-    },
-    "header": {
-      "title": "Identity and Access",
-      "subtitle": "Manage users, groups, memberships and app-level RBAC in a consistent workspace.",
-      "eyebrow": "Administrative Console",
-      "refresh": "Refresh",
-      "myProfile": "My profile"
-    },
-    "ariaLabel": "Identity administration",
-    "feedback": {
-      "loading": "Loading identity data..."
-    },
-    "createUser": {
-      "email": "Email",
-      "roleRootOption": "Root",
-      "primaryGroup": "Primary group",
-      "submit": "Create user",
-      "noPrimaryGroup": "No primary group",
-      "roleUserOption": "User",
-      "username": "Username",
-      "roleAdminOption": "Admin",
-      "password": "Password",
-      "title": "Create user",
-      "hint": "Define username, role and primary group for a new account.",
-      "lastName": "Last name",
-      "firstName": "First name",
-      "roleLabel": "Role"
-    },
-    "permissions": {
-      "selectTarget": "Select target",
-      "statusDisabled": "disabled",
-      "submit": "Store permission",
-      "statusEnabled": "enabled",
-      "app": "Application",
-      "target": "Target",
-      "scope": "Scope",
-      "title": "App permissions",
-      "hint": "Evaluated by group first, then user-level overrides.",
-      "enabled": "Enabled"
-    },
-    "createGroup": {
-      "name": "Group name",
-      "title": "Create group",
-      "submit": "Create group",
-      "hint": "Groups represent scientific teams or environments.",
-      "slug": "Slug",
-      "description": "Description"
-    },
-    "users": {
-      "roleRoot": "Root",
-      "colActions": "Actions",
-      "colPrimaryGroup": "Primary group",
-      "description": "User actions are role-aware. Admins can only manage users in their managed groups.",
-      "colRole": "Role",
-      "colUsername": "Username",
-      "title": "Users",
-      "roleUser": "User",
-      "deactivate": "Deactivate",
-      "roleAdmin": "Admin",
-      "activate": "Activate",
-      "colStatus": "Status"
-    }
-  },
-  "groupManager": {
-    "members": {
-      "title": "Members",
-      "selectUser": "Select user",
-      "colActions": "Actions",
-      "fastSearchUsers": "Fast search of users",
-      "addButton": "Add member",
-      "searchUsersPlaceholder": "Search user by name or email",
-      "colUser": "User",
-      "colRole": "Role"
-    },
-    "groups": {
-      "collapse": "Collapse",
-      "adminGroupLabel": "Administrative group",
-      "colActions": "Actions",
-      "colMembers": "Members",
-      "colName": "Name",
-      "allGroupsOption": "All manageable groups",
-      "manage": "Manage",
-      "title": "Groups",
-      "fastSearchGroups": "Fast search of groups",
-      "colSlug": "Slug",
-      "searchGroupsPlaceholder": "Search by name, slug or description"
-    },
-    "header": {
-      "title": "Group Management",
-      "eyebrow": "Administration",
-      "subtitle": "Manage scientific groups, their members, and app-level access rules."
-    },
-    "ariaLabel": "Group management",
-    "feedback": {
-      "loading": "Loading groups..."
-    },
-    "roles": {
-      "admin": "Admin",
-      "member": "Member"
-    },
-    "permissions": {
-      "title": "App Permissions"
-    },
-    "createGroup": {
-      "name": "Group name",
-      "title": "Create group",
-      "submit": "Create group",
-      "hint": "Groups represent scientific teams or environments.",
-      "slug": "Slug",
-      "description": "Description"
-    }
-  },
   "errorModal": {
     "http": {
-      "serverError": "Erreur interne du serveur.",
-      "unauthorized": "Your session is not authorized for this operation.",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "requestFailedTitle": "Échec de la requête",
       "networkUnavailable": "Réseau indisponible.",
+      "forbidden": "Vous n'avez pas les permissions requises.",
+      "requestFailedTitle": "Échec de la requête",
       "notFound": "The requested resource was not found.",
-      "forbidden": "Vous n'avez pas les permissions requises."
+      "serverError": "Erreur interne du serveur.",
+      "badRequest": "The request is invalid. Please verify the submitted data.",
+      "unauthorized": "Your session is not authorized for this operation."
     },
     "actions": {
       "closeAria": "Close error modal",
@@ -864,248 +15,652 @@
       "viewDetails": "Voir les détails techniques"
     }
   },
-  "scientificApps": {
-    "toxicity-properties": {
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.",
-      "title": "Toxicity Properties"
-    },
-    "sa-score": {
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.",
-      "title": "SA Score"
-    },
-    "tunnel": {
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs.",
-      "title": "Tunnel Effect"
-    },
-    "molar-fractions": {
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs.",
-      "title": "Molar Fractions"
-    },
-    "smileit": {
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.",
-      "title": "Smileit"
-    },
-    "marcus": {
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.",
-      "title": "Marcus Theory"
-    },
-    "cadma-py": {
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.",
-      "title": "CADMA Py"
-    },
-    "easy-rate": {
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.",
-      "title": "Easy-rate"
+  "language": {
+    "switcher": {
+      "ariaLabel": "Sélecteur de langue",
+      "menuLabel": "Langues disponibles"
     }
   },
-  "easyRate": {
-    "history": {
-      "empty": "No historical Easy-rate jobs yet.",
-      "ariaLabel": "Historical Easy-rate jobs"
-    },
-    "results": {
-      "unitK": "K",
-      "multiplicity": "mult",
-      "kappa": "κ (kappa)",
-      "fallback": "--",
-      "diffusionCorrected": "k Diffusion Corrected",
-      "unitPaPerSec": "Pa·s",
-      "unitCm": "cm⁻¹",
-      "kTST": "k TST",
-      "kFinal": "k Final",
-      "rateConstant": "Rate constant",
-      "unitPerMolPerSec": "L·mol⁻¹·s⁻¹",
-      "negFreq": "neg freq",
-      "diffusionOnly": "k Diffusion Only"
-    },
+  "trash": {
     "header": {
-      "title": "Easy-rate Calculator",
-      "eyebrow": "Kinetics — TST + Eckart Tunnel",
-      "subtitle": "Upload Gaussian log files for your reaction structures and compute rate constants with statistical mechanics, tunneling correction, and optional diffusion control."
+      "title": "Corbeille",
+      "subtitle": "Restore jobs deleted by administrators before automatic removal.",
+      "eyebrow": "Administrative Recovery"
     },
-    "result": {
-      "thermActivation": "Activation",
-      "ariaLabel": "Results and progress",
-      "flagCageEffects": "Cage effects",
-      "tunnelG": "G",
-      "condViscosity": "Viscosity",
-      "tunnelCorrection": "Tunnel Correction (Eckart)",
-      "title": "Output",
-      "kFinal": "k (final)",
-      "tunnelU": "U",
-      "kDiff": "k_diff",
-      "deltaG": "ΔG (kcal/mol)",
-      "flagNegativeActivation": "⚠ Negative activation",
-      "condTemperature": "Temperature",
-      "tunnelAlpha1": "α₁",
-      "deltaH": "ΔH (kcal/mol)",
-      "conditions": "Conditions",
-      "kappaTst": "κ (TST)",
-      "flagDiffusion": "Diffusion",
-      "tunnelAlpha2": "α₂",
-      "thermReaction": "Reaction",
-      "rateConstants": "Rate Constants",
-      "imagFreq": "ν‡ (cm⁻¹)",
-      "condPathDegeneracy": "Path degeneracy",
-      "kTst": "k (TST)",
-      "submitting": "Submitting Easy-rate job to backend...",
-      "defaultTitle": "Easy-rate result",
-      "thermochemistry": "Thermochemistry",
-      "kDiffCorrected": "k (diff-corrected)",
-      "deltaZpe": "ΔZPE (kcal/mol)",
-      "ariaProgressLabel": "Easy-rate job progress"
-    },
-    "solvents": {
-      "gasPhase": "Gas phase (Air)",
-      "water": "Water",
-      "benzene": "Benzene",
-      "pentylEthanoate": "Pentyl ethanoate",
-      "other": "Other"
-    },
-    "preview": {
-      "optimizationTermination": "Optimization / Termination",
-      "hartree": "hartree",
-      "imaginaryFrequency": "Imaginary frequency",
-      "optFreq": "OPT+FREQ",
-      "chargeMultiplicity": "Charge / Multiplicity",
-      "normalTermination": "Normal termination",
-      "scf": "SCF",
-      "incomplete": "Incomplete",
-      "notTerminated": "Not terminated",
-      "titleLabel": "Title",
-      "temperature": "Temperature",
-      "ghZpe": "G / H / ZPE"
+    "fallback": {
+      "unknownActor": "Unknown actor",
+      "noDeadline": "No deadline"
     },
     "actions": {
-      "reset": "Reset",
-      "run": "Run Easy-rate",
-      "clearFiles": "Clear files",
-      "processing": "Processing..."
+      "backToMonitor": "Retour au moniteur"
+    },
+    "aria": {
+      "page": "Recycle bin",
+      "filters": "Trash filters"
+    },
+    "table": {
+      "deletedAt": "Supprimé le",
+      "purgeAt": "Purge le",
+      "deletedBy": "Supprimé par"
+    },
+    "states": {
+      "loading": "Chargement de la corbeille...",
+      "empty": "Aucun job supprimé à restaurer."
+    }
+  },
+  "login": {
+    "form": {
+      "password": "Mot de passe",
+      "signIn": "Se connecter",
+      "signingIn": "Connexion en cours...",
+      "username": "Nom d'utilisateur"
+    },
+    "hero": {
+      "title": "Designing Scientific Workflows with Clarity",
+      "copy": "Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure access controls from a single command surface.",
+      "kicker": "App Chemistry Sense"
+    },
+    "errors": {
+      "unableToAuthenticate": "Unable to authenticate."
+    },
+    "aria": {
+      "signIn": "Sign in",
+      "brandMessage": "Brand message"
+    },
+    "panel": {
+      "title": "Accès scientifique",
+      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace.",
+      "eyebrow": "Identity Gateway"
+    }
+  },
+  "userManager": {
+    "header": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts, roles, and group memberships.",
+      "eyebrow": "Administration"
+    },
+    "addMembership": {
+      "selectGroup": "Select group",
+      "title": "Add membership",
+      "hint": "Assign an existing user to a group with a specific role.",
+      "submit": "Add membership",
+      "selectUser": "Select user"
+    },
+    "roles": {
+      "user": "User",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "ariaLabel": "User management",
+    "feedback": {
+      "loading": "Loading users..."
+    },
+    "users": {
+      "fastSearchUsers": "Fast search of users",
+      "colActions": "Actions",
+      "colRole": "Role",
+      "removeMembershipTitle": "Remove from group",
+      "title": "Users",
+      "description": "Admins can only manage users in their groups.",
+      "colStatus": "Status",
+      "fastSearchGroups": "Fast search of groups",
+      "searchGroupsPlaceholder": "Search group by name or slug",
+      "inactive": "Inactive",
+      "deactivate": "Deactivate",
+      "searchUsersPlaceholder": "Search by username, name or email",
+      "allGroups": "All groups",
+      "active": "Active",
+      "activate": "Activate",
+      "colUsername": "Username",
+      "colGroups": "Groups",
+      "filterGroup": "Filter by group"
+    },
+    "createUser": {
+      "password": "Password",
+      "firstName": "First name",
+      "username": "Username",
+      "title": "Create user",
+      "lastName": "Last name",
+      "submit": "Create user",
+      "noPrimaryGroup": "No primary group",
+      "email": "Email",
+      "primaryGroup": "Primary group",
+      "hint": "Admins can create accounts only for their groups.",
+      "roleLabel": "Role"
+    }
+  },
+  "toxicityProperties": {
+    "header": {
+      "title": "Toxicity Properties Table",
+      "subtitle": "Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of SMILES",
+      "eyebrow": "Toxicity Properties"
     },
     "form": {
-      "cageEffects": "Cage effects",
-      "analyzingGaussian": "Analyzing Gaussian executions...",
-      "titleField": "Title",
-      "ariaLabel": "Input files and parameters",
-      "parameters": "Parameters",
+      "jobNameLabel": "Job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
+      "title": "Input",
+      "ariaLabel": "Input parameters",
+      "jobNamePlaceholder": "Optional: visible job name"
+    },
+    "actions": {
+      "processing": "Processing...",
+      "reset": "Reset",
+      "run": "Run Toxicity Properties",
+      "exporting": "Exporting...",
+      "exportCsv": "Export CSV"
+    },
+    "history": {
+      "title": "History",
+      "empty": "No historical toxicity jobs yet.",
+      "ariaLabel": "Historical toxicity jobs"
+    },
+    "sketch": {
+      "loading": "Loading molecule sketcher…",
+      "addToList": "Add to list",
+      "ketcherTitle": "Ketcher SMILES sketcher",
+      "cancel": "Cancel",
+      "title": "Draw SMILES",
+      "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea."
+    },
+    "result": {
+      "tableSMILES": "SMILES",
+      "colLd50": "LD50 (mg/kg)",
+      "viewStructure": "Click to view molecule structure",
+      "ariaLabel": "Results and progress",
+      "colDevtoxScore": "DevTox Score",
+      "colAmesScore": "Ames Score",
+      "jobNameLabel": "Visible name:",
+      "searchLabel": "Search table",
+      "jobIdLabel": "Job ID:",
+      "searchPlaceholder": "Search by name or SMILES",
+      "totalMolecules": "Total molecules:",
+      "tableName": "Name",
+      "ariaProgressLabel": "Toxicity job progress",
+      "submitting": "Submitting toxicity job to backend...",
+      "colMutagenicity": "Mutagenicity",
+      "title": "Results",
+      "emptySearch": "No toxicity rows match the current search.",
+      "references": "Scientific references",
+      "filteredCount": "visible rows",
+      "modelLabel": "Model: ADMET-AI",
+      "colDevTox": "Dev. Toxicity"
+    },
+    "moleculeModal": {
+      "title": "Molecule preview"
+    }
+  },
+  "saScore": {
+    "header": {
+      "title": "Synthetic Accessibility Table",
+      "subtitle": "Run AMBIT, BRSAScore and RDKit synthetic accessibility methods over a batch of SMILES",
+      "eyebrow": "SA Score"
+    },
+    "form": {
+      "jobNameLabel": "Job name",
+      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
+      "methodsLegend": "Methods",
+      "title": "Input",
+      "ariaLabel": "Input parameters",
+      "jobNamePlaceholder": "Optional: visible job name"
+    },
+    "actions": {
+      "processing": "Processing...",
+      "reset": "Reset",
+      "run": "Run SA Score",
+      "exporting": "Exporting...",
+      "exportCsv": "Export CSV"
+    },
+    "history": {
+      "title": "History",
+      "empty": "No historical SA score jobs yet.",
+      "ariaLabel": "Historical SA score jobs"
+    },
+    "sketch": {
+      "loading": "Loading molecule sketcher…",
+      "addToList": "Add to list",
+      "ketcherTitle": "Ketcher SMILES sketcher",
+      "cancel": "Cancel",
+      "title": "Draw SMILES",
+      "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea."
+    },
+    "methods": {
+      "brsa": "BRSAScore SA",
+      "rdkit": "RDKit SA",
+      "ambit": "AMBIT SA"
+    },
+    "export": {
+      "allMethods": "All methods"
+    },
+    "result": {
+      "tableSMILES": "SMILES",
+      "submitting": "Submitting SA score job to backend...",
+      "title": "Results",
+      "viewStructure": "Click to view molecule structure",
+      "ariaLabel": "Results and progress",
+      "emptySearch": "No SA Score rows match the current search.",
+      "filteredCount": "visible rows",
+      "searchLabel": "Search table",
+      "jobNameLabel": "Visible name:",
+      "jobIdLabel": "Job ID:",
+      "exportTargetLabel": "Export target",
+      "searchPlaceholder": "Search by name or SMILES",
+      "methodsLabel": "Methods:",
+      "totalMolecules": "Total molecules:",
+      "error": "ERROR",
+      "tableName": "Name",
+      "ariaProgressLabel": "SA score job progress"
+    },
+    "moleculeModal": {
+      "title": "Molecule structure",
+      "loading": "Loading structure..."
+    }
+  },
+  "marcus": {
+    "header": {
+      "title": "Marcus Rate Calculator",
+      "subtitle": "Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute Marcus energies, reorganization energy, barriers, and rate constants.",
+      "eyebrow": "Kinetics — Marcus Theory"
+    },
+    "form": {
       "titlePlaceholder": "Optional reaction label",
-      "executionsParsed": "parsed execution(s)",
       "diffusionCorrection": "Diffusion correction",
-      "pathDegeneracy": "Reaction path degeneracy",
-      "selectExecutionHint": "Select one parsed execution to continue.",
-      "customViscosity": "Custom viscosity (Pa·s)",
-      "parsedExecution": "Parsed execution",
-      "gaussianPreview": "Gaussian Preview",
-      "title": "Input Files",
-      "printDataInput": "Print data input",
-      "parserNotes": "Parser notes:",
-      "solvent": "Solvent",
-      "browseHint": "Browse .log / .out / .txt"
+      "parameters": "Parameters",
+      "titleField": "Title"
+    },
+    "actions": {
+      "processing": "Processing...",
+      "clearFiles": "Clear files",
+      "reset": "Reset",
+      "run": "Run Marcus"
     },
     "fileSlots": {
-      "product1": "Product 1",
-      "required": "*",
-      "atLeastOneProduct": "(at least one product)",
-      "transitionState": "Transition State",
-      "reactant2": "Reactant 2",
       "reactant1": "Reactant 1",
-      "product2": "Product 2"
+      "product1Vertical": "Product 1 Vertical",
+      "product2Adiabatic": "Product 2 Adiabatic",
+      "reactant2": "Reactant 2",
+      "product2Vertical": "Product 2 Vertical",
+      "browse": "Browse .log / .out / .txt",
+      "product1Adiabatic": "Product 1 Adiabatic"
+    },
+    "history": {
+      "empty": "No historical Marcus jobs yet.",
+      "ariaLabel": "Historical Marcus jobs"
+    },
+    "fileGroups": {
+      "verticalProducts": "Vertical Products",
+      "allRequired": "All 6 required",
+      "adiabaticProducts": "Adiabatic Products",
+      "inputFilesTitle": "Required Input Files",
+      "reactants": "Reactants"
+    },
+    "result": {
+      "rateConstants": "Rate Constants",
+      "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
+      "kTst": "k (TST)",
+      "submitting": "Submitting Marcus job to backend...",
+      "title": "Output",
+      "kFinal": "k (final)",
+      "ariaLabel": "Results and progress",
+      "marcusEnergies": "Marcus Energies",
+      "conditions": "Conditions",
+      "kDiff": "k_diff",
+      "flagDiffusion": "Diffusion",
+      "adiabaticEnergyCorrected": "ΔE adiabatic corr. (kcal/mol)",
+      "verticalEnergy": "ΔE vertical (kcal/mol)",
+      "defaultTitle": "Marcus result",
+      "reorganizationEnergy": "λ (reorganization, kcal/mol)",
+      "barrier": "ΔG‡ (barrier, kcal/mol)",
+      "condTemperature": "Temperature",
+      "condViscosity": "Viscosity"
+    }
+  },
+  "appsHub": {
+    "header": {
+      "title": "Applications scientifiques",
+      "subtitle": "Access each module from one place and scale your scientific pipeline over time.",
+      "eyebrow": "Modular Ecosystem"
+    },
+    "empty": {
+      "title": "No visible apps",
+      "subtitle": "Your current role and group configuration do not expose additional scientific apps yet.",
+      "action": "Contact an administrator"
+    },
+    "aria": {
+      "library": "Scientific apps library"
+    },
+    "monitorCard": {
+      "open": "Ouvrir le moniteur",
+      "title": "Moniteur de jobs",
+      "subtitle": "Cross-app view for active, paused, completed and failed jobs.",
+      "kicker": "System layer"
+    },
+    "appCard": {
+      "kicker": "Scientific module",
+      "open": "Ouvrir l'application",
+      "comingSoon": "Bientôt disponible"
+    }
+  },
+  "profile": {
+    "header": {
+      "title": "Profil",
+      "subtitle": "Update your identity information. These changes are available for user, admin and root roles.",
+      "eyebrow": "Personal Workspace"
+    },
+    "form": {
+      "newPassword": "Nouveau mot de passe",
+      "firstName": "Prénom",
+      "confirmPassword": "Confirmer le mot de passe",
+      "email": "E-mail",
+      "lastName": "Nom",
+      "saveProfile": "Enregistrer le profil",
+      "saving": "Enregistrement..."
+    },
+    "errors": {
+      "mustBeSignedIn": "You must be signed in to update your profile.",
+      "unableToInitializeProfile": "Unable to initialize profile information.",
+      "passwordMismatch": "Password confirmation does not match the new password.",
+      "unableToUpdateProfile": "Unable to update profile."
+    },
+    "aria": {
+      "management": "Profile management"
+    },
+    "messages": {
+      "updatedSuccessfully": "Profile updated successfully."
+    }
+  },
+  "scientificApps": {
+    "molar-fractions": {
+      "title": "Molar Fractions",
+      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+    },
+    "tunnel": {
+      "title": "Tunnel Effect",
+      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+    },
+    "toxicity-properties": {
+      "title": "Toxicity Properties",
+      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+    },
+    "sa-score": {
+      "title": "SA Score",
+      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+    },
+    "smileit": {
+      "title": "Smileit",
+      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+    },
+    "marcus": {
+      "title": "Marcus Theory",
+      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+    },
+    "easy-rate": {
+      "title": "Easy-rate",
+      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+    },
+    "cadma-py": {
+      "title": "CADMA Py",
+      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
     }
   },
   "cadmaPy": {
-    "step2": {
-      "toxicityReady": "Toxicity ✓",
-      "quickFillReady": "The imported guide preserves the candidate name label so the CADMA ranking stays fully identified.",
-      "payloadPreviewTitle": "Final candidate payload preview",
-      "quickFillGuideMissing": "Upload a candidate guide with names and SMILES to enable automatic predictions.",
-      "quickFillNamesFallback": "Names will fall back to SMILES",
-      "candidatesLoaded": "candidates loaded",
-      "pathwayReuseTitle": "Reuse completed jobs",
-      "pathwayGenerateTitle": "Generate from Smile-it",
-      "quickFillApply": "Auto-fill candidate values",
-      "ariaBackToCandidates": "Back to candidate inputs",
-      "quickFillSkipSa": "Skip SA report",
-      "guideSa": "SA scores from",
-      "tableM": "M",
-      "clearFiles": "Clear files",
-      "skipSa": "Skip — no SA data",
-      "exportCsv": "Export CSV",
-      "selectSaScoreJobTitle": "Select an SA Score job",
-      "runCadmaPy": "Run CADMA Py →",
-      "tableLd50": "LD50",
-      "selectSaMethodTitle": "Select an SA method",
-      "smileitRequired": "Smile-it job · required",
-      "quickFillLaunch": "Launch missing SA + toxicity jobs",
-      "applySelectedJobs": "Apply selected jobs",
-      "quickFillSaMethod": "SA method to use",
-      "acceptAndContinue": "Accept and continue to formula",
-      "quickFillToxicity": "Toxicity report",
-      "backToStep2": "Back to step 2",
-      "unnamedCandidate": "Unnamed candidate",
-      "tableCandidate": "Candidate",
-      "showingFirst": "Showing the first {{ count }} of {{ total }} candidates.",
-      "title": "Upload candidate files",
-      "generatePanelTitle": "Generate from Smile-it",
-      "selectToxicityJobTitle": "Select a Toxicity Properties job",
-      "quickFillDesc": "If the current candidate file already contains names and SMILES, CADMA can launch the missing SA Score and Toxicity jobs for you. You can also reuse completed jobs below.",
-      "tableSmiles": "SMILES",
-      "saScoreOptional": "SA Score job · optional",
-      "saMissing": "SA missing",
-      "projectLabel": "Project label",
-      "tableDt": "DT",
-      "sourceGuide": "Source guide",
-      "projectLabelPlaceholder": "e.g. Quinone series April 2026",
-      "quickFillNeedSmileit": "Select a completed Smile-it job",
-      "tableSa": "SA",
-      "selectSaMethodPlaceholder": "Select SA method...",
-      "skipToxicity": "Skip — no toxicity data",
-      "generatePanelDesc": "Select the Smile-it run that contains your candidate SMILES. CADMA will launch new Toxicity Properties and SA Score jobs automatically.",
-      "saMethodLabel": "SA method",
-      "toxicityOptional": "Toxicity Properties job · optional",
-      "guideCombined": "A combined CSV with all columns",
-      "quickFillSkipToxicity": "Skip toxicity report",
-      "ariaClearReference": "Clear reference selection",
-      "launchMissing": "Launch missing jobs",
-      "selectSmileitJobTitle": "Select a Smile-it job",
-      "quickFillSmileit": "Smile-it guide job",
-      "draftHint": "You can pause once the project label and main SMILES guide are ready, then return later to add the remaining CSV files.",
-      "pathwayReuseDesc": "Pick existing Smile-it, Toxicity and SA Score jobs to combine their results.",
-      "change": "Change",
-      "quickFillToxicityReady": "Toxicity already attached",
-      "files": "Files",
-      "selectSmileitJobPlaceholder": "Select a Smile-it job...",
-      "saMethodRequired": "SA method · required",
-      "pathwayManualTitle": "Manual CSV import",
-      "generateButton": "Generate Toxicity + SA",
-      "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
-      "tableHash": "#",
-      "pathwayManualDesc": "Upload your own CSV files with candidate SMILES, toxicity and SA data.",
-      "quickFillNamesDetected": "Names detected in guide",
-      "pathwayGenerateDesc": "Pick a completed Smile-it job and auto-launch Toxicity + SA Score jobs.",
-      "quickFillSaReady": "SA already attached",
-      "guideSmiles": "SMILES from",
-      "payloadPreviewDesc": "This is the candidate set that will be carried into step 3.",
-      "desc": "Load your molecular data generated by Smile-it, Toxicity Properties and SA Score.",
-      "reloadJobList": "Reload job list",
-      "manualPanelTitle": "Manual CSV import",
-      "toxicityMissing": "Toxicity missing",
-      "reusePanelTitle": "Reuse completed jobs",
-      "saveProgress": "Save progress & pause",
-      "running": "Running CADMA Py…",
-      "labelHelp": "Reference family name identifies the baseline. The project label names this candidate batch, while molecule names are taken from the imported name column.",
-      "reusePanelDesc": "Select between your completed analysis jobs. A Smile-it job provides the candidate SMILES; Toxicity and SA Score jobs are optional but recommended.",
-      "saReady": "SA ✓",
-      "submitting": "Submitting CADMA Py job…",
-      "guideToxicity": "Toxicity from",
-      "quickFillSaJob": "SA Score job"
+    "step3": {
+      "weightAdme": "Weight ADME",
+      "formulaControls": "CADMA formula controls",
+      "saRef": "SA_ref",
+      "placeholderMin": "Min",
+      "candidate": "Candidate",
+      "formulaControlsDesc": "These values are applied to the next ranking run.",
+      "shadedHint": "Shaded region = reference mean ± std dev. Points inside the band pass this metric.",
+      "weightSa": "Weight SA",
+      "intervalMin": "Min",
+      "mRef": "M_ref",
+      "admeHits": "ADME hits",
+      "ld50Ref": "LD50_ref",
+      "candidatesEvaluated": "Candidates evaluated",
+      "barHint": "Bar length = selection score (ADME + toxicity + SA). Higher is better. Red dashed line = reference baseline.",
+      "metricFocus": "Metric focus",
+      "globalRanking": "Global selection ranking",
+      "dtRef": "DT_ref",
+      "weightToxicity": "Weight Toxicity",
+      "fullRanking": "Full ranking table",
+      "topCandidate": "Top candidate",
+      "candidateVsReference": "Candidate vs. reference band — {{ metric }}",
+      "intervalMax": "Max",
+      "referenceFamily": "Reference family",
+      "toxicity": "Toxicity",
+      "title": "Selection scores",
+      "placeholderMax": "Max",
+      "barChart": "Bar chart",
+      "intervalMetric": "Metric",
+      "chartType": "Chart type",
+      "scatterPlot": "Scatter plot",
+      "admeIntervalWindow": "ADME interval window",
+      "selectionScore": "selection score",
+      "desc": "Adjust reference values, weights, and ADME intervals, then run the CADMA Py ranking.",
+      "lineChart": "Line chart",
+      "totalWeight": "Total weight",
+      "resetDefaults": "Reset defaults"
+    },
+    "hero": {
+      "step3": "Configure your ranking formula",
+      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "title": "CADMAPy",
+      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
+      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "tag": "CADMA-Chem Protocol",
+      "infoAria": "Show workflow overview",
+      "step4": "View scores & export results"
     },
     "steps": {
-      "results": "Results",
-      "ariaLabel": "Workflow steps",
+      "selectionScores": "Selection scores",
       "referenceFamily": "Reference family",
-      "configureFormula": "Configure formula",
+      "ariaLabel": "Workflow steps",
       "candidateFiles": "Candidate files",
-      "selectionScores": "Selection scores"
+      "results": "Results",
+      "configureFormula": "Configure formula"
+    },
+    "importer": {
+      "deadLines": "Dead lines to skip",
+      "assignFor": "Assign meaning for {{ column }}",
+      "delimiterTab": "Tab",
+      "compoundName": "Compound name",
+      "saScore": "SA score",
+      "delimiter": "Delimiter",
+      "remove": "Remove",
+      "usableRows": "usable rows",
+      "format": "Format",
+      "formatCsv": "CSV",
+      "ignoreColumn": "Ignore this column",
+      "headerRow": "Header row",
+      "additionalFile": "Additional file",
+      "formatCsvTab": "CSV · tab",
+      "guideFile": "Guide file",
+      "mainSmiles": "Main SMILES guide",
+      "doiOrUrl": "DOI or URL",
+      "delimiterComma": "Comma",
+      "formatCsvDelimiter": "CSV · {{ delimiter }}",
+      "delimiterSemicolon": "Semicolon",
+      "mappingHint": "Use the combobox in each table header to tell the app what every column means.",
+      "paperReference": "Paper reference",
+      "noUsableRows": "No usable rows detected yet.",
+      "fallbackNote": "Fallback names will use {{ prefix }} + counter.",
+      "evidenceNote": "Evidence note",
+      "formatSmi": "SMI",
+      "assignColumn": "Assign column meaning",
+      "ld50": "LD50",
+      "smilesMatch": "SMILES match column",
+      "mutagenicity": "Mutagenicity",
+      "devTox": "Dev tox"
+    },
+    "scope": {
+      "group": "Group",
+      "unknown": "Unknown",
+      "personal": "Personal",
+      "global": "Global (Root)"
+    },
+    "metrics": {
+      "hbAcceptors": "HB Acceptors",
+      "molarRefractivity": "Molar Refractivity",
+      "devToxicity": "Dev. Toxicity",
+      "saScore": "SA Score",
+      "heavyAtoms": "Heavy Atoms",
+      "molecularWeight": "Molecular Weight",
+      "rotatableBonds": "Rotatable Bonds",
+      "hbDonors": "HB Donors",
+      "ld50": "LD50 (mg/kg)",
+      "logP": "LogP",
+      "mutagenicity": "Mutagenicity",
+      "polarSA": "Polar SA"
+    },
+    "familyDetail": {
+      "formatBytes": "B",
+      "back": "← Back",
+      "copying": "Copying…",
+      "cancel": "Cancel",
+      "closeCompound": "Close compound details",
+      "createCopy": "Create copy",
+      "readOnly": "Read only",
+      "editReference": "Edit reference",
+      "copyTitle": "Copy this family into your own editable workspace",
+      "sourceFiles": "Source files",
+      "nullWarning": "Some metrics have null values — compounds missing that field are excluded from its average.",
+      "removeCompound": "Remove compound",
+      "nullsLabel": "Nulls",
+      "rangeLabel": "Min — Max",
+      "date": "Date",
+      "defaultReadOnly": "This family is read-only in your current scope. Create an editable copy to modify it safely.",
+      "sha256Prefix": "SHA-256:",
+      "backToList": "Back to list",
+      "canEdit": "Can edit",
+      "paperUrl": "Paper URL / DOI",
+      "edit": "Edit",
+      "tableHeaderReference": "Reference",
+      "addCompound": "+ Add compound",
+      "name": "Name *",
+      "compoundsAndReferences": "Compounds & references",
+      "unnamedCompound": "Unnamed compound",
+      "nameLabel": "Name",
+      "disease": "Disease *",
+      "saveCompound": "Save compound",
+      "tableHeaderName": "Name",
+      "formatKb": "KB",
+      "compoundDetailsTitle": "Compound details",
+      "paperReference": "Paper reference",
+      "cancelAdd": "✕ Cancel",
+      "evidenceNote": "Evidence note",
+      "generatingPreview": "Generating molecule preview…",
+      "groupReadOnly": "This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
+      "nullCount": "null",
+      "smilesLabel": "SMILES *",
+      "description": "Description",
+      "tableHeaderUrl": "URL / DOI",
+      "meanSdLabel": "Mean ± SD",
+      "readOnlyTemplate": "Read-only template",
+      "smilesPlaceholder": "e.g. CCO",
+      "scientificContext": "Scientific context",
+      "files": "files",
+      "saveChanges": "Save changes",
+      "metricLabel": "Metric",
+      "rows": "rows",
+      "compoundNamePlaceholder": "Compound name",
+      "tableHeaderNote": "Note",
+      "stdevLabel": "±SD",
+      "rdkitPreview": "RDKit preview",
+      "tableHeaderRank": "#",
+      "tableHeaderSmiles": "SMILES",
+      "copySuffix": "Copy",
+      "downloadCsv": "Download CSV",
+      "paperReferencePlaceholder": "Author et al. (2025)",
+      "copyPlaceholder": "Editable copy name",
+      "fullAccess": "Full access",
+      "saving": "Saving…",
+      "createdBy": "Created by",
+      "addCompoundAdme": "Add compound (ADME auto-computed)",
+      "editFamilyTitle": "Edit family metadata",
+      "copyFamily": "⎘ Copy family",
+      "editFamily": "Edit family",
+      "rootReadOnly": "This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
+      "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
+      "openDetails": "Open compound details",
+      "paperUrlPlaceholder": "https://doi.org/...",
+      "meanLabel": "Mean",
+      "access": "Access",
+      "optionalNote": "Optional note",
+      "newFamilyName": "New family name",
+      "selectFamily": "Select family →",
+      "formatMb": "MB",
+      "cancelEdit": "Cancel edit",
+      "adding": "Adding…",
+      "openPreview": "Open molecule preview",
+      "refBandAverages": "Reference band averages"
+    },
+    "scopeLabels": {
+      "group": "Group",
+      "root": "Root",
+      "personal": "Personal"
+    },
+    "step1": {
+      "loading": "Loading…",
+      "orSavedFamily": "or choose a saved family",
+      "diseaseTarget": "Disease or target",
+      "doiUrl": "DOI / URL",
+      "traceabilitySummary": "Traceability summary",
+      "createNew": "Create a new reference family",
+      "updateFamily": "Update family",
+      "referenceCompounds": "reference compounds",
+      "previewCompounds": "Preview compounds",
+      "noFamilies": "No reference families available. Create one below to get started.",
+      "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
+      "readOnly": "Read only",
+      "compoundsColumn": "Compounds",
+      "familyName": "Family name",
+      "nameColumn": "Name",
+      "clear": "Clear",
+      "quickStart": "Quick start — pre-built reference sets",
+      "diseaseColumn": "Disease",
+      "traceabilityPlaceholder": "Brief notes on compound selection criteria…",
+      "change": "Change",
+      "alreadyImported": "Already imported",
+      "familyNamePlaceholder": "e.g. Alzheimer drugs 2025",
+      "deleteSelected": "Delete selected",
+      "selected": "Selected",
+      "title": "Reference family",
+      "paperReference": "Paper reference",
+      "loadingDetail": "Loading full reference detail…",
+      "selectFamily": "Select family →",
+      "compounds": "compounds",
+      "diseaseTargetPlaceholder": "e.g. Alzheimer's disease",
+      "saveReferenceFamily": "Save reference family",
+      "deleteFamily": "Delete family",
+      "doiUrlPlaceholder": "https://doi.org/…",
+      "desc": "Choose the disease baseline against which candidates will be scored.",
+      "viewFullDetail": "View full detail →",
+      "paperReferencePlaceholder": "Author et al. Journal Year"
+    },
+    "general": {
+      "minimum": "minimum",
+      "viewReport": "View report",
+      "showDetails": "Show details",
+      "candidates": "candidates",
+      "hideDetails": "Hide details",
+      "usableRows": "usable rows reviewed",
+      "files": "files",
+      "toxicityReady": "Toxicity ready",
+      "file": "file",
+      "ready": "ready",
+      "openResult": "Open result",
+      "saReady": "SA ready",
+      "close": "Close",
+      "maximum": "maximum",
+      "add": "Add",
+      "selectFamily": "Select family",
+      "createFamily": "Create family",
+      "delete": "Delete",
+      "compounds": "compounds",
+      "preview": "Preview",
+      "download": "Download",
+      "comparison": "comparison",
+      "edit": "Edit"
     },
     "history": {
       "title": "Previous executions",
@@ -1113,289 +668,130 @@
       "ariaLabel": "CADMA Py historical executions"
     },
     "deleteModal": {
-      "confirmDelete": "Are you sure you want to delete",
-      "deleting": "Deleting...",
-      "cascadeWarning": "All listed jobs and their results will be permanently removed.",
-      "checkingData": "Checking linked data...",
-      "delete": "Delete",
+      "loadingJobs": "Loading linked jobs...",
       "ariaClose": "Close",
       "hasNoLinked": "has no",
-      "linked": "linked",
       "jobs": "jobs",
-      "job": "job",
-      "loadingJobs": "Loading linked jobs...",
-      "hasLinked": "has",
-      "deleteFamily": "Delete family",
       "cancel": "Cancel",
-      "cannotUndo": "This action cannot be undone."
-    },
-    "metrics": {
-      "hbAcceptors": "HB Acceptors",
-      "logP": "LogP",
-      "polarSA": "Polar SA",
-      "mutagenicity": "Mutagenicity",
-      "devToxicity": "Dev. Toxicity",
-      "rotatableBonds": "Rotatable Bonds",
-      "heavyAtoms": "Heavy Atoms",
-      "ld50": "LD50 (mg/kg)",
-      "molarRefractivity": "Molar Refractivity",
-      "molecularWeight": "Molecular Weight",
-      "saScore": "SA Score",
-      "hbDonors": "HB Donors"
-    },
-    "general": {
-      "toxicityReady": "Toxicity ready",
-      "selectFamily": "Select family",
-      "minimum": "minimum",
-      "edit": "Edit",
-      "openResult": "Open result",
-      "close": "Close",
-      "comparison": "comparison",
-      "showDetails": "Show details",
-      "hideDetails": "Hide details",
-      "file": "file",
-      "usableRows": "usable rows reviewed",
-      "maximum": "maximum",
-      "preview": "Preview",
-      "download": "Download",
+      "linked": "linked",
+      "cannotUndo": "This action cannot be undone.",
+      "cascadeWarning": "All listed jobs and their results will be permanently removed.",
       "delete": "Delete",
-      "createFamily": "Create family",
-      "files": "files",
-      "viewReport": "View report",
-      "candidates": "candidates",
-      "compounds": "compounds",
-      "saReady": "SA ready",
-      "add": "Add",
-      "ready": "ready"
-    },
-    "scope": {
-      "global": "Global (Root)",
-      "group": "Group",
-      "unknown": "Unknown",
-      "personal": "Personal"
-    },
-    "scopeLabels": {
-      "root": "Root",
-      "personal": "Personal",
-      "group": "Group"
-    },
-    "importer": {
-      "additionalFile": "Additional file",
-      "noUsableRows": "No usable rows detected yet.",
-      "delimiterComma": "Comma",
-      "delimiter": "Delimiter",
-      "delimiterSemicolon": "Semicolon",
-      "deadLines": "Dead lines to skip",
-      "formatCsv": "CSV",
-      "devTox": "Dev tox",
-      "headerRow": "Header row",
-      "mutagenicity": "Mutagenicity",
-      "formatCsvDelimiter": "CSV · {{ delimiter }}",
-      "format": "Format",
-      "usableRows": "usable rows",
-      "guideFile": "Guide file",
-      "mappingHint": "Use the combobox in each table header to tell the app what every column means.",
-      "assignFor": "Assign meaning for {{ column }}",
-      "fallbackNote": "Fallback names will use {{ prefix }} + counter.",
-      "evidenceNote": "Evidence note",
-      "assignColumn": "Assign column meaning",
-      "ignoreColumn": "Ignore this column",
-      "doiOrUrl": "DOI or URL",
-      "delimiterTab": "Tab",
-      "formatSmi": "SMI",
-      "remove": "Remove",
-      "compoundName": "Compound name",
-      "formatCsvTab": "CSV · tab",
-      "mainSmiles": "Main SMILES guide",
-      "ld50": "LD50",
-      "smilesMatch": "SMILES match column",
-      "saScore": "SA score",
-      "paperReference": "Paper reference"
-    },
-    "familyDetail": {
-      "canEdit": "Can edit",
-      "readOnlyTemplate": "Read-only template",
-      "paperUrlPlaceholder": "https://doi.org/...",
-      "createdBy": "Created by",
-      "scientificContext": "Scientific context",
-      "edit": "Edit",
-      "tableHeaderSmiles": "SMILES",
-      "date": "Date",
-      "removeCompound": "Remove compound",
-      "tableHeaderNote": "Note",
-      "name": "Name *",
-      "optionalNote": "Optional note",
-      "compoundDetailsTitle": "Compound details",
-      "cancelEdit": "Cancel edit",
-      "downloadCsv": "Download CSV",
-      "fullAccess": "Full access",
-      "cancel": "Cancel",
-      "nullWarning": "Some metrics have null values — compounds missing that field are excluded from its average.",
-      "saveCompound": "Save compound",
-      "compoundNamePlaceholder": "Compound name",
-      "rdkitPreview": "RDKit preview",
-      "editFamily": "Edit family",
-      "saveChanges": "Save changes",
-      "files": "files",
-      "evidenceNote": "Evidence note",
-      "copying": "Copying…",
-      "description": "Description",
-      "compoundsAndReferences": "Compounds & references",
-      "back": "← Back",
-      "paperUrl": "Paper URL / DOI",
-      "copySuffix": "Copy",
-      "sourceFiles": "Source files",
-      "formatKb": "KB",
-      "generatingPreview": "Generating molecule preview…",
-      "tableHeaderRank": "#",
-      "adding": "Adding…",
-      "rows": "rows",
-      "paperReference": "Paper reference",
-      "sha256Prefix": "SHA-256:",
-      "editReference": "Edit reference",
-      "copyFamily": "⎘ Copy family",
-      "tableHeaderName": "Name",
-      "createCopy": "Create copy",
-      "groupReadOnly": "This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
-      "selectFamily": "Select family →",
-      "smilesPlaceholder": "e.g. CCO",
-      "nullCount": "null",
-      "editFamilyTitle": "Edit family metadata",
-      "readOnly": "Read only",
-      "defaultReadOnly": "This family is read-only in your current scope. Create an editable copy to modify it safely.",
-      "tableHeaderUrl": "URL / DOI",
-      "copyTitle": "Copy this family into your own editable workspace",
-      "backToList": "Back to list",
-      "rootReadOnly": "This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
-      "access": "Access",
-      "refBandAverages": "Reference band averages",
-      "unnamedCompound": "Unnamed compound",
-      "openPreview": "Open molecule preview",
-      "smilesLabel": "SMILES *",
-      "openDetails": "Open compound details",
-      "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
-      "disease": "Disease *",
-      "saving": "Saving…",
-      "newFamilyName": "New family name",
-      "formatBytes": "B",
-      "addCompoundAdme": "Add compound (ADME auto-computed)",
-      "cancelAdd": "✕ Cancel",
-      "paperReferencePlaceholder": "Author et al. (2025)",
-      "copyPlaceholder": "Editable copy name",
-      "tableHeaderReference": "Reference",
-      "addCompound": "+ Add compound",
-      "nameLabel": "Name",
-      "closeCompound": "Close compound details",
-      "formatMb": "MB"
-    },
-    "step3": {
-      "topCandidate": "Top candidate",
-      "fullRanking": "Full ranking table",
-      "resetDefaults": "Reset defaults",
-      "metricFocus": "Metric focus",
-      "mRef": "M_ref",
-      "candidatesEvaluated": "Candidates evaluated",
-      "globalRanking": "Global selection ranking",
-      "formulaControlsDesc": "These values are applied to the next ranking run.",
-      "weightToxicity": "Weight Toxicity",
-      "candidate": "Candidate",
-      "weightAdme": "Weight ADME",
-      "title": "Selection scores",
-      "admeHits": "ADME hits",
-      "admeIntervalWindow": "ADME interval window",
-      "desc": "Adjust reference values, weights, and ADME intervals, then run the CADMA Py ranking.",
-      "referenceFamily": "Reference family",
-      "intervalMax": "Max",
-      "placeholderMin": "Min",
-      "saRef": "SA_ref",
-      "formulaControls": "CADMA formula controls",
-      "ld50Ref": "LD50_ref",
-      "dtRef": "DT_ref",
-      "intervalMetric": "Metric",
-      "shadedHint": "Shaded region = reference mean ± std dev. Points inside the band pass this metric.",
-      "barHint": "Bar length = selection score (ADME + toxicity + SA). Higher is better. Red dashed line = reference baseline.",
-      "toxicity": "Toxicity",
-      "chartType": "Chart type",
-      "barChart": "Bar chart",
-      "candidateVsReference": "Candidate vs. reference band — {{ metric }}",
-      "intervalMin": "Min",
-      "selectionScore": "selection score",
-      "lineChart": "Line chart",
-      "totalWeight": "Total weight",
-      "placeholderMax": "Max",
-      "weightSa": "Weight SA",
-      "scatterPlot": "Scatter plot"
-    },
-    "step1": {
-      "selectFamily": "Select family →",
-      "createNew": "Create a new reference family",
-      "diseaseTarget": "Disease or target",
-      "traceabilityPlaceholder": "Brief notes on compound selection criteria…",
-      "readOnly": "Read only",
-      "diseaseColumn": "Disease",
-      "orSavedFamily": "or choose a saved family",
-      "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
-      "title": "Reference family",
-      "alreadyImported": "Already imported",
-      "saveReferenceFamily": "Save reference family",
-      "clear": "Clear",
-      "paperReference": "Paper reference",
-      "deleteSelected": "Delete selected",
-      "desc": "Choose the disease baseline against which candidates will be scored.",
-      "loading": "Loading…",
-      "previewCompounds": "Preview compounds",
-      "selected": "Selected",
-      "viewFullDetail": "View full detail →",
-      "change": "Change",
-      "doiUrlPlaceholder": "https://doi.org/…",
-      "nameColumn": "Name",
-      "loadingDetail": "Loading full reference detail…",
-      "quickStart": "Quick start — pre-built reference sets",
-      "diseaseTargetPlaceholder": "e.g. Alzheimer's disease",
-      "compounds": "compounds",
-      "familyNamePlaceholder": "e.g. Alzheimer drugs 2025",
-      "updateFamily": "Update family",
-      "referenceCompounds": "reference compounds",
-      "doiUrl": "DOI / URL",
-      "traceabilitySummary": "Traceability summary",
-      "paperReferencePlaceholder": "Author et al. Journal Year",
+      "deleting": "Deleting...",
+      "job": "job",
       "deleteFamily": "Delete family",
-      "compoundsColumn": "Compounds",
-      "noFamilies": "No reference families available. Create one below to get started.",
-      "familyName": "Family name"
+      "hasLinked": "has",
+      "confirmDelete": "Are you sure you want to delete",
+      "checkingData": "Checking linked data..."
     },
-    "hero": {
-      "tag": "CADMA-Chem Protocol",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "title": "CADMAPy",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
-      "step4": "View scores & export results",
-      "infoAria": "Show workflow overview"
+    "step2": {
+      "selectSaMethodTitle": "Select an SA method",
+      "smileitRequired": "Smile-it job · required",
+      "payloadPreviewDesc": "This is the candidate set that will be carried into step 3.",
+      "pathwayReuseTitle": "Reuse completed jobs",
+      "ariaBackToCandidates": "Back to candidate inputs",
+      "projectLabel": "Project label",
+      "quickFillToxicity": "Toxicity report",
+      "quickFillSaMethod": "SA method to use",
+      "labelHelp": "Reference family name identifies the baseline. The project label names this candidate batch, while molecule names are taken from the imported name column.",
+      "projectLabelPlaceholder": "e.g. Quinone series April 2026",
+      "selectSmileitJobTitle": "Select a Smile-it job",
+      "acceptAndContinue": "Accept and continue to formula",
+      "quickFillSmileit": "Smile-it guide job",
+      "pathwayGenerateTitle": "Generate from Smile-it",
+      "tableM": "M",
+      "saMethodLabel": "SA method",
+      "pathwayManualDesc": "Upload your own CSV files with candidate SMILES, toxicity and SA data.",
+      "desc": "Load your molecular data generated by Smile-it, Toxicity Properties and SA Score.",
+      "quickFillToxicityReady": "Toxicity already attached",
+      "saScoreOptional": "SA Score job · optional",
+      "pathwayReuseDesc": "Pick existing Smile-it, Toxicity and SA Score jobs to combine their results.",
+      "pathwayGenerateDesc": "Pick a completed Smile-it job and auto-launch Toxicity + SA Score jobs.",
+      "quickFillDesc": "If the current candidate file already contains names and SMILES, CADMA can launch the missing SA Score and Toxicity jobs for you. You can also reuse completed jobs below.",
+      "generatePanelDesc": "Select the Smile-it run that contains your candidate SMILES. CADMA will launch new Toxicity Properties and SA Score jobs automatically.",
+      "tableLd50": "LD50",
+      "guideCombined": "A combined CSV with all columns",
+      "sourceGuide": "Source guide",
+      "manualPanelTitle": "Manual CSV import",
+      "launchMissing": "Launch missing jobs",
+      "guideSa": "SA scores from",
+      "payloadPreviewTitle": "Final candidate payload preview",
+      "quickFillGuideMissing": "Upload a candidate guide with names and SMILES to enable automatic predictions.",
+      "quickFillNamesDetected": "Names detected in guide",
+      "title": "Upload candidate files",
+      "quickFillLaunch": "Launch missing SA + toxicity jobs",
+      "reloadJobList": "Reload job list",
+      "saMethodRequired": "SA method · required",
+      "ariaClearReference": "Clear reference selection",
+      "quickFillApply": "Auto-fill candidate values",
+      "guideSmiles": "SMILES from",
+      "tableSa": "SA",
+      "skipToxicity": "Skip — no toxicity data",
+      "candidatesLoaded": "candidates loaded",
+      "draftHint": "You can pause once the project label and main SMILES guide are ready, then return later to add the remaining CSV files.",
+      "quickFillSkipToxicity": "Skip toxicity report",
+      "generatePanelTitle": "Generate from Smile-it",
+      "files": "Files",
+      "tableCandidate": "Candidate",
+      "running": "Running CADMA Py…",
+      "toxicityMissing": "Toxicity missing",
+      "selectSmileitJobPlaceholder": "Select a Smile-it job...",
+      "skipSa": "Skip — no SA data",
+      "quickFillSaJob": "SA Score job",
+      "quickFillSaReady": "SA already attached",
+      "saReady": "SA ✓",
+      "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
+      "runCadmaPy": "Run CADMA Py →",
+      "change": "Change",
+      "submitting": "Submitting CADMA Py job…",
+      "clearFiles": "Clear files",
+      "guideToxicity": "Toxicity from",
+      "backToStep2": "Back to step 2",
+      "tableHash": "#",
+      "toxicityOptional": "Toxicity Properties job · optional",
+      "quickFillNamesFallback": "Names will fall back to SMILES",
+      "showingFirst": "Showing the first {{ count }} of {{ total }} candidates.",
+      "quickFillReady": "The imported guide preserves the candidate name label so the CADMA ranking stays fully identified.",
+      "quickFillSkipSa": "Skip SA report",
+      "exportCsv": "Export CSV",
+      "saMissing": "SA missing",
+      "selectSaMethodPlaceholder": "Select SA method...",
+      "toxicityReady": "Toxicity ✓",
+      "tableSmiles": "SMILES",
+      "selectSaScoreJobTitle": "Select an SA Score job",
+      "saveProgress": "Save progress & pause",
+      "tableDt": "DT",
+      "reusePanelDesc": "Select between your completed analysis jobs. A Smile-it job provides the candidate SMILES; Toxicity and SA Score jobs are optional but recommended.",
+      "reusePanelTitle": "Reuse completed jobs",
+      "selectToxicityJobTitle": "Select a Toxicity Properties job",
+      "unnamedCandidate": "Unnamed candidate",
+      "quickFillNeedSmileit": "Select a completed Smile-it job",
+      "pathwayManualTitle": "Manual CSV import",
+      "applySelectedJobs": "Apply selected jobs",
+      "generateButton": "Generate Toxicity + SA"
     },
     "step4": {
-      "metricChartAria": "CADMA Py metric comparison chart",
       "waitingForResults": "Waiting for CADMA Py results...",
-      "tableInband": "In-band metrics",
-      "tableMr": "MR",
-      "runningHint": "Running CADMA Py comparison... Results will appear here when the job completes.",
-      "rankingChartAria": "CADMA Py ranking chart",
       "tableSAdme": "S_ADME",
-      "tableHbla": "HBLA",
+      "tableSaRaw": "SA raw",
+      "tableLd50": "LD50",
+      "tableSS": "S_S",
+      "tableMr": "MR",
+      "rankingChartAria": "CADMA Py ranking chart",
+      "tableMw": "MW",
+      "tableRb": "RB",
       "tableAtx": "AtX",
       "tableDt": "DT",
-      "backToFormula": "Back to formula",
-      "tablePsa": "PSA",
+      "tableInband": "In-band metrics",
       "tableM": "M",
+      "runningHint": "Running CADMA Py comparison... Results will appear here when the job completes.",
+      "tableHbla": "HBLA",
+      "metricChartAria": "CADMA Py metric comparison chart",
+      "tablePsa": "PSA",
       "tableLogp": "logP",
       "tableHbld": "HBLD",
-      "tableSaRaw": "SA raw",
-      "tableMw": "MW",
       "tableSa": "SA",
-      "tableRb": "RB",
-      "tableSS": "S_S",
-      "tableLd50": "LD50"
+      "backToFormula": "Back to formula"
     }
   },
   "app": {
@@ -1403,116 +799,234 @@
       "signIn": "Se connecter",
       "signOut": "Se déconnecter"
     },
-    "navHints": {
-      "identity": "Users, groups and permissions",
-      "signIn": "Authenticate to load your workspace",
-      "groups": "Manage scientific team groups and their permissions",
-      "jobsMonitor": "Track active and completed jobs",
-      "apps": "Visible scientific apps for your current session",
-      "profile": "Manage your personal profile and password",
-      "users": "Manage user accounts and group memberships",
-      "dashboard": "Role-aware workspace overview"
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "signIn": "Sign in",
+      "ariaLabel": "Main navigation",
+      "jobsMonitor": "Moniteur de jobs",
+      "users": "Users",
+      "profile": "Profil",
+      "identity": "Identité",
+      "groups": "Groups",
+      "apps": "Applications"
     },
     "brand": {
-      "kicker": "Chemistry Apps",
       "title": "Centre de contrôle scientifique",
+      "kicker": "Chemistry Apps",
       "caption": "Navigation centrale pour les applications, les jobs et l'accès au compte."
     },
-    "nav": {
-      "identity": "Identité",
-      "signIn": "Sign in",
-      "groups": "Groups",
-      "jobsMonitor": "Moniteur de jobs",
-      "apps": "Applications",
-      "ariaLabel": "Main navigation",
-      "profile": "Profil",
-      "users": "Users",
-      "dashboard": "Tableau de bord"
+    "navHints": {
+      "dashboard": "Role-aware workspace overview",
+      "signIn": "Authenticate to load your workspace",
+      "jobsMonitor": "Track active and completed jobs",
+      "users": "Manage user accounts and group memberships",
+      "profile": "Manage your personal profile and password",
+      "identity": "Users, groups and permissions",
+      "groups": "Manage scientific team groups and their permissions",
+      "apps": "Visible scientific apps for your current session"
     }
   },
-  "language": {
-    "switcher": {
-      "menuLabel": "Langues disponibles",
-      "ariaLabel": "Sélecteur de langue"
+  "dashboard": {
+    "header": {
+      "role": "Rôle",
+      "primaryGroup": "Primary group",
+      "eyebrow": "Espace par rôle",
+      "anonymous": "anonymous"
+    },
+    "panels": {
+      "usersInScope": "Users in scope",
+      "groupsInScope": "Groups in scope",
+      "recentJobs": "Recent jobs",
+      "accessibleApps": "Accessible apps"
+    },
+    "actions": {
+      "openIdentityConsole": "Open identity console",
+      "openJobsMonitor": "Ouvrir le moniteur",
+      "openRecycleBin": "Open recycle bin",
+      "myProfile": "Mon profil"
+    },
+    "jobs": {
+      "resultUnavailable": "Result unavailable",
+      "openResultFor": "Open result for"
+    },
+    "aria": {
+      "page": "User dashboard"
+    },
+    "errors": {
+      "unableToDeleteJob": "Unable to delete job.",
+      "unableToLoadIdentityScope": "Unable to load identity scope.",
+      "unableToLoad": "Unable to load dashboard.",
+      "unableToLoadJobs": "Unable to load dashboard jobs."
+    },
+    "metrics": {
+      "pausedJobs": "Jobs en pause",
+      "visibleUsers": "Visible users",
+      "enabledApps": "Enabled apps",
+      "completedJobs": "Jobs terminés",
+      "runningJobs": "Jobs en cours",
+      "visibleGroups": "Visible groups"
+    },
+    "states": {
+      "loading": "Chargement du tableau de bord...",
+      "noRecentJobs": "No jobs available for your current visibility scope."
+    }
+  },
+  "tunnel": {
+    "header": {
+      "title": "Asymmetric Eckart Tunneling Calculator",
+      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced.",
+      "eyebrow": "Tunnel Effect"
+    },
+    "form": {
+      "barrierZpe": "Reaction barrier ZPE (kcal/mol)",
+      "imaginaryFrequency": "Imaginary frequency (cm-1)",
+      "title": "Data Entry",
+      "temperature": "Temperature (K)",
+      "ariaLabel": "Input parameters",
+      "energyZpe": "Reaction energy ZPE (kcal/mol)"
+    },
+    "trace": {
+      "empty": "No input modifications captured yet.",
+      "columns": {
+        "index": "#",
+        "field": "Field",
+        "new": "New",
+        "previous": "Previous",
+        "changedAt": "Changed At"
+      },
+      "title": "Input Modification Trace",
+      "ariaLabel": "Input modification events",
+      "eventsCapture": "events captured"
+    },
+    "actions": {
+      "exportLog": "Export LOG (inputs + results)",
+      "processing": "Processing...",
+      "reset": "Reset",
+      "run": "Data ok, Run Tunnel",
+      "exporting": "Exporting...",
+      "exportCsv": "Export CSV",
+      "clearTrace": "Clear input trace"
+    },
+    "history": {
+      "empty": "No historical tunnel effect jobs yet.",
+      "ariaLabel": "Historical tunnel jobs"
+    },
+    "result": {
+      "labels": {
+        "alpha1": "Alpha 1:",
+        "frequency": "Frequency:",
+        "u": "U:",
+        "model": "Model:",
+        "energyZpe": "Energy ZPE:",
+        "barrierZpe": "Barrier ZPE:",
+        "alpha2": "Alpha 2:",
+        "temperature": "Temperature:",
+        "g": "G:",
+        "inputEvents": "Input events:",
+        "kappaTst": "Kappa TST:"
+      },
+      "submitting": "Submitting tunnel effect job to backend...",
+      "title": "Output",
+      "ariaLabel": "Results and progress"
     }
   },
   "molarFractions": {
+    "header": {
+      "title": "Acid-Base Equilibrium Fractions",
+      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app.",
+      "eyebrow": "Molar Fractions"
+    },
+    "form": {
+      "phSingle": "One pH value",
+      "pkaValues": "Enter pKa values",
+      "initialChargePlaceholder": "q",
+      "phMode": "pH values",
+      "ariaLabel": "Input parameters",
+      "singlePh": "Single pH value",
+      "speciesSettings": "Species configuration",
+      "phMax": "Max",
+      "phRange": "pH range",
+      "inputMode": "Input mode",
+      "phMin": "Min",
+      "pkaCountOption": "{{ count }} pKa",
+      "title": "Data Entry",
+      "singleMode": "Single species",
+      "pkaCount": "Number of acid-base equilibria",
+      "speciesLabelPlaceholder": "A",
+      "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
+      "pkaSlotLabel": "pKa{{ n }}",
+      "batchMode": "Batch CSV",
+      "speciesLabel": "Species label",
+      "initialCharge": "Charge of the most protonated species",
+      "phStep": "Step"
+    },
+    "actions": {
+      "processing": "Processing...",
+      "reset": "Reset",
+      "run": "Run Molar Fractions",
+      "exportCsv": "Export CSV"
+    },
     "history": {
+      "empty": "No historical jobs yet for molar fractions.",
+      "open": "Open",
       "columns": {
         "mode": "Mode"
       },
-      "ariaLabel": "Historical jobs",
-      "empty": "No historical jobs yet for molar fractions.",
-      "open": "Open"
-    },
-    "header": {
-      "title": "Acid-Base Equilibrium Fractions",
-      "eyebrow": "Molar Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
-    },
-    "form": {
-      "singlePh": "Single pH value",
-      "speciesSettings": "Species configuration",
-      "speciesSettingsOptional": "Optional. Leave blank to use the model standard configuration.",
-      "ariaLabel": "Input parameters",
-      "speciesLabel": "Species label",
-      "title": "Data Entry",
-      "phStep": "Step",
-      "batchMode": "Batch CSV",
-      "inputMode": "Input mode",
-      "pkaSlotLabel": "pKa{{ n }}",
-      "phMode": "pH values",
-      "phMax": "Max",
-      "pkaCountOption": "{{ count }} pKa",
-      "singleMode": "Single species",
-      "pkaValues": "Enter pKa values",
-      "phMin": "Min",
-      "pkaCount": "Number of acid-base equilibria",
-      "phRange": "pH range",
-      "phSingle": "One pH value",
-      "speciesLabelPlaceholder": "A",
-      "initialCharge": "Charge of the most protonated species",
-      "initialChargePlaceholder": "q"
-    },
-    "actions": {
-      "reset": "Reset",
-      "run": "Run Molar Fractions",
-      "processing": "Processing...",
-      "exportCsv": "Export CSV"
+      "ariaLabel": "Historical jobs"
     },
     "result": {
-      "exportLog": "Export LOG (inputs + CSV)",
-      "title": "Results",
-      "ariaLabel": "Results and progress",
       "metadata": {
-        "step": "Step:",
-        "label": "Label:",
+        "mode": "Mode:",
+        "to": "to",
         "range": "Range:",
         "pkaValues": "pKa values:",
-        "species": "Species:",
-        "initialCharge": "Initial charge:",
         "points": "Points:",
-        "to": "to",
-        "mode": "Mode:"
+        "step": "Step:",
+        "label": "Label:",
+        "species": "Species:",
+        "initialCharge": "Initial charge:"
       },
+      "noRows": "No final rows available yet for this historical job.",
+      "exportLog": "Export LOG (inputs + CSV)",
+      "submitting": "Submitting molar fractions job to backend...",
+      "title": "Results",
+      "ariaLabel": "Results and progress",
       "chart": {
+        "probe": {
+          "label": "Reference pH",
+          "fixed": "Interpolated readings at pH",
+          "slider": "Move reference line"
+        },
         "title": "Fraction curves",
         "ariaLabel": "Molar fractions chart",
-        "subtitle": "Each species is drawn as a curve across the computed pH range.",
-        "probe": {
-          "fixed": "Interpolated readings at pH",
-          "label": "Reference pH",
-          "slider": "Move reference line"
-        }
+        "subtitle": "Each species is drawn as a curve across the computed pH range."
       },
-      "submitting": "Submitting molar fractions job to backend...",
-      "noRows": "No final rows available yet for this historical job.",
       "table": {
-        "ph": "pH",
-        "sum": "Sum"
+        "sum": "Sum",
+        "ph": "pH"
       }
     },
     "batch": {
+      "noRows": "No species met the selected threshold for this file.",
+      "summary": {
+        "rows": "Visible rows:",
+        "ph": "Target pH:"
+      },
+      "description": "Upload a CSV file with multiple compounds to calculate species fractions at one fixed pH value.",
+      "studentNote": "Students usually estimate pKa values outside the platform and then upload the final curated table here.",
+      "run": "Calculate from CSV",
+      "fileLabel": "CSV file",
+      "exportCsv": "Export batch CSV",
+      "table": {
+        "pkaValues": "pKa values",
+        "acronym": "Acronym",
+        "charge": "Charge",
+        "species": "Species",
+        "initialCharge": "Initial charge",
+        "fraction": "Fraction",
+        "smiles": "SMILES"
+      },
+      "threshold": "Minimum fraction threshold",
       "csvExampleTitle": "Expected CSV example",
       "csvExample": {
         "header": "Acronym,SMILES,InitialCharge,pKaValues",
@@ -1520,236 +1034,728 @@
         "row1": "EDA,NCCN,2,6.16;10.26",
         "row2": "GLY,NCC(=O)O,-1,2.35;9.78"
       },
-      "parameters": "Batch parameters",
-      "thresholdHint": "Only species with fraction greater than or equal to this value will remain in the final table.",
-      "description": "Upload a CSV file with multiple compounds to calculate species fractions at one fixed pH value.",
-      "threshold": "Minimum fraction threshold",
-      "exportCsv": "Export batch CSV",
-      "studentNote": "Students usually estimate pKa values outside the platform and then upload the final curated table here.",
-      "summary": {
-        "ph": "Target pH:",
-        "rows": "Visible rows:"
-      },
-      "noRows": "No species met the selected threshold for this file.",
-      "run": "Calculate from CSV",
-      "table": {
-        "acronym": "Acronym",
-        "smiles": "SMILES",
-        "fraction": "Fraction",
-        "pkaValues": "pKa values",
-        "species": "Species",
-        "initialCharge": "Initial charge",
-        "charge": "Charge"
-      },
       "targetPh": "Target pH",
-      "fileLabel": "CSV file"
+      "thresholdHint": "Only species with fraction greater than or equal to this value will remain in the final table.",
+      "parameters": "Batch parameters"
     }
   },
   "jobsMonitor": {
-    "aria": {
-      "activeJobs": "Active jobs",
-      "finishedJobs": "Finished jobs",
-      "statusSummary": "Status summary",
-      "filters": "Monitor filters",
-      "pausedJobs": "Paused jobs",
-      "page": "Jobs monitor"
-    },
-    "kpi": {
-      "active": "Actifs",
-      "completed": "Terminés",
-      "paused": "En pause",
-      "failed": "Échoués",
-      "cancelled": "Annulés",
-      "lastUpdate": "Dernière mise à jour"
-    },
-    "details": {
-      "aria": "Job details",
-      "logs": "Logs",
-      "message": "Message",
-      "title": "Détails du job",
-      "errorTrace": "Trace d'erreur",
-      "loading": "Loading details and logs...",
-      "noLogs": "No logs available for this job.",
-      "errorTraceAria": "Job error trace"
-    },
-    "states": {
-      "loadingJobs": "Chargement des jobs...",
-      "noActiveJobs": "No active jobs for the selected filters.",
-      "noFinishedJobs": "No terminal jobs for this filter yet.",
-      "noPausedJobs": "No paused jobs for the selected filters."
-    },
     "header": {
       "title": "Moniteur de jobs",
-      "eyebrow": "Distributed Operations",
-      "subtitle": "Track running, paused, completed and failed jobs across all apps."
+      "subtitle": "Track running, paused, completed and failed jobs across all apps.",
+      "eyebrow": "Distributed Operations"
+    },
+    "actions": {
+      "pauseJob": "Pause job",
+      "cancel": "Annuler",
+      "cancelJob": "Cancel job",
+      "recycleBin": "Corbeille",
+      "openLiveLogs": "Ouvrir les logs en direct",
+      "pause": "Mettre en pause",
+      "resume": "Reprendre",
+      "viewSummary": "Voir le résumé",
+      "pauseRequested": "Pause requested...",
+      "autoRefresh": "Rafraîchissement auto",
+      "openLogs": "Ouvrir les logs",
+      "cancelling": "Cancelling...",
+      "resumeJob": "Resume job",
+      "resuming": "Resuming...",
+      "pausing": "Pausing..."
     },
     "sections": {
       "finished": "Terminés, échoués et annulés",
       "running": "En cours",
       "paused": "En pause"
     },
+    "kpi": {
+      "completed": "Terminés",
+      "active": "Actifs",
+      "cancelled": "Annulés",
+      "lastUpdate": "Dernière mise à jour",
+      "failed": "Échoués",
+      "paused": "En pause"
+    },
+    "aria": {
+      "pausedJobs": "Paused jobs",
+      "finishedJobs": "Finished jobs",
+      "activeJobs": "Active jobs",
+      "page": "Jobs monitor",
+      "statusSummary": "Status summary",
+      "filters": "Monitor filters"
+    },
+    "hints": {
+      "cooperativePause": "A cooperative pause request was registered."
+    },
     "table": {
       "cacheMiss": "Miss",
       "cacheHit": "Hit"
     },
-    "actions": {
-      "viewSummary": "Voir le résumé",
-      "autoRefresh": "Rafraîchissement auto",
-      "pausing": "Pausing...",
-      "openLogs": "Ouvrir les logs",
-      "pauseRequested": "Pause requested...",
-      "resumeJob": "Resume job",
-      "pauseJob": "Pause job",
-      "pause": "Mettre en pause",
-      "cancelJob": "Cancel job",
-      "openLiveLogs": "Ouvrir les logs en direct",
-      "resume": "Reprendre",
-      "cancelling": "Cancelling...",
-      "recycleBin": "Corbeille",
-      "cancel": "Annuler",
-      "resuming": "Resuming..."
-    },
-    "hints": {
-      "cooperativePause": "A cooperative pause request was registered."
-    }
-  },
-  "profile": {
-    "aria": {
-      "management": "Profile management"
-    },
-    "errors": {
-      "unableToInitializeProfile": "Unable to initialize profile information.",
-      "unableToUpdateProfile": "Unable to update profile.",
-      "mustBeSignedIn": "You must be signed in to update your profile.",
-      "passwordMismatch": "Password confirmation does not match the new password."
-    },
-    "messages": {
-      "updatedSuccessfully": "Profile updated successfully."
-    },
-    "header": {
-      "title": "Profil",
-      "eyebrow": "Personal Workspace",
-      "subtitle": "Update your identity information. These changes are available for user, admin and root roles."
-    },
-    "form": {
-      "email": "E-mail",
-      "newPassword": "Nouveau mot de passe",
-      "confirmPassword": "Confirmer le mot de passe",
-      "saveProfile": "Enregistrer le profil",
-      "lastName": "Nom",
-      "firstName": "Prénom",
-      "saving": "Enregistrement..."
-    }
-  },
-  "saScore": {
-    "history": {
-      "title": "History",
-      "empty": "No historical SA score jobs yet.",
-      "ariaLabel": "Historical SA score jobs"
-    },
-    "header": {
-      "title": "Synthetic Accessibility Table",
-      "eyebrow": "SA Score",
-      "subtitle": "Run AMBIT, BRSAScore and RDKit synthetic accessibility methods over a batch of SMILES"
-    },
-    "moleculeModal": {
-      "loading": "Loading structure...",
-      "title": "Molecule structure"
-    },
-    "result": {
-      "viewStructure": "Click to view molecule structure",
-      "jobIdLabel": "Job ID:",
-      "ariaLabel": "Results and progress",
-      "methodsLabel": "Methods:",
-      "emptySearch": "No SA Score rows match the current search.",
-      "exportTargetLabel": "Export target",
-      "searchLabel": "Search table",
-      "tableName": "Name",
-      "jobNameLabel": "Visible name:",
-      "title": "Results",
-      "totalMolecules": "Total molecules:",
-      "submitting": "Submitting SA score job to backend...",
-      "error": "ERROR",
-      "filteredCount": "visible rows",
-      "searchPlaceholder": "Search by name or SMILES",
-      "tableSMILES": "SMILES",
-      "ariaProgressLabel": "SA score job progress"
-    },
-    "export": {
-      "allMethods": "All methods"
-    },
-    "sketch": {
-      "ketcherTitle": "Ketcher SMILES sketcher",
-      "title": "Draw SMILES",
-      "hint": "Use the sketcher below. If it fails to load, paste a SMILES in the fallback textarea.",
-      "loading": "Loading molecule sketcher…",
-      "addToList": "Add to list",
-      "cancel": "Cancel"
-    },
-    "actions": {
-      "reset": "Reset",
-      "exporting": "Exporting...",
-      "run": "Run SA Score",
-      "processing": "Processing...",
-      "exportCsv": "Export CSV"
-    },
-    "form": {
-      "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
-      "jobNameLabel": "Job name",
-      "title": "Input",
-      "jobNamePlaceholder": "Optional: visible job name",
-      "ariaLabel": "Input parameters",
-      "methodsLegend": "Methods"
-    },
-    "methods": {
-      "ambit": "AMBIT SA",
-      "brsa": "BRSAScore SA",
-      "rdkit": "RDKit SA"
-    }
-  },
-  "dashboard": {
-    "aria": {
-      "page": "User dashboard"
-    },
-    "jobs": {
-      "openResultFor": "Open result for",
-      "resultUnavailable": "Result unavailable"
-    },
-    "errors": {
-      "unableToLoad": "Unable to load dashboard.",
-      "unableToLoadIdentityScope": "Unable to load identity scope.",
-      "unableToLoadJobs": "Unable to load dashboard jobs.",
-      "unableToDeleteJob": "Unable to delete job."
+    "details": {
+      "loading": "Loading details and logs...",
+      "errorTrace": "Trace d'erreur",
+      "aria": "Job details",
+      "title": "Détails du job",
+      "message": "Message",
+      "noLogs": "No logs available for this job.",
+      "errorTraceAria": "Job error trace",
+      "logs": "Logs"
     },
     "states": {
-      "loading": "Chargement du tableau de bord...",
-      "noRecentJobs": "No jobs available for your current visibility scope."
-    },
+      "loadingJobs": "Chargement des jobs...",
+      "noFinishedJobs": "No terminal jobs for this filter yet.",
+      "noPausedJobs": "No paused jobs for the selected filters.",
+      "noActiveJobs": "No active jobs for the selected filters."
+    }
+  },
+  "groupManager": {
     "header": {
+      "title": "Group Management",
+      "subtitle": "Manage scientific groups, their members, and app-level access rules.",
+      "eyebrow": "Administration"
+    },
+    "roles": {
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "createGroup": {
+      "slug": "Slug",
+      "title": "Create group",
+      "description": "Description",
+      "hint": "Groups represent scientific teams or environments.",
+      "submit": "Create group",
+      "name": "Group name"
+    },
+    "permissions": {
+      "title": "App Permissions"
+    },
+    "ariaLabel": "Group management",
+    "feedback": {
+      "loading": "Loading groups..."
+    },
+    "members": {
+      "fastSearchUsers": "Fast search of users",
+      "colActions": "Actions",
+      "colRole": "Role",
+      "addButton": "Add member",
+      "colUser": "User",
+      "title": "Members",
+      "selectUser": "Select user",
+      "searchUsersPlaceholder": "Search user by name or email"
+    },
+    "groups": {
+      "colActions": "Actions",
+      "colName": "Name",
+      "title": "Groups",
+      "colSlug": "Slug",
+      "allGroupsOption": "All manageable groups",
+      "fastSearchGroups": "Fast search of groups",
+      "searchGroupsPlaceholder": "Search by name, slug or description",
+      "colMembers": "Members",
+      "adminGroupLabel": "Administrative group",
+      "collapse": "Collapse",
+      "manage": "Manage"
+    }
+  },
+  "identityAdmin": {
+    "header": {
+      "title": "Identity and Access",
+      "subtitle": "Manage users, groups, memberships and app-level RBAC in a consistent workspace.",
+      "eyebrow": "Administrative Console",
+      "myProfile": "My profile",
+      "refresh": "Refresh"
+    },
+    "addMembership": {
+      "selectGroup": "Select group",
+      "roleAdmin": "Admin",
+      "title": "Add membership",
+      "submit": "Add membership",
+      "roleMember": "Member",
+      "group": "Group",
+      "user": "User",
+      "hint": "Map users into groups before assigning app-level rules.",
+      "roleInGroup": "Role in group",
+      "selectUser": "Select user"
+    },
+    "createGroup": {
+      "slug": "Slug",
+      "title": "Create group",
+      "description": "Description",
+      "hint": "Groups represent scientific teams or environments.",
+      "submit": "Create group",
+      "name": "Group name"
+    },
+    "permissions": {
+      "statusEnabled": "enabled",
+      "title": "App permissions",
+      "target": "Target",
+      "enabled": "Enabled",
+      "scope": "Scope",
+      "submit": "Store permission",
+      "selectTarget": "Select target",
+      "statusDisabled": "disabled",
+      "app": "Application",
+      "hint": "Evaluated by group first, then user-level overrides."
+    },
+    "ariaLabel": "Identity administration",
+    "feedback": {
+      "loading": "Loading identity data..."
+    },
+    "users": {
+      "colActions": "Actions",
+      "colRole": "Role",
+      "roleAdmin": "Admin",
+      "title": "Users",
+      "description": "User actions are role-aware. Admins can only manage users in their managed groups.",
+      "colStatus": "Status",
+      "colPrimaryGroup": "Primary group",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "colUsername": "Username",
+      "roleRoot": "Root",
+      "roleUser": "User"
+    },
+    "groupConfig": {
+      "valuePlaceholder": "Value (true, false, number, text)",
+      "configLabel": "Configuration entries",
+      "selectGroup": "Select group",
+      "addEntry": "+ Add entry",
+      "title": "Group app config",
+      "submit": "Save group config",
+      "group": "Group",
+      "key": "Key",
+      "removeButton": "×",
+      "app": "Application",
+      "hint": "Store app-specific defaults at group level. Users can still override per app."
+    },
+    "createUser": {
+      "password": "Password",
+      "roleRootOption": "Root",
+      "roleAdminOption": "Admin",
+      "firstName": "First name",
+      "username": "Username",
+      "title": "Create user",
+      "lastName": "Last name",
+      "submit": "Create user",
+      "roleUserOption": "User",
+      "noPrimaryGroup": "No primary group",
+      "email": "Email",
       "primaryGroup": "Primary group",
-      "anonymous": "anonymous",
-      "role": "Rôle",
-      "eyebrow": "Espace par rôle"
+      "hint": "Define username, role and primary group for a new account.",
+      "roleLabel": "Role"
+    }
+  },
+  "easyRate": {
+    "header": {
+      "title": "Easy-rate Calculator",
+      "subtitle": "Upload Gaussian log files for your reaction structures and compute rate constants with statistical mechanics, tunneling correction, and optional diffusion control.",
+      "eyebrow": "Kinetics — TST + Eckart Tunnel"
     },
-    "metrics": {
-      "visibleUsers": "Visible users",
-      "pausedJobs": "Jobs en pause",
-      "enabledApps": "Enabled apps",
-      "visibleGroups": "Visible groups",
-      "runningJobs": "Jobs en cours",
-      "completedJobs": "Jobs terminés"
+    "solvents": {
+      "benzene": "Benzene",
+      "other": "Other",
+      "pentylEthanoate": "Pentyl ethanoate",
+      "water": "Water",
+      "gasPhase": "Gas phase (Air)"
     },
-    "panels": {
-      "accessibleApps": "Accessible apps",
-      "usersInScope": "Users in scope",
-      "recentJobs": "Recent jobs",
-      "groupsInScope": "Groups in scope"
+    "form": {
+      "customViscosity": "Custom viscosity (Pa·s)",
+      "browseHint": "Browse .log / .out / .txt",
+      "title": "Input Files",
+      "ariaLabel": "Input files and parameters",
+      "cageEffects": "Cage effects",
+      "pathDegeneracy": "Reaction path degeneracy",
+      "selectExecutionHint": "Select one parsed execution to continue.",
+      "analyzingGaussian": "Analyzing Gaussian executions...",
+      "parsedExecution": "Parsed execution",
+      "titlePlaceholder": "Optional reaction label",
+      "printDataInput": "Print data input",
+      "diffusionCorrection": "Diffusion correction",
+      "solvent": "Solvent",
+      "parameters": "Parameters",
+      "executionsParsed": "parsed execution(s)",
+      "parserNotes": "Parser notes:",
+      "titleField": "Title",
+      "gaussianPreview": "Gaussian Preview"
     },
     "actions": {
-      "openJobsMonitor": "Ouvrir le moniteur",
-      "openIdentityConsole": "Open identity console",
-      "openRecycleBin": "Open recycle bin",
-      "myProfile": "Mon profil"
+      "processing": "Processing...",
+      "clearFiles": "Clear files",
+      "reset": "Reset",
+      "run": "Run Easy-rate"
+    },
+    "fileSlots": {
+      "product1": "Product 1",
+      "required": "*",
+      "reactant1": "Reactant 1",
+      "product2": "Product 2",
+      "reactant2": "Reactant 2",
+      "atLeastOneProduct": "(at least one product)",
+      "transitionState": "Transition State"
+    },
+    "preview": {
+      "normalTermination": "Normal termination",
+      "titleLabel": "Title",
+      "chargeMultiplicity": "Charge / Multiplicity",
+      "incomplete": "Incomplete",
+      "scf": "SCF",
+      "optimizationTermination": "Optimization / Termination",
+      "imaginaryFrequency": "Imaginary frequency",
+      "notTerminated": "Not terminated",
+      "temperature": "Temperature",
+      "optFreq": "OPT+FREQ",
+      "ghZpe": "G / H / ZPE",
+      "hartree": "hartree"
+    },
+    "history": {
+      "empty": "No historical Easy-rate jobs yet.",
+      "ariaLabel": "Historical Easy-rate jobs"
+    },
+    "result": {
+      "deltaZpe": "ΔZPE (kcal/mol)",
+      "condPathDegeneracy": "Path degeneracy",
+      "tunnelG": "G",
+      "tunnelAlpha2": "α₂",
+      "ariaLabel": "Results and progress",
+      "flagCageEffects": "Cage effects",
+      "conditions": "Conditions",
+      "thermReaction": "Reaction",
+      "flagDiffusion": "Diffusion",
+      "imagFreq": "ν‡ (cm⁻¹)",
+      "thermActivation": "Activation",
+      "flagNegativeActivation": "⚠ Negative activation",
+      "defaultTitle": "Easy-rate result",
+      "thermochemistry": "Thermochemistry",
+      "deltaG": "ΔG (kcal/mol)",
+      "condTemperature": "Temperature",
+      "deltaH": "ΔH (kcal/mol)",
+      "ariaProgressLabel": "Easy-rate job progress",
+      "condViscosity": "Viscosity",
+      "kappaTst": "κ (TST)",
+      "rateConstants": "Rate Constants",
+      "kTst": "k (TST)",
+      "submitting": "Submitting Easy-rate job to backend...",
+      "tunnelCorrection": "Tunnel Correction (Eckart)",
+      "title": "Output",
+      "kFinal": "k (final)",
+      "kDiff": "k_diff",
+      "tunnelAlpha1": "α₁",
+      "kDiffCorrected": "k (diff-corrected)",
+      "tunnelU": "U"
+    },
+    "results": {
+      "unitPaPerSec": "Pa·s",
+      "kappa": "κ (kappa)",
+      "fallback": "--",
+      "multiplicity": "mult",
+      "kFinal": "k Final",
+      "kTST": "k TST",
+      "diffusionCorrected": "k Diffusion Corrected",
+      "unitCm": "cm⁻¹",
+      "diffusionOnly": "k Diffusion Only",
+      "unitK": "K",
+      "unitPerMolPerSec": "L·mol⁻¹·s⁻¹",
+      "negFreq": "neg freq",
+      "rateConstant": "Rate constant"
+    }
+  },
+  "common": {
+    "fallback": {
+      "unknownUser": "Utilisateur inconnu",
+      "noGroup": "Aucun groupe"
+    },
+    "actions": {
+      "restoreJob": "Restaurer le job",
+      "close": "Fermer",
+      "moveToTrash": "Envoyer à la corbeille",
+      "working": "Traitement...",
+      "deletePermanently": "Supprimer définitivement",
+      "refresh": "Actualiser",
+      "restore": "Restaurer",
+      "delete": "Supprimer",
+      "openResult": "Ouvrir le résultat"
+    },
+    "statusFilters": {
+      "all": "Tous"
+    },
+    "jobStatus": {
+      "completed": "Terminé",
+      "running": "En cours",
+      "cancelled": "Annulé",
+      "failed": "Échoué",
+      "pending": "En attente",
+      "paused": "En pause"
+    },
+    "flags": {
+      "on": "ON",
+      "off": "OFF"
+    },
+    "table": {
+      "ownerGroup": "Owner / Group",
+      "stage": "Stage",
+      "cache": "Cache",
+      "id": "ID",
+      "status": "Status",
+      "updated": "Updated",
+      "job": "Job",
+      "action": "Action",
+      "progress": "Progress",
+      "app": "App"
+    },
+    "filters": {
+      "all": "Tous",
+      "status": "Statut",
+      "app": "App"
+    }
+  },
+  "smileit": {
+    "step3": {
+      "panelMinimized": "Right panel minimized. Use \"Expand right panel\" to continue editing details.",
+      "newBlock": "New block",
+      "createFirstBlock": "Create the first block to define which substituent molecules will be available.",
+      "ariaLabel": "Blocks and catalogs",
+      "blockPriorityPrefix": "Priority",
+      "up": "Up",
+      "noSitesAssigned": "No sites assigned yet.",
+      "collapsedAriaLabel": "Right panel minimized summary",
+      "selectedSites": "Selected sites",
+      "blockLabel": "Block label",
+      "addFromCatalog": "Add from catalog",
+      "blockLabelAria": "Block {{n}} label",
+      "overviewAriaLabel": "Catalog coverage overview",
+      "blockPriority": "Priority",
+      "catalogEntries": "Catalog entries:",
+      "noneYet": "None yet",
+      "blocks": "Blocks:",
+      "substLibTitle": "Substituent library",
+      "siteAssignment": "Site assignment",
+      "effectiveCoverage": "Effective coverage",
+      "title": "3. Block assignment by location",
+      "substLibHint": "Browse by group and add a substituent directly to this block.",
+      "uncovered": "uncovered",
+      "uncoveredSites": "Uncovered sites:",
+      "coveredSites": "Covered sites:",
+      "down": "Down",
+      "deleteBlock": "Delete block"
+    },
+    "blocks": {
+      "siteLabel": "Site",
+      "noAutoMatched": "No catalog molecules auto-matched by the selected functional categories.",
+      "assignPositions": "Assign this block to scaffold positions",
+      "noAtomsHint": "Inspect the principal molecule and select target atoms before assigning this block to positions.",
+      "removeButton": "Remove",
+      "noSubstituentsYet": "No substituents added to this block yet.",
+      "manualSubstituentsLabel": "Manual substituents:",
+      "totalBlockSources": "Total block sources:",
+      "noPositionsAssigned": "This block still has no scaffold positions assigned. Choose the sites that should receive one of this block's molecules.",
+      "collapsedSummaryAria": "Collapsed block summary",
+      "substLibTitle": "Substituent library",
+      "anchorLabel": "Anchor",
+      "groupFilterAria": "Filter block catalog by group",
+      "addButton": "Add",
+      "substLibHint": "Browse by group and add a substituent directly to this block.",
+      "categoriesLabel": "Categories:",
+      "catalogSubstituentsLabel": "Catalog substituents:",
+      "openDetail": "Open detail for {{name}}",
+      "noCatalogMolecules": "No catalog molecules available for the selected group.",
+      "autoMatchedTitle": "Auto-matched molecules by functional category",
+      "addToBlockAria": "Add {{name}} to this block",
+      "sitesLabel": "Sites:",
+      "stableIdPrefix": "stable_id",
+      "substituentsAdded": "Substituents added"
+    },
+    "annotations": {
+      "hideTitleAttr": "Hide",
+      "showPatternAria": "Show pattern",
+      "hidePatternAria": "Hide pattern",
+      "showTitleAttr": "Show",
+      "ariaLabel": "Structural annotations"
+    },
+    "inspection": {
+      "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",
+      "patternsVisible": "Patterns visible:",
+      "ariaLabel": "Principal inspection context",
+      "canonical": "Canonical:",
+      "atoms": "Atoms:"
+    },
+    "properties": {
+      "clogpAria": "Calculated logP",
+      "hbaLabel": "HBA:",
+      "rotatableBondsAria": "Number of rotatable bonds",
+      "ariaLabel": "Quick physicochemical properties",
+      "hbaAria": "Hydrogen bond acceptors",
+      "mwAria": "Molecular weight",
+      "tpsaLabel": "TPSA:",
+      "clogpLabel": "cLogP:",
+      "hbdAria": "Hydrogen bond donors",
+      "mwLabel": "MW:",
+      "aromaticRingsLabel": "Aromatic rings:",
+      "tpsaAria": "Topological polar surface area",
+      "hbdLabel": "HBD:",
+      "aromaticRingsAria": "Number of aromatic rings",
+      "rotatableBondsLabel": "Rotatable bonds:"
+    },
+    "patterns": {
+      "hiddenInScaffold": "Hidden in scaffold",
+      "id": "ID",
+      "atoms": "Atoms",
+      "hidePattern": "Hide pattern",
+      "formCaption": "Caption",
+      "formSmartsPlaceholder": "[N+](=O)[O-]",
+      "showPattern": "Show pattern",
+      "howItWorksTitle": "How it works",
+      "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
+      "active": "Active",
+      "formType": "Pattern type",
+      "patternType": "Pattern type",
+      "hidden": "Hidden",
+      "formName": "Name",
+      "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
+      "formSmarts": "SMARTS",
+      "toxicophore": "Toxicophore",
+      "dialogAriaLabel": "Structural pattern catalog",
+      "smartsStructure": "SMARTS structure",
+      "detailAriaLabel": "Pattern detail",
+      "specification": "Specification",
+      "formTypePrivileged": "Privileged scaffold",
+      "title": "Structural patterns",
+      "formSource": "Source reference",
+      "editingPattern": "Editing pattern:",
+      "privileged": "Privileged scaffold",
+      "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
+      "version": "v",
+      "editing": "Editing",
+      "stableId": "stable_id",
+      "source": "Source",
+      "activeInScaffold": "Active in scaffold",
+      "formSave": "Save structural pattern",
+      "formTypeToxicophore": "Toxicophore",
+      "noPreview": "No SMILES available for preview.",
+      "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
+      "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
+      "previewUnavailable": "Preview unavailable"
+    },
+    "header": {
+      "title": "Combinatorial Structure Designer",
+      "ariaLabel": "Smileit scientific app",
+      "subtitle": "Inspect scaffolds, assign substitution blocks and generate derivative libraries from SMILES notation.",
+      "eyebrow": "SMILE-IT"
+    },
+    "catalogStudio": {
+      "title": "SMILES catalog studio",
+      "ariaLabel": "SMILES catalog studio",
+      "hint": "Create or edit substituents without mixing this flow with block mapping."
+    },
+    "catalogSketcher": {
+      "ketcherAriaLabel": "Ketcher sketcher frame",
+      "loadingAriaLabel": "Loading molecule sketcher",
+      "cancelButton": "Cancel",
+      "title": "Catalog SMILES sketcher",
+      "ariaLabel": "Catalog SMILES sketcher",
+      "loadingText": "Loading molecule sketcher…",
+      "iframeTitle": "Catalog SMILES sketcher",
+      "hint": "Draw the substituent in Ketcher and apply it to the current SMILES draft.",
+      "applyButton": "Apply to draft"
+    },
+    "step1": {
+      "title": "1. Principal molecule and scaffold preview",
+      "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
+      "ariaLabel": "Input parameters"
+    },
+    "catalogDetail": {
+      "close": "Close",
+      "editInLibrary": "Edit in Library",
+      "id": "ID",
+      "ariaLabel": "Substituent detail",
+      "zoomIn": "Zoom in",
+      "added": "Added",
+      "zoomOut": "Zoom out",
+      "source": "Source",
+      "anchorAtoms": "Anchor atoms",
+      "smiles": "SMILES"
+    },
+    "step2": {
+      "manageCatalog": "Edit catalog",
+      "storedEntries": "Stored entries:",
+      "browseHint": "Browse by group, inspect the structure preview, and open the full detail modal on click.",
+      "groupFilter": "Group",
+      "expand": "Expand section",
+      "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
+      "description": "",
+      "storedSubstituents": "Stored substituents",
+      "ariaLabel": "Step 2 substituent catalogs",
+      "minimize": "Minimize section",
+      "collapsedAriaLabel": "Catalog section collapsed summary",
+      "catalogGroups": "Catalog groups:",
+      "groupFilterAria": "Filter stored substituents by group",
+      "title": "2. Catalog of substituents",
+      "allGroups": "All groups",
+      "delete": "Delete",
+      "noCatalogMolecules": "No catalog molecules available for the selected group.",
+      "openDetail": "Open detail for {{name}}",
+      "validatedCategories": "Validated categories:",
+      "storedCatalogAriaLabel": "Stored substituent catalog",
+      "edit": "Edit"
+    },
+    "principalEditor": {
+      "sketchAriaLabel": "Principal sketch modifier",
+      "sketcherFrameTitle": "Ketcher principal sketcher",
+      "sketchLoading": "Loading molecule sketcher…",
+      "sketchHint": "Use the sketcher below to edit the principal molecule.",
+      "pending": "Pending principal SMILES",
+      "inspect": "Inspect structure",
+      "sketchTitle": "Principal sketch modifier",
+      "openSketch": "✏ Open sketch modifier",
+      "cancelButton": "Cancel",
+      "label": "Principal SMILES",
+      "inspecting": "Inspecting...",
+      "placeholder": "c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O",
+      "applyButton": "Apply"
+    },
+    "catalogForm": {
+      "addAndClose": "Add and close",
+      "previewCategories": "Categories:",
+      "step3AriaLabel": "Catalog draft anchor selector",
+      "smilesLabel": "SMILES",
+      "previewAnchor": "Anchor:",
+      "nameLabel": "Name",
+      "step4Title": "4. Chemistry categories",
+      "pending": "Pending",
+      "previewAriaLabel": "Catalog draft preview",
+      "sourceRefLabel": "Source reference",
+      "uncategorized": "Uncategorized",
+      "cancelButton": "Cancel edition",
+      "step3Title": "3. Substitution point",
+      "updateButton": "Update catalog entry",
+      "validationMessagesAria": "Catalog draft validation messages",
+      "addAnother": "Add another",
+      "sketchButton": "✏ Sketch SMILES",
+      "previewName": "Name:",
+      "step2Title": "2. SMILES",
+      "previewSource": "Source:",
+      "previewNotation": "Notation detected:",
+      "step5Title": "5. Source reference",
+      "step1Title": "1. Substituent name",
+      "previewTitle": "Catalog draft preview",
+      "step5Hint": "Keep a short traceable source for this substituent entry.",
+      "pendingCatalogSmiles": "Pending catalog SMILES",
+      "step1Hint": "A default name is prepared for each new draft. Replace it if you need a custom label.",
+      "emptySmartHint": "Enter a SMILES string to unlock the live structure preview."
+    },
+    "siteSelection": {
+      "pendingAssignment": "Selected sites pending assignment:",
+      "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
+      "title": "Select substitution sites on the scaffold",
+      "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
+      "blocksAvailableSuffix": "blocks available"
+    },
+    "step4": {
+      "loadedInView": "Loaded in current view:",
+      "preparingZip": "Preparing SVG ZIP...",
+      "maxHint": "max {{max}} (based on {{sites}} selected sites)",
+      "currentRunDisplayed": "The current run is already displayed below. This table only lists older jobs.",
+      "description": "Configure generation, run continuously, and inspect/export resulting structures.",
+      "derivativesTitle": "Derivatives",
+      "reactiveSites": "Reactive sites",
+      "processing": "Processing...",
+      "generatedModalAriaLabel": "Generated molecule preview",
+      "progressAriaLabel": "Smileit job progress",
+      "exportSmi": "SMI/TXT",
+      "noPreviousEnumerations": "No previous enumerations available yet.",
+      "noStructures": "No generated structures available in this snapshot.",
+      "unknown": "Unknown",
+      "histColUpdated": "Updated",
+      "inspectionLabel": "Inspection:",
+      "enabled": "Enabled",
+      "availableDerivatives": "Available derivatives:",
+      "histAriaLabel": "Previous jobs table",
+      "setupHint": "Run generation only after block molecules and scaffold positions are fully mapped.",
+      "open": "Open",
+      "inspectionHint": "Expand this section to review molecular depictions and SMILES.",
+      "principalSmilesLabel": "Principal SMILES",
+      "lockedUntilMapping": "Locked until mapping",
+      "loadingDerivatives": "Loading...",
+      "dispatchingJob": "Dispatching Smileit job...",
+      "enumeratedDerivatives": "Enumerated derivatives",
+      "preparingZipHint": "Generating all derivative SVGs on-demand for ZIP export. This may take a while.",
+      "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)",
+      "showMore": "Show 100 more",
+      "previousEnumAriaLabel": "Previous enumeration jobs",
+      "derivativeVisualTitle": "Generated derivative (substituents highlighted)",
+      "jobName": "Job name",
+      "ariaLabel": "Result and progress panel",
+      "generationSetup": "Generation setup",
+      "exportCsv": "CSV",
+      "jobNamePlaceholder": "smileit_run",
+      "downloadSvgZip": "↓ Download SVGs (ZIP)",
+      "assignmentBlocksLabel": "Assignment blocks",
+      "exportLog": "LOG",
+      "histColRun": "Run",
+      "noBlocks": "No blocks",
+      "downloadZipTitle": "Download all enumerated structures as ZIP. SVG files + one TXT with principal SMILES first and derivative SMILES after.",
+      "principalSmilesAriaLabel": "Principal SMILES summary",
+      "rSubstitutes": "R substitutes",
+      "title": "4. Continuous generation and outputs",
+      "reset": "Reset",
+      "run": "Generate structures",
+      "histColBlocks": "Blocks",
+      "derivativesAriaLabel": "Generated derivatives list",
+      "reloadJobs": "Reload jobs",
+      "histColView": "View",
+      "histColStatus": "Status",
+      "previousJobs": "Previous Jobs",
+      "histSites": "Sites",
+      "placeholderMapping": "Placeholder mapping:",
+      "openBelow": "Open below",
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+    }
+  },
+  "shared": {
+    "diffusionFields": {
+      "radiusReactant1": "Radius reactant 1 (Å)",
+      "radiusReactant2": "Radius reactant 2 (Å)",
+      "reactionDistance": "Reaction distance (Å)"
+    },
+    "jobLogs": {
+      "ariaLabel": "Execution logs"
+    },
+    "jobArtifactExport": {
+      "exportLog": "Export LOG",
+      "persistedFiles": "Persisted Input Files",
+      "downloadInputsZip": "Download Inputs ZIP",
+      "exporting": "Exporting...",
+      "exportCsv": "Export CSV",
+      "downloadErrorReport": "Download Error Report"
+    },
+    "jobProgress": {
+      "progressTitle": "Scientific job progress"
+    },
+    "smilesBatchInput": {
+      "uploadFile": "↑ Upload file",
+      "tableSMILES": "SMILES",
+      "editCustomNames": "Edit custom names",
+      "tableNumber": "#",
+      "uploadFileTitle": "Upload a .smi, .txt or .csv file with plain SMILES or name/SMILES pairs",
+      "validating": "Validating SMILES before submission...",
+      "hint": "Supports plain SMILES lists, .smi/.txt lists, and CSV files where column 1 is name and column 2 is SMILES.",
+      "label": "SMILES batch input",
+      "namePlaceholder": "Defaults to SMILES",
+      "fileFormats": ".smi, .txt or .csv file",
+      "tableName": "Name",
+      "drawSmilesTitle": "Draw a molecule with Ketcher and add it to the list",
+      "drawSmiles": "✏ Draw SMILES",
+      "detectedRows": "Detected rows:"
+    },
+    "jobHistoryTable": {
+      "colUpdated": "Updated",
+      "open": "Open",
+      "reloading": "Loading...",
+      "colAction": "Action",
+      "colStatus": "Status",
+      "colJobId": "Job ID",
+      "reload": "Reload history"
+    },
+    "jobResultFooter": {
+      "historicalJobs": "Historical jobs"
     }
   }
 }

@@ -153,19 +153,33 @@
             <span class="compound-count">{{ library().row_count }} {{ 'cadmaPy.step1.referenceCompounds' | transloco
                 }}</span>
         </h4>
-        <div class="metrics-grid">
-            @for (stat of metricStats(); track stat.key) {
-            <div class="metric-card" [class.has-nulls]="stat.nullCount > 0">
-                <span class="metric-name">{{ stat.label }}</span>
-                <strong class="metric-mean">{{ formatNumber(stat.mean) }}</strong>
-                <span class="metric-range">± {{ formatNumber(stat.stdev) }}</span>
-                <span class="metric-minmax">{{ formatNumber(stat.min) }} — {{ formatNumber(stat.max) }}</span>
-                @if (stat.nullCount > 0) {
-                <span class="metric-null">{{ stat.nullCount }} {{ 'cadmaPy.familyDetail.nullCount' | transloco }}</span>
+        <table class="band-averages-table">
+            <thead>
+                <tr>
+                    <th>{{ 'cadmaPy.familyDetail.metricLabel' | transloco }}</th>
+                    <th class="col-num">{{ 'cadmaPy.familyDetail.meanSdLabel' | transloco }}</th>
+                    <th class="col-num">{{ 'cadmaPy.familyDetail.rangeLabel' | transloco }}</th>
+                    @if (hasAnyNulls()) {
+                    <th class="col-num">{{ 'cadmaPy.familyDetail.nullsLabel' | transloco }}</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (stat of metricStats(); track stat.key) {
+                <tr [class.has-nulls]="stat.nullCount > 0">
+                    <td class="col-label">{{ stat.label }}</td>
+                    <td class="col-num col-mean-sd">
+                        <span class="mean-value">{{ formatNumber(stat.mean) }}</span>
+                        <span class="sd-value">± {{ formatNumber(stat.stdev) }}</span>
+                    </td>
+                    <td class="col-num">{{ formatNumber(stat.min) }} — {{ formatNumber(stat.max) }}</td>
+                    @if (hasAnyNulls()) {
+                    <td class="col-num">{{ stat.nullCount > 0 ? (stat.nullCount + ' ' + ('cadmaPy.familyDetail.nullCount' | transloco)) : '—' }}</td>
+                    }
+                </tr>
                 }
-            </div>
-            }
-        </div>
+            </tbody>
+        </table>
     </div>
 
     <!-- Archivos fuente -->
