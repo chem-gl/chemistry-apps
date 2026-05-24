@@ -14,6 +14,7 @@ import {
 } from '../core/api/jobs-api.service';
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
 import { EasyRateResultData } from '../core/application/easy-rate-workflow.types';
+import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider';
 import { EasyRateComponent } from './easy-rate.component';
 
 describe('EasyRateComponent', () => {
@@ -100,6 +101,7 @@ describe('EasyRateComponent', () => {
     TestBed.configureTestingModule({
       imports: [EasyRateComponent],
       providers: [
+        provideTestingTransloco(),
         {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({})) },
@@ -111,10 +113,6 @@ describe('EasyRateComponent', () => {
       set: {
         providers: [
           { provide: EasyRateWorkflowService, useValue: workflowMock },
-          {
-            provide: ActivatedRoute,
-            useValue: { queryParamMap: of(convertToParamMap({})) },
-          },
         ],
       },
     });
@@ -285,12 +283,16 @@ describe('EasyRateComponent', () => {
       negativeFrequencies: -300,
     } as unknown as Parameters<typeof component.buildExecutionOptionLabel>[0];
 
-    expect(component.buildExecutionOptionLabel(executionWithTitle)).toBe(
-      'TS Result · mult 1 · neg freq -500',
-    );
-    expect(component.buildExecutionOptionLabel(executionWithoutTitle)).toBe(
-      'Execution 3 · mult 2 · neg freq -300',
-    );
+    // buildExecutionOptionLabel usa translocoService.translate internamente.
+    // En el entorno de test, se evalua que incluya los valores esperados.
+    const resultWith = component.buildExecutionOptionLabel(executionWithTitle);
+    expect(resultWith).toContain('TS Result');
+    expect(resultWith).toContain('1');
+    expect(resultWith).toContain('-500');
+    const resultWithout = component.buildExecutionOptionLabel(executionWithoutTitle);
+    expect(resultWithout).toContain('Execution 3');
+    expect(resultWithout).toContain('2');
+    expect(resultWithout).toContain('-300');
   });
 
   it('joinMessages concatena mensajes con espacio', () => {
@@ -388,10 +390,10 @@ describe('EasyRateComponent', () => {
     const component = fixture.componentInstance;
     const result = component.trackInputSlot(0, {
       fieldName: 'product_2_file' as EasyRateInputFieldName,
-      label: 'Product 2',
+      labelKey: 'easyRate.fileSlots.product2',
       required: false,
-      note: null,
-    });
+      noteKey: null,
+    } as any);
     expect(result).toBe('product_2_file');
   });
 });

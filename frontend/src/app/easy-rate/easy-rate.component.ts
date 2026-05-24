@@ -4,7 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   DownloadedReportFile,
   EasyRateFileInspectionView,
@@ -20,9 +20,9 @@ import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-a
 
 interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
-  label: string;
+  labelKey: string;
   required: boolean;
-  note: string | null;
+  noteKey: string | null;
 }
 
 @Component({
@@ -41,40 +41,49 @@ interface EasyRateInputSlotView {
 })
 export class EasyRateComponent extends ScientificFileAppBaseComponent {
   override readonly workflow = inject(EasyRateWorkflowService);
+  private readonly translocoService = inject(TranslocoService);
 
   readonly solventOptions: ReadonlyArray<string> = SOLVENT_OPTIONS;
   readonly inputSlots: ReadonlyArray<EasyRateInputSlotView> = [
     {
       fieldName: 'transition_state_file',
-      label: 'Transition State',
+      labelKey: 'easyRate.fileSlots.transitionState',
       required: true,
-      note: null,
+      noteKey: null,
     },
     {
       fieldName: 'reactant_1_file',
-      label: 'Reactant 1',
+      labelKey: 'easyRate.fileSlots.reactant1',
       required: true,
-      note: null,
+      noteKey: null,
     },
     {
       fieldName: 'reactant_2_file',
-      label: 'Reactant 2',
+      labelKey: 'easyRate.fileSlots.reactant2',
       required: true,
-      note: null,
+      noteKey: null,
     },
     {
       fieldName: 'product_1_file',
-      label: 'Product 1',
+      labelKey: 'easyRate.fileSlots.product1',
       required: false,
-      note: '(at least one product)',
+      noteKey: 'easyRate.fileSlots.atLeastOneProduct',
     },
     {
       fieldName: 'product_2_file',
-      label: 'Product 2',
+      labelKey: 'easyRate.fileSlots.product2',
       required: false,
-      note: '(at least one product)',
+      noteKey: 'easyRate.fileSlots.atLeastOneProduct',
     },
   ];
+
+  readonly solventLabels: Record<string, string> = {
+    'Gas phase (Air)': 'easyRate.solvents.gasPhase',
+    'Benzene': 'easyRate.solvents.benzene',
+    'Pentyl ethanoate': 'easyRate.solvents.pentylEthanoate',
+    'Water': 'easyRate.solvents.water',
+    'Other': 'easyRate.solvents.other',
+  };
 
   // ── Manejadores de archivos ──────────────────────────────────────
   onInputFileChange(fieldName: EasyRateInputFieldName, event: Event): void {
@@ -123,7 +132,9 @@ export class EasyRateComponent extends ScientificFileAppBaseComponent {
   buildExecutionOptionLabel(execution: EasyRateInspectionExecutionView): string {
     const titleSegment: string =
       execution.jobTitle?.trim() || `Execution ${execution.executionIndex + 1}`;
-    return `${titleSegment} · mult ${execution.multiplicity} · neg freq ${execution.negativeFrequencies}`;
+    const multLabel: string = this.translocoService.translate('easyRate.results.multiplicity');
+    const negFreqLabel: string = this.translocoService.translate('easyRate.results.negFreq');
+    return `${titleSegment} · ${multLabel} ${execution.multiplicity} · ${negFreqLabel} ${execution.negativeFrequencies}`;
   }
 
   joinMessages(messages: string[]): string {

@@ -93,22 +93,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
+  padding: 0.25rem 0.75rem;
   height: 2rem;
   margin-left: 0.5rem;
   border: 1px solid var(--chem-glass-border);
-  border-radius: 50%;
+  border-radius: 4px;
   background: var(--chem-glass-light);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   line-height: 1;
   vertical-align: middle;
-  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+  transition: background 0.2s;
 }
 
 .hero-info-btn:hover {
   background: var(--chem-primary-light);
-  transform: scale(1.1);
 }
 
 /* ── Modal ── */

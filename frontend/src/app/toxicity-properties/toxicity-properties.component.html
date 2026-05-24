@@ -231,9 +231,9 @@
 
 <dialog #moleculeImageDialog class="molecule-image-dialog" (click)="onMoleculeImageDialogBackdropClick($event)"
   (keydown)="onMoleculeImageDialogBackdropClick($event)">
-  <section class="molecule-image-modal" [attr.aria-label]="'saScore.moleculeModal.title' | transloco">
+  <section class="molecule-image-modal" [attr.aria-label]="'toxicityProperties.moleculeModal.title' | transloco">
     <div class="molecule-image-header">
-      <h4>{{ 'saScore.moleculeModal.title' | transloco }}</h4>
+      <h4>{{ 'toxicityProperties.moleculeModal.title' | transloco }}</h4>
       <button class="close-btn" type="button" (click)="closeMoleculeImageModal()"
         [attr.aria-label]="'common.actions.close' | transloco">
         ✕
@@ -243,7 +243,7 @@
     <p class="mono molecule-modal-smiles">{{ moleculeModalSmiles() }}</p>
 
     @if (isLoadingMoleculeImage()) {
-    <p class="status-message">{{ 'saScore.moleculeModal.loading' | transloco }}</p>
+    <p class="status-message">{{ 'toxicityProperties.moleculeModal.title' | transloco }}</p>
     } @else if (moleculeImageError(); as imgError) {
     <p class="error-message" role="alert">{{ imgError }}</p>
     } @else if (moleculeModalSvg(); as svgContent) {

@@ -17,7 +17,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import {
   JobLogEntryView,
@@ -71,6 +71,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly injector = inject(Injector);
   private readonly jobsApiService = inject(JobsApiService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly translocoService = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private routeSubscription: Subscription | null = null;
   readonly isLogsCollapsed = signal<boolean>(false);
@@ -423,11 +424,11 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   patternTypeLabel(patternType: string): string {
     if (patternType === 'toxicophore') {
-      return 'Toxicophore';
+      return this.translocoService.translate('smileit.patterns.toxicophore');
     }
 
     if (patternType === 'privileged') {
-      return 'Privileged scaffold';
+      return this.translocoService.translate('smileit.patterns.privileged');
     }
 
     return patternType;
