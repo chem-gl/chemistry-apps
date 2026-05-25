@@ -255,25 +255,33 @@ export class GroupManagerComponent implements OnInit {
     const existing = this.appPermissions().find(
       (p) => p.group === groupId && p.app_name === pluginName && p.user === null,
     );
+    this.successMessage.set(null);
     if (existing === undefined) {
       this.identityApiService
         .createAppPermission({ app_name: pluginName, group: groupId, is_enabled: true })
         .subscribe({
           next: (created) => {
             this.appPermissions.update((list) => [...list, created]);
+            this.successMessage.set(`App "${pluginName}" habilitada para el grupo.`);
+            globalThis.setTimeout(() => this.successMessage.set(null), 2000);
           },
           error: (err: { error?: { detail?: string } }) => {
             this.errorMessage.set(err?.error?.detail ?? 'Error al crear el permiso de app.');
           },
         });
     } else {
+      const nextEnabled = !existing.is_enabled;
       this.identityApiService
-        .updateAppPermission(existing.id, { is_enabled: !existing.is_enabled })
+        .updateAppPermission(existing.id, { is_enabled: nextEnabled })
         .subscribe({
           next: (updated) => {
             this.appPermissions.update((list) =>
               list.map((p) => (p.id === existing.id ? updated : p)),
             );
+            this.successMessage.set(
+              `App "${pluginName}" ${nextEnabled ? 'habilitada' : 'deshabilitada'} para el grupo.`,
+            );
+            globalThis.setTimeout(() => this.successMessage.set(null), 2000);
           },
           error: (err: { error?: { detail?: string } }) => {
             this.errorMessage.set(err?.error?.detail ?? 'Error al actualizar el permiso de app.');
