@@ -160,6 +160,7 @@ function looksLikeHeader(columns: string[]): boolean {
 function findColumn(columns: string[], aliases: readonly string[]): string {
   const normalizedAliases = aliases.map((alias) => normalizeToken(alias));
 
+  // 1. Exact match first (fast path)
   for (const columnName of columns) {
     const normalizedColumn = normalizeToken(columnName);
     if (normalizedAliases.includes(normalizedColumn)) {
@@ -167,13 +168,13 @@ function findColumn(columns: string[], aliases: readonly string[]): string {
     }
   }
 
+  // 2. Partial match: column name contains an alias (min 3 chars)
   for (const columnName of columns) {
     const normalizedColumn = normalizeToken(columnName);
     if (
       normalizedAliases.some(
         (alias) =>
-          alias.length >= 2 &&
-          (normalizedColumn.includes(alias) || alias.includes(normalizedColumn)),
+          alias.length >= 3 && normalizedColumn.includes(alias),
       )
     ) {
       return columnName;
