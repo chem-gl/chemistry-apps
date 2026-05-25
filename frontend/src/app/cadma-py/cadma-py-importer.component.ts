@@ -538,20 +538,55 @@ export class CadmaPyImporterComponent {
 
   roleOptions(sourceIndex: number): Array<{ value: ColumnRole; label: string }> {
     return [
-      { value: '', label: 'Ignore this column' },
+      { value: '', label: 'cadmaPy.importer.ignoreColumn' },
       {
         value: 'smiles',
-        label: sourceIndex === 0 ? 'Main SMILES guide' : 'SMILES match column',
+        label: sourceIndex === this.smilesGuideFileIndex()
+          ? 'cadmaPy.importer.mainSmiles'
+          : 'cadmaPy.importer.smilesMatch',
       },
-      { value: 'name', label: 'Compound name' },
-      { value: 'paperReference', label: 'Paper reference' },
-      { value: 'paperUrl', label: 'DOI or URL' },
-      { value: 'evidenceNote', label: 'Evidence note' },
-      { value: 'dt', label: 'Dev. Toxicity' },
-      { value: 'm', label: 'Mutagenicity' },
-      { value: 'ld50', label: 'LD50' },
-      { value: 'sa', label: 'SA' },
+      { value: 'name', label: 'cadmaPy.importer.compoundName' },
+      { value: 'paperReference', label: 'cadmaPy.importer.paperReference' },
+      { value: 'paperUrl', label: 'cadmaPy.importer.doiOrUrl' },
+      { value: 'evidenceNote', label: 'cadmaPy.importer.evidenceNote' },
+      { value: 'dt', label: 'cadmaPy.importer.devTox' },
+      { value: 'm', label: 'cadmaPy.importer.mutagenicity' },
+      { value: 'ld50', label: 'cadmaPy.importer.ld50' },
+      { value: 'sa', label: 'cadmaPy.importer.saScore' },
     ];
+  }
+
+  readonly smilesGuideFileIndex = computed<number>(() => {
+    // Find the source marked as SMILES guide; default to first
+    const currentSources = this.sources();
+    const guideIndex = currentSources.findIndex(
+      (source) => source.smilesColumn !== '' && this._isGuideSource(source),
+    );
+    return guideIndex >= 0 ? guideIndex : 0;
+  });
+
+  setSmilesGuideFile(sourceId: string): void {
+    this.sources.update((currentSources) => {
+      const guideId = sourceId;
+      const nextSources = currentSources.map((source) => ({
+        ...source,
+        // Only the guide file keeps its SMILES column; others lose it
+        smilesColumn:
+          source.id === guideId
+            ? source.smilesColumn
+            : '',
+      }));
+      return nextSources;
+    });
+    this.emitState();
+  }
+
+  private _isGuideSource(source: GuidedSourceConfig): boolean {
+    // Check if this source is the designated guide (has a non-empty smiles column
+    // while others may have theirs cleared)
+    const sources = this.sources();
+    const guideCount = sources.filter((s) => s.smilesColumn !== '').length;
+    return guideCount <= 1 && source.smilesColumn !== '';
   }
 
   assignColumnRole(sourceId: string, columnName: string, nextRole: ColumnRole): void {

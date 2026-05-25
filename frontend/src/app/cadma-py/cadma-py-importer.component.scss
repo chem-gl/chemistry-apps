@@ -86,6 +86,46 @@
   gap: 0.75rem;
 }
 
+.source-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.source-card.guide-file {
+  border-left: 3px solid var(--chem-accent);
+}
+
+.guide-badge {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--chem-radius-pill);
+  background: var(--chem-accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-set-guide {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--chem-accent);
+  border-radius: var(--chem-radius-sm);
+  background: transparent;
+  color: var(--chem-accent);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--chem-transition);
+}
+
+.btn-set-guide:hover {
+  background: var(--chem-accent-light);
+}
+
 .source-card.collapsed {
   border-color: var(--chem-border-accent-dim);
   background: var(--chem-surface);
