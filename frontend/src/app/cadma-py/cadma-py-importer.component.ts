@@ -362,6 +362,7 @@ export class CadmaPyImporterComponent {
   readonly sources = signal<GuidedSourceConfig[]>([]);
   private readonly lastHydratedConfigJson = signal<string>('');
   readonly importerError = signal<string>('');
+  readonly collapsedSourceIds = signal<Set<string>>(new Set());
   readonly totalUsableRows = computed(() =>
     this.sources().reduce((total, source) => total + source.usableRowCount, 0),
   );
@@ -425,6 +426,22 @@ export class CadmaPyImporterComponent {
       inputElement.value = '';
     }
     this.emitState();
+  }
+
+  toggleSourceCollapse(sourceId: string): void {
+    this.collapsedSourceIds.update((current) => {
+      const nextSet = new Set(current);
+      if (nextSet.has(sourceId)) {
+        nextSet.delete(sourceId);
+      } else {
+        nextSet.add(sourceId);
+      }
+      return nextSet;
+    });
+  }
+
+  isSourceCollapsed(sourceId: string): boolean {
+    return this.collapsedSourceIds().has(sourceId);
   }
 
   removeSource(sourceId: string): void {
@@ -530,10 +547,10 @@ export class CadmaPyImporterComponent {
       { value: 'paperReference', label: 'Paper reference' },
       { value: 'paperUrl', label: 'DOI or URL' },
       { value: 'evidenceNote', label: 'Evidence note' },
-      { value: 'dt', label: 'Dev tox' },
+      { value: 'dt', label: 'Dev. Toxicity' },
       { value: 'm', label: 'Mutagenicity' },
       { value: 'ld50', label: 'LD50' },
-      { value: 'sa', label: 'SA score' },
+      { value: 'sa', label: 'SA' },
     ];
   }
 
@@ -613,9 +630,7 @@ export class CadmaPyImporterComponent {
               sourceRecord['smiles_column'],
               this.readStringField(
                 sourceRecord['smilesColumn'],
-                index === 0
-                  ? inferColumn(preview.columns, 'smiles') || (preview.columns[0] ?? '')
-                  : '',
+                inferColumn(preview.columns, 'smiles'),
               ),
             ),
             nameColumn: this.readStringField(
@@ -688,7 +703,7 @@ export class CadmaPyImporterComponent {
   private buildSourceFromFile(
     filename: string,
     contentText: string,
-    isFirstSource: boolean,
+    _isFirstSource: boolean,
   ): GuidedSourceConfig {
     const fileFormat = inferFormat(filename);
     const hasHeader = inferDefaultHeader(fileFormat);
@@ -717,9 +732,7 @@ export class CadmaPyImporterComponent {
       columns: preview.columns,
       previewRows: preview.previewRows,
       usableRowCount: preview.usableRowCount,
-      smilesColumn: isFirstSource
-        ? inferColumn(preview.columns, 'smiles') || (preview.columns[0] ?? '')
-        : inferColumn(preview.columns, 'smiles'),
+      smilesColumn: inferColumn(preview.columns, 'smiles'),
       nameColumn: inferColumn(preview.columns, 'name'),
       paperReferenceColumn: inferColumn(preview.columns, 'paperReference'),
       paperUrlColumn: inferColumn(preview.columns, 'paperUrl'),
