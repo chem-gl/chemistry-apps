@@ -793,6 +793,26 @@ export class CadmaPyImporterComponent {
       return;
     }
 
+    // Validar que múltiples archivos tengan el mismo número de filas procesables
+    if (currentSources.length > 1) {
+      const guideRowCount = currentSources[0].usableRowCount;
+      const mismatchFile = currentSources.find(
+        (source, index) => index > 0 && source.usableRowCount !== guideRowCount,
+      );
+      if (mismatchFile !== undefined) {
+        this.importerError.set(
+          `Row count mismatch: "${mismatchFile.filename}" has ${mismatchFile.usableRowCount} rows but "${currentSources[0].filename}" has ${guideRowCount}. All files must have the same number of data rows to align correctly.`,
+        );
+        this.stateChanged.emit({
+          sourceConfigsJson: '',
+          totalFiles: currentSources.length,
+          totalUsableRows: this.totalUsableRows(),
+          filenames: currentSources.map((source) => source.filename),
+        });
+        return;
+      }
+    }
+
     this.stateChanged.emit({
       sourceConfigsJson: JSON.stringify(
         currentSources.map((source) => buildSerializableConfig(source)),
