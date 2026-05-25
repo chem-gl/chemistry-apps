@@ -6,15 +6,18 @@ Define serializadores para autenticación y lectura de perfil de usuario.
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import models, transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from django.utils import timezone
 
 from ..app_registry import ScientificAppRegistry
 from ..models import (
     AppPermission,
     GroupAppConfig,
     GroupMembership,
+    SelfRegistrationToken,
     UserAppConfig,
     UserIdentityProfile,
     WorkGroup,
@@ -485,3 +488,209 @@ class GroupAppConfigSerializer(serializers.ModelSerializer):
         model = GroupAppConfig
         fields = ["id", "group", "app_name", "config", "updated_at"]
         read_only_fields = ["updated_at"]
+
+
+class UserRegistrationSerializer(serializers.Serializer):
+    """Serializer para auto-registro público de usuarios.
+
+    Sin `registration_token`: crea usuario sin grupo ni permisos (sin acceso a apps).
+    Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado
+    al token, heredando los AppPermission de ese grupo.
+    """
+
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    first_name = serializers.CharField(required=False, allow_blank=True, default="")
+    last_name = serializers.CharField(required=False, allow_blank=True, default="")
+    registration_token = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=12,
+        help_text="Token de invitación opcional. Si se provee, el usuario queda "
+        "automáticamente asignado al grupo vinculado.",
+    )
+
+    def validate_username(self, value: str) -> str:
+        user_model = get_user_model()
+        if user_model.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "A user with that username already exists."
+            )
+        return value
+
+    def validate_registration_token(self, value: str) -> str | None:
+        """Valida el token de registro si fue proporcionado."""
+        if not value or not value.strip():
+            return None
+
+        try:
+            token_obj = SelfRegistrationToken.objects.get(token=value.strip())
+        except SelfRegistrationToken.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired invitation token.")
+
+        if not token_obj.is_active:
+            raise serializers.ValidationError("This invitation token has been revoked.")
+
+        if token_obj.expires_at is not None and timezone.now() > token_obj.expires_at:
+            raise serializers.ValidationError("This invitation token has expired.")
+
+        if token_obj.max_uses > 0 and token_obj.use_count >= token_obj.max_uses:
+            raise serializers.ValidationError(
+                "This invitation token has reached its maximum uses."
+            )
+
+        return value.strip()
+
+    def create(self, validated_data: dict):
+        registration_token_str: str | None = validated_data.pop(
+            "registration_token", None
+        )
+        raw_password = str(validated_data.pop("password"))
+
+        if registration_token_str:
+            return self._create_with_token(
+                validated_data, raw_password, registration_token_str
+            )
+        return self._create_standalone(validated_data, raw_password)
+
+    def _create_standalone(self, validated_data: dict, raw_password: str):
+        """Crea usuario sin grupo: no tiene acceso a ninguna app."""
+        user_model = get_user_model()
+        with transaction.atomic():
+            created_user = user_model.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data.get("email", ""),
+                password=raw_password,
+                first_name=validated_data.get("first_name", ""),
+                last_name=validated_data.get("last_name", ""),
+                role=UserIdentityProfile.ROLE_USER,
+                account_status=UserIdentityProfile.STATUS_ACTIVE,
+                email_verified=False,
+            )
+
+            UserIdentityProfile.objects.update_or_create(
+                user=created_user,
+                defaults={
+                    "role": UserIdentityProfile.ROLE_USER,
+                    "account_status": UserIdentityProfile.STATUS_ACTIVE,
+                    "primary_group_id": None,
+                    "email_verified": False,
+                },
+            )
+
+        return created_user
+
+    def _create_with_token(
+        self,
+        validated_data: dict,
+        raw_password: str,
+        token_str: str,
+    ):
+        """Crea usuario y lo asigna al grupo vinculado al token."""
+        user_model = get_user_model()
+
+        with transaction.atomic():
+            # Bloqueo pesimista para evitar race condition en use_count
+            token_obj = SelfRegistrationToken.objects.select_for_update().get(
+                token=token_str
+            )
+
+            # Re-validar tras el lock
+            if not token_obj.is_valid():
+                raise serializers.ValidationError(
+                    "This invitation token is no longer valid."
+                )
+
+            created_user = user_model.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data.get("email", ""),
+                password=raw_password,
+                first_name=validated_data.get("first_name", ""),
+                last_name=validated_data.get("last_name", ""),
+                role=UserIdentityProfile.ROLE_USER,
+                account_status=UserIdentityProfile.STATUS_ACTIVE,
+                email_verified=False,
+            )
+
+            UserIdentityProfile.objects.update_or_create(
+                user=created_user,
+                defaults={
+                    "role": UserIdentityProfile.ROLE_USER,
+                    "account_status": UserIdentityProfile.STATUS_ACTIVE,
+                    "primary_group_id": token_obj.group_id,
+                    "email_verified": False,
+                },
+            )
+
+            GroupMembership.objects.update_or_create(
+                user=created_user,
+                group_id=token_obj.group_id,
+                defaults={"role_in_group": GroupMembership.ROLE_MEMBER},
+            )
+
+            # Incremento atómico del contador de usos
+            SelfRegistrationToken.objects.filter(pk=token_obj.pk).update(
+                use_count=models.F("use_count") + 1
+            )
+
+        return created_user
+
+
+class RegistrationTokenSerializer(serializers.ModelSerializer):
+    """Serializer de lectura para tokens de auto-registro."""
+
+    group_name = serializers.CharField(source="group.name", read_only=True)
+
+    class Meta:
+        model = SelfRegistrationToken
+        fields = [
+            "id",
+            "token",
+            "group",
+            "group_name",
+            "description",
+            "is_active",
+            "max_uses",
+            "use_count",
+            "expires_at",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "token",
+            "use_count",
+            "created_at",
+        ]
+
+
+class RegistrationTokenCreateSerializer(serializers.Serializer):
+    """Serializer para creación de tokens de auto-registro (solo root)."""
+
+    group_id = serializers.IntegerField()
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+    max_uses = serializers.IntegerField(
+        required=False,
+        default=1,
+        min_value=0,
+        help_text="0 = ilimitado",
+    )
+    expires_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        default=None,
+        help_text="Fecha de expiración. None = nunca expira.",
+    )
+
+    def validate_group_id(self, value: int) -> int:
+        if not WorkGroup.objects.filter(id=value).exists():
+            raise serializers.ValidationError("El grupo indicado no existe.")
+        return value
+
+    def create(self, validated_data: dict):
+        return SelfRegistrationToken.objects.create(
+            group_id=int(validated_data["group_id"]),
+            description=validated_data.get("description", ""),
+            max_uses=validated_data.get("max_uses", 1),
+            expires_at=validated_data.get("expires_at"),
+        )

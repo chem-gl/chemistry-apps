@@ -11,11 +11,13 @@ Cómo se usa:
     HTTP y streaming WebSocket/SSE.
 """
 
+import secrets
 import uuid
 
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 # Referencia lazy al modelo WorkGroup para usar en ForeignKey sin importación circular
 WORK_GROUP_MODEL_REF = "core.WorkGroup"
@@ -211,6 +213,86 @@ class GroupAppConfig(models.Model):
                 name="unique_group_app_config",
             )
         ]
+
+
+class SelfRegistrationToken(models.Model):
+    """Token de auto-registro vinculado a un grupo de trabajo.
+
+    Permite que usuarios nuevos se registren y queden automáticamente asignados
+    a un grupo específico, heredando los AppPermission de dicho grupo.
+    Solo root puede generar estos tokens.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.CharField(
+        max_length=12,
+        unique=True,
+        db_index=True,
+        help_text="Código corto de 12 caracteres para compartir como invitación.",
+    )
+    group = models.ForeignKey(
+        WORK_GROUP_MODEL_REF,
+        on_delete=models.CASCADE,
+        related_name="registration_tokens",
+        help_text="Grupo al que se asignará el usuario al registrarse.",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_registration_tokens",
+        help_text="Usuario root que generó el token.",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Descripción contextual del token (ej: 'Invitación Lab Alpha Q1').",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Desactivar para revocar el token sin eliminarlo.",
+    )
+    max_uses = models.PositiveIntegerField(
+        default=1,
+        help_text="Cantidad máxima de usos permitidos. 0 = ilimitado.",
+    )
+    use_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Contador de registros exitosos usando este token.",
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Fecha de expiración. None = nunca expira.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Token de auto-registro"
+        verbose_name_plural = "Tokens de auto-registro"
+
+    def __str__(self) -> str:
+        return f"SelfRegToken<{self.token}> ({self.group.name})"
+
+    def is_valid(self) -> bool:
+        """Verifica si el token puede ser usado para registrarse."""
+        if not self.is_active:
+            return False
+        if self.expires_at is not None and timezone.now() > self.expires_at:
+            return False
+        if self.max_uses > 0 and self.use_count >= self.max_uses:
+            return False
+        return True
+
+    def save(self, *args, **kwargs):
+        """Genera token aleatorio si no existe."""
+        if not self.token:
+            self.token = secrets.token_urlsafe(9)  # 12 caracteres base64url
+        super().save(*args, **kwargs)
 
 
 class ScientificJob(models.Model):

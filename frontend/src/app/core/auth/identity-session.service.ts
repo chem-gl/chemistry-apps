@@ -268,6 +268,15 @@ export class IdentitySessionService {
     void this.router.navigateByUrl('/login');
   }
 
+  /**
+   * Inicializa sesión desde un registro con token (auto-login).
+   * Persiste los tokens y carga la sesión remota.
+   */
+  initializeFromRegistration(tokens: { accessToken: string; refreshToken: string }): Observable<boolean> {
+    this.persistTokens(tokens);
+    return this.loadRemoteSession();
+  }
+
   refreshAccessToken(): Observable<string | null> {
     const storedRefreshToken = this.refreshToken();
     if (storedRefreshToken === null) {

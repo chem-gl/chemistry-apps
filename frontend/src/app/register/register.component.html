@@ -1,0 +1,74 @@
+<!-- register.component.html: Registro público de nuevos usuarios. -->
+<section class="register-shell" [attr.aria-label]="'register.aria.createAccount' | transloco">
+  <article class="register-hero" [attr.aria-label]="'register.aria.brandMessage' | transloco">
+    <p class="hero-kicker">{{ 'register.hero.kicker' | transloco }}</p>
+    <h1 class="hero-title">{{ 'register.hero.title' | transloco }}</h1>
+    <p class="hero-copy">{{ 'register.hero.copy' | transloco }}</p>
+  </article>
+
+  <article class="register-panel">
+    @if (registrationSuccess()) {
+      <div class="success-panel">
+        <p class="success-icon">✓</p>
+        <h2>{{ 'register.success.title' | transloco }}</h2>
+        <p>{{ 'register.success.message' | transloco }}</p>
+        <p class="redirect-hint">{{ 'register.success.redirecting' | transloco }}</p>
+        <a class="login-link" routerLink="/login">{{ 'register.success.signInNow' | transloco }}</a>
+      </div>
+    } @else {
+      <p class="eyebrow">{{ 'register.panel.eyebrow' | transloco }}</p>
+      <h2>{{ 'register.panel.title' | transloco }}</h2>
+      <p class="lead">{{ 'register.panel.copy' | transloco }}</p>
+
+      <form class="register-form" (ngSubmit)="submit()">
+        <label>
+          {{ 'register.form.username' | transloco }}
+          <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
+            autocomplete="username" required />
+        </label>
+
+        <label>
+          {{ 'register.form.email' | transloco }}
+          <input [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" type="email"
+            autocomplete="email" required />
+        </label>
+
+        <label>
+          {{ 'register.form.password' | transloco }}
+          <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
+            autocomplete="new-password" required />
+        </label>
+
+        <label>
+          {{ 'register.form.confirmPassword' | transloco }}
+          <input [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" name="confirmPassword"
+            type="password" autocomplete="new-password" required />
+        </label>
+
+        <label class="optional-field">
+          <span class="field-label">
+            {{ 'register.form.invitationToken' | transloco }}
+            <span class="optional-tag">{{ 'register.form.optional' | transloco }}</span>
+          </span>
+          <input [ngModel]="invitationToken()" (ngModelChange)="invitationToken.set($event)" name="invitationToken"
+            type="text" maxlength="12" placeholder="e.g. aB3xK9mPqR2s" />
+          <span class="field-hint">{{ 'register.form.tokenHint' | transloco }}</span>
+        </label>
+
+        @if (localErrorMessage(); as errorMessage) {
+          <p class="error-message" role="alert">{{ errorMessage }}</p>
+        }
+
+        <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? ('register.form.creatingAccount' | transloco) : ('register.form.createAccount' | transloco)
+          }}
+        </button>
+      </form>
+
+      <p class="login-redirect">
+        {{ 'register.panel.hasAccount' | transloco }}
+        <a routerLink="/login">{{ 'register.panel.signIn' | transloco }}</a>
+      </p>
+    }
+  </article>
+</section>

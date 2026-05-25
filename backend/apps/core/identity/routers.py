@@ -17,6 +17,7 @@ from ..models import (
     AppPermission,
     GroupAppConfig,
     GroupMembership,
+    SelfRegistrationToken,
     UserAppConfig,
     UserIdentityProfile,
     WorkGroup,
@@ -31,9 +32,12 @@ from .schemas import (
     IdentityBootstrapUserSerializer,
     IdentityUserSummarySerializer,
     IdentityUserUpdateSerializer,
+    RegistrationTokenCreateSerializer,
+    RegistrationTokenSerializer,
     ScientificAppCatalogSerializer,
     UserAppConfigSerializer,
     UserProfileSerializer,
+    UserRegistrationSerializer,
     WorkGroupSerializer,
 )
 from .services import AuthorizationService
@@ -129,6 +133,15 @@ def _prepare_group_deletion(group: WorkGroup) -> tuple[bool, str | None]:
         if not can_delete:
             return False, error_message
     return True, None
+
+
+def _issue_jwt_tokens(user):
+    """Genera access y refresh tokens JWT con claims de dominio para auto-login."""
+    refresh = DomainTokenObtainPairSerializer.get_token(user)
+    return {
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+    }
 
 
 @extend_schema(tags=["Auth"])
@@ -926,6 +939,128 @@ class AppPermissionDetailView(views.APIView):
                 )
 
         permission.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Auth"])
+class UserRegistrationView(views.APIView):
+    """Registro público de nuevos usuarios.
+
+    Sin `registration_token`: crea usuario sin grupo ni permisos de app.
+    Con `registration_token` válido: crea usuario, lo asigna al grupo vinculado
+    al token, y devuelve tokens JWT para auto-login inmediato.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserRegistrationSerializer
+
+    @extend_schema(
+        request=UserRegistrationSerializer,
+        responses={201: UserProfileSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        serializer = UserRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        registration_token_str: str | None = serializer.validated_data.get(
+            "registration_token"
+        )
+        user = serializer.save()
+
+        if registration_token_str:
+            # Registro con token → auto-login
+            tokens = _issue_jwt_tokens(user)
+            profile_serializer = UserProfileSerializer(user)
+            return Response(
+                {
+                    "user": profile_serializer.data,
+                    "access": tokens["access"],
+                    "refresh": tokens["refresh"],
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        # Registro sin token → solo perfil, sin JWT
+        profile_serializer = UserProfileSerializer(user)
+        return Response(
+            {"user": profile_serializer.data},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+@extend_schema(tags=["Identity"])
+class RegistrationTokensView(views.APIView):
+    """Lista y crea tokens de auto-registro para grupos.
+
+    - GET: lista tokens. Root ve todos; admin ve tokens de grupos que administra.
+    - POST: crea token. Solo root.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RegistrationTokenSerializer
+
+    @extend_schema(responses=RegistrationTokenSerializer(many=True))
+    def get(self, request: Request) -> Response:
+        actor = request.user
+        if not _require_admin_or_root(actor):
+            return Response(
+                {"detail": "No tienes permisos para listar tokens de registro."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = SelfRegistrationToken.objects.all().order_by("-created_at")
+        if AuthorizationService.is_admin(actor) and not AuthorizationService.is_root(
+            actor
+        ):
+            admin_group_ids = GroupMembership.objects.filter(
+                user_id=actor.id,
+                role_in_group=GroupMembership.ROLE_ADMIN,
+            ).values_list("group_id", flat=True)
+            queryset = queryset.filter(group_id__in=admin_group_ids)
+
+        serializer = RegistrationTokenSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        request=RegistrationTokenCreateSerializer,
+        responses={201: RegistrationTokenSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede generar tokens de registro."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = RegistrationTokenCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token_obj = serializer.save(created_by=actor)
+        output_serializer = RegistrationTokenSerializer(token_obj)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Identity"])
+class RegistrationTokenDetailView(views.APIView):
+    """Gestiona un token de auto-registro específico.
+
+    DELETE: Revoca el token (is_active=False). Solo root.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RegistrationTokenSerializer
+
+    def delete(self, request: Request, token_id: str) -> Response:
+        actor = request.user
+        if not AuthorizationService.is_root(actor):
+            return Response(
+                {"detail": "Solo root puede revocar tokens de registro."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        token_obj = get_object_or_404(SelfRegistrationToken, id=token_id)
+        token_obj.is_active = False
+        token_obj.save(update_fields=["is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

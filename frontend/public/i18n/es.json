@@ -70,7 +70,51 @@
     "panel": {
       "title": "Acceso Científico",
       "copy": "Inicia sesión para cargar tu rol, acceso por grupo, visibilidad de apps y espacio personalizado.",
-      "eyebrow": "Puerta de Identidad"
+      "eyebrow": "Puerta de Identidad",
+      "noAccount": "¿No tienes cuenta?",
+      "createAccount": "Crear una"
+    }
+  },
+  "register": {
+    "aria": {
+      "createAccount": "Crear cuenta",
+      "brandMessage": "Mensaje de marca"
+    },
+    "hero": {
+      "kicker": "App Chemistry Sense",
+      "title": "Únete a la Plataforma Científica",
+      "copy": "Crea tu cuenta para acceder a las herramientas científicas. Si tienes un enlace de invitación, pega el token debajo para unirte al espacio de tu equipo."
+    },
+    "panel": {
+      "eyebrow": "Registro de Identidad",
+      "title": "Crear Cuenta",
+      "copy": "Completa tus datos para comenzar.",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión"
+    },
+    "form": {
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "invitationToken": "Token de invitación",
+      "optional": "opcional",
+      "tokenHint": "Si recibiste un enlace de invitación, ingresa el token de 12 caracteres aquí.",
+      "createAccount": "Crear cuenta",
+      "creatingAccount": "Creando cuenta..."
+    },
+    "errors": {
+      "usernameRequired": "El nombre de usuario es obligatorio.",
+      "emailRequired": "El correo electrónico es obligatorio.",
+      "passwordRequired": "La contraseña es obligatoria.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordMismatch": "Las contraseñas no coinciden."
+    },
+    "success": {
+      "title": "¡Cuenta creada!",
+      "message": "Tu cuenta ha sido creada exitosamente.",
+      "redirecting": "Serás redirigido a la página de inicio de sesión en breve.",
+      "signInNow": "Iniciar sesión ahora"
     }
   },
   "userManager": {
@@ -1129,53 +1173,33 @@
     "permissions": {
       "title": "Permisos de Apps"
     },
-    "ariaLabel": "Gestión de grupos",
-    "feedback": {
-      "loading": "Cargando grupos..."
-    },
-    "members": {
-      "fastSearchUsers": "Búsqueda rápida de usuarios",
+    "invitationTokens": {
+      "title": "Tokens de Invitación",
+      "description": "Genera tokens de invitación para que nuevos usuarios se unan automáticamente a este grupo. Solo root puede crear tokens.",
+      "generate": "Generar token",
+      "revoke": "Revocar",
+      "revoked": "Revocado",
+      "active": "Activo",
+      "copyLink": "Copiar enlace",
+      "copied": "¡Copiado!",
+      "noTokens": "No hay tokens de invitación para este grupo.",
+      "colToken": "Token",
+      "colUses": "Usos",
+      "colExpires": "Expira",
+      "colStatus": "Estado",
       "colActions": "Acciones",
-      "colRole": "Rol",
-      "addButton": "Añadir miembro",
-      "colUser": "Usuario",
-      "title": "Miembros",
-      "selectUser": "Seleccionar usuario",
-      "searchUsersPlaceholder": "Buscar usuario por nombre o correo"
-    },
-    "groups": {
-      "colActions": "Acciones",
-      "colName": "Nombre",
-      "title": "Grupos",
-      "colSlug": "Slug",
-      "allGroupsOption": "Todos los grupos administrables",
-      "fastSearchGroups": "Búsqueda rápida de grupos",
-      "searchGroupsPlaceholder": "Buscar por nombre, slug o descripción",
-      "colMembers": "Miembros",
-      "adminGroupLabel": "Grupo administrativo",
-      "collapse": "Colapsar",
-      "manage": "Gestionar"
-    }
-  },
-  "identityAdmin": {
-    "header": {
-      "title": "Identidad y Acceso",
-      "subtitle": "Administra usuarios, grupos, membresías y RBAC a nivel de apps en un espacio de trabajo consistente.",
-      "eyebrow": "Consola Administrativa",
-      "myProfile": "Mi perfil",
-      "refresh": "Actualizar"
-    },
-    "addMembership": {
-      "selectGroup": "Seleccionar grupo",
-      "roleAdmin": "Admin",
-      "title": "Agregar membresía",
-      "submit": "Agregar membresía",
-      "roleMember": "Miembro",
-      "group": "Grupo",
-      "user": "Usuario",
-      "hint": "Mapea usuarios en grupos antes de asignar reglas por app.",
-      "roleInGroup": "Rol en el grupo",
-      "selectUser": "Seleccionar usuario"
+      "createModal": {
+        "title": "Generar token de invitación",
+        "description": "Descripción (opcional)",
+        "descriptionPlaceholder": "ej. Equipo Lab Alpha Q1",
+        "maxUses": "Usos máximos",
+        "maxUsesHint": "1 = un solo uso. 0 = ilimitado.",
+        "expiresAt": "Expira en (opcional)",
+        "cancel": "Cancelar",
+        "generate": "Generar"
+      },
+      "unlimited": "Ilimitado",
+      "neverExpires": "Nunca"
     },
     "createGroup": {
       "slug": "Slug",

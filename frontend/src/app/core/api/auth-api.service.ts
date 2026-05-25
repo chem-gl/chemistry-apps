@@ -1,12 +1,29 @@
 // auth-api.service.ts: Wrapper estable para autenticación JWT y perfil actual.
 
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { API_BASE_URL } from '../shared/constants';
 import { AuthService } from './generated';
 
 export interface SessionTokens {
   accessToken: string;
   refreshToken: string;
+}
+
+export interface RegisterPayload {
+  username: string;
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+  registration_token?: string;
+}
+
+export interface RegisterResponse {
+  user: CurrentUserProfileView;
+  access?: string;
+  refresh?: string;
 }
 
 export interface CurrentUserProfileView {
@@ -48,7 +65,16 @@ interface RefreshApiResponse {
   providedIn: 'root',
 })
 export class AuthApiService {
+  private readonly httpClient = inject(HttpClient);
+  private readonly authBaseUrl = `${API_BASE_URL}/api/auth`;
   private readonly authClient = inject(AuthService);
+
+  register(payload: RegisterPayload): Observable<RegisterResponse> {
+    return this.httpClient.post<RegisterResponse>(
+      `${this.authBaseUrl}/register/`,
+      payload,
+    );
+  }
 
   login(username: string, password: string): Observable<SessionTokens> {
     return this.authClient.authLoginCreate({ username, password }).pipe(

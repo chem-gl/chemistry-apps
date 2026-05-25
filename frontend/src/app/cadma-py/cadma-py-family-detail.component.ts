@@ -2,6 +2,7 @@
 // Muestra promedios por métrica, trazabilidad, scope de permisos, tabla de compuestos
 // con edición inline de referencias documentales y formulario para agregar compuestos.
 
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -185,6 +186,7 @@ const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: s
 })
 export class CadmaPyFamilyDetailComponent {
   private readonly cadmaApi = inject(CadmaPyApiService);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly jobsApi = inject(JobsApiService);
   private readonly translocoService = inject(TranslocoService);
 
@@ -238,7 +240,7 @@ export class CadmaPyFamilyDetailComponent {
 
   /** Modal con el detalle completo de un compuesto específico. */
   readonly selectedCompound = signal<CadmaReferenceRowView | null>(null);
-  readonly compoundModalSvg = signal<string | null>(null);
+  readonly compoundModalSvg = signal<SafeHtml | null>(null);
   readonly compoundModalBusy = signal<boolean>(false);
   readonly compoundModalError = signal<string>('');
   readonly isEditingCompound = computed<boolean>(() => this.editingRowIndex() >= 0);
@@ -385,7 +387,7 @@ export class CadmaPyFamilyDetailComponent {
 
     this.jobsApi.inspectSmileitStructure(row.smiles).subscribe({
       next: (inspection) => {
-        this.compoundModalSvg.set(inspection.svg);
+        this.compoundModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg)); // NOSONAR: S6268 - SVG from internal backend, never user input
         this.compoundModalBusy.set(false);
       },
       error: () => {

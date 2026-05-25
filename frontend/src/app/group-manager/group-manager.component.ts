@@ -5,12 +5,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { forkJoin, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import {
   AppPermissionView,
+  CreateRegistrationTokenPayload,
   GroupMembershipView,
   IdentityApiService,
   IdentityUserSummaryView,
+  RegistrationTokenView,
   ScientificAppCatalogItemView,
   WorkGroupView,
 } from '../core/api/identity-api.service';
@@ -56,6 +58,14 @@ export class GroupManagerComponent implements OnInit {
   readonly groupFilterId = signal<string>('');
   readonly groupSearchQuery = signal<string>('');
   readonly memberSearchQuery = signal<string>('');
+  readonly registrationTokens = signal<RegistrationTokenView[]>([]);
+  readonly showCreateTokenModal = signal<boolean>(false);
+  readonly createTokenGroupId = signal<number | null>(null);
+  readonly createTokenForm = signal<{
+    description: string;
+    maxUses: number;
+    expiresAt: string;
+  }>({ description: '', maxUses: 1, expiresAt: '' });
 
   /** IDs de grupos que el usuario actual puede administrar. */
   readonly managedGroupIds = computed<number[]>(() => {
@@ -103,13 +113,17 @@ export class GroupManagerComponent implements OnInit {
       memberships: this.identityApiService.listMemberships(),
       appPermissions: this.identityApiService.listAppPermissions(),
       scientificApps: this.identityApiService.listScientificApps(),
+      registrationTokens: this.identityApiService.listRegistrationTokens().pipe(
+        catchError(() => of([] as RegistrationTokenView[])),
+      ),
     }).subscribe({
-      next: ({ groups, users, memberships, appPermissions, scientificApps }) => {
+      next: ({ groups, users, memberships, appPermissions, scientificApps, registrationTokens }) => {
         this.groups.set(groups);
         this.users.set(users);
         this.memberships.set(memberships);
         this.appPermissions.set(appPermissions);
         this.scientificApps.set(scientificApps);
+        this.registrationTokens.set(registrationTokens);
         this.sessionService.setKnownGroups(groups);
         this.isLoading.set(false);
       },
@@ -314,6 +328,82 @@ export class GroupManagerComponent implements OnInit {
           this.isSubmitting.set(false);
         },
       });
+  }
+
+  // ── Registration Tokens ──────────────────────────────────────────────
+
+  tokensForGroup(groupId: number): RegistrationTokenView[] {
+    return this.registrationTokens().filter((t) => t.group === groupId);
+  }
+
+  copyTokenLink(token: string): void {
+    const link = `${globalThis.location.origin}/register?token=${token}`;
+    void navigator.clipboard.writeText(link);
+  }
+
+  openCreateTokenModal(groupId: number): void {
+    this.createTokenGroupId.set(groupId);
+    this.createTokenForm.set({ description: '', maxUses: 1, expiresAt: '' });
+    this.showCreateTokenModal.set(true);
+  }
+
+  closeCreateTokenModal(): void {
+    this.showCreateTokenModal.set(false);
+    this.createTokenGroupId.set(null);
+  }
+
+  submitCreateToken(): void {
+    const groupId = this.createTokenGroupId();
+    if (groupId === null) return;
+
+    const form = this.createTokenForm();
+    const payload: CreateRegistrationTokenPayload = {
+      group_id: groupId,
+      description: form.description,
+      max_uses: form.maxUses,
+    };
+    if (form.expiresAt.trim() !== '') {
+      payload.expires_at = new Date(form.expiresAt).toISOString();
+    }
+
+    this.isSubmitting.set(true);
+    this.successMessage.set(null);
+    this.errorMessage.set(null);
+    this.identityApiService.createRegistrationToken(payload).subscribe({
+      next: (newToken) => {
+        this.registrationTokens.update((list) => [...list, newToken]);
+        this.successMessage.set('Token de invitación generado correctamente.');
+        this.closeCreateTokenModal();
+        this.isSubmitting.set(false);
+        globalThis.setTimeout(() => this.successMessage.set(null), 3000);
+      },
+      error: () => {
+        this.errorMessage.set('Error al generar el token de invitación.');
+        this.isSubmitting.set(false);
+      },
+    });
+  }
+
+  revokeToken(tokenId: string): void {
+    this.isSubmitting.set(true);
+    this.identityApiService.revokeRegistrationToken(tokenId).subscribe({
+      next: () => {
+        this.registrationTokens.update((list) =>
+          list.map((t) => (t.id === tokenId ? { ...t, is_active: false } : t)),
+        );
+        this.successMessage.set('Token revocado correctamente.');
+        this.isSubmitting.set(false);
+        globalThis.setTimeout(() => this.successMessage.set(null), 3000);
+      },
+      error: () => {
+        this.errorMessage.set('Error al revocar el token.');
+        this.isSubmitting.set(false);
+      },
+    });
+  }
+
+  isRootUser(): boolean {
+    return this.sessionService.hasRootAccess();
   }
 
   private _groupMatchesSearch(group: WorkGroupView, normalizedSearch: string): boolean {

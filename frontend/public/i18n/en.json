@@ -99,7 +99,9 @@
     "panel": {
       "eyebrow": "Identity Gateway",
       "title": "Scientific Access",
-      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace."
+      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace.",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create one"
     },
     "form": {
       "username": "Username",
@@ -109,6 +111,48 @@
     },
     "errors": {
       "unableToAuthenticate": "Unable to authenticate."
+    }
+  },
+  "register": {
+    "aria": {
+      "createAccount": "Create account",
+      "brandMessage": "Brand message"
+    },
+    "hero": {
+      "kicker": "App Chemistry Sense",
+      "title": "Join the Scientific Platform",
+      "copy": "Create your account to access the scientific tools. If you have an invitation link, paste the token below to join your team's workspace."
+    },
+    "panel": {
+      "eyebrow": "Identity Registration",
+      "title": "Create Account",
+      "copy": "Fill in your details to get started.",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "form": {
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "invitationToken": "Invitation token",
+      "optional": "optional",
+      "tokenHint": "If you received an invitation link, enter the 12-character token here.",
+      "createAccount": "Create account",
+      "creatingAccount": "Creating account..."
+    },
+    "errors": {
+      "usernameRequired": "Username is required.",
+      "emailRequired": "Email is required.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match."
+    },
+    "success": {
+      "title": "Account created!",
+      "message": "Your account has been created successfully.",
+      "redirecting": "You will be redirected to the login page shortly.",
+      "signInNow": "Sign in now"
     }
   },
   "profile": {
@@ -1190,6 +1234,34 @@
     },
     "permissions": {
       "title": "App Permissions"
+    },
+    "invitationTokens": {
+      "title": "Invitation Tokens",
+      "description": "Generate invitation tokens to let new users auto-join this group. Only root can create tokens.",
+      "generate": "Generate token",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "active": "Active",
+      "copyLink": "Copy link",
+      "copied": "Copied!",
+      "noTokens": "No invitation tokens for this group.",
+      "colToken": "Token",
+      "colUses": "Uses",
+      "colExpires": "Expires",
+      "colStatus": "Status",
+      "colActions": "Actions",
+      "createModal": {
+        "title": "Generate invitation token",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "e.g. Lab Alpha Q1 team",
+        "maxUses": "Maximum uses",
+        "maxUsesHint": "1 = single use. 0 = unlimited.",
+        "expiresAt": "Expires at (optional)",
+        "cancel": "Cancel",
+        "generate": "Generate"
+      },
+      "unlimited": "Unlimited",
+      "neverExpires": "Never"
     },
     "createGroup": {
       "title": "Create group",

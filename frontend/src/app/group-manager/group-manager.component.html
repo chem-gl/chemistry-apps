@@ -166,6 +166,77 @@
                                     </div>
                                 </div>
 
+                                <!-- Subsección: tokens de invitación (solo root) -->
+                                @if (isRootUser()) {
+                                <div class="sub-section">
+                                    <h3 class="sub-title">{{ 'groupManager.invitationTokens.title' | transloco }}</h3>
+                                    <p class="section-description">{{ 'groupManager.invitationTokens.description' | transloco }}</p>
+
+                                    @if (tokensForGroup(group.id).length === 0) {
+                                    <p class="hint">{{ 'groupManager.invitationTokens.noTokens' | transloco }}</p>
+                                    } @else {
+                                    <table class="inner-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ 'groupManager.invitationTokens.colToken' | transloco }}</th>
+                                                <th>{{ 'groupManager.invitationTokens.colUses' | transloco }}</th>
+                                                <th>{{ 'groupManager.invitationTokens.colExpires' | transloco }}</th>
+                                                <th>{{ 'groupManager.invitationTokens.colStatus' | transloco }}</th>
+                                                <th>{{ 'groupManager.invitationTokens.colActions' | transloco }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (token of tokensForGroup(group.id); track token.id) {
+                                            <tr>
+                                                <td><code>{{ token.token }}</code></td>
+                                                <td>
+                                                    {{ token.use_count }}
+                                                    @if (token.max_uses === 0) {
+                                                    / {{ 'groupManager.invitationTokens.unlimited' | transloco }}
+                                                    } @else {
+                                                    / {{ token.max_uses }}
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (token.expires_at !== null) {
+                                                    {{ token.expires_at | date:'shortDate' }}
+                                                    } @else {
+                                                    {{ 'groupManager.invitationTokens.neverExpires' | transloco }}
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (token.is_active) {
+                                                    <span class="badge-active">{{ 'groupManager.invitationTokens.active' | transloco }}</span>
+                                                    } @else {
+                                                    <span class="badge-inactive">{{ 'groupManager.invitationTokens.revoked' | transloco }}</span>
+                                                    }
+                                                </td>
+                                                <td class="action-cell">
+                                                    <button class="action-button small" type="button"
+                                                        (click)="copyTokenLink(token.token)">
+                                                        {{ 'groupManager.invitationTokens.copyLink' | transloco }}
+                                                    </button>
+                                                    @if (token.is_active) {
+                                                    <button class="action-button small danger" type="button"
+                                                        (click)="revokeToken(token.id)">
+                                                        {{ 'groupManager.invitationTokens.revoke' | transloco }}
+                                                    </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                    }
+
+                                    <button class="action-button primary small" type="button"
+                                        (click)="openCreateTokenModal(group.id)"
+                                        style="margin-top: 0.75rem;">
+                                        {{ 'groupManager.invitationTokens.generate' | transloco }}
+                                    </button>
+                                </div>
+                                }
+
                             </div>
                         </td>
                     </tr>
@@ -209,4 +280,50 @@
     }
 
     } <!-- fin !isLoading -->
+
+    <!-- Modal de creación de token -->
+    @if (showCreateTokenModal()) {
+    <div class="modal-backdrop" (click)="closeCreateTokenModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>{{ 'groupManager.invitationTokens.createModal.title' | transloco }}</h3>
+
+            <form (ngSubmit)="submitCreateToken()">
+                <label class="form-label">
+                    {{ 'groupManager.invitationTokens.createModal.description' | transloco }}
+                    <input class="form-input" type="text"
+                        [ngModel]="createTokenForm().description"
+                        (ngModelChange)="createTokenForm.update(f => ({ ...f, description: $event }))"
+                        name="tokenDescription"
+                        [placeholder]="'groupManager.invitationTokens.createModal.descriptionPlaceholder' | transloco" />
+                </label>
+
+                <label class="form-label">
+                    {{ 'groupManager.invitationTokens.createModal.maxUses' | transloco }}
+                    <input class="form-input" type="number" min="0"
+                        [ngModel]="createTokenForm().maxUses"
+                        (ngModelChange)="createTokenForm.update(f => ({ ...f, maxUses: $event }))"
+                        name="tokenMaxUses" />
+                    <small class="hint">{{ 'groupManager.invitationTokens.createModal.maxUsesHint' | transloco }}</small>
+                </label>
+
+                <label class="form-label">
+                    {{ 'groupManager.invitationTokens.createModal.expiresAt' | transloco }}
+                    <input class="form-input" type="datetime-local"
+                        [ngModel]="createTokenForm().expiresAt"
+                        (ngModelChange)="createTokenForm.update(f => ({ ...f, expiresAt: $event }))"
+                        name="tokenExpiresAt" />
+                </label>
+
+                <div class="modal-actions">
+                    <button class="action-button" type="button" (click)="closeCreateTokenModal()">
+                        {{ 'groupManager.invitationTokens.createModal.cancel' | transloco }}
+                    </button>
+                    <button class="action-button primary" type="submit" [disabled]="isSubmitting()">
+                        {{ 'groupManager.invitationTokens.createModal.generate' | transloco }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    }
 </section>
