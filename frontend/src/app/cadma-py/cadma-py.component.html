@@ -208,16 +208,6 @@
   <!-- ═══════════════ PASO 2: Datos del candidato ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 2) {
   <section class="step-section">
-    <div class="family-selector-row">
-      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
-      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
-        (ngModelChange)="onReferenceFamilyChange($event)">
-        @for (family of combinedFamilies(); track family.id) {
-        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
-        }
-      </select>
-    </div>
-
     <div class="step-section-header">
       <div class="step-section-num">2</div>
       <div class="step-section-info">
@@ -476,15 +466,6 @@
   <!-- ═══════════════ PASO 3: Configurar fórmula ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 3) {
   <section class="step-section">
-    <div class="family-selector-row">
-      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
-      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
-        (ngModelChange)="onReferenceFamilyChange($event)">
-        @for (family of combinedFamilies(); track family.id) {
-        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
-        }
-      </select>
-    </div>
     @if (step2Summary(); as summary) {
     <button class="context-bar" type="button" (click)="returnToCandidateInputs()" [attr.aria-label]="'cadmaPy.step2.ariaBackToCandidates' | transloco">
       <span class="context-bar-text">{{ summary }}</span>
@@ -616,15 +597,6 @@
   <!-- ═══════════════ PASO 4: Resultados ═══════════════ -->
   @if (workflow.selectedReferenceLibraryId() !== '' && activeStep() === 4) {
   <section class="step-section results-section">
-    <div class="family-selector-row">
-      <label class="family-selector-label">{{ 'cadmaPy.step1.title' | transloco }}</label>
-      <select class="form-select family-selector" [ngModel]="workflow.selectedReferenceLibraryId()"
-        (ngModelChange)="onReferenceFamilyChange($event)">
-        @for (family of combinedFamilies(); track family.id) {
-        <option [value]="family.id">{{ family.diseaseName }} — {{ family.name }} ({{ family.rowCount }})</option>
-        }
-      </select>
-    </div>
     @if (step2Summary(); as summary) {
     <div class="context-bar">
       <span class="context-bar-text">{{ summary }}</span>
