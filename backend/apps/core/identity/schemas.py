@@ -693,4 +693,5 @@ class RegistrationTokenCreateSerializer(serializers.Serializer):
             description=validated_data.get("description", ""),
             max_uses=validated_data.get("max_uses", 1),
             expires_at=validated_data.get("expires_at"),
+            created_by=validated_data.get("created_by"),
         )
