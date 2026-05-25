@@ -26,7 +26,13 @@
 }
 
 .single-upload-btn input[type='file'] {
-  margin-top: 0.25rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .upload-btn-title {
@@ -75,10 +81,45 @@
 
 .source-card-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  align-items: start;
-  flex-wrap: wrap;
+}
+
+.source-card.collapsed {
+  border-color: var(--chem-border-accent-dim);
+  background: var(--chem-surface);
+}
+
+.source-card.collapsed .source-card-header {
+  margin-bottom: 0;
+}
+
+.source-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-collapse {
+  flex-shrink: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--chem-transition);
+}
+
+.btn-collapse:hover {
+  background: var(--chem-surface-inset);
+  border-color: var(--chem-border-strong);
 }
 
 .source-card-header h4 {

@@ -23,9 +23,13 @@
     @if (sources().length > 0) {
     <div class="source-list">
         @for (source of sources(); track source.id; let sourceIndex = $index) {
-        <article class="source-card">
+        <article class="source-card" [class.collapsed]="isSourceCollapsed(source.id)">
             <header class="source-card-header">
-                <div>
+                <button class="btn-collapse" type="button" (click)="toggleSourceCollapse(source.id)"
+                    [attr.aria-label]="isSourceCollapsed(source.id) ? 'Expand' : 'Collapse'">
+                    {{ isSourceCollapsed(source.id) ? '▶' : '▼' }}
+                </button>
+                <div class="source-card-info">
                     <span class="source-role">{{ fileRoleLabel(sourceIndex) }}</span>
                     <h4>{{ source.filename }}</h4>
                     <p>{{ formatDelimiterLabel(source) }} · {{ source.usableRowCount }} {{ 'cadmaPy.importer.usableRows'
@@ -35,6 +39,7 @@
                     | transloco }}</button>
             </header>
 
+            @if (!isSourceCollapsed(source.id)) {
             <div class="source-grid source-grid-meta">
                 <label class="field-block compact-field">
                     <span>{{ 'cadmaPy.importer.format' | transloco }}</span>
@@ -109,6 +114,7 @@
                     </tbody>
                 </table>
             </div>
+            }
             }
         </article>
         }
