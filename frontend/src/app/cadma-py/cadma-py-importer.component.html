@@ -23,20 +23,34 @@
     @if (sources().length > 0) {
     <div class="source-list">
         @for (source of sources(); track source.id; let sourceIndex = $index) {
-        <article class="source-card" [class.collapsed]="isSourceCollapsed(source.id)">
+        <article class="source-card" [class.collapsed]="isSourceCollapsed(source.id)" [class.guide-file]="smilesGuideFileIndex() === sourceIndex">
             <header class="source-card-header">
                 <button class="btn-collapse" type="button" (click)="toggleSourceCollapse(source.id)"
                     [attr.aria-label]="isSourceCollapsed(source.id) ? 'Expand' : 'Collapse'">
                     {{ isSourceCollapsed(source.id) ? '▶' : '▼' }}
                 </button>
                 <div class="source-card-info">
-                    <span class="source-role">{{ fileRoleLabel(sourceIndex) }}</span>
+                    <span class="source-role">
+                        @if (smilesGuideFileIndex() === sourceIndex) {
+                        <span class="guide-badge">{{ 'cadmaPy.importer.smilesGuideFile' | transloco }}</span>
+                        } @else {
+                        {{ fileRoleLabel(sourceIndex) }}
+                        }
+                    </span>
                     <h4>{{ source.filename }}</h4>
                     <p>{{ formatDelimiterLabel(source) }} · {{ source.usableRowCount }} {{ 'cadmaPy.importer.usableRows'
                         | transloco }}</p>
                 </div>
-                <button class="btn-remove" type="button" (click)="removeSource(source.id)">{{ 'cadmaPy.importer.remove'
-                    | transloco }}</button>
+                <div class="source-card-actions">
+                    @if (smilesGuideFileIndex() !== sourceIndex) {
+                    <button class="btn-set-guide" type="button" (click)="setSmilesGuideFile(source.id)"
+                        title="{{ 'cadmaPy.importer.setAsGuide' | transloco }}">
+                        {{ 'cadmaPy.importer.setAsGuide' | transloco }}
+                    </button>
+                    }
+                    <button class="btn-remove" type="button" (click)="removeSource(source.id)">{{ 'cadmaPy.importer.remove'
+                        | transloco }}</button>
+                </div>
             </header>
 
             @if (!isSourceCollapsed(source.id)) {
@@ -88,7 +102,7 @@
                                         [attr.aria-label]="'cadmaPy.importer.assignFor' | transloco:{ column: columnName }"
                                         (ngModelChange)="assignColumnRole(source.id, columnName, $event)">
                                         @for (roleOption of roleOptions(sourceIndex); track roleOption.label) {
-                                        <option [ngValue]="roleOption.value">{{ roleOption.label }}</option>
+                                        <option [ngValue]="roleOption.value">{{ roleOption.label | transloco }}</option>
                                         }
                                     </select>
                                 </div>
