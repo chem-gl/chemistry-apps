@@ -3,13 +3,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, RouterModule, TranslocoPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })

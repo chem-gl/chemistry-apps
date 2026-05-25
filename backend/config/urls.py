@@ -21,7 +21,10 @@ from apps.core.identity.routers import (
     GroupMembershipsView,
     IdentityUserDetailView,
     IdentityUsersView,
+    RegistrationTokenDetailView,
+    RegistrationTokensView,
     ScientificAppCatalogView,
+    UserRegistrationView,
     WorkGroupDetailView,
     WorkGroupsView,
 )
@@ -119,6 +122,7 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("api/auth/login/", DomainTokenObtainPairView.as_view(), name="auth-login"),
     path("api/auth/refresh/", DomainTokenRefreshView.as_view(), name="auth-refresh"),
+    path("api/auth/register/", UserRegistrationView.as_view(), name="auth-register"),
     path("api/auth/me/", CurrentUserProfileView.as_view(), name="auth-me"),
     path("api/auth/apps/", CurrentUserAccessibleAppsView.as_view(), name="auth-apps"),
     path(
@@ -142,6 +146,16 @@ urlpatterns = [
         "api/identity/groups/<int:group_id>/app-configs/<str:app_name>/",
         GroupAppConfigDetailView.as_view(),
         name="identity-group-app-config",
+    ),
+    path(
+        "api/identity/registration-tokens/",
+        RegistrationTokensView.as_view(),
+        name="identity-registration-tokens",
+    ),
+    path(
+        "api/identity/registration-tokens/<uuid:token_id>/",
+        RegistrationTokenDetailView.as_view(),
+        name="identity-registration-token-detail",
     ),
     path(
         "api/identity/scientific-apps/",

@@ -78,6 +78,26 @@ export interface AppPermissionView {
   updated_at: string;
 }
 
+export interface RegistrationTokenView {
+  id: string;
+  token: string;
+  group: number;
+  group_name: string;
+  description: string;
+  is_active: boolean;
+  max_uses: number;
+  use_count: number;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface CreateRegistrationTokenPayload {
+  group_id: number;
+  description?: string;
+  max_uses?: number;
+  expires_at?: string | null;
+}
+
 export interface GroupAppConfigView {
   id?: number;
   group?: number;
@@ -271,6 +291,29 @@ export class IdentityApiService {
     return this.httpClient.patch<GroupAppConfigView>(
       `${this.identityBaseUrl}/groups/${groupId}/app-configs/${appName}/`,
       { config },
+    );
+  }
+
+  // ── Registration Tokens ──────────────────────────────────────────────
+
+  listRegistrationTokens(): Observable<RegistrationTokenView[]> {
+    return this.httpClient.get<RegistrationTokenView[]>(
+      `${this.identityBaseUrl}/registration-tokens/`,
+    );
+  }
+
+  createRegistrationToken(
+    payload: CreateRegistrationTokenPayload,
+  ): Observable<RegistrationTokenView> {
+    return this.httpClient.post<RegistrationTokenView>(
+      `${this.identityBaseUrl}/registration-tokens/`,
+      payload,
+    );
+  }
+
+  revokeRegistrationToken(tokenId: string): Observable<void> {
+    return this.httpClient.delete<void>(
+      `${this.identityBaseUrl}/registration-tokens/${tokenId}/`,
     );
   }
 }

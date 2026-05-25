@@ -340,3 +340,68 @@ table {
     }
   }
 }
+
+/* ─── Badges ─── */
+.badge-active {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--chem-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-inactive {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--chem-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #fbe9e7;
+  color: #c62828;
+}
+
+/* ─── Modal ─── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--chem-surface);
+  border-radius: var(--chem-radius-lg);
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 90vw;
+  box-shadow: var(--chem-shadow-lg);
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-content h3 {
+  margin: 0;
+}
+
+.modal-content form {
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.modal-actions .action-button {
+  min-width: 7rem;
+}

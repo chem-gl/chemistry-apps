@@ -1,6 +1,6 @@
-/* login.component.scss: Pantalla de autenticacion con layout dividido y estilo App Chemistry Sense. */
+/* register.component.scss: Pantalla de registro con layout App Chemistry Sense. */
 
-.login-shell {
+.register-shell {
   min-height: calc(100vh - 8rem);
   display: grid;
   grid-template-columns: minmax(18rem, 1.3fr) minmax(18rem, 1fr);
@@ -12,7 +12,7 @@
   border: 1px solid rgba(168, 161, 176, 0.38);
 }
 
-.login-hero {
+.register-hero {
   border-radius: var(--chem-radius-lg);
   padding: clamp(1.5rem, 3vw, 2.4rem);
   border: 1px solid rgba(123, 90, 158, 0.2);
@@ -48,7 +48,7 @@
   line-height: 1.68;
 }
 
-.login-panel {
+.register-panel {
   width: min(29rem, 100%);
   justify-self: end;
   padding: 2.1rem 1.9rem;
@@ -85,9 +85,9 @@ h2 {
   font-size: var(--chem-text-sm);
 }
 
-.login-form {
+.register-form {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 label {
@@ -97,6 +97,33 @@ label {
   font-weight: 600;
   font-size: var(--chem-text-sm);
   font-family: var(--chem-font-label);
+}
+
+.optional-field {
+  opacity: 0.85;
+}
+
+.field-label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.optional-tag {
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--chem-ink-tertiary);
+  background: rgba(168, 161, 176, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--chem-radius-sm);
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--chem-ink-tertiary);
 }
 
 input {
@@ -139,6 +166,7 @@ input:focus {
     background var(--chem-transition),
     transform var(--chem-transition),
     box-shadow var(--chem-transition);
+  margin-top: 0.4rem;
 }
 
 .submit-button:hover {
@@ -152,29 +180,67 @@ input:focus {
   cursor: wait;
 }
 
-.register-link {
+.login-redirect {
   margin: 1.2rem 0 0;
   text-align: center;
   font-size: var(--chem-text-sm);
   color: var(--chem-ink-secondary);
 }
 
-.register-link a {
+.login-redirect a {
   color: var(--chem-accent);
   text-decoration: none;
   font-weight: 600;
 }
 
-.register-link a:hover {
+.login-redirect a:hover {
   text-decoration: underline;
 }
 
+/* Success panel */
+.success-panel {
+  display: grid;
+  gap: 0.8rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: var(--chem-success, #2e7d32);
+  margin: 0;
+}
+
+.success-panel h2 {
+  color: var(--chem-success, #2e7d32);
+}
+
+.success-panel a {
+  color: var(--chem-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.success-panel a:hover {
+  text-decoration: underline;
+}
+
+.redirect-hint {
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-tertiary);
+}
+
+.login-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 860px) {
-  .login-shell {
+  .register-shell {
     grid-template-columns: 1fr;
   }
 
-  .login-panel {
+  .register-panel {
     justify-self: stretch;
   }
 }
