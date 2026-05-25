@@ -1155,11 +1155,38 @@
       "noActiveJobs": "No hay jobs activos para los filtros seleccionados."
     }
   },
-  "groupManager": {
+   "groupManager": {
     "header": {
       "title": "Gestión de Grupos",
       "subtitle": "Administra grupos científicos, sus miembros y reglas de acceso a apps.",
       "eyebrow": "Administración"
+    },
+    "ariaLabel": "Gestión de grupos",
+    "feedback": {
+      "loading": "Cargando grupos..."
+    },
+    "groups": {
+      "title": "Grupos",
+      "adminGroupLabel": "Grupo administrativo",
+      "allGroupsOption": "Todos los grupos administrables",
+      "fastSearchGroups": "Búsqueda rápida de grupos",
+      "searchGroupsPlaceholder": "Buscar por nombre, slug o descripción",
+      "colName": "Nombre",
+      "colSlug": "Slug",
+      "colMembers": "Miembros",
+      "colActions": "Acciones",
+      "manage": "Gestionar",
+      "collapse": "Colapsar"
+    },
+    "members": {
+      "title": "Miembros",
+      "fastSearchUsers": "Búsqueda rápida de usuarios",
+      "searchUsersPlaceholder": "Buscar usuario por nombre o correo",
+      "colUser": "Usuario",
+      "colRole": "Rol",
+      "colActions": "Acciones",
+      "selectUser": "Seleccionar usuario",
+      "addButton": "Añadir miembro"
     },
     "roles": {
       "admin": "Admin",

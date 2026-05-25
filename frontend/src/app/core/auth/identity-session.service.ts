@@ -273,6 +273,8 @@ export class IdentitySessionService {
    * Persiste los tokens y carga la sesión remota.
    */
   initializeFromRegistration(tokens: { accessToken: string; refreshToken: string }): Observable<boolean> {
+    this.status.set('loading');
+    this.lastAuthenticationError.set(null);
     this.persistTokens(tokens);
     return this.loadRemoteSession();
   }
