@@ -424,15 +424,15 @@
       "ariaLabel": "Historical tunnel jobs"
     }
   },
-  "molarFractions": {
-    "header": {
-      "eyebrow": "Molar Fractions",
-      "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
-    },
-    "form": {
-      "title": "Data Entry",
-      "ariaLabel": "Input parameters",
+    "molarFractions": {
+      "header": {
+        "eyebrow": "Molar Fractions",
+        "title": "Acid-Base Equilibrium Fractions",
+        "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
+      },
+      "form": {
+        "title": "pka definition",
+        "ariaLabel": "pka definition",
       "inputMode": "Input mode",
       "singleMode": "Single species",
       "batchMode": "Batch CSV",
