@@ -1,0 +1,24 @@
+@if (open()) {
+<div class="doc-backdrop" (click)="onBackdropClick()" (keydown.escape)="closePanel.emit()">
+  <aside class="doc-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="doc-header">
+      <button type="button" class="doc-close-btn" (click)="closePanel.emit()">×</button>
+    </header>
+
+    <nav class="doc-tabs">
+      @for (tab of tabs(); track tab.id) {
+      <button type="button" class="doc-tab" [class.active]="tab.id === activeTabId()"
+        (click)="selectTab(tab.id)">
+        {{ tab.titleKey | transloco }}
+      </button>
+      }
+    </nav>
+
+    <div class="doc-body">
+      @if (activeTab(); as tab) {
+      <div class="doc-content" [innerHTML]="tab.content"></div>
+      }
+    </div>
+  </aside>
+</div>
+}

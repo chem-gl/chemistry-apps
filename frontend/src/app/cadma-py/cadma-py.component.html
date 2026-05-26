@@ -7,6 +7,7 @@
       <h2 class="hero-title">
         CADMA<span>Py</span>
         <button type="button" class="hero-info-btn" (click)="showInfoModal.set(true)" [attr.aria-label]="'cadmaPy.hero.infoAria' | transloco">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
+        <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
       </h2>
     </div>
   </header>
@@ -773,5 +774,9 @@
   <app-cadma-py-delete-modal [libraryName]="deleteModalLibraryName()" [linkedJobs]="deleteModalLinkedJobs()"
     [loading]="deleteModalLoading()" (confirmed)="confirmDelete($event)" (dismissed)="onDeleteDismissed()">
   </app-cadma-py-delete-modal>
+
+  <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs"
+    (closePanel)="showDocPanel.set(false)">
+  </app-scientific-doc-panel>
 
 </section>

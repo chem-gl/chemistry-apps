@@ -59,6 +59,8 @@ import {
   CadmaPyImporterComponent,
   type CadmaImportStateChange,
 } from './cadma-py-importer.component';
+import { CADMA_DOC_TABS } from './cadma-py-doc-content';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 
 interface CsvBundle {
   combined: string;
@@ -193,6 +195,7 @@ function createEmptyCsvBundle(): CsvBundle {
     CadmaPyFamilyDetailComponent,
     CadmaPyImporterComponent,
     CadmaPyDeleteModalComponent,
+    ScientificDocPanelComponent,
   ],
   providers: [CadmaPyWorkflowService],
   templateUrl: './cadma-py.component.html',
@@ -260,6 +263,8 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly candidateImportedTotalFiles = signal<number>(0);
   readonly candidateImportedTotalUsableRows = signal<number>(0);
   readonly showInfoModal = signal<boolean>(false);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = CADMA_DOC_TABS;
   readonly showCreateForm = signal<boolean>(false);
   readonly previewLibraryId = signal<string>('');
   readonly previewSampleKey = signal<string>('');

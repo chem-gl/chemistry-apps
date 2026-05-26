@@ -112,6 +112,29 @@
   background: var(--chem-primary-light);
 }
 
+.hero-doc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  height: 2rem;
+  margin-left: 0.35rem;
+  border: 1px solid var(--chem-glass-border);
+  border-radius: 4px;
+  background: var(--chem-glass-light);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.hero-doc-btn:hover {
+  background: var(--chem-primary-light);
+}
+
 /* ── Modal ── */
 .info-modal-backdrop {
   position: fixed;
