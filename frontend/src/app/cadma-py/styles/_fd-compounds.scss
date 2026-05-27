@@ -147,6 +147,19 @@
     white-space: nowrap;
   }
 
+  .compound-row {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--chem-surface-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--chem-accent);
+      outline-offset: -2px;
+    }
+  }
+
   th {
     background: var(--chem-surface-inset);
     font-weight: 700;
@@ -167,19 +180,19 @@
   }
 
   .smiles-cell {
-    max-width: 220px;
+    max-width: 320px;
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--chem-ink-secondary);
   }
 
-  .mono {
+  .smiles-text {
     font-family: var(--chem-font-mono);
     font-size: var(--chem-text-xs);
   }
 
   .ref-cell {
-    max-width: 180px;
+    max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--chem-ink-secondary);
