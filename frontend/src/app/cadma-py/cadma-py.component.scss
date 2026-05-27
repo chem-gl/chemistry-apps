@@ -8,4 +8,63 @@
 
 :host {
   display: block;
+
+  .diagram-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+
+    .diagram-modal {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+      width: 95vw;
+      max-width: 860px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .diagram-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid #e0ded6;
+
+      h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2a4a2a;
+        margin: 0;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #7a7a72;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        line-height: 1;
+
+        &:hover {
+          background: #f0efe8;
+          color: #3a3a32;
+        }
+      }
+    }
+
+    .diagram-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+  }
 }

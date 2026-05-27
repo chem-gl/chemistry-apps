@@ -5,6 +5,8 @@ import {
   computed,
   effect,
   ElementRef,
+  inject,
+  Injector,
   input,
   linkedSignal,
   output,
@@ -41,6 +43,7 @@ export class ScientificDocPanelComponent {
   private readonly bodyElement = viewChild<ElementRef<HTMLElement>>('docBody');
 
   constructor() {
+    const injector = inject(Injector);
     effect(() => {
       this.activeTab();
       afterNextRender({
@@ -57,7 +60,7 @@ export class ScientificDocPanelComponent {
             });
           }
         },
-      });
+      }, { injector });
     });
   }
 

@@ -4,10 +4,11 @@
   <!-- HERO -->
   <header class="cadma-hero">
     <div class="hero-left">
-      <h2 class="hero-title">
-        CADMA<span>Py</span>
-        <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
-      </h2>
+      <h2 class="hero-title">CADMA<span>Py</span></h2>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="hero-doc-btn" (click)="showDiagram.set(true)">📊 Protocol diagram</button>
+      <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
     </div>
   </header>
 
@@ -758,4 +759,16 @@
     (closePanel)="showDocPanel.set(false)">
   </app-scientific-doc-panel>
 
+  <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
+  @if (showDiagram()) {
+  <div class="diagram-overlay" (click)="onDiagramBackdropClick($event)">
+    <div class="diagram-modal" role="dialog" aria-modal="true" aria-label="Diagrama CADMA-Chem">
+      <div class="diagram-header">
+        <h3>CADMA-Chem · Protocol diagram</h3>
+        <button class="close-btn" type="button" (click)="showDiagram.set(false)" aria-label="Cerrar">✕</button>
+      </div>
+      <iframe [src]="diagramSrc" class="diagram-frame" title="Diagrama CADMA-Chem"></iframe>
+    </div>
+  </div>
+  }
 </section>

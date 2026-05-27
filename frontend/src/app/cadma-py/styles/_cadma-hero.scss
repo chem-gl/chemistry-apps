@@ -24,9 +24,10 @@
    HERO — glassmorphic
    ============================================================ */
 .cadma-hero {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1.5rem 2.5rem;
   background: var(--chem-glass-heavy);
   backdrop-filter: blur(16px);
@@ -37,7 +38,8 @@
 
 @media (max-width: 880px) {
   .cadma-hero {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
     padding: 1.5rem 1.25rem;
     gap: 1.25rem;
   }
@@ -89,13 +91,18 @@
   color: var(--chem-ink-secondary);
 }
 
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .hero-doc-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.25rem 0.75rem;
   height: 2rem;
-  margin-left: 0.35rem;
   border: 1px solid var(--chem-glass-border);
   border-radius: 4px;
   background: var(--chem-glass-light);
@@ -103,7 +110,6 @@
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1;
-  vertical-align: middle;
   white-space: nowrap;
   transition: background 0.2s;
 }

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CADMA-Chem · Protocolo</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f5f4f0;
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px 40px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.page {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 3px 24px rgba(0,0,0,0.09);
+  padding: 24px 20px 28px;
+  max-width: 800px;
+  width: 100%;
+}
+
+.header { margin-bottom: 8px; }
+.header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2e1a;
+  letter-spacing: -0.01em;
+}
+.header h1 span {
+  font-weight: 400;
+  font-size: 13px;
+  color: #7a8a7a;
+  margin-left: 10px;
+  letter-spacing: 0;
+}
+.header p {
+  font-size: 12px;
+  color: #9a9a92;
+  margin-top: 3px;
+}
+:root {
+  --c-green-bg:   #EAF4E2;
+  --c-green-bdr:  #4A8C2A;
+  --c-green-txt:  #1E4A08;
+  --c-green-head: #3B7022;
+  --c-blue-bg:    #E3F0FB;
+  --c-blue-bdr:   #2E7DC0;
+  --c-blue-txt:   #0C3D6E;
+  --c-blue-head:  #1A5E9A;
+  --c-gray-bg:    #F0EFE8;
+  --c-gray-bdr:   #8A8880;
+  --c-gray-txt:   #2C2C28;
+  --c-gray-head:  #4A4A44;
+  --c-teal-bg:    #E0F4EE;
+  --c-teal-bdr:   #1A8A62;
+  --c-teal-txt:   #0A3D2A;
+  --c-teal-head:  #147A54;
+  --c-amber-bg:   #FEF3E2;
+  --c-amber-bdr:  #C07810;
+  --c-amber-txt:  #5A3800;
+  --c-amber-head: #9A5E08;
+  --c-pink-bg:    #FAEAF2;
+  --c-pink-bdr:   #B03878;
+  --c-pink-txt:   #580030;
+  --c-pink-head:  #8C2860;
+  --c-neutral-bg: #F8F7F2;
+  --c-neutral-bdr:#C8C6BC;
+}
+svg { display: block; width: 100%; }
+.mod-green  { fill: var(--c-green-bg);  stroke: var(--c-green-bdr);  stroke-width: 1.4; }
+.mod-blue   { fill: var(--c-blue-bg);   stroke: var(--c-blue-bdr);   stroke-width: 1.4; }
+.mod-gray   { fill: var(--c-gray-bg);   stroke: var(--c-gray-bdr);   stroke-width: 1.4; }
+.mod-teal   { fill: var(--c-teal-bg);   stroke: var(--c-teal-bdr);   stroke-width: 1.4; }
+.mod-amber  { fill: var(--c-amber-bg);  stroke: var(--c-amber-bdr);  stroke-width: 1.4; }
+.mod-pink   { fill: var(--c-pink-bg);   stroke: var(--c-pink-bdr);   stroke-width: 1.4; }
+.step-green  { fill: #fff; stroke: var(--c-green-bdr);  stroke-width: 0.8; }
+.step-blue   { fill: #fff; stroke: var(--c-blue-bdr);   stroke-width: 0.8; }
+.step-gray   { fill: #fff; stroke: var(--c-gray-bdr);   stroke-width: 0.8; }
+.step-teal   { fill: #fff; stroke: var(--c-teal-bdr);   stroke-width: 0.8; }
+.step-amber  { fill: #fff; stroke: var(--c-amber-bdr);  stroke-width: 0.8; }
+.step-pink   { fill: #fff; stroke: var(--c-pink-bdr);   stroke-width: 0.8; }
+.mtitle-green  { font-size: 13px; font-weight: 700; fill: var(--c-green-head); letter-spacing: 0.04em; }
+.mtitle-blue   { font-size: 13px; font-weight: 700; fill: var(--c-blue-head);  letter-spacing: 0.04em; }
+.mtitle-gray   { font-size: 13px; font-weight: 700; fill: var(--c-gray-head);  letter-spacing: 0.04em; }
+.mtitle-teal   { font-size: 13px; font-weight: 700; fill: var(--c-teal-head);  letter-spacing: 0.04em; }
+.mtitle-amber  { font-size: 13px; font-weight: 700; fill: var(--c-amber-head); letter-spacing: 0.04em; }
+.mtitle-pink   { font-size: 13px; font-weight: 700; fill: var(--c-pink-head);  letter-spacing: 0.04em; }
+.slabel { font-size: 12.5px; font-weight: 600; }
+.ssub   { font-size: 10.5px; font-weight: 400; }
+.slabel-green { fill: var(--c-green-txt); }
+.slabel-blue  { fill: var(--c-blue-txt);  }
+.slabel-gray  { fill: var(--c-gray-txt);  }
+.slabel-teal  { fill: var(--c-teal-txt);  }
+.slabel-amber { fill: var(--c-amber-txt); }
+.slabel-pink  { fill: var(--c-pink-txt);  }
+.ssub-green { fill: #5A7A50; }
+.ssub-blue  { fill: #3A6090; }
+.ssub-gray  { fill: #606058; }
+.ssub-teal  { fill: #2A6A50; }
+.ssub-amber { fill: #806030; }
+.ssub-pink  { fill: #7A3060; }
+.arr-main { fill: none; stroke: #4A6040; stroke-width: 1.6; }
+.arr-feed { fill: none; stroke: #9A9A92; stroke-width: 1.2; stroke-dasharray: 5 3; }
+.arr-opt  { fill: none; stroke: #2E7DC0; stroke-width: 1.4; stroke-dasharray: 3 2; }
+.mdiv { stroke: #D8D6CE; stroke-width: 0.6; }
+.bif-label { font-size: 10px; font-weight: 600; fill: #2E7DC0; }
+.ann { font-size: 10px; fill: #9A9A92; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>CADMA-Chem <span>Computer-Aided Design of Multifunctional Antioxidants</span></h1>
+    <p>Protocolo computacional para diseño racional de antioxidantes multifuncionales con potencial neuroprotector</p>
+  </div>
+
+<svg viewBox="0 0 740 1700" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="mA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M1.5 1.5L8.5 5L1.5 8.5" fill="none" stroke="#4A6040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="mF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1.5 1.5L8.5 5L1.5 8.5" fill="none" stroke="#9A9A92" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="mO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1.5 1.5L8.5 5L1.5 8.5" fill="none" stroke="#2E7DC0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<rect class="mod-green" x="20" y="20" width="700" height="108" rx="12"/>
+<text class="mtitle-green" x="370" y="42" text-anchor="middle">PLANTEAMIENTO</text>
+<line class="mdiv" x1="36" y1="50" x2="704" y2="50"/>
+<rect class="step-green" x="32"  y="58" width="155" height="60" rx="7"/>
+<text class="slabel slabel-green" x="109"  y="83"  text-anchor="middle" dominant-baseline="central">Problema terapéutico</text>
+<text class="ssub   ssub-green"   x="109"  y="101" text-anchor="middle" dominant-baseline="central">enfermedad objetivo</text>
+<rect class="step-green" x="200" y="58" width="155" height="60" rx="7"/>
+<text class="slabel slabel-green" x="277" y="83"  text-anchor="middle" dominant-baseline="central">Compuesto líder</text>
+<text class="ssub   ssub-green"   x="277" y="101" text-anchor="middle" dominant-baseline="central">andamio estructural</text>
+<rect class="step-green" x="368" y="58" width="172" height="60" rx="7"/>
+<text class="slabel slabel-green" x="454" y="83"  text-anchor="middle" dominant-baseline="central">Blancos terapéuticos</text>
+<text class="ssub   ssub-green"   x="454" y="101" text-anchor="middle" dominant-baseline="central">enzimas / receptores</text>
+<rect class="step-green" x="553" y="58" width="155" height="60" rx="7"/>
+<text class="slabel slabel-green" x="630" y="83"  text-anchor="middle" dominant-baseline="central">Conjunto de referencia</text>
+<text class="ssub   ssub-green"   x="630" y="101" text-anchor="middle" dominant-baseline="central">35 neuroprotectores orales</text>
+<line x1="370" y1="128" x2="370" y2="152" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-green" x="20" y="156" width="700" height="196" rx="12"/>
+<text class="mtitle-green" x="370" y="178" text-anchor="middle">DISEÑO RACIONAL DE LA BIBLIOTECA</text>
+<line class="mdiv" x1="36" y1="186" x2="704" y2="186"/>
+<rect class="step-green" x="34"  y="196" width="196" height="58" rx="7"/>
+<text class="slabel slabel-green" x="132" y="221" text-anchor="middle" dominant-baseline="central">Farmacóforo de consenso</text>
+<text class="ssub   ssub-green"   x="132" y="240" text-anchor="middle" dominant-baseline="central">ligandos PDB · ConPhar</text>
+<rect class="step-green" x="34"  y="270" width="196" height="70" rx="7"/>
+<text class="slabel slabel-green" x="132" y="295" text-anchor="middle" dominant-baseline="central">Regiones de funcionalización</text>
+<text class="ssub   ssub-green"   x="132" y="312" text-anchor="middle" dominant-baseline="central">sitios estructuralmente accesibles</text>
+<rect class="step-green" x="250" y="196" width="210" height="58" rx="7"/>
+<text class="slabel slabel-green" x="355" y="221" text-anchor="middle" dominant-baseline="central">Sustituyentes funcionales</text>
+<text class="ssub   ssub-green"   x="355" y="240" text-anchor="middle" dominant-baseline="central">–OH, –NH₂, –SH, –F, –COOH…</text>
+<rect class="step-green" x="250" y="270" width="210" height="70" rx="7"/>
+<text class="slabel slabel-green" x="355" y="294" text-anchor="middle" dominant-baseline="central">Construcción automatizada</text>
+<text class="ssub   ssub-green"   x="355" y="312" text-anchor="middle" dominant-baseline="central">Smile-it · SMILES combinatorios</text>
+<rect class="step-green" x="480" y="196" width="228" height="144" rx="7"/>
+<text class="slabel slabel-green" x="594" y="252" text-anchor="middle" dominant-baseline="central">Análisis de diversidad</text>
+<text class="ssub   ssub-green"   x="594" y="270" text-anchor="middle" dominant-baseline="central">química de la biblioteca</text>
+<text class="ssub   ssub-green"   x="594" y="288" text-anchor="middle" dominant-baseline="central">t-SNE · UMAP</text>
+<line x1="132" y1="254" x2="132" y2="268" class="arr-main" marker-end="url(#mA)"/>
+<line x1="355" y1="254" x2="355" y2="268" class="arr-main" marker-end="url(#mA)"/>
+<line x1="460" y1="305" x2="478" y2="268" class="arr-main" marker-end="url(#mA)"/>
+<line x1="370" y1="352" x2="370" y2="376" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-amber" x="20" y="380" width="700" height="166" rx="12"/>
+<text class="mtitle-amber" x="370" y="402" text-anchor="middle">FILTRADO RÁPIDO 2D · PERFIL FARMACOLÓGICO ORAL</text>
+<line class="mdiv" x1="36" y1="410" x2="704" y2="410"/>
+<rect class="step-amber" x="34"  y="420" width="196" height="112" rx="7"/>
+<text class="slabel slabel-amber" x="132" y="446" text-anchor="middle" dominant-baseline="central">ADME · 6 conjuntos de reglas</text>
+<text class="ssub   ssub-amber"   x="132" y="464" text-anchor="middle" dominant-baseline="central">Lipinski, Ghose, Veber,</text>
+<text class="ssub   ssub-amber"   x="132" y="480" text-anchor="middle" dominant-baseline="central">REOS, Egan, Kelder</text>
+<text class="ssub   ssub-amber"   x="132" y="498" text-anchor="middle" dominant-baseline="central">MW, LogP, TPSA, HBD/HBA…</text>
+<rect class="step-amber" x="250" y="420" width="210" height="112" rx="7"/>
+<text class="slabel slabel-amber" x="355" y="445" text-anchor="middle" dominant-baseline="central">Toxicidad y síntesis</text>
+<text class="ssub   ssub-amber"   x="355" y="463" text-anchor="middle" dominant-baseline="central">LD₅₀, mutagenicidad,</text>
+<text class="ssub   ssub-amber"   x="355" y="480" text-anchor="middle" dominant-baseline="central">toxicidad al desarrollo, BF</text>
+<text class="ssub   ssub-amber"   x="355" y="497" text-anchor="middle" dominant-baseline="central">accesibilidad sintética</text>
+<rect class="step-amber" x="480" y="420" width="228" height="112" rx="7"/>
+<text class="slabel slabel-amber" x="594" y="444" text-anchor="middle" dominant-baseline="central">Índices de selección</text>
+<text class="ssub   ssub-amber"   x="594" y="462" text-anchor="middle" dominant-baseline="central">S_S: probabilidad drug-like</text>
+<text class="ssub   ssub-amber"   x="594" y="480" text-anchor="middle" dominant-baseline="central">S_E: penalización por toxicidad</text>
+<text class="ssub   ssub-amber"   x="594" y="498" text-anchor="middle" dominant-baseline="central">vs. conjunto de referencia</text>
+<line x1="370" y1="546" x2="370" y2="570" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-gray" x="20" y="574" width="700" height="140" rx="12"/>
+<text class="mtitle-gray" x="370" y="596" text-anchor="middle">ESTRUCTURA ELECTRÓNICA · BASE COMPUTACIONAL</text>
+<line class="mdiv" x1="36" y1="604" x2="704" y2="604"/>
+<rect class="step-gray" x="34"  y="614" width="196" height="88" rx="7"/>
+<text class="slabel slabel-gray" x="132" y="644" text-anchor="middle" dominant-baseline="central">Búsqueda conformacional</text>
+<text class="ssub   ssub-gray"   x="132" y="662" text-anchor="middle" dominant-baseline="central">CREST · GFN2-xTB</text>
+<text class="ssub   ssub-gray"   x="132" y="680" text-anchor="middle" dominant-baseline="central">ensamble · Boltzmann</text>
+<rect class="step-gray" x="250" y="614" width="210" height="88" rx="7"/>
+<text class="slabel slabel-gray" x="355" y="640" text-anchor="middle" dominant-baseline="central">Optimización geométrica</text>
+<text class="ssub   ssub-gray"   x="355" y="658" text-anchor="middle" dominant-baseline="central">HF-3c → DFT M05-2X</text>
+<text class="ssub   ssub-gray"   x="355" y="676" text-anchor="middle" dominant-baseline="central">6-311+G(d,p) · SMD</text>
+<rect class="step-gray" x="480" y="614" width="228" height="88" rx="7"/>
+<text class="slabel slabel-gray" x="594" y="636" text-anchor="middle" dominant-baseline="central">Especiación y reactividad</text>
+<text class="ssub   ssub-gray"   x="594" y="654" text-anchor="middle" dominant-baseline="central">pKa · fracciones a pH 7.4</text>
+<text class="ssub   ssub-gray"   x="594" y="672" text-anchor="middle" dominant-baseline="central">IE, EA, BDE, ω (∆SCF)</text>
+<line x1="370" y1="714" x2="370" y2="742" class="arr-main" marker-end="url(#mA)"/>
+
+<rect x="286" y="746" width="168" height="34" rx="17" fill="#E3F0FB" stroke="#2E7DC0" stroke-width="1.4"/>
+<text class="bif-label" x="370" y="763" text-anchor="middle" dominant-baseline="central">Ruta opcional · orden libre</text>
+<line x1="286" y1="763" x2="186" y2="763" class="arr-opt"/>
+<line x1="186" y1="763" x2="186" y2="800" class="arr-opt" marker-end="url(#mO)"/>
+<line x1="454" y1="763" x2="554" y2="763" class="arr-opt"/>
+<line x1="554" y1="763" x2="554" y2="800" class="arr-opt" marker-end="url(#mO)"/>
+<text class="bif-label" x="224" y="756" text-anchor="middle">Ruta A</text>
+<text class="bif-label" x="516" y="756" text-anchor="middle">Ruta B</text>
+
+<rect class="mod-teal" x="20" y="804" width="338" height="296" rx="12"/>
+<text class="mtitle-teal" x="189" y="826" text-anchor="middle">EVALUACIÓN ANTIOXIDANTE</text>
+<line class="mdiv" x1="36" y1="834" x2="342" y2="834"/>
+<rect class="step-teal" x="34"  y="844" width="310" height="76" rx="7"/>
+<text class="slabel slabel-teal" x="189" y="866" text-anchor="middle" dominant-baseline="central">eH-DAMA-FRS</text>
+<text class="ssub   ssub-teal"   x="189" y="884" text-anchor="middle" dominant-baseline="central">Free Radical Scavenging</text>
+<text class="ssub   ssub-teal"   x="189" y="901" text-anchor="middle" dominant-baseline="central">IE, EA, BDE · depuración de radicales</text>
+<rect class="step-teal" x="34"  y="932" width="310" height="76" rx="7"/>
+<text class="slabel slabel-teal" x="189" y="954" text-anchor="middle" dominant-baseline="central">eH-DAMA-AR</text>
+<text class="ssub   ssub-teal"   x="189" y="972" text-anchor="middle" dominant-baseline="central">Antioxidant Reparation</text>
+<text class="ssub   ssub-teal"   x="189" y="989" text-anchor="middle" dominant-baseline="central">reparación química de biomoléculas</text>
+<rect class="step-teal" x="34"  y="1020" width="310" height="54" rx="7"/>
+<text class="slabel slabel-teal" x="189" y="1041" text-anchor="middle" dominant-baseline="central">eH-DAMA-OS</text>
+<text class="ssub   ssub-teal"   x="189" y="1058" text-anchor="middle" dominant-baseline="central">Oxidative Stress · panorama general</text>
+<line x1="189" y1="920"  x2="189" y2="930"  class="arr-main" marker-end="url(#mA)"/>
+<line x1="189" y1="1008" x2="189" y2="1018" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-blue" x="382" y="804" width="338" height="296" rx="12"/>
+<text class="mtitle-blue" x="551" y="826" text-anchor="middle">RECONOCIMIENTO MOLECULAR</text>
+<line class="mdiv" x1="398" y1="834" x2="704" y2="834"/>
+<rect class="step-blue" x="396" y="844" width="310" height="62" rx="7"/>
+<text class="slabel slabel-blue" x="551" y="863" text-anchor="middle" dominant-baseline="central">Preparación de proteínas</text>
+<text class="ssub   ssub-blue"   x="551" y="881" text-anchor="middle" dominant-baseline="central">COMT · MAO-B · AChE · PDB</text>
+<rect class="step-blue" x="396" y="918" width="310" height="62" rx="7"/>
+<text class="slabel slabel-blue" x="551" y="942" text-anchor="middle" dominant-baseline="central">Docking multidiana</text>
+<text class="ssub   ssub-blue"   x="551" y="960" text-anchor="middle" dominant-baseline="central">AutoDock Vina · por especie a pH 7.4</text>
+<rect class="step-blue" x="396" y="992" width="310" height="62" rx="7"/>
+<text class="slabel slabel-blue" x="551" y="1013" text-anchor="middle" dominant-baseline="central">Puntaje multidiana</text>
+<text class="ssub   ssub-blue"   x="551" y="1030" text-anchor="middle" dominant-baseline="central">S_P ponderado por fracción molar</text>
+<rect class="step-blue" x="396" y="1066" width="310" height="20" rx="6"/>
+<text class="slabel slabel-blue" x="551" y="1076" text-anchor="middle" dominant-baseline="central">Rescoring MM/GBSA · poses seleccionadas</text>
+<line x1="551" y1="906" x2="551" y2="916"  class="arr-main" marker-end="url(#mA)"/>
+<line x1="551" y1="980" x2="551" y2="990"  class="arr-main" marker-end="url(#mA)"/>
+<line x1="551" y1="1054" x2="551" y2="1064" class="arr-main" marker-end="url(#mA)"/>
+
+<line x1="189" y1="1074" x2="189" y2="1108" class="arr-main"/>
+<line x1="189" y1="1108" x2="370"  y2="1108" class="arr-main"/>
+<line x1="551" y1="1086" x2="551" y2="1108" class="arr-main"/>
+<line x1="551" y1="1108" x2="370"  y2="1108" class="arr-main"/>
+<line x1="370" y1="1108" x2="370"  y2="1132" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-green" x="20" y="1136" width="700" height="124" rx="12"/>
+<text class="mtitle-green" x="370" y="1158" text-anchor="middle">SELECCIÓN DE CANDIDATOS FINALISTAS</text>
+<line class="mdiv" x1="36" y1="1166" x2="704" y2="1166"/>
+<rect class="step-green" x="34"  y="1176" width="196" height="68" rx="7"/>
+<text class="slabel slabel-green" x="132" y="1201" text-anchor="middle" dominant-baseline="central">Convergencia de puntajes</text>
+<text class="ssub   ssub-green"   x="132" y="1219" text-anchor="middle" dominant-baseline="central">S_S, S_E, eH-DAMA, S_P</text>
+<rect class="step-green" x="250" y="1176" width="210" height="68" rx="7"/>
+<text class="slabel slabel-green" x="355" y="1201" text-anchor="middle" dominant-baseline="central">Retrosíntesis</text>
+<text class="ssub   ssub-green"   x="355" y="1219" text-anchor="middle" dominant-baseline="central">viabilidad y rutas sintéticas</text>
+<rect class="step-green" x="480" y="1176" width="228" height="68" rx="7"/>
+<text class="slabel slabel-green" x="594" y="1201" text-anchor="middle" dominant-baseline="central">Candidatos propuestos</text>
+<text class="ssub   ssub-green"   x="594" y="1219" text-anchor="middle" dominant-baseline="central">para refinamiento y/o síntesis</text>
+<line x1="230" y1="1210" x2="248" y2="1210" class="arr-main" marker-end="url(#mA)"/>
+<line x1="460" y1="1210" x2="478" y2="1210" class="arr-main" marker-end="url(#mA)"/>
+<line x1="370" y1="1260" x2="370" y2="1284" class="arr-main" marker-end="url(#mA)"/>
+
+<rect x="252" y="1288" width="236" height="34" rx="17" fill="#F0EFE8" stroke="#8A8880" stroke-width="1.2"/>
+<text class="bif-label" x="370" y="1305" text-anchor="middle" dominant-baseline="central" style="fill:#4A4A44">Decisión según recursos y objetivos</text>
+<line x1="252" y1="1305" x2="156" y2="1305" class="arr-opt"/>
+<line x1="156" y1="1305" x2="156" y2="1338" class="arr-opt" marker-end="url(#mO)"/>
+<line x1="488" y1="1305" x2="584" y2="1305" class="arr-opt"/>
+<line x1="584" y1="1305" x2="584" y2="1338" class="arr-opt" marker-end="url(#mO)"/>
+<text class="bif-label" x="196" y="1298" text-anchor="middle">Opción A</text>
+<text class="bif-label" x="544" y="1298" text-anchor="middle">Opción B</text>
+
+<rect class="mod-blue" x="20" y="1342" width="318" height="172" rx="12"/>
+<text class="mtitle-blue" x="179" y="1362" text-anchor="middle">REFINAMIENTO COMPUTACIONAL</text>
+<line class="mdiv" x1="36" y1="1370" x2="332" y2="1370"/>
+<rect class="step-blue" x="34"  y="1380" width="290" height="58" rx="7"/>
+<text class="slabel slabel-blue" x="179" y="1401" text-anchor="middle" dominant-baseline="central">Cinética antioxidante detallada</text>
+<text class="ssub   ssub-blue"   x="179" y="1419" text-anchor="middle" dominant-baseline="central">QM-ORSA · ∆G°, Ea · IRC</text>
+<rect class="step-blue" x="34"  y="1448" width="290" height="54" rx="7"/>
+<text class="slabel slabel-blue" x="179" y="1469" text-anchor="middle" dominant-baseline="central">Dinámica molecular explícita</text>
+<text class="ssub   ssub-blue"   x="179" y="1487" text-anchor="middle" dominant-baseline="central">GROMACS · 3×100 ns · MM/GBSA</text>
+<line x1="179" y1="1438" x2="179" y2="1446" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-pink" x="402" y="1342" width="318" height="172" rx="12"/>
+<text class="mtitle-pink" x="561" y="1362" text-anchor="middle">VALIDACIÓN EXPERIMENTAL</text>
+<line class="mdiv" x1="418" y1="1370" x2="714" y2="1370"/>
+<rect class="step-pink" x="416" y="1380" width="290" height="58" rx="7"/>
+<text class="slabel slabel-pink" x="561" y="1401" text-anchor="middle" dominant-baseline="central">Síntesis experimental</text>
+<text class="ssub   ssub-pink"   x="561" y="1419" text-anchor="middle" dominant-baseline="central">candidatos propuestos</text>
+<rect class="step-pink" x="416" y="1448" width="290" height="54" rx="7"/>
+<text class="slabel slabel-pink" x="561" y="1469" text-anchor="middle" dominant-baseline="central">Ensayos in vitro e in vivo</text>
+<text class="ssub   ssub-pink"   x="561" y="1487" text-anchor="middle" dominant-baseline="central">validación de actividad biológica</text>
+<line x1="561" y1="1438" x2="561" y2="1446" class="arr-main" marker-end="url(#mA)"/>
+
+<line x1="179" y1="1514" x2="179" y2="1540" class="arr-main"/>
+<line x1="179" y1="1540" x2="370" y2="1540" class="arr-main"/>
+<line x1="561" y1="1514" x2="561" y2="1540" class="arr-main"/>
+<line x1="561" y1="1540" x2="370" y2="1540" class="arr-main"/>
+<line x1="370" y1="1540" x2="370" y2="1560" class="arr-main" marker-end="url(#mA)"/>
+
+<rect class="mod-green" x="160" y="1564" width="420" height="48" rx="12"/>
+<text class="mtitle-green" x="370" y="1593" text-anchor="middle">Refinamiento iterativo del protocolo</text>
+
+<path d="M 20 1176 Q 0 1156 5 1156 Q -10 268 20 248" class="arr-feed" marker-end="url(#mF)"/>
+<path d="M 720 950 Q 750 950 730 250 Q 730 196 720 196" class="arr-feed" marker-end="url(#mF)"/>
+<text class="ann" x="746" y="590" text-anchor="middle" transform="rotate(-90 732 590)">Retroalimentación SAR</text>
+<text class="ann" x="0"  y="710" text-anchor="middle" transform="rotate(-90 16 710)">Factibilidad sintética</text>
+
+<rect x="20" y="1634" width="700" height="56" rx="10" fill="none" stroke="#D8D6CE" stroke-width="0.8"/>
+<rect x="34"  y="1646" width="13" height="13" rx="3" class="mod-green"/>
+<text class="ssub ssub-green"   x="53"  y="1657">Diseño · Selección</text>
+<rect x="188" y="1646" width="13" height="13" rx="3" class="mod-amber"/>
+<text class="ssub ssub-amber"   x="207" y="1657">Filtrado 2D</text>
+<rect x="310" y="1646" width="13" height="13" rx="3" class="mod-gray"/>
+<text class="ssub ssub-gray"    x="329" y="1657">Cálculos QM base</text>
+<rect x="460" y="1646" width="13" height="13" rx="3" class="mod-teal"/>
+<text class="ssub ssub-teal"    x="479" y="1657">Mapas eH-DAMA</text>
+<rect x="590" y="1646" width="13" height="13" rx="3" class="mod-blue"/>
+<text class="ssub ssub-blue"    x="609" y="1657">Docking · Refinamiento</text>
+<line x1="34"  y1="1678" x2="74"  y2="1678" class="arr-main" marker-end="url(#mA)"/>
+<text class="ann" x="80" y="1682">Flujo principal</text>
+<line x1="196" y1="1678" x2="236" y2="1678" class="arr-feed" marker-end="url(#mF)"/>
+<text class="ann" x="242" y="1682">Retroalimentación</text>
+<line x1="390" y1="1678" x2="430" y2="1678" class="arr-opt" marker-end="url(#mO)"/>
+<text class="ann" x="436" y="1682">Rutas paralelas opcionales</text>
+<rect x="590" y="1668" width="13" height="13" rx="3" class="mod-pink"/>
+<text class="ssub ssub-pink"    x="609" y="1679">Validación experimental</text>
+
+</svg>
+</div>
+</body>
+</html>
