@@ -13,6 +13,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { EChartsCoreOption } from 'echarts/core';
@@ -59,6 +60,8 @@ import {
   CadmaPyImporterComponent,
   type CadmaImportStateChange,
 } from './cadma-py-importer.component';
+import { CADMA_DOC_TABS } from './cadma-py-doc-content';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 
 interface CsvBundle {
   combined: string;
@@ -193,6 +196,7 @@ function createEmptyCsvBundle(): CsvBundle {
     CadmaPyFamilyDetailComponent,
     CadmaPyImporterComponent,
     CadmaPyDeleteModalComponent,
+    ScientificDocPanelComponent,
   ],
   providers: [CadmaPyWorkflowService],
   templateUrl: './cadma-py.component.html',
@@ -259,7 +263,18 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly candidateImportedFilenames = signal<string[]>([]);
   readonly candidateImportedTotalFiles = signal<number>(0);
   readonly candidateImportedTotalUsableRows = signal<number>(0);
-  readonly showInfoModal = signal<boolean>(false);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly showDiagram = signal<boolean>(false);
+  readonly docTabs = CADMA_DOC_TABS;
+
+  private readonly sanitizer = inject(DomSanitizer);
+  readonly diagramSrc: SafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/cadma-chem-diagram.html');
+
+  onDiagramBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList.contains('diagram-overlay')) {
+      this.showDiagram.set(false);
+    }
+  }
   readonly showCreateForm = signal<boolean>(false);
   readonly previewLibraryId = signal<string>('');
   readonly previewSampleKey = signal<string>('');

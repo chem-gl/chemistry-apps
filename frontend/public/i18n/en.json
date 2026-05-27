@@ -424,15 +424,15 @@
       "ariaLabel": "Historical tunnel jobs"
     }
   },
-  "molarFractions": {
-    "header": {
-      "eyebrow": "Molar Fractions",
-      "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
-    },
-    "form": {
-      "title": "Data Entry",
-      "ariaLabel": "Input parameters",
+    "molarFractions": {
+      "header": {
+        "eyebrow": "Molar Fractions",
+        "title": "Acid-Base Equilibrium Fractions",
+        "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
+      },
+      "form": {
+        "title": "pka definition",
+        "ariaLabel": "pka definition",
       "inputMode": "Input mode",
       "singleMode": "Single species",
       "batchMode": "Batch CSV",
@@ -1412,13 +1412,7 @@
     },
     "hero": {
       "tag": "CADMA-Chem Protocol",
-      "title": "CADMAPy",
-      "infoAria": "Show workflow overview",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "step3": "Configure your ranking formula",
-      "step4": "View scores & export results"
+      "title": "CADMAPy"
     },
     "steps": {
       "ariaLabel": "Workflow steps",
@@ -1589,6 +1583,16 @@
       "candidate": "Candidate",
       "toxicity": "Toxicity",
       "admeHits": "ADME hits"
+    },
+    "doc": {
+      "open": "Documentation",
+      "tabOverview": "Overview",
+      "tabWorkflow": "Workflow",
+      "tabAdmeIntervals": "ADME intervals",
+      "tabAdmeProperties": "ADME properties",
+      "tabReferenceSets": "Reference sets",
+      "tabSelectionScores": "Selection scores",
+      "tabConformers": "Conformers"
     },
     "step4": {
       "backToFormula": "Back to formula",

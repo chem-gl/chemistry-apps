@@ -4,6 +4,6 @@ import { FrontendEnvironment } from './environment.model';
 
 export const environment: FrontendEnvironment = {
   production: false,
-  apiBaseUrl: 'http://localhost:8000',
+  apiBaseUrl: 'https://back-apps.guzman-lopez.com',
   appVersion: '1.0.0',
 };

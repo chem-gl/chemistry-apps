@@ -24,9 +24,10 @@
    HERO — glassmorphic
    ============================================================ */
 .cadma-hero {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1.5rem 2.5rem;
   background: var(--chem-glass-heavy);
   backdrop-filter: blur(16px);
@@ -37,7 +38,8 @@
 
 @media (max-width: 880px) {
   .cadma-hero {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
     padding: 1.5rem 1.25rem;
     gap: 1.25rem;
   }
@@ -89,13 +91,18 @@
   color: var(--chem-ink-secondary);
 }
 
-.hero-info-btn {
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-doc-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.25rem 0.75rem;
   height: 2rem;
-  margin-left: 0.5rem;
   border: 1px solid var(--chem-glass-border);
   border-radius: 4px;
   background: var(--chem-glass-light);
@@ -103,117 +110,12 @@
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 1;
-  vertical-align: middle;
   white-space: nowrap;
   transition: background 0.2s;
 }
 
-.hero-info-btn:hover {
+.hero-doc-btn:hover {
   background: var(--chem-primary-light);
 }
 
-/* ── Modal ── */
-.info-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  padding: 1rem;
-}
 
-.info-modal-card {
-  max-width: 540px;
-  width: 100%;
-  background: var(--chem-glass-heavy);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--chem-glass-border);
-  border-radius: var(--chem-radius-lg);
-  padding: 1.5rem 2rem;
-  color: var(--chem-ink);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.info-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.info-modal-header h2 {
-  margin: 0;
-  font-size: var(--chem-text-xl);
-  font-weight: 300;
-}
-
-.info-modal-header h2 span {
-  font-weight: 800;
-  color: var(--chem-primary);
-}
-
-.info-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  color: var(--chem-ink-secondary);
-  padding: 0.25rem;
-  line-height: 1;
-}
-
-.info-modal-close:hover {
-  color: var(--chem-ink);
-}
-
-.info-modal-body {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.info-modal-desc {
-  margin: 0;
-  font-size: 0.925rem;
-  line-height: 1.65;
-  color: var(--chem-ink-secondary);
-}
-
-.info-modal-steps {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.75rem;
-  counter-reset: proto;
-}
-
-.info-modal-steps li {
-  counter-increment: proto;
-  display: grid;
-  grid-template-columns: 1.75rem 1fr;
-  gap: 0.5rem;
-  align-items: start;
-  font-size: var(--chem-text-sm);
-  line-height: 1.5;
-  color: var(--chem-ink);
-}
-
-.info-modal-steps li::before {
-  content: counter(proto);
-  width: 1.5rem;
-  height: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--chem-primary-light);
-  border: 1px solid var(--chem-primary);
-  border-radius: 50%;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--chem-primary);
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
