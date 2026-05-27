@@ -14,7 +14,7 @@
       }
     </nav>
 
-    <div class="doc-body">
+    <div class="doc-body" #docBody>
       @if (activeTab(); as tab) {
       <div class="doc-content" [innerHTML]="tab.content"></div>
       }

@@ -1,5 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  input,
+  linkedSignal,
+  output,
+  viewChild,
+} from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import renderMathInElement from 'katex/contrib/auto-render';
 
 export interface DocTab {
   id: string;
@@ -25,6 +37,29 @@ export class ScientificDocPanelComponent {
   readonly activeTab = computed<DocTab | null>(
     () => this.tabs().find((tab) => tab.id === this.activeTabId()) ?? null,
   );
+
+  private readonly bodyElement = viewChild<ElementRef<HTMLElement>>('docBody');
+
+  constructor() {
+    effect(() => {
+      this.activeTab();
+      afterNextRender({
+        write: () => {
+          const el = this.bodyElement()?.nativeElement;
+          if (el) {
+            renderMathInElement(el, {
+              delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '\\(', right: '\\)', display: false },
+              ],
+              ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+              throwOnError: false,
+            });
+          }
+        },
+      });
+    });
+  }
 
   selectTab(tabId: string): void {
     this.activeTabId.set(tabId);

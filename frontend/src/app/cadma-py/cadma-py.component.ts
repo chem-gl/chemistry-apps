@@ -262,7 +262,6 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly candidateImportedFilenames = signal<string[]>([]);
   readonly candidateImportedTotalFiles = signal<number>(0);
   readonly candidateImportedTotalUsableRows = signal<number>(0);
-  readonly showInfoModal = signal<boolean>(false);
   readonly showDocPanel = signal<boolean>(false);
   readonly docTabs = CADMA_DOC_TABS;
   readonly showCreateForm = signal<boolean>(false);

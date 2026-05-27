@@ -6,31 +6,10 @@
     <div class="hero-left">
       <h2 class="hero-title">
         CADMA<span>Py</span>
-        <button type="button" class="hero-info-btn" (click)="showInfoModal.set(true)" [attr.aria-label]="'cadmaPy.hero.infoAria' | transloco">{{ 'cadmaPy.general.showDetails' | transloco }}</button>
         <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
       </h2>
     </div>
   </header>
-
-  @if (showInfoModal()) {
-  <div class="info-modal-backdrop" (click)="showInfoModal.set(false)" (keydown.escape)="showInfoModal.set(false)">
-    <section class="info-modal-card" role="dialog" aria-modal="true">
-      <header class="info-modal-header">
-        <h2>CADMA<span>Py</span></h2>
-        <button type="button" class="info-modal-close" (click)="showInfoModal.set(false)">×</button>
-      </header>
-      <div class="info-modal-body">
-        <p class="info-modal-desc">{{ 'cadmaPy.hero.desc' | transloco }}</p>
-        <ol class="info-modal-steps">
-          <li><span>{{ 'cadmaPy.hero.step1' | transloco }}</span></li>
-          <li><span>{{ 'cadmaPy.hero.step2' | transloco }}</span></li>
-          <li><span>{{ 'cadmaPy.hero.step3' | transloco }}</span></li>
-          <li><span>{{ 'cadmaPy.hero.step4' | transloco }}</span></li>
-        </ol>
-      </div>
-    </section>
-  </div>
-  }
 
   <!-- STEP TRACKER — 4 pasos -->
   <nav class="step-tracker" [attr.aria-label]="'cadmaPy.steps.ariaLabel' | transloco">
