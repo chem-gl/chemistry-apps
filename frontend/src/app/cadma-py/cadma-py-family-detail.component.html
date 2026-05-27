@@ -294,19 +294,17 @@
                 </thead>
                 <tbody>
                     @for (row of library().rows; track row.smiles; let i = $index) {
-                    <tr>
+                    <tr class="compound-row" (click)="openCompoundDetail(row, i)" tabindex="0"
+                        (keydown.enter)="openCompoundDetail(row, i)">
                         <td class="rank-num">{{ i + 1 }}</td>
                         <td>
-                            <button class="compound-open-btn" type="button" (click)="openCompoundDetail(row, i)"
+                            <button class="compound-open-btn" type="button" tabindex="-1"
                                 [title]="'cadmaPy.familyDetail.openDetails' | transloco">
                                 {{ row.name || ('cadmaPy.familyDetail.unnamedCompound' | transloco) }}
                             </button>
                         </td>
                         <td class="smiles-cell mono">
-                            <button class="compound-open-btn mono" type="button" (click)="openCompoundDetail(row, i)"
-                                [title]="'cadmaPy.familyDetail.openPreview' | transloco">
-                                {{ row.smiles }}
-                            </button>
+                            <span class="smiles-text">{{ row.smiles }}</span>
                         </td>
                         <td class="ref-cell">{{ row.paper_reference || '—' }}</td>
                         <td class="ref-cell">
