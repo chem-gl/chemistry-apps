@@ -22,6 +22,7 @@ export interface CadmaReferenceRowView {
   M: number;
   LD50: number;
   SA: number;
+  paper_authors: string;
   paper_reference: string;
   paper_url: string;
   evidence_note: string;
@@ -209,6 +210,7 @@ export interface CadmaPyJobCreatePayload {
 
 export interface CadmaReferenceRowPatchPayload {
   name?: string;
+  paper_authors?: string;
   paper_reference?: string;
   paper_url?: string;
   evidence_note?: string;
