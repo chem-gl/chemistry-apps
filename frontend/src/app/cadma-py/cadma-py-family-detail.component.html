@@ -284,6 +284,7 @@
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderRank' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderName' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderSmiles' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderAuthors' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderReference' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderUrl' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderNote' | transloco }}</th>
@@ -306,6 +307,7 @@
                         <td class="smiles-cell mono">
                             <span class="smiles-text">{{ row.smiles }}</span>
                         </td>
+                        <td class="ref-cell">{{ row.paper_authors || '—' }}</td>
                         <td class="ref-cell">{{ row.paper_reference || '—' }}</td>
                         <td class="ref-cell">
                             @if (row.paper_url) {
@@ -375,6 +377,11 @@
                                 (ngModelChange)="editDraft.set({...editDraft(), name: $event})" />
                         </label>
                         <label class="edit-label full">
+                            <span>{{ 'cadmaPy.familyDetail.paperAuthors' | transloco }}</span>
+                            <input type="text" class="edit-input" [ngModel]="editDraft().paper_authors ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), paper_authors: $event})" />
+                        </label>
+                        <label class="edit-label full">
                             <span>{{ 'cadmaPy.familyDetail.paperReference' | transloco }}</span>
                             <input type="text" class="edit-input" [ngModel]="editDraft().paper_reference ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), paper_reference: $event})" />
@@ -403,8 +410,11 @@
                         </div>
                     </div>
                     } @else {
-                    @if (selectedCompound()?.paper_reference || selectedCompound()?.paper_url) {
+                    @if (selectedCompound()?.paper_authors || selectedCompound()?.paper_reference || selectedCompound()?.paper_url) {
                     <div class="compound-reference-box">
+                        @if (selectedCompound()?.paper_authors) {
+                        <p class="compound-authors-text">{{ selectedCompound()?.paper_authors }}</p>
+                        }
                         @if (selectedCompound()?.paper_reference) {
                         <p class="compound-reference-text">{{ selectedCompound()?.paper_reference }}</p>
                         }

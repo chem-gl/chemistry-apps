@@ -55,6 +55,7 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
         "source",
     ),
     "paper_url": ("paperurl", "url", "doi", "paperdoi", "referenceurl"),
+    "paper_authors": ("authors", "author", "papermuthors"),
     "evidence_note": ("evidencenote", "note", "notes", "comment", "comments"),
     "MW": ("mw", "molecularweight", "molwt"),
     "logP": ("logp",),

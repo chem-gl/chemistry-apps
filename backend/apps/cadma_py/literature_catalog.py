@@ -63,6 +63,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "From cannabinoids and neurosteroids to statins and the ketogenic diet: New therapeutic avenues in Rett syndrome?"
         ),
         "paper_url": "https://doi.org/10.3389/fnins.2019.00680",
+        "paper_authors": "Mouro, F. M., Miranda-Lourenço, C., Sebastião, A. M., & Diógenes, M. J. (2019)",
         "evidence_note": (
             "TrkB receptor agonist (BDNF receptor); reviewed as a neuroprotective candidate in RTT for its ability to mimic BDNF signaling without requiring the protein itself."
         ),
@@ -72,6 +73,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Treating Rett syndrome: From mouse models to human therapies"
         ),
         "paper_url": "https://doi.org/10.1007/s00335-019-09793-5",
+        "paper_authors": "Vashi, N., & Justice, M. J. (2019)",
         "evidence_note": (
             "Non-essential amino acid; reviewed within metabolic and nutritional strategies in RTT; role in the glucose-alanine cycle relevant to neuronal energy metabolism."
         ),
@@ -81,6 +83,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Time-dependent modulation of GABAA-ergic synaptic transmission by allopregnanolone in locus coeruleus neurons of Mecp2-null mice"
         ),
         "paper_url": "https://doi.org/10.1152/ajpcell.00195.2013",
+        "paper_authors": "Jin, X., Zhong, W., & Jiang, C. (2013)",
         "evidence_note": (
             "Endogenous neurosteroid and positive modulator of GABA-A receptors; time-dependently modulated GABAergic transmission in locus coeruleus neurons of Mecp2-null mice."
         ),
@@ -90,6 +93,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Altered trajectories of neurodevelopment and behavior in mouse models of Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/j.nlm.2018.11.007",
+        "paper_authors": "Smith, E. S., Smith, D. R., Eyring, C., Braileanu, M., Smith-Connor, K. S., Ei Tan, Y., Fowler, A. Y., Hoffman, G. E., Johnston, M. V., Kannan, S., & Blue, M. E. (2019)",
         "evidence_note": (
             "Peripheral dopa-decarboxylase inhibitor; combined with levodopa to increase central dopamine availability; evaluated in a RTT mouse model improving neurodevelopmental trajectories and behavior."
         ),
@@ -99,6 +103,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "The new big is small: Leveraging knowledge from small trials for rare disease drug development: Blarcamesine for Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1111/bcp.15843",
+        "paper_authors": "Ette, E. I., Fadiran, E. O., Missling, C., & Hammond, E. (2023)",
         "evidence_note": (
             "Sigma-1 receptor agonist; evaluated in a clinical trial for RTT; a methodological study addressed how to leverage data from small trials for rare disease drug development."
         ),
@@ -108,6 +113,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Bromocriptine in the Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/s0387-7604(12)80329-9",
+        "paper_authors": "Zappella, M., Genazzani, A., Facchinetti, F., & Hayek, G. (1990)",
         "evidence_note": (
             "D2 dopaminergic agonist; one of the earliest drugs evaluated in RTT; early clinical study explored its effect on the dopaminergic dysfunction observed in the syndrome."
         ),
@@ -117,6 +123,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Cannabidiol therapy for refractory epilepsy and seizure disorders"
         ),
         "paper_url": "https://doi.org/10.1007/978-3-030-57369-0_7",
+        "paper_authors": "Golub, V., & Reddy, D. S. (2021)",
         "evidence_note": (
             "Non-psychoactive cannabinoid with antiepileptic activity; reviewed for refractory epilepsy and seizure disorders; proposed as an alternative for RTT patients with treatment-resistant epilepsy."
         ),
@@ -126,6 +133,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "From cannabinoids and neurosteroids to statins and the ketogenic diet: New therapeutic avenues in Rett syndrome?"
         ),
         "paper_url": "https://doi.org/10.3389/fnins.2019.00680",
+        "paper_authors": "Mouro, F. M., Miranda-Lourenço, C., Sebastião, A. M., & Diógenes, M. J. (2019)",
         "evidence_note": (
             "Phytocannabinoid analogue of cannabidiol with a shorter side chain; reviewed among cannabinoids and neurosteroids as possible therapeutic strategies in RTT."
         ),
@@ -135,6 +143,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Antiepileptic drugs in Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/j.ejpn.2015.02.007",
+        "paper_authors": "Pintaudi, M., Calevo, M. G., Vignoli, A., Baglietto, M. G., Hayek, Y., Traverso, M., Giacomini, T., Giordano, L., Renieri, A., Russo, S., Canevini, M., & Veneselli, E. (2015)",
         "evidence_note": (
             "Sodium channel-blocking antiepileptic drug; documented in clinical use in RTT patients for seizure control; reviewed in a European multicenter study on antiepileptic drugs in RTT."
         ),
@@ -144,6 +153,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Fluoxetine rescues rotarod motor deficits in Mecp2 heterozygous mouse model of Rett syndrome via brain serotonin"
         ),
         "paper_url": "https://doi.org/10.1016/j.neuropharm.2020.108221",
+        "paper_authors": "Villani, C., Sacchetti, G., Carli, M., & Invernizzi, R. W. (2020)",
         "evidence_note": (
             "SSRI reviewed in the context of serotonergic modulation in RTT; both citalopram and fluoxetine act on the serotonergic system which is disrupted in heterozygous Mecp2 mouse models."
         ),
@@ -153,6 +163,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Neurodevelopmental disorders: Righting Rett syndrome with IGF1"
         ),
         "paper_url": "https://doi.org/10.1038/nrd4417",
+        "paper_authors": "Bray, N. (2014)",
         "evidence_note": (
             "Beta-2 adrenergic agonist that stimulates IGF-1 production; proposed as a therapeutic strategy for RTT based on the IGF-1/PI3K signaling pathway."
         ),
@@ -162,6 +173,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Management of self-injurious behaviors in children with neurodevelopmental disorders: A pharmacotherapy overview"
         ),
         "paper_url": "https://doi.org/10.1002/phar.2238",
+        "paper_authors": "Sabus, A., Feinstein, J., Romani, P., Goldson, E., & Blackmer, A. (2019)",
         "evidence_note": (
             "Central alpha-2 adrenergic agonist; reviewed for management of self-injurious behaviors and hyperactivity in neurodevelopmental disorders including RTT."
         ),
@@ -171,6 +183,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Vascular dysfunction in a mouse model of Rett syndrome and effects of curcumin treatment"
         ),
         "paper_url": "https://doi.org/10.1371/journal.pone.0064863",
+        "paper_authors": "Panighini, A., Duranti, E., Santini, F., Maffei, M., Pizzorusso, T., Funel, N., Taddei, S., Bernardini, N., Ippolito, C., Virdis, A., & Costa, M. (2013)",
         "evidence_note": (
             "Natural polyphenol with anti-inflammatory and antioxidant properties; corrected vascular dysfunction in a Mecp2-deficient RTT mouse model by improving vasodilatory responses."
         ),
@@ -180,6 +193,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "The enhancement of activity rescues the establishment of Mecp2 null neuronal phenotypes"
         ),
         "paper_url": "https://doi.org/10.15252/emmm.202012433",
+        "paper_authors": "Scaramuzza, L., De Rocco, G., Desiato, G., Cobolli Gigli, C., Chiacchiaretta, M., Mirabella, F., Pozzi, D., De Simone, M., Conforti, P., Pagani, M., Benfenati, F., Cesca, F., Bedogni, F., & Landsberger, N. (2021)",
         "evidence_note": (
             "Positive allosteric modulator of AMPA receptors (ampakine); rescued neuronal phenotypes in Mecp2-null cells by enhancing glutamatergic synaptic activity and neuronal plasticity."
         ),
@@ -189,6 +203,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Unexpected link between Huntington disease and Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1051/medsci/2012281016",
+        "paper_authors": "Roux, J. C., Zala, D., Panayotis, N., Borges-Correia, A., Saudou, F., & Villard, L. (2012)",
         "evidence_note": (
             "Aminothiol with neuroprotective properties; identified through an unexpected link between Huntington disease and RTT; acts by elevating BDNF levels and reducing protein aggregate accumulation."
         ),
@@ -198,6 +213,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Effect of desipramine on patients with breathing disorders in Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1002/acn3.468",
+        "paper_authors": "Mancini, J., Dubus, J. C., Jouve, E., Roux, J. C., Franco, P., Lagrue, E., Castelnau, P., Cances, C., Chaix, Y., Rougeot-Jung, C., Cornu, C., Desportes, V., Vallée, L., Bahi-Buisson, N., Truillet, R., Attolini, L., Villard, L., Blin, O., & Micallef, J. (2017)",
         "evidence_note": (
             "Tricyclic antidepressant (norepinephrine reuptake inhibitor); demonstrated improvement of breathing disorders in RTT patients in a clinical trial specifically targeting apneas and hyperpneas."
         ),
@@ -207,6 +223,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Randomized open-label trial of dextromethorphan in Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1212/WNL.0000000000004515",
+        "paper_authors": "Smith-Hicks, C. L., Gupta, S., Ewen, J. B., Hong, M., Kratz, L., Kelley, R., Tierney, E., Vaurio, R., Bibat, G., Sanyal, A., Yenokyan, G., Brereton, N., Johnston, M. V., & Naidu, S. (2017)",
         "evidence_note": (
             "NMDA antagonist and sigma-1 agonist; evaluated in a randomized open-label clinical trial in RTT; showed trends of improvement in some behavioral symptoms without strong statistical significance."
         ),
@@ -216,6 +233,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "A case-controlled comparison of postoperative analgesic dosing between girls with Rett syndrome and girls with and without developmental disability undergoing spinal fusion surgery"
         ),
         "paper_url": "https://doi.org/10.1111/pan.13066",
+        "paper_authors": "Barney, C. C., Merbler, A. M., Quest, K. et al. (2017)",
         "evidence_note": (
             "GABA-A agonist benzodiazepine; studied in the context of postoperative pain management in girls with RTT undergoing spinal fusion surgery; useful for spasm and anxiety control."
         ),
@@ -225,6 +243,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Mecp2 deletion from cholinergic neurons selectively impairs recognition memory and disrupts cholinergic modulation of the perirhinal cortex"
         ),
         "paper_url": "https://doi.org/10.1523/ENEURO.0134-19.2019",
+        "paper_authors": "Ballinger, E. C., Schaaf, C. P., Patel, A. J., de Maio, A., Tao, H., Talmage, D. A., Zoghbi, H. Y., & Role, L. W. (2019)",
         "evidence_note": (
             "Acetylcholinesterase inhibitor; Mecp2 deletion in cholinergic neurons selectively impaired recognition memory and cholinergic modulation; Donepezil proposed to correct this deficit."
         ),
@@ -234,6 +253,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Fingolimod in children with Rett syndrome: the FINGORETT study"
         ),
         "paper_url": "https://doi.org/10.1186/s13023-020-01655-7",
+        "paper_authors": "Naegelin, Y., Kuhle, J., Schädelin, S. et al. (2021)",
         "evidence_note": (
             "Sphingosine-1-phosphate receptor modulator evaluated in the FINGORETT clinical study in girls with Rett syndrome to reduce neuroinflammation and improve neurological function."
         ),
@@ -243,6 +263,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Fluoxetine increases brain MeCP2 immuno-positive cells in a female Mecp2 heterozygous mouse model of Rett syndrome through endogenous serotonin"
         ),
         "paper_url": "https://doi.org/10.1038/s41598-021-94156-x",
+        "paper_authors": "Villani, C., Carli, M., Castaldo, A. M., Sacchetti, G., & Invernizzi, R. W. (2021)",
         "evidence_note": (
             "SSRI that increased MeCP2 immunopositive cells in heterozygous Mecp2 mice via endogenous serotonin; also rescued motor deficits in a heterozygous RTT mouse model."
         ),
@@ -252,6 +273,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Cerebral folate deficiency"
         ),
         "paper_url": "https://doi.org/10.1007/s10545-010-9159-6",
+        "paper_authors": "Hyland, K., Shoffner, J., & Heales, S. J. (2010)",
         "evidence_note": (
             "Vitamin B9; reviewed in the context of cerebral folate deficiency that can coexist with RTT; involved in neurotransmitter synthesis and DNA methylation."
         ),
@@ -261,6 +283,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Evaluation of novel enhancer compounds in gentamicin-mediated readthrough of nonsense mutations in Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.3390/ijms241411665",
+        "paper_authors": "Wong, K. M., Wegener, E., Baradaran-Heravi, A., Huppke, B., Gärtner, J., & Huppke, P. (2023)",
         "evidence_note": (
             "Aminoglycoside with nonsense mutation readthrough capacity; evaluated as an enhancer of functional MeCP2 protein production in MECP2 mutations that generate premature stop codons."
         ),
@@ -270,6 +293,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "RIPK1 activation in Mecp2-deficient microglia promotes inflammation and glutamate release in RTT"
         ),
         "paper_url": "https://doi.org/10.1073/pnas.2320383121",
+        "paper_authors": "Cao, Z., Min, X., Xie, X., Huang, M., Liu, Y., Sun, W., Xu, G., He, M., He, K., Li, Y., & Yuan, J. (2024)",
         "evidence_note": (
             "Excitatory neurotransmitter; RIPK1 activation in Mecp2-deficient microglia was shown to promote inflammation and excessive glutamate release in RTT pointing to the glutamatergic system as a therapeutic target."
         ),
@@ -279,6 +303,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Lamotrigine in two cases of Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/s0387-7604(01)00191-7",
+        "paper_authors": "Kumandaş, S., Caksen, H., Ciftçi, A., Oztürk, M., & Per, H. (2001)",
         "evidence_note": (
             "Membrane-stabilizing antiepileptic drug; reported in two RTT clinical cases with seizure improvement; blocks sodium channels and modulates glutamate release."
         ),
@@ -288,6 +313,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Improvement of the Rett syndrome phenotype in a MeCP2 mouse model upon treatment with levodopa and a dopa-decarboxylase inhibitor"
         ),
         "paper_url": "https://doi.org/10.1038/npp.2014.136",
+        "paper_authors": "Szczesna, K., de la Caridad, O., Petazzi, P., Soler, M., Roa, L., Saez, M. A., Fourcade, S., Pujol, A., Artuch-Iriberri, R., Molero-Luis, M., Vidal, A., Huertas, D., & Esteller, M. (2014)",
         "evidence_note": (
             "Dopamine precursor used together with a dopa-decarboxylase inhibitor; improved phenotype in MeCP2-mutant mice with effects on motor function and the dopaminergic system."
         ),
@@ -297,6 +323,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "A small-molecule TrkB ligand improves dendritic spine phenotypes and atypical behaviors in female Rett syndrome mice"
         ),
         "paper_url": "https://doi.org/10.1101/2023.11.09.566435",
+        "paper_authors": "Medeiros, D., Ayala-Baylon, K., Egido-Betancourt, H., Miller, E., Chapleau, C. A., Robinson, H. A., Phillips, M. L., Yang, T., Longo, F., Li, W., & Pozzo-Miller, L. (2023)",
         "evidence_note": (
             "Small TrkB ligand (BDNF receptor); improved dendritic spine morphology and atypical behaviors in female RTT mice; promising preclinical results from a preprint study."
         ),
@@ -306,6 +333,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Lovastatin fails to improve motor performance and survival in methyl-CpG-binding protein2-null mice"
         ),
         "paper_url": "https://doi.org/10.7554/eLife.22409",
+        "paper_authors": "Villani, C., Sacchetti, G., Bagnati, R., Passoni, A., Fusco, F., Carli, M., & Invernizzi, R. W. (2016)",
         "evidence_note": (
             "HMG-CoA reductase inhibitor (statin); failed to improve motor performance and survival in Mecp2-null mice despite proposed neuroprotective mechanisms."
         ),
@@ -315,6 +343,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Role of H3K4 demethylases in complex neurodevelopmental diseases"
         ),
         "paper_url": "https://doi.org/10.2217/epi.10.12",
+        "paper_authors": "Wynder, C., Stalker, L., & Doughty, M. L. (2010)",
         "evidence_note": (
             "Essential amino acid with a role in post-translational histone modifications (H3K4 methylation); reviewed in the epigenetic context of complex neurodevelopmental diseases including RTT."
         ),
@@ -324,6 +353,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Management of sleep disorders in children with neurodevelopmental disorders: A review"
         ),
         "paper_url": "https://doi.org/10.1002/phar.1686",
+        "paper_authors": "Blackmer, A. B., & Feinstein, J. A. (2016)",
         "evidence_note": (
             "Neuroendocrine hormone with antioxidant properties; used in RTT for management of sleep disorders common in the syndrome; reviewed as part of pharmacological strategies in neurodevelopmental disorders."
         ),
@@ -333,6 +363,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Is memantine a potential therapeutic for Rett syndrome?"
         ),
         "paper_url": "https://doi.org/10.3389/fnins.2013.00245",
+        "paper_authors": "Bello, O., Blair, K., Chapleau, C., & Larimore, J. L. (2013)",
         "evidence_note": (
             "Non-competitive NMDA receptor antagonist; proposed as therapy for RTT given the excitatory/inhibitory imbalance; systematic review of preclinical evidence."
         ),
@@ -342,6 +373,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "The benzodiazepine Midazolam mitigates the breathing defects of Mecp2-deficient mice"
         ),
         "paper_url": "https://doi.org/10.1016/j.resp.2011.02.002",
+        "paper_authors": "Voituron, N., & Hilaire, G. (2011)",
         "evidence_note": (
             "Short-acting benzodiazepine; mitigated breathing defects in Mecp2-deficient mice by acting on GABA-A receptors in respiratory brainstem centers."
         ),
@@ -351,6 +383,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Mirtazapine treatment in a young female mouse model of Rett syndrome identifies time windows for the rescue of early phenotypes"
         ),
         "paper_url": "https://doi.org/10.1016/j.expneurol.2022.114056",
+        "paper_authors": "Flores Gutiérrez, J., Natali, G., Giorgi, J., De Leonibus, E., & Tongiorgi, E. (2022)",
         "evidence_note": (
             "Noradrenergic and serotonergic antidepressant; identified critical time windows for rescue of early phenotypes in a young RTT mouse model; effective before full symptom onset."
         ),
@@ -360,6 +393,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Rett syndrome: Controlled study of an oral opiate antagonist, naltrexone"
         ),
         "paper_url": "https://doi.org/10.1002/ana.410350415",
+        "paper_authors": "Percy, A. K., Glaze, D. G., Schultz, R. J., Zoghbi, H. Y., Williamson, D., Frost, J. D. Jr., Jankovic, J. J., del Junco, D., Skender, M., & Waring, S. (1994)",
         "evidence_note": (
             "Opioid receptor antagonist; evaluated in a controlled trial in RTT; showed modest effects on breathing and behavior that were not sustained over time."
         ),
@@ -369,6 +403,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "GABAA receptor antagonism ameliorates behavioral and synaptic impairments associated with MeCP2 overexpression"
         ),
         "paper_url": "https://doi.org/10.1038/npp.2014.43",
+        "paper_authors": "Na, E. S., Morris, M. J., Nelson, E. D., & Monteggia, L. M. (2014)",
         "evidence_note": (
             "Inactive component of picrotoxin with a structure analogous to picrotoxinin; included as a structural reference; the study jointly evaluated GABA-A antagonism in the context of MeCP2 overexpression."
         ),
@@ -378,6 +413,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "GABAA receptor antagonism ameliorates behavioral and synaptic impairments associated with MeCP2 overexpression"
         ),
         "paper_url": "https://doi.org/10.1038/npp.2014.43",
+        "paper_authors": "Na, E. S., Morris, M. J., Nelson, E. D., & Monteggia, L. M. (2014)",
         "evidence_note": (
             "Active component of picrotoxin; GABA-A receptor antagonist (chloride channel blocker); GABA-A antagonism ameliorated behavioral and synaptic impairments in mice overexpressing MeCP2."
         ),
@@ -387,6 +423,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Modulation of serotonin receptors in neurodevelopmental disorders: Focus on 5-HT7 receptor"
         ),
         "paper_url": "https://doi.org/10.3390/molecules26113348",
+        "paper_authors": "Lee, J., Avramets, D., Jeon, B., & Choo, H. (2021)",
         "evidence_note": (
             "Atypical antipsychotic D2 and 5-HT2 antagonist; reviewed for modulation of serotonin receptors (especially 5-HT7) in neurodevelopmental disorders such as RTT; used for behavioral symptom management."
         ),
@@ -396,6 +433,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Potent hERG channel inhibition by sarizotan, an investigative treatment for Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/j.yjmcc.2019.07.012",
+        "paper_authors": "Cheng, H., Du, C., Zhang, Y., James, A. F., Dempsey, C. E., Abdala, A. P., & Hancox, J. C. (2019)",
         "evidence_note": (
             "5-HT1A agonist and partial D2 agonist; investigated for RTT to manage apneas; identified as a potent hERG channel inhibitor representing an important cardiac safety signal."
         ),
@@ -405,6 +443,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
         ),
         "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
+        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
         "evidence_note": (
             "Atypical antidepressant modulating glutamate and serotonin; reviewed as a drug repurposing candidate for RTT and Rett-like syndromes."
         ),
@@ -414,6 +453,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
         ),
         "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
+        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
         "evidence_note": (
             "Serotonin reuptake inhibitor and 5-HT2 antagonist antidepressant; reviewed as a repurposing candidate for RTT in the context of mood and sleep symptoms."
         ),
@@ -423,6 +463,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Anaplerotic triheptanoin diet enhances mitochondrial substrate use to remodel the metabolome and improve lifespan, motor function, and sociability in MeCP2-null mice"
         ),
         "paper_url": "https://doi.org/10.1371/journal.pone.0109527",
+        "paper_authors": "Park, M. J., Aja, S., Li, Q., Degano, A. L., Penati, J., Zhuo, J., Roe, C. R., & Ronnett, G. V. (2014)",
         "evidence_note": (
             "Anaplerotic 7-carbon medium-chain triglyceride; improved mitochondrial function and lifespan in Mecp2-null mice by remodeling the brain metabolome."
         ),
@@ -432,6 +473,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Trofinetide for the treatment of Rett syndrome: A randomized phase 3 study"
         ),
         "paper_url": "https://doi.org/10.1038/s41591-023-02398-1",
+        "paper_authors": "Neul, J. L., Percy, A. K., Benke, T. A., Berry-Kravis, E. M., Glaze, D. G., Marsh, E. D., Lin, T., Stankovic, S., Bishop, K. M., & Youakim, J. M. (2023)",
         "evidence_note": (
             "Synthetic IGF-1 analogue; FDA-approved in 2023 (Daybue) for RTT in patients aged 2 and older; demonstrated improvement in behavioral symptoms and global function in a phase 3 clinical trial."
         ),
@@ -441,6 +483,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Systemic Radical Scavenger Treatment of a Mouse Model of Rett Syndrome: Merits and Limitations of the Vitamin E Derivative Trolox"
         ),
         "paper_url": "https://doi.org/10.3389/fncel.2016.00266",
+        "paper_authors": "Janc, O. A., Hüser, M. A., Dietrich, K., Kempkes, B., Menzfeld, C., Hülsmann, S., & Müller, M. (2016)",
         "evidence_note": (
             "Water-soluble vitamin E analogue with antioxidant activity; evaluated in RTT mice to reduce oxidative stress; showed partial benefits with long-term limitations."
         ),
@@ -450,6 +493,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Biochemical and clinical effects of tyrosine and tryptophan in the Rett syndrome"
         ),
         "paper_url": "https://doi.org/10.1016/s0387-7604(12)80197-5",
+        "paper_authors": "Nielsen, J. B., Lou, H. C., & Andresen, J. (1990)",
         "evidence_note": (
             "Catecholamine precursor amino acid; studied in RTT for its biochemical effects on dopamine and serotonin metabolism in combination with tryptophan."
         ),
@@ -459,6 +503,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "SAMe, choline, and valproic acid as possible epigenetic drugs: Their effects in pregnancy with a special emphasis on animal studies"
         ),
         "paper_url": "https://doi.org/10.3390/ph15020192",
+        "paper_authors": "Ornoy, A., Weinstein-Fudim, L., & Becker, M. (2022)",
         "evidence_note": (
             "Antiepileptic drug with epigenetic properties (HDAC inhibitor); reviewed as an epigenetic agent with potential modulatory effect in RTT; also documented as a teratogen with a relevant risk profile."
         ),
@@ -468,6 +513,7 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Profile of Trofinetide in the treatment of Rett syndrome: Design, development and potential place in therapy"
         ),
         "paper_url": "https://doi.org/10.2147/DDDT.S383133",
+        "paper_authors": "Camillo, L., Pozzi, M., Bernardo, P., Pisano, S., & Nobile, M. (2024)",
         "evidence_note": (
             "Vitamin E analogue with mitochondrial antioxidant activity (15-LOX inhibitor); reviewed in the context of neuroprotection strategies in RTT alongside trofinetide."
         ),
@@ -477,8 +523,59 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Epileptic spasms in CDKL5 deficiency disorder: Delayed treatment and poor response to first-line therapies"
         ),
         "paper_url": "https://doi.org/10.1111/epi.17630",
+        "paper_authors": "Olson, H. E., Demarest, S., Pestana-Knight, E., Moosa, A. N., Zhang, X., Pérez-Pérez, J. R., Weisenberg, J., O'Connor Prange, E., Marsh, E. D., Rajaraman, R. R., Suter, B., Katyayan, A., Haviland, I., Daniels, C., Zhang, B., Greene, C., DeLeo, M., Swanson, L., Love-Nichols, J., Benke, T., Harini, C., & Poduri, A. (2023)",
         "evidence_note": (
             "Irreversible GABA-transaminase inhibitor antiepileptic; documented in epileptic spasms in CDKL5 deficiency disorder (RTT-related); variable response to first-line therapies reported."
+        ),
+    },
+    "carbamazepina": {
+        "paper_reference": (
+            "Antiepileptic drugs in Rett syndrome"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.ejpn.2015.02.007",
+        "paper_authors": "Pintaudi, M., Calevo, M. G., Vignoli, A., Baglietto, M. G., Hayek, Y., Traverso, M., Giacomini, T., Giordano, L., Renieri, A., Russo, S., Canevini, M., & Veneselli, E. (2015)",
+        "evidence_note": (
+            "Sodium channel-blocking antiepileptic drug; documented in clinical use in RTT patients for seizure control; reviewed in a European multicenter study on antiepileptic drugs in RTT."
+        ),
+    },
+    "melatonina": {
+        "paper_reference": (
+            "Management of sleep disorders in children with neurodevelopmental disorders: A review"
+        ),
+        "paper_url": "https://doi.org/10.1002/phar.1686",
+        "paper_authors": "Blackmer, A. B., & Feinstein, J. A. (2016)",
+        "evidence_note": (
+            "Neuroendocrine hormone with antioxidant properties; used in RTT for management of sleep disorders common in the syndrome; reviewed as part of pharmacological strategies in neurodevelopmental disorders."
+        ),
+    },
+    "tianeptina": {
+        "paper_reference": (
+            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
+        ),
+        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
+        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "evidence_note": (
+            "Atypical antidepressant modulating glutamate and serotonin; reviewed as a drug repurposing candidate for RTT and Rett-like syndromes."
+        ),
+    },
+    "clonidina": {
+        "paper_reference": (
+            "Management of self-injurious behaviors in children with neurodevelopmental disorders: A pharmacotherapy overview"
+        ),
+        "paper_url": "https://doi.org/10.1002/phar.2238",
+        "paper_authors": "Sabus, A., Feinstein, J., Romani, P., Goldson, E., & Blackmer, A. (2019)",
+        "evidence_note": (
+            "Central alpha-2 adrenergic agonist; reviewed for management of self-injurious behaviors and hyperactivity in neurodevelopmental disorders including RTT."
+        ),
+    },
+    "trazodona": {
+        "paper_reference": (
+            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
+        ),
+        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
+        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "evidence_note": (
+            "Serotonin reuptake inhibitor and 5-HT2 antagonist antidepressant; reviewed as a repurposing candidate for RTT in the context of mood and sleep symptoms."
         ),
     },
 }
@@ -517,6 +614,10 @@ def enrich_bundled_sample_rows(
                 "paper_url": compound_meta.get(
                     "paper_url",
                     row["paper_url"].strip() or family_meta["paper_url"],
+                ).strip(),
+                "paper_authors": compound_meta.get(
+                    "paper_authors",
+                    row.get("paper_authors", "").strip(),
                 ).strip(),
                 "evidence_note": compound_meta.get(
                     "evidence_note",
