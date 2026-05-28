@@ -453,8 +453,10 @@
 }
 
 .molecule-svg-wrap svg {
+  width: auto !important;
   max-width: 100%;
-  height: auto;
+  height: auto !important;
+  max-height: 280px;
 }
 
 .compound-reference-box,
