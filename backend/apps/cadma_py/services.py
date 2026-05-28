@@ -1241,7 +1241,7 @@ def update_reference_row(
             f"Índice de fila {row_index} fuera de rango (0-{len(rows) - 1})."
         )
 
-    editable_fields = ("name", "paper_reference", "paper_url", "evidence_note")
+    editable_fields = ("name", "paper_authors", "paper_reference", "paper_url", "evidence_note")
     target_row = rows[row_index]
     for field in editable_fields:
         if field in patch:
