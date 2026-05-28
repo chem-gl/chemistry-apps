@@ -41,6 +41,7 @@ class CadmaCompoundRow(TypedDict):
     M: float
     LD50: float
     SA: float
+    paper_authors: str
     paper_reference: str
     paper_url: str
     evidence_note: str

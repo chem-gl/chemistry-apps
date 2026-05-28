@@ -244,6 +244,13 @@
                 </label>
             </div>
             <div class="add-row">
+                <label class="add-label full">{{ 'cadmaPy.familyDetail.paperAuthors' | transloco }}
+                    <input type="text" class="add-input" [ngModel]="addAuthors()"
+                        (ngModelChange)="addAuthors.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.paperAuthorsPlaceholder' | transloco" />
+                </label>
+            </div>
+            <div class="add-row">
                 <label class="add-label">{{ 'cadmaPy.familyDetail.paperReference' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addPaperRef()"
                         (ngModelChange)="addPaperRef.set($event)"
@@ -259,6 +266,28 @@
                 <label class="add-label full">{{ 'cadmaPy.familyDetail.evidenceNote' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addNote()" (ngModelChange)="addNote.set($event)"
                         [placeholder]="'cadmaPy.familyDetail.optionalNote' | transloco" />
+                </label>
+            </div>
+            <div class="add-row add-row-metrics">
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityDT' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addDT()"
+                        (ngModelChange)="addDT.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityM' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addM()"
+                        (ngModelChange)="addM.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityLD50' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addLD50()"
+                        (ngModelChange)="addLD50.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.saScore' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addSA()"
+                        (ngModelChange)="addSA.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
                 </label>
             </div>
             @if (addError()) {

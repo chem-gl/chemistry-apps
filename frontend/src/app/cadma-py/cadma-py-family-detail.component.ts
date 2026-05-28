@@ -229,9 +229,14 @@ export class CadmaPyFamilyDetailComponent {
   readonly showAddForm = signal<boolean>(false);
   readonly addSmiles = signal<string>('');
   readonly addName = signal<string>('');
+  readonly addAuthors = signal<string>('');
   readonly addPaperRef = signal<string>('');
   readonly addPaperUrl = signal<string>('');
   readonly addNote = signal<string>('');
+  readonly addDT = signal<string>('');
+  readonly addM = signal<string>('');
+  readonly addLD50 = signal<string>('');
+  readonly addSA = signal<string>('');
   readonly addBusy = signal<boolean>(false);
   readonly addError = signal<string>('');
 
@@ -580,21 +585,35 @@ export class CadmaPyFamilyDetailComponent {
     }
     this.addBusy.set(true);
     this.addError.set('');
+    const parseNum = (v: string): number | null => {
+      const trimmed = v.trim();
+      return trimmed === '' ? null : Number(trimmed);
+    };
     const payload: CadmaCompoundAddPayload = {
       smiles,
       name: this.addName().trim(),
+      paper_authors: this.addAuthors().trim(),
       paper_reference: this.addPaperRef().trim(),
       paper_url: this.addPaperUrl().trim(),
       evidence_note: this.addNote().trim(),
+      toxicity_dt: parseNum(this.addDT()),
+      toxicity_m: parseNum(this.addM()),
+      toxicity_ld50: parseNum(this.addLD50()),
+      sa_score: parseNum(this.addSA()),
     };
     this.cadmaApi.addCompoundToLibrary(this.library().id, payload).subscribe({
       next: () => {
         this.addBusy.set(false);
         this.addSmiles.set('');
         this.addName.set('');
+        this.addAuthors.set('');
         this.addPaperRef.set('');
         this.addPaperUrl.set('');
         this.addNote.set('');
+        this.addDT.set('');
+        this.addM.set('');
+        this.addLD50.set('');
+        this.addSA.set('');
         this.showAddForm.set(false);
         this.libraryChanged.emit(this.library().id);
       },
