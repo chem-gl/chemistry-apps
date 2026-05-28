@@ -399,6 +399,7 @@
   border: 1px solid var(--chem-border-subtle);
   border-radius: 12px;
   background: var(--chem-surface-elevated);
+  overflow: hidden;
 }
 
 .compound-card-header-row {
@@ -445,18 +446,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 220px;
-  padding: 0.75rem;
+  min-height: 180px;
+  max-height: 280px;
+  padding: 0.5rem;
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
   background: #fff;
+  overflow: hidden;
 }
 
-.molecule-svg-wrap svg {
-  width: auto !important;
-  max-width: 100%;
+.molecule-svg-wrap :where(svg) {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 260px !important;
   height: auto !important;
-  max-height: 280px;
 }
 
 .compound-reference-box,
