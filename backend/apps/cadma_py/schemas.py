@@ -173,6 +173,9 @@ class CadmaReferenceRowPatchSerializer(serializers.Serializer):
     """Valida la edición parcial de una fila de referencia existente."""
 
     name = serializers.CharField(required=False, max_length=200)
+    paper_authors = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
     paper_reference = serializers.CharField(
         required=False, allow_blank=True, max_length=300
     )
@@ -187,6 +190,9 @@ class CadmaCompoundAddSerializer(serializers.Serializer):
 
     smiles = serializers.CharField(max_length=2000)
     name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    paper_authors = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
     paper_reference = serializers.CharField(
         required=False, allow_blank=True, max_length=300
     )
@@ -217,6 +223,7 @@ class CadmaCompoundRowResponseSerializer(serializers.Serializer):
     M = serializers.FloatField(read_only=True)
     LD50 = serializers.FloatField(read_only=True)
     SA = serializers.FloatField(read_only=True)
+    paper_authors = serializers.CharField(read_only=True)
     paper_reference = serializers.CharField(read_only=True)
     paper_url = serializers.CharField(read_only=True)
     evidence_note = serializers.CharField(read_only=True)
