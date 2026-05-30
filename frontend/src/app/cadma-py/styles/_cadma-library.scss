@@ -719,6 +719,7 @@
 .family-table .preview-row td {
   padding: 0.75rem 0.6rem;
   background: var(--chem-surface-elevated);
+  overflow: hidden;
 }
 
 .family-table .preview-row .preview-empty {
