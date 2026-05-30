@@ -2,6 +2,7 @@
 
 .family-detail {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1rem 0 0;
   border-top: 1px solid var(--chem-border-subtle);
