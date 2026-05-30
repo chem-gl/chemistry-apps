@@ -1624,7 +1624,7 @@
     },
     "familyDetail": {
       "selectFamily": "Select family →",
-      "copyFamily": "⎘ Copy family",
+      "copyFamily": "⎘ Copy and edit family",
       "rootReadOnly": "This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
       "groupReadOnly": "This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
       "defaultReadOnly": "This family is read-only in your current scope. Create an editable copy to modify it safely.",
