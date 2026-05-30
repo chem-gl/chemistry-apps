@@ -280,6 +280,22 @@
   }
 }
 
+.btn-row-duplicate {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0.15rem;
+  color: var(--chem-accent, #7b5a9e);
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(123, 90, 158, 0.08);
+    border-radius: 4px;
+  }
+}
+
 .btn-row-delete {
   background: none;
   border: none;
@@ -334,6 +350,24 @@
 
 .null-icon {
   flex-shrink: 0;
+}
+
+/* --- Banner sugerencia de copia para seed preview --- */
+.seed-browse-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: #fef9e7;
+  border: 1px solid #f9e79f;
+  border-radius: var(--chem-radius);
+  font-size: 0.82rem;
+  color: #7d6608;
+  margin: 0.5rem 0;
+}
+
+.seed-hint-icon::before {
+  content: '💡';
 }
 
 /* --- Diálogo de detalle de compuesto --- */

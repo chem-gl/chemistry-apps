@@ -119,6 +119,13 @@
     <p class="edit-error">{{ forkError() }}</p>
     }
 
+    @if (!library().editable) {
+    <div class="seed-browse-hint">
+        <span class="seed-hint-icon"></span>
+        <span>{{ 'cadmaPy.familyDetail.seedBrowseHint' | transloco }}</span>
+    </div>
+    }
+
     @if (showCopyForm()) {
     <div class="copy-family-form">
         <label class="edit-label full">
@@ -350,6 +357,9 @@
                             <button class="btn-row-edit" type="button"
                                 [title]="'cadmaPy.familyDetail.editReference' | transloco"
                                 (click)="startEditRow(i, row)">✏️ {{ 'cadmaPy.general.edit' | transloco }}</button>
+                            <button class="btn-row-duplicate" type="button"
+                                [title]="'cadmaPy.familyDetail.duplicateCompound' | transloco"
+                                (click)="duplicateRow(i)">📋 {{ 'cadmaPy.general.duplicate' | transloco }}</button>
                             <button class="btn-row-delete" type="button"
                                 [title]="'cadmaPy.familyDetail.removeCompound' | transloco" (click)="removeRow(i)"
                                 [disabled]="deletingRowIndex() === i">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>

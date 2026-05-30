@@ -647,7 +647,9 @@
       "cancelEdit": "Cancelar edición",
       "adding": "Agregando…",
       "openPreview": "Abrir vista previa de la molécula",
-      "refBandAverages": "Promedios de banda de referencia"
+      "refBandAverages": "Promedios de banda de referencia",
+      "duplicateCompound": "Duplicar este compuesto",
+      "seedBrowseHint": "Esta es una semilla de solo lectura. Haz clic en 'Copiar familia' arriba para crear una versión editable donde puedas agregar, duplicar o eliminar compuestos."
     },
     "scopeLabels": {
       "group": "Grupo",
@@ -710,6 +712,7 @@
       "add": "Add",
       "selectFamily": "Select family",
       "createFamily": "Create family",
+      "duplicate": "Duplicar",
       "delete": "Delete",
       "compounds": "compounds",
       "preview": "Preview",

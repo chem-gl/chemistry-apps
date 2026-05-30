@@ -571,6 +571,35 @@ export class CadmaPyFamilyDetailComponent {
     });
   }
 
+  duplicateRow(index: number): void {
+    const row = this.library().rows[index];
+    if (!row) return;
+    const payload: CadmaCompoundAddPayload = {
+      smiles: row.smiles,
+      name: row.name,
+      paper_authors: row.paper_authors,
+      paper_reference: row.paper_reference,
+      paper_url: row.paper_url,
+      evidence_note: row.evidence_note,
+      toxicity_dt: row.DT ?? null,
+      toxicity_m: row.M ?? null,
+      toxicity_ld50: row.LD50 ?? null,
+      sa_score: row.SA ?? null,
+    };
+    this.addBusy.set(true);
+    this.rowActionError.set('');
+    this.cadmaApi.addCompoundToLibrary(this.library().id, payload).subscribe({
+      next: () => {
+        this.addBusy.set(false);
+        this.libraryChanged.emit(this.library().id);
+      },
+      error: (err: Error) => {
+        this.addBusy.set(false);
+        this.rowActionError.set(err.message || 'Failed to duplicate compound.');
+      },
+    });
+  }
+
   /** Abre/cierra el formulario de agregar compuesto. */
   toggleAddForm(): void {
     this.showAddForm.update((v) => !v);
