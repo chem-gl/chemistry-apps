@@ -43,7 +43,7 @@ const ADME_LABELS: Record<string, string> = {
 };
 
 const ADME_FULL_LABELS: Record<string, string> = {
-  MW: 'Molecular Weight',
+  MW: 'Molar Mass',
   logP: 'LogP',
   MR: 'Molar Refractivity',
   AtX: 'Heavy Atoms',
@@ -381,8 +381,14 @@ export class CadmaPyFamilyDetailComponent {
     return this.translocoService.translate('cadmaPy.familyDetail.readOnly');
   });
 
+  private readonly INT_KEYS = new Set(['HBLA', 'HBLD', 'AtX', 'RB']);
+
   formatNumber(value: number, decimals: number = 2): string {
     return value.toFixed(decimals);
+  }
+
+  formatMetricValue(key: string, value: number): string {
+    return this.INT_KEYS.has(key) ? value.toFixed(0) : value.toFixed(2);
   }
 
   formatFileSize(bytes: number): string {

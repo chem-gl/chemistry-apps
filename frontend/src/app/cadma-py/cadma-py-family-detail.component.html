@@ -477,7 +477,7 @@
                                 @for (m of selectedCompoundAdme(); track m.key) {
                                 <div class="metric-chip">
                                     <span class="mc-key">{{ m.label }}</span>
-                                    <strong class="mc-val">{{ formatNumber(m.value) }}</strong>
+                                    <strong class="mc-val">{{ formatMetricValue(m.key, m.value) }}</strong>
                                 </div>
                                 }
                             </div>
