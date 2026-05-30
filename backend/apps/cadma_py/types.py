@@ -38,9 +38,18 @@ class CadmaCompoundRow(TypedDict):
     RB: float
     PSA: float
     DT: float
+    DT_test: NotRequired[float]
+    DT_admet: NotRequired[float]
     M: float
+    M_test: NotRequired[float]
+    M_admet: NotRequired[float]
     LD50: float
+    LD50_test: NotRequired[float]
+    LD50_admet: NotRequired[float]
     SA: float
+    SA_ambit: NotRequired[float]
+    SA_brsa: NotRequired[float]
+    SA_rdkit: NotRequired[float]
     paper_authors: str
     paper_reference: str
     paper_url: str

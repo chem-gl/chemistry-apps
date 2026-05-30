@@ -19,9 +19,18 @@ export interface CadmaReferenceRowView {
   RB: number;
   PSA: number;
   DT: number;
+  DT_test?: number | null;
+  DT_admet?: number | null;
   M: number;
+  M_test?: number | null;
+  M_admet?: number | null;
   LD50: number;
+  LD50_test?: number | null;
+  LD50_admet?: number | null;
   SA: number;
+  SA_ambit?: number | null;
+  SA_brsa?: number | null;
+  SA_rdkit?: number | null;
   paper_authors: string;
   paper_reference: string;
   paper_url: string;

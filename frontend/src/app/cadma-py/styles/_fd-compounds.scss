@@ -525,31 +525,96 @@
   line-height: 1.5;
 }
 
-.compound-metric-grid {
+/* --- Grupos de métricas en detalle de compuesto --- */
+.compound-metric-grouped {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 0.55rem;
+  gap: 0.85rem;
 }
 
-.compound-metric-card {
+.metric-group {
   display: grid;
-  gap: 0.15rem;
-  padding: 0.6rem 0.7rem;
+  gap: 0.4rem;
+}
+
+.metric-group-title {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--chem-ink-secondary);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+}
+
+.metric-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.metric-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 0.55rem;
+  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-sm);
+  min-width: 58px;
+}
+
+.mc-key {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chem-ink-secondary);
+}
+
+.mc-val {
+  font-size: 0.82rem;
+  color: var(--chem-ink);
+}
+
+.metric-group-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.tox-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.55rem 0.7rem;
   background: #fff;
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
 }
 
-.compound-metric-label {
-  font-size: 0.66rem;
+.tox-card-label {
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--chem-ink-secondary);
+  color: var(--chem-ink);
+  margin-bottom: 0.1rem;
 }
 
-.compound-metric-value {
-  font-size: 0.9rem;
+.tox-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.tox-source {
+  color: var(--chem-ink-secondary);
+  font-weight: 500;
+}
+
+.tox-val {
+  font-family: var(--chem-font-mono, 'SF Mono', monospace);
+  font-weight: 600;
   color: var(--chem-ink);
 }
 

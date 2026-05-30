@@ -469,11 +469,53 @@
                     }
                     }
 
-                    <div class="compound-metric-grid">
-                        @for (metric of selectedCompoundMetrics(); track metric.key) {
-                        <div class="compound-metric-card">
-                            <span class="compound-metric-label">{{ metric.label }}</span>
-                            <strong class="compound-metric-value">{{ formatNumber(metric.value) }}</strong>
+                    <div class="compound-metric-grouped">
+                        <!-- ADME row -->
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.admeGroup' | transloco }}</h6>
+                            <div class="metric-group-row">
+                                @for (m of selectedCompoundAdme(); track m.key) {
+                                <div class="metric-chip">
+                                    <span class="mc-key">{{ m.label }}</span>
+                                    <strong class="mc-val">{{ formatNumber(m.value) }}</strong>
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Toxicity row -->
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.toxicityGroup' | transloco }}</h6>
+                            <div class="metric-group-cards">
+                                @for (tox of selectedCompoundToxicity(); track tox.key) {
+                                <div class="tox-card">
+                                    <strong class="tox-card-label">{{ tox.label }}</strong>
+                                    @for (v of tox.values; track v.source) {
+                                    <div class="tox-row">
+                                        <span class="tox-source">{{ v.source }}</span>
+                                        <span class="tox-val">{{ v.value != null ? formatNumber(v.value) : '—' }}</span>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- SA row -->
+                        @if (selectedCompoundSA(); as sa) {
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.saGroup' | transloco }}</h6>
+                            <div class="metric-group-cards">
+                                <div class="tox-card">
+                                    <strong class="tox-card-label">{{ sa.label }}</strong>
+                                    @for (v of sa.values; track v.source) {
+                                    <div class="tox-row">
+                                        <span class="tox-source">{{ v.source }}</span>
+                                        <span class="tox-val">{{ v.value != null ? formatNumber(v.value) : '—' }}</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
                         }
                     </div>

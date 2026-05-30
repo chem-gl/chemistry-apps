@@ -66,9 +66,18 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
     "RB": ("rb", "rotatablebonds", "numrotatablebonds"),
     "PSA": ("psa", "tpsa"),
     "DT": ("dt", "devtox", "devtoxscore", "developmentaltoxicity"),
+    "DT_test": ("dttest", "dttoxicitytest"),
+    "DT_admet": ("dtadmet", "dtadmetai"),
     "M": ("m", "amesscore", "amesprobability", "mutagenicity"),
+    "M_test": ("mtest", "mmutagenicitytest"),
+    "M_admet": ("madmet", "madmetai"),
     "LD50": ("ld50", "ld50mgkg", "ld50oral", "acuteld50"),
-    "SA": ("sa", "sascore", "syntheticaccessibility", "ambit", "brsa", "rdkit"),
+    "LD50_test": ("ld50test",),
+    "LD50_admet": ("ld50admet",),
+    "SA": ("sa", "sascore", "syntheticaccessibility"),
+    "SA_ambit": ("sambit", "saambitscore"),
+    "SA_brsa": ("sabrsa", "sabrsascore"),
+    "SA_rdkit": ("sardkit", "sardkitsascore"),
 }
 
 SAMPLE_DEFINITIONS: tuple[CadmaReferenceSample, ...] = (
@@ -540,10 +549,23 @@ def _build_compound_rows_from_normalized_rows(
             "M": _resolve_metric_value(merged_row, "M", descriptor_values),
             "LD50": _resolve_metric_value(merged_row, "LD50", descriptor_values),
             "SA": _resolve_metric_value(merged_row, "SA", descriptor_values),
+            "paper_authors": _get_alias_value(merged_row, "paper_authors"),
             "paper_reference": paper_reference.strip(),
             "paper_url": paper_url.strip(),
             "evidence_note": evidence_note.strip(),
         }
+        for sw_key in (
+            "DT_test", "DT_admet",
+            "M_test", "M_admet",
+            "LD50_test", "LD50_admet",
+            "SA_ambit", "SA_brsa", "SA_rdkit",
+        ):
+            raw = _get_alias_value(merged_row, sw_key)
+            if raw:
+                try:
+                    compound_row[sw_key] = float(raw)  # type: ignore[literal-required]
+                except ValueError:
+                    pass
         normalized_rows.append(compound_row)
 
     return normalized_rows

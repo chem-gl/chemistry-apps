@@ -1712,6 +1712,11 @@
       "nullsLabel": "Nulls",
       "meanSdLabel": "Mean ± SD"
     },
+    "compoundDetail": {
+      "admeGroup": "ADME Properties",
+      "toxicityGroup": "Toxicity",
+      "saGroup": "Synthetic Accessibility"
+    },
      "importer": {
        "ignoreColumn": "Ignore this column",
        "mainSmiles": "Main SMILES guide",

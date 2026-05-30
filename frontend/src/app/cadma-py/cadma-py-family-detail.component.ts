@@ -31,7 +31,18 @@ import {
   downloadBlobFile,
 } from '../core/shared/scientific-app-ui.utils';
 
-const METRIC_LABELS: Record<string, string> = {
+const ADME_LABELS: Record<string, string> = {
+  MW: 'MW',
+  logP: 'LogP',
+  MR: 'MR',
+  AtX: 'AtX',
+  HBLA: 'HBLA',
+  HBLD: 'HBLD',
+  RB: 'RB',
+  PSA: 'PSA',
+};
+
+const ADME_FULL_LABELS: Record<string, string> = {
   MW: 'Molecular Weight',
   logP: 'LogP',
   MR: 'Molar Refractivity',
@@ -40,13 +51,32 @@ const METRIC_LABELS: Record<string, string> = {
   HBLD: 'HB Donors',
   RB: 'Rotatable Bonds',
   PSA: 'Polar SA',
+};
+
+const ADME_KEYS = Object.keys(ADME_LABELS);
+
+const TOXICITY_METRICS = [
+  { key: 'DT', label: 'Dev. Toxicity', software: ['DT', 'DT_test', 'DT_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
+  { key: 'M', label: 'Mutagenicity', software: ['M', 'M_test', 'M_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
+  { key: 'LD50', label: 'LD50 (mg/kg)', software: ['LD50', 'LD50_test', 'LD50_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
+] as const;
+
+const ALL_BASE_LABELS: Record<string, string> = {
+  ...ADME_FULL_LABELS,
   DT: 'Dev. Toxicity',
   M: 'Mutagenicity',
   LD50: 'LD50 (mg/kg)',
   SA: 'SA Score',
 };
 
-const METRIC_KEYS = Object.keys(METRIC_LABELS);
+const ALL_BASE_KEYS = Object.keys(ALL_BASE_LABELS);
+
+const SA_METRIC = {
+  key: 'SA', label: 'SA Score',
+  software: ['SA', 'SA_ambit', 'SA_brsa', 'SA_rdkit'] as const,
+  suffixes: ['', ' (AMBIT)', ' (BRSA)', ' (RDKit)'],
+} as const;
+
 const CSV_EXPORT_KEYS: Array<keyof CadmaReferenceRowView> = [
   'name',
   'smiles',
@@ -96,7 +126,7 @@ function computeScopeKind(sourceReference: string): ScopeKind {
 }
 
 function computeMetricStats(rows: CadmaReferenceRowView[]): MetricStat[] {
-  return METRIC_KEYS.map((key) => {
+  return ALL_BASE_KEYS.map((key) => {
     const values = rows
       .map((row) => row[key as keyof CadmaReferenceRowView] as number | null)
       .filter(
@@ -109,7 +139,7 @@ function computeMetricStats(rows: CadmaReferenceRowView[]): MetricStat[] {
     if (values.length === 0) {
       return {
         key,
-        label: METRIC_LABELS[key],
+        label: ALL_BASE_LABELS[key],
         mean: 0,
         stdev: 0,
         min: 0,
@@ -126,7 +156,7 @@ function computeMetricStats(rows: CadmaReferenceRowView[]): MetricStat[] {
 
     return {
       key,
-      label: METRIC_LABELS[key],
+      label: ALL_BASE_LABELS[key],
       mean,
       stdev,
       min: Math.min(...values),
@@ -255,19 +285,39 @@ export class CadmaPyFamilyDetailComponent {
   readonly canForkFamily = computed<boolean>(() => this.library().forkable === true);
 
   readonly metricStats = computed<MetricStat[]>(() => computeMetricStats(this.library().rows));
-  readonly selectedCompoundMetrics = computed<Array<{ key: string; label: string; value: number }>>(
-    () => {
-      const compound = this.selectedCompound();
-      if (compound === null) {
-        return [];
-      }
-      return METRIC_KEYS.map((key) => ({
-        key,
-        label: METRIC_LABELS[key],
-        value: compound[key as keyof CadmaReferenceRowView] as number,
-      }));
-    },
+  readonly selectedCompoundAdme = computed<Array<{ key: string; label: string; value: number }>>(
+    () => ADME_KEYS.map((key) => ({
+      key,
+      label: ADME_FULL_LABELS[key],
+      value: (this.selectedCompound()?.[key as keyof CadmaReferenceRowView] as number) ?? 0,
+    })),
   );
+
+  readonly selectedCompoundToxicity = computed(() => {
+    const compound = this.selectedCompound();
+    if (!compound) return [];
+    return TOXICITY_METRICS.map((metric) => ({
+      key: metric.key,
+      label: metric.label,
+      values: metric.software.map((swKey, i) => ({
+        source: metric.suffixes[i] || 'Base',
+        value: compound[swKey as keyof CadmaReferenceRowView] as number | null | undefined,
+      })),
+    }));
+  });
+
+  readonly selectedCompoundSA = computed(() => {
+    const compound = this.selectedCompound();
+    if (!compound) return null;
+    return {
+      key: SA_METRIC.key,
+      label: SA_METRIC.label,
+      values: SA_METRIC.software.map((swKey, i) => ({
+        source: SA_METRIC.suffixes[i] || 'Base',
+        value: compound[swKey as keyof CadmaReferenceRowView] as number | null | undefined,
+      })),
+    };
+  });
 
   readonly hasAnyNulls = computed<boolean>(() =>
     this.metricStats().some((stat) => stat.nullCount > 0),

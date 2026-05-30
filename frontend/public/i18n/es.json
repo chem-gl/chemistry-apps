@@ -651,6 +651,11 @@
       "duplicateCompound": "Duplicar este compuesto",
       "seedBrowseHint": "Esta es una semilla de solo lectura. Haz clic en 'Copiar familia' arriba para crear una versión editable donde puedas agregar, duplicar o eliminar compuestos."
     },
+    "compoundDetail": {
+      "admeGroup": "Propiedades ADME",
+      "toxicityGroup": "Toxicidad",
+      "saGroup": "Accesibilidad Sintética"
+    },
     "scopeLabels": {
       "group": "Grupo",
       "root": "Raíz",
