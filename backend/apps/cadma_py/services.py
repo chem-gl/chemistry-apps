@@ -75,7 +75,7 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
     "LD50_test": ("ld50test",),
     "LD50_admet": ("ld50admet",),
     "SA": ("sa", "sascore", "syntheticaccessibility"),
-    "SA_ambit": ("sambit", "saambitscore"),
+    "SA_ambit": ("saambit", "sambit", "saambitscore"),
     "SA_brsa": ("sabrsa", "sabrsascore"),
     "SA_rdkit": ("sardkit", "sardkitsascore"),
 }
