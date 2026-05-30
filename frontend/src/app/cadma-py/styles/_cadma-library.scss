@@ -637,6 +637,7 @@
    TABLA UNIFICADA DE FAMILIAS
    ═══════════════════════════════════════════════ */
 .family-table {
+  table-layout: fixed;
   width: 100%;
   border-collapse: collapse;
   margin-top: 0.75rem;
@@ -675,6 +676,7 @@
 .family-table td {
   padding: 0.5rem 0.6rem;
   vertical-align: middle;
+  overflow: hidden;
 }
 
 .family-table .col-disease {
@@ -687,20 +689,22 @@
 }
 
 .family-table .col-num {
+  width: 5rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .family-table .col-actions {
+  width: 9rem;
   text-align: right;
   white-space: nowrap;
 }
 
 .family-table .col-select {
+  width: 8rem;
   text-align: right;
   white-space: nowrap;
-  min-width: 7rem;
 }
 
 .family-table .check-badge {

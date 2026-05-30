@@ -136,8 +136,9 @@
 /* --- Tabla de compuestos --- */
 .compounds-table-wrap {
   overflow-x: auto;
-  max-height: 420px;
   overflow-y: auto;
+  max-height: 420px;
+  max-width: 100%;
   border: 1px solid var(--chem-border-subtle);
   border-radius: 8px;
 }
