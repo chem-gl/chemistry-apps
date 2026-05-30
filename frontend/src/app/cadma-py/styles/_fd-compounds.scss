@@ -141,6 +141,24 @@
   max-width: 100%;
   border: 1px solid var(--chem-border-subtle);
   border-radius: 8px;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--chem-surface-inset);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--chem-border-strong, #b0a8bc);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--chem-ink-secondary);
+  }
 }
 
 .compounds-table {
