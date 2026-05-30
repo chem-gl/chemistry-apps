@@ -1,7 +1,7 @@
 <!-- cadma-py-family-detail.component.html: Panel de detalle de familia de referencia con promedios, trazabilidad y scope. -->
 <div class="family-detail">
 
-    <!-- Cabecera: scope, creador, permisos, fecha + botón editar -->
+    <!-- Cabecera: acciones -->
     <div class="detail-header">
         @if (mode() === 'browsing') {
         <button class="btn-back-browse" type="button" (click)="closeBrowsing.emit()"
@@ -9,28 +9,6 @@
             {{ 'cadmaPy.familyDetail.back' | transloco }}
         </button>
         }
-        <div class="scope-badge" [class]="scopeConfig().cssClass">
-            <span class="scope-icon">{{ scopeConfig().icon }}</span>
-            <span class="scope-text">{{ scopeConfig().label }}</span>
-        </div>
-        <div class="header-meta">
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.createdBy' | transloco }}</span>
-                <strong>{{ library().created_by_name || '—' }}</strong>
-            </span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.date' | transloco }}</span>
-                <strong>{{ createdDate() }}</strong>
-            </span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.access' | transloco }}</span>
-                <strong [class.editable]="library().editable" [class.readonly]="!library().editable">
-                    {{ editableLabel() }}
-                </strong>
-            </span>
-        </div>
         @if (library().editable && !editingFamily()) {
         <button class="btn-edit-family" type="button" (click)="startFamilyEdit()"
             [title]="'cadmaPy.familyDetail.editFamilyTitle' | transloco">
@@ -119,13 +97,6 @@
     <p class="edit-error">{{ forkError() }}</p>
     }
 
-    @if (!library().editable) {
-    <div class="seed-browse-hint">
-        <span class="seed-hint-icon"></span>
-        <span>{{ 'cadmaPy.familyDetail.seedBrowseHint' | transloco }}</span>
-    </div>
-    }
-
     @if (showCopyForm()) {
     <div class="copy-family-form">
         <label class="edit-label full">
@@ -145,13 +116,6 @@
     </div>
     }
 
-    @if (!library().editable && canForkFamily()) {
-    <p class="detail-desc">{{ readOnlyGuidance() }} {{ 'cadmaPy.familyDetail.readOnlyGuidance' | transloco }}</p>
-    }
-
-    @if (library().description) {
-    <p class="detail-desc">{{ library().description }}</p>
-    }
     }
 
     <!-- Promedios de métricas -->
@@ -493,7 +457,7 @@
                                     @for (v of tox.values; track v.source) {
                                     <div class="tox-row">
                                         <span class="tox-source">{{ v.source }}</span>
-                                        <span class="tox-val">{{ v.value != null ? formatNumber(v.value) : '—' }}</span>
+                                        <span class="tox-val">{{ v.value !== null && v.value !== undefined ? formatNumber(v.value) : '—' }}</span>
                                     </div>
                                     }
                                 </div>
@@ -511,7 +475,7 @@
                                     @for (v of sa.values; track v.source) {
                                     <div class="tox-row">
                                         <span class="tox-source">{{ v.source }}</span>
-                                        <span class="tox-val">{{ v.value != null ? formatNumber(v.value) : '—' }}</span>
+                                        <span class="tox-val">{{ v.value !== null && v.value !== undefined ? formatNumber(v.value) : '—' }}</span>
                                     </div>
                                     }
                                 </div>
