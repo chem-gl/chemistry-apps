@@ -56,9 +56,9 @@ const ADME_FULL_LABELS: Record<string, string> = {
 const ADME_KEYS = Object.keys(ADME_LABELS);
 
 const TOXICITY_METRICS = [
-  { key: 'DT', label: 'Dev. Toxicity', software: ['DT', 'DT_test', 'DT_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
-  { key: 'M', label: 'Mutagenicity', software: ['M', 'M_test', 'M_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
-  { key: 'LD50', label: 'LD50 (mg/kg)', software: ['LD50', 'LD50_test', 'LD50_admet'] as const, suffixes: ['', ' (Test)', ' (ADMET-AI)'] },
+  { key: 'DT', label: 'Dev. Toxicity', software: ['DT', 'DT_admet'] as const, suffixes: ['T.E.S.T.', 'ADMET-AI'] },
+  { key: 'M', label: 'Mutagenicity', software: ['M', 'M_admet'] as const, suffixes: ['T.E.S.T.', 'ADMET-AI'] },
+  { key: 'LD50', label: 'LD50 (mg/kg)', software: ['LD50', 'LD50_admet'] as const, suffixes: ['T.E.S.T.', 'ADMET-AI'] },
 ] as const;
 
 const ALL_BASE_LABELS: Record<string, string> = {
@@ -73,8 +73,8 @@ const ALL_BASE_KEYS = Object.keys(ALL_BASE_LABELS);
 
 const SA_METRIC = {
   key: 'SA', label: 'SA Score',
-  software: ['SA', 'SA_ambit', 'SA_brsa', 'SA_rdkit'] as const,
-  suffixes: ['', ' (AMBIT)', ' (BRSA)', ' (RDKit)'],
+  software: ['SA_rdkit', 'SA_brsa', 'SA_ambit'] as const,
+  suffixes: ['RDKit', 'BRSA', 'AMBIT'],
 } as const;
 
 const CSV_EXPORT_KEYS: Array<keyof CadmaReferenceRowView> = [
@@ -300,7 +300,7 @@ export class CadmaPyFamilyDetailComponent {
       key: metric.key,
       label: metric.label,
       values: metric.software.map((swKey, i) => ({
-        source: metric.suffixes[i] || 'Base',
+        source: metric.suffixes[i],
         value: compound[swKey as keyof CadmaReferenceRowView] as number | null | undefined,
       })),
     }));
@@ -313,7 +313,7 @@ export class CadmaPyFamilyDetailComponent {
       key: SA_METRIC.key,
       label: SA_METRIC.label,
       values: SA_METRIC.software.map((swKey, i) => ({
-        source: SA_METRIC.suffixes[i] || 'Base',
+        source: SA_METRIC.suffixes[i],
         value: compound[swKey as keyof CadmaReferenceRowView] as number | null | undefined,
       })),
     };
