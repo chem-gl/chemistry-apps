@@ -1,7 +1,7 @@
 // register.component.ts: Pantalla de auto-registro público de usuarios.
 // Soporta registro con y sin token de invitación.
 
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -11,7 +11,7 @@ import { IdentitySessionService } from '../core/auth/identity-session.service';
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, FormsModule, RouterModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, RouterModule, TranslocoPipe, NgOptimizedImage],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
 })

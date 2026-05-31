@@ -55,10 +55,18 @@
       "signingIn": "Iniciando sesión...",
       "username": "Usuario"
     },
+    "institutional": {
+      "groupName": "Química Teórica y Aplicada",
+      "universities": "U A M  —  U N A M",
+      "director": "Directora del proyecto: Dra. Annia Galano",
+      "tagline": "Química Computacional para Evaluar la Naturaleza",
+      "suiteDescription": "Suite de herramientas computacionales para el protocolo CADMA-Chem, estimación de constantes de velocidad en solución y predicción de propiedades moleculares.",
+      "fundingLine": "SECIHTI  ·  UNAM Facultad de Química  ·  UAM Iztapalapa"
+    },
     "hero": {
-      "title": "Diseñando flujos científicos con claridad",
-      "copy": "Entra a tu espacio científico para orquestar cálculos, monitorear jobs distribuidos y gestionar accesos seguros desde una sola superficie de control.",
-      "kicker": "App Chemistry Sense"
+      "title": "Plataforma de Química Computacional",
+      "copy": "Herramientas para análisis de reactividad química, cálculo de constantes de velocidad y predicción de propiedades ADMET en solución.",
+      "kicker": "CADMA-Chem Suite"
     },
     "errors": {
       "unableToAuthenticate": "No fue posible autenticarse."
@@ -68,11 +76,33 @@
       "brandMessage": "Mensaje de marca"
     },
     "panel": {
-      "title": "Acceso Científico",
-      "copy": "Inicia sesión para cargar tu rol, acceso por grupo, visibilidad de apps y espacio personalizado.",
-      "eyebrow": "Puerta de Identidad",
+      "title": "Iniciar Sesión",
+      "copy": "Ingresa tus credenciales para acceder a las herramientas de química computacional.",
+      "eyebrow": "Acceso Científico",
       "noAccount": "¿No tienes cuenta?",
       "createAccount": "Crear una"
+    },
+    "developers": {
+      "ariaLabel": "Equipo de desarrollo",
+      "heading": "Equipo de Desarrollo",
+      "visitProfile": "Ver perfil de {{ name }}",
+      "anniaGalano": "Annia Galano",
+      "miguelReina": "Miguel Reina",
+      "luisAyala": "Luis Felipe Ayala",
+      "cesarGuzman": "César Gerardo Guzmán López",
+      "eduardoGuzman": "Eduardo Gabriel Guzmán López",
+      "roleDirector": "Directora del Proyecto",
+      "roleResearcher": "Investigador",
+      "roleDeveloper": "Desarrollador Principal",
+      "roleCreator": "Creador y Desarrollador",
+      "affUAM": "UAM Iztapalapa",
+      "affUNAM": "UNAM FQ"
+    },
+    "publications": {
+      "ariaLabel": "Publicaciones recientes",
+      "heading": "Publicaciones Recientes",
+      "button": "Publicaciones Relevantes →",
+      "viewAllLink": "#"
     }
   },
   "register": {
@@ -81,9 +111,9 @@
       "brandMessage": "Mensaje de marca"
     },
     "hero": {
-      "kicker": "App Chemistry Sense",
+      "kicker": "CADMA-Chem Suite",
       "title": "Únete a la Plataforma Científica",
-      "copy": "Crea tu cuenta para acceder a las herramientas científicas. Si tienes un enlace de invitación, pega el token debajo para unirte al espacio de tu equipo."
+      "copy": "Crea tu cuenta para acceder a las herramientas de química computacional. Si tienes un enlace de invitación, pega el token debajo para unirte al espacio de tu equipo."
     },
     "panel": {
       "eyebrow": "Registro de Identidad",
@@ -875,9 +905,9 @@
       "apps": "Apps"
     },
     "brand": {
-      "title": "Panel de Control Científico",
-      "kicker": "Chemistry Apps",
-      "caption": "Navegación central para apps, jobs y acceso de cuenta."
+      "title": "Química Computacional para Evaluar la Naturaleza",
+      "kicker": "CADMA-Chem Suite",
+      "caption": "Constantes de velocidad, reactividad, ADMET — UAM-UNAM."
     },
     "navHints": {
       "dashboard": "Resumen del espacio de trabajo adaptado al rol",

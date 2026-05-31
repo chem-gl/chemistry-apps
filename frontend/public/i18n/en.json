@@ -1,9 +1,9 @@
 {
   "app": {
     "brand": {
-      "kicker": "Chemistry Apps",
-      "title": "Scientific Control Desk",
-      "caption": "Central navigation for apps, jobs and account access."
+      "kicker": "CADMA-Chem Suite",
+      "title": "Computational Chemistry to Evaluate Nature",
+      "caption": "Rate constants, reactivity, ADMET — UAM-UNAM."
     },
     "actions": {
       "signIn": "Sign in",
@@ -91,15 +91,23 @@
       "signIn": "Sign in",
       "brandMessage": "Brand message"
     },
+    "institutional": {
+      "groupName": "Theoretical and Applied Chemistry",
+      "universities": "U A M  —  U N A M",
+      "director": "Project Director: Dra. Annia Galano",
+      "tagline": "Computational Chemistry to Evaluate Nature",
+      "suiteDescription": "A computational tools suite for the CADMA-Chem protocol, rate-constant estimation in solution, and molecular property prediction.",
+      "fundingLine": "SECIHTI  ·  UNAM Facultad de Química  ·  UAM Iztapalapa"
+    },
     "hero": {
-      "kicker": "App Chemistry Sense",
-      "title": "Designing Scientific Workflows with Clarity",
-      "copy": "Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure access controls from a single command surface."
+      "kicker": "CADMA-Chem Suite",
+      "title": "Computational Chemistry Toolkit",
+      "copy": "A platform for chemical reactivity analysis, rate-constant calculations, and ADMET property prediction in solution."
     },
     "panel": {
-      "eyebrow": "Identity Gateway",
-      "title": "Scientific Access",
-      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace.",
+      "eyebrow": "Scientific Access",
+      "title": "Sign In",
+      "copy": "Enter your credentials to access the suite of computational chemistry tools.",
       "noAccount": "Don't have an account?",
       "createAccount": "Create one"
     },
@@ -111,6 +119,28 @@
     },
     "errors": {
       "unableToAuthenticate": "Unable to authenticate."
+    },
+    "developers": {
+      "ariaLabel": "Development team",
+      "heading": "Development Team",
+      "visitProfile": "Visit profile of {{ name }}",
+      "anniaGalano": "Annia Galano",
+      "miguelReina": "Miguel Reina",
+      "luisAyala": "Luis Felipe Ayala",
+      "cesarGuzman": "César Gerardo Guzmán López",
+      "eduardoGuzman": "Eduardo Gabriel Guzmán López",
+      "roleDirector": "Project Director",
+      "roleResearcher": "Researcher",
+      "roleDeveloper": "Lead Developer",
+      "roleCreator": "Creator & Developer",
+      "affUAM": "UAM Iztapalapa",
+      "affUNAM": "UNAM FQ"
+    },
+    "publications": {
+      "ariaLabel": "Recent publications",
+      "heading": "Recent Publications",
+      "button": "Relevant Publications →",
+      "viewAllLink": "#"
     }
   },
   "register": {
@@ -119,9 +149,9 @@
       "brandMessage": "Brand message"
     },
     "hero": {
-      "kicker": "App Chemistry Sense",
+      "kicker": "CADMA-Chem Suite",
       "title": "Join the Scientific Platform",
-      "copy": "Create your account to access the scientific tools. If you have an invitation link, paste the token below to join your team's workspace."
+      "copy": "Create your account to access the computational chemistry toolkit. If you have an invitation link, paste the token below to join your team's workspace."
     },
     "panel": {
       "eyebrow": "Identity Registration",

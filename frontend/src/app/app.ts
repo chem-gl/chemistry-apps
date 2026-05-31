@@ -3,7 +3,7 @@
 //         cuando hay un nuevo despliegue (cache busting automatico).
 
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { environment } from '../environments/environment';
 import { IdentitySessionService } from './core/auth/identity-session.service';
@@ -50,8 +50,10 @@ export class App implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
   readonly languageService = inject(LanguageService);
   readonly scientificNumberInputLocaleService = inject(ScientificNumberInputLocaleService);
+  private readonly router = inject(Router);
   readonly isScrolled = signal(false);
   readonly isMobileNavOpen = signal(false);
+  readonly isAuthPage = signal(false);
 
   /** Items del dropdown de Apps. */
   readonly appsSubmenuItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
@@ -97,6 +99,13 @@ export class App implements OnInit {
     this.scientificNumberInputLocaleService.initialize();
     this.sessionService.initializeSession().subscribe();
     this.updateScrollState();
+
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        const url = event.urlAfterRedirects.split('?')[0];
+        this.isAuthPage.set(url === '/login' || url === '/register');
+      }
+    });
 
     if (environment.production) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

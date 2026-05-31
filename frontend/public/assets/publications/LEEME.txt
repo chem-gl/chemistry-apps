@@ -1,0 +1,10 @@
+Coloca aquí las portadas de los papers. Nombres esperados:
+
+- cadma-chem.jpg            → CADMA-Chem protocol paper (Int. J. Mol. Sci. 2022)
+- rate-constants.jpg         → Rate constants methodology (J. Comput. Chem. 2013)
+- antioxidants-review.jpg    → Antioxidants review (Acc. Chem. Res. 2025)
+- chem-sci-review.jpg        → Antioxidant activity review (Chem. Sci. 2025)
+
+Formatos soportados: jpg, png, webp.
+Tamaño recomendado: 200×260 px.
+Si no hay portada, se muestra un rectángulo de color con el nombre del journal.

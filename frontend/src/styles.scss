@@ -1,53 +1,69 @@
-/* styles.scss: Sistema de diseño global — identidad "App Chemistry Sense" 2026. */
+/* styles.scss: Sistema de diseño global — identidad institucional "Química Teórica y Aplicada. UAM-UNAM". */
 @use 'katex/dist/katex.min.css';
 
 :root {
+  /* === Institucional: UAM-UNAM palette === */
+  /* UAM greens */
+  --uni-green-50: #eaf0ec;
+  --uni-green-100: #D5DDD7;
+  --uni-green-200: #9EB0A2;
+  --uni-green-400: #6E967E;
+  --uni-green-500: #317154;
+  --uni-green-700: #4A725A;
+  --uni-green-950: #0C2021;
+  /* UNAM blue + gold */
+  --uni-blue: #003C71;
+  --uni-blue-hover: #002952;
+  --uni-gold: #B29600;
+  --uni-gold-light: #f9f3dc;
+
   /* === Acentos primarios === */
-  --chem-primary: #d32f2f;
-  --chem-primary-light: #fdecea;
-  --chem-primary-dark: #9a0007;
-  --chem-accent: #7b5a9e;
-  --chem-accent-light: #f3edf7;
-  --chem-coral: #f4a261;
+  --chem-primary: var(--uni-green-500);
+  --chem-primary-light: #e4f0e8;
+  --chem-primary-dark: var(--uni-green-700);
+  --chem-accent: var(--uni-blue);
+  --chem-accent-light: #e6eef6;
+  --chem-coral: var(--uni-gold);
 
   /* === Superficies (jerarquía de profundidad) === */
-  --chem-bg: #f5f4f0;
-  --chem-surface: #ede9f0;
-  --chem-surface-alt: #e8e4eb;
-  --chem-surface-elevated: #faf8fc;
-  --chem-surface-inset: #e4e0e7;
+  --chem-bg: #f8faf9;
+  --chem-surface: #f0f4f1;
+  --chem-surface-alt: #e6ede8;
+  --chem-surface-elevated: #ffffff;
+  --chem-surface-inset: #e2e9e4;
 
   /* === Glassmorphism === */
-  --chem-glass-bg: rgba(245, 244, 240, 0.82);
-  --chem-glass-border: rgba(168, 161, 176, 0.45);
-  --chem-glass-heavy: rgba(237, 233, 240, 0.92);
+  --chem-glass-bg: rgba(248, 250, 249, 0.88);
+  --chem-glass-border: rgba(49, 113, 84, 0.14);
+  --chem-glass-heavy: rgba(248, 250, 249, 0.96);
 
   /* === Gradientes === */
-  --chem-gradient-subtle: linear-gradient(128deg, rgba(123, 90, 158, 0.08), rgba(44, 37, 51, 0.06));
+  --chem-gradient-subtle: linear-gradient(128deg, rgba(49, 113, 84, 0.04), rgba(12, 32, 33, 0.02));
   --chem-gradient-header: linear-gradient(
     135deg,
-    rgba(123, 90, 158, 0.15),
-    rgba(211, 47, 47, 0.08)
+    rgba(0, 60, 113, 0.08),
+    rgba(49, 113, 84, 0.04)
   );
 
   /* === Bordes === */
-  --chem-border: #c8c2cc;
-  --chem-border-strong: #a8a1b0;
-  --chem-border-subtle: #d8d3dc;
-  --chem-border-accent: rgba(123, 90, 158, 0.16);
-  --chem-border-accent-soft: rgba(123, 90, 158, 0.12);
-  --chem-border-accent-dim: rgba(123, 90, 158, 0.14);
-  --chem-border-accent-strong: rgba(123, 90, 158, 0.18);
+  --chem-border: #ccd5ce;
+  --chem-border-strong: #a8b5ab;
+  --chem-border-subtle: #dce3dd;
+  --chem-border-accent: rgba(49, 113, 84, 0.18);
+  --chem-border-accent-soft: rgba(49, 113, 84, 0.08);
+  --chem-border-accent-dim: rgba(49, 113, 84, 0.12);
+  --chem-border-accent-strong: rgba(49, 113, 84, 0.22);
 
   /* === Sombras === */
-  --chem-shadow-sm: 0 1px 3px rgba(44, 37, 51, 0.06);
-  --chem-shadow: 0 2px 8px rgba(44, 37, 51, 0.08);
-  --chem-shadow-lg: 0 8px 24px rgba(44, 37, 51, 0.12);
+  --chem-shadow-sm: 0 1px 3px rgba(12, 32, 33, 0.04);
+  --chem-shadow: 0 2px 8px rgba(12, 32, 33, 0.05);
+  --chem-shadow-lg: 0 8px 24px rgba(12, 32, 33, 0.08);
 
   /* === Tinta === */
-  --chem-ink: #2c2533;
-  --chem-ink-secondary: #5a5163;
-  --chem-ink-soft: #a8a1b0;
+  --chem-ink: #0C2021;
+  --chem-ink-secondary: #3d5446;
+  --chem-ink-soft: #7d8f82;
+  --chem-ink-tertiary: #9aad9e;
 
   /* === Tipografía === */
   --chem-font-heading:
@@ -64,18 +80,17 @@
   --chem-text-3xl: 2.4rem;
 
   /* === Estados semánticos === */
-  --chem-success: #2e7d32;
-  --chem-success-bg: #e8f5e9;
-  --chem-error: #d32f2f;
+  --chem-success: #317154;
+  --chem-success-bg: #e4f0e8;
+  --chem-error: #c62828;
   --chem-error-bg: #ffebee;
-  --chem-warning: #ef6c00;
+  --chem-warning: #e65100;
   --chem-warning-bg: #fff3e0;
   --chem-warning-text: #92400e;
   --chem-warning-border: #fde68a;
-  --chem-info: #0277bd;
-  --chem-info-bg: #e1f5fe;
-  --chem-info-border: #bae6fd;
-  --chem-accent-border: #ddd6fe;
+  --chem-info: #003C71;
+  --chem-info-bg: #e6eef6;
+  --chem-info-border: #c5d8ea;
 
   /* === Status badges (jobs / procesos) === */
   --chem-status-running: var(--chem-primary);
@@ -85,16 +100,16 @@
   --chem-status-failed: #b71c1c;
   --chem-status-failed-bg: #ffcdd2;
   --chem-status-paused: var(--chem-coral);
-  --chem-status-paused-bg: #fff3e0;
+  --chem-status-paused-bg: #f9f3dc;
   --chem-status-cancelled: var(--chem-ink-soft);
   --chem-status-cancelled-bg: var(--chem-surface-alt);
   --chem-status-pending: var(--chem-accent);
   --chem-status-pending-bg: var(--chem-accent-light);
 
   /* === Inputs === */
-  --chem-input-bg: #faf8fc;
+  --chem-input-bg: #fdfdfd;
   --chem-input-border: var(--chem-border);
-  --chem-input-focus: var(--chem-accent);
+  --chem-input-focus: var(--uni-green-500);
   --chem-input-disabled-bg: var(--chem-surface-inset);
 
   /* === Radios === */
@@ -132,8 +147,8 @@ body {
   color: var(--chem-ink);
   background: var(--chem-bg);
   background-image:
-    radial-gradient(circle at 12% 10%, rgba(123, 90, 158, 0.11), transparent 38%),
-    radial-gradient(circle at 88% 84%, rgba(211, 47, 47, 0.07), transparent 42%);
+    radial-gradient(circle at 15% 5%, rgba(49, 113, 84, 0.04), transparent 35%),
+    radial-gradient(circle at 85% 90%, rgba(0, 60, 113, 0.03), transparent 40%);
   font-family: var(--chem-font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -160,7 +175,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--chem-input-focus);
-  box-shadow: 0 0 0 3px rgba(123, 90, 158, 0.15);
+  box-shadow: 0 0 0 3px rgba(49, 113, 84, 0.13);
 }
 
 input:disabled,

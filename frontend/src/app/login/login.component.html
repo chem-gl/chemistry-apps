@@ -1,42 +1,109 @@
-<!-- login.component.html: Inicio de sesión para operadores y administradores. -->
+<!-- login.component.html: Portal institucional — CADMA-Chem Suite. -->
 <section class="login-shell" [attr.aria-label]="'login.aria.signIn' | transloco">
-    <article class="login-hero" [attr.aria-label]="'login.aria.brandMessage' | transloco">
-        <p class="hero-kicker">{{ 'login.hero.kicker' | transloco }}</p>
-        <h1 class="hero-title">{{ 'login.hero.title' | transloco }}</h1>
-        <p class="hero-copy">{{ 'login.hero.copy' | transloco }}</p>
-    </article>
 
-    <article class="login-panel">
-        <p class="eyebrow">{{ 'login.panel.eyebrow' | transloco }}</p>
-        <h2>{{ 'login.panel.title' | transloco }}</h2>
-        <p class="lead">{{ 'login.panel.copy' | transloco }}</p>
+  <!-- ═══ LEFT COLUMN: presentation + login ═══ -->
+  <div class="left-column">
 
-        <form class="login-form" (ngSubmit)="submit()">
-            <label>
-                {{ 'login.form.username' | transloco }}
-                <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
-                    autocomplete="username" required />
-            </label>
+    <header class="institutional-header">
+      <div class="institution-logos">
+        <img ngSrc="assets/logos/secihti-logo.svg" alt="SECIHTI" width="200" height="80" class="institution-logo secihti-logo" priority />
+        <img ngSrc="assets/logos/unam-logo.svg" alt="UNAM" width="200" height="80" class="institution-logo unam-logo" priority />
+        <img ngSrc="assets/logos/uam-logo.png" alt="UAM" width="200" height="80" class="institution-logo" priority />
+      </div>
+      <h1 class="working-group-name">{{ 'login.institutional.groupName' | transloco }}</h1>
+      <p class="working-group-universities">{{ 'login.institutional.universities' | transloco }}</p>
+    </header>
 
-            <label>
-                {{ 'login.form.password' | transloco }}
-                <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
-                    autocomplete="current-password" required />
-            </label>
+    <p class="tagline">{{ 'login.institutional.tagline' | transloco }}</p>
 
-            @if (localErrorMessage() ?? sessionService.lastAuthenticationError(); as errorMessage) {
-            <p class="error-message" role="alert">{{ errorMessage }}</p>
+    <p class="suite-description">{{ 'login.institutional.suiteDescription' | transloco }}</p>
+
+    <div class="login-panel">
+      <p class="login-eyebrow">{{ 'login.panel.eyebrow' | transloco }}</p>
+      <h2 class="login-title">{{ 'login.panel.title' | transloco }}</h2>
+
+      <form class="login-form" (ngSubmit)="submit()">
+        <label>
+          <span class="field-label-text">{{ 'login.form.username' | transloco }}</span>
+          <input [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" type="text"
+            autocomplete="username" required />
+        </label>
+
+        <label>
+          <span class="field-label-text">{{ 'login.form.password' | transloco }}</span>
+          <input [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" type="password"
+            autocomplete="current-password" required />
+        </label>
+
+        @if (localErrorMessage() ?? sessionService.lastAuthenticationError(); as errorMessage) {
+        <p class="error-message" role="alert">{{ errorMessage }}</p>
+        }
+
+        <button class="submit-button" type="submit" [disabled]="sessionService.isLoading()">
+          {{ sessionService.isLoading() ? ('login.form.signingIn' | transloco) : ('login.form.signIn' | transloco) }}
+        </button>
+      </form>
+
+      <p class="register-link">
+        {{ 'login.panel.noAccount' | transloco }}
+        <a routerLink="/register">{{ 'login.panel.createAccount' | transloco }}</a>
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT COLUMN: team + publications ═══ -->
+  <div class="right-column">
+
+    <!-- Top-right: developers -->
+    <section class="developers-section" [attr.aria-label]="'login.developers.ariaLabel' | transloco">
+      <h2 class="section-heading">{{ 'login.developers.heading' | transloco }}</h2>
+
+      <div class="developers-grid">
+        @for (dev of developers(); track dev.nameKey) {
+        <a class="developer-card" [href]="dev.link" target="_blank" rel="noopener noreferrer"
+          [attr.aria-label]="dev.nameKey | transloco">
+          <div class="developer-avatar" [style.background]="dev.avatarColor">
+            @if (dev.photoUrl) {
+            <img [src]="dev.photoUrl" [alt]="dev.nameKey | transloco" class="developer-photo"
+              (error)="onDeveloperPhotoError($event, dev)" />
+            } @else {
+            <span class="developer-initials">{{ dev.initials }}</span>
             }
+          </div>
+          <span class="developer-name">{{ dev.nameKey | transloco }}</span>
+          <span class="developer-role">{{ dev.roleKey | transloco }}</span>
+          @if (dev.affiliationKey) {
+          <span class="developer-affiliation">{{ dev.affiliationKey | transloco }}</span>
+          }
+        </a>
+        }
+      </div>
+    </section>
 
-            <button class="submit-button" type="submit" [disabled]="sessionService.isLoading()">
-                {{ sessionService.isLoading() ? ('login.form.signingIn' | transloco) : ('login.form.signIn' | transloco)
-                }}
-            </button>
-        </form>
+    <!-- Bottom-right: publications -->
+    <section class="publications-section" [attr.aria-label]="'login.publications.ariaLabel' | transloco">
+      <h2 class="section-heading">{{ 'login.publications.heading' | transloco }}</h2>
 
-        <p class="register-link">
-            {{ 'login.panel.noAccount' | transloco }}
-            <a routerLink="/register">{{ 'login.panel.createAccount' | transloco }}</a>
-        </p>
-    </article>
+      <div class="publications-list">
+        @for (pub of publications(); track pub.doi) {
+        <a class="publication-card" [href]="pub.doi" target="_blank" rel="noopener noreferrer"
+          [attr.aria-label]="pub.title">
+          <div class="pub-info">
+            <span class="pub-title">{{ pub.title }}</span>
+            <span class="pub-authors">{{ pub.authors }}</span>
+            <span class="pub-journal-name">{{ pub.journal }}, {{ pub.year }}</span>
+          </div>
+        </a>
+        }
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="institutional-footer">
+    <span>{{ 'login.institutional.fundingLine' | transloco }}</span>
+  </footer>
+
 </section>
