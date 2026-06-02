@@ -1,0 +1,84 @@
+<!-- cadma-py-boxplot-dialog.component.html: Grafico unico con leyenda interactiva y panel lateral de detalle. -->
+<dialog #boxplotDialog class="bxp-dialog" (click)="onBackdropClick($event)" (keydown)="onBackdropClick($event)">
+  <section class="bxp-modal">
+    <div class="bxp-header">
+      <h4>Boxplot Charts — CADMA Py Ranking</h4>
+      <button class="bxp-close-btn" type="button" (click)="close()" aria-label="Close">×</button>
+    </div>
+    <div class="bxp-layout">
+      <div class="bxp-charts-panel">
+        @if (ranking().length > 0) {
+        <div class="bxp-toggles-row">
+          <div class="bxp-group-toggles">
+            @for (group of boxplotGroups; track group) {
+            <button class="bxp-toggle-btn" type="button"
+              [class.active]="isGroupVisible(group)"
+              (click)="toggleGroup(group)">
+              {{ group }} {{ isGroupVisible(group) ? '✓' : '✗' }}
+            </button>
+            }
+          </div>
+          <div class="bxp-metric-toggles">
+            @for (group of boxplotGroups; track group) {
+            <div class="bxp-metric-group">
+              <span class="bxp-metric-group-label">{{ group }}</span>
+              <div class="bxp-metric-buttons">
+                @for (m of visibleMetricsForGroup(group); track m.key) {
+                <button class="bxp-metric-btn" type="button"
+                  [class.off]="isMetricHidden(m.key)"
+                  [class.disabled]="!isGroupVisible(group)"
+                  (click)="toggleMetric(m.key)">
+                  {{ m.label }}
+                </button>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        <app-scientific-chart
+          [ariaLabel]="'Results boxplot chart'"
+          [options]="boxplotChartOptions()"
+          [chartHeight]="'640px'"
+          (chartInit)="onChartInit($event)"
+          (chartClick)="onChartClick($event)" />
+        } @else {
+        <p class="bxp-empty">No ranking data available. Run a comparison first.</p>
+        }
+      </div>
+
+      @if (selectedCompound(); as compound) {
+      <aside class="bxp-detail">
+        <div class="bxp-detail-header">
+          <h5>{{ compound.name || 'Compound Detail' }}</h5>
+          <button class="bxp-close-btn" type="button" (click)="clearSelectedCompound()" aria-label="Close detail">×</button>
+        </div>
+        <p class="bxp-smiles">{{ compound.smiles }}</p>
+
+        <div class="bxp-svg-container">
+          @if (compoundBusy()) {
+          <p class="bxp-loading">Loading structure...</p>
+          } @else if (compoundError()) {
+          <p class="bxp-error" role="alert">{{ compoundError() }}</p>
+          } @else if (compoundSvg(); as svg) {
+          <div class="bxp-svg" [innerHTML]="svg"></div>
+          } @else {
+          <p class="bxp-loading">Click a molecule to load 2D structure</p>
+          }
+        </div>
+
+        <table class="bxp-metrics-table">
+          <tbody>
+            @for (m of compoundMetrics(); track m.key) {
+            <tr>
+              <td class="bxp-metric-label">{{ m.label }}</td>
+              <td class="bxp-metric-value">{{ formatValue(m.value) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </aside>
+      }
+    </div>
+  </section>
+</dialog>

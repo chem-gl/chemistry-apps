@@ -600,6 +600,7 @@
         <button class="btn-secondary" type="button" (click)="exportSelectionCsv()">
           {{ 'cadmaPy.step2.exportCsv' | transloco }}
         </button>
+        <button class="btn-secondary" type="button" (click)="openBoxplotDialog()">Charts</button>
         }
       </div>
     </div>
@@ -631,17 +632,20 @@
           <h4>{{ 'cadmaPy.step3.globalRanking' | transloco }}</h4>
           <p class="chart-hint">{{ 'cadmaPy.step3.barHint' | transloco }}</p>
         </div>
-        <label class="chart-type-selector">
-          <span>{{ 'cadmaPy.step3.chartType' | transloco }}</span>
-          <select [ngModel]="scoreChartType()" (ngModelChange)="scoreChartType.set($event)">
-            <option value="bar">{{ 'cadmaPy.step3.barChart' | transloco }}</option>
-            <option value="line">{{ 'cadmaPy.step3.lineChart' | transloco }}</option>
-            <option value="scatter">{{ 'cadmaPy.step3.scatterPlot' | transloco }}</option>
-          </select>
-        </label>
+        <div class="chart-header-actions">
+          <label class="chart-type-selector">
+            <span>{{ 'cadmaPy.step3.chartType' | transloco }}</span>
+            <select [ngModel]="scoreChartType()" (ngModelChange)="scoreChartType.set($event)">
+              <option value="bar">{{ 'cadmaPy.step3.barChart' | transloco }}</option>
+              <option value="line">{{ 'cadmaPy.step3.lineChart' | transloco }}</option>
+              <option value="scatter">{{ 'cadmaPy.step3.scatterPlot' | transloco }}</option>
+            </select>
+          </label>
+          <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('score')" title="Expand chart">⛶</button>
+        </div>
       </div>
       <app-scientific-chart [ariaLabel]="'cadmaPy.step4.rankingChartAria' | transloco" [options]="scoreChartOptions()!"
-        [chartHeight]="'520px'"></app-scientific-chart>
+        [chartHeight]="'520px'" (chartClick)="onScoreChartClick($event)"></app-scientific-chart>
     </div>
     }
 
@@ -666,10 +670,13 @@
 
     @if (metricChartOptions()) {
     <div class="chart-card chart-card-tall">
-      <h4>{{ 'cadmaPy.step3.candidateVsReference' | transloco }} — {{ selectedMetric() }}</h4>
+      <div class="chart-header">
+        <h4>{{ 'cadmaPy.step3.candidateVsReference' | transloco }} — {{ selectedMetric() }}</h4>
+        <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('metric')" title="Expand chart">⛶</button>
+      </div>
       <p class="chart-hint">{{ 'cadmaPy.step3.shadedHint' | transloco }}</p>
       <app-scientific-chart [ariaLabel]="'cadmaPy.step4.metricChartAria' | transloco" [options]="metricChartOptions()!"
-        [chartHeight]="'460px'"></app-scientific-chart>
+        [chartHeight]="'460px'" (chartClick)="onMetricChartClick($event)"></app-scientific-chart>
     </div>
     }
 
@@ -751,6 +758,9 @@
     (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"
     (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
 
+  <app-cadma-py-boxplot-dialog
+    [ranking]="(workflow.resultData()?.ranking ?? [])" />
+
   <app-cadma-py-delete-modal [libraryName]="deleteModalLibraryName()" [linkedJobs]="deleteModalLinkedJobs()"
     [loading]="deleteModalLoading()" (confirmed)="confirmDelete($event)" (dismissed)="onDeleteDismissed()">
   </app-cadma-py-delete-modal>
@@ -762,6 +772,69 @@
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
   <div class="diagram-overlay" (click)="onDiagramBackdropClick($event)">
+
+
+  <!-- ── Expanded chart modal ──────────────────────────────────────── -->
+  @if (expandedChart(); as chartType) {
+  <div class="chart-expand-overlay" (click)="onExpandedChartBackdrop($event)">
+    <div class="chart-expand-modal" role="dialog" aria-modal="true" [attr.aria-label]="chartType === 'score' ? 'Expanded ranking chart' : 'Expanded metric chart'">
+      <div class="chart-expand-header">
+        <h3>{{ chartType === 'score' ? ('cadmaPy.step3.globalRanking' | transloco) : ('cadmaPy.step3.candidateVsReference' | transloco) + ' — ' + selectedMetric() }}</h3>
+        <button class="close-btn" type="button" (click)="closeExpandedChart()" aria-label="Close">×</button>
+      </div>
+      <div class="chart-expand-body">
+        @if (chartType === 'score' && scoreChartOptions()) {
+        <app-scientific-chart [ariaLabel]="'cadmaPy.step4.rankingChartAria' | transloco" [options]="scoreChartOptions()!"
+          [chartHeight]="'calc(90vh - 70px)'" (chartClick)="onScoreChartClick($event)"></app-scientific-chart>
+        }
+        @if (chartType === 'metric' && metricChartOptions()) {
+        <app-scientific-chart [ariaLabel]="'cadmaPy.step4.metricChartAria' | transloco" [options]="metricChartOptions()!"
+          [chartHeight]="'calc(90vh - 70px)'" (chartClick)="onMetricChartClick($event)"></app-scientific-chart>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ── Chart compound detail modal ─────────────────────────────────── -->
+  @if (chartCompound(); as compound) {
+  <div class="chart-compound-overlay" (click)="onChartCompoundBackdrop($event)">
+    <div class="chart-compound-modal" role="dialog" aria-modal="true" aria-label="Compound detail">
+      <div class="chart-compound-header">
+        <h3>{{ compound.name || 'Compound Detail' }}</h3>
+        <button class="close-btn" type="button" (click)="closeChartCompound()" aria-label="Close">×</button>
+      </div>
+      <div class="chart-compound-body">
+        <div class="chart-compound-grid">
+          <div class="chart-compound-svg-panel">
+            @if (chartCompoundBusy()) {
+            <p class="bxp-loading">Loading structure...</p>
+            } @else if (chartCompoundError()) {
+            <p class="bxp-error" role="alert">{{ chartCompoundError() }}</p>
+            } @else if (chartCompoundSvg(); as svg) {
+            <div class="bxp-svg" [innerHTML]="svg"></div>
+            } @else {
+            <p class="bxp-loading">Loading 2D structure...</p>
+            }
+          </div>
+          <div class="chart-compound-info">
+            <p class="chart-compound-smiles">{{ compound.smiles }}</p>
+            <table class="bxp-metrics-table">
+              <tbody>
+                @for (m of chartCompoundMetrics(); track m.key) {
+                <tr>
+                  <td class="bxp-metric-label">{{ m.label }}</td>
+                  <td class="bxp-metric-value">{{ formatChartCompoundValue(m.value) }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
     <div class="diagram-modal" role="dialog" aria-modal="true" aria-label="Diagrama CADMA-Chem">
       <div class="diagram-header">
         <h3>CADMA-Chem · Protocol diagram</h3>

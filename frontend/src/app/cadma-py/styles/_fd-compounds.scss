@@ -407,6 +407,227 @@
   color: var(--chem-ink);
 }
 
+.boxplot-dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: min(96vw, 1100px);
+  max-height: 88vh;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+}
+
+.boxplot-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.boxplot-modal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.boxplot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+}
+
+.boxplot-body {
+  padding: 1rem;
+  min-height: 200px;
+}
+
+.boxplot-toggles-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  align-items: start;
+}
+
+.boxplot-group-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 110px;
+}
+
+.boxplot-metric-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.boxplot-metric-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.boxplot-metric-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--chem-ink-secondary);
+  letter-spacing: 0.05em;
+}
+
+.boxplot-metric-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.boxplot-metric-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1.5px solid var(--chem-border-subtle);
+  border-radius: 14px;
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+
+  &:hover {
+    border-color: var(--chem-accent);
+    color: var(--chem-ink);
+  }
+
+  &.off {
+    background: var(--chem-surface-inset);
+    color: var(--chem-ink-soft);
+    text-decoration: line-through;
+  }
+
+  &.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.boxplot-metric-empty {
+  font-size: 0.72rem;
+  color: var(--chem-ink-soft);
+  font-style: italic;
+}
+
+.boxplot-outlier-note {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: #b91c1c;
+  font-style: italic;
+  text-align: center;
+}
+
+.boxplot-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.bc-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--chem-ink-secondary);
+}
+
+.bc-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.bc-swatch-box {
+  background: #3b82f6;
+  border: 2px solid #1d4ed8;
+  border-radius: 2px;
+}
+
+.bc-swatch-scatter {
+  background: #64748b;
+  opacity: 0.6;
+  border-radius: 50%;
+}
+
+.bc-swatch-outlier {
+  background: #ef4444;
+  border: 1.5px solid #dc2626;
+  border-radius: 50%;
+}
+
+.boxplot-group-toggles {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.boxplot-toggle-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid var(--chem-border-subtle);
+  border-radius: 20px;
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--chem-accent);
+    color: var(--chem-ink);
+  }
+
+  &.active {
+    background: var(--chem-accent);
+    border-color: var(--chem-accent);
+    color: #fff;
+  }
+}
+
+.boxplot-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+}
+
+.boxplot-mini-card {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-glass-bg);
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .boxplot-mini-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .boxplot-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .compound-modal-smiles {
   margin: 0;
   font-size: 0.76rem;
@@ -426,6 +647,33 @@
   &:hover {
     background: var(--chem-surface-inset);
     color: var(--chem-ink);
+  }
+}
+
+.compound-modal-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.compound-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--chem-ink-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--chem-radius-sm);
+  line-height: 1;
+
+  &:hover:not(:disabled) {
+    background: var(--chem-surface-inset);
+    color: var(--chem-ink);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
   }
 }
 
