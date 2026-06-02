@@ -301,7 +301,7 @@ export function buildCadmaBoxplotOptions(
 
   return {
     animationDuration: 300,
-    grid: { left: 60, right: 28, top: 40, bottom: 40, containLabel: true },
+    grid: { left: 70, right: 28, top: 44, bottom: 100, containLabel: true },
     legend: {
       data: ['Distribution', 'Values (within IQR)', 'Outliers (±1.5×IQR)'],
       top: 4,
@@ -750,7 +750,7 @@ export function buildCadmaResultsBoxplotSingleChart(
 
   return {
     animationDuration: 300,
-    grid: { left: 60, right: 28, top: 40, bottom: 40, containLabel: true },
+    grid: { left: 70, right: 28, top: 44, bottom: 100, containLabel: true },
     legend: {
       data: ['Distribution', 'Values (within IQR)', 'Outliers (±1.5×IQR)'],
       top: 4,
