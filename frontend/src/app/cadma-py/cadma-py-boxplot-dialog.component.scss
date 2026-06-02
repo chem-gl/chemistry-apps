@@ -64,8 +64,16 @@
 }
 
 .bxp-charts-panel {
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 1rem;
+  min-height: 0;
+}
+
+.bxp-chart-wrapper {
+  flex: 1;
+  min-height: 0;
 }
 
 .bxp-hint {

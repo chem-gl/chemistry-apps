@@ -36,12 +36,14 @@
             }
           </div>
         </div>
-        <app-scientific-chart
-          [ariaLabel]="'Results boxplot chart'"
-          [options]="boxplotChartOptions()"
-          [chartHeight]="'640px'"
-          (chartInit)="onChartInit($event)"
-          (chartClick)="onChartClick($event)" />
+        <div class="bxp-chart-wrapper">
+          <app-scientific-chart
+            [ariaLabel]="'Results boxplot chart'"
+            [options]="boxplotChartOptions()"
+            [chartHeight]="'100%'"
+            (chartInit)="onChartInit($event)"
+            (chartClick)="onChartClick($event)" />
+        </div>
         } @else {
         <p class="bxp-empty">No ranking data available. Run a comparison first.</p>
         }
