@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import type { EChartsCoreOption } from 'echarts/core';
 import {
   CadmaCompoundAddPayload,
   CadmaPyApiService,
@@ -26,10 +27,12 @@ import {
   CadmaReferenceRowView,
 } from '../core/api/cadma-py-api.service';
 import { JobsApiService } from '../core/api/jobs-api.service';
+import { ScientificChartComponent } from '../core/shared/components/scientific-chart/scientific-chart.component';
 import {
   closeDialogOnBackdropClick,
   downloadBlobFile,
 } from '../core/shared/scientific-app-ui.utils';
+import { buildCadmaBoxplotOptions, getReferenceBoxplotMetricDefs, type BoxplotMetricDef } from './cadma-py-chart.options';
 
 const ADME_LABELS: Record<string, string> = {
   MW: 'MW',
@@ -61,21 +64,19 @@ const TOXICITY_METRICS = [
   { key: 'LD50', label: 'LD50 (mg/kg)', software: ['LD50', 'LD50_admet'] as const, suffixes: ['T.E.S.T.', 'ADMET-AI'] },
 ] as const;
 
-const ALL_BASE_LABELS: Record<string, string> = {
-  ...ADME_FULL_LABELS,
-  DT: 'Dev. Toxicity',
-  M: 'Mutagenicity',
-  LD50: 'LD50 (mg/kg)',
-  SA: 'SA Score',
-};
-
-const ALL_BASE_KEYS = Object.keys(ALL_BASE_LABELS);
-
 const SA_METRIC = {
   key: 'SA', label: 'SA Score',
   software: ['SA_rdkit', 'SA_brsa', 'SA_ambit'] as const,
   suffixes: ['RDKit', 'BRSA', 'AMBIT'],
 } as const;
+
+const TABLE_METRICS: TableMetricDef[] = [
+  ...(Object.entries(ADME_FULL_LABELS).map(([key, label]) => ({ key, label }))),
+  { key: 'DT', label: 'Dev. Toxicity', sources: [{ field: 'DT', label: 'T.E.S.T.' }, { field: 'DT_admet', label: 'ADMET-AI' }] },
+  { key: 'M', label: 'Mutagenicity', sources: [{ field: 'M', label: 'T.E.S.T.' }, { field: 'M_admet', label: 'ADMET-AI' }] },
+  { key: 'LD50', label: 'LD50 (mg/kg)', sources: [{ field: 'LD50', label: 'T.E.S.T.' }, { field: 'LD50_admet', label: 'ADMET-AI' }] },
+  { key: 'SA', label: 'SA Score', sources: [{ field: 'SA_rdkit', label: 'RDKit' }, { field: 'SA_brsa', label: 'BRSA' }, { field: 'SA_ambit', label: 'AMBIT' }] },
+];
 
 const CSV_EXPORT_KEYS: Array<keyof CadmaReferenceRowView> = [
   'name',
@@ -100,12 +101,19 @@ const CSV_EXPORT_KEYS: Array<keyof CadmaReferenceRowView> = [
 export interface MetricStat {
   key: string;
   label: string;
+  source: string;
   mean: number;
   stdev: number;
   min: number;
   max: number;
   nullCount: number;
   total: number;
+}
+
+interface TableMetricDef {
+  key: string;
+  label: string;
+  sources?: Array<{ field: string; label: string }>;
 }
 
 export interface FamilyMetadataDraft {
@@ -125,45 +133,41 @@ function computeScopeKind(sourceReference: string): ScopeKind {
   return 'unknown';
 }
 
+function _calcStats(values: number[], total: number) {
+  const nullCount = total - values.length;
+  if (values.length === 0) {
+    return { mean: 0, stdev: 0, min: 0, max: 0, nullCount, total };
+  }
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  const mean = sum / values.length;
+  const variance = values.reduce((acc, val) => acc + (val - mean) ** 2, 0) / values.length;
+  return {
+    mean,
+    stdev: Math.sqrt(variance),
+    min: Math.min(...values),
+    max: Math.max(...values),
+    nullCount,
+    total,
+  };
+}
+
 function computeMetricStats(rows: CadmaReferenceRowView[]): MetricStat[] {
-  return ALL_BASE_KEYS.map((key) => {
-    const values = rows
-      .map((row) => row[key as keyof CadmaReferenceRowView] as number | null)
-      .filter(
-        (value): value is number => value !== null && value !== undefined && !Number.isNaN(value),
-      );
-
-    const nullCount = rows.length - values.length;
-    const total = rows.length;
-
-    if (values.length === 0) {
-      return {
-        key,
-        label: ALL_BASE_LABELS[key],
-        mean: 0,
-        stdev: 0,
-        min: 0,
-        max: 0,
-        nullCount,
-        total,
-      };
+  const total = rows.length;
+  return TABLE_METRICS.flatMap((def) => {
+    if (!def.sources) {
+      const key = def.key as keyof CadmaReferenceRowView;
+      const values = rows
+        .map((r) => r[key] as number | null | undefined)
+        .filter((v): v is number => v != null && !Number.isNaN(v));
+      return [{ key: def.key, label: def.label, source: '', ..._calcStats(values, total) }];
     }
-
-    const sum = values.reduce((acc, val) => acc + val, 0);
-    const mean = sum / values.length;
-    const variance = values.reduce((acc, val) => acc + (val - mean) ** 2, 0) / values.length;
-    const stdev = Math.sqrt(variance);
-
-    return {
-      key,
-      label: ALL_BASE_LABELS[key],
-      mean,
-      stdev,
-      min: Math.min(...values),
-      max: Math.max(...values),
-      nullCount,
-      total,
-    };
+    return def.sources.map((src) => {
+      const field = src.field as keyof CadmaReferenceRowView;
+      const values = rows
+        .map((r) => r[field] as number | null | undefined)
+        .filter((v): v is number => v != null && !Number.isNaN(v));
+      return { key: def.key, label: def.label, source: src.label, ..._calcStats(values, total) };
+    });
   });
 }
 
@@ -209,7 +213,7 @@ const SCOPE_CONFIG: Record<ScopeKind, { icon: string; label: string; cssClass: s
 @Component({
   selector: 'app-cadma-py-family-detail',
   standalone: true,
-  imports: [FormsModule, TranslocoPipe],
+  imports: [FormsModule, ScientificChartComponent, TranslocoPipe],
   templateUrl: './cadma-py-family-detail.component.html',
   styleUrl: './cadma-py-family-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -222,6 +226,76 @@ export class CadmaPyFamilyDetailComponent {
 
   @ViewChild('compoundDetailDialog')
   protected readonly compoundDetailDialogRef?: ElementRef<HTMLDialogElement>;
+
+  @ViewChild('boxplotDialog')
+  protected readonly boxplotDialogRef?: ElementRef<HTMLDialogElement>;
+
+  readonly boxplotOpen = signal<boolean>(false);
+  readonly visibleBoxplotGroups = signal<Set<string>>(new Set(['ADME', 'Toxicity', 'SA Score']));
+  readonly hiddenBoxplotKeys = signal<Set<string>>(new Set());
+
+  readonly allBoxplotMetrics = computed<BoxplotMetricDef[]>(() => getReferenceBoxplotMetricDefs());
+
+  readonly boxplotOptions = computed<EChartsCoreOption>(() => {
+    return buildCadmaBoxplotOptions(
+      this.library().rows,
+      this.visibleBoxplotGroups(),
+      this.hiddenBoxplotKeys(),
+    );
+  });
+
+  readonly boxplotGroups = ['ADME', 'Toxicity', 'SA Score'] as const;
+
+  toggleBoxplotGroup(group: string): void {
+    this.visibleBoxplotGroups.update((current) => {
+      const next = new Set(current);
+      if (next.has(group)) {
+        if (next.size > 1) next.delete(group);
+      } else {
+        next.add(group);
+      }
+      return next;
+    });
+  }
+
+  toggleBoxplotMetric(key: string): void {
+    this.hiddenBoxplotKeys.update((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isGroupVisible(group: string): boolean {
+    return this.visibleBoxplotGroups().has(group);
+  }
+
+  isMetricHidden(key: string): boolean {
+    return this.hiddenBoxplotKeys().has(key);
+  }
+
+  visibleMetricsForGroup(group: string): BoxplotMetricDef[] {
+    return this.allBoxplotMetrics().filter((m) => m.group === group);
+  }
+
+  onBoxplotChartClick(params: Record<string, unknown>): void {
+    const seriesType = params['seriesType'] as string | undefined;
+    if (seriesType !== 'scatter') return;
+
+    const data = params['data'] as { smiles?: string } | undefined;
+    const smiles = data?.smiles;
+    if (!smiles) return;
+
+    const rowIndex = this.library().rows.findIndex((r) => r.smiles === smiles);
+    if (rowIndex < 0) return;
+
+    const row = this.library().rows[rowIndex];
+    this.openCompoundDetail(row, rowIndex, false);
+  }
 
   readonly library = input.required<CadmaReferenceLibraryView>();
   /** Modo del componente: 'browsing' = exploración pre-selección, 'selected' = familia ya elegida. */
@@ -279,6 +353,16 @@ export class CadmaPyFamilyDetailComponent {
   readonly compoundModalBusy = signal<boolean>(false);
   readonly compoundModalError = signal<string>('');
   readonly isEditingCompound = computed<boolean>(() => this.editingRowIndex() >= 0);
+
+  readonly selectedCompoundIndex = computed<number>(() => {
+    const compound = this.selectedCompound();
+    if (!compound) return -1;
+    return this.library().rows.findIndex((r) => r.smiles === compound.smiles);
+  });
+  readonly hasPrevCompound = computed(() => this.selectedCompoundIndex() > 0);
+  readonly hasNextCompound = computed(
+    () => this.selectedCompoundIndex() < this.library().rows.length - 1,
+  );
 
   readonly scopeKind = computed<ScopeKind>(() => computeScopeKind(this.library().source_reference));
   readonly scopeConfig = computed(() => SCOPE_CONFIG[this.scopeKind()]);
@@ -383,6 +467,10 @@ export class CadmaPyFamilyDetailComponent {
 
   private readonly INT_KEYS = new Set(['HBLA', 'HBLD', 'AtX', 'RB']);
 
+  trackStat(index: number, stat: MetricStat): string {
+    return `${stat.key}_${stat.source ?? '_'}_${index}`;
+  }
+
   formatNumber(value: number, decimals: number = 2): string {
     return value.toFixed(decimals);
   }
@@ -469,9 +557,53 @@ export class CadmaPyFamilyDetailComponent {
     this.rowActionError.set('');
   }
 
+  navigateCompound(direction: 1 | -1): void {
+    const currentIdx = this.selectedCompoundIndex();
+    if (currentIdx < 0) return;
+    const nextIdx = currentIdx + direction;
+    const rows = this.library().rows;
+    if (nextIdx < 0 || nextIdx >= rows.length) return;
+    const nextCompound = rows[nextIdx];
+
+    this.selectedCompound.set(nextCompound);
+    this.rowActionError.set('');
+    this.compoundModalSvg.set(null);
+    this.compoundModalError.set('');
+    this.compoundModalBusy.set(true);
+    this.editingRowIndex.set(-1);
+    this.editDraft.set({});
+
+    this.jobsApi.inspectSmileitStructure(nextCompound.smiles).subscribe({
+      next: (inspection) => {
+        this.compoundModalSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
+        this.compoundModalBusy.set(false);
+      },
+      error: () => {
+        this.compoundModalError.set('Could not generate the molecule preview.');
+        this.compoundModalBusy.set(false);
+      },
+    });
+  }
+
   onCompoundDialogBackdropClick(event: MouseEvent | KeyboardEvent): void {
     closeDialogOnBackdropClick(event, this.compoundDetailDialogRef?.nativeElement, () => {
       this.closeCompoundDetail();
+    });
+  }
+
+  openBoxplot(): void {
+    this.boxplotOpen.set(true);
+    this.boxplotDialogRef?.nativeElement.showModal();
+  }
+
+  closeBoxplot(): void {
+    this.boxplotDialogRef?.nativeElement.close();
+    this.boxplotOpen.set(false);
+  }
+
+  onBoxplotBackdropClick(event: MouseEvent | KeyboardEvent): void {
+    closeDialogOnBackdropClick(event, this.boxplotDialogRef?.nativeElement, () => {
+      this.closeBoxplot();
     });
   }
 

@@ -13,7 +13,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { EChartsCoreOption } from 'echarts/core';
@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 import {
   CadmaMetricChartView,
   CadmaPyApiService,
+  CadmaRankingRowView,
   CadmaReferenceLibraryView,
   CadmaReferenceRowView,
   CadmaReferenceSampleView,
@@ -28,7 +29,7 @@ import {
   CadmaScoreConfigView,
   type CadmaLinkedJobView,
 } from '../core/api/cadma-py-api.service';
-import { SaScoreMethod, ScientificJobView } from '../core/api/jobs-api.service';
+import { JobsApiService, SaScoreMethod, ScientificJobView } from '../core/api/jobs-api.service';
 import {
   CadmaPyQuickFillService,
   type CadmaQuickFillPayload,
@@ -62,6 +63,7 @@ import {
 } from './cadma-py-importer.component';
 import { CADMA_DOC_TABS } from './cadma-py-doc-content';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { CadmaPyBoxplotDialogComponent } from './cadma-py-boxplot-dialog.component';
 
 interface CsvBundle {
   combined: string;
@@ -197,6 +199,7 @@ function createEmptyCsvBundle(): CsvBundle {
     CadmaPyImporterComponent,
     CadmaPyDeleteModalComponent,
     ScientificDocPanelComponent,
+    CadmaPyBoxplotDialogComponent,
   ],
   providers: [CadmaPyWorkflowService],
   templateUrl: './cadma-py.component.html',
@@ -208,11 +211,15 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   private readonly quickFillService = inject(CadmaPyQuickFillService);
   private readonly route = inject(ActivatedRoute);
   private readonly translocoService = inject(TranslocoService);
+  private readonly jobsApi = inject(JobsApiService);
   readonly workflow = inject(CadmaPyWorkflowService);
   private routeSubscription: Subscription | null = null;
 
   @ViewChild(CadmaPyDeleteModalComponent)
   private readonly deleteModal?: CadmaPyDeleteModalComponent;
+
+  @ViewChild(CadmaPyBoxplotDialogComponent)
+  private readonly boxplotDialog?: CadmaPyBoxplotDialogComponent;
 
   readonly libraries = signal<CadmaReferenceLibraryView[]>([]);
   readonly samples = signal<CadmaReferenceSampleView[]>([]);
@@ -265,6 +272,11 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   readonly candidateImportedTotalUsableRows = signal<number>(0);
   readonly showDocPanel = signal<boolean>(false);
   readonly showDiagram = signal<boolean>(false);
+  readonly expandedChart = signal<'score' | 'metric' | null>(null);
+  readonly chartCompound = signal<CadmaRankingRowView | null>(null);
+  readonly chartCompoundSvg = signal<SafeHtml | null>(null);
+  readonly chartCompoundBusy = signal<boolean>(false);
+  readonly chartCompoundError = signal<string>('');
   readonly docTabs = CADMA_DOC_TABS;
 
   private readonly sanitizer = inject(DomSanitizer);
@@ -358,13 +370,14 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     const resultData = this.workflow.resultData();
     return resultData === null
       ? null
-      : buildCadmaScoreChartOptions(resultData.score_chart, this.scoreChartType());
+      : buildCadmaScoreChartOptions(resultData.score_chart, this.scoreChartType(), resultData.ranking);
   });
   readonly metricChartOptions = computed<EChartsCoreOption | null>(() => {
     const metricChart = this.activeMetricChart();
+    const ranking = this.workflow.resultData()?.ranking;
     return metricChart === null
       ? null
-      : buildCadmaMetricChartOptions(metricChart, this.metricChartType());
+      : buildCadmaMetricChartOptions(metricChart, this.metricChartType(), ranking);
   });
   readonly formulaIntervalRows = computed<CadmaIntervalEditorRow[]>(() => {
     const intervals = this.scoreIntervals();
@@ -1439,6 +1452,98 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
 
     return historyJob.id;
   };
+
+  openBoxplotDialog(): void {
+    this.boxplotDialog?.open();
+  }
+
+  expandChart(type: 'score' | 'metric'): void {
+    this.expandedChart.set(type);
+  }
+
+  closeExpandedChart(): void {
+    this.expandedChart.set(null);
+  }
+
+  onExpandedChartBackdrop(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList.contains('chart-expand-overlay')) {
+      this.closeExpandedChart();
+    }
+  }
+
+  onScoreChartClick(params: Record<string, unknown>): void {
+    this.handleChartPointClick(params);
+  }
+
+  onMetricChartClick(params: Record<string, unknown>): void {
+    this.handleChartPointClick(params);
+  }
+
+  private handleChartPointClick(params: Record<string, unknown>): void {
+    const seriesType = params['seriesType'] as string | undefined;
+    if (seriesType !== 'scatter') return;
+
+    const data = params['data'] as { smiles?: string } | undefined;
+    const smiles = data?.smiles;
+    if (!smiles) return;
+
+    const ranking = this.workflow.resultData()?.ranking ?? [];
+    const compound = ranking.find((r) => r.smiles === smiles) ?? null;
+    this.loadChartCompound(compound);
+  }
+
+  private loadChartCompound(compound: CadmaRankingRowView | null): void {
+    if (!compound) return;
+    this.chartCompound.set(compound);
+    this.chartCompoundSvg.set(null);
+    this.chartCompoundError.set('');
+    this.chartCompoundBusy.set(true);
+
+    this.jobsApi.inspectSmileitStructure(compound.smiles).subscribe({
+      next: (inspection) => {
+        this.chartCompoundSvg.set(this.sanitizer.bypassSecurityTrustHtml(inspection.svg));
+        this.chartCompoundBusy.set(false);
+      },
+      error: () => {
+        this.chartCompoundError.set('Could not generate the molecule preview.');
+        this.chartCompoundBusy.set(false);
+      },
+    });
+  }
+
+  closeChartCompound(): void {
+    this.chartCompound.set(null);
+    this.chartCompoundSvg.set(null);
+    this.chartCompoundError.set('');
+    this.chartCompoundBusy.set(false);
+  }
+
+  onChartCompoundBackdrop(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList.contains('chart-compound-overlay')) {
+      this.closeChartCompound();
+    }
+  }
+
+  readonly chartCompoundMetrics = computed(() => {
+    const compound = this.chartCompound();
+    if (!compound) return [];
+    const metricKeys = ['MW', 'logP', 'MR', 'AtX', 'HBLA', 'HBLD', 'RB', 'PSA', 'DT', 'M', 'LD50', 'SA'] as const;
+    const labels: Record<string, string> = {
+      MW: 'Molecular Weight', logP: 'LogP', MR: 'Molar Refractivity', AtX: 'Heavy Atoms',
+      HBLA: 'HB Acceptors', HBLD: 'HB Donors', RB: 'Rotatable Bonds', PSA: 'Polar SA',
+      DT: 'Dev. Toxicity', M: 'Mutagenicity', LD50: 'LD50 (mg/kg)', SA: 'SA Score',
+    };
+    return metricKeys.map((key) => ({
+      key,
+      label: labels[key] ?? key,
+      value: (compound[key as keyof CadmaRankingRowView] as number | undefined) ?? null,
+    }));
+  });
+
+  formatChartCompoundValue(val: number | null): string {
+    if (val === null || val === undefined) return '—';
+    return val.toFixed(2);
+  }
 
   exportSelectionCsv(): void {
     const resultData = this.workflow.resultData();

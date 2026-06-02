@@ -235,9 +235,6 @@ def _normalize_numeric_value(metric_name: str, raw_value: str) -> float | None:
     except ValueError:
         return None
 
-    if metric_name in {"M", "DT"} and 1 < numeric_value <= 100:
-        return numeric_value / 100.0
-
     if metric_name == "SA" and numeric_value <= 10:
         return max(0.0, min(100.0, ((10.0 - numeric_value) / 9.0) * 100.0))
 

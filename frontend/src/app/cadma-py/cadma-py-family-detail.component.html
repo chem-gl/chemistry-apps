@@ -26,6 +26,10 @@
             {{ selectionActionLabel() }}
         </button>
         }
+        <button class="btn-ghost btn-sm" type="button" (click)="openBoxplot()"
+            [title]="'cadmaPy.familyDetail.boxplotTitle' | transloco">
+            📊 {{ 'cadmaPy.familyDetail.boxplotLabel' | transloco }}
+        </button>
     </div>
 
     <!-- Modo edición de metadatos de la familia -->
@@ -128,6 +132,7 @@
             <thead>
                 <tr>
                     <th>{{ 'cadmaPy.familyDetail.metricLabel' | transloco }}</th>
+                    <th class="col-source">{{ 'cadmaPy.familyDetail.softwareLabel' | transloco }}</th>
                     <th class="col-num">{{ 'cadmaPy.familyDetail.meanSdLabel' | transloco }}</th>
                     <th class="col-num">{{ 'cadmaPy.familyDetail.rangeLabel' | transloco }}</th>
                     @if (hasAnyNulls()) {
@@ -136,9 +141,10 @@
                 </tr>
             </thead>
             <tbody>
-                @for (stat of metricStats(); track stat.key) {
-                <tr [class.has-nulls]="stat.nullCount > 0">
+                @for (stat of metricStats(); track trackStat($index, stat)) {
+                <tr [class.has-nulls]="stat.nullCount > 0" [class.multi-source]="stat.source !== ''">
                     <td class="col-label">{{ stat.label }}</td>
+                    <td class="col-source">{{ stat.source || '—' }}</td>
                     <td class="col-num col-mean-sd">
                         <span class="mean-value">{{ formatNumber(stat.mean) }}</span>
                         <span class="sd-value">± {{ formatNumber(stat.stdev) }}</span>
@@ -345,10 +351,22 @@
                     <h4>{{ selectedCompound()?.name || ('cadmaPy.familyDetail.compoundDetailsTitle' | transloco) }}</h4>
                     <p class="compound-modal-smiles mono">{{ selectedCompound()?.smiles || '—' }}</p>
                 </div>
-                <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
-                    [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
-                    ×
-                </button>
+                <div class="compound-modal-nav">
+                    <button class="compound-nav-btn" type="button" (click)="navigateCompound(-1)"
+                        [disabled]="!hasPrevCompound()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.prevCompound' | transloco">
+                        ◀
+                    </button>
+                    <button class="compound-nav-btn" type="button" (click)="navigateCompound(1)"
+                        [disabled]="!hasNextCompound()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.nextCompound' | transloco">
+                        ▶
+                    </button>
+                    <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
+                        ×
+                    </button>
+                </div>
             </div>
 
             <div class="compound-modal-grid">
@@ -484,6 +502,57 @@
                         }
                     </div>
                 </div>
+            </div>
+        </section>
+    </dialog>
+
+    <dialog #boxplotDialog class="boxplot-dialog" (click)="onBoxplotBackdropClick($event)"
+        (keydown)="onBoxplotBackdropClick($event)">
+        <section class="boxplot-modal">
+            <div class="boxplot-header">
+                <h4>Boxplot Charts — {{ library().name }}</h4>
+                <button class="compound-close-btn" type="button" (click)="closeBoxplot()"
+                    [attr.aria-label]="'cadmaPy.familyDetail.closeBoxplot' | transloco">×</button>
+            </div>
+            <div class="boxplot-body">
+                @if (library().rows.length > 0) {
+                <div class="boxplot-toggles-row">
+                    <div class="boxplot-group-toggles">
+                        @for (group of boxplotGroups; track group) {
+                        <button class="boxplot-toggle-btn" type="button"
+                            [class.active]="isGroupVisible(group)"
+                            (click)="toggleBoxplotGroup(group)">
+                            {{ group }} {{ isGroupVisible(group) ? '✓' : '✗' }}
+                        </button>
+                        }
+                    </div>
+                    <div class="boxplot-metric-toggles">
+                        @for (group of boxplotGroups; track group) {
+                        <div class="boxplot-metric-group">
+                            <span class="boxplot-metric-group-label">{{ group }}</span>
+                            <div class="boxplot-metric-buttons">
+                                @for (m of visibleMetricsForGroup(group); track m.key) {
+                                <button class="boxplot-metric-btn" type="button"
+                                    [class.off]="isMetricHidden(m.key)"
+                                    [class.disabled]="!isGroupVisible(group)"
+                                    (click)="toggleBoxplotMetric(m.key)">
+                                    {{ m.label }}
+                                </button>
+                                }
+                                @if (visibleMetricsForGroup(group).length === 0) {
+                                <span class="boxplot-metric-empty">—</span>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                <app-scientific-chart [ariaLabel]="'cadmaPy.familyDetail.boxplotAria' | transloco"
+                    [options]="boxplotOptions()" [chartHeight]="'700px'"
+                    (chartClick)="onBoxplotChartClick($event)"></app-scientific-chart>
+                } @else {
+                <p class="status-message">{{ 'cadmaPy.familyDetail.boxplotEmpty' | transloco }}</p>
+                }
             </div>
         </section>
     </dialog>

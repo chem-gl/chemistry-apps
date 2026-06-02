@@ -196,6 +196,24 @@
   white-space: nowrap;
 }
 
+.band-averages-table th.col-source,
+.band-averages-table td.col-source {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--chem-ink-soft);
+  white-space: nowrap;
+}
+
+.band-averages-table tbody tr.multi-source td.col-label {
+  font-weight: 600;
+  color: var(--chem-ink);
+}
+
+.band-averages-table tbody tr.multi-source td.col-source {
+  font-weight: 600;
+  color: var(--chem-accent);
+}
+
 .band-averages-table .mean-value {
   font-weight: 700;
   color: var(--chem-ink);

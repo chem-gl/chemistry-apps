@@ -67,4 +67,233 @@
       border: none;
     }
   }
+
+  // ── Expand button on chart cards ──────────────────────────────────
+  .chart-expand-btn {
+    font-size: 1.1rem;
+    padding: 0.2rem 0.4rem;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+
+    &:hover {
+      opacity: 1;
+      background: var(--chem-surface-elevated);
+    }
+  }
+
+  .chart-header-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  // ── Expanded chart overlay ─────────────────────────────────────────
+  .chart-expand-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .chart-expand-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    width: 98vw;
+    max-width: 1600px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chart-expand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--chem-border-subtle);
+    flex-shrink: 0;
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--chem-ink);
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--chem-ink-secondary);
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+      line-height: 1;
+
+      &:hover {
+        background: var(--chem-surface-inset);
+        color: var(--chem-ink);
+      }
+    }
+  }
+
+  .chart-expand-body {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  // ── Chart compound detail modal ───────────────────────────────────
+  .chart-compound-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1105;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .chart-compound-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+    width: 92vw;
+    max-width: 720px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chart-compound-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--chem-border-subtle);
+    flex-shrink: 0;
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--chem-ink);
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 80%;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--chem-ink-secondary);
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+      line-height: 1;
+
+      &:hover {
+        background: var(--chem-surface-inset);
+        color: var(--chem-ink);
+      }
+    }
+  }
+
+  .chart-compound-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+  }
+
+  .chart-compound-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+
+    @media (max-width: 520px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .chart-compound-svg-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    border: 1px solid var(--chem-border-subtle);
+    border-radius: var(--chem-radius);
+    background: var(--chem-glass-bg);
+    padding: 12px;
+  }
+
+  .chart-compound-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chart-compound-smiles {
+    margin: 0;
+    font-size: 0.75rem;
+    font-family: var(--chem-font-mono);
+    color: var(--chem-ink-secondary);
+    word-break: break-all;
+  }
+
+  .bxp-loading {
+    font-size: 0.8rem;
+    color: var(--chem-ink-soft);
+    font-style: italic;
+  }
+
+  .bxp-error {
+    font-size: 0.8rem;
+    color: var(--chem-error);
+  }
+
+  .bxp-svg {
+    max-width: 100%;
+    overflow: hidden;
+
+    ::ng-deep svg {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+
+  .bxp-metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+
+    tr {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    td {
+      padding: 0.3rem 0.5rem;
+      vertical-align: middle;
+    }
+  }
+
+  .bxp-metric-label {
+    color: var(--chem-ink-secondary);
+    font-weight: 500;
+  }
+
+  .bxp-metric-value {
+    text-align: right;
+    font-weight: 600;
+    font-family: var(--chem-font-mono);
+    color: var(--chem-ink);
+  }
 }

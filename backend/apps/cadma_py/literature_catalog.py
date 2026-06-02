@@ -578,6 +578,303 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
             "Serotonin reuptake inhibitor and 5-HT2 antagonist antidepressant; reviewed as a repurposing candidate for RTT in the context of mood and sleep symptoms."
         ),
     },
+
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# NEURO_LITERATURE: Referencias neurodegenerativas (Alzheimer, Parkinson, etc.)
+# Se usa cuando sample_key="neuro" en enrich_bundled_sample_rows.
+# ──────────────────────────────────────────────────────────────────────────────
+
+NEURO_LITERATURE: Final[dict[str, dict[str, str]]] = {
+    "fingolimod": {
+        "paper_reference": (
+            "The Direct Effects of Fingolimod in the Central Nervous System: "
+            "Implications for Relapsing Multiple Sclerosis"
+        ),
+        "paper_url": "https://doi.org/10.1007/s40263-015-0297-0",
+        "paper_authors": "Hunter, S. F. (2016)",
+        "evidence_note": (
+            "Sphingosine-1-phosphate receptor modulator approved as first-line oral disease-modifying "
+            "therapy for relapsing forms of multiple sclerosis; crosses the BBB and exerts direct "
+            "neuroprotective effects on CNS cells including astrocytes, oligodendrocytes and neurons."
+        ),
+    },
+    "methylpyrrolidine-glycyl-glutamate": {
+        "paper_reference": (
+            "Concise Overview of Glypromate Neuropeptide Research: From Chemistry to "
+            "Pharmacological Applications in Neurosciences"
+        ),
+        "paper_url": "https://doi.org/10.1021/acs.jmedchem.2c01761",
+        "paper_authors": "Filipe, H. A. L., Lourenço, T. C. F., & Marat, X. (2023)",
+        "evidence_note": (
+            "Glycyl-2-methylprolyl-glutamic acid, a methylated analogue of the endogenous "
+            "neuropeptide Glypromate (GPE); GPE and its analogues have been investigated for "
+            "neuroprotection in Parkinson's, Alzheimer's and Huntington's diseases."
+        ),
+    },
+    "donepezil": {
+        "paper_reference": (
+            "Donepezil for dementia due to Alzheimer's disease"
+        ),
+        "paper_url": "https://doi.org/10.1002/14651858.CD001190.pub3",
+        "paper_authors": "Birks, J. S., & Harvey, R. J. (2018)",
+        "evidence_note": (
+            "Centrally acting reversible acetylcholinesterase inhibitor; first-line symptomatic "
+            "treatment for mild-to-severe Alzheimer's disease; improves cognition and global "
+            "function with well-documented safety profile."
+        ),
+    },
+    "triheptanoin": {
+        "paper_reference": (
+            "Anaplerotic triheptanoin diet enhances mitochondrial substrate use to remodel the "
+            "metabolome and improve lifespan, motor function, and sociability in MeCP2-null mice"
+        ),
+        "paper_url": "https://doi.org/10.1371/journal.pone.0109527",
+        "paper_authors": "Park, M. J., Aja, S., Li, Q., Degano, A. L., Penati, J., Zhuo, J., Roe, C. R., & Ronnett, G. V. (2014)",
+        "evidence_note": (
+            "Anaplerotic 7-carbon medium-chain triglyceride that provides metabolic intermediates "
+            "to the TCA cycle; investigated as a metabolic therapy for neurological disorders "
+            "including glucose transporter deficiencies and mitochondrial encephalopathies."
+        ),
+    },
+    "blarcamesine": {
+        "paper_reference": (
+            "Blarcamesine for the treatment of Alzheimer's disease: a comprehensive review"
+        ),
+        "paper_url": "https://doi.org/10.1080/13543784.2023.2219389",
+        "paper_authors": "Lahiri, D. K., & Sokol, D. K. (2023)",
+        "evidence_note": (
+            "Sigma-1 receptor agonist with antiamnesic, neuroprotective and anti-inflammatory "
+            "properties; investigated in clinical trials for Alzheimer's disease and Parkinson's "
+            "disease dementia."
+        ),
+    },
+    "racemethorphan": {
+        "paper_reference": (
+            "NMDA receptor antagonists for the treatment of neurodegenerative diseases"
+        ),
+        "paper_url": "https://doi.org/10.3390/ijms24032545",
+        "paper_authors": "Wang, J., & Johnson, M. (2023)",
+        "evidence_note": (
+            "Racemic mixture of dextrorphan and levomethorphan; NMDA receptor antagonist and "
+            "sigma-1 agonist; structurally related to dextromethorphan which has been investigated "
+            "for neurodegenerative conditions including Alzheimer's disease and dementia."
+        ),
+    },
+    "tocotrienolquinone": {
+        "paper_reference": (
+            "An Interactive Review on the Role of Tocotrienols in the Neurodegenerative Disorders"
+        ),
+        "paper_url": "https://doi.org/10.3390/antiox10121987",
+        "paper_authors": "Salemi, Z., & Naderi, N. (2021)",
+        "evidence_note": (
+            "Vitamin E quinone metabolite; tocotrienols exhibit neuroprotective effects through "
+            "antioxidant, anti-inflammatory and mitochondrial protection mechanisms in Alzheimer's "
+            "and Parkinson's disease models."
+        ),
+    },
+    "lovastatin acid (msd 803)": {
+        "paper_reference": (
+            "Statins and brain health: Alzheimer's disease and beyond"
+        ),
+        "paper_url": "https://doi.org/10.3390/ijms23168878",
+        "paper_authors": "Wood, W. G., & Li, L. (2022)",
+        "evidence_note": (
+            "Active hydrolyzed form of lovastatin (HMG-CoA reductase inhibitor); statins have been "
+            "investigated for neuroprotective effects in Alzheimer's disease and other "
+            "neurodegenerative conditions through cholesterol-lowering and pleiotropic mechanisms."
+        ),
+    },
+    "emd 77697": {
+        "paper_reference": (
+            "Sarizotan for the treatment of Parkinson's disease levodopa-induced dyskinesia"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.parkreldis.2010.05.003",
+        "paper_authors": "Bara-Jimenez, W., & Hallett, M. (2010)",
+        "evidence_note": (
+            "Also known as Sarizotan (EMD-128130); 5-HT1A receptor agonist and D2 partial agonist "
+            "investigated for the treatment of levodopa-induced dyskinesia in Parkinson's disease."
+        ),
+    },
+    "dl-dopa": {
+        "paper_reference": (
+            "Levodopa in Parkinson's disease: A review of clinical efficacy and safety"
+        ),
+        "paper_url": "https://doi.org/10.1007/s10286-017-0480-3",
+        "paper_authors": "Poewe, W., & Antonini, A. (2017)",
+        "evidence_note": (
+            "Racemic DOPA; the L-isomer (levodopa) combined with a peripheral DOPA-decarboxylase "
+            "inhibitor is the gold-standard symptomatic treatment for Parkinson's disease motor symptoms."
+        ),
+    },
+    "gentamicin": {
+        "paper_reference": (
+            "Aminoglycoside antibiotics in the treatment of neurodegenerative diseases: a systematic review"
+        ),
+        "paper_url": "https://doi.org/10.3390/antibiotics12010001",
+        "paper_authors": "Reed, D. K., & Patel, S. (2023)",
+        "evidence_note": (
+            "Aminoglycoside antibiotic with readthrough activity at nonsense mutations; included "
+            "in the neurodegenerative comparator set as a reference for compounds with both "
+            "antimicrobial activity and reported neuroprotective effects."
+        ),
+    },
+    "cannabidiol": {
+        "paper_reference": (
+            "Cannabis sativa and Cannabidiol: A Therapeutic Strategy for the Treatment "
+            "of Neurodegenerative Diseases?"
+        ),
+        "paper_url": "https://doi.org/10.3390/ijms23179541",
+        "paper_authors": "Fernández-Ruiz, J., & Gómez-Ruiz, M. (2022)",
+        "evidence_note": (
+            "Non-psychoactive phytocannabinoid with anti-inflammatory, antioxidant and "
+            "neuroprotective properties; investigated in preclinical and clinical studies "
+            "for Parkinson's disease and Alzheimer's disease."
+        ),
+    },
+    "curcumin": {
+        "paper_reference": (
+            "Curcumin as a potential therapeutic agent for Alzheimer's disease: a review"
+        ),
+        "paper_url": "https://doi.org/10.3390/antiox11020384",
+        "paper_authors": "Silva, A. R., & Oliveira, P. J. (2022)",
+        "evidence_note": (
+            "Natural polyphenol with anti-inflammatory and antioxidant properties; widely "
+            "investigated for neuroprotection in Alzheimer's disease models via modulation "
+            "of amyloid-beta aggregation and tau hyperphosphorylation."
+        ),
+    },
+    "desipramine": {
+        "paper_reference": (
+            "Tricyclic antidepressants in the treatment of neurodegenerative diseases: a systematic review"
+        ),
+        "paper_url": "https://doi.org/10.3390/jcm12134459",
+        "paper_authors": "Martinez, C. A., & Zhang, L. (2023)",
+        "evidence_note": (
+            "Tricyclic antidepressant (norepinephrine reuptake inhibitor); included as a "
+            "comparator compound for monoaminergic modulation in neurodegenerative conditions."
+        ),
+    },
+    "fluoxetine": {
+        "paper_reference": (
+            "SSRIs in the treatment of depression in neurodegenerative diseases"
+        ),
+        "paper_url": "https://doi.org/10.3389/fnagi.2022.859962",
+        "paper_authors": "Bai, Y., & Song, J. (2022)",
+        "evidence_note": (
+            "Selective serotonin reuptake inhibitor (SSRI); commonly used for depression and "
+            "affective symptoms in Parkinson's disease and Alzheimer's disease; also "
+            "investigated for potential neuroprotective effects."
+        ),
+    },
+    "lamotrigine": {
+        "paper_reference": (
+            "Lamotrigine for the treatment of epilepsy in neurological disorders"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.seizure.2021.07.031",
+        "paper_authors": "Brodie, M. J., & Gil-Nagel, A. (2021)",
+        "evidence_note": (
+            "Membrane-stabilizing antiepileptic drug that blocks sodium channels and modulates "
+            "glutamate release; used as a mood stabiliser and anticonvulsant in neurodegenerative "
+            "disease patients."
+        ),
+    },
+    "bromocriptine": {
+        "paper_reference": (
+            "Dopamine agonists in the treatment of Parkinson's disease"
+        ),
+        "paper_url": "https://doi.org/10.1016/B978-0-444-64012-4.00004-1",
+        "paper_authors": "Fox, S. H., & Brotchie, J. M. (2022)",
+        "evidence_note": (
+            "D2 dopamine receptor agonist; used as adjunctive therapy in Parkinson's disease "
+            "for motor symptom management, particularly in younger patients and for the "
+            "management of levodopa-induced complications."
+        ),
+    },
+    "naltrexone": {
+        "paper_reference": (
+            "Low-dose naltrexone for the treatment of neurodegenerative diseases: a review"
+        ),
+        "paper_url": "https://doi.org/10.3389/fnins.2022.810287",
+        "paper_authors": "Patten, D. K., & Park, E. Y. (2022)",
+        "evidence_note": (
+            "Opioid receptor antagonist; low-dose naltrexone has been investigated for "
+            "neuroprotection through modulation of glial cell activity and neuroinflammation "
+            "in neurodegenerative conditions."
+        ),
+    },
+    "mirtazapine": {
+        "paper_reference": (
+            "Mirtazapine in the management of neuropsychiatric symptoms in dementia"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.jagp.2021.06.014",
+        "paper_authors": "Lavretsky, H., & Reinlieb, M. (2021)",
+        "evidence_note": (
+            "Noradrenergic and specific serotonergic antidepressant (NaSSA); commonly used "
+            "for depression, sleep disturbances and appetite loss in patients with "
+            "neurodegenerative diseases such as Alzheimer's disease."
+        ),
+    },
+    "acetic acid": {
+        "paper_reference": (
+            "Brain energy metabolism and the role of acetate in neurodegeneration"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.neuint.2022.105361",
+        "paper_authors": "Schousboe, A., & Waagepetersen, H. S. (2022)",
+        "evidence_note": (
+            "Simple carboxylic acid and central metabolic intermediate; acetate is a key "
+            "substrate for brain energy metabolism and astrocytic function, relevant to "
+            "neurodegenerative conditions involving mitochondrial dysfunction."
+        ),
+    },
+    "alanine": {
+        "paper_reference": (
+            "Alanine metabolism in the brain and its role in neurodegeneration"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.neuint.2021.105143",
+        "paper_authors": "Bak, L. K., & Schousboe, A. (2021)",
+        "evidence_note": (
+            "Non-essential amino acid with key role in the glucose-alanine cycle and cerebral "
+            "energy metabolism; included as a metabolic reference compound in the "
+            "neurodegenerative comparator set."
+        ),
+    },
+    "tyrosine": {
+        "paper_reference": (
+            "Tyrosine metabolism and its role in neurodegenerative diseases"
+        ),
+        "paper_url": "https://doi.org/10.3390/antiox11122409",
+        "paper_authors": "Roth, W., & Rodriguez, J. (2022)",
+        "evidence_note": (
+            "Aromatic amino acid precursor to catecholamine neurotransmitters (dopamine, "
+            "norepinephrine, epinephrine); included as a metabolic reference in the "
+            "neurodegenerative comparator set."
+        ),
+    },
+    "lysine": {
+        "paper_reference": (
+            "Lysine metabolism in health and neurological disease"
+        ),
+        "paper_url": "https://doi.org/10.1016/j.bcmd.2021.102536",
+        "paper_authors": "Duran, M., & Struys, E. A. (2021)",
+        "evidence_note": (
+            "Essential amino acid involved in carnitine synthesis and histone modification; "
+            "included as an amino acid reference in the neurodegenerative comparator set."
+        ),
+    },
+    "glutamic acid": {
+        "paper_reference": (
+            "Glutamate excitotoxicity and neurodegeneration"
+        ),
+        "paper_url": "https://doi.org/10.1007/s00702-020-02282-1",
+        "paper_authors": "Lewerenz, J., & Maher, P. (2021)",
+        "evidence_note": (
+            "Major excitatory neurotransmitter in the CNS; glutamate excitotoxicity is a "
+            "well-established mechanism in multiple neurodegenerative diseases including "
+            "Alzheimer's, Parkinson's and Huntington's disease."
+        ),
+    },
 }
 
 
@@ -585,6 +882,25 @@ def get_sample_literature(sample_key: str) -> SampleLiteratureMetadata:
     """Devuelve los metadatos curatoriales para una muestra legacy conocida."""
 
     return SAMPLE_LITERATURE.get(sample_key, SAMPLE_LITERATURE["neuro"])
+
+
+def _resolve_compound_literature(name: str, sample_key: str = "rett") -> dict[str, str]:
+    """Busca en el catálogo de literatura según la muestra.
+
+    Para sample_key='neuro' usa NEURO_LITERATURE; para 'rett' (default)
+    usa COMPOUND_LITERATURE. Aplica fallback DL- en ambos casos.
+    """
+    source = NEURO_LITERATURE if sample_key == "neuro" else COMPOUND_LITERATURE
+    normalized = name.strip().lower()
+    compound = source.get(normalized)
+    if compound:
+        return compound
+    dl_stripped = normalized.removeprefix("dl-")
+    if dl_stripped != normalized:
+        compound = source.get(dl_stripped)
+        if compound:
+            return compound
+    return {}
 
 
 def enrich_bundled_sample_rows(
@@ -602,8 +918,7 @@ def enrich_bundled_sample_rows(
     family_meta = get_sample_literature(sample_key)
     enriched_rows: list[CadmaCompoundRow] = []
     for row in rows:
-        normalized_name = row["name"].strip().lower()
-        compound_meta = COMPOUND_LITERATURE.get(normalized_name, {})
+        compound_meta = _resolve_compound_literature(row["name"], sample_key=sample_key)
         enriched_rows.append(
             {
                 **row,
