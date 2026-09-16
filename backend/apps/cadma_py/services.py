@@ -55,6 +55,7 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
         "source",
     ),
     "paper_url": ("paperurl", "url", "doi", "paperdoi", "referenceurl"),
+    "paper_authors": ("authors", "author", "papermuthors"),
     "evidence_note": ("evidencenote", "note", "notes", "comment", "comments"),
     "MW": ("mw", "molecularweight", "molwt"),
     "logP": ("logp",),
@@ -65,9 +66,18 @@ HEADER_ALIASES: dict[str, tuple[str, ...]] = {
     "RB": ("rb", "rotatablebonds", "numrotatablebonds"),
     "PSA": ("psa", "tpsa"),
     "DT": ("dt", "devtox", "devtoxscore", "developmentaltoxicity"),
+    "DT_test": ("dttest", "dttoxicitytest"),
+    "DT_admet": ("dtadmet", "dtadmetai"),
     "M": ("m", "amesscore", "amesprobability", "mutagenicity"),
+    "M_test": ("mtest", "mmutagenicitytest"),
+    "M_admet": ("madmet", "madmetai"),
     "LD50": ("ld50", "ld50mgkg", "ld50oral", "acuteld50"),
-    "SA": ("sa", "sascore", "syntheticaccessibility", "ambit", "brsa", "rdkit"),
+    "LD50_test": ("ld50test",),
+    "LD50_admet": ("ld50admet",),
+    "SA": ("sa", "sascore", "syntheticaccessibility"),
+    "SA_ambit": ("saambit", "sambit", "saambitscore"),
+    "SA_brsa": ("sabrsa", "sabrsascore"),
+    "SA_rdkit": ("sardkit", "sardkitsascore"),
 }
 
 SAMPLE_DEFINITIONS: tuple[CadmaReferenceSample, ...] = (
@@ -224,9 +234,6 @@ def _normalize_numeric_value(metric_name: str, raw_value: str) -> float | None:
         numeric_value = float(normalized_text)
     except ValueError:
         return None
-
-    if metric_name in {"M", "DT"} and 1 < numeric_value <= 100:
-        return numeric_value / 100.0
 
     if metric_name == "SA" and numeric_value <= 10:
         return max(0.0, min(100.0, ((10.0 - numeric_value) / 9.0) * 100.0))
@@ -539,10 +546,23 @@ def _build_compound_rows_from_normalized_rows(
             "M": _resolve_metric_value(merged_row, "M", descriptor_values),
             "LD50": _resolve_metric_value(merged_row, "LD50", descriptor_values),
             "SA": _resolve_metric_value(merged_row, "SA", descriptor_values),
+            "paper_authors": _get_alias_value(merged_row, "paper_authors"),
             "paper_reference": paper_reference.strip(),
             "paper_url": paper_url.strip(),
             "evidence_note": evidence_note.strip(),
         }
+        for sw_key in (
+            "DT_test", "DT_admet",
+            "M_test", "M_admet",
+            "LD50_test", "LD50_admet",
+            "SA_ambit", "SA_brsa", "SA_rdkit",
+        ):
+            raw = _get_alias_value(merged_row, sw_key)
+            if raw:
+                try:
+                    compound_row[sw_key] = float(raw)  # type: ignore[literal-required]
+                except ValueError:
+                    pass
         normalized_rows.append(compound_row)
 
     return normalized_rows
@@ -1240,7 +1260,7 @@ def update_reference_row(
             f"Índice de fila {row_index} fuera de rango (0-{len(rows) - 1})."
         )
 
-    editable_fields = ("name", "paper_reference", "paper_url", "evidence_note")
+    editable_fields = ("name", "paper_authors", "paper_reference", "paper_url", "evidence_note")
     target_row = rows[row_index]
     for field in editable_fields:
         if field in patch:
@@ -1285,6 +1305,7 @@ def add_compound_to_library(
     library_id: str,
     smiles: str,
     name: str,
+    paper_authors: str = "",
     paper_reference: str = "",
     paper_url: str = "",
     evidence_note: str = "",
@@ -1325,6 +1346,7 @@ def add_compound_to_library(
         "M": toxicity_m if toxicity_m is not None else 0.0,
         "LD50": toxicity_ld50 if toxicity_ld50 is not None else 0.0,
         "SA": sa_score if sa_score is not None else 0.0,
+        "paper_authors": paper_authors.strip() if paper_authors.strip() else "",
         "paper_reference": paper_reference.strip(),
         "paper_url": paper_url.strip(),
         "evidence_note": evidence_note.strip(),

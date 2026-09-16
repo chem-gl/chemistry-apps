@@ -1,0 +1,11 @@
+Coloca aquí las fotos del equipo. Nombres esperados:
+
+- annia-galano.jpg      → Dra. Annia Galano
+- miguel-reina.jpg      → Dr. Miguel Reina
+- luis-ayala.jpg        → Dr. Luis Felipe Ayala
+- cesar-guzman.jpg      → César Gerardo Guzmán López
+- eduardo-guzman.jpg    → Eduardo Gabriel Guzmán López
+
+Formatos soportados: jpg, png, webp.
+Tamaño recomendado: 300×300 px (recorte cuadrado 1:1).
+Si no hay foto, se muestra un círculo de color con iniciales.

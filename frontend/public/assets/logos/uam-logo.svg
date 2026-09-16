@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <!-- UAM shield - geometric design -->
+  <defs>
+    <linearGradient id="uam-green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#317154"/>
+      <stop offset="100%" stop-color="#4A725A"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield shape -->
+  <path d="M40 10 L54 15 L54 32 C54 52 40 63 40 68 C40 63 26 52 26 32 L26 15 Z" fill="#0C2021" stroke="#6E967E" stroke-width="1.5"/>
+  <!-- UAM text inside shield -->
+  <text x="40" y="38" font-family="'Avenir Next', 'Segoe UI', sans-serif" font-weight="900" font-size="13" fill="url(#uam-green)" text-anchor="middle" letter-spacing="0.12em">UAM</text>
+  <text x="40" y="50" font-family="'Avenir Next', 'Segoe UI', sans-serif" font-weight="700" font-size="5" fill="#9EB0A2" text-anchor="middle" letter-spacing="0.06em">CASA ABIERTA</text>
+  <text x="40" y="57" font-family="'Avenir Next', 'Segoe UI', sans-serif" font-weight="700" font-size="5" fill="#9EB0A2" text-anchor="middle" letter-spacing="0.06em">AL TIEMPO</text>
+  <!-- Text -->
+  <text x="92" y="36" font-family="'Avenir Next', 'Segoe UI', sans-serif" font-weight="700" font-size="16" fill="#0C2021" letter-spacing="0.06em">UAM</text>
+  <text x="92" y="52" font-family="'Avenir Next', 'Segoe UI', sans-serif" font-size="8" fill="#6E967E" letter-spacing="0.08em">UNIDAD IZTAPALAPA</text>
+</svg>

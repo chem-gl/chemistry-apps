@@ -13,6 +13,8 @@ describe('LoginComponent', () => {
   const sessionServiceMock = {
     login: vi.fn(),
     lastAuthenticationError: vi.fn(),
+    isAuthenticated: vi.fn().mockReturnValue(false),
+    isLoading: vi.fn().mockReturnValue(false),
   };
 
   const translocoServiceMock = {

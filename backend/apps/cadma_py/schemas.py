@@ -173,6 +173,9 @@ class CadmaReferenceRowPatchSerializer(serializers.Serializer):
     """Valida la edición parcial de una fila de referencia existente."""
 
     name = serializers.CharField(required=False, max_length=200)
+    paper_authors = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
     paper_reference = serializers.CharField(
         required=False, allow_blank=True, max_length=300
     )
@@ -187,6 +190,9 @@ class CadmaCompoundAddSerializer(serializers.Serializer):
 
     smiles = serializers.CharField(max_length=2000)
     name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    paper_authors = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
     paper_reference = serializers.CharField(
         required=False, allow_blank=True, max_length=300
     )
@@ -214,9 +220,19 @@ class CadmaCompoundRowResponseSerializer(serializers.Serializer):
     RB = serializers.FloatField(read_only=True)
     PSA = serializers.FloatField(read_only=True)
     DT = serializers.FloatField(read_only=True)
+    DT_test = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    DT_admet = serializers.FloatField(read_only=True, required=False, allow_null=True)
     M = serializers.FloatField(read_only=True)
+    M_test = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    M_admet = serializers.FloatField(read_only=True, required=False, allow_null=True)
     LD50 = serializers.FloatField(read_only=True)
+    LD50_test = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    LD50_admet = serializers.FloatField(read_only=True, required=False, allow_null=True)
     SA = serializers.FloatField(read_only=True)
+    SA_ambit = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    SA_brsa = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    SA_rdkit = serializers.FloatField(read_only=True, required=False, allow_null=True)
+    paper_authors = serializers.CharField(read_only=True)
     paper_reference = serializers.CharField(read_only=True)
     paper_url = serializers.CharField(read_only=True)
     evidence_note = serializers.CharField(read_only=True)

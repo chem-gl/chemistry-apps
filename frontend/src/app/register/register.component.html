@@ -1,15 +1,26 @@
-<!-- register.component.html: Registro público de nuevos usuarios. -->
+<!-- register.component.html: Registro público — CADMA-Chem Suite. -->
 <section class="register-shell" [attr.aria-label]="'register.aria.createAccount' | transloco">
-  <article class="register-hero" [attr.aria-label]="'register.aria.brandMessage' | transloco">
-    <p class="hero-kicker">{{ 'register.hero.kicker' | transloco }}</p>
-    <h1 class="hero-title">{{ 'register.hero.title' | transloco }}</h1>
-    <p class="hero-copy">{{ 'register.hero.copy' | transloco }}</p>
-  </article>
 
+  <!-- Institutional header -->
+  <header class="institutional-header">
+    <div class="institution-logos">
+        <img ngSrc="assets/logos/secihti-logo.svg" alt="SECIHTI" width="200" height="80" class="institution-logo" priority />
+        <img ngSrc="assets/logos/unam-logo.svg" alt="UNAM" width="200" height="80" class="institution-logo" priority />
+        <img ngSrc="assets/logos/uam-logo.png" alt="UAM" width="200" height="80" class="institution-logo" priority />
+    </div>
+    <h1 class="working-group-name">{{ 'login.institutional.groupName' | transloco }}</h1>
+    <p class="working-group-universities">{{ 'login.institutional.universities' | transloco }}</p>
+    <p class="working-group-director">{{ 'login.institutional.director' | transloco }}</p>
+  </header>
+
+  <!-- Tagline -->
+  <p class="tagline">{{ 'login.institutional.tagline' | transloco }}</p>
+
+  <!-- Register panel -->
   <article class="register-panel">
     @if (registrationSuccess()) {
       <div class="success-panel">
-        <p class="success-icon">✓</p>
+        <span class="success-icon" aria-hidden="true">&#10003;</span>
         <h2>{{ 'register.success.title' | transloco }}</h2>
         <p>{{ 'register.success.message' | transloco }}</p>
         <p class="redirect-hint">{{ 'register.success.redirecting' | transloco }}</p>
@@ -60,8 +71,7 @@
         }
 
         <button class="submit-button" type="submit" [disabled]="isSubmitting()">
-          {{ isSubmitting() ? ('register.form.creatingAccount' | transloco) : ('register.form.createAccount' | transloco)
-          }}
+          {{ isSubmitting() ? ('register.form.creatingAccount' | transloco) : ('register.form.createAccount' | transloco) }}
         </button>
       </form>
 
@@ -71,4 +81,10 @@
       </p>
     }
   </article>
+
+  <!-- Footer -->
+  <footer class="institutional-footer">
+    <span>{{ 'login.institutional.fundingLine' | transloco }}</span>
+  </footer>
+
 </section>

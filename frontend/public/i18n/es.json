@@ -55,10 +55,18 @@
       "signingIn": "Iniciando sesión...",
       "username": "Usuario"
     },
+    "institutional": {
+      "groupName": "Química Teórica y Aplicada",
+      "universities": "U A M  —  U N A M",
+      "director": "Directora del proyecto: Dra. Annia Galano",
+      "tagline": "Química Computacional para Evaluar la Naturaleza",
+      "suiteDescription": "Suite de herramientas computacionales para el protocolo CADMA-Chem, estimación de constantes de velocidad en solución y predicción de propiedades moleculares.",
+      "fundingLine": "SECIHTI  ·  UNAM Facultad de Química  ·  UAM Iztapalapa"
+    },
     "hero": {
-      "title": "Diseñando flujos científicos con claridad",
-      "copy": "Entra a tu espacio científico para orquestar cálculos, monitorear jobs distribuidos y gestionar accesos seguros desde una sola superficie de control.",
-      "kicker": "App Chemistry Sense"
+      "title": "Plataforma de Química Computacional",
+      "copy": "Herramientas para análisis de reactividad química, cálculo de constantes de velocidad y predicción de propiedades ADMET en solución.",
+      "kicker": "CADMA-Chem Suite"
     },
     "errors": {
       "unableToAuthenticate": "No fue posible autenticarse."
@@ -68,11 +76,33 @@
       "brandMessage": "Mensaje de marca"
     },
     "panel": {
-      "title": "Acceso Científico",
-      "copy": "Inicia sesión para cargar tu rol, acceso por grupo, visibilidad de apps y espacio personalizado.",
-      "eyebrow": "Puerta de Identidad",
+      "title": "Iniciar Sesión",
+      "copy": "Ingresa tus credenciales para acceder a las herramientas de química computacional.",
+      "eyebrow": "Acceso Científico",
       "noAccount": "¿No tienes cuenta?",
       "createAccount": "Crear una"
+    },
+    "developers": {
+      "ariaLabel": "Equipo de desarrollo",
+      "heading": "Equipo de Desarrollo",
+      "visitProfile": "Ver perfil de {{ name }}",
+      "anniaGalano": "Annia Galano",
+      "miguelReina": "Miguel Reina",
+      "luisAyala": "Luis Felipe Ayala",
+      "cesarGuzman": "César Gerardo Guzmán López",
+      "eduardoGuzman": "Eduardo Gabriel Guzmán López",
+      "roleDirector": "Directora del Proyecto",
+      "roleResearcher": "Investigador",
+      "roleDeveloper": "Desarrollador Principal",
+      "roleCreator": "Creador y Desarrollador",
+      "affUAM": "UAM Iztapalapa",
+      "affUNAM": "UNAM FQ"
+    },
+    "publications": {
+      "ariaLabel": "Publicaciones recientes",
+      "heading": "Publicaciones Recientes",
+      "button": "Publicaciones Relevantes →",
+      "viewAllLink": "#"
     }
   },
   "register": {
@@ -81,9 +111,9 @@
       "brandMessage": "Mensaje de marca"
     },
     "hero": {
-      "kicker": "App Chemistry Sense",
+      "kicker": "CADMA-Chem Suite",
       "title": "Únete a la Plataforma Científica",
-      "copy": "Crea tu cuenta para acceder a las herramientas científicas. Si tienes un enlace de invitación, pega el token debajo para unirte al espacio de tu equipo."
+      "copy": "Crea tu cuenta para acceder a las herramientas de química computacional. Si tienes un enlace de invitación, pega el token debajo para unirte al espacio de tu equipo."
     },
     "panel": {
       "eyebrow": "Registro de Identidad",
@@ -565,6 +595,12 @@
       "copying": "Copiando…",
       "cancel": "Cancelar",
       "closeCompound": "Cerrar detalles del compuesto",
+      "prevCompound": "Compuesto anterior",
+      "nextCompound": "Compuesto siguiente",
+      "boxplotLabel": "Gráficas",
+      "boxplotTitle": "Boxplots",
+      "boxplotAria": "Gráfica boxplot de todas las propiedades moleculares",
+      "boxplotEmpty": "No hay compuestos para graficar.",
       "createCopy": "Crear copia",
       "readOnly": "Solo lectura",
       "editReference": "Editar referencia",
@@ -579,9 +615,11 @@
       "sha256Prefix": "SHA-256:",
       "backToList": "Volver a la lista",
       "canEdit": "Puede editar",
+      "paperAuthors": "Autores",
       "paperUrl": "URL del artículo / DOI",
       "edit": "Editar",
-      "tableHeaderReference": "Referencia",
+      "tableHeaderReference": "Título del artículo",
+      "tableHeaderAuthors": "Autores",
       "addCompound": "+ Agregar compuesto",
       "name": "Nombre *",
       "compoundsAndReferences": "Compuestos y referencias",
@@ -598,9 +636,10 @@
       "generatingPreview": "Generando vista previa de la molécula…",
       "groupReadOnly": "Esta familia de grupo compartida es de solo lectura para ti. Crea una copia editable para agregar, eliminar o actualizar compuestos y referencias.",
       "nullCount": "nulo",
+      "softwareLabel": "Software",
       "smilesLabel": "SMILES *",
       "description": "Descripción",
-      "tableHeaderUrl": "URL / DOI",
+      "tableHeaderUrl": "Referencia / DOI",
       "meanSdLabel": "Mean ± SD",
       "readOnlyTemplate": "Plantilla de solo lectura",
       "smilesPlaceholder": "ej. CCO",
@@ -610,6 +649,12 @@
       "metricLabel": "Metric",
       "rows": "filas",
       "compoundNamePlaceholder": "Nombre del compuesto",
+      "paperAuthorsPlaceholder": "Autor, Autor & Autor (Año)",
+      "toxicityDT": "Tox. del Desarrollo",
+      "toxicityM": "Mutagenicidad",
+      "toxicityLD50": "LD50",
+      "saScore": "SA Score",
+      "optionalMetric": "Opcional (auto si vacío)",
       "tableHeaderNote": "Nota",
       "stdevLabel": "±SD",
       "rdkitPreview": "Vista previa RDKit",
@@ -639,7 +684,14 @@
       "cancelEdit": "Cancelar edición",
       "adding": "Agregando…",
       "openPreview": "Abrir vista previa de la molécula",
-      "refBandAverages": "Promedios de banda de referencia"
+      "refBandAverages": "Promedios de banda de referencia",
+      "duplicateCompound": "Duplicar este compuesto",
+      "seedBrowseHint": "Esta es una semilla de solo lectura. Haz clic en 'Copiar familia' arriba para crear una versión editable donde puedas agregar, duplicar o eliminar compuestos."
+    },
+    "compoundDetail": {
+      "admeGroup": "Propiedades ADME",
+      "toxicityGroup": "Toxicidad",
+      "saGroup": "Accesibilidad Sintética"
     },
     "scopeLabels": {
       "group": "Grupo",
@@ -702,6 +754,7 @@
       "add": "Add",
       "selectFamily": "Select family",
       "createFamily": "Create family",
+      "duplicate": "Duplicar",
       "delete": "Delete",
       "compounds": "compounds",
       "preview": "Preview",
@@ -859,9 +912,9 @@
       "apps": "Apps"
     },
     "brand": {
-      "title": "Panel de Control Científico",
-      "kicker": "Chemistry Apps",
-      "caption": "Navegación central para apps, jobs y acceso de cuenta."
+      "title": "Química Computacional para Evaluar la Naturaleza",
+      "kicker": "CADMA-Chem Suite",
+      "caption": "Constantes de velocidad, reactividad, ADMET — UAM-UNAM."
     },
     "navHints": {
       "dashboard": "Resumen del espacio de trabajo adaptado al rol",

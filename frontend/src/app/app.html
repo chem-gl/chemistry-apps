@@ -1,4 +1,5 @@
 <div class="app-shell" (click)="closeMobileNav()">
+  @if (!isAuthPage()) {
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
     <div class="top-bar-inner">
       <div class="brand-block">
@@ -39,7 +40,6 @@
       (click)="$event.stopPropagation()">
       @for (navItem of mainNavigationItems(); track navItem.path) {
         @if (navItem.path === '/apps' && hasApps()) {
-        <!-- Apps dropdown -->
         <div class="nav-dropdown">
           <a [routerLink]="navItem.path" routerLinkActive="is-active"
             [routerLinkActiveOptions]="{ exact: true }"
@@ -71,6 +71,7 @@
       }
     </nav>
   </header>
+  }
 
   <main class="content-shell">
     <router-outlet />

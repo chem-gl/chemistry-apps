@@ -1,98 +1,128 @@
-/* register.component.scss: Pantalla de registro con layout App Chemistry Sense. */
+/* register.component.scss: Registro institucional — CADMA-Chem Suite. */
 
 .register-shell {
   min-height: calc(100vh - 8rem);
-  display: grid;
-  grid-template-columns: minmax(18rem, 1.3fr) minmax(18rem, 1fr);
-  gap: 1rem;
-  padding: clamp(1rem, 2.5vw, 2.2rem);
-  align-items: stretch;
-  background: linear-gradient(142deg, rgba(245, 244, 240, 0.75), rgba(237, 233, 240, 0.92));
-  border-radius: var(--chem-radius-lg);
-  border: 1px solid rgba(168, 161, 176, 0.38);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: clamp(1rem, 2.2vw, 2rem);
 }
 
-.register-hero {
-  border-radius: var(--chem-radius-lg);
-  padding: clamp(1.5rem, 3vw, 2.4rem);
-  border: 1px solid rgba(123, 90, 158, 0.2);
-  background: linear-gradient(160deg, rgba(123, 90, 158, 0.14), rgba(44, 37, 51, 0.08));
-  display: grid;
-  align-content: center;
-  gap: 1rem;
+/* ── Institutional header ── */
+
+.institutional-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 48rem;
 }
 
-.hero-kicker {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: var(--chem-font-label);
-  font-size: var(--chem-text-xs);
-  color: var(--chem-accent);
+.institution-logos {
+  display: flex;
+  gap: clamp(1.4rem, 3.5vw, 2.8rem);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.institution-logo {
+  height: 70px;
+  width: auto;
+  opacity: 0.92;
+  transition: opacity var(--chem-transition);
+}
+
+.institution-logo:hover {
+  opacity: 1;
+}
+
+.working-group-name {
+  margin: 0.15rem 0 0;
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
   font-weight: 700;
+  color: var(--uni-green-700);
+  letter-spacing: 0.02em;
 }
 
-.hero-title {
+.working-group-universities {
+  margin: 0;
+  font-family: var(--chem-font-body);
+  font-size: var(--chem-text-xs);
+  font-weight: 600;
+  color: var(--uni-green-400);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.working-group-director {
+  margin: 0.05rem 0 0;
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink-secondary);
+  font-style: italic;
+}
+
+/* ── Tagline ── */
+
+.tagline {
   margin: 0;
   font-family: var(--chem-font-heading);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  line-height: 1.06;
-  color: var(--chem-ink);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 700;
+  color: var(--uni-blue);
+  letter-spacing: 0.01em;
+  text-align: center;
+  max-width: 40rem;
+  line-height: 1.3;
 }
 
-.hero-copy {
-  margin: 0;
-  max-width: 40ch;
-  color: var(--chem-ink-secondary);
-  font-size: 0.95rem;
-  line-height: 1.68;
-}
+/* ── Register panel ── */
 
 .register-panel {
-  width: min(29rem, 100%);
-  justify-self: end;
-  padding: 2.1rem 1.9rem;
+  width: min(28rem, 100%);
+  padding: 1.6rem 1.6rem;
   border-radius: var(--chem-radius-lg);
-  border: 1px solid var(--chem-glass-border);
-  border-top: 3px solid var(--chem-primary);
-  background: rgba(245, 244, 240, 0.64);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--chem-shadow-lg);
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-elevated);
+  box-shadow: var(--chem-shadow-sm);
 }
 
 .eyebrow {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.25rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   font-size: var(--chem-text-xs);
   font-weight: 700;
-  color: var(--chem-accent);
+  color: var(--uni-green-400);
   font-family: var(--chem-font-label);
 }
 
 h2 {
   margin: 0;
-  font-size: clamp(1.45rem, 3vw, 2.05rem);
+  font-size: clamp(1.3rem, 2.5vw, 1.7rem);
   font-weight: 700;
   color: var(--chem-ink);
   font-family: var(--chem-font-heading);
 }
 
 .lead {
-  margin: 0.75rem 0 1.5rem;
+  margin: 0.5rem 0 1.1rem;
   color: var(--chem-ink-secondary);
-  line-height: 1.6;
+  line-height: 1.55;
   font-size: var(--chem-text-sm);
 }
 
 .register-form {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 label {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
   color: var(--chem-ink-secondary);
   font-weight: 600;
   font-size: var(--chem-text-sm);
@@ -110,18 +140,18 @@ label {
 }
 
 .optional-tag {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--chem-ink-tertiary);
-  background: rgba(168, 161, 176, 0.15);
-  padding: 0.1rem 0.4rem;
+  color: var(--chem-ink-soft);
+  background: rgba(158, 176, 162, 0.16);
+  padding: 0.1rem 0.35rem;
   border-radius: var(--chem-radius-sm);
 }
 
 .field-hint {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 400;
   color: var(--chem-ink-tertiary);
 }
@@ -129,8 +159,8 @@ label {
 input {
   border: 1px solid var(--chem-border);
   border-radius: var(--chem-radius);
-  background: rgba(237, 233, 240, 0.7);
-  padding: 0.75rem 0.9rem;
+  background: var(--chem-input-bg);
+  padding: 0.6rem 0.75rem;
   font: inherit;
   transition:
     border-color var(--chem-transition),
@@ -139,56 +169,60 @@ input {
 
 input:focus {
   outline: none;
-  border-color: var(--chem-accent);
-  box-shadow: 0 0 0 3px rgba(123, 90, 158, 0.17);
+  border-color: var(--uni-green-500);
+  box-shadow: 0 0 0 3px rgba(49, 113, 84, 0.13);
 }
 
 .error-message {
   margin: 0;
-  padding: 0.6rem 0.8rem;
+  padding: 0.5rem 0.7rem;
   background: var(--chem-error-bg);
   color: var(--chem-error);
   border-radius: var(--chem-radius-sm);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
 }
 
 .submit-button {
   border: none;
-  border-radius: var(--chem-radius-pill);
+  border-radius: var(--chem-radius);
   width: 100%;
-  padding: 0.86rem 1.2rem;
+  padding: 0.7rem 1.2rem;
   font: inherit;
   font-weight: 700;
+  font-family: var(--chem-font-label);
   color: #fff;
-  background: var(--chem-primary);
+  background: var(--uni-green-500);
   cursor: pointer;
+  letter-spacing: 0.02em;
+  margin-top: 0.25rem;
   transition:
     background var(--chem-transition),
     transform var(--chem-transition),
     box-shadow var(--chem-transition);
-  margin-top: 0.4rem;
 }
 
 .submit-button:hover {
-  background: var(--chem-primary-dark);
+  background: var(--uni-green-700);
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(211, 47, 47, 0.23);
+  box-shadow: 0 4px 12px rgba(49, 113, 84, 0.25);
 }
 
 .submit-button:disabled {
   opacity: 0.6;
   cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 .login-redirect {
-  margin: 1.2rem 0 0;
+  margin: 1rem 0 0;
   text-align: center;
   font-size: var(--chem-text-sm);
   color: var(--chem-ink-secondary);
 }
 
 .login-redirect a {
-  color: var(--chem-accent);
+  color: var(--uni-green-500);
   text-decoration: none;
   font-weight: 600;
 }
@@ -197,7 +231,8 @@ input:focus {
   text-decoration: underline;
 }
 
-/* Success panel */
+/* ── Success panel ── */
+
 .success-panel {
   display: grid;
   gap: 0.8rem;
@@ -207,16 +242,16 @@ input:focus {
 
 .success-icon {
   font-size: 3rem;
-  color: var(--chem-success, #2e7d32);
+  color: var(--chem-success);
   margin: 0;
 }
 
 .success-panel h2 {
-  color: var(--chem-success, #2e7d32);
+  color: var(--chem-success);
 }
 
 .success-panel a {
-  color: var(--chem-accent);
+  color: var(--uni-green-500);
   text-decoration: none;
   font-weight: 600;
 }
@@ -235,12 +270,41 @@ input:focus {
   margin-top: 0.5rem;
 }
 
+/* ── Institutional footer ── */
+
+.institutional-footer {
+  margin-top: 0.3rem;
+  padding: 0.55rem 1rem;
+  text-align: center;
+  font-size: 0.66rem;
+  color: var(--chem-ink-soft);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--chem-font-label);
+  border-top: 1px solid var(--chem-border-subtle);
+  width: 100%;
+  max-width: 48rem;
+}
+
+/* ── Responsive ── */
+
 @media (max-width: 860px) {
   .register-shell {
-    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.8rem;
   }
 
-  .register-panel {
-    justify-self: stretch;
+  .institution-logo {
+    height: 56px;
+  }
+}
+
+@media (max-width: 520px) {
+  .institution-logos {
+    gap: 0.7rem;
+  }
+
+  .institution-logo {
+    height: 46px;
   }
 }

@@ -1,9 +1,9 @@
 {
   "app": {
     "brand": {
-      "kicker": "Chemistry Apps",
-      "title": "Scientific Control Desk",
-      "caption": "Central navigation for apps, jobs and account access."
+      "kicker": "CADMA-Chem Suite",
+      "title": "Computational Chemistry to Evaluate Nature",
+      "caption": "Rate constants, reactivity, ADMET — UAM-UNAM."
     },
     "actions": {
       "signIn": "Sign in",
@@ -91,15 +91,23 @@
       "signIn": "Sign in",
       "brandMessage": "Brand message"
     },
+    "institutional": {
+      "groupName": "Theoretical and Applied Chemistry",
+      "universities": "U A M  —  U N A M",
+      "director": "Project Director: Dra. Annia Galano",
+      "tagline": "Computational Chemistry to Evaluate Nature",
+      "suiteDescription": "A computational tools suite for the CADMA-Chem protocol, rate-constant estimation in solution, and molecular property prediction.",
+      "fundingLine": "SECIHTI  ·  UNAM Facultad de Química  ·  UAM Iztapalapa"
+    },
     "hero": {
-      "kicker": "App Chemistry Sense",
-      "title": "Designing Scientific Workflows with Clarity",
-      "copy": "Enter your scientific workspace to orchestrate calculations, monitor distributed jobs and manage secure access controls from a single command surface."
+      "kicker": "CADMA-Chem Suite",
+      "title": "Computational Chemistry Toolkit",
+      "copy": "A platform for chemical reactivity analysis, rate-constant calculations, and ADMET property prediction in solution."
     },
     "panel": {
-      "eyebrow": "Identity Gateway",
-      "title": "Scientific Access",
-      "copy": "Sign in to load your role, group access, app visibility rules and personalized workspace.",
+      "eyebrow": "Scientific Access",
+      "title": "Sign In",
+      "copy": "Enter your credentials to access the suite of computational chemistry tools.",
       "noAccount": "Don't have an account?",
       "createAccount": "Create one"
     },
@@ -111,6 +119,28 @@
     },
     "errors": {
       "unableToAuthenticate": "Unable to authenticate."
+    },
+    "developers": {
+      "ariaLabel": "Development team",
+      "heading": "Development Team",
+      "visitProfile": "Visit profile of {{ name }}",
+      "anniaGalano": "Annia Galano",
+      "miguelReina": "Miguel Reina",
+      "luisAyala": "Luis Felipe Ayala",
+      "cesarGuzman": "César Gerardo Guzmán López",
+      "eduardoGuzman": "Eduardo Gabriel Guzmán López",
+      "roleDirector": "Project Director",
+      "roleResearcher": "Researcher",
+      "roleDeveloper": "Lead Developer",
+      "roleCreator": "Creator & Developer",
+      "affUAM": "UAM Iztapalapa",
+      "affUNAM": "UNAM FQ"
+    },
+    "publications": {
+      "ariaLabel": "Recent publications",
+      "heading": "Recent Publications",
+      "button": "Relevant Publications →",
+      "viewAllLink": "#"
     }
   },
   "register": {
@@ -119,9 +149,9 @@
       "brandMessage": "Brand message"
     },
     "hero": {
-      "kicker": "App Chemistry Sense",
+      "kicker": "CADMA-Chem Suite",
       "title": "Join the Scientific Platform",
-      "copy": "Create your account to access the scientific tools. If you have an invitation link, paste the token below to join your team's workspace."
+      "copy": "Create your account to access the computational chemistry toolkit. If you have an invitation link, paste the token below to join your team's workspace."
     },
     "panel": {
       "eyebrow": "Identity Registration",
@@ -424,15 +454,15 @@
       "ariaLabel": "Historical tunnel jobs"
     }
   },
-  "molarFractions": {
-    "header": {
-      "eyebrow": "Molar Fractions",
-      "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
-    },
-    "form": {
-      "title": "Data Entry",
-      "ariaLabel": "Input parameters",
+    "molarFractions": {
+      "header": {
+        "eyebrow": "Molar Fractions",
+        "title": "Acid-Base Equilibrium Fractions",
+        "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
+      },
+      "form": {
+        "title": "pka definition",
+        "ariaLabel": "pka definition",
       "inputMode": "Input mode",
       "singleMode": "Single species",
       "batchMode": "Batch CSV",
@@ -1412,13 +1442,7 @@
     },
     "hero": {
       "tag": "CADMA-Chem Protocol",
-      "title": "CADMAPy",
-      "infoAria": "Show workflow overview",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "step3": "Configure your ranking formula",
-      "step4": "View scores & export results"
+      "title": "CADMAPy"
     },
     "steps": {
       "ariaLabel": "Workflow steps",
@@ -1590,6 +1614,16 @@
       "toxicity": "Toxicity",
       "admeHits": "ADME hits"
     },
+    "doc": {
+      "open": "Documentation",
+      "tabOverview": "Overview",
+      "tabWorkflow": "Workflow",
+      "tabAdmeIntervals": "ADME intervals",
+      "tabAdmeProperties": "ADME properties",
+      "tabReferenceSets": "Reference sets",
+      "tabSelectionScores": "Selection scores",
+      "tabConformers": "Conformers"
+    },
     "step4": {
       "backToFormula": "Back to formula",
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -1620,7 +1654,7 @@
     },
     "familyDetail": {
       "selectFamily": "Select family →",
-      "copyFamily": "⎘ Copy family",
+      "copyFamily": "⎘ Copy and edit family",
       "rootReadOnly": "This root family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
       "groupReadOnly": "This shared group family is read-only for you. Create an editable copy to add, remove or update compounds and references.",
       "defaultReadOnly": "This family is read-only in your current scope. Create an editable copy to modify it safely.",
@@ -1629,6 +1663,7 @@
       "readOnlyTemplate": "Read-only template",
       "readOnly": "Read only",
       "nullCount": "null",
+      "softwareLabel": "Software",
       "sha256Prefix": "SHA-256:",
       "backToList": "Back to list",
       "back": "← Back",
@@ -1642,6 +1677,7 @@
       "name": "Name *",
       "disease": "Disease *",
       "description": "Description",
+      "paperAuthors": "Authors",
       "paperReference": "Paper reference",
       "paperReferencePlaceholder": "Author et al. (2025)",
       "paperUrl": "Paper URL / DOI",
@@ -1666,13 +1702,25 @@
       "smilesPlaceholder": "e.g. CCO",
       "nameLabel": "Name",
       "compoundNamePlaceholder": "Compound name",
+      "paperAuthorsPlaceholder": "Author, Author & Author (Year)",
       "evidenceNote": "Evidence note",
       "optionalNote": "Optional note",
+      "toxicityDT": "Dev. Toxicity",
+      "toxicityM": "Mutagenicity",
+      "toxicityLD50": "LD50",
+      "saScore": "SA Score",
+      "optionalMetric": "Optional (auto if empty)",
       "adding": "Adding…",
       "addCompoundAdme": "Add compound (ADME auto-computed)",
       "unnamedCompound": "Unnamed compound",
       "compoundDetailsTitle": "Compound details",
       "closeCompound": "Close compound details",
+      "prevCompound": "Previous compound",
+      "nextCompound": "Next compound",
+      "boxplotLabel": "Charts",
+      "boxplotTitle": "Boxplots",
+      "boxplotAria": "Boxplot chart of molecular properties across all compounds",
+      "boxplotEmpty": "No compounds to chart.",
       "rdkitPreview": "RDKit preview",
       "generatingPreview": "Generating molecule preview…",
       "scientificContext": "Scientific context",
@@ -1686,9 +1734,12 @@
       "tableHeaderRank": "#",
       "tableHeaderName": "Name",
       "tableHeaderSmiles": "SMILES",
-      "tableHeaderReference": "Reference",
-      "tableHeaderUrl": "URL / DOI",
+      "tableHeaderReference": "Paper Title",
+      "tableHeaderAuthors": "Authors",
+      "tableHeaderUrl": "Reference/DOI",
       "tableHeaderNote": "Note",
+      "duplicateCompound": "Duplicate this compound",
+      "seedBrowseHint": "This is a read-only seed. Click 'Copy family' above to create an editable version where you can add, duplicate, or remove compounds.",
       "formatBytes": "B",
       "formatKb": "KB",
       "formatMb": "MB",
@@ -1697,6 +1748,11 @@
       "rangeLabel": "Min — Max",
       "nullsLabel": "Nulls",
       "meanSdLabel": "Mean ± SD"
+    },
+    "compoundDetail": {
+      "admeGroup": "ADME Properties",
+      "toxicityGroup": "Toxicity",
+      "saGroup": "Synthetic Accessibility"
     },
      "importer": {
        "ignoreColumn": "Ignore this column",
@@ -1767,6 +1823,7 @@
       "download": "Download",
       "edit": "Edit",
       "delete": "Delete",
+      "duplicate": "Duplicate",
       "add": "Add",
       "close": "Close",
       "createFamily": "Create family",

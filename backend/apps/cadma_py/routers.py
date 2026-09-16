@@ -503,6 +503,7 @@ class CadmaPyJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
                 library_id=library_id,
                 smiles=str(data["smiles"]),
                 name=str(data.get("name", "")),
+                paper_authors=str(data.get("paper_authors", "")),
                 paper_reference=str(data.get("paper_reference", "")),
                 paper_url=str(data.get("paper_url", "")),
                 evidence_note=str(data.get("evidence_note", "")),

@@ -471,6 +471,9 @@ jobs:
               exit "$MIGRATE_EXIT_CODE"
             fi
 
+            # Refrescar datos semilla de RETT desde el CSV actual
+            poetry run python manage.py refresh_rett_seed 2>&1 || true
+
             cd "$VM_PROJECT_PATH"
 
             # Liberar espacio antes de build: eliminar imágenes no usadas de builds anteriores.

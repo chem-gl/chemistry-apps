@@ -1,7 +1,7 @@
 <!-- cadma-py-family-detail.component.html: Panel de detalle de familia de referencia con promedios, trazabilidad y scope. -->
 <div class="family-detail">
 
-    <!-- Cabecera: scope, creador, permisos, fecha + botón editar -->
+    <!-- Cabecera: acciones -->
     <div class="detail-header">
         @if (mode() === 'browsing') {
         <button class="btn-back-browse" type="button" (click)="closeBrowsing.emit()"
@@ -9,28 +9,6 @@
             {{ 'cadmaPy.familyDetail.back' | transloco }}
         </button>
         }
-        <div class="scope-badge" [class]="scopeConfig().cssClass">
-            <span class="scope-icon">{{ scopeConfig().icon }}</span>
-            <span class="scope-text">{{ scopeConfig().label }}</span>
-        </div>
-        <div class="header-meta">
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.createdBy' | transloco }}</span>
-                <strong>{{ library().created_by_name || '—' }}</strong>
-            </span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.date' | transloco }}</span>
-                <strong>{{ createdDate() }}</strong>
-            </span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item">
-                <span class="meta-label">{{ 'cadmaPy.familyDetail.access' | transloco }}</span>
-                <strong [class.editable]="library().editable" [class.readonly]="!library().editable">
-                    {{ editableLabel() }}
-                </strong>
-            </span>
-        </div>
         @if (library().editable && !editingFamily()) {
         <button class="btn-edit-family" type="button" (click)="startFamilyEdit()"
             [title]="'cadmaPy.familyDetail.editFamilyTitle' | transloco">
@@ -48,6 +26,10 @@
             {{ selectionActionLabel() }}
         </button>
         }
+        <button class="btn-ghost btn-sm" type="button" (click)="openBoxplot()"
+            [title]="'cadmaPy.familyDetail.boxplotTitle' | transloco">
+            📊 {{ 'cadmaPy.familyDetail.boxplotLabel' | transloco }}
+        </button>
     </div>
 
     <!-- Modo edición de metadatos de la familia -->
@@ -138,13 +120,6 @@
     </div>
     }
 
-    @if (!library().editable && canForkFamily()) {
-    <p class="detail-desc">{{ readOnlyGuidance() }} {{ 'cadmaPy.familyDetail.readOnlyGuidance' | transloco }}</p>
-    }
-
-    @if (library().description) {
-    <p class="detail-desc">{{ library().description }}</p>
-    }
     }
 
     <!-- Promedios de métricas -->
@@ -157,6 +132,7 @@
             <thead>
                 <tr>
                     <th>{{ 'cadmaPy.familyDetail.metricLabel' | transloco }}</th>
+                    <th class="col-source">{{ 'cadmaPy.familyDetail.softwareLabel' | transloco }}</th>
                     <th class="col-num">{{ 'cadmaPy.familyDetail.meanSdLabel' | transloco }}</th>
                     <th class="col-num">{{ 'cadmaPy.familyDetail.rangeLabel' | transloco }}</th>
                     @if (hasAnyNulls()) {
@@ -165,9 +141,10 @@
                 </tr>
             </thead>
             <tbody>
-                @for (stat of metricStats(); track stat.key) {
-                <tr [class.has-nulls]="stat.nullCount > 0">
+                @for (stat of metricStats(); track trackStat($index, stat)) {
+                <tr [class.has-nulls]="stat.nullCount > 0" [class.multi-source]="stat.source !== ''">
                     <td class="col-label">{{ stat.label }}</td>
+                    <td class="col-source">{{ stat.source || '—' }}</td>
                     <td class="col-num col-mean-sd">
                         <span class="mean-value">{{ formatNumber(stat.mean) }}</span>
                         <span class="sd-value">± {{ formatNumber(stat.stdev) }}</span>
@@ -244,6 +221,13 @@
                 </label>
             </div>
             <div class="add-row">
+                <label class="add-label full">{{ 'cadmaPy.familyDetail.paperAuthors' | transloco }}
+                    <input type="text" class="add-input" [ngModel]="addAuthors()"
+                        (ngModelChange)="addAuthors.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.paperAuthorsPlaceholder' | transloco" />
+                </label>
+            </div>
+            <div class="add-row">
                 <label class="add-label">{{ 'cadmaPy.familyDetail.paperReference' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addPaperRef()"
                         (ngModelChange)="addPaperRef.set($event)"
@@ -259,6 +243,28 @@
                 <label class="add-label full">{{ 'cadmaPy.familyDetail.evidenceNote' | transloco }}
                     <input type="text" class="add-input" [ngModel]="addNote()" (ngModelChange)="addNote.set($event)"
                         [placeholder]="'cadmaPy.familyDetail.optionalNote' | transloco" />
+                </label>
+            </div>
+            <div class="add-row add-row-metrics">
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityDT' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addDT()"
+                        (ngModelChange)="addDT.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityM' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addM()"
+                        (ngModelChange)="addM.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.toxicityLD50' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addLD50()"
+                        (ngModelChange)="addLD50.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
+                </label>
+                <label class="add-label metric">{{ 'cadmaPy.familyDetail.saScore' | transloco }}
+                    <input type="number" step="any" class="add-input num" [ngModel]="addSA()"
+                        (ngModelChange)="addSA.set($event)"
+                        [placeholder]="'cadmaPy.familyDetail.optionalMetric' | transloco" />
                 </label>
             </div>
             @if (addError()) {
@@ -284,6 +290,7 @@
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderRank' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderName' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderSmiles' | transloco }}</th>
+                        <th>{{ 'cadmaPy.familyDetail.tableHeaderAuthors' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderReference' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderUrl' | transloco }}</th>
                         <th>{{ 'cadmaPy.familyDetail.tableHeaderNote' | transloco }}</th>
@@ -294,20 +301,19 @@
                 </thead>
                 <tbody>
                     @for (row of library().rows; track row.smiles; let i = $index) {
-                    <tr>
+                    <tr class="compound-row" (click)="openCompoundDetail(row, i)" tabindex="0"
+                        (keydown.enter)="openCompoundDetail(row, i)">
                         <td class="rank-num">{{ i + 1 }}</td>
                         <td>
-                            <button class="compound-open-btn" type="button" (click)="openCompoundDetail(row, i)"
+                            <button class="compound-open-btn" type="button" tabindex="-1"
                                 [title]="'cadmaPy.familyDetail.openDetails' | transloco">
                                 {{ row.name || ('cadmaPy.familyDetail.unnamedCompound' | transloco) }}
                             </button>
                         </td>
                         <td class="smiles-cell mono">
-                            <button class="compound-open-btn mono" type="button" (click)="openCompoundDetail(row, i)"
-                                [title]="'cadmaPy.familyDetail.openPreview' | transloco">
-                                {{ row.smiles }}
-                            </button>
+                            <span class="smiles-text">{{ row.smiles }}</span>
                         </td>
+                        <td class="ref-cell">{{ row.paper_authors || '—' }}</td>
                         <td class="ref-cell">{{ row.paper_reference || '—' }}</td>
                         <td class="ref-cell">
                             @if (row.paper_url) {
@@ -321,6 +327,9 @@
                             <button class="btn-row-edit" type="button"
                                 [title]="'cadmaPy.familyDetail.editReference' | transloco"
                                 (click)="startEditRow(i, row)">✏️ {{ 'cadmaPy.general.edit' | transloco }}</button>
+                            <button class="btn-row-duplicate" type="button"
+                                [title]="'cadmaPy.familyDetail.duplicateCompound' | transloco"
+                                (click)="duplicateRow(i)">📋 {{ 'cadmaPy.general.duplicate' | transloco }}</button>
                             <button class="btn-row-delete" type="button"
                                 [title]="'cadmaPy.familyDetail.removeCompound' | transloco" (click)="removeRow(i)"
                                 [disabled]="deletingRowIndex() === i">🗑️ {{ 'cadmaPy.general.delete' | transloco }}</button>
@@ -342,10 +351,22 @@
                     <h4>{{ selectedCompound()?.name || ('cadmaPy.familyDetail.compoundDetailsTitle' | transloco) }}</h4>
                     <p class="compound-modal-smiles mono">{{ selectedCompound()?.smiles || '—' }}</p>
                 </div>
-                <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
-                    [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
-                    ×
-                </button>
+                <div class="compound-modal-nav">
+                    <button class="compound-nav-btn" type="button" (click)="navigateCompound(-1)"
+                        [disabled]="!hasPrevCompound()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.prevCompound' | transloco">
+                        ◀
+                    </button>
+                    <button class="compound-nav-btn" type="button" (click)="navigateCompound(1)"
+                        [disabled]="!hasNextCompound()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.nextCompound' | transloco">
+                        ▶
+                    </button>
+                    <button class="compound-close-btn" type="button" (click)="closeCompoundDetail()"
+                        [attr.aria-label]="'cadmaPy.familyDetail.closeCompound' | transloco">
+                        ×
+                    </button>
+                </div>
             </div>
 
             <div class="compound-modal-grid">
@@ -377,6 +398,11 @@
                                 (ngModelChange)="editDraft.set({...editDraft(), name: $event})" />
                         </label>
                         <label class="edit-label full">
+                            <span>{{ 'cadmaPy.familyDetail.paperAuthors' | transloco }}</span>
+                            <input type="text" class="edit-input" [ngModel]="editDraft().paper_authors ?? ''"
+                                (ngModelChange)="editDraft.set({...editDraft(), paper_authors: $event})" />
+                        </label>
+                        <label class="edit-label full">
                             <span>{{ 'cadmaPy.familyDetail.paperReference' | transloco }}</span>
                             <input type="text" class="edit-input" [ngModel]="editDraft().paper_reference ?? ''"
                                 (ngModelChange)="editDraft.set({...editDraft(), paper_reference: $event})" />
@@ -405,8 +431,11 @@
                         </div>
                     </div>
                     } @else {
-                    @if (selectedCompound()?.paper_reference || selectedCompound()?.paper_url) {
+                    @if (selectedCompound()?.paper_authors || selectedCompound()?.paper_reference || selectedCompound()?.paper_url) {
                     <div class="compound-reference-box">
+                        @if (selectedCompound()?.paper_authors) {
+                        <p class="compound-authors-text">{{ selectedCompound()?.paper_authors }}</p>
+                        }
                         @if (selectedCompound()?.paper_reference) {
                         <p class="compound-reference-text">{{ selectedCompound()?.paper_reference }}</p>
                         }
@@ -422,15 +451,108 @@
                     }
                     }
 
-                    <div class="compound-metric-grid">
-                        @for (metric of selectedCompoundMetrics(); track metric.key) {
-                        <div class="compound-metric-card">
-                            <span class="compound-metric-label">{{ metric.label }}</span>
-                            <strong class="compound-metric-value">{{ formatNumber(metric.value) }}</strong>
+                    <div class="compound-metric-grouped">
+                        <!-- ADME row -->
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.admeGroup' | transloco }}</h6>
+                            <div class="metric-group-row">
+                                @for (m of selectedCompoundAdme(); track m.key) {
+                                <div class="metric-chip">
+                                    <span class="mc-key">{{ m.label }}</span>
+                                    <strong class="mc-val">{{ formatMetricValue(m.key, m.value) }}</strong>
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Toxicity row -->
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.toxicityGroup' | transloco }}</h6>
+                            <div class="metric-group-cards">
+                                @for (tox of selectedCompoundToxicity(); track tox.key) {
+                                <div class="tox-card">
+                                    <strong class="tox-card-label">{{ tox.label }}</strong>
+                                    @for (v of tox.values; track v.source) {
+                                    <div class="tox-row">
+                                        <span class="tox-source">{{ v.source }}</span>
+                                        <span class="tox-val">{{ v.value !== null && v.value !== undefined ? formatNumber(v.value) : '—' }}</span>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- SA row -->
+                        @if (selectedCompoundSA(); as sa) {
+                        <div class="metric-group">
+                            <h6 class="metric-group-title">{{ 'cadmaPy.compoundDetail.saGroup' | transloco }}</h6>
+                            <div class="metric-group-cards">
+                                <div class="tox-card">
+                                    <strong class="tox-card-label">{{ sa.label }}</strong>
+                                    @for (v of sa.values; track v.source) {
+                                    <div class="tox-row">
+                                        <span class="tox-source">{{ v.source }}</span>
+                                        <span class="tox-val">{{ v.value !== null && v.value !== undefined ? formatNumber(v.value) : '—' }}</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
                         }
                     </div>
                 </div>
+            </div>
+        </section>
+    </dialog>
+
+    <dialog #boxplotDialog class="boxplot-dialog" (click)="onBoxplotBackdropClick($event)"
+        (keydown)="onBoxplotBackdropClick($event)">
+        <section class="boxplot-modal">
+            <div class="boxplot-header">
+                <h4>Boxplot Charts — {{ library().name }}</h4>
+                <button class="compound-close-btn" type="button" (click)="closeBoxplot()"
+                    [attr.aria-label]="'cadmaPy.familyDetail.closeBoxplot' | transloco">×</button>
+            </div>
+            <div class="boxplot-body">
+                @if (library().rows.length > 0) {
+                <div class="boxplot-toggles-row">
+                    <div class="boxplot-group-toggles">
+                        @for (group of boxplotGroups; track group) {
+                        <button class="boxplot-toggle-btn" type="button"
+                            [class.active]="isGroupVisible(group)"
+                            (click)="toggleBoxplotGroup(group)">
+                            {{ group }} {{ isGroupVisible(group) ? '✓' : '✗' }}
+                        </button>
+                        }
+                    </div>
+                    <div class="boxplot-metric-toggles">
+                        @for (group of boxplotGroups; track group) {
+                        <div class="boxplot-metric-group">
+                            <span class="boxplot-metric-group-label">{{ group }}</span>
+                            <div class="boxplot-metric-buttons">
+                                @for (m of visibleMetricsForGroup(group); track m.key) {
+                                <button class="boxplot-metric-btn" type="button"
+                                    [class.off]="isMetricHidden(m.key)"
+                                    [class.disabled]="!isGroupVisible(group)"
+                                    (click)="toggleBoxplotMetric(m.key)">
+                                    {{ m.label }}
+                                </button>
+                                }
+                                @if (visibleMetricsForGroup(group).length === 0) {
+                                <span class="boxplot-metric-empty">—</span>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                <app-scientific-chart [ariaLabel]="'cadmaPy.familyDetail.boxplotAria' | transloco"
+                    [options]="boxplotOptions()" [chartHeight]="'700px'"
+                    (chartClick)="onBoxplotChartClick($event)"></app-scientific-chart>
+                } @else {
+                <p class="status-message">{{ 'cadmaPy.familyDetail.boxplotEmpty' | transloco }}</p>
+                }
             </div>
         </section>
     </dialog>
