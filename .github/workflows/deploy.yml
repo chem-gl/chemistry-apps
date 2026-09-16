@@ -393,11 +393,21 @@ jobs:
               awk -F= -v key="$1" '$1 == key {sub(/^[^=]*=/, ""); print; exit}' .env
             }
 
+            # Tag en uso por un contenedor en marcha (fuente de verdad si el
+            # .env en disco está incompleto; p. ej. tras un deploy fallido).
+            live_tag() {
+              docker ps --format '{{.Names}} {{.Image}}' 2>/dev/null \
+                | awk -v name="$1" '$1 == name {sub(/.*:/, "", $2); print $2; exit}'
+            }
+
             previous_image_tag="$(env_value IMAGE_TAG)"
             previous_backend_tag="$(env_value IMAGE_TAG_BACKEND)"
             previous_frontend_tag="$(env_value IMAGE_TAG_FRONTEND)"
             previous_backend_tag="${previous_backend_tag:-$previous_image_tag}"
             previous_frontend_tag="${previous_frontend_tag:-$previous_image_tag}"
+            # Fallback: contenedores corriendo (nombres estables del compose).
+            [ -n "$previous_backend_tag" ] || previous_backend_tag="$(live_tag chemistry-apps-backend-1)"
+            [ -n "$previous_frontend_tag" ] || previous_frontend_tag="$(live_tag chemistry-apps-frontend-1)"
 
             if [ "$REBUILD_BACKEND" = "false" ]; then
               [ -n "$previous_backend_tag" ] || { echo "ERROR: no existe tag previo del backend."; exit 1; }
