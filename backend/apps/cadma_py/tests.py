@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -29,6 +29,10 @@ from .services import (
     preview_reference_sample_detail,
     remove_reference_row,
     update_reference_library,
+    _normalize_numeric_value,
+    _parse_source_configs_json,
+    _read_sample_text,
+    ranking_to_csv_rows,
 )
 
 TEST_AUTH_VALUE = "unused-auth-fixture"
@@ -603,3 +607,126 @@ class CadmaPyApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["status"], "paused")
         mock_prepare_paused.assert_called_once()
+
+
+class CadmaPyServiceEdgeTests(TestCase):
+    """Cubre validaciones, serialización y entradas externas sin I/O real."""
+
+    def test_empty_sources_require_at_least_one_file(self) -> None:
+        with self.assertRaisesMessage(ValueError, "al menos un CSV"):
+            build_compound_rows_from_sources(require_evidence=False)
+
+    def test_evidence_is_required_for_reference_rows(self) -> None:
+        with self.assertRaisesMessage(ValueError, "trazabilidad bibliográfica"):
+            build_compound_rows_from_sources(
+                combined_csv_text="name,smiles,DT,M,LD50,SA\nA,CCO,0,0,1,5",
+                require_evidence=True,
+            )
+
+    def test_numeric_labels_and_sa_scale_are_normalized(self) -> None:
+        self.assertEqual(_normalize_numeric_value("M", "positive"), 1.0)
+        self.assertEqual(_normalize_numeric_value("DT", "safe"), 0.0)
+        self.assertEqual(_normalize_numeric_value("SA", "5"), 55.55555555555556)
+        self.assertIsNone(_normalize_numeric_value("MW", "not-a-number"))
+
+    def test_source_config_json_rejects_invalid_shapes_and_skips_blank_files(self) -> None:
+        with self.assertRaisesMessage(ValueError, "JSON válido"):
+            _parse_source_configs_json("{")
+        with self.assertRaisesMessage(ValueError, "debe ser una lista"):
+            _parse_source_configs_json("{}")
+        with self.assertRaisesMessage(ValueError, "objeto de configuración"):
+            _parse_source_configs_json("[1]")
+        self.assertEqual(
+            _parse_source_configs_json(
+                '[{"content_text": "  "}, {"filename": "a.csv", "content_text": "x"}]'
+            ),
+            [{"filename": "a.csv", "content_text": "x"}],
+        )
+
+    def test_ranking_csv_escapes_delimiters_and_quotes(self) -> None:
+        rows = ranking_to_csv_rows(
+            [
+                {
+                    "name": 'A, "quoted"',
+                    "smiles": "CCO",
+                    "selection_score": 0.5,
+                    "adme_alignment": 0.1,
+                    "toxicity_alignment": 0.2,
+                    "sa_alignment": 0.3,
+                    "adme_hits_in_band": 2,
+                    "metrics_in_band": ["MW", "PSA"],
+                    "best_fit_summary": "line\nbreak",
+                }
+            ]
+        )
+        self.assertIn('"A, ""quoted"""', rows[1])
+        self.assertIn('"line\nbreak"', rows[1])
+
+    @patch("apps.cadma_py.services._resolve_sample_path")
+    def test_read_sample_text_wraps_missing_file(self, mock_path: MagicMock) -> None:
+        mock_path.return_value = Path("/does/not/exist.csv")
+        with self.assertRaisesMessage(ValueError, "no está disponible"):
+            _read_sample_text("neuro")
+
+
+class CadmaPyRouterBranchTests(TestCase):
+    """Prueba ramas de router aislando servicios y almacenamiento externo."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.base = "/api/cadma-py/jobs/"
+
+    def test_reference_library_detail_requires_id(self) -> None:
+        from apps.cadma_py.routers import CadmaPyJobViewSet
+        from rest_framework.test import APIRequestFactory
+
+        request = APIRequestFactory().get("/")
+        response = CadmaPyJobViewSet().reference_library_detail(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("apps.cadma_py.routers.list_visible_reference_libraries", return_value=[])
+    def test_reference_libraries_get_returns_empty_list(self, _mock: MagicMock) -> None:
+        response = self.client.get(f"{self.base}reference-libraries/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, [])
+
+    @patch("apps.cadma_py.routers.get_reference_library_for_actor")
+    def test_detail_maps_permission_error_to_403(self, mock_get: MagicMock) -> None:
+        mock_get.side_effect = PermissionError("denied")
+        response = self.client.get(f"{self.base}reference-libraries/not-found/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["detail"], "denied")
+
+    @patch("apps.cadma_py.routers.preview_library_deletion")
+    def test_deletion_preview_maps_not_found_to_404(self, mock_preview: MagicMock) -> None:
+        mock_preview.side_effect = ValueError("No existe la familia")
+        response = self.client.get(
+            f"{self.base}reference-libraries/id/deletion-preview/"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch("apps.cadma_py.routers.remove_reference_row")
+    def test_delete_row_returns_no_content(self, mock_remove: MagicMock) -> None:
+        response = self.client.delete(f"{self.base}reference-libraries/id/rows/0/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        mock_remove.assert_called_once()
+
+    def test_add_row_requires_library_id(self) -> None:
+        from apps.cadma_py.routers import CadmaPyJobViewSet
+        from rest_framework.test import APIRequestFactory
+
+        request = APIRequestFactory().post("/", {"smiles": "CCO", "name": "A"})
+        response = CadmaPyJobViewSet().add_reference_row(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("apps.cadma_py.routers.build_reference_artifacts_zip_bytes", return_value=b"zip")
+    @patch("apps.cadma_py.routers.get_reference_library_for_actor")
+    def test_report_inputs_returns_zip_when_sources_exist(
+        self, mock_get: MagicMock, _mock_zip: MagicMock
+    ) -> None:
+        library = MagicMock(id="lib-1")
+        library.source_files.count.return_value = 1
+        mock_get.return_value = library
+        response = self.client.get(f"{self.base}reference-libraries/lib/report-inputs/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "application/zip")

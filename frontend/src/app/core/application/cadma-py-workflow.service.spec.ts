@@ -2,7 +2,7 @@
 
 import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CadmaPyApiService, CadmaPyResultView } from '../api/cadma-py-api.service';
 import { JobLogsPageView, JobsApiService, ScientificJobView } from '../api/jobs-api.service';
@@ -35,7 +35,11 @@ describe('CadmaPyWorkflowService', () => {
     listJobs: ReturnType<typeof vi.fn>;
     getJobLogs: ReturnType<typeof vi.fn>;
     deleteJob: ReturnType<typeof vi.fn>;
+    streamJobEvents: ReturnType<typeof vi.fn>;
+    streamJobLogEvents: ReturnType<typeof vi.fn>;
+    pollJobUntilCompleted: ReturnType<typeof vi.fn>;
   };
+  let cadmaApiMock: { createComparisonJob: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     globalThis.localStorage?.clear();
@@ -52,7 +56,11 @@ describe('CadmaPyWorkflowService', () => {
       listJobs: vi.fn(() => of([])),
       getJobLogs: vi.fn(() => of(emptyLogs)),
       deleteJob: vi.fn(() => of({ detail: 'deleted', jobId: 'cadma-history-1' })),
+      streamJobEvents: vi.fn(() => NEVER),
+      streamJobLogEvents: vi.fn(() => NEVER),
+      pollJobUntilCompleted: vi.fn(() => of()),
     };
+    cadmaApiMock = { createComparisonJob: vi.fn() };
 
     const injector: Injector = Injector.create({
       providers: [
@@ -60,7 +68,7 @@ describe('CadmaPyWorkflowService', () => {
         { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
         {
           provide: CadmaPyApiService,
-          useValue: { createComparisonJob: vi.fn() } as unknown as CadmaPyApiService,
+          useValue: cadmaApiMock as unknown as CadmaPyApiService,
         },
       ],
     });
@@ -156,5 +164,52 @@ describe('CadmaPyWorkflowService', () => {
     expect(workflowService.saCsvText()).toContain('3.2');
     expect(workflowService.sourceConfigsJson()).toContain('candidate-bundle.csv');
     expect(workflowService.activeSection()).toBe('result');
+  });
+
+  it('valida familia, etiqueta y candidatos antes de despachar', () => {
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('reference family');
+
+    workflowService.selectedReferenceLibraryId.set('family-1');
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('Project label');
+
+    workflowService.projectLabel.set('Batch');
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('candidate CSV');
+    expect(jobsApiMock.getScientificJobStatus).not.toHaveBeenCalled();
+  });
+
+  it('despacha un job válido y maneja errores de creación', () => {
+    workflowService.selectedReferenceLibraryId.set('family-1');
+    workflowService.projectLabel.set('Batch');
+    workflowService.smilesCsvText.set('smiles\nCCO');
+    cadmaApiMock.createComparisonJob.mockReturnValueOnce(
+      of({ id: 'job-1', status: 'pending', results: null }),
+    );
+
+    workflowService.dispatch();
+    expect(cadmaApiMock.createComparisonJob).toHaveBeenCalledWith(
+      expect.objectContaining({ reference_library_id: 'family-1', project_label: 'Batch' }),
+    );
+
+    cadmaApiMock.createComparisonJob.mockReturnValueOnce(throwError(() => new Error('network')));
+    workflowService.dispatch();
+    expect(workflowService.errorMessage()).toContain('network');
+  });
+
+  it('devuelve null al reanudar un borrador inexistente y tolera storage inválido', () => {
+    localStorage.setItem('chemistry-apps.cadma-py.paused-drafts.v1', '{invalid');
+    const injector: Injector = Injector.create({
+      providers: [
+        CadmaPyWorkflowService,
+        { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
+        { provide: CadmaPyApiService, useValue: { createComparisonJob: vi.fn() } as unknown as CadmaPyApiService },
+      ],
+    });
+    const freshService = runInInjectionContext(injector, () => injector.get(CadmaPyWorkflowService));
+
+    expect(freshService.pausedDrafts()).toEqual([]);
+    expect(freshService.resumePausedDraft('missing')).toBeNull();
   });
 });

@@ -3,8 +3,8 @@
 // quede acotado por el grupo activo seleccionado.
 
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { Router } from '@angular/router';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AuthApiService } from '../api/auth-api.service';
 import { IdentityApiService } from '../api/identity-api.service';
@@ -125,7 +125,7 @@ describe('IdentitySessionService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([]),
+        { provide: Router, useValue: { navigateByUrl: vi.fn() } },
         { provide: AuthApiService, useValue: authApiServiceMock },
         { provide: IdentityApiService, useValue: identityApiServiceMock },
       ],
@@ -248,5 +248,87 @@ describe('IdentitySessionService', () => {
       groupSlug: 'marcus-lab',
       roleInGroup: 'admin',
     });
+  });
+
+  it('devuelve false sin tokens y conserva el estado anónimo', () => {
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.initializeSession().subscribe((value) => (result = value));
+
+    expect(result).toBe(false);
+    expect(service.status()).toBe('anonymous');
+    expect(authApiServiceMock.getCurrentUserProfile).not.toHaveBeenCalled();
+  });
+
+  it('inicia sesión, persiste tokens y permite cerrar sesión', () => {
+    authApiServiceMock.login.mockReturnValue(of({ accessToken: 'access', refreshToken: 'refresh' }));
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.login('user', 'password').subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(service.accessToken()).toBe('access');
+    expect(localStorage.getItem('chemistry-apps.access-token')).toBe('access');
+
+    service.logout();
+    expect(service.isAuthenticated()).toBe(false);
+    expect(localStorage.getItem('chemistry-apps.access-token')).toBeNull();
+  });
+
+  it('recupera la sesión tras un primer fallo usando refresh token', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'expired');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    authApiServiceMock.getCurrentUserProfile
+      .mockReturnValueOnce(throwError(() => new Error('expired')))
+      .mockReturnValueOnce(of(currentUserProfile));
+    authApiServiceMock.refresh.mockReturnValue(
+      of({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+    );
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.initializeSession().subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(authApiServiceMock.refresh).toHaveBeenCalledWith('refresh');
+    expect(service.accessToken()).toBe('new-access');
+  });
+
+  it('aplica permisos de jobs según rol, propietario y grupo', () => {
+    const service = TestBed.inject(IdentitySessionService);
+    service.currentUser.set(currentUserProfile);
+
+    expect(service.canViewJob({ owner: 10, group: null })).toBe(true);
+    expect(service.canViewJob({ owner: 99, group: 2 })).toBe(true);
+    expect(service.canViewJob({ owner: 99, group: 8 })).toBe(false);
+    expect(service.canManageJob({ owner: 99, group: 2 })).toBe(false);
+    expect(service.resolveDeleteMode({ owner: 10, group: null })).toBe('hard');
+    expect(service.resolveDeleteMode({ owner: 99, group: 2 })).toBeNull();
+  });
+
+  it('resuelve grupos administrables y apps habilitadas', () => {
+    const service = TestBed.inject(IdentitySessionService);
+    service.currentUser.set(currentUserProfile);
+    service.accessibleApps.set([
+      buildAccessibleApp('smileit'),
+      { ...buildAccessibleApp('tunnel'), enabled: false },
+    ]);
+
+    expect(service.enabledRouteKeys()).toEqual(['smileit']);
+    expect(service.canAccessRoute('smileit')).toBe(true);
+    expect(service.canAccessRoute('tunnel')).toBe(false);
+    expect(
+      service.resolveManagedGroupIds([], [
+        { user: 10, group: 2, role_in_group: 'admin', id: 1, joined_at: '' },
+      ]),
+    ).toEqual([2]);
+    expect(
+      service.resolveVisibleGroups(
+        rootGroups as unknown as Parameters<typeof service.resolveVisibleGroups>[0],
+        [2],
+      ),
+    ).toEqual([]);
   });
 });
