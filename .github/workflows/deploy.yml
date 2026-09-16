@@ -417,6 +417,11 @@ jobs:
               [ -n "$previous_frontend_tag" ] || { echo "ERROR: no existe tag previo del frontend."; exit 1; }
               sed -i "s|^IMAGE_TAG_FRONTEND=.*|IMAGE_TAG_FRONTEND=$previous_frontend_tag|" "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
             fi
+            # Deploy totalmente no-op: fija también IMAGE_TAG al previo para
+            # que el .env quede byte-idéntico y compose no reinicie nada.
+            if [ "$REBUILD_BACKEND" = "false" ] && [ "$REBUILD_FRONTEND" = "false" ] && [ -n "$previous_image_tag" ]; then
+              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$previous_image_tag|" "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
+            fi
 
             mkdir -p docker-data/postgres docker-data/redis backend/media
             chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
@@ -459,7 +464,14 @@ jobs:
               return 1
             }
 
-            install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
+            # Solo reinstalar .env si cambió: si el contenido es idéntico,
+            # compose recrearía los contenedores por el .env "tocado" aunque
+            # nada efectivo haya cambiado (rompería el deploy no-op).
+            if [ -f .env ] && cmp -s "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env; then
+              echo ".env sin cambios; se conserva (evita reinicios innecesarios)."
+            else
+              install -m 600 "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE" .env
+            fi
 
             PYTHON_BIN="$(resolve_python_bin || true)"
 
