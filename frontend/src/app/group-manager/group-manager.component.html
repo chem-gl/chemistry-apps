@@ -283,8 +283,9 @@
 
     <!-- Modal de creación de token -->
     @if (showCreateTokenModal()) {
-    <dialog class="modal-backdrop" open aria-label="Create invitation token" (click)="closeCreateTokenModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
+    <dialog class="modal-backdrop" open aria-label="Create invitation token" (click)="onCreateTokenBackdropClick($event)"
+        (keydown.escape)="closeCreateTokenModal()">
+        <div class="modal-content">
             <h3>{{ 'groupManager.invitationTokens.createModal.title' | transloco }}</h3>
 
             <form (ngSubmit)="submitCreateToken()">

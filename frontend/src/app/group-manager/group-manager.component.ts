@@ -352,6 +352,12 @@ export class GroupManagerComponent implements OnInit {
     this.createTokenGroupId.set(null);
   }
 
+  onCreateTokenBackdropClick(event: Event): void {
+    if ((event.target as HTMLElement)?.classList.contains('modal-backdrop')) {
+      this.closeCreateTokenModal();
+    }
+  }
+
   submitCreateToken(): void {
     const groupId = this.createTokenGroupId();
     if (groupId === null) return;

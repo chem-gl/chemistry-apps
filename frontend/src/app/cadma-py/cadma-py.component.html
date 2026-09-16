@@ -771,12 +771,14 @@
 
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
-  <dialog class="diagram-overlay" open aria-label="CADMA-Chem methodology diagram" (click)="onDiagramBackdropClick($event)">
+  <dialog class="diagram-overlay" open aria-label="CADMA-Chem methodology diagram" (click)="onDiagramBackdropClick($event)"
+    (keydown.escape)="showDiagram.set(false)">
 
 
   <!-- ── Expanded chart modal ──────────────────────────────────────── -->
   @if (expandedChart(); as chartType) {
-  <dialog class="chart-expand-overlay" open aria-label="Expanded chart" (click)="onExpandedChartBackdrop($event)">
+  <dialog class="chart-expand-overlay" open aria-label="Expanded chart" (click)="onExpandedChartBackdrop($event)"
+    (keydown.escape)="closeExpandedChart()">
     <div class="chart-expand-modal">
       <div class="chart-expand-header">
         <h3>{{ chartType === 'score' ? ('cadmaPy.step3.globalRanking' | transloco) : ('cadmaPy.step3.candidateVsReference' | transloco) + ' — ' + selectedMetric() }}</h3>
@@ -798,7 +800,8 @@
 
   <!-- ── Chart compound detail modal ─────────────────────────────────── -->
   @if (chartCompound(); as compound) {
-  <dialog class="chart-compound-overlay" open aria-label="Compound detail" (click)="onChartCompoundBackdrop($event)">
+  <dialog class="chart-compound-overlay" open aria-label="Compound detail" (click)="onChartCompoundBackdrop($event)"
+    (keydown.escape)="closeChartCompound()">
     <div class="chart-compound-modal">
       <div class="chart-compound-header">
         <h3>{{ compound.name || 'Compound Detail' }}</h3>
