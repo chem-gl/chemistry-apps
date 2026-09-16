@@ -76,7 +76,7 @@ def _compute_sa_brsa(smiles: str) -> float | None:
             raw = float(result.sa_score)
             return max(0, min(100, 100 - ((raw - 1) * (100 / 9))))
         return None
-    except Exception as exc:
+    except Exception:
         return None
 
 
@@ -87,7 +87,7 @@ def _compute_sa_ambit(smiles: str) -> float | None:
         if result.success and result.sa_score is not None:
             return float(result.sa_score)
         return None
-    except Exception as exc:
+    except Exception:
         return None
 
 
@@ -222,7 +222,7 @@ class Command(BaseCommand):
             ld50_admet = _parse_float(admet_row.get("LD50"))
 
             if dt_admet is None or m_admet is None or ld50_admet is None:
-                self.stdout.write(f"    Consultando ADMET-AI (nuevo)...")
+                self.stdout.write("    Consultando ADMET-AI (nuevo)...")
                 tox_result = admet_client.predict_properties(canonical)
                 if tox_result.success:
                     tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])

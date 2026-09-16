@@ -1,4 +1,5 @@
 """Compara valores ADME computados por RDKit vs los del archivo de referencia TEST."""
+import csv
 from pathlib import Path
 
 from rdkit import Chem
@@ -21,7 +22,6 @@ def compute_adme(smiles: str) -> dict:
         "PSA": round(rdMolDescriptors.CalcTPSA(mol), 2),
     }
 
-import csv
 
 with open(TEST_CSV, newline="", encoding="utf-8-sig") as f:
     reader = csv.DictReader(f)
