@@ -489,6 +489,99 @@ def _parse_source_configs_json(raw_json: str) -> list[CadmaMappedSourceConfig]:
     return parsed_configs
 
 
+def _resolve_row_bibliography(
+    merged_row: dict[str, str],
+    default_paper_reference: str,
+    default_paper_url: str,
+    default_evidence_note: str,
+    require_evidence: bool,
+) -> dict[str, str]:
+    """Trazabilidad bibliográfica de la fila con validación de evidencia."""
+    paper_reference = (
+        _get_alias_value(merged_row, "paper_reference") or default_paper_reference
+    )
+    paper_url = _get_alias_value(merged_row, "paper_url") or default_paper_url
+    evidence_note = (
+        _get_alias_value(merged_row, "evidence_note") or default_evidence_note
+    )
+    if (
+        require_evidence
+        and paper_reference.strip() == ""
+        and paper_url.strip() == ""
+    ):
+        raise ValueError(
+            "Cada referencia debe tener trazabilidad bibliográfica; agrega paper_reference o paper_url."
+        )
+    return {
+        "paper_authors": _get_alias_value(merged_row, "paper_authors"),
+        "paper_reference": paper_reference.strip(),
+        "paper_url": paper_url.strip(),
+        "evidence_note": evidence_note.strip(),
+    }
+
+
+def _apply_optional_float_metrics(
+    compound_row: CadmaCompoundRow, merged_row: dict[str, str]
+) -> None:
+    """Copia métricas opcionales TEST/ADMET/SA si parsean a float."""
+    for sw_key in (
+        "DT_test", "DT_admet",
+        "M_test", "M_admet",
+        "LD50_test", "LD50_admet",
+        "SA_ambit", "SA_brsa", "SA_rdkit",
+    ):
+        raw = _get_alias_value(merged_row, sw_key)
+        if raw:
+            try:
+                compound_row[sw_key] = float(raw)  # type: ignore[literal-required]
+            except ValueError:
+                pass
+
+
+def _build_single_compound_row(
+    merged_row: dict[str, str],
+    index: int,
+    safe_name_prefix: str,
+    default_paper_reference: str,
+    default_paper_url: str,
+    default_evidence_note: str,
+    require_evidence: bool,
+) -> CadmaCompoundRow:
+    """Normaliza una fila importada a CadmaCompoundRow."""
+    smiles_value = _get_alias_value(merged_row, "smiles")
+    if smiles_value == "":
+        raise ValueError("Cada fila debe incluir una columna smiles/smile/smi.")
+
+    canonical_smiles = _canonicalize_smiles(smiles_value)
+    descriptor_values = _compute_adme_descriptors(canonical_smiles)
+    bibliography = _resolve_row_bibliography(
+        merged_row,
+        default_paper_reference,
+        default_paper_url,
+        default_evidence_note,
+        require_evidence,
+    )
+    compound_row: CadmaCompoundRow = {
+        "name": _get_alias_value(merged_row, "name") or f"{safe_name_prefix} {index}",
+        "smiles": canonical_smiles,
+        "MW": _resolve_metric_value(merged_row, "MW", descriptor_values),
+        "logP": _resolve_metric_value(merged_row, "logP", descriptor_values),
+        "MR": _resolve_metric_value(merged_row, "MR", descriptor_values),
+        "AtX": _resolve_metric_value(merged_row, "AtX", descriptor_values),
+        "HBLA": _resolve_metric_value(merged_row, "HBLA", descriptor_values),
+        "HBLD": _resolve_metric_value(merged_row, "HBLD", descriptor_values),
+        "RB": _resolve_metric_value(merged_row, "RB", descriptor_values),
+        "PSA": _resolve_metric_value(merged_row, "PSA", descriptor_values),
+        "DT": _resolve_metric_value(merged_row, "DT", descriptor_values),
+        "M": _resolve_metric_value(merged_row, "M", descriptor_values),
+        "LD50": _resolve_metric_value(merged_row, "LD50", descriptor_values),
+        "SA": _resolve_metric_value(merged_row, "SA", descriptor_values),
+        **bibliography,  # type: ignore[typeddict-item]
+    }
+    _apply_optional_float_metrics(compound_row, merged_row)
+    return compound_row
+
+
 def _build_compound_rows_from_normalized_rows(
     *,
     merged_rows: list[dict[str, str]],
@@ -504,66 +597,17 @@ def _build_compound_rows_from_normalized_rows(
     normalized_rows: list[CadmaCompoundRow] = []
     safe_name_prefix = default_name_prefix.strip() or "Compound"
     for index, merged_row in enumerate(merged_rows, start=1):
-        smiles_value = _get_alias_value(merged_row, "smiles")
-        if smiles_value == "":
-            raise ValueError("Cada fila debe incluir una columna smiles/smile/smi.")
-
-        canonical_smiles = _canonicalize_smiles(smiles_value)
-        descriptor_values = _compute_adme_descriptors(canonical_smiles)
-
-        name_value = (
-            _get_alias_value(merged_row, "name") or f"{safe_name_prefix} {index}"
-        )
-        paper_reference = (
-            _get_alias_value(merged_row, "paper_reference") or default_paper_reference
-        )
-        paper_url = _get_alias_value(merged_row, "paper_url") or default_paper_url
-        evidence_note = (
-            _get_alias_value(merged_row, "evidence_note") or default_evidence_note
-        )
-
-        if (
-            require_evidence
-            and paper_reference.strip() == ""
-            and paper_url.strip() == ""
-        ):
-            raise ValueError(
-                "Cada referencia debe tener trazabilidad bibliográfica; agrega paper_reference o paper_url."
+        normalized_rows.append(
+            _build_single_compound_row(
+                merged_row,
+                index,
+                safe_name_prefix,
+                default_paper_reference,
+                default_paper_url,
+                default_evidence_note,
+                require_evidence,
             )
-
-        compound_row: CadmaCompoundRow = {
-            "name": name_value,
-            "smiles": canonical_smiles,
-            "MW": _resolve_metric_value(merged_row, "MW", descriptor_values),
-            "logP": _resolve_metric_value(merged_row, "logP", descriptor_values),
-            "MR": _resolve_metric_value(merged_row, "MR", descriptor_values),
-            "AtX": _resolve_metric_value(merged_row, "AtX", descriptor_values),
-            "HBLA": _resolve_metric_value(merged_row, "HBLA", descriptor_values),
-            "HBLD": _resolve_metric_value(merged_row, "HBLD", descriptor_values),
-            "RB": _resolve_metric_value(merged_row, "RB", descriptor_values),
-            "PSA": _resolve_metric_value(merged_row, "PSA", descriptor_values),
-            "DT": _resolve_metric_value(merged_row, "DT", descriptor_values),
-            "M": _resolve_metric_value(merged_row, "M", descriptor_values),
-            "LD50": _resolve_metric_value(merged_row, "LD50", descriptor_values),
-            "SA": _resolve_metric_value(merged_row, "SA", descriptor_values),
-            "paper_authors": _get_alias_value(merged_row, "paper_authors"),
-            "paper_reference": paper_reference.strip(),
-            "paper_url": paper_url.strip(),
-            "evidence_note": evidence_note.strip(),
-        }
-        for sw_key in (
-            "DT_test", "DT_admet",
-            "M_test", "M_admet",
-            "LD50_test", "LD50_admet",
-            "SA_ambit", "SA_brsa", "SA_rdkit",
-        ):
-            raw = _get_alias_value(merged_row, sw_key)
-            if raw:
-                try:
-                    compound_row[sw_key] = float(raw)  # type: ignore[literal-required]
-                except ValueError:
-                    pass
-        normalized_rows.append(compound_row)
+        )
 
     return normalized_rows
 

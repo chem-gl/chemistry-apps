@@ -771,13 +771,13 @@
 
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
-  <div class="diagram-overlay" tabindex="0" (click)="onDiagramBackdropClick($event)"
+  <div class="diagram-overlay" role="dialog" aria-modal="true" aria-label="CADMA-Chem methodology diagram" tabindex="0" (click)="onDiagramBackdropClick($event)"
     (keydown.enter)="onDiagramBackdropClick($event)">
 
 
   <!-- ── Expanded chart modal ──────────────────────────────────────── -->
   @if (expandedChart(); as chartType) {
-  <div class="chart-expand-overlay" tabindex="0" (click)="onExpandedChartBackdrop($event)"
+  <div class="chart-expand-overlay" role="dialog" aria-modal="true" aria-label="Expanded chart" tabindex="0" (click)="onExpandedChartBackdrop($event)"
     (keydown.enter)="onExpandedChartBackdrop($event)">
     <dialog open class="chart-expand-modal" [attr.aria-label]="chartType === 'score' ? 'Expanded ranking chart' : 'Expanded metric chart'">
       <div class="chart-expand-header">
@@ -800,7 +800,7 @@
 
   <!-- ── Chart compound detail modal ─────────────────────────────────── -->
   @if (chartCompound(); as compound) {
-  <div class="chart-compound-overlay" tabindex="0" (click)="onChartCompoundBackdrop($event)"
+  <div class="chart-compound-overlay" role="dialog" aria-modal="true" aria-label="Compound detail" tabindex="0" (click)="onChartCompoundBackdrop($event)"
     (keydown.enter)="onChartCompoundBackdrop($event)">
     <dialog open class="chart-compound-modal" aria-label="Compound detail">
       <div class="chart-compound-header">

@@ -113,6 +113,97 @@ def _parse_float(val: str | None) -> float | None:
         return None
 
 
+def _format_test_values(row: dict[str, str]) -> dict[str, str]:
+    """Formatea los valores experimentales TEST de la fila (2 decimales o vacío)."""
+    formatted: dict[str, str] = {}
+    for key in ("DT_test", "M_test", "LD50_test"):
+        parsed = _parse_float(row.get(key))
+        formatted[key] = f"{parsed:.2f}" if parsed is not None else ""
+    return formatted
+
+
+def _format_sa_values(
+    canonical: str,
+    row: dict[str, str],
+    ambit_mismatches: list[str],
+    name: str,
+) -> dict[str, str]:
+    """Calcula SA por 3 métodos y reporta discrepancias contra el valor existente."""
+    sa_rdkit = _compute_sa_rdkit(canonical)
+    sa_brsa = _compute_sa_brsa(canonical)
+    sa_ambit = _compute_sa_ambit(canonical)
+    sa_default = sa_rdkit if sa_rdkit is not None else sa_brsa
+    formatted = {
+        "SA_rdkit": f"{sa_rdkit:.3f}" if sa_rdkit is not None else "",
+        "SA_brsa": f"{sa_brsa:.3f}" if sa_brsa is not None else "",
+        "SA_ambit": f"{sa_ambit:.3f}" if sa_ambit is not None else "",
+        "SA": f"{sa_default:.3f}" if sa_default is not None else "50.000",
+    }
+    existing_sa_ambit = _parse_float(row.get("SA_ambit"))
+    if sa_ambit is not None and existing_sa_ambit is not None:
+        diff = abs(sa_ambit - existing_sa_ambit)
+        if diff > 0.5:
+            ambit_mismatches.append(
+                f"    {name}: existente={existing_sa_ambit:.3f} "
+                f"calculado={sa_ambit:.3f} diff={diff:.3f}"
+            )
+    return formatted
+
+
+def _fetch_admet_values(
+    command: Command,
+    admet_client: AdmetAiClient,
+    canonical: str,
+    adme: dict[str, float],
+    name: str,
+) -> dict[str, float | None]:
+    """Consulta ADMET-AI y extrae DT/M/LD50 (None si falla)."""
+    try:
+        tox_result = admet_client.predict_properties(canonical)
+        if tox_result.success:
+            tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
+            return {"DT": tox.get("DT"), "M": tox.get("M"), "LD50": tox.get("LD50")}
+        command.stderr.write(f"    ADMET-AI falló para {name}")
+    except Exception as error:
+        command.stderr.write(f"    ADMET-AI error para {name}: {error}")
+    return {"DT": None, "M": None, "LD50": None}
+
+
+def _format_admet_fallbacks(
+    row_out: dict[str, str], admet: dict[str, float | None]
+) -> None:
+    """Escribe valores ADMET-AI con fallbacks y resuelve DT/M/LD50 finales."""
+    row_out["DT_admet"] = f"{admet['DT']:.2f}" if admet["DT"] is not None else "0.50"
+    row_out["M_admet"] = f"{admet['M']:.2f}" if admet["M"] is not None else "0.50"
+    row_out["LD50_admet"] = (
+        f"{admet['LD50']:.2f}" if admet["LD50"] is not None else "500.00"
+    )
+    row_out["DT"] = row_out["DT_test"] if row_out["DT_test"] else row_out["DT_admet"]
+    row_out["M"] = row_out["M_test"] if row_out["M_test"] else row_out["M_admet"]
+    row_out["LD50"] = (
+        row_out["LD50_test"] if row_out["LD50_test"] else row_out["LD50_admet"]
+    )
+
+
+def _resolve_row_literature(row: dict[str, str], name: str) -> dict[str, str]:
+    """Conserva la literatura existente o resuelve la del catálogo por nombre."""
+    existing_papertitle = _clean(row.get("papertitle", ""))
+    if existing_papertitle:
+        return {
+            "papertitle": existing_papertitle,
+            "doi": _clean(row.get("doi", "")),
+            "note": _clean(row.get("note", "")),
+            "authors": _clean(row.get("authors", "")),
+        }
+    literature = _resolve_literature(name)
+    return {
+        "papertitle": _clean(literature.get("paper_reference", "")),
+        "doi": _clean(literature.get("paper_url", "")),
+        "note": _clean(literature.get("evidence_note", "")),
+        "authors": _clean(literature.get("paper_authors", "")),
+    }
+
+
 def _process_neuro_row(
     command: Command,
     row: dict[str, str],
@@ -148,65 +239,13 @@ def _process_neuro_row(
         "smile": canonical,
     }
 
-    dt_test = _parse_float(row.get("DT_test"))
-    m_test = _parse_float(row.get("M_test"))
-    ld50_test = _parse_float(row.get("LD50_test"))
-    row_out["DT_test"] = f"{dt_test:.2f}" if dt_test is not None else ""
-    row_out["M_test"] = f"{m_test:.2f}" if m_test is not None else ""
-    row_out["LD50_test"] = f"{ld50_test:.2f}" if ld50_test is not None else ""
-
-    sa_rdkit = _compute_sa_rdkit(canonical)
-    sa_brsa = _compute_sa_brsa(canonical)
-    sa_ambit = _compute_sa_ambit(canonical)
-    sa_default = sa_rdkit if sa_rdkit is not None else sa_brsa
-    row_out["SA_rdkit"] = f"{sa_rdkit:.3f}" if sa_rdkit is not None else ""
-    row_out["SA_brsa"] = f"{sa_brsa:.3f}" if sa_brsa is not None else ""
-
-    existing_sa_ambit = _parse_float(row.get("SA_ambit"))
-    if sa_ambit is not None and existing_sa_ambit is not None:
-        diff = abs(sa_ambit - existing_sa_ambit)
-        if diff > 0.5:
-            ambit_mismatches.append(
-                f"    {name}: existente={existing_sa_ambit:.3f} "
-                f"calculado={sa_ambit:.3f} diff={diff:.3f}"
-            )
-    row_out["SA_ambit"] = f"{sa_ambit:.3f}" if sa_ambit is not None else ""
-    row_out["SA"] = f"{sa_default:.3f}" if sa_default is not None else "50.000"
+    row_out.update(_format_test_values(row))
+    row_out.update(_format_sa_values(canonical, row, ambit_mismatches, name))
 
     command.stdout.write("    Consultando ADMET-AI...")
-    try:
-        tox_result = admet_client.predict_properties(canonical)
-        if tox_result.success:
-            tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
-            dt_admet = tox.get("DT")
-            m_admet = tox.get("M")
-            ld50_admet = tox.get("LD50")
-        else:
-            dt_admet = m_admet = ld50_admet = None
-            command.stderr.write(f"    ADMET-AI falló para {name}")
-    except Exception as error:
-        dt_admet = m_admet = ld50_admet = None
-        command.stderr.write(f"    ADMET-AI error para {name}: {error}")
-
-    row_out["DT_admet"] = f"{dt_admet:.2f}" if dt_admet is not None else "0.50"
-    row_out["M_admet"] = f"{m_admet:.2f}" if m_admet is not None else "0.50"
-    row_out["LD50_admet"] = f"{ld50_admet:.2f}" if ld50_admet is not None else "500.00"
-    row_out["DT"] = row_out["DT_test"] if row_out["DT_test"] else row_out["DT_admet"]
-    row_out["M"] = row_out["M_test"] if row_out["M_test"] else row_out["M_admet"]
-    row_out["LD50"] = row_out["LD50_test"] if row_out["LD50_test"] else row_out["LD50_admet"]
-
-    existing_papertitle = _clean(row.get("papertitle", ""))
-    if existing_papertitle:
-        row_out["papertitle"] = existing_papertitle
-        row_out["doi"] = _clean(row.get("doi", ""))
-        row_out["note"] = _clean(row.get("note", ""))
-        row_out["authors"] = _clean(row.get("authors", ""))
-    else:
-        literature = _resolve_literature(name)
-        row_out["papertitle"] = _clean(literature.get("paper_reference", ""))
-        row_out["doi"] = _clean(literature.get("paper_url", ""))
-        row_out["note"] = _clean(literature.get("evidence_note", ""))
-        row_out["authors"] = _clean(literature.get("paper_authors", ""))
+    admet = _fetch_admet_values(command, admet_client, canonical, adme, name)
+    _format_admet_fallbacks(row_out, admet)
+    row_out.update(_resolve_row_literature(row, name))
     return row_out
 
 

@@ -18,7 +18,7 @@ import { JobProgressCardComponent } from '../core/shared/components/job-progress
 import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 
-interface EasyRateInputSlotView {
+export interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
   labelKey: string;
   required: boolean;
