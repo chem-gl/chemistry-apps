@@ -169,6 +169,26 @@ def _format_test_block(
     return formatted
 
 
+def _fetch_live_admet(
+    command: Command,
+    admet_client: AdmetAiClient,
+    canonical: str,
+    adme: dict[str, float],
+    cached: dict[str, float | None],
+) -> dict[str, float | None]:
+    """Completa valores ADMET-AI faltantes con consulta en vivo."""
+    command.stdout.write("    Consultando ADMET-AI (nuevo)...")
+    tox_result = admet_client.predict_properties(canonical)
+    if not tox_result.success:
+        return cached
+    tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
+    return {
+        "DT": cached["DT"] if cached["DT"] is not None else tox.get("DT"),
+        "M": cached["M"] if cached["M"] is not None else tox.get("M"),
+        "LD50": cached["LD50"] if cached["LD50"] is not None else tox.get("LD50"),
+    }
+
+
 def _resolve_admet_block(
     command: Command,
     admet_data: dict[str, dict[str, str]],
@@ -178,17 +198,14 @@ def _resolve_admet_block(
 ) -> dict[str, str]:
     """ADMET-AI desde CSV cacheado o consulta en vivo, con fallbacks."""
     admet_row = admet_data.get(canonical, {})
-    dt_admet = _parse_float(admet_row.get("DT"))
-    m_admet = _parse_float(admet_row.get("M"))
-    ld50_admet = _parse_float(admet_row.get("LD50"))
-    if dt_admet is None or m_admet is None or ld50_admet is None:
-        command.stdout.write("    Consultando ADMET-AI (nuevo)...")
-        tox_result = admet_client.predict_properties(canonical)
-        if tox_result.success:
-            tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
-            dt_admet = dt_admet if dt_admet is not None else tox.get("DT")
-            m_admet = m_admet if m_admet is not None else tox.get("M")
-            ld50_admet = ld50_admet if ld50_admet is not None else tox.get("LD50")
+    cached: dict[str, float | None] = {
+        "DT": _parse_float(admet_row.get("DT")),
+        "M": _parse_float(admet_row.get("M")),
+        "LD50": _parse_float(admet_row.get("LD50")),
+    }
+    if cached["DT"] is None or cached["M"] is None or cached["LD50"] is None:
+        cached = _fetch_live_admet(command, admet_client, canonical, adme, cached)
+    dt_admet, m_admet, ld50_admet = cached["DT"], cached["M"], cached["LD50"]
     return {
         "DT_admet": f"{dt_admet:.2f}" if dt_admet is not None else "0.50",
         "M_admet": f"{m_admet:.2f}" if m_admet is not None else "0.50",

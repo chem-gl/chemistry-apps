@@ -771,15 +771,13 @@
 
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
-  <div class="diagram-overlay" role="dialog" aria-modal="true" aria-label="CADMA-Chem methodology diagram" tabindex="0" (click)="onDiagramBackdropClick($event)"
-    (keydown.enter)="onDiagramBackdropClick($event)">
+  <dialog class="diagram-overlay" open aria-label="CADMA-Chem methodology diagram" (click)="onDiagramBackdropClick($event)">
 
 
   <!-- ── Expanded chart modal ──────────────────────────────────────── -->
   @if (expandedChart(); as chartType) {
-  <div class="chart-expand-overlay" role="dialog" aria-modal="true" aria-label="Expanded chart" tabindex="0" (click)="onExpandedChartBackdrop($event)"
-    (keydown.enter)="onExpandedChartBackdrop($event)">
-    <dialog open class="chart-expand-modal" [attr.aria-label]="chartType === 'score' ? 'Expanded ranking chart' : 'Expanded metric chart'">
+  <dialog class="chart-expand-overlay" open aria-label="Expanded chart" (click)="onExpandedChartBackdrop($event)">
+    <div class="chart-expand-modal">
       <div class="chart-expand-header">
         <h3>{{ chartType === 'score' ? ('cadmaPy.step3.globalRanking' | transloco) : ('cadmaPy.step3.candidateVsReference' | transloco) + ' — ' + selectedMetric() }}</h3>
         <button class="close-btn" type="button" (click)="closeExpandedChart()" aria-label="Close">×</button>
@@ -794,15 +792,14 @@
           [chartHeight]="'calc(90vh - 70px)'" (chartClick)="onMetricChartClick($event)"></app-scientific-chart>
         }
       </div>
-    </dialog>
-  </div>
+    </div>
+  </dialog>
   }
 
   <!-- ── Chart compound detail modal ─────────────────────────────────── -->
   @if (chartCompound(); as compound) {
-  <div class="chart-compound-overlay" role="dialog" aria-modal="true" aria-label="Compound detail" tabindex="0" (click)="onChartCompoundBackdrop($event)"
-    (keydown.enter)="onChartCompoundBackdrop($event)">
-    <dialog open class="chart-compound-modal" aria-label="Compound detail">
+  <dialog class="chart-compound-overlay" open aria-label="Compound detail" (click)="onChartCompoundBackdrop($event)">
+    <div class="chart-compound-modal">
       <div class="chart-compound-header">
         <h3>{{ compound.name || 'Compound Detail' }}</h3>
         <button class="close-btn" type="button" (click)="closeChartCompound()" aria-label="Close">×</button>
@@ -836,16 +833,16 @@
           </div>
         </div>
       </div>
-    </dialog>
-  </div>
+    </div>
+  </dialog>
   }
-    <dialog open class="diagram-modal" aria-label="Diagrama CADMA-Chem">
+    <div class="diagram-modal">
       <div class="diagram-header">
         <h3>CADMA-Chem · Protocol diagram</h3>
         <button class="close-btn" type="button" (click)="showDiagram.set(false)" aria-label="Cerrar">✕</button>
       </div>
       <iframe [src]="diagramSrc" class="diagram-frame" title="Diagrama CADMA-Chem"></iframe>
-    </dialog>
-  </div>
+    </div>
+  </dialog>
   }
 </section>
