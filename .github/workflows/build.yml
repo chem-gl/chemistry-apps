@@ -11,10 +11,20 @@ on:
         required: false
         default: false
         type: boolean
+      rebuild_backend:
+        description: Valida la imagen Docker del backend
+        required: false
+        default: true
+        type: boolean
+      rebuild_frontend:
+        description: Valida la imagen Docker del frontend
+        required: false
+        default: true
+        type: boolean
     outputs:
       image_tag:
         description: Tag inmutable generado durante el build
-        value: ${{ jobs.build.outputs.image_tag }}
+        value: ${{ jobs.meta.outputs.image_tag }}
     secrets:
       BACKEND_PUBLIC_URL:
         required: false
@@ -24,28 +34,28 @@ env:
   DEPLOY_BUNDLE_PREFIX: chemistry-apps
 
 jobs:
-  build:
-    name: Build validation
+  meta:
+    name: Build metadata
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.image_meta.outputs.image_tag }}
+      image_tag: ${{ github.sha }}
+    steps:
+      - name: Confirm image tag
+        run: echo "image_tag=${GITHUB_SHA}"
+
+  frontend:
+    name: Build frontend validation
+    if: inputs.rebuild_frontend
+    needs: [meta]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Requerido para guardar/restaurar el caché de capas Docker (type=gha).
       actions: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
-      - name: Resolve image tag
-        id: image_meta
-        run: |
-          echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Build frontend (production)
         uses: docker/build-push-action@v6
         with:
@@ -55,7 +65,7 @@ jobs:
           # Solo validación: estas imágenes nunca se publican
           # (el deploy reconstruye en el servidor). Sin `push`.
           push: false
-          tags: chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}
+          tags: chemistry-frontend:${{ needs.meta.outputs.image_tag }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.description=Chemistry Apps frontend production image
@@ -65,6 +75,19 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
+  backend:
+    name: Build backend validation
+    if: inputs.rebuild_backend
+    needs: [meta]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build backend Docker image (prod)
         uses: docker/build-push-action@v6
         with:
@@ -73,7 +96,7 @@ jobs:
           target: prod
           # Solo validación (ver frontend). Sin `push`.
           push: false
-          tags: chemistry-backend:${{ steps.image_meta.outputs.image_tag }}
+          tags: chemistry-backend:${{ needs.meta.outputs.image_tag }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.description=Chemistry Apps backend production image
@@ -82,9 +105,9 @@ jobs:
 
   release:
     name: Create release
-    if: inputs.create_release
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [meta, frontend, backend]
+    if: always() && inputs.create_release && needs.meta.result == 'success' && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') && (needs.backend.result == 'success' || needs.backend.result == 'skipped')
     permissions:
       contents: write
 
@@ -95,20 +118,20 @@ jobs:
       - name: Build deploy bundle
         id: bundle_meta
         run: |
-          BUNDLE_NAME="${DEPLOY_BUNDLE_PREFIX}-${{ needs.build.outputs.image_tag }}.tar.gz"
+          BUNDLE_NAME="${DEPLOY_BUNDLE_PREFIX}-${{ needs.meta.outputs.image_tag }}.tar.gz"
           git archive --format=tar.gz --output "$BUNDLE_NAME" "${GITHUB_SHA}"
           echo "bundle_name=$BUNDLE_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ steps.bundle_meta.outputs.bundle_name }}
             ${{ env.DEPLOY_COMPOSE_FILE }}
-          tag_name: main-${{ needs.build.outputs.image_tag }}
-          name: Release main-${{ needs.build.outputs.image_tag }}
+          tag_name: main-${{ needs.meta.outputs.image_tag }}
+          name: Release main-${{ needs.meta.outputs.image_tag }}
           body: |
-            Automatico: se genero la release main-${{ needs.build.outputs.image_tag }}
+            Automatico: se genero la release main-${{ needs.meta.outputs.image_tag }}
 
             Assets de despliegue:
             - ${{ steps.bundle_meta.outputs.bundle_name }}
