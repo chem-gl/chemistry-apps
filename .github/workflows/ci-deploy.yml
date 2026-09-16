@@ -10,31 +10,41 @@ on:
       - dev
   workflow_dispatch: {}
 
+# Evita encolar runs completos de 8 min en pushes seguidos a dev.
+# NUNCA cancela runs de main (un deploy en curso no se interrumpe).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/dev' }}
+
 jobs:
   tests:
-    name: Test matrix (${{ matrix.service }})
+    name: Backend tests
     runs-on: ubuntu-latest
     # Los tests solo corren en push a dev; en main y PRs ya debieron pasar en dev.
+    # El frontend se valida compilando su imagen Docker en el job Build
+    # (evita `npm ci` + `npm run build` duplicados).
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [backend, frontend]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Setup Python 3.12
-        if: matrix.service == 'backend'
         uses: actions/setup-python@v6
         with:
           python-version: &python_version "3.12"
           cache: pip
           cache-dependency-path: backend/poetry.lock
 
+      - name: Cache Poetry venv
+        # setup-python `cache: pip` no cachea venvs de poetry; sin esto cada
+        # run reinstala torch/rdkit/etc (~85s). Key por poetry.lock.
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv
+          key: poetry-venv-${{ runner.os }}-3.12-${{ hashFiles('backend/poetry.lock') }}
+
       - name: Install backend deps
-        if: matrix.service == 'backend'
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
@@ -44,29 +54,10 @@ jobs:
           poetry install --with dev --no-interaction --no-ansi
 
       - name: Run backend tests
-        if: matrix.service == 'backend'
         working-directory: backend
         env:
           JOB_DISPATCH_ENABLED: "0"
         run: poetry run python manage.py test
-
-      - name: Setup Node.js
-        if: matrix.service == 'frontend'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend deps
-        if: matrix.service == 'frontend'
-        working-directory: frontend
-        run: npm ci
-
-      - name: Validate frontend build
-        if: matrix.service == 'frontend'
-        working-directory: frontend
-        run: npm run build
 
   build:
     name: Build reusable workflow
