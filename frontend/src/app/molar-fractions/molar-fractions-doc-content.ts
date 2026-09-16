@@ -4,7 +4,7 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'molarFractions.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Molar fractions: acid-base speciation</h3>
 
 <p>
@@ -39,7 +39,7 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
   {
     id: 'algorithm',
     titleKey: 'molarFractions.doc.tabAlgorithm',
-    content: `
+    content: String.raw`
 <h3>Algorithm</h3>
 
 <h4>1. Cumulative beta coefficients</h4>
@@ -82,7 +82,7 @@ $$
   {
     id: 'references',
     titleKey: 'molarFractions.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>Harris, D. C. <em>Quantitative Chemical Analysis</em>, 9th ed.; Freeman, 2015.</li>

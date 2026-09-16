@@ -150,11 +150,11 @@ export class App implements OnInit {
       const data = (await response.json()) as { version: string };
 
       if (data.version !== environment.appVersion) {
-        if ('caches' in window) {
+        if ('caches' in globalThis) {
           const cacheKeys: string[] = await caches.keys();
           await Promise.all(cacheKeys.map((key: string) => caches.delete(key)));
         }
-        window.location.reload();
+        globalThis.location.reload();
       }
     } catch {
       // Si falla la verificacion, la app continua normalmente.

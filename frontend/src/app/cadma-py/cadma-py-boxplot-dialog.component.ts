@@ -12,8 +12,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import type { ECharts } from 'echarts/core';
-import type { EChartsCoreOption } from 'echarts/core';
+import type { ECharts, EChartsCoreOption } from 'echarts/core';
 import { CadmaRankingRowView } from '../core/api/cadma-py-api.service';
 import { JobsApiService } from '../core/api/jobs-api.service';
 import { ScientificChartComponent } from '../core/shared/components/scientific-chart/scientific-chart.component';

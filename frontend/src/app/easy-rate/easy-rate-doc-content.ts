@@ -4,7 +4,7 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'easyRate.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Easy-rate: TST + Eckart rate constants</h3>
 
 <p>
@@ -36,7 +36,7 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
   {
     id: 'formulas',
     titleKey: 'easyRate.doc.tabFormulas',
-    content: `
+    content: String.raw`
 <h3>Key formulas</h3>
 
 <h4>TST rate constant</h4>
@@ -87,7 +87,7 @@ $$
   {
     id: 'references',
     titleKey: 'easyRate.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>Eyring, H. <em>J. Chem. Phys.</em> <strong>1935</strong>, 3, 107. <a href="https://doi.org/10.1063/1.1749604" target="_blank">DOI: 10.1063/1.1749604</a></li>

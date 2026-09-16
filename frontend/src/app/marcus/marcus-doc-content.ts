@@ -4,7 +4,7 @@ export const MARCUS_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'marcus.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Marcus electron transfer theory</h3>
 
 <p>
@@ -35,7 +35,7 @@ export const MARCUS_DOC_TABS: DocTab[] = [
   {
     id: 'formulas',
     titleKey: 'marcus.doc.tabFormulas',
-    content: `
+    content: String.raw`
 <h3>Key formulas</h3>
 
 <h4>Adiabatic energy</h4>
@@ -85,7 +85,7 @@ $$
   {
     id: 'references',
     titleKey: 'marcus.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>Marcus, R. A. <em>J. Chem. Phys.</em> <strong>1956</strong>, 24, 966. <a href="https://doi.org/10.1063/1.1742723" target="_blank">DOI: 10.1063/1.1742723</a></li>

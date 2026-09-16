@@ -69,7 +69,8 @@
           }
         </div>
 
-        <table class="bxp-metrics-table">
+       <table class="bxp-metrics-table">
+         <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
           <tbody>
             @for (m of compoundMetrics(); track m.key) {
             <tr>

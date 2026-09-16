@@ -277,8 +277,8 @@ export function buildCadmaBoxplotOptions(
 ): EChartsCoreOption {
   const allStats = computeBoxplotStats(rows);
   const stats = allStats.filter((s) => {
-    if (visibleGroups && !visibleGroups.has(s.group)) return false;
-    if (hiddenKeys && hiddenKeys.has(s.key)) return false;
+    if (visibleGroups?.has(s.group) === false) return false;
+    if (hiddenKeys?.has(s.key) === true) return false;
     return true;
   });
 
@@ -286,8 +286,8 @@ export function buildCadmaBoxplotOptions(
   const boxplotData = stats.map((s) => [s.min, s.q1, s.median, s.q3, s.max]);
 
   const visibleMetrics = BOXPLOT_METRICS.filter((m) => {
-    if (visibleGroups && !visibleGroups.has(m.group)) return false;
-    if (hiddenKeys && hiddenKeys.has(String(m.key))) return false;
+    if (visibleGroups?.has(m.group) === false) return false;
+    if (hiddenKeys?.has(String(m.key)) === true) return false;
     return true;
   });
 
@@ -597,7 +597,7 @@ export function buildCadmaSingleMetricBoxplotOptions(
   const q1 = computeQuantile(numericValues, 0.25);
   const median = computeQuantile(numericValues, 0.5);
   const q3 = computeQuantile(numericValues, 0.75);
-  const maxVal = numericValues[numericValues.length - 1];
+  const maxVal = numericValues.at(-1)!;
   const mean = numericValues.reduce((a, b) => a + b, 0) / numericValues.length;
   const stdev = Math.sqrt(
     numericValues.reduce((a, b) => a + (b - mean) ** 2, 0) / numericValues.length,
@@ -696,7 +696,7 @@ export function buildCadmaResultsBoxplotSingleChart(
   const allStats = RESULTS_BOXPLOT_METRICS.map(({ key, label, group }) => {
     const values = rows
       .map((r) => {
-        const raw = r[key as keyof CadmaRankingRowView];
+        const raw = r[key];
         return typeof raw === 'number' ? raw : undefined;
       })
       .filter((v): v is number => v !== undefined && !Number.isNaN(v))
@@ -726,8 +726,8 @@ export function buildCadmaResultsBoxplotSingleChart(
   });
 
   const stats = allStats.filter((s) => {
-    if (visibleGroups && !visibleGroups.has(s.group)) return false;
-    if (hiddenKeys && hiddenKeys.has(s.key)) return false;
+    if (visibleGroups?.has(s.group) === false) return false;
+    if (hiddenKeys?.has(s.key) === true) return false;
     return true;
   });
 
@@ -735,8 +735,8 @@ export function buildCadmaResultsBoxplotSingleChart(
   const boxplotData = stats.map((s) => [s.min, s.q1, s.median, s.q3, s.max]);
 
   const visibleMetrics = RESULTS_BOXPLOT_METRICS.filter((m) => {
-    if (visibleGroups && !visibleGroups.has(m.group)) return false;
-    if (hiddenKeys && hiddenKeys.has(String(m.key))) return false;
+    if (visibleGroups?.has(m.group) === false) return false;
+    if (hiddenKeys?.has(String(m.key)) === true) return false;
     return true;
   });
 

@@ -1,4 +1,4 @@
-<div class="app-shell" (click)="closeMobileNav()">
+<div class="app-shell" (click)="closeMobileNav()" (keydown)="$event.stopPropagation()">
   @if (!isAuthPage()) {
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
     <div class="top-bar-inner">
@@ -37,7 +37,7 @@
     </div>
 
     <nav class="main-nav" [class.is-open]="isMobileNavOpen()" [attr.aria-label]="'app.nav.ariaLabel' | transloco"
-      (click)="$event.stopPropagation()">
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       @for (navItem of mainNavigationItems(); track navItem.path) {
         @if (navItem.path === '/apps' && hasApps()) {
         <div class="nav-dropdown">

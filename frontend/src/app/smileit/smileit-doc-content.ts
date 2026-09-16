@@ -4,7 +4,7 @@ export const SMILEIT_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'smileit.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Smile-it: combinatorial SMILES generation</h3>
 
 <p>
@@ -34,7 +34,7 @@ export const SMILEIT_DOC_TABS: DocTab[] = [
   {
     id: 'workflow',
     titleKey: 'smileit.doc.tabWorkflow',
-    content: `
+    content: String.raw`
 <h3>Workflow</h3>
 
 <h4>1. Input the scaffold</h4>
@@ -70,7 +70,7 @@ validity at each step. Results include SMILES, SVG previews, traceability
   {
     id: 'algorithm',
     titleKey: 'smileit.doc.tabAlgorithm',
-    content: `
+    content: String.raw`
 <h3>Generation algorithm</h3>
 
 <h4>Iterative substitution</h4>
@@ -109,7 +109,7 @@ full reproducibility.</p>
   {
     id: 'references',
     titleKey: 'smileit.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>RDKit: Open-Source Cheminformatics Software. <a href="https://www.rdkit.org/" target="_blank">https://www.rdkit.org/</a></li>

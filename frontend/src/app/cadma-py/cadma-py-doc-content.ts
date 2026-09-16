@@ -4,7 +4,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'cadmaPy.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Overview</h3>
 <p>
   CADMA Py is a graphical interface for the CADMA-Chem protocol (Computer-Assisted
@@ -45,7 +45,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
   {
     id: 'workflow',
     titleKey: 'cadmaPy.doc.tabWorkflow',
-    content: `
+    content: String.raw`
 <h3>Workflow</h3>
 
 <p>
@@ -95,7 +95,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
   {
     id: 'adme-intervals',
     titleKey: 'cadmaPy.doc.tabAdmeIntervals',
-    content: `
+    content: String.raw`
 <h3>ADME interval window</h3>
 
 <p>
@@ -164,7 +164,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
   {
     id: 'adme-properties',
     titleKey: 'cadmaPy.doc.tabAdmeProperties',
-    content: `
+    content: String.raw`
 <h3>ADME properties</h3>
 
 <p>
@@ -225,7 +225,7 @@ $$
   {
     id: 'reference-sets',
     titleKey: 'cadmaPy.doc.tabReferenceSets',
-    content: `
+    content: String.raw`
 <h3>Reference sets</h3>
 
 <p>
@@ -272,7 +272,7 @@ $$
   {
     id: 'selection-scores',
     titleKey: 'cadmaPy.doc.tabSelectionScores',
-    content: `
+    content: String.raw`
 <h3>Selection scores</h3>
 
 <p>
@@ -370,7 +370,7 @@ $$
   {
     id: 'conformers',
     titleKey: 'cadmaPy.doc.tabConformers',
-    content: `
+    content: String.raw`
 <h3>Conformers from SMILES</h3>
 
 <p>

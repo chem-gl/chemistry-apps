@@ -4,7 +4,7 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'tunnel.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Eckart tunneling correction</h3>
 
 <p>
@@ -41,7 +41,7 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
   {
     id: 'formulas',
     titleKey: 'tunnel.doc.tabFormulas',
-    content: `
+    content: String.raw`
 <h3>Key formulas</h3>
 
 <h4>Reduced barrier frequency</h4>
@@ -87,7 +87,7 @@ $$
   {
     id: 'references',
     titleKey: 'tunnel.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>Eckart, C. <em>Phys. Rev.</em> <strong>1930</strong>, 35, 1303. <a href="https://doi.org/10.1103/PhysRev.35.1303" target="_blank">DOI: 10.1103/PhysRev.35.1303</a></li>

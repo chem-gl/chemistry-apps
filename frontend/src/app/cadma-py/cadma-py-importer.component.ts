@@ -562,7 +562,7 @@ export class CadmaPyImporterComponent {
     const guideIndex = currentSources.findIndex(
       (source) => source.smilesColumn !== '' && this._isGuideSource(source),
     );
-    return guideIndex >= 0 ? guideIndex : 0;
+    return Math.max(guideIndex, 0);
   });
 
   setSmilesGuideFile(sourceId: string): void {
