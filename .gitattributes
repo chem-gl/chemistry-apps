@@ -1,0 +1,4 @@
+# Nunca empaquetar secretos en el bundle de deploy (git archive).
+.env export-ignore
+*.key export-ignore
+*.pem export-ignore
