@@ -125,6 +125,103 @@ def _parse_float(val: str | None) -> float | None:
         return None
 
 
+def _format_base_row(
+    name: str, canonical: str, adme: dict[str, float]
+) -> dict[str, str]:
+    """Fila base con descriptores ADME formateados."""
+    return {
+        "name": name,
+        "MW": f"{adme['MW']:.2f}",
+        "logP": f"{adme['logP']:.2f}",
+        "MR": f"{adme['MR']:.2f}",
+        "AtX": str(int(adme["AtX"])),
+        "HBLA": str(int(adme["HBLA"])),
+        "HBLD": str(int(adme["HBLD"])),
+        "RB": str(int(adme["RB"])),
+        "PSA": f"{adme['PSA']:.2f}",
+        "smile": canonical,
+    }
+
+
+def _format_sa_block(canonical: str) -> dict[str, str]:
+    """SA por 3 métodos con fallback 50.000."""
+    sa_rdkit = _compute_sa_rdkit(canonical)
+    sa_brsa = _compute_sa_brsa(canonical)
+    sa_ambit = _compute_sa_ambit(canonical)
+    sa_default = sa_rdkit if sa_rdkit is not None else sa_brsa
+    return {
+        "SA_rdkit": f"{sa_rdkit:.3f}" if sa_rdkit is not None else "",
+        "SA_brsa": f"{sa_brsa:.3f}" if sa_brsa is not None else "",
+        "SA_ambit": f"{sa_ambit:.3f}" if sa_ambit is not None else "",
+        "SA": f"{sa_default:.3f}" if sa_default is not None else "50.000",
+    }
+
+
+def _format_test_block(
+    test_data: dict[str, dict[str, str]], canonical: str
+) -> dict[str, str]:
+    """Valores experimentales TEST indexados por SMILES canónico."""
+    test_row = test_data.get(canonical, {})
+    formatted: dict[str, str] = {}
+    for source, target in (("DT", "DT_test"), ("M", "M_test"), ("LD50", "LD50_test")):
+        parsed = _parse_float(test_row.get(source))
+        formatted[target] = f"{parsed:.2f}" if parsed is not None else ""
+    return formatted
+
+
+def _fetch_live_admet(
+    command: Command,
+    admet_client: AdmetAiClient,
+    canonical: str,
+    adme: dict[str, float],
+    cached: dict[str, float | None],
+) -> dict[str, float | None]:
+    """Completa valores ADMET-AI faltantes con consulta en vivo."""
+    command.stdout.write("    Consultando ADMET-AI (nuevo)...")
+    tox_result = admet_client.predict_properties(canonical)
+    if not tox_result.success:
+        return cached
+    tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
+    return {
+        "DT": cached["DT"] if cached["DT"] is not None else tox.get("DT"),
+        "M": cached["M"] if cached["M"] is not None else tox.get("M"),
+        "LD50": cached["LD50"] if cached["LD50"] is not None else tox.get("LD50"),
+    }
+
+
+def _resolve_admet_block(
+    command: Command,
+    admet_data: dict[str, dict[str, str]],
+    admet_client: AdmetAiClient,
+    canonical: str,
+    adme: dict[str, float],
+) -> dict[str, str]:
+    """ADMET-AI desde CSV cacheado o consulta en vivo, con fallbacks."""
+    admet_row = admet_data.get(canonical, {})
+    cached: dict[str, float | None] = {
+        "DT": _parse_float(admet_row.get("DT")),
+        "M": _parse_float(admet_row.get("M")),
+        "LD50": _parse_float(admet_row.get("LD50")),
+    }
+    if cached["DT"] is None or cached["M"] is None or cached["LD50"] is None:
+        cached = _fetch_live_admet(command, admet_client, canonical, adme, cached)
+    dt_admet, m_admet, ld50_admet = cached["DT"], cached["M"], cached["LD50"]
+    return {
+        "DT_admet": f"{dt_admet:.2f}" if dt_admet is not None else "0.50",
+        "M_admet": f"{m_admet:.2f}" if m_admet is not None else "0.50",
+        "LD50_admet": f"{ld50_admet:.2f}" if ld50_admet is not None else "500.00",
+    }
+
+
+def _resolve_final_toxicity(row_out: dict[str, str]) -> None:
+    """DT/M/LD50 finales: TEST si existe, si no ADMET-AI."""
+    row_out["DT"] = row_out["DT_test"] if row_out["DT_test"] else row_out["DT_admet"]
+    row_out["M"] = row_out["M_test"] if row_out["M_test"] else row_out["M_admet"]
+    row_out["LD50"] = (
+        row_out["LD50_test"] if row_out["LD50_test"] else row_out["LD50_admet"]
+    )
+
+
 def _process_rett_row(
     command: Command,
     row: dict[str, str],
@@ -148,60 +245,18 @@ def _process_rett_row(
         command.stderr.write("    No se pudieron computar ADME")
         return None
 
-    row_out: dict[str, str] = {
-        "name": name,
-        "MW": f"{adme['MW']:.2f}",
-        "logP": f"{adme['logP']:.2f}",
-        "MR": f"{adme['MR']:.2f}",
-        "AtX": str(int(adme["AtX"])),
-        "HBLA": str(int(adme["HBLA"])),
-        "HBLD": str(int(adme["HBLD"])),
-        "RB": str(int(adme["RB"])),
-        "PSA": f"{adme['PSA']:.2f}",
-        "smile": canonical,
-    }
-
-    sa_rdkit = _compute_sa_rdkit(canonical)
-    sa_brsa = _compute_sa_brsa(canonical)
-    sa_ambit = _compute_sa_ambit(canonical)
-    sa_default = sa_rdkit if sa_rdkit is not None else sa_brsa
-    row_out["SA_rdkit"] = f"{sa_rdkit:.3f}" if sa_rdkit is not None else ""
-    row_out["SA_brsa"] = f"{sa_brsa:.3f}" if sa_brsa is not None else ""
-    row_out["SA_ambit"] = f"{sa_ambit:.3f}" if sa_ambit is not None else ""
-    row_out["SA"] = f"{sa_default:.3f}" if sa_default is not None else "50.000"
-
-    test_row = test_data.get(canonical, {})
-    dt_test = _parse_float(test_row.get("DT"))
-    m_test = _parse_float(test_row.get("M"))
-    ld50_test = _parse_float(test_row.get("LD50"))
-    row_out["DT_test"] = f"{dt_test:.2f}" if dt_test is not None else ""
-    row_out["M_test"] = f"{m_test:.2f}" if m_test is not None else ""
-    row_out["LD50_test"] = f"{ld50_test:.2f}" if ld50_test is not None else ""
-
-    admet_row = admet_data.get(canonical, {})
-    dt_admet = _parse_float(admet_row.get("DT"))
-    m_admet = _parse_float(admet_row.get("M"))
-    ld50_admet = _parse_float(admet_row.get("LD50"))
-    if dt_admet is None or m_admet is None or ld50_admet is None:
-        command.stdout.write("    Consultando ADMET-AI (nuevo)...")
-        tox_result = admet_client.predict_properties(canonical)
-        if tox_result.success:
-            tox = _extract_admet_toxicity(tox_result.predictions, adme["MW"])
-            dt_admet = dt_admet if dt_admet is not None else tox.get("DT")
-            m_admet = m_admet if m_admet is not None else tox.get("M")
-            ld50_admet = ld50_admet if ld50_admet is not None else tox.get("LD50")
-
-    row_out["DT_admet"] = f"{dt_admet:.2f}" if dt_admet is not None else "0.50"
-    row_out["M_admet"] = f"{m_admet:.2f}" if m_admet is not None else "0.50"
-    row_out["LD50_admet"] = f"{ld50_admet:.2f}" if ld50_admet is not None else "500.00"
-    row_out["DT"] = row_out["DT_test"] if row_out["DT_test"] else row_out["DT_admet"]
-    row_out["M"] = row_out["M_test"] if row_out["M_test"] else row_out["M_admet"]
-    row_out["LD50"] = row_out["LD50_test"] if row_out["LD50_test"] else row_out["LD50_admet"]
+    row_out: dict[str, str] = _format_base_row(name, canonical, adme)
+    row_out.update(_format_sa_block(canonical))
+    row_out.update(_format_test_block(test_data, canonical))
+    row_out.update(
+        _resolve_admet_block(command, admet_data, admet_client, canonical, adme)
+    )
+    _resolve_final_toxicity(row_out)
     return row_out
 
 
 class Command(BaseCommand):
-    help = "Regenera RETT_RefSet.csv multi-método con TEST + ADMET-AI + SA (3 métodos)"
+    help = f"Regenera {OUTPUT_FILENAME} multi-método con TEST + ADMET-AI + SA (3 métodos)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -276,7 +331,7 @@ class Command(BaseCommand):
             "dt_admet": sum(1 for r in output_rows if r.get("DT_admet")),
         }
         self.stdout.write(self.style.SUCCESS(
-            f"✓ RETT_RefSet.csv regenerado con {stats['total']} moléculas\n"
+            f"✓ {OUTPUT_FILENAME} regenerado con {stats['total']} moléculas\n"
             f"  SA: rdkit={stats['sa_rdkit']}, brsa={stats['sa_brsa']}, ambit={stats['sa_ambit']}\n"
             f"  Tox TEST: DT={stats['dt_test']}, M={stats['m_test']}, LD50={stats['ld50_test']}\n"
             f"  Tox ADMET: DT={stats['dt_admet']}"

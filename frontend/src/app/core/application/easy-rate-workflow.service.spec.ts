@@ -527,7 +527,10 @@ describe('EasyRateWorkflowService', () => {
 
     progressEvents$.error(new Error('sse offline'));
 
-    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith('easy-rate-progress-1', 1000);
+    expect(jobsApiServiceMock.pollJobUntilCompleted).toHaveBeenCalledWith(
+      'easy-rate-progress-1',
+      1000,
+    );
     expect(jobsApiServiceMock.getEasyRateJobStatus).toHaveBeenCalledWith('easy-rate-progress-1');
     expect(workflowService.activeSection()).toBe('result');
     expect(workflowService.resultData()?.rateConstant).toBe(1.23e8);
@@ -895,5 +898,30 @@ describe('EasyRateWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('Unable to get Easy-rate final result');
     expect(workflowService.errorMessage()).toContain('gateway timeout');
+  });
+
+  it('includes optional product two and numeric calculation settings in dispatch', () => {
+    workflowService.updateInputFile('reactant_1_file', createGaussianFile('r1.log'));
+    workflowService.updateInputFile('reactant_2_file', createGaussianFile('r2.log'));
+    workflowService.updateInputFile('transition_state_file', createGaussianFile('ts.log'));
+    workflowService.updateInputFile('product_1_file', createGaussianFile('p1.log'));
+    workflowService.updateInputFile('product_2_file', createGaussianFile('p2.log'));
+    workflowService.updateDiffusion(true);
+    workflowService.updateRadiusReactant1(1.2);
+    workflowService.updateRadiusReactant2(1.4);
+    workflowService.updateReactionDistance(2.1);
+
+    workflowService.dispatch();
+
+    const dispatchParams = jobsApiServiceMock.dispatchEasyRateJob.mock.calls[0]?.[0] as {
+      product2File?: File;
+      radiusReactant1?: number;
+      radiusReactant2?: number;
+      reactionDistance?: number;
+    };
+    expect(dispatchParams.product2File).toBeInstanceOf(File);
+    expect(dispatchParams.radiusReactant1).toBe(1.2);
+    expect(dispatchParams.radiusReactant2).toBe(1.4);
+    expect(dispatchParams.reactionDistance).toBe(2.1);
   });
 });

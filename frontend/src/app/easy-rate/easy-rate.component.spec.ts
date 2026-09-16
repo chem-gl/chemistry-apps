@@ -15,7 +15,7 @@ import {
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
 import { EasyRateResultData } from '../core/application/easy-rate-workflow.types';
 import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider';
-import { EasyRateComponent } from './easy-rate.component';
+import { EasyRateComponent, EasyRateInputSlotView } from './easy-rate.component';
 
 describe('EasyRateComponent', () => {
   const workflowMock = {
@@ -393,7 +393,7 @@ describe('EasyRateComponent', () => {
       labelKey: 'easyRate.fileSlots.product2',
       required: false,
       noteKey: null,
-    } as any);
+    } satisfies EasyRateInputSlotView);
     expect(result).toBe('product_2_file');
   });
 });

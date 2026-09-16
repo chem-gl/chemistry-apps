@@ -593,4 +593,18 @@ describe('SmileitCatalogWorkflowService', () => {
 
     expect(smileitApiMock.deleteSmileitPatternEntry).toHaveBeenCalledWith('editable-pattern');
   });
+
+  it('rejects deleting a pattern owned by another user when the role is user', () => {
+    identitySessionMock.currentRole.mockReturnValue('user');
+    const foreignPattern = makePattern({
+      stable_id: 'foreign-pattern',
+      source_reference: 'local-lab',
+      provenance_metadata: { owner_user_id: '99' },
+    });
+
+    service.deletePatternEntry(foreignPattern);
+
+    expect(smileitApiMock.deleteSmileitPatternEntry).not.toHaveBeenCalled();
+    expect(state.errorMessage()).toContain('permission');
+  });
 });

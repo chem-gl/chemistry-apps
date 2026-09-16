@@ -47,6 +47,8 @@ generate_backend_reports() {
   poetry run python -m coverage erase
   poetry run python -m coverage run --source=apps,config,libs manage.py test
   poetry run python -m coverage xml -o coverage.xml
+  # El scanner corre desde la raíz: las rutas deben incluir el prefijo backend/.
+  sed -i 's|filename="|filename="backend/|' coverage.xml
   popd >/dev/null
 }
 

@@ -54,7 +54,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: prod
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     networks:
@@ -124,7 +124,7 @@ services:
       target: prod
       args:
         API_BASE_URL: ${BACKEND_PUBLIC_URL}
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend:${IMAGE_TAG_FRONTEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
     networks:
       - chemistry-apps-network
@@ -135,7 +135,7 @@ services:
         condition: service_healthy
 
   celery-worker:
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     command:

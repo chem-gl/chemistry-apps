@@ -9,6 +9,16 @@ on:
         description: SHA/tag usado para resolver el Release de despliegue
         required: true
         type: string
+      rebuild_backend:
+        description: Reconstruye el backend en el host remoto
+        required: false
+        default: true
+        type: boolean
+      rebuild_frontend:
+        description: Reconstruye el frontend en el host remoto
+        required: false
+        default: true
+        type: boolean
     secrets:
       VM_HOST:
         required: true
@@ -24,6 +34,8 @@ on:
         required: false
       VM_PROJECT_PATH:
         required: true
+      DB_HOST:
+        required: false
       DJANGO_SECRET_KEY:
         required: true
       DB_NAME:
@@ -129,6 +141,8 @@ jobs:
           BACKEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_BACKEND_PORT }}
           FRONTEND_INTERNAL_PORT: ${{ secrets.EXTERNAL_FRONTEND_PORT }}
           IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG_BACKEND: ${{ inputs.image_tag }}
+          IMAGE_TAG_FRONTEND: ${{ inputs.image_tag }}
           IMAGE_REGISTRY: ghcr.io
           IMAGE_NAMESPACE: ${{ github.repository_owner }}
         run: |
@@ -137,8 +151,8 @@ jobs:
             local normalized=""
             while IFS= read -r entry; do
               entry="${entry//$'\r'/}"
-              entry="${entry#${entry%%[![:space:]]*}}"
-              entry="${entry%${entry##*[![:space:]]}}"
+              entry="${entry#"${entry%%[![:space:]]*}"}"
+              entry="${entry%"${entry##*[![:space:]]}"}"
               entry="${entry%/}"
               [ -z "$entry" ] && continue
               case "$entry" in
@@ -200,6 +214,8 @@ jobs:
           BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8000}
           FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-80}
           IMAGE_TAG=${IMAGE_TAG}
+          IMAGE_TAG_BACKEND=${IMAGE_TAG_BACKEND}
+          IMAGE_TAG_FRONTEND=${IMAGE_TAG_FRONTEND}
           IMAGE_REGISTRY=${IMAGE_REGISTRY}
           IMAGE_NAMESPACE=${IMAGE_NAMESPACE}
           EOF_ENV
@@ -328,13 +344,15 @@ jobs:
           DEPLOY_ENV_FILE: ${{ env.DEPLOY_ENV_FILE }}
           DEPLOY_BUNDLE_FILE: ${{ env.DEPLOY_BUNDLE_FILE }}
           DEPLOY_STAGING_DIR: ${{ env.DEPLOY_STAGING_DIR }}
+          REBUILD_BACKEND: ${{ inputs.rebuild_backend }}
+          REBUILD_FRONTEND: ${{ inputs.rebuild_frontend }}
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           port: ${{ secrets.VM_PORT }}
           key: ${{ steps.ssh_key.outputs.private_key }}
           passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-          envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_BUNDLE_FILE,DEPLOY_STAGING_DIR
+          envs: VM_PROJECT_PATH,DEPLOY_COMPOSE_FILE,DEPLOY_ENV_FILE,DEPLOY_BUNDLE_FILE,DEPLOY_STAGING_DIR,REBUILD_BACKEND,REBUILD_FRONTEND
           script: |
             set -e
 
@@ -369,6 +387,26 @@ jobs:
 
             # --no-same-owner: ignorar el propietario almacenado en el tar
             tar --no-same-owner -xzf "$DEPLOY_STAGING_DIR/$DEPLOY_BUNDLE_FILE" -C "$VM_PROJECT_PATH"
+
+            env_value() {
+              [ -f .env ] || return 0
+              awk -F= -v key="$1" '$1 == key {sub(/^[^=]*=/, ""); print; exit}' .env
+            }
+
+            previous_image_tag="$(env_value IMAGE_TAG)"
+            previous_backend_tag="$(env_value IMAGE_TAG_BACKEND)"
+            previous_frontend_tag="$(env_value IMAGE_TAG_FRONTEND)"
+            previous_backend_tag="${previous_backend_tag:-$previous_image_tag}"
+            previous_frontend_tag="${previous_frontend_tag:-$previous_image_tag}"
+
+            if [ "$REBUILD_BACKEND" = "false" ]; then
+              [ -n "$previous_backend_tag" ] || { echo "ERROR: no existe tag previo del backend."; exit 1; }
+              sed -i "s|^IMAGE_TAG_BACKEND=.*|IMAGE_TAG_BACKEND=$previous_backend_tag|" "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
+            fi
+            if [ "$REBUILD_FRONTEND" = "false" ]; then
+              [ -n "$previous_frontend_tag" ] || { echo "ERROR: no existe tag previo del frontend."; exit 1; }
+              sed -i "s|^IMAGE_TAG_FRONTEND=.*|IMAGE_TAG_FRONTEND=$previous_frontend_tag|" "$DEPLOY_STAGING_DIR/$DEPLOY_ENV_FILE"
+            fi
 
             mkdir -p docker-data/postgres docker-data/redis backend/media
             chmod u+rwx "$DEPLOY_STAGING_DIR" 2>/dev/null || true
@@ -480,9 +518,13 @@ jobs:
             docker image prune -a -f
             docker builder prune -a -f
 
-            # --no-cache: evita reusar capas cacheadas con versiones anteriores de Poetry / dependencias.
-            # --pull:     fuerza re-pull de la imagen base para no usar capas locales obsoletas.
-            $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build --no-cache --pull backend frontend
+            # --no-cache: evita reusar capas cacheadas de los servicios modificados.
+            BUILD_SERVICES=""
+            [ "$REBUILD_BACKEND" = "true" ] && BUILD_SERVICES="$BUILD_SERVICES backend"
+            [ "$REBUILD_FRONTEND" = "true" ] && BUILD_SERVICES="$BUILD_SERVICES frontend"
+            if [ -n "$BUILD_SERVICES" ]; then
+              $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env build --no-cache --pull $BUILD_SERVICES
+            fi
 
             if ! $COMPOSE_CMD -f "$DEPLOY_COMPOSE_FILE" --env-file .env up -d --wait; then
               echo "Deploy failed, collecting compose diagnostics..."

@@ -108,7 +108,6 @@ export class App implements OnInit {
     });
 
     if (environment.production) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.verifyAppVersion();
     }
   }
