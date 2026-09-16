@@ -2,11 +2,18 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  buildCadmaBoxplotOptions,
+  buildCadmaReferenceBoxplotOptionsMap,
+  buildCadmaReferenceMiniBoxplotOptions,
   buildCadmaMetricChartOptions,
   buildCadmaResultsBoxplotOptionsMap,
   buildCadmaScoreChartOptions,
+  getAllReferenceBoxplotMetrics,
+  getReferenceBoxplotMetricDefs,
+  getResultsBoxplotMetricDefs,
+  buildCadmaSingleMetricBoxplotOptions,
 } from './cadma-py-chart.options';
-import { CadmaRankingRowView } from '../core/api/cadma-py-api.service';
+import { CadmaRankingRowView, CadmaReferenceRowView } from '../core/api/cadma-py-api.service';
 
 const mockRow = (overrides: Partial<CadmaRankingRowView> = {}): CadmaRankingRowView => ({
   name: 'Mol A',
@@ -32,6 +39,13 @@ const mockRow = (overrides: Partial<CadmaRankingRowView> = {}): CadmaRankingRowV
   best_fit_summary: 'good',
   ...overrides,
 });
+
+const mockReferenceRow = (overrides: Partial<CadmaReferenceRowView> = {}): CadmaReferenceRowView => ({
+  ...mockRow(), paper_authors: '', paper_reference: '', paper_url: '', evidence_note: '',
+  MW: 180, logP: 1.2, MR: 45, AtX: 12, HBLA: 3, HBLD: 1, RB: 4, PSA: 52,
+  DT: 0.15, M: 0.08, LD50: 320, SA: 3.2,
+  ...overrides,
+} as unknown as CadmaReferenceRowView);
 
 describe('cadma-py-chart.options', () => {
   it('builds the score chart with dynamic scale and explicit line support', () => {
@@ -120,5 +134,66 @@ describe('cadma-py-chart.options', () => {
         expect(options['title']).toBeDefined();
       }
     });
+  });
+
+  it('covers score bar/scatter series, ranking metadata and tooltip fallbacks', () => {
+    const score = { categories: ['A'], values: [1], reference_line: 0.5 };
+    const bar = buildCadmaScoreChartOptions(score, 'bar');
+    const scatter = buildCadmaScoreChartOptions(score, 'scatter', [mockRow({ name: 'Named', smiles: 'CO' })]);
+    const barSeries = (bar['series'] as Array<Record<string, unknown>>)[0];
+    const scatterSeries = (scatter['series'] as Array<Record<string, unknown>>)[0];
+    expect(barSeries['type']).toBe('bar');
+    expect(scatterSeries['data']).toEqual([{ value: [0, 1], name: 'Named', smiles: 'CO', symbolSize: 10 }]);
+    const formatter = (scatter['tooltip'] as { formatter: (p: unknown) => string })['formatter'];
+    expect(formatter({ data: { name: 'A', smiles: 'CO', value: [0, 1] } })).toContain('Score: 1.00');
+    expect(formatter({ name: 'fallback' })).toBe('fallback');
+  });
+
+  it('handles empty and constant reference mini boxplots', () => {
+    const empty = buildCadmaReferenceMiniBoxplotOptions([], 'MW', 'Molecular Weight');
+    expect(empty['series']).toEqual([]);
+    const options = buildCadmaReferenceMiniBoxplotOptions([mockReferenceRow({ MW: 10 })], 'MW', 'MW');
+    const series = (options['series'] as Array<Record<string, unknown>>)[0];
+    expect(series['data']).toEqual([[10, 10, 10, 10, 10]]);
+    const formatter = (options['tooltip'] as { formatter: () => string })['formatter'];
+    expect(formatter()).toContain('n: 1');
+  });
+
+  it('filters reference boxplots and separates outliers deterministically', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const rows = [mockReferenceRow({ MW: 1, name: 'small' }), mockReferenceRow({ MW: 2 }), mockReferenceRow({ MW: 3 }), mockReferenceRow({ MW: 100, name: 'outlier' })];
+    const options = buildCadmaBoxplotOptions(rows, new Set(['ADME']), new Set(['logP']));
+    const categories = (options['xAxis'] as { data: string[] })['data'];
+    const series = options['series'] as Array<{ data: unknown[] }>;
+    expect(categories).toContain('MW');
+    expect(categories).not.toContain('LogP');
+    expect(series[2].data).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'outlier' })]));
+    const tooltip = (options['tooltip'] as { formatter: (p: unknown) => string })['formatter'];
+    expect(tooltip({ seriesType: 'boxplot', dataIndex: 0, data: [] })).toContain('Median');
+    expect(tooltip({ seriesType: 'scatter', dataIndex: 0, data: { name: 'x', value: [0, 2], smiles: 'CC' } })).toContain('2.00');
+    expect(tooltip({ name: 'plain', seriesType: 'line', data: 1, dataIndex: 0 })).toBe('plain');
+    vi.restoreAllMocks();
+  });
+
+  it('exposes metric definitions and supports empty/result metric charts', () => {
+    expect(getAllReferenceBoxplotMetrics().length).toBe(17);
+    expect(getReferenceBoxplotMetricDefs().some((metric) => metric.group === 'Toxicity')).toBe(true);
+    expect(getResultsBoxplotMetricDefs()).toHaveLength(12);
+    expect(buildCadmaReferenceBoxplotOptionsMap([])['MW']['series']).toEqual([]);
+    expect(buildCadmaSingleMetricBoxplotOptions([], 'MW', 'MW')['series']).toEqual([]);
+    const options = buildCadmaSingleMetricBoxplotOptions([mockRow({ MW: 10 })], 'MW', 'MW');
+    const formatter = (options['tooltip'] as { formatter: (p: unknown) => string })['formatter'];
+    expect(formatter({ seriesType: 'boxplot', data: [10], name: 'MW' })).toContain('Mean');
+    expect(formatter({ seriesType: 'scatter', data: { value: [0, 10], name: 'A', smiles: 'CC' } })).toContain('A');
+    expect(formatter({ seriesType: 'line', data: [10], name: 'other' })).toBe('other');
+  });
+
+  it('builds metric scatter metadata and dynamic empty axes', () => {
+    const options = buildCadmaMetricChartOptions({ metric: 'MW', label: 'MW', categories: ['A'], values: [1], reference_mean: 1, reference_low: 1, reference_high: 1, better_direction: 'higher' }, 'scatter', [mockRow()]);
+    const series = (options['series'] as Array<Record<string, unknown>>)[0];
+    expect(series['type']).toBe('scatter');
+    expect((series['data'] as Array<Record<string, unknown>>)[0]['smiles']).toBe('CCO');
+    const empty = buildCadmaScoreChartOptions({ categories: [], values: [], reference_line: Number.NaN });
+    expect((empty['yAxis'] as { min: number; max: number })['max']).toBe(1);
   });
 });

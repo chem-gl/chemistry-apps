@@ -668,6 +668,46 @@ class CadmaPyServiceEdgeTests(TestCase):
         with self.assertRaisesMessage(ValueError, "no está disponible"):
             _read_sample_text("neuro")
 
+    def test_rows_reject_missing_smiles_and_missing_required_metric(self) -> None:
+        with self.assertRaisesMessage(ValueError, "columna smiles"):
+            build_compound_rows_from_sources(
+                combined_csv_text="name,DT,M,LD50,SA\nA,0,0,1,5",
+                require_evidence=False,
+            )
+        with self.assertRaisesMessage(ValueError, "métrica DT"):
+            build_compound_rows_from_sources(
+                combined_csv_text="name,smiles,M,LD50,SA\nA,CCO,0,1,5",
+                require_evidence=False,
+            )
+
+    def test_rows_use_default_evidence_and_name_for_literal_values(self) -> None:
+        rows = build_compound_rows_from_sources(
+            combined_csv_text="smiles,DT,M,LD50,SA\nCCO,yes,non-toxic,1,5",
+            default_paper_reference="Imported source",
+            default_name_prefix="Batch",
+            require_evidence=True,
+        )
+        self.assertEqual(rows[0]["name"], "Batch 1")
+        self.assertEqual(rows[0]["DT"], 1.0)
+        self.assertEqual(rows[0]["M"], 0.0)
+        self.assertEqual(rows[0]["paper_reference"], "Imported source")
+
+    def test_mapped_sources_reject_missing_smiles_in_secondary_and_bad_row_count(self) -> None:
+        guide = {
+            "filename": "guide.csv", "content_text": "smiles\nCCO\nCCN", "has_header": True,
+            "smiles_column": "smiles",
+        }
+        with self.assertRaisesMessage(ValueError, "no incluye SMILES"):
+            build_compound_rows_from_mapped_sources(
+                source_configs=[guide, {"filename": "tox.csv", "content_text": "smiles,dt\n,0", "has_header": True, "dt_column": "dt", "smiles_column": "smiles"}],
+                require_evidence=False,
+            )
+        with self.assertRaisesMessage(ValueError, "número de filas"):
+            build_compound_rows_from_mapped_sources(
+                source_configs=[guide, {"filename": "tox.csv", "content_text": "0", "has_header": False, "dt_column": "column1"}],
+                require_evidence=False,
+            )
+
 
 class CadmaPyRouterBranchTests(TestCase):
     """Prueba ramas de router aislando servicios y almacenamiento externo."""
