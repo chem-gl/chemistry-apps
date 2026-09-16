@@ -500,6 +500,8 @@ Cada app científica registra su función de dominio decorándola con `@PluginRe
 ```python
 from apps.core.processing import PluginRegistry
 
+@PluginRegistry.register("nombre")
+def mi_plugin(
     parameters: JSONMap,
     report_progress: PluginProgressCallback,
     emit_log: PluginLogCallback,
@@ -877,6 +879,8 @@ Las apps que procesan archivos Gaussian (`easy_rate`, `marcus`) no los guardan e
 - Archivos > umbral: reciben un `expires_at` calculado desde `ARTIFACT_LARGE_FILE_TTL_DAYS`.
 - La tarea Celery `purge_expired_artifact_chunks` (beat schedule: diario) elimina los chunks de artefactos vencidos pero preserva el registro `ScientificJobInputArtifact` con sus metadatos para mantener la trazabilidad del job.
 
+El parseo de los logs Gaussian se detalla una sola vez en `backend/libs/gaussian_log_parser/README.md` (API `parse_blob`/`parse_content`, `GaussianExecution.to_dict()`).
+
 ---
 
 ## 12) Inicio rápido local
@@ -1091,7 +1095,7 @@ npm run build
 ### Generar artefactos de análisis
 
 ```bash
-cd /ruta/al/repositorio
+cd chemistry-apps
 bash scripts/generate_sonar_coverage.sh && echo listo
 ```
 
