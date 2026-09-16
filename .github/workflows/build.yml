@@ -31,6 +31,8 @@ jobs:
       image_tag: ${{ steps.image_meta.outputs.image_tag }}
     permissions:
       contents: read
+      # Requerido para guardar/restaurar el caché de capas Docker (type=gha).
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -41,22 +43,42 @@ jobs:
         run: |
           echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build frontend (production)
-        run: |
-          docker build \
-            --label "org.opencontainers.image.revision=${{ github.sha }}" \
-            --label "org.opencontainers.image.description=Chemistry Apps frontend production image" \
-            --build-arg API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }} \
-            -t chemistry-frontend:${{ steps.image_meta.outputs.image_tag }} \
-            -f frontend/Dockerfile --target prod frontend/
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend/
+          file: frontend/Dockerfile
+          target: prod
+          # Solo validación: estas imágenes nunca se publican
+          # (el deploy reconstruye en el servidor). Sin `push`.
+          push: false
+          tags: chemistry-frontend:${{ steps.image_meta.outputs.image_tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.description=Chemistry Apps frontend production image
+          build-args: |
+            API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }}
+          # Las capas (npm ci, pip install) se reutilizan entre runs.
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
       - name: Build backend Docker image (prod)
-        run: |
-          docker build \
-            --label "org.opencontainers.image.revision=${{ github.sha }}" \
-            --label "org.opencontainers.image.description=Chemistry Apps backend production image" \
-            -t chemistry-backend:${{ steps.image_meta.outputs.image_tag }} \
-            -f backend/Dockerfile --target prod backend/
+        uses: docker/build-push-action@v6
+        with:
+          context: backend/
+          file: backend/Dockerfile
+          target: prod
+          # Solo validación (ver frontend). Sin `push`.
+          push: false
+          tags: chemistry-backend:${{ steps.image_meta.outputs.image_tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.description=Chemistry Apps backend production image
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
 
   release:
     name: Create release

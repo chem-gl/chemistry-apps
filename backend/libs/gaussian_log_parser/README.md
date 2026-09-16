@@ -133,6 +133,7 @@ gaussian_log_parser/
 │   ├── __init__.py
 │   ├── base.py               # Clase abstracta GaussianAttribute
 │   └── gaussian_attributes.py # Extractores específicos
+├── fixtures/                  # Logs de ejemplo para tests
 ├── tests.py                   # Tests unitarios
 └── README.md                  # Este archivo
 ```
@@ -143,13 +144,13 @@ Desde la carpeta `backend/`:
 
 ```bash
 # Con unittest
-python -m unittest libs.gaussian_log_parser.tests -v
+poetry run python -m unittest libs.gaussian_log_parser.tests -v
 
 # Con pytest (si está instalado)
-python -m pytest libs/gaussian_log_parser/tests.py -v
+poetry run python -m pytest libs/gaussian_log_parser/tests.py -v
 
 # Con Django
-python manage.py test libs.gaussian_log_parser.tests
+poetry run python manage.py test libs.gaussian_log_parser.tests
 ```
 
 ## 📦 Modelo de datos
@@ -220,7 +221,7 @@ self._attributes.append(MiNuevoAtributo())
 ## 📝 Notas de diseño
 
 - **Sin dependencias externas**: Usa solo stdlib
-- **Tipado estricto**: Cumple con `python.instructions.md`
+- **Tipado estricto**: Cumple con `.github/instructions/backend.instructions.md`
 - **Tolerante a errores**: Ignora caracteres inválidos (encoding)
 - **Reutilizable**: Diseño en capas para extraer a paquete aparte
 - **Testeable**: Lógica separada de I/O
