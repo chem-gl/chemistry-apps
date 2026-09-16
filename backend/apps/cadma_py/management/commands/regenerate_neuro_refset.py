@@ -187,7 +187,7 @@ class Command(BaseCommand):
             row_out["SA"] = f"{sa_default:.3f}" if sa_default is not None else "50.000"
 
             # --- Toxicidad ADMET-AI (siempre consultar porque el CSV las tiene vacías) ---
-            self.stdout.write(f"    Consultando ADMET-AI...")
+            self.stdout.write("    Consultando ADMET-AI...")
             try:
                 tox_result = admet_client.predict_properties(canonical)
                 if tox_result.success:

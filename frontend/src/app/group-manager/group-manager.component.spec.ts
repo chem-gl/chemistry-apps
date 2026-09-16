@@ -22,6 +22,9 @@ describe('GroupManagerComponent', () => {
     createAppPermission: vi.fn(),
     updateAppPermission: vi.fn(),
     deleteGroup: vi.fn(),
+    listRegistrationTokens: vi.fn(),
+    createRegistrationToken: vi.fn(),
+    revokeRegistrationToken: vi.fn(),
   };
 
   const sessionServiceMock = {
@@ -68,6 +71,11 @@ describe('GroupManagerComponent', () => {
       of({ id: 10, app_name: 'smileit', group: 1, user: null, is_enabled: false }),
     );
     identityApiServiceMock.deleteGroup.mockReturnValue(of(void 0));
+    identityApiServiceMock.listRegistrationTokens.mockReturnValue(of([]));
+    identityApiServiceMock.createRegistrationToken.mockReturnValue(
+      of({ id: 1, token: 'abc123', is_active: true }),
+    );
+    identityApiServiceMock.revokeRegistrationToken.mockReturnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       imports: [GroupManagerComponent],

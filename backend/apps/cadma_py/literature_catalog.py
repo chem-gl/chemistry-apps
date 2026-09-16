@@ -57,6 +57,17 @@ SAMPLE_LITERATURE: Final[dict[str, SampleLiteratureMetadata]] = {
 }
 
 
+# Referencia compartida de drug-repurposing en Rett (Fuchs et al. 2024).
+# Se centraliza para evitar literales duplicados (Sonar S1192).
+_FUCHS_2024_REFERENCE: Final[str] = (
+    "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
+)
+_FUCHS_2024_URL: Final[str] = "https://doi.org/10.3389/fmed.2024.1425038"
+_FUCHS_2024_AUTHORS: Final[str] = (
+    "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)"
+)
+
+
 COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
     "7,8-dihydroxyflavone": {
         "paper_reference": (
@@ -439,21 +450,17 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
         ),
     },
     "tianeptine": {
-        "paper_reference": (
-            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
-        ),
-        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
-        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "paper_reference": _FUCHS_2024_REFERENCE,
+        "paper_url": _FUCHS_2024_URL,
+        "paper_authors": _FUCHS_2024_AUTHORS,
         "evidence_note": (
             "Atypical antidepressant modulating glutamate and serotonin; reviewed as a drug repurposing candidate for RTT and Rett-like syndromes."
         ),
     },
     "trazodone": {
-        "paper_reference": (
-            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
-        ),
-        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
-        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "paper_reference": _FUCHS_2024_REFERENCE,
+        "paper_url": _FUCHS_2024_URL,
+        "paper_authors": _FUCHS_2024_AUTHORS,
         "evidence_note": (
             "Serotonin reuptake inhibitor and 5-HT2 antagonist antidepressant; reviewed as a repurposing candidate for RTT in the context of mood and sleep symptoms."
         ),
@@ -549,11 +556,9 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
         ),
     },
     "tianeptina": {
-        "paper_reference": (
-            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
-        ),
-        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
-        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "paper_reference": _FUCHS_2024_REFERENCE,
+        "paper_url": _FUCHS_2024_URL,
+        "paper_authors": _FUCHS_2024_AUTHORS,
         "evidence_note": (
             "Atypical antidepressant modulating glutamate and serotonin; reviewed as a drug repurposing candidate for RTT and Rett-like syndromes."
         ),
@@ -569,11 +574,9 @@ COMPOUND_LITERATURE: Final[dict[str, dict[str, str]]] = {
         ),
     },
     "trazodona": {
-        "paper_reference": (
-            "Drug repurposing in Rett and Rett-like syndromes: A promising yet underrated opportunity?"
-        ),
-        "paper_url": "https://doi.org/10.3389/fmed.2024.1425038",
-        "paper_authors": "Fuchs, C., 't Hoen, P. A. C., Müller, A. R., Ehrhart, F., & Van Karnebeek, C. D. M. (2024)",
+        "paper_reference": _FUCHS_2024_REFERENCE,
+        "paper_url": _FUCHS_2024_URL,
+        "paper_authors": _FUCHS_2024_AUTHORS,
         "evidence_note": (
             "Serotonin reuptake inhibitor and 5-HT2 antagonist antidepressant; reviewed as a repurposing candidate for RTT in the context of mood and sleep symptoms."
         ),

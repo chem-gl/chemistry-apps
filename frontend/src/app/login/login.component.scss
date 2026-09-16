@@ -15,6 +15,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  /* Permite que la columna encoja bajo su min-content (Firefox respeta
+     min-width:auto en items de grid y los inputs aportan un max-content enorme). */
+  min-width: 0;
+  min-height: 0;
 }
 
 /* ── Institutional header ── */
@@ -90,6 +94,7 @@
   color: var(--uni-blue);
   letter-spacing: 0.01em;
   text-align: center;
+  text-wrap: balance;
   line-height: 1.2;
 }
 
@@ -134,12 +139,14 @@
 
 .login-form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
 }
 
 .login-form label {
   display: grid;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .field-label-text {
@@ -156,6 +163,11 @@
   padding: 0.6rem 0.75rem;
   font-size: 0.86rem;
   font-family: var(--chem-font-body);
+  /* width:100% + min-width:0: en Firefox un input con width:auto dentro de
+     un grid aporta ~2700px de max-content y rompe el layout (scroll-x). */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   transition:
     border-color var(--chem-transition),
     box-shadow var(--chem-transition);
@@ -234,6 +246,10 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  /* Igual que .left-column: evita que textos largos (DOIs, autores)
+     fuercen la pista del grid en Firefox. */
+  min-width: 0;
+  min-height: 0;
 }
 
 /* ── Developers ── */

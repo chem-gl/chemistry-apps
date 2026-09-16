@@ -12,7 +12,6 @@ from django.core.management.base import BaseCommand
 from apps.cadma_py.literature_catalog import enrich_bundled_sample_rows
 from apps.cadma_py.models import CadmaReferenceLibrary
 from apps.cadma_py.services import (
-    _read_sample_text,
     build_compound_rows_from_sources,
     _sample_assets_dir,
 )
