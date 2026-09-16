@@ -1,6 +1,7 @@
 @if (open()) {
 <div class="doc-backdrop" (click)="onBackdropClick()" (keydown.escape)="closePanel.emit()">
-  <aside class="doc-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+  <dialog open class="doc-panel" (click)="$event.stopPropagation()"
+    (keydown)="$event.stopPropagation()">
     <header class="doc-header">
       <button type="button" class="doc-close-btn" (click)="closePanel.emit()">×</button>
     </header>
@@ -19,6 +20,6 @@
       <div class="doc-content" [innerHTML]="tab.content"></div>
       }
     </div>
-  </aside>
+  </dialog>
 </div>
 }

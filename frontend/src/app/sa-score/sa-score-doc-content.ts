@@ -4,7 +4,7 @@ export const SA_SCORE_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
     titleKey: 'saScore.doc.tabOverview',
-    content: `
+    content: String.raw`
 <h3>Synthetic Accessibility Score</h3>
 
 <p>
@@ -33,7 +33,7 @@ $$
   {
     id: 'methods',
     titleKey: 'saScore.doc.tabMethods',
-    content: `
+    content: String.raw`
 <h3>Available methods</h3>
 
 <h4>AMBIT</h4>
@@ -73,7 +73,7 @@ $$
   {
     id: 'references',
     titleKey: 'saScore.doc.tabReferences',
-    content: `
+    content: String.raw`
 <h3>References</h3>
 <ul>
   <li>Ertl, P.; Schuffenhauer, A. <em>J. Cheminform.</em> <strong>2009</strong>, 1, 8. <a href="https://doi.org/10.1186/1758-2946-1-8" target="_blank">DOI: 10.1186/1758-2946-1-8</a></li>

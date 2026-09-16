@@ -53,7 +53,7 @@ export class ScientificDocPanelComponent {
             renderMathInElement(el, {
               delimiters: [
                 { left: '$$', right: '$$', display: true },
-                { left: '\\(', right: '\\)', display: false },
+                { left: String.raw`\(`, right: String.raw`\)`, display: false },
               ],
               ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
               throwOnError: false,

@@ -282,7 +282,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   readonly diagramSrc: SafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl('/cadma-chem-diagram.html');
 
-  onDiagramBackdropClick(event: MouseEvent): void {
+  onDiagramBackdropClick(event: Event): void {
     if ((event.target as HTMLElement)?.classList.contains('diagram-overlay')) {
       this.showDiagram.set(false);
     }
@@ -1465,7 +1465,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.expandedChart.set(null);
   }
 
-  onExpandedChartBackdrop(event: MouseEvent): void {
+  onExpandedChartBackdrop(event: Event): void {
     if ((event.target as HTMLElement)?.classList.contains('chart-expand-overlay')) {
       this.closeExpandedChart();
     }
@@ -1518,7 +1518,7 @@ export class CadmaPyComponent implements OnInit, OnDestroy {
     this.chartCompoundBusy.set(false);
   }
 
-  onChartCompoundBackdrop(event: MouseEvent): void {
+  onChartCompoundBackdrop(event: Event): void {
     if ((event.target as HTMLElement)?.classList.contains('chart-compound-overlay')) {
       this.closeChartCompound();
     }

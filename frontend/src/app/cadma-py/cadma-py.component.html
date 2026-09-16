@@ -771,13 +771,15 @@
 
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
-  <div class="diagram-overlay" (click)="onDiagramBackdropClick($event)">
+  <div class="diagram-overlay" tabindex="0" (click)="onDiagramBackdropClick($event)"
+    (keydown.enter)="onDiagramBackdropClick($event)">
 
 
   <!-- ── Expanded chart modal ──────────────────────────────────────── -->
   @if (expandedChart(); as chartType) {
-  <div class="chart-expand-overlay" (click)="onExpandedChartBackdrop($event)">
-    <div class="chart-expand-modal" role="dialog" aria-modal="true" [attr.aria-label]="chartType === 'score' ? 'Expanded ranking chart' : 'Expanded metric chart'">
+  <div class="chart-expand-overlay" tabindex="0" (click)="onExpandedChartBackdrop($event)"
+    (keydown.enter)="onExpandedChartBackdrop($event)">
+    <dialog open class="chart-expand-modal" [attr.aria-label]="chartType === 'score' ? 'Expanded ranking chart' : 'Expanded metric chart'">
       <div class="chart-expand-header">
         <h3>{{ chartType === 'score' ? ('cadmaPy.step3.globalRanking' | transloco) : ('cadmaPy.step3.candidateVsReference' | transloco) + ' — ' + selectedMetric() }}</h3>
         <button class="close-btn" type="button" (click)="closeExpandedChart()" aria-label="Close">×</button>
@@ -792,14 +794,15 @@
           [chartHeight]="'calc(90vh - 70px)'" (chartClick)="onMetricChartClick($event)"></app-scientific-chart>
         }
       </div>
-    </div>
+    </dialog>
   </div>
   }
 
   <!-- ── Chart compound detail modal ─────────────────────────────────── -->
   @if (chartCompound(); as compound) {
-  <div class="chart-compound-overlay" (click)="onChartCompoundBackdrop($event)">
-    <div class="chart-compound-modal" role="dialog" aria-modal="true" aria-label="Compound detail">
+  <div class="chart-compound-overlay" tabindex="0" (click)="onChartCompoundBackdrop($event)"
+    (keydown.enter)="onChartCompoundBackdrop($event)">
+    <dialog open class="chart-compound-modal" aria-label="Compound detail">
       <div class="chart-compound-header">
         <h3>{{ compound.name || 'Compound Detail' }}</h3>
         <button class="close-btn" type="button" (click)="closeChartCompound()" aria-label="Close">×</button>
@@ -820,6 +823,7 @@
           <div class="chart-compound-info">
             <p class="chart-compound-smiles">{{ compound.smiles }}</p>
             <table class="bxp-metrics-table">
+              <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
               <tbody>
                 @for (m of chartCompoundMetrics(); track m.key) {
                 <tr>
@@ -832,16 +836,16 @@
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   </div>
   }
-    <div class="diagram-modal" role="dialog" aria-modal="true" aria-label="Diagrama CADMA-Chem">
+    <dialog open class="diagram-modal" aria-label="Diagrama CADMA-Chem">
       <div class="diagram-header">
         <h3>CADMA-Chem · Protocol diagram</h3>
         <button class="close-btn" type="button" (click)="showDiagram.set(false)" aria-label="Cerrar">✕</button>
       </div>
       <iframe [src]="diagramSrc" class="diagram-frame" title="Diagrama CADMA-Chem"></iframe>
-    </div>
+    </dialog>
   </div>
   }
 </section>

@@ -38,13 +38,16 @@ with open(TEST_CSV, newline="", encoding="utf-8-sig") as f:
             my_val = float(my[col]) if col in my else None
             if ref_val is not None and my_val is not None:
                 diff = abs(ref_val - my_val)
-                if col in ("AtX", "HBLA", "HBLD", "RB") and diff > 0:
-                    diffs.append(f"{col}: ref={ref_val} my={my_val}")
-                elif col in ("MW",) and diff > 0.05:
-                    diffs.append(f"{col}: ref={ref_val} my={my_val}")
-                elif col in ("logP", "MR") and diff > 0.01:
-                    diffs.append(f"{col}: ref={ref_val} my={my_val}")
-                elif col == "PSA" and diff > 0.1:
+                exceeds_exact_threshold = col in ("AtX", "HBLA", "HBLD", "RB") and diff > 0
+                exceeds_mw_threshold = col == "MW" and diff > 0.05
+                exceeds_logp_threshold = col in ("logP", "MR") and diff > 0.01
+                exceeds_psa_threshold = col == "PSA" and diff > 0.1
+                if (
+                    exceeds_exact_threshold
+                    or exceeds_mw_threshold
+                    or exceeds_logp_threshold
+                    or exceeds_psa_threshold
+                ):
                     diffs.append(f"{col}: ref={ref_val} my={my_val}")
         if diffs:
             mismatches.append((name, diffs))
