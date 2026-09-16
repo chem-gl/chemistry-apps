@@ -25,6 +25,8 @@ __pycache__/
 .scannerwork/
 .sonarlint/
 .sonar/
+.serena/
+.playwright-mcp/
 deorecated/
 deprecated/*
 !.vscode/
