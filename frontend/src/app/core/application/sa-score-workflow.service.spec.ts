@@ -127,19 +127,19 @@ describe('SaScoreWorkflowService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     jobsApiServiceMock = {
-      dispatchSaScoreJob: vi.fn(
-        (): Observable<SaScoreJobResponseView> => of(makeSaScoreJobResponse()),
+      dispatchSaScoreJob: vi.fn((): Observable<SaScoreJobResponseView> =>
+        of(makeSaScoreJobResponse()),
       ),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
-      getSaScoreJobStatus: vi.fn(
-        (): Observable<SaScoreJobResponseView> => of(makeSaScoreJobResponse()),
+      getSaScoreJobStatus: vi.fn((): Observable<SaScoreJobResponseView> =>
+        of(makeSaScoreJobResponse()),
       ),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
       listJobs: vi.fn((): Observable<ScientificJobView[]> => of([makeScientificJob()])),
-      validateSmilesCompatibility: vi.fn(
-        (): Observable<SmilesCompatibilityResultView> => of({ compatible: true, issues: [] }),
+      validateSmilesCompatibility: vi.fn((): Observable<SmilesCompatibilityResultView> =>
+        of({ compatible: true, issues: [] }),
       ),
       downloadSaScoreCsvReport: vi.fn(),
       downloadSaScoreCsvMethodReport: vi.fn(),
@@ -427,5 +427,21 @@ describe('SaScoreWorkflowService', () => {
     expect(workflowService.errorMessage()).toBe(
       'Unable to retrieve final SA score result: gateway timeout',
     );
+  });
+
+  it('surfaces dispatch errors and clears the display name during reset', () => {
+    jobsApiServiceMock.dispatchSaScoreJob.mockReturnValue(
+      throwError(() => new Error('dispatch unavailable')),
+    );
+    workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
+    workflowService.jobNameInput.set('Transient run');
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('dispatch unavailable');
+    workflowService.reset();
+    expect(workflowService.currentJobDisplayName()).toBeNull();
   });
 });

@@ -7,6 +7,7 @@ import {
   buildCadmaReferenceMiniBoxplotOptions,
   buildCadmaMetricChartOptions,
   buildCadmaResultsBoxplotOptionsMap,
+  buildCadmaResultsBoxplotSingleChart,
   buildCadmaScoreChartOptions,
   getAllReferenceBoxplotMetrics,
   getReferenceBoxplotMetricDefs,
@@ -195,5 +196,46 @@ describe('cadma-py-chart.options', () => {
     expect((series['data'] as Array<Record<string, unknown>>)[0]['smiles']).toBe('CCO');
     const empty = buildCadmaScoreChartOptions({ categories: [], values: [], reference_line: Number.NaN });
     expect((empty['yAxis'] as { min: number; max: number })['max']).toBe(1);
+  });
+
+  it('uses fallback names and empty series for missing scatter ranking rows', () => {
+    const score = buildCadmaScoreChartOptions(
+      { categories: ['A', 'B'], values: [1, 2], reference_line: 0.5 },
+      'scatter',
+      [mockRow({ name: 'First' })],
+    );
+    const scoreData = ((score['series'] as Array<Record<string, unknown>>)[0]['data']) as Array<Record<string, unknown>>;
+    expect(scoreData[1]).toEqual({ value: [1, 2], name: 'B', smiles: '', symbolSize: 10 });
+
+    const metric = buildCadmaMetricChartOptions(
+      { metric: 'MW', label: 'MW', categories: ['A'], values: [1], reference_mean: 1, reference_low: 0, reference_high: 2, better_direction: 'balanced' },
+      'bar',
+    );
+    const metricSeries = (metric['series'] as Array<Record<string, unknown>>)[0];
+    expect(metricSeries['type']).toBe('bar');
+    expect(metricSeries['markArea']).toBeDefined();
+  });
+
+  it('returns tooltip fallbacks when boxplot indices or scatter values are absent', () => {
+    const options = buildCadmaBoxplotOptions([], new Set(['ADME']), new Set(['MW']));
+    const formatter = (options['tooltip'] as { formatter: (params: unknown) => string })['formatter'];
+    expect(formatter({ seriesType: 'boxplot', dataIndex: 999, data: [] })).toBe('');
+    expect(formatter({ seriesType: 'scatter', dataIndex: 0, data: { name: '', smiles: '', value: undefined } })).toContain('—');
+    expect(formatter({ seriesType: 'line', dataIndex: 0, data: 1, name: undefined })).toBe('');
+
+    const results = buildCadmaResultsBoxplotSingleChart([], new Set(['ADME']), new Set(['MW']));
+    const resultsFormatter = (results['tooltip'] as { formatter: (params: unknown) => string })['formatter'];
+    expect(resultsFormatter({ seriesType: 'boxplot', dataIndex: 999, data: [] })).toBe('');
+    expect(resultsFormatter({ seriesType: 'line', dataIndex: 0, data: 1, name: undefined })).toBe('');
+  });
+
+  it('handles all-missing result metrics and metric tooltip fallbacks', () => {
+    const missing = mockRow({ MW: undefined, logP: undefined, SA: undefined });
+    const options = buildCadmaSingleMetricBoxplotOptions([missing], 'MW', 'MW');
+    expect(options['series']).toEqual([]);
+    const populated = buildCadmaSingleMetricBoxplotOptions([mockRow({ MW: 0, name: '', smiles: '' })], 'MW', 'MW');
+    const formatter = (populated['tooltip'] as { formatter: (params: unknown) => string })['formatter'];
+    expect(formatter({ seriesType: 'scatter', data: { value: [0, 0], name: '', smiles: '' } })).toContain('—');
+    expect(formatter({ seriesType: 'line', data: [0], name: undefined })).toBe('');
   });
 });

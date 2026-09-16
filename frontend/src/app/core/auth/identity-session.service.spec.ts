@@ -261,6 +261,34 @@ describe('IdentitySessionService', () => {
     expect(authApiServiceMock.getCurrentUserProfile).not.toHaveBeenCalled();
   });
 
+  it('devuelve true sin consultar la API cuando la sesión ya está autenticada', () => {
+    const service = TestBed.inject(IdentitySessionService);
+    service.status.set('authenticated');
+
+    let result: boolean | undefined;
+    service.initializeSession().subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(authApiServiceMock.getCurrentUserProfile).not.toHaveBeenCalled();
+  });
+
+  it('no reintenta una inicialización anónima que terminó con error', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValue(throwError(() => new Error('offline')));
+    const service = TestBed.inject(IdentitySessionService);
+
+    service.initializeSession().subscribe();
+    expect(service.status()).toBe('anonymous');
+    expect(service.lastAuthenticationError()).toBe('Session expired. Please sign in again.');
+    authApiServiceMock.getCurrentUserProfile.mockClear();
+
+    let result: boolean | undefined;
+    service.initializeSession().subscribe((value) => (result = value));
+
+    expect(result).toBe(false);
+    expect(authApiServiceMock.getCurrentUserProfile).not.toHaveBeenCalled();
+  });
+
   it('inicia sesión, persiste tokens y permite cerrar sesión', () => {
     authApiServiceMock.login.mockReturnValue(of({ accessToken: 'access', refreshToken: 'refresh' }));
     const service = TestBed.inject(IdentitySessionService);
@@ -275,6 +303,34 @@ describe('IdentitySessionService', () => {
     service.logout();
     expect(service.isAuthenticated()).toBe(false);
     expect(localStorage.getItem('chemistry-apps.access-token')).toBeNull();
+  });
+
+  it('expone el mensaje del backend cuando el login falla', () => {
+    authApiServiceMock.login.mockReturnValue(throwError(() => new Error('Invalid credentials')));
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.login('user', 'wrong').subscribe((value) => (result = value));
+
+    expect(result).toBe(false);
+    expect(service.status()).toBe('anonymous');
+    expect(service.lastAuthenticationError()).toBe('Invalid credentials');
+  });
+
+  it('no intenta refrescar si no hay refresh token y conserva el error de refresh', () => {
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: string | null | undefined;
+    service.refreshAccessToken().subscribe((value) => (result = value));
+    expect(result).toBeNull();
+    expect(authApiServiceMock.refresh).not.toHaveBeenCalled();
+
+    service.refreshToken.set('refresh');
+    authApiServiceMock.refresh.mockReturnValue(throwError(() => new Error('expired')));
+    service.refreshAccessToken().subscribe((value) => (result = value));
+
+    expect(result).toBeNull();
+    expect(service.lastAuthenticationError()).toBe('Unable to refresh the authentication token.');
   });
 
   it('recupera la sesión tras un primer fallo usando refresh token', () => {
@@ -308,6 +364,55 @@ describe('IdentitySessionService', () => {
     expect(service.resolveDeleteMode({ owner: 99, group: 2 })).toBeNull();
   });
 
+  it('aplica permisos administrativos y modo de borrado para root y admin', () => {
+    const service = TestBed.inject(IdentitySessionService);
+    service.currentUser.set({ ...currentUserProfile, role: 'admin' });
+
+    expect(service.hasAdminAccess()).toBe(true);
+    expect(service.canManageJob({ owner: 99, group: 2 })).toBe(true);
+    expect(service.canRestoreJob({ owner: 99, group: 2 })).toBe(true);
+    expect(service.resolveDeleteMode({ owner: 99, group: 2 })).toBe('soft');
+    expect(service.canRestoreJob({ owner: 10, group: null })).toBe(false);
+
+    service.currentUser.set({ ...rootUserProfile, memberships: [] });
+    expect(service.canViewJob({ owner: null, group: null })).toBe(true);
+    const typedRootGroups = rootGroups as unknown as Parameters<typeof service.resolveManagedGroupIds>[0];
+    expect(service.resolveManagedGroupIds(typedRootGroups, [])).toEqual([1, 3]);
+    expect(service.resolveVisibleGroups(typedRootGroups, [])).toEqual(rootGroups);
+  });
+
+  it('selecciona el primer grupo de root y usa vista global cuando corresponde', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    localStorage.setItem('chemistry-apps.root-view-context', 'true');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValueOnce(of({ ...rootUserProfile, primary_group_id: 99 }));
+    identityApiServiceMock.listGroups.mockReturnValueOnce(
+      of([{ id: 4, name: 'Lab', slug: 'lab', description: '' }] as unknown as typeof rootGroups),
+    );
+    const service = TestBed.inject(IdentitySessionService);
+
+    service.initializeSession().subscribe();
+
+    expect(identityApiServiceMock.listAccessibleApps).toHaveBeenCalledWith(undefined);
+    expect(service.activeGroupId()).toBe(4);
+    expect(service.activeGroupContext()).toBeNull();
+  });
+
+  it('tolera fallo al cargar grupos de root y devuelve vista sin grupos', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValueOnce(of(rootUserProfile));
+    identityApiServiceMock.listGroups.mockReturnValueOnce(throwError(() => new Error('groups unavailable')));
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.initializeSession().subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(service.knownGroups()).toEqual([]);
+    expect(service.activeGroupId()).toBeNull();
+  });
+
   it('resuelve grupos administrables y apps habilitadas', () => {
     const service = TestBed.inject(IdentitySessionService);
     service.currentUser.set(currentUserProfile);
@@ -330,5 +435,97 @@ describe('IdentitySessionService', () => {
         [2],
       ),
     ).toEqual([]);
+  });
+
+  it('usa username cuando el perfil no tiene nombre y deniega permisos sin sesión', () => {
+    const service = TestBed.inject(IdentitySessionService);
+
+    expect(service.displayName()).toBe('Guest');
+    expect(service.canViewJob({ owner: 10, group: 2 })).toBe(false);
+    expect(service.canManageJob({ owner: 10, group: 2 })).toBe(false);
+    expect(service.canDeleteJob({ owner: 10, group: 2 })).toBe(false);
+    expect(service.canRestoreJob({ owner: 10, group: 2 })).toBe(false);
+    expect(service.resolveDeleteMode({ owner: 10, group: 2 })).toBeNull();
+
+    service.currentUser.set({ ...currentUserProfile, first_name: '', last_name: '' });
+    expect(service.displayName()).toBe('group-user');
+    expect(service.hasGroupAdminRole()).toBe(true);
+    expect(service.canAccessAdminArea()).toBe(true);
+  });
+
+  it('recarga datos de una sesión autenticada y devuelve false si falla la API', () => {
+    const service = TestBed.inject(IdentitySessionService);
+    service.status.set('authenticated');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValue(of(currentUserProfile));
+    identityApiServiceMock.listAccessibleApps.mockReturnValue(of([buildAccessibleApp('tunnel')]));
+
+    let result: boolean | undefined;
+    service.reloadSessionData().subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(service.accessibleApps().map((app) => app.route_key)).toEqual(['tunnel']);
+
+    authApiServiceMock.getCurrentUserProfile.mockReturnValue(throwError(() => new Error('offline')));
+    service.reloadSessionData().subscribe((value) => (result = value));
+    expect(result).toBe(false);
+  });
+
+  it('inicializa sesión desde registro y persiste ambos tokens', () => {
+    const service = TestBed.inject(IdentitySessionService);
+
+    let result: boolean | undefined;
+    service.initializeFromRegistration({ accessToken: 'registered-access', refreshToken: 'registered-refresh' })
+      .subscribe((value) => (result = value));
+
+    expect(result).toBe(true);
+    expect(localStorage.getItem('chemistry-apps.access-token')).toBe('registered-access');
+    expect(localStorage.getItem('chemistry-apps.refresh-token')).toBe('registered-refresh');
+    expect(service.status()).toBe('authenticated');
+  });
+
+  it('cambia la vista root, persiste el contexto y solicita apps globales', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValue(of(rootUserProfile));
+    const service = TestBed.inject(IdentitySessionService);
+    service.initializeSession().subscribe();
+    identityApiServiceMock.listAccessibleApps.mockClear();
+
+    service.setRootViewContext(true);
+    expect(localStorage.getItem('chemistry-apps.root-view-context')).toBe('true');
+    expect(identityApiServiceMock.listAccessibleApps).toHaveBeenCalledWith(undefined);
+
+    service.setRootViewContext(false);
+    expect(localStorage.getItem('chemistry-apps.root-view-context')).toBeNull();
+    expect(identityApiServiceMock.listAccessibleApps).toHaveBeenCalledWith(3);
+  });
+
+  it('selecciona null para usuarios sin membresías y limpia un grupo almacenado inválido', () => {
+    localStorage.setItem('chemistry-apps.access-token', 'token');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    localStorage.setItem('chemistry-apps.active-group-id', 'not-a-number');
+    authApiServiceMock.getCurrentUserProfile.mockReturnValueOnce(
+      of({ ...currentUserProfile, memberships: [], primary_group_id: null }),
+    );
+    const service = TestBed.inject(IdentitySessionService);
+    service.initializeSession().subscribe();
+
+    expect(service.activeGroupId()).toBeNull();
+    expect(localStorage.getItem('chemistry-apps.active-group-id')).toBeNull();
+    expect(identityApiServiceMock.listAccessibleApps).toHaveBeenCalledWith(undefined);
+  });
+
+  it('ignora tokens malformados al programar refresh', () => {
+    vi.useFakeTimers();
+    localStorage.setItem('chemistry-apps.access-token', 'not-a-jwt');
+    localStorage.setItem('chemistry-apps.refresh-token', 'refresh');
+    const service = TestBed.inject(IdentitySessionService);
+
+    service.initializeSession().subscribe();
+    authApiServiceMock.refresh.mockClear();
+    vi.advanceTimersByTime(10_000);
+
+    expect(authApiServiceMock.refresh).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

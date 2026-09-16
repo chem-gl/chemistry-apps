@@ -14,7 +14,7 @@ import {
 } from '../core/api/cadma-py-api.service';
 import { CadmaPyQuickFillService } from '../core/application/cadma-py-quick-fill.service';
 import { CadmaPyWorkflowService } from '../core/application/cadma-py-workflow.service';
-import { JobProgressSnapshotView, JobsApiService } from '../core/api/jobs-api.service';
+import { JobProgressSnapshotView, JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import { CadmaPyComponent } from './cadma-py.component';
 
 function makeLibrary(id = 'family-1'): CadmaReferenceLibraryView {
@@ -71,8 +71,27 @@ describe('CadmaPyComponent', () => {
     listReferenceSamples: vi.fn(() => of<CadmaReferenceSampleView[]>([])),
     previewReferenceSampleDetail: vi.fn(() => of(makeLibrary('sample-neuro'))),
     inspectSmileitStructure: vi.fn(() => of({ svg: '<svg />' })),
+    previewLibraryDeletion: vi.fn(() => of({ linked_jobs: [] })),
+    deleteReferenceLibrary: vi.fn(() => of({ detail: 'deleted' })),
+    createComparisonJob: vi.fn(() => of({ id: 'paused-job' })),
+    createReferenceLibrary: vi.fn(() => of(makeLibrary('created-family'))),
+    updateReferenceLibrary: vi.fn(() => of(makeLibrary('updated-family'))),
   };
-  const quickFillMock = { loadSourceJobs: vi.fn(() => of({ smileitJobs: [], toxicityJobs: [], saScoreJobs: [] })) };
+  const quickFillMock = {
+    loadSourceJobs: vi.fn(() => of({ smileitJobs: [], toxicityJobs: [], saScoreJobs: [] })),
+    launchAutoFillFromSmileitJob: vi.fn(() => of({
+      sourceConfigsJson: '[{"filename":"guide.csv"}]', filenames: ['guide.csv'], totalFiles: 1,
+      totalUsableRows: 1, launchedToxicityJobId: 'tox-1', launchedSaScoreJobId: 'sa-1',
+    })),
+    launchAutoFillFromCurrentGuide: vi.fn(() => of({
+      sourceConfigsJson: '[{"filename":"guide.csv"}]', filenames: ['guide.csv'], totalFiles: 1,
+      totalUsableRows: 1, launchedToxicityJobId: '', launchedSaScoreJobId: '',
+    })),
+    buildAutoFillPayload: vi.fn(() => of({
+      sourceConfigsJson: '[{"filename":"guide.csv"}]', filenames: ['guide.csv'], totalFiles: 1,
+      totalUsableRows: 1,
+    })),
+  };
   const jobsApiMock = { inspectSmileitStructure: vi.fn(() => of({ svg: '<svg />' })) };
   const translocoMock = { translate: vi.fn((key: string) => key) };
 
@@ -188,7 +207,6 @@ describe('CadmaPyComponent', () => {
   });
 
   it('cubre las transiciones del workflow y sus computeds de procesamiento y progreso', () => {
-    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
     const states: Array<'idle' | 'dispatching' | 'progress' | 'result' | 'error'> = [
       'idle', 'dispatching', 'progress', 'result', 'error',
     ];
@@ -325,5 +343,189 @@ describe('CadmaPyComponent', () => {
     component.clearReferenceSelection();
     expect(workflowMock.selectedReferenceLibraryId()).toBe('');
     expect(component.activeStep()).toBe(1);
+  });
+
+  it('maneja errores de jobs rápidos, muestras y previews', () => {
+    quickFillMock.loadSourceJobs.mockReturnValueOnce(throwError(() => new Error('jobs down')));
+    apiMock.listReferenceSamples.mockReturnValueOnce(throwError(() => new Error('samples down')));
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    expect(component.quickFillErrorMessage()).toBe('Unable to load previous jobs: jobs down');
+    expect(component.samples()).toEqual([]);
+
+    apiMock.previewReferenceSampleDetail.mockReturnValueOnce(throwError(() => new Error('preview down')));
+    component.browseSample('neuro');
+    expect(component.libraryErrorMessage()).toBe('Unable to load the full bundled reference detail.');
+    component.browseSample('neuro');
+    expect(component.browsingSampleKey()).toBe('');
+  });
+
+  it('protege quick fill sin selección y cubre éxito y error de las tres vías', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    component.launchQuickFillFromSelectedSmileit();
+    expect(component.quickFillErrorMessage()).toContain('Select a completed Smile-it job');
+    component.quickFillSmileitJobId.set('smile-1');
+    component.launchQuickFillFromSelectedSmileit();
+    expect(component.quickFillErrorMessage()).toBe('Select the SA method before continuing.');
+
+    component.updateQuickFillSaMethod('rdkit');
+    component.launchQuickFillFromSelectedSmileit();
+    expect(quickFillMock.launchAutoFillFromSmileitJob).toHaveBeenCalledWith('smile-1', 'rdkit');
+    expect(component.candidateImportedFilenames()).toEqual(['guide.csv']);
+
+    quickFillMock.launchAutoFillFromSmileitJob.mockReturnValueOnce(throwError(() => new Error('launch down')));
+    component.quickFillSmileitJobId.set('smile-1');
+    component.launchQuickFillFromSelectedSmileit();
+    expect(component.quickFillErrorMessage()).toBe('Unable to generate the Smile-it reports: launch down');
+
+    workflowMock.sourceConfigsJson.set('[{"filename":"guide.csv","content_text":"smiles,name\\nCCO,Ethanol\\n","smiles_column":"smiles","name_column":"name"}]');
+    component.updateQuickFillSaMethod('rdkit');
+    component.launchQuickFillFromCurrentGuide();
+    expect(quickFillMock.launchAutoFillFromCurrentGuide).toHaveBeenCalled();
+    component.updateQuickFillSaMethod('');
+    component.quickFillSmileitJobId.set('smile-1');
+    component.applyQuickFillFromPreviousJobs();
+    expect(component.quickFillErrorMessage()).toBe('Select the SA method before continuing.');
+  });
+
+  it('valida y guarda un borrador pausado, y maneja su ausencia o error', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    component.savePausedProgress();
+    expect(component.candidateDraftMessage()).toContain('Project label is required');
+    workflowMock.projectLabel.set('Draft');
+    component.savePausedProgress();
+    expect(component.candidateDraftMessage()).toContain('Select a reference family');
+    workflowMock.selectedReferenceLibraryId.set('family-1');
+    component.savePausedProgress();
+    expect(component.candidateDraftMessage()).toContain('main SMILES guide');
+    workflowMock.smilesCsvText.set('smiles\nCCO');
+    workflowMock.savePausedDraft.mockReturnValueOnce({ projectLabel: 'Draft' });
+    component.savePausedProgress();
+    expect(apiMock.createComparisonJob).toHaveBeenCalledWith(expect.objectContaining({ start_paused: true }));
+    expect(component.candidateDraftMessage()).toContain('Paused job saved');
+
+    workflowMock.resumePausedDraft.mockReturnValueOnce(null);
+    component.resumePausedProgress('missing');
+    expect(component.candidateDraftMessage()).toContain('no longer available');
+    component.deletePausedProgress('draft-1');
+    expect(component.candidateDraftMessage()).toBe('Paused draft removed.');
+  });
+
+  it('cubre etiquetas, selección transitoria y controles de overlays', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    expect(component.scopeIcon('root')).toBe('');
+    expect(component.scopeLabel('root')).toBe('cadmaPy.scopeLabels.root');
+    expect(component.scopeLabel('admin-team')).toBe('cadmaPy.scopeLabels.group');
+    expect(component.scopeLabel('local-lab')).toBe('cadmaPy.scopeLabels.personal');
+    expect(component.scopeLabel('other')).toBe('');
+    expect(component.scopeCssClass('other')).toBe('scope-unknown');
+    component.showDiagram.set(true);
+    component.onDiagramBackdropClick({ target: { classList: { contains: (value: string) => value === 'diagram-overlay' } } } as unknown as Event);
+    expect(component.showDiagram()).toBe(false);
+    component.expandChart('score');
+    expect(component.expandedChart()).toBe('score');
+    component.onExpandedChartBackdrop({ target: { classList: { contains: (value: string) => value === 'chart-expand-overlay' } } } as unknown as Event);
+    expect(component.expandedChart()).toBeNull();
+  });
+
+  it('aplica quick fill desde guía y jobs previos, incluyendo errores', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    workflowMock.projectLabel.set('Batch');
+    component.updateQuickFillSaMethod('rdkit');
+    workflowMock.sourceConfigsJson.set(
+      '[{"filename":"guide.csv","content_text":"smiles,name\\nCCO,Ethanol","smiles_column":"smiles","name_column":"name"}]',
+    );
+
+    component.launchQuickFillFromCurrentGuide();
+    expect(quickFillMock.launchAutoFillFromCurrentGuide).toHaveBeenCalled();
+    expect(component.candidateDraftMessage()).toContain('Quick fill completed');
+
+    component.updateQuickFillSaMethod('rdkit');
+    component.quickFillSmileitJobId.set('smile-1');
+    component.applyQuickFillFromPreviousJobs();
+    expect(quickFillMock.buildAutoFillPayload).toHaveBeenCalledWith(expect.objectContaining({ saMethod: 'rdkit' }));
+
+    quickFillMock.buildAutoFillPayload.mockReturnValueOnce(throwError(() => new Error('payload down')));
+    component.applyQuickFillFromPreviousJobs();
+    expect(component.quickFillErrorMessage()).toBe('Unable to auto-fill candidate values: payload down');
+  });
+
+  it('carga jobs rápidos, filtra el método SA y conserva errores de selección', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    const saJob = { id: 'sa-1', parameters: { methods: ['rdkit'] } } as unknown as ScientificJobView;
+    quickFillMock.loadSourceJobs.mockReturnValueOnce(
+      of({ smileitJobs: [], toxicityJobs: [], saScoreJobs: [saJob] }) as ReturnType<typeof quickFillMock.loadSourceJobs>,
+    );
+    component.quickFillSaScoreJobId.set('sa-1');
+    component.quickFillSaMethod.set('ambit');
+    component.loadQuickFillJobs();
+
+    expect(component.quickFillSaScoreJobId()).toBe('sa-1');
+    expect(component.quickFillSaMethod()).toBe('');
+    component.updateQuickFillSaJob('sa-1');
+    expect(component.quickFillAvailableSaMethods()).toEqual(['rdkit']);
+  });
+
+  it('guarda y actualiza familias, importa archivos CSV y sincroniza cambios', async () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    component.libraryName.set(' New family ');
+    component.diseaseName.set(' Disease ');
+    const file = { name: 'reference.csv', text: vi.fn(() => Promise.resolve('smiles,name\nCCO,Ethanol')) } as unknown as File;
+    const input = { files: { item: (index: number) => index === 0 ? file : null } } as unknown as HTMLInputElement;
+    await component.onReferenceFileChange('combined', { target: input } as unknown as Event);
+    await component.onCandidateFileChange('smiles', { target: input } as unknown as Event);
+
+    expect(workflowMock.smilesCsvText()).toContain('Ethanol');
+    component.saveReferenceLibrary();
+    expect(apiMock.createReferenceLibrary).toHaveBeenCalledWith(expect.objectContaining({ name: 'New family' }));
+
+    component.libraries.set([makeLibrary()]);
+    component.selectLibrary('family-1');
+    component.saveReferenceLibrary();
+    expect(apiMock.updateReferenceLibrary).toHaveBeenCalledWith('family-1', expect.anything());
+  });
+
+  it('explora, elimina y reanuda borradores pausados', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    component.libraries.set([makeLibrary()]);
+    component.browseLibrary('family-1');
+    expect(component.browsingLibrary()?.id).toBe('family-1');
+    component.confirmBrowsingSelection();
+    expect(workflowMock.selectedReferenceLibraryId()).toBe('family-1');
+
+    const event = { stopPropagation: vi.fn() } as unknown as Event;
+    component.deleteLibrary({ ...makeLibrary(), deletable: false }, event);
+    expect(apiMock.previewLibraryDeletion).not.toHaveBeenCalled();
+    component.deleteLibrary(makeLibrary(), event);
+    expect(apiMock.previewLibraryDeletion).toHaveBeenCalledWith('family-1');
+
+    workflowMock.resumePausedDraft.mockReturnValueOnce({
+      referenceLibraryId: 'family-1', referenceLibraryName: 'Neuro family', projectLabel: 'Resumed',
+      combinedCsvText: '', smilesCsvText: 'smiles\nCCO', toxicityCsvText: '', saCsvText: '',
+      sourceConfigsJson: '[{"filename":"guide.csv"}]', scoreConfigJson: '', filenames: ['guide.csv'],
+      totalFiles: 1, totalUsableRows: 1,
+    });
+    component.resumePausedProgress('draft-1');
+    expect(component.candidateDraftMessage()).toContain('Resumed paused draft');
+    expect(component.candidateImportedFilenames()).toEqual(['guide.csv']);
+  });
+
+  it('maneja inspección de gráficas, progreso pausado y exportación', () => {
+    const component = TestBed.createComponent(CadmaPyComponent).componentInstance;
+    workflowMock.selectedReferenceLibraryId.set('family-1');
+    workflowMock.projectLabel.set('Batch');
+    workflowMock.sourceConfigsJson.set('[{"filename":"guide.csv"}]');
+    expect(component.canPauseCurrentProgress()).toBe(true);
+    workflowMock.progressSnapshot.set({ job_id: 'job', status: 'paused', progress_percentage: 55, progress_event_index: 2, updated_at: '', progress_stage: 'paused', progress_message: 'Paused' });
+    workflowMock.progressPercentage.set(55);
+    expect(workflowMock.progressSnapshot()?.status).toBe('paused');
+
+    const result = makeResult();
+    workflowMock.resultData.set(result);
+    jobsApiMock.inspectSmileitStructure.mockReturnValueOnce(throwError(() => new Error('inspect down')));
+    component.onMetricChartClick({ seriesType: 'scatter', data: { smiles: 'CCO' } });
+    expect(component.chartCompoundError()).toBe('Could not generate the molecule preview.');
+    expect(component.formatChartCompoundValue(null)).toBe('—');
+    expect(component.chartCompoundMetrics()).toHaveLength(12);
+    component.exportSelectionCsv();
   });
 });

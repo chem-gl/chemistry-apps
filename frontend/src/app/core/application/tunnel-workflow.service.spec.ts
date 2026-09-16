@@ -92,8 +92,8 @@ describe('TunnelWorkflowService', () => {
       dispatchTunnelJob: vi.fn((): Observable<ScientificJobView> => of(makeScientificJob())),
       streamJobEvents: vi.fn((): Observable<JobProgressSnapshotView> => of(makeProgressSnapshot())),
       streamJobLogEvents: vi.fn(),
-      pollJobUntilCompleted: vi.fn(
-        (): Observable<JobProgressSnapshotView> => of(makeProgressSnapshot()),
+      pollJobUntilCompleted: vi.fn((): Observable<JobProgressSnapshotView> =>
+        of(makeProgressSnapshot()),
       ),
       getScientificJobStatus: vi.fn((): Observable<ScientificJobView> => of(makeScientificJob())),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
@@ -186,5 +186,89 @@ describe('TunnelWorkflowService', () => {
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('Unable to get tunnel final result');
     expect(workflowService.errorMessage()).toContain('internal server error');
+  });
+
+  it('rejects incomplete result payloads and keeps valid numeric inputs synchronized', () => {
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      of(
+        makeScientificJob({
+          results: { u: 0.4, alpha_1: 1.2, alpha_2: 0.9, g: 0.6 } as never,
+          parameters: {
+            reaction_barrier_zpe: 4.1,
+            imaginary_frequency: 700,
+            reaction_energy_zpe: -3,
+            temperature: 310,
+          },
+        }),
+      ),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('invalid');
+    expect(workflowService.reactionBarrierZpe()).toBe(4.1);
+    expect(workflowService.temperature()).toBe(310);
+  });
+
+  it('uses null metadata labels and reports historical retrieval failures', () => {
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      of(
+        makeScientificJob({
+          results: {
+            u: 0.4,
+            alpha_1: 1.2,
+            alpha_2: 0.9,
+            g: 0.6,
+            kappa_tst: 1.05,
+            metadata: { model_name: 7, source_library: null },
+          } as never,
+        }),
+      ),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.resultData()?.modelName).toBeNull();
+    expect(workflowService.resultData()?.sourceLibrary).toBeNull();
+
+    const progressEvents$ = new Subject<JobProgressSnapshotView>();
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      of(makeScientificJob({ id: 'tunnel-history-error', status: 'running', results: null })),
+    );
+    jobsApiServiceMock.streamJobEvents.mockReturnValue(progressEvents$.asObservable());
+    jobsApiServiceMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('history unavailable')),
+    );
+    workflowService.dispatch();
+    progressEvents$.complete();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe(
+      'Unable to get tunnel final result: history unavailable',
+    );
+  });
+
+  it('ignores nonnumeric historical parameters while retaining existing inputs', () => {
+    workflowService.reactionBarrierZpe.set(9);
+    jobsApiServiceMock.dispatchTunnelJob.mockReturnValue(
+      of(
+        makeScientificJob({
+          parameters: {
+            reaction_barrier_zpe: 'invalid',
+            imaginary_frequency: 700,
+            reaction_energy_zpe: null,
+            temperature: 310,
+          } as never,
+        }),
+      ),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.reactionBarrierZpe()).toBe(9);
+    expect(workflowService.imaginaryFrequency()).toBe(700);
+    expect(workflowService.temperature()).toBe(310);
+    expect(workflowService.reactionEnergyZpe()).toBe(-8.2);
   });
 });

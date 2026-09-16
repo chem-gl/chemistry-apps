@@ -81,8 +81,8 @@ describe('MolarFractionsWorkflowService', () => {
 
   beforeEach(() => {
     jobsApiServiceMock = {
-      dispatchMolarFractionsJob: vi.fn(
-        (): Observable<ScientificJobView> => of(makeScientificJob()),
+      dispatchMolarFractionsJob: vi.fn((): Observable<ScientificJobView> =>
+        of(makeScientificJob()),
       ),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
@@ -265,5 +265,33 @@ describe('MolarFractionsWorkflowService', () => {
     workflowService.setPkaCount(3);
     expect(workflowService.pkaCount()).toBe(3);
     expect(workflowService.activePkaValues()).toHaveLength(3);
+  });
+
+  it('rejects invalid ranges and ignores non-finite pH steps before dispatch', () => {
+    workflowService.setPhStep(Number.NaN);
+    expect(workflowService.phStep()).toBe(1);
+    workflowService.phMin.set(8);
+    workflowService.phMax.set(2);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchMolarFractionsJob).not.toHaveBeenCalled();
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('pH');
+  });
+
+  it('rejects malformed rows in a completed response', () => {
+    jobsApiServiceMock.dispatchMolarFractionsJob.mockReturnValue(
+      of(
+        makeScientificJob({
+          results: { species_labels: ['f0'], rows: [{ ph: '7' }], metadata: {} } as never,
+        }),
+      ),
+    );
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('invalid');
   });
 });

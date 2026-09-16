@@ -30,6 +30,28 @@ describe('RegisterComponent', () => {
     component.password.set('password'); component.confirmPassword.set('different'); component.submit();
     expect(component.localErrorMessage()).toContain('passwordMismatch');
   });
+
+  it('valida email y contraseña requeridos antes de llamar al backend', () => {
+    const component = TestBed.createComponent(RegisterComponent).componentInstance;
+    component.username.set('user');
+    component.ngOnInit();
+
+    component.submit();
+    expect(component.localErrorMessage()).toContain('emailRequired');
+
+    component.email.set('user@example.test');
+    component.submit();
+    expect(component.localErrorMessage()).toContain('passwordRequired');
+    expect(auth.register).not.toHaveBeenCalled();
+  });
+
+  it('redirige al dashboard si ya existe una sesión', () => {
+    session.isAuthenticated.mockReturnValueOnce(true);
+
+    TestBed.createComponent(RegisterComponent).componentInstance.ngOnInit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+  });
   it('registers with token and redirects after auto-login', () => {
     auth.register.mockReturnValue(of({ access: 'a', refresh: 'r' }));
     const component = TestBed.createComponent(RegisterComponent).componentInstance;
@@ -45,6 +67,36 @@ describe('RegisterComponent', () => {
     expect(component.localErrorMessage()).toBe('Already used');
     auth.register.mockReturnValueOnce(of({})); component.submit();
     expect(component.registrationSuccess()).toBe(true);
+    expect(component.isSubmitting()).toBe(false);
+  });
+
+  it('redirige aunque falle la carga de sesión después del registro con tokens', () => {
+    auth.register.mockReturnValue(of({ access: 'a', refresh: 'r' }));
+    session.initializeFromRegistration.mockReturnValueOnce(
+      throwError(() => new Error('session unavailable')),
+    );
+    const component = TestBed.createComponent(RegisterComponent).componentInstance;
+    component.username.set('user');
+    component.email.set('e@x');
+    component.password.set('password');
+    component.confirmPassword.set('password');
+
+    component.submit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('muestra el mensaje de error genérico del backend', () => {
+    auth.register.mockReturnValueOnce(throwError(() => ({ message: 'Registration unavailable' })));
+    const component = TestBed.createComponent(RegisterComponent).componentInstance;
+    component.username.set('user');
+    component.email.set('e@x');
+    component.password.set('password');
+    component.confirmPassword.set('password');
+
+    component.submit();
+
+    expect(component.localErrorMessage()).toBe('Registration unavailable');
     expect(component.isSubmitting()).toBe(false);
   });
 });

@@ -37,4 +37,43 @@ describe('CadmaPyDeleteModalComponent', () => {
     expect(close).toHaveBeenCalled();
     expect(dismissed).toHaveBeenCalled();
   });
+
+  it('opens by resetting transient state and confirms without cascade when empty', () => {
+    const fixture = TestBed.createComponent(CadmaPyDeleteModalComponent);
+    const component = fixture.componentInstance;
+    const showModal = vi.fn();
+    const close = vi.fn();
+    (component as unknown as { dialogRef: { nativeElement: HTMLDialogElement } }).dialogRef = {
+      nativeElement: { showModal, close, open: false } as unknown as HTMLDialogElement,
+    };
+    component.deleting.set(true);
+    component.errorMessage.set('old error');
+    const confirmed = vi.fn();
+    component.confirmed.subscribe(confirmed);
+
+    component.open();
+    component.confirm();
+
+    expect(showModal).toHaveBeenCalledOnce();
+    expect(component.deleting()).toBe(false);
+    expect(component.errorMessage()).toBeNull();
+    expect(confirmed).toHaveBeenCalledWith({ confirmed: true, cascade: false });
+  });
+
+  it('does not dismiss for a click inside the dialog and closes explicitly', () => {
+    const fixture = TestBed.createComponent(CadmaPyDeleteModalComponent);
+    const component = fixture.componentInstance;
+    const dismissed = vi.fn();
+    component.dismissed.subscribe(dismissed);
+    const close = vi.fn();
+    const dialog = { close, open: true } as unknown as HTMLDialogElement;
+    (component as unknown as { dialogRef: { nativeElement: HTMLDialogElement } }).dialogRef = {
+      nativeElement: dialog,
+    };
+
+    component.onBackdropClick({ target: {} } as unknown as MouseEvent);
+    expect(dismissed).not.toHaveBeenCalled();
+    component.close();
+    expect(close).toHaveBeenCalledOnce();
+  });
 });

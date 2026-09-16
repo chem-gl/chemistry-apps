@@ -63,4 +63,37 @@ describe('CadmaPyBoxplotDialogComponent', () => {
     component.close();
     expect(close).toHaveBeenCalled();
   });
+
+  it('opens, initializes the chart and closes on a backdrop click', () => {
+    const component = create();
+    const showModal = vi.fn();
+    const close = vi.fn();
+    (component as unknown as { dialogRef: { nativeElement: HTMLDialogElement } }).dialogRef = {
+      nativeElement: {
+        showModal,
+        close,
+        getBoundingClientRect: () => ({ left: 0, right: 100, top: 0, bottom: 100 }),
+      } as unknown as HTMLDialogElement,
+    };
+    const chart = { resize: vi.fn() };
+    component.onChartInit(chart as unknown as Parameters<typeof component.onChartInit>[0]);
+    component.open();
+    expect(showModal).toHaveBeenCalledOnce();
+
+    component.onBackdropClick(new MouseEvent('click', { clientX: 0, clientY: 0 }));
+    expect(close).not.toHaveBeenCalled();
+    component.onBackdropClick(new MouseEvent('click', { clientX: -1, clientY: -1 }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(component.selectedCompound()).toBeNull();
+  });
+
+  it('ignores chart points without a matching scatter compound and exposes empty metrics', () => {
+    const component = create();
+    component.onChartClick({ seriesType: 'line', data: { smiles: 'CCO' } });
+    component.onChartClick({ seriesType: 'scatter', data: {} });
+    component.onChartClick({ seriesType: 'scatter', data: { smiles: 'missing' } });
+    expect(component.selectedCompound()).toBeNull();
+    expect(component.compoundMetrics()).toEqual([]);
+    expect(component.formatValue(undefined as unknown as number)).toBe('—');
+  });
 });

@@ -158,4 +158,176 @@ describe('CadmaPyFamilyDetailComponent', () => {
     expect(component.compoundModalError()).toBe('Could not generate the molecule preview.');
     expect(component.compoundModalBusy()).toBe(false);
   });
+
+  it('resuelve todos los scopes, etiquetas de acceso y métricas vacías', () => {
+    const root = createComponent(makeLibrary({ source_reference: 'root', editable: false, deletable: false, forkable: false, created_at: '' })).componentInstance;
+    expect(root.scopeKind()).toBe('root');
+    expect(root.readOnlyGuidance()).toBe('cadmaPy.familyDetail.rootReadOnly');
+    expect(root.editableLabel()).toBe('cadmaPy.familyDetail.readOnly');
+    expect(root.createdDate()).toBe('—');
+
+    const group = createComponent(makeLibrary({ source_reference: 'admin-team', editable: false, forkable: true })).componentInstance;
+    expect(group.scopeKind()).toBe('group');
+    expect(group.readOnlyGuidance()).toBe('cadmaPy.familyDetail.groupReadOnly');
+    expect(group.editableLabel()).toBe('cadmaPy.familyDetail.readOnlyTemplate');
+
+    const unknown = createComponent(makeLibrary({ source_reference: 'external', rows: [] })).componentInstance;
+    expect(unknown.scopeKind()).toBe('unknown');
+    expect(unknown.readOnlyGuidance()).toBe('cadmaPy.familyDetail.defaultReadOnly');
+    expect(unknown.metricStats().every((stat) => stat.mean === 0 && stat.nullCount === 0)).toBe(true);
+    expect(unknown.formatFileSize(512)).toBe('512 B');
+    expect(unknown.formatFileSize(2048)).toBe('2.0 KB');
+    expect(unknown.formatFileSize(2 * 1048576)).toBe('2.0 MB');
+  });
+
+  it('copia familias guardadas y muestras, incluyendo errores y cancelación', () => {
+    const fixture = createComponent(makeLibrary({ id: 'family-1' }));
+    const component = fixture.componentInstance;
+    const copied = vi.fn();
+    component.copiedLibraryCreated.subscribe(copied);
+    component.forkFamily();
+    component.copyDraftName.set('   ');
+    component.confirmForkFamily();
+    expect(component.forkError()).toBe('The new copied family needs a name.');
+
+    component.copyDraftName.set('Copy');
+    component.confirmForkFamily();
+    expect(apiMock.forkReferenceLibrary).toHaveBeenCalledWith('family-1', 'Copy');
+    expect(copied).toHaveBeenCalledWith('family-copy');
+    component.forkFamily();
+    component.cancelForkFamily();
+    expect(component.showCopyForm()).toBe(false);
+
+    const sample = createComponent(makeLibrary({ id: 'sample-neuro' })).componentInstance;
+    const closed = vi.fn();
+    sample.closeBrowsing.subscribe(closed);
+    sample.forkFamily();
+    sample.confirmForkFamily();
+    expect(apiMock.importReferenceSample).toHaveBeenCalledWith('neuro', 'Neuro family Copy');
+    expect(closed).toHaveBeenCalled();
+
+    apiMock.forkReferenceLibrary.mockReturnValueOnce(throwError(() => new Error('fork down')));
+    component.forkFamily();
+    component.copyDraftName.set('Broken copy');
+    component.confirmForkFamily();
+    expect(component.forkError()).toBe('fork down');
+    expect(component.forkBusy()).toBe(false);
+  });
+
+  it('edita, duplica y elimina filas con confirmación y errores', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    const changed = vi.fn();
+    component.libraryChanged.subscribe(changed);
+
+    component.startEditRow(0, makeRow());
+    component.editDraft.update((draft) => ({ ...draft, name: 'Edited' }));
+    component.saveRowEdit();
+    expect(apiMock.patchReferenceRow).toHaveBeenCalledWith('family-1', 0, expect.objectContaining({ name: 'Edited' }));
+    expect(component.editingRowIndex()).toBe(-1);
+
+    apiMock.patchReferenceRow.mockReturnValueOnce(throwError(() => new Error('patch down')));
+    component.startEditRow(0, makeRow());
+    component.saveRowEdit();
+    expect(component.rowActionError()).toBe('patch down');
+    component.cancelEdit();
+
+    component.duplicateRow(0);
+    expect(apiMock.addCompoundToLibrary).toHaveBeenCalledWith('family-1', expect.objectContaining({ smiles: 'CCO' }));
+    apiMock.deleteReferenceRow.mockReturnValueOnce(throwError(() => new Error('delete down')));
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
+    component.removeRow(0);
+    expect(component.rowActionError()).toBe('delete down');
+    expect(component.deletingRowIndex()).toBe(-1);
+    expect(changed).toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it('navega compuestos, exporta y protege clicks inválidos', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    const showModal = vi.fn();
+    const close = vi.fn();
+    (component as unknown as { compoundDetailDialogRef: { nativeElement: HTMLDialogElement } }).compoundDetailDialogRef = {
+      nativeElement: { showModal, close } as unknown as HTMLDialogElement,
+    };
+    component.onBoxplotChartClick({ seriesType: 'bar', data: { smiles: 'CCO' } });
+    component.onBoxplotChartClick({ seriesType: 'scatter', data: {} });
+    expect(component.selectedCompound()).toBeNull();
+    component.openCompoundDetail(makeRow({ smiles: '  ' }));
+    expect(showModal).not.toHaveBeenCalled();
+
+    component.openCompoundDetail(makeRow(), 0, true);
+    expect(component.isEditingCompound()).toBe(true);
+    component.navigateCompound(-1);
+    component.navigateCompound(1);
+    expect(component.selectedCompound()?.name).toBe('Benzene');
+    component.closeCompoundDetail();
+    expect(close).toHaveBeenCalled();
+    component.exportFamilyCsv();
+    expect(component.rowPaperUrl(makeRow({ paper_url: '10.1234/test' }))).toBe('https://doi.org/10.1234/test');
+  });
+
+  it('calcula el detalle seleccionado y maneja inspección, navegación y diálogos', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    const showModal = vi.fn();
+    const close = vi.fn();
+    (component as unknown as { compoundDetailDialogRef: { nativeElement: HTMLDialogElement } }).compoundDetailDialogRef = {
+      nativeElement: { showModal, close } as unknown as HTMLDialogElement,
+    };
+    component.openCompoundDetail(makeRow(), 0);
+    expect(component.selectedCompoundAdme()).toHaveLength(8);
+    expect(component.selectedCompoundToxicity()).toHaveLength(3);
+    expect(component.selectedCompoundSA()?.values).toHaveLength(3);
+    expect(component.hasNextCompound()).toBe(true);
+    component.navigateCompound(1);
+    expect(component.selectedCompound()?.name).toBe('Benzene');
+    expect(component.hasPrevCompound()).toBe(true);
+    component.onCompoundDialogBackdropClick({ target: { nodeName: 'DIV' } } as unknown as MouseEvent);
+    component.closeCompoundDetail();
+    expect(close).toHaveBeenCalled();
+
+    const boxplotClose = vi.fn();
+    (component as unknown as { boxplotDialogRef: { nativeElement: HTMLDialogElement } }).boxplotDialogRef = {
+      nativeElement: { showModal, close: boxplotClose } as unknown as HTMLDialogElement,
+    };
+    component.openBoxplot();
+    expect(component.boxplotOpen()).toBe(true);
+    component.closeBoxplot();
+    expect(boxplotClose).toHaveBeenCalled();
+  });
+
+  it('maneja errores de duplicado, alta y eliminación, incluida la cancelación', () => {
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(false);
+    component.removeRow(0);
+    expect(apiMock.deleteReferenceRow).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+
+    apiMock.addCompoundToLibrary.mockReturnValueOnce(throwError(() => new Error('add down')));
+    component.addSmiles.set('CCN');
+    component.submitAddCompound();
+    expect(component.addError()).toBe('add down');
+
+    apiMock.addCompoundToLibrary.mockReturnValueOnce(throwError(() => new Error('duplicate down')));
+    component.duplicateRow(0);
+    expect(component.rowActionError()).toBe('duplicate down');
+    expect(component.addBusy()).toBe(false);
+  });
+
+  it('abre edición automática y cubre etiquetas, formatos y exportación vacía', () => {
+    const fixture = TestBed.createComponent(CadmaPyFamilyDetailComponent);
+    fixture.componentRef.setInput('library', makeLibrary());
+    fixture.componentRef.setInput('autoOpenEditorLibraryId', 'family-1');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.editingFamily()).toBe(true);
+    expect(fixture.componentInstance.selectionActionLabel()).toContain('cadmaPy.familyDetail');
+    expect(fixture.componentInstance.trackStat(0, fixture.componentInstance.metricStats()[0]!)).toContain('MW');
+    expect(fixture.componentInstance.formatMetricValue('RB', 2.8)).toBe('3');
+
+    const emptyFixture = createComponent(makeLibrary({ rows: [], row_count: 0 }));
+    expect(() => emptyFixture.componentInstance.exportFamilyCsv()).not.toThrow();
+  });
 });

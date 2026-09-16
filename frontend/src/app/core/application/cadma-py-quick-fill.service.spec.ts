@@ -243,6 +243,49 @@ describe('CadmaPyQuickFill helpers', () => {
 
     expect(selectedJobId).toBe('job-1');
   });
+
+  it('uses default SA methods for malformed, empty, or unsupported selections', () => {
+    expect(extractRequestedSaMethods(null)).toEqual(['ambit', 'brsa', 'rdkit']);
+    expect(extractRequestedSaMethods({ methods: [] })).toEqual(['ambit', 'brsa', 'rdkit']);
+    expect(extractRequestedSaMethods({ methods: ['unsupported'] })).toEqual([
+      'ambit',
+      'brsa',
+      'rdkit',
+    ]);
+  });
+
+  it('returns safe empty results for malformed source configuration JSON', () => {
+    expect(inspectCadmaSourceConfigs('{not-json')).toEqual({
+      hasGuide: false,
+      guideFilename: 'candidate_guide.csv',
+      moleculeCount: 0,
+      hasNamedCandidates: false,
+      hasToxicityData: false,
+      hasSaData: false,
+    });
+    expect(previewCadmaSourceConfigs('')).toMatchObject({
+      hasGuide: false,
+      guideFilename: 'candidate_guide.csv',
+      rows: [],
+    });
+  });
+
+  it('escapes names and normalizes empty guides without producing data rows', () => {
+    expect(normalizeSmilesGuideCsv('')).toBe('smiles,name');
+    expect(normalizeSmilesGuideCsv('smiles,name\nCCO,"Lead, one"')).toBe(
+      'smiles,name\nCCO,"Lead, one"',
+    );
+  });
+
+  it('falls back to the job id for an invalid date and truncates long labels', () => {
+    const label = resolveScientificJobLabel({
+      id: '12345678-rest',
+      updated_at: 'invalid-date',
+      parameters: { title: '123456789012345678901234567890123456' },
+    });
+
+    expect(label).toBe('12345678901234567890123456789...');
+  });
 });
 
 describe('CadmaPyQuickFillService', () => {
@@ -314,6 +357,24 @@ describe('CadmaPyQuickFillService', () => {
     expect(jobsApiMock.downloadSaScoreCsvMethodReport).toHaveBeenCalledWith('sa-1', 'rdkit');
   });
 
+  it('construye una guía usando solo el reporte Smile-it cuando no se seleccionan reportes', async () => {
+    jobsApiMock.downloadSmileitCsvReport.mockReturnValue(
+      of({ blob: { text: vi.fn().mockResolvedValue('smiles\nCCO') } }),
+    );
+
+    const payload = await firstValueFrom(
+      service().buildAutoFillPayload({ smileitJobId: 'smile-2', saMethod: 'ambit' }),
+    );
+
+    expect(payload).toMatchObject({
+      filenames: ['smileit_smile-2_guide.csv'],
+      totalFiles: 1,
+      totalUsableRows: 1,
+    });
+    expect(jobsApiMock.downloadToxicityPropertiesCsvReport).not.toHaveBeenCalled();
+    expect(jobsApiMock.downloadSaScoreCsvMethodReport).not.toHaveBeenCalled();
+  });
+
   it('devuelve error cuando la compatibilidad de la guía falla', async () => {
     jobsApiMock.downloadSmileitCsvReport.mockReturnValue(
       of({ blob: { text: vi.fn().mockResolvedValue('name,smiles\nLead,invalid') } }),
@@ -327,6 +388,77 @@ describe('CadmaPyQuickFillService', () => {
 
     expect(errorMessage).toContain('unsupported SMILES');
     expect(jobsApiMock.dispatchSaScoreJob).not.toHaveBeenCalled();
+  });
+
+  it('rechaza lanzar desde una guía vacía o con métricas completas', async () => {
+    const emptyError = await firstValueFrom(
+      service().launchAutoFillFromCurrentGuide('[]', 'rdkit'),
+    ).catch((error: Error) => error.message);
+    expect(emptyError).toContain('Upload a candidate guide');
+
+    const completeGuide = JSON.stringify([
+      {
+        filename: 'complete.csv',
+        content_text: 'smiles,name,DT,M,LD50,SA\nCCO,Lead,0.1,0.2,300,80',
+        has_header: true,
+        smiles_column: 'smiles',
+        name_column: 'name',
+        dt_column: 'DT',
+        m_column: 'M',
+        ld50_column: 'LD50',
+        sa_column: 'SA',
+      },
+    ]);
+    const completeError = await firstValueFrom(
+      service().launchAutoFillFromCurrentGuide(completeGuide, 'rdkit'),
+    ).catch((error: Error) => error.message);
+    expect(completeError).toContain('already includes toxicity and SA');
+    expect(jobsApiMock.validateSmilesCompatibility).not.toHaveBeenCalled();
+  });
+
+  it('lanza ambos predictores y descarga reportes cuando el job ya está completado', async () => {
+    jobsApiMock.downloadSmileitCsvReport.mockReturnValue(
+      of({ blob: { text: vi.fn().mockResolvedValue('name,smiles\nLead,CCO') } }),
+    );
+    jobsApiMock.validateSmilesCompatibility.mockReturnValue(of({ compatible: true }));
+    jobsApiMock.dispatchToxicityPropertiesJob.mockReturnValue(of({ id: 'tox-4', status: 'completed' }));
+    jobsApiMock.dispatchSaScoreJob.mockReturnValue(of({ id: 'sa-4', status: 'completed' }));
+    jobsApiMock.downloadToxicityPropertiesCsvReport.mockReturnValue(
+      of({ blob: { text: vi.fn().mockResolvedValue('smiles,DT\nCCO,positive') } }),
+    );
+    jobsApiMock.downloadSaScoreCsvMethodReport.mockReturnValue(
+      of({ blob: { text: vi.fn().mockResolvedValue('smiles,SA\nCCO,75') } }),
+    );
+
+    const payload = await firstValueFrom(service().launchAutoFillFromSmileitJob(' smile-4 ', 'brsa'));
+
+    expect(payload).toMatchObject({
+      launchedToxicityJobId: 'tox-4',
+      launchedSaScoreJobId: 'sa-4',
+      totalFiles: 3,
+    });
+    expect(jobsApiMock.dispatchSaScoreJob).toHaveBeenCalledWith({
+      molecules: [{ name: 'Lead', smiles: 'CCO' }],
+      methods: ['brsa'],
+      version: '1.0.0',
+    });
+    expect(jobsApiMock.pollJobUntilCompleted).not.toHaveBeenCalled();
+  });
+
+  it('rechaza iniciar desde Smile-it sin moléculas utilizables y valida un id vacío', async () => {
+    const emptyIdError = await firstValueFrom(
+      service().launchAutoFillFromSmileitJob(' ', 'rdkit'),
+    ).catch((error: Error) => error.message);
+    expect(emptyIdError).toContain('Select a Smile-it job');
+
+    jobsApiMock.downloadSmileitCsvReport.mockReturnValue(
+      of({ blob: { text: vi.fn().mockResolvedValue('smiles,name\n,') } }),
+    );
+    const noMoleculesError = await firstValueFrom(
+      service().launchAutoFillFromSmileitJob('smile-empty', 'rdkit'),
+    ).catch((error: Error) => error.message);
+    expect(noMoleculesError).toContain('does not expose usable named molecules');
+    expect(jobsApiMock.validateSmilesCompatibility).not.toHaveBeenCalled();
   });
 
   it('lanza solo los predictores faltantes de una guía existente', async () => {

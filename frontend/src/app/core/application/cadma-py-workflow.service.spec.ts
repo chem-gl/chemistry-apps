@@ -204,12 +204,151 @@ describe('CadmaPyWorkflowService', () => {
       providers: [
         CadmaPyWorkflowService,
         { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
-        { provide: CadmaPyApiService, useValue: { createComparisonJob: vi.fn() } as unknown as CadmaPyApiService },
+        {
+          provide: CadmaPyApiService,
+          useValue: { createComparisonJob: vi.fn() } as unknown as CadmaPyApiService,
+        },
+      ],
+    });
+    const freshService = runInInjectionContext(injector, () =>
+      injector.get(CadmaPyWorkflowService),
+    );
+
+    expect(freshService.pausedDrafts()).toEqual([]);
+    expect(freshService.resumePausedDraft('missing')).toBeNull();
+  });
+
+  it('reports historical job retrieval failures without leaving a stale result', () => {
+    jobsApiMock.getScientificJobStatus.mockReturnValue(
+      throwError(() => new Error('history unavailable')),
+    );
+
+    workflowService.openHistoricalJob('cadma-history-error');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('history unavailable');
+    expect(workflowService.resultData()).toBeNull();
+  });
+
+  it('rehydrates fallback historical source configs when none were persisted', () => {
+    jobsApiMock.getScientificJobStatus.mockReturnValue(
+      of({
+        id: 'cadma-fallback-sources',
+        status: 'paused',
+        parameters: {
+          reference_library_id: 'family-9',
+          project_label: 'Paused batch',
+          combined_csv_text: 'name,smiles\nA,CCO',
+          smiles_csv_text: '',
+          toxicity_csv_text: '',
+          sa_csv_text: '',
+          source_configs_json: '',
+          score_config_json: '',
+        },
+        results: null,
+      } as unknown as ScientificJobView),
+    );
+
+    workflowService.openHistoricalJob('cadma-fallback-sources');
+
+    expect(workflowService.activeSection()).toBe('idle');
+    expect(workflowService.sourceConfigsJson()).toContain('historical-combined.csv');
+    expect(jobsApiMock.getJobLogs).toHaveBeenCalledWith('cadma-fallback-sources', { limit: 250 });
+  });
+
+  it('rejects completed historical payloads without ranking, charts, or score chart', () => {
+    jobsApiMock.getScientificJobStatus.mockReturnValue(
+      of({
+        id: 'cadma-invalid-result',
+        status: 'completed',
+        parameters: {},
+        results: { ranking: [], metric_charts: [] },
+      } as unknown as ScientificJobView),
+    );
+
+    workflowService.openHistoricalJob('cadma-invalid-result');
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toBe('Result payload is invalid.');
+  });
+
+  it('deletes persisted UUID drafts locally and remotely, including remote errors', () => {
+    const draft = workflowService.savePausedDraft({
+      referenceLibraryId: 'family-1',
+      referenceLibraryName: 'Family',
+      projectLabel: 'Persisted batch',
+      combinedCsvText: '',
+      smilesCsvText: 'smiles\nCCO',
+      toxicityCsvText: '',
+      saCsvText: '',
+      sourceConfigsJson: '',
+      scoreConfigJson: '',
+      filenames: [],
+      totalFiles: 0,
+      totalUsableRows: 1,
+    }, ['123e4567', 'e89b', '12d3', 'a456', '426614174000'].join('-'));
+    jobsApiMock.deleteJob.mockReturnValueOnce(of({ detail: 'deleted', jobId: draft.id }));
+
+    workflowService.deletePausedDraft(draft.id);
+
+    expect(workflowService.pausedDrafts()).toEqual([]);
+    expect(jobsApiMock.deleteJob).toHaveBeenCalledWith(draft.id);
+    expect(jobsApiMock.listJobs).toHaveBeenCalled();
+
+    const secondDraft = workflowService.savePausedDraft({
+      referenceLibraryId: draft.referenceLibraryId,
+      referenceLibraryName: draft.referenceLibraryName,
+      projectLabel: draft.projectLabel,
+      combinedCsvText: draft.combinedCsvText,
+      smilesCsvText: draft.smilesCsvText,
+      toxicityCsvText: draft.toxicityCsvText,
+      saCsvText: draft.saCsvText,
+      sourceConfigsJson: draft.sourceConfigsJson,
+      scoreConfigJson: draft.scoreConfigJson,
+      filenames: draft.filenames,
+      totalFiles: draft.totalFiles,
+      totalUsableRows: draft.totalUsableRows,
+    }, ['123e4567', 'e89b', '12d3', 'a456', '426614174001'].join('-'));
+    jobsApiMock.deleteJob.mockReturnValueOnce(throwError(() => new Error('remote unavailable')));
+    workflowService.deletePausedDraft(secondDraft.id);
+    expect(workflowService.pausedDrafts()).toEqual([]);
+  });
+
+  it('normalizes persisted drafts and falls back for invalid field types', () => {
+    localStorage.setItem(
+      'chemistry-apps.cadma-py.paused-drafts.v1',
+      JSON.stringify([
+        {
+          id: 'normalized',
+          referenceLibraryId: 42,
+          projectLabel: '  Label  ',
+          filenames: ['candidate.csv', 7],
+          totalFiles: 'invalid',
+          totalUsableRows: Number.POSITIVE_INFINITY,
+          persistedInJobsMonitor: 'yes',
+        },
+        'not-a-draft',
+      ]),
+    );
+    const injector: Injector = Injector.create({
+      providers: [
+        CadmaPyWorkflowService,
+        { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
+        { provide: CadmaPyApiService, useValue: cadmaApiMock as unknown as CadmaPyApiService },
       ],
     });
     const freshService = runInInjectionContext(injector, () => injector.get(CadmaPyWorkflowService));
 
-    expect(freshService.pausedDrafts()).toEqual([]);
-    expect(freshService.resumePausedDraft('missing')).toBeNull();
+    expect(freshService.pausedDrafts()).toEqual([
+      expect.objectContaining({
+        id: 'normalized',
+        referenceLibraryId: '',
+        projectLabel: 'Label',
+        filenames: ['candidate.csv'],
+        totalFiles: 1,
+        totalUsableRows: 0,
+        persistedInJobsMonitor: false,
+      }),
+    ]);
   });
 });

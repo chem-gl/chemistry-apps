@@ -123,20 +123,20 @@ describe('ToxicityPropertiesWorkflowService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     jobsApiServiceMock = {
-      dispatchToxicityPropertiesJob: vi.fn(
-        (): Observable<ToxicityJobResponseView> => of(makeToxicityJobResponse()),
+      dispatchToxicityPropertiesJob: vi.fn((): Observable<ToxicityJobResponseView> =>
+        of(makeToxicityJobResponse()),
       ),
       streamJobEvents: vi.fn(),
       streamJobLogEvents: vi.fn(),
       pollJobUntilCompleted: vi.fn(),
-      getToxicityPropertiesJobStatus: vi.fn(
-        (): Observable<ToxicityJobResponseView> => of(makeToxicityJobResponse()),
+      getToxicityPropertiesJobStatus: vi.fn((): Observable<ToxicityJobResponseView> =>
+        of(makeToxicityJobResponse()),
       ),
       getJobLogs: vi.fn((): Observable<JobLogsPageView> => of(emptyLogsPage)),
       listJobs: vi.fn((): Observable<ScientificJobView[]> => of([makeScientificJob()])),
       downloadToxicityPropertiesCsvReport: vi.fn(),
-      validateSmilesCompatibility: vi.fn(
-        (): Observable<SmilesCompatibilityResultView> => of({ compatible: true, issues: [] }),
+      validateSmilesCompatibility: vi.fn((): Observable<SmilesCompatibilityResultView> =>
+        of({ compatible: true, issues: [] }),
       ),
     };
 
@@ -401,5 +401,18 @@ describe('ToxicityPropertiesWorkflowService', () => {
     expect(workflowService.errorMessage()).toBe(
       'Unable to retrieve final toxicity result: gateway timeout',
     );
+  });
+
+  it('surfaces job creation errors after input validation succeeds', () => {
+    jobsApiServiceMock.dispatchToxicityPropertiesJob.mockReturnValue(
+      throwError(() => new Error('queue unavailable')),
+    );
+    workflowService.setBatchInputText('CCO');
+    vi.runAllTimers();
+
+    workflowService.dispatch();
+
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('queue unavailable');
   });
 });
