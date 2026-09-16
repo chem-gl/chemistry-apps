@@ -10,16 +10,20 @@ on:
       - dev
   workflow_dispatch: {}
 
-# Evita encolar runs completos de 8 min en pushes seguidos a dev.
-# NUNCA cancela runs de main (un deploy en curso no se interrumpe).
+# Sin `cancel-in-progress` con expresión aquí: el parser lo rechaza
+# (startup_failure). La cancelación vive a nivel de job (booleano).
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/dev' }}
 
 jobs:
   tests:
     name: Backend tests
     runs-on: ubuntu-latest
+    # Cancela tests obsoletos si llega otro push a dev. NUNCA toca main:
+    # en main/PRs este job ni siquiera existe (if) y el deploy no participa.
+    concurrency:
+      group: ci-tests-${{ github.ref }}
+      cancel-in-progress: true
     # Los tests solo corren en push a dev; en main y PRs ya debieron pasar en dev.
     # El frontend se valida compilando su imagen Docker en el job Build
     # (evita `npm ci` + `npm run build` duplicados).
@@ -69,6 +73,14 @@ jobs:
     needs: [tests]
     permissions:
       contents: write
+      # El workflow llamado (build.yml) pide `actions: write` para el caché
+      # de capas Docker: el caller debe otorgarlo o el run muere en arranque.
+      actions: write
+    # Cancela builds obsoletos ante un nuevo push (el deploy, job aparte
+    # sin concurrency, jamás se interrumpe una vez en curso).
+    concurrency:
+      group: ci-build-${{ github.ref }}
+      cancel-in-progress: true
     uses: ./.github/workflows/build.yml
     with:
       create_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
