@@ -153,11 +153,10 @@
 .inspection-card {
   display: grid;
   gap: 0.55rem;
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  background: none;
-  padding: 0.65rem 0 0;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.65rem 0.75rem;
 }
 
 .inspection-header-row {

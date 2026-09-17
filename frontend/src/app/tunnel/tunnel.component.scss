@@ -174,11 +174,10 @@
 }
 
 .output-block {
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  background: none;
-  padding: 0.65rem 0 0;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.65rem;
   display: grid;
   gap: 0.3rem;
   margin-bottom: 0.65rem;

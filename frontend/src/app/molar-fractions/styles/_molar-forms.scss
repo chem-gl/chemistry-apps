@@ -160,11 +160,10 @@
   margin: 0;
   font-size: 0.8rem;
   color: var(--chem-ink-secondary);
-  padding: 0.5rem 0;
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  background: none;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--chem-border-accent-soft);
+  border-radius: 12px;
+  background: rgba(250, 248, 252, 0.72);
 }
 
 .chart-card {
@@ -249,11 +248,9 @@
   display: grid;
   gap: 0.18rem;
   margin: 0;
-  padding: 0.45rem 0;
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  background: none;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(237, 233, 240, 0.86);
   color: var(--chem-ink-secondary);
   font-size: 0.78rem;
 }
