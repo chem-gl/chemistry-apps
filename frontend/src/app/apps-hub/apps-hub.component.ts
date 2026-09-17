@@ -5,6 +5,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { AppCardThumbnailComponent } from '../core/shared/components/app-card-thumbnail/app-card-thumbnail.component';
 import {
   ScientificAppRouteItem,
   VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS,
@@ -12,7 +13,7 @@ import {
 
 @Component({
   selector: 'app-apps-hub',
-  imports: [CommonModule, RouterLink, TranslocoPipe],
+  imports: [CommonModule, RouterLink, TranslocoPipe, AppCardThumbnailComponent],
   templateUrl: './apps-hub.component.html',
   styleUrl: './apps-hub.component.scss',
 })

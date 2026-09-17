@@ -77,6 +77,7 @@
             <div class="chip-grid">
                 @for (appItem of enabledApps(); track appItem.route_key) {
                 <a class="app-chip" [routerLink]="'/' + appItem.route_key">
+                    <app-app-illustration [appKey]="appItem.route_key" [size]="22" />
                     {{ appItem.app_name }}
                 </a>
                 }

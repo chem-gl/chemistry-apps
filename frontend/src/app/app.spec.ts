@@ -60,7 +60,8 @@ describe('App', () => {
 
     expect(allLinks).toContain('Jobs Monitor');
     expect(allLinks).toContain('Apps');
-    expect(allLinks).toContain('Dashboard');
+    expect(allLinks).not.toContain('Dashboard');
+    expect(allLinks[0]).toBe('Apps');
   });
 
   it('should show app submenu items in dropdown', () => {

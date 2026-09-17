@@ -91,7 +91,7 @@ describe('auth guards', () => {
       ),
     );
 
-    expect(router.serializeUrl(result as UrlTree)).toBe('/dashboard');
+    expect(router.serializeUrl(result as UrlTree)).toBe('/apps');
   });
 
   it('permite adminGuard cuando el usuario tiene acceso administrativo', async () => {
@@ -155,7 +155,7 @@ describe('auth guards', () => {
     expect(router.serializeUrl(result as UrlTree)).toBe('/apps');
   });
 
-  it('redirige groupAdminGuard a login o dashboard según el contexto', async () => {
+  it('redirige groupAdminGuard a login o apps según el contexto', async () => {
     // Verifica ambas salidas de protección del área de grupos/usuarios.
     const router = TestBed.inject(Router);
     sessionServiceMock.initializeSession.mockReturnValueOnce(of(false));
@@ -176,7 +176,7 @@ describe('auth guards', () => {
     );
 
     expect(router.serializeUrl(unauthenticated as UrlTree)).toBe('/login');
-    expect(router.serializeUrl(forbidden as UrlTree)).toBe('/dashboard');
+    expect(router.serializeUrl(forbidden as UrlTree)).toBe('/apps');
   });
 
   it('permite groupAdminGuard cuando el usuario puede acceder al área administrativa', async () => {

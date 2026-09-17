@@ -104,7 +104,7 @@ async function loginThroughUi(page: Page, username: string, password: string): P
   await page.getByRole('textbox', { name: /username/i }).fill(username);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForURL('**/dashboard');
+  await page.waitForURL('**/apps');
 }
 
 async function fulfillJson(route: Route, payload: unknown): Promise<void> {

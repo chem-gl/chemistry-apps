@@ -197,6 +197,10 @@ h1 {
   background: rgba(245, 244, 240, 0.7);
   color: var(--chem-ink-secondary);
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
 }
 
 .app-chip:hover {

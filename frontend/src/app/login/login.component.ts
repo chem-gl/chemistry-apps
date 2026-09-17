@@ -40,7 +40,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.sessionService.isAuthenticated()) {
-      const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/dashboard';
+        const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/apps';
       void this.router.navigateByUrl(redirectTarget);
     }
   }
@@ -146,7 +146,7 @@ export class LoginComponent implements OnInit {
           return;
         }
 
-        const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/dashboard';
+      const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/apps';
         void this.router.navigateByUrl(redirectTarget);
       },
       error: (loginError: { message?: string }) => {
