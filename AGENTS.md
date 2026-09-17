@@ -8,7 +8,7 @@ Monorepo de aplicaciones científicas de química. Backend Django 6 + DRF + Cele
 
 | Capa | Tecnología |
 |------|-----------|
-| Backend | Python 3.14, Django 6, DRF, Celery, Channels, Daphne |
+| Backend | Python 3.12, Django 6, DRF, Celery, Channels, Daphne |
 | Frontend | Angular 21 (standalone, signals, Transloco i18n) |
 | BD | SQLite (dev) / PostgreSQL (prod) |
 | Cache/Broker | Redis 7 |
@@ -289,7 +289,7 @@ cd frontend && npm run api:generate
 ## SonarQube
 
 - Servidor: `http://localhost:9000`
-- Token: `squ_83fb83e4a4f235171ac3b831a5c068895afac288`
+- Token: no se versiona — créalo en SonarQube y expórtalo como `SONAR_TOKEN`
 - Project key: `chemistry-apps`
 - Para cobertura real, generar reportes antes del scan: `bash scripts/generate_sonar_coverage.sh`
 - Cobertura actual: ~79.5% backend, ~82.6% frontend
