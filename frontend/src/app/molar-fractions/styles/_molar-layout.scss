@@ -8,13 +8,11 @@
 .molar-header {
   display: grid;
   gap: 0.45rem;
-  padding: 1.15rem 1.25rem;
-  border: 1px solid var(--chem-border-accent);
-  border-radius: calc(var(--chem-radius-lg) + 2px);
-  background:
-    radial-gradient(circle at top right, var(--chem-border-accent-strong), transparent 36%),
-    linear-gradient(140deg, rgba(250, 248, 252, 0.98), rgba(237, 233, 240, 0.94));
-  box-shadow: var(--chem-shadow);
+  padding: 0.25rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .molar-header h2 {
@@ -52,13 +50,12 @@
 .entry-panel,
 .result-panel,
 .history-card {
-  border: 1px solid var(--chem-border-accent-dim);
-  background:
-    linear-gradient(180deg, rgba(250, 248, 252, 0.98), rgba(244, 240, 247, 0.96)),
-    var(--chem-surface-elevated);
-  padding: 1rem 1rem 1.05rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   min-width: 0;
-  box-shadow: var(--chem-shadow);
+  box-shadow: none;
 }
 
 .form-card {
@@ -186,13 +183,12 @@
 .pka-block,
 .range-block,
 .single-ph-block {
-  border: 1px solid var(--chem-border-accent-dim);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
-    var(--chem-surface);
-  border-radius: 14px;
-  padding: 0.9rem;
-  margin-bottom: 0.9rem;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  padding: 0.9rem 0 0;
+  margin-bottom: 1.1rem;
   display: grid;
   gap: 0.6rem;
 }
@@ -231,13 +227,12 @@
 
 .batch-copy-card,
 .csv-example-card {
-  border: 1px solid var(--chem-border-accent-dim);
-  border-radius: 14px;
-  padding: 0.9rem;
-  margin-bottom: 0.9rem;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(237, 233, 240, 0.72)),
-    var(--chem-surface);
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  padding: 0.9rem 0 0;
+  margin-bottom: 1.1rem;
 }
 
 .batch-copy-card {
