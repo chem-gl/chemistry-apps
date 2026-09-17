@@ -110,7 +110,7 @@
 .catalog-preview-sidebar {
   margin-top: 0;
   position: sticky;
-  top: 1rem;
+  top: var(--chem-sticky-offset, 6.5rem);
 }
 
 .catalog-preview-metadata {
