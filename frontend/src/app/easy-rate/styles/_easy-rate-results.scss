@@ -86,10 +86,11 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.78rem;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  padding: 0.3rem 0.5rem;
-  background: var(--chem-surface);
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  padding: 0.3rem 0;
+  background: none;
 
   .fd-field {
     font-weight: 700;
@@ -140,10 +141,11 @@
 }
 
 .log-item {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  padding: 0.5rem;
-  background: var(--chem-surface);
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  padding: 0.5rem 0;
+  background: none;
   display: grid;
   gap: 0.3rem;
 }
