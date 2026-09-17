@@ -9,8 +9,6 @@
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────── -->
     <section class="entry-panel" [attr.aria-label]="'easyRate.form.ariaLabel' | transloco">
-      <h3>{{ 'easyRate.form.title' | transloco }}</h3>
-
       <h3 class="section-sub">{{ 'easyRate.form.parameters' | transloco }}</h3>
 
       <div class="param-grid">
@@ -71,6 +69,8 @@
         (radiusReactant1Change)="workflow.updateRadiusReactant1($event)"
         (radiusReactant2Change)="workflow.updateRadiusReactant2($event)"
         (reactionDistanceChange)="workflow.updateReactionDistance($event)"></app-diffusion-fields>
+
+      <h3>{{ 'easyRate.form.title' | transloco }}</h3>
 
       <div class="file-grid">
         @for (slot of inputSlots; track trackInputSlot($index, slot)) {
