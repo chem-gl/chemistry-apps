@@ -12,15 +12,14 @@
 .kpi-card {
   display: grid;
   gap: 0.2rem;
-  padding: 1rem 1.15rem;
-  background: var(--chem-surface-elevated);
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius-lg);
+  padding: 0.2rem 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
 }
 
-.kpi-card.kpi-highlight {
-  background: var(--chem-primary-light);
-  border-color: var(--chem-primary);
+.kpi-card.kpi-highlight .kpi-value {
+  color: var(--chem-primary);
 }
 
 .kpi-label {
@@ -62,11 +61,12 @@
    CHART CARDS
    ============================================================ */
 .chart-card {
-  padding: 1.25rem;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius-lg);
-  background: var(--chem-glass-bg);
-  backdrop-filter: blur(6px);
+  padding: 1.1rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
   display: grid;
   gap: 0.35rem;
 }

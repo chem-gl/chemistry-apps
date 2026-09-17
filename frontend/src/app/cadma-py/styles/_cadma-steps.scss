@@ -6,10 +6,10 @@
 .step-tracker {
   display: flex;
   align-items: center;
-  padding: 0.875rem 1.5rem;
-  background: var(--chem-surface-elevated);
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius-lg);
+  padding: 0.875rem 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
 }
 
 .step-item {
@@ -130,19 +130,15 @@
 
 /* Secciones principales de cada paso */
 .step-section {
-  background: var(--chem-glass-bg);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  padding: 1.5rem 0 0;
   display: grid;
   gap: 1.25rem;
-  transition: border-color 0.25s;
-}
-
-.results-section {
-  border-color: var(--chem-success);
 }
 
 .step-section-header {

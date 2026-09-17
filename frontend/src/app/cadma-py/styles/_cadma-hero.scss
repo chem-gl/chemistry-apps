@@ -28,11 +28,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem 2.5rem;
-  background: var(--chem-glass-heavy);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--chem-glass-border);
-  border-radius: var(--chem-radius-lg);
+  padding: 0.5rem 0 1rem;
+  background: none;
+  backdrop-filter: none;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
   color: var(--chem-ink);
 }
 

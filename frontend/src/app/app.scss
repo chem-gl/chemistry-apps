@@ -14,7 +14,8 @@
 .top-bar {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  /* Siempre sobre el contenido; los modales (z 59/60) quedan por encima. */
+  z-index: 50;
   width: 100%;
   background: var(--chem-surface);
   border-bottom: 1px solid var(--chem-glass-border);

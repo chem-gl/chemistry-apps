@@ -75,10 +75,11 @@
 }
 
 .log-item {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface-elevated);
-  padding: 0.48rem 0.6rem;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  padding: 0.48rem 0;
   display: grid;
   gap: 0.25rem;
 }

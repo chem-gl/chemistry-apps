@@ -22,14 +22,12 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 1rem;
-  padding: 1.25rem;
-  border: 1.5px solid var(--chem-border-subtle);
-  border-radius: 18px;
-  background: var(--chem-surface-elevated);
+  padding: 1rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
   align-items: center;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
 }
 
 .seed-card-main {
@@ -48,33 +46,9 @@
   border-radius: 12px;
 }
 
-.seed-card:hover {
-  box-shadow: var(--chem-shadow);
-}
-
 .seed-card.active-browse {
-  border-color: var(--chem-accent);
-  box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.15);
-}
-
-.seed-card[data-key='neuro'] {
-  background: linear-gradient(135deg, var(--chem-accent-light), #f3e8ff);
-  border-color: #e9d5ff;
-}
-
-.seed-card[data-key='rett'] {
-  background: linear-gradient(135deg, var(--chem-info-bg), #e0f2fe);
-  border-color: #bae6fd;
-}
-
-.seed-card[data-key='neuro']:hover {
-  border-color: var(--chem-accent);
-  box-shadow: 0 4px 20px rgba(123, 90, 158, 0.12);
-}
-
-.seed-card[data-key='rett']:hover {
-  border-color: var(--chem-info);
-  box-shadow: 0 4px 20px rgba(2, 119, 189, 0.12);
+  border-left: 3px solid var(--chem-accent);
+  padding-left: 0.75rem;
 }
 
 .seed-icon-wrap {
@@ -145,10 +119,11 @@
 
 .seed-preview-panel {
   grid-column: 1 / -1;
-  background: var(--chem-surface-elevated);
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
+  background: none;
+  border: 0;
+  border-left: 2px solid var(--chem-border-subtle);
+  border-radius: 0;
+  padding: 0.75rem 0 0.75rem 1rem;
   animation: slideDown 0.15s ease-out;
 }
 
@@ -223,14 +198,12 @@
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.875rem 1rem;
-  background: var(--chem-surface-elevated);
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 12px;
+  padding: 0.875rem 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
   text-align: left;
-  transition:
-    border-color 0.15s,
-    background 0.15s;
 }
 
 .library-row-main {
@@ -252,15 +225,9 @@
   border-radius: var(--chem-radius);
 }
 
-.library-row:hover {
-  border-color: var(--chem-border-strong);
-  background: var(--chem-surface-inset);
-}
-
 .library-row.active-browse {
-  border-color: var(--chem-accent);
-  background: var(--chem-accent-light);
-  box-shadow: 0 0 0 2px rgba(123, 90, 158, 0.15);
+  border-left: 3px solid var(--chem-accent);
+  padding-left: 0.75rem;
 }
 
 .lib-scope {
@@ -384,12 +351,12 @@
 
 /* --- Panel de vista previa de SMILES --- */
 .lib-preview-panel {
-  background: var(--chem-surface-elevated);
-  border: 1px solid var(--chem-border-subtle);
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-  margin-top: -0.5rem;
-  padding: 0.75rem 1rem;
+  background: none;
+  border: 0;
+  border-left: 2px solid var(--chem-border-subtle);
+  border-radius: 0;
+  margin-top: 0;
+  padding: 0.75rem 0 0.75rem 1rem;
   animation: slideDown 0.15s ease-out;
 }
 
