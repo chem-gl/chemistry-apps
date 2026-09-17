@@ -45,12 +45,12 @@ describe('RegisterComponent', () => {
     expect(auth.register).not.toHaveBeenCalled();
   });
 
-  it('redirige al dashboard si ya existe una sesión', () => {
+  it('redirige a apps si ya existe una sesión', () => {
     session.isAuthenticated.mockReturnValueOnce(true);
 
     TestBed.createComponent(RegisterComponent).componentInstance.ngOnInit();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/apps');
   });
   it('registers with token and redirects after auto-login', () => {
     auth.register.mockReturnValue(of({ access: 'a', refresh: 'r' }));
@@ -58,7 +58,7 @@ describe('RegisterComponent', () => {
     component.username.set(' user '); component.email.set(' e@x '); component.password.set('password'); component.confirmPassword.set('password'); component.ngOnInit(); component.submit();
     expect(auth.register).toHaveBeenCalledWith({ username: 'user', email: 'e@x', password: 'password', registration_token: 'invite' });
     expect(session.initializeFromRegistration).toHaveBeenCalled();
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/apps');
   });
   it('shows backend errors and supports registration without auto-login', () => {
     auth.register.mockReturnValueOnce(throwError(() => ({ error: { email: ['Already used'] } })));
@@ -83,7 +83,7 @@ describe('RegisterComponent', () => {
 
     component.submit();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/apps');
   });
 
   it('muestra el mensaje de error genérico del backend', () => {

@@ -12,6 +12,7 @@ import {
 import { JobsApiService, ScientificJobView } from '../core/api/jobs-api.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
+import { AppIllustrationComponent } from '../core/shared/components/app-illustration/app-illustration.component';
 import {
   resolveScientificJobRouteKey,
   resolveScientificJobRoutePath,
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, JobManagementActionsComponent, TranslocoPipe],
+  imports: [CommonModule, RouterLink, JobManagementActionsComponent, AppIllustrationComponent, TranslocoPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })

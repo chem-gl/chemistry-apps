@@ -92,10 +92,11 @@
    MANUAL IMPORT ACCORDION
    ============================================================ */
 .manual-import-accordion {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 12px;
-  background: var(--chem-surface-elevated);
-  overflow: hidden;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  overflow: visible;
 }
 
 .manual-import-accordion summary {
@@ -278,10 +279,11 @@
 .quick-fill-card {
   display: grid;
   gap: 0.75rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 12px;
-  background: var(--chem-surface-elevated);
+  padding: 0.95rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
 }
 
 .quick-fill-header {
@@ -336,10 +338,11 @@
 .formula-card {
   display: grid;
   gap: 1rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+  padding: 1rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
 }
 
 .formula-card-header {

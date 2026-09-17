@@ -14,6 +14,10 @@ export interface ScientificAppRouteItem {
   available: boolean;
   /** Si es false, la app no se muestra en menus ni en el hub (solo existe como ejemplo/ruta interna). */
   visibleInMenus: boolean;
+  /** Captura real de la app (tarjeta principal del hub). Opcional: sin ella se usa la ilustración. */
+  thumbnailScreenshot?: string;
+  /** Ilustración representativa (vistas secundarias y fallback). Opcional. */
+  thumbnailIllustration?: string;
 }
 
 interface ScientificAppDefinition {
@@ -22,6 +26,8 @@ interface ScientificAppDefinition {
   title: string;
   description: string;
   visibleInMenus: boolean;
+  thumbnailScreenshot?: string;
+  thumbnailIllustration?: string;
 }
 
 function createScientificAppRouteItem(definition: ScientificAppDefinition): ScientificAppRouteItem {
@@ -33,6 +39,8 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     routePath: `/${definition.key}`,
     available: true,
     visibleInMenus: definition.visibleInMenus,
+    thumbnailScreenshot: definition.thumbnailScreenshot,
+    thumbnailIllustration: definition.thumbnailIllustration,
   };
 }
 
@@ -53,6 +61,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     title: 'Molar Fractions',
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
   },
   {
     key: 'tunnel',
@@ -61,6 +70,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/tunnel.jpg',
   },
   {
     key: 'easy-rate',
@@ -69,6 +79,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/easy-rate.jpg',
   },
   {
     key: 'marcus',
@@ -77,6 +88,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/marcus.jpg',
   },
   {
     key: 'smileit',
@@ -85,6 +97,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/smileit.jpg',
   },
   {
     key: 'sa-score',
@@ -93,6 +106,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/sa-score.jpg',
   },
   {
     key: 'toxicity-properties',
@@ -101,6 +115,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/toxicity-properties.jpg',
   },
   {
     key: 'cadma-py',
@@ -109,6 +124,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
+    thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
   },
 ];
 

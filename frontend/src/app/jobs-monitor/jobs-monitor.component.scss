@@ -88,19 +88,11 @@ h1 {
 }
 
 .kpi-card {
-  border: 1px solid var(--chem-border-subtle);
-  background: var(--chem-surface-elevated);
-  border-radius: var(--chem-radius-lg);
-  padding: 0.85rem 1rem;
-  border-left: 3px solid var(--chem-accent);
-  transition:
-    transform var(--chem-transition),
-    box-shadow var(--chem-transition);
-}
-
-.kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--chem-shadow);
+  border: 0;
+  background: none;
+  border-radius: 0;
+  padding: 0.2rem 0;
+  border-left: none;
 }
 
 .kpi-label {
@@ -134,10 +126,11 @@ h1 {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  padding: 0.8rem;
-  background: var(--chem-surface-elevated);
+  align-items: end;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: none;
 }
 
 label {
@@ -184,34 +177,27 @@ select {
 
 .empty-state {
   margin: 0;
-  padding: 0.85rem;
-  border: 1px dashed var(--chem-border);
-  border-radius: var(--chem-radius);
+  padding: 0.85rem 0;
+  border: 0;
+  border-radius: 0;
   color: var(--chem-ink-soft);
-  background: transparent;
+  background: none;
 }
 
 .jobs-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0;
+  grid-template-columns: 1fr;
 }
 
 .job-card {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface-elevated);
-  padding: 0.85rem;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
+  padding: 0.85rem 0;
   display: grid;
   gap: 0.6rem;
-  transition:
-    transform var(--chem-transition),
-    box-shadow var(--chem-transition);
-}
-
-.job-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--chem-shadow);
 }
 
 .job-card-header {

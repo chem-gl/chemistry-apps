@@ -3,15 +3,10 @@
   <header class="molar-header">
     <p class="eyebrow">{{ 'molarFractions.header.eyebrow' | transloco }}</p>
     <h2>{{ 'molarFractions.header.title' | transloco }}</h2>
-    <p>{{ 'molarFractions.header.subtitle' | transloco }}</p>
   </header>
 
   <div class="workspace-grid">
     <div class="form-card entry-panel" [attr.aria-label]="'molarFractions.form.title' | transloco">
-      <div class="panel-heading">
-        <h3>{{ 'molarFractions.form.title' | transloco }}</h3>
-      </div>
-
       <div class="mode-toggle" [attr.aria-label]="'molarFractions.form.inputMode' | transloco">
         <button type="button" class="mode-toggle-btn" [attr.aria-pressed]="inputMode() === 'single'"
           [class.is-active]="inputMode() === 'single'" (click)="onInputModeChange('single')">

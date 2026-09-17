@@ -15,12 +15,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 1.5rem 1.75rem;
-  background: var(--chem-surface);
-  border: 1px solid var(--chem-border);
-  border-left: 3px solid var(--chem-accent);
-  border-radius: var(--chem-radius-lg);
-  box-shadow: var(--chem-shadow);
+  padding: 0 0 1rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .eyebrow {
@@ -73,11 +73,12 @@ h1 {
 
 /* ─── Secciones ─── */
 .section-block {
-  padding: 1.25rem 1.5rem;
-  background: var(--chem-surface);
-  border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius-lg);
-  box-shadow: var(--chem-shadow);
+  padding: 1.25rem 0 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
   display: grid;
   gap: 1rem;
 }

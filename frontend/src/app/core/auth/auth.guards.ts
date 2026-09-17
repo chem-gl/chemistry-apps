@@ -40,7 +40,7 @@ export const adminGuard: CanActivateFn = () => {
         return router.createUrlTree(['/login']);
       }
 
-      return sessionService.hasAdminAccess() ? true : router.createUrlTree(['/dashboard']);
+      return sessionService.hasAdminAccess() ? true : router.createUrlTree(['/apps']);
     }),
   );
 };
@@ -79,7 +79,7 @@ export const groupAdminGuard: CanActivateFn = () => {
         return router.createUrlTree(['/login']);
       }
 
-      return sessionService.canAccessAdminArea() ? true : router.createUrlTree(['/dashboard']);
+      return sessionService.canAccessAdminArea() ? true : router.createUrlTree(['/apps']);
     }),
   );
 };

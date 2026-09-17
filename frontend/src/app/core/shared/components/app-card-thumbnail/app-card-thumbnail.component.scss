@@ -1,0 +1,24 @@
+/* app-card-thumbnail.component.scss: Marco 16/10 para capturas e ilustraciones. */
+.card-thumbnail {
+  margin: 0;
+  border-radius: var(--chem-radius);
+  overflow: hidden;
+  border: 1px solid var(--chem-border-subtle);
+  background: var(--chem-surface-inset);
+}
+
+.card-thumbnail-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top;
+}
+
+.card-thumbnail-fallback {
+  display: grid;
+  place-items: center;
+  padding: 1.4rem;
+  color: var(--chem-primary);
+}

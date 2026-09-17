@@ -95,17 +95,17 @@
 }
 
 .status-card {
-  padding: 0.8rem 0.9rem;
-  border: 1px dashed var(--chem-border-accent-strong);
-  border-radius: 14px;
-  background: rgba(243, 237, 247, 0.42);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
 }
 
 .progress-card {
-  border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface);
-  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   display: grid;
   gap: 0.4rem;
 }
@@ -169,15 +169,13 @@
 .chart-card {
   display: grid;
   gap: 1rem;
-  margin-top: 0.9rem;
-  padding: 1.15rem 1.2rem 1.25rem;
-  border: 1px solid rgba(2, 119, 189, 0.15);
-  border-radius: 16px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top right, rgba(2, 119, 189, 0.08), transparent 30%),
-    linear-gradient(180deg, rgba(250, 248, 252, 0.98), rgba(237, 233, 240, 0.96)),
-    var(--chem-surface-elevated);
+  margin-top: 1.1rem;
+  padding: 1.1rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  overflow: visible;
+  background: none;
 }
 
 .chart-frame {
@@ -198,10 +196,11 @@
 .probe-card {
   display: grid;
   gap: 1rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid var(--chem-border-accent-soft);
-  border-radius: 14px;
-  background: rgba(250, 248, 252, 0.72);
+  padding: 1rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  background: none;
 }
 
 .probe-controls {

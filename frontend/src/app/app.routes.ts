@@ -7,7 +7,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'dashboard',
+    redirectTo: 'apps',
   },
   {
     path: 'login',
@@ -18,10 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./register/register.component').then((m) => m.RegisterComponent),
   },
   {
+    // Redirección de compatibilidad: el antiguo dashboard ahora vive en el hub de apps.
     path: 'dashboard',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
+    pathMatch: 'full',
+    redirectTo: 'apps',
   },
   {
     path: 'profile',
@@ -116,6 +116,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'dashboard',
+    redirectTo: 'apps',
   },
 ];

@@ -40,7 +40,7 @@ export class RegisterComponent implements OnInit {
 
     // If already authenticated, redirect
     if (this.sessionService.isAuthenticated()) {
-      void this.router.navigateByUrl('/dashboard');
+      void this.router.navigateByUrl('/apps');
     }
   }
 
@@ -100,10 +100,10 @@ export class RegisterComponent implements OnInit {
             refreshToken: response.refresh,
           }).subscribe({
             next: () => {
-              void this.router.navigateByUrl('/dashboard');
+              void this.router.navigateByUrl('/apps');
             },
             error: () => {
-              void this.router.navigateByUrl('/dashboard');
+              void this.router.navigateByUrl('/apps');
             },
           });
         } else {

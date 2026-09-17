@@ -107,24 +107,24 @@
     gap: 1rem;
   }
 
-  /* Columna izquierda: sticky para flotar mientras se recorre la columna derecha */
+  /* Columna izquierda: sticky bajo la topbar flotante (ver --chem-sticky-offset). */
   .workspace-left-column {
     grid-column: 1;
     grid-row: 1;
     position: sticky;
-    top: 1rem;
+    top: var(--chem-sticky-offset, 6.5rem);
     align-self: start;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
 
-  /* Columna derecha: catálogo + bloques, sticky sin scroll propio */
+  /* Columna derecha: catálogo + bloques, sticky bajo la topbar flotante. */
   .workspace-right-column {
     grid-column: 2;
     grid-row: 1;
     position: sticky;
-    top: 1rem;
+    top: var(--chem-sticky-offset, 6.5rem);
     align-self: start;
     display: grid;
     gap: 1rem;
@@ -152,10 +152,10 @@
     position: static;
   }
 
-  /* Panel de inspección (SVG + átomos): sticky para que quede visible al hacer scroll */
+  /* Panel de inspección (SVG + átomos): sticky bajo la topbar flotante. */
   .inspection-floating-panel {
     position: sticky;
-    top: 0;
+    top: var(--chem-sticky-offset, 6.5rem);
     z-index: var(--z-sticky);
   }
 

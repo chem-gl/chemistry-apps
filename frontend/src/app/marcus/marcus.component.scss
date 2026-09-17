@@ -41,11 +41,12 @@
 .entry-panel,
 .result-panel,
 .logs-card {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface-elevated);
-  padding: 1rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   min-width: 0;
+  box-shadow: none;
 
   h3 {
     display: flex;
@@ -272,10 +273,10 @@
 
 /* Progreso */
 .progress-card {
-  border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface);
-  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   display: grid;
   gap: 0.4rem;
 }
@@ -465,10 +466,11 @@
 }
 
 .log-item {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  padding: 0.5rem;
-  background: var(--chem-surface);
+  border: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  border-radius: 0;
+  padding: 0.5rem 0;
+  background: none;
   display: grid;
   gap: 0.3rem;
 }

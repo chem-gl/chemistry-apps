@@ -78,10 +78,9 @@ export class App implements OnInit {
     }
 
     return [
-      { labelKey: 'app.nav.dashboard', path: '/dashboard', hintKey: 'app.navHints.dashboard' },
+      SCIENTIFIC_APP_NAV_ITEM,
       { labelKey: 'app.nav.profile', path: '/profile', hintKey: 'app.navHints.profile' },
       { labelKey: 'app.nav.jobsMonitor', path: '/jobs', hintKey: 'app.navHints.jobsMonitor' },
-      SCIENTIFIC_APP_NAV_ITEM,
       ...(this.sessionService.canAccessAdminArea()
         ? [
             { labelKey: 'app.nav.groups', path: '/admin/groups', hintKey: 'app.navHints.groups' },

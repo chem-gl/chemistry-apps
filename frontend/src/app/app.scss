@@ -6,6 +6,15 @@
   background: var(--chem-bg);
   color: var(--chem-ink);
   font-family: var(--chem-font-body);
+  /* Offset para paneles sticky bajo la topbar flotante (~90px en desktop). */
+  --chem-sticky-offset: 6.5rem;
+}
+
+@media (max-width: 900px) {
+  :host {
+    /* En móvil la topbar envuelve a dos filas: offset mayor. */
+    --chem-sticky-offset: 9.5rem;
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -14,7 +23,8 @@
 .top-bar {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  /* Siempre sobre el contenido; los modales (z 59/60) quedan por encima. */
+  z-index: 50;
   width: 100%;
   background: var(--chem-surface);
   border-bottom: 1px solid var(--chem-glass-border);

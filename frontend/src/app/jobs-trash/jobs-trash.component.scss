@@ -6,14 +6,13 @@
 }
 
 .trash-header,
-.state-card,
-.table-card {
-  background: rgba(237, 233, 240, 0.72);
-  background-image: var(--chem-gradient-subtle);
-  border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius-lg);
-  padding: 1.15rem;
-  box-shadow: var(--chem-shadow);
+.state-card {
+  background: none;
+  background-image: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .trash-header {
@@ -22,6 +21,18 @@
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--chem-border-subtle);
+}
+
+.table-card {
+  background: none;
+  background-image: none;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 0;
+  box-shadow: none;
+  overflow: auto;
 }
 
 .eyebrow,
@@ -76,10 +87,10 @@ h1 {
 }
 
 .filters {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  padding: 0.85rem;
-  background: var(--chem-surface-elevated);
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: none;
 }
 
 .filter-control {

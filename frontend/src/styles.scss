@@ -66,11 +66,16 @@
   --chem-ink-tertiary: #9aad9e;
 
   /* === Tipografía === */
+  /* Los fallbacks Liberation/DejaVu van antes del genérico: en algunos Linux
+     `sans-serif` resuelve a Noto Color Emoji y rompe métricas (espaciado e inputs). */
   --chem-font-heading:
-    'Avenir Next Condensed', 'Arial Narrow', 'Franklin Gothic Medium', sans-serif;
-  --chem-font-body: 'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
-  --chem-font-label: 'Segoe UI Semibold', 'Helvetica Neue', Arial, sans-serif;
-  --chem-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    'Avenir Next Condensed', 'Arial Narrow', 'Franklin Gothic Medium', 'Liberation Sans',
+    'DejaVu Sans', sans-serif;
+  --chem-font-body: 'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI', 'Liberation Sans',
+    'DejaVu Sans', sans-serif;
+  --chem-font-label: 'Segoe UI Semibold', 'Helvetica Neue', Arial, 'Liberation Sans',
+    'DejaVu Sans', sans-serif;
+  --chem-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, 'DejaVu Sans Mono', monospace;
   --chem-text-xs: 0.72rem;
   --chem-text-sm: 0.84rem;
   --chem-text-md: 1rem;
