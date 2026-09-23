@@ -381,8 +381,7 @@
       "lead": "Sept modules de chimie computationnelle, prêts immédiatement. Enchaînez-les : générez des structures, évaluez l'accessibilité synthétique, filtrez par toxicité.",
       "start": "Commencer par les fractions molaires",
       "createAccount": "Créer un compte",
-      "openMonitor": "Ouvrir le moniteur de jobs",
-      "privacyNote": "Les paramètres envoyés ne sont pas privés : pour un calcul identique, le serveur renvoie le résultat en cache."
+      "openMonitor": "Ouvrir le moniteur de jobs"
     },
     "freeZone": {
       "title": "Sans compte",
@@ -1883,11 +1882,6 @@
   },
   "appMode": {
     "open": {
-      "banner": {
-        "title": "Mode ouvert",
-        "body": "Vous exécutez sans compte. Les résultats restent dans ce navigateur.",
-        "privacy": "Les paramètres ne sont pas privés : un calcul identique renvoie le résultat mis en cache, partagé pendant 7 jours maximum."
-      },
       "history": {
         "title": "Vos exécutions récentes (ce navigateur)",
         "empty": "Aucune exécution enregistrée.",

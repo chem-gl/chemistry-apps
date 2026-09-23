@@ -161,6 +161,41 @@ textarea:focus {
   color: var(--chem-ink);
 }
 
+/* Tarjeta de estado vacio del panel Results antes de ejecutar el calculo. */
+.result-empty-card {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  max-width: 32rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px dashed var(--chem-border-strong);
+  border-radius: var(--chem-radius);
+  background: var(--chem-glass-bg);
+
+  strong {
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--chem-ink-soft);
+  }
+}
+
+.result-empty-hint {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-accent);
+
+  &::before {
+    content: '→ ';
+  }
+}
+
 .progress-card {
   display: grid;
   gap: 0.4rem;

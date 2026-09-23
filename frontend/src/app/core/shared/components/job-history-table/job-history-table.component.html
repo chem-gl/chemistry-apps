@@ -10,7 +10,7 @@
 
   @if (accessMode?.isOpenMode()) {
   @if (localRecords.length === 0) {
-  <p class="status-message">{{ 'appMode.open.history.empty' | transloco }}</p>
+  <p class="status-message is-empty-note">{{ 'appMode.open.history.empty' | transloco }}</p>
   } @else {
   <div class="table-wrap">
     <table class="history-table">
@@ -32,7 +32,7 @@
   </div>
   }
   } @else if (jobs.length === 0) {
-  <p class="status-message">{{ emptyMessage }}</p>
+  <p class="status-message is-empty-note">{{ emptyMessage }}</p>
   } @else {
   <div class="table-wrap">
     <table class="history-table">

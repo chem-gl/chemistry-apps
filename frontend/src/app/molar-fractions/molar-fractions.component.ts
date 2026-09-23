@@ -3,7 +3,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { EChartsCoreOption } from 'echarts/core';
 import {
@@ -30,8 +29,7 @@ import {
 
 @Component({
   selector: 'app-molar-fractions',
-  imports: [
-    OpenModeBannerComponent,CommonModule, FormsModule, TranslocoPipe, ScientificChartComponent],
+  imports: [CommonModule, FormsModule, TranslocoPipe, ScientificChartComponent],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
   styleUrl: './molar-fractions.component.scss',

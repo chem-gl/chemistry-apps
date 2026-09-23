@@ -4,7 +4,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   DownloadedReportFile,
@@ -29,7 +28,6 @@ export interface EasyRateInputSlotView {
 @Component({
   selector: 'app-easy-rate',
   imports: [
-    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,

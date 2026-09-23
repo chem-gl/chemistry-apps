@@ -1,5 +1,4 @@
 <!-- molar-fractions.component.html: Molar fractions app UI with side-by-side workspace and chart below the result table. -->
-  <app-open-mode-banner />
 <section class="molar-shell" [attr.aria-label]="'molarFractions.header.eyebrow' | transloco">
   <header class="molar-header">
     <p class="eyebrow">{{ 'molarFractions.header.eyebrow' | transloco }}</p>
@@ -172,6 +171,15 @@
         <p class="panel-kicker">{{ 'molarFractions.result.ariaLabel' | transloco }}</p>
         <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
       </div>
+
+      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
+      @if (inputMode() === 'single' && workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'molarFractions.result.chart.title' | transloco }}</strong>
+        <p>{{ 'molarFractions.result.chart.subtitle' | transloco }}</p>
+        <span class="result-empty-hint">{{ 'molarFractions.actions.run' | transloco }}</span>
+      </div>
+      }
 
       @if (inputMode() === 'single') {
       @if (workflow.activeSection() === 'dispatching') {

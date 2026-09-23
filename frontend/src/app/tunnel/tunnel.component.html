@@ -1,5 +1,4 @@
 <!-- tunnel.component.html: Tunnel effect app UI equivalent to the desktop Tkinter inputs/output. -->
-  <app-open-mode-banner />
 <section class="tunnel-shell" [attr.aria-label]="'tunnel.header.eyebrow' | transloco">
   <header class="tunnel-header">
     <p class="eyebrow">{{ 'tunnel.header.eyebrow' | transloco }}</p>
@@ -51,6 +50,15 @@
 
     <section class="result-panel" [attr.aria-label]="'tunnel.result.ariaLabel' | transloco">
       <h3>{{ 'tunnel.result.title' | transloco }}</h3>
+
+      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
+      @if (workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'tunnel.result.ariaLabel' | transloco }}</strong>
+        <p>{{ 'tunnel.header.subtitle' | transloco }}</p>
+        <span class="result-empty-hint">{{ 'tunnel.actions.run' | transloco }}</span>
+      </div>
+      }
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'tunnel.result.submitting' | transloco }}</p>

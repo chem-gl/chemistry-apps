@@ -102,6 +102,38 @@
   text-align: right;
 }
 
+/* Estado vacio del panel de bloques: tarjeta guia con CTA de New block. */
+.blocks-empty-card {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1.1rem 1.2rem;
+  border: 1px dashed var(--chem-border-strong);
+  border-radius: var(--chem-radius);
+  background: var(--chem-glass-bg);
+
+  strong {
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
+  }
+
+  .hint {
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.blocks-empty-action {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--chem-accent);
+
+  &::before {
+    content: '→ ';
+  }
+}
+
 .block-card {
   position: relative;
   padding-top: 1.2rem;

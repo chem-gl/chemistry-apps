@@ -13,7 +13,8 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.6rem;
+  padding: 0.25rem 0.55rem;
+  margin-right: 0.85rem;
   border: 1px solid rgba(168, 161, 176, 0.4);
   border-radius: var(--chem-radius-pill);
   background: rgba(255, 255, 255, 0.8);
@@ -59,6 +60,13 @@
   z-index: 99;
 }
 
+.session-copy {
+  display: grid;
+  gap: 0.12rem;
+  margin-left: 0.05rem;
+}
+
+/* Menú desplegable del selector de grupo alineado a la derecha del trigger. */
 .selector-menu {
   position: absolute;
   top: calc(100% + 0.4rem);

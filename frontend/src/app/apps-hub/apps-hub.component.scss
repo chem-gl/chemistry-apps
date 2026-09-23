@@ -58,65 +58,6 @@
   align-items: center;
 }
 
-.top-note {
-  margin: 0;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: var(--chem-ink-soft);
-  border-left: 2px solid var(--chem-border-accent-strong);
-  padding: 0.55rem 0.85rem;
-  background: color-mix(in srgb, var(--chem-surface) 72%, transparent);
-
-  &::before {
-    content: '•';
-    display: inline-block;
-    margin-right: 0.45rem;
-    color: var(--chem-accent);
-    font-weight: 700;
-  }
-}
-
-.cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.7rem 1.15rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  text-decoration: none;
-  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
-
-  &:focus-visible {
-    outline: 3px solid var(--chem-accent);
-    outline-offset: 3px;
-  }
-}
-
-.cta-primary {
-  background: var(--chem-primary);
-  color: #ffffff;
-  box-shadow: var(--chem-shadow);
-
-  &:hover {
-    background: var(--chem-primary-dark);
-    transform: translateY(-1px);
-  }
-}
-
-.cta-quiet {
-  background: transparent;
-  color: var(--chem-ink-secondary);
-  border: 1px solid var(--chem-border-strong);
-
-  &:hover {
-    background: var(--chem-surface);
-    color: var(--chem-ink);
-  }
-}
-
 // ── Zonas ───────────────────────────────────────────────────────────────
 .zone {
   position: relative;
@@ -289,13 +230,43 @@
     min-height: 2.75rem;
     box-sizing: border-box;
   }
-
-  .top-note {
-    padding: 0.6rem 0.75rem;
-  }
 }
 
 // Respeta a quien pide menos movimiento.
+// ── Estado vacío de retícula ────────────────────────────────────────────
+.lattice-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.6rem 1.4rem;
+  border: 1px dashed var(--chem-border-strong);
+  border-radius: 14px;
+  background: var(--chem-glass-bg);
+  list-style: none;
+
+  h3 {
+    margin: 0;
+    font-family: var(--chem-font-heading);
+    font-size: 1.05rem;
+    color: var(--chem-ink);
+  }
+
+  p {
+    margin: 0;
+    max-width: 60ch;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--chem-ink-soft);
+  }
+}
+
+.lattice-empty-action {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--chem-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reaction-glow,
   .node-link,

@@ -1,5 +1,4 @@
 <!-- marcus.component.html: UI de Marcus para cálculo de energías y constantes de velocidad por teoría de Marcus. -->
-  <app-open-mode-banner />
 <section class="marcus-shell" [attr.aria-label]="'marcus.header.eyebrow' | transloco">
   <header class="marcus-header">
     <p class="eyebrow">{{ 'marcus.header.eyebrow' | transloco }}</p>
@@ -149,6 +148,15 @@
     <!-- ── Panel de resultado ──────────────────────────────────────── -->
     <section class="result-panel" [attr.aria-label]="'marcus.result.ariaLabel' | transloco">
       <h3>{{ 'marcus.result.title' | transloco }}</h3>
+
+      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
+      @if (workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'marcus.result.ariaLabel' | transloco }}</strong>
+        <p>{{ 'marcus.result.submitting' | transloco }}</p>
+        <span class="result-empty-hint">{{ 'marcus.actions.run' | transloco }}</span>
+      </div>
+      }
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'marcus.result.submitting' | transloco }}</p>

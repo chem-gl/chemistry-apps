@@ -1,10 +1,19 @@
-/* app-card-thumbnail.component.scss: Marco 16/10 para capturas e ilustraciones. */
+// Marco 16/10 para capturas e ilustraciones.
+// Para ilustraciones el alto queda acotado con max-width para que el
+// placeholder no domine la tarjeta del hub.
 .card-thumbnail {
   margin: 0;
   border-radius: var(--chem-radius);
   overflow: hidden;
   border: 1px solid var(--chem-border-subtle);
   background: var(--chem-surface-inset);
+}
+
+app-illustration {
+  display: block;
+  max-width: 15rem;
+  margin-inline: auto;
+  padding-block: 0.5rem;
 }
 
 .card-thumbnail-img {

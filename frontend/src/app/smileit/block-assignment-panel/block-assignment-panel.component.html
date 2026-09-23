@@ -53,9 +53,12 @@
       </article>
       } @else {
       @if (workflow.assignmentBlocks().length === 0) {
-      <p class="hint">
-        {{ 'smileit.step3.createFirstBlock' | transloco }}
-      </p>
+      <!-- Sin bloques: tarjeta de estado vacio en vez de texto huerfano. -->
+      <div class="blocks-empty-card">
+        <strong>{{ 'smileit.blocks.substLibTitle' | transloco }}</strong>
+        <p class="hint">{{ 'smileit.step3.createFirstBlock' | transloco }}</p>
+        <span class="blocks-empty-action">{{ 'smileit.step3.newBlock' | transloco }}</span>
+      </div>
       } @else {
       <div class="block-stack">
         @for (block of workflow.assignmentBlocks(); track block.id; let blockIndex = $index) {

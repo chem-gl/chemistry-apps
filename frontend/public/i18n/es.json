@@ -423,8 +423,7 @@
       "lead": "Siete módulos de química computacional listos al instante. Encadénalos: genera estructuras, puntúa su accesibilidad sintética y filtra por toxicidad.",
       "start": "Empezar con fracciones molares",
       "createAccount": "Crear cuenta",
-      "openMonitor": "Abrir monitor de jobs",
-      "privacyNote": "Los parámetros que envías no son privados: si alguien calcula exactamente lo mismo, el servidor devuelve el resultado en caché."
+      "openMonitor": "Abrir monitor de jobs"
     },
     "freeZone": {
       "title": "Sin cuenta",
@@ -1890,11 +1889,6 @@
   },
   "appMode": {
     "open": {
-      "banner": {
-        "title": "Modo abierto",
-        "body": "Estás ejecutando sin cuenta. Los resultados se quedan en este navegador.",
-        "privacy": "Los parámetros no son privados: un cálculo idéntico devuelve el resultado cacheado, compartido hasta 7 días."
-      },
       "history": {
         "title": "Tus ejecuciones recientes (este navegador)",
         "empty": "Todavía no hay ejecuciones guardadas.",

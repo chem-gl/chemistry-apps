@@ -4,7 +4,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ToxicityMoleculeResultView } from '../core/api/jobs-api.service';
 import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
@@ -32,7 +31,6 @@ import { LocalResultRecord } from '../core/shared/local-results.store';
   selector: 'app-toxicity-properties',
   standalone: true,
   imports: [
-    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,

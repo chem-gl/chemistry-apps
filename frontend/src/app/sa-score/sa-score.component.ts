@@ -4,7 +4,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SaScoreMethod, SaScoreMoleculeResultView } from '../core/api/jobs-api.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
@@ -32,7 +31,6 @@ import { LocalResultRecord } from '../core/shared/local-results.store';
   selector: 'app-sa-score',
   standalone: true,
   imports: [
-    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,

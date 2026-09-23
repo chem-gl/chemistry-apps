@@ -9,6 +9,34 @@
   padding: 0;
 }
 
+/* ── Historial en blanco: tarjeta de estado vacio ─────────────────────── */
+
+/* Sin historial: el mensaje dentro de una tarjeta punteada guía mejor que
+   una línea suelta sobre el fondo de la página. */
+.history-card .status-message.is-empty-note {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.15rem;
+  border: 1px dashed var(--chem-border-strong);
+  border-radius: var(--chem-radius);
+  background: var(--chem-glass-bg);
+}
+
+.history-card .status-message.is-empty-note::before {
+  content: '···';
+  flex-shrink: 0;
+  font-family: var(--chem-font-mono);
+  font-weight: 700;
+  color: var(--chem-ink-soft);
+  letter-spacing: 0.1em;
+}
+
+.history-card .status-message.is-empty-note + .table-wrap,
+.history-card .status-message.is-empty-note ~ .table-wrap {
+  margin-top: 0.7rem;
+}
+
 .history-header {
   display: flex;
   align-items: center;

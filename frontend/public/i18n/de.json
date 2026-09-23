@@ -381,8 +381,7 @@
       "lead": "Sieben Module der computergestützten Chemie, sofort einsatzbereit. Verketten Sie sie: Strukturen erzeugen, synthetische Zugänglichkeit bewerten, nach Toxizität filtern.",
       "start": "Mit Molenbrüchen starten",
       "createAccount": "Konto erstellen",
-      "openMonitor": "Job-Monitor öffnen",
-      "privacyNote": "Die gesendeten Parameter sind nicht privat: Bei identischer Berechnung liefert der Server das Ergebnis aus dem Cache."
+      "openMonitor": "Job-Monitor öffnen"
     },
     "freeZone": {
       "title": "Ohne Konto",
@@ -1883,11 +1882,6 @@
   },
   "appMode": {
     "open": {
-      "banner": {
-        "title": "Offener Modus",
-        "body": "Sie arbeiten ohne Konto. Ergebnisse bleiben in diesem Browser.",
-        "privacy": "Parameter sind nicht privat: Eine identische Berechnung liefert das zwischengespeicherte Ergebnis, das bis zu 7 Tage geteilt wird."
-      },
       "history": {
         "title": "Ihre letzten Berechnungen (dieser Browser)",
         "empty": "Noch keine Berechnungen gespeichert.",

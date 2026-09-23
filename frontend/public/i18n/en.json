@@ -248,8 +248,7 @@
       "lead": "Seven computational chemistry modules, ready immediately. Chain them: generate structures, score synthetic accessibility, filter by toxicity.",
       "start": "Start with molar fractions",
       "createAccount": "Create account",
-      "openMonitor": "Open job monitor",
-      "privacyNote": "The parameters you send are not private: if someone runs the exact same calculation, the server returns the cached result."
+      "openMonitor": "Open job monitor"
     },
     "freeZone": {
       "title": "No account",
@@ -1917,11 +1916,6 @@
   },
   "appMode": {
     "open": {
-      "banner": {
-        "title": "Open mode",
-        "body": "You are running without an account. Results stay in this browser.",
-        "privacy": "Parameters are not private: an identical calculation returns the cached result, shared for up to 7 days."
-      },
       "history": {
         "title": "Your recent runs (this browser)",
         "empty": "No runs stored yet.",

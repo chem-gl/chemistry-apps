@@ -1,6 +1,5 @@
 <!-- sa-score.component.html: Interfaz de SA Score con sketch Ketcher, carga de archivos,
      tabla multi-método, imagen de molécula y exportes CSV. -->
-  <app-open-mode-banner />
 <section class="sa-score-shell" [attr.aria-label]="'saScore.header.eyebrow' | transloco">
   <header class="sa-score-header">
     <p class="eyebrow">{{ 'saScore.header.eyebrow' | transloco }}</p>
@@ -56,6 +55,15 @@
 
     <section class="result-panel" [attr.aria-label]="'saScore.result.ariaLabel' | transloco">
       <h3>{{ 'saScore.result.title' | transloco }}</h3>
+
+      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
+      @if (workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'saScore.result.ariaLabel' | transloco }}</strong>
+        <p>{{ 'saScore.form.methodsLegend' | transloco }}</p>
+        <span class="result-empty-hint">{{ 'saScore.actions.run' | transloco }}</span>
+      </div>
+      }
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'saScore.result.submitting' | transloco }}</p>

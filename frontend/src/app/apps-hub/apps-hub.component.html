@@ -22,7 +22,6 @@
       <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
       }
     </div>
-    <p class="top-note">{{ 'appsHub.hero.privacyNote' | transloco }}</p>
   </div>
 
   <app-institutional-showcase variant="hub" />
@@ -38,11 +37,19 @@
       <li class="app-node">
         <a class="node-link" [routerLink]="appItem.routePath">
           <span class="node-badge">{{ 'appsHub.badge.free' | transloco }}</span>
-          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <!-- Ilustración propia en vez de captura del modal: la tarjeta encima
+               del resultado renderizaba dos tarjetas superpuestas. -->
+          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
           <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
           <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
         </a>
+      </li>
+      } @empty {
+      <!-- Sin apps visibles: tarjeta de estado vacio en lugar de reticula vacia. -->
+      <li class="lattice-empty">
+        <h3>{{ 'appsHub.empty.title' | transloco }}</h3>
+        <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
       </li>
       }
     </ul>
@@ -59,7 +66,7 @@
       <li class="app-node">
         @if (isAuthenticated()) {
         <a class="node-link" [routerLink]="appItem.routePath">
-          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
           <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
           <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
@@ -67,7 +74,7 @@
         } @else {
         <div class="node-link is-locked">
           <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
-          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
           <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
           <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
@@ -75,6 +82,14 @@
           </a>
         </div>
         }
+      </li>
+      }
+      @empty {
+      <!-- Sin apps con cuenta visibles: pedir permiso en vez de reticula vacia. -->
+      <li class="lattice-empty">
+        <h3>{{ 'appsHub.empty.title' | transloco }}</h3>
+        <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
+        <span class="lattice-empty-action">{{ 'appsHub.empty.action' | transloco }}</span>
       </li>
       }
     </ul>

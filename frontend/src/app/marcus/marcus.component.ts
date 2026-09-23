@@ -4,7 +4,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
 import { MarcusWorkflowService } from '../core/application/marcus-workflow.service';
@@ -17,7 +16,6 @@ import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-a
 @Component({
   selector: 'app-marcus',
   imports: [
-    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,

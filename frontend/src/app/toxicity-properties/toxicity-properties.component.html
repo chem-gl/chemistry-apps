@@ -1,6 +1,5 @@
 <!-- toxicity-properties.component.html: Interfaz de Toxicity Properties con sketch,
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
-  <app-open-mode-banner />
 <section class="toxicity-shell" [attr.aria-label]="'toxicityProperties.header.eyebrow' | transloco">
   <header class="toxicity-header">
     <p class="eyebrow">{{ 'toxicityProperties.header.eyebrow' | transloco }}</p>
@@ -43,6 +42,15 @@
 
     <section class="result-panel" [attr.aria-label]="'toxicityProperties.result.ariaLabel' | transloco">
       <h3>{{ 'toxicityProperties.result.title' | transloco }}</h3>
+
+      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
+      @if (workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'toxicityProperties.result.ariaLabel' | transloco }}</strong>
+        <p>{{ 'toxicityProperties.form.title' | transloco }}</p>
+        <span class="result-empty-hint">{{ 'toxicityProperties.actions.run' | transloco }}</span>
+      </div>
+      }
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'toxicityProperties.result.submitting' | transloco }}</p>
