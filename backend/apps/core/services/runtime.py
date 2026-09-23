@@ -17,6 +17,7 @@ from django.db import DatabaseError
 from django.utils import timezone
 
 from ..app_registry import ScientificAppRegistry
+from ..anonymous import resolve_job_expiration
 from ..models import ScientificJob
 from ..ports import (
     CacheRepositoryPort,
@@ -129,6 +130,7 @@ class RuntimeJobService:
                 status="completed",
                 cache_hit=True,
                 cache_miss=False,
+                expires_at=resolve_job_expiration(owner_id),
                 supports_pause_resume=ScientificAppRegistry.supports_pause_resume(
                     plugin_name
                 ),
@@ -165,6 +167,7 @@ class RuntimeJobService:
             status="pending",
             cache_hit=False,
             cache_miss=True,
+            expires_at=resolve_job_expiration(owner_id),
             supports_pause_resume=ScientificAppRegistry.supports_pause_resume(
                 plugin_name
             ),

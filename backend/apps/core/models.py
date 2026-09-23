@@ -435,6 +435,15 @@ class ScientificJob(models.Model):
         blank=True,
         help_text="Marca temporal del último intento de recuperación activa.",
     )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=(
+            "Expiración del job. Solo se define en jobs anónimos (sin owner) "
+            "creados desde las rutas públicas; se purgan al vencer."
+        ),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -446,6 +455,7 @@ class ScientificJob(models.Model):
             models.Index(fields=["scheduled_hard_delete_at"]),
             models.Index(fields=["group", "deleted_at"]),
             models.Index(fields=["owner", "deleted_at"]),
+            models.Index(fields=["expires_at"]),
         ]
 
     def __str__(self) -> str:
@@ -456,6 +466,11 @@ class ScientificJob(models.Model):
     def is_deleted(self) -> bool:
         """Indica si el job está actualmente enviado a la papelera lógica."""
         return self.deleted_at is not None
+
+    @property
+    def is_anonymous(self) -> bool:
+        """Indica si el job fue creado desde una ruta pública (sin dueño)."""
+        return self.owner_id is None
 
 
 class ScientificCacheEntry(models.Model):

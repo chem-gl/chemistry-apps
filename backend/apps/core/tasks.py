@@ -132,6 +132,24 @@ def run_active_recovery(
 
 
 @shared_task(bind=True)
+def purge_expired_anonymous_jobs(self: Task) -> dict[str, int]:
+    """Elimina jobs anónimos vencidos y su cascada (logs y artefactos).
+
+    Los jobs anónimos (sin `owner`) creados desde las rutas públicas viven un
+    TTL corto (por defecto 24 h, configurable con `ANONYMOUS_JOB_TTL_HOURS`).
+    Los jobs con cuenta no tienen `expires_at` y nunca se purgan aquí.
+
+    Retorna estadísticas: purged_jobs.
+    """
+    del self
+    from .anonymous import purge_expired_anonymous_jobs as purge_jobs
+
+    purged_jobs: int = purge_jobs()
+    logger.info("Purga de jobs anónimos: purgados=%d", purged_jobs)
+    return {"purged_jobs": purged_jobs}
+
+
+@shared_task(bind=True)
 def purge_expired_artifact_chunks(self: Task) -> dict[str, int]:
     """Elimina chunks binarios de artefactos cuyo TTL expiró.
 

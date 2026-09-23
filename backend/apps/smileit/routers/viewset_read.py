@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import cast
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -21,7 +20,6 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.core.identity.services import AuthorizationService
 from apps.core.models import ScientificJob
 from apps.core.reporting import (
     build_download_filename,
@@ -53,16 +51,13 @@ class SmileitReadActionsMixin:
     def _get_scoped_job_or_404(
         self, request: Request, job_id: str | None
     ) -> ScientificJob:
-        """Obtiene job Smile-it validando visibilidad para el actor autenticado."""
-        job = get_object_or_404(ScientificJob, pk=job_id, plugin_name=PLUGIN_NAME)
-        actor = request.user
-        if bool(
-            getattr(actor, "is_authenticated", False)
-        ) and not AuthorizationService.can_view_job(actor=actor, job=job):
-            from django.http import Http404
+        """Obtiene el job Smile-it delegando el scoping en el hook base.
 
-            raise Http404("Job no encontrado.")
-        return job
+        Mantiene un único punto de verdad para visibilidad y 404, de modo que la
+        variante pública (apps libres) aplique sus reglas sin duplicar lógica.
+        """
+        del request
+        return self.get_job_or_404(job_id)
 
     def build_csv_content(self, job: ScientificJob) -> str:
         """Delega a helper para CSV químico por derivado."""

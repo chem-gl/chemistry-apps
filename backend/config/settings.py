@@ -236,6 +236,18 @@ ROOT_USERNAME: str = os.getenv("ROOT_USERNAME", "admin")
 ROOT_PASSWORD: str = os.getenv("ROOT_PASSWORD", "")
 ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.local")
 
+# Límites de tasa (fase 1 apps libres): estrictos para anónimos, holgados para
+# usuarios registrados. Configurables por entorno sin tocar código.
+PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
+REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")
+
+# Número de proxies de confianza delante del backend. DRF lo usa para resolver
+# la IP real desde X-Forwarded-For. 0 = ignorar el header (usar REMOTE_ADDR).
+_configured_num_proxies: int = _get_env_int("NUM_PROXIES", 0)
+NUM_PROXIES: int | None = (
+    _configured_num_proxies if _configured_num_proxies > 0 else None
+)
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -243,6 +255,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_THROTTLE_RATES": {
+        "public-dispatch": PUBLIC_DISPATCH_RATE,
+        "registered-dispatch": REGISTERED_DISPATCH_RATE,
+    },
 }
 
 # Configuración de tiempos para tokens JWT.
@@ -430,8 +446,28 @@ ARTIFACT_LARGE_FILE_TTL_DAYS: int = max(
     1, _get_env_int("ARTIFACT_LARGE_FILE_TTL_DAYS", 30)
 )
 
+# ---------------------------------------------------------------------------
+# Política de jobs anónimos (apps libres sin login).
+#
+# ANONYMOUS_JOB_TTL_HOURS:
+#   Vida útil de un job creado desde las rutas públicas (sin `owner`). Al vencer,
+#   la tarea `purge_expired_anonymous_jobs` lo elimina con su cascada.
+#
+# SHARED_CACHE_TTL_DAYS:
+#   Retención del resultado compartido en la caché exacta por hash, reutilizable
+#   por cualquier visitante anónimo que envíe un cálculo idéntico.
+# ---------------------------------------------------------------------------
+ANONYMOUS_JOB_TTL_HOURS: int = max(1, _get_env_int("ANONYMOUS_JOB_TTL_HOURS", 24))
+SHARED_CACHE_TTL_DAYS: int = max(1, _get_env_int("SHARED_CACHE_TTL_DAYS", 7))
+
 # Tarea periódica de limpieza de chunks expirados (requiere Celery Beat).
 CELERY_BEAT_SCHEDULE = {
+    "purge-expired-anonymous-jobs": {
+        "task": "apps.core.tasks.purge_expired_anonymous_jobs",
+        # Ejecuta cada día a las 02:00 UTC: los jobs anónimos viven 24 h.
+        "schedule": 86400,
+        "options": {"expires": 3600},
+    },
     "purge-expired-artifact-chunks": {
         "task": "apps.core.tasks.purge_expired_artifact_chunks",
         # Ejecuta cada día a las 03:00 UTC.

@@ -58,6 +58,7 @@ from apps.toxicity_properties.routers import ToxicityPropertiesJobViewSet
 from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
 from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
 from apps.tunnel.routers import TunnelJobViewSet
+from config.public_urls import public_urlpatterns
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (
@@ -182,5 +183,6 @@ urlpatterns = [
         AppPermissionDetailView.as_view(),
         name="identity-app-permission-detail",
     ),
+    path("api/", include(public_urlpatterns)),
     path("api/", include(router.urls)),
 ]

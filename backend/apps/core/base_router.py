@@ -105,9 +105,17 @@ class ScientificAppViewSetMixin:
 
     def get_job_or_404(self, job_id: str | None) -> ScientificJob:
         """Obtiene un job del plugin validando permisos cuando hay actor autenticado."""
+        from django.http import Http404
+
+        from .uuid_utils import resolve_uuid_or_none
+
+        normalized_job_id = resolve_uuid_or_none(job_id)
+        if normalized_job_id is None:
+            raise Http404("Job no encontrado.")
+
         job = get_object_or_404(
             ScientificJob,
-            pk=job_id,
+            pk=normalized_job_id,
             plugin_name=self.plugin_name,
         )
         request_obj = getattr(self, "request", None)
@@ -116,8 +124,6 @@ class ScientificAppViewSetMixin:
         if bool(
             getattr(actor, "is_authenticated", False)
         ) and not AuthorizationService.can_view_job(actor=actor, job=job):
-            from django.http import Http404
-
             raise Http404("Job no encontrado.")
 
         return job
