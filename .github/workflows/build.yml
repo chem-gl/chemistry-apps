@@ -25,9 +25,8 @@ on:
       image_tag:
         description: Tag inmutable generado durante el build
         value: ${{ jobs.meta.outputs.image_tag }}
-    secrets:
-      BACKEND_PUBLIC_URL:
-        required: false
+    # Config no sensible via vars (heredadas automáticamente):
+    # BACKEND_PUBLIC_URL se lee como vars.BACKEND_PUBLIC_URL.
 
 env:
   DEPLOY_COMPOSE_FILE: docker-compose.yml
@@ -70,7 +69,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.description=Chemistry Apps frontend production image
           build-args: |
-            API_BASE_URL=${{ secrets.BACKEND_PUBLIC_URL }}
+            API_BASE_URL=${{ vars.BACKEND_PUBLIC_URL }}
           # Las capas (npm ci, pip install) se reutilizan entre runs.
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend

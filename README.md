@@ -420,7 +420,7 @@ sequenceDiagram
 
 ## 13) CI/CD, pruebas y SonarQube
 
-Tres workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run build`; en `main` encadena build+deploy), `build.yml` (imágenes y bundle de release), `deploy.yml` (SCP + SSH + compose). Secrets de VM/DB/Django/CORS en el workflow. Despliegue manual: `migrate` + `daphne config.asgi:application` + worker + beat + `npm run build` servido por Nginx.
+Tres workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run build`; en `main` encadena build+deploy), `build.yml` (imágenes y bundle de release), `deploy.yml` (SCP + SSH + compose). Solo 3 secrets sensibles (`VM_SSH_KEY`, `DJANGO_SECRET_KEY`, `DB_PASSWORD`); config no sensible en 15 vars (`VM_HOST/PORT/USER/PROJECT_PATH`, `DB_NAME/USER/PORT/HOST`, `REDIS_PORT`, `ALLOWED_HOSTS`, `CORS/CORS/CSRF`, `BACKEND/PUBLIC_URLs`, `EXTERNAL_*_PORT`). Despliegue manual: `migrate` + `daphne config.asgi:application` + worker + beat + `npm run build` servido por Nginx.
 
 Tests: backend `manage.py test` (plugins se prueban directo con callbacks mock; Channels en memoria), frontend Vitest (`npm test`, cobertura `test:coverage:ci`). SonarQube en `localhost:9000` (`chemistry-apps`); generar antes `bash scripts/generate_sonar_coverage.sh`. Cobertura ~79.5% backend, ~82.6% frontend. Comandos exactos en `AGENTS.md`.
 

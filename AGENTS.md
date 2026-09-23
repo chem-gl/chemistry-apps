@@ -288,8 +288,8 @@ cd frontend && npm run api:generate
 
 ## SonarQube
 
-- Servidor: `http://localhost:9000`
-- Token: no se versiona — créalo en SonarQube y expórtalo como `SONAR_TOKEN`
+- Servidor: `http://localhost:9000` (solo local, sin secret en GitHub)
+- Token: no se versiona — créalo en SonarQube y expórtalo como `SONAR_TOKEN` en tu `.env` local (gitignored)
 - Project key: `chemistry-apps`
 - Para cobertura real, generar reportes antes del scan: `bash scripts/generate_sonar_coverage.sh`
 - Cobertura actual: ~79.5% backend, ~82.6% frontend
