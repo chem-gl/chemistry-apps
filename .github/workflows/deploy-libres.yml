@@ -196,13 +196,16 @@ jobs:
           BUNDLE_FILE: ${{ env.LIBRES_BUNDLE_FILE }}
           STAGING_DIR: ${{ env.LIBRES_STAGING_DIR }}
           MIN_FREE_GB: ${{ env.LIBRES_MIN_FREE_GB }}
+          # Los runtime tools (JREs + JAR Ambit) ya existen en el stack
+          # principal: se copian para no descargarlos de nuevo en cada volumen.
+          RUNTIME_TOOLS_SOURCE: /home/deploy/chemistry-apps/backend/media/runtime-tools
         with:
           host: ${{ vars.VM_HOST }}
           username: ${{ vars.VM_USER }}
           port: ${{ vars.VM_PORT }}
           key: ${{ steps.ssh_key.outputs.private_key }}
           passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-          envs: PROJECT_PATH,COMPOSE_FILE,ENV_FILE,BUNDLE_FILE,STAGING_DIR,MIN_FREE_GB
+          envs: PROJECT_PATH,COMPOSE_FILE,ENV_FILE,BUNDLE_FILE,STAGING_DIR,MIN_FREE_GB,RUNTIME_TOOLS_SOURCE
           command_timeout: 60m
           script: |
             set -e
@@ -258,10 +261,25 @@ jobs:
 
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env up -d --wait db redis
 
-            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps backend \
+            # Los runtime tools científicos (JREs + JAR Ambit) son obligatorios
+            # para que Django arranque: se copian del stack principal si existen
+            # y, si falta algo, `ensure_runtime_tools` los descarga.
+            if [ -d "$RUNTIME_TOOLS_SOURCE" ] && [ ! -d backend/media/runtime-tools/java ]; then
+              echo "Sembrando runtime tools desde $RUNTIME_TOOLS_SOURCE"
+              mkdir -p backend/media
+              cp -a "$RUNTIME_TOOLS_SOURCE" backend/media/runtime-tools || true
+            fi
+
+            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
+              -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
+              python manage.py ensure_runtime_tools
+
+            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
+              -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
               python manage.py migrate --noinput
 
-            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps backend \
+            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
+              -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
               python manage.py refresh_rett_seed || true
 
             if ! $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env up -d --wait; then
