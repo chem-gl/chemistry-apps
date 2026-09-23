@@ -31,8 +31,13 @@ def _create_job(plugin_name: str) -> ScientificJob:
 
 
 class HeavyQueueRoutingTests(TestCase):
-    """Verifica que la cola pesada solo se usa cuando está declarada."""
+    """Verifica que la cola pesada solo se usa cuando está declarada.
 
+    El CI desactiva el despacho (`JOB_DISPATCH_ENABLED=0`): se fuerza aquí
+    porque estos tests verifican el ruteo, no el interruptor global.
+    """
+
+    @override_settings(JOB_DISPATCH_ENABLED=True)
     @patch(APPLY_ASYNC_TARGET)
     @patch(DELAY_TARGET)
     def test_without_heavy_plugins_dispatch_uses_default_queue(
@@ -47,7 +52,9 @@ class HeavyQueueRoutingTests(TestCase):
         apply_async_mock.assert_not_called()
 
     @override_settings(
-        CELERY_HEAVY_PLUGINS=("toxicity-properties",), CELERY_HEAVY_QUEUE="heavy"
+        JOB_DISPATCH_ENABLED=True,
+        CELERY_HEAVY_PLUGINS=("toxicity-properties",),
+        CELERY_HEAVY_QUEUE="heavy",
     )
     @patch(APPLY_ASYNC_TARGET)
     @patch(DELAY_TARGET)
@@ -63,7 +70,9 @@ class HeavyQueueRoutingTests(TestCase):
         delay_mock.assert_not_called()
 
     @override_settings(
-        CELERY_HEAVY_PLUGINS=("toxicity-properties",), CELERY_HEAVY_QUEUE="heavy"
+        JOB_DISPATCH_ENABLED=True,
+        CELERY_HEAVY_PLUGINS=("toxicity-properties",),
+        CELERY_HEAVY_QUEUE="heavy",
     )
     @patch(APPLY_ASYNC_TARGET)
     @patch(DELAY_TARGET)

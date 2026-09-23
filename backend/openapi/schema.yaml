@@ -159,9 +159,11 @@ paths:
       description: |-
         Registro público de nuevos usuarios.
 
-        Sin `registration_token`: crea usuario sin grupo ni permisos de app.
-        Con `registration_token` válido: crea usuario, lo asigna al grupo vinculado
-        al token, y devuelve tokens JWT para auto-login inmediato.
+        Sin `registration_token`: crea usuario en el grupo de acogida si está
+        configurado (`DEFAULT_REGISTRATION_GROUP_SLUG`); si no, sin grupo ni
+        permisos de app. Con `registration_token` válido: crea usuario, lo asigna
+        al grupo vinculado al token, y devuelve tokens JWT para auto-login
+        inmediato.
       tags:
       - Auth
       requestBody:
@@ -11037,7 +11039,9 @@ components:
       description: |-
         Serializer para auto-registro público de usuarios.
 
-        Sin `registration_token`: crea usuario sin grupo ni permisos (sin acceso a apps).
+        Sin `registration_token`: crea usuario en el grupo de acogida si
+        `DEFAULT_REGISTRATION_GROUP_SLUG` está configurado (sin acceso a apps con
+        cuenta salvo que el grupo lo otorgue); si no, queda sin grupo ni permisos.
         Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado
         al token, heredando los AppPermission de ese grupo.
       properties:

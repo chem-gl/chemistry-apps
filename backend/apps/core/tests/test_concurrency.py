@@ -238,13 +238,24 @@ class PublicDispatchConcurrencyTests(TestCase):
     TESTING=False,
 )
 class RegisteredDispatchThrottleTests(TestCase):
-    """El tope de despachos de registrados solo limita el create."""
+    """El tope de despachos de registrados solo limita el create.
+
+    El semáforo de concurrencia se parcha con un lease no-op: este test mide
+    el throttle de tasa y no debe tocar Redis (ni dejar leases colgados que
+    contaminen otras corridas).
+    """
 
     def setUp(self) -> None:
         cache.clear()
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(username="registered-throttle")
         self.client.force_authenticate(user=self.user)
+        acquire_patcher = patch(
+            "apps.core.base_router.acquire_registered_slot",
+            return_value=ConcurrencyLease(key="", token=""),
+        )
+        self.addCleanup(acquire_patcher.stop)
+        acquire_patcher.start()
 
     def tearDown(self) -> None:
         cache.clear()
