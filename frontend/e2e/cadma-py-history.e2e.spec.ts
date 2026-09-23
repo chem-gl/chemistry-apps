@@ -166,6 +166,20 @@ test.describe('CADMA Py history e2e', () => {
     request,
   }) => {
     await authenticateAsRoot(request);
+    await page.route('**/api/auth/apps/**', async (route) => {
+      await fulfillJson(route, [
+        {
+          app_name: 'cadma-py',
+          route_key: 'cadma-py',
+          api_base_path: '/api/cadma-py/jobs/',
+          supports_pause_resume: false,
+          available_features: ['reference-libraries', 'selection-scores', 'chart-exports'],
+          enabled: true,
+          group_permission: null,
+          user_permission: null,
+        },
+      ]);
+    });
     await loginThroughUi(page, ROOT_USERNAME, ROOT_PASSWORD);
 
     const historyJobs = buildCadmaHistoryJobList();
@@ -203,8 +217,12 @@ test.describe('CADMA Py history e2e', () => {
 
     await page.route('**/api/jobs/**', async (route) => {
       const requestUrl = route.request().url();
+      const parsedUrl = new URL(requestUrl);
 
-      if (requestUrl.includes('/api/jobs/?plugin_name=cadma-py')) {
+      if (
+        parsedUrl.pathname === '/api/jobs/' &&
+        parsedUrl.searchParams.get('plugin_name') === 'cadma-py'
+      ) {
         await fulfillJson(route, historyJobs);
         return;
       }
@@ -226,7 +244,7 @@ test.describe('CADMA Py history e2e', () => {
 
     await page.getByRole('button', { name: 'Open' }).first().click();
 
-    await expect(page.getByRole('heading', { name: 'Selection scores' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Global selection ranking' })).toBeVisible();
     await expect(page.getByText('Recovered historical CADMA analysis.')).toBeVisible();
     await expect(
       page.locator('.results-section').getByText('Recovered neuro family', { exact: true }),

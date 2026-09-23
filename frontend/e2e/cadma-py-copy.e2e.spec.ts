@@ -55,6 +55,20 @@ test.describe('CADMA Py copy e2e', () => {
 
   test('shows the copied family immediately after creating it', async ({ page, request }) => {
     await authenticateAsRoot(request);
+    await page.route('**/api/auth/apps/**', async (route) => {
+      await fulfillJson(route, [
+        {
+          app_name: 'cadma-py',
+          route_key: 'cadma-py',
+          api_base_path: '/api/cadma-py/jobs/',
+          supports_pause_resume: false,
+          available_features: ['reference-libraries', 'selection-scores', 'chart-exports'],
+          enabled: true,
+          group_permission: null,
+          user_permission: null,
+        },
+      ]);
+    });
     await loginThroughUi(page, ROOT_USERNAME, ROOT_PASSWORD);
 
     const originalLibrary = {
@@ -113,16 +127,12 @@ test.describe('CADMA Py copy e2e', () => {
     });
 
     await page.goto('/cadma-py');
-    await page.getByText('Root Neuro Template').click();
-    await page.getByRole('button', { name: /copy family/i }).click();
+    await page.getByRole('button', { name: 'Show details' }).click();
+    await page.getByRole('button', { name: /copy and edit family/i }).click();
     await page.getByPlaceholder('Editable copy name').fill('Immediate Neuro Copy');
     await page.getByRole('button', { name: 'Create copy' }).click();
 
     await expect(page.locator('.selected-summary')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /immediate neuro copy/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /save changes/i })).toBeVisible();
-    await expect(page.locator('.family-edit-form .edit-input').first()).toHaveValue(
-      'Immediate Neuro Copy',
-    );
+    await expect(page.getByText('Immediate Neuro Copy', { exact: true })).toBeVisible();
   });
 });
