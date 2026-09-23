@@ -1,17 +1,15 @@
 import { Injectable } from '@angular/core';
 
-// Estado conocido: 'pending' | 'running' | 'paused' | 'completed' | 'failed'
-// | 'cancelled' (backend) más 'expired' (marcado local). Se tipa como `string`
-// porque el backend puede ampliar el vocabulario sin que el historial local
-// deba cambiar: el store solo lo muestra y lo compara por igualdad.
-export type LocalResultStatus = string;
-
 export interface LocalResultRecord {
   jobId: string;
   pluginName: string;
   createdAt: string;
   updatedAt: string;
-  status: LocalResultStatus;
+  // Estado conocido: 'pending' | 'running' | 'paused' | 'completed' | 'failed'
+  // | 'cancelled' (backend) más 'expired' (marcado local). Se tipa como
+  // `string` porque el backend puede ampliar el vocabulario sin que el
+  // historial local deba cambiar.
+  status: string;
   progressPercentage: number;
   parameters: Record<string, unknown>;
   resultSummary: unknown;
