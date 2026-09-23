@@ -180,11 +180,45 @@ create/retrieve/report-csv).
 | `config/settings.py` | `ANONYMOUS_MAX_CONCURRENT_JOBS` (2), `ANONYMOUS_CONCURRENCY_LEASE_SECONDS` (1800), `CONCURRENCY_REDIS_URL` |
 | `apps/core/tests/test_concurrency.py` (nuevo) | 16 tests |
 
+### Paso 2e — COMPLETADO (catálogo público + superficie de lectura)
+
+| Archivo | Cambio |
+|---|---|
+| `config/public_urls.py` | `PublicCatalogView` (`GET /api/public/catalog/`: apps + límites) + 7 ViewSets públicos; Smile-it expone `catalog`/`categories`/`patterns` en solo lectura |
+| `apps/core/public_api.py` | Whitelist de reportes (`report_csv`, `report_csv_by_method`, `report_log`, `report_error`, `report_inputs`) y vistas (`inspect_input`, `inspect_structure`, `derivations`, `derivation_svg`, `report_smiles`, `report_traceability`, `report_images_zip`); `retrieve` sin throttle, lecturas costosas bajo `public-read` (120/h) |
+| `apps/core/throttling.py` | `AnonymousReadRateThrottle` (scope `public-read`) |
+| `config/settings.py` | `PUBLIC_READ_RATE=120/hour`, `REGISTERED_DISPATCH_RATE=600/hour` |
+
+Superficie pública resultante: `POST jobs/`, `GET jobs/<uuid>/`, reportes y vistas de solo lectura por app, más `GET /api/public/catalog/`. Sin listados, logs, pausa, cancelar ni papelera.
+
+### Paso 3 — COMPLETADO (cola heavy + workers + beat)
+
+| Archivo | Cambio |
+|---|---|
+| `apps/core/tasks.py` | `resolve_dispatch_queue()`: plugins en `CELERY_HEAVY_PLUGINS` van a `CELERY_HEAVY_QUEUE` |
+| `config/settings.py` | `CELERY_HEAVY_PLUGINS` / `CELERY_HEAVY_QUEUE=heavy`; beat programa `purge_expired_anonymous_jobs` y `purge_expired_artifact_chunks` |
+| `docker-compose.libres.yml` (nuevo) | Stack aislado: `celery-worker` (cola default), `celery-heavy-worker` (`-Q heavy -c 2`), `celery-beat`; puertos 8090/4220, BD y Redis propios |
+| `apps/core/tests/test_heavy_queue.py` (nuevo) | Ruteo heavy/default |
+
+### Paso 4 — COMPLETADO (frontend modo libre)
+
+| Archivo | Cambio |
+|---|---|
+| `core/shared/local-results.store.ts` (nuevo) | Historial `localStorage` (`chemistry-apps.results.v1.<plugin>`, FIFO 20, `QuotaExceededError` manejado) |
+| `core/api/public-jobs-api.service.ts` (nuevo) + `jobs-api.service.ts` | Despacho/consulta/reportes públicos sin token cuando hay modo abierto |
+| `app.routes.ts` | Sin `authGuard`/`appAccessGuard` en las 7 apps; `cadma-py` sigue protegido |
+
+### Paso 5 — COMPLETADO (despliegue aislado)
+
+| Archivo | Cambio |
+|---|---|
+| `.github/workflows/deploy-libres.yml` (nuevo) | Push a la rama de trabajo (solo-docs no despliega) → bundle `git archive` → migraciones en contenedor → guarda de disco (15 GB) → smoke `/` y `/api/public/catalog/` |
+| Host `plata` | `/home/deploy/chemistry-apps-libres`, `https://apps-libres.guzman-lopez.com` con wildcard `*.guzman-lopez.com`, Nginx same-origin (`/api`, `/ws`, `/static`, `/media`) |
+
 ### Pasos pendientes
 
-- `/api/public/catalog/` con apps disponibles + aviso de privacidad (referencia de solo lectura, caché HTTP).
-- Cola `heavy` para toxicity.
-- Frontend: capa `localStorage` FIFO-20 (namespace + versión, capturar `QuotaExceededError`), 7 apps sin guards, i18n (8 idiomas), aviso de privacidad.
-- Infra: compose aislado + SSL del subdominio (bloqueado por acceso al host).
 - Nginx: `client_max_body_size` como techo absoluto y `error_page 413` con formato unificado.
+- i18n (8 idiomas): textos de modo libre, aviso de privacidad, expiración 24 h, 429/413.
+- Carga ligera + Sonar: p95 < 2x, 0 5xx, 429 verificado, gate OK.
+- Corte final: pasar el workflow a `main` cuando `apps-libres` sea el sitio principal.
 

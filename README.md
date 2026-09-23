@@ -24,6 +24,7 @@ Monorepo de aplicaciones científicas de química. Backend Django 6 + DRF + Cele
 16. [Autenticación y autorización](#16-autenticación-y-autorización)
 17. [Entorno, i18n y papelera](#17-entorno-i18n-y-papelera)
 18. [Puertos y URLs](#18-puertos-y-urls)
+19. [Modo abierto (apps libres sin login)](#19-modo-abierto-apps-libres-sin-login)
 
 ## 1) Requisitos
 
@@ -362,6 +363,8 @@ stateDiagram-v2
 
 Plantilla común: `apps.py`, `definitions.py`, `types.py`, `schemas.py`, `routers.py`, `contract.py`, `plugin.py`, `tests.py`.
 
+Las 7 primeras se usan también sin cuenta (modo abierto, ver §19); `cadma_py` exige sesión siempre.
+
 **`cadma_py`**: wizard de 4 pasos (familia de referencia → candidatos por Smile-it/jobs previos/CSV → fórmula de ranking → resultados con gráficas). Backend con `CadmaReferenceLibrary` (paper, DOI) y muestras semilla (`neuro`, `rett`); frontend con `CadmaPyWorkflowService` e importador CSV con mapeo de columnas.
 
 ## 8) Frontend Angular
@@ -374,7 +377,7 @@ Rutas: `/apps` (hub y landing post-login), `/jobs`, `/jobs/trash` (admin), `/adm
 
 WebSocket `ws/jobs/stream/` con filtros opcionales (`job_id`, `plugin_name`, `include_logs`, `include_snapshot`, `active_only`); SSE alternativo `GET /api/jobs/{id}/events/`. Broadcast en 3 grupos Channels: global, por plugin y por job. Eventos: `jobs.snapshot`, `job.updated`, `job.progress`, `job.log`.
 
-Caché determinista: SHA-256 de (`plugin_name`, versión, parámetros ordenados, firmas de archivos). Hit → `completed` con `cache_hit=True` sin encolar; al completar se guarda si el payload cabe en el límite por plugin.
+Caché determinista: SHA-256 de (`plugin_name`, versión, parámetros ordenados, firmas de archivos). Hit → `completed` con `cache_hit=True` sin encolar; al completar se guarda si el payload cabe en el límite por plugin. En modo abierto el job anónimo vive 24 h (purga diaria) y el resultado idéntico se reutiliza desde la caché compartida durante 7 días (ver §19).
 
 Artefactos (`easy_rate`, `marcus`): upload multipart → chunks en DB (`ScientificInputArtifactStorageService`) → el plugin reconstruye en memoria. Archivos grandes con TTL y purga diaria; metadatos siempre trazables. Parser Gaussian en `backend/libs/gaussian_log_parser/` (ver docstrings del módulo).
 
@@ -388,6 +391,8 @@ cd frontend && npm install && npm start  # http://localhost:4200
 
 `up --without-celery` levanta solo la API (jobs quedan en `pending`). Verificar: `curl http://localhost:8000/api/schema/` y abrir `/login` (redirige a `/dashboard`). Beat opcional para tareas periódicas. Comandos de test/lint por capa en `AGENTS.md`.
 
+Probar el modo abierto en local exige broker y worker reales: Redis en `localhost:6379` y `poetry run celery -A config worker -l info` desde `backend/`. Sin broker el despacho no avanza y el job queda en `pending` (ver §19).
+
 ## 11) Docker Compose
 
 ```bash
@@ -395,6 +400,8 @@ docker compose -f docker-compose.dev.yml up --build
 ```
 
 Servicios: `redis`, `backend` (migrate + API sin worker), `celery-worker`, `celery-beat`, `frontend` (hot reload). `docker-compose.yml` es la variante de producción (sin hot reload, por variables de entorno). Si falta el JAR de AMBIT, el backend intenta descargarlo una vez; sin él solo fallan las rutas AMBIT.
+
+`docker-compose.libres.yml` es el stack aislado del modo abierto (ver §19): proyecto, volúmenes, base de datos y colas propios; expone backend en `8090` y frontend en `4220`. Se despliega en `/home/deploy/chemistry-apps-libres` y no comparte nada con el stack principal.
 
 ## 12) Flujo OpenAPI
 
@@ -421,6 +428,8 @@ sequenceDiagram
 ## 13) CI/CD, pruebas y SonarQube
 
 Tres workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run build`; en `main` encadena build+deploy), `build.yml` (imágenes y bundle de release), `deploy.yml` (SCP + SSH + compose). Solo 3 secrets sensibles (`VM_SSH_KEY`, `DJANGO_SECRET_KEY`, `DB_PASSWORD`); config no sensible en 15 vars (`VM_HOST/PORT/USER/PROJECT_PATH`, `DB_NAME/USER/PORT/HOST`, `REDIS_PORT`, `ALLOWED_HOSTS`, `CORS/CORS/CSRF`, `BACKEND/PUBLIC_URLs`, `EXTERNAL_*_PORT`). Despliegue manual: `migrate` + `daphne config.asgi:application` + worker + beat + `npm run build` servido por Nginx.
+
+`deploy-libres.yml` despliega el modo abierto en el stack aislado: se dispara con push a la rama de trabajo (cambios solo-docs no despliegan) y termina con smoke HTTP contra `/` y `/api/public/catalog/`. Detalle en §19.
 
 Tests: backend `manage.py test` (plugins se prueban directo con callbacks mock; Channels en memoria), frontend Vitest (`npm test`, cobertura `test:coverage:ci`). SonarQube en `localhost:9000` (`chemistry-apps`); generar antes `bash scripts/generate_sonar_coverage.sh`. Cobertura ~79.5% backend, ~82.6% frontend. Comandos exactos en `AGENTS.md`.
 
@@ -530,3 +539,58 @@ Vista `/jobs/trash` (`adminGuard`) con filtros, restauración y borrado permanen
 | Schema OpenAPI | `http://localhost:8000/api/schema/` |
 | WebSocket | `ws://localhost:8000/ws/jobs/stream/` |
 | SonarQube | `http://localhost:9000` |
+
+## 19) Modo abierto (apps libres sin login)
+
+Siete apps se usan sin cuenta: `molar-fractions`, `tunnel-effect` (`tunnel`), `easy-rate`, `marcus-kinetics` (`marcus`), `smileit`, `sa-score` y `toxicity-properties`. `cadma-py` exige sesión y no cambia. El cálculo sigue en el backend; el navegador solo persiste el historial en `localStorage`.
+
+### Contrato de API pública
+
+Namespace `/api/public/`, sin autenticación. `<app>` es la clave de ruta (`molar-fractions`, `tunnel`, `easy-rate`, `marcus`, `smileit`, `sa-score`, `toxicity-properties`):
+
+| Método | Ruta | Notas |
+| ------ | ---- | ----- |
+| `POST` | `/api/public/<app>/jobs/` | Crea job anónimo (`owner`/`group` nulos) y despacha |
+| `GET` | `/api/public/<app>/jobs/{id}/` | Estado y resultado por UUID; polling sin cuota |
+| `GET` | `/api/public/<app>/jobs/{id}/report-csv \| report-log \| report-error \| report-inputs` | Solo en `completed`; consumen cuota `public-read` |
+| `GET` | `/api/public/catalog/` | Apps disponibles y límites vigentes (machine-readable) |
+
+Extras por app: SA Score suma `report-csv-method`; Smile-it suma `report-smiles`, `report-traceability`, `report-images-zip`, `derivations`, `derivations/{i}/svg`, referencia de solo lectura `catalog \| categories \| patterns` e `inspect-structure`; easy-rate suma `inspect-input`.
+
+El UUID es una capability URL: solo devuelve jobs anónimos no expirados del plugin correcto; UUID ajeno o expirado responde 404, nunca 403. No hay listados, logs, pausa, cancelación ni papelera; reintentar es un `POST` nuevo. El resto del API exige sesión (`DEFAULT_PERMISSION_CLASSES = IsAuthenticated`).
+
+### Límites
+
+| Límite | Anónimo (por IP) | Registrado |
+| ------ | ---------------- | ---------- |
+| Despachos | 60/h (`public-dispatch`) | 600/h (`registered-dispatch`, por usuario) |
+| Jobs concurrentes | 2 (semáforo Redis con lease y fallo abierto) | Sin semáforo |
+| Archivo subido | 10 MB | 50 MB |
+| Cuerpo de parámetros | 256 KB (`MAX_PARAMETERS_BYTES`; exceso → 413) | Igual |
+| Lecturas costosas (reportes, derivaciones, SVG, ZIP, inspecciones) | 120/h (`public-read`) | — |
+| Vida del job | 24 h (`ANONYMOUS_JOB_TTL_HOURS`, purga diaria por beat) | Sin expiración |
+| Caché de cálculos idénticos | 7 días, compartida (`SHARED_CACHE_TTL_DAYS`) | — |
+
+Tasas y topes configurables por entorno sin tocar código.
+
+### Privacidad
+
+Los parámetros no son privados: un cálculo idéntico devuelve el resultado cacheado a cualquier visitante. El historial del modo abierto vive solo en el navegador (`localStorage` clave `chemistry-apps.results.v1.<plugin>`, FIFO de 20 por app, sin caducidad local) y guarda parámetros más resumen del resultado, nunca los bytes de los archivos subidos.
+
+### Colas
+
+| Servicio | Qué atiende |
+| -------- | ----------- |
+| `celery-worker` | Cola por defecto (todos los plugins salvo pesados) |
+| `celery-heavy-worker` | Cola `heavy` (`-Q heavy -c 2`); recibe `toxicity-properties` vía `CELERY_HEAVY_PLUGINS` |
+| `celery-beat` | Tareas periódicas, incluida la purga de jobs anónimos |
+
+El stack principal no tenía beat, por eso la purga no corría en producción. Sin worker suscrito a `heavy`, toxicity se degrada a la cola por defecto.
+
+### Segundo despliegue
+
+`docker-compose.libres.yml` levanta un stack aislado (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps-libres.guzman-lopez.com` con el certificado wildcard `*.guzman-lopez.com`. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado.
+
+Workflow `.github/workflows/deploy-libres.yml`: push a la rama de trabajo (cambios solo-docs no despliegan) → construye el bundle con `git archive` → migraciones dentro del contenedor → guarda de disco (aborta si quedan menos de 15 GB) → smoke HTTP contra `/` y `/api/public/catalog/`. No reutiliza `deploy.yml` ni toca el stack principal.
+
+`apps-libres` es hoy el entorno de vista previa de la rama; a corto plazo será el sitio principal (el workflow pasará a correr sobre `main`). `apps.guzman-lopez.com` se mantiene sin cambios.
