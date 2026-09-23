@@ -96,6 +96,9 @@ services:
       CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
 
+      # Grupo de acogida del registro público (ver ensure_registration_group).
+      DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}
+
       RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
       RUNTIME_TOOLS_STRICT_CHECK: "True"
       RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
@@ -173,6 +176,9 @@ services:
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
       CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+
+      # Grupo de acogida del registro público (ver ensure_registration_group).
+      DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}
       RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
       RUNTIME_TOOLS_STRICT_CHECK: "True"
       USER: appuser
@@ -219,6 +225,9 @@ services:
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
       CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+
+      # Grupo de acogida del registro público (ver ensure_registration_group).
+      DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}
       RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
       RUNTIME_TOOLS_STRICT_CHECK: "True"
       USER: appuser

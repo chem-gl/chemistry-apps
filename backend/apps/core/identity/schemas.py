@@ -493,7 +493,9 @@ class GroupAppConfigSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.Serializer):
     """Serializer para auto-registro público de usuarios.
 
-    Sin `registration_token`: crea usuario sin grupo ni permisos (sin acceso a apps).
+    Sin `registration_token`: crea usuario en el grupo de acogida si
+    `DEFAULT_REGISTRATION_GROUP_SLUG` está configurado (sin acceso a apps con
+    cuenta salvo que el grupo lo otorgue); si no, queda sin grupo ni permisos.
     Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado
     al token, heredando los AppPermission de ese grupo.
     """
@@ -555,8 +557,15 @@ class UserRegistrationSerializer(serializers.Serializer):
         return self._create_standalone(validated_data, raw_password)
 
     def _create_standalone(self, validated_data: dict, raw_password: str):
-        """Crea usuario sin grupo: no tiene acceso a ninguna app."""
+        """Crea usuario sin token: entra al grupo por defecto si está configurado.
+
+        `DEFAULT_REGISTRATION_GROUP_SLUG` (vacío por defecto) designa el grupo
+        de acogida (p. ej. `abierto` en el sitio público). Si el grupo no
+        existe, el usuario queda sin grupo, como antes.
+        """
         user_model = get_user_model()
+        default_group = self._resolve_default_registration_group()
+
         with transaction.atomic():
             created_user = user_model.objects.create_user(
                 username=validated_data["username"],
@@ -574,12 +583,30 @@ class UserRegistrationSerializer(serializers.Serializer):
                 defaults={
                     "role": UserIdentityProfile.ROLE_USER,
                     "account_status": UserIdentityProfile.STATUS_ACTIVE,
-                    "primary_group_id": None,
+                    "primary_group_id": default_group.pk if default_group else None,
                     "email_verified": False,
                 },
             )
 
+            if default_group is not None:
+                GroupMembership.objects.update_or_create(
+                    user=created_user,
+                    group=default_group,
+                    defaults={"role_in_group": GroupMembership.ROLE_MEMBER},
+                )
+
         return created_user
+
+    @staticmethod
+    def _resolve_default_registration_group() -> WorkGroup | None:
+        """Grupo de acogida para el registro sin token (o `None` si no aplica)."""
+        import os
+
+        group_slug = os.getenv("DEFAULT_REGISTRATION_GROUP_SLUG", "").strip()
+        if not group_slug:
+            return None
+
+        return WorkGroup.objects.filter(slug=group_slug).first()
 
     def _create_with_token(
         self,

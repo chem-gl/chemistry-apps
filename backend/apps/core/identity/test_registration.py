@@ -9,7 +9,9 @@ Cubre:
 
 from __future__ import annotations
 
+import os
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -634,3 +636,49 @@ class RegistrationTokenManagementTests(TestCase):
         for token_entry in response.data:
             self.assertIn("group_name", token_entry)
             self.assertIn("group", token_entry)
+
+    # ── Grupo de acogida (DEFAULT_REGISTRATION_GROUP_SLUG) ────────────
+
+    def test_register_without_token_joins_default_group_when_configured(self) -> None:
+        """Con el slug configurado, el registro sin token entra al grupo."""
+        WorkGroup.objects.create(name="Abierto", slug="abierto")
+
+        with patch.dict(os.environ, {"DEFAULT_REGISTRATION_GROUP_SLUG": "abierto"}):
+            response = self.client.post(
+                "/api/auth/register/",
+                {
+                    "username": "openuser",
+                    # OJO: email real de prueba (dominio example.com). Los
+                    # placeholders __VG_*__ NO son emails válidos.
+                    "email": "openuser@example.com",
+                    "password": "securePass123",
+                },
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_user = self.user_model.objects.get(username="openuser")
+        membership = GroupMembership.objects.filter(user=created_user).first()
+        self.assertIsNotNone(membership)
+        self.assertEqual(membership.group.slug, "abierto")
+        self.assertEqual(membership.role_in_group, GroupMembership.ROLE_MEMBER)
+        profile = UserIdentityProfile.objects.filter(user=created_user).first()
+        self.assertEqual(profile.primary_group.slug, "abierto")
+
+    def test_register_without_token_ignores_missing_default_group(self) -> None:
+        """Si el grupo de acogida no existe, el registro queda sin grupo."""
+        with patch.dict(os.environ, {"DEFAULT_REGISTRATION_GROUP_SLUG": "abierto"}):
+            response = self.client.post(
+                "/api/auth/register/",
+                {
+                    "username": "groupless",
+                    # OJO: email real de prueba (ver nota en el test anterior).
+                    "email": "groupless@example.com",
+                    "password": "securePass123",
+                },
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_user = self.user_model.objects.get(username="groupless")
+        self.assertEqual(GroupMembership.objects.filter(user=created_user).count(), 0)

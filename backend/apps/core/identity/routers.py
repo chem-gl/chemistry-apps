@@ -951,9 +951,11 @@ class AppPermissionDetailView(views.APIView):
 class UserRegistrationView(views.APIView):
     """Registro público de nuevos usuarios.
 
-    Sin `registration_token`: crea usuario sin grupo ni permisos de app.
-    Con `registration_token` válido: crea usuario, lo asigna al grupo vinculado
-    al token, y devuelve tokens JWT para auto-login inmediato.
+    Sin `registration_token`: crea usuario en el grupo de acogida si está
+    configurado (`DEFAULT_REGISTRATION_GROUP_SLUG`); si no, sin grupo ni
+    permisos de app. Con `registration_token` válido: crea usuario, lo asigna
+    al grupo vinculado al token, y devuelve tokens JWT para auto-login
+    inmediato.
     """
 
     permission_classes = [permissions.AllowAny]

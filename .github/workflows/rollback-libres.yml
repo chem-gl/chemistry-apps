@@ -1,31 +1,23 @@
-# .github/workflows/deploy-libres.yml
+# .github/workflows/rollback-libres.yml
 #
-# Despliegue del sitio público "Modo abierto" (apps-libres.guzman-lopez.com)
-# en un stack Docker Compose aislado del despliegue principal.
+# Rollback del sitio público "Modo abierto": re-despliega un commit anterior
+# en el stack aislado sin necesidad de `git revert` (útil si el revert tarda
+# o si el fallo está en el entorno y no en el código).
 #
-# Autónomo a propósito: NO reutiliza `deploy.yml` (que depende de releases de
-# `main`) ni toca el stack de `apps.guzman-lopez.com`. Construye el bundle con
-# `git archive` del commit que se empuja y despliega en su propio directorio.
-#
-# Nota de producto: por ahora apps-libres es el entorno de vista previa de la
-# rama; a corto plazo será el sitio principal y este workflow pasará a correr
-# sobre `main`.
+# Uso manual: Actions → "Rollback apps-libres" → Run workflow → pega el SHA
+# del commit bueno (debe existir en la rama; el bundle se construye con
+# `git archive` de ese SHA).
 
-name: Deploy apps-libres
+name: Rollback apps-libres
 
 on:
-  push:
-    branches:
-      - refactor/local-first
-    paths-ignore:
-      - '**.md'
-      - 'memos/**'
-      - 'docs/**'
-      - 'research/**'
-      - '.github/instructions/**'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: SHA del commit bueno a re-desplegar
+        required: true
+        type: string
 
-# Un despliegue a la vez sobre el mismo stack; nunca se interrumpe a la mitad.
 concurrency:
   group: apps-libres-deploy
   cancel-in-progress: false
@@ -34,41 +26,26 @@ env:
   LIBRES_COMPOSE_FILE: docker-compose.libres.yml
   LIBRES_ENV_FILE: .env.deploy
   LIBRES_BUNDLE_FILE: apps-libres-bundle.tar.gz
-  LIBRES_STAGING_DIR: /tmp/apps-libres-deploy-${{ github.run_id }}-${{ github.run_attempt }}
-  # Guarda de disco: el host tiene ~41 GB libres e imágenes de 10-17 GB.
+  LIBRES_STAGING_DIR: /tmp/apps-libres-rollback-${{ github.run_id }}
   LIBRES_MIN_FREE_GB: "15"
 
 jobs:
-  deploy:
-    name: Deploy open mode site
+  rollback:
+    name: Rollback open mode site
     runs-on: ubuntu-latest
     steps:
-      - name: Validate required config (vars + secrets)
-        env:
-          _PROJECT_PATH: ${{ vars.LIBRES_VM_PROJECT_PATH }}
-          _ALLOWED_HOSTS: ${{ vars.LIBRES_ALLOWED_HOSTS }}
-          _BACKEND_PUBLIC_URL: ${{ vars.LIBRES_BACKEND_PUBLIC_URL }}
-          _DB_NAME: ${{ vars.LIBRES_DB_NAME }}
-          _DB_USER: ${{ vars.LIBRES_DB_USER }}
-          _DB_PASSWORD: ${{ secrets.LIBRES_DB_PASSWORD }}
-          _SECRET_KEY: ${{ secrets.LIBRES_SECRET_KEY }}
-        run: |
-          missing=()
-          [ -z "$_PROJECT_PATH" ] && missing+=(vars.LIBRES_VM_PROJECT_PATH)
-          [ -z "$_ALLOWED_HOSTS" ] && missing+=(vars.LIBRES_ALLOWED_HOSTS)
-          [ -z "$_BACKEND_PUBLIC_URL" ] && missing+=(vars.LIBRES_BACKEND_PUBLIC_URL)
-          [ -z "$_DB_NAME" ] && missing+=(vars.LIBRES_DB_NAME)
-          [ -z "$_DB_USER" ] && missing+=(vars.LIBRES_DB_USER)
-          [ -z "$_DB_PASSWORD" ] && missing+=(secrets.LIBRES_DB_PASSWORD)
-          [ -z "$_SECRET_KEY" ] && missing+=(secrets.LIBRES_SECRET_KEY)
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "ERROR: faltan vars/secrets del sitio libre: ${missing[*]}"
-            exit 1
-          fi
-          echo "Configuración del sitio libre completa."
-
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate target SHA exists
+        run: |
+          git cat-file -e "${{ inputs.target_sha }}^{commit }" || {
+            echo "ERROR: el SHA ${{ inputs.target_sha }} no existe en este repo."
+            exit 1
+          }
+          echo "Rollback al commit: $(git log --oneline -1 "${{ inputs.target_sha }}")"
 
       - name: Build .env file for deployment
         env:
@@ -85,7 +62,7 @@ jobs:
           ANONYMOUS_MAX_CONCURRENT_JOBS: ${{ vars.LIBRES_ANONYMOUS_MAX_CONCURRENT_JOBS }}
           BACKEND_INTERNAL_PORT: ${{ vars.LIBRES_EXTERNAL_BACKEND_PORT }}
           FRONTEND_INTERNAL_PORT: ${{ vars.LIBRES_EXTERNAL_FRONTEND_PORT }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: rollback-${{ inputs.target_sha }}
         run: |
           cat > "$LIBRES_ENV_FILE" <<EOF_ENV
           DEBUG=0
@@ -112,35 +89,17 @@ jobs:
           ANONYMOUS_MAX_CONCURRENT_JOBS=${ANONYMOUS_MAX_CONCURRENT_JOBS:-2}
           CELERY_HEAVY_PLUGINS=toxicity-properties
           CELERY_HEAVY_QUEUE=heavy
-          DEFAULT_REGISTRATION_GROUP_SLUG=abierto
           IMAGE_TAG=${IMAGE_TAG}
           IMAGE_TAG_BACKEND=${IMAGE_TAG}
           IMAGE_TAG_FRONTEND=${IMAGE_TAG}
           IMAGE_REGISTRY=ghcr.io
           IMAGE_NAMESPACE=${{ github.repository_owner }}
           EOF_ENV
-          echo "Archivo de entorno generado para el commit ${IMAGE_TAG}."
 
-      - name: Build deployment bundle
+      - name: Build deployment bundle from target SHA
         run: |
-          git archive --format=tar.gz --output "$LIBRES_BUNDLE_FILE" "${GITHUB_SHA}"
+          git archive --format=tar.gz --output "$LIBRES_BUNDLE_FILE" "${{ inputs.target_sha }}"
           ls -lh "$LIBRES_BUNDLE_FILE"
-
-      - name: Preflight SSH connectivity
-        env:
-          VM_HOST: ${{ vars.VM_HOST }}
-          VM_PORT: ${{ vars.VM_PORT }}
-        run: |
-          for attempt in 1 2 3; do
-            if timeout 10 bash -lc "cat < /dev/null > /dev/tcp/${VM_HOST}/${VM_PORT}" 2>/dev/null; then
-              echo "Conectividad TCP OK contra ${VM_HOST}:${VM_PORT}"
-              exit 0
-            fi
-            echo "Intento ${attempt}/3 sin conectividad a ${VM_HOST}:${VM_PORT}."
-            sleep 5
-          done
-          echo "ERROR: no hay conectividad TCP hacia ${VM_HOST}:${VM_PORT}."
-          exit 1
 
       - name: Prepare SSH private key
         id: ssh_key
@@ -153,21 +112,16 @@ jobs:
           KEY_DIR="$GITHUB_WORKSPACE/.github/.tmp-ssh"
           KEY_FILE="$KEY_DIR/deploy_key"
           mkdir -p "$KEY_DIR"
-
           if [ -n "${VM_SSH_KEY_BASE64:-}" ]; then
             printf '%s' "$VM_SSH_KEY_BASE64" | base64 -d > "$KEY_FILE"
           else
             printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
           fi
-
           chmod 600 "$KEY_FILE"
-
-          if ! ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1; then
-            echo "ERROR: VM_SSH_KEY no es válida o requiere passphrase incorrecta."
+          ssh-keygen -y -P "${VM_SSH_PASSPHRASE:-}" -f "$KEY_FILE" >/dev/null 2>&1 || {
+            echo "ERROR: VM_SSH_KEY no es válida."
             exit 1
-          fi
-
-          echo "key_path=$KEY_FILE" >> "$GITHUB_OUTPUT"
+          }
           {
             echo "private_key<<__DEPLOY_KEY__"
             cat "$KEY_FILE"
@@ -188,7 +142,7 @@ jobs:
           timeout: 120s
           command_timeout: 20m
 
-      - name: Deploy on remote host
+      - name: Rollback on remote host
         uses: appleboy/ssh-action@v1.2.2
         env:
           PROJECT_PATH: ${{ vars.LIBRES_VM_PROJECT_PATH }}
@@ -197,8 +151,6 @@ jobs:
           BUNDLE_FILE: ${{ env.LIBRES_BUNDLE_FILE }}
           STAGING_DIR: ${{ env.LIBRES_STAGING_DIR }}
           MIN_FREE_GB: ${{ env.LIBRES_MIN_FREE_GB }}
-          # Los runtime tools (JREs + JAR Ambit) ya existen en el stack
-          # principal: se copian para no descargarlos de nuevo en cada volumen.
           RUNTIME_TOOLS_SOURCE: /home/deploy/chemistry-apps/backend/media/runtime-tools
         with:
           host: ${{ vars.VM_HOST }}
@@ -210,97 +162,46 @@ jobs:
           command_timeout: 60m
           script: |
             set -e
-
             if docker compose version >/dev/null 2>&1; then
               COMPOSE_CMD="docker compose"
-            elif command -v docker-compose >/dev/null 2>&1; then
+            else
               COMPOSE_CMD="docker-compose"
-            else
-              echo "ERROR: docker compose no está disponible en el host."
-              exit 1
             fi
-
             mkdir -p "$PROJECT_PATH" "$STAGING_DIR"
-            CURRENT_UID="$(id -u)"
-            CURRENT_GID="$(id -g)"
-
-            # Reparar propietarios de código fuente (excluye datos persistentes).
-            docker run --rm -v "$PROJECT_PATH:/work" alpine \
-              sh -c "find /work -maxdepth 1 -mindepth 1 ! -name docker-data -exec chown -R ${CURRENT_UID}:${CURRENT_GID} {} + 2>/dev/null; true"
-
             tar --no-same-owner -xzf "$STAGING_DIR/$BUNDLE_FILE" -C "$PROJECT_PATH"
-
             mkdir -p "$PROJECT_PATH/docker-data/postgres" "$PROJECT_PATH/docker-data/redis" "$PROJECT_PATH/backend/media"
-            chmod u+rwX "$PROJECT_PATH/backend/media" 2>/dev/null || true
-            chmod u+rwX "$PROJECT_PATH/docker-data/redis" 2>/dev/null || true
-
             cd "$PROJECT_PATH"
-
-            if [ -f .env ] && cmp -s "$STAGING_DIR/$ENV_FILE" .env; then
-              echo ".env sin cambios; se conserva."
-            else
-              install -m 600 "$STAGING_DIR/$ENV_FILE" .env
-            fi
-
-            export HOST_UID="$(id -u)"
-            export HOST_GID="$(id -g)"
-
-            # Liberar espacio antes del build: el host comparte disco con el
-            # stack principal y las imágenes del backend pesan 10-17 GB.
+            install -m 600 "$STAGING_DIR/$ENV_FILE" .env
+            export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
             docker image prune -a -f
             docker builder prune -f
-
             FREE_GB="$(df -BG --output=avail / | tail -1 | tr -dc '0-9')"
-            echo "Espacio libre antes del build: ${FREE_GB} GB (mínimo ${MIN_FREE_GB} GB)."
             if [ "${FREE_GB:-0}" -lt "$MIN_FREE_GB" ]; then
-              echo "ERROR: espacio insuficiente para construir el stack del modo abierto."
-              echo "Libera disco (docker image prune -a -f) o detén el stack principal."
+              echo "ERROR: espacio insuficiente para el rollback."
               exit 1
             fi
-
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env build --no-cache --pull backend frontend
-
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env up -d --wait db redis
-
-            # Los runtime tools científicos (JREs + JAR Ambit) son obligatorios
-            # para que Django arranque: se copian del stack principal si existen
-            # y, si falta algo, `ensure_runtime_tools` los descarga.
             if [ -d "$RUNTIME_TOOLS_SOURCE" ] && [ ! -d backend/media/runtime-tools/java ]; then
-              echo "Sembrando runtime tools desde $RUNTIME_TOOLS_SOURCE"
               mkdir -p backend/media
               cp -a "$RUNTIME_TOOLS_SOURCE" backend/media/runtime-tools || true
             fi
-
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
               -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
               python manage.py ensure_runtime_tools
-
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
               -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
               python manage.py migrate --noinput
-
-            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
-              -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
-              python manage.py refresh_rett_seed || true
-
-            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
-              -e DEFAULT_REGISTRATION_GROUP_SLUG=abierto backend \
-              python manage.py ensure_registration_group
-
             if ! $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env up -d --wait; then
-              echo "Deploy falló; recopilando diagnóstico..."
               $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env ps || true
               $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env logs --no-color --tail=200 \
                 backend db redis frontend celery-worker celery-heavy-worker celery-beat || true
               exit 1
             fi
-
             docker image prune -a -f
             docker builder prune -f
             rm -rf "$STAGING_DIR"
-
             systemctl reload nginx || true
-
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env ps
 
       - name: Smoke check public site
@@ -312,10 +213,10 @@ jobs:
             catalog_status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${PUBLIC_URL}/api/public/catalog/" || true)"
             echo "Intento ${attempt}: home=${home_status} catalog=${catalog_status}"
             if [ "$home_status" = "200" ] && [ "$catalog_status" = "200" ]; then
-              echo "Smoke OK en ${PUBLIC_URL}"
+              echo "Rollback OK en ${PUBLIC_URL}"
               exit 0
             fi
             sleep 15
           done
-          echo "ERROR: el sitio no respondió 200 en home y catálogo público."
+          echo "ERROR: el sitio no respondió 200 tras el rollback."
           exit 1
