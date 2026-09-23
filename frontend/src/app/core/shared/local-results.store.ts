@@ -34,29 +34,51 @@ export class LocalResultsStore {
   }
 
   save(record: LocalResultRecord): void {
-    const storage = this.storage();
-    if (storage === null) return;
-    const records = [
+    try {
+      const storage = this.storage();
+      if (storage === null) return;
+      const records = this.recordsWith(record).map((item) =>
+        item.jobId === record.jobId && this.serializedSize([item]) > MAX_BYTES
+          ? { ...item, resultSummary: null }
+          : item,
+      );
+      while (records.length > 0 && this.serializedSize(records) > MAX_BYTES) records.pop();
+      try {
+        storage.setItem(this.key(record.pluginName), JSON.stringify(records));
+      } catch (error: unknown) {
+        if (!this.isQuotaError(error)) return;
+        const compactRecord = { ...record, resultSummary: null };
+        const compactRecords = this.recordsWith(compactRecord);
+        while (compactRecords.length > 0 && this.serializedSize(compactRecords) > MAX_BYTES) {
+          compactRecords.pop();
+        }
+        try {
+          storage.setItem(this.key(record.pluginName), JSON.stringify(compactRecords));
+        } catch (retryError: unknown) {
+          if (!this.isQuotaError(retryError)) return;
+          while (compactRecords.length > 0) {
+            compactRecords.pop();
+            try {
+              storage.setItem(this.key(record.pluginName), JSON.stringify(compactRecords));
+              return;
+            } catch (finalError: unknown) {
+              if (!this.isQuotaError(finalError)) return;
+            }
+          }
+        }
+      }
+    } catch {
+      // La persistencia local es opcional y nunca bloquea el flujo.
+    }
+  }
+
+  private recordsWith(record: LocalResultRecord): LocalResultRecord[] {
+    return [
       ...this.list(record.pluginName).filter((item) => item.jobId !== record.jobId),
       record,
     ]
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
       .slice(0, MAX_RECORDS);
-    while (records.length > 0 && this.serializedSize(records) > MAX_BYTES) records.pop();
-    try {
-      storage.setItem(this.key(record.pluginName), JSON.stringify(records));
-    } catch (error: unknown) {
-      if (!this.isQuotaError(error)) return;
-      while (records.length > 0) {
-        records.pop();
-        try {
-          storage.setItem(this.key(record.pluginName), JSON.stringify(records));
-          return;
-        } catch (retryError: unknown) {
-          if (!this.isQuotaError(retryError)) return;
-        }
-      }
-    }
   }
 
   remove(pluginName: string, jobId: string): void {
@@ -101,7 +123,8 @@ export class LocalResultsStore {
     return JSON.stringify(records).length;
   }
   private isQuotaError(error: unknown): boolean {
-    return error instanceof DOMException && error.name === 'QuotaExceededError';
+    if (!(error instanceof DOMException)) return false;
+    return error.name === 'QuotaExceededError' || error.name.includes('Quota') || error.code === 22;
   }
   private isRecord(value: unknown): value is LocalResultRecord {
     return value !== null && typeof value === 'object' && 'jobId' in value && 'pluginName' in value;

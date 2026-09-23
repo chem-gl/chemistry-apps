@@ -16,6 +16,7 @@ import {
   MarcusWorkflowService,
 } from '../core/application/marcus-workflow.service';
 import { MarcusComponent } from './marcus.component';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 
 describe('MarcusComponent', () => {
   const workflowMock = {
@@ -98,6 +99,7 @@ describe('MarcusComponent', () => {
     TestBed.configureTestingModule({
       imports: [MarcusComponent],
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: signal(false) } },
         {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({})) },

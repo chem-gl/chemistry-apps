@@ -20,6 +20,7 @@ import { TokenRefreshRequest } from '../model/models';
 import { UserAppConfig } from '../model/models';
 import { UserProfile } from '../model/models';
 import { UserRegistrationRequest } from '../model/models';
+import { UserRegistrationResponse } from '../model/models';
 
 
 import { Configuration }                                     from '../configuration';
@@ -83,6 +84,6 @@ export interface AuthServiceInterface {
      * @endpoint post /api/auth/register/
      * @param userRegistrationRequest 
      */
-    authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, extraHttpRequestParams?: any): Observable<UserProfile>;
+    authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, extraHttpRequestParams?: any): Observable<UserRegistrationResponse>;
 
 }

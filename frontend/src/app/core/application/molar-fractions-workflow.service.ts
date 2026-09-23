@@ -37,6 +37,9 @@ export interface MolarFractionsResultData {
 
 @Injectable()
 export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarFractionsResultData> {
+  protected override get workflowPluginName(): string {
+    return 'molar-fractions';
+  }
   protected override get defaultProgressMessage(): string {
     return 'Preparing molar fractions calculation...';
   }

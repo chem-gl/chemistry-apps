@@ -11,6 +11,7 @@ import {
   MolarFractionsResultRow,
   MolarFractionsWorkflowService,
 } from '../core/application/molar-fractions-workflow.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { MolarFractionsComponent } from './molar-fractions.component';
 
 function buildResultData(options: {
@@ -79,6 +80,7 @@ describe('MolarFractionsComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [MolarFractionsComponent],
+      providers: [{ provide: JobAccessModeService, useValue: { isOpenMode: signal(false) } }],
     });
 
     TestBed.overrideComponent(MolarFractionsComponent, {

@@ -34,6 +34,8 @@ import { UserAppConfig } from '../model/userAppConfig';
 import { UserProfile } from '../model/userProfile';
 // @ts-ignore
 import { UserRegistrationRequest } from '../model/userRegistrationRequest';
+// @ts-ignore
+import { UserRegistrationResponse } from '../model/userRegistrationResponse';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -446,9 +448,9 @@ export class AuthService extends BaseService implements AuthServiceInterface {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserProfile>;
-    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserProfile>>;
-    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserProfile>>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserRegistrationResponse>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserRegistrationResponse>>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserRegistrationResponse>>;
     public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (userRegistrationRequest === null || userRegistrationRequest === undefined) {
             throw new Error('Required parameter userRegistrationRequest was null or undefined when calling authRegisterCreate.');
@@ -497,7 +499,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
 
         let localVarPath = `/api/auth/register/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<UserProfile>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserRegistrationResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: userRegistrationRequest,

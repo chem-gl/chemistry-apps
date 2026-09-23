@@ -62,7 +62,7 @@ export abstract class SmilesJobWorkflowService<TResultData>
     this.applyParsedBatch(parseNamedSmilesBatch(initialInput), false);
   }
 
-  protected abstract get workflowPluginName(): string;
+  protected abstract override get workflowPluginName(): string;
 
   override ngOnDestroy(): void {
     this.inputValidationSubscription?.unsubscribe();

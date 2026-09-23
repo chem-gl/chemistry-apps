@@ -129,6 +129,7 @@ export * from './userAppConfig';
 export * from './userMembershipSummary';
 export * from './userProfile';
 export * from './userRegistrationRequest';
+export * from './userRegistrationResponse';
 export * from './verificationRuleEnum';
 export * from './workGroup';
 export * from './workGroupRequest';

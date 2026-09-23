@@ -13,6 +13,8 @@ import {
   startWith,
   switchMap,
   takeWhile,
+  retry,
+  timer,
   throwError,
 } from 'rxjs';
 import {
@@ -133,6 +135,10 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Mensaje de progreso mostrado mientras el snapshot todavía no tiene mensaje del backend. */
   protected abstract get defaultProgressMessage(): string;
+
+  protected get workflowPluginName(): string | null {
+    return null;
+  }
 
   /** Despacha el job al backend con los parámetros del formulario actual. */
   abstract dispatch(): void;
@@ -373,6 +379,15 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
       .pipe(
         startWith(0),
         switchMap(() => this.publicJobStatus$(jobId)),
+        retry({
+          count: 3,
+          delay: (pollingError: unknown, retryCount: number) => {
+            if (this.resolveHttpStatus(pollingError) === 404) {
+              return throwError(() => pollingError);
+            }
+            return timer(retryCount * 500);
+          },
+        }),
         takeWhile(
           (jobProgress: PublicJobProgress) => !TERMINAL_JOB_STATUSES.includes(jobProgress.status),
           true,
@@ -603,6 +618,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     this.progressSnapshot.set(null);
     this.jobLogs.set([]);
     this.currentJobId.set(null);
+    this.currentJobPlugin.set(this.workflowPluginName);
   }
 
   // ── Helpers de manejo de respuestas ───────────────────────────────

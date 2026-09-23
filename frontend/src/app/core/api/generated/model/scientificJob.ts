@@ -76,9 +76,9 @@ export interface ScientificJob {
      */
     readonly pause_requested: boolean;
     /**
-     * Estado serializable de ejecución para reanudar tareas pausadas.
+     * Expone `runtime_state` sin las claves internas de control.  El lease de concurrencia solo tiene sentido dentro de Redis; el API REST nunca lo había necesitado y el realtime ya lo filtraba.
      */
-    readonly runtime_state: any | null;
+    readonly runtime_state: { [key: string]: any; };
     /**
      * Marca temporal del último momento en que el job quedó en pausa.
      */

@@ -25,6 +25,9 @@ import {
 
 @Injectable()
 export class EasyRateWorkflowService extends BaseJobWorkflowService<EasyRateResultData> {
+  protected override get workflowPluginName(): string {
+    return 'easy-rate';
+  }
   protected override get defaultProgressMessage(): string {
     return 'Preparing Easy-rate job...';
   }

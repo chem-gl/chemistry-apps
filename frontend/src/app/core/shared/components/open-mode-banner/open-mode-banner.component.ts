@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { JobAccessModeService } from '../../../auth/job-access-mode.service';
 
@@ -11,5 +11,6 @@ import { JobAccessModeService } from '../../../auth/job-access-mode.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OpenModeBannerComponent {
-  readonly isOpenMode = computed(() => JobAccessModeService.current?.isOpenMode() ?? false);
+  private readonly accessMode = inject(JobAccessModeService, { optional: true });
+  readonly isOpenMode = computed(() => this.accessMode?.isOpenMode() ?? false);
 }

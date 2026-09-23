@@ -19,6 +19,7 @@ import {
   SaScoreResultData,
   SaScoreWorkflowService,
 } from '../core/application/sa-score-workflow.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { SaScoreComponent } from './sa-score.component';
 
 describe('SaScoreComponent', () => {
@@ -118,6 +119,7 @@ describe('SaScoreComponent', () => {
     TestBed.configureTestingModule({
       imports: [SaScoreComponent],
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: signal(false) } },
         { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
       ],
     });

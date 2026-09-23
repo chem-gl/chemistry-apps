@@ -96,4 +96,13 @@ describe('LoginComponent', () => {
 
     expect(component.localErrorMessage()).toBe('Network down');
   });
+
+  it('rechaza redirects externos y usa el hub público', () => {
+    activatedRouteMock.snapshot.queryParamMap = convertToParamMap({ redirectTo: '//evil.test' });
+    const fixture = TestBed.createComponent(LoginComponent);
+
+    fixture.componentInstance.submit();
+
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/apps');
+  });
 });

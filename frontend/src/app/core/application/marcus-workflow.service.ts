@@ -39,6 +39,9 @@ export interface MarcusResultData {
 
 @Injectable()
 export class MarcusWorkflowService extends BaseJobWorkflowService<MarcusResultData> {
+  protected override get workflowPluginName(): string {
+    return 'marcus';
+  }
   protected override get defaultProgressMessage(): string {
     return 'Preparing Marcus job...';
   }

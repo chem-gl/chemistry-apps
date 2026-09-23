@@ -13,6 +13,7 @@ import {
   ScientificJobView,
 } from '../core/api/jobs-api.service';
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { EasyRateResultData } from '../core/application/easy-rate-workflow.types';
 import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider';
 import { EasyRateComponent, EasyRateInputSlotView } from './easy-rate.component';
@@ -102,6 +103,7 @@ describe('EasyRateComponent', () => {
       imports: [EasyRateComponent],
       providers: [
         provideTestingTransloco(),
+        { provide: JobAccessModeService, useValue: { isOpenMode: signal(false) } },
         {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({})) },

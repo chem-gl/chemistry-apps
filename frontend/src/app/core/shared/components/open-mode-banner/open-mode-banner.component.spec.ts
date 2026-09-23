@@ -8,10 +8,10 @@ import { OpenModeBannerComponent } from './open-mode-banner.component';
 describe('OpenModeBannerComponent', () => {
   let fixture: ComponentFixture<OpenModeBannerComponent>;
   beforeEach(async () => {
-    JobAccessModeService.current = { isOpenMode: signal(true) };
+    const accessModeMock = { isOpenMode: signal(true) };
     await TestBed.configureTestingModule({
       imports: [OpenModeBannerComponent, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
-      providers: [],
+      providers: [{ provide: JobAccessModeService, useValue: accessModeMock }],
     }).compileComponents();
     fixture = TestBed.createComponent(OpenModeBannerComponent);
   });
@@ -22,11 +22,11 @@ describe('OpenModeBannerComponent', () => {
   });
 
   it('hides the banner for account mode', () => {
-    JobAccessModeService.current = { isOpenMode: signal(false) };
+    const accessModeMock = { isOpenMode: signal(false) };
     TestBed.resetTestingModule();
     const accountFixture = TestBed.configureTestingModule({
       imports: [OpenModeBannerComponent, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
-      providers: [],
+      providers: [{ provide: JobAccessModeService, useValue: accessModeMock }],
     }).createComponent(OpenModeBannerComponent);
     accountFixture.detectChanges();
     expect(accountFixture.nativeElement.querySelector('.open-mode-banner')).toBeNull();

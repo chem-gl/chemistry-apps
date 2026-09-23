@@ -18,7 +18,7 @@ async function useLanguage(page: Page, languageCode: string): Promise<void> {
 }
 
 test.describe('Puerta de entrada', () => {
-  test('presenta el proyecto, el equipo con fotos y las publicaciones', async ({ page }) => {
+  test('redirige al hub público de apps', async ({ page }) => {
     await useLanguage(page, 'en');
     const consoleErrors: string[] = [];
     page.on('console', (message) => {
@@ -28,26 +28,9 @@ test.describe('Puerta de entrada', () => {
     });
 
     await page.goto('/');
-    await expect(page).toHaveURL(/\/login$/);
-
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Theoretical and Applied Chemistry',
-    );
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('img[alt="UNAM"]')).toBeVisible();
-
-    const developerCards = page.locator('.developer-card');
-    await expect(developerCards).toHaveCount(5);
-    await expect(page.getByRole('heading', { name: 'Development Team' })).toBeVisible();
-
-    const photosLoaded = await page.evaluate(() =>
-      Array.from(document.querySelectorAll<HTMLImageElement>('.developer-photo')).every(
-        (photo) => photo.complete && photo.naturalWidth > 0,
-      ),
-    );
-    expect(photosLoaded).toBe(true);
-
-    await expect(page.locator('.publication-card')).toHaveCount(4);
+    await expect(page).toHaveURL(/\/apps$/);
+    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
+    await expect(page.locator('.zone').first().locator('.app-node')).toHaveCount(7);
     expect(consoleErrors).toEqual([]);
   });
 

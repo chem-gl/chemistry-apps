@@ -20,6 +20,9 @@ export interface TunnelResultData {
 
 @Injectable()
 export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultData> {
+  protected override get workflowPluginName(): string {
+    return 'tunnel-effect';
+  }
   protected override get defaultProgressMessage(): string {
     return 'Preparing tunnel effect calculation...';
   }

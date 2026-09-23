@@ -49,7 +49,7 @@ const buildScientificJob = (overrides: Partial<ScientificJobView> = {}): Scienti
   progress_event_index: 1,
   supports_pause_resume: false,
   pause_requested: false,
-  runtime_state: null,
+  runtime_state: {},
   paused_at: null,
   resumed_at: null,
   parameters: {},

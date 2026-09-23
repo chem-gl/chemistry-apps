@@ -163,6 +163,7 @@ model/userAppConfig.ts
 model/userMembershipSummary.ts
 model/userProfile.ts
 model/userRegistrationRequest.ts
+model/userRegistrationResponse.ts
 model/verificationRuleEnum.ts
 model/workGroup.ts
 model/workGroupRequest.ts

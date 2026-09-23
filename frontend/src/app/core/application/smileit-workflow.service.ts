@@ -4,7 +4,17 @@
 // a través de las propiedades públicas (workflow.catalog.xxx(), workflow.blocks.xxx()).
 
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  catchError,
+  finalize,
+  interval,
+  startWith,
+  switchMap,
+  takeWhile,
+  throwError,
+} from 'rxjs';
 import { SiteOverlapPolicyEnum } from '../api/generated';
 import type {
   DownloadedReportFile,
@@ -507,6 +517,10 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private startProgressStream(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) {
+      this.startPublicPolling(jobId);
+      return;
+    }
     this.startLogsStream(jobId);
 
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
@@ -517,6 +531,7 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private startLogsStream(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) return;
     this.logsSubscription?.unsubscribe();
     this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
       next: (logEntry: JobLogEntryView) => {
@@ -529,12 +544,44 @@ export class SmileitWorkflowService implements OnDestroy {
   }
 
   private loadHistoricalLogs(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) return;
     this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
       next: (logsPage: JobLogsPageView) => this.state.jobLogs.set(logsPage.results),
       error: () => {
         // Si falla la carga de logs históricos, el resultado principal sigue visible.
       },
     });
+  }
+
+  private startPublicPolling(jobId: string): void {
+    this.progressSubscription?.unsubscribe();
+    this.progressSubscription = interval(2000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.smileitApiService.getSmileitJobStatus(jobId)),
+        takeWhile(
+          (jobResponse: SmileitJobResponseView) =>
+            !['completed', 'failed', 'cancelled'].includes(jobResponse.status),
+          true,
+        ),
+      )
+      .subscribe({
+        next: (jobResponse: SmileitJobResponseView) =>
+          this.state.progressSnapshot.set({
+            job_id: jobId,
+            status: jobResponse.status,
+            progress_percentage: jobResponse.progress_percentage ?? 0,
+            progress_stage: (jobResponse.progress_stage ?? 'running') as JobProgressSnapshotView['progress_stage'],
+            progress_message: jobResponse.progress_message ?? '',
+            progress_event_index: 0,
+            updated_at: new Date().toISOString(),
+          }),
+        complete: () => this.fetchFinalResult(jobId),
+        error: (pollingError: Error) => {
+          this.state.activeSection.set('error');
+          this.state.errorMessage.set(`Unable to track Smileit progress: ${pollingError.message}`);
+        },
+      });
   }
 
   private startPollingFallback(jobId: string): void {

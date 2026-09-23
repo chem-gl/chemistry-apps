@@ -9,6 +9,7 @@ import {
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
 import { TunnelComponent } from './tunnel.component';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 
 describe('TunnelComponent', () => {
   const workflowMock = {
@@ -44,6 +45,7 @@ describe('TunnelComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [TunnelComponent],
+      providers: [{ provide: JobAccessModeService, useValue: { isOpenMode: signal(false) } }],
     });
 
     TestBed.overrideComponent(TunnelComponent, {

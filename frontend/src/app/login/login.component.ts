@@ -28,10 +28,14 @@ export class LoginComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  private redirectTarget(): string {
+    const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo');
+    return redirectTo !== null && /^\/(?!\/)[^:]*$/.test(redirectTo) ? redirectTo : '/apps';
+  }
+
   ngOnInit(): void {
     if (this.sessionService.isAuthenticated()) {
-        const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/apps';
-      void this.router.navigateByUrl(redirectTarget);
+      void this.router.navigateByUrl(this.redirectTarget());
     }
   }
 
@@ -51,8 +55,7 @@ export class LoginComponent implements OnInit {
           return;
         }
 
-      const redirectTarget = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/apps';
-        void this.router.navigateByUrl(redirectTarget);
+        void this.router.navigateByUrl(this.redirectTarget());
       },
       error: (loginError: { message?: string }) => {
         this.localErrorMessage.set(
