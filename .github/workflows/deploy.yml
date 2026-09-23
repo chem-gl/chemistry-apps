@@ -141,7 +141,7 @@ jobs:
               elif ! printf ',%s,' "$normalized" | grep -Fq ",$entry,"; then
                 normalized="$normalized,$entry"
               fi
-            done < <(printf '%s' "$raw_value" | tr ';' ',' | tr ',' '\n')
+            done < <(printf '%s\n' "$raw_value" | tr ';' ',' | tr ',' '\n')
 
             printf '%s' "$normalized"
           }
