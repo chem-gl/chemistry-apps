@@ -176,10 +176,6 @@ class PublicMarcusJobViewSet(PublicAppViewSetMixin, MarcusJobViewSet):
 class PublicSmileitJobViewSet(PublicAppViewSetMixin, SmileitJobViewSet):
     """Versión sin login de Smileit (catálogo y patrones solo lectura)."""
 
-    public_extra_actions: tuple[str, ...] = (
-        PublicAppViewSetMixin.public_extra_actions + ("categories", "catalog", "patterns")
-    )
-
     @extend_schema(
         summary="Listar Categorías Químicas de Smile-it (público)",
         responses={200: SmileitCategorySerializer(many=True)},

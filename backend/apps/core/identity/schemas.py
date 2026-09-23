@@ -171,6 +171,18 @@ class UserProfileSerializer(serializers.Serializer):
         return base
 
 
+class UserRegistrationResponseSerializer(serializers.Serializer):
+    """Forma real de la respuesta del registro público.
+
+    Siempre incluye `user`; con `registration_token` válido además devuelve
+    los JWT (`access`/`refresh`) para auto-login inmediato.
+    """
+
+    user = UserProfileSerializer(read_only=True)
+    access = serializers.CharField(read_only=True, required=False)
+    refresh = serializers.CharField(read_only=True, required=False)
+
+
 class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Extiende claims JWT con rol y grupo primario."""
 
@@ -600,9 +612,9 @@ class UserRegistrationSerializer(serializers.Serializer):
     @staticmethod
     def _resolve_default_registration_group() -> WorkGroup | None:
         """Grupo de acogida para el registro sin token (o `None` si no aplica)."""
-        import os
+        from django.conf import settings
 
-        group_slug = os.getenv("DEFAULT_REGISTRATION_GROUP_SLUG", "").strip()
+        group_slug = settings.DEFAULT_REGISTRATION_GROUP_SLUG
         if not group_slug:
             return None
 

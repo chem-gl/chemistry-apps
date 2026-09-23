@@ -57,3 +57,9 @@ class AnonymousReadRateThrottle(SettingsDrivenRateMixin, AnonRateThrottle):
     """
 
     scope = "public-read"
+
+
+class RegistrationRateThrottle(SettingsDrivenRateMixin, AnonRateThrottle):
+    """Frena la creación masiva de cuentas (spam/DoS de DB) por IP."""
+
+    scope = "registration"

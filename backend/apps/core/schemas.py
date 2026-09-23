@@ -14,6 +14,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from .models import ScientificJob
+from .realtime import INTERNAL_RUNTIME_STATE_KEYS
 
 JOB_ID_HELP_TEXT = "Identificador único del job."
 
@@ -255,6 +256,7 @@ class ScientificJobSerializer(serializers.ModelSerializer):
         source="deleted_by.username", read_only=True
     )
     is_deleted = serializers.SerializerMethodField()
+    runtime_state = serializers.SerializerMethodField()
 
     class Meta:
         model = ScientificJob
@@ -297,6 +299,17 @@ class ScientificJobSerializer(serializers.ModelSerializer):
     def get_is_deleted(self, instance: ScientificJob) -> bool:
         """Expone un flag estable para frontend sin depender de comparar timestamps."""
         return instance.deleted_at is not None
+
+    def get_runtime_state(self, instance: ScientificJob) -> dict:
+        """Expone `runtime_state` sin las claves internas de control.
+
+        El lease de concurrencia solo tiene sentido dentro de Redis; el API
+        REST nunca lo había necesitado y el realtime ya lo filtraba.
+        """
+        runtime_state: dict = dict(instance.runtime_state or {})
+        for internal_key in INTERNAL_RUNTIME_STATE_KEYS:
+            runtime_state.pop(internal_key, None)
+        return runtime_state
 
     def to_representation(self, instance: ScientificJob):
         """Normaliza salida terminal para evitar inconsistencias legacy en UI."""

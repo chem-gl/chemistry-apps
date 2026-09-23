@@ -9,13 +9,11 @@ caen en este grupo como miembros.
 
 from __future__ import annotations
 
-import os
-
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.core.models import WorkGroup
 
-DEFAULT_SLUG = "abierto"
 DEFAULT_NAME = "Abierto"
 DEFAULT_DESCRIPTION = (
     "Grupo de acogida del registro público: usuarios sin cuenta previa. "
@@ -30,7 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         del args, options
-        group_slug = os.getenv("DEFAULT_REGISTRATION_GROUP_SLUG", DEFAULT_SLUG).strip()
+        group_slug = settings.DEFAULT_REGISTRATION_GROUP_SLUG
         if not group_slug:
             self.stdout.write("Registro sin grupo de acogida; no se crea ningún grupo.")
             return

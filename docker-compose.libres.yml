@@ -73,6 +73,11 @@ services:
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
 
+      # Un solo proxy (Nginx) delante: DRF resuelve la IP real desde
+      # X-Forwarded-For y los topes/semaforo anonimos no se pueden falsear
+      # ni colapsar en un bucket global.
+      NUM_PROXIES: ${NUM_PROXIES:-1}
+
       DB_ENGINE: "postgres"
       DB_NAME: ${DB_NAME:-chemistry_libres_db}
       DB_USER: ${DB_USER:-postgres}

@@ -37,9 +37,11 @@ from .schemas import (
     ScientificAppCatalogSerializer,
     UserAppConfigSerializer,
     UserProfileSerializer,
+    UserRegistrationResponseSerializer,
     UserRegistrationSerializer,
     WorkGroupSerializer,
 )
+from ..throttling import RegistrationRateThrottle
 from .services import AuthorizationService
 
 
@@ -959,11 +961,12 @@ class UserRegistrationView(views.APIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegistrationRateThrottle]
     serializer_class = UserRegistrationSerializer
 
     @extend_schema(
         request=UserRegistrationSerializer,
-        responses={201: UserProfileSerializer},
+        responses={201: UserRegistrationResponseSerializer},
     )
     def post(self, request: Request) -> Response:
         serializer = UserRegistrationSerializer(data=request.data)

@@ -12,7 +12,6 @@ Cómo se usa:
 
 import sys
 import os
-import sys
 from importlib.util import find_spec
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -243,6 +242,8 @@ PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
 REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")
 # Lecturas anónimas costosas (reportes, derivaciones, SVG, ZIPs, inspecciones).
 PUBLIC_READ_RATE: str = os.getenv("PUBLIC_READ_RATE", "120/hour")
+# Cuentas nuevas por IP (anti-spam del registro público).
+REGISTRATION_RATE: str = os.getenv("REGISTRATION_RATE", "30/hour")
 
 # Número de proxies de confianza delante del backend. DRF lo usa para resolver
 # la IP real desde X-Forwarded-For. 0 = ignorar el header (usar REMOTE_ADDR).
@@ -268,6 +269,7 @@ REST_FRAMEWORK = {
         "public-dispatch": PUBLIC_DISPATCH_RATE,
         "public-read": PUBLIC_READ_RATE,
         "registered-dispatch": REGISTERED_DISPATCH_RATE,
+        "registration": REGISTRATION_RATE,
     },
     # Traduce RequestDataTooBig a 413 en lugar del 400 por defecto.
     "EXCEPTION_HANDLER": "apps.core.exceptions.scientific_exception_handler",
@@ -522,6 +524,12 @@ CELERY_HEAVY_PLUGINS: tuple[str, ...] = tuple(
     if plugin.strip()
 )
 CELERY_HEAVY_QUEUE: str = os.getenv("CELERY_HEAVY_QUEUE", "heavy")
+
+# DEFAULT_REGISTRATION_GROUP_SLUG: grupo de acogida del registro sin token
+# (p. ej. `abierto` en el sitio público). Vacío = sin grupo, como antes.
+DEFAULT_REGISTRATION_GROUP_SLUG: str = os.getenv(
+    "DEFAULT_REGISTRATION_GROUP_SLUG", ""
+).strip()
 
 # REGISTERED_MAX_CONCURRENT_JOBS: trabajos simultáneos por usuario autenticado.
 REGISTERED_MAX_CONCURRENT_JOBS: int = max(

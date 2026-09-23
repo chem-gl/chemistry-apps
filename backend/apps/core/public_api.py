@@ -66,6 +66,12 @@ PUBLIC_APP_VIEW_ACTIONS: tuple[str, ...] = (
     "report_smiles",
     "report_traceability",
     "report_images_zip",
+    # Referencia de solo lectura del catálogo Smile-it. Se incluyen aquí para
+    # que también consuman la cuota `public-read` (son lecturas no paginadas
+    # que recorren el catálogo completo).
+    "categories",
+    "catalog",
+    "patterns",
 )
 
 
