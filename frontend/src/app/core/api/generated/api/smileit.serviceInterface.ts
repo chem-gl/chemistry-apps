@@ -35,11 +35,61 @@ export interface SmileitServiceInterface {
     configuration: Configuration;
 
     /**
+     * Listar Catálogo de Sustituyentes (público)
+     * Solo lectura: devuelve lo visible para un actor anónimo (seed/root).
+     * @endpoint get /api/public/smileit/jobs/catalog/
+     */
+    publicSmileitJobsCatalogList(extraHttpRequestParams?: any): Observable<Array<SmileitCatalogEntry>>;
+
+    /**
+     * Listar Categorías Químicas de Smile-it (público)
+     * Solo lectura: el modo abierto no crea ni edita categorías.
+     * @endpoint get /api/public/smileit/jobs/categories/
+     */
+    publicSmileitJobsCategoriesList(extraHttpRequestParams?: any): Observable<Array<SmileitCategory>>;
+
+    /**
      * 
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/smileit/jobs/
+     * @param smileitJobCreateRequest 
      */
-    publicSmileitJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    publicSmileitJobsCreate(smileitJobCreateRequest: SmileitJobCreateRequest, extraHttpRequestParams?: any): Observable<SmileitJobResponse>;
+
+    /**
+     * Listar derivados Smile-it paginados
+     * Entrega derivados por páginas para evitar respuestas gigantes en frontend.
+     * @endpoint get /api/public/smileit/jobs/{id}/derivations/
+     * @param id A UUID string identifying this scientific job.
+     * @param limit Tamaño de página (máximo 100).
+     * @param offset Índice inicial absoluto (0-based).
+     */
+    publicSmileitJobsDerivationsRetrieve(id: string, limit?: number, offset?: number, extraHttpRequestParams?: any): Observable<SmileitGeneratedStructurePage>;
+
+    /**
+     * Renderizar SVG de un derivado Smile-it bajo demanda
+     * Genera SVG del derivado solicitado únicamente cuando frontend lo necesita.
+     * @endpoint get /api/public/smileit/jobs/{id}/derivations/{structure_index}/svg/
+     * @param id A UUID string identifying this scientific job.
+     * @param structureIndex Índice absoluto del derivado dentro del job.
+     * @param variant Variante de renderizado: \&#39;thumb\&#39; para grid o \&#39;detail\&#39; para modal/export.
+     */
+    publicSmileitJobsDerivationsSvgRetrieve(id: string, structureIndex: number, variant?: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Inspeccionar Estructura Smile-it
+     * Inspecciona molécula con propiedades rápidas y anotaciones por patrones.
+     * @endpoint post /api/public/smileit/jobs/inspect-structure/
+     * @param smileitStructureInspectionRequestRequest 
+     */
+    publicSmileitJobsInspectStructureCreate(smileitStructureInspectionRequestRequest: SmileitStructureInspectionRequestRequest, extraHttpRequestParams?: any): Observable<SmileitStructureInspectionResponse>;
+
+    /**
+     * Listar Patrones Estructurales (público)
+     * Solo lectura: el filtro &#x60;root-only&#x60; no aplica a actores anónimos.
+     * @endpoint get /api/public/smileit/jobs/patterns/
+     */
+    publicSmileitJobsPatternsList(extraHttpRequestParams?: any): Observable<Array<SmileitPatternEntry>>;
 
     /**
      * Descargar Reporte CSV
@@ -48,6 +98,54 @@ export interface SmileitServiceInterface {
      * @param id A UUID string identifying this scientific job.
      */
     publicSmileitJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar ZIP de imágenes SVG de derivados Smile-it
+     * Entrega ZIP de imágenes por backend para jobs extremadamente grandes.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-images-zip/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportImagesZipRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Export Principal SMILES Enumerado
+     * Descarga archivo SMI/TXT con principal y derivados como lista simple de SMILES.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-smiles/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportSmilesRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar CSV de Trazabilidad Smile-it
+     * Descarga auditoría sitio -&gt; sustituyente aplicada por derivado.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-traceability/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportTraceabilityRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
      * Obtener Job Smile-it (resumen optimizado)

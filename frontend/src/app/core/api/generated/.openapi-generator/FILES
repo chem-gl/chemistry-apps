@@ -17,6 +17,8 @@ api/marcus.service.ts
 api/marcus.serviceInterface.ts
 api/molarFractions.service.ts
 api/molarFractions.serviceInterface.ts
+api/public.service.ts
+api/public.serviceInterface.ts
 api/sAScore.service.ts
 api/sAScore.serviceInterface.ts
 api/smileit.service.ts

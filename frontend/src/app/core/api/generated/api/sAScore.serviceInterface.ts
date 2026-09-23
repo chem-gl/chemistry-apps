@@ -28,8 +28,18 @@ export interface SAScoreServiceInterface {
      * 
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/sa-score/jobs/
+     * @param saScoreJobCreateRequest 
      */
-    publicSaScoreJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    publicSaScoreJobsCreate(saScoreJobCreateRequest?: SaScoreJobCreateRequest, extraHttpRequestParams?: any): Observable<SaScoreJobResponse>;
+
+    /**
+     * Descargar CSV por método específico
+     * Descarga CSV por método específico. Para AMBIT la columna es smiles,sa_percent (escala 0-100). Para BRSA/RDKit la columna es smiles,sa (escala SA clásica 1-10). Solo aplica para jobs completed.
+     * @endpoint get /api/public/sa-score/jobs/{id}/report-csv-method/
+     * @param id UUID del job.
+     * @param method Método SA score: ambit, brsa o rdkit.
+     */
+    publicSaScoreJobsReportCsvMethodRetrieve(id: string, method: 'ambit' | 'brsa' | 'rdkit', extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
      * Descargar Reporte CSV
@@ -40,12 +50,36 @@ export interface SAScoreServiceInterface {
     publicSaScoreJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/sa-score/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSaScoreJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/sa-score/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSaScoreJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/sa-score/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSaScoreJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/public/sa-score/jobs/{id}/
      * @param id UUID del job.
      */
-    publicSaScoreJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+    publicSaScoreJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<SaScoreJobResponse>;
 
     /**
      * Crear Job de SA Score

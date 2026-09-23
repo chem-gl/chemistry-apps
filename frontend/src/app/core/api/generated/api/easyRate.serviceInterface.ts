@@ -106,8 +106,38 @@ export interface EasyRateServiceInterface {
      * 
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/easy-rate/jobs/
+     * @param reactant1File 
+     * @param reactant2File 
+     * @param transitionStateFile 
+     * @param version 
+     * @param title 
+     * @param reactionPathDegeneracy 
+     * @param cageEffects 
+     * @param diffusion 
+     * @param solvent 
+     * @param customViscosity 
+     * @param radiusReactant1 
+     * @param radiusReactant2 
+     * @param reactionDistance 
+     * @param printDataInput 
+     * @param reactant1ExecutionIndex 
+     * @param reactant2ExecutionIndex 
+     * @param transitionStateExecutionIndex 
+     * @param product1ExecutionIndex 
+     * @param product2ExecutionIndex 
+     * @param product1File 
+     * @param product2File 
      */
-    publicEasyRateJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    publicEasyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
+
+    /**
+     * Inspeccionar archivo Gaussian para Easy-rate
+     * Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones candidatas para selección previa en frontend.
+     * @endpoint post /api/public/easy-rate/jobs/inspect-input/
+     * @param sourceField 
+     * @param gaussianFile 
+     */
+    publicEasyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, extraHttpRequestParams?: any): Observable<EasyRateInspectionResponse>;
 
     /**
      * Descargar Reporte CSV
@@ -118,11 +148,35 @@ export interface EasyRateServiceInterface {
     publicEasyRateJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicEasyRateJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicEasyRateJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicEasyRateJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/public/easy-rate/jobs/{id}/
      * @param id UUID del job.
      */
-    publicEasyRateJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+    publicEasyRateJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<EasyRateJobResponse>;
 
 }

@@ -28,8 +28,9 @@ export interface ToxicityPropertiesServiceInterface {
      * 
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/toxicity-properties/jobs/
+     * @param toxicityJobCreateRequest 
      */
-    publicToxicityPropertiesJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    publicToxicityPropertiesJobsCreate(toxicityJobCreateRequest?: ToxicityJobCreateRequest, extraHttpRequestParams?: any): Observable<ToxicityJobResponse>;
 
     /**
      * Descargar Reporte CSV
@@ -40,12 +41,36 @@ export interface ToxicityPropertiesServiceInterface {
     publicToxicityPropertiesJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/toxicity-properties/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicToxicityPropertiesJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/toxicity-properties/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicToxicityPropertiesJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/toxicity-properties/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicToxicityPropertiesJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/public/toxicity-properties/jobs/{id}/
      * @param id UUID del job.
      */
-    publicToxicityPropertiesJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+    publicToxicityPropertiesJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<ToxicityJobResponse>;
 
     /**
      * Crear Job de Toxicity Properties

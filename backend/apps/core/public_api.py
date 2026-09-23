@@ -13,9 +13,11 @@ Cómo se usa (en el punto de composición, p. ej. ``config/public_urls.py``):
 
 Reglas garantizadas por el mixin:
 1. ``create`` nunca asocia ``owner``/``group`` (job anónimo con TTL).
-2. ``retrieve`` / ``report-csv`` solo devuelven jobs anónimos no expirados.
-3. ``list``, ``report-log``, ``report-error`` y ``report-inputs`` no se exponen.
-4. El límite de tasa aplica al despacho, nunca al polling de estado.
+2. ``retrieve`` / reportes / vistas de app solo devuelven jobs anónimos no expirados.
+3. ``list`` y las acciones de escritura (catálogo Smile-it) no se exponen: el
+   modo libre es de solo lectura sobre sus propios jobs.
+4. El límite de tasa aplica al despacho (``public-dispatch``) y a las lecturas
+   costosas (``public-read``); el polling del estado no consume cuota.
 """
 
 from __future__ import annotations
@@ -38,10 +40,33 @@ from .concurrency import (
     release_lease,
 )
 from .models import ScientificJob
-from .throttling import AnonymousDispatchRateThrottle
+from .throttling import AnonymousDispatchRateThrottle, AnonymousReadRateThrottle
 from .uuid_utils import resolve_uuid_or_none
 
-PUBLIC_UNAVAILABLE_DETAIL: str = "Recurso no disponible en el API público."
+# Acciones heredadas que el API público SÍ publica.
+#
+# Los reportes son la salida natural de un job anónimo: el UUID es la
+# capability URL y el aviso de privacidad ya declara que los parámetros no son
+# privados. Las vistas de app (derivaciones, SVG, catálogo de referencia,
+# inspección de archivos) son de solo lectura y permiten que el modo libre
+# funcione sin cuenta.
+PUBLIC_REPORT_ACTIONS: tuple[str, ...] = (
+    "report_csv",
+    "report_csv_by_method",
+    "report_log",
+    "report_error",
+    "report_inputs",
+)
+
+PUBLIC_APP_VIEW_ACTIONS: tuple[str, ...] = (
+    "inspect_input",
+    "inspect_structure",
+    "derivations",
+    "derivation_svg",
+    "report_smiles",
+    "report_traceability",
+    "report_images_zip",
+)
 
 
 class PublicAppViewSetMixin:
@@ -50,11 +75,19 @@ class PublicAppViewSetMixin:
     permission_classes = [AllowAny]
     authentication_classes: list[type] = []
     throttle_classes: list[type[BaseThrottle]] = [AnonymousDispatchRateThrottle]
+    read_throttle_classes: list[type[BaseThrottle]] = [AnonymousReadRateThrottle]
 
     # Whitelist explícita de acciones `@action` heredadas que SÍ se publican.
-    # El resto de acciones (logs, inspecciones, catálogos, derivaciones) queda
-    # fuera por defecto para no ampliar la superficie pública sin decisión.
-    public_extra_actions: tuple[str, ...] = ("report_csv",)
+    # Las acciones que no estén aquí (por ejemplo las de escritura del catálogo
+    # Smile-it) quedan fuera: el modo libre es de solo lectura.
+    public_extra_actions: tuple[str, ...] = (
+        PUBLIC_REPORT_ACTIONS + PUBLIC_APP_VIEW_ACTIONS
+    )
+
+    # Acciones de lectura costosa que consumen la cuota `public-read`.
+    public_read_throttled_actions: tuple[str, ...] = (
+        PUBLIC_REPORT_ACTIONS + PUBLIC_APP_VIEW_ACTIONS
+    )
 
     @classmethod
     def get_extra_actions(cls) -> list[object]:
@@ -114,13 +147,23 @@ class PublicAppViewSetMixin:
         return response
 
     def get_throttles(self) -> list[BaseThrottle]:
-        """Aplica el tope de despachos solo a ``create``.
+        """Reparte los topes según el tipo de operación.
 
-        El polling del resultado (cada ~2 s) no debe consumir la cuota de
-        despachos, por eso las acciones de lectura quedan sin throttle de tasa.
+        - ``create``: cuota de despachos (``public-dispatch``).
+        - Lecturas costosas (reportes, derivaciones, SVG, ZIP e inspecciones):
+          cuota suave de lectura (``public-read``).
+        - ``retrieve``: sin tope, porque el modo libre hace polling cada ~2 s
+          y castigarlo rompería la experiencia sin proteger nada.
         """
-        if getattr(self, "action", None) == "create":
+        action_name = getattr(self, "action", None)
+
+        if action_name == "create":
             return [throttle_class() for throttle_class in self.throttle_classes]
+
+        if action_name in self.public_read_throttled_actions:
+            return [
+                throttle_class() for throttle_class in self.read_throttle_classes
+            ]
 
         return []
 
@@ -152,21 +195,3 @@ class PublicAppViewSetMixin:
             raise Http404("Job no encontrado.")
 
         return job
-
-    # ── Acciones heredadas que NO se exponen en el API público ──────────
-    # Al redefinirlas sin el decorador @action, el router deja de publicarlas.
-
-    def report_log(self, request: Request, id: str | None = None) -> None:
-        """No disponible en modo público: el log expone parámetros de entrada."""
-        del request, id
-        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)
-
-    def report_error(self, request: Request, id: str | None = None) -> None:
-        """No disponible en modo público: el reporte expone parámetros de entrada."""
-        del request, id
-        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)
-
-    def report_inputs(self, request: Request, id: str | None = None) -> None:
-        """No disponible en modo público: devuelve archivos subidos."""
-        del request, id
-        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)

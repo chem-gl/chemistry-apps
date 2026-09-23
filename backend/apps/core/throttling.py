@@ -46,3 +46,14 @@ class RegisteredDispatchRateThrottle(SettingsDrivenRateMixin, UserRateThrottle):
     """Limita despachos de usuarios autenticados según ``registered-dispatch``."""
 
     scope = "registered-dispatch"
+
+
+class AnonymousReadRateThrottle(SettingsDrivenRateMixin, AnonRateThrottle):
+    """Limita lecturas anónimas costosas según el scope ``public-read``.
+
+    Aplica a lo que sí consume CPU en el servidor: descarga de reportes,
+    derivaciones paginadas, SVG por estructura y ZIPs de imágenes. El polling
+    del estado (``retrieve``) queda fuera para no castigar el modo libre.
+    """
+
+    scope = "public-read"

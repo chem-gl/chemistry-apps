@@ -590,18 +590,49 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     /**
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/easy-rate/jobs/
+     * @param reactant1File 
+     * @param reactant2File 
+     * @param transitionStateFile 
+     * @param version 
+     * @param title 
+     * @param reactionPathDegeneracy 
+     * @param cageEffects 
+     * @param diffusion 
+     * @param solvent 
+     * @param customViscosity 
+     * @param radiusReactant1 
+     * @param radiusReactant2 
+     * @param reactionDistance 
+     * @param printDataInput 
+     * @param reactant1ExecutionIndex 
+     * @param reactant2ExecutionIndex 
+     * @param transitionStateExecutionIndex 
+     * @param product1ExecutionIndex 
+     * @param product2ExecutionIndex 
+     * @param product1File 
+     * @param product2File 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public publicEasyRateJobsCreate(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public publicEasyRateJobsCreate(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public publicEasyRateJobsCreate(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public publicEasyRateJobsCreate(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public publicEasyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
+    public publicEasyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
+    public publicEasyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
+    public publicEasyRateJobsCreate(reactant1File: Blob, reactant2File: Blob, transitionStateFile: Blob, version?: string, title?: string, reactionPathDegeneracy?: number, cageEffects?: boolean, diffusion?: boolean, solvent?: string, customViscosity?: number, radiusReactant1?: number, radiusReactant2?: number, reactionDistance?: number, printDataInput?: boolean, reactant1ExecutionIndex?: number, reactant2ExecutionIndex?: number, transitionStateExecutionIndex?: number, product1ExecutionIndex?: number, product2ExecutionIndex?: number, product1File?: Blob, product2File?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (reactant1File === null || reactant1File === undefined) {
+            throw new Error('Required parameter reactant1File was null or undefined when calling publicEasyRateJobsCreate.');
+        }
+        if (reactant2File === null || reactant2File === undefined) {
+            throw new Error('Required parameter reactant2File was null or undefined when calling publicEasyRateJobsCreate.');
+        }
+        if (transitionStateFile === null || transitionStateFile === undefined) {
+            throw new Error('Required parameter transitionStateFile was null or undefined when calling publicEasyRateJobsCreate.');
+        }
 
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -611,6 +642,101 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'multipart/form-data',
+            'application/x-www-form-urlencoded'
+        ];
+
+        const canConsumeForm = this.canConsumeForm(consumes);
+
+        let localVarFormParams: { append(param: string, value: any): any; };
+        let localVarUseForm = false;
+        let localVarConvertFormParamsToString = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        if (localVarUseForm) {
+            localVarFormParams = new FormData();
+        } else {
+            localVarFormParams = new HttpParams({encoder: this.encoder});
+        }
+
+        if (version !== undefined) {
+            localVarFormParams = localVarFormParams.append('version', <any>version) as any || localVarFormParams;
+        }
+        if (title !== undefined) {
+            localVarFormParams = localVarFormParams.append('title', <any>title) as any || localVarFormParams;
+        }
+        if (reactionPathDegeneracy !== undefined) {
+            localVarFormParams = localVarFormParams.append('reaction_path_degeneracy', <any>reactionPathDegeneracy) as any || localVarFormParams;
+        }
+        if (cageEffects !== undefined) {
+            localVarFormParams = localVarFormParams.append('cage_effects', <any>cageEffects) as any || localVarFormParams;
+        }
+        if (diffusion !== undefined) {
+            localVarFormParams = localVarFormParams.append('diffusion', <any>diffusion) as any || localVarFormParams;
+        }
+        if (solvent !== undefined) {
+            localVarFormParams = localVarFormParams.append('solvent', localVarUseForm ? new Blob([JSON.stringify(solvent)], {type: 'application/json'}) : <any>solvent) as any || localVarFormParams;
+        }
+        if (customViscosity !== undefined) {
+            localVarFormParams = localVarFormParams.append('custom_viscosity', <any>customViscosity) as any || localVarFormParams;
+        }
+        if (radiusReactant1 !== undefined) {
+            localVarFormParams = localVarFormParams.append('radius_reactant_1', <any>radiusReactant1) as any || localVarFormParams;
+        }
+        if (radiusReactant2 !== undefined) {
+            localVarFormParams = localVarFormParams.append('radius_reactant_2', <any>radiusReactant2) as any || localVarFormParams;
+        }
+        if (reactionDistance !== undefined) {
+            localVarFormParams = localVarFormParams.append('reaction_distance', <any>reactionDistance) as any || localVarFormParams;
+        }
+        if (printDataInput !== undefined) {
+            localVarFormParams = localVarFormParams.append('print_data_input', <any>printDataInput) as any || localVarFormParams;
+        }
+        if (reactant1ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_1_execution_index', <any>reactant1ExecutionIndex) as any || localVarFormParams;
+        }
+        if (reactant2ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_2_execution_index', <any>reactant2ExecutionIndex) as any || localVarFormParams;
+        }
+        if (transitionStateExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('transition_state_execution_index', <any>transitionStateExecutionIndex) as any || localVarFormParams;
+        }
+        if (product1ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_1_execution_index', <any>product1ExecutionIndex) as any || localVarFormParams;
+        }
+        if (product2ExecutionIndex !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_2_execution_index', <any>product2ExecutionIndex) as any || localVarFormParams;
+        }
+        if (reactant1File !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_1_file', <any>reactant1File) as any || localVarFormParams;
+        }
+        if (reactant2File !== undefined) {
+            localVarFormParams = localVarFormParams.append('reactant_2_file', <any>reactant2File) as any || localVarFormParams;
+        }
+        if (transitionStateFile !== undefined) {
+            localVarFormParams = localVarFormParams.append('transition_state_file', <any>transitionStateFile) as any || localVarFormParams;
+        }
+        if (product1File !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_1_file', <any>product1File) as any || localVarFormParams;
+        }
+        if (product2File !== undefined) {
+            localVarFormParams = localVarFormParams.append('product_2_file', <any>product2File) as any || localVarFormParams;
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -625,9 +751,98 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
 
         let localVarPath = `/api/public/easy-rate/jobs/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<EasyRateJobResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: localVarConvertFormParamsToString ? localVarFormParams.toString() : localVarFormParams,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Inspeccionar archivo Gaussian para Easy-rate
+     * Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones candidatas para selección previa en frontend.
+     * @endpoint post /api/public/easy-rate/jobs/inspect-input/
+     * @param sourceField 
+     * @param gaussianFile 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public publicEasyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateInspectionResponse>;
+    public publicEasyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateInspectionResponse>>;
+    public publicEasyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateInspectionResponse>>;
+    public publicEasyRateJobsInspectInputCreate(sourceField: SourceFieldEnum, gaussianFile: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (sourceField === null || sourceField === undefined) {
+            throw new Error('Required parameter sourceField was null or undefined when calling publicEasyRateJobsInspectInputCreate.');
+        }
+        if (gaussianFile === null || gaussianFile === undefined) {
+            throw new Error('Required parameter gaussianFile was null or undefined when calling publicEasyRateJobsInspectInputCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'multipart/form-data',
+            'application/x-www-form-urlencoded'
+        ];
+
+        const canConsumeForm = this.canConsumeForm(consumes);
+
+        let localVarFormParams: { append(param: string, value: any): any; };
+        let localVarUseForm = false;
+        let localVarConvertFormParamsToString = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        // see https://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+        localVarUseForm = canConsumeForm;
+        if (localVarUseForm) {
+            localVarFormParams = new FormData();
+        } else {
+            localVarFormParams = new HttpParams({encoder: this.encoder});
+        }
+
+        if (sourceField !== undefined) {
+            localVarFormParams = localVarFormParams.append('source_field', <any>sourceField) as any || localVarFormParams;
+        }
+        if (gaussianFile !== undefined) {
+            localVarFormParams = localVarFormParams.append('gaussian_file', <any>gaussianFile) as any || localVarFormParams;
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/public/easy-rate/jobs/inspect-input/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<EasyRateInspectionResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: localVarConvertFormParamsToString ? localVarFormParams.toString() : localVarFormParams,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -685,6 +900,144 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
     }
 
     /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public publicEasyRateJobsReportErrorRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public publicEasyRateJobsReportErrorRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public publicEasyRateJobsReportErrorRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public publicEasyRateJobsReportErrorRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling publicEasyRateJobsReportErrorRetrieve.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let localVarPath = `/api/public/easy-rate/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-error/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: "blob",
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public publicEasyRateJobsReportInputsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public publicEasyRateJobsReportInputsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public publicEasyRateJobsReportInputsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public publicEasyRateJobsReportInputsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling publicEasyRateJobsReportInputsRetrieve.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let localVarPath = `/api/public/easy-rate/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-inputs/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: "blob",
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/easy-rate/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public publicEasyRateJobsReportLogRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Blob>;
+    public publicEasyRateJobsReportLogRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Blob>>;
+    public publicEasyRateJobsReportLogRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Blob>>;
+    public publicEasyRateJobsReportLogRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling publicEasyRateJobsReportLogRetrieve.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let localVarPath = `/api/public/easy-rate/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}/report-log/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: "blob",
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/public/easy-rate/jobs/{id}/
@@ -693,9 +1046,9 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public publicEasyRateJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public publicEasyRateJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public publicEasyRateJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public publicEasyRateJobsRetrieve(id: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<EasyRateJobResponse>;
+    public publicEasyRateJobsRetrieve(id: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<EasyRateJobResponse>>;
+    public publicEasyRateJobsRetrieve(id: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<EasyRateJobResponse>>;
     public publicEasyRateJobsRetrieve(id: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling publicEasyRateJobsRetrieve.');
@@ -728,7 +1081,7 @@ export class EasyRateService extends BaseService implements EasyRateServiceInter
 
         let localVarPath = `/api/public/easy-rate/jobs/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<EasyRateJobResponse>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

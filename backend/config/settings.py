@@ -240,6 +240,8 @@ ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.l
 # usuarios registrados. Configurables por entorno sin tocar código.
 PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
 REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")
+# Lecturas anónimas costosas (reportes, derivaciones, SVG, ZIPs, inspecciones).
+PUBLIC_READ_RATE: str = os.getenv("PUBLIC_READ_RATE", "120/hour")
 
 # Número de proxies de confianza delante del backend. DRF lo usa para resolver
 # la IP real desde X-Forwarded-For. 0 = ignorar el header (usar REMOTE_ADDR).
@@ -263,6 +265,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_THROTTLE_RATES": {
         "public-dispatch": PUBLIC_DISPATCH_RATE,
+        "public-read": PUBLIC_READ_RATE,
         "registered-dispatch": REGISTERED_DISPATCH_RATE,
     },
     # Traduce RequestDataTooBig a 413 en lugar del 400 por defecto.

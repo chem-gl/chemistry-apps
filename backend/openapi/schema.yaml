@@ -2833,6 +2833,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/catalog/:
+    get:
+      operationId: public_catalog_retrieve
+      description: 'Lista las apps sin login y los límites aplicables: TTL del job,
+        días de caché compartida, cuota de despacho, concurrencia y tamaño máximo
+        de subida.'
+      summary: Catálogo del modo abierto
+      tags:
+      - Public
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/public/easy-rate/jobs/:
     post:
       operationId: public_easy_rate_jobs_create
@@ -2844,11 +2863,48 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - EasyRate
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EasyRateJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EasyRateJobCreateRequest'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/easy-rate/jobs/{id}/:
     get:
       operationId: public_easy_rate_jobs_retrieve
@@ -2867,13 +2923,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/easy-rate/jobs/{id}/report-csv/:
     get:
       operationId: public_easy_rate_jobs_report_csv_retrieve
@@ -2911,6 +2971,146 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/easy-rate/jobs/{id}/report-error/:
+    get:
+      operationId: public_easy_rate_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/easy-rate/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_easy_rate_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/easy-rate/jobs/{id}/report-log/:
+    get:
+      operationId: public_easy_rate_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/easy-rate/jobs/inspect-input/:
+    post:
+      operationId: public_easy_rate_jobs_inspect_input_create
+      description: Parsea un archivo Gaussian sin crear job y devuelve las ejecuciones
+        candidatas para selección previa en frontend.
+      summary: Inspeccionar archivo Gaussian para Easy-rate
+      tags:
+      - EasyRate
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EasyRateInspectionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EasyRateInspectionRequestRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasyRateInspectionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible inspeccionar el archivo cargado.
   /api/public/marcus/jobs/:
     post:
       operationId: public_marcus_jobs_create
@@ -2922,11 +3122,48 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - Marcus
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MarcusJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MarcusJobCreateRequest'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarcusJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/marcus/jobs/{id}/:
     get:
       operationId: public_marcus_jobs_retrieve
@@ -2945,13 +3182,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarcusJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/marcus/jobs/{id}/report-csv/:
     get:
       operationId: public_marcus_jobs_report_csv_retrieve
@@ -2989,6 +3230,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/marcus/jobs/{id}/report-error/:
+    get:
+      operationId: public_marcus_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/marcus/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_marcus_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/marcus/jobs/{id}/report-log/:
+    get:
+      operationId: public_marcus_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/public/molar-fractions/jobs/:
     post:
       operationId: public_molar_fractions_jobs_create
@@ -3000,11 +3349,79 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - MolarFractions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+            examples:
+              CrearJobMolarFractionsPorRango:
+                value:
+                  version: 1.0.0
+                  pka_values:
+                  - 2.2
+                  - 7.2
+                  - 12.3
+                  initial_charge: q
+                  label: A
+                  ph_mode: range
+                  ph_min: 0.0
+                  ph_max: 14.0
+                  ph_step: 1.0
+                summary: Crear job molar fractions por rango
+                description: Calcula fracciones f0..f3 desde pH 0 hasta 14 con paso
+                  1.
+              CrearJobMolarFractionsEnUnSoloPH:
+                value:
+                  version: 1.0.0
+                  pka_values:
+                  - 4.75
+                  initial_charge: -1
+                  label: Ac
+                  ph_mode: single
+                  ph_value: 7.4
+                summary: Crear job molar fractions en un solo pH
+                description: Calcula fracciones en un único punto de pH.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MolarFractionsJobCreateRequest'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MolarFractionsJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/molar-fractions/jobs/{id}/:
     get:
       operationId: public_molar_fractions_jobs_retrieve
@@ -3023,13 +3440,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MolarFractionsJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/molar-fractions/jobs/{id}/report-csv/:
     get:
       operationId: public_molar_fractions_jobs_report_csv_retrieve
@@ -3067,6 +3488,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/molar-fractions/jobs/{id}/report-error/:
+    get:
+      operationId: public_molar_fractions_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/molar-fractions/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_molar_fractions_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/molar-fractions/jobs/{id}/report-log/:
+    get:
+      operationId: public_molar_fractions_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/public/sa-score/jobs/:
     post:
       operationId: public_sa_score_jobs_create
@@ -3078,11 +3607,50 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - SAScore
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaScoreJobCreateRequest'
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaScoreJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/sa-score/jobs/{id}/:
     get:
       operationId: public_sa_score_jobs_retrieve
@@ -3101,13 +3669,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaScoreJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/sa-score/jobs/{id}/report-csv/:
     get:
       operationId: public_sa_score_jobs_report_csv_retrieve
@@ -3145,6 +3717,169 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/sa-score/jobs/{id}/report-csv-method/:
+    get:
+      operationId: public_sa_score_jobs_report_csv_method_retrieve
+      description: Descarga CSV por método específico. Para AMBIT la columna es smiles,sa_percent
+        (escala 0-100). Para BRSA/RDKit la columna es smiles,sa (escala SA clásica
+        1-10). Solo aplica para jobs completed.
+      summary: Descargar CSV por método específico
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      - in: query
+        name: method
+        schema:
+          type: string
+          enum:
+          - ambit
+          - brsa
+          - rdkit
+        description: 'Método SA score: ambit, brsa o rdkit.'
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: 'Archivo CSV. AMBIT: smiles,sa_percent (0-100). BRSA/RDKit:
+            smiles,sa (1-10).'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Método no válido o no fue calculado en este job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/sa-score/jobs/{id}/report-error/:
+    get:
+      operationId: public_sa_score_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/sa-score/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_sa_score_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/sa-score/jobs/{id}/report-log/:
+    get:
+      operationId: public_sa_score_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/public/smileit/jobs/:
     post:
       operationId: public_smileit_jobs_create
@@ -3156,11 +3891,99 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - Smileit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+            examples:
+              GeneraciónPorBloquesMixtos:
+                value:
+                  version: 2.0.0
+                  principal_smiles: c1ccccc1
+                  selected_atom_indices:
+                  - 0
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  assignment_blocks:
+                  - label: Aromatic coverage
+                    site_atom_indices:
+                    - 0
+                    - 1
+                    category_keys:
+                    - aromatic
+                    substituent_refs: []
+                    manual_substituents: []
+                  - label: Donor tuning
+                    site_atom_indices:
+                    - 2
+                    category_keys:
+                    - hbond_donor
+                    substituent_refs: []
+                    manual_substituents: []
+                  - label: Custom lipophilic
+                    site_atom_indices:
+                    - 3
+                    - 4
+                    category_keys: []
+                    substituent_refs: []
+                    manual_substituents:
+                    - name: Cyclopropyl
+                      smiles: C1CC1
+                      anchor_atom_indices:
+                      - 0
+                      categories:
+                      - hydrophobic
+                  site_overlap_policy: last_block_wins
+                  r_substitutes: 2
+                  num_bonds: 1
+                  allow_repeated: false
+                  max_structures: 600
+                  export_name_base: BENZENE_SERIES
+                  export_padding: 5
+                summary: Generación por bloques mixtos
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SmileitJobCreateRequest'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/smileit/jobs/{id}/:
     get:
       operationId: public_smileit_jobs_retrieve
@@ -3185,6 +4008,109 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job inexistente, ya expirado o no anónimo.
+  /api/public/smileit/jobs/{id}/derivations/:
+    get:
+      operationId: public_smileit_jobs_derivations_retrieve
+      description: Entrega derivados por páginas para evitar respuestas gigantes en
+        frontend.
+      summary: Listar derivados Smile-it paginados
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Tamaño de página (máximo 100).
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Índice inicial absoluto (0-based).
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitGeneratedStructurePage'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/derivations/{structure_index}/svg/:
+    get:
+      operationId: public_smileit_jobs_derivations_svg_retrieve
+      description: Genera SVG del derivado solicitado únicamente cuando frontend lo
+        necesita.
+      summary: Renderizar SVG de un derivado Smile-it bajo demanda
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      - in: path
+        name: structure_index
+        schema:
+          type: integer
+        description: Índice absoluto del derivado dentro del job.
+        required: true
+      - in: query
+        name: variant
+        schema:
+          type: string
+        description: 'Variante de renderizado: ''thumb'' para grid o ''detail'' para
+          modal/export.'
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           description: ''
   /api/public/smileit/jobs/{id}/report-csv/:
     get:
@@ -3223,6 +4149,320 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/smileit/jobs/{id}/report-error/:
+    get:
+      operationId: public_smileit_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/report-images-zip/:
+    get:
+      operationId: public_smileit_jobs_report_images_zip_retrieve
+      description: Entrega ZIP de imágenes por backend para jobs extremadamente grandes.
+      summary: Descargar ZIP de imágenes SVG de derivados Smile-it
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_smileit_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/smileit/jobs/{id}/report-log/:
+    get:
+      operationId: public_smileit_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/report-smiles/:
+    get:
+      operationId: public_smileit_jobs_report_smiles_retrieve
+      description: Descarga archivo SMI/TXT con principal y derivados como lista simple
+        de SMILES.
+      summary: Descargar Export Principal SMILES Enumerado
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/report-traceability/:
+    get:
+      operationId: public_smileit_jobs_report_traceability_retrieve
+      description: Descarga auditoría sitio -> sustituyente aplicada por derivado.
+      summary: Descargar CSV de Trazabilidad Smile-it
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/catalog/:
+    get:
+      operationId: public_smileit_jobs_catalog_list
+      description: 'Solo lectura: devuelve lo visible para un actor anónimo (seed/root).'
+      summary: Listar Catálogo de Sustituyentes (público)
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SmileitCatalogEntry'
+          description: ''
+  /api/public/smileit/jobs/categories/:
+    get:
+      operationId: public_smileit_jobs_categories_list
+      description: 'Solo lectura: el modo abierto no crea ni edita categorías.'
+      summary: Listar Categorías Químicas de Smile-it (público)
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SmileitCategory'
+          description: ''
+  /api/public/smileit/jobs/inspect-structure/:
+    post:
+      operationId: public_smileit_jobs_inspect_structure_create
+      description: Inspecciona molécula con propiedades rápidas y anotaciones por
+        patrones.
+      summary: Inspeccionar Estructura Smile-it
+      tags:
+      - Smileit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+            examples:
+              InspeccionarBenzeno:
+                value:
+                  smiles: c1ccccc1
+                summary: Inspeccionar benzeno
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SmileitStructureInspectionRequestRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitStructureInspectionResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/patterns/:
+    get:
+      operationId: public_smileit_jobs_patterns_list
+      description: 'Solo lectura: el filtro `root-only` no aplica a actores anónimos.'
+      summary: Listar Patrones Estructurales (público)
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SmileitPatternEntry'
+          description: ''
   /api/public/toxicity-properties/jobs/:
     post:
       operationId: public_toxicity_properties_jobs_create
@@ -3234,11 +4474,50 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - ToxicityProperties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToxicityJobCreateRequest'
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToxicityJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/toxicity-properties/jobs/{id}/:
     get:
       operationId: public_toxicity_properties_jobs_retrieve
@@ -3257,13 +4536,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToxicityJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/toxicity-properties/jobs/{id}/report-csv/:
     get:
       operationId: public_toxicity_properties_jobs_report_csv_retrieve
@@ -3301,6 +4584,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/public/toxicity-properties/jobs/{id}/report-error/:
+    get:
+      operationId: public_toxicity_properties_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/toxicity-properties/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_toxicity_properties_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/toxicity-properties/jobs/{id}/report-log/:
+    get:
+      operationId: public_toxicity_properties_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/public/tunnel/jobs/:
     post:
       operationId: public_tunnel_jobs_create
@@ -3312,11 +4703,71 @@ paths:
         ningún worker ejecutará la liberación.
       tags:
       - Tunnel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+            examples:
+              CrearJobTunnelConTrazabilidadDeCambios:
+                value:
+                  version: 2.0.0
+                  reaction_barrier_zpe: 3.5
+                  imaginary_frequency: 625.0
+                  reaction_energy_zpe: -8.2
+                  temperature: 298.15
+                  input_change_events:
+                  - field_name: reaction_barrier_zpe
+                    previous_value: 0.0
+                    new_value: 3.5
+                    changed_at: '2026-03-12T10:01:10.000Z'
+                  - field_name: imaginary_frequency
+                    previous_value: 0.0
+                    new_value: 625.0
+                    changed_at: '2026-03-12T10:01:19.000Z'
+                summary: Crear job Tunnel con trazabilidad de cambios
+                description: Calcula el efecto túnel con teoría de barrera de Eckart
+                  asimétrica y registra eventos de edición de entradas para auditoría.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TunnelJobCreateRequest'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Parámetros inválidos.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Carga o parámetros por encima del tope del modo abierto.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Cuota de despachos o de concurrencia agotada.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible crear o encolar el job.
   /api/public/tunnel/jobs/{id}/:
     get:
       operationId: public_tunnel_jobs_retrieve
@@ -3335,13 +4786,17 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelJobResponse'
+          description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: ''
+          description: Job inexistente, ya expirado o no anónimo.
   /api/public/tunnel/jobs/{id}/report-csv/:
     get:
       operationId: public_tunnel_jobs_report_csv_retrieve
@@ -3374,6 +4829,114 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
         '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/tunnel/jobs/{id}/report-error/:
+    get:
+      operationId: public_tunnel_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/tunnel/jobs/{id}/report-inputs/:
+    get:
+      operationId: public_tunnel_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/public/tunnel/jobs/{id}/report-log/:
+    get:
+      operationId: public_tunnel_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
           content:
             application/json:
               schema:

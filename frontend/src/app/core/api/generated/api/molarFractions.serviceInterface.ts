@@ -76,8 +76,9 @@ export interface MolarFractionsServiceInterface {
      * 
      * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
      * @endpoint post /api/public/molar-fractions/jobs/
+     * @param molarFractionsJobCreateRequest 
      */
-    publicMolarFractionsJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+    publicMolarFractionsJobsCreate(molarFractionsJobCreateRequest: MolarFractionsJobCreateRequest, extraHttpRequestParams?: any): Observable<MolarFractionsJobResponse>;
 
     /**
      * Descargar Reporte CSV
@@ -88,11 +89,35 @@ export interface MolarFractionsServiceInterface {
     publicMolarFractionsJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
 
     /**
+     * Descargar Reporte de Error
+     * Descarga reporte de error para jobs failed con error_trace. Incluye parámetros de entrada y detalle del fallo.
+     * @endpoint get /api/public/molar-fractions/jobs/{id}/report-error/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicMolarFractionsJobsReportErrorRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Entradas Originales ZIP
+     * Descarga ZIP con todos los archivos de entrada persistidos y manifest.json para reproducibilidad/reintento.
+     * @endpoint get /api/public/molar-fractions/jobs/{id}/report-inputs/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicMolarFractionsJobsReportInputsRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Descargar Reporte LOG
+     * Descarga log técnico con parámetros de entrada, estado, resultados y eventos de ejecución.
+     * @endpoint get /api/public/molar-fractions/jobs/{id}/report-log/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicMolarFractionsJobsReportLogRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
      * Consultar Job
      * Devuelve estado, progreso y resultados del job por UUID.
      * @endpoint get /api/public/molar-fractions/jobs/{id}/
      * @param id UUID del job.
      */
-    publicMolarFractionsJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+    publicMolarFractionsJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<MolarFractionsJobResponse>;
 
 }
