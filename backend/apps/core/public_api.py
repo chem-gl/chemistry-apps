@@ -31,6 +31,8 @@ from .models import ScientificJob
 from .throttling import AnonymousDispatchRateThrottle
 from .uuid_utils import resolve_uuid_or_none
 
+PUBLIC_UNAVAILABLE_DETAIL: str = "Recurso no disponible en el API público."
+
 
 class PublicAppViewSetMixin:
     """Variante pública (sin login) de un ViewSet de app científica."""
@@ -40,8 +42,8 @@ class PublicAppViewSetMixin:
     throttle_classes: list[type[BaseThrottle]] = [AnonymousDispatchRateThrottle]
 
     # Whitelist explícita de acciones `@action` heredadas que SÍ se publican.
-    # Todo lo demás (logs, inspecciones, catálogos, derivaciones) queda fuera
-    # por defecto para no ampliar la superficie pública sin decisión explícita.
+    # El resto de acciones (logs, inspecciones, catálogos, derivaciones) queda
+    # fuera por defecto para no ampliar la superficie pública sin decisión.
     public_extra_actions: tuple[str, ...] = ("report_csv",)
 
     @classmethod
@@ -106,14 +108,14 @@ class PublicAppViewSetMixin:
     def report_log(self, request: Request, id: str | None = None) -> None:
         """No disponible en modo público: el log expone parámetros de entrada."""
         del request, id
-        raise Http404("Recurso no disponible en el API público.")
+        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)
 
     def report_error(self, request: Request, id: str | None = None) -> None:
         """No disponible en modo público: el reporte expone parámetros de entrada."""
         del request, id
-        raise Http404("Recurso no disponible en el API público.")
+        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)
 
     def report_inputs(self, request: Request, id: str | None = None) -> None:
         """No disponible en modo público: devuelve archivos subidos."""
         del request, id
-        raise Http404("Recurso no disponible en el API público.")
+        raise Http404(PUBLIC_UNAVAILABLE_DETAIL)
