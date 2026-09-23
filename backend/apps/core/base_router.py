@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -34,11 +35,19 @@ from drf_spectacular.utils import (
 )
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import Throttled
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .artifacts import ArtifactTooLargeError, ScientificInputArtifactStorageService
+from .concurrency import (
+    CONCURRENCY_LIMIT_DETAIL,
+    ConcurrencyLease,
+    acquire_registered_slot,
+    attach_lease_to_job,
+    release_lease,
+)
 from .declarative_api import DeclarativeJobAPI
 from .identity.services import AuthorizationService
 from .models import ScientificJob
@@ -71,9 +80,83 @@ class ScientificAppViewSetMixin:
     # (`IsAuthenticated`). La variante pública vive en `apps/core/public_api.py`.
     permission_classes = [IsAuthenticated]
 
+    # Semáforo de concurrencia por usuario autenticado (5 por defecto). La
+    # variante pública lo desactiva porque ya reserva su cupo anónimo.
+    registered_concurrency_enabled: bool = True
+
     plugin_name: str
     response_serializer_class: type[serializers.Serializer]
     csv_report_suffix: str = "report"
+
+    def initial(self, request: Request, *args: object, **kwargs: object) -> None:
+        """Reserva el cupo de concurrencia del usuario antes de crear el job.
+
+        Se hace en ``initial`` (y no en ``create``) para cubrir de una sola vez
+        a todas las apps: los routers no repiten la lógica y el cupo se libera
+        en ``finalize_response`` para cualquier respuesta, incluidos errores.
+        """
+        super().initial(request, *args, **kwargs)
+        self._registered_lease = None
+
+        actor = getattr(request, "user", None)
+        if not self.should_enforce_registered_concurrency(request, actor):
+            return
+
+        lease = acquire_registered_slot(request)
+        if lease is None:
+            raise Throttled(detail=CONCURRENCY_LIMIT_DETAIL)
+
+        self._registered_lease = lease
+
+    def should_enforce_registered_concurrency(
+        self, request: Request, actor: object
+    ) -> bool:
+        """Indica si corresponde reservar cupo de concurrencia registrada.
+
+        Se desactiva en la suite de tests: el semáforo real depende de Redis y
+        los tests de integración deben ser deterministas (los tests unitarios de
+        concurrencia usan un cliente falso explícito).
+        """
+        del request
+        return bool(
+            self.registered_concurrency_enabled
+            and not getattr(settings, "TESTING", False)
+            and getattr(self, "action", None) == "create"
+            and getattr(actor, "is_authenticated", False)
+        )
+
+    def finalize_response(
+        self,
+        request: Request,
+        response: Response,
+        *args: object,
+        **kwargs: object,
+    ) -> Response:
+        """Asocia el lease al job creado o lo libera si el despacho falló."""
+        lease = getattr(self, "_registered_lease", None)
+        if lease is not None:
+            self._registered_lease = None
+            self._finalize_registered_lease(lease, response)
+
+        return super().finalize_response(request, response, *args, **kwargs)
+
+    def _finalize_registered_lease(
+        self, lease: ConcurrencyLease, response: Response
+    ) -> None:
+        """Adjunta el lease al job recién creado; en cualquier otro caso lo libera."""
+        if response.status_code != status.HTTP_201_CREATED:
+            release_lease(lease)
+            return
+
+        response_data = response.data if isinstance(response.data, dict) else {}
+        job_id = str(response_data.get("id", ""))
+        job = ScientificJob.objects.filter(pk=job_id).first() if job_id else None
+
+        if job is None:
+            release_lease(lease)
+            return
+
+        attach_lease_to_job(job, lease)
 
     def resolve_actor_job_scope(
         self, request: Request

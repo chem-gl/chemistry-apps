@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 KEY_NAMESPACE = "apps-libres:concurrency:v1"
 DEFAULT_MAX_CONCURRENT_JOBS = 2
+DEFAULT_REGISTERED_MAX_CONCURRENT_JOBS = 5
 DEFAULT_LEASE_SECONDS = 1800
 RUNTIME_STATE_LEASE_KEY = "concurrency_lease"
 
@@ -118,9 +119,21 @@ def get_redis_client() -> Redis:
 
 
 def resolve_max_concurrent_jobs() -> int:
-    """Cupo de trabajos simultáneos por cliente (mínimo 1)."""
+    """Cupo de trabajos simultáneos por cliente anónimo (mínimo 1)."""
     configured_value = int(
         getattr(settings, "ANONYMOUS_MAX_CONCURRENT_JOBS", DEFAULT_MAX_CONCURRENT_JOBS)
+    )
+    return max(1, configured_value)
+
+
+def resolve_registered_max_concurrent_jobs() -> int:
+    """Cupo de trabajos simultáneos por usuario autenticado (mínimo 1)."""
+    configured_value = int(
+        getattr(
+            settings,
+            "REGISTERED_MAX_CONCURRENT_JOBS",
+            DEFAULT_REGISTERED_MAX_CONCURRENT_JOBS,
+        )
     )
     return max(1, configured_value)
 
@@ -147,19 +160,34 @@ def build_lease_key(request: object) -> str:
     return f"{KEY_NAMESPACE}:{identifier_hash[:32]}"
 
 
-def acquire_slot(
-    request: object,
+def build_registered_lease_key(request: object) -> str:
+    """Clave del semáforo por usuario autenticado (solo el hash del id)."""
+    actor = getattr(request, "user", None)
+    actor_id = getattr(actor, "pk", None)
+    if actor_id is None:
+        raise ValueError("El semáforo de registrados requiere un usuario con pk.")
+
+    identifier_hash = hashlib.sha256(f"user:{actor_id}".encode("utf-8")).hexdigest()
+    return f"{KEY_NAMESPACE}:user:{identifier_hash[:32]}"
+
+
+def _acquire_lease(
+    lease_key: str,
+    max_slots: int,
     *,
     client: Redis | None = None,
 ) -> ConcurrencyLease | None:
-    """Intenta reservar un cupo de concurrencia para el cliente de la petición.
+    """Reserva un cupo en la clave dada (núcleo compartido de ambos perfiles).
 
-    Retorna el lease reservado, ``None`` si el cliente ya agotó su cupo, o un
-    lease *no-op* si Redis no está disponible (fallo abierto, con aviso).
+    En la suite de tests (sin cliente explícito) se devuelve un lease no-op:
+    el semáforo depende de Redis y los tests de integración deben ser
+    deterministas. Los tests unitarios pasan un cliente falso y sí ejercen la
+    lógica real de adquisición.
     """
-    lease_key = build_lease_key(request)
+    if client is None and getattr(settings, "TESTING", False):
+        return ConcurrencyLease(key="", token="")
+
     token = hashlib.sha256(f"{lease_key}:{timezone.now().timestamp()}".encode()).hexdigest()
-    max_slots = resolve_max_concurrent_jobs()
     lease_seconds = resolve_lease_seconds()
     now_ms = int(timezone.now().timestamp() * 1000)
 
@@ -186,6 +214,34 @@ def acquire_slot(
         return None
 
     return ConcurrencyLease(key=lease_key, token=token)
+
+
+def acquire_slot(
+    request: object,
+    *,
+    client: Redis | None = None,
+) -> ConcurrencyLease | None:
+    """Intenta reservar un cupo de concurrencia anónima para el cliente.
+
+    Retorna el lease reservado, ``None`` si el cliente ya agotó su cupo, o un
+    lease *no-op* si Redis no está disponible (fallo abierto, con aviso).
+    """
+    return _acquire_lease(
+        build_lease_key(request), resolve_max_concurrent_jobs(), client=client
+    )
+
+
+def acquire_registered_slot(
+    request: object,
+    *,
+    client: Redis | None = None,
+) -> ConcurrencyLease | None:
+    """Intenta reservar un cupo de concurrencia para el usuario autenticado."""
+    return _acquire_lease(
+        build_registered_lease_key(request),
+        resolve_registered_max_concurrent_jobs(),
+        client=client,
+    )
 
 
 def release_lease(lease: ConcurrencyLease, *, client: Redis | None = None) -> None:

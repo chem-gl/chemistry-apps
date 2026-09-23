@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
 
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -22,11 +23,14 @@ from ..anonymous import purge_expired_anonymous_jobs
 from ..concurrency import (
     KEY_NAMESPACE,
     ConcurrencyLease,
+    acquire_registered_slot,
     acquire_slot,
     attach_lease_to_job,
     build_lease_key,
+    build_registered_lease_key,
     release_job_lease,
     release_lease,
+    resolve_registered_max_concurrent_jobs,
 )
 from ..models import ScientificJob
 from ..realtime import build_scientific_job_payload
@@ -37,6 +41,7 @@ from ..signals import (
 )
 
 PUBLIC_MOLAR_URL = "/api/public/molar-fractions/jobs/"
+PRIVATE_MOLAR_URL = "/api/molar-fractions/jobs/"
 MOLAR_PAYLOAD: dict[str, object] = {
     "version": "1.0.0",
     "pka_values": [4.75],
@@ -312,3 +317,104 @@ class ConcurrencySignalTests(TestCase):
             )
 
         mock_release.assert_not_called()
+
+
+class RegisteredConcurrencyUnitTests(TestCase):
+    """Clave y cupo del semáforo para usuarios autenticados."""
+
+    def setUp(self) -> None:
+        self.factory = APIRequestFactory()
+        self.user_one = get_user_model().objects.create_user(username="conc-user-1")
+        self.user_two = get_user_model().objects.create_user(username="conc-user-2")
+
+    def _request_for(self, user: object):
+        request = self.factory.post("/api/molar-fractions/jobs/")
+        request.user = user
+        return request
+
+    def test_registered_key_is_per_user_and_hashed(self) -> None:
+        key_one = build_registered_lease_key(self._request_for(self.user_one))
+        key_two = build_registered_lease_key(self._request_for(self.user_two))
+
+        self.assertNotEqual(key_one, key_two)
+        self.assertTrue(key_one.startswith(f"{KEY_NAMESPACE}:user:"))
+        self.assertNotIn(str(self.user_one.pk), key_one)
+
+    def test_registered_default_quota_is_five(self) -> None:
+        self.assertEqual(resolve_registered_max_concurrent_jobs(), 5)
+
+    @override_settings(REGISTERED_MAX_CONCURRENT_JOBS=1)
+    def test_registered_quota_reads_settings(self) -> None:
+        self.assertEqual(resolve_registered_max_concurrent_jobs(), 1)
+
+    def test_registered_slot_returns_none_when_quota_is_exhausted(self) -> None:
+        lease = acquire_registered_slot(
+            self._request_for(self.user_one), client=FakeRedis(result=0)
+        )
+
+        self.assertIsNone(lease)
+
+    def test_registered_slot_requires_authenticated_actor(self) -> None:
+        anonymous_request = self.factory.post("/api/molar-fractions/jobs/")
+        anonymous_request.user = SimpleNamespace(pk=None, is_authenticated=False)
+
+        with self.assertRaises(ValueError):
+            build_registered_lease_key(anonymous_request)
+
+
+@override_settings(TESTING=False)
+class RegisteredDispatchConcurrencyTests(TestCase):
+    """Integración del semáforo registrado con el create privado de una app."""
+
+    def setUp(self) -> None:
+        cache.clear()
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(username="registered-conc")
+        self.client.force_authenticate(user=self.user)
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def test_exhausted_slots_return_429(self) -> None:
+        with patch("apps.core.base_router.acquire_registered_slot", return_value=None):
+            response = self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+
+        self.assertEqual(response.status_code, 429)
+
+    def test_lease_is_attached_to_the_created_job(self) -> None:
+        lease = ConcurrencyLease(key="reg-key", token="reg-token")
+
+        with (
+            patch("apps.core.base_router.acquire_registered_slot", return_value=lease),
+            patch(
+                "apps.molar_fractions.routers.dispatch_scientific_job",
+                return_value=True,
+            ),
+        ):
+            response = self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        job = ScientificJob.objects.get(pk=response.data["id"])
+        self.assertEqual(
+            job.runtime_state["concurrency_lease"],
+            {"key": "reg-key", "token": "reg-token"},
+        )
+
+    def test_lease_is_released_when_creation_fails(self) -> None:
+        lease = ConcurrencyLease(key="reg-key", token="reg-token")
+
+        with (
+            patch("apps.core.base_router.acquire_registered_slot", return_value=lease),
+            patch("apps.core.base_router.release_lease") as mock_release,
+        ):
+            response = self.client.post(PRIVATE_MOLAR_URL, {"bad": "payload"}, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        mock_release.assert_called_once_with(lease)
+
+    @override_settings(TESTING=True)
+    def test_guard_is_skipped_in_test_mode(self) -> None:
+        with patch("apps.core.base_router.acquire_registered_slot") as mock_acquire:
+            self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+
+        mock_acquire.assert_not_called()

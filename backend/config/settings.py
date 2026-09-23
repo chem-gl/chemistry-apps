@@ -10,6 +10,7 @@ Cómo se usa:
 - La prioridad de valores es: entorno del sistema -> `.env` local -> defaults.
 """
 
+import sys
 import os
 import sys
 from importlib.util import find_spec
@@ -521,6 +522,14 @@ CELERY_HEAVY_PLUGINS: tuple[str, ...] = tuple(
     if plugin.strip()
 )
 CELERY_HEAVY_QUEUE: str = os.getenv("CELERY_HEAVY_QUEUE", "heavy")
+
+# REGISTERED_MAX_CONCURRENT_JOBS: trabajos simultáneos por usuario autenticado.
+REGISTERED_MAX_CONCURRENT_JOBS: int = max(
+    1, _get_env_int("REGISTERED_MAX_CONCURRENT_JOBS", 5)
+)
+
+# Modo test: la suite usa semáforos falsos y no debe depender de un Redis real.
+TESTING: bool = "test" in sys.argv
 SHARED_CACHE_TTL_DAYS: int = max(1, _get_env_int("SHARED_CACHE_TTL_DAYS", 7))
 
 # Tarea periódica de limpieza de chunks expirados (requiere Celery Beat).

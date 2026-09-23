@@ -77,6 +77,10 @@ class PublicAppViewSetMixin:
     throttle_classes: list[type[BaseThrottle]] = [AnonymousDispatchRateThrottle]
     read_throttle_classes: list[type[BaseThrottle]] = [AnonymousReadRateThrottle]
 
+    # El semáforo de registrados no aplica aquí: la ruta pública ya reserva su
+    # propio cupo anónimo y un solo job no puede llevar dos leases a la vez.
+    registered_concurrency_enabled: bool = False
+
     # Whitelist explícita de acciones `@action` heredadas que SÍ se publican.
     # Las acciones que no estén aquí (por ejemplo las de escritura del catálogo
     # Smile-it) quedan fuera: el modo libre es de solo lectura.
