@@ -30,3 +30,11 @@ __pycache__/
 deorecated/
 deprecated/*
 !.vscode/
+
+# Reportes generados para SonarQube. Se regeneran con
+# `bash scripts/generate_sonar_coverage.sh`; no deben versionarse porque un
+# reporte viejo hace que SonarQube evalúe cobertura/estilo desactualizados.
+backend/.coverage
+backend/coverage.xml
+backend/ruff.json
+frontend/eslint.json
