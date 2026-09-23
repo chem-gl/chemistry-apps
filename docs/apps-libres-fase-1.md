@@ -136,12 +136,35 @@ Reglas de acceso:
 Rutas públicas resultantes (3 por app, 21 en total): `POST jobs/`, `GET jobs/<uuid>/`,
 `GET jobs/<uuid>/report-csv/`. Sin listados, logs, papelera ni acciones de app.
 
-### Paso 2b — PENDIENTE
+### Paso 2b — COMPLETADO (API cerrado + streaming autenticado)
 
-- Cambiar `DEFAULT_PERMISSION_CLASSES` a `IsAuthenticated` y cerrar huecos de
-  `list`/`retrieve`/control/stream en `/api/jobs/` y `/api/<app>/jobs/`.
-- Ajustar tests de rutas privadas (hoy llaman sin credenciales).
-- Límite de concurrencia por IP (leases atómicos en Redis, liberados al terminar el job).
-- Límite de tasa para despachos registrados (`RegisteredDispatchRateThrottle` aún sin uso).
-- `/api/public/catalog/` con apps disponibles y aviso de privacidad.
+| Archivo | Cambio |
+|---|---|
+| `config/settings.py` | `DEFAULT_PERMISSION_CLASSES = IsAuthenticated`; `QueryStringJWTAuthentication` como 3er método de auth |
+| `apps/core/identity/routers.py` | `AllowAny` explícito en login y refresh (públicas, igual que registro) |
+| `apps/core/routers/viewset.py` | `permission_classes = [IsAuthenticated]` explícito en `JobViewSet` |
+| `apps/core/base_router.py` | `permission_classes = [IsAuthenticated]` explícito en `ScientificAppViewSetMixin` |
+| `apps/core/identity/authentication.py` (nuevo) | `QueryStringJWTAuthentication`: acepta `?token=<jwt>` (EventSource/WebSocket no admiten cabeceras) |
+| `apps/core/identity/ws_auth.py` (nuevo) | `JWTAuthMiddleware`: resuelve `scope["user"]` desde el token del query string |
+| `config/asgi.py` | `AuthMiddlewareStack(JWTAuthMiddleware(URLRouter(...)))` |
+| `apps/core/consumers.py` | WS exige autenticación (4401), valida alcance (job visible / plugin / global solo root-admin → 4403, job inexistente → 4404) y filtra el snapshot por visibilidad del actor |
+| `apps/core/test_utils.py` | `build_authenticated_api_client()`; `ScientificJobTestMixin` autentica por defecto |
+| 15 módulos de tests | Cliente autenticado (superusuario) en tests de rutas privadas |
+| `apps/core/tests/test_stream_auth.py` (nuevo) | 11 tests (query-token HTTP + reglas del consumer WS) |
+| `frontend/.../jobs-streaming-api.service.ts` | Adjunta `?token=` a SSE y a `WebSocket` (+1 test) |
+
+**Decisión abierta**: el catálogo Smile-it (sustituyentes/categorías/patrones) dejó
+de ser anónimo. Si la UI anónima necesita esos datos, hay que exponer un endpoint
+público de referencia de solo lectura (la superficie pública hoy solo tiene
+create/retrieve/report-csv).
+
+### Pasos pendientes
+
+- Throttle de despachos registrados (`RegisteredDispatchRateThrottle` aún sin uso).
+- Topes de tamaño: parámetros 256 KB; archivos 10 MB anónimo / 50 MB registrado → 413.
+- `/api/public/catalog/` con apps disponibles + aviso de privacidad.
+- Concurrencia por IP (leases atómicos en Redis, liberados al terminar el job).
+- Cola `heavy` para toxicity.
+- Frontend: capa `localStorage` FIFO-20, 7 apps sin guards, i18n (8 idiomas).
+- Infra: compose aislado + SSL del subdominio (bloqueado por acceso al host).
 
