@@ -242,10 +242,13 @@ export class EasyRateWorkflowService extends BaseJobWorkflowService<EasyRateResu
           'Easy-rate',
         );
       },
-      error: (dispatchError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to create Easy-rate job: ${dispatchError.message}`);
-      },
+        error: (dispatchError: Error) => {
+          this.activeSection.set('error');
+          this.errorMessage.set(
+            this.accessMode.openModeLimitMessage?.(dispatchError) ??
+              `Unable to create Easy-rate job: ${dispatchError.message}`,
+          );
+        },
     });
   }
 

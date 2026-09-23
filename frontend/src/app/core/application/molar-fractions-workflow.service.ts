@@ -107,7 +107,10 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
       },
       error: (dispatchError: Error) => {
         this.activeSection.set('error');
-        this.errorMessage.set(`Unable to create molar fractions job: ${dispatchError.message}`);
+        this.errorMessage.set(
+          this.accessMode.openModeLimitMessage?.(dispatchError) ??
+            `Unable to create molar fractions job: ${dispatchError.message}`,
+        );
       },
     });
   }

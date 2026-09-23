@@ -6,11 +6,13 @@
         <h3>{{ 'smileit.step2.title' | transloco }}</h3>
 
       </div>
-      <div class="catalog-card-header-actions">
+       @if (!accessMode.isOpenMode()) {
+       <div class="catalog-card-header-actions">
         <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
           {{ 'smileit.step2.manageCatalog' | transloco }}
         </button>
-      </div>
+       </div>
+       }
     </div>
 
     @if (isCatalogPanelCollapsed()) {
@@ -81,7 +83,7 @@
             </span>
             <span class="thumb-smiles mono">{{ entry.smiles }}</span>
           </button>
-          @if (workflow.catalog.isCatalogEntryEditable(entry)) {
+           @if (!accessMode.isOpenMode() && workflow.catalog.isCatalogEntryEditable(entry)) {
           <div class="library-thumb-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <button class="btn-secondary small" (click)="beginCatalogEntryEdition(entry)"
               [disabled]="workflow.isProcessing()">
@@ -96,6 +98,7 @@
     </section>
     }
 
+    @if (!accessMode.isOpenMode()) {
     <dialog #catalogStudioDialog class="catalog-studio-dialog" (click)="onCatalogStudioDialogClick($event)"
       (keydown.enter)="onCatalogStudioDialogClick($event)"
       (keydown.space)="onCatalogStudioDialogClick($event); $event.preventDefault()"
@@ -314,6 +317,7 @@
         </div>
       </section>
     </dialog>
+    }
     <dialog #catalogSmilesSketchDialog class="catalog-smiles-sketch-dialog"
       (click)="onCatalogSmilesSketchDialogClick($event)" (keydown.enter)="onCatalogSmilesSketchDialogClick($event)"
       (keydown.space)="onCatalogSmilesSketchDialogClick($event); $event.preventDefault()"

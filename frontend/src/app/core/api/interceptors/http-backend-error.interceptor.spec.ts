@@ -12,6 +12,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { JobAccessModeService } from '../../auth/job-access-mode.service';
 import {
   ERROR_NOTIFIER_PORT,
   ErrorNotifierPort,
@@ -103,6 +104,30 @@ describe('HttpBackendErrorInterceptor', () => {
     };
 
     await expect(firstValueFrom(interceptor.intercept(request, handler))).rejects.toBe(httpError);
+    expect(showHttpErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not duplicate open-mode quota errors in the global modal', async () => {
+    const notifier: ErrorNotifierPort = {
+      showError: () => {},
+      showMessage: () => {},
+      showHttpError: () => {},
+      dismiss: () => {},
+    };
+    const showHttpErrorSpy = vi.spyOn(notifier, 'showHttpError');
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ERROR_NOTIFIER_PORT, useValue: notifier },
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => true } },
+      ],
+    });
+    const interceptor = TestBed.runInInjectionContext(() => new HttpBackendErrorInterceptor());
+    const request = new HttpRequest('POST', '/api/open/jobs', null);
+    const httpError = new HttpErrorResponse({ status: 429 });
+
+    await expect(
+      firstValueFrom(interceptor.intercept(request, { handle: () => throwError(() => httpError) })),
+    ).rejects.toBe(httpError);
     expect(showHttpErrorSpy).not.toHaveBeenCalled();
   });
 });

@@ -18,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import {
@@ -75,6 +76,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly translocoService = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
+  readonly accessMode = inject(JobAccessModeService);
   private routeSubscription: Subscription | null = null;
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
@@ -342,6 +344,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   beginPatternEntryEdition(pattern: SmileitPatternEntryView): void {
+    if (this.accessMode.isOpenMode()) return;
     this.workflow.catalog.beginPatternEntryEdition(pattern);
     this.bringPatternEditorToTop();
   }
@@ -351,6 +354,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
   }
 
   deletePatternEntry(pattern: SmileitPatternEntryView): void {
+    if (this.accessMode.isOpenMode()) return;
     this.workflow.catalog.deletePatternEntry(pattern);
 
     const selectedPattern: SmileitPatternEntryView | null = this.selectedPatternForDetail();
@@ -378,6 +382,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   /** Cierra el detalle y abre el editor de la entrada seleccionada */
   editLibraryEntryFromDetail(catalogEntry: SmileitCatalogEntryView): void {
+    if (this.accessMode.isOpenMode()) return;
     this.closeLibraryEntryDetail();
     this.catalogPanelComponentRef?.beginCatalogEntryEdition(catalogEntry);
   }
@@ -411,6 +416,10 @@ export class SmileitComponent implements OnInit, OnDestroy {
       .some((block: SmileitAssignmentBlockDraft) =>
         this.workflow.catalog.isCatalogEntryReferenced(block, catalogEntry),
       );
+  }
+
+  isCatalogEntryEditable(catalogEntry: SmileitCatalogEntryView): boolean {
+    return !this.accessMode.isOpenMode() && this.workflow.catalog.isCatalogEntryEditable(catalogEntry);
   }
 
   isAtomSelected(atomIndex: number): boolean {

@@ -1,0 +1,206 @@
+:host {
+  display: block;
+}
+
+.showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+.showcase.is-hub {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.9fr) minmax(0, 1.4fr);
+  gap: clamp(1rem, 3vw, 2rem);
+  padding: clamp(1rem, 3vw, 1.8rem);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(230, 237, 232, 0.72));
+  box-shadow: var(--chem-shadow);
+}
+
+.developers-section,
+.publications-section {
+  padding: 1.2rem 1rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-surface-elevated);
+}
+
+.is-hub .developers-section,
+.is-hub .publications-section {
+  border-color: var(--chem-border-accent-strong);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.section-heading {
+  margin: 0 0 0.9rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: var(--chem-text-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.developers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.developer-card {
+  display: flex;
+  min-width: 5.5rem;
+  padding: 0.4rem 0.35rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--chem-radius);
+  text-decoration: none;
+  transition: background var(--chem-transition), transform var(--chem-transition);
+}
+
+.developer-card:hover {
+  background: rgba(49, 113, 84, 0.08);
+  transform: translateY(-2px);
+}
+
+.developer-card:focus-visible,
+.publication-card:focus-visible {
+  outline: 3px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+
+.developer-avatar {
+  display: flex;
+  width: 80px;
+  height: 80px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(12, 32, 33, 0.1);
+}
+
+.developer-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.developer-initials {
+  color: #fff;
+  font-family: var(--chem-font-label);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.developer-name {
+  display: flex;
+  min-height: 2.3em;
+  max-width: 7rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.developer-role {
+  color: var(--uni-green-400);
+  font-family: var(--chem-font-label);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.developer-affiliation {
+  color: var(--uni-blue);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.publications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.publication-card {
+  display: flex;
+  padding: 0.55rem 0.7rem;
+  flex-direction: column;
+  gap: 0.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--chem-radius);
+  text-decoration: none;
+  transition: background var(--chem-transition), border-color var(--chem-transition), box-shadow var(--chem-transition);
+}
+
+.publication-card:hover {
+  border-color: var(--chem-border-subtle);
+  background: var(--chem-surface);
+  box-shadow: var(--chem-shadow-sm);
+}
+
+.pub-title {
+  color: var(--chem-ink);
+  font-family: var(--chem-font-body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pub-authors {
+  color: var(--chem-ink-secondary);
+  font-size: 0.66rem;
+  line-height: 1.2;
+}
+
+.pub-journal-name {
+  color: var(--uni-green-500);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .showcase.is-hub {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .developers-grid {
+    gap: 0.5rem;
+  }
+
+  .developer-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .developer-name {
+    font-size: 0.76rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .developer-card,
+  .publication-card {
+    transition: none;
+  }
+
+  .developer-card:hover {
+    transform: none;
+  }
+}

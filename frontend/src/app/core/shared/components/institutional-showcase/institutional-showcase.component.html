@@ -1,0 +1,39 @@
+<div class="showcase" [class.is-hub]="variant() === 'hub'">
+  <section class="developers-section" [attr.aria-label]="'login.developers.ariaLabel' | transloco">
+    <h2 class="section-heading">{{ 'login.developers.heading' | transloco }}</h2>
+    <div class="developers-grid">
+      @for (developer of developers(); track developer.nameKey) {
+      <a class="developer-card" [href]="developer.link" target="_blank" rel="noopener noreferrer"
+        [attr.aria-label]="developer.nameKey | transloco">
+        <div class="developer-avatar" [style.background]="developer.avatarColor">
+          @if (developer.photoUrl) {
+          <img [src]="developer.photoUrl" [alt]="developer.nameKey | transloco" class="developer-photo"
+            (error)="onDeveloperPhotoError($event, developer)" />
+          } @else {
+          <span class="developer-initials">{{ developer.initials }}</span>
+          }
+        </div>
+        <span class="developer-name">{{ developer.nameKey | transloco }}</span>
+        <span class="developer-role">{{ developer.roleKey | transloco }}</span>
+        @if (developer.affiliationKey) {
+        <span class="developer-affiliation">{{ developer.affiliationKey | transloco }}</span>
+        }
+      </a>
+      }
+    </div>
+  </section>
+
+  <section class="publications-section" [attr.aria-label]="'login.publications.ariaLabel' | transloco">
+    <h2 class="section-heading">{{ 'login.publications.heading' | transloco }}</h2>
+    <div class="publications-list">
+      @for (publication of publications(); track publication.doi) {
+      <a class="publication-card" [href]="publication.doi" target="_blank" rel="noopener noreferrer"
+        [attr.aria-label]="publication.title">
+        <span class="pub-title">{{ publication.title }}</span>
+        <span class="pub-authors">{{ publication.authors }}</span>
+        <span class="pub-journal-name">{{ publication.journal }}, {{ publication.year }}</span>
+      </a>
+      }
+    </div>
+  </section>
+</div>

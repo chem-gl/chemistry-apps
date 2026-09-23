@@ -6,13 +6,13 @@
     </a>
     }
 
-    @if (canDelete) {
+    @if (canDelete && !accessMode?.isOpenMode()) {
     <button class="job-action-button delete-action" type="button" [disabled]="isBusy" (click)="deleteRequested.emit()">
         {{ isBusy ? ('common.actions.working' | transloco) : deleteLabel }}
     </button>
     }
 
-    @if (canRestore) {
+    @if (canRestore && !accessMode?.isOpenMode()) {
     <button class="job-action-button restore-action" type="button" [disabled]="isBusy"
         (click)="restoreRequested.emit()">
         {{ isBusy ? ('common.actions.working' | transloco) : restoreLabel }}

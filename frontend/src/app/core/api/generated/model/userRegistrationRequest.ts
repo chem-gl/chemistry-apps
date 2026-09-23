@@ -10,7 +10,7 @@
 
 
 /**
- * Serializer para auto-registro público de usuarios.  Sin `registration_token`: crea usuario sin grupo ni permisos (sin acceso a apps). Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado al token, heredando los AppPermission de ese grupo.
+ * Serializer para auto-registro público de usuarios.  Sin `registration_token`: crea usuario en el grupo de acogida si `DEFAULT_REGISTRATION_GROUP_SLUG` está configurado (sin acceso a apps con cuenta salvo que el grupo lo otorgue); si no, queda sin grupo ni permisos. Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado al token, heredando los AppPermission de ese grupo.
  */
 export interface UserRegistrationRequest { 
     username: string;

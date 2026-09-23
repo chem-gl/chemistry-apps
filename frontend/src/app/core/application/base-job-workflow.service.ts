@@ -251,6 +251,11 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     return source.pipe(
       finalize(() => this.isExporting.set(false)),
       catchError((requestError: unknown) => {
+        const limitMessage = this.accessMode.openModeLimitMessage?.(requestError) ?? null;
+        if (limitMessage !== null) {
+          this.exportErrorMessage.set(limitMessage);
+          return throwError(() => requestError);
+        }
         const msg: string = requestError instanceof Error ? requestError.message : 'Unknown error.';
         this.exportErrorMessage.set(`Unable to download ${label}: ${msg}`);
         return throwError(() => requestError);

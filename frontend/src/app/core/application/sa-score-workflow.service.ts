@@ -108,7 +108,10 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
             },
             error: (dispatchError: Error) => {
               this.activeSection.set('error');
-              this.errorMessage.set(`Unable to create SA score job: ${dispatchError.message}`);
+              this.errorMessage.set(
+                this.accessMode.openModeLimitMessage?.(dispatchError) ??
+                  `Unable to create SA score job: ${dispatchError.message}`,
+              );
             },
           });
         },

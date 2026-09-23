@@ -233,6 +233,9 @@
   }
 
   h3 {
+    display: flex;
+    min-height: 2.4em;
+    align-items: center;
     margin: 0;
     font-family: var(--chem-font-heading);
     font-size: 1.08rem;
@@ -292,6 +295,7 @@
 
 // Respeta a quien pide menos movimiento.
 @media (prefers-reduced-motion: reduce) {
+  .reaction-glow,
   .node-link,
   .cta {
     transition: none;

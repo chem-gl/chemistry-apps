@@ -220,9 +220,9 @@
 
     <app-library-entry-detail-dialog [selectedEntry]="selectedLibraryEntryForDetail()"
       [openContext]="libraryDetailOpenContext()" [previewSvgResolver]="catalogEntryPreviewSvg.bind(this)"
-      [isReferencedInAnyBlockResolver]="isReferencedInAnyBlock.bind(this)" [isCatalogEntryEditableResolver]="
-        workflow.catalog.isCatalogEntryEditable.bind(workflow.catalog)
-      " [isProcessing]="workflow.isProcessing()" (closeRequested)="closeLibraryEntryDetail()"
+       [isReferencedInAnyBlockResolver]="isReferencedInAnyBlock.bind(this)" [isCatalogEntryEditableResolver]="
+         isCatalogEntryEditable.bind(this)
+       " [isProcessing]="workflow.isProcessing()" (closeRequested)="closeLibraryEntryDetail()"
       (editRequested)="editLibraryEntryFromDetail($event)" />
 
     <dialog #patternCatalogDialog class="pattern-catalog-dialog"
@@ -249,7 +249,8 @@
           <p>{{ 'smileit.patterns.howItWorks3' | transloco }}</p>
         </article>
 
-        @if (editingPatternEntry(); as activePatternEdition) {
+         @if (!accessMode.isOpenMode()) {
+         @if (editingPatternEntry(); as activePatternEdition) {
         <output class="pattern-editing-notice" aria-live="polite">
 {{ 'smileit.patterns.editingPattern' | transloco }} <strong>{{ activePatternEdition.name }}</strong>
                     <span class="mono">({{ 'smileit.patterns.stableId' | transloco }} {{ activePatternEdition.stable_id }})</span>
@@ -305,9 +306,10 @@
         </div>
         }
 
-        @if (workflow.errorMessage(); as patternErrorMessage) {
-        <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
-        }
+         @if (workflow.errorMessage(); as patternErrorMessage) {
+         <p class="error-message" role="alert">{{ patternErrorMessage }}</p>
+         }
+         }
 
         <div class="pattern-list pattern-modal-list">
           @for (
@@ -336,7 +338,7 @@
                 {{ isPatternEnabled(pattern) ? ('smileit.patterns.active' | transloco) : ('smileit.patterns.hidden' |
                 transloco) }}
               </label>
-              @if (workflow.catalog.isPatternEntryEditable(pattern)) {
+               @if (!accessMode.isOpenMode() && workflow.catalog.isPatternEntryEditable(pattern)) {
               <div class="pattern-item-actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                 <button type="button" class="btn-secondary small" (click)="beginPatternEntryEdition(pattern)"
                   [disabled]="workflow.isProcessing()">

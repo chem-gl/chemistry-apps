@@ -66,7 +66,10 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');
-          this.errorMessage.set(`Unable to create tunnel job: ${dispatchError.message}`);
+          this.errorMessage.set(
+            this.accessMode.openModeLimitMessage?.(dispatchError) ??
+              `Unable to create tunnel job: ${dispatchError.message}`,
+          );
         },
       });
   }

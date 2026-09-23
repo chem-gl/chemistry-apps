@@ -154,10 +154,13 @@ export class MarcusWorkflowService extends BaseJobWorkflowService<MarcusResultDa
       next: (jobResponse: MarcusJobResponseView) => {
         this.handleDispatchJobResponse(jobResponse, (job) => this.extractResultData(job), 'Marcus');
       },
-      error: (dispatchError: Error) => {
-        this.activeSection.set('error');
-        this.errorMessage.set(`Unable to create Marcus job: ${dispatchError.message}`);
-      },
+        error: (dispatchError: Error) => {
+          this.activeSection.set('error');
+          this.errorMessage.set(
+            this.accessMode.openModeLimitMessage?.(dispatchError) ??
+              `Unable to create Marcus job: ${dispatchError.message}`,
+          );
+        },
     });
   }
 

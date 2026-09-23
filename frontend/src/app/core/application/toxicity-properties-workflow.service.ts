@@ -92,7 +92,8 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
               error: (dispatchError: Error) => {
                 this.activeSection.set('error');
                 this.errorMessage.set(
-                  `Unable to create toxicity properties job: ${dispatchError.message}`,
+                  this.accessMode.openModeLimitMessage?.(dispatchError) ??
+                    `Unable to create toxicity properties job: ${dispatchError.message}`,
                 );
               },
             });

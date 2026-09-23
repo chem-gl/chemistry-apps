@@ -14,10 +14,12 @@ import {
   ErrorNotifierPort,
 } from '../../application/errors/error-notifier.port';
 import { SKIP_GLOBAL_ERROR_MODAL } from './http-context-tokens';
+import { JobAccessModeService } from '../../auth/job-access-mode.service';
 
 @Injectable()
 export class HttpBackendErrorInterceptor implements HttpInterceptor {
   private readonly errorNotifier: ErrorNotifierPort = inject(ERROR_NOTIFIER_PORT);
+  private readonly accessMode = inject(JobAccessModeService, { optional: true });
 
   intercept(httpRequest: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     return next.handle(httpRequest).pipe(
@@ -28,6 +30,10 @@ export class HttpBackendErrorInterceptor implements HttpInterceptor {
         }
 
         if (httpRequest.context.get(SKIP_GLOBAL_ERROR_MODAL)) {
+          return throwError(() => httpError);
+        }
+
+        if (this.accessMode?.isOpenMode() && (httpError.status === 429 || httpError.status === 413)) {
           return throwError(() => httpError);
         }
 

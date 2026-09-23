@@ -67,6 +67,10 @@ class TestWorkflowService extends BaseJobWorkflowService<string> {
   summary(status: string): string {
     return this.buildHistoricalSummaryMessage(status);
   }
+
+  restore(summary: unknown): string | null {
+    return this.restoreResultFromLocalSummary(summary);
+  }
 }
 
 function makeJob(id: string, updatedAt: string): ScientificJobView {
@@ -225,5 +229,11 @@ describe('BaseJobWorkflowService', () => {
     service.start('job-5');
     service.ngOnDestroy();
     expect(api.streamJobEvents).toHaveBeenCalledWith('job-5');
+  });
+
+  it('restores object summaries and rejects null or primitive summaries', () => {
+    expect(service.restore({ value: 'saved' })).toEqual({ value: 'saved' });
+    expect(service.restore(null)).toBeNull();
+    expect(service.restore('saved')).toBeNull();
   });
 });

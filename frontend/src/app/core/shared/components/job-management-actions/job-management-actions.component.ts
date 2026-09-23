@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { JobAccessModeService } from '../../../auth/job-access-mode.service';
 
 @Component({
   selector: 'app-job-management-actions',
@@ -13,6 +14,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   styleUrl: './job-management-actions.component.scss',
 })
 export class JobManagementActionsComponent {
+  readonly accessMode = JobAccessModeService.current;
   /** Controla si se renderiza el enlace al resultado de la app científica. */
   @Input() showOpenResult: boolean = true;
 

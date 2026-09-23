@@ -11,6 +11,7 @@ import {
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { JobFiltersComponent } from '../core/shared/components/job-filters/job-filters.component';
 import { JobLogsPanelComponent } from '../core/shared/components/job-logs-panel/job-logs-panel.component';
 import { JobManagementActionsComponent } from '../core/shared/components/job-management-actions/job-management-actions.component';
@@ -39,6 +40,7 @@ import {
 export class JobsMonitorComponent implements OnInit, OnDestroy {
   readonly facade = inject(JobsMonitorFacadeService);
   readonly sessionService = inject(IdentitySessionService);
+  readonly accessMode = inject(JobAccessModeService, { optional: true });
   private readonly translocoService = inject(TranslocoService);
 
   readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; labelKey: string }> = [

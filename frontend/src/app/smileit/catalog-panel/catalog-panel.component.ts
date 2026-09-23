@@ -25,6 +25,7 @@ import {
   SmileitStructureInspectionView,
 } from '../../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
+import { JobAccessModeService } from '../../core/auth/job-access-mode.service';
 import { SmileitInspectionService } from '../core/services/smileit-inspection.service';
 import {
   formatAtomIndices,
@@ -55,6 +56,7 @@ export class CatalogPanelComponent implements OnDestroy {
 
   // --- Servicios inyectados desde el árbol de inyectores del padre ---
   readonly workflow = inject(SmileitWorkflowService);
+  readonly accessMode = inject(JobAccessModeService);
   private readonly inspectionService = inject(SmileitInspectionService);
   private readonly jobsApiService = inject(JobsApiService);
   private readonly sanitizer = inject(DomSanitizer);
@@ -132,6 +134,7 @@ export class CatalogPanelComponent implements OnDestroy {
   }
 
   openCatalogStudioModal(): void {
+    if (this.accessMode.isOpenMode()) return;
     const dialog = this.catalogStudioDialogRef?.nativeElement;
     if (dialog === undefined || dialog.open) {
       return;
@@ -153,6 +156,7 @@ export class CatalogPanelComponent implements OnDestroy {
   }
 
   beginCatalogEntryEdition(catalogEntry: SmileitCatalogEntryView): void {
+    if (this.accessMode.isOpenMode()) return;
     this.workflow.catalog.beginCatalogEntryEdition(catalogEntry);
     this.openCatalogStudioModal();
   }

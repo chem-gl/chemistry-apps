@@ -439,7 +439,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
     }
 
     /**
-     * Registro público de nuevos usuarios.  Sin &#x60;registration_token&#x60;: crea usuario sin grupo ni permisos de app. Con &#x60;registration_token&#x60; válido: crea usuario, lo asigna al grupo vinculado al token, y devuelve tokens JWT para auto-login inmediato.
+     * Registro público de nuevos usuarios.  Sin &#x60;registration_token&#x60;: crea usuario en el grupo de acogida si está configurado (&#x60;DEFAULT_REGISTRATION_GROUP_SLUG&#x60;); si no, sin grupo ni permisos de app. Con &#x60;registration_token&#x60; válido: crea usuario, lo asigna al grupo vinculado al token, y devuelve tokens JWT para auto-login inmediato.
      * @endpoint post /api/auth/register/
      * @param userRegistrationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

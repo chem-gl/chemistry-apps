@@ -114,7 +114,7 @@
           </a>
           }
 
-          @if (canManageJob(activeJob) && activeJob.supports_pause_resume) {
+           @if (!accessMode?.isOpenMode() && canManageJob(activeJob) && activeJob.supports_pause_resume) {
           <button class="control-btn pause-btn" (click)="pauseJob(activeJob.id)" [disabled]="
                     facade.isControlActionRunning(activeJob.id) || activeJob.pause_requested
                   ">
@@ -126,7 +126,7 @@
             }
           </button>
           }
-          @if (canManageJob(activeJob)) {
+           @if (!accessMode?.isOpenMode() && canManageJob(activeJob)) {
           <button class="control-btn cancel-btn" (click)="cancelJob(activeJob.id)"
             [disabled]="facade.isControlActionRunning(activeJob.id)">
             {{ facade.isControlActionRunning(activeJob.id) ? ('jobsMonitor.actions.cancelling' | transloco) :
@@ -187,14 +187,14 @@
           </a>
           }
 
-          @if (canManageJob(pausedJob) && pausedJob.supports_pause_resume) {
+           @if (!accessMode?.isOpenMode() && canManageJob(pausedJob) && pausedJob.supports_pause_resume) {
           <button class="control-btn resume-btn" (click)="resumeJob(pausedJob.id)"
             [disabled]="facade.isControlActionRunning(pausedJob.id)">
             {{ facade.isControlActionRunning(pausedJob.id) ? ('jobsMonitor.actions.resuming' | transloco) :
             ('jobsMonitor.actions.resume' | transloco) }}
           </button>
           }
-          @if (canManageJob(pausedJob)) {
+           @if (!accessMode?.isOpenMode() && canManageJob(pausedJob)) {
           <button class="control-btn cancel-btn" (click)="cancelJob(pausedJob.id)"
             [disabled]="facade.isControlActionRunning(pausedJob.id)">
             {{ facade.isControlActionRunning(pausedJob.id) ? ('jobsMonitor.actions.cancelling' | transloco) :
@@ -307,7 +307,7 @@
         </p>
       </div>
 
-      @if (canManageJob(selectedJob) && selectedJob.supports_pause_resume) {
+      @if (!accessMode?.isOpenMode() && canManageJob(selectedJob) && selectedJob.supports_pause_resume) {
       <div class="actions-cell">
         @if (selectedJob.status === 'paused') {
         <button class="control-btn resume-btn" (click)="resumeJob(selectedJob.id)"
@@ -333,11 +333,11 @@
           }
         </button>
         }
-        @if (
+      @if (!accessMode?.isOpenMode() && (
         selectedJob.status === 'pending' ||
         selectedJob.status === 'running' ||
         selectedJob.status === 'paused'
-        ) {
+      )) {
         <button class="control-btn cancel-btn" (click)="cancelJob(selectedJob.id)"
           [disabled]="facade.isControlActionRunning(selectedJob.id)">
           {{

@@ -20,6 +20,7 @@ import type {
 } from '../api/jobs-api.service';
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
 import { deduplicateJobsKeepingLatestSnapshot } from './job-history-utils';
 import { mergeLogEntry } from './log-entry-utils';
 
@@ -61,6 +62,7 @@ export class SmileitWorkflowService implements OnDestroy {
 
   private readonly jobsApiService = inject(JobsApiService);
   private readonly smileitApiService = inject(SmileitApiService);
+  private readonly accessMode = inject(JobAccessModeService, { optional: true });
   private progressSubscription: Subscription | null = null;
   private logsSubscription: Subscription | null = null;
 
@@ -284,7 +286,10 @@ export class SmileitWorkflowService implements OnDestroy {
       },
       error: (dispatchError: Error) => {
         this.state.activeSection.set('error');
-        this.state.errorMessage.set(`Unable to create Smileit job: ${dispatchError.message}`);
+        this.state.errorMessage.set(
+          this.accessMode?.openModeLimitMessage?.(dispatchError) ??
+            `Unable to create Smileit job: ${dispatchError.message}`,
+        );
       },
     });
   }
@@ -447,6 +452,11 @@ export class SmileitWorkflowService implements OnDestroy {
     return downloadFactory(selectedJobId).pipe(
       finalize(() => this.state.isExporting.set(false)),
       catchError((requestError: unknown) => {
+        const limitMessage = this.accessMode?.openModeLimitMessage?.(requestError) ?? null;
+        if (limitMessage !== null) {
+          this.state.exportErrorMessage.set(limitMessage);
+          return throwError(() => requestError);
+        }
         const normalizedErrorMessage: string =
           requestError instanceof Error
             ? requestError.message

@@ -11,6 +11,7 @@ import {
   SmileitWorkflowService,
 } from '../../core/application/smileit-workflow.service';
 import { JobProgressCardComponent } from '../../core/shared/components/job-progress-card/job-progress-card.component';
+import { JobAccessModeService } from '../../core/auth/job-access-mode.service';
 import { GenerationResultDataService } from './generation-result-data.service';
 import {
   buildDerivativeDisplayName,
@@ -28,6 +29,7 @@ import {
 })
 export class GenerationResultPanelComponent {
   readonly workflow = inject(SmileitWorkflowService);
+  readonly accessMode = inject(JobAccessModeService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly resultDataService = inject(GenerationResultDataService);
 
@@ -144,9 +146,9 @@ export class GenerationResultPanelComponent {
 
   canDeleteHistoricalJob(historyJob: ScientificJobView): boolean {
     return (
-      historyJob.status === 'completed' ||
+      !this.accessMode.isOpenMode() && (historyJob.status === 'completed' ||
       historyJob.status === 'failed' ||
-      historyJob.status === 'cancelled'
+      historyJob.status === 'cancelled')
     );
   }
 
