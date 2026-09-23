@@ -247,7 +247,7 @@ services:
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
-    command: ["python", "-m", "celery", "-A", "config", "beat", "-l", "info"]
+    command: ["python", "-m", "celery", "-A", "config", "beat", "-l", "info", "--schedule=/tmp/celerybeat-schedule"]
     networks:
       - chemistry-libres-network
     depends_on:
@@ -257,6 +257,10 @@ services:
         condition: service_healthy
       backend:
         condition: service_healthy
+    volumes:
+      # Sin este volumen, settings.py no puede crear su dir de storage y beat
+      # entra en crash-loop (PermissionError en /app/media).
+      - ./backend/media:/app/media
     environment:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${SECRET_KEY}
