@@ -158,7 +158,7 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
   }
 
   protected override fetchFinalResult(jobId: string): void {
-    this.jobsApiService.getScientificJobStatus(jobId).subscribe({
+    this.jobsApiService.getMolarFractionsJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           loadLogs: false,

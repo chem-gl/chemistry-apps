@@ -3,7 +3,17 @@
 
 import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  forkJoin,
+  from,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { createReportDownload$ } from './api-download.utils';
 import {
   PatchedSmileitCatalogEntryCreateRequest,
@@ -35,6 +45,8 @@ import type {
   SmilesCompatibilityIssueView,
   SmilesCompatibilityResultView,
 } from './types';
+import { PublicJobsApiService } from './public-jobs-api.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
 
 @Injectable({
   providedIn: 'root',
@@ -42,6 +54,12 @@ import type {
 export class SmileitApiService {
   private readonly smileitClient = inject(SmileitService);
   private readonly httpClient = inject(HttpClient);
+  private readonly publicApi = inject(PublicJobsApiService);
+  private readonly accessMode = inject(JobAccessModeService, { optional: true });
+
+  private isOpenMode(): boolean {
+    return this.accessMode?.isOpenMode() ?? false;
+  }
 
   /**
    * Construye contexto HTTP para evitar modal global en flujos que ya muestran
@@ -56,16 +74,19 @@ export class SmileitApiService {
    * Usar para poblar la lista inicial y referencias inmutables por bloque.
    */
   listSmileitCatalog(): Observable<SmileitCatalogEntryView[]> {
+    if (this.isOpenMode()) return this.publicApi.listSmileitCatalog();
     return this.smileitClient.smileitJobsCatalogList().pipe(shareReplay(1));
   }
 
   /** Devuelve las categorías químicas verificables para filtros y validación. */
   listSmileitCategories(): Observable<SmileitCategoryView[]> {
+    if (this.isOpenMode()) return this.publicApi.listSmileitCategories();
     return this.smileitClient.smileitJobsCategoriesList().pipe(shareReplay(1));
   }
 
   /** Devuelve el catálogo de patrones estructurales activos para anotación visual. */
   listSmileitPatterns(): Observable<SmileitPatternEntryView[]> {
+    if (this.isOpenMode()) return this.publicApi.listSmileitPatterns();
     return this.smileitClient.smileitJobsPatternsList().pipe(shareReplay(1));
   }
 
@@ -73,6 +94,8 @@ export class SmileitApiService {
   createSmileitCatalogEntry(
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
+    if (this.isOpenMode())
+      return throwError(() => new Error('Smileit catalog editing requires an account.'));
     const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
       .smileitJobsCatalogCreate(this.buildCatalogCreateRequest(params), 'body', false, {
@@ -86,6 +109,8 @@ export class SmileitApiService {
     stableId: string,
     params: SmileitCatalogEntryCreateParams,
   ): Observable<SmileitCatalogEntryView[]> {
+    if (this.isOpenMode())
+      return throwError(() => new Error('Smileit catalog editing requires an account.'));
     const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
       .smileitJobsCatalogPartialUpdate(
@@ -104,6 +129,8 @@ export class SmileitApiService {
   createSmileitPatternEntry(
     params: SmileitPatternEntryCreateParams,
   ): Observable<SmileitPatternEntryView[]> {
+    if (this.isOpenMode())
+      return throwError(() => new Error('Smileit pattern editing requires an account.'));
     const requestContext = this.buildSkipGlobalErrorContext();
     return this.smileitClient
       .smileitJobsPatternsCreate(this.buildPatternEntryRequest(params), undefined, 'body', false, {
@@ -117,6 +144,8 @@ export class SmileitApiService {
     stableId: string,
     params: SmileitPatternEntryCreateParams,
   ): Observable<SmileitPatternEntryView> {
+    if (this.isOpenMode())
+      return throwError(() => new Error('Smileit pattern editing requires an account.'));
     const requestContext = this.buildSkipGlobalErrorContext();
     const encodedStableId: string = encodeURIComponent(stableId);
     return this.httpClient
@@ -130,6 +159,8 @@ export class SmileitApiService {
 
   /** Elimina lógicamente un patrón editable por stable_id. */
   deleteSmileitPatternEntry(stableId: string): Observable<void> {
+    if (this.isOpenMode())
+      return throwError(() => new Error('Smileit pattern editing requires an account.'));
     const requestContext = this.buildSkipGlobalErrorContext();
     const encodedStableId: string = encodeURIComponent(stableId);
     return this.httpClient
@@ -144,6 +175,7 @@ export class SmileitApiService {
    * Usar para que el usuario seleccione los átomos de sustitución antes de despachar el job.
    */
   inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
+    if (this.isOpenMode()) return this.publicApi.inspectSmileitStructure(smiles);
     const requestContext = new HttpContext().set(SKIP_GLOBAL_ERROR_MODAL, true);
     const request: SmileitStructureInspectionRequestRequest = { smiles };
     return this.smileitClient
@@ -151,22 +183,20 @@ export class SmileitApiService {
         context: requestContext,
       })
       .pipe(
-        map(
-          (raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
-            canonicalSmiles: raw.canonical_smiles,
-            atomCount: raw.atom_count,
-            atoms: raw.atoms.map((atom) => ({
-              index: atom.index,
-              symbol: atom.symbol,
-              implicitHydrogens: atom.implicit_hydrogens,
-              isAromatic: atom.is_aromatic,
-            })),
-            svg: raw.svg,
-            quickProperties: raw.quick_properties,
-            annotations: raw.annotations,
-            activePatternRefs: raw.active_pattern_refs,
-          }),
-        ),
+        map((raw: SmileitStructureInspectionResponse): SmileitStructureInspectionView => ({
+          canonicalSmiles: raw.canonical_smiles,
+          atomCount: raw.atom_count,
+          atoms: raw.atoms.map((atom) => ({
+            index: atom.index,
+            symbol: atom.symbol,
+            implicitHydrogens: atom.implicit_hydrogens,
+            isAromatic: atom.is_aromatic,
+          })),
+          svg: raw.svg,
+          quickProperties: raw.quick_properties,
+          annotations: raw.annotations,
+          activePatternRefs: raw.active_pattern_refs,
+        })),
         shareReplay(1),
       );
   }
@@ -242,6 +272,7 @@ export class SmileitApiService {
    * Retorna el job creado con status 'pending'; usar streamJobEvents() para progreso.
    */
   dispatchSmileitJob(params: SmileitGenerationParams): Observable<SmileitJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.dispatchSmileitJob(params);
     const payload: SmileitJobCreateRequest = {
       version: params.version ?? '2.0.0',
       principal_smiles: params.principalSmiles,
@@ -283,6 +314,7 @@ export class SmileitApiService {
 
   /** Consulta estado completo de un job smileit por UUID. */
   getSmileitJobStatus(jobId: string): Observable<SmileitJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.getSmileitJobStatus(jobId);
     return this.smileitClient.smileitJobsRetrieve(jobId);
   }
 
@@ -292,6 +324,7 @@ export class SmileitApiService {
     offset: number,
     limit: number,
   ): Observable<SmileitDerivationPageView> {
+    if (this.isOpenMode()) return this.publicApi.listSmileitDerivations(jobId, offset, limit);
     return this.smileitClient.smileitJobsDerivationsRetrieve(jobId, limit, offset).pipe(
       map((rawPage) => ({
         totalGenerated: rawPage.total_generated,
@@ -320,6 +353,8 @@ export class SmileitApiService {
     structureIndex: number,
     variant: 'thumb' | 'detail' = 'detail',
   ): Observable<string> {
+    if (this.isOpenMode())
+      return this.publicApi.getSmileitDerivationSvg(jobId, structureIndex, variant);
     return this.smileitClient
       .smileitJobsDerivationsSvgRetrieve(jobId, structureIndex, variant)
       .pipe(
@@ -345,6 +380,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte CSV de smileit (listado de estructuras generadas). */
   downloadSmileitCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitCsvReport(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportCsvRetrieve(jobId, 'response'),
       `smileit_${jobId}_report.csv`,
@@ -353,6 +389,7 @@ export class SmileitApiService {
 
   /** Descarga el archivo enumerado de SMILES listo para DataWarrior u otros flujos. */
   downloadSmileitSmilesReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitSmilesReport(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportSmilesRetrieve(jobId, 'response'),
       `smileit_${jobId}_structures.smi`,
@@ -361,6 +398,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte tabular de trazabilidad sitio -> sustituyente por derivado. */
   downloadSmileitTraceabilityReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitTraceabilityReport(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportTraceabilityRetrieve(jobId, 'response'),
       `smileit_${jobId}_traceability.csv`,
@@ -369,6 +407,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte LOG de smileit (descripción de la generación). */
   downloadSmileitLogReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitLogReport(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportLogRetrieve(jobId, 'response'),
       `smileit_${jobId}_report.log`,
@@ -377,6 +416,7 @@ export class SmileitApiService {
 
   /** Descarga el reporte de error de smileit cuando el job falla. */
   downloadSmileitErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitErrorReport(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportErrorRetrieve(jobId, 'response'),
       `smileit_${jobId}_error.txt`,
@@ -385,6 +425,7 @@ export class SmileitApiService {
 
   /** Descarga ZIP server-side con imágenes SVG para jobs Smile-it muy grandes. */
   downloadSmileitImagesZipServer(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSmileitImagesZipServer(jobId);
     return this.downloadReportFile$(
       this.smileitClient.smileitJobsReportImagesZipRetrieve(jobId, 'response'),
       `smileit_${jobId}_images.zip`,

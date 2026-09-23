@@ -9,6 +9,8 @@ import {
 } from '../api/jobs-api.service';
 import { NamedSmilesInputRow } from '../shared/scientific-app-ui.utils';
 import { SmilesJobWorkflowService } from './smiles-job-workflow.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 
 class TestSmilesWorkflowService extends SmilesJobWorkflowService<string> {
   constructor(initialInput: string) {
@@ -78,6 +80,8 @@ describe('SmilesJobWorkflowService', () => {
     );
     const injector = Injector.create({
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => false, mode: () => 'account' } },
+        { provide: LocalResultsStore, useValue: { list: () => [], save: () => undefined, remove: () => undefined, clear: () => undefined } },
         {
           provide: JobsApiService,
           useValue: {

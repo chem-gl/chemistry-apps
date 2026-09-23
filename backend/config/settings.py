@@ -510,6 +510,17 @@ ANONYMOUS_CONCURRENCY_LEASE_SECONDS: int = max(
 #   por cualquier visitante anónimo que envíe un cálculo idéntico.
 # ---------------------------------------------------------------------------
 ANONYMOUS_JOB_TTL_HOURS: int = max(1, _get_env_int("ANONYMOUS_JOB_TTL_HOURS", 24))
+
+# CELERY_HEAVY_PLUGINS / CELERY_HEAVY_QUEUE:
+#   Plugins cuyo cómputo se manda a una cola separada para poder aislarlos en
+#   workers externos. Vacío por defecto: el despliegue actual no cambia de
+#   comportamiento hasta que se declaren plugins y exista un worker suscrito.
+CELERY_HEAVY_PLUGINS: tuple[str, ...] = tuple(
+    plugin.strip()
+    for plugin in os.getenv("CELERY_HEAVY_PLUGINS", "").split(",")
+    if plugin.strip()
+)
+CELERY_HEAVY_QUEUE: str = os.getenv("CELERY_HEAVY_QUEUE", "heavy")
 SHARED_CACHE_TTL_DAYS: int = max(1, _get_env_int("SHARED_CACHE_TTL_DAYS", 7))
 
 # Tarea periódica de limpieza de chunks expirados (requiere Celery Beat).

@@ -26,6 +26,8 @@ import {
 } from './generated';
 import { JobsStreamingApiService } from './jobs-streaming-api.service';
 import { SmileitApiService } from './smileit-api.service';
+import { PublicJobsApiService } from './public-jobs-api.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
 
 // Re-exportación de todos los tipos para compatibilidad con imports existentes.
 // Los consumidores pueden importar tipos directamente desde 'core/api/types' o desde aquí.
@@ -52,6 +54,7 @@ import type {
   SaScoreParams,
   ScientificJobDispatchParams,
   SmileitDerivationPageView,
+  SmileitJobResponseView,
   SmileitStructureInspectionView,
   SmilesCompatibilityResultView,
   ToxicityJobResponseView,
@@ -103,6 +106,12 @@ export class JobsApiService {
   private readonly toxicityPropertiesClient = inject(ToxicityPropertiesService);
   private readonly streamingApi = inject(JobsStreamingApiService);
   private readonly smileitApi = inject(SmileitApiService);
+  private readonly publicApi = inject(PublicJobsApiService);
+  private readonly accessMode = inject(JobAccessModeService, { optional: true });
+
+  private isOpenMode(): boolean {
+    return this.accessMode?.isOpenMode() ?? false;
+  }
 
   // --- Delegación a JobsStreamingApiService (compatibilidad con consumidores) ---
 
@@ -146,6 +155,10 @@ export class JobsApiService {
   /** Inspecciona estructura SMILES (usado por componentes heredados) */
   inspectSmileitStructure(smiles: string): Observable<SmileitStructureInspectionView> {
     return this.smileitApi.inspectSmileitStructure(smiles);
+  }
+
+  getSmileitJobStatus(jobId: string): Observable<SmileitJobResponseView> {
+    return this.smileitApi.getSmileitJobStatus(jobId);
   }
 
   /** Descarga el CSV tabular principal de Smile-it para reutilizarlo en otras apps. */
@@ -271,6 +284,8 @@ export class JobsApiService {
 
   /** Despacha un job de molar fractions vía API core desacoplada */
   dispatchMolarFractionsJob(params: MolarFractionsParams): Observable<ScientificJob> {
+    if (this.isOpenMode())
+      return this.publicApi.dispatchMolarFractionsJob(params) as Observable<ScientificJob>;
     const normalizedPkaValues: number[] = params.pkaValues.map(Number);
     if (normalizedPkaValues.length < 1 || normalizedPkaValues.length > 6) {
       throw new Error('molar-fractions requiere entre 1 y 6 valores pKa.');
@@ -315,6 +330,8 @@ export class JobsApiService {
 
   /** Despacha un job de efecto túnel vía API core desacoplada */
   dispatchTunnelJob(params: TunnelParams): Observable<ScientificJob> {
+    if (this.isOpenMode())
+      return this.publicApi.dispatchTunnelJob(params) as Observable<ScientificJob>;
     if (params.reactionBarrierZpe <= 0) {
       throw new Error('reactionBarrierZpe must be greater than zero.');
     }
@@ -354,8 +371,21 @@ export class JobsApiService {
     return this.jobsClient.jobsRetrieve(jobId);
   }
 
+  getMolarFractionsJobStatus(jobId: string): Observable<ScientificJob> {
+    return this.isOpenMode()
+      ? (this.publicApi.getMolarFractionsJobStatus(jobId) as Observable<ScientificJob>)
+      : this.molarFractionsClient.molarFractionsJobsRetrieve(jobId);
+  }
+
+  getTunnelJobStatus(jobId: string): Observable<ScientificJob> {
+    return this.isOpenMode()
+      ? (this.publicApi.getTunnelJobStatus(jobId) as Observable<ScientificJob>)
+      : this.tunnelClient.tunnelJobsRetrieve(jobId);
+  }
+
   /** Descarga el reporte CSV de molar fractions directamente desde backend */
   downloadMolarFractionsCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMolarFractionsCsvReport(jobId);
     return createReportDownload$(
       this.molarFractionsClient.molarFractionsJobsReportCsvRetrieve(jobId, 'response'),
       `molar_fractions_${jobId}_report.csv`,
@@ -364,6 +394,7 @@ export class JobsApiService {
 
   /** Descarga el reporte LOG de molar fractions directamente desde backend */
   downloadMolarFractionsLogReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMolarFractionsLogReport(jobId);
     return createReportDownload$(
       this.molarFractionsClient.molarFractionsJobsReportLogRetrieve(jobId, 'response'),
       `molar_fractions_${jobId}_report.log`,
@@ -372,6 +403,7 @@ export class JobsApiService {
 
   /** Descarga el reporte CSV de Tunnel directamente desde backend */
   downloadTunnelCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadTunnelCsvReport(jobId);
     return createReportDownload$(
       this.tunnelClient.tunnelJobsReportCsvRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_report.csv`,
@@ -380,6 +412,7 @@ export class JobsApiService {
 
   /** Descarga el reporte LOG de Tunnel directamente desde backend */
   downloadTunnelLogReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadTunnelLogReport(jobId);
     return createReportDownload$(
       this.tunnelClient.tunnelJobsReportLogRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_report.log`,
@@ -388,6 +421,7 @@ export class JobsApiService {
 
   /** Descarga el reporte de error de Tunnel cuando el job falla */
   downloadTunnelErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadTunnelErrorReport(jobId);
     return createReportDownload$(
       this.tunnelClient.tunnelJobsReportErrorRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_error.txt`,
@@ -443,6 +477,7 @@ export class JobsApiService {
     sourceField: EasyRateInputFieldName,
     gaussianFile: File,
   ): Observable<EasyRateFileInspectionView> {
+    if (this.isOpenMode()) return this.publicApi.inspectEasyRateInput(sourceField, gaussianFile);
     return this.easyRateClient
       .easyRateJobsInspectInputCreate(sourceField as SourceFieldEnum, gaussianFile)
       .pipe(
@@ -453,6 +488,7 @@ export class JobsApiService {
 
   /** Despacha un job Easy-rate con archivos Gaussian en multipart */
   dispatchEasyRateJob(params: EasyRateParams): Observable<EasyRateJobResponse> {
+    if (this.isOpenMode()) return this.publicApi.dispatchEasyRateJob(params);
     return this.easyRateClient
       .easyRateJobsCreate(
         params.reactant1File,
@@ -482,11 +518,13 @@ export class JobsApiService {
 
   /** Consulta estado completo de un job Easy-rate por UUID */
   getEasyRateJobStatus(jobId: string): Observable<EasyRateJobResponse> {
+    if (this.isOpenMode()) return this.publicApi.getEasyRateJobStatus(jobId);
     return this.easyRateClient.easyRateJobsRetrieve(jobId);
   }
 
   /** Descarga reporte CSV de Easy-rate */
   downloadEasyRateCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadEasyRateCsvReport(jobId);
     return createReportDownload$(
       this.easyRateClient.easyRateJobsReportCsvRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_report.csv`,
@@ -495,6 +533,7 @@ export class JobsApiService {
 
   /** Descarga reporte LOG de Easy-rate */
   downloadEasyRateLogReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadEasyRateLogReport(jobId);
     return createReportDownload$(
       this.easyRateClient.easyRateJobsReportLogRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_report.log`,
@@ -503,6 +542,7 @@ export class JobsApiService {
 
   /** Descarga reporte de error de Easy-rate */
   downloadEasyRateErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadEasyRateErrorReport(jobId);
     return createReportDownload$(
       this.easyRateClient.easyRateJobsReportErrorRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_error.txt`,
@@ -511,6 +551,7 @@ export class JobsApiService {
 
   /** Descarga ZIP de archivos de entrada originales de Easy-rate */
   downloadEasyRateInputsZip(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadEasyRateInputsZip(jobId);
     return createReportDownload$(
       this.easyRateClient.easyRateJobsReportInputsRetrieve(jobId, 'response'),
       `easy_rate_${jobId}_inputs.zip`,
@@ -521,6 +562,7 @@ export class JobsApiService {
 
   /** Despacha un job Marcus con 6 archivos Gaussian en multipart */
   dispatchMarcusJob(params: MarcusParams): Observable<MarcusJobResponse> {
+    if (this.isOpenMode()) return this.publicApi.dispatchMarcusJob(params);
     return this.marcusClient
       .marcusJobsCreate(
         params.reactant1File,
@@ -541,11 +583,13 @@ export class JobsApiService {
 
   /** Consulta estado completo de un job Marcus por UUID */
   getMarcusJobStatus(jobId: string): Observable<MarcusJobResponse> {
+    if (this.isOpenMode()) return this.publicApi.getMarcusJobStatus(jobId);
     return this.marcusClient.marcusJobsRetrieve(jobId);
   }
 
   /** Descarga reporte CSV de Marcus */
   downloadMarcusCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMarcusCsvReport(jobId);
     return createReportDownload$(
       this.marcusClient.marcusJobsReportCsvRetrieve(jobId, 'response'),
       `marcus_${jobId}_report.csv`,
@@ -554,6 +598,7 @@ export class JobsApiService {
 
   /** Descarga reporte LOG de Marcus */
   downloadMarcusLogReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMarcusLogReport(jobId);
     return createReportDownload$(
       this.marcusClient.marcusJobsReportLogRetrieve(jobId, 'response'),
       `marcus_${jobId}_report.log`,
@@ -562,6 +607,7 @@ export class JobsApiService {
 
   /** Descarga reporte de error de Marcus */
   downloadMarcusErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMarcusErrorReport(jobId);
     return createReportDownload$(
       this.marcusClient.marcusJobsReportErrorRetrieve(jobId, 'response'),
       `marcus_${jobId}_error.txt`,
@@ -570,6 +616,7 @@ export class JobsApiService {
 
   /** Descarga ZIP de archivos de entrada originales de Marcus */
   downloadMarcusInputsZip(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadMarcusInputsZip(jobId);
     return createReportDownload$(
       this.marcusClient.marcusJobsReportInputsRetrieve(jobId, 'response'),
       `marcus_${jobId}_inputs.zip`,
@@ -580,6 +627,7 @@ export class JobsApiService {
 
   /** Despacha un job SA score para una lista de SMILES y métodos seleccionados. */
   dispatchSaScoreJob(params: SaScoreParams): Observable<SaScoreJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.dispatchSaScoreJob(params);
     const payload: SaScoreJobCreateRequest = {
       molecules: params.molecules,
       methods: params.methods,
@@ -591,11 +639,13 @@ export class JobsApiService {
 
   /** Consulta estado completo de un job SA score por UUID. */
   getSaScoreJobStatus(jobId: string): Observable<SaScoreJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.getSaScoreJobStatus(jobId);
     return this.saScoreClient.saScoreJobsRetrieve(jobId).pipe(shareReplay(1));
   }
 
   /** Descarga CSV completo (todas las columnas de métodos solicitados) para SA score. */
   downloadSaScoreCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSaScoreCsvReport(jobId);
     return createReportDownload$(
       this.saScoreClient.saScoreJobsReportCsvRetrieve(jobId, 'response'),
       `sa_score_${jobId}_report.csv`,
@@ -607,6 +657,7 @@ export class JobsApiService {
     jobId: string,
     method: SaScoreMethod,
   ): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadSaScoreCsvMethodReport(jobId, method);
     return createReportDownload$(
       this.saScoreClient.saScoreJobsReportCsvMethodRetrieve(jobId, method, 'response'),
       `sa_score_${jobId}_${method}.csv`,
@@ -619,6 +670,7 @@ export class JobsApiService {
   dispatchToxicityPropertiesJob(
     params: ToxicityPropertiesParams,
   ): Observable<ToxicityJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.dispatchToxicityPropertiesJob(params);
     const payload: ToxicityJobCreateRequest = {
       molecules: params.molecules,
       version: params.version ?? '1.0.0',
@@ -628,11 +680,13 @@ export class JobsApiService {
 
   /** Consulta estado completo de un job de Toxicity Properties por UUID. */
   getToxicityPropertiesJobStatus(jobId: string): Observable<ToxicityJobResponseView> {
+    if (this.isOpenMode()) return this.publicApi.getToxicityPropertiesJobStatus(jobId);
     return this.toxicityPropertiesClient.toxicityPropertiesJobsRetrieve(jobId).pipe(shareReplay(1));
   }
 
   /** Descarga CSV toxicológico (columnas fijas) para un job completado. */
   downloadToxicityPropertiesCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    if (this.isOpenMode()) return this.publicApi.downloadToxicityPropertiesCsvReport(jobId);
     return createReportDownload$(
       this.toxicityPropertiesClient.toxicityPropertiesJobsReportCsvRetrieve(jobId, 'response'),
       `toxicity_properties_${jobId}_report.csv`,

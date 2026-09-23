@@ -4,7 +4,17 @@
 // handleJobOutcome() provee el patrón común para procesar respuestas de job en todos los servicios.
 
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Observable, Subscription, catchError, finalize, throwError } from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  catchError,
+  finalize,
+  interval,
+  startWith,
+  switchMap,
+  takeWhile,
+  throwError,
+} from 'rxjs';
 import {
   DownloadedReportFile,
   JobLogEntryView,
@@ -14,6 +24,63 @@ import {
   ScientificJobView,
 } from '../api/jobs-api.service';
 import { mergeLogEntry } from './log-entry-utils';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore, type LocalResultRecord } from '../shared/local-results.store';
+
+const JOB_STATUS_VALUES: readonly string[] = [
+  'pending',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'cancelled',
+];
+const TERMINAL_JOB_STATUSES: readonly string[] = ['completed', 'failed', 'cancelled'];
+const PROGRESS_STAGE_VALUES: readonly string[] = [
+  'pending',
+  'queued',
+  'running',
+  'paused',
+  'recovering',
+  'caching',
+  'completed',
+  'failed',
+  'cancelled',
+];
+
+/** Lectura tolerante del job público: el API abierto devuelve el job completo. */
+interface PublicJobProgress {
+  status: string;
+  progressPercentage: number;
+  progressStage: string;
+  progressMessage: string;
+}
+
+function toPublicJobProgress(rawJob: unknown): PublicJobProgress | null {
+  if (typeof rawJob !== 'object' || rawJob === null) {
+    return null;
+  }
+
+  const candidate = rawJob as Record<string, unknown>;
+  const rawStatus = candidate['status'];
+  if (typeof rawStatus !== 'string' || !JOB_STATUS_VALUES.includes(rawStatus)) {
+    return null;
+  }
+
+  const rawPercentage = candidate['progress_percentage'];
+  const rawStage = candidate['progress_stage'];
+  const rawMessage = candidate['progress_message'];
+
+  return {
+    status: rawStatus,
+    progressPercentage: typeof rawPercentage === 'number' ? rawPercentage : 0,
+    progressStage:
+      typeof rawStage === 'string' && PROGRESS_STAGE_VALUES.includes(rawStage)
+        ? rawStage
+        : 'running',
+    progressMessage: typeof rawMessage === 'string' ? rawMessage : '',
+  };
+}
 
 /** Secciones de pantalla disponibles en todos los workflow services de apps científicas */
 export type JobWorkflowSection = 'idle' | 'dispatching' | 'progress' | 'result' | 'error';
@@ -28,6 +95,8 @@ export type JobWorkflowSection = 'idle' | 'dispatching' | 'progress' | 'result' 
 @Injectable()
 export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
   protected readonly jobsApiService = inject(JobsApiService);
+  protected readonly accessMode = inject(JobAccessModeService);
+  protected readonly localResultsStore = inject(LocalResultsStore);
   protected progressSubscription: Subscription | null = null;
   protected logsSubscription: Subscription | null = null;
 
@@ -41,7 +110,15 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
   readonly exportErrorMessage = signal<string | null>(null);
   readonly isExporting = signal<boolean>(false);
   readonly historyJobs = signal<ScientificJobView[]>([]);
+  /** Historial local del modo abierto (localStorage, sin caducidad). */
+  readonly localHistory = signal<LocalResultRecord[]>([]);
   readonly isHistoryLoading = signal<boolean>(false);
+
+  /**
+   * Plugin del job en curso. El modo abierto consulta por endpoint público de
+   * la app y no puede inferirlo del API genérico, que exige sesión.
+   */
+  protected readonly currentJobPlugin = signal<string | null>(null);
 
   // ── Señales derivadas comunes ──────────────────────────────────────
   readonly isProcessing = computed(
@@ -65,6 +142,11 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Obtiene y procesa el resultado final del job una vez completado. */
   protected abstract fetchFinalResult(jobId: string): void;
+
+  /** Reconstruye el resultado guardado en el historial local, si la app lo soporta. */
+  protected restoreResultFromLocalSummary(summary: unknown): TResultData | null {
+    return typeof summary === 'object' && summary !== null ? (summary as TResultData) : null;
+  }
 
   // ── Ciclo de vida ──────────────────────────────────────────────────
 
@@ -90,6 +172,10 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Inicia el stream de eventos de progreso SSE y el stream de logs en paralelo. */
   protected startProgressStream(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) {
+      this.startPublicPolling(jobId);
+      return;
+    }
     this.startLogsStream(jobId);
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
@@ -100,6 +186,10 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Inicia el stream de progreso SSE sin enganchar logs para apps transitorias. */
   protected startProgressOnlyStream(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) {
+      this.startPublicPolling(jobId);
+      return;
+    }
     this.progressSubscription = this.jobsApiService.streamJobEvents(jobId).subscribe({
       next: (snapshot: JobProgressSnapshotView) => this.progressSnapshot.set(snapshot),
       complete: () => this.fetchFinalResult(jobId),
@@ -109,6 +199,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Inicia el stream SSE de logs del job, deduplicando por eventIndex. */
   protected startLogsStream(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) return;
     this.logsSubscription?.unsubscribe();
     this.logsSubscription = this.jobsApiService.streamJobLogEvents(jobId).subscribe({
       next: (logEntry: JobLogEntryView) => {
@@ -122,6 +213,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Carga logs históricos paginados para jobs completados o fallidos. */
   protected loadHistoricalLogs(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) return;
     this.jobsApiService.getJobLogs(jobId, { limit: 250 }).subscribe({
       next: (logsPage: JobLogsPageView) => this.jobLogs.set(logsPage.results),
       error: () => {
@@ -178,6 +270,10 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Carga historial de jobs de una app específica por plugin name. */
   protected loadHistoryForPlugin(pluginName: string): void {
+    if (this.accessMode?.isOpenMode()) {
+      this.loadLocalHistory(pluginName);
+      return;
+    }
     this.isHistoryLoading.set(true);
     this.jobsApiService.listJobs({ pluginName }).subscribe({
       next: (jobItems: ScientificJobView[]) => {
@@ -190,8 +286,257 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     });
   }
 
+  /** Recarga el historial visible según el modo activo. */
+  protected refreshHistory(): void {
+    if (this.accessMode.isOpenMode()) {
+      this.loadLocalHistory(this.currentJobPlugin() ?? '');
+      return;
+    }
+
+    this.loadHistory();
+  }
+
+  /** Historial del modo abierto: sale del almacenamiento local, no del API. */
+  protected loadLocalHistory(pluginName: string): void {
+    this.isHistoryLoading.set(false);
+    this.historyJobs.set([]);
+    this.localHistory.set(this.localResultsStore.list(pluginName));
+  }
+
+  /** Reengancha el polling público si quedó un job pendiente en el historial local. */
+  protected resumePendingLocalJob(pluginName: string, jobId?: string): void {
+    if (!this.accessMode.isOpenMode()) {
+      return;
+    }
+
+    const pendingRecord = this.localResultsStore
+      .list(pluginName)
+      .find(
+        (record) =>
+          !record.expired &&
+          (record.status === 'pending' || record.status === 'running') &&
+          (jobId === undefined || record.jobId === jobId),
+      );
+    if (pendingRecord === undefined) {
+      return;
+    }
+
+    this.currentJobId.set(pendingRecord.jobId);
+    this.currentJobPlugin.set(pendingRecord.pluginName);
+    this.activeSection.set('progress');
+    this.startPublicPolling(pendingRecord.jobId);
+  }
+
+  /** Abre un registro local o vuelve a enganchar su polling público. */
+  protected openLocalRecord(record: LocalResultRecord): void {
+    this.currentJobId.set(record.jobId);
+    this.currentJobPlugin.set(record.pluginName);
+    if (record.status === 'pending' || record.status === 'running') {
+      this.resumePendingLocalJob(record.pluginName, record.jobId);
+      return;
+    }
+
+    const restoredResult = this.restoreResultFromLocalSummary(record.resultSummary);
+    if (restoredResult === null) {
+      this.activeSection.set('error');
+      this.errorMessage.set('The saved local result is not available.');
+      return;
+    }
+
+    this.resultData.set(restoredResult);
+    this.progressSnapshot.set({
+      job_id: record.jobId,
+      status: record.status === 'expired' ? 'failed' : 'completed',
+      progress_percentage: record.progressPercentage,
+      progress_stage: record.status === 'expired' ? 'failed' : 'completed',
+      progress_message: '',
+      progress_event_index: 0,
+      updated_at: record.updatedAt,
+    });
+    this.activeSection.set('result');
+  }
+
+  /**
+   * Polling del modo abierto.
+   *
+   * El API público no expone SSE ni logs: se consulta el job por su endpoint
+   * de app cada 2 s hasta el estado terminal y entonces se extrae el resultado.
+   */
+  private startPublicPolling(jobId: string): void {
+    this.progressSubscription?.unsubscribe();
+    this.progressSubscription = interval(2000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.publicJobStatus$(jobId)),
+        takeWhile(
+          (jobProgress: PublicJobProgress) => !TERMINAL_JOB_STATUSES.includes(jobProgress.status),
+          true,
+        ),
+      )
+      .subscribe({
+        next: (jobProgress: PublicJobProgress) => this.applyPublicProgress(jobId, jobProgress),
+        complete: () => this.fetchFinalResult(jobId),
+        error: (pollingError: unknown) => this.handlePublicPollingError(jobId, pollingError),
+      });
+  }
+
+  /** Consulta el estado del job en el endpoint público que corresponde al plugin. */
+  private publicJobStatus$(jobId: string): Observable<PublicJobProgress> {
+    const pluginName: string | null = this.currentJobPlugin();
+    const statusRequest$: Observable<unknown> | null = this.resolvePublicStatusRequest(
+      pluginName,
+      jobId,
+    );
+
+    if (statusRequest$ === null) {
+      return throwError(() => new Error('Open mode polling requires a known plugin.'));
+    }
+
+    return statusRequest$.pipe(
+      switchMap((rawJob: unknown) => {
+        const jobProgress: PublicJobProgress | null = toPublicJobProgress(rawJob);
+        return jobProgress === null
+          ? throwError(() => new Error('Open mode job payload is invalid.'))
+          : [jobProgress];
+      }),
+    );
+  }
+
+  private resolvePublicStatusRequest(
+    pluginName: string | null,
+    jobId: string,
+  ): Observable<unknown> | null {
+    switch (pluginName) {
+      case 'molar-fractions':
+        return this.jobsApiService.getMolarFractionsJobStatus(jobId);
+      case 'tunnel-effect':
+        return this.jobsApiService.getTunnelJobStatus(jobId);
+      case 'easy-rate':
+        return this.jobsApiService.getEasyRateJobStatus(jobId);
+      case 'marcus':
+        return this.jobsApiService.getMarcusJobStatus(jobId);
+      case 'sa-score':
+        return this.jobsApiService.getSaScoreJobStatus(jobId);
+      case 'toxicity-properties':
+        return this.jobsApiService.getToxicityPropertiesJobStatus(jobId);
+      case 'smileit':
+        return this.jobsApiService.getSmileitJobStatus(jobId);
+      default:
+        return null;
+    }
+  }
+
+  /** Publica el progreso público en la señal que ya consumen los componentes. */
+  private applyPublicProgress(jobId: string, jobProgress: PublicJobProgress): void {
+    this.progressSnapshot.set({
+      job_id: jobId,
+      status: jobProgress.status as JobProgressSnapshotView['status'],
+      progress_percentage: jobProgress.progressPercentage,
+      progress_stage: jobProgress.progressStage as JobProgressSnapshotView['progress_stage'],
+      progress_message: jobProgress.progressMessage,
+      progress_event_index: this.progressSnapshot()?.progress_event_index ?? 0,
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * El job anónimo expira a las 24 h: el backend responde 404 y el registro
+   * local se conserva marcado como expirado (el usuario no pierde el cálculo).
+   */
+  private handlePublicPollingError(jobId: string, pollingError: unknown): void {
+    const statusCode: number | null = this.resolveHttpStatus(pollingError);
+
+    if (statusCode === 404) {
+      this.markLocalRecordExpired(jobId);
+      this.activeSection.set('error');
+      this.errorMessage.set('This open-mode calculation expired on the server (24 h).');
+      this.loadLocalHistory(this.currentJobPlugin() ?? '');
+      return;
+    }
+
+    this.activeSection.set('error');
+    this.errorMessage.set(
+      `Unable to track progress: ${pollingError instanceof Error ? pollingError.message : 'unknown error'}`,
+    );
+  }
+
+  private resolveHttpStatus(error: unknown): number | null {
+    if (typeof error !== 'object' || error === null) {
+      return null;
+    }
+
+    const candidate = error as Record<string, unknown>;
+    const status = candidate['status'];
+    return typeof status === 'number' ? status : null;
+  }
+
+  private markLocalRecordExpired(jobId: string): void {
+    const pluginName: string | null = this.currentJobPlugin();
+    if (pluginName === null) {
+      return;
+    }
+
+    const record = this.localResultsStore.list(pluginName).find((item) => item.jobId === jobId);
+    if (record === undefined) {
+      return;
+    }
+
+    this.localResultsStore.save({
+      ...record,
+      status: 'expired',
+      expired: true,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  /** Persiste el registro local del modo abierto con el estado actual. */
+  protected persistLocalRecord(
+    jobId: string,
+    status: string,
+    progressPercentage: number,
+    parameters: Record<string, unknown>,
+    resultSummary: unknown,
+  ): void {
+    if (!this.accessMode.isOpenMode()) {
+      return;
+    }
+
+    const pluginName: string | null = this.currentJobPlugin();
+    if (pluginName === null) {
+      return;
+    }
+
+    const previousRecord = this.localResultsStore
+      .list(pluginName)
+      .find((item) => item.jobId === jobId);
+    const now: string = new Date().toISOString();
+
+    this.localResultsStore.save({
+      jobId,
+      pluginName,
+      createdAt: previousRecord?.createdAt ?? now,
+      updatedAt: now,
+      status,
+      progressPercentage,
+      parameters,
+      resultSummary: resultSummary ?? previousRecord?.resultSummary ?? null,
+      expired: false,
+    });
+    this.localHistory.set(this.localResultsStore.list(pluginName));
+  }
+
   /** Elimina un job histórico y actualiza la lista local del historial. */
   deleteHistoryJob(jobId: string): void {
+    if (this.accessMode.isOpenMode()) {
+      const pluginName = this.currentJobPlugin() ?? this.resolveLocalPluginFromHistory(jobId);
+      if (pluginName !== null) {
+        this.localResultsStore.remove(pluginName, jobId);
+        this.localHistory.set(this.localResultsStore.list(pluginName));
+      }
+      if (this.currentJobId() === jobId) this.reset();
+      return;
+    }
+
     this.jobsApiService.deleteJob(jobId).subscribe({
       next: () => {
         this.historyJobs.update((jobs: ScientificJobView[]) =>
@@ -206,6 +551,10 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
         this.errorMessage.set(`Unable to delete job: ${deleteError.message}`);
       },
     });
+  }
+
+  private resolveLocalPluginFromHistory(jobId: string): string | null {
+    return this.localHistory().find((record) => record.jobId === jobId)?.pluginName ?? null;
   }
 
   // ── Resúmenes históricos ───────────────────────────────────────────
@@ -249,7 +598,14 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
    * @param opts.loadLogs         Carga logs históricos al finalizar (default: true)
    * @param opts.loadHistoryAfter Llama loadHistory() si el resultado es exitoso (default: true)
    */
-  protected handleJobOutcome<T extends { status?: string; error_trace?: string | null }>(
+  protected handleJobOutcome<
+    T extends {
+      status?: string;
+      error_trace?: string | null;
+      parameters?: unknown;
+      progress_percentage?: number;
+    },
+  >(
     jobId: string,
     jobResponse: T,
     extract: (job: T) => TResultData | null,
@@ -258,9 +614,13 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     const checkFailed = opts.checkFailed !== false;
     const loadLogs = opts.loadLogs !== false;
     const loadHistoryAfter = opts.loadHistoryAfter !== false;
+    const jobParameters: Record<string, unknown> = this.extractRecordParameters(
+      jobResponse.parameters,
+    );
 
     if (checkFailed && jobResponse.status === 'failed') {
       if (loadLogs) this.loadHistoricalLogs(jobId);
+      this.persistLocalRecord(jobId, 'failed', 100, jobParameters, null);
       this.activeSection.set('error');
       this.errorMessage.set(jobResponse.error_trace ?? 'Job ended with error.');
       return;
@@ -274,9 +634,16 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     }
 
     this.resultData.set(result);
+    this.persistLocalRecord(
+      jobId,
+      'completed',
+      jobResponse.progress_percentage ?? 100,
+      jobParameters,
+      result,
+    );
     if (loadLogs) this.loadHistoricalLogs(jobId);
     this.activeSection.set('result');
-    if (loadHistoryAfter) this.loadHistory();
+    if (loadHistoryAfter) this.refreshHistory();
   }
 
   /**
@@ -288,12 +655,17 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
    * @param extract     Función que extrae TResultData del jobResponse (null = payload inválido)
    * @param errorLabel  Etiqueta para el mensaje de error si el payload es inválido
    */
-  protected handleDispatchJobResponse<T extends { id: string; status?: string }>(
-    jobResponse: T,
-    extract: (job: T) => TResultData | null,
-    errorLabel: string,
-  ): void {
+  protected handleDispatchJobResponse<
+    T extends {
+      id: string;
+      status?: string;
+      plugin_name?: string;
+      parameters?: unknown;
+      progress_percentage?: number;
+    },
+  >(jobResponse: T, extract: (job: T) => TResultData | null, errorLabel: string): void {
     this.currentJobId.set(jobResponse.id);
+    this.captureJobPlugin(jobResponse);
 
     if (jobResponse.status === 'completed') {
       const immediateResult = extract(jobResponse);
@@ -303,23 +675,42 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
         return;
       }
       this.resultData.set(immediateResult);
+      this.persistLocalRecord(
+        jobResponse.id,
+        'completed',
+        100,
+        this.extractRecordParameters(jobResponse.parameters),
+        immediateResult,
+      );
       this.loadHistoricalLogs(jobResponse.id);
       this.activeSection.set('result');
-      this.loadHistory();
+      this.refreshHistory();
       return;
     }
 
+    this.persistLocalRecord(
+      jobResponse.id,
+      jobResponse.status ?? 'pending',
+      jobResponse.progress_percentage ?? 0,
+      this.extractRecordParameters(jobResponse.parameters),
+      null,
+    );
     this.activeSection.set('progress');
     this.startProgressStream(jobResponse.id);
   }
 
   /** Maneja el dispatch de apps inmediatas que no exponen logs ni historial persistido. */
-  protected handleTransientDispatchJobResponse<T extends { id: string; status?: string }>(
-    jobResponse: T,
-    extract: (job: T) => TResultData | null,
-    errorLabel: string,
-  ): void {
+  protected handleTransientDispatchJobResponse<
+    T extends {
+      id: string;
+      status?: string;
+      plugin_name?: string;
+      parameters?: unknown;
+      progress_percentage?: number;
+    },
+  >(jobResponse: T, extract: (job: T) => TResultData | null, errorLabel: string): void {
     this.currentJobId.set(jobResponse.id);
+    this.captureJobPlugin(jobResponse);
 
     if (jobResponse.status === 'completed') {
       const immediateResult = extract(jobResponse);
@@ -330,11 +721,41 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
       }
 
       this.resultData.set(immediateResult);
+      this.persistLocalRecord(
+        jobResponse.id,
+        'completed',
+        100,
+        this.extractRecordParameters(jobResponse.parameters),
+        immediateResult,
+      );
       this.activeSection.set('result');
       return;
     }
 
+    this.persistLocalRecord(
+      jobResponse.id,
+      jobResponse.status ?? 'pending',
+      jobResponse.progress_percentage ?? 0,
+      this.extractRecordParameters(jobResponse.parameters),
+      null,
+    );
     this.activeSection.set('progress');
     this.startProgressOnlyStream(jobResponse.id);
+  }
+
+  /** Recuerda el plugin del job para poder consultar su endpoint público. */
+  private captureJobPlugin(jobResponse: { plugin_name?: string }): void {
+    if (typeof jobResponse.plugin_name === 'string' && jobResponse.plugin_name.length > 0) {
+      this.currentJobPlugin.set(jobResponse.plugin_name);
+    }
+  }
+
+  /** Normaliza los parámetros del job a un registro plano para el historial local. */
+  private extractRecordParameters(rawParameters: unknown): Record<string, unknown> {
+    if (typeof rawParameters !== 'object' || rawParameters === null) {
+      return {};
+    }
+
+    return { ...(rawParameters as Record<string, unknown>) };
   }
 }

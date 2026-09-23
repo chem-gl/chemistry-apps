@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CadmaPyApiService, CadmaPyResultView } from '../api/cadma-py-api.service';
 import { JobLogsPageView, JobsApiService, ScientificJobView } from '../api/jobs-api.service';
 import { CadmaPyWorkflowService } from './cadma-py-workflow.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 
 function makeCadmaResult(): CadmaPyResultView {
   return {
@@ -64,6 +66,8 @@ describe('CadmaPyWorkflowService', () => {
 
     const injector: Injector = Injector.create({
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => false, mode: () => 'account' } },
+        { provide: LocalResultsStore, useValue: { list: () => [], save: () => undefined, remove: () => undefined, clear: () => undefined } },
         CadmaPyWorkflowService,
         { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
         {
@@ -202,6 +206,8 @@ describe('CadmaPyWorkflowService', () => {
     localStorage.setItem('chemistry-apps.cadma-py.paused-drafts.v1', '{invalid');
     const injector: Injector = Injector.create({
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => false, mode: () => 'account' } },
+        { provide: LocalResultsStore, useValue: { list: () => [], save: () => undefined, remove: () => undefined, clear: () => undefined } },
         CadmaPyWorkflowService,
         { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
         {
@@ -332,6 +338,8 @@ describe('CadmaPyWorkflowService', () => {
     );
     const injector: Injector = Injector.create({
       providers: [
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => false, mode: () => 'account' } },
+        { provide: LocalResultsStore, useValue: { list: () => [], save: () => undefined, remove: () => undefined, clear: () => undefined } },
         CadmaPyWorkflowService,
         { provide: JobsApiService, useValue: jobsApiMock as unknown as JobsApiService },
         { provide: CadmaPyApiService, useValue: cadmaApiMock as unknown as CadmaPyApiService },

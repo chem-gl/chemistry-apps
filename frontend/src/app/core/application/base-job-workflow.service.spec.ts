@@ -11,6 +11,8 @@ import {
   ScientificJobView,
 } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 
 class TestWorkflowService extends BaseJobWorkflowService<string> {
   protected override get defaultProgressMessage(): string {
@@ -102,6 +104,19 @@ describe('BaseJobWorkflowService', () => {
     };
     const injector = Injector.create({
       providers: [
+        {
+          provide: JobAccessModeService,
+          useValue: { isOpenMode: () => false, mode: () => 'account' },
+        },
+        {
+          provide: LocalResultsStore,
+          useValue: {
+            list: () => [],
+            save: () => undefined,
+            remove: () => undefined,
+            clear: () => undefined,
+          },
+        },
         TestWorkflowService,
         { provide: JobsApiService, useValue: api as unknown as JobsApiService },
       ],

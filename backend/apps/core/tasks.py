@@ -21,9 +21,34 @@ from django.conf import settings
 from kombu.exceptions import OperationalError
 from redis.exceptions import ConnectionError as RedisConnectionError
 
+from .models import ScientificJob
 from .services import JobService
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_dispatch_queue(job_id: str) -> str | None:
+    """Cola dedicada para los plugins declarados como pesados.
+
+    Permite mandar cómputo costoso (p. ej. `toxicity-properties`) a workers
+    externos sin tocar el código de las apps: basta con declarar el plugin en
+    ``CELERY_HEAVY_PLUGINS`` y levantar un worker suscrito a esa cola.
+    """
+    heavy_plugins: tuple[str, ...] = tuple(
+        getattr(settings, "CELERY_HEAVY_PLUGINS", ()) or ()
+    )
+    if not heavy_plugins:
+        return None
+
+    plugin_name: str | None = (
+        ScientificJob.objects.filter(pk=job_id)
+        .values_list("plugin_name", flat=True)
+        .first()
+    )
+    if plugin_name in heavy_plugins:
+        return str(getattr(settings, "CELERY_HEAVY_QUEUE", "heavy"))
+
+    return None
 
 
 def dispatch_scientific_job(job_id: str) -> bool:
@@ -40,7 +65,11 @@ def dispatch_scientific_job(job_id: str) -> bool:
         return False
 
     try:
-        execute_scientific_job.delay(job_id)
+        dispatch_queue: str | None = _resolve_dispatch_queue(job_id)
+        if dispatch_queue is None:
+            execute_scientific_job.delay(job_id)
+        else:
+            execute_scientific_job.apply_async(args=[job_id], queue=dispatch_queue)
         return True
     except (RuntimeError, OperationalError, RedisConnectionError, OSError) as error:
         logger.warning(

@@ -1,0 +1,261 @@
+# docker-compose.libres.yml: Stack aislado del sitio público "Modo abierto".
+#
+# Se despliega en su propio directorio (`/home/deploy/chemistry-apps-libres`)
+# con proyecto Compose propio, puertos, volúmenes, base de datos y cola de
+# Celery independientes del stack de `apps.guzman-lopez.com`.
+#
+# Uso:
+#   docker compose -f docker-compose.libres.yml --env-file .env up -d --wait
+
+networks:
+  chemistry-libres-network:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - chemistry-libres-network
+    volumes:
+      - ./docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - chemistry-libres-network
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-chemistry_libres_db}
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-chemistry_libres_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    # Nombre de imagen propio: evita que un prune del stack principal borre
+    # capas del sitio libre y viceversa.
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    networks:
+      - chemistry-libres-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_INTERNAL_PORT:-8090}:8000"
+    volumes:
+      - ./backend/media:/app/media
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      ENABLE_CORS: "True"
+      CORS_ALLOW_ALL_ORIGINS: "False"
+      CORS_ALLOW_CREDENTIALS: "True"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+
+      DB_ENGINE: "postgres"
+      DB_NAME: ${DB_NAME:-chemistry_libres_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+
+      # Modo abierto: topes, TTL y cola pesada.
+      PUBLIC_DISPATCH_RATE: ${PUBLIC_DISPATCH_RATE:-60/hour}
+      PUBLIC_READ_RATE: ${PUBLIC_READ_RATE:-120/hour}
+      REGISTERED_DISPATCH_RATE: ${REGISTERED_DISPATCH_RATE:-600/hour}
+      ANONYMOUS_JOB_TTL_HOURS: ${ANONYMOUS_JOB_TTL_HOURS:-24}
+      SHARED_CACHE_TTL_DAYS: ${SHARED_CACHE_TTL_DAYS:-7}
+      ANONYMOUS_MAX_CONCURRENT_JOBS: ${ANONYMOUS_MAX_CONCURRENT_JOBS:-2}
+      ANONYMOUS_MAX_UPLOAD_BYTES: ${ANONYMOUS_MAX_UPLOAD_BYTES:-10485760}
+      REGISTERED_MAX_UPLOAD_BYTES: ${REGISTERED_MAX_UPLOAD_BYTES:-52428800}
+      CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
+      CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+
+      RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
+      RUNTIME_TOOLS_STRICT_CHECK: "True"
+      RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS: ${RUNTIME_TOOLS_DOWNLOAD_TIMEOUT_SECONDS:-1200}
+      RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS: ${RUNTIME_TOOLS_DOWNLOAD_MAX_ATTEMPTS:-5}
+
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app
+      MPLCONFIGDIR: /tmp/matplotlib-cache
+      TORCHINDUCTOR_CACHE_DIR: /tmp/torchinductor-cache
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; s = socket.create_connection(('127.0.0.1', 8000), 2); s.close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 900s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        # Same-origin: Nginx del subdominio proxya /api y /ws al backend.
+        API_BASE_URL: ${BACKEND_PUBLIC_URL}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend-libres:${IMAGE_TAG_FRONTEND:-${IMAGE_TAG:-latest}}
+    restart: unless-stopped
+    networks:
+      - chemistry-libres-network
+    ports:
+      - "${FRONTEND_INTERNAL_PORT:-4220}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  celery-worker:
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    command:
+      [
+        "sh",
+        "-c",
+        "RUNTIME_TOOLS_STRICT_CHECK=false python manage.py ensure_runtime_tools && exec python -m celery -A config worker -l info -Q celery",
+      ]
+    networks:
+      - chemistry-libres-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./backend/media:/app/media
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      ENABLE_CORS: "False"
+      DB_ENGINE: "postgres"
+      DB_NAME: ${DB_NAME:-chemistry_libres_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+      CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
+      CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+      RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
+      RUNTIME_TOOLS_STRICT_CHECK: "True"
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app
+      MPLCONFIGDIR: /tmp/matplotlib-cache
+      TORCHINDUCTOR_CACHE_DIR: /tmp/torchinductor-cache
+
+  # Worker dedicado a los plugins pesados (toxicity-properties). Concurrencia
+  # baja para no competir con el worker general en el mismo host.
+  celery-heavy-worker:
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    command:
+      [
+        "sh",
+        "-c",
+        "RUNTIME_TOOLS_STRICT_CHECK=false python manage.py ensure_runtime_tools && exec python -m celery -A config worker -l info -Q heavy -c 2",
+      ]
+    networks:
+      - chemistry-libres-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./backend/media:/app/media
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      ENABLE_CORS: "False"
+      DB_ENGINE: "postgres"
+      DB_NAME: ${DB_NAME:-chemistry_libres_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+      CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
+      CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+      RUNTIME_TOOLS_DIR: "/app/media/runtime-tools"
+      RUNTIME_TOOLS_STRICT_CHECK: "True"
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app
+      MPLCONFIGDIR: /tmp/matplotlib-cache
+      TORCHINDUCTOR_CACHE_DIR: /tmp/torchinductor-cache
+
+  # Planificador de tareas periódicas (incluye la purga de jobs anónimos).
+  # El stack principal no lo tenía: la purga nunca corría en producción.
+  celery-beat:
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
+    restart: unless-stopped
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    command: ["python", "-m", "celery", "-A", "config", "beat", "-l", "info"]
+    networks:
+      - chemistry-libres-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      ENABLE_CORS: "False"
+      DB_ENGINE: "postgres"
+      DB_NAME: ${DB_NAME:-chemistry_libres_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
+      USER: appuser
+      LOGNAME: appuser
+      HOME: /app

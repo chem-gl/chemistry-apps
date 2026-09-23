@@ -77,7 +77,7 @@ export class TunnelWorkflowService extends BaseJobWorkflowService<TunnelResultDa
   }
 
   protected override fetchFinalResult(jobId: string): void {
-    this.jobsApiService.getScientificJobStatus(jobId).subscribe({
+    this.jobsApiService.getTunnelJobStatus(jobId).subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
