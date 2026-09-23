@@ -72,6 +72,51 @@ def _resolve_scope_access(
     return "denied"
 
 
+@database_sync_to_async
+def _is_root_actor(actor: object) -> bool:
+    """Indica si el actor tiene visibilidad global de jobs (rol root)."""
+    if bool(getattr(actor, "is_superuser", False)):
+        return True
+
+    # Actores sin fila en base de datos (p. ej. dobles de test) no son root y no
+    # deben provocar consultas contra el perfil de identidad.
+    if getattr(actor, "pk", None) is None:
+        return False
+
+    return AuthorizationService.is_root(actor)
+
+
+@database_sync_to_async
+def _can_view_job_id(actor: object, job_id: str) -> bool:
+    """Resuelve si el actor puede ver el job del evento."""
+    if getattr(actor, "pk", None) is None:
+        return False
+
+    try:
+        job = ScientificJob.objects.filter(pk=job_id).first()
+    except (ValueError, ValidationError):
+        return False
+
+    if job is None:
+        return False
+
+    return AuthorizationService.can_view_job(actor=actor, job=job)
+
+
+def _extract_event_job_id(event: dict[str, object]) -> str | None:
+    """Extrae el job_id del payload de un evento de realtime."""
+    payload = event.get("payload")
+    if not isinstance(payload, dict):
+        return None
+
+    for key_name in ("job_id", "id"):
+        raw_value = payload.get(key_name)
+        if raw_value:
+            return str(raw_value)
+
+    return None
+
+
 class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
     """Expone un stream WebSocket global o filtrado de jobs, progreso y logs."""
 
@@ -81,6 +126,8 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
     include_logs: bool
     include_snapshot: bool
     active_only: bool
+    viewer_is_root: bool
+    _visible_job_cache: dict[str, bool]
 
     async def connect(self) -> None:
         """Autentica, valida el alcance pedido y suscribe el socket.
@@ -132,6 +179,12 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
         for group_name in self.group_names:
             await self.channel_layer.group_add(group_name, self.channel_name)
 
+        # El filtrado del snapshot no basta: los eventos llegan en vivo y cada
+        # uno debe validarse contra la visibilidad del actor (el grupo de plugin
+        # transporta eventos de jobs de todos los usuarios).
+        self.viewer_is_root = await _is_root_actor(actor)
+        self._visible_job_cache = {}
+
         await self.accept()
 
         if self.include_snapshot:
@@ -150,9 +203,15 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard(group_name, self.channel_name)
 
     async def jobs_stream_event(self, event: dict[str, object]) -> None:
-        """Reenvía eventos broadcast a los clientes conectados."""
+        """Reenvía eventos broadcast a los clientes que pueden ver ese job."""
         event_name = str(event["event_name"])
         if event_name == "job.log" and not self.include_logs:
+            return
+
+        event_job_id = _extract_event_job_id(event)
+        if event_job_id is not None and not await self._can_receive_job_event(
+            event_job_id
+        ):
             return
 
         await self.send_json(
@@ -161,6 +220,24 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
                 "data": event["payload"],
             }
         )
+
+    async def _can_receive_job_event(self, job_id: str) -> bool:
+        """Valida la visibilidad del job del evento, con caché por conexión."""
+        if self.viewer_is_root:
+            return True
+
+        cached_visibility = self._visible_job_cache.get(job_id)
+        if cached_visibility is not None:
+            return cached_visibility
+
+        actor = self.scope.get("user")
+        is_visible = await _can_view_job_id(actor, job_id)
+
+        if len(self._visible_job_cache) >= 256:
+            self._visible_job_cache.clear()
+        self._visible_job_cache[job_id] = is_visible
+
+        return is_visible
 
     def _resolve_group_names(self) -> list[str]:
         """Resuelve los grupos a los que se suscribirá el socket actual."""

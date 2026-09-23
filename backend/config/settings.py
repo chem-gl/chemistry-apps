@@ -477,6 +477,13 @@ REGISTERED_MAX_UPLOAD_BYTES: int = max(
     1024, _get_env_int("REGISTERED_MAX_UPLOAD_BYTES", 50 * 1024 * 1024)
 )
 
+# Los archivos pequeños siguen en memoria; los grandes usan el handler con tope
+# por rol, que corta la recepción antes de escribir el archivo completo a disco.
+FILE_UPLOAD_HANDLERS: list[str] = [
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "apps.core.upload_handlers.SizeLimitedTemporaryFileUploadHandler",
+]
+
 # Semáforo de concurrencia por cliente en el modo libre (además de la tasa).
 # ANONYMOUS_MAX_CONCURRENT_JOBS: trabajos anónimos simultáneos por cliente.
 # ANONYMOUS_CONCURRENCY_LEASE_SECONDS: vida máxima del lease; actúa como red de

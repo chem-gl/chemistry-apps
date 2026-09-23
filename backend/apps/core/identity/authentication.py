@@ -14,6 +14,7 @@ Consideraciones de seguridad:
 
 from __future__ import annotations
 
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import Token
@@ -25,10 +26,18 @@ class QueryStringJWTAuthentication(JWTAuthentication):
     """Autentica por cabecera `Authorization` o, si falta, por `?token=`."""
 
     def authenticate(self, request: Request) -> tuple[object, Token] | None:
-        """Reutiliza la autenticación por cabecera y cae al query string."""
+        """Reutiliza la autenticación por cabecera y cae al query string.
+
+        El token por query string solo se acepta en métodos seguros (GET/HEAD/
+        OPTIONS): así se cubren los streams SSE sin exponer el token en URLs de
+        escritura, que quedarían en logs de acceso e historial.
+        """
         header_authentication = super().authenticate(request)
         if header_authentication is not None:
             return header_authentication
+
+        if request.method not in SAFE_METHODS:
+            return None
 
         raw_token = request.query_params.get(QUERY_TOKEN_KEY)
         if raw_token is None or str(raw_token).strip() == "":

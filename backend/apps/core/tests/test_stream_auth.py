@@ -24,6 +24,7 @@ from apps.core.consumers import (
 )
 from apps.core.identity.authentication import QueryStringJWTAuthentication
 from apps.core.models import ScientificJob
+from apps.core.realtime import broadcast_job_update
 from config.asgi import application
 
 JOBS_STREAM_PATH = "/ws/jobs/stream/"
@@ -75,6 +76,15 @@ class QueryStringJWTAuthenticationTests(TestCase):
     def test_invalid_token_is_rejected(self) -> None:
         with self.assertRaises(AuthenticationFailed):
             self._authenticate({"token": "not-a-valid-jwt"})
+
+    def test_query_token_is_ignored_on_write_methods(self) -> None:
+        """Evita exponer el token en URLs de escritura (logs, historial, Referer)."""
+        access_token = _build_access_token(self.user)
+        django_request = self.factory.post("/api/jobs/", {"token": access_token})
+
+        result = self.authentication.authenticate(Request(django_request))
+
+        self.assertIsNone(result)
 
 
 class JobsStreamConsumerTests(TransactionTestCase):
@@ -185,3 +195,29 @@ class JobsStreamConsumerTests(TransactionTestCase):
         }
         self.assertIn(str(self.own_job.id), visible_job_ids)
         self.assertNotIn(str(self.foreign_job.id), visible_job_ids)
+
+    async def test_plugin_scope_does_not_leak_live_events_of_other_users(
+        self,
+    ) -> None:
+        """Los eventos en vivo respetan la visibilidad, no solo el snapshot."""
+        access_token = await database_sync_to_async(_build_access_token)(
+            self.owner_user
+        )
+        communicator = WebsocketCommunicator(
+            application,
+            f"{JOBS_STREAM_PATH}?plugin_name=calculator&include_snapshot=false"
+            f"&token={access_token}",
+        )
+        connected, _ = await communicator.connect()
+        self.assertTrue(connected)
+
+        await database_sync_to_async(broadcast_job_update)(self.foreign_job)
+        self.assertTrue(await communicator.receive_nothing(timeout=0.4))
+
+        await database_sync_to_async(broadcast_job_update)(self.own_job)
+        received_message = await communicator.receive_json_from(timeout=2)
+
+        await communicator.disconnect()
+
+        self.assertEqual(received_message["event"], "job.updated")
+        self.assertEqual(str(received_message["data"]["id"]), str(self.own_job.id))

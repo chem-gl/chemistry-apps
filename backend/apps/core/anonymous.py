@@ -26,6 +26,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from .concurrency import release_job_lease
 from .models import ScientificJob
 
 # Valores por defecto de la fase 1 (ver plan apps-libres [1/5] punto 9).
@@ -135,6 +136,11 @@ def purge_expired_anonymous_jobs(
 
         if not expired_ids:
             break
+
+        # Liberar los leases antes de borrar: si no, el cupo del cliente queda
+        # ocupado hasta que venza el TTL.
+        for expired_job in ScientificJob.objects.filter(id__in=expired_ids):
+            release_job_lease(expired_job, persist=False)
 
         ScientificJob.objects.filter(id__in=expired_ids).delete()
         purged_total += len(expired_ids)

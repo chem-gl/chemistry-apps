@@ -7,15 +7,18 @@ liberación vía señales de Celery.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from redis.exceptions import RedisError
 from rest_framework.test import APIClient, APIRequestFactory
 
+from ..anonymous import purge_expired_anonymous_jobs
 from ..concurrency import (
     KEY_NAMESPACE,
     ConcurrencyLease,
@@ -26,6 +29,7 @@ from ..concurrency import (
     release_lease,
 )
 from ..models import ScientificJob
+from ..realtime import build_scientific_job_payload
 from ..signals import (
     EXECUTE_JOB_TASK_NAME,
     _extract_job_id,
@@ -216,6 +220,66 @@ class PublicDispatchConcurrencyTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         mock_release.assert_called_once_with(lease)
+
+
+class LeaseAttachGuardTests(TestCase):
+    """Verifica que no se adjunte un lease a un job que ya terminó."""
+
+    def test_attach_releases_when_job_is_already_terminal(self) -> None:
+        job = _create_job(status="completed")
+        lease = ConcurrencyLease(key="k", token="t")
+
+        with patch("apps.core.concurrency.release_lease") as mock_release:
+            attach_lease_to_job(job, lease)
+
+        mock_release.assert_called_once_with(lease)
+        job.refresh_from_db()
+        self.assertNotIn("concurrency_lease", job.runtime_state)
+
+    def test_attach_persists_when_job_is_still_pending(self) -> None:
+        job = _create_job(status="pending")
+        lease = ConcurrencyLease(key="k", token="t")
+
+        attach_lease_to_job(job, lease)
+
+        job.refresh_from_db()
+        self.assertEqual(
+            job.runtime_state["concurrency_lease"], {"key": "k", "token": "t"}
+        )
+
+
+class PurgeReleasesLeasesTests(TestCase):
+    """Verifica que la purga libere los leases antes de borrar los jobs."""
+
+    def test_purge_releases_lease_before_deleting(self) -> None:
+        expired_job = _create_job(
+            expires_at=timezone.now() - timedelta(hours=1),
+            runtime_state={"concurrency_lease": {"key": "k", "token": "t"}},
+        )
+
+        with patch("apps.core.concurrency.release_lease") as mock_release:
+            purged = purge_expired_anonymous_jobs()
+
+        self.assertEqual(purged, 1)
+        mock_release.assert_called_once()
+        self.assertFalse(ScientificJob.objects.filter(pk=expired_job.pk).exists())
+
+
+class RealtimePayloadTests(TestCase):
+    """Verifica que el payload realtime no exponga estado interno de control."""
+
+    def test_payload_excludes_internal_runtime_state_keys(self) -> None:
+        job = _create_job(
+            runtime_state={
+                "concurrency_lease": {"key": "k", "token": "t"},
+                "custom_state": "visible",
+            }
+        )
+
+        payload = build_scientific_job_payload(job)
+
+        self.assertNotIn("concurrency_lease", payload["runtime_state"])
+        self.assertEqual(payload["runtime_state"], {"custom_state": "visible"})
 
 
 class ConcurrencySignalTests(TestCase):

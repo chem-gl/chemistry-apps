@@ -31,6 +31,7 @@ from rest_framework.throttling import BaseThrottle
 from .anonymous import can_access_public_job
 from .concurrency import (
     CONCURRENCY_LIMIT_DETAIL,
+    TERMINAL_JOB_STATUSES,
     ConcurrencyLease,
     acquire_slot,
     attach_lease_to_job,
@@ -41,9 +42,6 @@ from .throttling import AnonymousDispatchRateThrottle
 from .uuid_utils import resolve_uuid_or_none
 
 PUBLIC_UNAVAILABLE_DETAIL: str = "Recurso no disponible en el API público."
-
-# Estados en los que no habrá ejecución que libere el cupo de concurrencia.
-_TERMINAL_JOB_STATUSES: frozenset[str] = frozenset({"completed", "failed", "cancelled"})
 
 
 class PublicAppViewSetMixin:
@@ -108,7 +106,7 @@ class PublicAppViewSetMixin:
         job_id = str(response_payload.get("id", ""))
         job = ScientificJob.objects.filter(pk=job_id).first() if job_id else None
 
-        if job is None or job.status in _TERMINAL_JOB_STATUSES:
+        if job is None or job.status in TERMINAL_JOB_STATUSES:
             release_lease(lease)
             return response
 

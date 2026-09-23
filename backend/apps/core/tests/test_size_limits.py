@@ -165,6 +165,31 @@ class ArtifactSizeLimitTests(TestCase):
         self.assertEqual(response.status_code, 413)
 
 
+class UploadHandlerTests(TestCase):
+    """Verifica el corte temprano del multipart (evita el DoS por disco)."""
+
+    def setUp(self) -> None:
+        cache.clear()
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    @override_settings(
+        ANONYMOUS_MAX_UPLOAD_BYTES=TINY_LIMIT_BYTES,
+        FILE_UPLOAD_MAX_MEMORY_SIZE=1,
+    )
+    def test_upload_is_cut_while_receiving_the_body(self) -> None:
+        """Con archivos que exceden el umbral de memoria, corta el handler."""
+        with patch("apps.core.base_router.dispatch_scientific_job", return_value=True):
+            response = self.client.post(
+                PUBLIC_EASY_RATE_URL,
+                _build_valid_multipart_payload(),
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, 413)
+
+
 def build_authenticated_api_client_user() -> object:
     """Crea (y retorna) el usuario de pruebas del cliente autenticado."""
     from django.contrib.auth import get_user_model

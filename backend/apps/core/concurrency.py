@@ -42,6 +42,11 @@ DEFAULT_MAX_CONCURRENT_JOBS = 2
 DEFAULT_LEASE_SECONDS = 1800
 RUNTIME_STATE_LEASE_KEY = "concurrency_lease"
 
+# Estados en los que el job ya no se ejecutará: nadie liberará su lease.
+TERMINAL_JOB_STATUSES: frozenset[str] = frozenset(
+    {"completed", "failed", "cancelled"}
+)
+
 CONCURRENCY_LIMIT_DETAIL: str = (
     "Tienes demasiados cálculos en curso. Espera a que terminen e inténtalo de nuevo."
 )
@@ -200,8 +205,17 @@ def release_lease(lease: ConcurrencyLease, *, client: Redis | None = None) -> No
 
 
 def attach_lease_to_job(job: ScientificJob, lease: ConcurrencyLease) -> None:
-    """Persiste el lease en ``runtime_state`` para liberarlo al terminar el job."""
+    """Persiste el lease en ``runtime_state`` para liberarlo al terminar el job.
+
+    Si el job ya está en estado terminal (p. ej. terminó entre el despacho y este
+    momento) el lease se libera al instante: ningún worker lo liberaría después.
+    """
     if lease.is_noop:
+        return
+
+    job.refresh_from_db(fields=["status", "runtime_state"])
+    if job.status in TERMINAL_JOB_STATUSES:
+        release_lease(lease)
         return
 
     runtime_state: dict[str, object] = dict(job.runtime_state or {})
@@ -210,8 +224,17 @@ def attach_lease_to_job(job: ScientificJob, lease: ConcurrencyLease) -> None:
     job.save(update_fields=["runtime_state", "updated_at"])
 
 
-def release_job_lease(job: ScientificJob, *, client: Redis | None = None) -> None:
-    """Libera el lease asociado al job (si lo tiene) y limpia ``runtime_state``."""
+def release_job_lease(
+    job: ScientificJob,
+    *,
+    client: Redis | None = None,
+    persist: bool = True,
+) -> None:
+    """Libera el lease asociado al job (si lo tiene).
+
+    ``persist=False`` evita escribir en el job cuando está a punto de borrarse
+    (por ejemplo durante la purga de jobs anónimos vencidos).
+    """
     runtime_state: dict[str, object] = dict(job.runtime_state or {})
     lease_payload = runtime_state.pop(RUNTIME_STATE_LEASE_KEY, None)
     if not isinstance(lease_payload, dict):
@@ -220,6 +243,9 @@ def release_job_lease(job: ScientificJob, *, client: Redis | None = None) -> Non
     lease_key = str(lease_payload.get("key", ""))
     lease_token = str(lease_payload.get("token", ""))
     release_lease(ConcurrencyLease(key=lease_key, token=lease_token), client=client)
+
+    if not persist:
+        return
 
     job.runtime_state = runtime_state
     job.save(update_fields=["runtime_state", "updated_at"])

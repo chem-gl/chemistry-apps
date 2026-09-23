@@ -84,8 +84,25 @@ def build_job_log_entry(log_event: ScientificJobLogEvent) -> JobLogEntry:
     }
 
 
+INTERNAL_RUNTIME_STATE_KEYS: tuple[str, ...] = ("concurrency_lease",)
+
+
+def _build_public_runtime_state(job: ScientificJob) -> JSONMap:
+    """Copia ``runtime_state`` sin las claves internas de control."""
+    runtime_state: JSONMap = dict(job.runtime_state or {})
+
+    for internal_key in INTERNAL_RUNTIME_STATE_KEYS:
+        runtime_state.pop(internal_key, None)
+
+    return runtime_state
+
+
 def build_scientific_job_payload(job: ScientificJob) -> JSONMap:
-    """Serializa el job completo en un payload estable para frontend realtime."""
+    """Serializa el job completo en un payload estable para frontend realtime.
+
+    Excluye claves internas de ``runtime_state`` (por ejemplo el lease de
+    concurrencia) para no exponer estado de control a los clientes del stream.
+    """
     normalized_progress_percentage: int = int(job.progress_percentage)
     normalized_progress_stage: str = str(job.progress_stage)
     normalized_progress_message: str = str(job.progress_message)
@@ -113,7 +130,7 @@ def build_scientific_job_payload(job: ScientificJob) -> JSONMap:
         "progress_event_index": int(job.progress_event_index),
         "supports_pause_resume": bool(job.supports_pause_resume),
         "pause_requested": bool(job.pause_requested),
-        "runtime_state": dict(job.runtime_state),
+        "runtime_state": _build_public_runtime_state(job),
         "paused_at": (
             job.paused_at.isoformat().replace(UTC_OFFSET_SUFFIX, UTC_SUFFIX)
             if job.paused_at is not None
