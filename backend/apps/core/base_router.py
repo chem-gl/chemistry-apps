@@ -38,7 +38,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .artifacts import ScientificInputArtifactStorageService
+from .artifacts import ArtifactTooLargeError, ScientificInputArtifactStorageService
 from .declarative_api import DeclarativeJobAPI
 from .identity.services import AuthorizationService
 from .models import ScientificJob
@@ -336,6 +336,26 @@ class ScientificAppViewSetMixin:
                     field_name=field_name,
                     role="input",
                 )
+        except ArtifactTooLargeError as size_error:
+            created_job.status = "failed"
+            created_job.error_trace = str(size_error)
+            created_job.progress_percentage = 100
+            created_job.progress_stage = "failed"
+            created_job.progress_message = "Archivo de entrada demasiado grande."
+            created_job.save(
+                update_fields=[
+                    "status",
+                    "error_trace",
+                    "progress_percentage",
+                    "progress_stage",
+                    "progress_message",
+                    "updated_at",
+                ]
+            )
+            return Response(
+                {"detail": str(size_error)},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
         except Exception as error_value:
             created_job.status = "failed"
             created_job.error_trace = str(error_value)

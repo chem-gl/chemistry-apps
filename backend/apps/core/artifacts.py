@@ -37,6 +37,7 @@ from .models import (
     ScientificJobInputArtifact,
     ScientificJobInputArtifactChunk,
 )
+from .upload_limits import format_megabytes, resolve_max_upload_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,20 @@ class ScientificInputArtifactStorageService:
         field_name: str,
         role: str = "input",
     ) -> ScientificJobInputArtifact:
-        """Guarda archivo multipart en chunks, asigna política de retención y retorna metadatos."""
+        """Guarda archivo multipart en chunks, asigna política de retención y retorna metadatos.
+
+        Rechaza con ``ArtifactTooLargeError`` cuando el archivo supera el tope del
+        rol del job (estricto para anónimos, holgado para usuarios registrados).
+        """
+        max_bytes: int = resolve_max_upload_bytes(job)
+        declared_size: int = int(getattr(uploaded_file, "size", 0) or 0)
+        if declared_size > max_bytes:
+            raise ArtifactTooLargeError(
+                filename=uploaded_file.name or field_name,
+                size_bytes=declared_size,
+                max_bytes=max_bytes,
+            )
+
         normalized_filename: str = self._normalize_filename(uploaded_file.name)
         content_type_value: str = (
             uploaded_file.content_type
@@ -174,6 +188,14 @@ class ScientificInputArtifactStorageService:
                 chunk_bytes: bytes = self._normalize_chunk_to_bytes(chunk)
                 hasher.update(chunk_bytes)
                 total_size_bytes += len(chunk_bytes)
+
+                # Segunda barrera: un tamaño declarado puede mentir o faltar.
+                if total_size_bytes > max_bytes:
+                    raise ArtifactTooLargeError(
+                        filename=normalized_filename,
+                        size_bytes=total_size_bytes,
+                        max_bytes=max_bytes,
+                    )
 
                 ScientificJobInputArtifactChunk.objects.create(
                     artifact=artifact,
@@ -408,6 +430,24 @@ class ScientificInputArtifactStorageService:
         if isinstance(chunk, memoryview):
             return chunk.tobytes()
         return chunk.encode("utf-8")
+
+
+class ArtifactTooLargeError(Exception):
+    """Se lanza cuando un archivo subido supera el tope permitido para su rol.
+
+    Los jobs anónimos usan un tope estricto (10 MB por defecto) y los jobs de
+    usuarios registrados uno holgado (50 MB por defecto). El router traduce esta
+    excepción a HTTP 413.
+    """
+
+    def __init__(self, *, filename: str, size_bytes: int, max_bytes: int) -> None:
+        self.filename: str = filename
+        self.size_bytes: int = size_bytes
+        self.max_bytes: int = max_bytes
+        super().__init__(
+            f"El archivo '{filename}' pesa {format_megabytes(size_bytes)} y supera "
+            f"el máximo permitido de {format_megabytes(max_bytes)}."
+        )
 
 
 class ArtifactChunksPurgedError(Exception):

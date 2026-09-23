@@ -265,6 +265,8 @@ REST_FRAMEWORK = {
         "public-dispatch": PUBLIC_DISPATCH_RATE,
         "registered-dispatch": REGISTERED_DISPATCH_RATE,
     },
+    # Traduce RequestDataTooBig a 413 en lugar del 400 por defecto.
+    "EXCEPTION_HANDLER": "apps.core.exceptions.scientific_exception_handler",
 }
 
 # Configuración de tiempos para tokens JWT.
@@ -450,6 +452,29 @@ ARTIFACT_INLINE_THRESHOLD_KB: int = max(
 )
 ARTIFACT_LARGE_FILE_TTL_DAYS: int = max(
     1, _get_env_int("ARTIFACT_LARGE_FILE_TTL_DAYS", 30)
+)
+
+# ---------------------------------------------------------------------------
+# Límites de tamaño del modo libre (fase 1).
+#
+# MAX_PARAMETERS_BYTES (256 KB por defecto):
+#   Tope del cuerpo JSON de una petición. Django lo aplica con
+#   DATA_UPLOAD_MAX_MEMORY_SIZE, que excluye los datos de archivos subidos; el
+#   exceso se responde como 413 desde `apps/core/exceptions.py`.
+#
+# ANONYMOUS_MAX_UPLOAD_BYTES / REGISTERED_MAX_UPLOAD_BYTES:
+#   Tope por archivo según el rol del job (10 MB anónimo, 50 MB registrado).
+# ---------------------------------------------------------------------------
+MAX_PARAMETERS_BYTES: int = max(
+    1024, _get_env_int("MAX_PARAMETERS_BYTES", 256 * 1024)
+)
+DATA_UPLOAD_MAX_MEMORY_SIZE: int = MAX_PARAMETERS_BYTES
+
+ANONYMOUS_MAX_UPLOAD_BYTES: int = max(
+    1024, _get_env_int("ANONYMOUS_MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
+)
+REGISTERED_MAX_UPLOAD_BYTES: int = max(
+    1024, _get_env_int("REGISTERED_MAX_UPLOAD_BYTES", 50 * 1024 * 1024)
 )
 
 # ---------------------------------------------------------------------------
