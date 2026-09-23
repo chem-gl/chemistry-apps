@@ -40,6 +40,9 @@ class CoreConfig(AppConfig):
         # Importa señales de startup del dominio de identidad (post_migrate).
         from .identity import startup as _identity_startup  # noqa: F401
 
+        # Señales de Celery que liberan el cupo de concurrencia del modo libre.
+        from . import signals as _concurrency_signals  # noqa: F401
+
         if not _is_runtime_tools_strict_check_enabled():
             return
 

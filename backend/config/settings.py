@@ -477,6 +477,17 @@ REGISTERED_MAX_UPLOAD_BYTES: int = max(
     1024, _get_env_int("REGISTERED_MAX_UPLOAD_BYTES", 50 * 1024 * 1024)
 )
 
+# Semáforo de concurrencia por cliente en el modo libre (además de la tasa).
+# ANONYMOUS_MAX_CONCURRENT_JOBS: trabajos anónimos simultáneos por cliente.
+# ANONYMOUS_CONCURRENCY_LEASE_SECONDS: vida máxima del lease; actúa como red de
+# seguridad si el worker muere sin liberar.
+ANONYMOUS_MAX_CONCURRENT_JOBS: int = max(
+    1, _get_env_int("ANONYMOUS_MAX_CONCURRENT_JOBS", 2)
+)
+ANONYMOUS_CONCURRENCY_LEASE_SECONDS: int = max(
+    60, _get_env_int("ANONYMOUS_CONCURRENCY_LEASE_SECONDS", 1800)
+)
+
 # ---------------------------------------------------------------------------
 # Política de jobs anónimos (apps libres sin login).
 #
@@ -542,6 +553,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 CHANNEL_LAYERS_REDIS_URL = os.getenv(
     "CHANNEL_LAYERS_REDIS_URL",
     CELERY_BROKER_URL,
+)
+# Redis compartido por web y workers para el semáforo de concurrencia anónima.
+CONCURRENCY_REDIS_URL: str = os.getenv(
+    "CONCURRENCY_REDIS_URL",
+    CHANNEL_LAYERS_REDIS_URL,
 )
 USE_INMEMORY_CHANNEL_LAYER = _get_env_bool(
     "USE_INMEMORY_CHANNEL_LAYER",

@@ -22,16 +22,28 @@ from __future__ import annotations
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.throttling import BaseThrottle
 
 from .anonymous import can_access_public_job
+from .concurrency import (
+    CONCURRENCY_LIMIT_DETAIL,
+    ConcurrencyLease,
+    acquire_slot,
+    attach_lease_to_job,
+    release_lease,
+)
 from .models import ScientificJob
 from .throttling import AnonymousDispatchRateThrottle
 from .uuid_utils import resolve_uuid_or_none
 
 PUBLIC_UNAVAILABLE_DETAIL: str = "Recurso no disponible en el API público."
+
+# Estados en los que no habrá ejecución que libere el cupo de concurrencia.
+_TERMINAL_JOB_STATUSES: frozenset[str] = frozenset({"completed", "failed", "cancelled"})
 
 
 class PublicAppViewSetMixin:
@@ -61,6 +73,47 @@ class PublicAppViewSetMixin:
         """Fuerza jobs sin dueño ni grupo: el modo público es 100% anónimo."""
         del request
         return None, None
+
+    def create(self, request: Request) -> Response:
+        """Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+        """
+        lease = acquire_slot(request)
+        if lease is None:
+            return Response(
+                {"detail": CONCURRENCY_LIMIT_DETAIL},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        try:
+            response = super().create(request)
+        except Exception:
+            release_lease(lease)
+            raise
+
+        return self._finalize_public_dispatch(response, lease)
+
+    def _finalize_public_dispatch(
+        self, response: Response, lease: ConcurrencyLease
+    ) -> Response:
+        """Asocia el lease al job recién creado o lo libera si no habrá ejecución."""
+        if response.status_code != status.HTTP_201_CREATED:
+            release_lease(lease)
+            return response
+
+        response_payload = response.data if isinstance(response.data, dict) else {}
+        job_id = str(response_payload.get("id", ""))
+        job = ScientificJob.objects.filter(pk=job_id).first() if job_id else None
+
+        if job is None or job.status in _TERMINAL_JOB_STATUSES:
+            release_lease(lease)
+            return response
+
+        attach_lease_to_job(job, lease)
+        return response
 
     def get_throttles(self) -> list[BaseThrottle]:
         """Aplica el tope de despachos solo a ``create``.
