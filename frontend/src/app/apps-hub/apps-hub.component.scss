@@ -43,44 +43,24 @@
   }
 }
 
-// ── Hero ────────────────────────────────────────────────────────────────
-.hero {
+// ── Barra superior compacta (acciones, sin títulos) ─────────────────────
+.top-actions {
   position: relative;
-  max-width: 46rem;
-}
-
-.hero-eyebrow {
-  margin: 0 0 0.75rem;
-  font-family: var(--chem-font-mono, ui-monospace, 'SFMono-Regular', monospace);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--chem-primary-dark);
-}
-
-.hero-title {
-  margin: 0 0 0.85rem;
-  font-family: var(--chem-font-heading);
-  font-size: clamp(2.1rem, 5.2vw, 3.4rem);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
-  color: var(--chem-ink);
-  text-wrap: balance;
-}
-
-.hero-lead {
-  margin: 0 0 1.5rem;
-  max-width: 36rem;
-  font-size: 1.02rem;
-  line-height: 1.65;
-  color: var(--chem-ink-secondary);
-}
-
-.hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+}
+
+.top-note {
+  margin: 0;
+  flex-basis: 100%;
+  max-width: 38rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--chem-ink-soft);
+  border-left: 2px solid var(--chem-border-accent-strong);
+  padding-left: 0.7rem;
 }
 
 .cta {
@@ -120,16 +100,6 @@
     background: var(--chem-surface);
     color: var(--chem-ink);
   }
-}
-
-.hero-note {
-  margin: 1.1rem 0 0;
-  max-width: 34rem;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: var(--chem-ink-soft);
-  border-left: 2px solid var(--chem-border-accent-strong);
-  padding-left: 0.7rem;
 }
 
 // ── Zonas ───────────────────────────────────────────────────────────────

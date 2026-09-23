@@ -37,14 +37,14 @@ test.describe('Puerta de entrada', () => {
   test('traduce la interfaz al español y vuelve al inglés', async ({ page }) => {
     await useLanguage(page, 'en');
     await page.goto('/apps');
-    await expect(page.locator('.hero-title')).toHaveText(
-      'Run a calculation without signing up.',
+    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
+      'Start with molar fractions',
     );
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'Español' }).first().click();
-    await expect(page.locator('.hero-title')).toHaveText(
-      'Calcula sin crear cuenta.',
+    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
+      'Empezar con fracciones molares',
     );
     await expect(page.getByRole('heading', { name: 'Sin cuenta' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Con cuenta' })).toBeVisible();
@@ -52,8 +52,8 @@ test.describe('Puerta de entrada', () => {
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'English' }).first().click();
-    await expect(page.locator('.hero-title')).toHaveText(
-      'Run a calculation without signing up.',
+    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
+      'Start with molar fractions',
     );
   });
 

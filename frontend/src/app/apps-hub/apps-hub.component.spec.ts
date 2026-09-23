@@ -87,7 +87,10 @@ describe('AppsHubComponent', () => {
 
     const host: HTMLElement = fixture.nativeElement;
     expect(host.querySelectorAll('.app-lattice').length).toBe(2);
-    expect(host.textContent).toContain('Run a calculation without signing up.');
+    expect(host.querySelector('.top-actions .cta-primary')?.textContent).toContain(
+      'Start with molar fractions',
+    );
+    expect(host.querySelector('app-institutional-showcase')).not.toBeNull();
     expect(host.textContent).toContain('Account required');
     expect(host.querySelectorAll('.node-badge.is-locked').length).toBeGreaterThan(0);
   });

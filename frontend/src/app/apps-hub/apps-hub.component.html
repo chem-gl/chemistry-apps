@@ -7,26 +7,23 @@
 >
   <div class="reaction-glow" aria-hidden="true"></div>
 
-  <header class="hero">
-    <p class="hero-eyebrow">{{ 'appsHub.hero.eyebrow' | transloco }}</p>
-    <h2 class="hero-title">{{ 'appsHub.hero.title' | transloco }}</h2>
-    <p class="hero-lead">{{ 'appsHub.hero.lead' | transloco }}</p>
+  <!-- Barra superior compacta: acciones sin títulos. El equipo y los
+    artículos (showcase) son el contenido principal de la portada. -->
+  <div class="top-actions">
+    @if (starterApp(); as firstApp) {
+    <a class="cta cta-primary" [routerLink]="firstApp.routePath">
+      {{ 'appsHub.hero.start' | transloco }}
+    </a>
+    }
+    @if (!isAuthenticated()) {
+    <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
+    } @else {
+    <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
+    }
+    <p class="top-note">{{ 'appsHub.hero.privacyNote' | transloco }}</p>
+  </div>
 
-    <div class="hero-actions">
-      @if (starterApp(); as firstApp) {
-      <a class="cta cta-primary" [routerLink]="firstApp.routePath">
-        {{ 'appsHub.hero.start' | transloco }}
-      </a>
-      }
-      @if (!isAuthenticated()) {
-      <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
-      } @else {
-      <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
-      }
-    </div>
-
-    <p class="hero-note">{{ 'appsHub.hero.privacyNote' | transloco }}</p>
-  </header>
+  <app-institutional-showcase variant="hub" />
 
   <section class="zone" [attr.aria-labelledby]="'free-zone-title'">
     <header class="zone-header">
@@ -80,6 +77,4 @@
       }
     </ul>
   </section>
-
-  <app-institutional-showcase variant="hub" />
 </section>
