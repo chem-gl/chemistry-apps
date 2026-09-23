@@ -2,7 +2,7 @@
 // Muestra Job ID, Status, Updated y botón Open; emite eventos reload y openJob al componente padre.
 
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ScientificJobView } from '../../../api/jobs-api.service';
 import { JobAccessModeService } from '../../../auth/job-access-mode.service';
@@ -16,7 +16,7 @@ import { LocalResultRecord } from '../../local-results.store';
   styleUrl: './job-history-table.component.scss',
 })
 export class JobHistoryTableComponent {
-  readonly accessMode = JobAccessModeService.current;
+  protected readonly accessMode = inject(JobAccessModeService, { optional: true });
   /** Lista de jobs históricos a mostrar en la tabla. */
   @Input() jobs: ScientificJobView[] = [];
 

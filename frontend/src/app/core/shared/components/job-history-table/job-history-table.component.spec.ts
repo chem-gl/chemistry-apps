@@ -24,9 +24,9 @@ describe('JobHistoryTableComponent', () => {
   let fixture: ComponentFixture<JobHistoryTableComponent>;
 
   beforeEach(async () => {
-    JobAccessModeService.current = { isOpenMode: signal(true) };
     await TestBed.configureTestingModule({
       imports: [JobHistoryTableComponent, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
+      providers: [{ provide: JobAccessModeService, useValue: { isOpenMode: signal(true) } }],
     }).compileComponents();
     fixture = TestBed.createComponent(JobHistoryTableComponent);
   });

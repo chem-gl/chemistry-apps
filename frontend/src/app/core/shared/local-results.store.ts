@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 
-export type LocalResultStatus = 'pending' | 'running' | 'completed' | 'failed' | 'expired' | string;
+// `(string & {})` conserva el autocompletado de los literales conocidos sin
+// que el `string` genérico los opaque (evita el aviso de union redundante).
+export type LocalResultStatus =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'expired'
+  | (string & {});
 
 export interface LocalResultRecord {
   jobId: string;
@@ -37,38 +45,66 @@ export class LocalResultsStore {
     try {
       const storage = this.storage();
       if (storage === null) return;
-      const records = this.recordsWith(record).map((item) =>
-        item.jobId === record.jobId && this.serializedSize([item]) > MAX_BYTES
-          ? { ...item, resultSummary: null }
-          : item,
-      );
-      while (records.length > 0 && this.serializedSize(records) > MAX_BYTES) records.pop();
-      try {
-        storage.setItem(this.key(record.pluginName), JSON.stringify(records));
-      } catch (error: unknown) {
-        if (!this.isQuotaError(error)) return;
-        const compactRecord = { ...record, resultSummary: null };
-        const compactRecords = this.recordsWith(compactRecord);
-        while (compactRecords.length > 0 && this.serializedSize(compactRecords) > MAX_BYTES) {
-          compactRecords.pop();
-        }
-        try {
-          storage.setItem(this.key(record.pluginName), JSON.stringify(compactRecords));
-        } catch (retryError: unknown) {
-          if (!this.isQuotaError(retryError)) return;
-          while (compactRecords.length > 0) {
-            compactRecords.pop();
-            try {
-              storage.setItem(this.key(record.pluginName), JSON.stringify(compactRecords));
-              return;
-            } catch (finalError: unknown) {
-              if (!this.isQuotaError(finalError)) return;
-            }
-          }
-        }
-      }
+      const records = this.pruneToFit(this.recordsWith(this.slimRecordIfHuge(record)));
+      if (this.tryPersist(storage, record.pluginName, records) !== 'quota') return;
+      this.persistCompact(storage, record);
     } catch {
       // La persistencia local es opcional y nunca bloquea el flujo.
+    }
+  }
+
+  /** Si un registro solo ya supera el tope, guarda sin el resumen pesado. */
+  private slimRecordIfHuge(record: LocalResultRecord): LocalResultRecord {
+    if (this.serializedSize([record]) <= MAX_BYTES) return record;
+    return { ...record, resultSummary: null };
+  }
+
+  /** Recorta por tamaño manteniendo los más recientes (ya ordenados). */
+  private pruneToFit(records: LocalResultRecord[]): LocalResultRecord[] {
+    const pruned = [...records];
+    while (pruned.length > 0 && this.serializedSize(pruned) > MAX_BYTES) {
+      pruned.pop();
+    }
+    return pruned;
+  }
+
+  /** Intenta persistir; ante cuota, reintenta con el registro compacto. */
+  private persistCompact(storage: Storage, record: LocalResultRecord): void {
+    const compactRecords = this.pruneToFit(
+      this.recordsWith({ ...record, resultSummary: null }),
+    );
+    if (this.tryPersist(storage, record.pluginName, compactRecords) !== 'quota') return;
+    this.persistOneByOne(storage, record.pluginName, compactRecords);
+  }
+
+  /** Persiste quitando de uno en uno hasta caber o vaciar la lista. */
+  private persistOneByOne(
+    storage: Storage,
+    pluginName: string,
+    records: LocalResultRecord[],
+  ): void {
+    const remaining = [...records];
+    while (remaining.length > 0) {
+      remaining.pop();
+      try {
+        storage.setItem(this.key(pluginName), JSON.stringify(remaining));
+        return;
+      } catch (persistError: unknown) {
+        if (!this.isQuotaError(persistError)) return;
+      }
+    }
+  }
+
+  private tryPersist(
+    storage: Storage,
+    pluginName: string,
+    records: LocalResultRecord[],
+  ): 'ok' | 'quota' | 'fatal' {
+    try {
+      storage.setItem(this.key(pluginName), JSON.stringify(records));
+      return 'ok';
+    } catch (persistError: unknown) {
+      return this.isQuotaError(persistError) ? 'quota' : 'fatal';
     }
   }
 
@@ -119,14 +155,22 @@ export class LocalResultsStore {
   private key(pluginName: string): string {
     return `${KEY_PREFIX}${pluginName}`;
   }
+
   private serializedSize(records: LocalResultRecord[]): number {
     return JSON.stringify(records).length;
   }
+
   private isQuotaError(error: unknown): boolean {
     if (!(error instanceof DOMException)) return false;
-    return error.name === 'QuotaExceededError' || error.name.includes('Quota') || error.code === 22;
+    // Nombres históricos sin usar el obsoleto `DOMException.code`: Chrome y
+    // Safari modernos usan 'QuotaExceededError'; Firefox antiguo,
+    // 'NS_ERROR_DOM_QUOTA_REACHED'.
+    return error.name === 'QuotaExceededError' || error.name.includes('QUOTA');
   }
+
   private isRecord(value: unknown): value is LocalResultRecord {
-    return value !== null && typeof value === 'object' && 'jobId' in value && 'pluginName' in value;
+    return (
+      value !== null && typeof value === 'object' && 'jobId' in value && 'pluginName' in value
+    );
   }
 }

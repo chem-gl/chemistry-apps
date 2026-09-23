@@ -29,16 +29,20 @@ import { mergeLogEntry } from './log-entry-utils';
 import { JobAccessModeService } from '../auth/job-access-mode.service';
 import { LocalResultsStore, type LocalResultRecord } from '../shared/local-results.store';
 
-const JOB_STATUS_VALUES: readonly string[] = [
+const JOB_STATUS_VALUES: ReadonlySet<string> = new Set([
   'pending',
   'running',
   'paused',
   'completed',
   'failed',
   'cancelled',
-];
-const TERMINAL_JOB_STATUSES: readonly string[] = ['completed', 'failed', 'cancelled'];
-const PROGRESS_STAGE_VALUES: readonly string[] = [
+]);
+const TERMINAL_JOB_STATUSES: ReadonlySet<string> = new Set([
+  'completed',
+  'failed',
+  'cancelled',
+]);
+const PROGRESS_STAGE_VALUES: ReadonlySet<string> = new Set([
   'pending',
   'queued',
   'running',
@@ -48,7 +52,7 @@ const PROGRESS_STAGE_VALUES: readonly string[] = [
   'completed',
   'failed',
   'cancelled',
-];
+]);
 
 /** Lectura tolerante del job público: el API abierto devuelve el job completo. */
 interface PublicJobProgress {
@@ -65,7 +69,7 @@ function toPublicJobProgress(rawJob: unknown): PublicJobProgress | null {
 
   const candidate = rawJob as Record<string, unknown>;
   const rawStatus = candidate['status'];
-  if (typeof rawStatus !== 'string' || !JOB_STATUS_VALUES.includes(rawStatus)) {
+  if (typeof rawStatus !== 'string' || !JOB_STATUS_VALUES.has(rawStatus)) {
     return null;
   }
 
@@ -77,7 +81,7 @@ function toPublicJobProgress(rawJob: unknown): PublicJobProgress | null {
     status: rawStatus,
     progressPercentage: typeof rawPercentage === 'number' ? rawPercentage : 0,
     progressStage:
-      typeof rawStage === 'string' && PROGRESS_STAGE_VALUES.includes(rawStage)
+      typeof rawStage === 'string' && PROGRESS_STAGE_VALUES.has(rawStage)
         ? rawStage
         : 'running',
     progressMessage: typeof rawMessage === 'string' ? rawMessage : '',
@@ -389,7 +393,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
           },
         }),
         takeWhile(
-          (jobProgress: PublicJobProgress) => !TERMINAL_JOB_STATUSES.includes(jobProgress.status),
+          (jobProgress: PublicJobProgress) => !TERMINAL_JOB_STATUSES.has(jobProgress.status),
           true,
         ),
       )

@@ -2,7 +2,7 @@
 // de artefactos, los logs de ejecución y la tabla de historial de jobs. Elimina la duplicación
 // de estas tres secciones entre EasyRateComponent y MarcusComponent.
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { JobAccessModeService } from '../../../auth/job-access-mode.service';
 
@@ -50,7 +50,7 @@ export interface JobResultFooterWorkflowPort {
   styleUrl: './job-result-footer.component.scss',
 })
 export class JobResultFooterComponent {
-  readonly accessMode = JobAccessModeService.current;
+  protected readonly accessMode = inject(JobAccessModeService, { optional: true });
   /** Workflow del componente padre; proporciona señales de estado y datos del job. */
   @Input({ required: true }) workflow!: JobResultFooterWorkflowPort;
 

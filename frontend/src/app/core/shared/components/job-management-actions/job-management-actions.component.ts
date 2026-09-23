@@ -1,7 +1,7 @@
 // job-management-actions.component.ts: Acciones reutilizables para jobs visibles, eliminables o restaurables.
 
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { JobAccessModeService } from '../../../auth/job-access-mode.service';
@@ -14,7 +14,7 @@ import { JobAccessModeService } from '../../../auth/job-access-mode.service';
   styleUrl: './job-management-actions.component.scss',
 })
 export class JobManagementActionsComponent {
-  readonly accessMode = JobAccessModeService.current;
+  protected readonly accessMode = inject(JobAccessModeService, { optional: true });
   /** Controla si se renderiza el enlace al resultado de la app científica. */
   @Input() showOpenResult: boolean = true;
 

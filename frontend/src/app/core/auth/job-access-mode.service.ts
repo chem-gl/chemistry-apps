@@ -5,7 +5,6 @@ import { IdentitySessionService } from './identity-session.service';
 
 @Injectable({ providedIn: 'root' })
 export class JobAccessModeService {
-  static current: Pick<JobAccessModeService, 'isOpenMode'> | null = null;
   private readonly session = inject(IdentitySessionService);
   private readonly transloco = inject(TranslocoService, { optional: true });
 
@@ -18,7 +17,12 @@ export class JobAccessModeService {
       return null;
     }
 
-    const translationKey = error.status === 429 ? 'appMode.open.limits.429' : error.status === 413 ? 'appMode.open.limits.413' : null;
+    let translationKey: string | null = null;
+    if (error.status === 429) {
+      translationKey = 'appMode.open.limits.429';
+    } else if (error.status === 413) {
+      translationKey = 'appMode.open.limits.413';
+    }
     if (translationKey === null) {
       return null;
     }
@@ -28,12 +32,9 @@ export class JobAccessModeService {
       ? translationKey
       : translatedMessage;
     const retryAfter = error.headers.get('Retry-After');
-    return retryAfter === null || retryAfter.trim() === ''
-      ? message
-      : `${message} Retry-After: ${retryAfter}.`;
-  }
-
-  constructor() {
-    JobAccessModeService.current = this;
+    if (retryAfter === null || retryAfter.trim() === '') {
+      return message;
+    }
+    return `${message} Retry-After: ${retryAfter}.`;
   }
 }
