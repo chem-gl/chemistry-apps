@@ -428,36 +428,36 @@
   },
   "scientificApps": {
     "molar-fractions": {
-      "title": "Molar Fractions",
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+      "title": "摩尔分数",
+      "description": "含 f0..fn 表格与详细日志的酸碱平衡摩尔分数。"
     },
     "tunnel": {
-      "title": "Tunnel Effect",
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+      "title": "隧道效应",
+      "description": "含完整输入修改追踪与作业日志的非对称 Eckart 隧道校正。"
     },
     "toxicity-properties": {
-      "title": "Toxicity Properties",
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+      "title": "毒性性质",
+      "description": "基于 SMILES 批量的 LD50、Ames 致突变性与发育毒性 ADMET-AI 表。"
     },
     "sa-score": {
       "title": "SA Score",
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+      "description": "基于 AMBIT、BRSAScore 与 RDKit 方法的 SMILES 批量合成可及性评分。"
     },
     "smileit": {
       "title": "Smileit",
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+      "description": "组合 SMILES 生成，支持原子序号检查、取代基目录与报告导出。"
     },
     "marcus": {
-      "title": "Marcus Theory",
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+      "title": "Marcus 理论",
+      "description": "基于六个 Gaussian 日志的 Marcus 能量、重组能、能垒与速率常数。"
     },
     "easy-rate": {
       "title": "Easy-rate",
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+      "description": "基于 Gaussian 日志的 TST＋Eckart 隧道速率常数，可选扩散校正。"
     },
     "cadma-py": {
       "title": "CADMA Py",
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
+      "description": "参照家族管理、透明选择得分与化合物优先级比较图表。"
     }
   },
   "cadmaPy": {

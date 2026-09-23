@@ -428,36 +428,36 @@
   },
   "scientificApps": {
     "molar-fractions": {
-      "title": "Molar Fractions",
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+      "title": "モル分率",
+      "description": "f0..fn表と詳細ログ付きの酸塩基平衡モル分率。"
     },
     "tunnel": {
-      "title": "Tunnel Effect",
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+      "title": "トンネル効果",
+      "description": "入力変更履歴とジョブログ付きの非対称Eckartトンネル補正。"
     },
     "toxicity-properties": {
-      "title": "Toxicity Properties",
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+      "title": "毒性特性",
+      "description": "SMILESバッチからのLD50・Ames変異原性・発生毒性のADMET-AI表。"
     },
     "sa-score": {
       "title": "SA Score",
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+      "description": "AMBIT・BRSAScore・RDKit法によるSMILESバッチの合成容易性評価。"
     },
     "smileit": {
       "title": "Smileit",
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+      "description": "原子番号検査、置換基カタログ、レポート出力を備えた組合せSMILES生成。"
     },
     "marcus": {
-      "title": "Marcus Theory",
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+      "title": "Marcus理論",
+      "description": "6つのGaussianログからのMarcusエネルギー、再配向エネルギー、障壁と速度定数。"
     },
     "easy-rate": {
       "title": "Easy-rate",
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+      "description": "GaussianログからのTST＋Eckartトンネル速度定数（拡散補正は任意）。"
     },
     "cadma-py": {
       "title": "CADMA Py",
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
+      "description": "参照ファミリー管理、透明な選択スコア、化合物優先度付けの比較グラフ。"
     }
   },
   "cadmaPy": {

@@ -428,36 +428,36 @@
   },
   "scientificApps": {
     "molar-fractions": {
-      "title": "Molar Fractions",
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+      "title": "Fractions molaires",
+      "description": "Fractions molaires d'équilibre acide-base avec table f0..fn et journaux détaillés."
     },
     "tunnel": {
-      "title": "Tunnel Effect",
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+      "title": "Effet tunnel",
+      "description": "Correction tunnel d’Eckart asymétrique avec trace complète des modifications et journaux du job."
     },
     "toxicity-properties": {
-      "title": "Toxicity Properties",
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+      "title": "Propriétés de toxicité",
+      "description": "Table ADMET-AI : LD50, mutagénicité d’Ames et toxicité développementale depuis des lots SMILES."
     },
     "sa-score": {
       "title": "SA Score",
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+      "description": "Accessibilité synthétique pour lots SMILES avec les méthodes AMBIT, BRSAScore et RDKit."
     },
     "smileit": {
       "title": "Smileit",
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+      "description": "Génération SMILES combinatoire avec inspection par indices, catalogue de substituants et exports de rapports."
     },
     "marcus": {
-      "title": "Marcus Theory",
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+      "title": "Théorie de Marcus",
+      "description": "Énergies de Marcus, énergie de réorganisation, barrière et constantes depuis six fichiers Gaussian."
     },
     "easy-rate": {
       "title": "Easy-rate",
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+      "description": "Constantes de vitesse TST + tunnel d’Eckart depuis des fichiers Gaussian avec correction diffusionnelle optionnelle."
     },
     "cadma-py": {
       "title": "CADMA Py",
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
+      "description": "Gestion des familles de référence, scores de sélection transparents et graphiques de comparaison pour prioriser les composés."
     }
   },
   "cadmaPy": {

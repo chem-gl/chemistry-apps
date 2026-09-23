@@ -428,36 +428,36 @@
   },
   "scientificApps": {
     "molar-fractions": {
-      "title": "Molar Fractions",
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+      "title": "मोल प्रभाज",
+      "description": "f0..fn तालिका और विस्तृत लॉग सहित अम्ल-क्षार साम्य मोल प्रभाज।"
     },
     "tunnel": {
-      "title": "Tunnel Effect",
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+      "title": "टनल प्रभाव",
+      "description": "पूर्ण इनपुट परिवर्तन ट्रेस और जॉब लॉग सहित असममित Eckart टनलिंग सुधार।"
     },
     "toxicity-properties": {
-      "title": "Toxicity Properties",
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+      "title": "विषाक्तता गुणधर्म",
+      "description": "SMILES बैचों से LD50, Ames उत्परिवर्तनीयता व विकास विषाक्तता हेतु ADMET-AI तालिका।"
     },
     "sa-score": {
       "title": "SA Score",
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+      "description": "AMBIT, BRSAScore व RDKit विधियों से SMILES बैचों हेतु संश्लेषण सुलभता स्कोरिंग।"
     },
     "smileit": {
       "title": "Smileit",
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+      "description": "परमाणु-सूचकांक निरीक्षण, प्रतिस्थापी सूची और रिपोर्ट निर्यात सहित संयोजी SMILES उत्पादन।"
     },
     "marcus": {
-      "title": "Marcus Theory",
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+      "title": "Marcus सिद्धांत",
+      "description": "छह Gaussian लॉग फ़ाइलों से Marcus ऊर्जा, पुनर्गठन ऊर्जा, बैरियर और दर स्थिरांक।"
     },
     "easy-rate": {
       "title": "Easy-rate",
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+      "description": "वैकल्पिक विसरण सुधार सहित Gaussian लॉग फ़ाइलों से TST + Eckart टनल दर स्थिरांक।"
     },
     "cadma-py": {
       "title": "CADMA Py",
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
+      "description": "संदर्भ-परिवार प्रबंधन, पारदर्शी चयन स्कोर और यौगिक प्राथमिकता हेतु तुलनात्मक चार्ट।"
     }
   },
   "cadmaPy": {

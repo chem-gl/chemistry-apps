@@ -428,36 +428,36 @@
   },
   "scientificApps": {
     "molar-fractions": {
-      "title": "Molar Fractions",
-      "description": "Acid-base equilibrium molar fractions with f0..fn table and detailed logs."
+      "title": "Мольные доли",
+      "description": "Мольные доли кислотно-основного равновесия с таблицей f0..fn и подробными логами."
     },
     "tunnel": {
-      "title": "Tunnel Effect",
-      "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+      "title": "Туннельный эффект",
+      "description": "Асимметричная поправка Эккарта на туннелирование с полной трассировкой изменений и логами задачи."
     },
     "toxicity-properties": {
-      "title": "Toxicity Properties",
-      "description": "ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches."
+      "title": "Свойства токсичности",
+      "description": "Таблица ADMET-AI: LD50, мутагенность по Эймсу и эмбриотоксичность из SMILES-пакетов."
     },
     "sa-score": {
       "title": "SA Score",
-      "description": "Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods."
+      "description": "Оценка синтетической доступности SMILES-пакетов методами AMBIT, BRSAScore и RDKit."
     },
     "smileit": {
       "title": "Smileit",
-      "description": "Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports."
+      "description": "Комбинаторная генерация SMILES с проверкой по индексам атомов, каталогом заместителей и экспортом отчётов."
     },
     "marcus": {
-      "title": "Marcus Theory",
-      "description": "Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files."
+      "title": "Теория Маркуса",
+      "description": "Энергии Маркуса, энергия реорганизации, барьер и константы из шести Gaussian-логов."
     },
     "easy-rate": {
       "title": "Easy-rate",
-      "description": "TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction."
+      "description": "Константы скорости TST + туннель Эккарта из Gaussian-логoв с опциональной диффузионной поправкой."
     },
     "cadma-py": {
       "title": "CADMA Py",
-      "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
+      "description": "Ведение эталонных семейств, прозрачные оценки отбора и сравнительные графики для приоритизации соединений."
     }
   },
   "cadmaPy": {
