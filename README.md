@@ -1049,23 +1049,27 @@ El directorio `.github/workflows/` define tres workflows:
 - Copia el bundle al servidor remoto con SCP.
 - Conecta por SSH, descomprime el bundle y ejecuta `docker compose up`.
 
-### Secrets requeridos para deploy
+### Secrets y vars requeridos para deploy
 
-| Secret                                         | Descripción                                           |
-| ---------------------------------------------- | ----------------------------------------------------- |
-| `VM_HOST`                                      | IP o hostname del servidor                            |
-| `VM_PORT`                                      | Puerto SSH                                            |
-| `VM_USER`                                      | Usuario SSH                                           |
-| `VM_SSH_KEY`                                   | Clave privada SSH (o `VM_SSH_KEY_BASE64`)             |
-| `VM_PROJECT_PATH`                              | Ruta en el servidor donde se despliega                |
-| `DJANGO_SECRET_KEY`                            | Clave secreta de Django                               |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` | Credenciales PostgreSQL                               |
-| `ALLOWED_HOSTS`                                | Hosts permitidos por Django                           |
-| `CORS_ALLOWED_ORIGINS`                         | Orígenes CORS permitidos                              |
-| `CSRF_TRUSTED_ORIGINS`                         | Orígenes de confianza para CSRF                       |
-| `BACKEND_PUBLIC_URL`                           | URL pública del backend (usada en build del frontend) |
-| `EXTERNAL_BACKEND_PORT`                        | Puerto externo del backend                            |
-| `EXTERNAL_FRONTEND_PORT`                       | Puerto externo del frontend                           |
+Solo 3 secrets sensibles (+2 opcionales). El resto es config no sensible en vars (`gh variable list`):
+
+| Secret (sensible) | Descripción |
+|---|---|
+| `VM_SSH_KEY` (o `VM_SSH_KEY_BASE64`) | Clave privada SSH |
+| `VM_SSH_PASSPHRASE` (opcional) | Passphrase si la llave está cifrada |
+| `DJANGO_SECRET_KEY` | Clave secreta de Django |
+| `DB_PASSWORD` | Password PostgreSQL |
+
+| Var (no sensible) | Descripción |
+|---|---|
+| `VM_HOST`, `VM_PORT`, `VM_USER`, `VM_PROJECT_PATH` | Destino SSH y ruta en servidor |
+| `DB_NAME`, `DB_USER`, `DB_PORT`, `DB_HOST`, `REDIS_PORT` | Datos y puertos (defaults: `db`, `6379`) |
+| `ALLOWED_HOSTS` | Hosts permitidos por Django |
+| `CORS_ALLOWED_ORIGINS` | Orígenes CORS permitidos |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes de confianza para CSRF |
+| `BACKEND_PUBLIC_URL` | URL pública del backend (build-arg del frontend) |
+| `FRONTEND_PUBLIC_URL` (opcional) | Se fusiona a CORS si se define |
+| `EXTERNAL_BACKEND_PORT`, `EXTERNAL_FRONTEND_PORT` | Puertos externos (8080/4210 en plata) |
 
 ### Despliegue manual en producción
 
