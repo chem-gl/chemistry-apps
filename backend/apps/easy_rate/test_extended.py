@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.services import JobService
 
@@ -77,7 +77,7 @@ class EasyRateExtendedApiTests(TestCase):
     """Pruebas extendidas del contrato API de easy_rate."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def _create_job(self) -> str:
         """Crea job easy_rate y retorna su ID."""

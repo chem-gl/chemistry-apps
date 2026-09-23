@@ -15,7 +15,7 @@ from zipfile import ZipFile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.services import JobService
 
@@ -66,7 +66,7 @@ class EasyRateContractApiTests(TestCase):
     """Valida contrato HTTP y flujo completo de ejecución Easy-rate."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def _build_valid_multipart_payload(self) -> dict[str, object]:
         """Construye payload multipart válido para pruebas de create."""

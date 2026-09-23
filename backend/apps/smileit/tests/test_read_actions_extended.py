@@ -15,7 +15,7 @@ from zipfile import ZipFile
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.models import ScientificJob
 
@@ -108,7 +108,7 @@ class SmileitReadActionsExtendedTests(SmileitSeedTestCase):
     """Cubre las rutas GET especializadas del viewset de lectura de Smile-it."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
         self.user_model = get_user_model()
 
     def _create_completed_job(self) -> ScientificJob:
@@ -265,7 +265,7 @@ class SmileitReadActionsSmokeTests(TestCase):
     """Pruebas ligeras de compatibilidad para endpoints con IDs inexistentes."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_missing_job_returns_404_in_read_endpoints(self) -> None:
         # Verifica que los endpoints lean el job desde el queryset acotado y fallen con 404 si no existe.

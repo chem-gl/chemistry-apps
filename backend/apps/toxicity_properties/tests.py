@@ -12,7 +12,7 @@ from unittest.mock import patch
 from django.test import TestCase
 from libs.admet_ai.client import AdmetAiClient
 from libs.admet_ai.models import AdmetPredictionResult
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.models import ScientificJob
 from apps.core.services import JobService
@@ -216,7 +216,7 @@ class ToxicityContractApiTests(TestCase):
     """Pruebas de contrato HTTP para creación, consulta y reportes."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     @patch("apps.toxicity_properties.routers.dispatch_scientific_job")
     @patch("apps.toxicity_properties.plugin.AdmetAiClient")

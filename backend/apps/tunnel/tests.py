@@ -13,7 +13,7 @@ import math
 from unittest.mock import patch
 
 from django.test import TestCase
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.models import ScientificJob, ScientificJobLogEvent
 from apps.core.services import JobService
@@ -26,7 +26,7 @@ class TunnelContractApiTests(TestCase):
     """Valida contrato HTTP y ejecución del plugin Tunnel."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_create_and_retrieve_tunnel_job(self) -> None:
         request_payload: JSONMap = {

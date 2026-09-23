@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.models import ScientificJob
 from apps.core.services import JobService
@@ -52,7 +52,7 @@ class SmileitJobLifecycleTests(SmileitSeedTestCase):
     """Pruebas extendidas de ciclo de vida: cancel, progress, logs, list, 404."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def _create_pending_job(self) -> str:
         """Crea un job smileit en estado pending y retorna su ID."""

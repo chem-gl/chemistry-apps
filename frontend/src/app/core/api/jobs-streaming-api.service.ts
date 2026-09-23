@@ -3,6 +3,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
+import { IdentitySessionService } from '../auth/identity-session.service';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
 import { JobLogList, JobProgressSnapshot, JobsService, ScientificJob } from './generated';
 import type {
@@ -19,6 +20,7 @@ import type {
 })
 export class JobsStreamingApiService {
   private readonly jobsClient = inject(JobsService);
+  private readonly identitySession = inject(IdentitySessionService);
 
   /**
    * Obtiene un snapshot puntual del progreso del job: porcentaje, etapa y mensaje legible.
@@ -50,7 +52,7 @@ export class JobsStreamingApiService {
    */
   streamJobEvents(jobId: string): Observable<JobProgressSnapshot> {
     return new Observable<JobProgressSnapshot>((observer) => {
-      const url = `${API_BASE_URL}/api/jobs/${jobId}/events/`;
+      const url = `${API_BASE_URL}/api/jobs/${jobId}/events/${this.buildStreamingTokenQuery()}`;
       const source = new EventSource(url);
 
       source.addEventListener('job.progress', (rawEvent: Event) => {
@@ -83,7 +85,7 @@ export class JobsStreamingApiService {
   /** Abre stream SSE de logs en tiempo real para un job específico */
   streamJobLogEvents(jobId: string): Observable<JobLogEntryView> {
     return new Observable<JobLogEntryView>((observer) => {
-      const url = `${API_BASE_URL}/api/jobs/${jobId}/logs/events/`;
+      const url = `${API_BASE_URL}/api/jobs/${jobId}/logs/events/${this.buildStreamingTokenQuery()}`;
       const source = new EventSource(url);
 
       source.addEventListener('job.log', (rawEvent: Event) => {
@@ -218,7 +220,34 @@ export class JobsStreamingApiService {
       url.searchParams.set('active_only', String(query.activeOnly));
     }
 
+    const accessToken = this.resolveStreamingAccessToken();
+    if (accessToken !== null) {
+      url.searchParams.set('token', accessToken);
+    }
+
     return url.toString();
+  }
+
+  /**
+   * Resuelve el access token para streaming.
+   *
+   * `EventSource` y `WebSocket` no permiten adjuntar cabeceras HTTP, así que el
+   * backend acepta `?token=<jwt>` como fallback en estas rutas. El token de
+   * acceso vive 30 minutos, lo que acota la ventana de exposición.
+   */
+  private resolveStreamingAccessToken(): string | null {
+    const accessToken: string | null = this.identitySession.accessToken();
+    if (accessToken === null || accessToken.trim() === '') {
+      return null;
+    }
+
+    return accessToken;
+  }
+
+  /** Query string (`?token=...`) para los endpoints SSE del backend. */
+  private buildStreamingTokenQuery(): string {
+    const accessToken = this.resolveStreamingAccessToken();
+    return accessToken === null ? '' : `?token=${encodeURIComponent(accessToken)}`;
   }
 
   private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {

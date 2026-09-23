@@ -304,9 +304,9 @@ class SaScoreRouterApiTests(TestCase):
     SA_SCORE_URL: str = "/api/sa-score/jobs/"
 
     def setUp(self) -> None:
-        from rest_framework.test import APIClient
+        from apps.core.test_utils import build_authenticated_api_client
 
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def _make_completed_sa_job(self, methods: list[str] | None = None) -> ScientificJob:
         """Crea un job de SA score en estado completado para tests de reporte."""

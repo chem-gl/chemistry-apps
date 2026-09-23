@@ -15,9 +15,11 @@ from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.core.exceptions import ValidationError
 from django.urls import path
 
 from .definitions import CORE_JOBS_WEBSOCKET_ROUTE_PATH
+from .identity.services import AuthorizationService
 from .models import ScientificJob
 from .realtime import (
     build_scientific_job_payload,
@@ -25,6 +27,49 @@ from .realtime import (
     get_jobs_job_group_name,
     get_jobs_plugin_group_name,
 )
+
+# Códigos de cierre WebSocket propios (rango 4000-4999 = aplicación).
+WS_CLOSE_UNAUTHENTICATED = 4401
+WS_CLOSE_FORBIDDEN = 4403
+WS_CLOSE_NOT_FOUND = 4404
+
+
+@database_sync_to_async
+def _resolve_scope_access(
+    actor: object,
+    *,
+    job_id: str | None,
+    plugin_name: str | None,
+) -> str:
+    """Resuelve si el actor puede suscribirse al alcance pedido.
+
+    - `job_id`: solo si puede ver ese job (404 propio si no existe).
+    - `plugin_name`: lectura de un plugin concreto, permitida a autenticados.
+    - sin filtros (alcance global): solo root/admin, porque el grupo global
+      emite eventos de todos los plugins y usuarios.
+    """
+    if job_id is not None:
+        try:
+            job = ScientificJob.objects.filter(pk=job_id).first()
+        except (ValueError, ValidationError):
+            return "not_found"
+
+        if job is None:
+            return "not_found"
+
+        return (
+            "ok"
+            if AuthorizationService.can_view_job(actor=actor, job=job)
+            else "denied"
+        )
+
+    if plugin_name is not None:
+        return "ok"
+
+    if AuthorizationService.is_root(actor) or AuthorizationService.is_admin(actor):
+        return "ok"
+
+    return "denied"
 
 
 class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
@@ -38,7 +83,17 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
     active_only: bool
 
     async def connect(self) -> None:
-        """Suscribe el socket a los grupos adecuados y envía snapshot inicial."""
+        """Autentica, valida el alcance pedido y suscribe el socket.
+
+        Rechaza la conexión cuando no hay usuario autenticado (sesión o
+        `?token=<access>`), cuando el job pedido no es visible para el actor o
+        cuando se pide el alcance global sin ser root/admin.
+        """
+        actor = self.scope.get("user")
+        if actor is None or not bool(getattr(actor, "is_authenticated", False)):
+            await self.close(code=WS_CLOSE_UNAUTHENTICATED)
+            return
+
         query_values = parse_qs(self.scope["query_string"].decode("utf-8"))
         self.job_id_filter = self._read_optional_query_value(query_values, "job_id")
         self.plugin_name_filter = self._read_optional_query_value(
@@ -61,6 +116,18 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
             default_value=False,
         )
 
+        scope_access = await _resolve_scope_access(
+            actor,
+            job_id=self.job_id_filter,
+            plugin_name=self.plugin_name_filter,
+        )
+        if scope_access == "not_found":
+            await self.close(code=WS_CLOSE_NOT_FOUND)
+            return
+        if scope_access == "denied":
+            await self.close(code=WS_CLOSE_FORBIDDEN)
+            return
+
         self.group_names = self._resolve_group_names()
         for group_name in self.group_names:
             await self.channel_layer.group_add(group_name, self.channel_name)
@@ -68,7 +135,7 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
         if self.include_snapshot:
-            snapshot_items = await self._load_initial_snapshot_items()
+            snapshot_items = await self._load_initial_snapshot_items(actor)
             await self.send_json(
                 {
                     "event": "jobs.snapshot",
@@ -133,9 +200,11 @@ class JobsStreamConsumer(AsyncJsonWebsocketConsumer):
         return raw_value.lower() in {"1", "true", "yes", "on"}
 
     @database_sync_to_async
-    def _load_initial_snapshot_items(self) -> list[dict[str, object]]:
-        """Carga snapshot inicial para evitar polling inmediato en frontend."""
-        jobs_queryset = ScientificJob.objects.all().order_by("-updated_at")
+    def _load_initial_snapshot_items(self, actor: object) -> list[dict[str, object]]:
+        """Carga el snapshot inicial acotado a lo que el actor puede ver."""
+        jobs_queryset = AuthorizationService.get_visible_jobs(actor=actor).order_by(
+            "-updated_at"
+        )
 
         if self.job_id_filter is not None:
             jobs_queryset = jobs_queryset.filter(id=self.job_id_filter)

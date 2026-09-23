@@ -11,7 +11,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import TestCase
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from ..models import ScientificJob, ScientificJobLogEvent
 from ..services import JobService
@@ -29,7 +29,7 @@ class JobApiTests(TestCase):
     """Verifica endpoints principales y contrato HTTP de jobs."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def _create_job_record(self, plugin_name: str, status_value: str) -> ScientificJob:
         """Crea un job persistido para validar escenarios de listado y filtrado."""

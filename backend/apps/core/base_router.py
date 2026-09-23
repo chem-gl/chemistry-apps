@@ -34,6 +34,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -65,6 +66,10 @@ class ScientificAppViewSetMixin:
     - build_csv_content(job: ScientificJob) -> str → construye CSV específico de la app.
     - create(request: Request) -> Response → endpoint de creación de job.
     """
+
+    # Explícito por claridad: las rutas privadas siguen el default del proyecto
+    # (`IsAuthenticated`). La variante pública vive en `apps/core/public_api.py`.
+    permission_classes = [IsAuthenticated]
 
     plugin_name: str
     response_serializer_class: type[serializers.Serializer]

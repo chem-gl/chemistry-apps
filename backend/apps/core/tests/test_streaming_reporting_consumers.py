@@ -254,15 +254,26 @@ class StreamingGeneratorsTests(TestCase):
 class JobsStreamConsumerTests(TestCase):
     """Valida comportamiento de filtros, grupos y envío en consumer WebSocket."""
 
-    def _build_consumer(self, query_string: bytes) -> JobsStreamConsumer:
+    def _build_consumer(
+        self,
+        query_string: bytes,
+        *,
+        actor: object | None = None,
+    ) -> JobsStreamConsumer:
         consumer = JobsStreamConsumer()
-        consumer.scope = {"query_string": query_string}
+        consumer.scope = {
+            "query_string": query_string,
+            "user": actor
+            if actor is not None
+            else SimpleNamespace(is_authenticated=True),
+        }
         consumer.channel_name = "test-channel"
         consumer.channel_layer = SimpleNamespace(
             group_add=AsyncMock(),
             group_discard=AsyncMock(),
         )
         consumer.accept = AsyncMock()
+        consumer.close = AsyncMock()
         consumer.send_json = AsyncMock()
         return consumer
 
@@ -336,6 +347,19 @@ class JobsStreamConsumerTests(TestCase):
         consumer.accept.assert_awaited_once()
         consumer.send_json.assert_awaited_once()
 
+    def test_connect_rejects_unauthenticated_actor(self) -> None:
+        """Sin usuario autenticado la conexión se cierra con 4401 y no se acepta."""
+        from django.contrib.auth.models import AnonymousUser
+
+        from apps.core.consumers import WS_CLOSE_UNAUTHENTICATED
+
+        consumer = self._build_consumer(b"", actor=AnonymousUser())
+
+        asyncio.run(consumer.connect())
+
+        consumer.close.assert_awaited_once_with(code=WS_CLOSE_UNAUTHENTICATED)
+        consumer.accept.assert_not_awaited()
+
     def test_disconnect_discards_all_group_names(self) -> None:
         consumer = self._build_consumer(b"")
         consumer.group_names = ["jobs.global", "jobs.plugin.sa-score"]
@@ -365,16 +389,24 @@ class JobsStreamConsumerSnapshotQueryTests(TransactionTestCase):
     def test_load_initial_snapshot_items_filters_by_plugin_and_active_only(
         self,
     ) -> None:
+        from django.contrib.auth import get_user_model
+
         running_job = self._create_job("sa_score", "running")
         self._create_job("sa_score", "completed")
         self._create_job("calculator", "running")
+
+        root_user = get_user_model().objects.create_user(
+            username="ws-snapshot-root",
+            is_staff=True,
+            is_superuser=True,
+        )
 
         consumer = JobsStreamConsumer()
         consumer.job_id_filter = None
         consumer.plugin_name_filter = "sa_score"
         consumer.active_only = True
 
-        snapshot_items = asyncio.run(consumer._load_initial_snapshot_items())
+        snapshot_items = asyncio.run(consumer._load_initial_snapshot_items(root_user))
 
         self.assertEqual(len(snapshot_items), 1)
         self.assertEqual(snapshot_items[0]["id"], str(running_job.id))

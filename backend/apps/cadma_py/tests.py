@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.models import GroupMembership, ScientificJob, WorkGroup
 
@@ -431,7 +431,7 @@ class CadmaPyApiTests(TestCase):
     URL = "/api/cadma-py/jobs/"
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
         reference_rows = build_compound_rows_from_sources(
             combined_csv_text=(
                 "name,smiles,DT,M,LD50,SA,paper_reference\n"
@@ -713,7 +713,7 @@ class CadmaPyRouterBranchTests(TestCase):
     """Prueba ramas de router aislando servicios y almacenamiento externo."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
         self.base = "/api/cadma-py/jobs/"
 
     def test_reference_library_detail_requires_id(self) -> None:

@@ -19,6 +19,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -40,6 +41,10 @@ from ._job_stream_mixin import JobStreamActionsMixin
 @extend_schema(tags=["Jobs"])
 class JobViewSet(JobControlActionsMixin, JobStreamActionsMixin, viewsets.ViewSet):
     """Controlador para despachar y consultar Jobs Científicos."""
+
+    # Explícito por claridad: las rutas de jobs son privadas (el modo anónimo
+    # vive en `apps/core/public_api.py`, montado bajo `/api/public/`).
+    permission_classes = [IsAuthenticated]
 
     queryset = ScientificJob.objects.all()
     lookup_field = "id"

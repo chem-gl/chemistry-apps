@@ -7,6 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
+import { IdentitySessionService } from '../auth/identity-session.service';
 import {
   JobLogList,
   JobProgressSnapshot,
@@ -121,6 +122,7 @@ function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJo
 
 describe('JobsStreamingApiService', () => {
   let service: JobsStreamingApiService;
+  const sessionTokenStub = { accessToken: vi.fn<() => string | null>(() => null) };
   let httpMock: HttpTestingController;
   let originalEventSource: typeof EventSource | undefined;
   let originalWebSocket: typeof WebSocket | undefined;
@@ -165,9 +167,14 @@ describe('JobsStreamingApiService', () => {
         provideHttpClientTesting(),
         provideApi(API_BASE_URL),
         JobsStreamingApiService,
+        {
+          provide: IdentitySessionService,
+          useValue: sessionTokenStub,
+        },
       ],
     });
 
+    sessionTokenStub.accessToken.mockReturnValue(null);
     service = TestBed.inject(JobsStreamingApiService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -217,6 +224,27 @@ describe('JobsStreamingApiService', () => {
     expect(nextSpy).toHaveBeenCalledTimes(2);
     expect(completeSpy).toHaveBeenCalledTimes(1);
     expect(source.close).toHaveBeenCalled();
+  });
+
+  it('adjunta el access token a SSE y WebSocket para autenticar el streaming', () => {
+    // EventSource/WebSocket no permiten cabeceras: el token viaja como ?token=.
+    sessionTokenStub.accessToken.mockReturnValue('jwt-test-token');
+
+    service.streamJobEvents('job-9').subscribe();
+    const progressSource = MockEventSource.instances[0];
+    expect(progressSource.url).toBe(
+      `${API_BASE_URL}/api/jobs/job-9/events/?token=jwt-test-token`,
+    );
+
+    service.streamJobLogEvents('job-9').subscribe();
+    const logsSource = MockEventSource.instances[1];
+    expect(logsSource.url).toBe(
+      `${API_BASE_URL}/api/jobs/job-9/logs/events/?token=jwt-test-token`,
+    );
+
+    service.streamJobsRealtime({ jobId: 'job-9' }).subscribe();
+    expect(capturedWebSocketUrl).toContain('token=jwt-test-token');
+    expect(capturedWebSocketUrl).toContain('job_id=job-9');
   });
 
   it('ignora eventos SSE malformados y sigue procesando el stream', () => {

@@ -148,12 +148,17 @@ def _issue_jwt_tokens(user):
 class DomainTokenObtainPairView(TokenObtainPairView):
     """Endpoint de login JWT con claims de dominio."""
 
+    # Ruta pública explícita: sin ella nadie podría obtener el primer token.
+    permission_classes = [permissions.AllowAny]
     serializer_class = DomainTokenObtainPairSerializer
 
 
 @extend_schema(tags=["Auth"])
 class DomainTokenRefreshView(TokenRefreshView):
     """Endpoint de refresco JWT."""
+
+    # Ruta pública explícita: el refresh token es la credencial de la petición.
+    permission_classes = [permissions.AllowAny]
 
 
 @extend_schema(tags=["Auth"])

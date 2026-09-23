@@ -29,9 +29,20 @@ def _get_websocket_urlpatterns():
     return websocket_urlpatterns
 
 
+def _get_websocket_application():
+    # `AuthMiddlewareStack` resuelve primero la sesión por cookies; el middleware
+    # JWT lo sobrescribe cuando el cliente envía `?token=<access>` (navegadores
+    # no pueden mandar cabeceras en una conexión WebSocket).
+    from apps.core.identity.ws_auth import JWTAuthMiddleware
+
+    return AuthMiddlewareStack(
+        JWTAuthMiddleware(URLRouter(_get_websocket_urlpatterns()))
+    )
+
+
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AuthMiddlewareStack(URLRouter(_get_websocket_urlpatterns())),
+        "websocket": _get_websocket_application(),
     }
 )

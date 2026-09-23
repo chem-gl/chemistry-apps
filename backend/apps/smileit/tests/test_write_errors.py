@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from ..definitions import APP_API_BASE_PATH
 from .test_seed import SmileitSeedTestCase
@@ -19,7 +19,7 @@ class CategoriesEndpointTests(SmileitSeedTestCase):
     """Cubre la acción GET categories/ que lista categorías disponibles."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_categories_endpoint_returns_list(self) -> None:
         """GET categories/ debe retornar la lista de categorías activas con 200."""
@@ -39,7 +39,7 @@ class CatalogPostConflictTests(SmileitSeedTestCase):
     """Cubre la ruta de conflicto 409 al intentar crear sustituyente duplicado."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_create_duplicate_catalog_returns_409(self) -> None:
         """POST catalog/ con SMILES duplicado debe retornar 409."""
@@ -71,7 +71,7 @@ class UpdateCatalogErrorTests(SmileitSeedTestCase):
     """Cubre las rutas de error 404/409 en PATCH catalog/<stable_id>/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_update_nonexistent_stable_id_returns_404(self) -> None:
         """PATCH con stable_id inexistente debe retornar 404."""
@@ -131,7 +131,7 @@ class InspectStructureErrorTests(SmileitSeedTestCase):
     """Cubre la ruta de error 400 en POST inspect-structure/ con SMILES inválido."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_invalid_smiles_returns_400(self) -> None:
         """SMILES vacío o no parseable debe retornar 400."""
@@ -154,7 +154,7 @@ class PatternConflictTests(SmileitSeedTestCase):
     """Cubre la ruta de conflicto 409 al crear patrón duplicado via HTTP."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_create_duplicate_pattern_returns_409(self) -> None:
         """POST patterns/ con SMARTS duplicado y mismo tipo debe retornar 409."""
@@ -182,7 +182,7 @@ class PatternsGetEndpointTests(SmileitSeedTestCase):
     """Cubre la acción GET patterns/ que lista patrones activos (líneas 164-167)."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_patterns_get_returns_200_list(self) -> None:
         """GET patterns/ debe retornar 200 con una lista de patrones activos."""

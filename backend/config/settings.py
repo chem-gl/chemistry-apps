@@ -253,8 +253,14 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
+        # Fallback para streaming (EventSource/WebSocket no permiten cabeceras).
+        "apps.core.identity.authentication.QueryStringJWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    # Cerrado por defecto: solo las rutas públicas explícitas (apps libres,
+    # login, refresh y registro) declaran AllowAny. Todo lo demás exige sesión.
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
     "DEFAULT_THROTTLE_RATES": {
         "public-dispatch": PUBLIC_DISPATCH_RATE,
         "registered-dispatch": REGISTERED_DISPATCH_RATE,

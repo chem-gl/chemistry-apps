@@ -126,8 +126,13 @@ class SmileitCatalogIdentityE2ETests(SmileitSeedTestCase):
         self.assertEqual(update_b.status_code, status.HTTP_409_CONFLICT)
         self.assertIn("detail", update_b.json())
 
-    def test_anonymous_catalog_still_exposes_seed_entries_only(self) -> None:
-        """Sin login, el catálogo se mantiene funcional para lectura base de seed."""
+    def test_anonymous_catalog_requires_authentication(self) -> None:
+        """Política cerrada por defecto: el catálogo privado ya no es anónimo.
+
+        El modo libre de la fase 1 usa exclusivamente `/api/public/smileit/jobs/`
+        (create/retrieve/report-csv); si la UI anónima necesita el catálogo de
+        sustituyentes, deberá exponerse como endpoint de referencia público
+        explícito y de solo lectura.
+        """
         response: Any = self.client_anonymous.get(f"{APP_API_BASE_PATH}catalog/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.json()), 1)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

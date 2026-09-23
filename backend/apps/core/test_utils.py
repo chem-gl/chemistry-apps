@@ -12,7 +12,9 @@ Cómo se usa:
 from __future__ import annotations
 
 from unittest.mock import patch
+from uuid import uuid4
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.response import Response
@@ -21,6 +23,28 @@ from rest_framework.test import APIClient
 from apps.core.models import ScientificJob
 from apps.core.services import JobService
 from apps.core.types import JSONMap
+
+
+def build_authenticated_api_client(*, username: str | None = None) -> APIClient:
+    """Devuelve un APIClient autenticado como superusuario de pruebas.
+
+    Desde el cierre de `AllowAny`, las rutas privadas del API exigen sesión. Los
+    tests de lógica de dominio se autentican como superusuario (rol root) para
+    conservar la visibilidad global que tenían cuando el API era abierto.
+    """
+    user_model = get_user_model()
+    unique_username = username or f"api-test-{uuid4().hex[:12]}"
+    test_user = user_model.objects.create_user(
+        username=unique_username,
+        email=f"{unique_username}@example.com",
+        password=None,
+        is_staff=True,
+        is_superuser=True,
+    )
+
+    authenticated_client = APIClient()
+    authenticated_client.force_authenticate(user=test_user)
+    return authenticated_client
 
 
 class ScientificJobTestMixin(TestCase):
@@ -33,8 +57,8 @@ class ScientificJobTestMixin(TestCase):
     client: APIClient  # typed hint for subclasses
 
     def setUp(self) -> None:
-        """Inicializa el cliente API para cada test."""
-        self.client = APIClient()
+        """Inicializa el cliente API autenticado para cada test."""
+        self.client = build_authenticated_api_client()
 
     def create_job_via_api(
         self,

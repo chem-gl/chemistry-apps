@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from apps.core.test_utils import build_authenticated_api_client
 
 from apps.core.definitions import CORE_JOBS_API_BASE_PATH
 from apps.core.models import ScientificJob
@@ -41,7 +41,7 @@ class ListJobsViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/ con filtros."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_list_returns_empty_when_no_jobs(self) -> None:
         response = self.client.get(API)
@@ -80,7 +80,7 @@ class CreateJobViewTests(TestCase):
     """Pruebas del endpoint POST /api/jobs/ (create)."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_create_job_returns_201(self) -> None:
         payload = {
@@ -127,7 +127,7 @@ class RetrieveJobViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/{id}/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_retrieve_existing_job_returns_200(self) -> None:
         job = _create_job("calculator")
@@ -153,7 +153,7 @@ class PauseJobViewTests(TestCase):
     """Pruebas del endpoint POST /api/jobs/{id}/pause/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_pause_pending_job_returns_200(self) -> None:
         job = ScientificJob.objects.create(
@@ -195,7 +195,7 @@ class ResumeJobViewTests(TestCase):
     """Pruebas del endpoint POST /api/jobs/{id}/resume/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_resume_paused_job_returns_200(self) -> None:
         job = ScientificJob.objects.create(
@@ -236,7 +236,7 @@ class CancelJobViewTests(TestCase):
     """Pruebas del endpoint POST /api/jobs/{id}/cancel/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_cancel_pending_job_returns_200(self) -> None:
         job = _create_job("calculator")
@@ -273,7 +273,7 @@ class ProgressJobViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/{id}/progress/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_progress_returns_snapshot(self) -> None:
         job = _create_job("calculator")
@@ -295,7 +295,7 @@ class LogsJobViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/{id}/logs/."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_logs_returns_empty_list_for_new_job(self) -> None:
         job = _create_job("calculator")
@@ -339,7 +339,7 @@ class SseLogsEventsViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/{id}/logs/events/ (SSE)."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_logs_events_returns_streaming_response(self) -> None:
         job = _create_job("calculator", run=True)
@@ -374,7 +374,7 @@ class SseEventsViewTests(TestCase):
     """Pruebas del endpoint GET /api/jobs/{id}/events/ (SSE de progreso)."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.client = build_authenticated_api_client()
 
     def test_events_returns_streaming_response(self) -> None:
         job = _create_job("calculator")
