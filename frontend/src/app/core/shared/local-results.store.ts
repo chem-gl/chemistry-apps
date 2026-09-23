@@ -1,14 +1,10 @@
 import { Injectable } from '@angular/core';
 
-// `(string & {})` conserva el autocompletado de los literales conocidos sin
-// que el `string` genérico los opaque (evita el aviso de union redundante).
-export type LocalResultStatus =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'expired'
-  | (string & {});
+// Estado conocido: 'pending' | 'running' | 'paused' | 'completed' | 'failed'
+// | 'cancelled' (backend) más 'expired' (marcado local). Se tipa como `string`
+// porque el backend puede ampliar el vocabulario sin que el historial local
+// deba cambiar: el store solo lo muestra y lo compara por igualdad.
+export type LocalResultStatus = string;
 
 export interface LocalResultRecord {
   jobId: string;
