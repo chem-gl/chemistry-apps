@@ -1,5 +1,6 @@
 <!-- toxicity-properties.component.html: Interfaz de Toxicity Properties con sketch,
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
+  <app-open-mode-banner />
 <section class="toxicity-shell" [attr.aria-label]="'toxicityProperties.header.eyebrow' | transloco">
   <header class="toxicity-header">
     <p class="eyebrow">{{ 'toxicityProperties.header.eyebrow' | transloco }}</p>
@@ -196,7 +197,7 @@
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-  <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+  <app-job-history-table [jobs]="workflow.historyJobs()" [localRecords]="localHistoryRecords()" [isLoading]="workflow.isHistoryLoading()"
     [jobDisplayNameResolver]="resolveHistoryJobDisplayName"
     [emptyMessage]="'toxicityProperties.history.empty' | transloco"
     [sectionTitle]="'toxicityProperties.history.title' | transloco"

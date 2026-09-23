@@ -1783,5 +1783,13 @@
   "jobResultFooter": {
    "historicalJobs": "Historical jobs"
   }
- }
+ }  ,"appMode": {
+    "open": {
+      "banner": {"title": "Offener Modus", "body": "Sie arbeiten ohne Konto. Ergebnisse bleiben in diesem Browser.", "privacy": "Parameter sind nicht privat: Eine identische Berechnung liefert das zwischengespeicherte Ergebnis, das bis zu 7 Tage geteilt wird."},
+      "history": {"title": "Ihre letzten Berechnungen (dieser Browser)", "empty": "Noch keine Berechnungen gespeichert.", "open": "Öffnen", "remove": "Entfernen", "expired": "Auf dem Server abgelaufen"},
+      "limits": {"429": "Zu viele Berechnungen aus Ihrem Netzwerk. Versuchen Sie es später erneut.", "413": "Upload oder Parameter überschreiten das Limit des offenen Modus."},
+      "unavailable": "Ohne Konto nicht verfügbar."
+    }
+  }
+
 }

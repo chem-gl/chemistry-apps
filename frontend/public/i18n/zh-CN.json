@@ -1783,5 +1783,13 @@
   "jobResultFooter": {
    "historicalJobs": "Historical jobs"
   }
- }
+ }  ,"appMode": {
+    "open": {
+      "banner": {"title": "开放模式", "body": "您正在无账户运行。结果会保留在此浏览器中。", "privacy": "参数并不私密：相同的计算会返回缓存结果，最多共享 7 天。"},
+      "history": {"title": "您最近的运行记录（此浏览器）", "empty": "尚未存储运行记录。", "open": "打开", "remove": "移除", "expired": "已在服务器上过期"},
+      "limits": {"429": "来自您网络的计算过多。请稍后重试。", "413": "上传内容或参数超过开放模式限制。"},
+      "unavailable": "无账户不可用。"
+    }
+  }
+
 }

@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.open-mode-banner {
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border, #c7d2fe);
+  border-radius: 0.75rem;
+  background: var(--color-surface-accent, #eef2ff);
+  color: var(--color-text, #172554);
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+p + p {
+  margin-top: 0.35rem;
+}

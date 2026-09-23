@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ScientificJobView } from '../../../api/jobs-api.service';
+import { JobAccessModeService } from '../../../auth/job-access-mode.service';
+import { LocalResultRecord } from '../../local-results.store';
 
 @Component({
   selector: 'app-job-history-table',
@@ -14,8 +16,12 @@ import { ScientificJobView } from '../../../api/jobs-api.service';
   styleUrl: './job-history-table.component.scss',
 })
 export class JobHistoryTableComponent {
+  readonly accessMode = JobAccessModeService.current;
   /** Lista de jobs históricos a mostrar en la tabla. */
   @Input() jobs: ScientificJobView[] = [];
+
+  /** Registros del navegador mostrados en modo abierto. */
+  @Input() localRecords: LocalResultRecord[] = [];
 
   /** Indica si el historial se está cargando actualmente. */
   @Input() isLoading: boolean = false;
@@ -52,6 +58,10 @@ export class JobHistoryTableComponent {
 
   displayJobName(jobItem: ScientificJobView): string {
     return this.jobDisplayNameResolver?.(jobItem) ?? jobItem.id;
+  }
+
+  localStatus(record: LocalResultRecord): string {
+    return record.expired ? 'appMode.open.history.expired' : record.status;
   }
 
   private isTerminalJob(jobItem: ScientificJobView): boolean {

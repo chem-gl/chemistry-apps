@@ -158,7 +158,12 @@ export class MolarFractionsWorkflowService extends BaseJobWorkflowService<MolarF
   }
 
   protected override fetchFinalResult(jobId: string): void {
-    this.jobsApiService.getMolarFractionsJobStatus(jobId).subscribe({
+    const api = this.jobsApiService as unknown as Record<string, unknown>;
+    const statusRequest$ =
+      typeof api['getMolarFractionsJobStatus'] === 'function'
+        ? this.jobsApiService.getMolarFractionsJobStatus(jobId)
+        : this.jobsApiService.getScientificJobStatus(jobId);
+    statusRequest$.subscribe({
       next: (jobResponse: ScientificJobView) => {
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
           loadLogs: false,

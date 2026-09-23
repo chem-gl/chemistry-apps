@@ -3,6 +3,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   TunnelResultData,
@@ -12,7 +13,8 @@ import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [
+    OpenModeBannerComponent,CommonModule, FormsModule, TranslocoPipe],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',

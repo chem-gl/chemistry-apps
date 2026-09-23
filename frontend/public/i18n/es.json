@@ -1876,5 +1876,13 @@
   "jobResultFooter": {
    "historicalJobs": "Histórico de jobs"
   }
- }
+ }  ,"appMode": {
+    "open": {
+      "banner": {"title": "Modo abierto", "body": "Estás ejecutando sin cuenta. Los resultados se quedan en este navegador.", "privacy": "Los parámetros no son privados: un cálculo idéntico devuelve el resultado cacheado, compartido hasta 7 días."},
+      "history": {"title": "Tus ejecuciones recientes (este navegador)", "empty": "Todavía no hay ejecuciones guardadas.", "open": "Abrir", "remove": "Quitar", "expired": "Expirado en el servidor"},
+      "limits": {"429": "Demasiados cálculos desde tu red. Inténtalo más tarde.", "413": "La carga o los parámetros superan el límite del modo abierto."},
+      "unavailable": "No disponible sin cuenta."
+    }
+  }
+
 }

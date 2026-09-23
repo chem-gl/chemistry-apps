@@ -1,5 +1,6 @@
 <!-- sa-score.component.html: Interfaz de SA Score con sketch Ketcher, carga de archivos,
      tabla multi-método, imagen de molécula y exportes CSV. -->
+  <app-open-mode-banner />
 <section class="sa-score-shell" [attr.aria-label]="'saScore.header.eyebrow' | transloco">
   <header class="sa-score-header">
     <p class="eyebrow">{{ 'saScore.header.eyebrow' | transloco }}</p>
@@ -182,7 +183,7 @@
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
 
-  <app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+  <app-job-history-table [jobs]="workflow.historyJobs()" [localRecords]="localHistoryRecords()" [isLoading]="workflow.isHistoryLoading()"
     [jobDisplayNameResolver]="resolveHistoryJobDisplayName" [emptyMessage]="'saScore.history.empty' | transloco"
     [sectionTitle]="'saScore.history.title' | transloco" [ariaLabel]="'saScore.history.ariaLabel' | transloco"
     (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"

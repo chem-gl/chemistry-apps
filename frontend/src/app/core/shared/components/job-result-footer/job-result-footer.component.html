@@ -9,10 +9,12 @@
 </app-job-artifact-export-panel>
 
 <!-- ── Logs de ejecución ──────────────────────────────────────────── -->
+@if (!accessMode?.isOpenMode()) {
 <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>
+}
 
 <!-- ── Historial de jobs ──────────────────────────────────────────── -->
-<app-job-history-table [jobs]="workflow.historyJobs()" [isLoading]="workflow.isHistoryLoading()"
+<app-job-history-table [jobs]="workflow.historyJobs()" [localRecords]="workflow.localHistory?.() ?? []" [isLoading]="workflow.isHistoryLoading()"
     [emptyMessage]="emptyMessage" [sectionTitle]="'shared.jobResultFooter.historicalJobs' | transloco"
     [ariaLabel]="ariaLabel" (reload)="workflow.loadHistory()" (openJob)="openJob.emit($event)"
     (deleteJob)="deleteJob.emit($event)"></app-job-history-table>

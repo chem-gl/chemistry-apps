@@ -4,6 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ToxicityMoleculeResultView } from '../core/api/jobs-api.service';
 import { ToxicityPropertiesWorkflowService } from '../core/application/toxicity-properties-workflow.service';
@@ -25,11 +26,13 @@ import {
   resolveScientificJobNameForHistory,
 } from '../core/shared/scientific-job-name.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
+import { LocalResultRecord } from '../core/shared/local-results.store';
 
 @Component({
   selector: 'app-toxicity-properties',
   standalone: true,
   imports: [
+    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,
@@ -57,6 +60,11 @@ export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
       ),
     );
   readonly tableSearchTerm = signal<string>('');
+
+  localHistoryRecords(): LocalResultRecord[] {
+    const candidate = this.workflow as unknown as { localHistory?: () => LocalResultRecord[] };
+    return candidate.localHistory?.() ?? [];
+  }
   readonly tableSort = signal<ResultTableSortState<ToxicitySortColumn>>({
     column: 'name',
     direction: 'asc',

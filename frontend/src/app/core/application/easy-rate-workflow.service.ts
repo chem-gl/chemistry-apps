@@ -313,6 +313,11 @@ export class EasyRateWorkflowService extends BaseJobWorkflowService<EasyRateResu
 
   /** Abre y reconstruye la vista de un job histórico por su UUID */
   openHistoricalJob(jobId: string): void {
+    if (this.accessMode.isOpenMode()) {
+      const localRecord = this.localHistory().find((record) => record.jobId === jobId);
+      if (localRecord !== undefined) this.openLocalRecord(localRecord);
+      return;
+    }
     this.prepareForDispatch();
     this.currentJobId.set(jobId);
 

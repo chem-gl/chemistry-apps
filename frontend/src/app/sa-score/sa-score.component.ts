@@ -4,6 +4,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SaScoreMethod, SaScoreMoleculeResultView } from '../core/api/jobs-api.service';
 import { SaScoreWorkflowService } from '../core/application/sa-score-workflow.service';
@@ -25,11 +26,13 @@ import {
   resolveScientificJobNameForHistory,
 } from '../core/shared/scientific-job-name.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
+import { LocalResultRecord } from '../core/shared/local-results.store';
 
 @Component({
   selector: 'app-sa-score',
   standalone: true,
   imports: [
+    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,
@@ -54,6 +57,11 @@ export class SaScoreComponent extends SmilesMoleculesBaseComponent {
     );
 
   private readonly translocoService = inject(TranslocoService);
+
+  localHistoryRecords(): LocalResultRecord[] {
+    const candidate = this.workflow as unknown as { localHistory?: () => LocalResultRecord[] };
+    return candidate.localHistory?.() ?? [];
+  }
 
   readonly methodItems = [
     { key: 'ambit' as SaScoreMethod, label: 'saScore.methods.ambit' },

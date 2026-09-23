@@ -173,6 +173,11 @@ export class MarcusWorkflowService extends BaseJobWorkflowService<MarcusResultDa
 
   /** Abre y reconstruye la vista de un job Marcus histórico por UUID */
   openHistoricalJob(jobId: string): void {
+    if (this.accessMode.isOpenMode()) {
+      const localRecord = this.localHistory().find((record) => record.jobId === jobId);
+      if (localRecord !== undefined) this.openLocalRecord(localRecord);
+      return;
+    }
     this.prepareForDispatch();
     this.currentJobId.set(jobId);
 

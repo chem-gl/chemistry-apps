@@ -1783,5 +1783,13 @@
   "jobResultFooter": {
    "historicalJobs": "Historical jobs"
   }
- }
+ }  ,"appMode": {
+    "open": {
+      "banner": {"title": "Mode ouvert", "body": "Vous exécutez sans compte. Les résultats restent dans ce navigateur.", "privacy": "Les paramètres ne sont pas privés : un calcul identique renvoie le résultat mis en cache, partagé pendant 7 jours maximum."},
+      "history": {"title": "Vos exécutions récentes (ce navigateur)", "empty": "Aucune exécution enregistrée.", "open": "Ouvrir", "remove": "Supprimer", "expired": "Expiré sur le serveur"},
+      "limits": {"429": "Trop de calculs depuis votre réseau. Réessayez plus tard.", "413": "Le fichier ou les paramètres dépassent la limite du mode ouvert."},
+      "unavailable": "Indisponible sans compte."
+    }
+  }
+
 }

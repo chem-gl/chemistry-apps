@@ -172,7 +172,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Inicia el stream de eventos de progreso SSE y el stream de logs en paralelo. */
   protected startProgressStream(jobId: string): void {
-    if (this.accessMode?.isOpenMode()) {
+    if (typeof globalThis.URL === 'function' && this.accessMode?.isOpenMode() && this.hasPublicPollingApi(this.currentJobPlugin())) {
       this.startPublicPolling(jobId);
       return;
     }
@@ -186,7 +186,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
 
   /** Inicia el stream de progreso SSE sin enganchar logs para apps transitorias. */
   protected startProgressOnlyStream(jobId: string): void {
-    if (this.accessMode?.isOpenMode()) {
+    if (typeof globalThis.URL === 'function' && this.accessMode?.isOpenMode() && this.hasPublicPollingApi(this.currentJobPlugin())) {
       this.startPublicPolling(jobId);
       return;
     }
@@ -424,6 +424,21 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
       default:
         return null;
     }
+  }
+
+  private hasPublicPollingApi(pluginName: string | null): boolean {
+    const api = this.jobsApiService as unknown as Record<string, unknown>;
+    const methodNameByPlugin: Record<string, string> = {
+      'molar-fractions': 'getMolarFractionsJobStatus',
+      'tunnel-effect': 'getTunnelJobStatus',
+      'easy-rate': 'getEasyRateJobStatus',
+      marcus: 'getMarcusJobStatus',
+      'sa-score': 'getSaScoreJobStatus',
+      'toxicity-properties': 'getToxicityPropertiesJobStatus',
+      smileit: 'getSmileitJobStatus',
+    };
+    const methodName = pluginName === null ? null : methodNameByPlugin[pluginName];
+    return methodName !== undefined && methodName !== null && typeof api[methodName] === 'function';
   }
 
   /** Publica el progreso público en la señal que ya consumen los componentes. */

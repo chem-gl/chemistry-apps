@@ -1,59 +1,53 @@
-<!-- job-history-table.component.html: Panel reutilizable de historial de jobs para apps científicas. -->
 <section class="history-card" [attr.aria-label]="ariaLabel">
-    <div class="history-header">
-        <h3>{{ sectionTitle }}</h3>
-        <button class="btn-secondary" (click)="reload.emit()" [disabled]="isLoading">
-            {{ isLoading ? ('shared.jobHistoryTable.reloading' | transloco) : ('shared.jobHistoryTable.reload' |
-            transloco) }}
-        </button>
-    </div>
-
-    @if (jobs.length === 0) {
-    <p class="status-message">{{ emptyMessage }}</p>
-    } @else {
-    <div class="table-wrap">
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th>
-                    <th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th>
-                    <th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th>
-                    <th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (historyJob of jobs; track historyJob.id) {
-                <tr>
-                    <td>
-                        @if (displayJobName(historyJob) !== historyJob.id) {
-                        <div class="job-display-name">{{ displayJobName(historyJob) }}</div>
-                        <div class="mono">{{ historyJob.id }}</div>
-                        } @else {
-                        <div class="mono">{{ historyJob.id }}</div>
-                        }
-                    </td>
-                    <td>
-                        <span [class]="statusClass(historyJob.status)">{{
-                            historyJob.status
-                            }}</span>
-                    </td>
-                    <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                    <td>
-                        <div class="actions-cell">
-                            <button class="history-open-btn" (click)="openJob.emit(historyJob.id)">
-                                {{ 'shared.jobHistoryTable.open' | transloco }}
-                            </button>
-                            @if (canDeleteJob(historyJob)) {
-                            <button class="history-open-btn" (click)="deleteJob.emit(historyJob.id)">
-                                {{ 'common.actions.delete' | transloco }}
-                            </button>
-                            }
-                        </div>
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+  <div class="history-header">
+    <h3>{{ sectionTitle }}</h3>
+    @if (!accessMode?.isOpenMode()) {
+    <button class="btn-secondary" (click)="reload.emit()" [disabled]="isLoading">
+      {{ isLoading ? ('shared.jobHistoryTable.reloading' | transloco) : ('shared.jobHistoryTable.reload' | transloco) }}
+    </button>
     }
+  </div>
+
+  @if (accessMode?.isOpenMode()) {
+  @if (localRecords.length === 0) {
+  <p class="status-message">{{ 'appMode.open.history.empty' | transloco }}</p>
+  } @else {
+  <div class="table-wrap">
+    <table class="history-table">
+      <thead><tr><th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th></tr></thead>
+      <tbody>
+        @for (record of localRecords; track record.jobId) {
+        <tr>
+          <td><div class="mono">{{ record.jobId }}</div></td>
+          <td><span [class]="statusClass(record.expired ? 'expired' : record.status)">{{ localStatus(record) | transloco }}</span></td>
+          <td>{{ record.updatedAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+          <td><div class="actions-cell">
+            <button class="history-open-btn" (click)="openJob.emit(record.jobId)">{{ 'appMode.open.history.open' | transloco }}</button>
+            <button class="history-open-btn" (click)="deleteJob.emit(record.jobId)">{{ 'appMode.open.history.remove' | transloco }}</button>
+          </div></td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+  } @else if (jobs.length === 0) {
+  <p class="status-message">{{ emptyMessage }}</p>
+  } @else {
+  <div class="table-wrap">
+    <table class="history-table">
+      <thead><tr><th>{{ 'shared.jobHistoryTable.colJobId' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colStatus' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colUpdated' | transloco }}</th><th>{{ 'shared.jobHistoryTable.colAction' | transloco }}</th></tr></thead>
+      <tbody>
+        @for (historyJob of jobs; track historyJob.id) {
+        <tr>
+          <td>@if (displayJobName(historyJob) !== historyJob.id) { <div class="job-display-name">{{ displayJobName(historyJob) }}</div> }<div class="mono">{{ historyJob.id }}</div></td>
+          <td><span [class]="statusClass(historyJob.status)">{{ historyJob.status }}</span></td>
+          <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+          <td><div class="actions-cell"><button class="history-open-btn" (click)="openJob.emit(historyJob.id)">{{ 'shared.jobHistoryTable.open' | transloco }}</button>@if (canDeleteJob(historyJob)) {<button class="history-open-btn" (click)="deleteJob.emit(historyJob.id)">{{ 'common.actions.delete' | transloco }}</button>}</div></td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
 </section>

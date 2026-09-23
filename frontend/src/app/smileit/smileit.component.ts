@@ -17,6 +17,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { OpenModeBannerComponent } from '../core/shared/components/open-mode-banner/open-mode-banner.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import {
@@ -45,6 +46,7 @@ import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-v
   selector: 'app-smileit',
   standalone: true,
   imports: [
+    OpenModeBannerComponent,
     CommonModule,
     FormsModule,
     TranslocoPipe,

@@ -126,6 +126,11 @@ export class SaScoreWorkflowService extends SmilesJobWorkflowService<SaScoreResu
   }
 
   openHistoricalJob(jobId: string): void {
+    if (this.accessMode.isOpenMode()) {
+      const localRecord = this.localHistory().find((record) => record.jobId === jobId);
+      if (localRecord !== undefined) this.openLocalRecord(localRecord);
+      return;
+    }
     this.prepareForDispatch();
     this.currentJobId.set(jobId);
 

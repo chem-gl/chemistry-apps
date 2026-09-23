@@ -1913,5 +1913,13 @@
    "title": "CADMA Py",
    "description": "Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization."
   }
- }
+ }  ,"appMode": {
+    "open": {
+      "banner": {"title": "Open mode", "body": "You are running without an account. Results stay in this browser.", "privacy": "Parameters are not private: an identical calculation returns the cached result, shared for up to 7 days."},
+      "history": {"title": "Your recent runs (this browser)", "empty": "No runs stored yet.", "open": "Open", "remove": "Remove", "expired": "Expired on the server"},
+      "limits": {"429": "Too many calculations from your network. Try again later.", "413": "The upload or parameters exceed the open-mode limit."},
+      "unavailable": "Not available without an account."
+    }
+  }
+
 }
