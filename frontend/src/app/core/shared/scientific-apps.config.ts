@@ -14,6 +14,8 @@ export interface ScientificAppRouteItem {
   available: boolean;
   /** Si es false, la app no se muestra en menus ni en el hub (solo existe como ejemplo/ruta interna). */
   visibleInMenus: boolean;
+  /** Si es true, la app se puede usar sin cuenta desde el modo libre. */
+  freeAccess: boolean;
   /** Captura real de la app (tarjeta principal del hub). Opcional: sin ella se usa la ilustración. */
   thumbnailScreenshot?: string;
   /** Ilustración representativa (vistas secundarias y fallback). Opcional. */
@@ -26,6 +28,7 @@ interface ScientificAppDefinition {
   title: string;
   description: string;
   visibleInMenus: boolean;
+  freeAccess: boolean;
   thumbnailScreenshot?: string;
   thumbnailIllustration?: string;
 }
@@ -39,6 +42,7 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     routePath: `/${definition.key}`,
     available: true,
     visibleInMenus: definition.visibleInMenus,
+    freeAccess: definition.freeAccess,
     thumbnailScreenshot: definition.thumbnailScreenshot,
     thumbnailIllustration: definition.thumbnailIllustration,
   };
@@ -61,6 +65,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     title: 'Molar Fractions',
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
   },
   {
@@ -70,6 +75,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/tunnel.jpg',
   },
   {
@@ -79,6 +85,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/easy-rate.jpg',
   },
   {
@@ -88,6 +95,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/marcus.jpg',
   },
   {
@@ -97,6 +105,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/smileit.jpg',
   },
   {
@@ -106,6 +115,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/sa-score.jpg',
   },
   {
@@ -115,6 +125,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
     visibleInMenus: true,
+    freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/toxicity-properties.jpg',
   },
   {
@@ -124,6 +135,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
+    freeAccess: false,
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
   },
 ];
@@ -159,3 +171,11 @@ export function resolveScientificJobRoutePath(pluginName: string): string | null
 /** Lista filtrada: solo las apps visibles en menus y en el hub. */
 export const VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.visibleInMenus);
+
+/** Apps utilizables sin cuenta (modo libre). */
+export const FREE_ACCESS_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.freeAccess);
+
+/** Apps que requieren cuenta (se muestran con invitación a registrarse). */
+export const ACCOUNT_ONLY_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => !app.freeAccess);

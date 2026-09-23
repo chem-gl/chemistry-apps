@@ -62,6 +62,7 @@ model/groupAppConfig.ts
 model/groupMembership.ts
 model/groupMembershipRequest.ts
 model/identityBootstrapUserRequest.ts
+model/identityBootstrapUserRequestEmail.ts
 model/identityUserSummary.ts
 model/jobControlActionResponse.ts
 model/jobCreateRequest.ts
@@ -99,6 +100,8 @@ model/patchedWorkGroupRequest.ts
 model/patternTypeEnum.ts
 model/phModeEnum.ts
 model/progressStageEnum.ts
+model/registrationToken.ts
+model/registrationTokenCreateRequest.ts
 model/roleEnum.ts
 model/roleInGroupEnum.ts
 model/saMoleculeResult.ts
@@ -157,6 +160,7 @@ model/tunnelResult.ts
 model/userAppConfig.ts
 model/userMembershipSummary.ts
 model/userProfile.ts
+model/userRegistrationRequest.ts
 model/verificationRuleEnum.ts
 model/workGroup.ts
 model/workGroupRequest.ts

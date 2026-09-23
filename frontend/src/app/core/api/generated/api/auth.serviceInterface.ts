@@ -19,6 +19,7 @@ import { TokenRefresh } from '../model/models';
 import { TokenRefreshRequest } from '../model/models';
 import { UserAppConfig } from '../model/models';
 import { UserProfile } from '../model/models';
+import { UserRegistrationRequest } from '../model/models';
 
 
 import { Configuration }                                     from '../configuration';
@@ -75,5 +76,13 @@ export interface AuthServiceInterface {
      * @param tokenRefreshRequest 
      */
     authRefreshCreate(tokenRefreshRequest: TokenRefreshRequest, extraHttpRequestParams?: any): Observable<TokenRefresh>;
+
+    /**
+     * 
+     * Registro público de nuevos usuarios.  Sin &#x60;registration_token&#x60;: crea usuario sin grupo ni permisos de app. Con &#x60;registration_token&#x60; válido: crea usuario, lo asigna al grupo vinculado al token, y devuelve tokens JWT para auto-login inmediato.
+     * @endpoint post /api/auth/register/
+     * @param userRegistrationRequest 
+     */
+    authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, extraHttpRequestParams?: any): Observable<UserProfile>;
 
 }

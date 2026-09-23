@@ -6,7 +6,11 @@
   grid-template-columns: 1.15fr 1fr;
   gap: clamp(1rem, 3vw, 2.5rem);
   padding: clamp(1rem, 2.5vw, 2.2rem);
+  /* `start` evita que la fila sobrante se estire y deje una banda vacía
+     debajo del pie institucional. */
   align-items: start;
+  align-content: start;
+  grid-auto-rows: min-content;
 }
 
 /* ═══ LEFT COLUMN ═══ */
@@ -239,6 +243,39 @@
 .register-link a:hover {
   text-decoration: underline;
 }
+.free-mode-entry {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--chem-border);
+  text-align: center;
+}
+.free-mode-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--chem-border-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--chem-primary-dark);
+  text-decoration: none;
+  transition: background var(--chem-transition), border-color var(--chem-transition);
+}
+.free-mode-link:hover {
+  background: var(--chem-primary-light);
+  border-color: var(--chem-border-accent-strong);
+}
+.free-mode-link:focus-visible {
+  outline: 3px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+.free-mode-note {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--chem-ink-soft);
+}
 
 /* ═══ RIGHT COLUMN ═══ */
 
@@ -276,6 +313,9 @@
   gap: 0.8rem;
   justify-content: center;
   flex-wrap: wrap;
+  /* Las tarjetas se alinean por el borde superior: los avatares quedan a la
+     misma altura aunque el nombre ocupe una o dos líneas. */
+  align-items: start;
 }
 
 .developer-card {
@@ -331,6 +371,11 @@
   text-align: center;
   max-width: 7rem;
   line-height: 1.15;
+  /* Reserva dos líneas: los nombres largos no desalinean rol y afiliación. */
+  min-height: 2.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .developer-role {

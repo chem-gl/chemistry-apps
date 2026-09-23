@@ -105,6 +105,8 @@ paths:
             schema:
               $ref: '#/components/schemas/DomainTokenObtainPairRequest'
         required: true
+      security:
+      - {}
       responses:
         '200':
           description: No response body
@@ -142,12 +144,48 @@ paths:
             schema:
               $ref: '#/components/schemas/TokenRefreshRequest'
         required: true
+      security:
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: |-
+        Registro público de nuevos usuarios.
+
+        Sin `registration_token`: crea usuario sin grupo ni permisos de app.
+        Con `registration_token` válido: crea usuario, lo asigna al grupo vinculado
+        al token, y devuelve tokens JWT para auto-login inmediato.
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
           description: ''
   /api/cadma-py/jobs/:
     post:
@@ -171,7 +209,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -208,7 +245,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -236,7 +272,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -276,7 +311,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -316,7 +350,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -356,7 +389,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -381,7 +413,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -430,7 +461,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -475,7 +505,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -530,7 +559,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -574,7 +602,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -619,7 +646,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -668,7 +694,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -706,7 +731,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -762,7 +786,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -822,7 +845,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -872,7 +894,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -910,7 +931,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -938,7 +958,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -969,7 +988,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1007,7 +1025,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -1047,7 +1064,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -1084,7 +1100,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -1112,7 +1127,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1152,7 +1166,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1192,7 +1205,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1232,7 +1244,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1267,7 +1278,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1630,6 +1640,81 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/identity/registration-tokens/:
+    get:
+      operationId: identity_registration_tokens_list
+      description: |-
+        Lista y crea tokens de auto-registro para grupos.
+
+        - GET: lista tokens. Root ve todos; admin ve tokens de grupos que administra.
+        - POST: crea token. Solo root.
+      tags:
+      - Identity
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistrationToken'
+          description: ''
+    post:
+      operationId: identity_registration_tokens_create
+      description: |-
+        Lista y crea tokens de auto-registro para grupos.
+
+        - GET: lista tokens. Root ve todos; admin ve tokens de grupos que administra.
+        - POST: crea token. Solo root.
+      tags:
+      - Identity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationTokenCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegistrationTokenCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegistrationTokenCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationToken'
+          description: ''
+  /api/identity/registration-tokens/{token_id}/:
+    delete:
+      operationId: identity_registration_tokens_destroy
+      description: |-
+        Gestiona un token de auto-registro específico.
+
+        DELETE: Revoca el token (is_active=False). Solo root.
+      parameters:
+      - in: path
+        name: token_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Identity
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/identity/scientific-apps/:
     get:
       operationId: identity_scientific_apps_list
@@ -1767,7 +1852,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1822,7 +1906,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -1859,7 +1942,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1892,7 +1974,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1937,7 +2018,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -1981,7 +2061,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2031,7 +2110,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2094,7 +2172,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2135,7 +2212,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2173,7 +2249,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2217,7 +2292,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2255,7 +2329,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2286,7 +2359,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2322,7 +2394,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -2359,7 +2430,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -2387,7 +2457,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2427,7 +2496,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2467,7 +2535,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2507,7 +2574,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2573,7 +2639,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -2610,7 +2675,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -2638,7 +2702,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2678,7 +2741,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2718,7 +2780,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2758,7 +2819,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2768,6 +2828,552 @@ paths:
                 format: binary
           description: Log de auditoría.
         '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/easy-rate/jobs/:
+    post:
+      operationId: public_easy_rate_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/easy-rate/jobs/{id}/:
+    get:
+      operationId: public_easy_rate_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/easy-rate/jobs/{id}/report-csv/:
+    get:
+      operationId: public_easy_rate_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - EasyRate
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/marcus/jobs/:
+    post:
+      operationId: public_marcus_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/marcus/jobs/{id}/:
+    get:
+      operationId: public_marcus_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/marcus/jobs/{id}/report-csv/:
+    get:
+      operationId: public_marcus_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Marcus
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/molar-fractions/jobs/:
+    post:
+      operationId: public_molar_fractions_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/molar-fractions/jobs/{id}/:
+    get:
+      operationId: public_molar_fractions_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/molar-fractions/jobs/{id}/report-csv/:
+    get:
+      operationId: public_molar_fractions_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - MolarFractions
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/sa-score/jobs/:
+    post:
+      operationId: public_sa_score_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/sa-score/jobs/{id}/:
+    get:
+      operationId: public_sa_score_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/sa-score/jobs/{id}/report-csv/:
+    get:
+      operationId: public_sa_score_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - SAScore
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/smileit/jobs/:
+    post:
+      operationId: public_smileit_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/smileit/jobs/{id}/:
+    get:
+      operationId: public_smileit_jobs_retrieve
+      description: Retorna estado del job sin lista completa de derivados para reducir
+        payload.
+      summary: Obtener Job Smile-it (resumen optimizado)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmileitJobResponse'
+          description: ''
+  /api/public/smileit/jobs/{id}/report-csv/:
+    get:
+      operationId: public_smileit_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Smileit
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/toxicity-properties/jobs/:
+    post:
+      operationId: public_toxicity_properties_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/toxicity-properties/jobs/{id}/:
+    get:
+      operationId: public_toxicity_properties_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/toxicity-properties/jobs/{id}/report-csv/:
+    get:
+      operationId: public_toxicity_properties_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ToxicityProperties
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/tunnel/jobs/:
+    post:
+      operationId: public_tunnel_jobs_create
+      description: |-
+        Despacha el `create` de la app reservando un cupo de concurrencia.
+
+        El cupo se reserva antes de crear el job y se libera si la creación
+        falla o si el job nace ya terminal (cache hit), porque en esos casos
+        ningún worker ejecutará la liberación.
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/public/tunnel/jobs/{id}/:
+    get:
+      operationId: public_tunnel_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/public/tunnel/jobs/{id}/report-csv/:
+    get:
+      operationId: public_tunnel_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - Tunnel
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
           content:
             application/json:
               schema:
@@ -2795,7 +3401,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -2832,7 +3437,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -2860,7 +3464,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2910,7 +3513,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2957,7 +3559,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -2997,7 +3598,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3037,7 +3637,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3122,7 +3721,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -3167,7 +3765,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3204,7 +3801,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3255,7 +3851,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3294,7 +3889,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3334,7 +3928,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3373,7 +3966,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3413,7 +4005,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3453,7 +4044,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3487,7 +4077,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3526,7 +4115,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3557,7 +4145,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3615,7 +4202,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3682,7 +4268,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3724,7 +4309,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3758,7 +4342,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3796,7 +4379,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3827,7 +4409,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3888,7 +4469,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3951,7 +4531,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -3991,7 +4570,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4035,7 +4613,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -4072,7 +4649,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -4100,7 +4676,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4140,7 +4715,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4180,7 +4754,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4220,7 +4793,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4278,7 +4850,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -4315,7 +4886,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -4343,7 +4913,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4383,7 +4952,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4423,7 +4991,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4463,7 +5030,6 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -4593,6 +5159,9 @@ components:
         name:
           type: string
           maxLength: 200
+        paper_authors:
+          type: string
+          maxLength: 500
         paper_reference:
           type: string
           maxLength: 300
@@ -4666,17 +5235,65 @@ components:
           type: number
           format: double
           readOnly: true
+        DT_test:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        DT_admet:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
         M:
           type: number
           format: double
           readOnly: true
+        M_test:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        M_admet:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
         LD50:
           type: number
           format: double
           readOnly: true
+        LD50_test:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        LD50_admet:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
         SA:
           type: number
           format: double
+          readOnly: true
+        SA_ambit:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        SA_brsa:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        SA_rdkit:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        paper_authors:
+          type: string
           readOnly: true
         paper_reference:
           type: string
@@ -4690,18 +5307,28 @@ components:
       required:
       - AtX
       - DT
+      - DT_admet
+      - DT_test
       - HBLA
       - HBLD
       - LD50
+      - LD50_admet
+      - LD50_test
       - M
       - MR
       - MW
+      - M_admet
+      - M_test
       - PSA
       - RB
       - SA
+      - SA_ambit
+      - SA_brsa
+      - SA_rdkit
       - evidence_note
       - logP
       - name
+      - paper_authors
       - paper_reference
       - paper_url
       - smiles
@@ -5773,8 +6400,11 @@ components:
           minLength: 1
           maxLength: 150
         email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         password:
           type: string
           writeOnly: true
@@ -6716,6 +7346,9 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+        paper_authors:
+          type: string
+          maxLength: 500
         paper_reference:
           type: string
           maxLength: 300
@@ -6751,8 +7384,11 @@ components:
       description: Serializer de actualización de perfil/estado de usuario para administración.
       properties:
         email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         first_name:
           type: string
         last_name:
@@ -6900,6 +7536,79 @@ components:
         * `completed` - completed
         * `failed` - failed
         * `cancelled` - cancelled
+    RegistrationToken:
+      type: object
+      description: Serializer de lectura para tokens de auto-registro.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        token:
+          type: string
+          readOnly: true
+          description: Código corto de 12 caracteres para compartir como invitación.
+        group:
+          type: integer
+          description: Grupo al que se asignará el usuario al registrarse.
+        group_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          description: 'Descripción contextual del token (ej: ''Invitación Lab Alpha
+            Q1'').'
+          maxLength: 255
+        is_active:
+          type: boolean
+          description: Desactivar para revocar el token sin eliminarlo.
+        max_uses:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Cantidad máxima de usos permitidos. 0 = ilimitado.
+        use_count:
+          type: integer
+          readOnly: true
+          description: Contador de registros exitosos usando este token.
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de expiración. None = nunca expira.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - group
+      - group_name
+      - id
+      - token
+      - use_count
+    RegistrationTokenCreateRequest:
+      type: object
+      description: Serializer para creación de tokens de auto-registro (solo root).
+      properties:
+        group_id:
+          type: integer
+        description:
+          type: string
+          default: ''
+        max_uses:
+          type: integer
+          minimum: 0
+          default: 1
+          description: 0 = ilimitado
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de expiración. None = nunca expira.
+      required:
+      - group_id
     RoleEnum:
       enum:
       - root
@@ -8759,6 +9468,42 @@ components:
       - primary_group_id
       - role
       - updated_at
+      - username
+    UserRegistrationRequest:
+      type: object
+      description: |-
+        Serializer para auto-registro público de usuarios.
+
+        Sin `registration_token`: crea usuario sin grupo ni permisos (sin acceso a apps).
+        Con `registration_token` válido: crea usuario + lo asigna al grupo vinculado
+        al token, heredando los AppPermission de ese grupo.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        first_name:
+          type: string
+          default: ''
+        last_name:
+          type: string
+          default: ''
+        registration_token:
+          type: string
+          description: Token de invitación opcional. Si se provee, el usuario queda
+            automáticamente asignado al grupo vinculado.
+          maxLength: 12
+      required:
+      - email
+      - password
       - username
     VerificationRuleEnum:
       enum:

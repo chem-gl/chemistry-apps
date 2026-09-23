@@ -72,4 +72,27 @@ export interface MolarFractionsServiceInterface {
      */
     molarFractionsJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
 
+    /**
+     * 
+     * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
+     * @endpoint post /api/public/molar-fractions/jobs/
+     */
+    publicMolarFractionsJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
+     * @endpoint get /api/public/molar-fractions/jobs/{id}/report-csv/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicMolarFractionsJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
+     * @endpoint get /api/public/molar-fractions/jobs/{id}/
+     * @param id UUID del job.
+     */
+    publicMolarFractionsJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+
 }

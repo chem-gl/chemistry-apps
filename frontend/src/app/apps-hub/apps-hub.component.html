@@ -1,30 +1,83 @@
-<!-- apps-hub.component.html: Hub screen for scientific app navigation. -->
-<section class="apps-shell" [attr.aria-label]="'appsHub.aria.library' | transloco">
-  <header class="apps-header">
-    <h1 class="eyebrow">{{ 'appsHub.header.eyebrow' | transloco }}</h1>
+<!-- apps-hub.component.html: Catalogo publico con modo libre y zona con cuenta. -->
+<section
+  #shell
+  class="apps-shell"
+  [attr.aria-label]="'appsHub.aria.library' | transloco"
+  (pointermove)="trackPointer($event, shell)"
+>
+  <div class="reaction-glow" aria-hidden="true"></div>
+
+  <header class="hero">
+    <p class="hero-eyebrow">{{ 'appsHub.hero.eyebrow' | transloco }}</p>
+    <h2 class="hero-title">{{ 'appsHub.hero.title' | transloco }}</h2>
+    <p class="hero-lead">{{ 'appsHub.hero.lead' | transloco }}</p>
+
+    <div class="hero-actions">
+      @if (starterApp(); as firstApp) {
+      <a class="cta cta-primary" [routerLink]="firstApp.routePath">
+        {{ 'appsHub.hero.start' | transloco }}
+      </a>
+      }
+      @if (!isAuthenticated()) {
+      <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
+      } @else {
+      <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
+      }
+    </div>
+
+    <p class="hero-note">{{ 'appsHub.hero.privacyNote' | transloco }}</p>
   </header>
 
-  <div class="apps-grid">
-    @if (scientificApps().length === 0) {
-    <article class="app-card is-disabled">
-      <h2>{{ 'appsHub.empty.title' | transloco }}</h2>
-      <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
-      <span class="coming-soon">{{ 'appsHub.empty.action' | transloco }}</span>
-    </article>
-    }
+  <section class="zone" [attr.aria-labelledby]="'free-zone-title'">
+    <header class="zone-header">
+      <h2 id="free-zone-title">{{ 'appsHub.freeZone.title' | transloco }}</h2>
+      <p>{{ 'appsHub.freeZone.subtitle' | transloco }}</p>
+    </header>
 
-    @for (appItem of scientificApps(); track appItem.key) {
-    <article class="app-card" [class.is-disabled]="!appItem.available">
-      <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
-      <p class="card-kicker">{{ 'appsHub.appCard.kicker' | transloco }}</p>
-      <h2>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h2>
-      <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
-      @if (appItem.available) {
-      <a [routerLink]="appItem.routePath" class="app-link">{{ 'appsHub.appCard.open' | transloco }}</a>
-      } @else {
-      <span class="coming-soon">{{ 'appsHub.appCard.comingSoon' | transloco }}</span>
+    <ul class="app-lattice">
+      @for (appItem of freeApps(); track appItem.key) {
+      <li class="app-node">
+        <a class="node-link" [routerLink]="appItem.routePath">
+          <span class="node-badge">{{ 'appsHub.badge.free' | transloco }}</span>
+          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
+        </a>
+      </li>
       }
-    </article>
-    }
-  </div>
+    </ul>
+  </section>
+
+  <section class="zone zone-account" [attr.aria-labelledby]="'account-zone-title'">
+    <header class="zone-header">
+      <h2 id="account-zone-title">{{ 'appsHub.accountZone.title' | transloco }}</h2>
+      <p>{{ 'appsHub.accountZone.subtitle' | transloco }}</p>
+    </header>
+
+    <ul class="app-lattice is-quiet">
+      @for (appItem of accountApps(); track appItem.key) {
+      <li class="app-node">
+        @if (isAuthenticated()) {
+        <a class="node-link" [routerLink]="appItem.routePath">
+          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
+        </a>
+        } @else {
+        <div class="node-link is-locked">
+          <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
+          <app-card-thumbnail [appItem]="appItem" mode="screenshot" />
+          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
+            {{ 'appsHub.accountZone.signIn' | transloco }}
+          </a>
+        </div>
+        }
+      </li>
+      }
+    </ul>
+  </section>
 </section>

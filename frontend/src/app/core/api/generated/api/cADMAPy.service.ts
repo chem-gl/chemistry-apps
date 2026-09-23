@@ -883,6 +883,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param libraryId ID de la familia de referencia CADMA Py.
      * @param smiles 
      * @param name 
+     * @param paperAuthors 
      * @param paperReference 
      * @param paperUrl 
      * @param evidenceNote 
@@ -894,10 +895,10 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
-    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
+    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (libraryId === null || libraryId === undefined) {
             throw new Error('Required parameter libraryId was null or undefined when calling cadmaPyJobsReferenceLibrariesRowsCreate.');
         }
@@ -946,6 +947,9 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
         }
         if (name !== undefined) {
             localVarFormParams = localVarFormParams.append('name', <any>name) as any || localVarFormParams;
+        }
+        if (paperAuthors !== undefined) {
+            localVarFormParams = localVarFormParams.append('paper_authors', <any>paperAuthors) as any || localVarFormParams;
         }
         if (paperReference !== undefined) {
             localVarFormParams = localVarFormParams.append('paper_reference', <any>paperReference) as any || localVarFormParams;
@@ -1069,6 +1073,7 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param libraryId ID de la familia de referencia CADMA Py.
      * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      * @param name 
+     * @param paperAuthors 
      * @param paperReference 
      * @param paperUrl 
      * @param evidenceNote 
@@ -1076,10 +1081,10 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
-    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CadmaCompoundRowResponse>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CadmaCompoundRowResponse>>;
+    public cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (libraryId === null || libraryId === undefined) {
             throw new Error('Required parameter libraryId was null or undefined when calling cadmaPyJobsReferenceLibrariesRowsPartialUpdate.');
         }
@@ -1125,6 +1130,9 @@ export class CADMAPyService extends BaseService implements CADMAPyServiceInterfa
 
         if (name !== undefined) {
             localVarFormParams = localVarFormParams.append('name', <any>name) as any || localVarFormParams;
+        }
+        if (paperAuthors !== undefined) {
+            localVarFormParams = localVarFormParams.append('paper_authors', <any>paperAuthors) as any || localVarFormParams;
         }
         if (paperReference !== undefined) {
             localVarFormParams = localVarFormParams.append('paper_reference', <any>paperReference) as any || localVarFormParams;

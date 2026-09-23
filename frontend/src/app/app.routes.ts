@@ -1,16 +1,24 @@
 // app.routes.ts: Enrutado principal con guards de sesión y acceso por app.
 
 import { Routes } from '@angular/router';
-import { adminGuard, appAccessGuard, authGuard, groupAdminGuard } from './core/auth/auth.guards';
+import {
+  adminGuard,
+  appAccessGuard,
+  authGuard,
+  groupAdminGuard,
+  guestGuard,
+} from './core/auth/auth.guards';
 
 export const routes: Routes = [
   {
+    // Puerta de entrada institucional: titulo, equipo y publicaciones.
     path: '',
     pathMatch: 'full',
-    redirectTo: 'apps',
+    redirectTo: 'login',
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
@@ -58,40 +66,34 @@ export const routes: Routes = [
       import('./jobs-trash/jobs-trash.component').then((m) => m.JobsTrashComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'molar-fractions',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'molar-fractions' },
     loadComponent: () =>
       import('./molar-fractions/molar-fractions.component').then((m) => m.MolarFractionsComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'tunnel',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'tunnel' },
     loadComponent: () => import('./tunnel/tunnel.component').then((m) => m.TunnelComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'easy-rate',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'easy-rate' },
     loadComponent: () => import('./easy-rate/easy-rate.component').then((m) => m.EasyRateComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'marcus',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'marcus' },
     loadComponent: () => import('./marcus/marcus.component').then((m) => m.MarcusComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'smileit',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'smileit' },
     loadComponent: () => import('./smileit/smileit.component').then((m) => m.SmileitComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'sa-score',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'sa-score' },
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
@@ -101,17 +103,16 @@ export const routes: Routes = [
     loadComponent: () => import('./cadma-py/cadma-py.component').then((m) => m.CadmaPyComponent),
   },
   {
+    // Modo libre: usable sin cuenta.
     path: 'toxicity-properties',
-    canActivate: [authGuard, appAccessGuard],
-    data: { appKey: 'toxicity-properties' },
     loadComponent: () =>
       import('./toxicity-properties/toxicity-properties.component').then(
         (m) => m.ToxicityPropertiesComponent,
       ),
   },
   {
+    // Catalogo publico: muestra las apps libres y las que piden cuenta.
     path: 'apps',
-    canActivate: [authGuard],
     loadComponent: () => import('./apps-hub/apps-hub.component').then((m) => m.AppsHubComponent),
   },
   {

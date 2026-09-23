@@ -25,6 +25,29 @@ export interface SAScoreServiceInterface {
     configuration: Configuration;
 
     /**
+     * 
+     * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
+     * @endpoint post /api/public/sa-score/jobs/
+     */
+    publicSaScoreJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
+     * @endpoint get /api/public/sa-score/jobs/{id}/report-csv/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSaScoreJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
+     * @endpoint get /api/public/sa-score/jobs/{id}/
+     * @param id UUID del job.
+     */
+    publicSaScoreJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
      * Crear Job de SA Score
      * Crea un job asíncrono que calcula accesibilidad sintética para una lista de SMILES usando los métodos seleccionados (ambit, brsa, rdkit).
      * @endpoint post /api/sa-score/jobs/

@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { IdentityBootstrapUserRequestEmail } from './identityBootstrapUserRequestEmail';
 import { RoleEnum } from './roleEnum';
 import { AccountStatusEnum } from './accountStatusEnum';
 
@@ -15,7 +16,7 @@ import { AccountStatusEnum } from './accountStatusEnum';
  * Serializer de actualización de perfil/estado de usuario para administración.
  */
 export interface PatchedIdentityUserUpdateRequest { 
-    email?: string;
+    email?: IdentityBootstrapUserRequestEmail;
     first_name?: string;
     last_name?: string;
     password?: string;

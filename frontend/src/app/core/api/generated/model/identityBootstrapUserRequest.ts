@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { IdentityBootstrapUserRequestEmail } from './identityBootstrapUserRequestEmail';
 import { RoleEnum } from './roleEnum';
 import { AccountStatusEnum } from './accountStatusEnum';
 
@@ -16,7 +17,7 @@ import { AccountStatusEnum } from './accountStatusEnum';
  */
 export interface IdentityBootstrapUserRequest { 
     username: string;
-    email?: string;
+    email?: IdentityBootstrapUserRequestEmail;
     password: string;
     first_name?: string;
     last_name?: string;

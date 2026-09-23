@@ -25,6 +25,29 @@ export interface ToxicityPropertiesServiceInterface {
     configuration: Configuration;
 
     /**
+     * 
+     * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
+     * @endpoint post /api/public/toxicity-properties/jobs/
+     */
+    publicToxicityPropertiesJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
+     * @endpoint get /api/public/toxicity-properties/jobs/{id}/report-csv/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicToxicityPropertiesJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Consultar Job
+     * Devuelve estado, progreso y resultados del job por UUID.
+     * @endpoint get /api/public/toxicity-properties/jobs/{id}/
+     * @param id UUID del job.
+     */
+    publicToxicityPropertiesJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
      * Crear Job de Toxicity Properties
      * Crea un job asíncrono para predecir LD50, mutagenicidad (Ames) y toxicidad del desarrollo con ADMET-AI para una lista de SMILES.
      * @endpoint post /api/toxicity-properties/jobs/

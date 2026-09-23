@@ -12,6 +12,7 @@ const ITEM_WITH_SCREENSHOT: ScientificAppRouteItem = {
   routePath: '/molar-fractions',
   available: true,
   visibleInMenus: true,
+  freeAccess: true,
   thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
 };
 

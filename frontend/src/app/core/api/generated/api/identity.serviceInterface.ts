@@ -23,6 +23,8 @@ import { PatchedGroupAppConfigRequest } from '../model/models';
 import { PatchedGroupMembershipRequest } from '../model/models';
 import { PatchedIdentityUserUpdateRequest } from '../model/models';
 import { PatchedWorkGroupRequest } from '../model/models';
+import { RegistrationToken } from '../model/models';
+import { RegistrationTokenCreateRequest } from '../model/models';
 import { ScientificAppCatalog } from '../model/models';
 import { WorkGroup } from '../model/models';
 import { WorkGroupRequest } from '../model/models';
@@ -150,6 +152,29 @@ export interface IdentityServiceInterface {
      * @param patchedGroupMembershipRequest 
      */
     identityMembershipsPartialUpdate(membershipId: number, patchedGroupMembershipRequest?: PatchedGroupMembershipRequest, extraHttpRequestParams?: any): Observable<GroupMembership>;
+
+    /**
+     * 
+     * Lista y crea tokens de auto-registro para grupos.  - GET: lista tokens. Root ve todos; admin ve tokens de grupos que administra. - POST: crea token. Solo root.
+     * @endpoint post /api/identity/registration-tokens/
+     * @param registrationTokenCreateRequest 
+     */
+    identityRegistrationTokensCreate(registrationTokenCreateRequest: RegistrationTokenCreateRequest, extraHttpRequestParams?: any): Observable<RegistrationToken>;
+
+    /**
+     * 
+     * Gestiona un token de auto-registro específico.  DELETE: Revoca el token (is_active&#x3D;False). Solo root.
+     * @endpoint delete /api/identity/registration-tokens/{token_id}/
+     * @param tokenId 
+     */
+    identityRegistrationTokensDestroy(tokenId: string, extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * 
+     * Lista y crea tokens de auto-registro para grupos.  - GET: lista tokens. Root ve todos; admin ve tokens de grupos que administra. - POST: crea token. Solo root.
+     * @endpoint get /api/identity/registration-tokens/
+     */
+    identityRegistrationTokensList(extraHttpRequestParams?: any): Observable<Array<RegistrationToken>>;
 
     /**
      * 

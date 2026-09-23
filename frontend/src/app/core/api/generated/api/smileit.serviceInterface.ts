@@ -35,6 +35,29 @@ export interface SmileitServiceInterface {
     configuration: Configuration;
 
     /**
+     * 
+     * Despacha el &#x60;create&#x60; de la app reservando un cupo de concurrencia.  El cupo se reserva antes de crear el job y se libera si la creación falla o si el job nace ya terminal (cache hit), porque en esos casos ningún worker ejecutará la liberación.
+     * @endpoint post /api/public/smileit/jobs/
+     */
+    publicSmileitJobsCreate(extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * Descargar Reporte CSV
+     * Descarga CSV con resultados del job. Solo aplica para estado completed.
+     * @endpoint get /api/public/smileit/jobs/{id}/report-csv/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsReportCsvRetrieve(id: string, extraHttpRequestParams?: any): Observable<Blob>;
+
+    /**
+     * Obtener Job Smile-it (resumen optimizado)
+     * Retorna estado del job sin lista completa de derivados para reducir payload.
+     * @endpoint get /api/public/smileit/jobs/{id}/
+     * @param id A UUID string identifying this scientific job.
+     */
+    publicSmileitJobsRetrieve(id: string, extraHttpRequestParams?: any): Observable<SmileitJobResponse>;
+
+    /**
      * Gestionar Catálogo de Sustituyentes
      * Lista o crea sustituyentes persistidos activos de Smile-it.
      * @endpoint post /api/smileit/jobs/catalog/

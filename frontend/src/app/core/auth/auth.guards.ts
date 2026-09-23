@@ -83,3 +83,18 @@ export const groupAdminGuard: CanActivateFn = () => {
     }),
   );
 };
+
+/**
+ * Guard de rutas publicas de sesion (login): si ya hay sesion, redirige al
+ * catalogo para no mostrarle el formulario a quien ya entro.
+ */
+export const guestGuard: CanActivateFn = () => {
+  const sessionService = inject(IdentitySessionService);
+  const router = inject(Router);
+
+  return sessionService.initializeSession().pipe(
+    map((isAuthenticated: boolean) =>
+      isAuthenticated ? router.createUrlTree(['/apps']) : true,
+    ),
+  );
+};

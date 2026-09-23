@@ -147,6 +147,7 @@ export interface CADMAPyServiceInterface {
      * @param libraryId ID de la familia de referencia CADMA Py.
      * @param smiles 
      * @param name 
+     * @param paperAuthors 
      * @param paperReference 
      * @param paperUrl 
      * @param evidenceNote 
@@ -155,7 +156,7 @@ export interface CADMAPyServiceInterface {
      * @param toxicityLd50 
      * @param saScore 
      */
-    cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
+    cadmaPyJobsReferenceLibrariesRowsCreate(libraryId: string, smiles: string, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, toxicityDt?: number, toxicityM?: number, toxicityLd50?: number, saScore?: number, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
 
     /**
      * Editar o eliminar una fila de compuesto por índice
@@ -173,11 +174,12 @@ export interface CADMAPyServiceInterface {
      * @param libraryId ID de la familia de referencia CADMA Py.
      * @param rowIndex Índice de la fila dentro de &#x60;reference_rows&#x60;.
      * @param name 
+     * @param paperAuthors 
      * @param paperReference 
      * @param paperUrl 
      * @param evidenceNote 
      */
-    cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
+    cadmaPyJobsReferenceLibrariesRowsPartialUpdate(libraryId: string, rowIndex: number, name?: string, paperAuthors?: string, paperReference?: string, paperUrl?: string, evidenceNote?: string, extraHttpRequestParams?: any): Observable<CadmaCompoundRowResponse>;
 
     /**
      * Ver detalle completo de una muestra legacy sin importarla

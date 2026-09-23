@@ -32,6 +32,8 @@ import { TokenRefreshRequest } from '../model/tokenRefreshRequest';
 import { UserAppConfig } from '../model/userAppConfig';
 // @ts-ignore
 import { UserProfile } from '../model/userProfile';
+// @ts-ignore
+import { UserRegistrationRequest } from '../model/userRegistrationRequest';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -426,6 +428,79 @@ export class AuthService extends BaseService implements AuthServiceInterface {
             {
                 context: localVarHttpContext,
                 body: tokenRefreshRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Registro público de nuevos usuarios.  Sin &#x60;registration_token&#x60;: crea usuario sin grupo ni permisos de app. Con &#x60;registration_token&#x60; válido: crea usuario, lo asigna al grupo vinculado al token, y devuelve tokens JWT para auto-login inmediato.
+     * @endpoint post /api/auth/register/
+     * @param userRegistrationRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserProfile>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserProfile>>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserProfile>>;
+    public authRegisterCreate(userRegistrationRequest: UserRegistrationRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (userRegistrationRequest === null || userRegistrationRequest === undefined) {
+            throw new Error('Required parameter userRegistrationRequest was null or undefined when calling authRegisterCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (cookieAuth) required
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/auth/register/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<UserProfile>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: userRegistrationRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
