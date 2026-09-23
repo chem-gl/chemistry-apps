@@ -227,6 +227,47 @@ class PublicDispatchConcurrencyTests(TestCase):
         mock_release.assert_called_once_with(lease)
 
 
+@override_settings(
+    REST_FRAMEWORK={
+        "DEFAULT_THROTTLE_RATES": {
+            "public-dispatch": "60/hour",
+            "public-read": "120/hour",
+            "registered-dispatch": "2/hour",
+        }
+    },
+    TESTING=False,
+)
+class RegisteredDispatchThrottleTests(TestCase):
+    """El tope de despachos de registrados solo limita el create."""
+
+    def setUp(self) -> None:
+        cache.clear()
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(username="registered-throttle")
+        self.client.force_authenticate(user=self.user)
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def test_dispatch_is_throttled_but_retrieve_is_not(self) -> None:
+        with patch(
+            "apps.molar_fractions.routers.dispatch_scientific_job",
+            return_value=True,
+        ):
+            first = self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+            second = self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+            third = self.client.post(PRIVATE_MOLAR_URL, MOLAR_PAYLOAD, format="json")
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(third.status_code, 429)
+
+        job_id = str(first.data["id"])
+        for _ in range(5):
+            retrieve_response = self.client.get(f"{PRIVATE_MOLAR_URL}{job_id}/")
+            self.assertEqual(retrieve_response.status_code, 200)
+
+
 class LeaseAttachGuardTests(TestCase):
     """Verifica que no se adjunte un lease a un job que ya terminó."""
 

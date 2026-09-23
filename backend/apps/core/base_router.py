@@ -49,6 +49,7 @@ from .concurrency import (
     release_lease,
 )
 from .declarative_api import DeclarativeJobAPI
+from .throttling import RegisteredDispatchRateThrottle
 from .identity.services import AuthorizationService
 from .models import ScientificJob
 from .realtime import broadcast_job_update
@@ -87,6 +88,18 @@ class ScientificAppViewSetMixin:
     plugin_name: str
     response_serializer_class: type[serializers.Serializer]
     csv_report_suffix: str = "report"
+
+    def get_throttles(self) -> list:
+        """Tope de despachos para usuarios autenticados (solo `create`).
+
+        El polling del estado y las descargas no consumen la cuota, igual que
+        en la variante pública. La variante pública pisa este método con su
+        propio reparto de topes.
+        """
+        if getattr(self, "action", None) == "create":
+            return [RegisteredDispatchRateThrottle()]
+
+        return []
 
     def initial(self, request: Request, *args: object, **kwargs: object) -> None:
         """Reserva el cupo de concurrencia del usuario antes de crear el job.
