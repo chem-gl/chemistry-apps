@@ -10,16 +10,18 @@
   <!-- Barra superior compacta: acciones sin títulos. El equipo y los
     artículos (showcase) son el contenido principal de la portada. -->
   <div class="top-actions">
-    @if (starterApp(); as firstApp) {
-    <a class="cta cta-primary" [routerLink]="firstApp.routePath">
-      {{ 'appsHub.hero.start' | transloco }}
-    </a>
-    }
-    @if (!isAuthenticated()) {
-    <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
-    } @else {
-    <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
-    }
+    <div class="cta-row">
+      @if (starterApp(); as firstApp) {
+      <a class="cta cta-primary" [routerLink]="firstApp.routePath">
+        {{ 'appsHub.hero.start' | transloco }}
+      </a>
+      }
+      @if (!isAuthenticated()) {
+      <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
+      } @else {
+      <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
+      }
+    </div>
     <p class="top-note">{{ 'appsHub.hero.privacyNote' | transloco }}</p>
   </div>
 

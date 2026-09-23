@@ -46,6 +46,12 @@
 // ── Barra superior compacta (acciones, sin títulos) ─────────────────────
 .top-actions {
   position: relative;
+  display: grid;
+  gap: 0.9rem;
+  margin-bottom: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.cta-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -54,13 +60,22 @@
 
 .top-note {
   margin: 0;
-  flex-basis: 100%;
-  max-width: 38rem;
+  width: 100%;
+  box-sizing: border-box;
   font-size: 0.84rem;
   line-height: 1.55;
   color: var(--chem-ink-soft);
   border-left: 2px solid var(--chem-border-accent-strong);
-  padding-left: 0.7rem;
+  padding: 0.55rem 0.85rem;
+  background: color-mix(in srgb, var(--chem-surface) 72%, transparent);
+
+  &::before {
+    content: '•';
+    display: inline-block;
+    margin-right: 0.45rem;
+    color: var(--chem-accent);
+    font-weight: 700;
+  }
 }
 
 .cta {
@@ -260,6 +275,23 @@
   &:hover {
     transform: none;
     box-shadow: none;
+  }
+}
+
+@media (max-width: 36rem) {
+  .cta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cta {
+    justify-content: center;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+  }
+
+  .top-note {
+    padding: 0.6rem 0.75rem;
   }
 }
 
