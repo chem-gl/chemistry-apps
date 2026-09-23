@@ -38,3 +38,7 @@ backend/.coverage
 backend/coverage.xml
 backend/ruff.json
 frontend/eslint.json
+
+# Artefactos de Playwright (traces, videos, resultados de la ultima corrida).
+frontend/test-results/
+frontend/playwright-report/
