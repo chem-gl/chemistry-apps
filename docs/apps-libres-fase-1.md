@@ -158,13 +158,33 @@ de ser anónimo. Si la UI anónima necesita esos datos, hay que exponer un endpo
 público de referencia de solo lectura (la superficie pública hoy solo tiene
 create/retrieve/report-csv).
 
+### Paso 2c — COMPLETADO (topes de tamaño)
+
+| Archivo | Cambio |
+|---|---|
+| `config/settings.py` | `MAX_PARAMETERS_BYTES` (256 KB) → `DATA_UPLOAD_MAX_MEMORY_SIZE`; `ANONYMOUS_MAX_UPLOAD_BYTES` (10 MB) y `REGISTERED_MAX_UPLOAD_BYTES` (50 MB) |
+| `apps/core/exceptions.py` (nuevo) | `scientific_exception_handler`: `RequestDataTooBig` → 413 (en vez del 400 genérico) |
+| `apps/core/upload_limits.py` (nuevo) | Tope por archivo según el rol del job, en una sola capa |
+| `apps/core/artifacts.py` | Rechazo temprano por tamaño declarado + segunda barrera durante el streaming; la transacción revierte sin artefactos huérfanos |
+| `apps/core/base_router.py` | El create multipart responde 413 con mensaje legible |
+| `apps/core/tests/test_size_limits.py` (nuevo) | 7 tests |
+
+### Paso 2d — COMPLETADO (concurrencia por cliente)
+
+| Archivo | Cambio |
+|---|---|
+| `apps/core/concurrency.py` (nuevo) | Semáforo distribuido: sorted set por cliente (`apps-libres:concurrency:v1:{ip_hash}`), scripts Lua atómicos de adquisición y liberación, TTL como red de seguridad y fallo abierto con aviso si Redis no responde |
+| `apps/core/signals.py` (nuevo) | Liberación en `task_postrun` y `task_failure` (idempotente, solo el token propio) |
+| `apps/core/apps.py` | Importa las señales en `ready()` |
+| `apps/core/public_api.py` | El `create` público reserva el cupo, lo asocia al job en `runtime_state` y lo libera si la creación falla o el job nace terminal (cache hit) |
+| `config/settings.py` | `ANONYMOUS_MAX_CONCURRENT_JOBS` (2), `ANONYMOUS_CONCURRENCY_LEASE_SECONDS` (1800), `CONCURRENCY_REDIS_URL` |
+| `apps/core/tests/test_concurrency.py` (nuevo) | 16 tests |
+
 ### Pasos pendientes
 
-- Throttle de despachos registrados (`RegisteredDispatchRateThrottle` aún sin uso).
-- Topes de tamaño: parámetros 256 KB; archivos 10 MB anónimo / 50 MB registrado → 413.
-- `/api/public/catalog/` con apps disponibles + aviso de privacidad.
-- Concurrencia por IP (leases atómicos en Redis, liberados al terminar el job).
+- `/api/public/catalog/` con apps disponibles + aviso de privacidad (referencia de solo lectura, caché HTTP).
 - Cola `heavy` para toxicity.
-- Frontend: capa `localStorage` FIFO-20, 7 apps sin guards, i18n (8 idiomas).
+- Frontend: capa `localStorage` FIFO-20 (namespace + versión, capturar `QuotaExceededError`), 7 apps sin guards, i18n (8 idiomas), aviso de privacidad.
 - Infra: compose aislado + SSL del subdominio (bloqueado por acceso al host).
+- Nginx: `client_max_body_size` como techo absoluto y `error_page 413` con formato unificado.
 
