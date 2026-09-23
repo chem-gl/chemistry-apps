@@ -13,6 +13,7 @@ from django.utils import timezone
 from ..models import ScientificJob
 from ..ports import JobLogPublisherPort, JobProgressPublisherPort, JobProgressUpdate
 from ..types import JSONMap
+from .concurrency_lease import preserve_concurrency_lease
 from .log_helpers import publish_job_log
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,10 @@ def finish_with_result(
     # Mantener convención Django para strings: ausencia de dato = cadena vacía.
     job.error_trace = ""
     job.pause_requested = False
-    job.runtime_state = {}
+    # El lease de concurrencia sobrevive a la limpieza: la señal `task_postrun`
+    # lo libera después a partir de este mismo campo. Sin esto, el cupo queda
+    # huérfano en Redis hasta el TTL y el modo libre se queda sin slots.
+    job.runtime_state = preserve_concurrency_lease(job.runtime_state, {})
     job.progress_percentage = 100
     job.progress_stage = "completed"
     job.progress_message = completion_message
@@ -93,7 +97,11 @@ def finish_with_pause(
 
     job.status = "paused"
     job.pause_requested = False
-    job.runtime_state = checkpoint_payload
+    # El checkpoint convive con el lease: al reanudar, el worker que termine
+    # libera el cupo original en `task_postrun`.
+    job.runtime_state = preserve_concurrency_lease(
+        job.runtime_state, checkpoint_payload
+    )
     job.progress_stage = "paused"
     job.progress_message = pause_message
     job.paused_at = timezone.now()

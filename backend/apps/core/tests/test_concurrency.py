@@ -279,6 +279,94 @@ class RegisteredDispatchThrottleTests(TestCase):
             self.assertEqual(retrieve_response.status_code, 200)
 
 
+class LeasePreservationTests(TestCase):
+    """El fin terminal/pausa no debe borrar el lease antes del postrun.
+
+    Regresión real: `finish_with_*` sobrescribía `runtime_state`, el postrun
+    ya no encontraba el lease y el cupo quedaba huérfano en Redis hasta el
+    TTL (el modo libre se quedaba sin sus 2 slots).
+    """
+
+    def _create_job_with_lease(self) -> ScientificJob:
+        job = ScientificJob.objects.create(
+            job_hash=uuid4().hex,
+            plugin_name="molar-fractions",
+            algorithm_version="1.0.0",
+            status="running",
+            parameters={},
+            results=None,
+            runtime_state={
+                "concurrency_lease": {"key": "lease-key", "token": "lease-token"}
+            },
+        )
+        return job
+
+    def test_completion_preserves_lease_for_postrun(self) -> None:
+        from apps.core.services.terminal_states import finish_with_result
+
+        job = self._create_job_with_lease()
+
+        finish_with_result(
+            job=job,
+            job_id=str(job.id),
+            result_payload={},
+            from_cache=False,
+            progress_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+            log_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+        )
+
+        job.refresh_from_db()
+        self.assertEqual(
+            job.runtime_state.get("concurrency_lease"),
+            {"key": "lease-key", "token": "lease-token"},
+        )
+
+    def test_pause_checkpoint_preserves_lease(self) -> None:
+        from apps.core.services.terminal_states import finish_with_pause
+
+        job = self._create_job_with_lease()
+
+        finish_with_pause(
+            job=job,
+            job_id=str(job.id),
+            pause_message="pausado",
+            checkpoint={"step": 3},
+            progress_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+            log_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+        )
+
+        job.refresh_from_db()
+        runtime_state = job.runtime_state
+        self.assertEqual(runtime_state.get("step"), 3)
+        self.assertEqual(
+            runtime_state.get("concurrency_lease"),
+            {"key": "lease-key", "token": "lease-token"},
+        )
+
+    def test_full_cycle_releases_slot_with_realistic_flow(self) -> None:
+        from apps.core.services.terminal_states import finish_with_result
+
+        job = self._create_job_with_lease()
+        fake_client = FakeRedis(result=1)
+
+        attach_lease_to_job(
+            job,
+            ConcurrencyLease(key="cycle-key", token="cycle-token"),
+        )
+        finish_with_result(
+            job=job,
+            job_id=str(job.id),
+            result_payload={},
+            from_cache=False,
+            progress_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+            log_publisher=SimpleNamespace(publish=lambda *a, **k: None),
+        )
+        release_job_lease(job, client=fake_client)
+
+        job.refresh_from_db()
+        self.assertNotIn("concurrency_lease", job.runtime_state)
+
+
 class LeaseAttachGuardTests(TestCase):
     """Verifica que no se adjunte un lease a un job que ya terminó."""
 
