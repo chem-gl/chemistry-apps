@@ -26,21 +26,22 @@ export class JobAccessModeService {
    * El guard lo espera para no dejar pasar navegación directa antes de saber
    * si el backend tiene el modo abierto o cerrado. Ante error, CERRADO
    * (fail-closed, seguro por defecto).
+   * En SSR no hay HttpClient: dejamos la petición para el cliente.
    */
   whenOpenModeKnown(): Observable<boolean> {
     if (this.openModeRequest$ === null) {
       if (this.httpClient === null) {
-        this.openModeRequest$ = of(false);
-      } else {
-        this.openModeRequest$ = this.httpClient
-          .get<{ mode?: string }>(`${API_BASE_URL}/api/public/catalog/`)
-          .pipe(
-            map((catalog) => catalog.mode === 'open'),
-            catchError(() => of(false)),
-            tap((enabled) => this.openModeEnabled.set(enabled)),
-            shareReplay(1),
-          );
+        // SSR: no hay HttpClient, no cacheamos — el cliente hará la petición real.
+        return of(false).pipe(tap((enabled) => this.openModeEnabled.set(enabled)));
       }
+      this.openModeRequest$ = this.httpClient
+        .get<{ mode?: string }>(`${API_BASE_URL}/api/public/catalog/`)
+        .pipe(
+          map((catalog) => catalog.mode === 'open'),
+          catchError(() => of(false)),
+          tap((enabled) => this.openModeEnabled.set(enabled)),
+          shareReplay(1),
+        );
     }
     return this.openModeRequest$;
   }
