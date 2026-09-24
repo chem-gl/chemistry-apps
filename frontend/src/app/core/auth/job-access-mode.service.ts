@@ -24,18 +24,19 @@ export class JobAccessModeService {
   /**
    * Observable compartido del estado del modo libre (una sola petición).
    * El guard lo espera para no dejar pasar navegación directa antes de saber
-   * si el backend tiene el modo abierto o cerrado. Ante error, abierto.
+   * si el backend tiene el modo abierto o cerrado. Ante error, CERRADO
+   * (fail-closed, seguro por defecto).
    */
   whenOpenModeKnown(): Observable<boolean> {
     if (this.openModeRequest$ === null) {
       if (this.httpClient === null) {
-        this.openModeRequest$ = of(true);
+        this.openModeRequest$ = of(false);
       } else {
         this.openModeRequest$ = this.httpClient
           .get<{ mode?: string }>(`${API_BASE_URL}/api/public/catalog/`)
           .pipe(
             map((catalog) => catalog.mode === 'open'),
-            catchError(() => of(true)),
+            catchError(() => of(false)),
             tap((enabled) => this.openModeEnabled.set(enabled)),
             shareReplay(1),
           );

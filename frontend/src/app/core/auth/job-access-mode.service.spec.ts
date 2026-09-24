@@ -77,7 +77,7 @@ describe('JobAccessModeService', () => {
     httpMock.verify();
   });
 
-  it('defaults to open mode when the catalog is unreachable', async () => {
+  it('defaults to CLOSED mode when the catalog is unreachable (fail-closed)', async () => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
@@ -92,8 +92,8 @@ describe('JobAccessModeService', () => {
     const pending = httpMock.expectOne((request) => request.url.endsWith('/api/public/catalog/'));
     pending.error(new ProgressEvent('error'));
 
-    expect(await result).toBe(true);
-    expect(service.openModeEnabled()).toBe(true);
+    expect(await result).toBe(false);
+    expect(service.openModeEnabled()).toBe(false);
     httpMock.verify();
   });
 });
