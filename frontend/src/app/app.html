@@ -1,5 +1,4 @@
 <div class="app-shell" (click)="closeMobileNav()" (keydown)="$event.stopPropagation()">
-  @if (!isAuthPage()) {
   <header class="top-bar" [class.is-scrolled]="isScrolled()">
     <div class="top-bar-inner">
       <div class="brand-block">
@@ -21,8 +20,6 @@
             <span>{{ sessionService.currentRole() }}</span>
           </div>
           <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
-          } @else {
-          <a class="session-button" routerLink="/login">{{ 'app.actions.signIn' | transloco }}</a>
           }
         </div>
 
@@ -36,6 +33,7 @@
       </div>
     </div>
 
+    @if (mainNavigationItems().length > 0) {
     <nav class="main-nav" [class.is-open]="isMobileNavOpen()" [attr.aria-label]="'app.nav.ariaLabel' | transloco"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       @for (navItem of mainNavigationItems(); track navItem.path) {
@@ -60,7 +58,7 @@
             }
           </div>
         </div>
-        } @else if (!(navItem.path === '/login' && !sessionService.isAuthenticated())) {
+        } @else {
         <a [routerLink]="navItem.path" routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: true }"
           [title]="navItem.hintKey ? (navItem.hintKey | transloco) : navItem.hint"
@@ -70,8 +68,8 @@
         }
       }
     </nav>
+    }
   </header>
-  }
 
   <main class="content-shell">
     <router-outlet />

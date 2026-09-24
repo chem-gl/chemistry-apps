@@ -80,6 +80,17 @@ describe('AppsHubComponent', () => {
     expect(hub.starterApp()?.key).toBe('molar-fractions');
   });
 
+  it('muestra Sign in como CTA primario cuando el modo libre está cerrado', () => {
+    accessModeStub.openModeEnabled.set(false);
+    const fixture = TestBed.createComponent(AppsHubComponent);
+    fixture.detectChanges();
+
+    const primaryCta = fixture.nativeElement.querySelector('.top-actions .cta-primary') as HTMLAnchorElement;
+    expect(primaryCta.textContent).toContain('Sign in');
+    expect(primaryCta.getAttribute('href')).toBe('/login');
+    expect(fixture.nativeElement.querySelector('.top-actions .cta-quiet')?.textContent).toContain('Create account');
+  });
+
   it('mueve el resplandor de reaccion con el puntero', () => {
     const fixture = TestBed.createComponent(AppsHubComponent);
     const shell = fixture.nativeElement.querySelector('.apps-shell') as HTMLElement;

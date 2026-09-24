@@ -25,6 +25,7 @@ describe('App', () => {
   };
 
   beforeEach(async () => {
+    sessionServiceMock.isAuthenticated = () => true;
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -74,5 +75,18 @@ describe('App', () => {
     );
 
     expect(dropdownItems.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('should show Apps and Sign in in the guest navigation', () => {
+    sessionServiceMock.isAuthenticated = () => false;
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = Array.from(compiled.querySelectorAll('.main-nav a')).map(
+      (anchorElement: Element) => anchorElement.textContent?.trim().replace('▾', '').trim() ?? '',
+    );
+
+    expect(links).toEqual(['Apps', 'Sign in']);
+    sessionServiceMock.isAuthenticated = () => true;
   });
 });

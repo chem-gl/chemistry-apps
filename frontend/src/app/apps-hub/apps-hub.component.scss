@@ -58,6 +58,50 @@
   align-items: center;
 }
 
+.cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--chem-radius);
+  box-sizing: border-box;
+  font-family: var(--chem-font-label);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+
+  &:focus-visible {
+    outline: 3px solid var(--chem-accent);
+    outline-offset: 2px;
+  }
+}
+
+.cta-primary {
+  color: var(--chem-surface-elevated);
+  background: var(--chem-primary);
+  border-color: var(--chem-primary);
+
+  &:hover {
+    background: var(--chem-primary-dark);
+    border-color: var(--chem-primary-dark);
+    transform: translateY(-1px);
+  }
+}
+
+.cta-quiet {
+  color: var(--chem-ink-secondary);
+  background: transparent;
+  border-color: var(--chem-border);
+
+  &:hover {
+    color: var(--chem-primary-dark);
+    background: var(--chem-primary-light);
+    border-color: var(--chem-border-accent-strong);
+  }
+}
+
 // ── Zonas ───────────────────────────────────────────────────────────────
 .zone {
   position: relative;

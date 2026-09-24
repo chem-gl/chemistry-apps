@@ -76,7 +76,10 @@ export class App implements OnInit {
   /** Items principales del nav (sin apps ni admin). */
   readonly mainNavigationItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
     if (!this.sessionService.isAuthenticated()) {
-      return [{ labelKey: 'app.nav.signIn', path: '/login', hintKey: 'app.navHints.signIn' }];
+      return [
+        SCIENTIFIC_APP_NAV_ITEM,
+        { labelKey: 'app.nav.signIn', path: '/login', hintKey: 'app.navHints.signIn' },
+      ];
     }
 
     return [
