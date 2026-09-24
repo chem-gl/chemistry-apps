@@ -1,6 +1,7 @@
-// app-card-thumbnail.component.ts: Miniatura dual para tarjetas de apps cientificas.
-// mode=screenshot muestra la captura real en la tarjeta principal del hub;
-// mode=illustration (o sin captura / error de carga) muestra la ilustración representativa.
+// app-card-thumbnail.component.ts: Miniatura triple para tarjetas de apps cientificas.
+// mode=screenshot muestra la captura real; mode=icon muestra el icono circular
+// de la app junto al titulo (hub); mode=illustration (o sin asset / error de
+// carga) muestra la ilustración representativa.
 
 import { Component, computed, input, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -16,9 +17,10 @@ import { AppIllustrationComponent } from '../app-illustration/app-illustration.c
 })
 export class AppCardThumbnailComponent {
   readonly appItem = input.required<ScientificAppRouteItem>();
-  readonly mode = input<'screenshot' | 'illustration'>('screenshot');
+  readonly mode = input<'screenshot' | 'illustration' | 'icon'>('screenshot');
 
   private readonly screenshotFailed = signal<boolean>(false);
+  private readonly iconFailed = signal<boolean>(false);
 
   readonly showScreenshot = computed<boolean>(
     () =>
@@ -27,7 +29,18 @@ export class AppCardThumbnailComponent {
       !this.screenshotFailed(),
   );
 
+  readonly showIcon = computed<boolean>(
+    () =>
+      this.mode() === 'icon' &&
+      (this.appItem().iconAsset?.length ?? 0) > 0 &&
+      !this.iconFailed(),
+  );
+
   onScreenshotError(): void {
     this.screenshotFailed.set(true);
+  }
+
+  onIconError(): void {
+    this.iconFailed.set(true);
   }
 }

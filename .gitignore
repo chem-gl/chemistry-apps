@@ -42,3 +42,5 @@ frontend/eslint.json
 # Artefactos de Playwright (traces, videos, resultados de la ultima corrida).
 frontend/test-results/
 frontend/playwright-report/
+# Screenshots de auditoría visual: se regeneran con `npm run e2e:visual`.
+frontend/e2e/snapshots/

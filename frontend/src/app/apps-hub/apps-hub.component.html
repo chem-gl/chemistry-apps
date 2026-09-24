@@ -40,11 +40,12 @@
       <li class="app-node">
         <a class="node-link" [routerLink]="appItem.routePath">
           <span class="node-badge">{{ 'appsHub.badge.free' | transloco }}</span>
-          <!-- Ilustración propia en vez de captura del modal: la tarjeta encima
-               del resultado renderizaba dos tarjetas superpuestas. -->
-          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
-          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
-          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <!-- Icono circular junto al título + descripción concisa. -->
+          <div class="node-head">
+            <app-card-thumbnail [appItem]="appItem" mode="icon" />
+            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          </div>
+          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
         </a>
       </li>
@@ -70,17 +71,21 @@
       <li class="app-node">
         @if (isAuthenticated()) {
         <a class="node-link" [routerLink]="appItem.routePath">
-          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
-          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
-          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <div class="node-head">
+            <app-card-thumbnail [appItem]="appItem" mode="icon" />
+            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          </div>
+          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
         </a>
         } @else {
         <div class="node-link is-locked">
           <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
-          <app-card-thumbnail [appItem]="appItem" mode="illustration" />
-          <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
-          <p>{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+          <div class="node-head">
+            <app-card-thumbnail [appItem]="appItem" mode="icon" />
+            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          </div>
+          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
           <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
             {{ 'appsHub.accountZone.signIn' | transloco }}
           </a>

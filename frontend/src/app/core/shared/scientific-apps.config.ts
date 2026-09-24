@@ -20,6 +20,8 @@ export interface ScientificAppRouteItem {
   thumbnailScreenshot?: string;
   /** Ilustración representativa (vistas secundarias y fallback). Opcional. */
   thumbnailIllustration?: string;
+  /** Icono circular de la app (assets/*.png). Opcional: sin él se usa la ilustración. */
+  iconAsset?: string;
 }
 
 interface ScientificAppDefinition {
@@ -31,6 +33,7 @@ interface ScientificAppDefinition {
   freeAccess: boolean;
   thumbnailScreenshot?: string;
   thumbnailIllustration?: string;
+  iconAsset?: string;
 }
 
 function createScientificAppRouteItem(definition: ScientificAppDefinition): ScientificAppRouteItem {
@@ -45,6 +48,7 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     freeAccess: definition.freeAccess,
     thumbnailScreenshot: definition.thumbnailScreenshot,
     thumbnailIllustration: definition.thumbnailIllustration,
+    iconAsset: definition.iconAsset,
   };
 }
 
@@ -67,6 +71,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
+    iconAsset: 'assets/pka_app_icon.png',
   },
   {
     key: 'tunnel',
@@ -77,6 +82,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/tunnel.jpg',
+    iconAsset: 'assets/tunnel_effect_app_icon.png',
   },
   {
     key: 'easy-rate',
@@ -87,6 +93,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/easy-rate.jpg',
+    iconAsset: 'assets/tst_app_icon.png',
   },
   {
     key: 'marcus',
@@ -97,6 +104,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/marcus.jpg',
+    iconAsset: 'assets/marcus_app_icon.png',
   },
   {
     key: 'smileit',
@@ -107,6 +115,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/smileit.jpg',
+    iconAsset: 'assets/smileit_app_icon.png',
   },
   {
     key: 'sa-score',
@@ -117,6 +126,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/sa-score.jpg',
+    iconAsset: 'assets/synth_access_app_icon.png',
   },
   {
     key: 'toxicity-properties',
@@ -127,6 +137,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: true,
     thumbnailScreenshot: 'assets/thumbnails/toxicity-properties.jpg',
+    iconAsset: 'assets/toxicity_app_icon.png',
   },
   {
     key: 'cadma-py',
@@ -137,6 +148,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     visibleInMenus: true,
     freeAccess: false,
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
+    iconAsset: 'assets/cadmapy_v3_noboxes.png',
   },
 ];
 

@@ -1,4 +1,4 @@
-<!-- app-card-thumbnail.component.html: Captura real o ilustración representativa de la app. -->
+<!-- app-card-thumbnail.component.html: Captura real, icono circular o ilustración de la app. -->
 <figure class="card-thumbnail">
   @if (showScreenshot()) {
   <img
@@ -9,6 +9,16 @@
     height="300"
     loading="lazy"
     (error)="onScreenshotError()"
+  />
+  } @else if (showIcon()) {
+  <img
+    class="card-icon-img"
+    [src]="appItem().iconAsset"
+    [alt]="'scientificApps.' + appItem().key + '.title' | transloco"
+    width="96"
+    height="96"
+    loading="lazy"
+    (error)="onIconError()"
   />
   } @else {
   <app-app-illustration class="card-thumbnail-fallback" [appKey]="appItem().key" [size]="72" />

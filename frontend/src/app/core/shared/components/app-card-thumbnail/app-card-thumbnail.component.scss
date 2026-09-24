@@ -7,6 +7,15 @@
   overflow: hidden;
   border: 1px solid var(--chem-border-subtle);
   background: var(--chem-surface-inset);
+
+  // Modo icono: el figure se colapsa y la imagen circular (disco negro +
+  // anillo neón del icono) vive junto al título en .node-head del hub.
+  &:has(.card-icon-img) {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overflow: visible;
+  }
 }
 
 app-illustration {
@@ -23,6 +32,17 @@ app-illustration {
   aspect-ratio: 16 / 10;
   object-fit: cover;
   object-position: top;
+}
+
+// Icono circular de la app: tamaño fijo, sin marco (el disco negro del icono
+// ya aporta el contraste sobre la tarjeta clara).
+.card-icon-img {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: contain;
+  flex: none;
 }
 
 .card-thumbnail-fallback {

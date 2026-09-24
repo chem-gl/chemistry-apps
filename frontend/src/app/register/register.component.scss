@@ -53,7 +53,7 @@
   font-family: var(--chem-font-body);
   font-size: var(--chem-text-xs);
   font-weight: 600;
-  color: var(--uni-green-400);
+  color: var(--chem-primary-dark);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -96,7 +96,7 @@
   letter-spacing: 0.1em;
   font-size: var(--chem-text-xs);
   font-weight: 700;
-  color: var(--uni-green-400);
+  color: var(--chem-primary-dark);
   font-family: var(--chem-font-label);
 }
 
@@ -130,7 +130,8 @@ label {
 }
 
 .optional-field {
-  opacity: 0.85;
+  // Sin opacity: atenuar con transparencia rompe el contraste AA del hint.
+  // Lo opcional ya lo comunica la etiqueta .optional-tag.
 }
 
 .field-label {
@@ -144,8 +145,8 @@ label {
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--chem-ink-soft);
-  background: rgba(158, 176, 162, 0.16);
+  color: var(--chem-ink-secondary);
+  background: var(--chem-surface-inset);
   padding: 0.1rem 0.35rem;
   border-radius: var(--chem-radius-sm);
 }
@@ -153,7 +154,7 @@ label {
 .field-hint {
   font-size: 0.76rem;
   font-weight: 400;
-  color: var(--chem-ink-tertiary);
+  color: var(--chem-ink-soft);
 }
 
 input {
@@ -262,7 +263,7 @@ input:focus {
 
 .redirect-hint {
   font-size: var(--chem-text-sm);
-  color: var(--chem-ink-tertiary);
+  color: var(--chem-ink-soft);
 }
 
 .login-link {

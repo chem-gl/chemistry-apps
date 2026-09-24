@@ -30,7 +30,7 @@
       </div>
 
       <div class="pka-block">
-        <h4>{{ 'molarFractions.form.pkaValues' | transloco }}</h4>
+        <h3>{{ 'molarFractions.form.pkaValues' | transloco }}</h3>
         <div class="pka-grid">
           @for (slotIndex of workflow.pkaInputSlots(); track slotIndex) {
           <label>
@@ -44,7 +44,7 @@
       </div>
 
       <div class="range-block species-meta-block">
-        <h4>{{ 'molarFractions.form.speciesSettings' | transloco }}</h4>
+        <h3>{{ 'molarFractions.form.speciesSettings' | transloco }}</h3>
         <p class="field-hint">{{ 'molarFractions.form.speciesSettingsOptional' | transloco }}</p>
         <div class="species-meta-grid">
           <label>
@@ -82,7 +82,7 @@
       }
       @if (workflow.phMode() !== 'single') {
       <div class="range-block">
-        <h4>{{ 'molarFractions.form.phRange' | transloco }}</h4>
+        <h3>{{ 'molarFractions.form.phRange' | transloco }}</h3>
         <div class="range-grid">
           <label>
             {{ 'molarFractions.form.phMin' | transloco }}
@@ -138,7 +138,7 @@
       </div>
 
       <div class="range-block batch-parameter-block">
-        <h4>{{ 'molarFractions.batch.parameters' | transloco }}</h4>
+        <h3>{{ 'molarFractions.batch.parameters' | transloco }}</h3>
         <div class="range-grid batch-grid">
           <label>
             {{ 'molarFractions.batch.targetPh' | transloco }}

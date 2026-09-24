@@ -1,4 +1,4 @@
-// app-card-thumbnail.component.spec.ts: Pruebas de la miniatura dual captura/ilustración.
+// app-card-thumbnail.component.spec.ts: Pruebas de la miniatura captura/icono/ilustración.
 
 import { TestBed } from '@angular/core/testing';
 import { ScientificAppRouteItem } from '../../scientific-apps.config';
@@ -14,6 +14,7 @@ const ITEM_WITH_SCREENSHOT: ScientificAppRouteItem = {
   visibleInMenus: true,
   freeAccess: true,
   thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
+  iconAsset: 'assets/pka_app_icon.png',
 };
 
 describe('AppCardThumbnailComponent', () => {
@@ -52,5 +53,29 @@ describe('AppCardThumbnailComponent', () => {
     fixture.componentRef.setInput('appItem', { ...ITEM_WITH_SCREENSHOT, thumbnailScreenshot: undefined });
 
     expect(component.showScreenshot()).toBe(false);
+  });
+
+  it('muestra el icono en modo icon cuando existe', () => {
+    const fixture = TestBed.createComponent(AppCardThumbnailComponent);
+    const component = fixture.componentInstance;
+    fixture.componentRef.setInput('appItem', ITEM_WITH_SCREENSHOT);
+    fixture.componentRef.setInput('mode', 'icon');
+
+    expect(component.showIcon()).toBe(true);
+    expect(component.showScreenshot()).toBe(false);
+  });
+
+  it('usa la ilustración en modo icon sin icono o si falla la carga', () => {
+    const fixture = TestBed.createComponent(AppCardThumbnailComponent);
+    const component = fixture.componentInstance;
+    fixture.componentRef.setInput('appItem', { ...ITEM_WITH_SCREENSHOT, iconAsset: undefined });
+    fixture.componentRef.setInput('mode', 'icon');
+
+    expect(component.showIcon()).toBe(false);
+
+    fixture.componentRef.setInput('appItem', ITEM_WITH_SCREENSHOT);
+    component.onIconError();
+
+    expect(component.showIcon()).toBe(false);
   });
 });

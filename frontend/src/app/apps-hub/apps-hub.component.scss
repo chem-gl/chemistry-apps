@@ -133,7 +133,8 @@
 }
 
 .zone-account {
-  opacity: 0.92;
+  // Sin opacity: atenuar con transparencia rompe el contraste AA del texto
+  // bloqueado (la zona ya se distingue por borde dashed y fondo inset).
 }
 
 // ── Reticula de nodos ───────────────────────────────────────────────────
@@ -221,6 +222,38 @@
   }
 }
 
+// Cabecera de tarjeta: icono circular del icono junto al título.
+// El título ya no necesita altura mínima propia: la alinea el icono.
+.node-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+
+  h3 {
+    min-height: 0;
+  }
+
+  .card-icon-img {
+    transition: box-shadow 180ms ease;
+  }
+}
+
+// Descripción concisa: dos líneas con elipsis en todos los idiomas.
+.node-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Eco del anillo neón del icono al interactuar (decorativo, mismo gesto).
+.node-link:hover .card-icon-img,
+.node-link:focus-visible .card-icon-img {
+  box-shadow: 0 0 0 3px rgba(0, 200, 60, 0.25);
+}
+
 .node-badge {
   align-self: flex-start;
   padding: 0.18rem 0.55rem;
@@ -234,7 +267,7 @@
   border: 1px solid var(--chem-border-accent-dim);
 
   &.is-locked {
-    color: var(--chem-ink-soft);
+    color: var(--chem-ink-secondary);
     background: var(--chem-surface-inset);
     border-color: var(--chem-border);
   }
@@ -315,6 +348,10 @@
   .reaction-glow,
   .node-link,
   .cta {
+    transition: none;
+  }
+
+  .node-head .card-icon-img {
     transition: none;
   }
 

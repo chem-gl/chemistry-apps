@@ -3,13 +3,13 @@
 <div class="error-modal-backdrop" (click)="close()" (keydown)="close()">
   <section class="error-modal-card" role="alertdialog" aria-modal="true" [attr.aria-label]="errorViewModel.title"
     (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-    <header class="error-modal-header">
+    <div class="error-modal-header">
       <h3>{{ errorViewModel.title }}</h3>
       <button type="button" class="error-modal-close-button" (click)="close()"
         [attr.aria-label]="'errorModal.actions.closeAria' | transloco">
         ×
       </button>
-    </header>
+    </div>
 
     <p class="error-modal-message">{{ errorViewModel.message }}</p>
 
@@ -20,11 +20,11 @@
     </details>
     }
 
-    <footer class="error-modal-footer">
+    <div class="error-modal-footer">
       <button type="button" class="error-modal-confirm-button" (click)="close()">
         {{ 'errorModal.actions.understood' | transloco }}
       </button>
-    </footer>
+    </div>
   </section>
 </div>
 }
