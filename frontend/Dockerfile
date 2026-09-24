@@ -1,4 +1,5 @@
 # frontend/Dockerfile: Imagenes Docker para desarrollo (watch) y produccion (build + nginx).
+# Build timestamp: 2026-09-24T16:00:00Z - force fresh build
 
 FROM node:20-alpine AS dev
 WORKDIR /app
