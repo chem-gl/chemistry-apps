@@ -11,11 +11,13 @@ from apps.core.definitions import CORE_JOBS_ROUTE_BASENAME, CORE_JOBS_ROUTE_PREF
 from apps.core.identity.routers import (
     AppPermissionDetailView,
     AppPermissionsView,
+    AuthProvidersView,
     CurrentUserAccessibleAppsView,
     CurrentUserAppConfigView,
     CurrentUserProfileView,
     DomainTokenObtainPairView,
     DomainTokenRefreshView,
+    GoogleLoginView,
     GroupAppConfigDetailView,
     GroupMembershipDetailView,
     GroupMembershipsView,
@@ -124,6 +126,8 @@ urlpatterns = [
     path("api/auth/login/", DomainTokenObtainPairView.as_view(), name="auth-login"),
     path("api/auth/refresh/", DomainTokenRefreshView.as_view(), name="auth-refresh"),
     path("api/auth/register/", UserRegistrationView.as_view(), name="auth-register"),
+    path("api/auth/google/", GoogleLoginView.as_view(), name="auth-google"),
+    path("api/auth/providers/", AuthProvidersView.as_view(), name="auth-providers"),
     path("api/auth/me/", CurrentUserProfileView.as_view(), name="auth-me"),
     path("api/auth/apps/", CurrentUserAccessibleAppsView.as_view(), name="auth-apps"),
     path(

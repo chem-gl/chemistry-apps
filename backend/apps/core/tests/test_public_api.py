@@ -293,6 +293,37 @@ class PublicThrottleTests(TestCase):
         self.assertEqual(third.status_code, 429)
 
 
+@override_settings(OPEN_MODE_ENABLED=False)
+class PublicDisabledModeTests(TestCase):
+    """Con el modo libre apagado, la superficie pública no existe (404)."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        cache.clear()
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def test_dispatch_returns_404_when_open_mode_is_disabled(self) -> None:
+        response = self.client.post(MOLAR_CREATE_URL, MOLAR_PAYLOAD, format="json")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_retrieve_returns_404_when_open_mode_is_disabled(self) -> None:
+        job = _create_molar_job(expires_at=timezone.now() + timedelta(hours=1))
+
+        response = self.client.get(f"{MOLAR_CREATE_URL}{job.id}/")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_catalog_reports_closed_mode_without_apps(self) -> None:
+        response = self.client.get("/api/public/catalog/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["mode"], "closed")
+        self.assertEqual(response.data["apps"], [])
+
+
 class PublicOpenApiContractTests(TestCase):
     """El modo libre necesita request/response declarados para generar cliente.
 

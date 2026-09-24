@@ -22,6 +22,7 @@ Reglas garantizadas por el mixin:
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -114,6 +115,17 @@ class PublicAppViewSetMixin:
         """Fuerza jobs sin dueño ni grupo: el modo público es 100% anónimo."""
         del request
         return None, None
+
+    def initial(self, request: Request, *args: object, **kwargs: object) -> None:
+        """Bloquea toda la superficie pública cuando el modo libre está apagado.
+
+        Se responde 404 (no 403) para no revelar ni la existencia de las rutas.
+        Corre antes que el resto de `initial` para no reservar cupos ni gastar
+        cuota cuando el modo está cerrado.
+        """
+        if not getattr(settings, "OPEN_MODE_ENABLED", True):
+            raise Http404("Modo abierto desactivado.")
+        super().initial(request, *args, **kwargs)
 
     def create(self, request: Request) -> Response:
         """Despacha el `create` de la app reservando un cupo de concurrencia.

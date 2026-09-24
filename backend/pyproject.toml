@@ -38,6 +38,8 @@ psycopg2-binary = "2.9.13"
 
 # Grupo opcional para apps científicas con dependencias pesadas (torch/cuda/gpu).
 # Se omite en deploy host (migraciones) pero se instala en la imagen Docker.
+google-auth = "^2.58.0"
+requests = "^2.34.2"
 [tool.poetry.group.scientific.dependencies]
 admet_ai = "2.0.1"
 

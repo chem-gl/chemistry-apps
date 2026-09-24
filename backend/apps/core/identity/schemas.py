@@ -183,6 +183,15 @@ class UserRegistrationResponseSerializer(serializers.Serializer):
     refresh = serializers.CharField(read_only=True, required=False)
 
 
+class GoogleLoginSerializer(serializers.Serializer):
+    """Contrato del login con Google: solo el `id_token` de GIS."""
+
+    id_token = serializers.CharField(
+        max_length=8192,
+        help_text="ID token JWT emitido por Google Identity Services.",
+    )
+
+
 class DomainTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Extiende claims JWT con rol y grupo primario."""
 

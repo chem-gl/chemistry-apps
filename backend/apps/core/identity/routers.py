@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema
 from rest_framework import permissions, status, views
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,11 +23,13 @@ from ..models import (
     UserIdentityProfile,
     WorkGroup,
 )
+from ..schemas import ErrorResponseSerializer
 from .schemas import (
     AccessibleScientificAppSerializer,
     AppPermissionSerializer,
     DomainTokenObtainPairSerializer,
     EffectiveAppConfigSerializer,
+    GoogleLoginSerializer,
     GroupAppConfigSerializer,
     GroupMembershipSerializer,
     IdentityBootstrapUserSerializer,
@@ -40,6 +43,11 @@ from .schemas import (
     UserRegistrationResponseSerializer,
     UserRegistrationSerializer,
     WorkGroupSerializer,
+)
+from .social_auth import (
+    GoogleAuthError,
+    get_or_create_google_user,
+    verify_google_id_token,
 )
 from ..throttling import RegistrationRateThrottle
 from .services import AuthorizationService
@@ -995,6 +1003,80 @@ class UserRegistrationView(views.APIView):
         return Response(
             {"user": profile_serializer.data},
             status=status.HTTP_201_CREATED,
+        )
+
+
+@extend_schema(tags=["Auth"])
+class GoogleLoginView(views.APIView):
+    """Login con Google (GIS): verifica el `id_token` y hace auto-login.
+
+    Sin `GOOGLE_CLIENT_ID` configurado responde 503: el frontend oculta el
+    botón en ese caso. Comparte forma de respuesta con el registro con token.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegistrationRateThrottle]
+
+    @extend_schema(
+        request=GoogleLoginSerializer,
+        responses={
+            200: UserRegistrationResponseSerializer,
+            401: OpenApiResponse(response=ErrorResponseSerializer),
+            503: OpenApiResponse(response=ErrorResponseSerializer),
+        },
+    )
+    def post(self, request: Request) -> Response:
+        if not settings.GOOGLE_CLIENT_ID:
+            return Response(
+                {"detail": "Login con Google no configurado."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        serializer = GoogleLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            claims = verify_google_id_token(serializer.validated_data["id_token"])
+            user, _created = get_or_create_google_user(claims)
+        except GoogleAuthError as auth_error:
+            return Response(
+                {"detail": str(auth_error) or "Token de Google inválido."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        tokens = _issue_jwt_tokens(user)
+        profile_serializer = UserProfileSerializer(user)
+        return Response(
+            {
+                "user": profile_serializer.data,
+                "access": tokens["access"],
+                "refresh": tokens["refresh"],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(tags=["Auth"])
+class AuthProvidersView(views.APIView):
+    """Describe los proveedores sociales disponibles (para mostrar botones).
+
+    El Client ID de Google es público por diseño; sin él, el botón se oculta.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    def get(self, request: Request) -> Response:
+        del request
+        google_client_id = settings.GOOGLE_CLIENT_ID
+        return Response(
+            {
+                "google": {
+                    "enabled": bool(google_client_id),
+                    "client_id": google_client_id or None,
+                },
+            },
+            status=status.HTTP_200_OK,
         )
 
 

@@ -87,6 +87,51 @@ paths:
                 items:
                   $ref: '#/components/schemas/AccessibleScientificApp'
           description: ''
+  /api/auth/google/:
+    post:
+      operationId: auth_google_create
+      description: |-
+        Login con Google (GIS): verifica el `id_token` y hace auto-login.
+
+        Sin `GOOGLE_CLIENT_ID` configurado responde 503: el frontend oculta el
+        botón en ese caso. Comparte forma de respuesta con el registro con token.
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegistrationResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/auth/login/:
     post:
       operationId: auth_login_create
@@ -125,6 +170,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
+          description: ''
+  /api/auth/providers/:
+    get:
+      operationId: auth_providers_retrieve
+      description: |-
+        Describe los proveedores sociales disponibles (para mostrar botones).
+
+        El Client ID de Google es público por diseño; sin él, el botón se oculta.
+      tags:
+      - Auth
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/auth/refresh/:
     post:
@@ -7899,6 +7965,17 @@ components:
           description: Descripción del error manejado por API.
       required:
       - detail
+    GoogleLoginRequest:
+      type: object
+      description: 'Contrato del login con Google: solo el `id_token` de GIS.'
+      properties:
+        id_token:
+          type: string
+          minLength: 1
+          description: ID token JWT emitido por Google Identity Services.
+          maxLength: 8192
+      required:
+      - id_token
     GroupAppConfig:
       type: object
       description: Serializer CRUD para configuración de app por grupo.

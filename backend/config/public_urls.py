@@ -247,24 +247,26 @@ class PublicCatalogView(APIView):
     )
     def get(self, request: Request) -> Response:
         del request
+        open_mode_enabled: bool = bool(getattr(settings, "OPEN_MODE_ENABLED", True))
         apps: list[dict[str, object]] = []
 
-        for route_key in PUBLIC_APP_ROUTE_KEYS:
-            definition = ScientificAppRegistry.resolve_definition(route_key)
-            if definition is None:
-                continue
-            apps.append(
-                {
-                    "route_key": definition.route_key,
-                    "plugin_name": definition.plugin_name,
-                    "api_base_path": definition.api_base_path,
-                    "jobs_url": f"/api/public/{definition.route_key}/jobs/",
-                }
-            )
+        if open_mode_enabled:
+            for route_key in PUBLIC_APP_ROUTE_KEYS:
+                definition = ScientificAppRegistry.resolve_definition(route_key)
+                if definition is None:
+                    continue
+                apps.append(
+                    {
+                        "route_key": definition.route_key,
+                        "plugin_name": definition.plugin_name,
+                        "api_base_path": definition.api_base_path,
+                        "jobs_url": f"/api/public/{definition.route_key}/jobs/",
+                    }
+                )
 
         return Response(
             {
-                "mode": "open",
+                "mode": "open" if open_mode_enabled else "closed",
                 "apps": apps,
                 "limits": {
                     "job_ttl_hours": settings.ANONYMOUS_JOB_TTL_HOURS,

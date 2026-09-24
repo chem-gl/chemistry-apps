@@ -238,6 +238,12 @@ ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.l
 
 # Límites de tasa (fase 1 apps libres): estrictos para anónimos, holgados para
 # usuarios registrados. Configurables por entorno sin tocar código.
+# OPEN_MODE_ENABLED: interruptor del modo libre (apps sin login).
+#   True (default): las rutas `/api/public/*` operan normal.
+#   False: todo lo público responde 404 y el catálogo declara modo cerrado.
+# Permite ocultar las apps libres en un entorno sin borrar el feature.
+OPEN_MODE_ENABLED: bool = _get_env_bool("OPEN_MODE_ENABLED", True)
+
 PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
 REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")
 # Lecturas anónimas costosas (reportes, derivaciones, SVG, ZIPs, inspecciones).
@@ -530,6 +536,12 @@ CELERY_HEAVY_QUEUE: str = os.getenv("CELERY_HEAVY_QUEUE", "heavy")
 DEFAULT_REGISTRATION_GROUP_SLUG: str = os.getenv(
     "DEFAULT_REGISTRATION_GROUP_SLUG", ""
 ).strip()
+
+# GOOGLE_CLIENT_ID: Client ID web de Google para el login social (GIS).
+# Vacío = login con Google desactivado (endpoint en 503, botón oculto).
+# Es público por diseño (vive en el JS del frontend); no hay secreto que
+# guardar porque se verifica solo firma + audiencia del ID token.
+GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
 
 # REGISTERED_MAX_CONCURRENT_JOBS: trabajos simultáneos por usuario autenticado.
 REGISTERED_MAX_CONCURRENT_JOBS: int = max(
