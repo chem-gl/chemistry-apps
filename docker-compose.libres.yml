@@ -78,6 +78,10 @@ services:
       # ni colapsar en un bucket global.
       NUM_PROXIES: ${NUM_PROXIES:-1}
 
+      # Interruptor del modo libre: 0 = todo con cuenta (solo lectura del
+      # catálogo en modo cerrado). Llega vía .env del deploy.
+      OPEN_MODE_ENABLED: ${OPEN_MODE_ENABLED:-1}
+
       DB_ENGINE: "postgres"
       DB_NAME: ${DB_NAME:-chemistry_libres_db}
       DB_USER: ${DB_USER:-postgres}
