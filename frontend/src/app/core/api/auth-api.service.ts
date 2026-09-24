@@ -11,6 +11,10 @@ export interface SessionTokens {
   refreshToken: string;
 }
 
+export interface AuthProviders {
+  google: { enabled: boolean; client_id: string | null };
+}
+
 export interface RegisterPayload {
   username: string;
   email: string;
@@ -78,6 +82,30 @@ export class AuthApiService {
 
   login(username: string, password: string): Observable<SessionTokens> {
     return this.authClient.authLoginCreate({ username, password }).pipe(
+      map((response: LoginApiResponse) => ({
+        accessToken: response.access,
+        refreshToken: response.refresh,
+      })),
+    );
+  }
+
+  getAuthProviders(): Observable<AuthProviders> {
+    return this.authClient.authProvidersRetrieve().pipe(
+      map((response) => {
+        const payload = response as Record<string, unknown>;
+        const googleConfig = payload['google'] as Record<string, unknown> | undefined;
+        return {
+          google: {
+            enabled: googleConfig?.['enabled'] === true,
+            client_id: typeof googleConfig?.['client_id'] === 'string' ? googleConfig['client_id'] : null,
+          },
+        };
+      }),
+    );
+  }
+
+  loginWithGoogle(idToken: string): Observable<SessionTokens> {
+    return this.authClient.authGoogleCreate({ id_token: idToken }).pipe(
       map((response: LoginApiResponse) => ({
         accessToken: response.access,
         refreshToken: response.refresh,

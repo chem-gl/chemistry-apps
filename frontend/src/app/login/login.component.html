@@ -44,6 +44,13 @@
         </button>
       </form>
 
+      @if (googleReady() && googleProvider()?.client_id !== null) {
+      <div class="social-divider" aria-hidden="true">{{ 'login.social.divider' | transloco }}</div>
+      <button class="google-button" type="button" (click)="loginWithGoogle()">
+        {{ 'login.social.googleButton' | transloco }}
+      </button>
+      }
+
       <p class="register-link">
         {{ 'login.panel.noAccount' | transloco }}
         <a routerLink="/register">{{ 'login.panel.createAccount' | transloco }}</a>

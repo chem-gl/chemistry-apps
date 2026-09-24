@@ -9,6 +9,7 @@ import {
 } from '@angular/router';
 import { map } from 'rxjs';
 import { IdentitySessionService } from './identity-session.service';
+import { JobAccessModeService } from './job-access-mode.service';
 
 export const authGuard: CanActivateFn = (
   _route: ActivatedRouteSnapshot,
@@ -27,6 +28,26 @@ export const authGuard: CanActivateFn = (
         queryParams: { redirectTo: state.url },
       });
     }),
+  );
+};
+
+export const freeAccessGuard: CanActivateFn = (_route, state) => {
+  const accessModeService = inject(JobAccessModeService);
+  const sessionService = inject(IdentitySessionService);
+  const router = inject(Router);
+
+  // Modo abierto: entra todo el mundo. Modo cerrado: como las apps con
+  // cuenta (exige sesión y conserva a dónde iba el usuario).
+  if (accessModeService.openModeEnabled()) {
+    return true;
+  }
+
+  return sessionService.initializeSession().pipe(
+    map((isAuthenticated: boolean) =>
+      isAuthenticated
+        ? true
+        : router.createUrlTree(['/login'], { queryParams: { redirectTo: state.url } }),
+    ),
   );
 };
 

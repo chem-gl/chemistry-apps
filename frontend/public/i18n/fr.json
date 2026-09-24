@@ -49,6 +49,7 @@
     }
   },
   "login": {
+    "social": { "divider": "ou", "googleButton": "Continuer avec Google" },
     "form": {
       "password": "Mot de passe",
       "signIn": "Se connecter",

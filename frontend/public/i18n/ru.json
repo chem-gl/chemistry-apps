@@ -49,6 +49,7 @@
     }
   },
   "login": {
+    "social": { "divider": "или", "googleButton": "Продолжить с Google" },
     "form": {
       "password": "Пароль",
       "signIn": "Войти",

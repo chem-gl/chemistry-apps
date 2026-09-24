@@ -7,6 +7,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { TranslocoPipe } from '@jsverse/transloco';
 import { environment } from '../environments/environment';
 import { IdentitySessionService } from './core/auth/identity-session.service';
+import { JobAccessModeService } from './core/auth/job-access-mode.service';
 import { LanguageService } from './core/i18n/language.service';
 import { ScientificNumberInputLocaleService } from './core/i18n/scientific-number-input-locale.service';
 import { ActiveGroupSelectorComponent } from './core/shared/components/active-group-selector/active-group-selector.component';
@@ -48,6 +49,7 @@ const SCIENTIFIC_APP_NAV_ITEM: PrimaryNavigationItem = {
 })
 export class App implements OnInit {
   readonly sessionService = inject(IdentitySessionService);
+  private readonly jobAccessModeService = inject(JobAccessModeService);
   readonly languageService = inject(LanguageService);
   readonly scientificNumberInputLocaleService = inject(ScientificNumberInputLocaleService);
   private readonly router = inject(Router);
@@ -97,6 +99,7 @@ export class App implements OnInit {
     this.languageService.initializeLanguage();
     this.scientificNumberInputLocaleService.initialize();
     this.sessionService.initializeSession().subscribe();
+    this.jobAccessModeService.refreshOpenMode();
     this.updateScrollState();
 
     this.router.events.subscribe((event) => {

@@ -8,6 +8,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { AppCardThumbnailComponent } from '../core/shared/components/app-card-thumbnail/app-card-thumbnail.component';
 import { InstitutionalShowcaseComponent } from '../core/shared/components/institutional-showcase/institutional-showcase.component';
 import {
@@ -24,23 +25,30 @@ import {
 })
 export class AppsHubComponent {
   private readonly sessionService = inject(IdentitySessionService);
+  private readonly accessModeService = inject(JobAccessModeService);
 
   /** Sesion activa: cambia el tono de la invitacion a crear cuenta. */
   readonly isAuthenticated = this.sessionService.isAuthenticated;
+  readonly openModeEnabled = this.accessModeService.openModeEnabled;
 
   /** Apps del modo libre: siempre utilizables, con o sin cuenta. */
   readonly freeApps = computed<ReadonlyArray<ScientificAppRouteItem>>(
-    () => FREE_ACCESS_APP_ROUTE_ITEMS,
+    () => (this.openModeEnabled() ? FREE_ACCESS_APP_ROUTE_ITEMS : []),
   );
 
   /** Apps que piden cuenta: bloqueadas para invitados, filtradas por permiso si hay sesion. */
   readonly accountApps = computed<ReadonlyArray<ScientificAppRouteItem>>(() => {
+    const apps = this.openModeEnabled()
+      ? ACCOUNT_ONLY_APP_ROUTE_ITEMS
+      : [...FREE_ACCESS_APP_ROUTE_ITEMS, ...ACCOUNT_ONLY_APP_ROUTE_ITEMS];
     if (!this.isAuthenticated()) {
-      return ACCOUNT_ONLY_APP_ROUTE_ITEMS;
+      return apps;
     }
 
-    return ACCOUNT_ONLY_APP_ROUTE_ITEMS.filter((appItem) =>
-      this.sessionService.canAccessRoute(appItem.key),
+    return apps.filter(
+      (appItem) =>
+        FREE_ACCESS_APP_ROUTE_ITEMS.some((freeApp) => freeApp.key === appItem.key) ||
+        this.sessionService.canAccessRoute(appItem.key),
     );
   });
 

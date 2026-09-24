@@ -49,6 +49,7 @@
     }
   },
   "login": {
+    "social": { "divider": "या", "googleButton": "Google के साथ जारी रखें" },
     "form": {
       "password": "पासवर्ड",
       "signIn": "साइन इन",

@@ -26,6 +26,7 @@
 
   <app-institutional-showcase variant="hub" />
 
+  @if (openModeEnabled()) {
   <section class="zone" [attr.aria-labelledby]="'free-zone-title'">
     <header class="zone-header">
       <h2 id="free-zone-title">{{ 'appsHub.freeZone.title' | transloco }}</h2>
@@ -54,6 +55,7 @@
       }
     </ul>
   </section>
+  }
 
   <section class="zone zone-account" [attr.aria-labelledby]="'account-zone-title'">
     <header class="zone-header">

@@ -27,6 +27,7 @@ export * from './easyRateStructureSnapshot';
 export * from './easyRateStructures';
 export * from './effectiveAppConfig';
 export * from './errorResponse';
+export * from './googleLoginRequest';
 export * from './groupAppConfig';
 export * from './groupMembership';
 export * from './groupMembershipRequest';

@@ -49,6 +49,7 @@
     }
   },
   "login": {
+    "social": { "divider": "或", "googleButton": "使用 Google 继续" },
     "form": {
       "password": "密码",
       "signIn": "登录",

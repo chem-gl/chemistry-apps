@@ -87,6 +87,7 @@
     }
   },
   "login": {
+    "social": { "divider": "or", "googleButton": "Continue with Google" },
     "aria": {
       "signIn": "Sign in",
       "brandMessage": "Brand message"

@@ -14,6 +14,8 @@ import { Observable }                                        from 'rxjs';
 import { AccessibleScientificApp } from '../model/models';
 import { DomainTokenObtainPairRequest } from '../model/models';
 import { EffectiveAppConfig } from '../model/models';
+import { ErrorResponse } from '../model/models';
+import { GoogleLoginRequest } from '../model/models';
 import { PatchedUserAppConfigRequest } from '../model/models';
 import { TokenRefresh } from '../model/models';
 import { TokenRefreshRequest } from '../model/models';
@@ -57,6 +59,14 @@ export interface AuthServiceInterface {
 
     /**
      * 
+     * Login con Google (GIS): verifica el &#x60;id_token&#x60; y hace auto-login.  Sin &#x60;GOOGLE_CLIENT_ID&#x60; configurado responde 503: el frontend oculta el botón en ese caso. Comparte forma de respuesta con el registro con token.
+     * @endpoint post /api/auth/google/
+     * @param googleLoginRequest 
+     */
+    authGoogleCreate(googleLoginRequest: GoogleLoginRequest, extraHttpRequestParams?: any): Observable<UserRegistrationResponse>;
+
+    /**
+     * 
      * Endpoint de login JWT con claims de dominio.
      * @endpoint post /api/auth/login/
      * @param domainTokenObtainPairRequest 
@@ -69,6 +79,13 @@ export interface AuthServiceInterface {
      * @endpoint get /api/auth/me/
      */
     authMeRetrieve(extraHttpRequestParams?: any): Observable<UserProfile>;
+
+    /**
+     * 
+     * Describe los proveedores sociales disponibles (para mostrar botones).  El Client ID de Google es público por diseño; sin él, el botón se oculta.
+     * @endpoint get /api/auth/providers/
+     */
+    authProvidersRetrieve(extraHttpRequestParams?: any): Observable<{ [key: string]: any; }>;
 
     /**
      * 

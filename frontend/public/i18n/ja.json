@@ -49,6 +49,7 @@
     }
   },
   "login": {
+    "social": { "divider": "または", "googleButton": "Googleで続行" },
     "form": {
       "password": "パスワード",
       "signIn": "サインイン",

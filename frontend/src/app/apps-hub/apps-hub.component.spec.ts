@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
+import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import {
   ACCOUNT_ONLY_APP_ROUTE_ITEMS,
   FREE_ACCESS_APP_ROUTE_ITEMS,
@@ -16,12 +17,18 @@ class IdentitySessionStub {
   canAccessRoute = (_appKey: string): boolean => false;
 }
 
+class JobAccessModeStub {
+  readonly openModeEnabled = signal(true);
+}
+
 describe('AppsHubComponent', () => {
   let hub: AppsHubComponent;
   let sessionStub: IdentitySessionStub;
+  let accessModeStub: JobAccessModeStub;
 
   beforeEach(async () => {
     sessionStub = new IdentitySessionStub();
+    accessModeStub = new JobAccessModeStub();
 
     await TestBed.configureTestingModule({
       imports: [AppsHubComponent],
@@ -29,6 +36,7 @@ describe('AppsHubComponent', () => {
         provideRouter([]),
         provideTestingTransloco(),
         { provide: IdentitySessionService, useValue: sessionStub },
+        { provide: JobAccessModeService, useValue: accessModeStub },
       ],
     }).compileComponents();
 
@@ -46,6 +54,12 @@ describe('AppsHubComponent', () => {
 
     expect(hub.accountApps()).toEqual(ACCOUNT_ONLY_APP_ROUTE_ITEMS);
     expect(hub.accountApps().length).toBeGreaterThan(0);
+  });
+
+  it('mueve las apps libres a la zona bloqueada cuando el modo está cerrado', () => {
+    accessModeStub.openModeEnabled.set(false);
+    expect(hub.freeApps()).toEqual([]);
+    expect(hub.accountApps().slice(0, 7)).toEqual(FREE_ACCESS_APP_ROUTE_ITEMS);
   });
 
   it('filtra las apps con cuenta por permiso cuando hay sesion', () => {

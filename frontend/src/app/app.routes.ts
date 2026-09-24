@@ -7,6 +7,7 @@ import {
   authGuard,
   groupAdminGuard,
   guestGuard,
+  freeAccessGuard,
 } from './core/auth/auth.guards';
 
 export const routes: Routes = [
@@ -68,32 +69,38 @@ export const routes: Routes = [
   {
     // Modo libre: usable sin cuenta.
     path: 'molar-fractions',
+    canActivate: [freeAccessGuard],
     loadComponent: () =>
       import('./molar-fractions/molar-fractions.component').then((m) => m.MolarFractionsComponent),
   },
   {
     // Modo libre: usable sin cuenta.
     path: 'tunnel',
+    canActivate: [freeAccessGuard],
     loadComponent: () => import('./tunnel/tunnel.component').then((m) => m.TunnelComponent),
   },
   {
     // Modo libre: usable sin cuenta.
     path: 'easy-rate',
+    canActivate: [freeAccessGuard],
     loadComponent: () => import('./easy-rate/easy-rate.component').then((m) => m.EasyRateComponent),
   },
   {
     // Modo libre: usable sin cuenta.
     path: 'marcus',
+    canActivate: [freeAccessGuard],
     loadComponent: () => import('./marcus/marcus.component').then((m) => m.MarcusComponent),
   },
   {
     // Modo libre: usable sin cuenta.
     path: 'smileit',
+    canActivate: [freeAccessGuard],
     loadComponent: () => import('./smileit/smileit.component').then((m) => m.SmileitComponent),
   },
   {
     // Modo libre: usable sin cuenta.
     path: 'sa-score',
+    canActivate: [freeAccessGuard],
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
@@ -105,6 +112,7 @@ export const routes: Routes = [
   {
     // Modo libre: usable sin cuenta.
     path: 'toxicity-properties',
+    canActivate: [freeAccessGuard],
     loadComponent: () =>
       import('./toxicity-properties/toxicity-properties.component').then(
         (m) => m.ToxicityPropertiesComponent,

@@ -60,6 +60,7 @@ model/easyRateStructureSnapshot.ts
 model/easyRateStructures.ts
 model/effectiveAppConfig.ts
 model/errorResponse.ts
+model/googleLoginRequest.ts
 model/groupAppConfig.ts
 model/groupMembership.ts
 model/groupMembershipRequest.ts

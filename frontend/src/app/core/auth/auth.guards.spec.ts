@@ -2,6 +2,7 @@
 // Verifica redirecciones y accesos para evitar rutas expuestas a usuarios sin sesión.
 
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   provideRouter,
@@ -11,8 +12,9 @@ import {
 } from '@angular/router';
 import { firstValueFrom, Observable, of } from 'rxjs';
 import { vi } from 'vitest';
-import { adminGuard, appAccessGuard, authGuard, groupAdminGuard } from './auth.guards';
+import { adminGuard, appAccessGuard, authGuard, freeAccessGuard, groupAdminGuard } from './auth.guards';
 import { IdentitySessionService } from './identity-session.service';
+import { JobAccessModeService } from './job-access-mode.service';
 
 function asGuardObservable(result: unknown): Observable<boolean | UrlTree> {
   return result as Observable<boolean | UrlTree>;
@@ -25,9 +27,11 @@ describe('auth guards', () => {
     canAccessRoute: vi.fn(),
     canAccessAdminArea: vi.fn(),
   };
+  const accessModeMock = { openModeEnabled: signal(true) };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    accessModeMock.openModeEnabled.set(true);
     sessionServiceMock.initializeSession.mockReturnValue(of(true));
     sessionServiceMock.hasAdminAccess.mockReturnValue(false);
     sessionServiceMock.canAccessRoute.mockReturnValue(false);
@@ -37,8 +41,42 @@ describe('auth guards', () => {
       providers: [
         provideRouter([]),
         { provide: IdentitySessionService, useValue: sessionServiceMock },
+        { provide: JobAccessModeService, useValue: accessModeMock },
       ],
     });
+  });
+
+  it('permite freeAccessGuard en modo abierto', () => {
+    const result = TestBed.runInInjectionContext(() =>
+      freeAccessGuard({} as ActivatedRouteSnapshot, { url: '/smileit' } as RouterStateSnapshot),
+    );
+    expect(result).toBe(true);
+  });
+
+  it('permite freeAccessGuard con sesión en modo cerrado', async () => {
+    accessModeMock.openModeEnabled.set(false);
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(
+        asGuardObservable(
+          freeAccessGuard({} as ActivatedRouteSnapshot, { url: '/smileit' } as RouterStateSnapshot),
+        ),
+      ),
+    );
+    expect(result).toBe(true);
+  });
+
+  it('redirige freeAccessGuard a login sin sesión en modo cerrado', async () => {
+    accessModeMock.openModeEnabled.set(false);
+    sessionServiceMock.initializeSession.mockReturnValue(of(false));
+    const router = TestBed.inject(Router);
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(
+        asGuardObservable(
+          freeAccessGuard({} as ActivatedRouteSnapshot, { url: '/smileit' } as RouterStateSnapshot),
+        ),
+      ),
+    );
+    expect(router.serializeUrl(result as UrlTree)).toBe('/login?redirectTo=%2Fsmileit');
   });
 
   it('permite authGuard cuando la sesión ya está autenticada', async () => {

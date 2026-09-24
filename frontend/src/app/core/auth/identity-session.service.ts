@@ -263,6 +263,23 @@ export class IdentitySessionService {
     );
   }
 
+  loginWithGoogle(idToken: string): Observable<boolean> {
+    this.status.set('loading');
+    this.lastAuthenticationError.set(null);
+
+    return this.authApiService.loginWithGoogle(idToken).pipe(
+      tap((tokens: SessionTokens) => this.persistTokens(tokens)),
+      switchMap(() => this.loadRemoteSession()),
+      catchError((authenticationError: { message?: string }) => {
+        this.clearSessionState();
+        this.lastAuthenticationError.set(
+          authenticationError.message ?? 'Unable to sign in with the provided credentials.',
+        );
+        return of(false);
+      }),
+    );
+  }
+
   logout(): void {
     this.clearSessionState();
     void this.router.navigateByUrl('/login');
