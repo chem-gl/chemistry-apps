@@ -139,6 +139,7 @@ services:
       args:
         # Same-origin: Nginx del subdominio proxya /api y /ws al backend.
         API_BASE_URL: ${BACKEND_PUBLIC_URL}
+        BUILD_TIMESTAMP: ${IMAGE_TAG}
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-frontend-libres:${IMAGE_TAG_FRONTEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
     networks:

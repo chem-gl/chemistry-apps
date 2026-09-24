@@ -11,6 +11,7 @@ CMD ["npm", "run", "start"]
 FROM node:20-alpine AS build
 WORKDIR /app
 ARG API_BASE_URL=/api
+ARG BUILD_TIMESTAMP=unknown
 COPY package*.json ./
 RUN npm ci
 COPY . .
