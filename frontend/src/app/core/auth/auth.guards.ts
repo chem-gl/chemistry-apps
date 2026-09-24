@@ -7,7 +7,7 @@ import {
   Router,
   RouterStateSnapshot,
 } from '@angular/router';
-import { map } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 import { IdentitySessionService } from './identity-session.service';
 import { JobAccessModeService } from './job-access-mode.service';
 
@@ -36,18 +36,23 @@ export const freeAccessGuard: CanActivateFn = (_route, state) => {
   const sessionService = inject(IdentitySessionService);
   const router = inject(Router);
 
-  // Modo abierto: entra todo el mundo. Modo cerrado: como las apps con
-  // cuenta (exige sesión y conserva a dónde iba el usuario).
-  if (accessModeService.openModeEnabled()) {
-    return true;
-  }
-
-  return sessionService.initializeSession().pipe(
-    map((isAuthenticated: boolean) =>
-      isAuthenticated
-        ? true
-        : router.createUrlTree(['/login'], { queryParams: { redirectTo: state.url } }),
-    ),
+  // Espera a conocer el modo (una sola petición compartida): la navegación
+  // directa no debe colarse con el valor por defecto antes del fetch.
+  // Modo abierto: entra todo el mundo. Modo cerrado: exige sesión como las
+  // apps con cuenta, conservando a dónde iba el usuario.
+  return accessModeService.whenOpenModeKnown().pipe(
+    switchMap((enabled: boolean) => {
+      if (enabled) {
+        return of(true);
+      }
+      return sessionService.initializeSession().pipe(
+        map((isAuthenticated: boolean) =>
+          isAuthenticated
+            ? true
+            : router.createUrlTree(['/login'], { queryParams: { redirectTo: state.url } }),
+        ),
+      );
+    }),
   );
 };
 

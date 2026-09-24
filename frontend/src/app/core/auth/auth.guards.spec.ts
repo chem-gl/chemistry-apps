@@ -27,11 +27,15 @@ describe('auth guards', () => {
     canAccessRoute: vi.fn(),
     canAccessAdminArea: vi.fn(),
   };
-  const accessModeMock = { openModeEnabled: signal(true) };
+  const accessModeMock = {
+    openModeEnabled: signal(true),
+    whenOpenModeKnown: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     accessModeMock.openModeEnabled.set(true);
+    accessModeMock.whenOpenModeKnown.mockReturnValue(of(true));
     sessionServiceMock.initializeSession.mockReturnValue(of(true));
     sessionServiceMock.hasAdminAccess.mockReturnValue(false);
     sessionServiceMock.canAccessRoute.mockReturnValue(false);
@@ -46,15 +50,19 @@ describe('auth guards', () => {
     });
   });
 
-  it('permite freeAccessGuard en modo abierto', () => {
-    const result = TestBed.runInInjectionContext(() =>
-      freeAccessGuard({} as ActivatedRouteSnapshot, { url: '/smileit' } as RouterStateSnapshot),
+  it('permite freeAccessGuard en modo abierto', async () => {
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(
+        asGuardObservable(
+          freeAccessGuard({} as ActivatedRouteSnapshot, { url: '/smileit' } as RouterStateSnapshot),
+        ),
+      ),
     );
     expect(result).toBe(true);
   });
 
   it('permite freeAccessGuard con sesión en modo cerrado', async () => {
-    accessModeMock.openModeEnabled.set(false);
+    accessModeMock.whenOpenModeKnown.mockReturnValue(of(false));
     const result = await TestBed.runInInjectionContext(() =>
       firstValueFrom(
         asGuardObservable(
@@ -66,7 +74,7 @@ describe('auth guards', () => {
   });
 
   it('redirige freeAccessGuard a login sin sesión en modo cerrado', async () => {
-    accessModeMock.openModeEnabled.set(false);
+    accessModeMock.whenOpenModeKnown.mockReturnValue(of(false));
     sessionServiceMock.initializeSession.mockReturnValue(of(false));
     const router = TestBed.inject(Router);
     const result = await TestBed.runInInjectionContext(() =>

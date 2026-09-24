@@ -1,6 +1,9 @@
 import { Injector, runInInjectionContext, signal } from '@angular/core';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
+import { firstValueFrom } from 'rxjs';
 import { IdentitySessionService } from './identity-session.service';
 import { JobAccessModeService } from './job-access-mode.service';
 
@@ -37,8 +40,7 @@ describe('JobAccessModeService', () => {
     expect(service.openModeLimitMessage(new HttpErrorResponse({ status }))).toBe(key);
   });
 
-  it('includes Retry-After for open-mode 429 and ignores limits in account mode', () => {
-    const status = signal<'idle' | 'loading' | 'authenticated' | 'anonymous'>('anonymous');
+  it('includes Retry-After for open-mode 429 and ignores limits in account mode', () => {    const status = signal<'idle' | 'loading' | 'authenticated' | 'anonymous'>('anonymous');
     const injector = Injector.create({
       providers: [JobAccessModeService, { provide: IdentitySessionService, useValue: { status } }],
     });
@@ -51,5 +53,47 @@ describe('JobAccessModeService', () => {
     expect(service.openModeLimitMessage(response)).toContain('Retry-After: 30');
     status.set('authenticated');
     expect(service.openModeLimitMessage(response)).toBeNull();
+  });
+
+  it('resolves open mode from the public catalog with a single request', async () => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        JobAccessModeService,
+        { provide: IdentitySessionService, useValue: { status: signal('anonymous') } },
+      ],
+    });
+    const service = TestBed.inject(JobAccessModeService);
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    const first = firstValueFrom(service.whenOpenModeKnown());
+    const second = firstValueFrom(service.whenOpenModeKnown());
+    const pending = httpMock.expectOne((request) => request.url.endsWith('/api/public/catalog/'));
+    pending.flush({ mode: 'closed', apps: [] });
+
+    expect(await first).toBe(false);
+    expect(await second).toBe(false);
+    expect(service.openModeEnabled()).toBe(false);
+    httpMock.verify();
+  });
+
+  it('defaults to open mode when the catalog is unreachable', async () => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        JobAccessModeService,
+        { provide: IdentitySessionService, useValue: { status: signal('anonymous') } },
+      ],
+    });
+    const service = TestBed.inject(JobAccessModeService);
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    const result = firstValueFrom(service.whenOpenModeKnown());
+    const pending = httpMock.expectOne((request) => request.url.endsWith('/api/public/catalog/'));
+    pending.error(new ProgressEvent('error'));
+
+    expect(await result).toBe(true);
+    expect(service.openModeEnabled()).toBe(true);
+    httpMock.verify();
   });
 });

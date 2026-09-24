@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { catchError, of } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap } from 'rxjs';
 import { API_BASE_URL } from '../shared/constants';
 import { IdentitySessionService } from './identity-session.service';
 
@@ -10,6 +10,7 @@ export class JobAccessModeService {
   private readonly session = inject(IdentitySessionService);
   private readonly transloco = inject(TranslocoService, { optional: true });
   private readonly httpClient = inject(HttpClient, { optional: true });
+  private openModeRequest$: Observable<boolean> | null = null;
 
   readonly openModeEnabled = signal<boolean>(true);
   readonly isOpenMode = computed(() => this.session.status() === 'anonymous');
@@ -17,13 +18,30 @@ export class JobAccessModeService {
   readonly canUseJobControls = computed(() => !this.isOpenMode());
 
   refreshOpenMode(): void {
-    if (this.httpClient === null) {
-      return;
+    this.whenOpenModeKnown().subscribe((enabled) => this.openModeEnabled.set(enabled));
+  }
+
+  /**
+   * Observable compartido del estado del modo libre (una sola petición).
+   * El guard lo espera para no dejar pasar navegación directa antes de saber
+   * si el backend tiene el modo abierto o cerrado. Ante error, abierto.
+   */
+  whenOpenModeKnown(): Observable<boolean> {
+    if (this.openModeRequest$ === null) {
+      if (this.httpClient === null) {
+        this.openModeRequest$ = of(true);
+      } else {
+        this.openModeRequest$ = this.httpClient
+          .get<{ mode?: string }>(`${API_BASE_URL}/api/public/catalog/`)
+          .pipe(
+            map((catalog) => catalog.mode === 'open'),
+            catchError(() => of(true)),
+            tap((enabled) => this.openModeEnabled.set(enabled)),
+            shareReplay(1),
+          );
+      }
     }
-    this.httpClient
-      .get<{ mode?: string }>(`${API_BASE_URL}/api/public/catalog/`)
-      .pipe(catchError(() => of({ mode: 'open' })))
-      .subscribe((catalog) => this.openModeEnabled.set(catalog.mode === 'open'));
+    return this.openModeRequest$;
   }
 
   openModeLimitMessage(error: unknown): string | null {
