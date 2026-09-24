@@ -32,6 +32,7 @@ export class JobAccessModeService {
     if (this.openModeRequest$ === null) {
       if (this.httpClient === null) {
         // SSR: no hay HttpClient, no cacheamos — el cliente hará la petición real.
+        console.log('[JobAccessModeService] SSR mode: returning fresh of(false)');
         return of(false).pipe(tap((enabled) => this.openModeEnabled.set(enabled)));
       }
       this.openModeRequest$ = this.httpClient
