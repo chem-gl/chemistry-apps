@@ -31,8 +31,16 @@ import type {
 import { JobsApiService } from '../api/jobs-api.service';
 import { SmileitApiService } from '../api/smileit-api.service';
 import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 import { deduplicateJobsKeepingLatestSnapshot } from './job-history-utils';
 import { mergeLogEntry } from './log-entry-utils';
+import { normalizeProgressStage } from './progress-stage-messages';
+import {
+  mapLocalRecordsToHistoryJobs,
+  saveSmileitLocalRecord,
+  SmileitLocalRecordInput,
+  SMILEIT_PLUGIN_NAME,
+} from './smileit/smileit-local-history';
 
 import { SmileitBlockWorkflowService } from './smileit/smileit-block-workflow.service';
 import { SmileitCatalogWorkflowService } from './smileit/smileit-catalog-workflow.service';
@@ -73,6 +81,11 @@ export class SmileitWorkflowService implements OnDestroy {
   private readonly jobsApiService = inject(JobsApiService);
   private readonly smileitApiService = inject(SmileitApiService);
   private readonly accessMode = inject(JobAccessModeService, { optional: true });
+  /**
+   * Almacén local del historial del modo abierto. Es opcional porque en SSR y en los
+   * inyectores planos de prueba puede no estar registrado.
+   */
+  private readonly localResultsStore = inject(LocalResultsStore, { optional: true });
   private progressSubscription: Subscription | null = null;
   private logsSubscription: Subscription | null = null;
 
@@ -285,12 +298,26 @@ export class SmileitWorkflowService implements OnDestroy {
             return;
           }
           this.state.resultData.set(immediateResultData);
+          this.persistLocalRecord({
+            jobId: jobResponse.id,
+            status: 'completed',
+            progressPercentage: 100,
+            parameters: jobResponse.parameters,
+            resultSummary: immediateResultData,
+          });
           this.loadHistoricalLogs(jobResponse.id);
           this.state.activeSection.set('result');
           this.loadHistory();
           return;
         }
 
+        this.persistLocalRecord({
+          jobId: jobResponse.id,
+          status: jobResponse.status,
+          progressPercentage: jobResponse.progress_percentage ?? 0,
+          parameters: jobResponse.parameters,
+          resultSummary: null,
+        });
         this.state.activeSection.set('progress');
         this.startProgressStream(jobResponse.id);
       },
@@ -365,11 +392,21 @@ export class SmileitWorkflowService implements OnDestroy {
     });
   }
 
-  /** Carga la lista de jobs históricos de Smileit. */
+  /**
+   * Carga la lista de jobs históricos de Smileit.
+   *
+   * En modo abierto el endpoint privado `GET /api/jobs/` exige sesión (401 para un invitado),
+   * así que el historial se alimenta del almacén local, igual que en `BaseJobWorkflowService`.
+   */
   loadHistory(): void {
+    if (this.isOpenMode()) {
+      this.loadLocalHistory();
+      return;
+    }
+
     this.state.isHistoryLoading.set(true);
 
-    this.jobsApiService.listJobs({ pluginName: 'smileit' }).subscribe({
+    this.jobsApiService.listJobs({ pluginName: SMILEIT_PLUGIN_NAME }).subscribe({
       next: (jobItems: ScientificJobView[]) => {
         const orderedJobs: ScientificJobView[] = this.deduplicateHistoryJobs(jobItems);
         this.state.historyJobs.set(orderedJobs);
@@ -381,8 +418,39 @@ export class SmileitWorkflowService implements OnDestroy {
     });
   }
 
+  /** Historial del modo abierto: se lee del almacén local y se expone con la vista ya usada. */
+  private loadLocalHistory(): void {
+    this.state.isHistoryLoading.set(false);
+    this.state.historyJobs.set(
+      mapLocalRecordsToHistoryJobs(this.localResultsStore?.list(SMILEIT_PLUGIN_NAME) ?? []),
+    );
+  }
+
+  /** Registra el estado del job en el historial local (solo tiene sentido en modo abierto). */
+  private persistLocalRecord(input: SmileitLocalRecordInput): void {
+    if (!this.isOpenMode() || this.localResultsStore === null) {
+      return;
+    }
+
+    saveSmileitLocalRecord(this.localResultsStore, input);
+  }
+
+  /** Indica si la sesión actual es de invitado en modo abierto. */
+  private isOpenMode(): boolean {
+    return this.accessMode?.isOpenMode() ?? false;
+  }
+
   /** Elimina un job histórico y sincroniza estado local del panel. */
   deleteHistoryJob(jobId: string): void {
+    if (this.isOpenMode()) {
+      this.localResultsStore?.remove(SMILEIT_PLUGIN_NAME, jobId);
+      this.loadLocalHistory();
+      if (this.state.currentJobId() === jobId) {
+        this.reset();
+      }
+      return;
+    }
+
     this.jobsApiService.deleteJob(jobId).subscribe({
       next: () => {
         this.state.historyJobs.update((jobItems: ScientificJobView[]) =>
@@ -567,21 +635,30 @@ export class SmileitWorkflowService implements OnDestroy {
       )
       .subscribe({
         next: (jobResponse: SmileitJobResponseView) =>
-          this.state.progressSnapshot.set({
-            job_id: jobId,
-            status: jobResponse.status,
-            progress_percentage: jobResponse.progress_percentage ?? 0,
-            progress_stage: (jobResponse.progress_stage ?? 'running') as JobProgressSnapshotView['progress_stage'],
-            progress_message: jobResponse.progress_message ?? '',
-            progress_event_index: 0,
-            updated_at: new Date().toISOString(),
-          }),
+          this.applyPublicJobProgress(jobId, jobResponse),
         complete: () => this.fetchFinalResult(jobId),
         error: (pollingError: Error) => {
           this.state.activeSection.set('error');
           this.state.errorMessage.set(`Unable to track Smileit progress: ${pollingError.message}`);
         },
       });
+  }
+
+  /**
+   * Publica el progreso del job público en la señal que consume la UI.
+   * El registro local se escribe en los puntos de cambio de estado (dispatch y resultado
+   * final), no en cada tick, para no serializar parámetros cada dos segundos.
+   */
+  private applyPublicJobProgress(jobId: string, jobResponse: SmileitJobResponseView): void {
+    this.state.progressSnapshot.set({
+      job_id: jobId,
+      status: jobResponse.status,
+      progress_percentage: jobResponse.progress_percentage ?? 0,
+      progress_stage: normalizeProgressStage(jobResponse.progress_stage) ?? 'running',
+      progress_message: jobResponse.progress_message ?? '',
+      progress_event_index: 0,
+      updated_at: new Date().toISOString(),
+    });
   }
 
   private startPollingFallback(jobId: string): void {
@@ -602,6 +679,13 @@ export class SmileitWorkflowService implements OnDestroy {
       next: (jobResponse: SmileitJobResponseView) => {
         if (jobResponse.status === 'failed') {
           this.loadHistoricalLogs(jobId);
+          this.persistLocalRecord({
+            jobId,
+            status: 'failed',
+            progressPercentage: 100,
+            parameters: jobResponse.parameters,
+            resultSummary: null,
+          });
           this.state.activeSection.set('error');
           this.state.errorMessage.set(
             jobResponse.error_trace ?? 'Smileit job ended without details.',
@@ -618,6 +702,13 @@ export class SmileitWorkflowService implements OnDestroy {
           return;
         }
         this.state.resultData.set(finalData);
+        this.persistLocalRecord({
+          jobId,
+          status: jobResponse.status,
+          progressPercentage: jobResponse.progress_percentage ?? 100,
+          parameters: jobResponse.parameters,
+          resultSummary: finalData,
+        });
         this.loadHistoricalLogs(jobId);
         this.state.activeSection.set('result');
         this.loadHistory();

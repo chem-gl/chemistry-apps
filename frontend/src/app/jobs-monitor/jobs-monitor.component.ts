@@ -10,6 +10,7 @@ import {
   JobStatusFilterOption,
   JobsMonitorFacadeService,
 } from '../core/application/jobs-monitor.facade.service';
+import { JobProgressTextService } from '../core/application/job-progress-text.service';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { JobFiltersComponent } from '../core/shared/components/job-filters/job-filters.component';
@@ -42,6 +43,7 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
   readonly sessionService = inject(IdentitySessionService);
   readonly accessMode = inject(JobAccessModeService, { optional: true });
   private readonly translocoService = inject(TranslocoService);
+  private readonly progressText = inject(JobProgressTextService);
 
   readonly statusOptions: ReadonlyArray<{ value: JobStatusFilterOption; labelKey: string }> = [
     { value: 'all', labelKey: 'common.statusFilters.all' },
@@ -112,6 +114,18 @@ export class JobsMonitorComponent implements OnInit, OnDestroy {
 
   stageClassName(progressStage: string): string {
     return `stage-pill stage-${progressStage}`;
+  }
+
+  /**
+   * Mensaje de progreso del job. El backend redacta `progress_message` en español, así que se
+   * prefiere el texto del `progress_stage` en el idioma activo y, si no hay etapa utilizable,
+   * la etiqueta traducida del estado.
+   */
+  progressMessageFor(jobItem: ScientificJobView): string {
+    const statusMessage: string = this.translocoService.translate(
+      `common.jobStatus.${jobItem.status}`,
+    );
+    return this.progressText.resolve(jobItem, statusMessage);
   }
 
   appRouteForJob(jobItem: ScientificJobView): string | null {

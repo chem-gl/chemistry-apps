@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "等待中",
+      "queued": "已排队",
+      "running": "运行中…",
+      "paused": "已暂停",
+      "recovering": "恢复中…",
+      "caching": "缓存结果…",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "网络不可用。",

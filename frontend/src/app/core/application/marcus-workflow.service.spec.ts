@@ -549,7 +549,10 @@ describe('MarcusWorkflowService', () => {
     expect(workflowService.isProcessing()).toBe(true);
     expect(workflowService.canDispatch()).toBe(false);
     expect(workflowService.progressPercentage()).toBe(55);
-    expect(workflowService.progressMessage()).toBe('processing');
+    // Con un `progress_stage` conocido el texto se deriva del catálogo i18n: no se pinta el
+    // `progress_message` crudo del backend, que siempre llega en español.
+    expect(workflowService.progressMessage()).not.toBe('processing');
+    expect(workflowService.progressMessage().length).toBeGreaterThan(0);
   });
 
   it('updates progress snapshots from SSE and resolves final result on completion', () => {

@@ -1,5 +1,6 @@
 import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -11,6 +12,7 @@ import {
   ScientificJobView,
 } from '../api/jobs-api.service';
 import { BaseJobWorkflowService } from './base-job-workflow.service';
+import { JobProgressTextService } from './job-progress-text.service';
 import { JobAccessModeService } from '../auth/job-access-mode.service';
 import { LocalResultsStore } from '../shared/local-results.store';
 
@@ -235,5 +237,94 @@ describe('BaseJobWorkflowService', () => {
     expect(service.restore({ value: 'saved' })).toEqual({ value: 'saved' });
     expect(service.restore(null)).toBeNull();
     expect(service.restore('saved')).toBeNull();
+  });
+});
+
+describe('BaseJobWorkflowService con catálogo i18n', () => {
+  /** Texto que el backend publica en `progress_message` (siempre en español). */
+  const SPANISH_BACKEND_MESSAGE = 'Ejecutando plugin científico.';
+
+  let service: TestWorkflowService;
+
+  /** Snapshot mínimo con el mensaje en español que emite el backend. */
+  function makeSnapshot(overrides: Partial<JobProgressSnapshotView>): JobProgressSnapshotView {
+    return {
+      job_id: 'job-1',
+      status: 'running',
+      progress_percentage: 40,
+      progress_stage: 'running',
+      progress_message: SPANISH_BACKEND_MESSAGE,
+      progress_event_index: 1,
+      updated_at: '2026-01-01T00:00:00.000Z',
+      ...overrides,
+    };
+  }
+
+  function createServiceWithTransloco(activeLanguage: string): TestWorkflowService {
+    // Catálogos recortados a propósito: cada idioma deja de propósito una clave sin entrada para
+    // ejercitar el fallback del resolutor sin pintar claves crudas ni texto español.
+    const stageTextsByLanguage: Record<string, Record<string, string>> = {
+      en: { 'progress.stage.caching': 'Caching result…' },
+      es: { 'progress.stage.running': 'Ejecutando…' },
+    };
+    const translocoStub = {
+      translate: vi.fn((translationKey: string) => {
+        const languageCatalog: Record<string, string> = stageTextsByLanguage[activeLanguage] ?? {};
+        return languageCatalog[translationKey] ?? translationKey;
+      }),
+      activeLang: vi.fn(() => activeLanguage),
+    };
+    const i18nApiMock = {
+      streamJobEvents: vi.fn(() => of({})),
+      streamJobLogEvents: vi.fn(() => of({})),
+      pollJobUntilCompleted: vi.fn(() => of({})),
+      getJobLogs: vi.fn(() => of({ results: [] })),
+      listJobs: vi.fn(() => of([])),
+      deleteJob: vi.fn(() => of({})),
+    };
+
+    const injector = Injector.create({
+      providers: [
+        {
+          provide: JobAccessModeService,
+          useValue: { isOpenMode: () => false, mode: () => 'account' },
+        },
+        {
+          provide: LocalResultsStore,
+          useValue: { list: () => [], save: () => undefined, remove: () => undefined },
+        },
+        { provide: JobsApiService, useValue: i18nApiMock },
+        { provide: TranslocoService, useValue: translocoStub },
+        JobProgressTextService,
+        TestWorkflowService,
+      ],
+    });
+    return runInInjectionContext(injector, () => injector.get(TestWorkflowService));
+  }
+
+  it('prefiere el texto del stage traducido sobre el mensaje español del backend', () => {
+    service = createServiceWithTransloco('en');
+
+    service.progressSnapshot.set(makeSnapshot({ progress_stage: 'caching' }));
+
+    expect(service.progressMessage()).toBe('Caching result…');
+  });
+
+  it('traduce en el idioma activo cuando la UI está en español', () => {
+    service = createServiceWithTransloco('es');
+
+    service.progressSnapshot.set(makeSnapshot({ progress_stage: 'running' }));
+
+    expect(service.progressMessage()).toBe('Ejecutando…');
+  });
+
+  it('usa el mensaje propio de la app cuando no hay texto traducible para el stage', () => {
+    service = createServiceWithTransloco('en');
+
+    // El catálogo en inglés de prueba no define `progress.stage.running`: cae al fallback de la
+    // app en lugar de pintar la clave cruda o el texto español del backend.
+    service.progressSnapshot.set(makeSnapshot({ progress_stage: 'running' }));
+
+    expect(service.progressMessage()).toBe('Waiting');
   });
 });

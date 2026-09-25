@@ -2,7 +2,7 @@
 // Todos los signals y computed compartidos por los sub-servicios (catálogo, bloques, fachada).
 // Ningún sub-servicio define signals propios; todos leen/escriben a través de esta única fuente.
 
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { PatternTypeEnum, SiteOverlapPolicyEnum } from '../../api/generated';
 import type {
   JobLogEntryView,
@@ -26,6 +26,12 @@ import type {
   SmileitSiteCoverageView,
 } from './smileit-workflow.types';
 
+import { JobProgressTextService } from '../job-progress-text.service';
+import {
+  ProgressTextSource,
+  UNTRANSLATED_PROGRESS_TEXT,
+} from '../progress-stage-messages';
+
 import {
   buildCatalogGroups,
   buildEffectiveCoverage,
@@ -33,8 +39,18 @@ import {
   parseSingleAnchorIndexInput,
 } from './smileit-workflow.utils';
 
+/** Mensaje propio de Smile-it mientras el snapshot no aporta un stage traducible. */
+const SMILEIT_DEFAULT_PROGRESS_MESSAGE = 'Preparing Smileit generation...';
+
 @Injectable()
 export class SmileitWorkflowState {
+  /**
+   * Resolutor del texto de progreso. Es opcional porque en SSR y en los inyectores planos de
+   * prueba no hay catálogo i18n: en ese caso se conserva el mensaje del backend.
+   */
+  private readonly progressText: ProgressTextSource =
+    inject(JobProgressTextService, { optional: true }) ?? UNTRANSLATED_PROGRESS_TEXT;
+
   // ── Estructura principal ──────────────────────────────────────────────
   readonly principalSmiles = signal<string>('c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
@@ -96,8 +112,13 @@ export class SmileitWorkflowState {
     () => this.inspection()?.quickProperties ?? null,
   );
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? 'Preparing Smileit generation...',
+  /**
+   * Mensaje de progreso visible. Se deriva del stage machine-readable del snapshot porque el
+   * backend redacta `progress_message` en español: sin este filtro la UI en inglés mostraría
+   * texto sin traducir.
+   */
+  readonly progressMessage = computed(() =>
+    this.progressText.resolve(this.progressSnapshot(), SMILEIT_DEFAULT_PROGRESS_MESSAGE),
   );
 
   // ── Computed: bloques y cobertura ─────────────────────────────────────

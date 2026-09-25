@@ -27,6 +27,13 @@ import {
 } from '../api/jobs-api.service';
 import { mergeLogEntry } from './log-entry-utils';
 import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { JobProgressTextService } from './job-progress-text.service';
+import {
+  KnownProgressStage,
+  normalizeProgressStage,
+  ProgressTextSource,
+  UNTRANSLATED_PROGRESS_TEXT,
+} from './progress-stage-messages';
 import { LocalResultsStore, type LocalResultRecord } from '../shared/local-results.store';
 
 const JOB_STATUS_VALUES: ReadonlySet<string> = new Set([
@@ -42,23 +49,13 @@ const TERMINAL_JOB_STATUSES: ReadonlySet<string> = new Set([
   'failed',
   'cancelled',
 ]);
-const PROGRESS_STAGE_VALUES: ReadonlySet<string> = new Set([
-  'pending',
-  'queued',
-  'running',
-  'paused',
-  'recovering',
-  'caching',
-  'completed',
-  'failed',
-  'cancelled',
-]);
 
 /** Lectura tolerante del job público: el API abierto devuelve el job completo. */
 interface PublicJobProgress {
   status: string;
   progressPercentage: number;
-  progressStage: string;
+  /** Stage ya normalizado al vocabulario que la UI sabe traducir. */
+  progressStage: KnownProgressStage;
   progressMessage: string;
 }
 
@@ -80,10 +77,7 @@ function toPublicJobProgress(rawJob: unknown): PublicJobProgress | null {
   return {
     status: rawStatus,
     progressPercentage: typeof rawPercentage === 'number' ? rawPercentage : 0,
-    progressStage:
-      typeof rawStage === 'string' && PROGRESS_STAGE_VALUES.has(rawStage)
-        ? rawStage
-        : 'running',
+    progressStage: normalizeProgressStage(rawStage) ?? 'running',
     progressMessage: typeof rawMessage === 'string' ? rawMessage : '',
   };
 }
@@ -103,6 +97,12 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
   protected readonly jobsApiService = inject(JobsApiService);
   protected readonly accessMode = inject(JobAccessModeService);
   protected readonly localResultsStore = inject(LocalResultsStore);
+  /**
+   * Resolutor del texto de progreso. Es opcional porque los inyectores planos de prueba y el
+   * SSR pueden no tener catálogo i18n: en ese caso se degrada al mensaje del backend.
+   */
+  protected readonly progressText: ProgressTextSource =
+    inject(JobProgressTextService, { optional: true }) ?? UNTRANSLATED_PROGRESS_TEXT;
   protected progressSubscription: Subscription | null = null;
   protected logsSubscription: Subscription | null = null;
 
@@ -131,8 +131,12 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
     () => this.activeSection() === 'dispatching' || this.activeSection() === 'progress',
   );
   readonly progressPercentage = computed(() => this.progressSnapshot()?.progress_percentage ?? 0);
-  readonly progressMessage = computed(
-    () => this.progressSnapshot()?.progress_message ?? this.defaultProgressMessage,
+  /**
+   * Texto de progreso visible. Se deriva del stage machine-readable del snapshot para que
+   * ningún idioma muestre el `progress_message` en español que emite el backend.
+   */
+  readonly progressMessage = computed(() =>
+    this.progressText.resolve(this.progressSnapshot(), this.defaultProgressMessage),
   );
 
   // ── Contrato que deben implementar las subclases ───────────────────
@@ -471,7 +475,7 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
       job_id: jobId,
       status: jobProgress.status as JobProgressSnapshotView['status'],
       progress_percentage: jobProgress.progressPercentage,
-      progress_stage: jobProgress.progressStage as JobProgressSnapshotView['progress_stage'],
+      progress_stage: jobProgress.progressStage,
       progress_message: jobProgress.progressMessage,
       progress_event_index: this.progressSnapshot()?.progress_event_index ?? 0,
       updated_at: new Date().toISOString(),
@@ -545,23 +549,16 @@ export abstract class BaseJobWorkflowService<TResultData> implements OnDestroy {
       return;
     }
 
-    const previousRecord = this.localResultsStore
-      .list(pluginName)
-      .find((item) => item.jobId === jobId);
-    const now: string = new Date().toISOString();
-
-    this.localResultsStore.save({
-      jobId,
-      pluginName,
-      createdAt: previousRecord?.createdAt ?? now,
-      updatedAt: now,
-      status,
-      progressPercentage,
-      parameters,
-      resultSummary: resultSummary ?? previousRecord?.resultSummary ?? null,
-      expired: false,
-    });
-    this.localHistory.set(this.localResultsStore.list(pluginName));
+    this.localHistory.set(
+      this.localResultsStore.upsert({
+        pluginName,
+        jobId,
+        status,
+        progressPercentage,
+        parameters,
+        resultSummary,
+      }),
+    );
   }
 
   /** Elimina un job histórico y actualiza la lista local del historial. */

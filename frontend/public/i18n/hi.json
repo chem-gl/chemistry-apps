@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "प्रतीक्षित",
+      "queued": "कतार में",
+      "running": "चल रहा है…",
+      "paused": "रुका हुआ",
+      "recovering": "पुनर्प्राप्ति…",
+      "caching": "कैश हो रहा है…",
+      "completed": "पूर्ण",
+      "failed": "विफल",
+      "cancelled": "रद्द"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "नेटवर्क उपलब्ध नहीं है।",

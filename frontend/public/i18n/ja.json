@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "待機中",
+      "queued": "キュー待ち",
+      "running": "実行中…",
+      "paused": "一時停止",
+      "recovering": "復旧中…",
+      "caching": "結果をキャッシュ中…",
+      "completed": "完了",
+      "failed": "失敗",
+      "cancelled": "キャンセル"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "ネットワークに接続できません。",

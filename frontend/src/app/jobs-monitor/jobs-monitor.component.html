@@ -101,7 +101,7 @@
             }}</span>
         </div>
 
-        <p class="job-message">{{ activeJob.progress_message }}</p>
+        <p class="job-message">{{ progressMessageFor(activeJob) }}</p>
 
         <div class="actions-cell">
           <button class="open-logs-btn" (click)="openJobDetails(activeJob.id)">
@@ -174,7 +174,7 @@
             }}</span>
         </div>
 
-        <p class="job-message">{{ pausedJob.progress_message }}</p>
+        <p class="job-message">{{ progressMessageFor(pausedJob) }}</p>
 
         <div class="actions-cell">
           <button class="open-logs-btn" (click)="openJobDetails(pausedJob.id)">
@@ -300,7 +300,7 @@
         <p><strong>{{ 'common.table.status' | transloco }}:</strong> {{ selectedJob.status }}</p>
         <p><strong>{{ 'common.table.stage' | transloco }}:</strong> {{ selectedJob.progress_stage }}</p>
         <p><strong>{{ 'common.table.progress' | transloco }}:</strong> {{ selectedJob.progress_percentage }}%</p>
-        <p><strong>{{ 'jobsMonitor.details.message' | transloco }}:</strong> {{ selectedJob.progress_message }}</p>
+        <p><strong>{{ 'jobsMonitor.details.message' | transloco }}:</strong> {{ progressMessageFor(selectedJob) }}</p>
         <p>
           <strong>{{ 'common.table.updated' | transloco }}:</strong> {{ selectedJob.updated_at | date: 'yyyy-MM-dd
           HH:mm:ss' }}

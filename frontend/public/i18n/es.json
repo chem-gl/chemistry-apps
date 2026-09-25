@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "En espera",
+      "queued": "En cola",
+      "running": "Ejecutando…",
+      "paused": "En pausa",
+      "recovering": "Recuperando…",
+      "caching": "Guardando resultado…",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "Red no disponible. Verifica tu conexión.",

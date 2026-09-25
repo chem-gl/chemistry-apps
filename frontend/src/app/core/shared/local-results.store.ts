@@ -16,6 +16,16 @@ export interface LocalResultRecord {
   expired: boolean;
 }
 
+/** Datos mínimos para crear o actualizar el registro local del job de una app. */
+export interface LocalResultUpsert {
+  pluginName: string;
+  jobId: string;
+  status: string;
+  progressPercentage: number;
+  parameters: Record<string, unknown>;
+  resultSummary?: unknown;
+}
+
 const MAX_RECORDS = 20;
 const MAX_BYTES = 1_500_000;
 const KEY_PREFIX = 'chemistry-apps.results.v1.';
@@ -109,6 +119,32 @@ export class LocalResultsStore {
     ]
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
       .slice(0, MAX_RECORDS);
+  }
+
+  /**
+   * Crea o actualiza el registro de un job y devuelve el listado completo y ordenado.
+   * Conserva `createdAt` del registro previo y su `resultSummary` cuando el aporte nuevo
+   * llega sin resumen (por ejemplo en los avances parciales de progreso).
+   */
+  upsert(input: LocalResultUpsert): LocalResultRecord[] {
+    const previousRecord: LocalResultRecord | undefined = this.list(input.pluginName).find(
+      (record: LocalResultRecord) => record.jobId === input.jobId,
+    );
+    const timestamp: string = new Date().toISOString();
+
+    this.save({
+      jobId: input.jobId,
+      pluginName: input.pluginName,
+      createdAt: previousRecord?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+      status: input.status,
+      progressPercentage: input.progressPercentage,
+      parameters: input.parameters,
+      resultSummary: input.resultSummary ?? previousRecord?.resultSummary ?? null,
+      expired: false,
+    });
+
+    return this.list(input.pluginName);
   }
 
   remove(pluginName: string, jobId: string): void {

@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "Waiting…",
+      "queued": "Queued",
+      "running": "Running…",
+      "paused": "Paused",
+      "recovering": "Recovering…",
+      "caching": "Caching result…",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    }
+  },
   "app": {
     "brand": {
       "kicker": "CADMA-Chem Suite",

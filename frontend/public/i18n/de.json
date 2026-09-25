@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "Wartend",
+      "queued": "Eingereiht",
+      "running": "Läuft…",
+      "paused": "Pausiert",
+      "recovering": "Wiederherstellung…",
+      "caching": "Zwischenspeichern…",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "Netzwerk nicht verfügbar.",

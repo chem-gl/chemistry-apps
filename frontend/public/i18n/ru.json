@@ -1,4 +1,17 @@
 {
+  "progress": {
+    "stage": {
+      "pending": "Ожидание",
+      "queued": "В очереди",
+      "running": "Выполняется…",
+      "paused": "Пауза",
+      "recovering": "Восстановление…",
+      "caching": "Сохранение в кэш…",
+      "completed": "Завершено",
+      "failed": "Ошибка",
+      "cancelled": "Отменено"
+    }
+  },
   "errorModal": {
     "http": {
       "networkUnavailable": "Сеть недоступна.",
