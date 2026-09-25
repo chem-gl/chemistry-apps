@@ -8,10 +8,8 @@ on:
     branches:
       - main
       - dev
-      # Rama de trabajo del stack de producción (apps.agalano.com): este
-      # workflow solo valida tests y build; el despliegue lo hace
-      # `deploy-libres.yml`.
-      - refactor/local-first
+      # Este workflow solo valida (tests y build); el despliegue de
+      # producción lo hace `deploy-libres.yml`.
   workflow_dispatch: {}
 
 jobs:
@@ -55,14 +53,13 @@ jobs:
     concurrency:
       group: ci-tests-${{ github.ref }}
       cancel-in-progress: true
-    # Los tests corren en push a dev y en la rama intermedia de apps libres;
-    # en main y PRs ya debieron pasar en dev.
+    # Los tests corren en push a dev; en main y PRs ya debieron pasar en dev.
     # El frontend se valida compilando su imagen Docker en el job Build
     # (evita `npm ci` + `npm run build` duplicados).
     needs: [changes]
     if: |
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/refactor/local-first') &&
+      github.ref == 'refs/heads/dev' &&
       needs.changes.outputs.backend == 'true'
 
     steps:
@@ -101,7 +98,7 @@ jobs:
 
   build:
     name: Build reusable workflow
-    # Corre en dev, la rama intermedia, main y PRs; acepta tests skipped.
+    # Corre en dev, main y PRs; acepta tests skipped.
     if: |
       always() &&
       (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
@@ -109,8 +106,7 @@ jobs:
       (
         github.event_name == 'pull_request' ||
         github.ref == 'refs/heads/main' ||
-        github.ref == 'refs/heads/dev' ||
-        github.ref == 'refs/heads/refactor/local-first'
+        github.ref == 'refs/heads/dev'
       )
     needs: [changes, tests]
     permissions:

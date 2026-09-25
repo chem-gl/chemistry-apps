@@ -1,11 +1,11 @@
 # Apps libres (sin login) — Fase 1: plan de ejecución técnico
 
-Rama de trabajo: `refactor/local-first` (desde `dev`).
+Rama de trabajo: una rama dedicada (desde `dev`), ya fusionada en `dev`/`main` y eliminada.
 
 > **Actualización 2026-09-25 — corte a producción ejecutado**: el stack aislado
 > de apps libres es la producción principal en `https://apps.agalano.com`
 > (certbot, modo libre activo con `LIBRES_OPEN_MODE_ENABLED=1`). El workflow
-> `deploy-libres.yml` corre en `main` y en la rama de trabajo, y el despliegue
+> `deploy-libres.yml` corre solo en `main`, y el despliegue
 > automático del stack antiguo (`/home/deploy/chemistry-apps`,
 > `apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`) quedó desactivado.
 > Las tablas fechadas de este documento (p. ej. §2, 2026-09-23) son snapshots
@@ -25,7 +25,7 @@ Fuente de requisitos: memos `#apps-chemistry #apps-libres #plan` [1/5]..[5/5].
 
 | Punto | Estado |
 |---|---|
-| `git` | rama `dev` limpia; ramas solo `dev`/`main`; rama `refactor/local-first` creada |
+| `git` | rama `dev` limpia; ramas solo `dev`/`main` (la rama de trabajo se creó para la fase y se eliminó al fusionar) |
 | Backend | Django 6 / DRF 3.18.1 / Celery 5.6.3 / `djangorestframework-simplejwt` 5.5.1 |
 | Permiso global | `DEFAULT_PERMISSION_CLASSES = AllowAny` (punto a cerrar) |
 | Throttling | no configurado (`REST_FRAMEWORK` sin `DEFAULT_THROTTLE_*`) |
@@ -222,7 +222,7 @@ Superficie pública resultante: `POST jobs/`, `GET jobs/<uuid>/`, reportes y vis
 
 | Archivo | Cambio |
 |---|---|
-| `.github/workflows/deploy-libres.yml` (nuevo) | Hoy `Deploy production apps.agalano.com`: push a `main` o `refactor/local-first` (solo-docs no despliega) → bundle `git archive` → migraciones en contenedor → guarda de disco (15 GB) → smoke `/` y `/api/public/catalog/` |
+| `.github/workflows/deploy-libres.yml` (nuevo) | Hoy `Deploy production apps.agalano.com`: push a `main` (solo-docs no despliega) → bundle `git archive` → migraciones en contenedor → guarda de disco (15 GB) → smoke `/` y `/api/public/catalog/` |
 | Host `plata` | `/home/deploy/chemistry-apps-libres`, `https://apps.agalano.com` con certificado certbot, Nginx same-origin (`/api`, `/ws`, `/static`, `/media`) |
 
 ### Pasos pendientes
