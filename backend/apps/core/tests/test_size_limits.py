@@ -52,6 +52,10 @@ def _create_job(**overrides: object) -> ScientificJob:
     return ScientificJob.objects.create(**defaults)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class PayloadTooLargeTests(TestCase):
     """Verifica que un cuerpo JSON excesivo responde 413 y no 400."""
 
@@ -97,6 +101,10 @@ class PayloadTooLargeTests(TestCase):
         self.assertEqual(response.status_code, 201)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class ArtifactSizeLimitTests(TestCase):
     """Verifica los topes de archivo por rol (anónimo vs registrado)."""
 
@@ -165,6 +173,10 @@ class ArtifactSizeLimitTests(TestCase):
         self.assertEqual(response.status_code, 413)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class UploadHandlerTests(TestCase):
     """Verifica el corte temprano del multipart (evita el DoS por disco)."""
 

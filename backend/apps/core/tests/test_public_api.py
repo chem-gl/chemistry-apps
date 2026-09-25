@@ -51,6 +51,10 @@ def _create_molar_job(**overrides: object) -> ScientificJob:
     return ScientificJob.objects.create(**defaults)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class PublicDispatchTests(TestCase):
     """Verifica la creación de jobs anónimos desde la ruta pública."""
 
@@ -93,6 +97,10 @@ class PublicDispatchTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class PublicRetrieveTests(TestCase):
     """Verifica el acceso por capability URL a jobs anónimos."""
 
@@ -134,6 +142,10 @@ class PublicRetrieveTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+# El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
+# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
+# lo público respondería 404).
+@override_settings(OPEN_MODE_ENABLED=True)
 class PublicSurfaceTests(TestCase):
     """Verifica el contrato del modo abierto sobre la superficie pública.
 
@@ -242,6 +254,7 @@ class PublicSurfaceTests(TestCase):
 
 
 @override_settings(
+    OPEN_MODE_ENABLED=True,
     REST_FRAMEWORK={
         "DEFAULT_THROTTLE_RATES": {
             "public-dispatch": "2/hour",

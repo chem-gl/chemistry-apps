@@ -179,8 +179,14 @@ class LeaseReleaseTests(TestCase):
         self.assertEqual(len(fake_client.calls), 1)
 
 
+@override_settings(OPEN_MODE_ENABLED=True)
 class PublicDispatchConcurrencyTests(TestCase):
-    """Verifica la integración del semáforo con el create público."""
+    """Verifica la integración del semáforo con el create público.
+
+    Fuerza el modo abierto: estos tests miden el semáforo de concurrencia, no
+    el interruptor global `OPEN_MODE_ENABLED` (que en local puede estar
+    apagado y respondería 404 a toda la superficie pública).
+    """
 
     def setUp(self) -> None:
         cache.clear()
@@ -365,6 +371,170 @@ class LeasePreservationTests(TestCase):
 
         job.refresh_from_db()
         self.assertNotIn("concurrency_lease", job.runtime_state)
+
+
+class StaleWorkerLeaseRaceTests(TestCase):
+    """Regresión del 429 fantasma: el worker termina con un `job` obsoleto.
+
+    Orden demostrado en producción: el worker carga el job (con
+    `runtime_state={}`) **antes** de que el proceso HTTP lo adjunte con
+    `attach_lease_to_job`. Si el fin terminal escribiera el valor en memoria,
+    borraría el lease recién persistido y `task_postrun` no encontraría nada que
+    liberar: el cupo queda ocupado hasta el TTL con 0 jobs en curso.
+    """
+
+    LATE_LEASE = ConcurrencyLease(key="late-key", token="late-token")
+    PUBLISHERS = {
+        "progress_publisher": SimpleNamespace(publish=lambda *a, **k: None),
+        "log_publisher": SimpleNamespace(publish=lambda *a, **k: None),
+    }
+
+    def _race(self) -> tuple[ScientificJob, ScientificJob]:
+        """Devuelve (job_persistido, copia_obsoleta_del_worker) con lease tardío."""
+        persisted = _create_job(status="running", runtime_state={})
+        stale_copy = ScientificJob.objects.get(pk=persisted.pk)
+
+        attach_lease_to_job(persisted, self.LATE_LEASE)
+
+        self.assertEqual(stale_copy.runtime_state, {})
+        return persisted, stale_copy
+
+    def test_completion_keeps_lease_attached_after_job_load(self) -> None:
+        from apps.core.services.terminal_states import finish_with_result
+
+        persisted, stale_copy = self._race()
+        finish_with_result(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            result_payload={},
+            from_cache=False,
+            **self.PUBLISHERS,
+        )
+
+        persisted.refresh_from_db()
+        self.assertEqual(
+            persisted.runtime_state,
+            {"concurrency_lease": {"key": "late-key", "token": "late-token"}},
+        )
+
+    def test_pause_keeps_lease_attached_after_job_load(self) -> None:
+        from apps.core.services.terminal_states import finish_with_pause
+
+        persisted, stale_copy = self._race()
+        finish_with_pause(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            pause_message="pausado",
+            checkpoint={"step": 7},
+            **self.PUBLISHERS,
+        )
+
+        persisted.refresh_from_db()
+        self.assertEqual(persisted.runtime_state.get("step"), 7)
+        self.assertEqual(
+            persisted.runtime_state.get("concurrency_lease"),
+            {"key": "late-key", "token": "late-token"},
+        )
+
+    def test_postrun_signal_releases_the_late_lease(self) -> None:
+        """El ciclo completo: terminar con objeto obsoleto y liberar vía señal."""
+        from apps.core.services.terminal_states import finish_with_result
+
+        persisted, stale_copy = self._race()
+        finish_with_result(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            result_payload={},
+            from_cache=False,
+            **self.PUBLISHERS,
+        )
+
+        with patch("apps.core.concurrency.release_lease") as mock_release:
+            release_concurrency_lease_after_task(
+                sender=SimpleNamespace(name=EXECUTE_JOB_TASK_NAME),
+                args=(str(persisted.id),),
+                kwargs={},
+            )
+
+        mock_release.assert_called_once_with(self.LATE_LEASE, client=None)
+
+    def test_release_uses_the_real_redis_client_after_stale_finish(self) -> None:
+        """Con un cliente falso se comprueba el ZREM efectivo del lease tardío."""
+        from apps.core.services.terminal_states import finish_with_result
+
+        persisted, stale_copy = self._race()
+        finish_with_result(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            result_payload={},
+            from_cache=False,
+            **self.PUBLISHERS,
+        )
+
+        fake_client = FakeRedis(result=1)
+        release_job_lease(
+            ScientificJob.objects.get(pk=persisted.pk), client=fake_client
+        )
+
+        self.assertEqual(fake_client.calls, [("late-key", "late-token")])
+        persisted.refresh_from_db()
+        self.assertNotIn("concurrency_lease", persisted.runtime_state)
+
+    def test_completion_without_lease_is_unaffected(self) -> None:
+        """Sin lease en ningún lado no se rompe nada ni aparecen claves extra."""
+        from apps.core.services.terminal_states import finish_with_result
+
+        persisted = _create_job(status="running", runtime_state={})
+        stale_copy = ScientificJob.objects.get(pk=persisted.pk)
+        finish_with_result(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            result_payload={"ok": 1},
+            from_cache=False,
+            **self.PUBLISHERS,
+        )
+
+        persisted.refresh_from_db()
+        self.assertEqual(persisted.status, "completed")
+        self.assertEqual(persisted.runtime_state, {})
+
+    def test_pause_without_lease_keeps_only_the_checkpoint(self) -> None:
+        from apps.core.services.terminal_states import finish_with_pause
+
+        persisted = _create_job(status="running", runtime_state={})
+        stale_copy = ScientificJob.objects.get(pk=persisted.pk)
+        finish_with_pause(
+            job=stale_copy,
+            job_id=str(stale_copy.id),
+            pause_message="pausado",
+            checkpoint={"step": 3},
+            **self.PUBLISHERS,
+        )
+
+        persisted.refresh_from_db()
+        self.assertEqual(persisted.runtime_state, {"step": 3})
+
+    def test_in_memory_lease_is_used_when_db_has_none(self) -> None:
+        """Si la BD ya no tiene el lease, se conserva el que trae el worker."""
+        from apps.core.services.terminal_states import finish_with_result
+
+        persisted = _create_job(
+            status="running",
+            runtime_state={"concurrency_lease": {"key": "local", "token": "local"}},
+        )
+        worker_copy = ScientificJob.objects.get(pk=persisted.pk)
+        ScientificJob.objects.filter(pk=persisted.pk).update(runtime_state={})
+
+        finish_with_result(
+            job=worker_copy, job_id=str(worker_copy.id), result_payload={},
+            from_cache=False, **self.PUBLISHERS,
+        )
+
+        persisted.refresh_from_db()
+        self.assertEqual(
+            persisted.runtime_state,
+            {"concurrency_lease": {"key": "local", "token": "local"}},
+        )
 
 
 class LeaseAttachGuardTests(TestCase):
