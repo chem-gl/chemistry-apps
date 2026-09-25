@@ -1,21 +1,23 @@
 # .github/workflows/deploy-libres.yml
 #
-# Despliegue del sitio público "Modo abierto" (apps-libres.guzman-lopez.com)
-# en un stack Docker Compose aislado del despliegue principal.
+# Despliegue de PRODUCCIÓN: https://apps.agalano.com, servido por el stack
+# Docker Compose aislado (`docker-compose.libres.yml` en
+# `/home/deploy/chemistry-apps-libres`) con el modo libre activo.
 #
-# Autónomo a propósito: NO reutiliza `deploy.yml` (que depende de releases de
-# `main`) ni toca el stack de `apps.guzman-lopez.com`. Construye el bundle con
-# `git archive` del commit que se empuja y despliega en su propio directorio.
+# Autónomo a propósito: NO reutiliza `deploy.yml`, asociado al stack antiguo
+# (`apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`), retirado el
+# 2026-09-25. Construye el bundle con `git archive` del commit que se empuja
+# y despliega en su propio directorio.
 #
-# Nota de producto: por ahora apps-libres es el entorno de vista previa de la
-# rama; a corto plazo será el sitio principal y este workflow pasará a correr
-# sobre `main`.
+# Triggers: `main` publica producción; `refactor/local-first` sigue habilitada
+# como rama de trabajo durante la migración.
 
-name: Deploy apps-libres
+name: Deploy production apps.agalano.com
 
 on:
   push:
     branches:
+      - main
       - refactor/local-first
     paths-ignore:
       - '**.md'

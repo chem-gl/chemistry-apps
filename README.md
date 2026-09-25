@@ -399,9 +399,9 @@ Probar el modo abierto en local exige broker y worker reales: Redis en `localhos
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Servicios: `redis`, `backend` (migrate + API sin worker), `celery-worker`, `celery-beat`, `frontend` (hot reload). `docker-compose.yml` es la variante de producción (sin hot reload, por variables de entorno). Si falta el JAR de AMBIT, el backend intenta descargarlo una vez; sin él solo fallan las rutas AMBIT.
+Servicios: `redis`, `backend` (migrate + API sin worker), `celery-worker`, `celery-beat`, `frontend` (hot reload). `docker-compose.yml` pertenecía al stack antiguo (`apps.guzman-lopez.com`), retirado el 2026-09-25; la producción actual se sirve con `docker-compose.libres.yml` (ver §19). Si falta el JAR de AMBIT, el backend intenta descargarlo una vez; sin él solo fallan las rutas AMBIT.
 
-`docker-compose.libres.yml` es el stack aislado del modo abierto (ver §19): proyecto, volúmenes, base de datos y colas propios; expone backend en `8090` y frontend en `4220`. Se despliega en `/home/deploy/chemistry-apps-libres` y no comparte nada con el stack principal.
+`docker-compose.libres.yml` es el stack de producción (modo abierto, ver §19): proyecto, volúmenes, base de datos y colas propios; expone backend en `8090` y frontend en `4220`. Se despliega en `/home/deploy/chemistry-apps-libres` y sirve `https://apps.agalano.com`; no comparte nada con el stack antiguo retirado (`docker-compose.yml`).
 
 ## 12) Flujo OpenAPI
 
@@ -427,9 +427,9 @@ sequenceDiagram
 
 ## 13) CI/CD, pruebas y SonarQube
 
-Tres workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run build`; en `main` encadena build+deploy), `build.yml` (imágenes y bundle de release), `deploy.yml` (SCP + SSH + compose). Solo 3 secrets sensibles (`VM_SSH_KEY`, `DJANGO_SECRET_KEY`, `DB_PASSWORD`); config no sensible en 15 vars (`VM_HOST/PORT/USER/PROJECT_PATH`, `DB_NAME/USER/PORT/HOST`, `REDIS_PORT`, `ALLOWED_HOSTS`, `CORS/CORS/CSRF`, `BACKEND/PUBLIC_URLs`, `EXTERNAL_*_PORT`). Despliegue manual: `migrate` + `daphne config.asgi:application` + worker + beat + `npm run build` servido por Nginx.
+Workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run build`; su job `deploy` quedó desactivado el 2026-09-25 al retirarse el stack antiguo), `build.yml` (imágenes y bundle de release), `deploy.yml` (SCP + SSH + compose; heredero del stack retirado, ya no se invoca) y `deploy-libres.yml` (producción actual en `https://apps.agalano.com`). Solo 3 secrets sensibles (`VM_SSH_KEY`, `DJANGO_SECRET_KEY`, `DB_PASSWORD`); config no sensible en 15 vars (`VM_HOST/PORT/USER/PROJECT_PATH`, `DB_NAME/USER/PORT/HOST`, `REDIS_PORT`, `ALLOWED_HOSTS`, `CORS/CORS/CSRF`, `BACKEND/PUBLIC_URLs`, `EXTERNAL_*_PORT`). Despliegue manual: `migrate` + `daphne config.asgi:application` + worker + beat + `npm run build` servido por Nginx.
 
-`deploy-libres.yml` despliega el modo abierto en el stack aislado: se dispara con push a la rama de trabajo (cambios solo-docs no despliegan) y termina con smoke HTTP contra `/` y `/api/public/catalog/`. Detalle en §19.
+`deploy-libres.yml` despliega la producción `https://apps.agalano.com` (modo abierto) en el stack aislado: se dispara con push a `main` y a la rama de trabajo (cambios solo-docs no despliegan) y termina con smoke HTTP contra `/` y `/api/public/catalog/`. Detalle en §19.
 
 Tests: backend `manage.py test` (plugins se prueban directo con callbacks mock; Channels en memoria), frontend Vitest (`npm test`, cobertura `test:coverage:ci`). SonarQube en `localhost:9000` (`chemistry-apps`); generar antes `bash scripts/generate_sonar_coverage.sh`. Cobertura ~79.5% backend, ~82.6% frontend. Comandos exactos en `AGENTS.md`.
 
@@ -587,10 +587,10 @@ Los parámetros no son privados: un cálculo idéntico devuelve el resultado cac
 
 El stack principal no tenía beat, por eso la purga no corría en producción. Sin worker suscrito a `heavy`, toxicity se degrada a la cola por defecto.
 
-### Segundo despliegue
+### Despliegue de producción
 
-`docker-compose.libres.yml` levanta un stack aislado (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps-libres.guzman-lopez.com` con el certificado wildcard `*.guzman-lopez.com`. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado.
+`docker-compose.libres.yml` levanta el stack aislado de producción (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps.agalano.com` con certificado gestionado por certbot. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado. El modo libre está activo (`LIBRES_OPEN_MODE_ENABLED=1`; el default del código sigue siendo abierto).
 
-Workflow `.github/workflows/deploy-libres.yml`: push a la rama de trabajo (cambios solo-docs no despliegan) → construye el bundle con `git archive` → migraciones dentro del contenedor → guarda de disco (aborta si quedan menos de 15 GB) → smoke HTTP contra `/` y `/api/public/catalog/`. No reutiliza `deploy.yml` ni toca el stack principal.
+Workflow `.github/workflows/deploy-libres.yml` (`Deploy production apps.agalano.com`): push a `main` o a la rama de trabajo `refactor/local-first` (cambios solo-docs no despliegan) → construye el bundle con `git archive` → migraciones dentro del contenedor → guarda de disco (aborta si quedan menos de 15 GB) → smoke HTTP contra `/` y `/api/public/catalog/`. No reutiliza `deploy.yml`.
 
-`apps-libres` es hoy el entorno de vista previa de la rama; a corto plazo será el sitio principal (el workflow pasará a correr sobre `main`). `apps.guzman-lopez.com` se mantiene sin cambios.
+El stack antiguo (`/home/deploy/chemistry-apps`, `docker-compose.yml`, dominios `apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`) quedó **retirado** el 2026-09-25: el job `deploy` de `ci-deploy.yml` está desactivado de forma permanente (`if: false`) y su despliegue automático ya no corre.

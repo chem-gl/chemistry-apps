@@ -8,7 +8,9 @@ on:
     branches:
       - main
       - dev
-      # Rama intermedia de apps libres: valida tests y build, nunca despliega.
+      # Rama de trabajo del stack de producción (apps.agalano.com): este
+      # workflow solo valida tests y build; el despliegue lo hace
+      # `deploy-libres.yml`.
       - refactor/local-first
   workflow_dispatch: {}
 
@@ -128,9 +130,15 @@ jobs:
       rebuild_frontend: ${{ needs.changes.outputs.frontend == 'true' }}
     secrets: inherit
 
+  # El stack antiguo (apps.guzman-lopez.com / back-apps.guzman-lopez.com,
+  # `docker-compose.yml` en /home/deploy/chemistry-apps) fue retirado el
+  # 2026-09-25. La producción es https://apps.agalano.com y la despliega
+  # `.github/workflows/deploy-libres.yml`. Se conserva el job documentado y
+  # desactivado de forma permanente con una condición imposible (`if: false`)
+  # para que el historial de CI deje constancia del retiro.
   deploy:
-    name: Deploy reusable workflow
-    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
+    name: Deploy reusable workflow (LEGADO RETIRADO — nunca corre)
+    if: false
     needs: [build, changes]
     concurrency:
       group: production-deploy

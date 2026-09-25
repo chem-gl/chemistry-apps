@@ -1,6 +1,16 @@
 # Apps libres (sin login) — Fase 1: plan de ejecución técnico
 
-Rama de trabajo: `refactor/local-first` (desde `dev`). `main` y el deploy `plata` no se tocan.
+Rama de trabajo: `refactor/local-first` (desde `dev`).
+
+> **Actualización 2026-09-25 — corte a producción ejecutado**: el stack aislado
+> de apps libres es la producción principal en `https://apps.agalano.com`
+> (certbot, modo libre activo con `LIBRES_OPEN_MODE_ENABLED=1`). El workflow
+> `deploy-libres.yml` corre en `main` y en la rama de trabajo, y el despliegue
+> automático del stack antiguo (`/home/deploy/chemistry-apps`,
+> `apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`) quedó desactivado.
+> Las tablas fechadas de este documento (p. ej. §2, 2026-09-23) son snapshots
+> históricos y no se reescriben.
+
 Fuente de requisitos: memos `#apps-chemistry #apps-libres #plan` [1/5]..[5/5].
 
 ## 1. Alcance
@@ -80,10 +90,10 @@ Reglas de acceso:
 ## 6. Infraestructura
 
 1. Compose aislado (BD/Redis/volúmenes/puertos propios) para el subdominio.
-2. Nginx del host + `certbot --nginx -d apps-libres.guzman-lopez.com -d back-apps-libres.guzman-lopez.com`.
+2. Nginx del host + `certbot --nginx -d apps.agalano.com` (TLS de producción; el backend se sirve same-origin, sin subdominio propio).
 3. Variables propias: hosts, CORS/CSRF, TTLs, límites, nombre de cola `heavy`.
 4. Worker `heavy` con concurrencia 2 para toxicity.
-5. Rollback: bajar el compose del subdominio (nada que revertir en `plata`).
+5. Rollback: volver a desplegar el commit anterior con `deploy-libres.yml` (el stack es producción; `plata`/`apps.guzman-lopez.com` ya no interviene).
 
 ## 7. Orden de ejecución y gates
 
@@ -212,13 +222,13 @@ Superficie pública resultante: `POST jobs/`, `GET jobs/<uuid>/`, reportes y vis
 
 | Archivo | Cambio |
 |---|---|
-| `.github/workflows/deploy-libres.yml` (nuevo) | Push a la rama de trabajo (solo-docs no despliega) → bundle `git archive` → migraciones en contenedor → guarda de disco (15 GB) → smoke `/` y `/api/public/catalog/` |
-| Host `plata` | `/home/deploy/chemistry-apps-libres`, `https://apps-libres.guzman-lopez.com` con wildcard `*.guzman-lopez.com`, Nginx same-origin (`/api`, `/ws`, `/static`, `/media`) |
+| `.github/workflows/deploy-libres.yml` (nuevo) | Hoy `Deploy production apps.agalano.com`: push a `main` o `refactor/local-first` (solo-docs no despliega) → bundle `git archive` → migraciones en contenedor → guarda de disco (15 GB) → smoke `/` y `/api/public/catalog/` |
+| Host `plata` | `/home/deploy/chemistry-apps-libres`, `https://apps.agalano.com` con certificado certbot, Nginx same-origin (`/api`, `/ws`, `/static`, `/media`) |
 
 ### Pasos pendientes
 
 - Nginx: `client_max_body_size` como techo absoluto y `error_page 413` con formato unificado.
 - i18n (8 idiomas): textos de modo libre, aviso de privacidad, expiración 24 h, 429/413.
 - Carga ligera + Sonar: p95 < 2x, 0 5xx, 429 verificado, gate OK.
-- Corte final: pasar el workflow a `main` cuando `apps-libres` sea el sitio principal.
+- ~~Corte final: pasar el workflow a `main` cuando `apps-libres` sea el sitio principal.~~ **HECHO (2026-09-25)**: `deploy-libres.yml` corre en `main` y despliega la producción `https://apps.agalano.com` (modo libre activo); el stack antiguo de `guzman-lopez.com` quedó retirado y su job `deploy` en `ci-deploy.yml` desactivado con `if: false`.
 
