@@ -247,7 +247,9 @@ OPEN_MODE_ENABLED: bool = _get_env_bool("OPEN_MODE_ENABLED", True)
 PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
 REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")
 # Lecturas anónimas costosas (reportes, derivaciones, SVG, ZIPs, inspecciones).
-PUBLIC_READ_RATE: str = os.getenv("PUBLIC_READ_RATE", "120/hour")
+# 600/h por defecto: 120/h resultaba insuficiente en aulas/NAT compartido,
+# donde varias personas comparten una misma IP y agotaban la cuota en minutos.
+PUBLIC_READ_RATE: str = os.getenv("PUBLIC_READ_RATE", "600/hour")
 # Cuentas nuevas por IP (anti-spam del registro público).
 REGISTRATION_RATE: str = os.getenv("REGISTRATION_RATE", "30/hour")
 

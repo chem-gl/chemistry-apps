@@ -19,6 +19,7 @@ from django.utils import timezone
 from ..models import ScientificJob
 
 MOLAR_CREATE_URL = "/api/public/molar-fractions/jobs/"
+PUBLIC_CATALOG_URL = "/api/public/catalog/"
 MOLAR_PAYLOAD: dict[str, object] = {
     "version": "1.0.0",
     "pka_values": [4.75],
@@ -304,6 +305,59 @@ class PublicThrottleTests(TestCase):
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 200)
         self.assertEqual(third.status_code, 429)
+
+
+@override_settings(
+    OPEN_MODE_ENABLED=True,
+    REST_FRAMEWORK={
+        "DEFAULT_THROTTLE_RATES": {
+            "public-dispatch": "60/hour",
+            "public-read": "1/hour",
+            "registered-dispatch": "600/hour",
+        }
+    },
+)
+class PublicCatalogCacheTests(TestCase):
+    """El catálogo público no consume la cuota `public-read` y se cachea.
+
+    Causa raíz (429 en producción): el SPA pide el catálogo en cada carga y,
+    con IPs compartidas (NAT/aulas), esas lecturas baratas agotaban la cuota
+    de `public-read` y dejaban al SPA sin poder resolver el modo. El catálogo
+    queda exento de throttle y lleva `Cache-Control` para que el navegador no
+    lo repita en cada navegación.
+    """
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        cache.clear()
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def test_catalog_ignores_public_read_quota(self) -> None:
+        # Con `public-read` a 1/hour, dos peticiones seguidas deben responder
+        # 200: si el catálogo consumiera la cuota, la segunda sería 429.
+        first = self.client.get(PUBLIC_CATALOG_URL)
+        second = self.client.get(PUBLIC_CATALOG_URL)
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+
+    def test_catalog_sets_http_cache_header(self) -> None:
+        response = self.client.get(PUBLIC_CATALOG_URL)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Cache-Control"], "public, max-age=300")
+
+    def test_heavy_reads_still_consume_public_read_quota(self) -> None:
+        # Regresión: eximir el catálogo no exime las lecturas costosas reales.
+        job = _create_molar_job(
+            status="completed", expires_at=timezone.now() + timedelta(hours=1)
+        )
+        report_url = f"{MOLAR_CREATE_URL}{job.id}/report-log/"
+
+        self.assertEqual(self.client.get(report_url).status_code, 200)
+        self.assertEqual(self.client.get(report_url).status_code, 429)
 
 
 @override_settings(OPEN_MODE_ENABLED=False)

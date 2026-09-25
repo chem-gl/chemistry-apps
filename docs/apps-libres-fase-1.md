@@ -194,10 +194,10 @@ create/retrieve/report-csv).
 
 | Archivo | Cambio |
 |---|---|
-| `config/public_urls.py` | `PublicCatalogView` (`GET /api/public/catalog/`: apps + límites) + 7 ViewSets públicos; Smile-it expone `catalog`/`categories`/`patterns` en solo lectura |
-| `apps/core/public_api.py` | Whitelist de reportes (`report_csv`, `report_csv_by_method`, `report_log`, `report_error`, `report_inputs`) y vistas (`inspect_input`, `inspect_structure`, `derivations`, `derivation_svg`, `report_smiles`, `report_traceability`, `report_images_zip`); `retrieve` sin throttle, lecturas costosas bajo `public-read` (120/h) |
+| `config/public_urls.py` | `PublicCatalogView` (`GET /api/public/catalog/`: apps + límites, sin throttle y con `Cache-Control: public, max-age=300`) + 7 ViewSets públicos; Smile-it expone `catalog`/`categories`/`patterns` en solo lectura |
+| `apps/core/public_api.py` | Whitelist de reportes (`report_csv`, `report_csv_by_method`, `report_log`, `report_error`, `report_inputs`) y vistas (`inspect_input`, `inspect_structure`, `derivations`, `derivation_svg`, `report_smiles`, `report_traceability`, `report_images_zip`); `retrieve` sin throttle, lecturas costosas bajo `public-read` (600/h) |
 | `apps/core/throttling.py` | `AnonymousReadRateThrottle` (scope `public-read`) |
-| `config/settings.py` | `PUBLIC_READ_RATE=120/hour`, `REGISTERED_DISPATCH_RATE=600/hour` |
+| `config/settings.py` | `PUBLIC_READ_RATE=600/hour`, `REGISTERED_DISPATCH_RATE=600/hour` |
 
 Superficie pública resultante: `POST jobs/`, `GET jobs/<uuid>/`, reportes y vistas de solo lectura por app, más `GET /api/public/catalog/`. Sin listados, logs, pausa, cancelar ni papelera.
 

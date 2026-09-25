@@ -1,0 +1,16 @@
+ Initial command:
+ /opt/gaussian/g09/l1.exe "ts.inp"
+ %chk=ts.chk
+ #p opt freq 6-311+G(d,p)
+ ---------------
+ TS
+ ---------------
+ Charge =  1 Multiplicity = 2
+ SCF Done:  E(RM052X) =  -687.542319  A.U. after   18 cycles
+ Sum of electronic and zero-point Energies= -687.412345
+ Sum of electronic and thermal Enthalpies= -687.389012
+ Sum of electronic and thermal Free Energies= -687.421567
+ Temperature  298.150 Kelvin.  Pressure   1.00000 Atm.
+ 1 imaginary frequencies (negative Signs)
+ Frequencies --  -1450.5432
+ Normal termination of Gaussian 09 at Fri Jan 28 03:25:33 2022.

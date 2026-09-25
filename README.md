@@ -553,7 +553,7 @@ Namespace `/api/public/`, sin autenticación. `<app>` es la clave de ruta (`mola
 | `POST` | `/api/public/<app>/jobs/` | Crea job anónimo (`owner`/`group` nulos) y despacha |
 | `GET` | `/api/public/<app>/jobs/{id}/` | Estado y resultado por UUID; polling sin cuota |
 | `GET` | `/api/public/<app>/jobs/{id}/report-csv \| report-log \| report-error \| report-inputs` | Solo en `completed`; consumen cuota `public-read` |
-| `GET` | `/api/public/catalog/` | Apps disponibles y límites vigentes (machine-readable) |
+| `GET` | `/api/public/catalog/` | Apps disponibles y límites vigentes (machine-readable); sin throttle y con `Cache-Control: public, max-age=300` |
 
 Extras por app: SA Score suma `report-csv-method`; Smile-it suma `report-smiles`, `report-traceability`, `report-images-zip`, `derivations`, `derivations/{i}/svg`, referencia de solo lectura `catalog \| categories \| patterns` e `inspect-structure`; easy-rate suma `inspect-input`.
 
@@ -567,7 +567,7 @@ El UUID es una capability URL: solo devuelve jobs anónimos no expirados del plu
 | Jobs concurrentes | 2 (semáforo Redis con lease y fallo abierto) | Sin semáforo |
 | Archivo subido | 10 MB | 50 MB |
 | Cuerpo de parámetros | 256 KB (`MAX_PARAMETERS_BYTES`; exceso → 413) | Igual |
-| Lecturas costosas (reportes, derivaciones, SVG, ZIP, inspecciones) | 120/h (`public-read`) | — |
+| Lecturas costosas (reportes, derivaciones, SVG, ZIP, inspecciones) | 600/h (`public-read`; el catálogo público no consume esta cuota) | — |
 | Vida del job | 24 h (`ANONYMOUS_JOB_TTL_HOURS`, purga diaria por beat) | Sin expiración |
 | Caché de cálculos idénticos | 7 días, compartida (`SHARED_CACHE_TTL_DAYS`) | — |
 

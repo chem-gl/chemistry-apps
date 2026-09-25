@@ -33,12 +33,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
+from rest_framework.throttling import BaseThrottle
 from rest_framework.views import APIView
 
 from apps.core.app_registry import ScientificAppRegistry
 from apps.core.public_api import PublicAppViewSetMixin
 from apps.core.schemas import ErrorResponseSerializer
-from apps.core.throttling import AnonymousReadRateThrottle
 from apps.easy_rate.routers import EasyRateJobViewSet
 from apps.easy_rate.schemas import (
     EasyRateJobCreateSerializer,
@@ -233,7 +233,13 @@ class PublicCatalogView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list[type] = []
-    throttle_classes = [AnonymousReadRateThrottle]
+    # Sin throttle: el catálogo es un payload pequeño y cacheable (una lista de
+    # apps + límites estáticos) que el SPA pide en cada carga. Consumir la
+    # cuota `public-read` aquí agotaba la IP compartida (NAT/aulas) y producía
+    # 429 en producción, dejando el SPA sin poder resolver el modo. La
+    # protección real es la cabecera Cache-Control de abajo (5 min de caché
+    # en navegador) + el tamaño fijo y barato de la respuesta.
+    throttle_classes: list[type[BaseThrottle]] = []
 
     @extend_schema(
         tags=["Public"],
@@ -264,7 +270,7 @@ class PublicCatalogView(APIView):
                     }
                 )
 
-        return Response(
+        response = Response(
             {
                 "mode": "open" if open_mode_enabled else "closed",
                 "apps": apps,
@@ -279,6 +285,12 @@ class PublicCatalogView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+        # Caché HTTP corta: evita que el SPA repita la petición en cada
+        # navegación (5 min) sin arriesgar visibilidad de un cambio de modo
+        # (el interruptor global rara vez cambia y, si lo hace, se propaga en
+        # como mucho 5 minutos).
+        response.headers["Cache-Control"] = "public, max-age=300"
+        return response
 
 
 public_router = DefaultRouter()
