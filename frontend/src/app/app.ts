@@ -98,6 +98,18 @@ export class App implements OnInit {
   /** Apps con submenu tiene items? */
   readonly hasApps = computed(() => this.appsSubmenuItems().length > 0);
 
+  /**
+   * Rol visible en el chip de sesión. Se oculta cuando coincide con el nombre
+   * mostrado (p. ej. usuario "root" sin nombre propio) para no duplicar el texto.
+   */
+  readonly sessionRoleLabel = computed<string | null>(() => {
+    const role = this.sessionService.currentRole();
+    if (role === null) {
+      return null;
+    }
+    return role.toLowerCase() === this.sessionService.displayName().toLowerCase() ? null : role;
+  });
+
   ngOnInit(): void {
     this.languageService.initializeLanguage();
     this.scientificNumberInputLocaleService.initialize();

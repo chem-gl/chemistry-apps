@@ -7,10 +7,24 @@
   label {
     display: grid;
     gap: 0.3rem;
+    /* min-width:0 permite que la pista encoja por debajo del ancho intrínseco
+       del input (≈203px) y evita desbordes horizontales en móvil. */
+    min-width: 0;
     font-size: var(--chem-text-sm);
     font-weight: 700;
     color: var(--chem-ink);
     font-family: var(--chem-font-label);
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Móvil: una sola columna para que el placeholder no se recorte. */
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   &.diffusion-fields {

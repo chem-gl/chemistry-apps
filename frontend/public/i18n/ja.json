@@ -17,15 +17,20 @@
       "networkUnavailable": "ネットワークに接続できません。",
       "forbidden": "この操作を実行する権限がありません。",
       "requestFailedTitle": "リクエスト失敗",
-      "notFound": "The requested resource was not found.",
+      "notFound": "要求されたリソースが見つかりません。",
       "serverError": "サーバー内部エラー。",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "unauthorized": "Your session is not authorized for this operation."
+      "badRequest": "リクエストが無効です。送信データを確認してください。",
+      "unauthorized": "このセッションではこの操作が許可されていません。"
     },
     "actions": {
-      "closeAria": "Close error modal",
+      "closeAria": "エラーモーダルを閉じる",
       "understood": "了解",
       "viewDetails": "技術詳細を表示"
+    },
+    "runtime": {
+      "applicationErrorTitle": "アプリケーションエラー",
+      "unexpectedErrorTitle": "予期しないエラー",
+      "unexpectedClientError": "クライアント側で予期しないエラーが発生しました。"
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "または", "googleButton": "Googleで続行" },
+    "social": {
+      "divider": "または",
+      "googleButton": "Googleで続行"
+    },
     "form": {
       "password": "パスワード",
       "signIn": "サインイン",
@@ -347,6 +355,7 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "送信待ち — 入力を設定してジョブを実行すると、ここに結果が表示されます。",
       "submitting": "Submitting Marcus job to backend...",
       "title": "Output",
       "kFinal": "k (final)",
@@ -520,7 +529,8 @@
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "tag": "CADMA-Chem Protocol",
       "infoAria": "Show workflow overview",
-      "step4": "View scores & export results"
+      "step4": "View scores & export results",
+      "protocolDiagram": "プロトコル図"
     },
     "steps": {
       "selectionScores": "Selection scores",
@@ -704,7 +714,7 @@
       "noFamilies": "No reference families available. Create one below to get started.",
       "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
       "readOnly": "Read only",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "化合物",
       "familyName": "Family name",
       "nameColumn": "Name",
       "clear": "Clear",
@@ -884,7 +894,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Back to formula"
+      "backToFormula": "Back to formula",
+      "charts": "グラフ"
     },
     "compoundDetail": {
       "admeGroup": "ADME特性",
@@ -900,6 +911,23 @@
       "tabReferenceSets": "参照セット",
       "tabSelectionScores": "選択スコア",
       "tabWorkflow": "ワークフロー"
+    },
+    "diagram": {
+      "ariaLabel": "CADMA-Chem 手法図"
+    },
+    "charts": {
+      "expandChart": "グラフを拡大",
+      "expandedChartAria": "拡大したグラフ",
+      "loadingStructure": "構造を読み込み中…",
+      "loading2D": "2D構造を読み込み中…",
+      "clickToLoad2D": "2D構造を読み込むには分子をクリック",
+      "compoundDetail": "化合物の詳細",
+      "metricHeader": "指標",
+      "valueHeader": "値",
+      "closeDetail": "詳細を閉じる",
+      "emptyRanking": "ランキングデータがありません。まず比較を実行してください。",
+      "dialogTitle": "箱ひげ図 — CADMA Py ランキング",
+      "boxplotAria": "結果の箱ひげ図"
     }
   },
   "app": {
@@ -1600,10 +1628,10 @@
       "substituentsAdded": "Substituents added"
     },
     "annotations": {
-      "hideTitleAttr": "Hide",
+      "hideTitleAttr": "隠す",
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
-      "showTitleAttr": "Show",
+      "showTitleAttr": "表示",
       "ariaLabel": "Structural annotations"
     },
     "inspection": {
@@ -1633,11 +1661,11 @@
     "patterns": {
       "hiddenInScaffold": "Hidden in scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "原子",
+      "hidePattern": "パターンを隠す",
       "formCaption": "Caption",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "パターンを表示",
       "howItWorksTitle": "How it works",
       "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
       "active": "Active",
@@ -1647,28 +1675,28 @@
       "formName": "Name",
       "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
       "formSmarts": "SMARTS",
-      "toxicophore": "Toxicophore",
+      "toxicophore": "トキシコフォア",
       "dialogAriaLabel": "Structural pattern catalog",
       "smartsStructure": "SMARTS structure",
       "detailAriaLabel": "Pattern detail",
       "specification": "Specification",
       "formTypePrivileged": "Privileged scaffold",
-      "title": "Structural patterns",
+      "title": "構造パターン",
       "formSource": "Source reference",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "パターンを編集中：",
+      "privileged": "プリビレッジド骨格",
       "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "編集中",
       "stableId": "stable_id",
       "source": "Source",
       "activeInScaffold": "Active in scaffold",
       "formSave": "Save structural pattern",
       "formTypeToxicophore": "Toxicophore",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "プレビュー可能な SMILES がありません。",
       "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
       "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "プレビュー利用不可"
     },
     "header": {
       "title": "Combinatorial Structure Designer",
@@ -1842,7 +1870,12 @@
       "histSites": "Sites",
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
+      "showingOfTotal": "{total} 件中 {shown} 個の誘導体を表示"
+    },
+    "catalogPanel": {
+      "maximizeSection": "セクションを最大化",
+      "minimizeSection": "セクションを最小化"
     }
   },
   "shared": {
@@ -1904,8 +1937,8 @@
         "expired": "サーバーで期限切れ"
       },
       "limits": {
-        "429": "ネットワークからの計算が多すぎます。後でもう一度お試しください。",
-        "413": "アップロードまたはパラメータがオープンモードの上限を超えています。"
+        "413": "アップロードまたはパラメータがオープンモードの上限を超えています。",
+        "429": "ネットワークからの計算が多すぎます。後でもう一度お試しください。"
       },
       "unavailable": "アカウントなしでは利用できません。"
     }

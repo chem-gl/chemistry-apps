@@ -17,15 +17,20 @@
       "networkUnavailable": "网络不可用。",
       "forbidden": "无权限执行此操作。",
       "requestFailedTitle": "请求失败",
-      "notFound": "The requested resource was not found.",
+      "notFound": "未找到请求的资源。",
       "serverError": "服务器内部错误。",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "unauthorized": "Your session is not authorized for this operation."
+      "badRequest": "请求无效。请检查提交的数据。",
+      "unauthorized": "您的会话无权执行此操作。"
     },
     "actions": {
-      "closeAria": "Close error modal",
+      "closeAria": "关闭错误对话框",
       "understood": "我知道了",
       "viewDetails": "查看技术详情"
+    },
+    "runtime": {
+      "applicationErrorTitle": "应用程序错误",
+      "unexpectedErrorTitle": "意外错误",
+      "unexpectedClientError": "客户端发生意外错误。"
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "或", "googleButton": "使用 Google 继续" },
+    "social": {
+      "divider": "或",
+      "googleButton": "使用 Google 继续"
+    },
     "form": {
       "password": "密码",
       "signIn": "登录",
@@ -347,6 +355,7 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "等待提交 — 配置输入并运行任务，结果将显示在此处。",
       "submitting": "Submitting Marcus job to backend...",
       "title": "Output",
       "kFinal": "k (final)",
@@ -520,7 +529,8 @@
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "tag": "CADMA-Chem Protocol",
       "infoAria": "Show workflow overview",
-      "step4": "View scores & export results"
+      "step4": "View scores & export results",
+      "protocolDiagram": "协议流程图"
     },
     "steps": {
       "selectionScores": "Selection scores",
@@ -704,7 +714,7 @@
       "noFamilies": "No reference families available. Create one below to get started.",
       "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
       "readOnly": "Read only",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "化合物",
       "familyName": "Family name",
       "nameColumn": "Name",
       "clear": "Clear",
@@ -884,7 +894,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Back to formula"
+      "backToFormula": "Back to formula",
+      "charts": "图表"
     },
     "compoundDetail": {
       "admeGroup": "ADME 性质",
@@ -900,6 +911,23 @@
       "tabReferenceSets": "参考集",
       "tabSelectionScores": "选择得分",
       "tabWorkflow": "工作流"
+    },
+    "diagram": {
+      "ariaLabel": "CADMA-Chem 方法流程图"
+    },
+    "charts": {
+      "expandChart": "展开图表",
+      "expandedChartAria": "展开的图表",
+      "loadingStructure": "正在加载结构…",
+      "loading2D": "正在加载 2D 结构…",
+      "clickToLoad2D": "点击分子以加载其 2D 结构",
+      "compoundDetail": "化合物详情",
+      "metricHeader": "指标",
+      "valueHeader": "值",
+      "closeDetail": "关闭详情",
+      "emptyRanking": "没有可用的排名数据。请先运行一次比较。",
+      "dialogTitle": "箱线图 — CADMA Py 排名",
+      "boxplotAria": "结果箱线图"
     }
   },
   "app": {
@@ -1600,10 +1628,10 @@
       "substituentsAdded": "Substituents added"
     },
     "annotations": {
-      "hideTitleAttr": "Hide",
+      "hideTitleAttr": "隐藏",
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
-      "showTitleAttr": "Show",
+      "showTitleAttr": "显示",
       "ariaLabel": "Structural annotations"
     },
     "inspection": {
@@ -1633,11 +1661,11 @@
     "patterns": {
       "hiddenInScaffold": "Hidden in scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "原子",
+      "hidePattern": "隐藏模式",
       "formCaption": "Caption",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "显示模式",
       "howItWorksTitle": "How it works",
       "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
       "active": "Active",
@@ -1647,28 +1675,28 @@
       "formName": "Name",
       "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
       "formSmarts": "SMARTS",
-      "toxicophore": "Toxicophore",
+      "toxicophore": "毒性基团",
       "dialogAriaLabel": "Structural pattern catalog",
       "smartsStructure": "SMARTS structure",
       "detailAriaLabel": "Pattern detail",
       "specification": "Specification",
       "formTypePrivileged": "Privileged scaffold",
-      "title": "Structural patterns",
+      "title": "结构模式",
       "formSource": "Source reference",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "正在编辑模式：",
+      "privileged": "优先骨架",
       "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "编辑中",
       "stableId": "stable_id",
       "source": "Source",
       "activeInScaffold": "Active in scaffold",
       "formSave": "Save structural pattern",
       "formTypeToxicophore": "Toxicophore",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "没有可用于预览的 SMILES。",
       "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
       "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "预览不可用"
     },
     "header": {
       "title": "Combinatorial Structure Designer",
@@ -1842,7 +1870,12 @@
       "histSites": "Sites",
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
+      "showingOfTotal": "显示 {total} 个中的 {shown} 个衍生物"
+    },
+    "catalogPanel": {
+      "maximizeSection": "最大化区块",
+      "minimizeSection": "最小化区块"
     }
   },
   "shared": {
@@ -1904,8 +1937,8 @@
         "expired": "已在服务器上过期"
       },
       "limits": {
-        "429": "来自您网络的计算过多。请稍后重试。",
-        "413": "上传内容或参数超过开放模式限制。"
+        "413": "上传内容或参数超过开放模式限制。",
+        "429": "来自您网络的计算过多。请稍后重试。"
       },
       "unavailable": "无账户不可用。"
     }

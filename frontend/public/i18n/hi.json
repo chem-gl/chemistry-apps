@@ -17,15 +17,20 @@
       "networkUnavailable": "नेटवर्क उपलब्ध नहीं है।",
       "forbidden": "इस क्रिया के लिए अनुमति नहीं है।",
       "requestFailedTitle": "अनुरोध विफल",
-      "notFound": "The requested resource was not found.",
+      "notFound": "अनुरोधित संसाधन नहीं मिला।",
       "serverError": "सर्वर में आंतरिक त्रुटि।",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "unauthorized": "Your session is not authorized for this operation."
+      "badRequest": "अनुरोध अमान्य है। कृपया भेजे गए डेटा की जाँच करें।",
+      "unauthorized": "आपका सत्र इस संचालन हेतु अधिकृत नहीं है।"
     },
     "actions": {
-      "closeAria": "Close error modal",
+      "closeAria": "त्रुटि मोडाल बंद करें",
       "understood": "समझ गया",
       "viewDetails": "तकनीकी विवरण देखें"
+    },
+    "runtime": {
+      "applicationErrorTitle": "एप्लिकेशन त्रुटि",
+      "unexpectedErrorTitle": "अप्रत्याशित त्रुटि",
+      "unexpectedClientError": "एक अप्रत्याशित क्लाइंट-साइड त्रुटि उत्पन्न हुई।"
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "या", "googleButton": "Google के साथ जारी रखें" },
+    "social": {
+      "divider": "या",
+      "googleButton": "Google के साथ जारी रखें"
+    },
     "form": {
       "password": "पासवर्ड",
       "signIn": "साइन इन",
@@ -347,6 +355,7 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "सबमिशन की प्रतीक्षा — परिणाम यहाँ देखने के लिए इनपुट कॉन्फ़िगर करें और job चलाएँ।",
       "submitting": "Submitting Marcus job to backend...",
       "title": "Output",
       "kFinal": "k (final)",
@@ -520,7 +529,8 @@
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "tag": "CADMA-Chem Protocol",
       "infoAria": "Show workflow overview",
-      "step4": "View scores & export results"
+      "step4": "View scores & export results",
+      "protocolDiagram": "प्रोटोकॉल आरेख"
     },
     "steps": {
       "selectionScores": "Selection scores",
@@ -704,7 +714,7 @@
       "noFamilies": "No reference families available. Create one below to get started.",
       "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
       "readOnly": "Read only",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "यौगिक",
       "familyName": "Family name",
       "nameColumn": "Name",
       "clear": "Clear",
@@ -884,7 +894,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Back to formula"
+      "backToFormula": "Back to formula",
+      "charts": "चार्ट"
     },
     "compoundDetail": {
       "admeGroup": "ADME गुणधर्म",
@@ -900,6 +911,23 @@
       "tabReferenceSets": "संदर्भ सेट",
       "tabSelectionScores": "चयन स्कोर",
       "tabWorkflow": "कार्यप्रवाह"
+    },
+    "diagram": {
+      "ariaLabel": "CADMA-Chem कार्यविधि आरेख"
+    },
+    "charts": {
+      "expandChart": "चार्ट विस्तारित करें",
+      "expandedChartAria": "विस्तारित चार्ट",
+      "loadingStructure": "संरचना लोड हो रही है…",
+      "loading2D": "2D संरचना लोड हो रही है…",
+      "clickToLoad2D": "2D संरचना लोड करने के लिए अणु पर क्लिक करें",
+      "compoundDetail": "यौगिक विवरण",
+      "metricHeader": "मैट्रिक",
+      "valueHeader": "मान",
+      "closeDetail": "विवरण बंद करें",
+      "emptyRanking": "कोई रैंकिंग डेटा उपलब्ध नहीं। पहले एक तुलना चलाएँ।",
+      "dialogTitle": "बॉक्सप्लॉट चार्ट — CADMA Py रैंकिंग",
+      "boxplotAria": "परिणाम बॉक्सप्लॉट चार्ट"
     }
   },
   "app": {
@@ -1600,10 +1628,10 @@
       "substituentsAdded": "Substituents added"
     },
     "annotations": {
-      "hideTitleAttr": "Hide",
+      "hideTitleAttr": "छिपाएँ",
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
-      "showTitleAttr": "Show",
+      "showTitleAttr": "दिखाएँ",
       "ariaLabel": "Structural annotations"
     },
     "inspection": {
@@ -1633,11 +1661,11 @@
     "patterns": {
       "hiddenInScaffold": "Hidden in scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "परमाणु",
+      "hidePattern": "पैटर्न छिपाएँ",
       "formCaption": "Caption",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "पैटर्न दिखाएँ",
       "howItWorksTitle": "How it works",
       "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
       "active": "Active",
@@ -1647,28 +1675,28 @@
       "formName": "Name",
       "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
       "formSmarts": "SMARTS",
-      "toxicophore": "Toxicophore",
+      "toxicophore": "टॉक्सिकोफोर",
       "dialogAriaLabel": "Structural pattern catalog",
       "smartsStructure": "SMARTS structure",
       "detailAriaLabel": "Pattern detail",
       "specification": "Specification",
       "formTypePrivileged": "Privileged scaffold",
-      "title": "Structural patterns",
+      "title": "संरचनात्मक पैटर्न",
       "formSource": "Source reference",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "पैटर्न संपादित कर रहे हैं:",
+      "privileged": "विशेष स्केफोल्ड",
       "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "संपादन",
       "stableId": "stable_id",
       "source": "Source",
       "activeInScaffold": "Active in scaffold",
       "formSave": "Save structural pattern",
       "formTypeToxicophore": "Toxicophore",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "पूर्वावलोकन के लिए SMILES उपलब्ध नहीं।",
       "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
       "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "पूर्वावलोकन अनुपलब्ध"
     },
     "header": {
       "title": "Combinatorial Structure Designer",
@@ -1842,7 +1870,12 @@
       "histSites": "Sites",
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
+      "showingOfTotal": "{total} में से {shown} व्युत्पन्न दिखा रहे हैं"
+    },
+    "catalogPanel": {
+      "maximizeSection": "अनुभाग अधिकतम करें",
+      "minimizeSection": "अनुभाग न्यूनतम करें"
     }
   },
   "shared": {
@@ -1904,8 +1937,8 @@
         "expired": "सर्वर पर समाप्त"
       },
       "limits": {
-        "429": "आपके नेटवर्क से बहुत अधिक गणनाएँ। बाद में पुनः प्रयास करें।",
-        "413": "अपलोड या पैरामीटर ओपन-मोड सीमा से अधिक हैं।"
+        "413": "अपलोड या पैरामीटर ओपन-मोड सीमा से अधिक हैं।",
+        "429": "आपके नेटवर्क से बहुत अधिक गणनाएँ। बाद में पुनः प्रयास करें।"
       },
       "unavailable": "खाते के बिना उपलब्ध नहीं।"
     }

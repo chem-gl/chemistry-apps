@@ -40,6 +40,8 @@ describe('GlobalErrorModalService', () => {
     const currentError = service.currentError();
     expect(currentError).not.toBeNull();
     expect(currentError?.title).toBe('Request failed');
+    expect(currentError?.titleKey).toBe('errorModal.http.requestFailedTitle');
+    expect(currentError?.messageKey).toBe('errorModal.http.serverError');
     expect(currentError?.message).toBe(
       'The server reported an internal error. Please try again later.',
     );

@@ -2,8 +2,8 @@
 <dialog #boxplotDialog class="bxp-dialog" (click)="onBackdropClick($event)" (keydown)="onBackdropClick($event)">
   <section class="bxp-modal">
     <div class="bxp-header">
-      <h4>Boxplot Charts — CADMA Py Ranking</h4>
-      <button class="bxp-close-btn" type="button" (click)="close()" aria-label="Close">×</button>
+      <h4>{{ 'cadmaPy.charts.dialogTitle' | transloco }}</h4>
+      <button class="bxp-close-btn" type="button" (click)="close()" [attr.aria-label]="'cadmaPy.general.close' | transloco">×</button>
     </div>
     <div class="bxp-layout">
       <div class="bxp-charts-panel">
@@ -38,39 +38,39 @@
         </div>
         <div class="bxp-chart-wrapper">
           <app-scientific-chart
-            [ariaLabel]="'Results boxplot chart'"
+            [ariaLabel]="'cadmaPy.charts.boxplotAria' | transloco"
             [options]="boxplotChartOptions()"
             [chartHeight]="'100%'"
             (chartInit)="onChartInit($event)"
             (chartClick)="onChartClick($event)" />
         </div>
         } @else {
-        <p class="bxp-empty">No ranking data available. Run a comparison first.</p>
+        <p class="bxp-empty">{{ 'cadmaPy.charts.emptyRanking' | transloco }}</p>
         }
       </div>
 
       @if (selectedCompound(); as compound) {
       <aside class="bxp-detail">
         <div class="bxp-detail-header">
-          <h5>{{ compound.name || 'Compound Detail' }}</h5>
-          <button class="bxp-close-btn" type="button" (click)="clearSelectedCompound()" aria-label="Close detail">×</button>
+          <h5>{{ compound.name || ('cadmaPy.charts.compoundDetail' | transloco) }}</h5>
+          <button class="bxp-close-btn" type="button" (click)="clearSelectedCompound()" [attr.aria-label]="'cadmaPy.charts.closeDetail' | transloco">×</button>
         </div>
         <p class="bxp-smiles">{{ compound.smiles }}</p>
 
         <div class="bxp-svg-container">
           @if (compoundBusy()) {
-          <p class="bxp-loading">Loading structure...</p>
+          <p class="bxp-loading">{{ 'cadmaPy.charts.loadingStructure' | transloco }}</p>
           } @else if (compoundError()) {
           <p class="bxp-error" role="alert">{{ compoundError() }}</p>
           } @else if (compoundSvg(); as svg) {
           <div class="bxp-svg" [innerHTML]="svg"></div>
           } @else {
-          <p class="bxp-loading">Click a molecule to load 2D structure</p>
+          <p class="bxp-loading">{{ 'cadmaPy.charts.clickToLoad2D' | transloco }}</p>
           }
         </div>
 
        <table class="bxp-metrics-table">
-         <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
+         <thead><tr><th scope="col">{{ 'cadmaPy.charts.metricHeader' | transloco }}</th><th scope="col">{{ 'cadmaPy.charts.valueHeader' | transloco }}</th></tr></thead>
           <tbody>
             @for (m of compoundMetrics(); track m.key) {
             <tr>

@@ -99,3 +99,11 @@
 .error-modal-confirm-button {
   padding: 0.44rem 0.8rem;
 }
+
+/* Respeta la preferencia de movimiento reducido: sin transiciones en los botones. */
+@media (prefers-reduced-motion: reduce) {
+  .error-modal-close-button,
+  .error-modal-confirm-button {
+    transition: none;
+  }
+}

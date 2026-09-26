@@ -173,6 +173,41 @@ describe('SmilesJobWorkflowService', () => {
     expect(service.jobLogs().map((entry) => entry.eventIndex)).toEqual([1, 2]);
   });
 
+  it('no solicita logs privados en modo abierto para evitar el 401 del job anónimo', () => {
+    const openGetJobLogs = vi.fn(() =>
+      of({ jobId: 'job-open', count: 0, nextAfterEventIndex: 0, results: [] } as JobLogsPageView),
+    );
+    const openInjector = Injector.create({
+      providers: [
+        {
+          provide: JobAccessModeService,
+          useValue: { isOpenMode: () => true, mode: () => 'open' },
+        },
+        {
+          provide: LocalResultsStore,
+          useValue: { list: () => [], save: () => undefined, remove: () => undefined, clear: () => undefined },
+        },
+        {
+          provide: JobsApiService,
+          useValue: {
+            getJobLogs: openGetJobLogs,
+            validateSmilesCompatibility: vi.fn(() => of({ compatible: true, issues: [] })),
+            streamJobEvents: vi.fn(),
+            streamJobLogEvents: vi.fn(),
+            pollJobUntilCompleted: vi.fn(),
+          } as unknown as JobsApiService,
+        },
+      ],
+    });
+    const openService = runInInjectionContext(openInjector, () => new TestSmilesWorkflowService('CCO'));
+
+    openService.historicalLogsForTest('job-open');
+
+    expect(openGetJobLogs).not.toHaveBeenCalled();
+    expect(openService.jobLogs()).toEqual([]);
+    openService.ngOnDestroy();
+  });
+
   it('persists and hydrates display names using input or historical parameters', () => {
     service.jobNameInput.set('Named run');
     service.remember('job-1');

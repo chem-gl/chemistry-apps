@@ -13,8 +13,8 @@
     </button>
   </div>
   <div #principalSvgViewport class="principal-svg-viewport">
-    <div class="principal-zoom-surface" [style.width.px]="canvasSizePx" [style.height.px]="canvasSizePx">
-      <div class="svg-preview inspectable principal-svg-stage" [style.transform]="'scale(' + zoomLevel + ')'"
+    <div class="principal-zoom-surface" [style.--zoom-factor]="zoomLevel">
+      <div class="svg-preview inspectable principal-svg-stage"
         (click)="onInspectionSvgClick($event)" (keydown)="onInspectionSvgClick($event)" [innerHTML]="inspectionSvg">
       </div>
     </div>

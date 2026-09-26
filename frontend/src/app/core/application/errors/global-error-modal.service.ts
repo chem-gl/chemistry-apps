@@ -5,6 +5,23 @@ import { Injectable, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { ErrorModalViewModel, ErrorNotifierPort } from './error-notifier.port';
 
+/** Título mostrado mientras el catálogo activo no resuelva la clave de título. */
+const REQUEST_FAILED_TITLE = 'Request failed';
+
+/** Clave Transloco del error HTTP conocido según su estado; null si es desconocido. */
+const HTTP_STATUS_MESSAGE_KEY: Record<number, string | null> = {
+  0: 'errorModal.http.networkUnavailable',
+  400: 'errorModal.http.badRequest',
+  401: 'errorModal.http.unauthorized',
+  403: 'errorModal.http.forbidden',
+  404: 'errorModal.http.notFound',
+};
+
+interface KnownHttpMessage {
+  translationKey: string | null;
+  fallbackText: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GlobalErrorModalService implements ErrorNotifierPort {
   private readonly translocoService = inject(TranslocoService);
@@ -14,22 +31,25 @@ export class GlobalErrorModalService implements ErrorNotifierPort {
     this.currentError.set(viewModel);
   }
 
-  showMessage(message: string, title: string = 'Unexpected error'): void {
-    this.currentError.set({
-      title,
-      message,
-      details: null,
-    });
+  showMessage(message: string, title?: string): void {
+    const resolvedTitle: string = title ?? 'Unexpected error';
+    this.currentError.set(
+      title === undefined
+        ? { title: resolvedTitle, titleKey: 'errorModal.runtime.unexpectedErrorTitle', message, details: null }
+        : { title: resolvedTitle, message, details: null },
+    );
   }
 
   showHttpError(httpError: HttpErrorResponse): void {
     const detailMessage: string = this.extractHttpMessage(httpError);
     const detailsPayload: string | null = this.extractHttpDetails(httpError);
-    const localizedMessage: string = this.mapKnownHttpError(httpError, detailMessage);
+    const knownMessage: KnownHttpMessage = this.resolveKnownHttpError(httpError, detailMessage);
 
     this.currentError.set({
-      title: this.translateOrFallback('errorModal.http.requestFailedTitle', 'Request failed'),
-      message: localizedMessage,
+      title: this.translateOrFallback('errorModal.http.requestFailedTitle', REQUEST_FAILED_TITLE),
+      titleKey: 'errorModal.http.requestFailedTitle',
+      message: knownMessage.fallbackText,
+      messageKey: knownMessage.translationKey ?? undefined,
       details: detailsPayload,
     });
   }
@@ -71,50 +91,40 @@ export class GlobalErrorModalService implements ErrorNotifierPort {
     return null;
   }
 
-  private mapKnownHttpError(httpError: HttpErrorResponse, rawMessage: string): string {
-    if (httpError.status === 0) {
-      return this.translateOrFallback(
-        'errorModal.http.networkUnavailable',
-        'Network unavailable. Please verify your connection.',
-      );
-    }
-
-    if (httpError.status === 400) {
-      return this.translateOrFallback(
-        'errorModal.http.badRequest',
-        'The request is invalid. Please verify the submitted data.',
-      );
-    }
-
-    if (httpError.status === 401) {
-      return this.translateOrFallback(
-        'errorModal.http.unauthorized',
-        'Your session is not authorized for this operation.',
-      );
-    }
-
-    if (httpError.status === 403) {
-      return this.translateOrFallback(
-        'errorModal.http.forbidden',
-        'You do not have permission to perform this action.',
-      );
-    }
-
-    if (httpError.status === 404) {
-      return this.translateOrFallback(
-        'errorModal.http.notFound',
-        'The requested resource was not found.',
-      );
-    }
-
+  /** Resuelve el texto visible y su clave Transloco para errores HTTP conocidos. */
+  private resolveKnownHttpError(httpError: HttpErrorResponse, rawMessage: string): KnownHttpMessage {
     if (httpError.status >= 500) {
-      return this.translateOrFallback(
-        'errorModal.http.serverError',
-        'The server reported an internal error. Please try again later.',
-      );
+      const serverErrorKey = 'errorModal.http.serverError';
+      return {
+        translationKey: serverErrorKey,
+        fallbackText: this.translateOrFallback(
+          serverErrorKey,
+          'The server reported an internal error. Please try again later.',
+        ),
+      };
     }
 
-    return rawMessage;
+    const translationKey: string | null = HTTP_STATUS_MESSAGE_KEY[httpError.status] ?? null;
+    if (translationKey === null) {
+      return { translationKey: null, fallbackText: rawMessage };
+    }
+
+    return {
+      translationKey,
+      fallbackText: this.translateOrFallback(translationKey, this.englishFallbackFor(translationKey, rawMessage)),
+    };
+  }
+
+  private englishFallbackFor(translationKey: string, rawMessage: string): string {
+    const fallbackBySuffix: Record<string, string> = {
+      networkUnavailable: 'Network unavailable. Please verify your connection.',
+      badRequest: 'The request is invalid. Please verify the submitted data.',
+      unauthorized: 'Your session is not authorized for this operation.',
+      forbidden: 'You do not have permission to perform this action.',
+      notFound: 'The requested resource was not found.',
+    };
+    const suffix: string = translationKey.split('.').pop() ?? '';
+    return fallbackBySuffix[suffix] ?? rawMessage;
   }
 
   private translateOrFallback(translationKey: string, fallbackText: string): string {

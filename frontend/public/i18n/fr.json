@@ -17,15 +17,20 @@
       "networkUnavailable": "Réseau indisponible.",
       "forbidden": "Vous n'avez pas les permissions requises.",
       "requestFailedTitle": "Échec de la requête",
-      "notFound": "The requested resource was not found.",
+      "notFound": "La ressource demandée est introuvable.",
       "serverError": "Erreur interne du serveur.",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "unauthorized": "Your session is not authorized for this operation."
+      "badRequest": "La requête est invalide. Vérifiez les données envoyées.",
+      "unauthorized": "Votre session n'est pas autorisée pour cette opération."
     },
     "actions": {
-      "closeAria": "Close error modal",
+      "closeAria": "Fermer la fenêtre d'erreur",
       "understood": "Compris",
       "viewDetails": "Voir les détails techniques"
+    },
+    "runtime": {
+      "applicationErrorTitle": "Erreur de l'application",
+      "unexpectedErrorTitle": "Erreur inattendue",
+      "unexpectedClientError": "Une erreur cliente inattendue s'est produite."
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "ou", "googleButton": "Continuer avec Google" },
+    "social": {
+      "divider": "ou",
+      "googleButton": "Continuer avec Google"
+    },
     "form": {
       "password": "Mot de passe",
       "signIn": "Se connecter",
@@ -347,6 +355,7 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "En attente d'envoi — configurez les entrées et lancez un job pour voir les résultats ici.",
       "submitting": "Submitting Marcus job to backend...",
       "title": "Output",
       "kFinal": "k (final)",
@@ -520,7 +529,8 @@
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "tag": "CADMA-Chem Protocol",
       "infoAria": "Show workflow overview",
-      "step4": "View scores & export results"
+      "step4": "View scores & export results",
+      "protocolDiagram": "Diagramme du protocole"
     },
     "steps": {
       "selectionScores": "Selection scores",
@@ -704,7 +714,7 @@
       "noFamilies": "No reference families available. Create one below to get started.",
       "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
       "readOnly": "Read only",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "Composés",
       "familyName": "Family name",
       "nameColumn": "Name",
       "clear": "Clear",
@@ -884,7 +894,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Back to formula"
+      "backToFormula": "Back to formula",
+      "charts": "Graphiques"
     },
     "compoundDetail": {
       "admeGroup": "Propriétés ADME",
@@ -900,6 +911,23 @@
       "tabReferenceSets": "Jeux de référence",
       "tabSelectionScores": "Scores de sélection",
       "tabWorkflow": "Flux de travail"
+    },
+    "diagram": {
+      "ariaLabel": "Diagramme de la méthodologie CADMA-Chem"
+    },
+    "charts": {
+      "expandChart": "Agrandir le graphique",
+      "expandedChartAria": "Graphique agrandi",
+      "loadingStructure": "Chargement de la structure…",
+      "loading2D": "Chargement de la structure 2D…",
+      "clickToLoad2D": "Cliquez sur une molécule pour charger sa structure 2D",
+      "compoundDetail": "Détail du composé",
+      "metricHeader": "Métrique",
+      "valueHeader": "Valeur",
+      "closeDetail": "Fermer le détail",
+      "emptyRanking": "Aucune donnée de classement disponible. Lancez d'abord une comparaison.",
+      "dialogTitle": "Diagrammes en boîte — Classement CADMA Py",
+      "boxplotAria": "Graphique en boîte des résultats"
     }
   },
   "app": {
@@ -1600,10 +1628,10 @@
       "substituentsAdded": "Substituents added"
     },
     "annotations": {
-      "hideTitleAttr": "Hide",
+      "hideTitleAttr": "Masquer",
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
-      "showTitleAttr": "Show",
+      "showTitleAttr": "Afficher",
       "ariaLabel": "Structural annotations"
     },
     "inspection": {
@@ -1633,11 +1661,11 @@
     "patterns": {
       "hiddenInScaffold": "Hidden in scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "Atomes",
+      "hidePattern": "Masquer le motif",
       "formCaption": "Caption",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "Afficher le motif",
       "howItWorksTitle": "How it works",
       "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
       "active": "Active",
@@ -1653,22 +1681,22 @@
       "detailAriaLabel": "Pattern detail",
       "specification": "Specification",
       "formTypePrivileged": "Privileged scaffold",
-      "title": "Structural patterns",
+      "title": "Motifs structuraux",
       "formSource": "Source reference",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "Édition du motif :",
+      "privileged": "Échafaudage privilégié",
       "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "Édition",
       "stableId": "stable_id",
       "source": "Source",
       "activeInScaffold": "Active in scaffold",
       "formSave": "Save structural pattern",
       "formTypeToxicophore": "Toxicophore",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "Aucun SMILES disponible pour l’aperçu.",
       "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
       "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "Aperçu indisponible"
     },
     "header": {
       "title": "Combinatorial Structure Designer",
@@ -1842,7 +1870,12 @@
       "histSites": "Sites",
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
+      "showingOfTotal": "Affichage de {shown} sur {total} dérivés"
+    },
+    "catalogPanel": {
+      "maximizeSection": "Agrandir la section",
+      "minimizeSection": "Réduire la section"
     }
   },
   "shared": {
@@ -1904,8 +1937,8 @@
         "expired": "Expiré sur le serveur"
       },
       "limits": {
-        "429": "Trop de calculs depuis votre réseau. Réessayez plus tard.",
-        "413": "Le fichier ou les paramètres dépassent la limite du mode ouvert."
+        "413": "Le fichier ou les paramètres dépassent la limite du mode ouvert.",
+        "429": "Trop de calculs depuis votre réseau. Réessayez plus tard."
       },
       "unavailable": "Indisponible sans compte."
     }

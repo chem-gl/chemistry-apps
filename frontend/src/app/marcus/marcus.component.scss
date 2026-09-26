@@ -189,10 +189,23 @@
   label {
     display: grid;
     gap: 0.3rem;
+    /* min-width:0 evita que el ancho intrínseco del input desborde la pista en móvil. */
+    min-width: 0;
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--chem-ink-secondary);
     font-family: var(--chem-font-label);
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Móvil: una sola columna para que el placeholder no se recorte. */
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   &.diffusion-fields {

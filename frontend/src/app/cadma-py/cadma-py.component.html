@@ -7,7 +7,7 @@
       <h2 class="hero-title">CADMA<span>Py</span></h2>
     </div>
     <div class="hero-actions">
-      <button type="button" class="hero-doc-btn" (click)="showDiagram.set(true)">📊 Protocol diagram</button>
+      <button type="button" class="hero-doc-btn" (click)="showDiagram.set(true)">📊 {{ 'cadmaPy.hero.protocolDiagram' | transloco }}</button>
       <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
     </div>
   </header>
@@ -49,6 +49,7 @@
 
       <!-- Tabla unificada de familias (seeds + guardadas) -->
       @if (combinedFamilies().length > 0) {
+      <div class="family-table-wrap">
       <table class="family-table">
         <thead>
           <tr>
@@ -69,7 +70,7 @@
             : (browsingLibraryId() === family.id)">
             <td class="col-disease">{{ family.diseaseName }}</td>
             <td class="col-name">{{ family.name }}</td>
-            <td class="col-num">{{ family.rowCount }}</td>
+            <td class="col-num" [attr.data-label]="'cadmaPy.step1.compoundsColumn' | transloco">{{ family.rowCount }}</td>
             <td class="col-actions">
               <button class="btn-ghost btn-sm" type="button"
                 [title]="'cadmaPy.step1.previewCompounds' | transloco"
@@ -126,6 +127,7 @@
           }
         </tbody>
       </table>
+      </div>
       }
 
     <!-- Formulario de creación colapsable (solo visible sin seleccion) -->
@@ -523,7 +525,7 @@
             <strong>{{ row.metric }}</strong>
             <input type="number" [ngModel]="row.min" (ngModelChange)="updateFormulaInterval(row.metric, 'min', $event)"
               step="0.01" [attr.title]="row.metric + ' ' + ('cadmaPy.general.minimum' | transloco)" [placeholder]="'cadmaPy.step3.placeholderMin' | transloco" />
-
+            <input type="number" [ngModel]="row.max" (ngModelChange)="updateFormulaInterval(row.metric, 'max', $event)"
               step="0.01" [attr.title]="row.metric + ' ' + ('cadmaPy.general.maximum' | transloco)" [placeholder]="'cadmaPy.step3.placeholderMax' | transloco" />
           </div>
           }
@@ -600,7 +602,7 @@
         <button class="btn-secondary" type="button" (click)="exportSelectionCsv()">
           {{ 'cadmaPy.step2.exportCsv' | transloco }}
         </button>
-        <button class="btn-secondary" type="button" (click)="openBoxplotDialog()">Charts</button>
+        <button class="btn-secondary" type="button" (click)="openBoxplotDialog()">{{ 'cadmaPy.step4.charts' | transloco }}</button>
         }
       </div>
     </div>
@@ -641,7 +643,7 @@
               <option value="scatter">{{ 'cadmaPy.step3.scatterPlot' | transloco }}</option>
             </select>
           </label>
-          <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('score')" title="Expand chart">⛶</button>
+          <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('score')" [attr.title]="'cadmaPy.charts.expandChart' | transloco">⛶</button>
         </div>
       </div>
       <app-scientific-chart [ariaLabel]="'cadmaPy.step4.rankingChartAria' | transloco" [options]="scoreChartOptions()!"
@@ -672,7 +674,7 @@
     <div class="chart-card chart-card-tall">
       <div class="chart-header">
         <h4>{{ 'cadmaPy.step3.candidateVsReference' | transloco }} — {{ selectedMetric() }}</h4>
-        <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('metric')" title="Expand chart">⛶</button>
+        <button class="btn-ghost btn-sm chart-expand-btn" type="button" (click)="expandChart('metric')" [attr.title]="'cadmaPy.charts.expandChart' | transloco">⛶</button>
       </div>
       <p class="chart-hint">{{ 'cadmaPy.step3.shadedHint' | transloco }}</p>
       <app-scientific-chart [ariaLabel]="'cadmaPy.step4.metricChartAria' | transloco" [options]="metricChartOptions()!"
@@ -771,18 +773,18 @@
 
   <!-- ── Diagrama de la metodología CADMA-Chem ──────────────────────── -->
   @if (showDiagram()) {
-  <dialog class="diagram-overlay" open aria-label="CADMA-Chem methodology diagram" (click)="onDiagramBackdropClick($event)"
+  <dialog class="diagram-overlay" open [attr.aria-label]="'cadmaPy.diagram.ariaLabel' | transloco" (click)="onDiagramBackdropClick($event)"
     (keydown.escape)="showDiagram.set(false)">
 
 
   <!-- ── Expanded chart modal ──────────────────────────────────────── -->
   @if (expandedChart(); as chartType) {
-  <dialog class="chart-expand-overlay" open aria-label="Expanded chart" (click)="onExpandedChartBackdrop($event)"
+  <dialog class="chart-expand-overlay" open [attr.aria-label]="'cadmaPy.charts.expandedChartAria' | transloco" (click)="onExpandedChartBackdrop($event)"
     (keydown.escape)="closeExpandedChart()">
     <div class="chart-expand-modal">
       <div class="chart-expand-header">
         <h3>{{ chartType === 'score' ? ('cadmaPy.step3.globalRanking' | transloco) : ('cadmaPy.step3.candidateVsReference' | transloco) + ' — ' + selectedMetric() }}</h3>
-        <button class="close-btn" type="button" (click)="closeExpandedChart()" aria-label="Close">×</button>
+        <button class="close-btn" type="button" (click)="closeExpandedChart()" [attr.aria-label]="'cadmaPy.general.close' | transloco">×</button>
       </div>
       <div class="chart-expand-body">
         @if (chartType === 'score' && scoreChartOptions()) {
@@ -800,30 +802,30 @@
 
   <!-- ── Chart compound detail modal ─────────────────────────────────── -->
   @if (chartCompound(); as compound) {
-  <dialog class="chart-compound-overlay" open aria-label="Compound detail" (click)="onChartCompoundBackdrop($event)"
+  <dialog class="chart-compound-overlay" open [attr.aria-label]="'cadmaPy.charts.compoundDetail' | transloco" (click)="onChartCompoundBackdrop($event)"
     (keydown.escape)="closeChartCompound()">
     <div class="chart-compound-modal">
       <div class="chart-compound-header">
-        <h3>{{ compound.name || 'Compound Detail' }}</h3>
-        <button class="close-btn" type="button" (click)="closeChartCompound()" aria-label="Close">×</button>
+        <h3>{{ compound.name || ('cadmaPy.charts.compoundDetail' | transloco) }}</h3>
+        <button class="close-btn" type="button" (click)="closeChartCompound()" [attr.aria-label]="'cadmaPy.general.close' | transloco">×</button>
       </div>
       <div class="chart-compound-body">
         <div class="chart-compound-grid">
           <div class="chart-compound-svg-panel">
             @if (chartCompoundBusy()) {
-            <p class="bxp-loading">Loading structure...</p>
+            <p class="bxp-loading">{{ 'cadmaPy.charts.loadingStructure' | transloco }}</p>
             } @else if (chartCompoundError()) {
             <p class="bxp-error" role="alert">{{ chartCompoundError() }}</p>
             } @else if (chartCompoundSvg(); as svg) {
             <div class="bxp-svg" [innerHTML]="svg"></div>
             } @else {
-            <p class="bxp-loading">Loading 2D structure...</p>
+            <p class="bxp-loading">{{ 'cadmaPy.charts.loading2D' | transloco }}</p>
             }
           </div>
           <div class="chart-compound-info">
             <p class="chart-compound-smiles">{{ compound.smiles }}</p>
             <table class="bxp-metrics-table">
-              <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
+              <thead><tr><th scope="col">{{ 'cadmaPy.charts.metricHeader' | transloco }}</th><th scope="col">{{ 'cadmaPy.charts.valueHeader' | transloco }}</th></tr></thead>
               <tbody>
                 @for (m of chartCompoundMetrics(); track m.key) {
                 <tr>
@@ -841,10 +843,10 @@
   }
     <div class="diagram-modal">
       <div class="diagram-header">
-        <h3>CADMA-Chem · Protocol diagram</h3>
-        <button class="close-btn" type="button" (click)="showDiagram.set(false)" aria-label="Cerrar">✕</button>
+        <h3>CADMA-Chem · {{ 'cadmaPy.hero.protocolDiagram' | transloco }}</h3>
+        <button class="close-btn" type="button" (click)="showDiagram.set(false)" [attr.aria-label]="'cadmaPy.general.close' | transloco">✕</button>
       </div>
-      <iframe [src]="diagramSrc" class="diagram-frame" title="Diagrama CADMA-Chem"></iframe>
+      <iframe [src]="diagramSrc" class="diagram-frame" [attr.title]="'cadmaPy.diagram.ariaLabel' | transloco"></iframe>
     </div>
   </dialog>
   }

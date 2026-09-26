@@ -236,8 +236,19 @@
   padding: 0;
   text-align: left;
   word-break: break-all;
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
+  /* Sin subrayado: el SMILES es dato de salida, no un enlace; el tooltip y el
+     foco visible comunican la acción de inspección. */
+  text-decoration: none;
+
+  &:hover {
+    color: var(--chem-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chem-input-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 .sketch-dialog,

@@ -16,8 +16,10 @@
           <app-active-group-selector />
           <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
           <div class="session-copy">
-            <strong>{{ sessionService.displayName() }}</strong>
-            <span>{{ sessionService.currentRole() }}</span>
+            <strong [title]="sessionService.displayName()">{{ sessionService.displayName() }}</strong>
+            @if (sessionRoleLabel(); as roleLabel) {
+            <span [title]="roleLabel">{{ roleLabel }}</span>
+            }
           </div>
           <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
           }

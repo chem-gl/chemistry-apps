@@ -50,7 +50,11 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  flex-shrink: 0;
+  /* El brand debe poder encogerse por debajo de su max-content para que el
+     título largo (p. ej. "Química Computacional para Evaluar la Naturaleza")
+     envuelva en móvil en vez de desbordar el viewport (scrollWidth > clientWidth). */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .brand-kicker {
@@ -64,15 +68,23 @@
   font-size: 0.7rem;
   font-family: var(--chem-font-label);
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.brand-copy {
+  min-width: 0;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: clamp(1rem, 1.6vw + 0.55rem, 1.15rem);
   font-weight: 700;
   color: var(--chem-ink);
   font-family: var(--chem-font-heading);
   line-height: 1.2;
+  min-width: 0;
+  /* Rompe palabras largas sin espacios para no generar overflow horizontal. */
+  overflow-wrap: anywhere;
 }
 
 .brand-caption {
@@ -84,7 +96,10 @@ h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  /* Permite que el bloque derecho encoja (y el nombre se elipsis) en lugar de
+     forzar el ancho del header más allá del viewport. */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 /* ── Session panel ── */
@@ -92,6 +107,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.25rem 0.55rem 0.25rem 0.45rem;
   border: 1px solid var(--chem-glass-border);
   border-radius: var(--chem-radius);
@@ -108,32 +125,56 @@ h1 {
 .session-avatar {
   width: 1.75rem;
   height: 1.75rem;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   background: var(--chem-accent-bg);
   color: var(--chem-accent);
   border: 1px solid var(--chem-accent-border);
+  border-radius: var(--chem-radius);
   font-family: var(--chem-font-label);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
+/* Nombre y rol en columnas separadas: antes ambos eran inline y se leían
+   concatenados ("ui1-…user"). gap + min-width:0 + elipsis = chip legible. */
+.session-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
 .session-copy strong {
+  display: block;
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.82rem;
   font-family: var(--chem-font-label);
 }
 
 .session-copy span {
+  display: block;
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--chem-ink-soft);
-  text-transform: capitalize;
   font-size: 0.68rem;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
 }
 
 .session-button {
+  flex-shrink: 0;
   border: 1px solid var(--chem-glass-border);
   background: var(--chem-surface-inset);
   color: var(--chem-ink);
   padding: 0.35rem 0.7rem;
+  border-radius: var(--chem-radius);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.75rem;
@@ -286,7 +327,17 @@ h1 {
     display: none;
   }
 
+  /* En móvil el chip debe seguir siendo legible: se muestra el nombre truncado
+     con elipsis y se oculta la línea de rol para no duplicar el contexto. */
   .session-copy {
+    display: flex;
+  }
+
+  .session-copy strong {
+    max-width: 9ch;
+  }
+
+  .session-copy span {
     display: none;
   }
 
@@ -334,5 +385,27 @@ h1 {
 
   .content-shell {
     padding: 1rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ACCESIBILIDAD — foco visible y movimiento reducido
+   ═══════════════════════════════════════════════ */
+.hamburger:focus-visible,
+.session-button:focus-visible,
+.main-nav a:focus-visible,
+.nav-dropdown-trigger:focus-visible,
+.nav-dropdown-item:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-bar,
+  .session-button,
+  .main-nav a,
+  .nav-dropdown-trigger,
+  .nav-dropdown-item {
+    transition: none;
   }
 }

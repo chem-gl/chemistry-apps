@@ -18,7 +18,7 @@
     @if (isCatalogPanelCollapsed()) {
     <article class="collapsed-panel-card" [attr.aria-label]="'smileit.step2.collapsedAriaLabel' | transloco">
       <button type="button" class="btn-secondary small collapsed-toggle" (click)="toggleCatalogPanelCollapse()"
-        aria-label="Maximize section">
+        [attr.aria-label]="'smileit.catalogPanel.maximizeSection' | transloco">
         +
       </button>
 
@@ -30,17 +30,8 @@
     </article>
     } @else {
     <section class="catalog-browser-panel" [attr.aria-label]="'smileit.step2.storedCatalogAriaLabel' | transloco">
-
-      Tunnel Effect
-      Easy-rate
-      Marcus Theory
-      Smileit
-      SA Score
-      Toxicity Properties
-      Groups
-      Users
       <button type="button" class="btn-secondary small collapsed-toggle expanded-toggle"
-        (click)="toggleCatalogPanelCollapse()" aria-label="Minimize section">
+        (click)="toggleCatalogPanelCollapse()" [attr.aria-label]="'smileit.catalogPanel.minimizeSection' | transloco">
         -
       </button>
 

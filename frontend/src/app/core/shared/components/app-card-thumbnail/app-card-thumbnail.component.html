@@ -7,7 +7,9 @@
     [alt]="'scientificApps.' + appItem().key + '.title' | transloco"
     width="480"
     height="300"
+    sizes="(min-width: 30rem) 300px, 92vw"
     loading="lazy"
+    decoding="async"
     (error)="onScreenshotError()"
   />
   } @else if (showIcon()) {
@@ -15,9 +17,11 @@
     class="card-icon-img"
     [src]="appItem().iconAsset"
     [alt]="'scientificApps.' + appItem().key + '.title' | transloco"
-    width="96"
-    height="96"
+    width="48"
+    height="48"
+    sizes="48px"
     loading="lazy"
+    decoding="async"
     (error)="onIconError()"
   />
   } @else {

@@ -26,6 +26,11 @@
       "closeAria": "Cerrar modal de error",
       "understood": "Entendido",
       "viewDetails": "Ver detalles técnicos"
+    },
+    "runtime": {
+      "applicationErrorTitle": "Error de la aplicación",
+      "unexpectedErrorTitle": "Error inesperado",
+      "unexpectedClientError": "Se produjo un error inesperado en el cliente."
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "o", "googleButton": "Continuar con Google" },
+    "social": {
+      "divider": "o",
+      "googleButton": "Continuar con Google"
+    },
     "form": {
       "password": "Contraseña",
       "signIn": "Iniciar sesión",
@@ -389,6 +397,7 @@
       "rateConstants": "Constantes de velocidad",
       "adiabaticEnergy": "ΔE adiabático (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "Esperando el envío — configura las entradas y ejecuta un trabajo para ver aquí los resultados.",
       "submitting": "Enviando job de Marcus al backend...",
       "title": "Salida",
       "kFinal": "k (final)",
@@ -562,7 +571,8 @@
       "desc": "Puntúa moléculas candidatas contra una familia de referencia de fármacos específica de una enfermedad usando propiedades ADMET, toxicidad y accesibilidad sintética — priorizando los mejores candidatos para síntesis y evaluación posterior.",
       "tag": "Protocolo CADMA-Chem",
       "infoAria": "Mostrar visión general del flujo",
-      "step4": "Ver puntuaciones y exportar resultados"
+      "step4": "Ver puntuaciones y exportar resultados",
+      "protocolDiagram": "Diagrama del protocolo"
     },
     "steps": {
       "selectionScores": "Puntajes de selección",
@@ -609,10 +619,10 @@
       "selectSmilesGuide": "Seleccionar guía SMILES principal"
     },
     "scope": {
-      "group": "Group",
-      "unknown": "Unknown",
+      "group": "Grupo",
+      "unknown": "Desconocido",
       "personal": "Personal",
-      "global": "Global (Root)"
+      "global": "Global (Raíz)"
     },
     "metrics": {
       "hbAcceptors": "HB Acceptors",
@@ -637,7 +647,7 @@
       "prevCompound": "Compuesto anterior",
       "nextCompound": "Compuesto siguiente",
       "boxplotLabel": "Gráficas",
-      "boxplotTitle": "Boxplots",
+      "boxplotTitle": "Diagramas de caja",
       "boxplotAria": "Gráfica boxplot de todas las propiedades moleculares",
       "boxplotEmpty": "No hay compuestos para graficar.",
       "createCopy": "Crear copia",
@@ -647,7 +657,7 @@
       "sourceFiles": "Archivos fuente",
       "nullWarning": "Algunas métricas tienen valores nulos — los compuestos sin ese campo son excluidos de su promedio.",
       "removeCompound": "Eliminar compuesto",
-      "nullsLabel": "Nulls",
+      "nullsLabel": "Nulos",
       "rangeLabel": "Min — Max",
       "date": "Fecha",
       "defaultReadOnly": "Esta familia es de solo lectura en tu alcance actual. Crea una copia editable para modificarla de forma segura.",
@@ -685,7 +695,7 @@
       "scientificContext": "Contexto científico",
       "files": "archivos",
       "saveChanges": "Guardar cambios",
-      "metricLabel": "Metric",
+      "metricLabel": "Métrica",
       "rows": "filas",
       "compoundNamePlaceholder": "Nombre del compuesto",
       "paperAuthorsPlaceholder": "Autor, Autor & Autor (Año)",
@@ -699,7 +709,7 @@
       "rdkitPreview": "Vista previa RDKit",
       "tableHeaderRank": "#",
       "tableHeaderSmiles": "SMILES",
-      "copySuffix": "Copy",
+      "copySuffix": "Copia",
       "downloadCsv": "Descargar CSV",
       "paperReferencePlaceholder": "Autor et al. (2025)",
       "copyPlaceholder": "Nombre de la copia editable",
@@ -751,12 +761,12 @@
       "noFamilies": "No hay familias de referencia disponibles. Crea una abajo para comenzar.",
       "uploadHint": "Sube uno o varios archivos CSV / SMI, revisa encabezados y líneas muertas, y mapea las columnas de SMILES y métricas opcionales antes de guardar la familia.",
       "readOnly": "Solo lectura",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "Compuestos",
       "familyName": "Nombre de la familia",
-      "nameColumn": "Name",
+      "nameColumn": "Nombre",
       "clear": "Limpiar",
       "quickStart": "Inicio rápido — conjuntos de referencia preconstruidos",
-      "diseaseColumn": "Disease",
+      "diseaseColumn": "Enfermedad",
       "traceabilityPlaceholder": "Notas breves sobre el criterio de selección de compuestos…",
       "change": "Cambiar",
       "alreadyImported": "Ya importada",
@@ -777,30 +787,30 @@
       "paperReferencePlaceholder": "Autor et al. Revista Año"
     },
     "general": {
-      "minimum": "minimum",
-      "viewReport": "View report",
-      "showDetails": "Show details",
-      "candidates": "candidates",
-      "hideDetails": "Hide details",
-      "usableRows": "usable rows reviewed",
-      "files": "files",
-      "toxicityReady": "Toxicity ready",
-      "file": "file",
-      "ready": "ready",
-      "openResult": "Open result",
-      "saReady": "SA ready",
-      "close": "Close",
-      "maximum": "maximum",
-      "add": "Add",
-      "selectFamily": "Select family",
-      "createFamily": "Create family",
+      "minimum": "mínimo",
+      "viewReport": "Ver informe",
+      "showDetails": "Mostrar detalles",
+      "candidates": "candidatos",
+      "hideDetails": "Ocultar detalles",
+      "usableRows": "filas utilizables revisadas",
+      "files": "archivos",
+      "toxicityReady": "Toxicidad lista",
+      "file": "archivo",
+      "ready": "listo",
+      "openResult": "Abrir resultado",
+      "saReady": "SA lista",
+      "close": "Cerrar",
+      "maximum": "máximo",
+      "add": "Añadir",
+      "selectFamily": "Seleccionar familia",
+      "createFamily": "Crear familia",
       "duplicate": "Duplicar",
-      "delete": "Delete",
-      "compounds": "compounds",
-      "preview": "Preview",
-      "download": "Download",
-      "comparison": "comparison",
-      "edit": "Edit"
+      "delete": "Eliminar",
+      "compounds": "compuestos",
+      "preview": "Vista previa",
+      "download": "Descargar",
+      "comparison": "comparación",
+      "edit": "Editar"
     },
     "history": {
       "title": "Ejecuciones anteriores",
@@ -808,24 +818,24 @@
       "ariaLabel": "Ejecuciones históricas de CADMA Py"
     },
     "deleteModal": {
-      "loadingJobs": "Loading linked jobs...",
-      "ariaClose": "Close",
+      "loadingJobs": "Cargando trabajos vinculados...",
+      "ariaClose": "Cerrar",
       "hasNoLinked": "has no",
-      "jobs": "jobs",
-      "cancel": "Cancel",
-      "linked": "linked",
-      "cannotUndo": "This action cannot be undone.",
-      "cascadeWarning": "All listed jobs and their results will be permanently removed.",
-      "delete": "Delete",
-      "deleting": "Deleting...",
-      "job": "job",
-      "deleteFamily": "Delete family",
+      "jobs": "trabajos",
+      "cancel": "Cancelar",
+      "linked": "vinculados",
+      "cannotUndo": "Esta acción no se puede deshacer.",
+      "cascadeWarning": "Todos los trabajos listados y sus resultados se eliminarán de forma permanente.",
+      "delete": "Eliminar",
+      "deleting": "Eliminando...",
+      "job": "trabajo",
+      "deleteFamily": "Eliminar familia",
       "hasLinked": "has",
-      "confirmDelete": "Are you sure you want to delete",
-      "checkingData": "Checking linked data..."
+      "confirmDelete": "¿Seguro que quieres eliminar",
+      "checkingData": "Comprobando datos vinculados..."
     },
     "step2": {
-      "selectSaMethodTitle": "Select an SA method",
+      "selectSaMethodTitle": "Selecciona un método SA",
       "smileitRequired": "Job Smile-it · requerido",
       "payloadPreviewDesc": "Este es el conjunto de candidatos que se llevará al paso 3.",
       "pathwayReuseTitle": "Reutilizar jobs completados",
@@ -899,12 +909,12 @@
       "selectSaMethodPlaceholder": "Selecciona método SA...",
       "toxicityReady": "Toxicidad ✓",
       "tableSmiles": "SMILES",
-      "selectSaScoreJobTitle": "Select an SA Score job",
+      "selectSaScoreJobTitle": "Selecciona un trabajo de SA Score",
       "saveProgress": "Guardar progreso y pausar",
       "tableDt": "DT",
       "reusePanelDesc": "Selecciona entre tus jobs de análisis completados. Un job de Smile-it provee los SMILES candidatos; los jobs de Toxicity y SA Score son opcionales pero recomendados.",
       "reusePanelTitle": "Reutilizar jobs completados",
-      "selectToxicityJobTitle": "Select a Toxicity Properties job",
+      "selectToxicityJobTitle": "Selecciona un trabajo de Toxicity Properties",
       "unnamedCandidate": "Candidato sin nombre",
       "quickFillNeedSmileit": "Selecciona un job completado de Smile-it",
       "pathwayManualTitle": "Importación manual CSV",
@@ -932,7 +942,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Volver a la fórmula"
+      "backToFormula": "Volver a la fórmula",
+      "charts": "Gráficos"
     },
     "doc": {
       "open": "Documentación",
@@ -943,6 +954,23 @@
       "tabReferenceSets": "Conjuntos de referencia",
       "tabSelectionScores": "Puntajes de selección",
       "tabWorkflow": "Flujo de trabajo"
+    },
+    "diagram": {
+      "ariaLabel": "Diagrama de la metodología CADMA-Chem"
+    },
+    "charts": {
+      "expandChart": "Ampliar gráfico",
+      "expandedChartAria": "Gráfico ampliado",
+      "loadingStructure": "Cargando estructura…",
+      "loading2D": "Cargando estructura 2D…",
+      "clickToLoad2D": "Haz clic en una molécula para cargar su estructura 2D",
+      "compoundDetail": "Detalle del compuesto",
+      "metricHeader": "Métrica",
+      "valueHeader": "Valor",
+      "closeDetail": "Cerrar detalle",
+      "emptyRanking": "No hay datos de ranking disponibles. Ejecuta primero una comparación.",
+      "dialogTitle": "Diagramas de caja — Ranking CADMA Py",
+      "boxplotAria": "Gráfico de caja de resultados"
     }
   },
   "app": {
@@ -1640,11 +1668,11 @@
     "patterns": {
       "hiddenInScaffold": "Oculto en scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "Átomos",
+      "hidePattern": "Ocultar patrón",
       "formCaption": "Descripción",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "Mostrar patrón",
       "howItWorksTitle": "Cómo funciona",
       "modalHint": "Los patrones están habilitados por defecto. Alterna cada uno para mostrar u ocultar sus resaltados.",
       "active": "Activo",
@@ -1654,7 +1682,7 @@
       "formName": "Nombre",
       "howItWorks3": "3. Haz clic en cualquier nombre de patrón para abrir los detalles SMARTS completos.",
       "formSmarts": "SMARTS",
-      "toxicophore": "Toxicophore",
+      "toxicophore": "Toxicóforo",
       "dialogAriaLabel": "Catálogo de patrones estructurales",
       "smartsStructure": "Estructura SMARTS",
       "detailAriaLabel": "Detalle del patrón",
@@ -1662,20 +1690,20 @@
       "formTypePrivileged": "Scaffold privilegiado",
       "title": "Patrones estructurales",
       "formSource": "Referencia de fuente",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "Editando patrón:",
+      "privileged": "Esqueleto privilegiado",
       "howItWorks2": "2. Los nombres de los patrones se renderizan sobre el área resaltada en la vista previa.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "Editando",
       "stableId": "stable_id",
       "source": "Fuente",
       "activeInScaffold": "Activo en scaffold",
       "formSave": "Guardar patrón estructural",
       "formTypeToxicophore": "Toxicóforo",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "No hay SMILES disponible para la vista previa.",
       "hint": "Abre el modal de patrones para crear reglas SMARTS y alternar resaltados en la molécula principal.",
       "howItWorks1": "1. Los patrones activos iluminan los átomos coincidentes en la molécula principal.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "Vista previa no disponible"
     },
     "header": {
       "title": "Diseñador de Estructuras Combinatorias",
@@ -1849,7 +1877,12 @@
       "histSites": "Sitios",
       "placeholderMapping": "Mapeo de marcadores:",
       "openBelow": "Abrir abajo",
-      "previousJobsHint": "Abre una ejecución histórica para inspeccionar las estructuras actualmente renderizadas."
+      "previousJobsHint": "Abre una ejecución histórica para inspeccionar las estructuras actualmente renderizadas.",
+      "showingOfTotal": "Mostrando {shown} de {total} derivados"
+    },
+    "catalogPanel": {
+      "maximizeSection": "Maximizar sección",
+      "minimizeSection": "Minimizar sección"
     }
   },
   "shared": {
@@ -1911,8 +1944,8 @@
         "expired": "Expirado en el servidor"
       },
       "limits": {
-        "429": "Demasiados cálculos desde tu red. Inténtalo más tarde.",
-        "413": "La carga o los parámetros superan el límite del modo abierto."
+        "413": "La carga o los parámetros superan el límite del modo abierto.",
+        "429": "Demasiados cálculos desde tu red. Inténtalo más tarde."
       },
       "unavailable": "No disponible sin cuenta."
     }

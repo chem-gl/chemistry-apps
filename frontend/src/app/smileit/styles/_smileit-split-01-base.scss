@@ -203,10 +203,12 @@
 }
 
 .principal-pattern-action {
-  margin-top: 0.8rem;
-  padding-top: 0.35rem;
+  margin-top: 1rem;
+  padding: 0.85rem 0 0.1rem;
   display: flex;
   justify-content: flex-end;
+  /* Espacio propio: separador claro frente a la parrilla de chips. */
+  border-top: 1px solid var(--chem-border-subtle);
 }
 
 .principal-pattern-action .hint {

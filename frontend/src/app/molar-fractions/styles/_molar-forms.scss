@@ -156,14 +156,26 @@
   margin-bottom: 0.85rem;
 }
 
+/* Metadatos del resultado: datos de salida (etiqueta + valor), no campos. */
 .metadata-grid p {
   margin: 0;
+  display: grid;
+  gap: 0.12rem;
   font-size: 0.8rem;
-  color: var(--chem-ink-secondary);
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--chem-border-accent-soft);
-  border-radius: 12px;
-  background: rgba(250, 248, 252, 0.72);
+  color: var(--chem-ink);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+
+  strong {
+    color: var(--chem-ink-soft);
+    font-family: var(--chem-font-label);
+    font-size: var(--chem-text-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
 }
 
 /* Tarjeta de estado vacio del panel Results antes de calcular. */

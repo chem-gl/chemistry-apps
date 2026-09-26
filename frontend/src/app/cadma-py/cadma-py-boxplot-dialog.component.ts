@@ -13,6 +13,7 @@ import {
   signal,
 } from '@angular/core';
 import type { ECharts, EChartsCoreOption } from 'echarts/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { CadmaRankingRowView } from '../core/api/cadma-py-api.service';
 import { JobsApiService } from '../core/api/jobs-api.service';
 import { ScientificChartComponent } from '../core/shared/components/scientific-chart/scientific-chart.component';
@@ -28,7 +29,7 @@ const METRIC_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-cadma-py-boxplot-dialog',
   standalone: true,
-  imports: [ScientificChartComponent],
+  imports: [ScientificChartComponent, TranslocoPipe],
   templateUrl: './cadma-py-boxplot-dialog.component.html',
   styleUrl: './cadma-py-boxplot-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

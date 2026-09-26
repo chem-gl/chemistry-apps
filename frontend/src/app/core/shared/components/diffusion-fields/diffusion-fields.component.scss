@@ -8,10 +8,22 @@
   label {
     display: grid;
     gap: 0.3rem;
+    /* min-width:0 evita que el ancho intrínseco del input desborde la pista en móvil. */
+    min-width: 0;
     font-size: var(--chem-text-sm);
     font-weight: 600;
     color: var(--chem-ink-secondary);
     font-family: var(--chem-font-label);
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Móvil: una sola columna, coherente con la rejilla de parámetros de las apps. */
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   &.diffusion-fields {

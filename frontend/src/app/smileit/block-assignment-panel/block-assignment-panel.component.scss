@@ -11,6 +11,33 @@
   align-items: start;
 }
 
+/* Desktop: el panel de bloques estira para equilibrar la columna
+   derecha con la izquierda (sin hueco muerto bajo "Block assignment"). */
+@media (min-width: 1024px) {
+  :host {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .workspace-right-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .workspace-side-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .library-panel {
+    flex: 1;
+  }
+}
+
 .panel-header-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

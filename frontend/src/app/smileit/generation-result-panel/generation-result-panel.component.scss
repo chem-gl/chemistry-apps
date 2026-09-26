@@ -5,4 +5,8 @@
 
 :host {
   display: block;
+  /* Permite que el panel encoja por debajo de su min-content: evita que una
+     tabla ancha propague ancho mínimo hacia el grid del workspace móvil y
+     provoque scroll horizontal de página. */
+  min-width: 0;
 }

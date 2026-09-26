@@ -85,8 +85,14 @@ export abstract class SmilesJobWorkflowService<TResultData>
   /**
    * Carga los logs históricos del job con un límite mayor y ordenados por eventIndex.
    * Sobrescribe el comportamiento base para apps de SMILES que generan más eventos de log.
+   * En modo abierto el endpoint privado de logs responde 401: se omite la llamada (mismo
+   * gate que `loadHistoryForPlugin`), igual que hace la implementación base.
    */
   protected override loadHistoricalLogs(jobId: string): void {
+    if (this.accessMode?.isOpenMode()) {
+      return;
+    }
+
     this.jobsApiService.getJobLogs(jobId, { limit: 300 }).subscribe({
       next: (logsPage: JobLogsPageView) => {
         const sortedLogs: JobLogEntryView[] = [...logsPage.results].sort(

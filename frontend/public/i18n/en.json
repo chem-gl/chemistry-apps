@@ -100,7 +100,10 @@
     }
   },
   "login": {
-    "social": { "divider": "or", "googleButton": "Continue with Google" },
+    "social": {
+      "divider": "or",
+      "googleButton": "Continue with Google"
+    },
     "aria": {
       "signIn": "Sign in",
       "brandMessage": "Brand message"
@@ -432,6 +435,11 @@
       "forbidden": "You do not have permission to perform this action.",
       "notFound": "The requested resource was not found.",
       "serverError": "The server reported an internal error. Please try again later."
+    },
+    "runtime": {
+      "applicationErrorTitle": "Application error",
+      "unexpectedErrorTitle": "Unexpected error",
+      "unexpectedClientError": "An unexpected client-side error occurred."
     }
   },
   "tunnel": {
@@ -753,6 +761,7 @@
     "result": {
       "title": "Output",
       "ariaLabel": "Results and progress",
+      "idleHint": "Waiting for submission — configure the inputs and run a job to see results here.",
       "submitting": "Submitting Marcus job to backend...",
       "defaultTitle": "Marcus result",
       "marcusEnergies": "Marcus Energies",
@@ -1047,7 +1056,8 @@
       "showMore": "Show 100 more",
       "loadingDerivatives": "Loading...",
       "generatedModalAriaLabel": "Generated molecule preview",
-      "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)"
+      "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)",
+      "showingOfTotal": "Showing {shown} of {total} derivatives"
     },
     "principalEditor": {
       "label": "Principal SMILES",
@@ -1201,6 +1211,10 @@
       "noAtomsHint": "Inspect the principal molecule and select target atoms before assigning this block to positions.",
       "siteLabel": "Site",
       "noPositionsAssigned": "This block still has no scaffold positions assigned. Choose the sites that should receive one of this block's molecules."
+    },
+    "catalogPanel": {
+      "maximizeSection": "Maximize section",
+      "minimizeSection": "Minimize section"
     }
   },
   "identityAdmin": {
@@ -1481,7 +1495,8 @@
     },
     "hero": {
       "tag": "CADMA-Chem Protocol",
-      "title": "CADMAPy"
+      "title": "CADMAPy",
+      "protocolDiagram": "Protocol diagram"
     },
     "steps": {
       "ariaLabel": "Workflow steps",
@@ -1684,7 +1699,8 @@
       "tableM": "M",
       "tableLd50": "LD50",
       "tableSaRaw": "SA raw",
-      "tableInband": "In-band metrics"
+      "tableInband": "In-band metrics",
+      "charts": "Charts"
     },
     "history": {
       "empty": "No previous CADMA Py executions yet.",
@@ -1892,6 +1908,23 @@
       "delete": "Delete",
       "deleteFamily": "Delete family",
       "checkingData": "Checking linked data..."
+    },
+    "diagram": {
+      "ariaLabel": "CADMA-Chem methodology diagram"
+    },
+    "charts": {
+      "expandChart": "Expand chart",
+      "expandedChartAria": "Expanded chart",
+      "loadingStructure": "Loading structure…",
+      "loading2D": "Loading 2D structure…",
+      "clickToLoad2D": "Click a molecule to load its 2D structure",
+      "compoundDetail": "Compound detail",
+      "metricHeader": "Metric",
+      "valueHeader": "Value",
+      "closeDetail": "Close detail",
+      "emptyRanking": "No ranking data available. Run a comparison first.",
+      "dialogTitle": "Boxplot charts — CADMA Py ranking",
+      "boxplotAria": "Results boxplot chart"
     }
   },
   "scientificApps": {
@@ -1938,8 +1971,8 @@
         "expired": "Expired on the server"
       },
       "limits": {
-        "429": "Too many calculations from your network. Try again later.",
-        "413": "The upload or parameters exceed the open-mode limit."
+        "413": "The upload or parameters exceed the open-mode limit.",
+        "429": "Too many calculations from your network. Try again later."
       },
       "unavailable": "Not available without an account."
     }

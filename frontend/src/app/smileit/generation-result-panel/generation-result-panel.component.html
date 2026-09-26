@@ -317,8 +317,7 @@
     @if (hasMoreGeneratedStructures()) {
     <div class="show-more-row">
       <p class="hint">
-        Showing <strong>{{ visibleGeneratedStructures().length }}</strong> of
-        <strong>{{ resultData.totalGenerated }}</strong> derivatives
+        {{ 'smileit.step4.showingOfTotal' | transloco: { shown: visibleGeneratedStructures().length, total: resultData.totalGenerated } }}
       </p>
       <button class="btn-secondary" type="button" (click)="showMoreStructures()"
         [disabled]="isLoadingGeneratedStructures()">

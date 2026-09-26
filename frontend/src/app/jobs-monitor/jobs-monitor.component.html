@@ -231,7 +231,7 @@
         <tbody>
           @for (finishedJob of facade.finishedJobs(); track finishedJob.id) {
           <tr>
-            <td class="mono">{{ finishedJob.id }}</td>
+            <td class="mono job-id-cell" [title]="finishedJob.id">{{ finishedJob.id }}</td>
             <td>{{ finishedJob.plugin_name }}</td>
             <td>{{ ownerGroupLabel(finishedJob) }}</td>
             <td>

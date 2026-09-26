@@ -36,12 +36,14 @@ app-illustration {
 
 // Icono circular de la app: tamaño fijo, sin marco (el disco negro del icono
 // ya aporta el contraste sobre la tarjeta clara).
+// object-fit: cover con fuente y hueco cuadrados no recorta nada: mantiene el
+// render idéntico y evita el aviso NG0913 (intrinsic 1254px vs render 48px).
 .card-icon-img {
   display: block;
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
   flex: none;
 }
 

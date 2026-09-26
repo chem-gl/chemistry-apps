@@ -31,7 +31,9 @@
   display: grid;
   gap: 0.9rem;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
-  align-items: start;
+  /* Las dos columnas comparten altura: el panel de salida crece y no deja
+     área muerta bajo el resultado. */
+  align-items: stretch;
 }
 
 .entry-panel,
@@ -44,6 +46,13 @@
   padding: 0;
   min-width: 0;
   box-shadow: none;
+}
+
+/* El panel de salida es una columna flexible: la tarjeta vacía guiada y el
+   bloque de resultados crecen hasta ocupar la altura de la fila. */
+.result-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .events-card,
@@ -152,6 +161,7 @@
 /* Resultado vacío: tarjeta guía del panel Output antes de ejecutar. */
 .result-empty-card {
   display: grid;
+  flex: 1;
   gap: 0.4rem;
   align-content: center;
   justify-items: start;
@@ -209,6 +219,9 @@
   background: var(--chem-surface);
   padding: 0.65rem;
   display: grid;
+  /* Crece con la columna para que el espacio bajo el resultado tenga propósito. */
+  flex: 1;
+  align-content: start;
   gap: 0.3rem;
   margin-bottom: 0.65rem;
 }

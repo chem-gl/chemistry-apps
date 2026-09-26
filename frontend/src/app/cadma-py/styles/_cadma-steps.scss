@@ -10,13 +10,16 @@
   background: none;
   border: 0;
   border-radius: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 0;
+  flex: 0 0 auto;
   white-space: nowrap;
   opacity: 0.38;
   transition: opacity 0.25s;
@@ -64,7 +67,7 @@
 }
 
 .step-connector {
-  flex: 1;
+  flex: 1 0 2rem;
   height: 2px;
   background: var(--chem-border-subtle);
   margin: 0 0.5rem;
@@ -330,6 +333,23 @@
     border-radius: var(--chem-radius);
   }
 
+  /* Variante compacta: solo el paso visible muestra su etiqueta.
+     Evita que los pasos 3-4 queden fuera del viewport en 390px. */
+  .step-label {
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .step-item:not(.active) .step-label {
+    display: none;
+  }
+
+  .step-connector {
+    min-width: 1.25rem;
+    margin: 0 0.35rem;
+  }
+
   .step-section {
     padding: 0.85rem 0.75rem;
     border-radius: 14px;
@@ -348,5 +368,15 @@
   .context-bar {
     font-size: 0.75rem;
     padding: 0.45rem 0.65rem;
+  }
+}
+
+/* Accesibilidad: desactiva transiciones del tracker si el usuario lo pide. */
+@media (prefers-reduced-motion: reduce) {
+  .step-tracker,
+  .step-item,
+  .step-bubble,
+  .step-connector {
+    transition: none;
   }
 }

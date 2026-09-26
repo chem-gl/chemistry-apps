@@ -3,6 +3,14 @@
 .monitor-shell {
   display: grid;
   gap: 1.25rem;
+  /* Pista única limitada al ancho del contenedor: sin esto, un hijo con
+     min-content ancho (la tabla) estira la columna y desborda la página. */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Todo hijo directo del monitor puede encogerse por debajo de su contenido. */
+.monitor-shell > * {
+  min-width: 0;
 }
 
 .monitor-header {
@@ -11,6 +19,12 @@
   gap: 1rem;
   align-items: flex-start;
   flex-wrap: wrap;
+}
+
+/* El bloque de título debe poder encogerse (y envolver) para no forcer el ancho
+   del header más allá del viewport en móvil. */
+.monitor-header > div {
+  min-width: 0;
 }
 
 .eyebrow {
@@ -351,7 +365,11 @@ select {
 /* --- Tabla de resultados --- */
 
 .table-wrap {
-  overflow: auto;
+  /* Scroll horizontal PROPIO: la tabla nunca desborda la página. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
   background: var(--chem-surface);
@@ -369,6 +387,15 @@ td {
   padding: 0.62rem;
   border-bottom: 1px solid var(--chem-border-subtle);
   font-size: 0.84rem;
+}
+
+/* Primera columna: IDs largos (UUID) truncados con elipsis + tooltip (title). */
+td.job-id-cell {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
 }
 
 th {
@@ -550,4 +577,42 @@ th {
   padding: 0.5rem;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE + ACCESIBILIDAD
+   ═══════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  /* Contadores apilados en 2 columnas para lectura cómoda sin desbordar. */
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+.btn:focus-visible,
+.control-btn:focus-visible,
+.open-logs-btn:focus-visible,
+.open-result-link:focus-visible,
+.close-details-btn:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .control-btn,
+  .open-result-link,
+  .open-logs-btn,
+  .close-details-btn {
+    transition: none;
+  }
 }

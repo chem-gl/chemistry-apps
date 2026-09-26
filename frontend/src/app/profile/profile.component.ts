@@ -23,6 +23,9 @@ export class ProfileComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
+  /** Distingue "perfil aún cargando" de "campo vacío": controla placeholders y estado visual. */
+  readonly isProfileLoaded = signal<boolean>(false);
+
   readonly formState = signal({
     first_name: '',
     last_name: '',
@@ -36,6 +39,7 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.sessionService.initializeSession().subscribe({
       next: () => {
+        this.isProfileLoaded.set(true);
         const currentUser = this.sessionService.currentUser();
         if (currentUser === null) {
           return;
@@ -50,6 +54,7 @@ export class ProfileComponent implements OnInit {
         });
       },
       error: () => {
+        this.isProfileLoaded.set(true);
         this.errorMessage.set(
           this.translocoService.translate('profile.errors.unableToInitializeProfile'),
         );

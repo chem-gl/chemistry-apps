@@ -244,6 +244,11 @@ textarea:focus {
   font-size: 0.88rem;
 }
 
+/* Garantiza separación visible entre la etiqueta (que termina en ':') y su valor. */
+.metadata-grid p strong {
+  margin-inline-end: 0.3rem;
+}
+
 .export-row {
   margin-top: 0.25rem;
   align-items: center;

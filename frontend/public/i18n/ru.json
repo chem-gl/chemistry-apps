@@ -17,15 +17,20 @@
       "networkUnavailable": "Сеть недоступна.",
       "forbidden": "Недостаточно прав.",
       "requestFailedTitle": "Ошибка запроса",
-      "notFound": "The requested resource was not found.",
+      "notFound": "Запрошенный ресурс не найден.",
       "serverError": "Внутренняя ошибка сервера.",
-      "badRequest": "The request is invalid. Please verify the submitted data.",
-      "unauthorized": "Your session is not authorized for this operation."
+      "badRequest": "Запрос некорректен. Проверьте отправленные данные.",
+      "unauthorized": "Ваша сессия не авторизована для этой операции."
     },
     "actions": {
-      "closeAria": "Close error modal",
+      "closeAria": "Закрыть окно ошибки",
       "understood": "Понятно",
       "viewDetails": "Показать технические детали"
+    },
+    "runtime": {
+      "applicationErrorTitle": "Ошибка приложения",
+      "unexpectedErrorTitle": "Непредвиденная ошибка",
+      "unexpectedClientError": "На стороне клиента произошла непредвиденная ошибка."
     }
   },
   "language": {
@@ -62,7 +67,10 @@
     }
   },
   "login": {
-    "social": { "divider": "или", "googleButton": "Продолжить с Google" },
+    "social": {
+      "divider": "или",
+      "googleButton": "Продолжить с Google"
+    },
     "form": {
       "password": "Пароль",
       "signIn": "Войти",
@@ -347,6 +355,7 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
+      "idleHint": "Ожидание отправки — настройте входные данные и запустите задачу, чтобы увидеть результаты здесь.",
       "submitting": "Submitting Marcus job to backend...",
       "title": "Output",
       "kFinal": "k (final)",
@@ -520,7 +529,8 @@
       "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
       "tag": "CADMA-Chem Protocol",
       "infoAria": "Show workflow overview",
-      "step4": "View scores & export results"
+      "step4": "View scores & export results",
+      "protocolDiagram": "Диаграмма протокола"
     },
     "steps": {
       "selectionScores": "Selection scores",
@@ -704,7 +714,7 @@
       "noFamilies": "No reference families available. Create one below to get started.",
       "uploadHint": "Upload one or many CSV / SMI files, review headers and dead lines, and map the SMILES and optional metric columns before saving the family.",
       "readOnly": "Read only",
-      "compoundsColumn": "Compounds",
+      "compoundsColumn": "Соединения",
       "familyName": "Family name",
       "nameColumn": "Name",
       "clear": "Clear",
@@ -884,7 +894,8 @@
       "tableLogp": "logP",
       "tableHbld": "HBLD",
       "tableSa": "SA",
-      "backToFormula": "Back to formula"
+      "backToFormula": "Back to formula",
+      "charts": "Графики"
     },
     "compoundDetail": {
       "admeGroup": "Свойства ADME",
@@ -900,6 +911,23 @@
       "tabReferenceSets": "Эталонные наборы",
       "tabSelectionScores": "Оценки отбора",
       "tabWorkflow": "Рабочий процесс"
+    },
+    "diagram": {
+      "ariaLabel": "Диаграмма методологии CADMA-Chem"
+    },
+    "charts": {
+      "expandChart": "Развернуть график",
+      "expandedChartAria": "Развёрнутый график",
+      "loadingStructure": "Загрузка структуры…",
+      "loading2D": "Загрузка 2D-структуры…",
+      "clickToLoad2D": "Нажмите на молекулу, чтобы загрузить её 2D-структуру",
+      "compoundDetail": "Детали соединения",
+      "metricHeader": "Метрика",
+      "valueHeader": "Значение",
+      "closeDetail": "Закрыть детали",
+      "emptyRanking": "Данные рейтинга отсутствуют. Сначала выполните сравнение.",
+      "dialogTitle": "Диаграммы boxplot — рейтинг CADMA Py",
+      "boxplotAria": "Диаграмма boxplot результатов"
     }
   },
   "app": {
@@ -1600,10 +1628,10 @@
       "substituentsAdded": "Substituents added"
     },
     "annotations": {
-      "hideTitleAttr": "Hide",
+      "hideTitleAttr": "Скрыть",
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
-      "showTitleAttr": "Show",
+      "showTitleAttr": "Показать",
       "ariaLabel": "Structural annotations"
     },
     "inspection": {
@@ -1633,11 +1661,11 @@
     "patterns": {
       "hiddenInScaffold": "Hidden in scaffold",
       "id": "ID",
-      "atoms": "Atoms",
-      "hidePattern": "Hide pattern",
+      "atoms": "Атом",
+      "hidePattern": "Скрыть паттерन",
       "formCaption": "Caption",
       "formSmartsPlaceholder": "[N+](=O)[O-]",
-      "showPattern": "Show pattern",
+      "showPattern": "Показать паттерн",
       "howItWorksTitle": "How it works",
       "modalHint": "Patterns are enabled by default. Toggle each one to show or hide its highlights and labels on the principal molecule.",
       "active": "Active",
@@ -1647,28 +1675,28 @@
       "formName": "Name",
       "howItWorks3": "3. Click any pattern name below to open complete SMARTS details.",
       "formSmarts": "SMARTS",
-      "toxicophore": "Toxicophore",
+      "toxicophore": "Токсикофор",
       "dialogAriaLabel": "Structural pattern catalog",
       "smartsStructure": "SMARTS structure",
       "detailAriaLabel": "Pattern detail",
       "specification": "Specification",
       "formTypePrivileged": "Privileged scaffold",
-      "title": "Structural patterns",
+      "title": "Структурные паттерны",
       "formSource": "Source reference",
-      "editingPattern": "Editing pattern:",
-      "privileged": "Privileged scaffold",
+      "editingPattern": "Редактирование паттерна:",
+      "privileged": "Привилегированный каркас",
       "howItWorks2": "2. Pattern names are rendered over the highlighted area in the scaffold preview.",
       "version": "v",
-      "editing": "Editing",
+      "editing": "Редактирование",
       "stableId": "stable_id",
       "source": "Source",
       "activeInScaffold": "Active in scaffold",
       "formSave": "Save structural pattern",
       "formTypeToxicophore": "Toxicophore",
-      "noPreview": "No SMILES available for preview.",
+      "noPreview": "Нет SMILES для предпросмотра.",
       "hint": "Open the pattern modal to create SMARTS rules and toggle contour highlights on the principal molecule.",
       "howItWorks1": "1. Enabled patterns illuminate matching atoms on the principal molecule.",
-      "previewUnavailable": "Preview unavailable"
+      "previewUnavailable": "Предпросмотр недоступен"
     },
     "header": {
       "title": "Combinatorial Structure Designer",
@@ -1842,7 +1870,12 @@
       "histSites": "Sites",
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
-      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below."
+      "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
+      "showingOfTotal": "Показано {shown} из {total} производных"
+    },
+    "catalogPanel": {
+      "maximizeSection": "Развернуть раздел",
+      "minimizeSection": "Свернуть раздел"
     }
   },
   "shared": {
@@ -1904,8 +1937,8 @@
         "expired": "Истёк на сервере"
       },
       "limits": {
-        "429": "Слишком много расчётов из вашей сети. Повторите позже.",
-        "413": "Загрузка или параметры превышают лимит открытого режима."
+        "413": "Загрузка или параметры превышают лимит открытого режима.",
+        "429": "Слишком много расчётов из вашей сети. Повторите позже."
       },
       "unavailable": "Недоступно без учётной записи."
     }

@@ -8,16 +8,20 @@
 
     <article class="metallic-card profile-card">
         <form class="profile-form" (ngSubmit)="saveProfile()">
-            <label>
+            <label [class.is-empty]="isProfileLoaded() && formState().first_name === ''">
                 {{ 'profile.form.firstName' | transloco }}
                 <input [ngModel]="formState().first_name" (ngModelChange)="setField('first_name', $event)"
-                    name="first_name" type="text" autocomplete="given-name" />
+                    name="first_name" type="text" autocomplete="given-name"
+                    [placeholder]="'profile.form.firstName' | transloco"
+                    [attr.aria-busy]="!isProfileLoaded()" [disabled]="!isProfileLoaded()" />
             </label>
 
-            <label>
+            <label [class.is-empty]="isProfileLoaded() && formState().last_name === ''">
                 {{ 'profile.form.lastName' | transloco }}
                 <input [ngModel]="formState().last_name" (ngModelChange)="setField('last_name', $event)"
-                    name="last_name" type="text" autocomplete="family-name" />
+                    name="last_name" type="text" autocomplete="family-name"
+                    [placeholder]="'profile.form.lastName' | transloco"
+                    [attr.aria-busy]="!isProfileLoaded()" [disabled]="!isProfileLoaded()" />
             </label>
 
             <label class="wide-field">
