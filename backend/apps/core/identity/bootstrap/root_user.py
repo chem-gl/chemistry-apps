@@ -11,6 +11,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 
+from apps.core.models import UserIdentityProfile
+
 
 def ensure_root_user() -> tuple[AbstractUser, str | None, bool]:
     """Garantiza la existencia de un root y retorna (usuario, password, creado)."""
@@ -19,6 +21,8 @@ def ensure_root_user() -> tuple[AbstractUser, str | None, bool]:
     if root_user is not None:
         return root_user, None, False
 
+    configured_password = getattr(settings, "ROOT_PASSWORD", "") or ""
+    password_is_configured = configured_password.strip() != ""
     root_password = _build_initial_root_password()
     root_user = user_model.objects.create_superuser(
         username=getattr(settings, "ROOT_USERNAME", "admin"),
@@ -28,6 +32,16 @@ def ensure_root_user() -> tuple[AbstractUser, str | None, bool]:
     root_user.is_staff = True
     root_user.is_superuser = True
     root_user.save(update_fields=["is_staff", "is_superuser"])
+    if password_is_configured:
+        # El password fue asignado por quien despliega: forzar cambio al entrar.
+        UserIdentityProfile.objects.update_or_create(
+            user=root_user,
+            defaults={
+                "role": UserIdentityProfile.ROLE_ROOT,
+                "account_status": UserIdentityProfile.STATUS_ACTIVE,
+                "must_change_password": True,
+            },
+        )
     return root_user, root_password, True
 
 

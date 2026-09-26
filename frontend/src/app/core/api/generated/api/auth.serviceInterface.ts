@@ -16,6 +16,7 @@ import { DomainTokenObtainPairRequest } from '../model/models';
 import { EffectiveAppConfig } from '../model/models';
 import { ErrorResponse } from '../model/models';
 import { GoogleLoginRequest } from '../model/models';
+import { PasswordChangeRequest } from '../model/models';
 import { PatchedUserAppConfigRequest } from '../model/models';
 import { TokenRefresh } from '../model/models';
 import { TokenRefreshRequest } from '../model/models';
@@ -79,6 +80,14 @@ export interface AuthServiceInterface {
      * @endpoint get /api/auth/me/
      */
     authMeRetrieve(extraHttpRequestParams?: any): Observable<UserProfile>;
+
+    /**
+     * 
+     * Permite al usuario autenticado cambiar su contraseña obligatoria.
+     * @endpoint post /api/auth/password-change/
+     * @param passwordChangeRequest 
+     */
+    authPasswordChangeCreate(passwordChangeRequest: PasswordChangeRequest, extraHttpRequestParams?: any): Observable<UserProfile>;
 
     /**
      * 

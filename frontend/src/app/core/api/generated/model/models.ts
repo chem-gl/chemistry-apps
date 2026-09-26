@@ -56,6 +56,7 @@ export * from './molarFractionsJobResponse';
 export * from './molarFractionsMetadata';
 export * from './molarFractionsParameters';
 export * from './molarFractionsResult';
+export * from './passwordChangeRequest';
 export * from './patchedAppPermissionRequest';
 export * from './patchedCadmaReferenceLibraryWriteRequest';
 export * from './patchedCadmaReferenceRowPatchRequest';

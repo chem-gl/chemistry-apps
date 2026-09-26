@@ -131,6 +131,25 @@
       "note": "Las siete apps rápidas funcionan sin registro y el resultado queda en este navegador."
     }
   },
+  "changePassword": {
+    "eyebrow": "Paso de seguridad obligatorio",
+    "title": "Cambia tu contraseña",
+    "copy": "Tu cuenta usa una contraseña temporal. Define una nueva para continuar.",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar nueva contraseña",
+    "submit": "Cambiar contraseña",
+    "submitting": "Cambiando contraseña...",
+    "success": "Contraseña cambiada correctamente.",
+    "errors": {
+      "required": "Todos los campos son obligatorios.",
+      "mismatch": "La confirmación no coincide con la nueva contraseña.",
+      "tooShort": "La nueva contraseña debe tener al menos 8 caracteres.",
+      "sameAsCurrent": "La nueva contraseña debe ser distinta a la actual.",
+      "wrongCurrent": "La contraseña actual es incorrecta.",
+      "generic": "No se pudo cambiar la contraseña. Inténtalo de nuevo."
+    }
+  },
   "register": {
     "aria": {
       "createAccount": "Crear cuenta",

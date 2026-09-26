@@ -77,6 +77,7 @@ export class IdentitySessionService {
   readonly isAuthenticated = computed(() => this.status() === 'authenticated');
   readonly isLoading = computed(() => this.status() === 'loading');
   readonly currentRole = computed(() => this.currentUser()?.role ?? null);
+  readonly mustChangePassword = computed(() => this.currentUser()?.must_change_password ?? false);
   readonly displayName = computed(() => {
     const userProfile = this.currentUser();
     if (userProfile === null) {
@@ -333,6 +334,17 @@ export class IdentitySessionService {
 
   canAccessRoute(routeKey: string): boolean {
     return this.enabledRouteKeys().includes(routeKey);
+  }
+
+  /**
+   * Cambia la contraseña del usuario autenticado y recarga la sesión.
+   * Retorna true cuando el cambio y la recarga fueron exitosos.
+   */
+  changePassword(currentPassword: string, newPassword: string): Observable<boolean> {
+    return this.authApiService.changePassword(currentPassword, newPassword).pipe(
+      switchMap(() => this.reloadSessionData()),
+      catchError(() => of(false)),
+    );
   }
 
   /**

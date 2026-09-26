@@ -15,6 +15,7 @@ describe('LoginComponent', () => {
     lastAuthenticationError: vi.fn(),
     isAuthenticated: vi.fn().mockReturnValue(false),
     isLoading: vi.fn().mockReturnValue(false),
+    mustChangePassword: vi.fn().mockReturnValue(false),
   };
 
   const translocoServiceMock = {

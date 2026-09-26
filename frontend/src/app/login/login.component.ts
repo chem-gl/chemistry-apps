@@ -45,6 +45,14 @@ export class LoginComponent implements OnInit {
     return redirectTo !== null && /^\/(?!\/)[^:]*$/.test(redirectTo) ? redirectTo : '/apps';
   }
 
+  private passwordChangeOrRedirectTarget(): string {
+    // Con cambio obligatorio pendiente se ignora redirectTo: primero la nueva contraseña.
+    if (this.sessionService.mustChangePassword()) {
+      return '/change-password';
+    }
+    return this.redirectTarget();
+  }
+
   ngOnInit(): void {
     if (this.sessionService.isAuthenticated()) {
       void this.router.navigateByUrl(this.redirectTarget());
@@ -90,7 +98,7 @@ export class LoginComponent implements OnInit {
     this.sessionService.loginWithGoogle(idToken).subscribe({
       next: (wasAuthenticated) => {
         if (wasAuthenticated) {
-          void this.router.navigateByUrl(this.redirectTarget());
+          void this.router.navigateByUrl(this.passwordChangeOrRedirectTarget());
           return;
         }
         this.localErrorMessage.set(
@@ -118,7 +126,7 @@ export class LoginComponent implements OnInit {
           return;
         }
 
-        void this.router.navigateByUrl(this.redirectTarget());
+        void this.router.navigateByUrl(this.passwordChangeOrRedirectTarget());
       },
       error: (loginError: { message?: string }) => {
         this.localErrorMessage.set(

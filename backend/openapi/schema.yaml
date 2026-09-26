@@ -171,6 +171,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserProfile'
           description: ''
+  /api/auth/password-change/:
+    post:
+      operationId: auth_password_change_create
+      description: Permite al usuario autenticado cambiar su contraseña obligatoria.
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
   /api/auth/providers/:
     get:
       operationId: auth_providers_retrieve
@@ -8918,6 +8946,21 @@ components:
       - metadata
       - rows
       - species_labels
+    PasswordChangeRequest:
+      type: object
+      description: Contrato para el cambio obligatorio de contraseña del usuario autenticado.
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - current_password
+      - new_password
     PatchedAppPermissionRequest:
       type: object
       description: Serializer CRUD para permisos de app por usuario o por grupo.
@@ -11084,6 +11127,9 @@ components:
         email_verified:
           type: boolean
           readOnly: true
+        must_change_password:
+          type: boolean
+          readOnly: true
         primary_group_id:
           type: integer
           readOnly: true
@@ -11113,6 +11159,7 @@ components:
       - id
       - last_name
       - memberships
+      - must_change_password
       - primary_group_id
       - role
       - updated_at

@@ -164,6 +164,25 @@
       "note": "The seven fast apps work without signing up, and results stay in this browser."
     }
   },
+  "changePassword": {
+    "eyebrow": "Mandatory security step",
+    "title": "Change your password",
+    "copy": "Your account uses a temporary password. Set a new one to continue.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "submit": "Change password",
+    "submitting": "Changing password...",
+    "success": "Password changed successfully.",
+    "errors": {
+      "required": "All fields are required.",
+      "mismatch": "Password confirmation does not match.",
+      "tooShort": "The new password must be at least 8 characters.",
+      "sameAsCurrent": "The new password must be different from the current one.",
+      "wrongCurrent": "The current password is incorrect.",
+      "generic": "Unable to change the password. Please try again."
+    }
+  },
   "register": {
     "aria": {
       "createAccount": "Create account",

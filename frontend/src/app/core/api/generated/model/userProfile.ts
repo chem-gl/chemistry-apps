@@ -23,6 +23,7 @@ export interface UserProfile {
     readonly last_name: string;
     readonly avatar: string;
     readonly email_verified: boolean;
+    readonly must_change_password: boolean;
     readonly primary_group_id: number | null;
     readonly created_at: string | null;
     readonly updated_at: string | null;

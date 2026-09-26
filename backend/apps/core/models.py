@@ -78,6 +78,7 @@ class UserIdentityProfile(models.Model):
     )
     avatar = models.TextField(blank=True, default="")
     email_verified = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(default=False)
     primary_group = models.ForeignKey(
         WORK_GROUP_MODEL_REF,
         null=True,

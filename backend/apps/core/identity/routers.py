@@ -35,6 +35,7 @@ from .schemas import (
     IdentityBootstrapUserSerializer,
     IdentityUserSummarySerializer,
     IdentityUserUpdateSerializer,
+    PasswordChangeSerializer,
     RegistrationTokenCreateSerializer,
     RegistrationTokenSerializer,
     ScientificAppCatalogSerializer,
@@ -181,6 +182,38 @@ class CurrentUserProfileView(views.APIView):
     def get(self, request: Request) -> Response:
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Auth"])
+class PasswordChangeView(views.APIView):
+    """Permite al usuario autenticado cambiar su contraseña obligatoria."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    @extend_schema(
+        request=PasswordChangeSerializer,
+        responses={200: UserProfileSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        serializer = PasswordChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        current_password = str(serializer.validated_data["current_password"])
+        new_password = str(serializer.validated_data["new_password"])
+        if not user.check_password(current_password):
+            return Response(
+                {"detail": "La contraseña actual es incorrecta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+        UserIdentityProfile.objects.update_or_create(
+            user=user,
+            defaults={"must_change_password": False},
+        )
+        profile_serializer = UserProfileSerializer(user)
+        return Response(profile_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Auth"])

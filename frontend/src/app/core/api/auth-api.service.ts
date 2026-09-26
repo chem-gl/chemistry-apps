@@ -40,6 +40,7 @@ export interface CurrentUserProfileView {
   last_name: string;
   avatar: string;
   email_verified: boolean;
+  must_change_password?: boolean;
   primary_group_id: number | null;
   created_at: string | null;
   updated_at: string | null;
@@ -125,5 +126,12 @@ export class AuthApiService {
 
   getCurrentUserProfile(): Observable<CurrentUserProfileView> {
     return this.authClient.authMeRetrieve() as Observable<CurrentUserProfileView>;
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<CurrentUserProfileView> {
+    return this.authClient.authPasswordChangeCreate({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }) as Observable<CurrentUserProfileView>;
   }
 }

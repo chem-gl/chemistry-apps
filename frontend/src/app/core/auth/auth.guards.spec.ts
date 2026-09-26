@@ -12,7 +12,7 @@ import {
 } from '@angular/router';
 import { firstValueFrom, Observable, of } from 'rxjs';
 import { vi } from 'vitest';
-import { adminGuard, appAccessGuard, authGuard, freeAccessGuard, groupAdminGuard } from './auth.guards';
+import { adminGuard, appAccessGuard, authGuard, freeAccessGuard, groupAdminGuard, guestGuard } from './auth.guards';
 import { IdentitySessionService } from './identity-session.service';
 import { JobAccessModeService } from './job-access-mode.service';
 
@@ -26,6 +26,8 @@ describe('auth guards', () => {
     hasAdminAccess: vi.fn(),
     canAccessRoute: vi.fn(),
     canAccessAdminArea: vi.fn(),
+    isAuthenticated: vi.fn(() => true),
+    mustChangePassword: vi.fn(() => false),
   };
   const accessModeMock = {
     openModeEnabled: signal(true),
@@ -236,5 +238,30 @@ describe('auth guards', () => {
     );
 
     expect(result).toBe(true);
+  });
+
+  it('redirige authGuard a change-password con flag obligatorio activo', async () => {
+    sessionServiceMock.mustChangePassword.mockReturnValueOnce(true);
+    const router = TestBed.inject(Router);
+    const state = { url: '/apps' } as RouterStateSnapshot;
+
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(asGuardObservable(authGuard({} as ActivatedRouteSnapshot, state))),
+    );
+
+    expect(router.serializeUrl(result as UrlTree)).toBe('/change-password');
+  });
+
+  it('redirige guestGuard a change-password con flag obligatorio activo', async () => {
+    sessionServiceMock.mustChangePassword.mockReturnValueOnce(true);
+    const router = TestBed.inject(Router);
+
+    const result = await TestBed.runInInjectionContext(() =>
+      firstValueFrom(
+        asGuardObservable(guestGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)),
+      ),
+    );
+
+    expect(router.serializeUrl(result as UrlTree)).toBe('/change-password');
   });
 });

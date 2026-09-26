@@ -131,6 +131,25 @@
       "heading": "近期出版物"
     }
   },
+  "changePassword": {
+    "eyebrow": "必需的安全步骤",
+    "title": "更改密码",
+    "copy": "您的帐户正在使用临时密码。请设置新密码以继续。",
+    "current": "当前密码",
+    "new": "新密码",
+    "confirm": "确认新密码",
+    "submit": "更改密码",
+    "submitting": "正在更改密码...",
+    "success": "密码更改成功。",
+    "errors": {
+      "required": "所有字段均为必填项。",
+      "mismatch": "确认密码与新密码不一致。",
+      "tooShort": "新密码长度至少为 8 个字符。",
+      "sameAsCurrent": "新密码必须与当前密码不同。",
+      "wrongCurrent": "当前密码不正确。",
+      "generic": "无法更改密码，请重试。"
+    }
+  },
   "userManager": {
     "header": {
       "title": "User Management",

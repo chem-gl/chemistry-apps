@@ -23,6 +23,7 @@ from apps.core.identity.routers import (
     GroupMembershipsView,
     IdentityUserDetailView,
     IdentityUsersView,
+    PasswordChangeView,
     RegistrationTokenDetailView,
     RegistrationTokensView,
     ScientificAppCatalogView,
@@ -129,6 +130,11 @@ urlpatterns = [
     path("api/auth/google/", GoogleLoginView.as_view(), name="auth-google"),
     path("api/auth/providers/", AuthProvidersView.as_view(), name="auth-providers"),
     path("api/auth/me/", CurrentUserProfileView.as_view(), name="auth-me"),
+    path(
+        "api/auth/password-change/",
+        PasswordChangeView.as_view(),
+        name="auth-password-change",
+    ),
     path("api/auth/apps/", CurrentUserAccessibleAppsView.as_view(), name="auth-apps"),
     path(
         "api/auth/app-configs/<str:app_name>/",

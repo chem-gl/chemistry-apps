@@ -132,6 +132,7 @@ def _build_user_representation(
         "last_name": instance.last_name,
         "avatar": avatar,
         "email_verified": email_verified,
+        "must_change_password": bool(getattr(profile, "must_change_password", False)),
         "primary_group_id": primary_group_id,
         "created_at": getattr(instance, "date_joined", None),
         "updated_at": updated_at,
@@ -159,6 +160,7 @@ class UserProfileSerializer(serializers.Serializer):
     last_name = serializers.CharField(read_only=True)
     avatar = serializers.CharField(read_only=True)
     email_verified = serializers.BooleanField(read_only=True)
+    must_change_password = serializers.BooleanField(read_only=True)
     primary_group_id = serializers.IntegerField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True, allow_null=True)
     updated_at = serializers.DateTimeField(read_only=True, allow_null=True)
@@ -435,6 +437,7 @@ class IdentityBootstrapUserSerializer(serializers.Serializer):
                     "role": role_value,
                     "account_status": account_status,
                     "primary_group_id": primary_group_id,
+                    "must_change_password": True,
                 },
             )
 
@@ -743,3 +746,17 @@ class RegistrationTokenCreateSerializer(serializers.Serializer):
             expires_at=validated_data.get("expires_at"),
             created_by=validated_data.get("created_by"),
         )
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Contrato para el cambio obligatorio de contraseña del usuario autenticado."""
+
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs: dict) -> dict:
+        if str(attrs.get("current_password", "")) == str(attrs.get("new_password", "")):
+            raise serializers.ValidationError(
+                {"new_password": "La nueva contraseña debe ser distinta a la actual."}
+            )
+        return attrs
