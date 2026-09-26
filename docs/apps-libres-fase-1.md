@@ -10,6 +10,11 @@ Rama de trabajo: una rama dedicada (desde `dev`), ya fusionada en `dev`/`main` y
 > `apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`) quedó desactivado.
 > Las tablas fechadas de este documento (p. ej. §2, 2026-09-23) son snapshots
 > históricos y no se reescriben.
+>
+> **Actualización 2026-09-26 — modo libre cerrado**: `LIBRES_OPEN_MODE_ENABLED=0`
+> en GitHub vars y `OPEN_MODE_ENABLED=0` en `/home/deploy/chemistry-apps-libres/.env`.
+> El catálogo declara `{mode:closed, apps:[]}`, todo `/api/public/*` responde 404 y el
+> frontend redirige a `/login`. Feature intacto y reversible (volver a `1`).
 
 Fuente de requisitos: memos `#apps-chemistry #apps-libres #plan` [1/5]..[5/5].
 

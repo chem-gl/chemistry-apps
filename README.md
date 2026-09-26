@@ -589,7 +589,7 @@ El stack principal no tenía beat, por eso la purga no corría en producción. S
 
 ### Despliegue de producción
 
-`docker-compose.libres.yml` levanta el stack aislado de producción (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps.agalano.com` con certificado gestionado por certbot. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado. El modo libre está activo (`LIBRES_OPEN_MODE_ENABLED=1`; el default del código sigue siendo abierto).
+`docker-compose.libres.yml` levanta el stack aislado de producción (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps.agalano.com` con certificado gestionado por certbot. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado. El modo libre está **cerrado desde 2026-09-26** (`LIBRES_OPEN_MODE_ENABLED=0`; el default del código sigue siendo abierto y el feature intacto/reversible).
 
 Workflow `.github/workflows/deploy-libres.yml` (`Deploy production apps.agalano.com`): push a `main` o ejecución manual vía `workflow_dispatch` (cambios solo-docs no despliegan) → construye el bundle con `git archive` → migraciones dentro del contenedor → guarda de disco (aborta si quedan menos de 15 GB) → smoke HTTP contra `/` y `/api/public/catalog/`. No reutiliza `deploy.yml`.
 
