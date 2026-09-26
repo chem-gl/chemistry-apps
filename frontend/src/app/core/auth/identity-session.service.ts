@@ -508,6 +508,16 @@ export class IdentitySessionService {
   }> {
     return this.authApiService.getCurrentUserProfile().pipe(
       switchMap((currentUser: CurrentUserProfileView) => {
+        if (currentUser.must_change_password === true) {
+          // Cambio obligatorio pendiente: grupos y apps responden 403 por el
+          // enforcement del backend; basta el perfil para que los guards
+          // redirijan a /change-password.
+          return of({
+            currentUser,
+            accessibleApps: [] as AccessibleScientificAppView[],
+            resolvedGroupId: currentUser.primary_group_id ?? null,
+          });
+        }
         if (currentUser.role === 'root') {
           return this.identityApiService.listGroups().pipe(
             catchError(() => of([] as WorkGroupView[])),
