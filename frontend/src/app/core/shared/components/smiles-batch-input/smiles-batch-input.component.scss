@@ -1,7 +1,14 @@
-/* smiles-batch-input.component.scss: Estilos compartidos del editor batch de SMILES con nombres opcionales. */
+/* smiles-batch-input.component.scss: Editor batch de SMILES con nombres opcionales.
+   La tarjeta (.panel-card), los botones (.btn) y la barra de acciones (.action-bar)
+   vienen de las utilidades globales; aquí solo queda el layout interno. */
 :host {
+  display: block;
+  min-width: 0;
+}
+
+.batch-shell {
   display: grid;
-  gap: 0.7rem;
+  gap: var(--space-3);
 }
 
 .smiles-label {
@@ -21,7 +28,7 @@ button {
 textarea,
 .name-input {
   border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius);
+  border-radius: 8px;
   padding: 0.65rem 0.75rem;
   font-size: 0.94rem;
   background: var(--chem-surface-elevated);
@@ -32,11 +39,7 @@ textarea {
   min-height: 180px;
 }
 
-textarea:focus,
-.name-input:focus {
-  outline: 2px solid rgba(123, 90, 158, 0.25);
-  border-color: var(--chem-accent);
-}
+/* El foco usa el anillo verde global (input:focus en styles.scss). */
 
 .hint {
   margin: 0;
@@ -55,7 +58,7 @@ textarea:focus,
 .validation-error {
   margin: 0;
   padding: 0.7rem 0.82rem;
-  border: 1px solid rgba(211, 47, 47, 0.18);
+  border: 1px solid rgba(198, 40, 40, 0.18);
   border-radius: var(--chem-radius-sm);
   background: var(--chem-error-bg);
   color: var(--chem-error);
@@ -66,7 +69,7 @@ textarea:focus,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -81,6 +84,7 @@ textarea:focus,
 
 .batch-preview-shell {
   overflow: auto;
+  min-width: 0;
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
   background: var(--chem-surface-elevated);
@@ -124,26 +128,9 @@ textarea:focus,
 }
 
 .input-tools-row {
-  display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.btn-tool {
-  border: 1px solid var(--chem-primary);
-  border-radius: 999px;
-  background: var(--chem-surface);
-  color: var(--chem-primary);
-  padding: 0.45rem 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    opacity var(--chem-transition),
-    background var(--chem-transition);
-}
-
-.btn-tool:hover:not(.disabled):not(:disabled) {
-  background: var(--chem-surface-elevated);
+  /* .action-bar global aporta fila/gap; aquí solo se anula el margen superior
+     porque el grid de la tarjeta ya separa. */
+  margin-top: 0;
 }
 
 .file-upload-label {
@@ -159,7 +146,7 @@ textarea:focus,
 }
 
 .disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   pointer-events: none;
 }
 

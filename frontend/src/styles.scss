@@ -133,6 +133,26 @@
   --z-dropdown: 3;
   --z-backdrop: 59; /* Modalbackdrop justo debajo de modales */
   --z-modal: 60; /* Modales encima de Ketcher (que usa 40-63) */
+
+  /* === Escala de espaciado (design-overhaul 2026-09) === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* === Alturas de control únicas === */
+  --chem-input-h: 2.5rem;
+  --chem-btn-h: 2.6rem;
+
+  /* === Tarjetas (derivados de tokens existentes) === */
+  --chem-card-bg: var(--chem-surface-elevated);
+  --chem-card-border: var(--chem-border-subtle);
+  --chem-card-radius: var(--chem-radius-lg);
+  --chem-card-shadow: var(--chem-shadow-sm);
+  --chem-card-pad: 1.25rem;
 }
 
 /* === Reset base === */
@@ -238,4 +258,455 @@ tbody tr:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--chem-border-strong);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Patrones utilitarios globales (spec docs/design-overhaul.md)
+   "Panel de instrumento de laboratorio": superficies contenidas,
+   jerarquía clara y controles de altura única.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Tarjeta de panel ─────────────────────────────────────────── */
+.panel-card {
+  background: var(--chem-card-bg);
+  border: 1px solid var(--chem-card-border);
+  border-radius: var(--chem-card-radius);
+  box-shadow: var(--chem-card-shadow);
+  padding: var(--chem-card-pad);
+  min-width: 0;
+}
+
+/* ── 2. Cabecera de panel (eyebrow + h3 + slot derecho) ──────────── */
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+  border-bottom: 1px solid var(--chem-border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.panel-kicker {
+  flex: 0 0 100%;
+  margin: 0;
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--chem-primary);
+}
+
+.panel-head h3 {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  letter-spacing: -0.01em;
+  color: var(--chem-ink);
+}
+
+.panel-head-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* ── 3. Cabecera de página (eyebrow + h2 + lead) ─────────────────── */
+.page-head {
+  min-width: 0;
+  margin-bottom: var(--space-5);
+}
+
+.page-head .eyebrow {
+  margin: 0 0 var(--space-2);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--chem-primary);
+}
+
+.page-head h2 {
+  margin: 0;
+  font-family: var(--chem-font-heading);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: var(--chem-ink);
+}
+
+.page-head .lead {
+  margin: var(--space-2) 0 0;
+  max-width: 68ch;
+  color: var(--chem-ink-secondary);
+  font-size: var(--chem-text-sm);
+}
+
+/* ── 4. Grid de trabajo (form lateral + resultados) ──────────────── */
+.workspace-grid {
+  display: grid;
+  /* min() con 100% evita scroll horizontal en viewports < 372px. */
+  grid-template-columns: minmax(min(340px, 100%), 420px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  min-width: 0;
+}
+
+.workspace-form {
+  position: sticky;
+  top: var(--chem-sticky-offset, 6.5rem);
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-form {
+    position: static;
+  }
+}
+
+/* ── 5. Pila de formulario ───────────────────────────────────────── */
+.form-stack {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.form-stack label {
+  font-family: var(--chem-font-label);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--chem-ink-secondary);
+}
+
+.form-stack input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.form-stack select {
+  height: var(--chem-input-h);
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+}
+
+.form-stack textarea {
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border);
+  border-radius: 8px;
+}
+
+/* Grupos numéricos: 2/3 columnas que colapsan en móvil. */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── 6. Control segmentado (pill) ────────────────────────────────── */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--chem-surface-inset);
+  border-radius: var(--chem-radius-pill);
+  max-width: 100%;
+}
+
+.segmented button,
+.segmented label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.42rem 0.9rem;
+  border-radius: var(--chem-radius-pill);
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    box-shadow var(--chem-transition);
+}
+
+.segmented button:hover:not(.active):not([aria-pressed='true']):not([aria-selected='true']),
+.segmented label:hover:not(.active):not(:has(input:checked)) {
+  color: var(--chem-primary-dark);
+}
+
+.segmented button.active,
+.segmented button.is-active,
+.segmented button[aria-pressed='true'],
+.segmented button[aria-selected='true'],
+.segmented label.active,
+.segmented label:has(input:checked) {
+  background: var(--chem-primary);
+  color: var(--chem-surface-elevated);
+  box-shadow: var(--chem-shadow-sm);
+}
+
+.segmented input[type='checkbox'],
+.segmented input[type='radio'] {
+  accent-color: var(--chem-primary);
+  margin: 0;
+}
+
+.segmented button:focus-visible,
+.segmented label:focus-visible,
+.segmented label:focus-within {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+
+/* ── 7. Botones ──────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--chem-btn-h);
+  padding: 0 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--chem-radius-pill);
+  background: transparent;
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--chem-transition),
+    color var(--chem-transition),
+    border-color var(--chem-transition),
+    box-shadow var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--chem-primary);
+  border-color: var(--chem-primary);
+  color: var(--chem-surface-elevated);
+}
+
+.btn-primary:hover:not(:disabled):not(.disabled) {
+  background: var(--chem-primary-dark);
+  border-color: var(--chem-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--chem-shadow);
+}
+
+.btn-secondary {
+  background: var(--chem-card-bg);
+  border-color: var(--chem-border-strong);
+  color: var(--chem-ink-secondary);
+}
+
+.btn-secondary:hover:not(:disabled):not(.disabled) {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--chem-accent);
+}
+
+.btn-ghost:hover:not(:disabled):not(.disabled) {
+  background: var(--chem-accent-light);
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Variante compacta para acciones dentro de tablas y chips. */
+.btn-sm {
+  height: calc(var(--chem-btn-h) - 0.7rem);
+  padding: 0 0.7rem;
+  font-size: var(--chem-text-xs);
+}
+
+/* ── 8. Contenedor de tablas con scroll horizontal ───────────────── */
+.table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.table-scroll table {
+  min-width: 560px;
+}
+
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-base);
+  background: var(--chem-surface);
+}
+
+.table-scroll tbody tr:nth-child(even) {
+  background: rgba(49, 113, 84, 0.03);
+}
+
+/* El hover global (tbody tr:hover) pierde especificidad contra el zebra:
+   se restaura aquí para conservar el feedback existente. */
+.table-scroll tbody tr:hover {
+  background: var(--chem-surface-alt);
+}
+
+/* ── 9. Chips de estado ──────────────────────────────────────────── */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: var(--chem-radius-pill);
+  font-family: var(--chem-font-label);
+  font-size: var(--chem-text-xs);
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--chem-surface-alt);
+  color: var(--chem-ink-soft);
+}
+
+.status-chip.is-pending {
+  background: var(--chem-status-pending-bg);
+  color: var(--chem-status-pending);
+}
+
+.status-chip.is-running {
+  background: var(--chem-status-running-bg);
+  color: var(--chem-status-running);
+}
+
+.status-chip.is-completed {
+  background: var(--chem-status-completed-bg);
+  color: var(--chem-status-completed);
+}
+
+.status-chip.is-failed {
+  background: var(--chem-status-failed-bg);
+  color: var(--chem-status-failed);
+}
+
+.status-chip.is-paused {
+  background: var(--chem-status-paused-bg);
+  color: var(--chem-status-paused);
+}
+
+.status-chip.is-cancelled {
+  background: var(--chem-status-cancelled-bg);
+  color: var(--chem-status-cancelled);
+}
+
+/* ── 10. Estado vacío ────────────────────────────────────────────── */
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 1px dashed var(--chem-border-accent-soft);
+  border-radius: var(--chem-radius-lg);
+  background: var(--chem-glass-bg);
+  text-align: center;
+  color: var(--chem-ink-soft);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--chem-text-sm);
+}
+
+.empty-state .empty-state-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.empty-state .empty-state-hint {
+  font-size: var(--chem-text-xs);
+  color: var(--chem-ink-tertiary);
+}
+
+/* ── 11. Barra de acciones ───────────────────────────────────────── */
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 560px) {
+  .panel-card {
+    padding: var(--space-4);
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-bar .btn {
+    width: 100%;
+  }
+}
+
+/* ── Accesibilidad: movimiento reducido ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .segmented button,
+  .segmented label {
+    transition: none;
+  }
+
+  .btn-primary:hover:not(:disabled):not(.disabled) {
+    transform: none;
+  }
 }

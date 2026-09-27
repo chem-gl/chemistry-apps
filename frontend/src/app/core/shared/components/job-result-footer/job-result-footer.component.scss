@@ -1,3 +1,8 @@
 // job-result-footer.component.scss: Estilos para el footer reutilizable de resultados de jobs.
-// El componente delega el layout a los sub-componentes internos; este archivo queda vacío
-// intencionalmente para no imponer estilos específicos de host.
+// El componente delega el layout a los sub-componentes internos (cada uno usa ya
+// las utilidades globales .panel-card/.table-scroll con tokens --chem-card-*).
+// Solo se garantiza que el host no desborde dentro de grids de trabajo.
+:host {
+  display: block;
+  min-width: 0;
+}

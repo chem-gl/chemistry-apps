@@ -1,3 +1,6 @@
+/* scientific-doc-panel.component.scss: Panel lateral de documentación científica.
+   Superficie unificada con los tokens de tarjeta (--chem-card-*) y la paleta
+   institucional; los colores sueltos con fallback (#hex) se reemplazan por tokens. */
 :host {
   display: contents;
 }
@@ -6,16 +9,17 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(12, 32, 33, 0.45);
   display: flex;
   justify-content: flex-end;
 }
 
 .doc-panel {
   width: min(820px, 96vw);
+  max-width: 100%;
   height: 100%;
-  background: var(--chem-bg-card, #fff);
-  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.15);
+  background: var(--chem-card-bg);
+  box-shadow: -6px 0 24px rgba(12, 32, 33, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -30,8 +34,8 @@
 .doc-header {
   display: flex;
   justify-content: flex-end;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--chem-border, #e5e7eb);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--chem-border-subtle);
 }
 
 .doc-close-btn {
@@ -40,13 +44,18 @@
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
-  color: var(--chem-text-secondary, #6b7280);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  color: var(--chem-ink-secondary);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--chem-radius-sm);
 
   &:hover {
-    background: var(--chem-bg-hover, #f3f4f6);
-    color: var(--chem-text, #111827);
+    background: var(--chem-surface-alt);
+    color: var(--chem-ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chem-accent);
+    outline-offset: 2px;
   }
 }
 
@@ -54,56 +63,64 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  border-bottom: 1px solid var(--chem-border, #e5e7eb);
-  padding: 0 0.75rem;
-  background: var(--chem-bg-subtle, #f9fafb);
+  border-bottom: 1px solid var(--chem-border-subtle);
+  padding: 0 var(--space-3);
+  background: var(--chem-surface);
 }
 
 .doc-tab {
   padding: 0.6rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 500;
+  font-family: var(--chem-font-label);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  color: var(--chem-text-secondary, #6b7280);
+  color: var(--chem-ink-secondary);
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
 
   &:hover {
-    color: var(--chem-text, #111827);
+    color: var(--chem-ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chem-accent);
+    outline-offset: 2px;
   }
 
   &.active {
-    color: var(--chem-accent, #2563eb);
-    border-bottom-color: var(--chem-accent, #2563eb);
+    color: var(--chem-accent);
+    border-bottom-color: var(--chem-accent);
   }
 }
 
 .doc-body {
   flex: 1;
   overflow-y: auto;
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-5);
 }
 
 .doc-content {
   font-size: 0.9rem;
   line-height: 1.65;
-  color: var(--chem-text, #111827);
+  color: var(--chem-ink);
 
   h3 {
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 0.75rem;
-    color: var(--chem-text, #111827);
+    font-family: var(--chem-font-heading);
+    margin: 0 0 var(--space-3);
+    color: var(--chem-ink);
   }
 
   h4 {
     font-size: 0.95rem;
     font-weight: 600;
-    margin: 1rem 0 0.4rem;
-    color: var(--chem-text, #111827);
+    font-family: var(--chem-font-heading);
+    margin: var(--space-4) 0 0.4rem;
+    color: var(--chem-ink);
   }
 
   p {
@@ -124,29 +141,29 @@
   }
 
   code {
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-family: var(--chem-font-mono);
     font-size: 0.82rem;
-    background: var(--chem-bg-subtle, #f3f4f6);
+    background: var(--chem-surface);
     padding: 0.1em 0.3em;
-    border-radius: 3px;
+    border-radius: var(--chem-radius-sm);
   }
 
   .formula-block {
-    background: var(--chem-bg-subtle, #f3f4f6);
-    border-left: 3px solid var(--chem-accent, #2563eb);
-    padding: 0.6rem 1rem;
-    margin: 0.5rem 0 0.8rem;
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--chem-surface);
+    border-left: 3px solid var(--chem-accent);
+    padding: 0.6rem var(--space-4);
+    margin: var(--space-2) 0 0.8rem;
+    font-family: var(--chem-font-mono);
     font-size: 0.85rem;
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 var(--chem-radius-sm) var(--chem-radius-sm) 0;
     overflow-x: auto;
   }
 
   .metric-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.4rem 1rem;
-    margin: 0.5rem 0 0.8rem;
+    gap: 0.4rem var(--space-4);
+    margin: var(--space-2) 0 0.8rem;
   }
 
   .metric-item {
@@ -156,40 +173,50 @@
 
   .metric-code {
     font-weight: 600;
-    color: var(--chem-accent, #2563eb);
+    color: var(--chem-accent);
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.5rem 0 0.8rem;
+    margin: var(--space-2) 0 0.8rem;
     font-size: 0.82rem;
   }
 
   th, td {
-    padding: 0.35rem 0.5rem;
-    border: 1px solid var(--chem-border, #e5e7eb);
+    padding: 0.35rem var(--space-2);
+    border: 1px solid var(--chem-border);
     text-align: left;
   }
 
   th {
-    background: var(--chem-bg-subtle, #f3f4f6);
+    background: var(--chem-surface);
     font-weight: 600;
   }
 
   hr {
     border: none;
-    border-top: 1px solid var(--chem-border, #e5e7eb);
-    margin: 1rem 0;
+    border-top: 1px solid var(--chem-border-subtle);
+    margin: var(--space-4) 0;
   }
 
   .infobox {
-    background: #f0f7ee;
-    border-left: 3px solid #4a8c2a;
-    padding: 0.6rem 1rem;
+    background: var(--chem-success-bg);
+    border-left: 3px solid var(--chem-primary);
+    padding: 0.6rem var(--space-4);
     margin: 0.8rem 0;
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 var(--chem-radius-sm) var(--chem-radius-sm) 0;
     font-size: 0.85rem;
     line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-panel {
+    animation: none;
+  }
+
+  .doc-tab {
+    transition: none;
   }
 }

@@ -1,72 +1,51 @@
-/* job-history-table.component.scss: Tabla de historial — App Chemistry Sense. */
+/* job-history-table.component.scss: Tabla de historial — App Chemistry Sense.
+   La forma (tarjeta, cabecera, tabla con scroll, chips y botones) vive en las
+   utilidades globales (.panel-card, .panel-head, .table-scroll, .status-chip,
+   .btn). Aquí solo quedan colores de estado y ajustes locales mínimos. */
 
 :host {
   display: block;
+  min-width: 0;
 }
 
 .history-card {
-  background: transparent;
-  padding: 0;
+  /* La acción de recarga se alinea al borde derecho de la cabecera. */
+  .history-header .btn {
+    margin-left: auto;
+  }
+
+  /* El borde superior del envoltorio de la tabla se separa de la cabecera. */
+  .table-wrap {
+    margin-top: var(--space-3);
+    border: 1px solid var(--chem-border-subtle);
+    border-radius: var(--chem-radius);
+  }
 }
 
 /* ── Historial en blanco: tarjeta de estado vacio ─────────────────────── */
 
-/* Sin historial: el mensaje dentro de una tarjeta punteada guía mejor que
-   una línea suelta sobre el fondo de la página. */
-.history-card .status-message.is-empty-note {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 1rem 1.15rem;
-  border: 1px dashed var(--chem-border-strong);
-  border-radius: var(--chem-radius);
-  background: var(--chem-glass-bg);
-}
-
+/* Sin historial: el mensaje dentro de .empty-state (global) con un icono
+   tipográfico guía mejor que una línea suelta sobre el fondo de la página. */
 .history-card .status-message.is-empty-note::before {
   content: '···';
   flex-shrink: 0;
   font-family: var(--chem-font-mono);
   font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1;
   color: var(--chem-ink-soft);
   letter-spacing: 0.1em;
 }
 
 .history-card .status-message.is-empty-note + .table-wrap,
 .history-card .status-message.is-empty-note ~ .table-wrap {
-  margin-top: 0.7rem;
-}
-
-.history-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.7rem;
-}
-
-.history-header h3 {
-  margin: 0;
-  font-family: var(--chem-font-heading);
-  color: var(--chem-ink);
+  margin-top: var(--space-3);
 }
 
 .status-message {
   margin: 0;
   color: var(--chem-ink-secondary);
   font-size: var(--chem-text-sm);
-}
-
-.table-wrap {
-  margin-top: 0.7rem;
-  overflow: auto;
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-}
-
-.history-table {
-  min-width: 420px;
 }
 
 .mono {
@@ -83,70 +62,46 @@
   word-break: break-word;
 }
 
-.history-open-btn {
-  border-radius: var(--chem-radius-pill);
-  padding: 0.35rem 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--chem-border);
-  background: transparent;
-  color: var(--chem-ink-secondary);
-  font-family: var(--chem-font-label);
-  font-size: var(--chem-text-xs);
-  transition: all var(--chem-transition);
+.actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-.history-open-btn:hover {
-  border-color: var(--chem-accent);
-  color: var(--chem-accent);
-  background: var(--chem-accent-light);
-}
-
-/* ── Badges de estado ─────────────────────────────────────────────────── */
-
-/* ── Badges de estado ── */
-
-.history-status {
-  border-radius: var(--chem-radius-pill);
-  border: 1px solid transparent;
-  padding: 0.12rem 0.48rem;
-  font-weight: 700;
-  font-size: var(--chem-text-xs);
-  font-family: var(--chem-font-label);
-}
+/* ── Pares color/bg de los chips de estado (forma: .status-chip global) ── */
 
 .history-pending {
-  border-color: rgba(123, 90, 158, 0.25);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-pending-bg);
   color: var(--chem-status-pending);
 }
 
 .history-running {
-  border-color: rgba(211, 47, 47, 0.25);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-running-bg);
   color: var(--chem-status-running);
 }
 
 .history-completed {
-  border-color: rgba(46, 125, 50, 0.25);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-completed-bg);
   color: var(--chem-status-completed);
 }
 
 .history-failed {
-  border-color: rgba(183, 28, 28, 0.25);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-failed-bg);
   color: var(--chem-status-failed);
 }
 
 .history-cancelled {
-  border-color: rgba(168, 161, 176, 0.3);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-cancelled-bg);
   color: var(--chem-status-cancelled);
 }
 
 .history-paused {
-  border-color: rgba(244, 162, 97, 0.3);
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-paused-bg);
   color: var(--chem-status-paused);
 }
@@ -155,28 +110,4 @@
   border-color: var(--chem-border-subtle);
   background: var(--chem-surface-alt);
   color: var(--chem-ink-soft);
-}
-
-/* ── Reload button ── */
-
-.btn-secondary {
-  border-radius: var(--chem-radius-pill);
-  padding: 0.45rem 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--chem-border);
-  background: transparent;
-  color: var(--chem-ink-secondary);
-  font-family: var(--chem-font-label);
-  transition: all var(--chem-transition);
-}
-
-.btn-secondary:hover {
-  border-color: var(--chem-accent);
-  color: var(--chem-accent);
-}
-
-.btn-secondary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }

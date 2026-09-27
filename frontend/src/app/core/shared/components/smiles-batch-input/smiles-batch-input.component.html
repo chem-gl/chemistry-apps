@@ -1,4 +1,6 @@
-<!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo). -->
+<!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo).
+     Todo el editor vive en una tarjeta (.panel-card global) con sus herramientas en .action-bar. -->
+<div class="panel-card batch-shell">
 <label class="smiles-label">
     {{ 'shared.smilesBatchInput.label' | transloco }}
     <textarea rows="10" [ngModel]="smilesValue" (ngModelChange)="smilesChange.emit($event)"
@@ -58,16 +60,17 @@
 </div>
 }
 
-<div class="input-tools-row">
-    <button class="btn-tool" type="button" (click)="openSketch.emit()" [disabled]="isDisabled"
+<div class="input-tools-row action-bar">
+    <button class="btn btn-secondary" type="button" (click)="openSketch.emit()" [disabled]="isDisabled"
         [title]="'shared.smilesBatchInput.drawSmilesTitle' | transloco">
         {{ 'shared.smilesBatchInput.drawSmiles' | transloco }}
     </button>
 
-    <label class="btn-tool file-upload-label" [class.disabled]="isDisabled"
+    <label class="btn btn-secondary file-upload-label" [class.disabled]="isDisabled"
         [title]="'shared.smilesBatchInput.uploadFileTitle' | transloco">
         {{ 'shared.smilesBatchInput.uploadFile' | transloco }}
         <input type="file" accept=".smi,.txt,.csv" class="file-input-hidden" [disabled]="isDisabled"
             (change)="fileUpload.emit($event)" />
     </label>
+</div>
 </div>

@@ -32,17 +32,17 @@
 }
 
 .top-bar.is-scrolled {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--chem-shadow);
 }
 
 .top-bar-inner {
   max-width: 1680px;
   margin: 0 auto;
-  padding: 0.7rem 1.5rem;
+  padding: var(--space-3) var(--space-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 /* ── Brand ── */
@@ -274,7 +274,8 @@ h1 {
   min-width: 180px;
   background: var(--chem-surface);
   border: 1px solid var(--chem-glass-border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--chem-shadow-lg);
+  border-radius: var(--chem-radius);
   z-index: 100;
   padding: 0.3rem 0;
 }
@@ -310,7 +311,7 @@ h1 {
 .content-shell {
   max-width: 1680px;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-4) var(--space-5);
   min-height: calc(100vh - 3.5rem);
 }
 
@@ -384,7 +385,7 @@ h1 {
   }
 
   .content-shell {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }
 
