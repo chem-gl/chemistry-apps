@@ -1,7 +1,7 @@
 // smileit-api.service.ts: Sub-servicio API exclusivo para operaciones Smileit.
 // Encapsula catálogo, inspección estructural, validación, despacho y reportes.
 
-import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
   Observable,
@@ -218,12 +218,17 @@ export class SmileitApiService {
       normalizedSmiles.map((smilesValue: string) =>
         this.inspectSmileitStructure(smilesValue).pipe(
           map(() => null),
-          catchError((validationError: unknown) =>
-            of({
+          catchError((validationError: unknown) => {
+            // En modo abierto, 429/413 son límites de cuota pública, no SMILES inválidos:
+            // se propagan para que el flujo muestre el mensaje traducido de cuota.
+            if (this.isOpenMode() && this.isPublicQuotaError(validationError)) {
+              return throwError(() => validationError);
+            }
+            return of({
               smiles: smilesValue,
               reason: this.extractErrorMessage(validationError),
-            }),
-          ),
+            });
+          }),
         ),
       );
 
@@ -239,6 +244,13 @@ export class SmileitApiService {
           issues,
         };
       }),
+    );
+  }
+
+  /** Detecta errores HTTP de cuota del modo abierto (429 Too Many Requests / 413 Payload Too Large). */
+  private isPublicQuotaError(error: unknown): boolean {
+    return (
+      error instanceof HttpErrorResponse && (error.status === 429 || error.status === 413)
     );
   }
 

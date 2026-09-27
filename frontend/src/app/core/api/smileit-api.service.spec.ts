@@ -1,12 +1,18 @@
 // smileit-api.service.spec.ts: Pruebas unitarias del wrapper SmileitApiService.
 // Cubre mapeos, validaciones, descargas y endpoints auxiliares sin depender del cliente generado real.
 
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpResponse,
+  provideHttpClient,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import '@angular/compiler';
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
 import { API_BASE_URL } from '../shared/constants';
 import {
   PatternTypeEnum,
@@ -547,5 +553,81 @@ describe('SmileitApiService', () => {
     );
 
     await expect(lastValueFrom(service.getSmileitDerivationSvg('job-1', 1))).resolves.toBe('');
+  });
+});
+
+describe('SmileitApiService (límites de cuota del modo abierto)', () => {
+  let openModeService: SmileitApiService;
+  let publicInspectMock: ReturnType<typeof vi.fn>;
+  let privateInspectMock: ReturnType<typeof vi.fn>;
+  let isOpenMode = true;
+
+  beforeEach(() => {
+    isOpenMode = true;
+    publicInspectMock = vi.fn();
+    privateInspectMock = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 429 })));
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideApi(API_BASE_URL),
+        SmileitApiService,
+        {
+          provide: SmileitService,
+          useValue: {
+            publicSmileitJobsInspectStructureCreate: publicInspectMock,
+            smileitJobsInspectStructureCreate: privateInspectMock,
+          },
+        },
+        { provide: JobAccessModeService, useValue: { isOpenMode: () => isOpenMode } },
+      ],
+    });
+
+    openModeService = TestBed.inject(SmileitApiService);
+  });
+
+  it('propaga el 429 de cuota pública como error en lugar de marcar el SMILES como inválido', async () => {
+    publicInspectMock.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 429 })),
+    );
+
+    await expect(
+      lastValueFrom(openModeService.validateSmilesCompatibility(['CCO'])),
+    ).rejects.toBeInstanceOf(HttpErrorResponse);
+  });
+
+  it('propaga el 413 de payload demasiado grande como error en modo abierto', async () => {
+    publicInspectMock.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 413 })),
+    );
+
+    await expect(
+      lastValueFrom(openModeService.validateSmilesCompatibility(['CCO'])),
+    ).rejects.toBeInstanceOf(HttpErrorResponse);
+  });
+
+  it('mantiene los demás errores como issues de compatibilidad en modo abierto', async () => {
+    publicInspectMock.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+
+    await expect(
+      lastValueFrom(openModeService.validateSmilesCompatibility(['bad'])),
+    ).resolves.toEqual({
+      compatible: false,
+      issues: [{ smiles: 'bad', reason: expect.any(String) }],
+    });
+  });
+
+  it('con sesión el 429 sigue reportándose como issue de compatibilidad (comportamiento intacto)', async () => {
+    isOpenMode = false;
+
+    await expect(
+      lastValueFrom(openModeService.validateSmilesCompatibility(['CCO'])),
+    ).resolves.toEqual({
+      compatible: false,
+      issues: [{ smiles: 'CCO', reason: expect.any(String) }],
+    });
   });
 });

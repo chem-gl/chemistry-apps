@@ -1,5 +1,7 @@
 // sa-score-workflow.service.spec.ts: Pruebas unitarias del workflow SA Score.
 
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -12,6 +14,8 @@ import {
   ScientificJobView,
   SmilesCompatibilityResultView,
 } from '../api/jobs-api.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 import { SaScoreWorkflowService } from './sa-score-workflow.service';
 
 function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
@@ -161,6 +165,51 @@ describe('SaScoreWorkflowService', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
+
+  /** Crea un workflow con JobsApiService que hace fallar la validación con el status dado. */
+  function createOpenQuotaService(status: number, retryAfter: string | null): SaScoreWorkflowService {
+    const validateFailure$: Observable<SmilesCompatibilityResultView> = throwError(
+      () =>
+        new HttpErrorResponse({
+          status,
+          headers: retryAfter === null ? undefined : new HttpHeaders({ 'Retry-After': retryAfter }),
+        }),
+    );
+    const openJobsApi = {
+      ...jobsApiServiceMock,
+      validateSmilesCompatibility: vi.fn(() => validateFailure$),
+    };
+    const injector = Injector.create({
+      providers: [
+        { provide: JobsApiService, useValue: openJobsApi },
+        {
+          provide: JobAccessModeService,
+          useValue: {
+            isOpenMode: () => true,
+            mode: () => 'open',
+            openModeLimitMessage: (error: unknown) => {
+              if (!(error instanceof HttpErrorResponse)) {
+                return null;
+              }
+              const key = error.status === 429 ? 'appMode.open.limits.429' : 'appMode.open.limits.413';
+              const retryHeader = error.headers.get('Retry-After');
+              return retryHeader === null ? key : `${key} Retry-After: ${retryHeader}.`;
+            },
+          },
+        },
+        {
+          provide: LocalResultsStore,
+          useValue: {
+            list: () => [],
+            save: () => undefined,
+            upsert: () => [],
+            remove: () => undefined,
+          },
+        },
+      ],
+    });
+    return runInInjectionContext(injector, () => new SaScoreWorkflowService());
+  }
 
   it('dispatches SA score job when smiles are compatible', () => {
     workflowService.setBatchInputText('CCO');
@@ -443,5 +492,20 @@ describe('SaScoreWorkflowService', () => {
     expect(workflowService.errorMessage()).toContain('dispatch unavailable');
     workflowService.reset();
     expect(workflowService.currentJobDisplayName()).toBeNull();
+  });
+
+  it('modo abierto: un 429 en la validacion de dispatch muestra el limite de cuota', () => {
+    const openService = createOpenQuotaService(429, '45');
+
+    openService.setBatchInputText('CCO');
+    vi.runAllTimers();
+    expect(openService.hasInvalidSmiles()).toBe(false);
+
+    openService.dispatch();
+
+    expect(openService.activeSection()).toBe('error');
+    expect(openService.errorMessage()).toBe('appMode.open.limits.429 Retry-After: 45.');
+    expect(jobsApiServiceMock.dispatchSaScoreJob).not.toHaveBeenCalled();
+    openService.ngOnDestroy();
   });
 });

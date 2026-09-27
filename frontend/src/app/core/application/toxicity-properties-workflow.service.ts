@@ -101,7 +101,9 @@ export class ToxicityPropertiesWorkflowService extends SmilesJobWorkflowService<
         error: (validationError: Error) => {
           this.activeSection.set('error');
           this.errorMessage.set(
-            `Unable to validate SMILES compatibility: ${validationError.message}`,
+            // En modo abierto, la validación propaga 429/413 de cuota: se muestra el mensaje traducido.
+            this.accessMode.openModeLimitMessage?.(validationError) ??
+              `Unable to validate SMILES compatibility: ${validationError.message}`,
           );
         },
       });

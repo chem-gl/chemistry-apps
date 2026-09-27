@@ -40,11 +40,20 @@ export abstract class SmilesJobWorkflowService<TResultData>
   readonly currentJobDisplayName = signal<string | null>(null);
   readonly invalidSmilesIssues = signal<SmilesCompatibilityIssueView[]>([]);
   readonly isInputValidationPending = signal<boolean>(false);
+  /** Mensaje traducido de cuota del modo abierto (429/413) durante la validación asíncrona. */
+  readonly openModeValidationMessage = signal<string | null>(null);
   readonly resolvedJobName = computed<string | null>(() =>
     resolveScientificJobNameCandidate(this.jobNameInput(), this.inputRows()),
   );
   readonly hasInvalidSmiles = computed<boolean>(() => this.invalidSmilesIssues().length > 0);
   readonly inputValidationMessage = computed<string | null>(() => {
+    // El límite de cuota tiene prioridad: informa por qué no se pudo validar sin
+    // marcar el SMILES como inválido (el botón sigue habilitado para reintentar).
+    const limitMessage: string | null = this.openModeValidationMessage();
+    if (limitMessage !== null) {
+      return limitMessage;
+    }
+
     const issues: SmilesCompatibilityIssueView[] = this.invalidSmilesIssues();
     if (issues.length === 0) {
       return null;
@@ -152,7 +161,14 @@ export abstract class SmilesJobWorkflowService<TResultData>
       return 'Wait until SMILES validation finishes.';
     }
 
-    return this.inputValidationMessage();
+    // El mensaje de cuota no bloquea el dispatch: el usuario debe poder reintentar.
+    if (!this.hasInvalidSmiles()) {
+      return null;
+    }
+    return this.buildSmilesCompatibilityErrorMessage({
+      compatible: false,
+      issues: this.invalidSmilesIssues(),
+    });
   }
 
   /**
@@ -215,10 +231,12 @@ export abstract class SmilesJobWorkflowService<TResultData>
 
     if (smilesList.length === 0) {
       this.invalidSmilesIssues.set([]);
+      this.openModeValidationMessage.set(null);
       this.isInputValidationPending.set(false);
       return;
     }
 
+    this.openModeValidationMessage.set(null);
     this.isInputValidationPending.set(true);
     this.inputValidationTimer = setTimeout(() => {
       this.inputValidationSubscription = this.jobsApiService
@@ -229,12 +247,18 @@ export abstract class SmilesJobWorkflowService<TResultData>
               return;
             }
             this.invalidSmilesIssues.set(validationResult.issues);
+            this.openModeValidationMessage.set(null);
             this.isInputValidationPending.set(false);
           },
-          error: () => {
+          error: (validationError: unknown) => {
             if (validationToken !== this.latestValidationToken) {
               return;
             }
+            // En modo abierto, un 429/413 de cuota se muestra como mensaje traducido sin
+            // invalidar el SMILES; en sesión, openModeLimitMessage retorna null (igual que antes).
+            const limitMessage: string | null =
+              this.accessMode.openModeLimitMessage?.(validationError) ?? null;
+            this.openModeValidationMessage.set(limitMessage);
             this.invalidSmilesIssues.set([]);
             this.isInputValidationPending.set(false);
           },

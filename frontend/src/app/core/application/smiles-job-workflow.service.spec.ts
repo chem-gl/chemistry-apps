@@ -1,5 +1,6 @@
 import '@angular/compiler';
-import { Injector, runInInjectionContext } from '@angular/core';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Injector, runInInjectionContext, signal, WritableSignal } from '@angular/core';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -9,6 +10,7 @@ import {
 } from '../api/jobs-api.service';
 import { NamedSmilesInputRow } from '../shared/scientific-app-ui.utils';
 import { SmilesJobWorkflowService } from './smiles-job-workflow.service';
+import { IdentitySessionService } from '../auth/identity-session.service';
 import { JobAccessModeService } from '../auth/job-access-mode.service';
 import { LocalResultsStore } from '../shared/local-results.store';
 
@@ -216,5 +218,121 @@ describe('SmilesJobWorkflowService', () => {
     service.reset();
     service.hydrate('job-2', { job_name: 'Recovered run' });
     expect(service.currentJobDisplayName()).toBe('Recovered run');
+  });
+});
+
+describe('SmilesJobWorkflowService (cuota del modo abierto en validacion de SMILES)', () => {
+  let quotaService: TestSmilesWorkflowService;
+  let sessionStatus: WritableSignal<'anonymous' | 'authenticated'>;
+  let validateSmilesCompatibility: ReturnType<typeof vi.fn>;
+
+  afterEach(() => {
+    quotaService.ngOnDestroy();
+    vi.useRealTimers();
+  });
+
+  function createService(): TestSmilesWorkflowService {
+    const injector = Injector.create({
+      providers: [
+        JobAccessModeService,
+        { provide: IdentitySessionService, useValue: { status: sessionStatus } },
+        {
+          provide: LocalResultsStore,
+          useValue: {
+            list: () => [],
+            save: () => undefined,
+            remove: () => undefined,
+            clear: () => undefined,
+          },
+        },
+        {
+          provide: JobsApiService,
+          useValue: {
+            validateSmilesCompatibility,
+            getJobLogs: vi.fn(),
+            streamJobEvents: vi.fn(),
+            streamJobLogEvents: vi.fn(),
+            pollJobUntilCompleted: vi.fn(),
+          } as unknown as JobsApiService,
+        },
+      ],
+    });
+    return runInInjectionContext(injector, () => new TestSmilesWorkflowService(''));
+  }
+
+  it('429: muestra el mensaje de cuota con Retry-After sin invalidar el SMILES ni bloquear el reintento', () => {
+    vi.useFakeTimers();
+    sessionStatus = signal<'anonymous' | 'authenticated'>('anonymous');
+    validateSmilesCompatibility = vi.fn(() =>
+      throwError(
+        () => new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '30' }) }),
+      ),
+    );
+    quotaService = createService();
+
+    quotaService.setBatchInputText('CCO');
+    vi.runAllTimers();
+
+    expect(quotaService.isInputValidationPending()).toBe(false);
+    expect(quotaService.hasInvalidSmiles()).toBe(false);
+    expect(quotaService.invalidSmilesIssues()).toEqual([]);
+    expect(quotaService.inputValidationMessage()).toContain('appMode.open.limits.429');
+    expect(quotaService.inputValidationMessage()).toContain('Retry-After: 30');
+    // El boton "Run" queda habilitado: la validacion previa no bloquea el reintento.
+    expect(quotaService.validationError()).toBeNull();
+  });
+
+  it('413: muestra el mensaje traducido de payload demasiado grande', () => {
+    vi.useFakeTimers();
+    sessionStatus = signal<'anonymous' | 'authenticated'>('anonymous');
+    validateSmilesCompatibility = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 413 })),
+    );
+    quotaService = createService();
+
+    quotaService.setBatchInputText('CCO');
+    vi.runAllTimers();
+
+    expect(quotaService.hasInvalidSmiles()).toBe(false);
+    expect(quotaService.inputValidationMessage()).toBe('appMode.open.limits.413');
+    expect(quotaService.validationError()).toBeNull();
+  });
+
+  it('el reintento exitoso limpia el mensaje de cuota', () => {
+    vi.useFakeTimers();
+    sessionStatus = signal<'anonymous' | 'authenticated'>('anonymous');
+    validateSmilesCompatibility = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 429 })),
+    );
+    quotaService = createService();
+
+    quotaService.setBatchInputText('CCO');
+    vi.runAllTimers();
+    expect(quotaService.inputValidationMessage()).toBe('appMode.open.limits.429');
+
+    validateSmilesCompatibility.mockReturnValue(of({ compatible: true, issues: [] }));
+    quotaService.setBatchInputText('CCN');
+    vi.runAllTimers();
+
+    expect(quotaService.openModeValidationMessage()).toBeNull();
+    expect(quotaService.inputValidationMessage()).toBeNull();
+    expect(quotaService.hasInvalidSmiles()).toBe(false);
+  });
+
+  it('con sesion autenticada un 429 inesperado no genera mensaje de cuota (comportamiento intacto)', () => {
+    vi.useFakeTimers();
+    sessionStatus = signal<'anonymous' | 'authenticated'>('authenticated');
+    validateSmilesCompatibility = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 429 })),
+    );
+    quotaService = createService();
+
+    quotaService.setBatchInputText('CCO');
+    vi.runAllTimers();
+
+    expect(quotaService.openModeValidationMessage()).toBeNull();
+    expect(quotaService.inputValidationMessage()).toBeNull();
+    expect(quotaService.hasInvalidSmiles()).toBe(false);
+    expect(quotaService.validationError()).toBeNull();
   });
 });

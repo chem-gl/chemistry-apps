@@ -1,5 +1,7 @@
 // toxicity-properties-workflow.service.spec.ts: Pruebas unitarias del workflow de Toxicity Properties.
 
+import { HttpErrorResponse } from '@angular/common/http';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -11,6 +13,8 @@ import {
   SmilesCompatibilityResultView,
   ToxicityJobResponseView,
 } from '../api/jobs-api.service';
+import { JobAccessModeService } from '../auth/job-access-mode.service';
+import { LocalResultsStore } from '../shared/local-results.store';
 import { ToxicityPropertiesWorkflowService } from './toxicity-properties-workflow.service';
 
 function makeScientificJob(overrides: Partial<ScientificJobView> = {}): ScientificJobView {
@@ -156,6 +160,49 @@ describe('ToxicityPropertiesWorkflowService', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
+
+  /** Crea un workflow cuyo API hace fallar la validación con el status HTTP dado. */
+  function createOpenQuotaService(status: number): ToxicityPropertiesWorkflowService {
+    const validateFailure$: Observable<SmilesCompatibilityResultView> = throwError(
+      () => new HttpErrorResponse({ status }),
+    );
+    const openJobsApi = {
+      ...jobsApiServiceMock,
+      validateSmilesCompatibility: vi.fn(() => validateFailure$),
+    };
+    const injector = Injector.create({
+      providers: [
+        { provide: JobsApiService, useValue: openJobsApi },
+        {
+          provide: JobAccessModeService,
+          useValue: {
+            isOpenMode: () => true,
+            mode: () => 'open',
+            openModeLimitMessage: (error: unknown) => {
+              if (!(error instanceof HttpErrorResponse)) {
+                return null;
+              }
+              return error.status === 429
+                ? 'appMode.open.limits.429'
+                : error.status === 413
+                  ? 'appMode.open.limits.413'
+                  : null;
+            },
+          },
+        },
+        {
+          provide: LocalResultsStore,
+          useValue: {
+            list: () => [],
+            save: () => undefined,
+            upsert: () => [],
+            remove: () => undefined,
+          },
+        },
+      ],
+    });
+    return runInInjectionContext(injector, () => new ToxicityPropertiesWorkflowService());
+  }
 
   it('dispatches toxicity job and stores completed result', () => {
     workflowService.setBatchInputText('CCO');
@@ -414,5 +461,20 @@ describe('ToxicityPropertiesWorkflowService', () => {
 
     expect(workflowService.activeSection()).toBe('error');
     expect(workflowService.errorMessage()).toContain('queue unavailable');
+  });
+
+  it('modo abierto: un 413 en la validacion de dispatch muestra el limite de cuota', () => {
+    const openService = createOpenQuotaService(413);
+
+    openService.setBatchInputText('CCO');
+    vi.runAllTimers();
+    expect(openService.hasInvalidSmiles()).toBe(false);
+
+    openService.dispatch();
+
+    expect(openService.activeSection()).toBe('error');
+    expect(openService.errorMessage()).toBe('appMode.open.limits.413');
+    expect(jobsApiServiceMock.dispatchToxicityPropertiesJob).not.toHaveBeenCalled();
+    openService.ngOnDestroy();
   });
 });
