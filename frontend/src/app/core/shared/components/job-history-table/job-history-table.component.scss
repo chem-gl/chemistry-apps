@@ -1,7 +1,7 @@
 /* job-history-table.component.scss: Tabla de historial — App Chemistry Sense.
-   La forma (tarjeta, cabecera, tabla con scroll, chips y botones) vive en las
-   utilidades globales (.panel-card, .panel-head, .table-scroll, .status-chip,
-   .btn). Aquí solo quedan colores de estado y ajustes locales mínimos. */
+   La forma Y los colores de los chips viven en las utilidades globales
+   (.panel-card, .panel-head, .table-scroll, .status-chip.is-* en styles.scss,
+   .btn). Aquí solo quedan ajustes locales mínimos de layout. */
 
 :host {
   display: block;
@@ -68,46 +68,5 @@
   gap: var(--space-2);
 }
 
-/* ── Pares color/bg de los chips de estado (forma: .status-chip global) ── */
-
-.history-pending {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-pending-bg);
-  color: var(--chem-status-pending);
-}
-
-.history-running {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-running-bg);
-  color: var(--chem-status-running);
-}
-
-.history-completed {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-completed-bg);
-  color: var(--chem-status-completed);
-}
-
-.history-failed {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-failed-bg);
-  color: var(--chem-status-failed);
-}
-
-.history-cancelled {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-cancelled-bg);
-  color: var(--chem-status-cancelled);
-}
-
-.history-paused {
-  border-color: var(--chem-border-accent-dim);
-  background: var(--chem-status-paused-bg);
-  color: var(--chem-status-paused);
-}
-
-.history-unknown {
-  border-color: var(--chem-border-subtle);
-  background: var(--chem-surface-alt);
-  color: var(--chem-ink-soft);
-}
+/* Los pares color/bg del chip son los modificadores globales
+   .status-chip.is-* definidos en styles.scss (única fuente). */

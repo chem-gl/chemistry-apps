@@ -106,12 +106,12 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
   describe('historicalStatusClass', () => {
     it('construye la clase CSS correctamente para estado completed', () => {
       const cssClass = component.historicalStatusClass('completed' as ScientificJobView['status']);
-      expect(cssClass).toBe('history-status history-completed');
+      expect(cssClass).toBe('status-chip is-completed');
     });
 
     it('construye la clase CSS correctamente para estado running', () => {
       const cssClass = component.historicalStatusClass('running' as ScientificJobView['status']);
-      expect(cssClass).toBe('history-status history-running');
+      expect(cssClass).toBe('status-chip is-running');
     });
   });
 

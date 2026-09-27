@@ -47,9 +47,9 @@ export class JobHistoryTableComponent {
   /** Emitido al pulsar "Delete" en una fila; lleva el jobId. */
   @Output() deleteJob = new EventEmitter<string>();
 
-  /** Clase CSS para el badge de estado del job. */
+  /** Clase CSS para el chip de estado del job (base + modificador global). */
   statusClass(status: string | undefined): string {
-    return `history-status history-${status ?? 'unknown'}`;
+    return `status-chip is-${status ?? 'unknown'}`;
   }
 
   canDeleteJob(jobItem: ScientificJobView): boolean {

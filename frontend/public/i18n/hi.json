@@ -260,7 +260,10 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity"
+      "colDevTox": "Dev. Toxicity",
+      "emptyTitle": "अभी कोई परिणाम नहीं",
+      "emptyBody": "अपने अणुओं की अनुमानित ADMET संपत्तियाँ यहाँ देखने के लिए गणना चलाएँ।",
+      "emptyHint": "इनपुट कॉन्फ़िगर करें, फिर रन दबाएँ।"
     },
     "moleculeModal": {
       "title": "Molecule preview"

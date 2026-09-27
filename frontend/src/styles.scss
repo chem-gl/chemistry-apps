@@ -494,7 +494,10 @@ tbody tr:hover {
 }
 
 /* ── 7. Botones ──────────────────────────────────────────────────── */
-.btn {
+/* Forma base en placeholder: las variantes la extienden y funcionan con o
+   sin la clase .btn (muchas plantillas usan solo btn-primary/btn-secondary).
+   Así conservan altura, píldora, tipografía, foco y estado deshabilitado. */
+%btn-base {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -517,14 +520,25 @@ tbody tr:hover {
     border-color var(--chem-transition),
     box-shadow var(--chem-transition),
     transform var(--chem-transition);
+
+  &:focus-visible {
+    outline: 2px solid var(--chem-accent);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
-.btn:focus-visible {
-  outline: 2px solid var(--chem-accent);
-  outline-offset: 2px;
+.btn {
+  @extend %btn-base;
 }
 
 .btn-primary {
+  @extend %btn-base;
   background: var(--chem-primary);
   border-color: var(--chem-primary);
   color: var(--chem-surface-elevated);
@@ -538,6 +552,7 @@ tbody tr:hover {
 }
 
 .btn-secondary {
+  @extend %btn-base;
   background: var(--chem-card-bg);
   border-color: var(--chem-border-strong);
   color: var(--chem-ink-secondary);
@@ -550,6 +565,7 @@ tbody tr:hover {
 }
 
 .btn-ghost {
+  @extend %btn-base;
   background: transparent;
   border-color: transparent;
   color: var(--chem-accent);
@@ -557,12 +573,6 @@ tbody tr:hover {
 
 .btn-ghost:hover:not(:disabled):not(.disabled) {
   background: var(--chem-accent-light);
-}
-
-.btn:disabled,
-.btn.disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* Variante compacta para acciones dentro de tablas y chips. */
@@ -616,34 +626,49 @@ tbody tr:hover {
   color: var(--chem-ink-soft);
 }
 
+/* Modificadores de estado: única fuente para todas las tablas de historial. */
 .status-chip.is-pending {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-pending-bg);
   color: var(--chem-status-pending);
 }
 
 .status-chip.is-running {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-running-bg);
   color: var(--chem-status-running);
 }
 
 .status-chip.is-completed {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-completed-bg);
   color: var(--chem-status-completed);
 }
 
 .status-chip.is-failed {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-failed-bg);
   color: var(--chem-status-failed);
 }
 
 .status-chip.is-paused {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-paused-bg);
   color: var(--chem-status-paused);
 }
 
 .status-chip.is-cancelled {
+  border-color: var(--chem-border-accent-dim);
   background: var(--chem-status-cancelled-bg);
   color: var(--chem-status-cancelled);
+}
+
+/* Expirado (caché local caducada) y desconocido: gris sobrio. */
+.status-chip.is-expired,
+.status-chip.is-unknown {
+  border-color: var(--chem-border-subtle);
+  background: var(--chem-surface-alt);
+  color: var(--chem-ink-soft);
 }
 
 /* ── 10. Estado vacío ────────────────────────────────────────────── */
@@ -693,14 +718,23 @@ tbody tr:hover {
     align-items: stretch;
   }
 
-  .action-bar .btn {
+  /* Ancho completo también para variantes usadas sin la clase .btn. */
+  .action-bar .btn,
+  .action-bar .btn-primary,
+  .action-bar .btn-secondary,
+  .action-bar .btn-ghost {
     width: 100%;
   }
 }
 
 /* ── Accesibilidad: movimiento reducido ───────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  /* Se listan las variantes además de .btn porque %btn-base no se propaga
+     dentro de los @media del placeholder extendido. */
   .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
   .segmented button,
   .segmented label {
     transition: none;

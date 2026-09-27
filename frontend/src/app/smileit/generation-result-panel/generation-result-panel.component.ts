@@ -105,7 +105,7 @@ export class GenerationResultPanelComponent {
   readonly toNumber = Number;
 
   historicalStatusClass(jobStatus: ScientificJobView['status']): string {
-    return `history-status history-${jobStatus}`;
+    return `status-chip is-${jobStatus}`;
   }
 
   isHistoricalJobSelected(jobId: string): boolean {

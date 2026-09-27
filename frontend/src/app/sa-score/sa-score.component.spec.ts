@@ -192,10 +192,10 @@ describe('SaScoreComponent', () => {
     const fixture = TestBed.createComponent(SaScoreComponent);
     const component = fixture.componentInstance;
 
-    expect(component.historicalStatusClass('completed')).toBe('history-status history-completed');
-    expect(component.historicalStatusClass('failed')).toBe('history-status history-failed');
-    expect(component.historicalStatusClass('running')).toBe('history-status history-running');
-    expect(component.historicalStatusClass('pending')).toBe('history-status history-pending');
+    expect(component.historicalStatusClass('completed')).toBe('status-chip is-completed');
+    expect(component.historicalStatusClass('failed')).toBe('status-chip is-failed');
+    expect(component.historicalStatusClass('running')).toBe('status-chip is-running');
+    expect(component.historicalStatusClass('pending')).toBe('status-chip is-pending');
   });
 
   it('construye el nombre visible del job actual e histórico cuando existe nombre', () => {

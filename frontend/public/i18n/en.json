@@ -910,7 +910,10 @@
       "colMutagenicity": "Mutagenicity",
       "colAmesScore": "Ames Score",
       "colDevTox": "Dev. Toxicity",
-      "colDevtoxScore": "DevTox Score"
+      "colDevtoxScore": "DevTox Score",
+      "emptyTitle": "No results yet",
+      "emptyBody": "Run a calculation to see the predicted ADMET properties of your molecules here.",
+      "emptyHint": "Configure the input, then press Run."
     },
     "sketch": {
       "title": "Draw SMILES",

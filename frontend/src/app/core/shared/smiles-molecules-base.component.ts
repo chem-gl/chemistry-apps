@@ -150,7 +150,7 @@ export abstract class SmilesMoleculesBaseComponent implements OnInit, OnDestroy 
   // ---------------------------------------------------------------------------
 
   historicalStatusClass(jobStatus: string | undefined): string {
-    return `history-status history-${jobStatus ?? 'unknown'}`;
+    return `status-chip is-${jobStatus ?? 'unknown'}`;
   }
 
   // ---------------------------------------------------------------------------

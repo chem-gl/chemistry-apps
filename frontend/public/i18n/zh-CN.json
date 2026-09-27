@@ -260,7 +260,10 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity"
+      "colDevTox": "Dev. Toxicity",
+      "emptyTitle": "暂无结果",
+      "emptyBody": "运行计算后即可在此查看分子的 ADMET 性质预测结果。",
+      "emptyHint": "配置输入内容，然后点击“开始计算”。"
     },
     "moleculeModal": {
       "title": "Molecule preview"

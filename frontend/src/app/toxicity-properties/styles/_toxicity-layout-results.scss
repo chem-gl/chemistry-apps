@@ -152,35 +152,7 @@
   flex-wrap: wrap;
 }
 
-.history-status {
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 0.12rem 0.48rem;
-  font-weight: 700;
-  font-size: 0.76rem;
-}
-
-.history-pending,
-.history-running {
-  background: var(--chem-status-running-bg);
-  color: var(--chem-status-running);
-}
-
-.history-completed {
-  background: var(--chem-status-completed-bg);
-  color: var(--chem-status-completed);
-}
-
-.history-failed,
-.history-cancelled {
-  background: var(--chem-status-failed-bg);
-  color: var(--chem-status-failed);
-}
-
-.history-paused {
-  background: var(--chem-status-paused-bg);
-  color: var(--chem-status-paused);
-}
+/* Chips de estado: usan los modificadores globales .status-chip.is-* (styles.scss). */
 
 .input-tools-row {
   display: flex;

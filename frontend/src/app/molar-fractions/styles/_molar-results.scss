@@ -119,40 +119,7 @@
   margin-bottom: 0.85rem;
 }
 
-.history-status {
-  border-radius: 999px;
-  padding: 0.12rem 0.42rem;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  font-weight: 800;
-  border: 1px solid transparent;
-  font-family: var(--chem-font-label);
-}
-
-.history-pending {
-  color: var(--chem-status-pending);
-  background: var(--chem-status-pending-bg);
-}
-
-.history-running {
-  color: var(--chem-status-running);
-  background: var(--chem-status-running-bg);
-}
-
-.history-paused {
-  color: var(--chem-status-paused);
-  background: var(--chem-status-paused-bg);
-}
-
-.history-completed {
-  color: var(--chem-status-completed);
-  background: var(--chem-status-completed-bg);
-}
-
-.history-failed {
-  color: var(--chem-status-failed);
-  background: var(--chem-status-failed-bg);
-}
+/* Chips de estado: usan los modificadores globales .status-chip.is-* (styles.scss). */
 
 @media (max-width: 980px) {
   .form-card {

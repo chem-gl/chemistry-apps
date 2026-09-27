@@ -260,7 +260,10 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity"
+      "colDevTox": "Dev. Toxicity",
+      "emptyTitle": "Noch keine Ergebnisse",
+      "emptyBody": "Führen Sie eine Berechnung aus, um hier die vorhergesagten ADMET-Eigenschaften Ihrer Moleküle zu sehen.",
+      "emptyHint": "Eingaben konfigurieren und dann „Berechnung starten“ drücken."
     },
     "moleculeModal": {
       "title": "Molecule preview"

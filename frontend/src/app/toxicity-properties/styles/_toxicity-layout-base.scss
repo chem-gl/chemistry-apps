@@ -85,7 +85,7 @@ textarea {
 }
 
 textarea:focus {
-  outline: 2px solid rgba(123, 90, 158, 0.25);
+  outline: 2px solid var(--chem-border-accent-strong);
   border-color: var(--chem-accent);
 }
 
@@ -284,7 +284,7 @@ textarea:focus {
 }
 
 .table-search-input:focus {
-  outline: 2px solid rgba(123, 90, 158, 0.18);
+  outline: 2px solid var(--chem-border-accent);
   border-color: var(--chem-accent);
 }
 

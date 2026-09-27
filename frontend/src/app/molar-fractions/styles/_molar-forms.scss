@@ -59,9 +59,9 @@
 
 .btn-primary {
   border: 1px solid var(--chem-primary);
-  color: #fff;
+  color: var(--chem-surface-elevated);
   background: linear-gradient(135deg, var(--chem-primary), var(--chem-primary-dark));
-  box-shadow: 0 10px 20px rgba(211, 47, 47, 0.18);
+  box-shadow: var(--chem-shadow-lg);
 }
 
 .btn-primary:hover {

@@ -19,7 +19,7 @@
         @for (record of localRecords; track record.jobId) {
         <tr>
           <td><div class="mono">{{ record.jobId }}</div></td>
-          <td><span class="status-chip" [class]="statusClass(record.expired ? 'expired' : record.status)">{{ localStatus(record) | transloco }}</span></td>
+          <td><span [class]="statusClass(record.expired ? 'expired' : record.status)">{{ localStatus(record) | transloco }}</span></td>
           <td>{{ record.updatedAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
           <td><div class="actions-cell">
             <button class="btn btn-secondary btn-sm" (click)="openJob.emit(record.jobId)">{{ 'appMode.open.history.open' | transloco }}</button>
@@ -41,7 +41,7 @@
         @for (historyJob of jobs; track historyJob.id) {
         <tr>
           <td>@if (displayJobName(historyJob) !== historyJob.id) { <div class="job-display-name">{{ displayJobName(historyJob) }}</div> }<div class="mono">{{ historyJob.id }}</div></td>
-          <td><span class="status-chip" [class]="statusClass(historyJob.status)">{{ historyJob.status }}</span></td>
+          <td><span [class]="statusClass(historyJob.status)">{{ historyJob.status }}</span></td>
           <td>{{ historyJob.updated_at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
           <td><div class="actions-cell"><button class="btn btn-secondary btn-sm" (click)="openJob.emit(historyJob.id)">{{ 'shared.jobHistoryTable.open' | transloco }}</button>@if (canDeleteJob(historyJob)) {<button class="btn btn-secondary btn-sm" (click)="deleteJob.emit(historyJob.id)">{{ 'common.actions.delete' | transloco }}</button>}</div></td>
         </tr>

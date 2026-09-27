@@ -1,32 +1,6 @@
-/* _smileit-split-05.scss: fragmento modular de estilos de Smile-it. */
-
-.history-status {
-  display: inline-flex;
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.74rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.history-completed {
-  background: rgba(123, 90, 158, 0.12);
-  color: var(--chem-accent);
-}
-
-.history-running,
-.history-pending,
-.history-paused {
-  background: var(--chem-surface-inset);
-  color: var(--chem-ink-secondary);
-}
-
-.history-failed,
-.history-cancelled {
-  background: rgba(211, 47, 47, 0.08);
-  color: var(--chem-primary);
-}
+/* _smileit-split-05.scss: fragmento modular de estilos de Smile-it.
+   Los chips de estado usan .status-chip.is-* globales (styles.scss); ya no
+   hay reglas locales de color/estado aquí. */
 
 .log-header {
   display: flex;
