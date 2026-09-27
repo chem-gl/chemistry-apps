@@ -433,8 +433,11 @@ describe('ToxicityPropertiesComponent', () => {
     ]);
     fixture.detectChanges();
 
+    // Redesign: los botones de acción usan las utilidades globales .btn y viven
+    // en .actions-cell. El primero es "abrir"; se conserva la verificación de
+    // que el click delega al workflow con el id del job histórico.
     const openButton = (fixture.nativeElement as HTMLElement).querySelector(
-      'button.history-open-btn',
+      '.actions-cell button',
     ) as HTMLButtonElement | null;
     expect(openButton).not.toBeNull();
     openButton?.click();
