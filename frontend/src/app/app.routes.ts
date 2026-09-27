@@ -15,7 +15,7 @@ export const routes: Routes = [
     // Puerta de entrada institucional: titulo, equipo y publicaciones.
     path: '',
     pathMatch: 'full',
-    redirectTo: 'apps',
+    redirectTo: 'login',
   },
   {
     path: 'login',

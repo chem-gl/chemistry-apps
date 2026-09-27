@@ -18,7 +18,7 @@ async function useLanguage(page: Page, languageCode: string): Promise<void> {
 }
 
 test.describe('Puerta de entrada', () => {
-  test('redirige al hub público de apps', async ({ page }) => {
+  test('la raiz aterriza en la puerta de entrada institucional', async ({ page }) => {
     await useLanguage(page, 'en');
     const consoleErrors: string[] = [];
     page.on('console', (message) => {
@@ -27,10 +27,13 @@ test.describe('Puerta de entrada', () => {
       }
     });
 
+    // Sin sesion, el guestGuard deja pasar: / → /login con formulario y CTA al modo libre.
     await page.goto('/');
-    await expect(page).toHaveURL(/\/apps$/);
-    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
-    await expect(page.locator('.zone').first().locator('.app-node')).toHaveCount(7);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+    await expect(page.locator("input[name='username']")).toBeVisible();
+    await expect(page.locator("input[name='password']")).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Explore without an account' })).toBeVisible();
     expect(consoleErrors).toEqual([]);
   });
 
