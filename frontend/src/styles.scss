@@ -727,6 +727,35 @@ tbody tr:hover {
   }
 }
 
+/* ── 12. Resplandor de reaccion sigue-al-puntero (hub + login) ────── */
+/* Utilidad ambiental: un div .reaction-glow dentro de un shell .glow-host
+   (position:relative con overflow:hidden) que recibe --glow-x/--glow-y via
+   trackGlowPointer (core/shared/pointer-glow.utils.ts). */
+.glow-host {
+  position: relative;
+  overflow: hidden;
+}
+
+.reaction-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    520px circle at var(--glow-x, 50%) var(--glow-y, 20%),
+    rgba(178, 150, 0, 0.11),
+    rgba(49, 113, 84, 0.05) 38%,
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glow-host:hover .reaction-glow {
+    opacity: 1;
+  }
+}
+
 /* ── Accesibilidad: movimiento reducido ───────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   /* Se listan las variantes además de .btn porque %btn-base no se propaga
@@ -736,7 +765,8 @@ tbody tr:hover {
   .btn-secondary,
   .btn-ghost,
   .segmented button,
-  .segmented label {
+  .segmented label,
+  .reaction-glow {
     transition: none;
   }
 

@@ -11,6 +11,7 @@ import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { AppCardThumbnailComponent } from '../core/shared/components/app-card-thumbnail/app-card-thumbnail.component';
 import { InstitutionalShowcaseComponent } from '../core/shared/components/institutional-showcase/institutional-showcase.component';
+import { trackGlowPointer } from '../core/shared/pointer-glow.utils';
 import {
   ACCOUNT_ONLY_APP_ROUTE_ITEMS,
   FREE_ACCESS_APP_ROUTE_ITEMS,
@@ -52,17 +53,13 @@ export class AppsHubComponent {
     );
   });
 
-  /** Nombre corto del modulo con el que arranca el modo libre. */
-  readonly starterApp = computed<ScientificAppRouteItem | undefined>(() => this.freeApps()[0]);
-
   /**
    * Mueve el resplandor de reaccion siguiendo el puntero.
    * Es un detalle ambiental: no aporta informacion y esta desactivado en
    * `prefers-reduced-motion`, pero da textura organica a la reticula.
+   * Compartido con el login via `trackGlowPointer`.
    */
   trackPointer(event: PointerEvent, shell: HTMLElement): void {
-    const bounds = shell.getBoundingClientRect();
-    shell.style.setProperty('--glow-x', `${event.clientX - bounds.left}px`);
-    shell.style.setProperty('--glow-y', `${event.clientY - bounds.top}px`);
+    trackGlowPointer(event, shell);
   }
 }

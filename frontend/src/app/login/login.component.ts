@@ -9,6 +9,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { AuthApiService, AuthProviders } from '../core/api/auth-api.service';
 import { InstitutionalShowcaseComponent } from '../core/shared/components/institutional-showcase/institutional-showcase.component';
+import { trackGlowPointer } from '../core/shared/pointer-glow.utils';
 
 interface GoogleCredentialResponse { credential: string; }
 interface GoogleIdentityApi {
@@ -112,6 +113,15 @@ export class LoginComponent implements OnInit {
         );
       },
     });
+  }
+
+  /**
+   * Mueve el resplandor de reaccion siguiendo el puntero: el mismo gesto
+   * ambiental del hub (utilidad global `.reaction-glow`, invisible en
+   * `prefers-reduced-motion`). No alterna informacion alguna del formulario.
+   */
+  trackPointer(event: PointerEvent, shell: HTMLElement): void {
+    trackGlowPointer(event, shell);
   }
 
   submit(): void {

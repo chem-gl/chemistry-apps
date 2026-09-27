@@ -76,19 +76,16 @@ describe('AppsHubComponent', () => {
     expect(hub.accountApps()).toEqual([]);
   });
 
-  it('propone la primera app libre como punto de partida', () => {
-    expect(hub.starterApp()?.key).toBe('molar-fractions');
-  });
-
-  it('muestra Sign in como CTA primario cuando el modo libre está cerrado', () => {
-    accessModeStub.openModeEnabled.set(false);
+  it('renderiza la zona publica y la invitacion a cuenta', () => {
     const fixture = TestBed.createComponent(AppsHubComponent);
     fixture.detectChanges();
 
-    const primaryCta = fixture.nativeElement.querySelector('.top-actions .cta-primary') as HTMLAnchorElement;
-    expect(primaryCta.textContent).toContain('Sign in');
-    expect(primaryCta.getAttribute('href')).toBe('/login');
-    expect(fixture.nativeElement.querySelector('.top-actions .cta-quiet')?.textContent).toContain('Create account');
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.querySelectorAll('.app-lattice').length).toBe(2);
+    expect(host.querySelector('app-institutional-showcase')).not.toBeNull();
+    expect(host.textContent).toContain('Account required');
+    expect(host.querySelectorAll('.node-badge.is-locked').length).toBeGreaterThan(0);
+    expect(host.querySelector('.top-actions')).toBeNull();
   });
 
   it('mueve el resplandor de reaccion con el puntero', () => {
@@ -104,19 +101,5 @@ describe('AppsHubComponent', () => {
 
     expect(shell.style.getPropertyValue('--glow-x')).toBe('50px');
     expect(shell.style.getPropertyValue('--glow-y')).toBe('50px');
-  });
-
-  it('renderiza la zona publica y la invitacion a cuenta', () => {
-    const fixture = TestBed.createComponent(AppsHubComponent);
-    fixture.detectChanges();
-
-    const host: HTMLElement = fixture.nativeElement;
-    expect(host.querySelectorAll('.app-lattice').length).toBe(2);
-    expect(host.querySelector('.top-actions .cta-primary')?.textContent).toContain(
-      'Start with molar fractions',
-    );
-    expect(host.querySelector('app-institutional-showcase')).not.toBeNull();
-    expect(host.textContent).toContain('Account required');
-    expect(host.querySelectorAll('.node-badge.is-locked').length).toBeGreaterThan(0);
   });
 });

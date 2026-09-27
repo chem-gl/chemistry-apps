@@ -27,12 +27,15 @@ test.describe('Puerta de entrada', () => {
       }
     });
 
-    // Sin sesion, el guestGuard deja pasar: / → /login con formulario y CTA al modo libre.
+    // Sin sesion, el guestGuard deja pasar: / → /login con formulario, showcase
+    // (equipo y publicaciones) y CTA al modo libre.
     await page.goto('/');
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
     await expect(page.locator("input[name='username']")).toBeVisible();
     await expect(page.locator("input[name='password']")).toBeVisible();
+    await expect(page.locator('.developers-section')).toBeVisible();
+    await expect(page.locator('.publications-section')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Explore without an account' })).toBeVisible();
     expect(consoleErrors).toEqual([]);
   });
@@ -40,24 +43,19 @@ test.describe('Puerta de entrada', () => {
   test('traduce la interfaz al español y vuelve al inglés', async ({ page }) => {
     await useLanguage(page, 'en');
     await page.goto('/apps');
-    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
-      'Start with molar fractions',
-    );
+    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'With account' })).toBeVisible();
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'Español' }).first().click();
-    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
-      'Empezar con fracciones molares',
-    );
     await expect(page.getByRole('heading', { name: 'Sin cuenta' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Con cuenta' })).toBeVisible();
     await expect(page.locator('body')).not.toContainText('appsHub.');
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'English' }).first().click();
-    await expect(page.locator('.top-actions .cta-primary')).toHaveText(
-      'Start with molar fractions',
-    );
+    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'With account' })).toBeVisible();
   });
 
   test('invitado ve las apps libres y la app con cuenta bloqueada', async ({ page }) => {

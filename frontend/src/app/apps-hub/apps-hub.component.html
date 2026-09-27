@@ -1,30 +1,11 @@
 <!-- apps-hub.component.html: Catalogo publico con modo libre y zona con cuenta. -->
 <section
   #shell
-  class="apps-shell"
+  class="apps-shell glow-host"
   [attr.aria-label]="'appsHub.aria.library' | transloco"
   (pointermove)="trackPointer($event, shell)"
 >
   <div class="reaction-glow" aria-hidden="true"></div>
-
-  <!-- Barra superior compacta: acciones sin títulos. El equipo y los
-    artículos (showcase) son el contenido principal de la portada. -->
-  <div class="top-actions">
-    <div class="cta-row">
-      @if (starterApp(); as firstApp) {
-      <a class="cta cta-primary" [routerLink]="firstApp.routePath">
-        {{ 'appsHub.hero.start' | transloco }}
-      </a>
-      } @else {
-      <a class="cta cta-primary" routerLink="/login">{{ 'app.nav.signIn' | transloco }}</a>
-      }
-      @if (!isAuthenticated()) {
-      <a class="cta cta-quiet" routerLink="/register">{{ 'appsHub.hero.createAccount' | transloco }}</a>
-      } @else {
-      <a class="cta cta-quiet" routerLink="/jobs">{{ 'appsHub.hero.openMonitor' | transloco }}</a>
-      }
-    </div>
-  </div>
 
   <app-institutional-showcase variant="hub" />
 

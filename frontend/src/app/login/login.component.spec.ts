@@ -106,4 +106,18 @@ describe('LoginComponent', () => {
 
     expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/apps');
   });
+
+  it('escribe las coordenadas del resplandor relativas al shell', () => {
+    // Mismo efecto ambiental del hub: la capa `.reaction-glow` se mueve con
+    // --glow-x/--glow-y que fija trackPointer sobre el shell del login.
+    const fixture = TestBed.createComponent(LoginComponent);
+    const shell = document.createElement('section');
+    shell.getBoundingClientRect = () =>
+      ({ left: 10, top: 20, width: 100, height: 100 }) as DOMRect;
+
+    fixture.componentInstance.trackPointer({ clientX: 60, clientY: 70 } as PointerEvent, shell);
+
+    expect(shell.style.getPropertyValue('--glow-x')).toBe('50px');
+    expect(shell.style.getPropertyValue('--glow-y')).toBe('50px');
+  });
 });

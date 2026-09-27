@@ -32,7 +32,7 @@ async function expectNoAxeViolations(page: Page): Promise<void> {
 }
 
 test.describe('Auditoría visual', { tag: '@visual' }, () => {
-  test('hub invitado: layout, CTA, axe y screenshots', async ({ page }) => {
+  test('hub invitado: layout, nodos, axe y screenshots', async ({ page }) => {
     await useEnglish(page);
     const jsErrors: string[] = [];
     page.on('pageerror', (error) => jsErrors.push(String(error).slice(0, 120)));
@@ -48,12 +48,12 @@ test.describe('Auditoría visual', { tag: '@visual' }, () => {
     }
     await expectNoOverflow(page);
 
-    // CTA primario siempre visible (abierto o cerrado).
-    await expect(page.locator('.top-actions .cta').first()).toBeVisible();
+    // Primera app siempre visible (la reticula es el contenido principal).
+    await expect(page.locator('.app-node .node-link').first()).toBeVisible();
     await page.screenshot({ path: 'e2e/snapshots/hub-default.png' });
 
-    // Estado hover del primer CTA (único gesto interactivo permitido).
-    await page.locator('.top-actions .cta').first().hover();
+    // Estado hover del primer nodo (único gesto interactivo permitido).
+    await page.locator('.app-node .node-link').first().hover();
     await page.screenshot({ path: 'e2e/snapshots/hub-cta-hover.png' });
 
     // Estado foco visible por teclado.

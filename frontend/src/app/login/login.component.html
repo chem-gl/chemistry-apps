@@ -1,5 +1,12 @@
 <!-- login.component.html: Portal institucional — CADMA-Chem Suite. -->
-<section class="login-shell" [attr.aria-label]="'login.aria.signIn' | transloco">
+<section
+  #shell
+  class="login-shell glow-host"
+  [attr.aria-label]="'login.aria.signIn' | transloco"
+  (pointermove)="trackPointer($event, shell)"
+>
+  <!-- Resplandor ambiental compartido con el hub (utilidad global .reaction-glow). -->
+  <div class="reaction-glow" aria-hidden="true"></div>
 
   <!-- ═══ LEFT COLUMN: presentation + login ═══ -->
   <div class="left-column">
