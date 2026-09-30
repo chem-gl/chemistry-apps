@@ -13,6 +13,7 @@ const ITEM_WITH_SCREENSHOT: ScientificAppRouteItem = {
   available: true,
   visibleInMenus: true,
   freeAccess: true,
+  group: 'others',
   thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
   iconAsset: 'assets/pka_app_icon.png',
 };

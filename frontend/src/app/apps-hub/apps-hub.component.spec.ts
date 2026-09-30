@@ -1,4 +1,4 @@
-// apps-hub.component.spec.ts: Pruebas del catalogo publico (modo libre y cuenta).
+// apps-hub.component.spec.ts: Pruebas del catalogo publico (columnas CADMA/Others).
 
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -7,8 +7,8 @@ import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import {
-  ACCOUNT_ONLY_APP_ROUTE_ITEMS,
-  FREE_ACCESS_APP_ROUTE_ITEMS,
+  CADMA_GROUP_APP_ROUTE_ITEMS,
+  OTHER_GROUP_APP_ROUTE_ITEMS,
 } from '../core/shared/scientific-apps.config';
 import { AppsHubComponent } from './apps-hub.component';
 
@@ -44,47 +44,75 @@ describe('AppsHubComponent', () => {
     hub = fixture.componentInstance;
   });
 
-  it('expone las siete apps del modo libre sin necesidad de sesion', () => {
-    expect(hub.freeApps().length).toBe(7);
-    expect(hub.freeApps()).toEqual(FREE_ACCESS_APP_ROUTE_ITEMS);
+  it('agrupa las apps en las columnas CADMA y Others sin necesidad de sesion', () => {
+    const groups = hub.appGroups();
+
+    expect(groups.map((group) => group.id)).toEqual(['cadma', 'others']);
+    expect(groups[0].apps).toEqual(CADMA_GROUP_APP_ROUTE_ITEMS);
+    expect(groups[1].apps).toEqual(OTHER_GROUP_APP_ROUTE_ITEMS);
+    expect(CADMA_GROUP_APP_ROUTE_ITEMS.length).toBeGreaterThan(0);
+    expect(OTHER_GROUP_APP_ROUTE_ITEMS.length).toBeGreaterThan(0);
   });
 
-  it('muestra las apps con cuenta bloqueadas para invitados', () => {
+  it('bloquea para invitados solo las apps que piden cuenta', () => {
     sessionStub.isAuthenticated.set(false);
 
-    expect(hub.accountApps()).toEqual(ACCOUNT_ONLY_APP_ROUTE_ITEMS);
-    expect(hub.accountApps().length).toBeGreaterThan(0);
+    const cadmaPy = CADMA_GROUP_APP_ROUTE_ITEMS.find((appItem) => appItem.key === 'cadma-py');
+    const molarFractions = OTHER_GROUP_APP_ROUTE_ITEMS[0];
+
+    expect(cadmaPy).toBeDefined();
+    expect(hub.isLocked(cadmaPy!)).toBe(true);
+    expect(hub.isLocked(molarFractions)).toBe(false);
   });
 
-  it('mueve las apps libres a la zona bloqueada cuando el modo está cerrado', () => {
+  it('bloquea todas las apps cuando el modo libre esta cerrado', () => {
     accessModeStub.openModeEnabled.set(false);
-    expect(hub.freeApps()).toEqual([]);
-    expect(hub.accountApps().slice(0, 7)).toEqual(FREE_ACCESS_APP_ROUTE_ITEMS);
-  });
 
-  it('filtra las apps con cuenta por permiso cuando hay sesion', () => {
-    sessionStub.isAuthenticated.set(true);
-    sessionStub.canAccessRoute = (appKey: string): boolean => appKey === 'cadma-py';
-
-    expect(hub.accountApps().map((appItem) => appItem.key)).toEqual(['cadma-py']);
+    const molarFractions = OTHER_GROUP_APP_ROUTE_ITEMS[0];
+    expect(hub.isLocked(molarFractions)).toBe(true);
   });
 
   it('oculta las apps con cuenta sin permiso cuando hay sesion', () => {
     sessionStub.isAuthenticated.set(true);
     sessionStub.canAccessRoute = (_appKey: string): boolean => false;
 
-    expect(hub.accountApps()).toEqual([]);
+    const cadmaGroup = hub.appGroups().find((group) => group.id === 'cadma');
+    const visibleKeys = cadmaGroup?.apps.map((appItem) => appItem.key) ?? [];
+
+    expect(visibleKeys).toEqual(['smileit', 'sa-score', 'toxicity-properties']);
+    expect(visibleKeys).not.toContain('cadma-py');
   });
 
-  it('renderiza la zona publica y la invitacion a cuenta', () => {
+  it('mantiene las apps con cuenta cuando la sesion tiene permiso', () => {
+    sessionStub.isAuthenticated.set(true);
+    sessionStub.canAccessRoute = (appKey: string): boolean => appKey === 'cadma-py';
+
+    const cadmaGroup = hub.appGroups().find((group) => group.id === 'cadma');
+    expect(cadmaGroup?.apps.map((appItem) => appItem.key)).toContain('cadma-py');
+  });
+
+  it('cada app expone su manual y lo abre sin navegar', () => {
+    expect(hub.hasDoc('molar-fractions')).toBe(true);
+    expect(hub.hasDoc('cadma-py')).toBe(true);
+    expect(hub.hasDoc('inexistente')).toBe(false);
+
+    const openEvent = { preventDefault: (): void => undefined, stopPropagation: (): void => undefined } as Event;
+    hub.openAppDoc('molar-fractions', openEvent);
+
+    expect(hub.docPanelOpen()).toBe(true);
+    expect(hub.activeDocTabs().length).toBeGreaterThan(0);
+  });
+
+  it('renderiza las dos columnas con manual en cada tarjeta', () => {
     const fixture = TestBed.createComponent(AppsHubComponent);
     fixture.detectChanges();
 
     const host: HTMLElement = fixture.nativeElement;
+    expect(host.querySelectorAll('.app-column').length).toBe(2);
     expect(host.querySelectorAll('.app-lattice').length).toBe(2);
+    expect(host.querySelector('.node-doc-btn')).not.toBeNull();
+    expect(host.querySelectorAll('.node-doc-btn.is-coming-soon').length).toBe(0);
     expect(host.querySelector('app-institutional-showcase')).not.toBeNull();
-    expect(host.textContent).toContain('Account required');
-    expect(host.querySelectorAll('.node-badge.is-locked').length).toBeGreaterThan(0);
     expect(host.querySelector('.top-actions')).toBeNull();
   });
 

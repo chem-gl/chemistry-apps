@@ -43,28 +43,29 @@ test.describe('Puerta de entrada', () => {
   test('traduce la interfaz al español y vuelve al inglés', async ({ page }) => {
     await useLanguage(page, 'en');
     await page.goto('/apps');
-    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'With account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CADMA', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Others' })).toBeVisible();
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'Español' }).first().click();
-    await expect(page.getByRole('heading', { name: 'Sin cuenta' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Con cuenta' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CADMA', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Otras' })).toBeVisible();
     await expect(page.locator('body')).not.toContainText('appsHub.');
 
     await page.locator('.language-toggle').click();
     await page.locator('.language-option', { hasText: 'English' }).first().click();
-    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'With account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CADMA', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Others' })).toBeVisible();
   });
 
-  test('invitado ve las apps libres y la app con cuenta bloqueada', async ({ page }) => {
+  test('invitado ve las dos columnas y la app con cuenta bloqueada', async ({ page }) => {
     await useLanguage(page, 'en');
     await page.goto('/apps');
 
-    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
-    await expect(page.locator('.zone').first().locator('.app-node')).toHaveCount(7);
-    await expect(page.getByRole('heading', { name: 'With account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CADMA', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Others' })).toBeVisible();
+    await expect(page.locator('.app-column')).toHaveCount(2);
+    await expect(page.locator('.app-node')).toHaveCount(8);
     await expect(page.locator('.node-badge.is-locked').first()).toBeVisible();
     await expect(page.locator('.session-panel')).not.toContainText('Sign out');
 
@@ -80,7 +81,7 @@ test.describe('Puerta de entrada', () => {
     await page.getByRole('link', { name: 'Explore without an account' }).click();
 
     await expect(page).toHaveURL(/\/apps$/);
-    await expect(page.getByRole('heading', { name: 'No account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CADMA', exact: true })).toBeVisible();
   });
 
   test('el inicio de sesión deja la sesión activa', async ({ page }) => {

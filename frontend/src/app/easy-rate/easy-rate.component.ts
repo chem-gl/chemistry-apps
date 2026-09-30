@@ -2,7 +2,7 @@
 // Gestiona la carga de archivos Gaussian, parámetros cinéticos y visualización de resultados.
 
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
@@ -17,6 +17,8 @@ import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fi
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { EASY_RATE_DOC_TABS } from './easy-rate-doc-content';
 
 export interface EasyRateInputSlotView {
   fieldName: EasyRateInputFieldName;
@@ -34,6 +36,7 @@ export interface EasyRateInputSlotView {
     JobProgressCardComponent,
     DiffusionFieldsComponent,
     JobResultFooterComponent,
+    ScientificDocPanelComponent,
   ],
   providers: [EasyRateWorkflowService],
   templateUrl: './easy-rate.component.html',
@@ -41,6 +44,8 @@ export interface EasyRateInputSlotView {
 })
 export class EasyRateComponent extends ScientificFileAppBaseComponent {
   override readonly workflow = inject(EasyRateWorkflowService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = EASY_RATE_DOC_TABS;
   private readonly translocoService = inject(TranslocoService);
 
   readonly solventOptions: ReadonlyArray<string> = SOLVENT_OPTIONS;

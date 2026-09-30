@@ -1,6 +1,7 @@
 <!-- smileit.component.html: Interfaz profesional de Smile-it para inspección, asignación por bloques y exportes reproducibles. -->
 <section class="smileit-shell" [attr.aria-label]="'smileit.header.ariaLabel' | transloco">
   <header class="smileit-header">
+    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
     <p class="eyebrow">{{ 'smileit.header.eyebrow' | transloco }}</p>
     <h2>{{ 'smileit.header.title' | transloco }}</h2>
     <p>{{ 'smileit.header.subtitle' | transloco }}</p>
@@ -392,4 +393,6 @@
       }
     </dialog>
   </div>
+
+  <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />
 </section>

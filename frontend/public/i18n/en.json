@@ -254,6 +254,10 @@
     }
   },
   "appsHub": {
+    "groups": {
+      "cadma": "CADMA",
+      "others": "Others"
+    },
     "aria": {
       "library": "Scientific apps library"
     },
@@ -299,6 +303,17 @@
       "free": "Open mode",
       "account": "Account required"
     }
+  },
+  "scientificDoc": {
+    "open": "Documentation",
+    "comingSoon": "Coming soon",
+    "tabOverview": "Overview",
+    "tabWorkflow": "Workflow",
+    "tabAlgorithm": "Algorithm",
+    "tabFormulas": "Formulas",
+    "tabMethods": "Methods",
+    "tabInterpretation": "Interpretation",
+    "tabReferences": "References"
   },
   "dashboard": {
     "aria": {

@@ -41,6 +41,8 @@ import { GenerationResultPanelComponent } from './generation-result-panel/genera
 import { LibraryEntryDetailDialogComponent } from './library-entry-detail-dialog/library-entry-detail-dialog.component';
 import { PrincipalMoleculeEditorModule } from './principal-molecule/principal-molecule-editor.module';
 import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-viewer.module';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { SMILEIT_DOC_TABS } from './smileit-doc-content';
 
 @Component({
   selector: 'app-smileit',
@@ -55,6 +57,7 @@ import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-v
     BlockAssignmentPanelComponent,
     GenerationResultPanelComponent,
     LibraryEntryDetailDialogComponent,
+    ScientificDocPanelComponent,
   ],
   encapsulation: ViewEncapsulation.None,
   providers: [
@@ -75,6 +78,8 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly translocoService = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   readonly accessMode = inject(JobAccessModeService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = SMILEIT_DOC_TABS;
   private routeSubscription: Subscription | null = null;
   readonly isLogsCollapsed = signal<boolean>(false);
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);

@@ -3,7 +3,7 @@ import type { DocTab } from '../core/shared/components/scientific-doc-panel/scie
 export const EASY_RATE_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
-    titleKey: 'easyRate.doc.tabOverview',
+    titleKey: 'scientificDoc.tabOverview',
     content: String.raw`
 <h3>Easy-rate: TST + Eckart rate constants</h3>
 
@@ -35,7 +35,7 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
   },
   {
     id: 'formulas',
-    titleKey: 'easyRate.doc.tabFormulas',
+    titleKey: 'scientificDoc.tabFormulas',
     content: String.raw`
 <h3>Key formulas</h3>
 
@@ -86,7 +86,7 @@ $$
   },
   {
     id: 'references',
-    titleKey: 'easyRate.doc.tabReferences',
+    titleKey: 'scientificDoc.tabReferences',
     content: String.raw`
 <h3>References</h3>
 <ul>

@@ -3,7 +3,7 @@ import type { DocTab } from '../core/shared/components/scientific-doc-panel/scie
 export const SA_SCORE_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
-    titleKey: 'saScore.doc.tabOverview',
+    titleKey: 'scientificDoc.tabOverview',
     content: String.raw`
 <h3>Synthetic Accessibility Score</h3>
 
@@ -32,7 +32,7 @@ $$
   },
   {
     id: 'methods',
-    titleKey: 'saScore.doc.tabMethods',
+    titleKey: 'scientificDoc.tabMethods',
     content: String.raw`
 <h3>Available methods</h3>
 
@@ -72,7 +72,7 @@ $$
   },
   {
     id: 'references',
-    titleKey: 'saScore.doc.tabReferences',
+    titleKey: 'scientificDoc.tabReferences',
     content: String.raw`
 <h3>References</h3>
 <ul>

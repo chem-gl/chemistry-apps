@@ -1,7 +1,7 @@
 // tunnel.component.ts: Tunnel effect screen with Tkinter-equivalent inputs and result panel.
 
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -9,16 +9,20 @@ import {
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe, ScientificDocPanelComponent],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',
 })
 export class TunnelComponent {
   readonly workflow = inject(TunnelWorkflowService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = TUNNEL_DOC_TABS;
 
   dispatch(): void {
     this.workflow.dispatch();

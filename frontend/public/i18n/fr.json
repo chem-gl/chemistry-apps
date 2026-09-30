@@ -396,6 +396,10 @@
     }
   },
   "appsHub": {
+    "groups": {
+      "cadma": "CADMA",
+      "others": "Autres"
+    },
     "header": {
       "title": "Applications scientifiques",
       "subtitle": "Access each module from one place and scale your scientific pipeline over time.",
@@ -983,6 +987,17 @@
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
     }
+  },
+  "scientificDoc": {
+    "open": "Documentation",
+    "comingSoon": "Bientôt disponible",
+    "tabOverview": "Aperçu",
+    "tabWorkflow": "Flux de travail",
+    "tabAlgorithm": "Algorithme",
+    "tabFormulas": "Formules",
+    "tabMethods": "Méthodes",
+    "tabInterpretation": "Interprétation",
+    "tabReferences": "Références"
   },
   "dashboard": {
     "header": {

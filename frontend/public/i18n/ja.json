@@ -396,6 +396,10 @@
     }
   },
   "appsHub": {
+    "groups": {
+      "cadma": "CADMA",
+      "others": "その他"
+    },
     "header": {
       "title": "Scientific Apps",
       "subtitle": "Access each module from one place and scale your scientific pipeline over time.",
@@ -983,6 +987,17 @@
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
     }
+  },
+  "scientificDoc": {
+    "open": "ドキュメント",
+    "comingSoon": "近日公開",
+    "tabOverview": "概要",
+    "tabWorkflow": "ワークフロー",
+    "tabAlgorithm": "アルゴリズム",
+    "tabFormulas": "計算式",
+    "tabMethods": "手法",
+    "tabInterpretation": "解釈",
+    "tabReferences": "参考文献"
   },
   "dashboard": {
     "header": {

@@ -3,6 +3,9 @@
 // `scientificApps.<key>.title` y `scientificApps.<key>.description` en los templates.
 // Los campos `title`/`description` sirven como fallback en ingles.
 
+/** Familia a la que pertenece una app en el hub (`CADMA` vs `Others`). */
+export type ScientificAppGroup = 'cadma' | 'others';
+
 export interface ScientificAppRouteItem {
   key: string;
   pluginName: string;
@@ -12,6 +15,8 @@ export interface ScientificAppRouteItem {
   description: string;
   routePath: string;
   available: boolean;
+  /** Columna del hub donde se agrupa la app. */
+  group: ScientificAppGroup;
   /** Si es false, la app no se muestra en menus ni en el hub (solo existe como ejemplo/ruta interna). */
   visibleInMenus: boolean;
   /** Si es true, la app se puede usar sin cuenta desde el modo libre. */
@@ -31,6 +36,7 @@ interface ScientificAppDefinition {
   description: string;
   visibleInMenus: boolean;
   freeAccess: boolean;
+  group: ScientificAppGroup;
   thumbnailScreenshot?: string;
   thumbnailIllustration?: string;
   iconAsset?: string;
@@ -44,6 +50,7 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     description: definition.description,
     routePath: `/${definition.key}`,
     available: true,
+    group: definition.group,
     visibleInMenus: definition.visibleInMenus,
     freeAccess: definition.freeAccess,
     thumbnailScreenshot: definition.thumbnailScreenshot,
@@ -70,6 +77,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description: 'Acid-base equilibrium molar fractions with f0..fn table and detailed logs.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
     iconAsset: 'assets/pka_app_icon.png',
   },
@@ -81,6 +89,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'Asymmetric Eckart tunneling correction with full input modification trace and job logs.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/tunnel.jpg',
     iconAsset: 'assets/tunnel_effect_app_icon.png',
   },
@@ -92,6 +101,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'TST + Eckart tunnel rate constants from Gaussian log files with optional diffusion correction.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/easy-rate.jpg',
     iconAsset: 'assets/tst_app_icon.png',
   },
@@ -103,6 +113,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'Marcus energies, reorganization energy, barrier and rate constants from six Gaussian log files.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/marcus.jpg',
     iconAsset: 'assets/marcus_app_icon.png',
   },
@@ -114,6 +125,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'Combinatorial SMILES generation with atom-index inspection, substituent catalog and report exports.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/smileit.jpg',
     iconAsset: 'assets/smileit_app_icon.png',
   },
@@ -125,6 +137,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'Synthetic accessibility scoring for SMILES batches using AMBIT, BRSAScore and RDKit methods.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/sa-score.jpg',
     iconAsset: 'assets/synth_access_app_icon.png',
   },
@@ -136,6 +149,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'ADMET-AI toxicity table for LD50, Ames mutagenicity and developmental toxicity from SMILES batches.',
     visibleInMenus: true,
     freeAccess: true,
+    group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/toxicity-properties.jpg',
     iconAsset: 'assets/toxicity_app_icon.png',
   },
@@ -147,6 +161,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
       'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
     freeAccess: false,
+    group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
     iconAsset: 'assets/cadmapy_v3_noboxes.png',
   },
@@ -191,3 +206,11 @@ export const FREE_ACCESS_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> 
 /** Apps que requieren cuenta (se muestran con invitación a registrarse). */
 export const ACCOUNT_ONLY_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => !app.freeAccess);
+
+/** Apps de la familia CADMA (columna izquierda del hub). */
+export const CADMA_GROUP_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.group === 'cadma');
+
+/** Apps que no pertenecen a CADMA (columna derecha del hub). */
+export const OTHER_GROUP_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.group === 'others');

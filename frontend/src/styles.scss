@@ -582,6 +582,24 @@ tbody tr:hover {
   font-size: var(--chem-text-xs);
 }
 
+/* Lanzador del manual de una app: botón compacto reutilizable en todas las
+   cabeceras de módulo (esquina superior izquierda). */
+.doc-launcher {
+  @extend %btn-base;
+  height: calc(var(--chem-btn-h) - 0.5rem);
+  padding: 0 0.85rem;
+  font-size: var(--chem-text-xs);
+  background: var(--chem-card-bg);
+  border-color: var(--chem-border-strong);
+  color: var(--chem-ink-secondary);
+}
+
+.doc-launcher:hover:not(:disabled):not(.disabled) {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
 /* ── 8. Contenedor de tablas con scroll horizontal ───────────────── */
 .table-scroll {
   overflow-x: auto;

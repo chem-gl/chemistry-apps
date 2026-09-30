@@ -26,16 +26,26 @@ import {
   buildBatchSpeciesRows,
   splitSpeciesLabelForDisplay,
 } from './molar-fractions-computation';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { MOLAR_FRACTIONS_DOC_TABS } from './molar-fractions-doc-content';
 
 @Component({
   selector: 'app-molar-fractions',
-  imports: [CommonModule, FormsModule, TranslocoPipe, ScientificChartComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslocoPipe,
+    ScientificChartComponent,
+    ScientificDocPanelComponent,
+  ],
   providers: [MolarFractionsWorkflowService],
   templateUrl: './molar-fractions.component.html',
   styleUrl: './molar-fractions.component.scss',
 })
 export class MolarFractionsComponent {
   readonly workflow = inject(MolarFractionsWorkflowService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = MOLAR_FRACTIONS_DOC_TABS;
 
   readonly pkaCountOptions: number[] = [1, 2, 3, 4, 5, 6];
   readonly inputMode = signal<'single' | 'batch'>('single');

@@ -2,6 +2,7 @@
      tabla multi-método, imagen de molécula y exportes CSV. -->
 <section class="sa-score-shell" [attr.aria-label]="'saScore.header.eyebrow' | transloco">
   <header class="sa-score-header">
+    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
     <p class="eyebrow">{{ 'saScore.header.eyebrow' | transloco }}</p>
     <h2>{{ 'saScore.header.title' | transloco }}</h2>
     <p>{{ 'saScore.header.subtitle' | transloco }}</p>
@@ -196,6 +197,8 @@
     [sectionTitle]="'saScore.history.title' | transloco" [ariaLabel]="'saScore.history.ariaLabel' | transloco"
     (reload)="workflow.loadHistory()" (openJob)="openHistoricalJob($event)"
     (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
+
+  <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />
 </section>
 <!-- ── Sketch dialog (Ketcher) ─────────────────────────────────────────── -->
 <dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"

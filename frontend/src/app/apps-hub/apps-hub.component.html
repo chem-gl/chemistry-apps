@@ -1,4 +1,4 @@
-<!-- apps-hub.component.html: Catalogo publico con modo libre y zona con cuenta. -->
+<!-- apps-hub.component.html: Catalogo publico en dos columnas: CADMA y Others. -->
 <section
   #shell
   class="apps-shell glow-host"
@@ -9,79 +9,64 @@
 
   <app-institutional-showcase variant="hub" />
 
-  @if (openModeEnabled()) {
-  <section class="zone" [attr.aria-labelledby]="'free-zone-title'">
-    <header class="zone-header page-head">
-      <h2 id="free-zone-title">{{ 'appsHub.freeZone.title' | transloco }}</h2>
-      <p class="lead">{{ 'appsHub.freeZone.subtitle' | transloco }}</p>
-    </header>
+  <div class="app-columns">
+    @for (group of appGroups(); track group.id) {
+    <section class="app-column" [attr.aria-labelledby]="group.id + '-column-title'">
+      <header class="zone-header page-head">
+        <h2 [id]="group.id + '-column-title'">{{ group.titleKey | transloco }}</h2>
+      </header>
 
-    <ul class="app-lattice">
-      @for (appItem of freeApps(); track appItem.key) {
-      <li class="app-node">
-        <a class="node-link panel-card" [routerLink]="appItem.routePath">
-          <span class="node-badge">{{ 'appsHub.badge.free' | transloco }}</span>
-          <!-- Icono circular junto al título + descripción concisa. -->
-          <div class="node-head">
-            <app-card-thumbnail [appItem]="appItem" mode="icon" />
-            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
-          </div>
-          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
-          <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
-        </a>
-      </li>
-      } @empty {
-      <!-- Sin apps visibles: tarjeta de estado vacio en lugar de reticula vacia. -->
-      <li class="lattice-empty empty-state">
-        <h3>{{ 'appsHub.empty.title' | transloco }}</h3>
-        <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
-      </li>
-      }
-    </ul>
-  </section>
-  }
+      <ul class="app-lattice">
+        @for (appItem of group.apps; track appItem.key) {
+        <li class="app-node">
+          <!-- Manual en la esquina superior izquierda; si falta, "Proximamente". -->
+          @if (hasDoc(appItem.key)) {
+          <button type="button" class="node-doc-btn" (click)="openAppDoc(appItem.key, $event)">
+            {{ 'scientificDoc.open' | transloco }}
+          </button>
+          } @else {
+          <span class="node-doc-btn is-coming-soon">{{ 'scientificDoc.comingSoon' | transloco }}</span>
+          }
 
-  <section class="zone zone-account" [attr.aria-labelledby]="'account-zone-title'">
-    <header class="zone-header page-head">
-      <h2 id="account-zone-title">{{ 'appsHub.accountZone.title' | transloco }}</h2>
-      <p class="lead">{{ 'appsHub.accountZone.subtitle' | transloco }}</p>
-    </header>
-
-    <ul class="app-lattice is-quiet">
-      @for (appItem of accountApps(); track appItem.key) {
-      <li class="app-node">
-        @if (isAuthenticated()) {
-        <a class="node-link panel-card" [routerLink]="appItem.routePath">
-          <div class="node-head">
-            <app-card-thumbnail [appItem]="appItem" mode="icon" />
-            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+          @if (isLocked(appItem)) {
+          <div class="node-link panel-card is-locked">
+            <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
+            <div class="node-head">
+              <app-card-thumbnail [appItem]="appItem" mode="icon" />
+              <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+            </div>
+            <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+            <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
+              {{ 'appsHub.accountZone.signIn' | transloco }}
+            </a>
           </div>
-          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
-          <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
-        </a>
-        } @else {
-        <div class="node-link panel-card is-locked">
-          <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
-          <div class="node-head">
-            <app-card-thumbnail [appItem]="appItem" mode="icon" />
-            <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
-          </div>
-          <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
-          <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
-            {{ 'appsHub.accountZone.signIn' | transloco }}
+          } @else {
+          <a class="node-link panel-card" [routerLink]="appItem.routePath">
+            @if (openModeEnabled() && appItem.freeAccess) {
+            <span class="node-badge">{{ 'appsHub.badge.free' | transloco }}</span>
+            }
+            <div class="node-head">
+              <app-card-thumbnail [appItem]="appItem" mode="icon" />
+              <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
+            </div>
+            <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+            <span class="node-action">{{ 'appsHub.appCard.open' | transloco }}</span>
           </a>
-        </div>
+          }
+        </li>
+        } @empty {
+        <!-- Sin apps visibles: estado vacio en lugar de reticula vacia. -->
+        <li class="lattice-empty empty-state">
+          <h3>{{ 'appsHub.empty.title' | transloco }}</h3>
+          <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
+          <span class="lattice-empty-action">{{ 'appsHub.empty.action' | transloco }}</span>
+        </li>
         }
-      </li>
-      }
-      @empty {
-      <!-- Sin apps con cuenta visibles: pedir permiso en vez de reticula vacia. -->
-      <li class="lattice-empty empty-state">
-        <h3>{{ 'appsHub.empty.title' | transloco }}</h3>
-        <p>{{ 'appsHub.empty.subtitle' | transloco }}</p>
-        <span class="lattice-empty-action">{{ 'appsHub.empty.action' | transloco }}</span>
-      </li>
-      }
-    </ul>
-  </section>
+      </ul>
+    </section>
+    }
+  </div>
+
+  <app-scientific-doc-panel [open]="docPanelOpen()" [tabs]="activeDocTabs()"
+    (closePanel)="docPanelOpen.set(false)" />
 </section>

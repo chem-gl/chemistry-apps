@@ -2,7 +2,7 @@
 // Gestiona la carga de los 6 archivos Gaussian requeridos, parámetros de difusión y visualización de resultados.
 
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DownloadedReportFile } from '../core/api/jobs-api.service';
@@ -12,6 +12,8 @@ import { JobProgressCardComponent } from '../core/shared/components/job-progress
 import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { MARCUS_DOC_TABS } from './marcus-doc-content';
 
 @Component({
   selector: 'app-marcus',
@@ -22,6 +24,7 @@ import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-a
     JobProgressCardComponent,
     DiffusionFieldsComponent,
     JobResultFooterComponent,
+    ScientificDocPanelComponent,
   ],
   providers: [MarcusWorkflowService],
   templateUrl: './marcus.component.html',
@@ -29,6 +32,8 @@ import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-a
 })
 export class MarcusComponent extends ScientificFileAppBaseComponent {
   override readonly workflow = inject(MarcusWorkflowService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = MARCUS_DOC_TABS;
 
   // ── Manejadores de los 6 archivos requeridos ─────────────────────
   onReactant1FileChange(event: Event): void {

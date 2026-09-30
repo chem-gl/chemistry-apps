@@ -3,7 +3,7 @@ import type { DocTab } from '../core/shared/components/scientific-doc-panel/scie
 export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
-    titleKey: 'molarFractions.doc.tabOverview',
+    titleKey: 'scientificDoc.tabOverview',
     content: String.raw`
 <h3>Molar fractions: acid-base speciation</h3>
 
@@ -38,7 +38,7 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
   },
   {
     id: 'algorithm',
-    titleKey: 'molarFractions.doc.tabAlgorithm',
+    titleKey: 'scientificDoc.tabAlgorithm',
     content: String.raw`
 <h3>Algorithm</h3>
 
@@ -81,7 +81,7 @@ $$
   },
   {
     id: 'references',
-    titleKey: 'molarFractions.doc.tabReferences',
+    titleKey: 'scientificDoc.tabReferences',
     content: String.raw`
 <h3>References</h3>
 <ul>

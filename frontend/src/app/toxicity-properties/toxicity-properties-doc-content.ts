@@ -3,7 +3,7 @@ import type { DocTab } from '../core/shared/components/scientific-doc-panel/scie
 export const TOXICITY_PROPERTIES_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
-    titleKey: 'toxicityProperties.doc.tabOverview',
+    titleKey: 'scientificDoc.tabOverview',
     content: `
 <h3>Toxicity Properties with ADMET-AI</h3>
 
@@ -31,7 +31,7 @@ export const TOXICITY_PROPERTIES_DOC_TABS: DocTab[] = [
   },
   {
     id: 'interpretation',
-    titleKey: 'toxicityProperties.doc.tabInterpretation',
+    titleKey: 'scientificDoc.tabInterpretation',
     content: `
 <h3>Interpretation of results</h3>
 
@@ -75,7 +75,7 @@ export const TOXICITY_PROPERTIES_DOC_TABS: DocTab[] = [
   },
   {
     id: 'references',
-    titleKey: 'toxicityProperties.doc.tabReferences',
+    titleKey: 'scientificDoc.tabReferences',
     content: `
 <h3>Scientific references</h3>
 <ul>

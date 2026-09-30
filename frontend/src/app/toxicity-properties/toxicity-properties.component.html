@@ -2,6 +2,7 @@
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
 <section class="toxicity-shell" [attr.aria-label]="'toxicityProperties.header.eyebrow' | transloco">
   <header class="toxicity-header">
+    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
     <p class="eyebrow">{{ 'toxicityProperties.header.eyebrow' | transloco }}</p>
     <h2>{{ 'toxicityProperties.header.title' | transloco }}</h2>
     <p>{{ 'toxicityProperties.header.subtitle' | transloco }}</p>
@@ -211,6 +212,8 @@
     [sectionTitle]="'toxicityProperties.history.title' | transloco"
     [ariaLabel]="'toxicityProperties.history.ariaLabel' | transloco" (reload)="workflow.loadHistory()"
     (openJob)="openHistoricalJob($event)" (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-history-table>
+
+  <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />
 </section>
 
 <dialog #sketchDialog class="sketch-dialog" (click)="onSketchDialogBackdropClick($event)"

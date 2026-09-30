@@ -1,6 +1,7 @@
 <!-- marcus.component.html: UI de Marcus para cálculo de energías y constantes de velocidad por teoría de Marcus. -->
 <section class="marcus-shell" [attr.aria-label]="'marcus.header.eyebrow' | transloco">
   <header class="marcus-header">
+    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
     <p class="eyebrow">{{ 'marcus.header.eyebrow' | transloco }}</p>
     <h2>{{ 'marcus.header.title' | transloco }}</h2>
     <p>{{ 'marcus.header.subtitle' | transloco }}</p>
@@ -244,4 +245,6 @@
     (exportCsv)="exportCsv()" (exportLog)="exportLog()" (exportInputsZip)="exportInputsZip()"
     (exportError)="exportError()" (openJob)="openHistoricalJob($event)"
     (deleteJob)="workflow.deleteHistoryJob($event)"></app-job-result-footer>
+
+  <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />
 </section>

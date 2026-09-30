@@ -3,7 +3,7 @@ import type { DocTab } from '../core/shared/components/scientific-doc-panel/scie
 export const TUNNEL_DOC_TABS: DocTab[] = [
   {
     id: 'overview',
-    titleKey: 'tunnel.doc.tabOverview',
+    titleKey: 'scientificDoc.tabOverview',
     content: String.raw`
 <h3>Eckart tunneling correction</h3>
 
@@ -40,7 +40,7 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
   },
   {
     id: 'formulas',
-    titleKey: 'tunnel.doc.tabFormulas',
+    titleKey: 'scientificDoc.tabFormulas',
     content: String.raw`
 <h3>Key formulas</h3>
 
@@ -86,7 +86,7 @@ $$
   },
   {
     id: 'references',
-    titleKey: 'tunnel.doc.tabReferences',
+    titleKey: 'scientificDoc.tabReferences',
     content: String.raw`
 <h3>References</h3>
 <ul>

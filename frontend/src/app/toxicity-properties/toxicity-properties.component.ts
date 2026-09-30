@@ -26,6 +26,8 @@ import {
 } from '../core/shared/scientific-job-name.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 import { LocalResultRecord } from '../core/shared/local-results.store';
+import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { TOXICITY_PROPERTIES_DOC_TABS } from './toxicity-properties-doc-content';
 
 @Component({
   selector: 'app-toxicity-properties',
@@ -38,6 +40,7 @@ import { LocalResultRecord } from '../core/shared/local-results.store';
     JobLogsPanelComponent,
     JobHistoryTableComponent,
     SmilesBatchInputComponent,
+    ScientificDocPanelComponent,
   ],
   providers: [ToxicityPropertiesWorkflowService],
   templateUrl: './toxicity-properties.component.html',
@@ -45,6 +48,8 @@ import { LocalResultRecord } from '../core/shared/local-results.store';
 })
 export class ToxicityPropertiesComponent extends SmilesMoleculesBaseComponent {
   protected override readonly workflow = inject(ToxicityPropertiesWorkflowService);
+  readonly showDocPanel = signal<boolean>(false);
+  readonly docTabs = TOXICITY_PROPERTIES_DOC_TABS;
   readonly resolveHistoryJobDisplayName = (historyJob: {
     id: string;
     parameters: unknown;
