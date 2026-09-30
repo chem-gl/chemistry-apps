@@ -112,7 +112,6 @@ describe('AppsHubComponent', () => {
     expect(host.querySelectorAll('.app-lattice').length).toBe(2);
     expect(host.querySelector('.node-doc-btn')).not.toBeNull();
     expect(host.querySelectorAll('.node-doc-btn.is-coming-soon').length).toBe(0);
-    expect(host.querySelector('app-institutional-showcase')).not.toBeNull();
     expect(host.querySelector('.top-actions')).toBeNull();
   });
 

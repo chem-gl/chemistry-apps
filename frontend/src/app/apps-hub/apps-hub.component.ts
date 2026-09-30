@@ -11,7 +11,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { IdentitySessionService } from '../core/auth/identity-session.service';
 import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { AppCardThumbnailComponent } from '../core/shared/components/app-card-thumbnail/app-card-thumbnail.component';
-import { InstitutionalShowcaseComponent } from '../core/shared/components/institutional-showcase/institutional-showcase.component';
 import {
   DocTab,
   ScientificDocPanelComponent,
@@ -38,7 +37,6 @@ interface AppGroupView {
     RouterLink,
     TranslocoPipe,
     AppCardThumbnailComponent,
-    InstitutionalShowcaseComponent,
     ScientificDocPanelComponent,
   ],
   templateUrl: './apps-hub.component.html',
