@@ -227,6 +227,57 @@
   box-shadow: none;
 }
 
+/* Separador "o" entre el login local y Google. */
+.social-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--chem-ink-soft);
+  text-transform: lowercase;
+}
+
+.social-divider::before,
+.social-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--chem-border);
+}
+
+/* Botón de Google (GIS): mismo peso visual que el submit local. */
+.google-button {
+  width: 100%;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius);
+  padding: 0.7rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  font-family: var(--chem-font-label);
+  font-size: 0.9rem;
+  color: var(--chem-ink);
+  background: var(--chem-surface);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition:
+    background var(--chem-transition),
+    border-color var(--chem-transition),
+    transform var(--chem-transition);
+}
+
+.google-button:hover {
+  background: var(--chem-surface-alt);
+  border-color: var(--chem-border-strong);
+  transform: translateY(-1px);
+}
+
+.google-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+  transform: none;
+}
+
 .register-link {
   margin: 0.9rem 0 0;
   text-align: center;
