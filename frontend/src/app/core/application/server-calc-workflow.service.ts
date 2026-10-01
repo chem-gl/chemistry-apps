@@ -69,6 +69,9 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
             (job) => this.extractResultData(job),
             'server calc',
           );
+          if (this.activeSection() === 'result') {
+            this.loadHistoricalLogs(jobResponse.id);
+          }
         },
         error: (dispatchError: Error) => {
           this.activeSection.set('error');
@@ -92,7 +95,6 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
       next: (jobResponse: ScientificJobView) => {
         this.syncInputsFromJobParameters(jobResponse);
         this.handleJobOutcome(jobId, jobResponse, (job) => this.extractResultData(job), {
-          loadLogs: false,
           loadHistoryAfter: false,
         });
       },

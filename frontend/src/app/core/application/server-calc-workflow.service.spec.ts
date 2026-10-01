@@ -126,7 +126,7 @@ describe('ServerCalcWorkflowService', () => {
     expect(workflowService.resultData()?.fileName).toBe('calc_x.txt');
     expect(workflowService.resultData()?.executedOn).toBe('qta');
     expect(workflowService.historyJobs()).toEqual([]);
-    expect(jobsApiServiceMock.getJobLogs).not.toHaveBeenCalled();
+    expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalled();
   });
 
   it('marks local fallback results with fallback flag', () => {
