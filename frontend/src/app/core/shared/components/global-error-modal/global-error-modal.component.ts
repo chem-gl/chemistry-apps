@@ -107,7 +107,7 @@ export class GlobalErrorModalComponent {
     }
 
     const card = this.cardElement();
-    if (card !== undefined && card.contains(target)) {
+    if (card?.contains(target)) {
       return;
     }
 
@@ -131,8 +131,8 @@ export class GlobalErrorModalComponent {
       return;
     }
 
-    const first = focusable[0] as HTMLElement;
-    const last = focusable[focusable.length - 1] as HTMLElement;
+    const first = focusable[0];
+    const last = focusable.at(-1) ?? first;
     const active = document.activeElement;
 
     if (event.shiftKey && (active === first || !card.contains(active))) {

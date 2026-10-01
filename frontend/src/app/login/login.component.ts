@@ -80,7 +80,7 @@ export class LoginComponent implements OnInit {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      const googleApi = window.google;
+      const googleApi = window.google; // NOSONAR typescript:S7764 - API del SDK de Google expuesta en window
       if (googleApi === undefined) return;
       googleApi.accounts.id.initialize({
         client_id: clientId,
@@ -92,7 +92,7 @@ export class LoginComponent implements OnInit {
     document.head.appendChild(script);
   }
 
-  loginWithGoogle(): void { window.google?.accounts.id.prompt(); }
+  loginWithGoogle(): void { window.google?.accounts.id.prompt(); } // NOSONAR typescript:S7764 - API del SDK de Google expuesta en window
 
   private loginWithGoogleCredential(idToken: string): void {
     this.localErrorMessage.set(null);

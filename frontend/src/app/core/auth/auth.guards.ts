@@ -20,10 +20,9 @@ import { JobAccessModeService } from './job-access-mode.service';
 function passwordChangeRedirect(
   sessionService: IdentitySessionService,
   router: Router,
-  url: string,
+  url: string = '',
 ): UrlTree | null {
-  const safeUrl = url ?? '';
-  if (safeUrl.startsWith('/change-password')) {
+  if (url.startsWith('/change-password')) {
     return null;
   }
   if (sessionService.isAuthenticated() && sessionService.mustChangePassword()) {
@@ -59,7 +58,7 @@ export const freeAccessGuard: CanActivateFn = (_route, state) => {
 
   // Espera a conocer el modo (una sola petición compartida): la navegación
   // directa no debe colarse con el valor por defecto antes del fetch.
-  // Modo abierto: entra todo el mundo. Modo cerrado: exige sesión como las
+  // Modo abierto: entra cualquiera. Modo cerrado: exige sesión como las
   // apps con cuenta, conservando a dónde iba el usuario.
   return accessModeService.whenOpenModeKnown().pipe(
     switchMap((enabled: boolean) => {
