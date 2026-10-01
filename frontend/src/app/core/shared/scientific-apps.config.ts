@@ -160,7 +160,7 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
-    freeAccess: false,
+    freeAccess: true,
     group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
     iconAsset: 'assets/cadmapy_v3_noboxes.png',
