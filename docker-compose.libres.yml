@@ -153,7 +153,9 @@ services:
   celery-worker:
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    # Arranca como root solo para registrar el UID del host en /etc/passwd
+    # (SSH lo exige) y baja privilegios con setpriv antes de ejecutar Celery.
+    entrypoint: ["sh", "/app/docker/entrypoint_worker.sh"]
     command:
       [
         "sh",
@@ -195,6 +197,8 @@ services:
       QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
       QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
       QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
+      HOST_UID: "${HOST_UID:-1000}"
+      HOST_GID: "${HOST_GID:-1000}"
 
       # Grupo de acogida del registro público (ver ensure_registration_group).
       DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}
@@ -211,7 +215,8 @@ services:
   celery-heavy-worker:
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-chem-gl}/chemistry-backend-libres:${IMAGE_TAG_BACKEND:-${IMAGE_TAG:-latest}}
     restart: unless-stopped
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    # Mismo trato que celery-worker: entrada de passwd + drop de privilegios.
+    entrypoint: ["sh", "/app/docker/entrypoint_worker.sh"]
     command:
       [
         "sh",
@@ -253,6 +258,8 @@ services:
       QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
       QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
       QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
+      HOST_UID: "${HOST_UID:-1000}"
+      HOST_GID: "${HOST_GID:-1000}"
 
       # Grupo de acogida del registro público (ver ensure_registration_group).
       DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}

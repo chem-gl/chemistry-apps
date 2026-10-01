@@ -84,7 +84,7 @@ def _build_server_calc_input(parameters: JSONMap) -> ServerCalcCalculationInput:
     if op_value not in SUPPORTED_OPERATORS:
         raise ValueError("op debe ser uno de + - * /.")
 
-    if op_value == "/" and b_value == 0.0:
+    if op_value == "/" and not b_value:
         raise ValueError("División por cero no permitida.")
 
     return {"a": a_value, "op": op_value, "b": b_value}
@@ -116,6 +116,10 @@ def _run_remote_calc(
         "BatchMode=yes",
         "-o",
         "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "GlobalKnownHostsFile=/dev/null",
         "-o",
         f"ConnectTimeout={timeout_s}",
         f"{user}@{host}",

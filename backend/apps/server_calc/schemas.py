@@ -54,7 +54,7 @@ class ServerCalcJobCreateSerializer(serializers.Serializer):
         attrs: dict[str, object],
     ) -> dict[str, object]:
         """Rechaza división por cero antes de encolar."""
-        if str(attrs["op"]) == "/" and float(attrs["b"]) == 0.0:  # type: ignore[arg-type]
+        if str(attrs["op"]) == "/" and not float(attrs["b"]):  # type: ignore[arg-type]
             raise serializers.ValidationError({"b": "División por cero no permitida."})
         return attrs
 
