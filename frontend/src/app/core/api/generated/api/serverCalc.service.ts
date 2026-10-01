@@ -44,7 +44,7 @@ export class ServerCalcService extends BaseService implements ServerCalcServiceI
 
     /**
      * Crear Job de Server Calc
-     * Crea un job asíncrono para calcular a op b en el servidor remoto qta vía SSH, con fallback local si la conexión falla. Solo administradores.
+     * Crea un job asíncrono para calcular a op b en el servidor remoto qta vía SSH. Si qta no responde, el job falla. Solo administradores.
      * @endpoint post /api/server-calc/jobs/
      * @param serverCalcJobCreateRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

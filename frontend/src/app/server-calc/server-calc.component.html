@@ -71,8 +71,7 @@
       <div class="metadata-grid">
         <p><strong>{{ 'serverCalc.result.labels.result' | transloco }}</strong> {{ resultData.result ?? '--' }}</p>
         <p><strong>{{ 'serverCalc.result.labels.executedOn' | transloco }}</strong>
-          <span class="execution-badge" [class.execution-remote]="isRemoteExecution(resultData)"
-            [class.execution-fallback]="!isRemoteExecution(resultData)">
+          <span class="execution-badge execution-remote">
             {{ resultData.executedOn ?? '--' }}
           </span>
         </p>

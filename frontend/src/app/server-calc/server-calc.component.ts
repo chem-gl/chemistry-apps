@@ -63,10 +63,6 @@ export class ServerCalcComponent {
     return `${resultData.a} ${resultData.op} ${resultData.b} = ${resultText}`;
   }
 
-  isRemoteExecution(resultData: ServerCalcResultData): boolean {
-    return resultData.executedOn === 'qta' && resultData.fallbackUsed === false;
-  }
-
   hasResultValues(resultData: ServerCalcResultData): boolean {
     return resultData.result !== null;
   }

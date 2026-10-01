@@ -33,11 +33,11 @@ export interface ServerCalcResult {
     /**
      * Archivo escrito en qta.
      */
-    file_name: string | null;
+    file_name: string;
     /**
      * Ruta del archivo en qta.
      */
-    file_path: string | null;
+    file_path: string;
     metadata: ServerCalcMetadata;
 }
 

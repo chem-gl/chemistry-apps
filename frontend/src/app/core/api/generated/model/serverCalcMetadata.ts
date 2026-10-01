@@ -15,6 +15,5 @@
 export interface ServerCalcMetadata { 
     executed_on: string;
     remote_host: string;
-    fallback_used: boolean;
 }
 

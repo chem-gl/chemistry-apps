@@ -17,7 +17,6 @@ export interface ServerCalcResultData {
   filePath: string | null;
   executedOn: string | null;
   remoteHost: string | null;
-  fallbackUsed: boolean | null;
 }
 
 @Injectable()
@@ -64,6 +63,12 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
       .subscribe({
         next: (jobResponse: ScientificJobView) => {
           this.syncInputsFromJobParameters(jobResponse);
+          if (jobResponse.status === 'failed') {
+            this.loadHistoricalLogs(jobResponse.id);
+            this.activeSection.set('error');
+            this.errorMessage.set(jobResponse.error_trace ?? 'Remote job failed.');
+            return;
+          }
           this.handleTransientDispatchJobResponse(
             jobResponse,
             (job) => this.extractResultData(job),
@@ -127,7 +132,6 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
 
     const executedOn: unknown = rawMetadata['executed_on'];
     const remoteHost: unknown = rawMetadata['remote_host'];
-    const fallbackUsed: unknown = rawMetadata['fallback_used'];
 
     return {
       ...parametersData,
@@ -136,7 +140,6 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
       filePath: typeof rawFilePath === 'string' ? rawFilePath : null,
       executedOn: typeof executedOn === 'string' ? executedOn : null,
       remoteHost: typeof remoteHost === 'string' ? remoteHost : null,
-      fallbackUsed: typeof fallbackUsed === 'boolean' ? fallbackUsed : null,
     };
   }
 
@@ -166,7 +169,6 @@ export class ServerCalcWorkflowService extends BaseJobWorkflowService<ServerCalc
       filePath: null,
       executedOn: null,
       remoteHost: null,
-      fallbackUsed: null,
     };
   }
 

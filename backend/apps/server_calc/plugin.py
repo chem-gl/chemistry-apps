@@ -1,8 +1,8 @@
-"""plugin.py: Lógica de dominio para suma remota en el servidor qta vía SSH.
+"""plugin.py: Lógica de dominio para el cálculo remoto en el servidor qta vía SSH.
 
 Objetivo del archivo:
-- Ejecutar una suma en el servidor remoto qta desacoplado de HTTP/ORM.
-- Caer a cálculo local si la conexión SSH falla, dejándolo trazado.
+- Ejecutar a op b en el servidor remoto qta, desacoplado de HTTP/ORM.
+- Sin cálculo de respaldo: si qta no responde, el job falla con traza clara.
 
 Cómo se usa:
 - `PluginRegistry` ejecuta `server_calc_plugin` desde `JobService.run_job`.
@@ -59,7 +59,7 @@ def _read_ssh_settings() -> tuple[str, str, str, int]:
 
 
 def _apply_operator(a: float, op: str, b: float) -> float:
-    """Aplica el operador localmente para verificación y fallback."""
+    """Aplica el operador localmente para verificar el resultado remoto."""
     if op == "+":
         return a + b
     if op == "-":
@@ -151,15 +151,9 @@ def _run_remote_calc(
     return parsed
 
 
-def _build_metadata(
-    executed_on: str, remote_host: str, fallback_used: bool
-) -> ServerCalcCalculationMetadata:
-    """Construye metadatos de salida con origen de ejecución."""
-    return {
-        "executed_on": executed_on,
-        "remote_host": remote_host,
-        "fallback_used": fallback_used,
-    }
+def _build_metadata(remote_host: str) -> ServerCalcCalculationMetadata:
+    """Construye metadatos de salida con el host remoto de ejecución."""
+    return {"executed_on": "qta", "remote_host": remote_host}
 
 
 @PluginRegistry.register(PLUGIN_NAME)
@@ -168,7 +162,7 @@ def server_calc_plugin(
     progress_callback: PluginProgressCallback,
     log_callback: PluginLogCallback | None = None,
 ) -> JSONMap:
-    """Ejecuta la suma en el servidor qta vía SSH con fallback local."""
+    """Ejecuta el cálculo en el servidor qta vía SSH; falla si qta no responde."""
     emit_log: PluginLogCallback = (
         log_callback
         if log_callback is not None
@@ -198,99 +192,85 @@ def server_calc_plugin(
         remote_payload: dict = _run_remote_calc(
             a_value, op_value, b_value, job_label, host, user, key_path, timeout_s
         )
+    except Exception as exc:
         emit_log(
-            "info",
+            "error",
             SERVER_CALC_LOG_SOURCE,
-            "Conexión SSH establecida con qta.",
-            {"host": host, "user": user, "job_label": job_label},
+            "No se pudo ejecutar el cálculo en qta.",
+            {"reason": str(exc), "host": host, "user": user},
         )
-        emit_log(
-            "info",
-            SERVER_CALC_LOG_SOURCE,
-            "Salida remota recibida.",
-            {"remote_output": remote_payload},
+        raise ValueError(
+            f"No se pudo ejecutar el cálculo remoto en qta ({host}): {exc}"
+        ) from exc
+
+    emit_log(
+        "info",
+        SERVER_CALC_LOG_SOURCE,
+        "Conexión SSH establecida con qta.",
+        {"host": host, "user": user, "job_label": job_label},
+    )
+    emit_log(
+        "info",
+        SERVER_CALC_LOG_SOURCE,
+        "Salida remota recibida.",
+        {"remote_output": remote_payload},
+    )
+
+    if remote_payload.get("ok") is not True:
+        raise ValueError(f"El servidor remoto reportó ok=false: {remote_payload!r}.")
+    remote_result_raw: object = remote_payload.get("result")
+    try:
+        remote_result: float = float(remote_result_raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"El resultado remoto no es numérico: {remote_result_raw!r}."
+        ) from exc
+    if not math.isfinite(remote_result):
+        raise ValueError("El resultado remoto no es finito.")
+
+    expected_value: float = _apply_operator(a_value, op_value, b_value)
+    if abs(expected_value - remote_result) >= LOCAL_VERIFICATION_TOLERANCE:
+        raise ValueError(
+            "La verificación local falló: "
+            f"esperado {expected_value!r} vs remoto {remote_result!r}."
         )
 
-        if remote_payload.get("ok") is not True:
-            raise ValueError(
-                f"El servidor remoto reportó ok=false: {remote_payload!r}."
-            )
-        remote_result_raw: object = remote_payload.get("result")
-        try:
-            remote_result: float = float(remote_result_raw)  # type: ignore[arg-type]
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"El resultado remoto no es numérico: {remote_result_raw!r}."
-            ) from exc
-        if not math.isfinite(remote_result):
-            raise ValueError("El resultado remoto no es finito.")
+    emit_log(
+        "info",
+        SERVER_CALC_LOG_SOURCE,
+        "Verificación local superada.",
+        {"expected": expected_value, "remote_result": remote_result},
+    )
 
-        expected_value: float = _apply_operator(a_value, op_value, b_value)
-        if abs(expected_value - remote_result) >= LOCAL_VERIFICATION_TOLERANCE:
-            raise ValueError(
-                "La verificación local falló: "
-                f"esperado {expected_value!r} vs remoto {remote_result!r}."
-            )
+    remote_file_name: object = remote_payload.get("file_name")
+    remote_file_path: object = remote_payload.get("file_path")
+    if not isinstance(remote_file_name, str) or remote_file_name == "":
+        raise ValueError("El remoto no reportó file_name.")
+    if not isinstance(remote_file_path, str) or remote_file_path == "":
+        raise ValueError("El remoto no reportó file_path.")
 
-        emit_log(
-            "info",
-            SERVER_CALC_LOG_SOURCE,
-            "Verificación local superada.",
-            {"expected": expected_value, "remote_result": remote_result},
-        )
-
-        remote_file_name: object = remote_payload.get("file_name")
-        remote_file_path: object = remote_payload.get("file_path")
-        if not isinstance(remote_file_name, str) or remote_file_name == "":
-            raise ValueError("El remoto no reportó file_name.")
-        if not isinstance(remote_file_path, str) or remote_file_path == "":
-            raise ValueError("El remoto no reportó file_path.")
-
-        result_payload: ServerCalcCalculationResult = {
+    result_payload: ServerCalcCalculationResult = {
+        "a": a_value,
+        "op": op_value,
+        "b": b_value,
+        "result": remote_result,
+        "file_name": remote_file_name,
+        "file_path": remote_file_path,
+        "metadata": _build_metadata(host),
+    }
+    emit_log(
+        "info",
+        SERVER_CALC_LOG_SOURCE,
+        "Cálculo Server Calc completado en qta.",
+        {
             "a": a_value,
             "op": op_value,
             "b": b_value,
             "result": remote_result,
             "file_name": remote_file_name,
             "file_path": remote_file_path,
-            "metadata": _build_metadata("qta", host, False),
-        }
-        emit_log(
-            "info",
-            SERVER_CALC_LOG_SOURCE,
-            "Cálculo Server Calc completado en qta.",
-            {
-                "a": a_value,
-                "op": op_value,
-                "b": b_value,
-                "result": remote_result,
-                "file_name": remote_file_name,
-                "file_path": remote_file_path,
-            },
-        )
-    except Exception as exc:
-        emit_log(
-            "warning",
-            SERVER_CALC_LOG_SOURCE,
-            "SSH falló; se usa cálculo local de respaldo.",
-            {"reason": str(exc), "host": host, "user": user},
-        )
-        local_result: float = _apply_operator(a_value, op_value, b_value)
-        result_payload = {
-            "a": a_value,
-            "op": op_value,
-            "b": b_value,
-            "result": local_result,
-            "file_name": None,
-            "file_path": None,
-            "metadata": _build_metadata("local-fallback", host, True),
-        }
-        emit_log(
-            "info",
-            SERVER_CALC_LOG_SOURCE,
-            "Cálculo Server Calc completado con fallback local.",
-            {"a": a_value, "op": op_value, "b": b_value, "result": local_result},
-        )
+        },
+    )
 
     logger.info(
         "Job Server Calc completado con a=%s, op=%s, b=%s, result=%s",

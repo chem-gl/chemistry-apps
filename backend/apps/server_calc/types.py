@@ -29,11 +29,10 @@ class ServerCalcJobCreatePayload(TypedDict):
 
 
 class ServerCalcCalculationMetadata(TypedDict):
-    """Metadatos de trazabilidad: dónde se ejecutó y si hubo fallback."""
+    """Metadatos de trazabilidad: dónde se ejecutó el cálculo."""
 
     executed_on: str
     remote_host: str
-    fallback_used: bool
 
 
 class ServerCalcCalculationResult(TypedDict):

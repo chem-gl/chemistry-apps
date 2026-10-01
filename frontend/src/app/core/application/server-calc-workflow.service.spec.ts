@@ -45,7 +45,6 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
       metadata: {
         executed_on: 'qta',
         remote_host: '192.168.1.20',
-        fallback_used: false,
       },
     },
     error_trace: '',
@@ -129,32 +128,21 @@ describe('ServerCalcWorkflowService', () => {
     expect(jobsApiServiceMock.getJobLogs).toHaveBeenCalled();
   });
 
-  it('marks local fallback results with fallback flag', () => {
+  it('surfaces qta errors instead of a local fallback result', () => {
     jobsApiServiceMock.dispatchServerCalcJob.mockReturnValue(
       of(
         makeScientificJob({
-          results: {
-            a: 7,
-            op: '*',
-            b: 6,
-            result: 42,
-            file_name: null,
-            file_path: null,
-            metadata: {
-              executed_on: 'local-fallback',
-              remote_host: '192.168.1.20',
-              fallback_used: true,
-            },
-          },
+          status: 'failed',
+          error_trace: 'No se pudo ejecutar el cálculo remoto en qta',
+          results: null,
         }),
       ),
     );
 
     workflowService.dispatch();
 
-    expect(workflowService.activeSection()).toBe('result');
-    expect(workflowService.resultData()?.fallbackUsed).toBe(true);
-    expect(workflowService.resultData()?.executedOn).toBe('local-fallback');
+    expect(workflowService.activeSection()).toBe('error');
+    expect(workflowService.errorMessage()).toContain('qta');
   });
 
   it('actualiza inputs numéricos a y b', () => {

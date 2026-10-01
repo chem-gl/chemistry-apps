@@ -72,7 +72,6 @@ class ServerCalcMetadataSerializer(serializers.Serializer):
 
     executed_on = serializers.CharField(max_length=50)
     remote_host = serializers.CharField(max_length=255)
-    fallback_used = serializers.BooleanField()
 
 
 class ServerCalcResultSerializer(serializers.Serializer):
@@ -83,10 +82,10 @@ class ServerCalcResultSerializer(serializers.Serializer):
     b = serializers.FloatField(help_text="Segundo operando.")
     result = serializers.FloatField(help_text="Resultado de a op b.")
     file_name = serializers.CharField(
-        max_length=255, allow_null=True, help_text="Archivo escrito en qta."
+        max_length=255, help_text="Archivo escrito en qta."
     )
     file_path = serializers.CharField(
-        max_length=512, allow_null=True, help_text="Ruta del archivo en qta."
+        max_length=512, help_text="Ruta del archivo en qta."
     )
     metadata = ServerCalcMetadataSerializer()
 

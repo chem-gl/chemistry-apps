@@ -80,7 +80,7 @@ class ServerCalcJobViewSet(ScientificAppViewSetMixin, viewsets.ViewSet):
         summary="Crear Job de Server Calc",
         description=(
             "Crea un job asíncrono para calcular a op b en el servidor "
-            "remoto qta vía SSH, con fallback local si la conexión falla. "
+            "remoto qta vía SSH. Si qta no responde, el job falla. "
             "Solo administradores."
         ),
         request=ServerCalcJobCreateSerializer,

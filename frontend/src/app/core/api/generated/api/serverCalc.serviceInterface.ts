@@ -26,7 +26,7 @@ export interface ServerCalcServiceInterface {
 
     /**
      * Crear Job de Server Calc
-     * Crea un job asíncrono para calcular a op b en el servidor remoto qta vía SSH, con fallback local si la conexión falla. Solo administradores.
+     * Crea un job asíncrono para calcular a op b en el servidor remoto qta vía SSH. Si qta no responde, el job falla. Solo administradores.
      * @endpoint post /api/server-calc/jobs/
      * @param serverCalcJobCreateRequest 
      */

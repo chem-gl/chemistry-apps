@@ -5314,7 +5314,7 @@ paths:
     post:
       operationId: server_calc_jobs_create
       description: Crea un job asíncrono para calcular a op b en el servidor remoto
-        qta vía SSH, con fallback local si la conexión falla. Solo administradores.
+        qta vía SSH. Si qta no responde, el job falla. Solo administradores.
       summary: Crear Job de Server Calc
       tags:
       - ServerCalc
@@ -10065,11 +10065,8 @@ components:
         remote_host:
           type: string
           maxLength: 255
-        fallback_used:
-          type: boolean
       required:
       - executed_on
-      - fallback_used
       - remote_host
     ServerCalcParameters:
       type: object
@@ -10110,12 +10107,10 @@ components:
           description: Resultado de a op b.
         file_name:
           type: string
-          nullable: true
           description: Archivo escrito en qta.
           maxLength: 255
         file_path:
           type: string
-          nullable: true
           description: Ruta del archivo en qta.
           maxLength: 512
         metadata:

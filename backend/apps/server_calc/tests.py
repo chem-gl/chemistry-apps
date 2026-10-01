@@ -2,7 +2,7 @@
 
 Objetivo del archivo:
 - Verificar creación/consulta de jobs y comportamiento del plugin con SSH
-  simulado (sin red real): éxito remoto, fallback local y validación.
+  simulado (sin red real): éxito remoto, fallo sin respaldo y validación.
 - Verificar que solo root/admin pueden usar los endpoints (401 anónimo,
   403 usuario normal, 201 admin).
 
@@ -91,30 +91,26 @@ class ServerCalcPluginUnitTests(TestCase):
         self.assertTrue(str(result["file_path"]).endswith(".txt"))
         metadata = result["metadata"]
         self.assertEqual(metadata["executed_on"], "qta")
-        self.assertEqual(metadata["fallback_used"], False)
+        self.assertNotIn("fallback_used", metadata)
         self.assertEqual(progress_calls[-1][0], 100)
 
-    def test_ssh_failure_falls_back_to_local(self) -> None:
-        """Si SSH falla, calcula localmente y marca fallback_used=True."""
+    def test_ssh_timeout_raises_without_fallback(self) -> None:
+        """Si SSH expira, el job falla con error; no hay cálculo local."""
         with patch(
             "apps.server_calc.plugin.subprocess.run",
             side_effect=subprocess.TimeoutExpired(cmd="ssh", timeout=25),
         ):
-            result = server_calc_plugin(
-                {"a": 7.0, "op": "*", "b": 6.0},
-                _silent_progress,
-                _silent_log,
-            )
+            with self.assertRaises(ValueError) as error_context:
+                server_calc_plugin(
+                    {"a": 7.0, "op": "*", "b": 6.0},
+                    _silent_progress,
+                    _silent_log,
+                )
 
-        self.assertEqual(float(result["result"]), 42.0)
-        self.assertIsNone(result["file_name"])
-        self.assertIsNone(result["file_path"])
-        metadata = result["metadata"]
-        self.assertEqual(metadata["executed_on"], "local-fallback")
-        self.assertEqual(metadata["fallback_used"], True)
+        self.assertIn("qta", str(error_context.exception))
 
-    def test_nonzero_exit_code_falls_back_to_local(self) -> None:
-        """Un retorno SSH != 0 también dispara el fallback local."""
+    def test_nonzero_exit_code_raises_without_fallback(self) -> None:
+        """Un retorno SSH != 0 también falla el job (sin respaldo local)."""
         fake_completed = subprocess.CompletedProcess(
             args=["ssh"],
             returncode=255,
@@ -125,14 +121,12 @@ class ServerCalcPluginUnitTests(TestCase):
             "apps.server_calc.plugin.subprocess.run",
             return_value=fake_completed,
         ):
-            result = server_calc_plugin(
-                {"a": 10.0, "op": "-", "b": 4.0},
-                _silent_progress,
-                _silent_log,
-            )
-
-        self.assertEqual(float(result["result"]), 6.0)
-        self.assertEqual(result["metadata"]["fallback_used"], True)
+            with self.assertRaises(ValueError):
+                server_calc_plugin(
+                    {"a": 10.0, "op": "-", "b": 4.0},
+                    _silent_progress,
+                    _silent_log,
+                )
 
     def test_invalid_operator_raises_value_error(self) -> None:
         """Un operador no soportado lanza ValueError sin intentar SSH."""
@@ -225,9 +219,15 @@ class ServerCalcContractApiTests(TestCase):
         self.assertEqual(create_response.data["parameters"]["op"], "*")
         created_job_id: str = str(create_response.data["id"])
 
+        fake_completed = subprocess.CompletedProcess(
+            args=["ssh"],
+            returncode=0,
+            stdout=_remote_ok_stdout(7.0, "*", 6.0, 42.0),
+            stderr="",
+        )
         with patch(
             "apps.server_calc.plugin.subprocess.run",
-            side_effect=subprocess.TimeoutExpired(cmd="ssh", timeout=25),
+            return_value=fake_completed,
         ):
             JobService.run_job(created_job_id)
 
@@ -237,8 +237,31 @@ class ServerCalcContractApiTests(TestCase):
 
         result_payload: dict[str, object] = retrieve_response.data["results"]
         self.assertEqual(float(result_payload["result"]), 42.0)
+        self.assertEqual(str(result_payload["file_name"]).endswith(".txt"), True)
         metadata_payload: dict[str, object] = result_payload["metadata"]  # type: ignore[assignment]
-        self.assertEqual(metadata_payload["fallback_used"], True)
+        self.assertEqual(metadata_payload["executed_on"], "qta")
+
+    def test_ssh_failure_marks_job_failed(self) -> None:
+        """Sin conexión a qta el job queda failed, sin resultado de respaldo."""
+        with patch("apps.server_calc.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            create_response = self.client.post(
+                APP_API_BASE_PATH,
+                {"version": "1.1.0", "a": 7.0, "op": "*", "b": 6.0},
+                format="json",
+            )
+        created_job_id: str = str(create_response.data["id"])
+
+        with patch(
+            "apps.server_calc.plugin.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="ssh", timeout=25),
+        ):
+            JobService.run_job(created_job_id)
+
+        retrieve_response = self.client.get(f"{APP_API_BASE_PATH}{created_job_id}/")
+        self.assertEqual(retrieve_response.status_code, 200)
+        self.assertEqual(retrieve_response.data["status"], "failed")
+        self.assertIn("qta", str(retrieve_response.data["error_trace"]))
 
     def test_create_rejects_division_by_zero(self) -> None:
         """POST con b=0 y op=/ responde 400 sin encolar."""
@@ -272,7 +295,6 @@ class ServerCalcContractApiTests(TestCase):
                 "metadata": {
                     "executed_on": "qta",
                     "remote_host": "192.168.1.20",
-                    "fallback_used": False,
                 },
             },
         )

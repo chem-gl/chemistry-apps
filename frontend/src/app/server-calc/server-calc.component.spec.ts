@@ -71,31 +71,6 @@ describe('ServerCalcComponent', () => {
     expect(workflowMock.reset).toHaveBeenCalled();
   });
 
-  it('isRemoteExecution distingue qta de local-fallback', () => {
-    const fixture = TestBed.createComponent(ServerCalcComponent);
-    const component = fixture.componentInstance;
-
-    const remote: ServerCalcResultData = {
-      a: 7,
-      op: '*',
-      b: 6,
-      result: 42,
-      fileName: 'calc_x.txt',
-      filePath: '/home/chemistry-apps/server-apps/results/calc_x.txt',
-      executedOn: 'qta',
-      remoteHost: '192.168.1.20',
-      fallbackUsed: false,
-    };
-    const fallback: ServerCalcResultData = {
-      ...remote,
-      executedOn: 'local-fallback',
-      fallbackUsed: true,
-    };
-
-    expect(component.isRemoteExecution(remote)).toBe(true);
-    expect(component.isRemoteExecution(fallback)).toBe(false);
-  });
-
   it('formatExpression muestra "a op b = result"', () => {
     const fixture = TestBed.createComponent(ServerCalcComponent);
     const component = fixture.componentInstance;
@@ -110,7 +85,6 @@ describe('ServerCalcComponent', () => {
         filePath: '/home/chemistry-apps/server-apps/results/calc_x.txt',
         executedOn: 'qta',
         remoteHost: '192.168.1.20',
-        fallbackUsed: false,
       }),
     ).toBe('7 * 6 = 42');
   });
@@ -128,7 +102,6 @@ describe('ServerCalcComponent', () => {
       filePath: '/home/chemistry-apps/server-apps/results/calc_x.txt',
       executedOn: 'qta',
       remoteHost: '192.168.1.20',
-      fallbackUsed: false,
     };
     const empty: ServerCalcResultData = { ...full, result: null };
 
@@ -148,7 +121,6 @@ describe('ServerCalcComponent', () => {
       filePath: '/home/chemistry-apps/server-apps/results/calc_x.txt',
       executedOn: 'qta',
       remoteHost: '192.168.1.20',
-      fallbackUsed: false,
     });
 
     const clickSpy = vi.fn();
