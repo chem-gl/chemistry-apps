@@ -42,6 +42,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "users": "Manage user accounts and group memberships"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. All rights reserved."
     }
   },
   "language": {
@@ -1026,7 +1029,7 @@
     },
     "step2": {
       "title": "2. Catalog of substituents",
-      "description": "",
+      "description": "Build and curate the substituent catalogs first. These entries are reused in the block assignment step.",
       "manageCatalog": "Edit catalog",
       "expand": "Expand section",
       "minimize": "Minimize section",
@@ -1421,7 +1424,16 @@
       "admin": "Admin"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "Application",
+      "enabled": "Enabled",
+      "hint": "Evaluated first by group, then by user-level overrides.",
+      "scope": "Scope",
+      "selectTarget": "Select target",
+      "statusDisabled": "disabled",
+      "statusEnabled": "enabled",
+      "submit": "Save permission",
+      "target": "Target"
     },
     "invitationTokens": {
       "title": "Invitation Tokens",
@@ -1458,6 +1470,49 @@
       "slug": "Slug",
       "description": "Description",
       "submit": "Create group"
+    },
+    "createUser": {
+      "email": "Email",
+      "firstName": "First name",
+      "hint": "Set username, role and primary group for a new account.",
+      "lastName": "Last name",
+      "noPrimaryGroup": "No primary group",
+      "password": "Password",
+      "primaryGroup": "Primary group",
+      "roleAdminOption": "Administrator",
+      "roleLabel": "Role",
+      "roleRootOption": "Root",
+      "roleUserOption": "User",
+      "submit": "Create user",
+      "title": "Create user",
+      "username": "Username"
+    },
+    "groupConfig": {
+      "addEntry": "+ Add entry",
+      "app": "Application",
+      "configLabel": "Configuration entries",
+      "group": "Group",
+      "hint": "Stores per-app defaults at group level. Users can override them per app.",
+      "key": "Key",
+      "removeButton": "×",
+      "selectGroup": "Select group",
+      "submit": "Save group configuration",
+      "title": "Per-group app configuration",
+      "valuePlaceholder": "Value (true, false, number, text)"
+    },
+    "users": {
+      "activate": "Activate",
+      "colActions": "Actions",
+      "colPrimaryGroup": "Primary group",
+      "colRole": "Role",
+      "colStatus": "Status",
+      "colUsername": "Username",
+      "deactivate": "Deactivate",
+      "description": "Actions are role-aware. Admins only manage users within the groups they administer.",
+      "roleAdmin": "Administrator",
+      "roleRoot": "Root",
+      "roleUser": "User",
+      "title": "Users"
     }
   },
   "userManager": {
@@ -1574,7 +1629,13 @@
     "hero": {
       "tag": "CADMA-Chem Protocol",
       "title": "CADMAPy",
-      "protocolDiagram": "Protocol diagram"
+      "protocolDiagram": "Protocol diagram",
+      "desc": "Scores candidate molecules against a disease-specific reference family of drugs using ADMET, toxicity and synthetic accessibility properties — prioritizing the best candidates for synthesis and further evaluation.",
+      "infoAria": "Show workflow overview",
+      "step1": "Pick a disease baseline from the prebuilt reference sets (Neuro or RETT) or create a custom family.",
+      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
+      "step3": "Configure your ranking formula",
+      "step4": "Review scores and export results"
     },
     "steps": {
       "ariaLabel": "Workflow steps",
@@ -1706,7 +1767,8 @@
       "clearFiles": "Clear files",
       "exportCsv": "Export CSV",
       "draftHint": "You can pause once the project label and main SMILES guide are ready, then return later to add the remaining CSV files.",
-      "submitting": "Submitting CADMA Py job…"
+      "submitting": "Submitting CADMA Py job…",
+      "quickFillTitle": "Quick fill from the current candidate guide or previous runs"
     },
     "step3": {
       "title": "Selection scores",
@@ -1881,7 +1943,9 @@
       "rangeLabel": "Min — Max",
       "nullsLabel": "Nulls",
       "meanSdLabel": "Mean ± SD",
-      "closeBoxplot": "Close boxplot"
+      "closeBoxplot": "Close boxplot",
+      "meanLabel": "Mean",
+      "stdevLabel": "±SD"
     },
     "compoundDetail": {
       "admeGroup": "ADME Properties",

@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "其他"
+      "others": "其他",
+      "server": "服务器应用"
     },
     "header": {
       "title": "Scientific Apps",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "需要账户",
       "subtitle": "保存历史记录，作为其他模块的输入，并与团队共享。",
-      "signIn": "登录"
+      "signIn": "登录",
+      "requestAccess": "请联系管理员"
     },
     "badge": {
       "free": "自由模式",
-      "account": "需要账户"
+      "account": "需要账户",
+      "restricted": "受限"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "参照家族管理、透明选择得分与化合物优先级比较图表。"
+    },
+    "server-calc": {
+      "description": "概念验证：通过 SSH 在 qta 服务器上执行远程计算并生成结果文件。仅限管理员。",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "配置您的排名公式",
+      "step1": "从预置参考集（Neuro 或 RETT）中选择疾病基线，或创建自定义家族。",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "上传从 Smile-it、Toxicity Properties 和 SA Score 导出的候选 CSV，或单个合并 CSV。",
+      "desc": "使用 ADMET、毒性和合成可及性等性质，将候选分子与特定疾病的参考药物家族进行评分比较，优先选出最适合合成和后续评估的候选分子。",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "显示工作流程概览",
+      "step4": "查看评分并导出结果",
       "protocolDiagram": "协议流程图"
     },
     "steps": {
@@ -674,7 +681,7 @@
       "rows": "rows",
       "compoundNamePlaceholder": "Compound name",
       "tableHeaderNote": "Note",
-      "stdevLabel": "±SD",
+      "stdevLabel": "±标准差",
       "rdkitPreview": "RDKit preview",
       "tableHeaderRank": "#",
       "tableHeaderSmiles": "SMILES",
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "平均值",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "从当前候选指南或历史运行快速填充"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. 版权所有。"
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "应用",
+      "enabled": "已启用",
+      "hint": "先按组评估，再按用户级覆盖评估。",
+      "scope": "范围",
+      "selectTarget": "选择目标",
+      "statusDisabled": "已禁用",
+      "statusEnabled": "已启用",
+      "submit": "保存权限",
+      "target": "目标"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "已撤销",
       "title": "邀请令牌",
       "unlimited": "无限制"
+    },
+    "createUser": {
+      "email": "电子邮件",
+      "firstName": "名",
+      "hint": "为新账户设置用户名、角色和主组。",
+      "lastName": "姓",
+      "noPrimaryGroup": "无主组",
+      "password": "密码",
+      "primaryGroup": "主组",
+      "roleAdminOption": "管理员",
+      "roleLabel": "角色",
+      "roleRootOption": "Root",
+      "roleUserOption": "用户",
+      "submit": "创建用户",
+      "title": "创建用户",
+      "username": "用户名"
+    },
+    "groupConfig": {
+      "addEntry": "+ 添加条目",
+      "app": "应用",
+      "configLabel": "配置条目",
+      "group": "组",
+      "hint": "在组级别存储各应用的默认值。用户可按应用覆盖。",
+      "key": "键",
+      "removeButton": "×",
+      "selectGroup": "选择组",
+      "submit": "保存组配置",
+      "title": "按组应用配置",
+      "valuePlaceholder": "值（true、false、数字、文本）"
+    },
+    "users": {
+      "activate": "启用",
+      "colActions": "操作",
+      "colPrimaryGroup": "主组",
+      "colRole": "角色",
+      "colStatus": "状态",
+      "colUsername": "用户名",
+      "deactivate": "停用",
+      "description": "操作会考虑角色。管理员只能管理其管辖组内的用户。",
+      "roleAdmin": "管理员",
+      "roleRoot": "Root",
+      "roleUser": "用户",
+      "title": "用户"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "请先建立并维护取代基目录。这些条目会在区块分配步骤中复用。",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "即将跳转到登录页面。",
       "signInNow": "立即登录",
       "title": "帐户已创建！"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "导出 CSV",
+      "processing": "处理中...",
+      "reset": "重置",
+      "run": "数据就绪，运行 Server Calc"
+    },
+    "form": {
+      "a": "第一个值 (a)",
+      "ariaLabel": "输入参数",
+      "b": "第二个值 (b)",
+      "operator": "运算符",
+      "title": "数据输入"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "输入两个数字和运算符（+、-、*、/），通过 SSH 在 qta 服务器上计算。服务器会写入结果文件并记录连接日志。",
+      "title": "远程计算器概念验证"
+    },
+    "logs": {
+      "ariaLabel": "任务连接日志",
+      "title": "连接日志"
+    },
+    "result": {
+      "ariaLabel": "结果与进度",
+      "emptyHint": "运行计算以查看结果和写入 qta 的文件。",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "executedOn": "执行于：",
+        "fileName": "结果文件：",
+        "filePath": "保存位置 (qta)：",
+        "result": "结果："
+      },
+      "submitting": "正在将 Server Calc 任务提交到后端...",
+      "title": "输出"
     }
   }
 }

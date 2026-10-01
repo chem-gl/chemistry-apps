@@ -1036,6 +1036,9 @@
       "identity": "Usuarios, grupos y permisos",
       "groups": "Gestionar grupos de laboratorio y sus permisos",
       "apps": "Apps científicas visibles para tu sesión actual"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. Todos los derechos reservados."
     }
   },
   "scientificDoc": {

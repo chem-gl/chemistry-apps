@@ -410,3 +410,28 @@ h1 {
     transition: none;
   }
 }
+
+/* Pie de página global con el aviso de derechos reservados. */
+.app-footer {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  border-top: 1px solid var(--chem-border);
+  font-size: 0.78rem;
+  color: var(--chem-ink-soft);
+  text-align: center;
+}
+
+/* Enlace del pie: mismo aspecto que el texto, con realce al pasar el cursor. */
+.app-footer-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--chem-transition), color var(--chem-transition);
+}
+
+.app-footer-link:hover,
+.app-footer-link:focus-visible {
+  color: var(--chem-primary-dark);
+  border-bottom-color: currentColor;
+}

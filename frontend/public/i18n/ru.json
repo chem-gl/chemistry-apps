@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "Другие"
+      "others": "Другие",
+      "server": "Серверные приложения"
     },
     "header": {
       "title": "Scientific Apps",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "С аккаунтом",
       "subtitle": "Сохраняйте историю, используйте её как вход для других модулей и делитесь с группой.",
-      "signIn": "Войти"
+      "signIn": "Войти",
+      "requestAccess": "Обратитесь к администратору"
     },
     "badge": {
       "free": "Свободный режим",
-      "account": "Нужен аккаунт"
+      "account": "Нужен аккаунт",
+      "restricted": "Ограничено"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "Ведение эталонных семейств, прозрачные оценки отбора и сравнительные графики для приоритизации соединений."
+    },
+    "server-calc": {
+      "description": "Демонстрация: удалённый расчёт на сервере qta по SSH с файлом результата. Только администраторы.",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "Настройте формулу ранжирования",
+      "step1": "Выберите базовую линию заболевания из готовых наборов (Neuro или RETT) либо создайте собственную семью.",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "Загрузите CSV кандидатов, экспортированные из Smile-it, Toxicity Properties и SA Score, или один объединённый CSV.",
+      "desc": "Оценивает молекулы-кандидаты относительно референсной семьи препаратов для конкретного заболевания по свойствам ADMET, токсичности и синтетической доступности — приоритизируя лучшие кандидаты для синтеза и дальнейшей оценки.",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "Показать обзор процесса",
+      "step4": "Просмотрите оценки и экспортируйте результаты",
       "protocolDiagram": "Диаграмма протокола"
     },
     "steps": {
@@ -674,7 +681,7 @@
       "rows": "rows",
       "compoundNamePlaceholder": "Compound name",
       "tableHeaderNote": "Note",
-      "stdevLabel": "±SD",
+      "stdevLabel": "±СО",
       "rdkitPreview": "RDKit preview",
       "tableHeaderRank": "#",
       "tableHeaderSmiles": "SMILES",
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "Среднее",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "Быстрое заполнение из текущего руководства по кандидатам или прошлых запусков"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. Все права защищены."
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "Приложение",
+      "enabled": "Включено",
+      "hint": "Сначала оценивается по группе, затем по переопределениям на уровне пользователя.",
+      "scope": "Область",
+      "selectTarget": "Выбрать объект",
+      "statusDisabled": "отключено",
+      "statusEnabled": "включено",
+      "submit": "Сохранить разрешение",
+      "target": "Объект"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "Отозван",
       "title": "Токены приглашений",
       "unlimited": "Без ограничений"
+    },
+    "createUser": {
+      "email": "Эл. почта",
+      "firstName": "Имя",
+      "hint": "Задайте имя пользователя, роль и основную группу для новой учётной записи.",
+      "lastName": "Фамилия",
+      "noPrimaryGroup": "Без основной группы",
+      "password": "Пароль",
+      "primaryGroup": "Основная группа",
+      "roleAdminOption": "Администратор",
+      "roleLabel": "Роль",
+      "roleRootOption": "Root",
+      "roleUserOption": "Пользователь",
+      "submit": "Создать пользователя",
+      "title": "Создание пользователя",
+      "username": "Имя пользователя"
+    },
+    "groupConfig": {
+      "addEntry": "+ Добавить запись",
+      "app": "Приложение",
+      "configLabel": "Записи конфигурации",
+      "group": "Группа",
+      "hint": "Хранит значения по умолчанию для приложений на уровне группы. Пользователи могут переопределять их для каждого приложения.",
+      "key": "Ключ",
+      "removeButton": "×",
+      "selectGroup": "Выбрать группу",
+      "submit": "Сохранить конфигурацию группы",
+      "title": "Конфигурация приложений по группам",
+      "valuePlaceholder": "Значение (true, false, число, текст)"
+    },
+    "users": {
+      "activate": "Активировать",
+      "colActions": "Действия",
+      "colPrimaryGroup": "Основная группа",
+      "colRole": "Роль",
+      "colStatus": "Статус",
+      "colUsername": "Имя пользователя",
+      "deactivate": "Деактивировать",
+      "description": "Действия учитывают роль. Администраторы управляют только пользователями в своих группах.",
+      "roleAdmin": "Администратор",
+      "roleRoot": "Root",
+      "roleUser": "Пользователь",
+      "title": "Пользователи"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "Сначала создайте и упорядочьте каталоги заместителей. Эти записи используются на этапе назначения блоков.",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "Сейчас вы будете перенаправлены на страницу входа.",
       "signInNow": "Войти",
       "title": "Учётная запись создана!"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "Экспорт CSV",
+      "processing": "Обработка...",
+      "reset": "Сбросить",
+      "run": "Данные готовы, запустить Server Calc"
+    },
+    "form": {
+      "a": "Первое значение (a)",
+      "ariaLabel": "Входные параметры",
+      "b": "Второе значение (b)",
+      "operator": "Оператор",
+      "title": "Ввод данных"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "Введите два числа и оператор (+, -, *, /), чтобы вычислить их на сервере qta по SSH. Сервер записывает файл результата и журналирует подключение.",
+      "title": "Удалённый калькулятор (демонстрация)"
+    },
+    "logs": {
+      "ariaLabel": "Журналы подключения задания",
+      "title": "Журналы подключения"
+    },
+    "result": {
+      "ariaLabel": "Результаты и прогресс",
+      "emptyHint": "Запустите расчёт, чтобы увидеть результат и файл, записанный на qta.",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "executedOn": "Выполнено на:",
+        "fileName": "Файл результата:",
+        "filePath": "Сохранено в (qta):",
+        "result": "Результат:"
+      },
+      "submitting": "Отправка задания Server Calc в бэкенд...",
+      "title": "Вывод"
     }
   }
 }

@@ -309,3 +309,16 @@ input:focus {
     height: 46px;
   }
 }
+/* Enlace del pie institucional hacia agalano.com. */
+.institutional-footer .footer-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--chem-transition), color var(--chem-transition);
+}
+
+.institutional-footer .footer-link:hover,
+.institutional-footer .footer-link:focus-visible {
+  color: var(--chem-primary-dark);
+  border-bottom-color: currentColor;
+}

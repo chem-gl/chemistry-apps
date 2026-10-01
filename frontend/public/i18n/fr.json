@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "Autres"
+      "others": "Autres",
+      "server": "Applications serveur"
     },
     "header": {
       "title": "Applications scientifiques",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "Avec un compte",
       "subtitle": "Conservez votre historique, réutilisez-le comme entrée d'autres modules et partagez-le avec votre groupe.",
-      "signIn": "Se connecter"
+      "signIn": "Se connecter",
+      "requestAccess": "Demander à un administrateur"
     },
     "badge": {
       "free": "Mode libre",
-      "account": "Compte requis"
+      "account": "Compte requis",
+      "restricted": "Restreinte"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "Gestion des familles de référence, scores de sélection transparents et graphiques de comparaison pour prioriser les composés."
+    },
+    "server-calc": {
+      "description": "Preuve de concept : calcul distant sur le serveur qta via SSH avec fichier de résultat. Administrateurs uniquement.",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "Configurez votre formule de classement",
+      "step1": "Choisissez une base pathologique parmi les ensembles de référence prédéfinis (Neuro ou RETT) ou créez une famille personnalisée.",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "Importez les CSV de candidats exportés depuis Smile-it, Toxicity Properties et SA Score, ou un seul CSV combiné.",
+      "desc": "Évalue des molécules candidates par rapport à une famille de référence de médicaments propre à une maladie, à partir des propriétés ADMET, de la toxicité et de l’accessibilité synthétique — en priorisant les meilleurs candidats pour la synthèse et l’évaluation ultérieure.",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "Afficher l’aperçu du flux de travail",
+      "step4": "Consultez les scores et exportez les résultats",
       "protocolDiagram": "Diagramme du protocole"
     },
     "steps": {
@@ -674,7 +681,7 @@
       "rows": "rows",
       "compoundNamePlaceholder": "Compound name",
       "tableHeaderNote": "Note",
-      "stdevLabel": "±SD",
+      "stdevLabel": "±ET",
       "rdkitPreview": "RDKit preview",
       "tableHeaderRank": "#",
       "tableHeaderSmiles": "SMILES",
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "Moyenne",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "Remplissage rapide depuis le guide de candidats actuel ou les exécutions précédentes"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. Tous droits réservés."
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "Application",
+      "enabled": "Activé",
+      "hint": "Évalué d’abord par groupe, puis par les dérogations au niveau utilisateur.",
+      "scope": "Portée",
+      "selectTarget": "Sélectionner une cible",
+      "statusDisabled": "désactivé",
+      "statusEnabled": "activé",
+      "submit": "Enregistrer la permission",
+      "target": "Cible"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "Révoqué",
       "title": "Jetons d'invitation",
       "unlimited": "Illimité"
+    },
+    "createUser": {
+      "email": "Adresse e-mail",
+      "firstName": "Prénom",
+      "hint": "Définissez le nom d’utilisateur, le rôle et le groupe principal d’un nouveau compte.",
+      "lastName": "Nom",
+      "noPrimaryGroup": "Aucun groupe principal",
+      "password": "Mot de passe",
+      "primaryGroup": "Groupe principal",
+      "roleAdminOption": "Administrateur",
+      "roleLabel": "Rôle",
+      "roleRootOption": "Root",
+      "roleUserOption": "Utilisateur",
+      "submit": "Créer l’utilisateur",
+      "title": "Créer un utilisateur",
+      "username": "Nom d’utilisateur"
+    },
+    "groupConfig": {
+      "addEntry": "+ Ajouter une entrée",
+      "app": "Application",
+      "configLabel": "Entrées de configuration",
+      "group": "Groupe",
+      "hint": "Stocke les valeurs par défaut par application au niveau du groupe. Les utilisateurs peuvent les remplacer par application.",
+      "key": "Clé",
+      "removeButton": "×",
+      "selectGroup": "Sélectionner un groupe",
+      "submit": "Enregistrer la configuration du groupe",
+      "title": "Configuration des applications par groupe",
+      "valuePlaceholder": "Valeur (true, false, nombre, texte)"
+    },
+    "users": {
+      "activate": "Activer",
+      "colActions": "Actions",
+      "colPrimaryGroup": "Groupe principal",
+      "colRole": "Rôle",
+      "colStatus": "Statut",
+      "colUsername": "Nom d’utilisateur",
+      "deactivate": "Désactiver",
+      "description": "Les actions tiennent compte du rôle. Les administrateurs ne gèrent que les utilisateurs des groupes qu’ils administrent.",
+      "roleAdmin": "Administrateur",
+      "roleRoot": "Root",
+      "roleUser": "Utilisateur",
+      "title": "Utilisateurs"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "Construisez et gérez d’abord les catalogues de substituants. Ces entrées sont réutilisées à l’étape d’attribution des blocs.",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "Tu vas être redirigé vers la page de connexion.",
       "signInNow": "Se connecter",
       "title": "Compte créé !"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "Exporter le CSV",
+      "processing": "Traitement...",
+      "reset": "Réinitialiser",
+      "run": "Données ok, lancer Server Calc"
+    },
+    "form": {
+      "a": "Première valeur (a)",
+      "ariaLabel": "Paramètres d’entrée",
+      "b": "Deuxième valeur (b)",
+      "operator": "Opérateur",
+      "title": "Saisie des données"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "Saisissez deux nombres et un opérateur (+, -, *, /) pour les calculer sur le serveur qta via SSH. Le serveur écrit un fichier de résultat et journalise la connexion.",
+      "title": "Calculatrice distante (preuve de concept)"
+    },
+    "logs": {
+      "ariaLabel": "Journaux de connexion du job",
+      "title": "Journaux de connexion"
+    },
+    "result": {
+      "ariaLabel": "Résultats et progression",
+      "emptyHint": "Lancez un calcul pour voir le résultat et le fichier écrit sur qta.",
+      "labels": {
+        "a": "A :",
+        "b": "B :",
+        "executedOn": "Exécuté sur :",
+        "fileName": "Fichier de résultat :",
+        "filePath": "Enregistré dans (qta) :",
+        "result": "Résultat :"
+      },
+      "submitting": "Envoi du job Server Calc au backend...",
+      "title": "Sortie"
     }
   }
 }

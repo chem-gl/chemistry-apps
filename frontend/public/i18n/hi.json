@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "अन्य"
+      "others": "अन्य",
+      "server": "सर्वर ऐप्स"
     },
     "header": {
       "title": "Scientific Apps",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "खाते के साथ",
       "subtitle": "इतिहास सहेजें, अन्य मॉड्यूल के इनपुट के रूप में उपयोग करें और समूह के साथ साझा करें।",
-      "signIn": "साइन इन करें"
+      "signIn": "साइन इन करें",
+      "requestAccess": "प्रशासक से अनुरोध करें"
     },
     "badge": {
       "free": "मुक्त मोड",
-      "account": "खाता आवश्यक"
+      "account": "खाता आवश्यक",
+      "restricted": "प्रतिबंधित"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "संदर्भ-परिवार प्रबंधन, पारदर्शी चयन स्कोर और यौगिक प्राथमिकता हेतु तुलनात्मक चार्ट।"
+    },
+    "server-calc": {
+      "description": "प्रूफ-ऑफ-कॉन्सेप्ट: SSH के माध्यम से qta सर्वर पर दूरस्थ गणना, परिणाम फ़ाइल के साथ। केवल प्रशासक।",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "अपना रैंकिंग सूत्र कॉन्फ़िगर करें",
+      "step1": "पूर्वनिर्मित संदर्भ सेट (Neuro या RETT) में से रोग आधार चुनें या अपना परिवार बनाएँ।",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "Smile-it, Toxicity Properties और SA Score से निर्यात किए गए उम्मीदवार CSV अपलोड करें, या एक संयुक्त CSV।",
+      "desc": "ADMET, विषाक्तता और संश्लेषणीय उपलब्धता गुणों का उपयोग करके उम्मीदवार अणुओं को रोग-विशिष्ट संदर्भ औषधि परिवार के विरुद्ध अंक देता है — संश्लेषण और आगे के मूल्यांकन के लिए सर्वोत्तम उम्मीदवारों को प्राथमिकता देता है।",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "कार्यप्रवाह अवलोकन दिखाएँ",
+      "step4": "स्कोर देखें और परिणाम निर्यात करें",
       "protocolDiagram": "प्रोटोकॉल आरेख"
     },
     "steps": {
@@ -674,7 +681,7 @@
       "rows": "rows",
       "compoundNamePlaceholder": "Compound name",
       "tableHeaderNote": "Note",
-      "stdevLabel": "±SD",
+      "stdevLabel": "±मानक विचलन",
       "rdkitPreview": "RDKit preview",
       "tableHeaderRank": "#",
       "tableHeaderSmiles": "SMILES",
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "औसत",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "वर्तमान उम्मीदवार गाइड या पिछले रन से त्वरित भरण"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. सर्वाधिकार सुरक्षित।"
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "एप्लिकेशन",
+      "enabled": "सक्षम",
+      "hint": "पहले समूह द्वारा, फिर उपयोगकर्ता-स्तरीय ओवरराइड द्वारा मूल्यांकन किया जाता है।",
+      "scope": "दायरा",
+      "selectTarget": "लक्ष्य चुनें",
+      "statusDisabled": "अक्षम",
+      "statusEnabled": "सक्षम",
+      "submit": "अनुमति सहेजें",
+      "target": "लक्ष्य"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "रद्द",
       "title": "निमंत्रण टोकन",
       "unlimited": "असीमित"
+    },
+    "createUser": {
+      "email": "ईमेल",
+      "firstName": "पहला नाम",
+      "hint": "नए खाते के लिए उपयोगकर्ता नाम, भूमिका और प्राथमिक समूह निर्धारित करें।",
+      "lastName": "उपनाम",
+      "noPrimaryGroup": "कोई प्राथमिक समूह नहीं",
+      "password": "पासवर्ड",
+      "primaryGroup": "प्राथमिक समूह",
+      "roleAdminOption": "प्रशासक",
+      "roleLabel": "भूमिका",
+      "roleRootOption": "Root",
+      "roleUserOption": "उपयोगकर्ता",
+      "submit": "उपयोगकर्ता बनाएँ",
+      "title": "उपयोगकर्ता बनाएँ",
+      "username": "उपयोगकर्ता नाम"
+    },
+    "groupConfig": {
+      "addEntry": "+ प्रविष्टि जोड़ें",
+      "app": "एप्लिकेशन",
+      "configLabel": "कॉन्फ़िगरेशन प्रविष्टियाँ",
+      "group": "समूह",
+      "hint": "समूह स्तर पर प्रति-ऐप डिफ़ॉल्ट संग्रहीत करता है। उपयोगकर्ता प्रति ऐप उन्हें ओवरराइड कर सकते हैं।",
+      "key": "कुंजी",
+      "removeButton": "×",
+      "selectGroup": "समूह चुनें",
+      "submit": "समूह कॉन्फ़िगरेशन सहेजें",
+      "title": "प्रति-समूह ऐप कॉन्फ़िगरेशन",
+      "valuePlaceholder": "मान (true, false, संख्या, पाठ)"
+    },
+    "users": {
+      "activate": "सक्रिय करें",
+      "colActions": "क्रियाएँ",
+      "colPrimaryGroup": "प्राथमिक समूह",
+      "colRole": "भूमिका",
+      "colStatus": "स्थिति",
+      "colUsername": "उपयोगकर्ता नाम",
+      "deactivate": "निष्क्रिय करें",
+      "description": "क्रियाएँ भूमिका-जागरूक हैं। प्रशासक केवल अपने प्रबंधित समूहों के उपयोगकर्ताओं का प्रबंधन करते हैं।",
+      "roleAdmin": "प्रशासक",
+      "roleRoot": "Root",
+      "roleUser": "उपयोगकर्ता",
+      "title": "उपयोगकर्ता"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "पहले प्रतिस्थापन कैटलॉग बनाएँ और सँभालें। ये प्रविष्टियाँ ब्लॉक असाइनमेंट चरण में पुनः उपयोग होती हैं।",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "आपको शीघ्र ही लॉगिन पृष्ठ पर भेजा जाएगा।",
       "signInNow": "अभी साइन इन करें",
       "title": "खाता बन गया!"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "CSV निर्यात करें",
+      "processing": "प्रोसेसिंग...",
+      "reset": "रीसेट",
+      "run": "डेटा ठीक है, Server Calc चलाएँ"
+    },
+    "form": {
+      "a": "पहला मान (a)",
+      "ariaLabel": "इनपुट पैरामीटर",
+      "b": "दूसरा मान (b)",
+      "operator": "ऑपरेटर",
+      "title": "डेटा प्रविष्टि"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "दो संख्याएँ और एक ऑपरेटर (+, -, *, /) दर्ज करें ताकि SSH के माध्यम से qta सर्वर पर गणना हो। सर्वर एक परिणाम फ़ाइल लिखता है और कनेक्शन लॉग करता है।",
+      "title": "दूरस्थ कैलकुलेटर प्रूफ-ऑफ-कॉन्सेप्ट"
+    },
+    "logs": {
+      "ariaLabel": "जॉब कनेक्शन लॉग",
+      "title": "कनेक्शन लॉग"
+    },
+    "result": {
+      "ariaLabel": "परिणाम और प्रगति",
+      "emptyHint": "परिणाम और qta पर लिखी फ़ाइल देखने के लिए गणना चलाएँ।",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "executedOn": "निष्पादित:",
+        "fileName": "परिणाम फ़ाइल:",
+        "filePath": "यहाँ सहेजा गया (qta):",
+        "result": "परिणाम:"
+      },
+      "submitting": "Server Calc जॉब बैकएंड को भेजा जा रहा है...",
+      "title": "आउटपुट"
     }
   }
 }

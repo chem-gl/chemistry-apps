@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "その他"
+      "others": "その他",
+      "server": "サーバーアプリ"
     },
     "header": {
       "title": "Scientific Apps",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "アカウントあり",
       "subtitle": "履歴を保存し、他モジュールの入力として再利用し、グループで共有できます。",
-      "signIn": "サインイン"
+      "signIn": "サインイン",
+      "requestAccess": "管理者に依頼する"
     },
     "badge": {
       "free": "オープンモード",
-      "account": "アカウントが必要"
+      "account": "アカウントが必要",
+      "restricted": "制限あり"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "参照ファミリー管理、透明な選択スコア、化合物優先度付けの比較グラフ。"
+    },
+    "server-calc": {
+      "description": "概念実証：SSH 経由で qta サーバー上で実行するリモート計算（結果ファイル付き）。管理者のみ。",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "ランキング式を設定します",
+      "step1": "事前構築された参照セット（Neuro または RETT）から疾患ベースラインを選ぶか、カスタムファミリーを作成します。",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "Smile-it、Toxicity Properties、SA Score からエクスポートした候補 CSV、または単一の統合 CSV をアップロードします。",
+      "desc": "ADMET特性、毒性、合成容易度を用いて候補分子を疾患特異的な参照薬剤ファミリーと比較評価し、合成と今後の評価に最適な候補を優先します。",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "ワークフローの概要を表示",
+      "step4": "スコアを確認して結果をエクスポートします",
       "protocolDiagram": "プロトコル図"
     },
     "steps": {
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "平均",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "現在の候補ガイドまたは過去の実行からすばやく入力"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. 無断複写・転載を禁じます。"
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "アプリケーション",
+      "enabled": "有効",
+      "hint": "まずグループで、次にユーザー単位の上書きで評価されます。",
+      "scope": "スコープ",
+      "selectTarget": "対象を選択",
+      "statusDisabled": "無効",
+      "statusEnabled": "有効",
+      "submit": "権限を保存",
+      "target": "対象"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "無効化済み",
       "title": "招待トークン",
       "unlimited": "無制限"
+    },
+    "createUser": {
+      "email": "メールアドレス",
+      "firstName": "名",
+      "hint": "新しいアカウントのユーザー名、ロール、主グループを設定します。",
+      "lastName": "姓",
+      "noPrimaryGroup": "主グループなし",
+      "password": "パスワード",
+      "primaryGroup": "主グループ",
+      "roleAdminOption": "管理者",
+      "roleLabel": "ロール",
+      "roleRootOption": "Root",
+      "roleUserOption": "ユーザー",
+      "submit": "ユーザーを作成",
+      "title": "ユーザーを作成",
+      "username": "ユーザー名"
+    },
+    "groupConfig": {
+      "addEntry": "+ エントリを追加",
+      "app": "アプリケーション",
+      "configLabel": "設定エントリ",
+      "group": "グループ",
+      "hint": "グループ単位でアプリごとの既定値を保存します。ユーザーはアプリごとに上書きできます。",
+      "key": "キー",
+      "removeButton": "×",
+      "selectGroup": "グループを選択",
+      "submit": "グループ設定を保存",
+      "title": "グループ別アプリ設定",
+      "valuePlaceholder": "値（true、false、数値、テキスト）"
+    },
+    "users": {
+      "activate": "有効化",
+      "colActions": "操作",
+      "colPrimaryGroup": "主グループ",
+      "colRole": "ロール",
+      "colStatus": "ステータス",
+      "colUsername": "ユーザー名",
+      "deactivate": "無効化",
+      "description": "操作はロールを考慮します。管理者は自分が管理するグループ内のユーザーのみを管理できます。",
+      "roleAdmin": "管理者",
+      "roleRoot": "Root",
+      "roleUser": "ユーザー",
+      "title": "ユーザー"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "まず置換基カタログを作成・整備してください。これらの項目はブロック割り当て手順で再利用されます。",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "まもなくログインページに移動します。",
       "signInNow": "今すぐサインイン",
       "title": "アカウントを作成しました！"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "CSV をエクスポート",
+      "processing": "処理中...",
+      "reset": "リセット",
+      "run": "データOK、Server Calc を実行"
+    },
+    "form": {
+      "a": "1つ目の値 (a)",
+      "ariaLabel": "入力パラメータ",
+      "b": "2つ目の値 (b)",
+      "operator": "演算子",
+      "title": "データ入力"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "2つの数値と演算子（+、-、*、/）を入力すると、SSH 経由で qta サーバー上で計算します。サーバーは結果ファイルを書き出し、接続をログに記録します。",
+      "title": "リモート計算機（概念実証）"
+    },
+    "logs": {
+      "ariaLabel": "ジョブの接続ログ",
+      "title": "接続ログ"
+    },
+    "result": {
+      "ariaLabel": "結果と進行状況",
+      "emptyHint": "計算を実行すると、結果と qta に保存されたファイルが表示されます。",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "executedOn": "実行先:",
+        "fileName": "結果ファイル:",
+        "filePath": "保存先 (qta):",
+        "result": "結果:"
+      },
+      "submitting": "Server Calc ジョブをバックエンドに送信中...",
+      "title": "出力"
     }
   }
 }

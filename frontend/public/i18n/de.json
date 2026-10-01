@@ -398,7 +398,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "Weitere"
+      "others": "Weitere",
+      "server": "Server-Apps"
     },
     "header": {
       "title": "Wissenschaftliche Apps",
@@ -439,11 +440,13 @@
     "accountZone": {
       "title": "Mit Konto",
       "subtitle": "Verlauf speichern, als Eingabe anderer Module nutzen und mit Ihrer Gruppe teilen.",
-      "signIn": "Anmelden"
+      "signIn": "Anmelden",
+      "requestAccess": "Administrator fragen"
     },
     "badge": {
       "free": "Offener Modus",
-      "account": "Konto erforderlich"
+      "account": "Konto erforderlich",
+      "restricted": "Eingeschränkt"
     }
   },
   "profile": {
@@ -506,6 +509,10 @@
     "cadma-py": {
       "title": "CADMA Py",
       "description": "Referenzfamilien-Verwaltung, transparente Auswahlwerte und Vergleichsdiagramme zur Priorisierung von Verbindungen."
+    },
+    "server-calc": {
+      "description": "Proof-of-Concept: entfernte Berechnung auf dem qta-Server über SSH mit Ergebnisdatei. Nur Administratoren.",
+      "title": "Server Calc"
     }
   },
   "cadmaPy": {
@@ -548,14 +555,14 @@
       "resetDefaults": "Reset defaults"
     },
     "hero": {
-      "step3": "Configure your ranking formula",
-      "step1": "Select a disease baseline from the pre-built reference sets (Neuro or RETT) or create a custom family.",
+      "step3": "Konfiguriere deine Ranking-Formel",
+      "step1": "Wähle eine Krankheitsbasis aus den vorgefertigten Referenzsätzen (Neuro oder RETT) oder erstelle eine eigene Familie.",
       "title": "CADMAPy",
-      "step2": "Upload candidate CSVs exported from Smile-it, Toxicity Properties and SA Score, or a single combined CSV.",
-      "desc": "Score candidate molecules against a disease-specific reference drug family using ADMET properties, toxicity and synthetic accessibility — prioritising the best candidates for synthesis and further evaluation.",
+      "step2": "Lade Kandidaten-CSVs hoch, exportiert aus Smile-it, Toxicity Properties und SA Score, oder eine einzelne kombinierte CSV.",
+      "desc": "Bewertet Kandidatenmoleküle gegen eine krankheitsspezifische Referenzfamilie von Wirkstoffen anhand von ADMET-, Toxizitäts- und Synthesezugänglichkeits-Eigenschaften — und priorisiert die besten Kandidaten für Synthese und weitere Evaluierung.",
       "tag": "CADMA-Chem Protocol",
-      "infoAria": "Show workflow overview",
-      "step4": "View scores & export results",
+      "infoAria": "Ablaufübersicht anzeigen",
+      "step4": "Ergebnisse prüfen und exportieren",
       "protocolDiagram": "Protokolldiagramm"
     },
     "steps": {
@@ -693,7 +700,7 @@
       "readOnlyGuidance": "Selecting the family keeps the original creator; copying creates your own editable version.",
       "openDetails": "Open compound details",
       "paperUrlPlaceholder": "https://doi.org/...",
-      "meanLabel": "Mean",
+      "meanLabel": "Mittelwert",
       "access": "Access",
       "optionalNote": "Optional note",
       "newFamilyName": "New family name",
@@ -897,7 +904,8 @@
       "quickFillNeedSmileit": "Select a completed Smile-it job",
       "pathwayManualTitle": "Manual CSV import",
       "applySelectedJobs": "Apply selected jobs",
-      "generateButton": "Generate Toxicity + SA"
+      "generateButton": "Generate Toxicity + SA",
+      "quickFillTitle": "Schnellbefüllung aus dem aktuellen Kandidatenleitfaden oder früheren Läufen"
     },
     "step4": {
       "waitingForResults": "Waiting for CADMA Py results...",
@@ -986,6 +994,9 @@
       "identity": "Users, groups and permissions",
       "groups": "Manage scientific team groups and their permissions",
       "apps": "Visible scientific apps for your current session"
+    },
+    "footer": {
+      "copyright": "© 2026 agalano.com. Alle Rechte vorbehalten."
     }
   },
   "scientificDoc": {
@@ -1299,7 +1310,16 @@
       "name": "Group name"
     },
     "permissions": {
-      "title": "App Permissions"
+      "title": "App Permissions",
+      "app": "Anwendung",
+      "enabled": "Aktiviert",
+      "hint": "Wird zuerst nach Gruppe, dann nach benutzerspezifischen Überschreibungen ausgewertet.",
+      "scope": "Geltungsbereich",
+      "selectTarget": "Ziel auswählen",
+      "statusDisabled": "deaktiviert",
+      "statusEnabled": "aktiviert",
+      "submit": "Berechtigung speichern",
+      "target": "Ziel"
     },
     "ariaLabel": "Group management",
     "feedback": {
@@ -1355,6 +1375,49 @@
       "revoked": "Widerrufen",
       "title": "Einladungstoken",
       "unlimited": "Unbegrenzt"
+    },
+    "createUser": {
+      "email": "E-Mail",
+      "firstName": "Vorname",
+      "hint": "Lege Benutzername, Rolle und Hauptgruppe für ein neues Konto fest.",
+      "lastName": "Nachname",
+      "noPrimaryGroup": "Keine Hauptgruppe",
+      "password": "Passwort",
+      "primaryGroup": "Hauptgruppe",
+      "roleAdminOption": "Administrator",
+      "roleLabel": "Rolle",
+      "roleRootOption": "Root",
+      "roleUserOption": "Benutzer",
+      "submit": "Benutzer erstellen",
+      "title": "Benutzer erstellen",
+      "username": "Benutzername"
+    },
+    "groupConfig": {
+      "addEntry": "+ Eintrag hinzufügen",
+      "app": "Anwendung",
+      "configLabel": "Konfigurationseinträge",
+      "group": "Gruppe",
+      "hint": "Speichert app-spezifische Standardwerte auf Gruppenebene. Benutzer können sie pro App überschreiben.",
+      "key": "Schlüssel",
+      "removeButton": "×",
+      "selectGroup": "Gruppe auswählen",
+      "submit": "Gruppenkonfiguration speichern",
+      "title": "App-Konfiguration pro Gruppe",
+      "valuePlaceholder": "Wert (true, false, Zahl, Text)"
+    },
+    "users": {
+      "activate": "Aktivieren",
+      "colActions": "Aktionen",
+      "colPrimaryGroup": "Hauptgruppe",
+      "colRole": "Rolle",
+      "colStatus": "Status",
+      "colUsername": "Benutzername",
+      "deactivate": "Deaktivieren",
+      "description": "Aktionen berücksichtigen die Rolle. Administratoren verwalten nur Benutzer in den Gruppen, die sie betreuen.",
+      "roleAdmin": "Administrator",
+      "roleRoot": "Root",
+      "roleUser": "Benutzer",
+      "title": "Benutzer"
     }
   },
   "identityAdmin": {
@@ -1781,7 +1844,7 @@
       "groupFilter": "Group",
       "expand": "Expand section",
       "catalogNote": "Catalog creation and edition are isolated in the SMILES catalog studio to keep the main workflow clean.",
-      "description": "",
+      "description": "Erstelle und pflege zuerst die Substituentenkataloge. Diese Einträge werden im Schritt der Blockzuordnung wiederverwendet.",
       "storedSubstituents": "Stored substituents",
       "ariaLabel": "Step 2 substituent catalogs",
       "minimize": "Minimize section",
@@ -2020,6 +2083,44 @@
       "redirecting": "Du wirst in Kürze zur Anmeldeseite weitergeleitet.",
       "signInNow": "Jetzt anmelden",
       "title": "Konto erstellt!"
+    }
+  },
+  "serverCalc": {
+    "actions": {
+      "exportCsv": "CSV exportieren",
+      "processing": "Verarbeitung...",
+      "reset": "Zurücksetzen",
+      "run": "Daten ok, Server Calc starten"
+    },
+    "form": {
+      "a": "Erster Wert (a)",
+      "ariaLabel": "Eingabeparameter",
+      "b": "Zweiter Wert (b)",
+      "operator": "Operator",
+      "title": "Dateneingabe"
+    },
+    "header": {
+      "eyebrow": "Server Calc",
+      "subtitle": "Gib zwei Zahlen und einen Operator (+, -, *, /) ein, um sie auf dem qta-Server über SSH zu berechnen. Der Server schreibt eine Ergebnisdatei und protokolliert die Verbindung.",
+      "title": "Remote-Rechner als Proof of Concept"
+    },
+    "logs": {
+      "ariaLabel": "Verbindungsprotokolle des Jobs",
+      "title": "Verbindungsprotokolle"
+    },
+    "result": {
+      "ariaLabel": "Ergebnisse und Fortschritt",
+      "emptyHint": "Starte eine Berechnung, um das Ergebnis und die auf qta geschriebene Datei zu sehen.",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "executedOn": "Ausgeführt auf:",
+        "fileName": "Ergebnisdatei:",
+        "filePath": "Gespeichert unter (qta):",
+        "result": "Ergebnis:"
+      },
+      "submitting": "Server-Calc-Job wird an das Backend gesendet...",
+      "title": "Ausgabe"
     }
   }
 }
