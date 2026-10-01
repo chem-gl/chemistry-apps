@@ -86,9 +86,12 @@ export class AppsHubComponent {
     return !appItem.freeAccess || !this.openModeEnabled();
   }
 
-  /** Bloqueada solo para invitados: la sesion habilita las apps con permiso. */
+  /** Bloqueada para invitados y para sesiones sin permiso sobre la app. */
   isLocked(appItem: ScientificAppRouteItem): boolean {
-    return this.requiresAccount(appItem) && !this.isAuthenticated();
+    if (!this.isAuthenticated()) {
+      return this.requiresAccount(appItem);
+    }
+    return !appItem.freeAccess && !this.sessionService.canAccessRoute(appItem.key);
   }
 
   /** Indica si la app tiene manual disponible. */
@@ -120,20 +123,13 @@ export class AppsHubComponent {
     trackGlowPointer(event, shell);
   }
 
-  /** Columna Server: solo con sesion y permiso del grupo (canAccessRoute).
-   * Invitados ven lo libre; con sesion, solo lo libre o lo que tengan permitido. */
+  /** Todas las apps se listan siempre: Server Calc solo con permiso del grupo. */
   private visibleApps(
     apps: ReadonlyArray<ScientificAppRouteItem>,
   ): ReadonlyArray<ScientificAppRouteItem> {
-    if (!this.isAuthenticated()) {
-      return apps.filter((appItem) => appItem.group !== 'server');
-    }
-
     return apps.filter(
       (appItem) =>
-        (appItem.group !== 'server' &&
-          (appItem.freeAccess || this.sessionService.canAccessRoute(appItem.key))) ||
-        (appItem.group === 'server' && this.sessionService.canAccessRoute(appItem.key)),
+        appItem.group !== 'server' || this.sessionService.canAccessRoute(appItem.key),
     );
   }
 }

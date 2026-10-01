@@ -307,3 +307,10 @@
     transform: none;
   }
 }
+
+/* Aviso sin enlace para sesiones sin permiso sobre la app. */
+.node-action.is-note {
+  color: var(--chem-ink-soft);
+  font-weight: 600;
+  cursor: default;
+}

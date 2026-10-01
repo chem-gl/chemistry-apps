@@ -118,6 +118,7 @@ export const routes: Routes = [
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
+    // Visible para todos; requiere sesión y permiso del grupo (appAccessGuard).
     path: 'cadma-py',
     canActivate: [authGuard, appAccessGuard],
     data: { appKey: 'cadma-py' },

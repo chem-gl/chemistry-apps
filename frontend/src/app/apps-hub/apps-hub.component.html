@@ -28,15 +28,21 @@
 
           @if (isLocked(appItem)) {
           <div class="node-link panel-card is-locked">
-            <span class="node-badge is-locked">{{ 'appsHub.badge.account' | transloco }}</span>
+            <span class="node-badge is-locked">
+              {{ (isAuthenticated() ? 'appsHub.badge.restricted' : 'appsHub.badge.account') | transloco }}
+            </span>
             <div class="node-head">
               <app-card-thumbnail [appItem]="appItem" mode="icon" />
               <h3>{{ 'scientificApps.' + appItem.key + '.title' | transloco }}</h3>
             </div>
             <p class="node-desc">{{ 'scientificApps.' + appItem.key + '.description' | transloco }}</p>
+            @if (isAuthenticated()) {
+            <span class="node-action is-note">{{ 'appsHub.accountZone.requestAccess' | transloco }}</span>
+            } @else {
             <a class="node-action" routerLink="/login" [queryParams]="{ redirectTo: appItem.routePath }">
               {{ 'appsHub.accountZone.signIn' | transloco }}
             </a>
+            }
           </div>
           } @else {
           <a class="node-link panel-card" [routerLink]="appItem.routePath">

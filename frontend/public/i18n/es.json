@@ -482,11 +482,13 @@
     "accountZone": {
       "title": "Con cuenta",
       "subtitle": "Guarda tu historial, reutilízalo como entrada de otros módulos y compártelo con tu grupo.",
-      "signIn": "Iniciar sesión"
+      "signIn": "Iniciar sesión",
+      "requestAccess": "Solicita acceso a un administrador"
     },
     "badge": {
       "free": "Modo libre",
-      "account": "Requiere cuenta"
+      "account": "Requiere cuenta",
+      "restricted": "Restringida"
     }
   },
   "profile": {

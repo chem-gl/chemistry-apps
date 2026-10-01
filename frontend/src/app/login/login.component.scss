@@ -248,6 +248,10 @@
 
 /* Botón de Google (GIS): mismo peso visual que el submit local. */
 .google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   width: 100%;
   border: 1px solid var(--chem-border);
   border-radius: var(--chem-radius);
@@ -264,6 +268,13 @@
     background var(--chem-transition),
     border-color var(--chem-transition),
     transform var(--chem-transition);
+}
+
+/* Logo oficial de Google (cuatro colores) junto al texto. */
+.google-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
 }
 
 .google-button:hover {

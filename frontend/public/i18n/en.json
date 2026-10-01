@@ -298,11 +298,13 @@
     "accountZone": {
       "title": "With account",
       "subtitle": "Keep your history, reuse it as input for other modules, and share it with your group.",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "requestAccess": "Ask an administrator"
     },
     "badge": {
       "free": "Open mode",
-      "account": "Account required"
+      "account": "Account required",
+      "restricted": "Restricted"
     }
   },
   "scientificDoc": {
