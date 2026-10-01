@@ -82,6 +82,10 @@ services:
       # catálogo en modo cerrado). Llega vía .env del deploy.
       OPEN_MODE_ENABLED: ${OPEN_MODE_ENABLED:-1}
 
+      # Login con Google (GIS): vacío = deshabilitado. El Client ID web es
+      # público y también es la audiencia que valida el token en backend.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+
       DB_ENGINE: "postgres"
       DB_NAME: ${DB_NAME:-chemistry_libres_db}
       DB_USER: ${DB_USER:-postgres}

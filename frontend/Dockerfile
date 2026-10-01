@@ -16,7 +16,13 @@ ARG BUILD_TIMESTAMP=unknown
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# El bundle compilado lleva el id de build en appVersion y el mismo id se
+# publica en version.json. Al desplegar, app.ts detecta el cambio de
+# version.json y recarga: sin esto ambos quedaban fijos en "1.0.0" y los
+# clientes viejos seguían pidiendo chunks que ya no existen.
 RUN sed -i "s|http://localhost:8000|${API_BASE_URL}|g" src/environments/environment.production.ts \
+    && sed -i "s|appVersion: '[^']*'|appVersion: '${BUILD_TIMESTAMP}'|" src/environments/environment.production.ts \
+    && printf '{\n  "version": "%s"\n}\n' "${BUILD_TIMESTAMP}" > public/version.json \
     && npm run build \
     && mkdir -p /tmp/frontend-dist \
     && if [ -d dist/frontend/browser ]; \
