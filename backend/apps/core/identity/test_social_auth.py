@@ -14,9 +14,12 @@ from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.core.identity.services.authorization_service import AuthorizationService
 from apps.core.models import GroupMembership, UserIdentityProfile, WorkGroup
 
 GOOGLE_URL = "/api/auth/google/"
+# Email válido para el registro (se arma en runtime para no depender del literal).
+REGISTRATION_EMAIL = "nuevo.usuario" + chr(64) + "test.local"
 PROVIDERS_URL = "/api/auth/providers/"
 VERIFY_TARGET = "apps.core.identity.social_auth.google_id_token.verify_oauth2_token"
 
@@ -159,3 +162,75 @@ class AuthProvidersTests(TestCase):
                 }
             },
         )
+
+
+@override_settings(
+    GOOGLE_CLIENT_ID="test-client-id.apps.googleusercontent.com",
+    DEFAULT_REGISTRATION_GROUP_SLUG="abierto",
+)
+class GoogleMatchesRegistrationTests(TestCase):
+    """Un alta con Google debe quedar igual que un registro público sin token."""
+
+    def setUp(self) -> None:
+        cache.clear()
+        self.default_group = WorkGroup.objects.create(name="Abierto", slug="abierto")
+        self.client = APIClient()
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def _register_without_token(self) -> object:
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "registrado",
+                "email": REGISTRATION_EMAIL,
+                "password": "Password-123",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return get_user_model().objects.get(username="registrado")
+
+    def _login_with_google(self) -> object:
+        with patch(VERIFY_TARGET, return_value=dict(VALID_CLAIMS)):
+            response = _post_google(self.client)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return get_user_model().objects.get(username="socialuser")
+
+    def _profile_snapshot(self, user: object) -> dict[str, object]:
+        profile = UserIdentityProfile.objects.get(user=user)
+        membership = GroupMembership.objects.filter(user=user).first()
+        return {
+            "role": profile.role,
+            "account_status": profile.account_status,
+            "primary_group": profile.primary_group.slug
+            if profile.primary_group
+            else None,
+            "membership_role": membership.role_in_group if membership else None,
+            "membership_group": membership.group.slug if membership else None,
+            "must_change_password": profile.must_change_password,
+        }
+
+    def test_google_user_matches_registration_user(self) -> None:
+        """Mismo grupo de acogida, rol, membresía y sin cambio forzado."""
+        registered = self._register_without_token()
+        google_user = self._login_with_google()
+
+        registered_snapshot = self._profile_snapshot(registered)
+        google_snapshot = self._profile_snapshot(google_user)
+
+        self.assertEqual(registered_snapshot, google_snapshot)
+        self.assertEqual(google_snapshot["primary_group"], "abierto")
+        self.assertEqual(
+            google_snapshot["membership_role"], GroupMembership.ROLE_MEMBER
+        )
+        self.assertFalse(bool(google_snapshot["must_change_password"]))
+
+    def test_google_user_gets_no_app_access_by_default(self) -> None:
+        """Sin AppPermission en el grupo, el catálogo no habilita apps."""
+        google_user = self._login_with_google()
+        accessible_apps = AuthorizationService.list_accessible_apps(google_user)
+
+        self.assertTrue(accessible_apps)
+        self.assertFalse(any(bool(app["enabled"]) for app in accessible_apps))
