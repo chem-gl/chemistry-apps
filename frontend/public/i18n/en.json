@@ -307,7 +307,7 @@
   },
   "scientificDoc": {
     "open": "Documentation",
-    "comingSoon": "Coming soon",
+    "comingSoon": "Docs soon",
     "tabOverview": "Overview",
     "tabWorkflow": "Workflow",
     "tabAlgorithm": "Algorithm",
@@ -566,7 +566,8 @@
         "executedOn": "Executed on:",
         "fileName": "Result file:",
         "filePath": "Saved at (qta):"
-      }
+      },
+      "emptyHint": "Run a calculation to see the result and the file written on qta."
     },
     "logs": {
       "title": "Connection logs",

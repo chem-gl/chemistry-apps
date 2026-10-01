@@ -1038,7 +1038,7 @@
   },
   "scientificDoc": {
     "open": "Documentación",
-    "comingSoon": "Próximamente",
+    "comingSoon": "Manual pronto",
     "tabOverview": "Resumen",
     "tabWorkflow": "Flujo de trabajo",
     "tabAlgorithm": "Algoritmo",
@@ -1181,7 +1181,8 @@
       },
       "submitting": "Enviando job de server calc al backend...",
       "title": "Salida",
-      "ariaLabel": "Resultados y progreso"
+      "ariaLabel": "Resultados y progreso",
+      "emptyHint": "Ejecuta un cálculo para ver el resultado y el archivo escrito en qta."
     },
     "logs": {
       "title": "Logs de conexión",
