@@ -757,6 +757,7 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate(self, attrs: dict) -> dict:
         if str(attrs.get("current_password", "")) == str(attrs.get("new_password", "")):
             raise serializers.ValidationError(
-                {"new_password": "La nueva contraseña debe ser distinta a la actual."}  # NOSONAR: S2068 - mensaje de validación, no una credencial
+                # Falso positivo S2068: mensaje de validación, no una credencial.
+                {"new_password": "La nueva contraseña debe ser distinta a la actual."}  # NOSONAR
             )
         return attrs
