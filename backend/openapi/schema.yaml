@@ -5310,6 +5310,239 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/server-calc/jobs/:
+    post:
+      operationId: server_calc_jobs_create
+      description: Crea un job asíncrono para calcular a op b en el servidor remoto
+        qta vía SSH, con fallback local si la conexión falla. Solo administradores.
+      summary: Crear Job de Server Calc
+      tags:
+      - ServerCalc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerCalcJobCreateRequest'
+            examples:
+              CrearJobServerCalc:
+                value:
+                  version: 1.1.0
+                  a: 7.0
+                  op: '*'
+                  b: 6.0
+                summary: Crear job Server Calc
+                description: Calcula 7 * 6 en el servidor remoto qta vía SSH. El remoto
+                  escribe un archivo con 'a op b = result' y lo reporta.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ServerCalcJobCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ServerCalcJobCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerCalcJobResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Error de validación del contrato de Server Calc.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Solo administradores pueden usar Server Calc.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No fue posible encolar o crear el job.
+  /api/server-calc/jobs/{id}/:
+    get:
+      operationId: server_calc_jobs_retrieve
+      description: Devuelve estado, progreso y resultados del job por UUID.
+      summary: Consultar Job
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: UUID del job.
+        required: true
+      tags:
+      - ServerCalc
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/server-calc/jobs/{id}/report-csv/:
+    get:
+      operationId: server_calc_jobs_report_csv_retrieve
+      description: Descarga CSV con resultados del job. Solo aplica para estado completed.
+      summary: Descargar Reporte CSV
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ServerCalc
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/server-calc/jobs/{id}/report-error/:
+    get:
+      operationId: server_calc_jobs_report_error_retrieve
+      description: Descarga reporte de error para jobs failed con error_trace. Incluye
+        parámetros de entrada y detalle del fallo.
+      summary: Descargar Reporte de Error
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ServerCalc
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Reporte de error.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/server-calc/jobs/{id}/report-inputs/:
+    get:
+      operationId: server_calc_jobs_report_inputs_retrieve
+      description: Descarga ZIP con todos los archivos de entrada persistidos y manifest.json
+        para reproducibilidad/reintento.
+      summary: Descargar Entradas Originales ZIP
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ServerCalc
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Archivo ZIP con entradas persistidas del job.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Job no encontrado.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: No existen artefactos de entrada persistidos.
+  /api/server-calc/jobs/{id}/report-log/:
+    get:
+      operationId: server_calc_jobs_report_log_retrieve
+      description: Descarga log técnico con parámetros de entrada, estado, resultados
+        y eventos de ejecución.
+      summary: Descargar Reporte LOG
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scientific job.
+        required: true
+      tags:
+      - ServerCalc
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Log de auditoría.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/smileit/jobs/:
     post:
       operationId: smileit_jobs_create
@@ -8946,6 +9179,18 @@ components:
       - metadata
       - rows
       - species_labels
+    OpEnum:
+      enum:
+      - +
+      - '-'
+      - '*'
+      - /
+      type: string
+      description: |-
+        * `+` - +
+        * `-` - -
+        * `*` - *
+        * `/` - /
     PasswordChangeRequest:
       type: object
       description: Contrato para el cambio obligatorio de contraseña del usuario autenticado.
@@ -9702,6 +9947,187 @@ components:
       - soft
       type: string
       description: '* `soft` - Soft delete'
+    ServerCalcJobCreateRequest:
+      type: object
+      description: Valida parámetros de creación para jobs de cálculo remoto.
+      properties:
+        version:
+          type: string
+          minLength: 1
+          default: 1.1.0
+          maxLength: 50
+        a:
+          type: number
+          format: double
+          description: Primer operando.
+        op:
+          allOf:
+          - $ref: '#/components/schemas/OpEnum'
+          description: |-
+            Operador: + - * /.
+
+            * `+` - +
+            * `-` - -
+            * `*` - *
+            * `/` - /
+        b:
+          type: number
+          format: double
+          description: Segundo operando.
+      required:
+      - a
+      - b
+      - op
+    ServerCalcJobResponse:
+      type: object
+      description: Respuesta estable para jobs de la app Server Calc.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        job_hash:
+          type: string
+          readOnly: true
+          description: Hash SHA-256 for caching
+        plugin_name:
+          type: string
+          readOnly: true
+        algorithm_version:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        cache_hit:
+          type: boolean
+          readOnly: true
+        cache_miss:
+          type: boolean
+          readOnly: true
+        progress_percentage:
+          type: integer
+          readOnly: true
+          description: Porcentaje de progreso entre 0 y 100.
+        progress_stage:
+          type: string
+          readOnly: true
+          description: 'Etapa actual de ejecución: pending/queued/running/paused/caching/completed/failed.'
+        progress_message:
+          type: string
+          readOnly: true
+          description: Mensaje corto y legible del estado de progreso.
+        progress_event_index:
+          type: integer
+          readOnly: true
+          description: Contador incremental de eventos de progreso emitidos.
+        parameters:
+          $ref: '#/components/schemas/ServerCalcParameters'
+        results:
+          allOf:
+          - $ref: '#/components/schemas/ServerCalcResult'
+          nullable: true
+        error_trace:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - algorithm_version
+      - cache_hit
+      - cache_miss
+      - created_at
+      - error_trace
+      - id
+      - job_hash
+      - parameters
+      - plugin_name
+      - progress_event_index
+      - progress_message
+      - progress_percentage
+      - progress_stage
+      - status
+      - updated_at
+    ServerCalcMetadata:
+      type: object
+      description: Metadatos técnicos de resultado Server Calc.
+      properties:
+        executed_on:
+          type: string
+          maxLength: 50
+        remote_host:
+          type: string
+          maxLength: 255
+        fallback_used:
+          type: boolean
+      required:
+      - executed_on
+      - fallback_used
+      - remote_host
+    ServerCalcParameters:
+      type: object
+      description: Parámetros persistidos de entrada para un job Server Calc.
+      properties:
+        a:
+          type: number
+          format: double
+        op:
+          type: string
+          maxLength: 4
+        b:
+          type: number
+          format: double
+      required:
+      - a
+      - b
+      - op
+    ServerCalcResult:
+      type: object
+      description: Resultado tipado del cálculo Server Calc.
+      properties:
+        a:
+          type: number
+          format: double
+          description: Primer operando.
+        op:
+          type: string
+          description: Operador aplicado.
+          maxLength: 4
+        b:
+          type: number
+          format: double
+          description: Segundo operando.
+        result:
+          type: number
+          format: double
+          description: Resultado de a op b.
+        file_name:
+          type: string
+          nullable: true
+          description: Archivo escrito en qta.
+          maxLength: 255
+        file_path:
+          type: string
+          nullable: true
+          description: Ruta del archivo en qta.
+          maxLength: 512
+        metadata:
+          $ref: '#/components/schemas/ServerCalcMetadata'
+      required:
+      - a
+      - b
+      - file_name
+      - file_path
+      - metadata
+      - op
+      - result
     SiteOverlapPolicyEnum:
       enum:
       - last_block_wins
@@ -11315,6 +11741,9 @@ tags:
 - name: Tunnel
   description: Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica
     y trazabilidad de cambios de entrada.
+- name: ServerCalc
+  description: Endpoints PoC para suma remota ejecutada en el servidor qta vía SSH
+    con fallback local.
 - name: EasyRate
   description: Endpoints para cinética Easy-rate con carga de archivos Gaussian y
     persistencia de entradas para reproducibilidad.

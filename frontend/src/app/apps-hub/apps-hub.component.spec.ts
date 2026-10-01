@@ -1,4 +1,4 @@
-// apps-hub.component.spec.ts: Pruebas del catalogo publico (columnas CADMA/Others).
+// apps-hub.component.spec.ts: Pruebas del catalogo publico (columnas CADMA/Others/Server).
 
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -9,6 +9,7 @@ import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import {
   CADMA_GROUP_APP_ROUTE_ITEMS,
   OTHER_GROUP_APP_ROUTE_ITEMS,
+  SERVER_GROUP_APP_ROUTE_ITEMS,
 } from '../core/shared/scientific-apps.config';
 import { AppsHubComponent } from './apps-hub.component';
 
@@ -44,7 +45,7 @@ describe('AppsHubComponent', () => {
     hub = fixture.componentInstance;
   });
 
-  it('agrupa las apps en las columnas CADMA y Others sin necesidad de sesion', () => {
+  it('agrupa CADMA y Others sin sesion y oculta la columna Server (grupo qta-operators)', () => {
     const groups = hub.appGroups();
 
     expect(groups.map((group) => group.id)).toEqual(['cadma', 'others']);
@@ -52,6 +53,22 @@ describe('AppsHubComponent', () => {
     expect(groups[1].apps).toEqual(OTHER_GROUP_APP_ROUTE_ITEMS);
     expect(CADMA_GROUP_APP_ROUTE_ITEMS.length).toBeGreaterThan(0);
     expect(OTHER_GROUP_APP_ROUTE_ITEMS.length).toBeGreaterThan(0);
+    expect(SERVER_GROUP_APP_ROUTE_ITEMS.length).toBeGreaterThan(0);
+  });
+
+  it('muestra Server Calc con sesion y permiso del grupo', () => {
+    sessionStub.isAuthenticated.set(true);
+    sessionStub.canAccessRoute = (appKey: string): boolean => appKey === 'server-calc';
+
+    const serverGroup = hub.appGroups().find((group) => group.id === 'server');
+    expect(serverGroup?.apps.map((appItem) => appItem.key)).toEqual(['server-calc']);
+  });
+
+  it('oculta la columna Server con sesion pero sin permiso del grupo', () => {
+    sessionStub.isAuthenticated.set(true);
+    sessionStub.canAccessRoute = (_appKey: string): boolean => false;
+
+    expect(hub.appGroups().map((group) => group.id)).toEqual(['cadma', 'others']);
   });
 
   it('bloquea para invitados solo las apps que piden cuenta', () => {
@@ -103,16 +120,17 @@ describe('AppsHubComponent', () => {
     expect(hub.activeDocTabs().length).toBeGreaterThan(0);
   });
 
-  it('renderiza las dos columnas con manual en cada tarjeta', () => {
-    const fixture = TestBed.createComponent(AppsHubComponent);
-    fixture.detectChanges();
+  it('renderiza dos columnas sin sesion y tres con permiso del grupo', () => {
+    const guestFixture = TestBed.createComponent(AppsHubComponent);
+    guestFixture.detectChanges();
 
-    const host: HTMLElement = fixture.nativeElement;
-    expect(host.querySelectorAll('.app-column').length).toBe(2);
-    expect(host.querySelectorAll('.app-lattice').length).toBe(2);
-    expect(host.querySelector('.node-doc-btn')).not.toBeNull();
-    expect(host.querySelectorAll('.node-doc-btn.is-coming-soon').length).toBe(0);
-    expect(host.querySelector('.top-actions')).toBeNull();
+    const guestHost: HTMLElement = guestFixture.nativeElement;
+    expect(guestHost.querySelectorAll('.app-column').length).toBe(2);
+    expect(guestHost.querySelector('.node-doc-btn')).not.toBeNull();
+    // Sin sesion no hay columna Server: ninguna tarjeta "Proximamente" visible.
+    expect(guestHost.querySelectorAll('.node-doc-btn.is-coming-soon').length).toBe(0);
+    expect(guestHost.querySelector('.lattice-empty')).toBeNull();
+    expect(guestHost.querySelector('.top-actions')).toBeNull();
   });
 
   it('mueve el resplandor de reaccion con el puntero', () => {

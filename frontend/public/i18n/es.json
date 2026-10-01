@@ -440,7 +440,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "Otras"
+      "others": "Otras",
+      "server": "Servidor"
     },
     "header": {
       "title": "Apps científicas",
@@ -524,6 +525,10 @@
     "tunnel": {
       "title": "Efecto túnel",
       "description": "Corrección de tuneleo Eckart asimétrico con traza completa de cambios y registros del job."
+    },
+    "server-calc": {
+      "title": "Server Calc",
+      "description": "Cálculo remoto de prueba en el servidor qta vía SSH con archivo de resultado. Solo admins."
     },
     "toxicity-properties": {
       "title": "Propiedades de toxicidad",
@@ -1144,6 +1149,43 @@
       "submitting": "Enviando job de efecto túnel al backend...",
       "title": "Salida",
       "ariaLabel": "Resultados y progreso"
+    }
+  },
+  "serverCalc": {
+    "header": {
+      "title": "Calculadora remota de prueba",
+      "subtitle": "Ingresa dos valores y un operador (+, -, *, /) para calcularlos en el servidor qta vía SSH. El servidor escribe un archivo de resultado y registra la conexión.",
+      "eyebrow": "Server Calc"
+    },
+    "form": {
+      "a": "Primer valor (a)",
+      "b": "Segundo valor (b)",
+      "title": "Entrada de datos",
+      "ariaLabel": "Parámetros de entrada",
+      "operator": "Operador"
+    },
+    "actions": {
+      "processing": "Procesando...",
+      "reset": "Restablecer",
+      "run": "Datos ok, ejecutar Server Calc",
+      "exportCsv": "Exportar CSV"
+    },
+    "result": {
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "result": "Resultado:",
+        "executedOn": "Ejecutado en:",
+        "fileName": "Archivo resultado:",
+        "filePath": "Guardado en (qta):"
+      },
+      "submitting": "Enviando job de server calc al backend...",
+      "title": "Salida",
+      "ariaLabel": "Resultados y progreso"
+    },
+    "logs": {
+      "title": "Logs de conexión",
+      "ariaLabel": "Logs de conexión del job"
     }
   },
   "molarFractions": {

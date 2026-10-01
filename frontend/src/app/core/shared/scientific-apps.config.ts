@@ -3,8 +3,8 @@
 // `scientificApps.<key>.title` y `scientificApps.<key>.description` en los templates.
 // Los campos `title`/`description` sirven como fallback en ingles.
 
-/** Familia a la que pertenece una app en el hub (`CADMA` vs `Others`). */
-export type ScientificAppGroup = 'cadma' | 'others';
+/** Familia a la que pertenece una app en el hub (`CADMA` vs `Others` vs `Server`). */
+export type ScientificAppGroup = 'cadma' | 'others' | 'server';
 
 export interface ScientificAppRouteItem {
   key: string;
@@ -165,6 +165,16 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
     iconAsset: 'assets/cadmapy_v3_noboxes.png',
   },
+  {
+    key: 'server-calc',
+    pluginName: 'server-calc',
+    title: 'Server Calc',
+    description:
+      'Proof-of-concept remote calculation on the qta server over SSH with result file logging. Admins only.',
+    visibleInMenus: true,
+    freeAccess: false,
+    group: 'server',
+  },
 ];
 
 export const SCIENTIFIC_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
@@ -214,3 +224,7 @@ export const CADMA_GROUP_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> 
 /** Apps que no pertenecen a CADMA (columna derecha del hub). */
 export const OTHER_GROUP_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
   VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.group === 'others');
+
+/** Apps remotas PoC ejecutadas en servidores externos (tercera columna del hub). */
+export const SERVER_GROUP_APP_ROUTE_ITEMS: ReadonlyArray<ScientificAppRouteItem> =
+  VISIBLE_SCIENTIFIC_APP_ROUTE_ITEMS.filter((app) => app.group === 'server');

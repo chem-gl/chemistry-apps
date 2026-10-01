@@ -37,6 +37,7 @@ RUN mkdir -p /tmp/matplotlib-cache /tmp/torchinductor-cache \
         libxext6 \
         libx11-6 \
         libexpat1 \
+        openssh-client \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --upgrade pip \
     && pip install "poetry==${POETRY_VERSION}"

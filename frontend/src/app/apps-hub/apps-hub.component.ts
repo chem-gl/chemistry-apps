@@ -1,8 +1,8 @@
 // apps-hub.component.ts: Catalogo publico de apps cientificas.
-// Dos columnas por familia: CADMA (pipeline de priorizacion) y Others
-// (fisicoquimica/kinetica). Cada tarjeta conserva su comportamiento de acceso
-// (modo libre vs cuenta) y expone su manual de documentacion en la esquina
-// superior izquierda.
+// Tres columnas por familia: CADMA (pipeline de priorizacion), Others
+// (fisicoquimica/kinetica) y Server (PoC remotos via SSH). Cada tarjeta conserva
+// su comportamiento de acceso (modo libre vs cuenta) y expone su manual de
+// documentacion en la esquina superior izquierda.
 
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -19,6 +19,7 @@ import { trackGlowPointer } from '../core/shared/pointer-glow.utils';
 import {
   CADMA_GROUP_APP_ROUTE_ITEMS,
   OTHER_GROUP_APP_ROUTE_ITEMS,
+  SERVER_GROUP_APP_ROUTE_ITEMS,
   ScientificAppRouteItem,
 } from '../core/shared/scientific-apps.config';
 import { getScientificAppDocTabs } from './app-doc.registry';
@@ -54,19 +55,31 @@ export class AppsHubComponent {
   readonly docPanelOpen = signal<boolean>(false);
   readonly activeDocTabs = signal<DocTab[]>([]);
 
-  /** Columnas CADMA / Others, ya filtradas por permisos de la sesion. */
-  readonly appGroups = computed<ReadonlyArray<AppGroupView>>(() => [
-    {
-      id: 'cadma',
-      titleKey: 'appsHub.groups.cadma',
-      apps: this.visibleApps(CADMA_GROUP_APP_ROUTE_ITEMS),
-    },
-    {
-      id: 'others',
-      titleKey: 'appsHub.groups.others',
-      apps: this.visibleApps(OTHER_GROUP_APP_ROUTE_ITEMS),
-    },
-  ]);
+  /** Columnas CADMA / Others / Server, ya filtradas por permisos de la sesion.
+   * La columna Server se oculta por completo cuando no hay apps visibles. */
+  readonly appGroups = computed<ReadonlyArray<AppGroupView>>(() => {
+    const serverApps = this.visibleApps(SERVER_GROUP_APP_ROUTE_ITEMS);
+    const groups: AppGroupView[] = [
+      {
+        id: 'cadma',
+        titleKey: 'appsHub.groups.cadma',
+        apps: this.visibleApps(CADMA_GROUP_APP_ROUTE_ITEMS),
+      },
+      {
+        id: 'others',
+        titleKey: 'appsHub.groups.others',
+        apps: this.visibleApps(OTHER_GROUP_APP_ROUTE_ITEMS),
+      },
+    ];
+    if (serverApps.length > 0) {
+      groups.push({
+        id: 'server',
+        titleKey: 'appsHub.groups.server',
+        apps: serverApps,
+      });
+    }
+    return groups;
+  });
 
   /** Una app pide cuenta si no es libre o si el modo libre esta desactivado. */
   requiresAccount(appItem: ScientificAppRouteItem): boolean {
@@ -107,16 +120,20 @@ export class AppsHubComponent {
     trackGlowPointer(event, shell);
   }
 
-  /** Invitados ven todo; con sesion, solo lo libre o lo que tengan permitido. */
+  /** Columna Server: solo con sesion y permiso del grupo (canAccessRoute).
+   * Invitados ven lo libre; con sesion, solo lo libre o lo que tengan permitido. */
   private visibleApps(
     apps: ReadonlyArray<ScientificAppRouteItem>,
   ): ReadonlyArray<ScientificAppRouteItem> {
     if (!this.isAuthenticated()) {
-      return apps;
+      return apps.filter((appItem) => appItem.group !== 'server');
     }
 
     return apps.filter(
-      (appItem) => appItem.freeAccess || this.sessionService.canAccessRoute(appItem.key),
+      (appItem) =>
+        (appItem.group !== 'server' &&
+          (appItem.freeAccess || this.sessionService.canAccessRoute(appItem.key))) ||
+        (appItem.group === 'server' && this.sessionService.canAccessRoute(appItem.key)),
     );
   }
 }

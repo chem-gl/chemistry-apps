@@ -19,6 +19,7 @@ import {
   SAScoreService,
   SaScoreJobCreateRequest,
   ScientificJob,
+  ServerCalcService,
   SourceFieldEnum,
   ToxicityJobCreateRequest,
   ToxicityPropertiesService,
@@ -53,6 +54,7 @@ import type {
   SaScoreMethod,
   SaScoreParams,
   ScientificJobDispatchParams,
+  ServerCalcParams,
   SmileitDerivationPageView,
   SmileitJobResponseView,
   SmileitStructureInspectionView,
@@ -102,6 +104,7 @@ export class JobsApiService {
   private readonly saScoreClient = inject(SAScoreService);
   private readonly molarFractionsClient = inject(MolarFractionsService);
   private readonly tunnelClient = inject(TunnelService);
+  private readonly serverCalcClient = inject(ServerCalcService);
   private readonly jobsClient = inject(JobsService);
   private readonly toxicityPropertiesClient = inject(ToxicityPropertiesService);
   private readonly streamingApi = inject(JobsStreamingApiService);
@@ -383,6 +386,25 @@ export class JobsApiService {
       : this.tunnelClient.tunnelJobsRetrieve(jobId);
   }
 
+  /** Despacha un job de cálculo remoto (solo admin, siempre autenticado) */
+  dispatchServerCalcJob(params: ServerCalcParams): Observable<ScientificJob> {
+    const payloadParameters: Record<string, unknown> = {
+      a: Number(params.a),
+      op: params.op,
+      b: Number(params.b),
+    };
+
+    return this.dispatchScientificJob({
+      pluginName: 'server-calc',
+      version: params.version ?? '1.1.0',
+      parameters: payloadParameters,
+    });
+  }
+
+  getServerCalcJobStatus(jobId: string): Observable<ScientificJob> {
+    return this.serverCalcClient.serverCalcJobsRetrieve(jobId);
+  }
+
   /** Descarga el reporte CSV de molar fractions directamente desde backend */
   downloadMolarFractionsCsvReport(jobId: string): Observable<DownloadedReportFile> {
     if (this.isOpenMode()) return this.publicApi.downloadMolarFractionsCsvReport(jobId);
@@ -425,6 +447,30 @@ export class JobsApiService {
     return createReportDownload$(
       this.tunnelClient.tunnelJobsReportErrorRetrieve(jobId, 'response'),
       `tunnel_effect_${jobId}_error.txt`,
+    );
+  }
+
+  /** Descarga el reporte CSV de Server Calc directamente desde backend */
+  downloadServerCalcCsvReport(jobId: string): Observable<DownloadedReportFile> {
+    return createReportDownload$(
+      this.serverCalcClient.serverCalcJobsReportCsvRetrieve(jobId, 'response'),
+      `server_calc_${jobId}_report.csv`,
+    );
+  }
+
+  /** Descarga el reporte LOG de Server Calc directamente desde backend */
+  downloadServerCalcLogReport(jobId: string): Observable<DownloadedReportFile> {
+    return createReportDownload$(
+      this.serverCalcClient.serverCalcJobsReportLogRetrieve(jobId, 'response'),
+      `server_calc_${jobId}_report.log`,
+    );
+  }
+
+  /** Descarga el reporte de error de Server Calc cuando el job falla */
+  downloadServerCalcErrorReport(jobId: string): Observable<DownloadedReportFile> {
+    return createReportDownload$(
+      this.serverCalcClient.serverCalcJobsReportErrorRetrieve(jobId, 'response'),
+      `server_calc_${jobId}_error.txt`,
     );
   }
 

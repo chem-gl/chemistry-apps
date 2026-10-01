@@ -8,6 +8,7 @@ export * from './molar-fractions-api.types';
 export * from './named-smiles-api.types';
 export * from './realtime-events.types';
 export * from './sa-score-api.types';
+export * from './server-calc-api.types';
 export * from './smileit-api.types';
 export * from './toxicity-api.types';
 export * from './tunnel-api.types';

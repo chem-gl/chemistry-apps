@@ -10,13 +10,11 @@
 
 
 /**
- * * `+` - + * `-` - - * `*` - * * `/` - /
+ * Parámetros persistidos de entrada para un job Server Calc.
  */
-export const OpEnum = {
-    Plus: '+',
-    Minus: '-',
-    Star: '*',
-    Slash: '/'
-} as const;
-export type OpEnum = typeof OpEnum[keyof typeof OpEnum];
+export interface ServerCalcParameters { 
+    a: number;
+    op: string;
+    b: number;
+}
 

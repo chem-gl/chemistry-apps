@@ -53,6 +53,7 @@ jobs:
           _DB_USER: ${{ vars.LIBRES_DB_USER }}
           _DB_PASSWORD: ${{ secrets.LIBRES_DB_PASSWORD }}
           _SECRET_KEY: ${{ secrets.LIBRES_SECRET_KEY }}
+          _QTA_SSH_KEY: ${{ secrets.QTA_SSH_PRIVATE_KEY }}
         run: |
           missing=()
           [ -z "$_PROJECT_PATH" ] && missing+=(vars.LIBRES_VM_PROJECT_PATH)
@@ -62,6 +63,7 @@ jobs:
           [ -z "$_DB_USER" ] && missing+=(vars.LIBRES_DB_USER)
           [ -z "$_DB_PASSWORD" ] && missing+=(secrets.LIBRES_DB_PASSWORD)
           [ -z "$_SECRET_KEY" ] && missing+=(secrets.LIBRES_SECRET_KEY)
+          [ -z "$_QTA_SSH_KEY" ] && missing+=(secrets.QTA_SSH_PRIVATE_KEY)
           if [ ${#missing[@]} -gt 0 ]; then
             echo "ERROR: faltan vars/secrets del sitio libre: ${missing[*]}"
             exit 1
@@ -201,6 +203,7 @@ jobs:
           BUNDLE_FILE: ${{ env.LIBRES_BUNDLE_FILE }}
           STAGING_DIR: ${{ env.LIBRES_STAGING_DIR }}
           MIN_FREE_GB: ${{ env.LIBRES_MIN_FREE_GB }}
+          QTA_SSH_PRIVATE_KEY: ${{ secrets.QTA_SSH_PRIVATE_KEY }}
           # Los runtime tools (JREs + JAR Ambit) ya existen en el stack
           # principal: se copian para no descargarlos de nuevo en cada volumen.
           RUNTIME_TOOLS_SOURCE: /home/deploy/chemistry-apps/backend/media/runtime-tools
@@ -210,7 +213,7 @@ jobs:
           port: ${{ vars.VM_PORT }}
           key: ${{ steps.ssh_key.outputs.private_key }}
           passphrase: ${{ secrets.VM_SSH_PASSPHRASE }}
-          envs: PROJECT_PATH,COMPOSE_FILE,ENV_FILE,BUNDLE_FILE,STAGING_DIR,MIN_FREE_GB,RUNTIME_TOOLS_SOURCE
+          envs: PROJECT_PATH,COMPOSE_FILE,ENV_FILE,BUNDLE_FILE,STAGING_DIR,MIN_FREE_GB,RUNTIME_TOOLS_SOURCE,QTA_SSH_PRIVATE_KEY
           command_timeout: 60m
           script: |
             set -e
@@ -290,6 +293,20 @@ jobs:
             $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
               -e DEFAULT_REGISTRATION_GROUP_SLUG=abierto backend \
               python manage.py ensure_registration_group
+
+            # Server Calc: llave SSH hacia qta (worker) y grupo qta-operators.
+            mkdir -p "$PROJECT_PATH/secrets"
+            printf '%s\n' "$QTA_SSH_PRIVATE_KEY" | tr -d '\r' > "$PROJECT_PATH/secrets/qta_ssh_key"
+            chmod 600 "$PROJECT_PATH/secrets/qta_ssh_key"
+            chown "${CURRENT_UID}:${CURRENT_GID}" "$PROJECT_PATH/secrets/qta_ssh_key"
+            if ! ssh-keygen -y -f "$PROJECT_PATH/secrets/qta_ssh_key" >/dev/null 2>&1; then
+              echo "ERROR: QTA_SSH_PRIVATE_KEY no es una llave privada válida."
+              exit 1
+            fi
+
+            $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env run --rm --no-deps \
+              -e RUNTIME_TOOLS_STRICT_CHECK=false backend \
+              python manage.py ensure_qta_operators
 
             if ! $COMPOSE_CMD -f "$COMPOSE_FILE" --env-file .env up -d --wait; then
               echo "Deploy falló; recopilando diagnóstico..."

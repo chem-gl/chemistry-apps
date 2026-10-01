@@ -61,6 +61,13 @@ from apps.toxicity_properties.routers import ToxicityPropertiesJobViewSet
 from apps.tunnel.definitions import APP_ROUTE_BASENAME as TUNNEL_ROUTE_BASENAME
 from apps.tunnel.definitions import APP_ROUTE_PREFIX as TUNNEL_ROUTE_PREFIX
 from apps.tunnel.routers import TunnelJobViewSet
+from apps.server_calc.definitions import (
+    APP_ROUTE_BASENAME as SERVER_CALC_ROUTE_BASENAME,
+)
+from apps.server_calc.definitions import (
+    APP_ROUTE_PREFIX as SERVER_CALC_ROUTE_PREFIX,
+)
+from apps.server_calc.routers import ServerCalcJobViewSet
 from config.public_urls import public_urlpatterns
 from django.contrib import admin
 from django.urls import include, path
@@ -83,6 +90,11 @@ router.register(
     TUNNEL_ROUTE_PREFIX,
     TunnelJobViewSet,
     basename=TUNNEL_ROUTE_BASENAME,
+)
+router.register(
+    SERVER_CALC_ROUTE_PREFIX,
+    ServerCalcJobViewSet,
+    basename=SERVER_CALC_ROUTE_BASENAME,
 )
 router.register(
     EASY_RATE_ROUTE_PREFIX,

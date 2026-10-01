@@ -86,6 +86,14 @@ export const routes: Routes = [
     loadComponent: () => import('./tunnel/tunnel.component').then((m) => m.TunnelComponent),
   },
   {
+    // Solo grupo qta-operators (root/admin): ejecuta comandos remotos en qta vía SSH.
+    path: 'server-calc',
+    canActivate: [authGuard, appAccessGuard],
+    data: { appKey: 'server-calc' },
+    loadComponent: () =>
+      import('./server-calc/server-calc.component').then((m) => m.ServerCalcComponent),
+  },
+  {
     // Modo libre: usable sin cuenta.
     path: 'easy-rate',
     canActivate: [freeAccessGuard],

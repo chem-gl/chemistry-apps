@@ -171,6 +171,9 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/media:/app/media
+      # Llave SSH hacia qta (solo Server Calc). La escribe el workflow
+      # de deploy desde secrets.QTA_SSH_PRIVATE_KEY con modo 600.
+      - ./secrets/qta_ssh_key:/run/secrets/qta_ssh_key:ro
     environment:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${SECRET_KEY}
@@ -186,6 +189,12 @@ services:
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
       CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+
+      # Server Calc: ejecución remota en qta vía SSH (solo root/admin).
+      QTA_SSH_HOST: ${QTA_SSH_HOST:-100.98.230.18}
+      QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
+      QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
+      QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
 
       # Grupo de acogida del registro público (ver ensure_registration_group).
       DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}
@@ -220,6 +229,9 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/media:/app/media
+      # Llave SSH hacia qta (solo Server Calc). La escribe el workflow
+      # de deploy desde secrets.QTA_SSH_PRIVATE_KEY con modo 600.
+      - ./secrets/qta_ssh_key:/run/secrets/qta_ssh_key:ro
     environment:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${SECRET_KEY}
@@ -235,6 +247,12 @@ services:
       CHANNEL_LAYERS_REDIS_URL: "redis://redis:6379/1"
       CELERY_HEAVY_PLUGINS: ${CELERY_HEAVY_PLUGINS:-toxicity-properties}
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
+
+      # Server Calc: ejecución remota en qta vía SSH (solo root/admin).
+      QTA_SSH_HOST: ${QTA_SSH_HOST:-100.98.230.18}
+      QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
+      QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
+      QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
 
       # Grupo de acogida del registro público (ver ensure_registration_group).
       DEFAULT_REGISTRATION_GROUP_SLUG: ${DEFAULT_REGISTRATION_GROUP_SLUG:-abierto}

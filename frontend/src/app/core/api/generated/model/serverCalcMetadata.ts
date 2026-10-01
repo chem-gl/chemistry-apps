@@ -10,13 +10,11 @@
 
 
 /**
- * * `+` - + * `-` - - * `*` - * * `/` - /
+ * Metadatos técnicos de resultado Server Calc.
  */
-export const OpEnum = {
-    Plus: '+',
-    Minus: '-',
-    Star: '*',
-    Slash: '/'
-} as const;
-export type OpEnum = typeof OpEnum[keyof typeof OpEnum];
+export interface ServerCalcMetadata { 
+    executed_on: string;
+    remote_host: string;
+    fallback_used: boolean;
+}
 

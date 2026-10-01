@@ -219,6 +219,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.molar_fractions.apps.MolarFractionsConfig",
     "apps.tunnel.apps.TunnelConfig",
+    "apps.server_calc.apps.ServerCalcConfig",
     "apps.easy_rate.apps.EasyRateConfig",
     "apps.marcus.apps.MarcusConfig",
     "apps.smileit.apps.SmileitConfig",
@@ -354,6 +355,13 @@ SPECTACULAR_SETTINGS = {
             ),
         },
         {
+            "name": "ServerCalc",
+            "description": (
+                "Endpoints PoC para suma remota ejecutada en el servidor qta "
+                "vía SSH con fallback local."
+            ),
+        },
+        {
             "name": "EasyRate",
             "description": (
                 "Endpoints para cinética Easy-rate con carga de archivos Gaussian "
@@ -413,6 +421,18 @@ SPECTACULAR_SETTINGS = {
         ],
     },
 }
+
+# ---------------------------------------------------------------------------
+# Conexión SSH al servidor remoto qta (app Server Calc, PoC).
+# QTA_SSH_HOST/USER/KEY_PATH/TIMEOUT: destino, usuario, clave y timeout (s).
+# ---------------------------------------------------------------------------
+QTA_SSH_HOST: str = os.getenv("QTA_SSH_HOST", "192.168.1.20")
+QTA_SSH_USER: str = os.getenv("QTA_SSH_USER", "chemistry-apps")
+QTA_SSH_KEY_PATH: str = os.getenv(
+    "QTA_SSH_KEY_PATH",
+    os.path.expanduser("~/.ssh/chemistry-apps_qta_ed25519"),
+)
+QTA_SSH_TIMEOUT: int = _get_env_int("QTA_SSH_TIMEOUT", 25)
 
 # Opciones de configuración de Celery.
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")

@@ -21,6 +21,8 @@ api/public.service.ts
 api/public.serviceInterface.ts
 api/sAScore.service.ts
 api/sAScore.serviceInterface.ts
+api/serverCalc.service.ts
+api/serverCalc.serviceInterface.ts
 api/smileit.service.ts
 api/smileit.serviceInterface.ts
 api/toxicityProperties.service.ts
@@ -90,6 +92,7 @@ model/molarFractionsJobResponse.ts
 model/molarFractionsMetadata.ts
 model/molarFractionsParameters.ts
 model/molarFractionsResult.ts
+model/opEnum.ts
 model/passwordChangeRequest.ts
 model/patchedAppPermissionRequest.ts
 model/patchedCadmaReferenceLibraryWriteRequest.ts
@@ -117,6 +120,11 @@ model/sampleKeyEnum.ts
 model/scientificAppCatalog.ts
 model/scientificJob.ts
 model/scientificJobDeletionModeEnum.ts
+model/serverCalcJobCreateRequest.ts
+model/serverCalcJobResponse.ts
+model/serverCalcMetadata.ts
+model/serverCalcParameters.ts
+model/serverCalcResult.ts
 model/siteOverlapPolicyEnum.ts
 model/smileitAssignmentBlockInputRequest.ts
 model/smileitAtomInfo.ts

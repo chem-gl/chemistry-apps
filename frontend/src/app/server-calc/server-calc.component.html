@@ -1,0 +1,114 @@
+<!-- server-calc.component.html: Calculadora remota (qta vía SSH) con archivo de resultado y logs. -->
+<section class="server-calc-shell" [attr.aria-label]="'serverCalc.header.eyebrow' | transloco">
+  <header class="server-calc-header">
+    <p class="eyebrow">{{ 'serverCalc.header.eyebrow' | transloco }}</p>
+    <h2>{{ 'serverCalc.header.title' | transloco }}</h2>
+    <p>{{ 'serverCalc.header.subtitle' | transloco }}</p>
+  </header>
+
+  <div class="workspace-grid">
+    <section class="entry-panel" [attr.aria-label]="'serverCalc.form.ariaLabel' | transloco">
+      <h3>{{ 'serverCalc.form.title' | transloco }}</h3>
+
+      <div class="field-grid">
+        <label>
+          {{ 'serverCalc.form.a' | transloco }}
+          <input type="number" step="0.01" [ngModel]="workflow.a()"
+            (ngModelChange)="workflow.updateA(toNumber($event))"
+            [disabled]="workflow.isProcessing()" />
+        </label>
+
+        <label>
+          {{ 'serverCalc.form.operator' | transloco }}
+          <select [ngModel]="workflow.op()" (ngModelChange)="workflow.updateOp($event)"
+            [disabled]="workflow.isProcessing()">
+            @for (operator of operators; track operator) {
+            <option [value]="operator">{{ operator }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          {{ 'serverCalc.form.b' | transloco }}
+          <input type="number" step="0.01" [ngModel]="workflow.b()"
+            (ngModelChange)="workflow.updateB(toNumber($event))" [disabled]="workflow.isProcessing()" />
+        </label>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-primary" (click)="dispatch()" [disabled]="workflow.isProcessing()">
+          {{ workflow.isProcessing() ? ('serverCalc.actions.processing' | transloco) : ('serverCalc.actions.run' | transloco) }}
+        </button>
+        <button class="btn-secondary" (click)="reset()" [disabled]="workflow.isProcessing()">
+          {{ 'serverCalc.actions.reset' | transloco }}
+        </button>
+      </div>
+    </section>
+
+    <section class="result-panel" [attr.aria-label]="'serverCalc.result.ariaLabel' | transloco">
+      <h3>{{ 'serverCalc.result.title' | transloco }}</h3>
+
+      @if (workflow.activeSection() === 'idle') {
+      <div class="result-empty-card">
+        <strong>{{ 'serverCalc.result.ariaLabel' | transloco }}</strong>
+        <span class="result-empty-hint">{{ 'serverCalc.actions.run' | transloco }}</span>
+      </div>
+      }
+
+      @if (workflow.activeSection() === 'dispatching') {
+      <p class="status-message">{{ 'serverCalc.result.submitting' | transloco }}</p>
+      }
+
+      @if (workflow.activeSection() === 'progress') {
+      <p class="status-message">{{ workflow.progressMessage() }}</p>
+      }
+
+      @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
+      <div class="expression-block" [class.output-empty]="!hasResultValues(resultData)">
+        <code>{{ formatExpression(resultData) }}</code>
+      </div>
+
+      <div class="metadata-grid">
+        <p><strong>{{ 'serverCalc.result.labels.result' | transloco }}</strong> {{ resultData.result ?? '--' }}</p>
+        <p><strong>{{ 'serverCalc.result.labels.executedOn' | transloco }}</strong>
+          <span class="execution-badge" [class.execution-remote]="isRemoteExecution(resultData)"
+            [class.execution-fallback]="!isRemoteExecution(resultData)">
+            {{ resultData.executedOn ?? '--' }}
+          </span>
+        </p>
+        <p><strong>{{ 'serverCalc.result.labels.fileName' | transloco }}</strong>
+          <code>{{ resultData.fileName ?? '--' }}</code>
+        </p>
+        <p class="file-path-row"><strong>{{ 'serverCalc.result.labels.filePath' | transloco }}</strong>
+          <code>{{ resultData.filePath ?? '--' }}</code>
+        </p>
+      </div>
+
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.resultData() === null">
+          {{ 'serverCalc.actions.exportCsv' | transloco }}
+        </button>
+      </div>
+      }
+
+      @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
+      <p class="error-message" role="alert">{{ currentError }}</p>
+      }
+    </section>
+  </div>
+
+  @if (workflow.jobLogs().length > 0) {
+  <section class="logs-panel" [attr.aria-label]="'serverCalc.logs.ariaLabel' | transloco">
+    <h3>{{ 'serverCalc.logs.title' | transloco }}</h3>
+    <ol class="logs-list">
+      @for (logEntry of workflow.jobLogs(); track logEntry.eventIndex) {
+      <li class="log-line" [attr.data-level]="logEntry.level">
+        <span class="log-source">{{ logEntry.source }}</span>
+        <span class="log-message">{{ logEntry.message }}</span>
+      </li>
+      }
+    </ol>
+  </section>
+  }
+
+</section>

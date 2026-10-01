@@ -256,7 +256,8 @@
   "appsHub": {
     "groups": {
       "cadma": "CADMA",
-      "others": "Others"
+      "others": "Others",
+      "server": "Server Apps"
     },
     "aria": {
       "library": "Scientific apps library"
@@ -533,6 +534,43 @@
     "history": {
       "empty": "No historical tunnel effect jobs yet.",
       "ariaLabel": "Historical tunnel jobs"
+    }
+  },
+  "serverCalc": {
+    "header": {
+      "eyebrow": "Server Calc",
+      "title": "Remote Calculator Proof-of-Concept",
+      "subtitle": "Enter two numbers and an operator (+, -, *, /) to compute them on the qta server over SSH. The server writes a result file and logs the connection."
+    },
+    "form": {
+      "title": "Data Entry",
+      "ariaLabel": "Input parameters",
+      "a": "First value (a)",
+      "b": "Second value (b)",
+      "operator": "Operator"
+    },
+    "actions": {
+      "run": "Data ok, Run Server Calc",
+      "processing": "Processing...",
+      "reset": "Reset",
+      "exportCsv": "Export CSV"
+    },
+    "result": {
+      "title": "Output",
+      "ariaLabel": "Results and progress",
+      "submitting": "Submitting server calc job to backend...",
+      "labels": {
+        "a": "A:",
+        "b": "B:",
+        "result": "Result:",
+        "executedOn": "Executed on:",
+        "fileName": "Result file:",
+        "filePath": "Saved at (qta):"
+      }
+    },
+    "logs": {
+      "title": "Connection logs",
+      "ariaLabel": "Job connection logs"
     }
   },
   "molarFractions": {
@@ -1972,6 +2010,10 @@
     "tunnel": {
       "title": "Tunnel Effect",
       "description": "Asymmetric Eckart tunneling correction with full input modification trace and job logs."
+    },
+    "server-calc": {
+      "title": "Server Calc",
+      "description": "Proof-of-concept remote calculation on the qta server over SSH with result file. Admins only."
     },
     "easy-rate": {
       "title": "Easy-rate",
