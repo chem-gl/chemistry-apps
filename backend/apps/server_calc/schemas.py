@@ -21,7 +21,7 @@ from .definitions import DEFAULT_ALGORITHM_VERSION
         OpenApiExample(
             "Crear job Server Calc",
             value={
-                "version": "1.1.0",
+                "version": "1.2.0",
                 "a": 7.0,
                 "op": "*",
                 "b": 6.0,

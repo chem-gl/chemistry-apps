@@ -5326,7 +5326,7 @@ paths:
             examples:
               CrearJobServerCalc:
                 value:
-                  version: 1.1.0
+                  version: 1.2.0
                   a: 7.0
                   op: '*'
                   b: 6.0
@@ -9954,7 +9954,7 @@ components:
         version:
           type: string
           minLength: 1
-          default: 1.1.0
+          default: 1.2.0
           maxLength: 50
         a:
           type: number

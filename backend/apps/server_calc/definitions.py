@@ -16,4 +16,4 @@ APP_ROUTE_BASENAME: Final[str] = "server-calc-job"
 APP_API_BASE_PATH: Final[str] = "/api/server-calc/jobs/"
 
 PLUGIN_NAME: Final[str] = "server-calc"
-DEFAULT_ALGORITHM_VERSION: Final[str] = "1.1.0"
+DEFAULT_ALGORITHM_VERSION: Final[str] = "1.2.0"

@@ -396,7 +396,7 @@ export class JobsApiService {
 
     return this.dispatchScientificJob({
       pluginName: 'server-calc',
-      version: params.version ?? '1.1.0',
+      version: params.version ?? '1.2.0',
       parameters: payloadParameters,
     });
   }

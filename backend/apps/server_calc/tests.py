@@ -200,7 +200,7 @@ class ServerCalcContractApiTests(TestCase):
 
     def test_create_and_retrieve_server_calc_job(self) -> None:
         request_payload: JSONMap = {
-            "version": "1.1.0",
+            "version": "1.2.0",
             "a": 7.0,
             "op": "*",
             "b": 6.0,
@@ -247,7 +247,7 @@ class ServerCalcContractApiTests(TestCase):
             dispatch_mock.return_value = True
             create_response = self.client.post(
                 APP_API_BASE_PATH,
-                {"version": "1.1.0", "a": 7.0, "op": "*", "b": 6.0},
+                {"version": "1.2.0", "a": 7.0, "op": "*", "b": 6.0},
                 format="json",
             )
         created_job_id: str = str(create_response.data["id"])
@@ -268,7 +268,7 @@ class ServerCalcContractApiTests(TestCase):
         with patch("apps.server_calc.routers.dispatch_scientific_job") as dispatch_mock:
             response = self.client.post(
                 APP_API_BASE_PATH,
-                {"version": "1.1.0", "a": 1.0, "op": "/", "b": 0.0},
+                {"version": "1.2.0", "a": 1.0, "op": "/", "b": 0.0},
                 format="json",
             )
         self.assertEqual(response.status_code, 400)
@@ -279,7 +279,7 @@ class ServerCalcContractApiTests(TestCase):
 
         completed_job: ScientificJob = ScientificJob.objects.create(
             plugin_name=PLUGIN_NAME,
-            algorithm_version="1.1.0",
+            algorithm_version="1.2.0",
             job_hash="s" * 64,
             parameters={"a": 7.0, "op": "*", "b": 6.0},
             status="completed",
@@ -329,7 +329,7 @@ class ServerCalcAdminPermissionTests(TestCase):
         """Sin sesión, POST responde 401."""
         response = APIClient().post(
             APP_API_BASE_PATH,
-            {"version": "1.1.0", "a": 1.0, "op": "+", "b": 2.0},
+            {"version": "1.2.0", "a": 1.0, "op": "+", "b": 2.0},
             format="json",
         )
         self.assertEqual(response.status_code, 401)
@@ -338,7 +338,7 @@ class ServerCalcAdminPermissionTests(TestCase):
         """Usuario no admin recibe 403 al crear."""
         response = self._regular_client().post(
             APP_API_BASE_PATH,
-            {"version": "1.1.0", "a": 1.0, "op": "+", "b": 2.0},
+            {"version": "1.2.0", "a": 1.0, "op": "+", "b": 2.0},
             format="json",
         )
         self.assertEqual(response.status_code, 403)
@@ -349,7 +349,7 @@ class ServerCalcAdminPermissionTests(TestCase):
             dispatch_mock.return_value = True
             response = build_authenticated_api_client().post(
                 APP_API_BASE_PATH,
-                {"version": "1.1.0", "a": 1.0, "op": "+", "b": 2.0},
+                {"version": "1.2.0", "a": 1.0, "op": "+", "b": 2.0},
                 format="json",
             )
         self.assertEqual(response.status_code, 201)

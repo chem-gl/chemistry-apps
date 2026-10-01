@@ -17,7 +17,7 @@ function makeScientificJob(overrides: Partial<ScientificJobView> = {}): Scientif
     id: 'server-calc-job-1',
     job_hash: 'hash-1',
     plugin_name: 'server-calc',
-    algorithm_version: '1.1.0',
+    algorithm_version: '1.2.0',
     status: 'completed',
     cache_hit: false,
     cache_miss: true,
