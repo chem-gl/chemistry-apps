@@ -117,7 +117,21 @@ async function loginThroughUi(page: Page, username: string, password: string): P
   await page.getByRole('textbox', { name: /username/i }).fill(username);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForURL('**/apps');
+  // Los usuarios creados por API exigen cambio de contraseña al primer
+  // login: completarlo cuando el guard redirija a /change-password.
+  const landed = await Promise.race([
+    page.waitForURL('**/apps').then(() => 'apps' as const),
+    page.waitForURL('**/change-password').then(() => 'change-password' as const),
+  ]);
+  if (landed === 'change-password') {
+    const rotatedPassword = `${password}R0t1!`;
+    const passwordInputs = page.locator('.change-password-form input[type="password"]');
+    await passwordInputs.nth(0).fill(password);
+    await passwordInputs.nth(1).fill(rotatedPassword);
+    await passwordInputs.nth(2).fill(rotatedPassword);
+    await page.locator('.change-password-form button[type="submit"]').click();
+    await page.waitForURL('**/apps');
+  }
 }
 
 test.describe('Identity groups e2e', () => {
