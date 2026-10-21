@@ -14,11 +14,12 @@ import {
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import renderMathInElement from 'katex/contrib/auto-render';
+import { LanguageService } from '../../../i18n/language.service';
 
 export interface DocTab {
   id: string;
   titleKey: string;
-  content: string;
+  contentKey: string;
 }
 
 @Component({
@@ -41,6 +42,7 @@ export class ScientificDocPanelComponent {
   );
 
   private readonly bodyElement = viewChild<ElementRef<HTMLElement>>('docBody');
+  private readonly languageService = inject(LanguageService);
 
   constructor() {
     const injector = inject(Injector);
@@ -49,6 +51,9 @@ export class ScientificDocPanelComponent {
       // y sin esta lectura KaTeX nunca se ejecutaba en la primera apertura.
       this.open();
       this.activeTab();
+      // Re-renderiza al cambiar de idioma: el pipe sustituye el innerHTML
+      // y hay que volver a aplicar KaTeX sobre el contenido traducido.
+      this.languageService.activeLanguageCode();
       afterNextRender({
         write: () => {
           const el = this.bodyElement()?.nativeElement;

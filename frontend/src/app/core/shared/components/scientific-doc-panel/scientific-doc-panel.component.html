@@ -17,7 +17,7 @@
 
     <div class="doc-body" #docBody>
       @if (activeTab(); as tab) {
-      <div class="doc-content" [innerHTML]="tab.content"></div>
+      <div class="doc-content" [innerHTML]="tab.contentKey | transloco"></div>
       }
     </div>
   </dialog>
