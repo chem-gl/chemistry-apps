@@ -12,6 +12,11 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
     contentKey: 'scientificDoc.docs.easyRate.formulas',
   },
   {
+    id: 'example',
+    titleKey: 'scientificDoc.tabExample',
+    contentKey: 'scientificDoc.docs.easyRate.example',
+  },
+  {
     id: 'references',
     titleKey: 'scientificDoc.tabReferences',
     contentKey: 'scientificDoc.docs.easyRate.references',

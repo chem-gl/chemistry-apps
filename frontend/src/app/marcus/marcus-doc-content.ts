@@ -12,6 +12,11 @@ export const MARCUS_DOC_TABS: DocTab[] = [
     contentKey: 'scientificDoc.docs.marcus.formulas',
   },
   {
+    id: 'example',
+    titleKey: 'scientificDoc.tabExample',
+    contentKey: 'scientificDoc.docs.marcus.example',
+  },
+  {
     id: 'references',
     titleKey: 'scientificDoc.tabReferences',
     contentKey: 'scientificDoc.docs.marcus.references',

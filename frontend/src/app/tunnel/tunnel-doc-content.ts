@@ -12,6 +12,11 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
     contentKey: 'scientificDoc.docs.tunnel.formulas',
   },
   {
+    id: 'example',
+    titleKey: 'scientificDoc.tabExample',
+    contentKey: 'scientificDoc.docs.tunnel.example',
+  },
+  {
     id: 'references',
     titleKey: 'scientificDoc.tabReferences',
     contentKey: 'scientificDoc.docs.tunnel.references',

@@ -13,6 +13,7 @@ Uso:
 """
 
 import math
+import re
 
 from .base import GaussianAttribute
 
@@ -253,17 +254,14 @@ class SCFEnergyAttribute(GaussianAttribute):
         return "SCF Done:" in line
 
     def extract_value(self, line: str) -> float:
-        """Extrae la energía SCF (el primer float después de valores numéricos)."""
-        # Buscar patrón: "SCF Done: E(...) = -542.456789"
-        # Extraer uno de los floats más grandes (la energía está antes de los ciclos)
-        floats = self.extract_floats(line)
-        # La energía es generalmente el primer float grande (negativo)
-        if floats:
-            # Retornar el primero que sea negativo o el primero si todos son positivos
-            for f in floats:
-                if f < -500:  # Energías típicas en Hartree
-                    return f
-            return floats[0]
+        """Extrae la energía SCF (float entre '=' y 'A.U.')."""
+        # Formato Gaussian: "SCF Done: E(RM052X) =  -273.909639883     A.U. after   10 cycles".
+        # El heurístico anterior fallaba cuando la energía era mayor que -500 Hartree
+        # (moléculas pequeñas): devolvía dígitos del nombre del funcional (B3LYP -> 3.0,
+        # M052X -> 52.0) en lugar de la energía.
+        scf_match = re.search(r"=\s*(-?\d+\.\d+)\s*A\.U\.", line)
+        if scf_match is not None:
+            return float(scf_match.group(1))
         return float("nan")
 
 

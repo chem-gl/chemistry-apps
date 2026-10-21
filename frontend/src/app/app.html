@@ -15,12 +15,13 @@
           @if (sessionService.isAuthenticated()) {
           <app-active-group-selector />
           <span class="session-avatar" aria-hidden="true">{{ sessionService.displayName().slice(0, 1) }}</span>
-          <div class="session-copy">
+          <a class="session-copy session-identity" [routerLink]="['/profile']"
+            [title]="'app.nav.profile' | transloco">
             <strong [title]="sessionService.displayName()">{{ sessionService.displayName() }}</strong>
             @if (sessionRoleLabel(); as roleLabel) {
             <span [title]="roleLabel">{{ roleLabel }}</span>
             }
-          </div>
+          </a>
           <button class="session-button" type="button" (click)="logout()">{{ 'app.actions.signOut' | transloco }}</button>
           }
         </div>
