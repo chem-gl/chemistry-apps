@@ -20,13 +20,19 @@ COPY . .
 # publica en version.json. Al desplegar, app.ts detecta el cambio de
 # version.json y recarga: sin esto ambos quedaban fijos en "1.0.0" y los
 # clientes viejos seguían pidiendo chunks que ya no existen.
+# Las fuentes KaTeX salen del build bajo `media/`, pero en produccion Nginx
+# proxya `/media/` al backend Django (archivos de usuario) y daria 404.
+# Se reubican a `fonts/` (mismo origen del frontend) y se reescribe el CSS.
 RUN sed -i "s|http://localhost:8000|${API_BASE_URL}|g" src/environments/environment.production.ts \
     && sed -i "s|appVersion: '[^']*'|appVersion: '${BUILD_TIMESTAMP}'|" src/environments/environment.production.ts \
     && printf '{\n  "version": "%s"\n}\n' "${BUILD_TIMESTAMP}" > public/version.json \
     && npm run build \
     && mkdir -p /tmp/frontend-dist \
     && if [ -d dist/frontend/browser ]; \
-    then cp -r dist/frontend/browser/. /tmp/frontend-dist/; else cp -r dist/frontend/. /tmp/frontend-dist/; fi
+    then cp -r dist/frontend/browser/. /tmp/frontend-dist/; else cp -r dist/frontend/. /tmp/frontend-dist/; fi \
+    && mkdir -p /tmp/frontend-dist/fonts \
+    && mv /tmp/frontend-dist/media/KaTeX_* /tmp/frontend-dist/fonts/ 2>/dev/null || true \
+    && sed -i 's|\./media/KaTeX_|./fonts/KaTeX_|g' /tmp/frontend-dist/styles-*.css
 
 FROM nginx:1.27-alpine AS prod
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -12,7 +12,8 @@ import {
   output,
   viewChild,
 } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import renderMathInElement from 'katex/contrib/auto-render';
 import { LanguageService } from '../../../i18n/language.service';
 
@@ -43,6 +44,18 @@ export class ScientificDocPanelComponent {
 
   private readonly bodyElement = viewChild<ElementRef<HTMLElement>>('docBody');
   private readonly languageService = inject(LanguageService);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly sanitizer = inject(DomSanitizer);
+
+  // Contenido propio (i18n del repo, no entrada de usuario): se omite el
+  // saneador de Angular para conservar los diagramas <svg> de los ejemplos.
+  readonly safeContent = computed<SafeHtml>(() => {
+    this.languageService.activeLanguageCode();
+    const contentKey = this.activeTab()?.contentKey ?? '';
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.translocoService.translate(contentKey),
+    );
+  });
 
   constructor() {
     const injector = inject(Injector);
