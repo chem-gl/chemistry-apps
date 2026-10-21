@@ -44,3 +44,6 @@ frontend/test-results/
 frontend/playwright-report/
 # Screenshots de auditoría visual: se regeneran con `npm run e2e:visual`.
 frontend/e2e/snapshots/
+
+# Redis local (si se arranca desde la raiz del repo).
+dump.rdb

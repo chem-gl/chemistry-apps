@@ -259,7 +259,7 @@ class SCFEnergyAttribute(GaussianAttribute):
         # El heurístico anterior fallaba cuando la energía era mayor que -500 Hartree
         # (moléculas pequeñas): devolvía dígitos del nombre del funcional (B3LYP -> 3.0,
         # M052X -> 52.0) en lugar de la energía.
-        scf_match = re.search(r"=\s*(-?\d+\.\d+)\s*A\.U\.", line)
+        scf_match = re.search(r"=\s*(-?\d+\.\d+(?:[eE][-+]?\d+)?)\s*A\.U\.", line)
         if scf_match is not None:
             return float(scf_match.group(1))
         return float("nan")
