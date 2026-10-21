@@ -9,13 +9,13 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
 
 <p>
   This app computes the <strong>quantum tunneling correction factor</strong>
-  \\(\\kappa_{TST}\\) for chemical reaction rate constants using an asymmetric
+  \(\kappa_{TST}\) for chemical reaction rate constants using an asymmetric
   Eckart potential barrier.
 </p>
 
 <p>
   In Transition State Theory (TST) the classical rate constant is multiplied by
-  \\(\\kappa_{TST}\\) to account for quantum-mechanical tunnelling through the
+  \(\kappa_{TST}\) to account for quantum-mechanical tunnelling through the
   reaction barrier. The Eckart model provides an analytical potential that
   approximates the true barrier shape using the forward barrier height, the
   reaction energy and the imaginary frequency at the transition state.
@@ -23,17 +23,17 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
 
 <h4>Asymmetric Eckart barrier</h4>
 <p>
-  The asymmetric Eckart potential \\(V(x)\\) is defined by three parameters:
-  \\(\\alpha_1\\), \\(\\alpha_2\\) and \\(u\\). The tunnelling probability
-  \\(G(E)\\) is integrated numerically over the barrier using a 40-point
-  Gauss–Legendre quadrature to yield \\(G^*\\), the integrated transmission
+  The asymmetric Eckart potential \(V(x)\) is defined by three parameters:
+  \(\alpha_1\), \(\alpha_2\) and \(u\). The tunnelling probability
+  \(G(E)\) is integrated numerically over the barrier using a 40-point
+  Gauss–Legendre quadrature to yield \(G^*\), the integrated transmission
   coefficient.
 </p>
 
 <h4>Physical meaning</h4>
 <ul>
-  <li><strong>\\(\\kappa_{TST} > 1\\)</strong> — the reaction is faster than classical TST predicts, indicating significant tunnelling.</li>
-  <li>Larger \\(\\kappa_{TST}\\) values are typical for <strong>H-atom transfer</strong> reactions and low-temperature kinetics.</li>
+  <li><strong>\(\kappa_{TST} > 1\)</strong> — the reaction is faster than classical TST predicts, indicating significant tunnelling.</li>
+  <li>Larger \(\kappa_{TST}\) values are typical for <strong>H-atom transfer</strong> reactions and low-temperature kinetics.</li>
   <li><strong>Imaginary frequency</strong> — the curvature at the transition state (higher → sharper barrier → more tunnelling).</li>
 </ul>
 `,
@@ -47,41 +47,41 @@ export const TUNNEL_DOC_TABS: DocTab[] = [
 <h4>Reduced barrier frequency</h4>
 
 $$
-u = \\frac{h \\cdot c \\cdot \\tilde{\\nu}}{k_B \\cdot T}
+u = \frac{h \cdot c \cdot \tilde{\nu}}{k_B \cdot T}
 $$
 
-<p>where \\(h\\) is Planck's constant, \\(c\\) the speed of light,
-\\(\\tilde{\\nu}\\) the imaginary frequency (cm⁻¹), \\(k_B\\) Boltzmann's constant
-and \\(T\\) the temperature.</p>
+<p>where \(h\) is Planck's constant, \(c\) the speed of light,
+\(\tilde{\nu}\) the imaginary frequency (cm⁻¹), \(k_B\) Boltzmann's constant
+and \(T\) the temperature.</p>
 
 <h4>Barrier shape parameters</h4>
 
 $$
-\\alpha_1 = \\frac{2 \\pi \\cdot \\Delta V_f^{\\ddagger}}{h \\cdot c \\cdot \\tilde{\\nu}}
+\alpha_1 = \frac{2 \pi \cdot \Delta V_f^{\ddagger}}{h \cdot c \cdot \tilde{\nu}}
 $$
 
 $$
-\\alpha_2 = \\frac{2 \\pi \\cdot (\\Delta V_f^{\\ddagger} - \\Delta_r E)}{h \\cdot c \\cdot \\tilde{\\nu}}
+\alpha_2 = \frac{2 \pi \cdot (\Delta V_f^{\ddagger} - \Delta_r E)}{h \cdot c \cdot \tilde{\nu}}
 $$
 
-<p>where \\(\\Delta V_f^{\\ddagger}\\) is the forward barrier (ZPE-corrected) and
-\\(\\Delta_r E\\) is the reaction energy (ZPE-corrected).</p>
+<p>where \(\Delta V_f^{\ddagger}\) is the forward barrier (ZPE-corrected) and
+\(\Delta_r E\) is the reaction energy (ZPE-corrected).</p>
 
 <h4>Integrated transmission coefficient</h4>
-<p>The tunnelling probability \\(G(E)\\) is integrated over the barrier energy range:</p>
+<p>The tunnelling probability \(G(E)\) is integrated over the barrier energy range:</p>
 
 $$
-G^* = \\int_{E_{min}}^{E_{max}} G(E) \\, dE
+G^* = \int_{E_{min}}^{E_{max}} G(E) \, dE
 $$
 
 <h4>Tunnelling correction factor</h4>
 
 $$
-\\kappa_{TST} = \\frac{G^*}{\\exp(-u)}
+\kappa_{TST} = \frac{G^*}{\exp(-u)}
 $$
 
-<p>The denominator \\(\\exp(-u)\\) is the classical Boltzmann transmission factor.
-\\(\\kappa_{TST}\\) is the ratio of the quantum to the classical transmission.</p>
+<p>The denominator \(\exp(-u)\) is the classical Boltzmann transmission factor.
+\(\kappa_{TST}\) is the ratio of the quantum to the classical transmission.</p>
 `,
   },
   {

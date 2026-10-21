@@ -25,9 +25,9 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
 <h4>Processing pipeline</h4>
 <ol>
   <li>Parse Gaussian logs: extract SCF energy, thermal enthalpy, Gibbs free energy, ZPE, temperature, imaginary frequency.</li>
-  <li>Compute thermodynamic deltas: \\(\\Delta H\\), \\(\\Delta G\\), \\(\\Delta ZPE\\) for both reaction and activation.</li>
+  <li>Compute thermodynamic deltas: \(\Delta H\), \(\Delta G\), \(\Delta ZPE\) for both reaction and activation.</li>
   <li>Apply cage-effect correction (optional) to the activation Gibbs energy.</li>
-  <li>Compute Eckart tunnelling correction \\(\\kappa_{TST}\\) from the TS imaginary frequency and barrier/reaction energies.</li>
+  <li>Compute Eckart tunnelling correction \(\kappa_{TST}\) from the TS imaginary frequency and barrier/reaction energies.</li>
   <li>Compute the TST rate constant with path degeneracy.</li>
   <li>Apply diffusion correction (optional) using Stokes–Einstein theory.</li>
 </ol>
@@ -42,46 +42,46 @@ export const EASY_RATE_DOC_TABS: DocTab[] = [
 <h4>TST rate constant</h4>
 
 $$
-k_{TST} = \\sigma \\cdot \\kappa_{TST} \\cdot \\frac{k_B T}{h} \\cdot
-\\exp\\left(\\frac{-\\Delta G^{\\ddagger}}{RT}\\right)
+k_{TST} = \sigma \cdot \kappa_{TST} \cdot \frac{k_B T}{h} \cdot
+\exp\left(\frac{-\Delta G^{\ddagger}}{RT}\right)
 $$
 
-<p>where \\(\\sigma\\) is the reaction path degeneracy, \\(\\kappa_{TST}\\) the
-Eckart tunnelling factor, \\(k_B T/h\\) the fundamental frequency factor
-(\\(\\approx 2.08 \\times 10^{10} \\, T\\) s⁻¹), and \\(\\Delta G^{\\ddagger}\\) the
+<p>where \(\sigma\) is the reaction path degeneracy, \(\kappa_{TST}\) the
+Eckart tunnelling factor, \(k_B T/h\) the fundamental frequency factor
+(\(\approx 2.08 \times 10^{10} \, T\) s⁻¹), and \(\Delta G^{\ddagger}\) the
 Gibbs free energy of activation.</p>
 
 <h4>Eckart tunnelling correction</h4>
 
 $$
-u = \\frac{h c \\tilde{\\nu}}{k_B T}, \\quad
-\\alpha_1 = \\frac{2 \\pi \\Delta V_f^{\\ddagger}}{h c \\tilde{\\nu}}, \\quad
-\\alpha_2 = \\frac{2 \\pi (\\Delta V_f^{\\ddagger} - \\Delta_r E)}{h c \\tilde{\\nu}}
+u = \frac{h c \tilde{\nu}}{k_B T}, \quad
+\alpha_1 = \frac{2 \pi \Delta V_f^{\ddagger}}{h c \tilde{\nu}}, \quad
+\alpha_2 = \frac{2 \pi (\Delta V_f^{\ddagger} - \Delta_r E)}{h c \tilde{\nu}}
 $$
 
 $$
-\\kappa_{TST} = \\frac{G^*}{\\exp(-u)}
+\kappa_{TST} = \frac{G^*}{\exp(-u)}
 $$
 
 <h4>Diffusion correction</h4>
 <p>If enabled, the observed rate constant is:</p>
 
 $$
-k_{obs} = \\frac{k_{diff} \\cdot k_{TST}}{k_{diff} + k_{TST}}
+k_{obs} = \frac{k_{diff} \cdot k_{TST}}{k_{diff} + k_{TST}}
 $$
 
-<p>where \\(k_{diff} = 4 \\pi N_A D_{AB} R\\) is the Stokes–Einstein
-diffusion-controlled rate, \\(D_{AB} = D_A + D_B\\) the mutual diffusion
-coefficient, and \\(R\\) the encounter distance.</p>
+<p>where \(k_{diff} = 4 \pi N_A D_{AB} R\) is the Stokes–Einstein
+diffusion-controlled rate, \(D_{AB} = D_A + D_B\) the mutual diffusion
+coefficient, and \(R\) the encounter distance.</p>
 
 <h4>Cage effect</h4>
 <p>When cage effects are enabled, the activation Gibbs energy is reduced by:</p>
 
 $$
-\\Delta G^{\\ddagger}_{cage} = \\Delta G^{\\ddagger} - RT \\ln(N_r \\cdot 10^{2N_r - 2}) + (N_r - 1)
+\Delta G^{\ddagger}_{cage} = \Delta G^{\ddagger} - RT \ln(N_r \cdot 10^{2N_r - 2}) + (N_r - 1)
 $$
 
-<p>where \\(N_r\\) is the number of reactant molecules.</p>
+<p>where \(N_r\) is the number of reactant molecules.</p>
 `,
   },
   {

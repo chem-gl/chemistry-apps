@@ -26,7 +26,7 @@ export const SA_SCORE_DOC_TABS: DocTab[] = [
 <p>The conversion from the classic 1–10 (RDKit) scale is:</p>
 
 $$
-SA_{0-100} = 100 - \\frac{(SA_{1-10} - 1) \\times 100}{9}
+SA_{0-100} = 100 - \frac{(SA_{1-10} - 1) \times 100}{9}
 $$
 `,
   },

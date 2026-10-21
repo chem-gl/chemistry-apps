@@ -14,7 +14,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
   <li>Compare pharmacokinetic-relevant properties between a reference set
     and one or more sets of proposed molecules.</li>
   <li>Combine ADME, toxicity and synthetic accessibility into a single
-    selection score \\(S_S\\) that can be used as a first filter.</li>
+    selection score \(S_S\) that can be used as a first filter.</li>
   <li>Build or update disease-specific reference sets that serve as normalization
     anchors for future projects.</li>
 </ul>
@@ -87,7 +87,7 @@ export const CADMA_DOC_TABS: DocTab[] = [
 <h4>Step 4 — Review results</h4>
 <p>
   Inspect the ranked candidates table, score histograms and per-metric
-  plots. The global selection score \\(S_S\\) combines ADME, toxicity
+  plots. The global selection score \(S_S\) combines ADME, toxicity
   and synthetic accessibility. Export the full report as CSV.
 </p>
 `,
@@ -200,24 +200,24 @@ export const CADMA_DOC_TABS: DocTab[] = [
 </p>
 
 $$
-\\mathrm{ADME}_P(i) = \\begin{cases}
-  1 & \\text{if } P_{\\min} \\leq P(i) \\leq P_{\\max} \\\\
-  0 & \\text{otherwise}
-\\end{cases}
+\mathrm{ADME}_P(i) = \begin{cases}
+  1 & \text{if } P_{\min} \leq P(i) \leq P_{\max} \\
+  0 & \text{otherwise}
+\end{cases}
 $$
 
 <p>The aggregate ADME score is:</p>
 
 $$
-S_{\\mathrm{ADME}}(i) =
-\\frac{\\displaystyle\\sum_{P} \\mathrm{ADME}_P(i)}
-     {\\Sigma_{\\mathrm{ADME,ref}}}
+S_{\mathrm{ADME}}(i) =
+\frac{\displaystyle\sum_{P} \mathrm{ADME}_P(i)}
+     {\Sigma_{\mathrm{ADME,ref}}}
 $$
 
 <p>
-  where \\(\\Sigma_{\\mathrm{ADME,ref}}\\) is the number of ADME properties that
+  where \(\Sigma_{\mathrm{ADME,ref}}\) is the number of ADME properties that
   the reference set itself satisfies within the same intervals.
-  By construction, \\(S_{\\mathrm{ADME}}\\) grows when more properties fall
+  By construction, \(S_{\mathrm{ADME}}\) grows when more properties fall
   inside the desired ADME window.
 </p>
 `,
@@ -286,23 +286,23 @@ $$
 <p>LD50 alignment (higher LD50 → less toxic → rewarded):</p>
 
 $$
-S_{\\mathrm{LD50}}(i) =
-1 + \\log_{10}\\left(
-  \\frac{1 + \\mathrm{LD50}(i)}
-       {1 + \\overline{\\mathrm{LD50}}_{\\mathrm{ref}}}
-\\right)
+S_{\mathrm{LD50}}(i) =
+1 + \log_{10}\left(
+  \frac{1 + \mathrm{LD50}(i)}
+       {1 + \overline{\mathrm{LD50}}_{\mathrm{ref}}}
+\right)
 $$
 
 <p>Mutagenicity and developmental toxicity (lower values → less toxic → rewarded):</p>
 
 $$
-S_M(i) = 1 - \\log_{10}\\left(
-  \\frac{1 + M(i)}{1 + \\overline{M}_{\\mathrm{ref}}}
-\\right)
-\\qquad
-S_{\\mathrm{DT}}(i) = 1 - \\log_{10}\\left(
-  \\frac{1 + \\mathrm{DT}(i)}{1 + \\overline{\\mathrm{DT}}_{\\mathrm{ref}}}
-\\right)
+S_M(i) = 1 - \log_{10}\left(
+  \frac{1 + M(i)}{1 + \overline{M}_{\mathrm{ref}}}
+\right)
+\qquad
+S_{\mathrm{DT}}(i) = 1 - \log_{10}\left(
+  \frac{1 + \mathrm{DT}(i)}{1 + \overline{\mathrm{DT}}_{\mathrm{ref}}}
+\right)
 $$
 
 <p>The "+1" shift avoids taking the logarithm of zero for very small predicted values.</p>
@@ -310,42 +310,42 @@ $$
 <p>Overall toxicity score (arithmetic mean of the three):</p>
 
 $$
-S_T(i) = \\frac{S_{\\mathrm{LD50}}(i) + S_M(i) + S_{\\mathrm{DT}}(i)}{3}
+S_T(i) = \frac{S_{\mathrm{LD50}}(i) + S_M(i) + S_{\mathrm{DT}}(i)}{3}
 $$
 
 <h4>ADME–toxicity combined score</h4>
 
 $$
-S_{\\mathrm{ADMET}}(i) = S_{\\mathrm{ADME}}(i) + S_T(i)
+S_{\mathrm{ADMET}}(i) = S_{\mathrm{ADME}}(i) + S_T(i)
 $$
 
 <h4>Synthetic accessibility score</h4>
 
 $$
-S_{\\mathrm{SA}}(i) = \\frac{\\mathrm{SA}(i)}{\\overline{\\mathrm{SA}}_{\\mathrm{ref}}}
+S_{\mathrm{SA}}(i) = \frac{\mathrm{SA}(i)}{\overline{\mathrm{SA}}_{\mathrm{ref}}}
 $$
 
 <p>
-  \\(S_{\\mathrm{SA}} > 1\\) indicates the derivative is easier to synthesise
+  \(S_{\mathrm{SA}} > 1\) indicates the derivative is easier to synthesise
   than the reference drugs. Higher SA values mean easier synthesis on the AMBIT scale.
 </p>
 
-<h4>Global selection score \\(S_S\\)</h4>
+<h4>Global selection score \(S_S\)</h4>
 
 <p>The three blocks are combined with fixed weights:</p>
 
 $$
 S_S(i) =
-\\underbrace{0.4 \\cdot S_{\\mathrm{ADME}}(i)}_{\\text{ADME weight}} +
-\\underbrace{0.4 \\cdot S_T(i)}_{\\text{Toxicity weight}} +
-\\underbrace{0.2 \\cdot S_{\\mathrm{SA}}(i)}_{\\text{SA weight}}
+\underbrace{0.4 \cdot S_{\mathrm{ADME}}(i)}_{\text{ADME weight}} +
+\underbrace{0.4 \cdot S_T(i)}_{\text{Toxicity weight}} +
+\underbrace{0.2 \cdot S_{\mathrm{SA}}(i)}_{\text{SA weight}}
 $$
 
 <p>
   Interpretation:
-  \\(S_S = 1\\) is the reference threshold — the derivative is, on average,
-  as "good" as the reference drugs. \\(S_S > 1\\) indicates global improvement.
-  Results are sorted from highest to lowest \\(S_S\\).
+  \(S_S = 1\) is the reference threshold — the derivative is, on average,
+  as "good" as the reference drugs. \(S_S > 1\) indicates global improvement.
+  Results are sorted from highest to lowest \(S_S\).
 </p>
 
 <h4>Reference formula values</h4>
@@ -380,7 +380,7 @@ $$
 
 <h4>Input modes</h4>
 <ol>
-  <li>From a selection-score CSV: load a \\(S_S\\) CSV, pick the top-N
+  <li>From a selection-score CSV: load a \(S_S\) CSV, pick the top-N
     molecules by score, and generate their 3D structures.</li>
   <li>From a manual SMILES list: paste SMILES strings (one per line).
     Invalid entries are discarded automatically.</li>
@@ -404,7 +404,7 @@ $$
 <ol>
   <li>SMILES → <code>MolFromSmiles</code></li>
   <li>Add explicit hydrogens (<code>AddHs</code>)</li>
-  <li>Generate \\(N\\) conformers using ETKDGv3</li>
+  <li>Generate \(N\) conformers using ETKDGv3</li>
   <li>Optimise with UFF force field</li>
   <li>Select the lowest-energy conformer → SDF export</li>
 </ol>

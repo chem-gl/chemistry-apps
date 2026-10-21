@@ -9,7 +9,7 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
 
 <p>
   This app computes the <strong>speciation diagram</strong> (molar fraction vs. pH)
-  for a polyprotic acid or base. Given a set of \\(pK_a\\) values and an initial
+  for a polyprotic acid or base. Given a set of \(pK_a\) values and an initial
   charge for the fully protonated species, it calculates the fraction of every
   protonation state across a range of pH values.
 </p>
@@ -23,8 +23,8 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
 <h4>Key concepts</h4>
 <ul>
   <li><strong>Speciation</strong> — the distribution of a compound among its protonation states as a function of pH.</li>
-  <li><strong>Polyprotic system</strong> — a molecule with \\(n\\) ionisable groups has \\(n+1\\) species (fully protonated → fully deprotonated).</li>
-  <li><strong>\\(pK_a\\)</strong> — the pH at which two adjacent species are at equal concentration.</li>
+  <li><strong>Polyprotic system</strong> — a molecule with \(n\) ionisable groups has \(n+1\) species (fully protonated → fully deprotonated).</li>
+  <li><strong>\(pK_a\)</strong> — the pH at which two adjacent species are at equal concentration.</li>
   <li><strong>Initial charge</strong> — charge of the fully protonated form (e.g. +1 for ammonium, 0 for neutral acid).</li>
 </ul>
 
@@ -44,35 +44,35 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
 
 <h4>1. Cumulative beta coefficients</h4>
 <p>
-  Starting from \\(\\beta_0 = 1\\), each successive formation constant is:
+  Starting from \(\beta_0 = 1\), each successive formation constant is:
 </p>
 
 $$
-\\beta_k = 10^{\\sum_{j=1}^{k} K_{n-j+1}}
+\beta_k = 10^{\sum_{j=1}^{k} K_{n-j+1}}
 $$
 
-<p>where \\(K_j\\) are the acid dissociation constants (pKa values) in the user-defined order.</p>
+<p>where \(K_j\) are the acid dissociation constants (pKa values) in the user-defined order.</p>
 
 <h4>2. Species fraction at a given pH</h4>
 <p>
-  The hydrogen ion concentration is \\([H^+] = 10^{-pH}\\). The fraction of species
-  \\(i\\) (which has lost \\(i\\) protons relative to the fully protonated form) is:
+  The hydrogen ion concentration is \([H^+] = 10^{-pH}\). The fraction of species
+  \(i\) (which has lost \(i\) protons relative to the fully protonated form) is:
 </p>
 
 $$
-f_i = \\frac{\\beta_i \\cdot [H^+]^{i}}{\\sum_{j=0}^{n} \\beta_j \\cdot [H^+]^{j}}
+f_i = \frac{\beta_i \cdot [H^+]^{i}}{\sum_{j=0}^{n} \beta_j \cdot [H^+]^{j}}
 $$
 
 <h4>3. Species labelling</h4>
 <p>
-  Labels follow the convention: \\(H_n A q\\) for the fully protonated species,
-  where \\(n\\) is the number of pKa values and \\(q\\) is the initial charge.
-  Each deprotonation removes one \\(H^+\\) and reduces the charge by one.
+  Labels follow the convention: \(H_n A q\) for the fully protonated species,
+  where \(n\) is the number of pKa values and \(q\) is the initial charge.
+  Each deprotonation removes one \(H^+\) and reduces the charge by one.
 </p>
 
 <h4>4. Numerical grid</h4>
 <ul>
-  <li>pH values are generated from \\(pH_{min}\\) to \\(pH_{max}\\) with step \\(\\Delta pH\\).</li>
+  <li>pH values are generated from \(pH_{min}\) to \(pH_{max}\) with step \(\Delta pH\).</li>
   <li>Minimum step: 0.05</li>
   <li>Grid size: 8 – 350 points</li>
   <li>pKa values: 1 – 6</li>

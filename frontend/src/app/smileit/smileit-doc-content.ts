@@ -97,7 +97,7 @@ validity at each step. Results include SMILES, SVG previews, traceability
 <ul>
   <li>Duplicate SMILES are discarded at each round.</li>
   <li>A fusion-attempt cache prevents re-computing the same (scaffold, substituent, site) combination across different branches.</li>
-  <li>If \\(max\\_structures\\) is set, generation stops once the limit is reached (<em>truncated</em> flag raised).</li>
+  <li>If \(max\_structures\) is set, generation stops once the limit is reached (<em>truncated</em> flag raised).</li>
 </ul>
 
 <h4>Traceability</h4>

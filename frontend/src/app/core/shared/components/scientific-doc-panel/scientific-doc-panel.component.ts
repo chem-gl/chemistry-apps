@@ -45,6 +45,9 @@ export class ScientificDocPanelComponent {
   constructor() {
     const injector = inject(Injector);
     effect(() => {
+      // Depende también de `open()`: al abrir el panel `activeTab()` no cambia
+      // y sin esta lectura KaTeX nunca se ejecutaba en la primera apertura.
+      this.open();
       this.activeTab();
       afterNextRender({
         write: () => {
