@@ -47,3 +47,6 @@ frontend/e2e/snapshots/
 
 # Redis local (si se arranca desde la raiz del repo).
 dump.rdb
+
+# Config local de Pyright/basedpyright (venv de Poetry, específico de la máquina)
+pyrightconfig.json

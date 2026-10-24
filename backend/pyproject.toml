@@ -55,6 +55,7 @@ ruff = "0.15.8"  # 0.16+ expandió el set de reglas default (283 errores en cód
 beautifulsoup4 = "4.15.0"
 mipy = "0.0.1"
 rich = "15.0.0"
+django-stubs = "6.1.2"
 
 [tool.pytest.ini_options]
 # Configuración de pytest. Django se inicializa vía conftest.py con os.environ.
