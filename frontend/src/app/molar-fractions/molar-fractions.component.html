@@ -219,38 +219,6 @@
       }
 
       @if (resultData.rows.length > 0) {
-      <div class="table-wrap result-table-wrap">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
-              @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
-              <th>
-                <span class="formatted-species-label">
-                  {{ speciesLabelBase(speciesLabel) }}
-                  @if (speciesLabelCharge(speciesLabel); as chargeLabel) {
-                  <sup>{{ chargeLabel }}</sup>
-                  }
-                </span>
-              </th>
-              }
-              <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of resultData.rows; track $index) {
-            <tr>
-              <td>{{ formatPh(row) }}</td>
-              @for (fractionValue of row.fractions; track $index) {
-              <td>{{ formatFractionValue(fractionValue) }}</td>
-              }
-              <td>{{ formatFractionValue(row.sumFraction) }}</td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
       @if (showResultChart()) {
       @if (chartOptions()) {
       <div class="chart-card" [attr.aria-label]="'molarFractions.result.chart.ariaLabel' | transloco">
@@ -303,6 +271,38 @@
       </div>
       }
       }
+
+      <div class="table-wrap result-table-wrap">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>{{ 'molarFractions.result.table.ph' | transloco }}</th>
+              @for (speciesLabel of resultData.speciesLabels; track speciesLabel) {
+              <th>
+                <span class="formatted-species-label">
+                  {{ speciesLabelBase(speciesLabel) }}
+                  @if (speciesLabelCharge(speciesLabel); as chargeLabel) {
+                  <sup>{{ chargeLabel }}</sup>
+                  }
+                </span>
+              </th>
+              }
+              <th>{{ 'molarFractions.result.table.sum' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of resultData.rows; track $index) {
+            <tr>
+              <td>{{ formatPh(row) }}</td>
+              @for (fractionValue of row.fractions; track $index) {
+              <td>{{ formatFractionValue(fractionValue) }}</td>
+              }
+              <td>{{ formatFractionValue(row.sumFraction) }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       }
       }
 
