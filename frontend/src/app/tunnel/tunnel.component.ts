@@ -9,12 +9,19 @@ import {
   TunnelWorkflowService,
 } from '../core/application/tunnel-workflow.service';
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
 
 @Component({
   selector: 'app-tunnel',
-  imports: [CommonModule, FormsModule, TranslocoPipe, ScientificDocPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslocoPipe,
+    ScientificAppHeaderComponent,
+    ScientificDocPanelComponent,
+  ],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',
   styleUrl: './tunnel.component.scss',

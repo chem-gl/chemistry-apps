@@ -9,11 +9,12 @@ import {
   ServerCalcResultData,
   ServerCalcWorkflowService,
 } from '../core/application/server-calc-workflow.service';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 
 @Component({
   selector: 'app-server-calc',
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe, ScientificAppHeaderComponent],
   providers: [ServerCalcWorkflowService],
   templateUrl: './server-calc.component.html',
   styleUrl: './server-calc.component.scss',

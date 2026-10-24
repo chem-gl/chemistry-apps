@@ -63,10 +63,6 @@
     gap: 1.2rem;
   }
 
-  .smileit-header {
-    grid-row: 1;
-  }
-
   .floating-workspace-shell {
     grid-row: 2;
     display: grid;
@@ -179,7 +175,6 @@
    de página en 390px. El contenido ancho sigue accesible porque su envoltorio
    propio (`.history-table-shell`, `.family-table-wrap`) ya trae overflow-x:auto.
    min-width:0 es inocuo en escritorio (los carriles ya usan minmax(0,·)). */
-.smileit-header,
 .floating-workspace-shell,
 .workspace-columns,
 .workspace-left-column,
@@ -284,8 +279,7 @@ app-generation-result-panel,
   .result-panel,
   .advanced-panel,
   .logs-card,
-  .history-card,
-  .smileit-header {
+  .history-card {
     padding: 0.9rem;
   }
 

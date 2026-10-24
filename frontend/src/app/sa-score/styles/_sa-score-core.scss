@@ -4,34 +4,6 @@
   gap: 1rem;
 }
 
-.sa-score-header {
-  border: 0;
-  border-radius: 0;
-  padding: 0.25rem 0 0;
-  background: none;
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--chem-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--chem-text-xs);
-  font-weight: 800;
-  font-family: var(--chem-font-label);
-}
-
-.sa-score-header h2 {
-  margin: 0.2rem 0 0.4rem;
-  color: var(--chem-ink);
-  font-family: var(--chem-font-heading);
-}
-
-.sa-score-header p {
-  margin: 0;
-  color: var(--chem-ink);
-}
-
 .workspace-grid {
   display: grid;
   gap: 1rem;

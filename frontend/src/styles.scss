@@ -582,65 +582,6 @@ tbody tr:hover {
   font-size: var(--chem-text-xs);
 }
 
-/* Lanzador del manual de una app: botón compacto reutilizable en todas las
-   cabeceras de módulo (esquina superior izquierda). */
-.doc-launcher {
-  @extend %btn-base;
-  height: calc(var(--chem-btn-h) - 0.5rem);
-  padding: 0 0.85rem;
-  font-size: var(--chem-text-xs);
-  background: var(--chem-card-bg);
-  border-color: var(--chem-border-strong);
-  color: var(--chem-ink-secondary);
-}
-
-.doc-launcher:hover:not(:disabled):not(.disabled) {
-  border-color: var(--chem-accent);
-  color: var(--chem-accent);
-  background: var(--chem-accent-light);
-}
-
-/* Cabeceras de app con lanzador de manual: texto a la izquierda y botón
-   Documentation alineado a la derecha en la misma fila visual, en vez de
-   flotando solo en su propia línea. Aplica a las 7 cabeceras de módulo. */
-.easy-rate-header,
-.marcus-header,
-.molar-header,
-.sa-score-header,
-.smileit-header,
-.toxicity-header,
-.tunnel-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 1rem;
-  align-items: start;
-}
-
-.easy-rate-header > :not(.doc-launcher),
-.marcus-header > :not(.doc-launcher),
-.molar-header > :not(.doc-launcher),
-.sa-score-header > :not(.doc-launcher),
-.smileit-header > :not(.doc-launcher),
-.toxicity-header > :not(.doc-launcher),
-.tunnel-header > :not(.doc-launcher) {
-  grid-column: 1;
-  min-width: 0;
-}
-
-.easy-rate-header > .doc-launcher,
-.marcus-header > .doc-launcher,
-.molar-header > .doc-launcher,
-.sa-score-header > .doc-launcher,
-.smileit-header > .doc-launcher,
-.toxicity-header > .doc-launcher,
-.tunnel-header > .doc-launcher {
-  grid-column: 2;
-  grid-row: 1 / -1;
-  align-self: center;
-  justify-self: end;
-  white-space: nowrap;
-}
-
 /* ── 8. Contenedor de tablas con scroll horizontal ───────────────── */
 .table-scroll {
   overflow-x: auto;

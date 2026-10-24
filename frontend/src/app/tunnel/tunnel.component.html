@@ -1,10 +1,6 @@
 <!-- tunnel.component.html: Tunnel effect app UI equivalent to the desktop Tkinter inputs/output. -->
-<section class="tunnel-shell" [attr.aria-label]="'tunnel.header.eyebrow' | transloco">
-  <header class="tunnel-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'tunnel.header.title' | transloco }}</h2>
-    <p>{{ 'tunnel.header.subtitle' | transloco }}</p>
-  </header>
+<section class="tunnel-shell" [attr.aria-label]="'scientificApps.tunnel.title' | transloco">
+  <app-scientific-app-header appKey="tunnel" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
     <section class="entry-panel" [attr.aria-label]="'tunnel.form.ariaLabel' | transloco">

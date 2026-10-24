@@ -25,6 +25,7 @@ interface PrimaryNavigationItem {
   labelKey?: string;
   hint?: string;
   hintKey?: string;
+  icon?: string;
 }
 
 const SCIENTIFIC_APP_NAV_ITEM: PrimaryNavigationItem = {
@@ -70,6 +71,7 @@ export class App implements OnInit {
       path: appItem.routePath,
       hintKey: scientificAppDescriptionKey(appItem.key),
       hint: appItem.description,
+      icon: appItem.iconAsset,
     }));
   });
 

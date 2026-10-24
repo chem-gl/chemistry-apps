@@ -534,11 +534,6 @@
     }
   },
   "tunnel": {
-    "header": {
-      "eyebrow": "Tunnel Effect",
-      "title": "Asymmetric Eckart Tunneling Calculator",
-      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced."
-    },
     "form": {
       "title": "Data Entry",
       "ariaLabel": "Input parameters",
@@ -593,11 +588,6 @@
     }
   },
   "serverCalc": {
-    "header": {
-      "eyebrow": "Server Calc",
-      "title": "Remote Calculator Proof-of-Concept",
-      "subtitle": "Enter two numbers and an operator (+, -, *, /) to compute them on the qta server over SSH. The server writes a result file and logs the connection."
-    },
     "form": {
       "title": "Data Entry",
       "ariaLabel": "Input parameters",
@@ -631,11 +621,6 @@
     }
   },
   "molarFractions": {
-    "header": {
-      "eyebrow": "Molar Fractions",
-      "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app."
-    },
     "form": {
       "title": "pka definition",
       "ariaLabel": "pka definition",
@@ -740,11 +725,6 @@
     }
   },
   "easyRate": {
-    "header": {
-      "eyebrow": "Kinetics — TST + Eckart Tunnel",
-      "title": "Easy-rate Calculator",
-      "subtitle": "Upload Gaussian log files for your reaction structures and compute rate constants with statistical mechanics, tunneling correction, and optional diffusion control."
-    },
     "form": {
       "title": "Input Files",
       "ariaLabel": "Input files and parameters",
@@ -854,11 +834,6 @@
     }
   },
   "marcus": {
-    "header": {
-      "eyebrow": "Kinetics — Marcus Theory",
-      "title": "Marcus Rate Calculator",
-      "subtitle": "Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute Marcus energies, reorganization energy, barriers, and rate constants."
-    },
     "fileGroups": {
       "reactants": "Reactants",
       "adiabaticProducts": "Adiabatic Products",
@@ -914,11 +889,6 @@
     }
   },
   "saScore": {
-    "header": {
-      "eyebrow": "SA Score",
-      "title": "Synthetic Accessibility Table",
-      "subtitle": "Run AMBIT, BRSAScore and RDKit synthetic accessibility methods over a batch of SMILES"
-    },
     "form": {
       "title": "Input",
       "ariaLabel": "Input parameters",
@@ -980,11 +950,6 @@
     }
   },
   "toxicityProperties": {
-    "header": {
-      "eyebrow": "Toxicity Properties",
-      "title": "Toxicity Properties Table",
-      "subtitle": "Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of SMILES"
-    },
     "form": {
       "title": "Input",
       "ariaLabel": "Input parameters",
@@ -1044,9 +1009,6 @@
   },
   "smileit": {
     "header": {
-      "eyebrow": "SMILE-IT",
-      "title": "Combinatorial Structure Designer",
-      "subtitle": "Inspect scaffolds, assign substitution blocks and generate derivative libraries from SMILES notation.",
       "ariaLabel": "Smileit scientific app"
     },
     "step1": {

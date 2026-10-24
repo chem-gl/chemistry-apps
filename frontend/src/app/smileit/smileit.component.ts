@@ -41,6 +41,7 @@ import { GenerationResultPanelComponent } from './generation-result-panel/genera
 import { LibraryEntryDetailDialogComponent } from './library-entry-detail-dialog/library-entry-detail-dialog.component';
 import { PrincipalMoleculeEditorModule } from './principal-molecule/principal-molecule-editor.module';
 import { PrincipalSvgViewerModule } from './principal-visualizer/principal-svg-viewer.module';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { SMILEIT_DOC_TABS } from './smileit-doc-content';
 
@@ -57,6 +58,7 @@ import { SMILEIT_DOC_TABS } from './smileit-doc-content';
     BlockAssignmentPanelComponent,
     GenerationResultPanelComponent,
     LibraryEntryDetailDialogComponent,
+    ScientificAppHeaderComponent,
     ScientificDocPanelComponent,
   ],
   encapsulation: ViewEncapsulation.None,

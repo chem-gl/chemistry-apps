@@ -2,15 +2,9 @@
 <section class="cadma-shell" [attr.aria-label]="'cadmaPy.hero.tag' | transloco">
 
   <!-- HERO -->
-  <header class="cadma-hero">
-    <div class="hero-left">
-      <h2 class="hero-title">CADMA<span>Py</span></h2>
-    </div>
-    <div class="hero-actions">
-      <button type="button" class="hero-doc-btn" (click)="showDiagram.set(true)">📊 {{ 'cadmaPy.hero.protocolDiagram' | transloco }}</button>
-      <button type="button" class="hero-doc-btn" (click)="showDocPanel.set(true)">{{ 'cadmaPy.doc.open' | transloco }}</button>
-    </div>
-  </header>
+  <app-scientific-app-header appKey="cadma-py" [showDoc]="true"
+    [secondaryActionLabelKey]="'cadmaPy.hero.protocolDiagram'" (openDocs)="showDocPanel.set(true)"
+    (secondaryAction)="showDiagram.set(true)" />
 
   <!-- STEP TRACKER — 4 pasos -->
   <nav class="step-tracker" [attr.aria-label]="'cadmaPy.steps.ariaLabel' | transloco">

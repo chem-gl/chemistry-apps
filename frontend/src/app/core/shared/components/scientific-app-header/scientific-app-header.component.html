@@ -1,0 +1,24 @@
+<!-- scientific-app-header.component.html: Logo de la app + título corto/descripción + acciones. -->
+<header class="app-header-card">
+  <div class="module-strip" aria-hidden="true">
+    @if (iconAsset(); as iconAssetPath) {
+    <img class="module-icon" [src]="iconAssetPath" alt="" width="22" height="22" decoding="async" />
+    }
+  </div>
+
+  <div class="module-copy">
+    <h2>{{ titleKey() | transloco }}</h2>
+    <p>{{ descriptionKey() | transloco }}</p>
+  </div>
+
+  <div class="module-actions">
+    @if (secondaryActionLabelKey(); as secondaryLabelKey) {
+    <button type="button" class="doc-btn" [attr.aria-label]="secondaryLabelKey | transloco"
+      (click)="secondaryAction.emit()">{{ secondaryLabelKey | transloco }}</button>
+    }
+    @if (showDoc()) {
+    <button type="button" class="doc-btn" [attr.aria-label]="'scientificDoc.open' | transloco"
+      (click)="openDocs.emit()">{{ 'scientificDoc.open' | transloco }}</button>
+    }
+  </div>
+</header>

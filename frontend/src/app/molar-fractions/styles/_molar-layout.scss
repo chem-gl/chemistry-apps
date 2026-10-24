@@ -5,40 +5,6 @@
   gap: 1.15rem;
 }
 
-.molar-header {
-  display: grid;
-  gap: 0.45rem;
-  padding: 0.25rem 0 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.molar-header h2 {
-  margin: 0.2rem 0;
-  color: var(--chem-ink);
-  font-family: var(--chem-font-heading);
-  font-size: clamp(1.35rem, 2.7vw, 2rem);
-  line-height: 1.05;
-}
-
-.eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--chem-text-xs);
-  color: var(--chem-primary);
-  font-weight: 700;
-  font-family: var(--chem-font-label);
-}
-
-.molar-header p {
-  margin: 0;
-  color: var(--chem-ink-secondary);
-  max-width: 72ch;
-}
-
 .workspace-grid {
   display: grid;
   gap: 1rem;

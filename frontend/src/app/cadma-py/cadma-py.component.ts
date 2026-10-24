@@ -62,6 +62,7 @@ import {
   type CadmaImportStateChange,
 } from './cadma-py-importer.component';
 import { CADMA_DOC_TABS } from './cadma-py-doc-content';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { CadmaPyBoxplotDialogComponent } from './cadma-py-boxplot-dialog.component';
 
@@ -198,6 +199,7 @@ function createEmptyCsvBundle(): CsvBundle {
     CadmaPyFamilyDetailComponent,
     CadmaPyImporterComponent,
     CadmaPyDeleteModalComponent,
+    ScientificAppHeaderComponent,
     ScientificDocPanelComponent,
     CadmaPyBoxplotDialogComponent,
   ],

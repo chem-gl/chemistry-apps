@@ -1,0 +1,131 @@
+/* scientific-app-header.component.scss: Cabecera-tarjeta única de las apps científicas.
+   Solo usa tokens --chem-*; la franja lateral deriva sus degradados de los acentos
+   institucionales (oro + verde) con transparencia y muestra únicamente el logo. */
+:host {
+  display: block;
+}
+
+.app-header-card {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem 1.1rem;
+  padding: 0.65rem 0.9rem 0.65rem 0;
+  background: var(--chem-surface-elevated);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  box-shadow: var(--chem-shadow-sm);
+  overflow: hidden;
+}
+
+.module-strip {
+  grid-row: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0;
+  background: transparent;
+  border-right: 1px solid var(--chem-border-subtle);
+}
+
+.module-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.module-copy {
+  min-width: 0;
+}
+
+.module-copy h2 {
+  margin: 0;
+  font-family: var(--chem-font-heading);
+  font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+  line-height: 1.1;
+  color: var(--chem-ink);
+}
+
+.module-copy p {
+  margin: 0.15rem 0 0;
+  font-family: var(--chem-font-body);
+  font-size: var(--chem-text-sm);
+  color: var(--chem-ink-soft);
+  max-width: 70ch;
+}
+
+.module-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--chem-btn-h) - 0.6rem);
+  padding: 0 0.8rem;
+  border: 1px solid var(--chem-border-strong);
+  border-radius: var(--chem-radius-sm);
+  background: var(--chem-card-bg);
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--chem-transition),
+    border-color var(--chem-transition),
+    background var(--chem-transition);
+
+  &:hover {
+    border-color: var(--chem-accent);
+    color: var(--chem-accent);
+    background: var(--chem-accent-light);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chem-accent);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.6rem 0.75rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .module-strip {
+    grid-column: 1;
+    background: none;
+    border-right: 0;
+    padding: 0;
+  }
+
+  .module-copy {
+    grid-column: 2;
+  }
+
+  .module-actions {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-btn {
+    transition: none;
+  }
+}

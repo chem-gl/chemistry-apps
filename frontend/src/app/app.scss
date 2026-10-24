@@ -298,13 +298,26 @@ a.session-identity:hover strong {
 }
 
 .nav-dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.4rem 0.75rem;
   text-decoration: none;
   color: var(--chem-ink);
   font-size: 0.78rem;
   font-weight: 500;
   transition: background 0.12s;
+}
+
+.nav-dropdown-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+  background: #fff;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 50%;
+  padding: 1px;
 }
 
 .nav-dropdown-item:hover {

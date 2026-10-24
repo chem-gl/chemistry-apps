@@ -1,10 +1,6 @@
 <!-- smileit.component.html: Interfaz profesional de Smile-it para inspección, asignación por bloques y exportes reproducibles. -->
 <section class="smileit-shell" [attr.aria-label]="'smileit.header.ariaLabel' | transloco">
-  <header class="smileit-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'smileit.header.title' | transloco }}</h2>
-    <p>{{ 'smileit.header.subtitle' | transloco }}</p>
-  </header>
+  <app-scientific-app-header appKey="smileit" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="floating-workspace-shell">
     <div class="workspace-columns">

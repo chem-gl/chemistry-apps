@@ -249,11 +249,6 @@
     }
   },
   "toxicityProperties": {
-    "header": {
-      "title": "Tabla de Propiedades de Toxicidad",
-      "subtitle": "Predice LD50, mutagenicidad Ames y toxicidad del desarrollo con ADMET-AI sobre un lote de SMILES",
-      "eyebrow": "Propiedades de Toxicidad"
-    },
     "form": {
       "jobNameLabel": "Nombre del trabajo",
       "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual.",
@@ -312,11 +307,6 @@
     }
   },
   "saScore": {
-    "header": {
-      "title": "Tabla de Accesibilidad Sintética",
-      "subtitle": "Ejecuta los métodos AMBIT, BRSAScore y RDKit sobre un lote de SMILES",
-      "eyebrow": "SA Score"
-    },
     "form": {
       "jobNameLabel": "Nombre del trabajo",
       "jobNameHint": "Si lo dejas vacío, se usa el primer nombre del CSV cuando exista; si no, se mantiene el comportamiento actual.",
@@ -378,11 +368,6 @@
     }
   },
   "marcus": {
-    "header": {
-      "title": "Calculadora de Velocidad Marcus",
-      "subtitle": "Carga seis archivos de log Gaussian (reactivos, productos adiabáticos, productos verticales) para calcular energías Marcus, energía de reorganización, barreras y constantes de velocidad.",
-      "eyebrow": "Cinética — Teoría de Marcus"
-    },
     "form": {
       "titlePlaceholder": "Etiqueta de reacción opcional",
       "diffusionCorrection": "Corrección por difusión",
@@ -1149,11 +1134,6 @@
     }
   },
   "tunnel": {
-    "header": {
-      "title": "Calculadora de Tunelización Eckart Asimétrica",
-      "subtitle": "Ingresa los mismos campos de la herramienta de escritorio y rastrea cada modificación de entrada para entender cómo se produjo el resultado final.",
-      "eyebrow": "Efecto Túnel"
-    },
     "form": {
       "barrierZpe": "Barrera de reacción ZPE (kcal/mol)",
       "imaginaryFrequency": "Frecuencia imaginaria (cm-1)",
@@ -1208,11 +1188,6 @@
     }
   },
   "serverCalc": {
-    "header": {
-      "title": "Calculadora remota de prueba",
-      "subtitle": "Ingresa dos valores y un operador (+, -, *, /) para calcularlos en el servidor qta vía SSH. El servidor escribe un archivo de resultado y registra la conexión.",
-      "eyebrow": "Server Calc"
-    },
     "form": {
       "a": "Primer valor (a)",
       "b": "Segundo valor (b)",
@@ -1246,11 +1221,6 @@
     }
   },
   "molarFractions": {
-    "header": {
-      "title": "Fracciones de Equilibrio Ácido-Base",
-      "subtitle": "Configura los valores de pKa y el modo de pH para calcular la tabla de fracciones producida por la aplicación de escritorio.",
-      "eyebrow": "Fracciones Molares"
-    },
     "form": {
       "phSingle": "Un valor de pH",
       "pkaValues": "Ingresar valores pKa",
@@ -1552,11 +1522,6 @@
     }
   },
   "easyRate": {
-    "header": {
-      "title": "Calculadora Easy-rate",
-      "subtitle": "Carga archivos de log Gaussian para las estructuras de reacción y calcula constantes de velocidad con mecánica estadística, corrección por tunelamiento y control de difusión opcional.",
-      "eyebrow": "Cinética — TST + Túnel Eckart"
-    },
     "solvents": {
       "benzene": "Benzene",
       "other": "Other",
@@ -1842,10 +1807,7 @@
       "previewUnavailable": "Vista previa no disponible"
     },
     "header": {
-      "title": "Diseñador de Estructuras Combinatorias",
-      "ariaLabel": "App científica Smileit",
-      "subtitle": "Inspecciona scaffolds, asigna bloques de sustitución y genera bibliotecas derivadas desde notación SMILES.",
-      "eyebrow": "SMILE-IT"
+      "ariaLabel": "App científica Smileit"
     },
     "catalogStudio": {
       "title": "Estudio SMILES catálogo",

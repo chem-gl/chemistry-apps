@@ -207,11 +207,6 @@
     }
   },
   "toxicityProperties": {
-    "header": {
-      "title": "Tableau des propriétés de toxicité",
-      "subtitle": "Prédisez la LD50, la mutagénicité Ames et la toxicité développementale avec ADMET-AI sur un lot de SMILES",
-      "eyebrow": "Propriétés de toxicité"
-    },
     "form": {
       "jobNameLabel": "Nom du job",
       "jobNameHint": "Si ce champ est vide, le premier nom du CSV est utilisé quand il est disponible ; sinon le comportement actuel est conservé.",
@@ -270,11 +265,6 @@
     }
   },
   "saScore": {
-    "header": {
-      "title": "Tableau d’accessibilité synthétique",
-      "subtitle": "Exécutez les méthodes d’accessibilité synthétique AMBIT, BRSAScore et RDKit sur un lot de SMILES",
-      "eyebrow": "Score SA"
-    },
     "form": {
       "jobNameLabel": "Nom du job",
       "jobNameHint": "Si ce champ est vide, le premier nom du CSV est utilisé quand il est disponible ; sinon le comportement actuel est conservé.",
@@ -336,11 +326,6 @@
     }
   },
   "marcus": {
-    "header": {
-      "title": "Calculateur de vitesse de Marcus",
-      "subtitle": "Téléversez six fichiers log Gaussian (réactifs, produits adiabatiques, produits verticaux) pour calculer les énergies de Marcus, l’énergie de réorganisation, les barrières et les constantes de vitesse.",
-      "eyebrow": "Cinétique — théorie de Marcus"
-    },
     "form": {
       "titlePlaceholder": "Étiquette de réaction facultative",
       "diffusionCorrection": "Correction diffusionnelle",
@@ -1107,11 +1092,6 @@
     }
   },
   "tunnel": {
-    "header": {
-      "title": "Calculateur d’effet tunnel d’Eckart asymétrique",
-      "subtitle": "Saisissez les mêmes champs que dans l’outil de bureau et suivez chaque modification de saisie pour comprendre comment le résultat final a été produit.",
-      "eyebrow": "Effet tunnel"
-    },
     "form": {
       "barrierZpe": "Barrière de réaction ZPE (kcal/mol)",
       "imaginaryFrequency": "Fréquence imaginaire (cm-1)",
@@ -1166,11 +1146,6 @@
     }
   },
   "molarFractions": {
-    "header": {
-      "title": "Fractions d’équilibre acide-base",
-      "subtitle": "Configurez les valeurs de pKa et le mode de pH pour calculer le même tableau de fractions que l’application de bureau.",
-      "eyebrow": "Fractions molaires"
-    },
     "form": {
       "phSingle": "Une valeur de pH",
       "pkaValues": "Saisissez les valeurs de pKa",
@@ -1560,11 +1535,6 @@
     }
   },
   "easyRate": {
-    "header": {
-      "title": "Calculateur Easy-rate",
-      "subtitle": "Téléversez les fichiers log Gaussian de vos structures réactionnelles et calculez les constantes de vitesse avec la mécanique statistique, la correction d’effet tunnel et un contrôle diffusionnel facultatif.",
-      "eyebrow": "Cinétique — TST + effet tunnel d’Eckart"
-    },
     "solvents": {
       "benzene": "Benzène",
       "other": "Autre",
@@ -1850,10 +1820,7 @@
       "previewUnavailable": "Aperçu indisponible"
     },
     "header": {
-      "title": "Concepteur de structures combinatoires",
-      "ariaLabel": "Application scientifique Smile-it",
-      "subtitle": "Inspectez les échafaudages, attribuez des blocs de substitution et générez des bibliothèques de dérivés à partir de la notation SMILES.",
-      "eyebrow": "SMILE-IT"
+      "ariaLabel": "Application scientifique Smile-it"
     },
     "catalogStudio": {
       "title": "Studio de catalogue SMILES",
@@ -2149,11 +2116,6 @@
       "b": "Deuxième valeur (b)",
       "operator": "Opérateur",
       "title": "Saisie des données"
-    },
-    "header": {
-      "eyebrow": "Server Calc",
-      "subtitle": "Saisissez deux nombres et un opérateur (+, -, *, /) pour les calculer sur le serveur qta via SSH. Le serveur écrit un fichier de résultat et journalise la connexion.",
-      "title": "Calculatrice distante (preuve de concept)"
     },
     "logs": {
       "ariaLabel": "Journaux de connexion du job",

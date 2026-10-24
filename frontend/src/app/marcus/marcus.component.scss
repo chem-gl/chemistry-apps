@@ -5,29 +5,6 @@
   gap: 1rem;
 }
 
-.marcus-header {
-  h2 {
-    margin: 0.2rem 0;
-    color: var(--chem-ink);
-    font-family: var(--chem-font-heading);
-    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-  }
-  p {
-    margin: 0;
-    color: var(--chem-ink-secondary);
-  }
-}
-
-.eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--chem-text-xs);
-  color: var(--chem-primary);
-  font-weight: 700;
-  font-family: var(--chem-font-label);
-}
-
 .workspace-grid {
   display: grid;
   gap: 0.9rem;

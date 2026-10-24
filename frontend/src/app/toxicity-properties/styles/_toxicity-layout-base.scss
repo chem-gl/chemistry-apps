@@ -4,28 +4,6 @@
   gap: 1rem;
 }
 
-.toxicity-header {
-  border: 0;
-  border-radius: 0;
-  padding: 0.25rem 0 0;
-  background: none;
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--chem-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--chem-text-xs);
-  font-weight: 800;
-  font-family: var(--chem-font-label);
-}
-
-.toxicity-header p {
-  margin: 0;
-  color: var(--chem-ink);
-}
-
 .workspace-grid {
   display: grid;
   gap: 1rem;

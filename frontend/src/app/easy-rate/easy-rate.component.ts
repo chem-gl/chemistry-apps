@@ -17,6 +17,7 @@ import { DiffusionFieldsComponent } from '../core/shared/components/diffusion-fi
 import { JobProgressCardComponent } from '../core/shared/components/job-progress-card/job-progress-card.component';
 import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { EASY_RATE_DOC_TABS } from './easy-rate-doc-content';
 
@@ -36,6 +37,7 @@ export interface EasyRateInputSlotView {
     JobProgressCardComponent,
     DiffusionFieldsComponent,
     JobResultFooterComponent,
+    ScientificAppHeaderComponent,
     ScientificDocPanelComponent,
   ],
   providers: [EasyRateWorkflowService],

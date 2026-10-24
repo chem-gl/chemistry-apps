@@ -1,10 +1,6 @@
 <!-- marcus.component.html: UI de Marcus para cálculo de energías y constantes de velocidad por teoría de Marcus. -->
-<section class="marcus-shell" [attr.aria-label]="'marcus.header.eyebrow' | transloco">
-  <header class="marcus-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'marcus.header.title' | transloco }}</h2>
-    <p>{{ 'marcus.header.subtitle' | transloco }}</p>
-  </header>
+<section class="marcus-shell" [attr.aria-label]="'scientificApps.marcus.title' | transloco">
+  <app-scientific-app-header appKey="marcus" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────────── -->

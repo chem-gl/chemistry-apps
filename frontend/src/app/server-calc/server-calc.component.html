@@ -1,10 +1,6 @@
 <!-- server-calc.component.html: Calculadora remota (qta vía SSH) con archivo de resultado y logs. -->
-<section class="server-calc-shell" [attr.aria-label]="'serverCalc.header.eyebrow' | transloco">
-  <header class="server-calc-header">
-    <p class="eyebrow">{{ 'serverCalc.header.eyebrow' | transloco }}</p>
-    <h2>{{ 'serverCalc.header.title' | transloco }}</h2>
-    <p>{{ 'serverCalc.header.subtitle' | transloco }}</p>
-  </header>
+<section class="server-calc-shell" [attr.aria-label]="'scientificApps.server-calc.title' | transloco">
+  <app-scientific-app-header appKey="server-calc" />
 
   <div class="workspace-grid">
     <section class="entry-panel" [attr.aria-label]="'serverCalc.form.ariaLabel' | transloco">

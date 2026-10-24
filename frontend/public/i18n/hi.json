@@ -207,11 +207,6 @@
     }
   },
   "toxicityProperties": {
-    "header": {
-      "title": "Toxicity Properties Table",
-      "subtitle": "Predict LD50, Ames mutagenicity and developmental toxicity with ADMET-AI over a batch of SMILES",
-      "eyebrow": "Toxicity Properties"
-    },
     "form": {
       "jobNameLabel": "Job name",
       "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
@@ -270,11 +265,6 @@
     }
   },
   "saScore": {
-    "header": {
-      "title": "Synthetic Accessibility Table",
-      "subtitle": "Run AMBIT, BRSAScore and RDKit synthetic accessibility methods over a batch of SMILES",
-      "eyebrow": "SA Score"
-    },
     "form": {
       "jobNameLabel": "Job name",
       "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved.",
@@ -336,11 +326,6 @@
     }
   },
   "marcus": {
-    "header": {
-      "title": "Marcus Rate Calculator",
-      "subtitle": "Upload six Gaussian log files (reactants, adiabatic products, vertical products) to compute Marcus energies, reorganization energy, barriers, and rate constants.",
-      "eyebrow": "Kinetics — Marcus Theory"
-    },
     "form": {
       "titlePlaceholder": "Optional reaction label",
       "diffusionCorrection": "Diffusion correction",
@@ -1056,11 +1041,6 @@
     }
   },
   "tunnel": {
-    "header": {
-      "title": "Asymmetric Eckart Tunneling Calculator",
-      "subtitle": "Enter the same fields from the desktop tool and track each input modification to understand how the final result was produced.",
-      "eyebrow": "Tunnel Effect"
-    },
     "form": {
       "barrierZpe": "Reaction barrier ZPE (kcal/mol)",
       "imaginaryFrequency": "Imaginary frequency (cm-1)",
@@ -1115,11 +1095,6 @@
     }
   },
   "molarFractions": {
-    "header": {
-      "title": "Acid-Base Equilibrium Fractions",
-      "subtitle": "Configure pKa values and pH mode to calculate the same fraction table produced by the desktop app.",
-      "eyebrow": "Molar Fractions"
-    },
     "form": {
       "phSingle": "One pH value",
       "pkaValues": "Enter pKa values",
@@ -1509,11 +1484,6 @@
     }
   },
   "easyRate": {
-    "header": {
-      "title": "Easy-rate Calculator",
-      "subtitle": "Upload Gaussian log files for your reaction structures and compute rate constants with statistical mechanics, tunneling correction, and optional diffusion control.",
-      "eyebrow": "Kinetics — TST + Eckart Tunnel"
-    },
     "solvents": {
       "benzene": "Benzene",
       "other": "Other",
@@ -1799,10 +1769,7 @@
       "previewUnavailable": "पूर्वावलोकन अनुपलब्ध"
     },
     "header": {
-      "title": "Combinatorial Structure Designer",
-      "ariaLabel": "Smileit scientific app",
-      "subtitle": "Inspect scaffolds, assign substitution blocks and generate derivative libraries from SMILES notation.",
-      "eyebrow": "SMILE-IT"
+      "ariaLabel": "Smileit scientific app"
     },
     "catalogStudio": {
       "title": "SMILES catalog studio",
@@ -2098,11 +2065,6 @@
       "b": "दूसरा मान (b)",
       "operator": "ऑपरेटर",
       "title": "डेटा प्रविष्टि"
-    },
-    "header": {
-      "eyebrow": "Server Calc",
-      "subtitle": "दो संख्याएँ और एक ऑपरेटर (+, -, *, /) दर्ज करें ताकि SSH के माध्यम से qta सर्वर पर गणना हो। सर्वर एक परिणाम फ़ाइल लिखता है और कनेक्शन लॉग करता है।",
-      "title": "दूरस्थ कैलकुलेटर प्रूफ-ऑफ-कॉन्सेप्ट"
     },
     "logs": {
       "ariaLabel": "जॉब कनेक्शन लॉग",

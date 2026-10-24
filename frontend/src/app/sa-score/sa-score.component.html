@@ -1,11 +1,7 @@
 <!-- sa-score.component.html: Interfaz de SA Score con sketch Ketcher, carga de archivos,
      tabla multi-método, imagen de molécula y exportes CSV. -->
-<section class="sa-score-shell" [attr.aria-label]="'saScore.header.eyebrow' | transloco">
-  <header class="sa-score-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'saScore.header.title' | transloco }}</h2>
-    <p>{{ 'saScore.header.subtitle' | transloco }}</p>
-  </header>
+<section class="sa-score-shell" [attr.aria-label]="'scientificApps.sa-score.title' | transloco">
+  <app-scientific-app-header appKey="sa-score" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
     <section class="entry-panel" [attr.aria-label]="'saScore.form.ariaLabel' | transloco">

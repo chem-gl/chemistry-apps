@@ -26,6 +26,7 @@ import {
 } from '../core/shared/scientific-job-name.utils';
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 import { LocalResultRecord } from '../core/shared/local-results.store';
+import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { TOXICITY_PROPERTIES_DOC_TABS } from './toxicity-properties-doc-content';
 
@@ -40,6 +41,7 @@ import { TOXICITY_PROPERTIES_DOC_TABS } from './toxicity-properties-doc-content'
     JobLogsPanelComponent,
     JobHistoryTableComponent,
     SmilesBatchInputComponent,
+    ScientificAppHeaderComponent,
     ScientificDocPanelComponent,
   ],
   providers: [ToxicityPropertiesWorkflowService],

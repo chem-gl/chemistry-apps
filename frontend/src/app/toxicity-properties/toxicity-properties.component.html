@@ -1,11 +1,8 @@
 <!-- toxicity-properties.component.html: Interfaz de Toxicity Properties con sketch,
      carga de archivo, tabla fija toxicológica y referencias científicas. -->
-<section class="toxicity-shell" [attr.aria-label]="'toxicityProperties.header.eyebrow' | transloco">
-  <header class="toxicity-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'toxicityProperties.header.title' | transloco }}</h2>
-    <p>{{ 'toxicityProperties.header.subtitle' | transloco }}</p>
-  </header>
+<section class="toxicity-shell" [attr.aria-label]="'scientificApps.toxicity-properties.title' | transloco">
+  <app-scientific-app-header appKey="toxicity-properties" [showDoc]="true"
+    (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
     <section class="entry-panel" [attr.aria-label]="'toxicityProperties.form.ariaLabel' | transloco">

@@ -56,6 +56,9 @@
               class="nav-dropdown-item"
               [title]="appItem.hintKey ? (appItem.hintKey | transloco) : appItem.hint"
               (click)="closeMobileNav()">
+              @if (appItem.icon) {
+              <img class="nav-dropdown-icon" [src]="appItem.icon" alt="" width="18" height="18" loading="lazy" decoding="async" />
+              }
               {{ appItem.labelKey ? (appItem.labelKey | transloco) : appItem.label }}
             </a>
             }

@@ -1,10 +1,6 @@
 <!-- easy-rate.component.html: UI de Easy-rate para cálculo TST + túnel de constantes de velocidad química. -->
-<section class="easy-rate-shell" [attr.aria-label]="'easyRate.header.eyebrow' | transloco">
-  <header class="easy-rate-header">
-    <button type="button" class="doc-launcher" (click)="showDocPanel.set(true)">{{ 'scientificDoc.open' | transloco }}</button>
-    <h2>{{ 'easyRate.header.title' | transloco }}</h2>
-    <p>{{ 'easyRate.header.subtitle' | transloco }}</p>
-  </header>
+<section class="easy-rate-shell" [attr.aria-label]="'scientificApps.easy-rate.title' | transloco">
+  <app-scientific-app-header appKey="easy-rate" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────── -->
