@@ -6,15 +6,53 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { MolarFractionsResultData } from '../core/application/molar-fractions-workflow.service';
 
 const DEFAULT_PROBE_PH = 7.4;
-const INTERPOLATION_SAMPLES_PER_PH_UNIT = 24;
-const MIN_INTERPOLATION_SAMPLES_PER_SEGMENT = 24;
-const MAX_INTERPOLATION_SAMPLES_PER_SEGMENT = 120;
+// Muestreo de la curva analítica exacta: denso para un polígono indistinguible
+// de la sigmoide continua (la forma ya es exacta, los puntos solo la dibujan).
+const ANALYTIC_POINTS_PER_PH_UNIT = 32;
 
-interface CurveDefinition {
-  readonly speciesLabel: string;
-  readonly xValues: number[];
-  readonly yValues: number[];
-  readonly slopes: number[];
+/**
+ * Fracciones molares exactas para un ácido con los pKa dados.
+ * α₀ = hⁿ/D (totalmente protonado) … αᵢ = (Πⱼ≤ᵢ Kⱼ)·hⁿ⁻ⁱ/D,
+ * con h = 10⁻ᵖᴴ, Kⱼ = 10^(−pKaⱼ) y D la suma de los n+1 términos.
+ * Es la misma fórmula analítica del backend: coincide con la tabla y es
+ * infinitamente suave (sin codos de interpolación por tramos).
+ */
+function evaluateExactFractions(pKaValues: number[], phValue: number): number[] {
+  const speciesCount = pKaValues.length + 1;
+  if (speciesCount === 1) {
+    return [1];
+  }
+
+  const h = Math.pow(10, -phValue);
+  const terms: number[] = new Array(speciesCount);
+  let term = Math.pow(h, pKaValues.length);
+  terms[0] = term;
+  for (let index = 0; index < pKaValues.length; index += 1) {
+    term = (term * Math.pow(10, -pKaValues[index])) / h;
+    terms[index + 1] = term;
+  }
+
+  const total = terms.reduce((sum, value) => sum + value, 0);
+  if (!(total > 0)) {
+    return terms.map(() => 0);
+  }
+  return terms.map((value) => sanitizeFraction(value / total));
+}
+
+function buildAnalyticSeriesData(
+  pKaValues: number[],
+  speciesIndex: number,
+  phMin: number,
+  phMax: number,
+): Array<[number, number]> {
+  const span = Math.max(phMax - phMin, 0);
+  const pointCount = Math.max(Math.ceil(span * ANALYTIC_POINTS_PER_PH_UNIT) + 1, 2);
+  const points: Array<[number, number]> = new Array(pointCount);
+  for (let index = 0; index < pointCount; index += 1) {
+    const phValue = pointCount === 1 ? phMin : phMin + (span * index) / (pointCount - 1);
+    points[index] = [phValue, evaluateExactFractions(pKaValues, phValue)[speciesIndex] ?? 0];
+  }
+  return points;
 }
 
 interface TooltipParameter {
@@ -56,139 +94,6 @@ function sanitizeFraction(value: number): number {
   return clampValue(value, 0, 1);
 }
 
-function buildCurveDefinitions(resultData: MolarFractionsResultData): CurveDefinition[] {
-  const xValues: number[] = resultData.rows.map((row) => row.ph);
-
-  return resultData.speciesLabels.map((speciesLabel, fractionIndex) => {
-    const yValues: number[] = resultData.rows.map((row) => row.fractions[fractionIndex] ?? 0);
-
-    return {
-      speciesLabel,
-      xValues,
-      yValues,
-      slopes: buildMonotoneSlopes(xValues, yValues),
-    };
-  });
-}
-
-function buildMonotoneSlopes(xValues: number[], yValues: number[]): number[] {
-  const pointCount = xValues.length;
-  if (pointCount <= 1) {
-    return [0];
-  }
-
-  const deltaX: number[] = [];
-  const secants: number[] = [];
-  for (let index = 0; index < pointCount - 1; index += 1) {
-    const currentDeltaX = xValues[index + 1] - xValues[index];
-    deltaX.push(currentDeltaX);
-    secants.push(currentDeltaX === 0 ? 0 : (yValues[index + 1] - yValues[index]) / currentDeltaX);
-  }
-
-  const slopes: number[] = new Array(pointCount).fill(0);
-  slopes[0] = secants[0] ?? 0;
-  slopes[pointCount - 1] = secants.at(-1) ?? 0;
-
-  for (let index = 1; index < pointCount - 1; index += 1) {
-    const previousSecant = secants[index - 1] ?? 0;
-    const nextSecant = secants[index] ?? 0;
-
-    if (previousSecant === 0 || nextSecant === 0 || previousSecant * nextSecant < 0) {
-      slopes[index] = 0;
-      continue;
-    }
-
-    const previousDeltaX = deltaX[index - 1] ?? 1;
-    const nextDeltaX = deltaX[index] ?? 1;
-    const weightA = 2 * nextDeltaX + previousDeltaX;
-    const weightB = nextDeltaX + 2 * previousDeltaX;
-
-    slopes[index] = (weightA + weightB) / (weightA / previousSecant + weightB / nextSecant);
-  }
-
-  return slopes;
-}
-
-function evaluateCurveAtPh(curve: CurveDefinition, phValue: number): number {
-  const { xValues, yValues, slopes } = curve;
-  if (xValues.length === 0) {
-    return 0;
-  }
-  if (xValues.length === 1) {
-    return sanitizeFraction(yValues[0] ?? 0);
-  }
-
-  const minPh = xValues[0] ?? phValue;
-  const maxPh = xValues.at(-1) ?? phValue;
-  const clampedPh = clampValue(phValue, minPh, maxPh);
-  let segmentIndex = xValues.findIndex((currentValue, index) => {
-    const nextValue = xValues[index + 1];
-    return nextValue !== undefined && clampedPh >= currentValue && clampedPh <= nextValue;
-  });
-
-  if (segmentIndex === -1) {
-    segmentIndex = xValues.length - 2;
-  }
-
-  const x0 = xValues[segmentIndex] ?? clampedPh;
-  const x1 = xValues[segmentIndex + 1] ?? clampedPh;
-  const y0 = yValues[segmentIndex] ?? 0;
-  const y1 = yValues[segmentIndex + 1] ?? y0;
-  const m0 = slopes[segmentIndex] ?? 0;
-  const m1 = slopes[segmentIndex + 1] ?? 0;
-  const segmentWidth = x1 - x0;
-  if (segmentWidth === 0) {
-    return sanitizeFraction(y0);
-  }
-
-  const t = (clampedPh - x0) / segmentWidth;
-  const t2 = t * t;
-  const t3 = t2 * t;
-  const interpolatedValue =
-    (2 * t3 - 3 * t2 + 1) * y0 +
-    (t3 - 2 * t2 + t) * segmentWidth * m0 +
-    (-2 * t3 + 3 * t2) * y1 +
-    (t3 - t2) * segmentWidth * m1;
-
-  return sanitizeFraction(interpolatedValue);
-}
-
-function resolveSegmentSampleCount(segmentStart: number, segmentEnd: number): number {
-  const phSpan = Math.abs(segmentEnd - segmentStart);
-  const requestedSamples = Math.ceil(phSpan * INTERPOLATION_SAMPLES_PER_PH_UNIT);
-
-  return Math.round(
-    clampValue(
-      requestedSamples,
-      MIN_INTERPOLATION_SAMPLES_PER_SEGMENT,
-      MAX_INTERPOLATION_SAMPLES_PER_SEGMENT,
-    ),
-  );
-}
-
-function buildInterpolatedSeriesData(curve: CurveDefinition): Array<[number, number]> {
-  const densePoints: Array<[number, number]> = [];
-  const { xValues } = curve;
-
-  for (let index = 0; index < xValues.length - 1; index += 1) {
-    const segmentStart = xValues[index] ?? 0;
-    const segmentEnd = xValues[index + 1] ?? segmentStart;
-    const segmentSamples = Math.max(resolveSegmentSampleCount(segmentStart, segmentEnd), 2);
-
-    for (let sampleIndex = 0; sampleIndex < segmentSamples; sampleIndex += 1) {
-      const ratio = sampleIndex / segmentSamples;
-      const interpolatedPh = segmentStart + (segmentEnd - segmentStart) * ratio;
-      densePoints.push([interpolatedPh, evaluateCurveAtPh(curve, interpolatedPh)]);
-    }
-  }
-
-  const lastPh = xValues.at(-1);
-  if (lastPh !== undefined) {
-    densePoints.push([lastPh, evaluateCurveAtPh(curve, lastPh)]);
-  }
-
-  return densePoints;
-}
 
 export function shouldRenderMolarFractionsChart(
   resultData: MolarFractionsResultData | null,
@@ -213,11 +118,11 @@ export function buildProbeReadings(
   resultData: MolarFractionsResultData,
   probePh: number,
 ): ProbeSpeciesReading[] {
-  const curveDefinitions = buildCurveDefinitions(resultData);
+  const fractions = evaluateExactFractions(resultData.metadata.pkaValues, probePh);
 
-  return curveDefinitions.map((curve) => ({
-    speciesLabel: curve.speciesLabel,
-    fraction: evaluateCurveAtPh(curve, probePh),
+  return resultData.speciesLabels.map((speciesLabel, speciesIndex) => ({
+    speciesLabel,
+    fraction: fractions[speciesIndex] ?? 0,
   }));
 }
 
@@ -225,13 +130,16 @@ export function buildMolarFractionsChartOptions(
   resultData: MolarFractionsResultData,
   probePh: number,
 ): EChartsCoreOption {
-  const curveDefinitions = buildCurveDefinitions(resultData);
-
-  const speciesSeries: LineSeriesOption[] = curveDefinitions.map((curve) => ({
-    name: curve.speciesLabel,
+  const speciesSeries: LineSeriesOption[] = resultData.speciesLabels.map((speciesLabel, speciesIndex) => ({
+    name: speciesLabel,
     type: 'line',
-    data: buildInterpolatedSeriesData(curve),
-    smooth: 0.28,
+    data: buildAnalyticSeriesData(
+      resultData.metadata.pkaValues,
+      speciesIndex,
+      resultData.metadata.phMin,
+      resultData.metadata.phMax,
+    ),
+    smooth: 0.35,
     smoothMonotone: 'x',
     showSymbol: false,
     lineStyle: {
@@ -245,6 +153,9 @@ export function buildMolarFractionsChartOptions(
   const probeSeries: LineSeriesOption = {
     name: '__probe__',
     type: 'line',
+    // Eje X oculto propio: la sonda no contamina el preview del dataZoom
+    // (antes pintaba una barra vertical fantasma en el slider).
+    xAxisIndex: 1,
     data: [
       [probePh, 0],
       [probePh, 1],
@@ -308,7 +219,7 @@ export function buildMolarFractionsChartOptions(
       },
     ],
     grid: {
-      top: 86,
+      top: 76,
       right: 32,
       bottom: 92,
       left: 66,
@@ -318,6 +229,7 @@ export function buildMolarFractionsChartOptions(
       type: 'scroll',
       top: 12,
       left: 'center',
+      right: 92,
       itemGap: 14,
       itemWidth: 18,
       itemHeight: 10,
@@ -372,31 +284,35 @@ export function buildMolarFractionsChartOptions(
         return `pH ${formatAxisValue(axisValue)}<br/>${rows}`;
       },
     },
-    xAxis: {
-      type: 'value',
-      name: 'pH',
-      min: resultData.metadata.phMin,
-      max: resultData.metadata.phMax,
-      nameLocation: 'middle',
-      nameGap: 42,
-      nameTextStyle: {
-        color: '#5a5163',
-        fontSize: 14,
-        fontWeight: 700,
-        padding: [14, 0, 0, 0],
+    xAxis: [
+      {
+        type: 'value',
+        name: 'pH',
+        min: resultData.metadata.phMin,
+        max: resultData.metadata.phMax,
+        nameLocation: 'middle',
+        nameGap: 42,
+        nameTextStyle: {
+          color: '#5a5163',
+          fontSize: 14,
+          fontWeight: 700,
+          padding: [14, 0, 0, 0],
+        },
+        axisLabel: {
+          formatter: (axisValue: number) => formatAxisValue(axisValue),
+          color: '#5a5163',
+          fontSize: 13,
+          margin: 12,
+        },
       },
-      axisLabel: {
-        formatter: (axisValue: number) => formatAxisValue(axisValue),
-        color: '#5a5163',
-        fontSize: 13,
-        margin: 12,
+      // Eje fantasma para la sonda: comparte escala, sin dibujo.
+      {
+        type: 'value',
+        show: false,
+        min: resultData.metadata.phMin,
+        max: resultData.metadata.phMax,
       },
-      axisPointer: {
-        show: true,
-        value: probePh,
-        snap: false,
-      },
-    },
+    ],
     yAxis: {
       type: 'value',
       name: 'Fraction',

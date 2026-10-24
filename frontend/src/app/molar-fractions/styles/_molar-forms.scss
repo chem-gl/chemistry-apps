@@ -216,21 +216,24 @@
 .chart-card {  display: grid;
   gap: 1rem;
   margin-top: 1.1rem;
-  padding: 1.1rem 0 0;
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  overflow: visible;
-  background: none;
+  padding: 1.1rem 1.1rem 1.2rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius-lg);
+  overflow: hidden;
+  background: var(--chem-surface-elevated);
+  box-shadow: var(--chem-shadow-sm);
 }
 
 .chart-frame {
   inline-size: 100%;
-  aspect-ratio: 1 / 1;
-  min-height: 30rem;
+  max-inline-size: none;
+  block-size: clamp(16rem, 44vh, 24rem);
+  min-block-size: 16rem;
   margin-inline: auto;
   overflow: hidden;
+  border: 1px solid var(--chem-border-subtle);
   border-radius: 14px;
+  background: var(--chem-surface-elevated);
 }
 
 .chart-frame app-scientific-chart {
@@ -286,16 +289,17 @@
 
 .probe-grid {
   display: grid;
-  gap: 0.55rem;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
 }
 
 .probe-grid p {
   display: grid;
-  gap: 0.18rem;
+  gap: 0.12rem;
   margin: 0;
-  padding: 0.65rem 0.7rem;
-  border-radius: 12px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
   background: rgba(237, 233, 240, 0.86);
   color: var(--chem-ink-secondary);
   font-size: 0.78rem;
