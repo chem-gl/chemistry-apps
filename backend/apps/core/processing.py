@@ -19,6 +19,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from .types import (
     JSONMap,
+    JobProgressStage,
     PluginControlCallback,
     PluginLogCallback,
     PluginProgressCallback,
@@ -33,6 +34,19 @@ PluginCallable = (
         JSONMap,
     ]
 )
+
+
+def _noop_progress_callback(
+    plugin_percentage: int,
+    plugin_stage_or_message: JobProgressStage | str,
+    plugin_message: str | None = None,
+) -> None:
+    """Callback no-op con la firma exacta de `PluginProgressCallback`.
+
+    Se usa cuando un plugin no recibe callback de progreso. Los nombres de los
+    parámetros deben coincidir con el protocolo porque los plugins pueden
+    invocarlo con argumentos nombrados.
+    """
 
 
 class PluginRegistry:
@@ -96,7 +110,7 @@ class PluginRegistry:
         callback_to_use: PluginProgressCallback = (
             progress_callback
             if progress_callback is not None
-            else lambda _percentage, _stage, _message: None
+            else _noop_progress_callback
         )
         log_callback_to_use: PluginLogCallback = (
             log_callback
