@@ -165,7 +165,6 @@
 
     <div class="result-panel" [attr.aria-label]="'molarFractions.result.ariaLabel' | transloco">
       <div class="panel-heading result-heading">
-        <p class="panel-kicker">{{ 'molarFractions.result.ariaLabel' | transloco }}</p>
         <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
       </div>
 
@@ -206,12 +205,6 @@
           resultData.metadata.totalSpecies }}</p>
         <p><strong>{{ 'molarFractions.result.metadata.points' | transloco }}</strong> {{
           resultData.metadata.totalPoints }}</p>
-      </div>
-
-      <div class="action-row export-row">
-        <button class="btn-secondary" (click)="exportCsv()" [disabled]="resultData === null">
-          {{ 'molarFractions.actions.exportCsv' | transloco }}
-        </button>
       </div>
 
       @if (resultData.rows.length === 0) {
@@ -271,6 +264,12 @@
       </div>
       }
       }
+
+      <div class="action-row export-row">
+        <button class="btn-secondary" (click)="exportCsv()" [disabled]="resultData === null">
+          {{ 'molarFractions.actions.exportCsv' | transloco }}
+        </button>
+      </div>
 
       <div class="table-wrap result-table-wrap">
         <table class="result-table">
