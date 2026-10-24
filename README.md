@@ -393,13 +393,16 @@ cd frontend && npm install && npm start  # http://localhost:4200
 
 Probar el modo abierto en local exige broker y worker reales: Redis en `localhost:6379` y `poetry run celery -A config worker -l info` desde `backend/`. Sin broker el despacho no avanza y el job queda en `pending` (ver §19).
 
-## 11) Docker Compose
+## 11) Docker (solo producción)
+
+Docker solo se usa para producción. Desarrollo es nativo (ver §10: `poetry` + `npm`);
+si acaso, solo Redis puede levantarse con Docker como broker local.
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.dev.yml up -d  # opcional, solo redis en 6380
 ```
 
-Servicios: `redis`, `backend` (migrate + API sin worker), `celery-worker`, `celery-beat`, `frontend` (hot reload). `docker-compose.yml` pertenecía al stack antiguo (`apps.guzman-lopez.com`), retirado el 2026-09-25; la producción actual se sirve con `docker-compose.libres.yml` (ver §19). Si falta el JAR de AMBIT, el backend intenta descargarlo una vez; sin él solo fallan las rutas AMBIT.
+`docker-compose.dev.yml` levanta únicamente `redis`. `docker-compose.yml` pertenecía al stack antiguo (`apps.guzman-lopez.com`), retirado el 2026-09-25; la producción actual se sirve con `docker-compose.libres.yml` (ver §19). Si falta el JAR de AMBIT, el backend intenta descargarlo una vez; sin él solo fallan las rutas AMBIT.
 
 `docker-compose.libres.yml` es el stack de producción (modo abierto, ver §19): proyecto, volúmenes, base de datos y colas propios; expone backend en `8090` y frontend en `4220`. Se despliega en `/home/deploy/chemistry-apps-libres` y sirve `https://apps.agalano.com`; no comparte nada con el stack antiguo retirado (`docker-compose.yml`).
 
@@ -431,7 +434,7 @@ Workflows: `ci-deploy.yml` (valida backend `manage.py test` + frontend `npm run 
 
 `deploy-libres.yml` despliega la producción `https://apps.agalano.com` (modo abierto) en el stack aislado: se dispara con push a `main` y a la rama de trabajo (cambios solo-docs no despliegan) y termina con smoke HTTP contra `/` y `/api/public/catalog/`. Detalle en §19.
 
-Tests: backend `manage.py test` (plugins se prueban directo con callbacks mock; Channels en memoria), frontend Vitest (`npm test`, cobertura `test:coverage:ci`). SonarQube en `localhost:9000` (`chemistry-apps`); generar antes `bash scripts/generate_sonar_coverage.sh`. Cobertura ~79.5% backend, ~82.6% frontend. Comandos exactos en `AGENTS.md`.
+Tests: backend `manage.py test` (plugins se prueban directo con callbacks mock; Channels en memoria), frontend Vitest (`npm test`, cobertura `test:coverage:ci`). SonarQube en `localhost:9000` (`chemistry-apps`); generar antes `bash scripts/generate_sonar_coverage.sh`. Cobertura local 2026-10-23: backend 94% (`backend/coverage.xml`, line-rate 0.9418, 17782 stmts), frontend 84.6% lcov (`frontend/coverage/frontend/lcov-sonar.info`, 7546/8920 líneas, 131 archivos; stmt 84.0%, funcs 83.3%, branch 74.6%). Sonar server tras scan 2026-10-23: coverage global 51.0% (sin e2e, `frontend/coverage/e2e/lcov.info` ausente), gate OK, bugs 0, vulns 0, smells 1 (`typescript:S3358` en `chunk-load-recovery.ts:51`), duplicación 0.7%. Comandos exactos en `AGENTS.md`.
 
 ## 14) Agregar una nueva app científica
 

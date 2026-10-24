@@ -14,7 +14,7 @@ Monorepo de aplicaciones científicas de química. Backend Django 6 + DRF + Cele
 | Cache/Broker | Redis 7 |
 | Calidad | Ruff, ESLint, SonarQube (localhost:9000) |
 | OpenAPI | drf-spectacular → `scripts/create_openapi.py` |
-| Contenedores | Docker Compose (app + worker + redis + db + sonar) |
+| Contenedores | Docker solo prod (compose prod + scanner Sonar); dev nativo, si acaso solo redis |
 
 ---
 
@@ -292,7 +292,8 @@ cd frontend && npm run api:generate
 - Token: no se versiona — créalo en SonarQube y expórtalo como `SONAR_TOKEN` en tu `.env` local (gitignored)
 - Project key: `chemistry-apps`
 - Para cobertura real, generar reportes antes del scan: `bash scripts/generate_sonar_coverage.sh`
-- Cobertura actual: ~79.5% backend, ~82.6% frontend
+- Cobertura local 2026-10-23: backend 94% (`backend/coverage.xml`, line-rate 0.9418) con `ruff.json` 0 issues; frontend 84.6% lcov (`frontend/coverage/frontend/lcov-sonar.info`, 131 archivos) con `eslint.json` 0 errors / 10 warnings
+- Sonar server 2026-10-23: coverage global 51.0% (falta e2e `frontend/coverage/e2e/lcov.info`), quality gate OK (new_coverage 81.5, 0 violations), bugs 0, vulns 0, smells 1 (`typescript:S3358` `chunk-load-recovery.ts:51`), duplicación 0.7%
 
 ---
 
