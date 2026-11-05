@@ -219,6 +219,15 @@
   margin-bottom: 0.6rem;
 }
 
+/* Diagrama de túnel: tarjeta con el potencial y la función de onda. */
+.chart-block {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.5rem 0.6rem 0.2rem;
+  margin-bottom: 0.65rem;
+}
+
 .events-header {
   display: flex;
   justify-content: space-between;

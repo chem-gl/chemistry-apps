@@ -12,6 +12,7 @@ import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
 import { JobStatusPanelComponent } from '../core/shared/components/job-status-panel/job-status-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
+import { TunnelingProfileChartComponent } from '../core/shared/components/tunneling-profile-chart/tunneling-profile-chart.component';
 import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
 
 @Component({
@@ -23,6 +24,7 @@ import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
     ScientificAppHeaderComponent,
     JobStatusPanelComponent,
     ScientificDocPanelComponent,
+    TunnelingProfileChartComponent,
   ],
   providers: [TunnelWorkflowService],
   templateUrl: './tunnel.component.html',

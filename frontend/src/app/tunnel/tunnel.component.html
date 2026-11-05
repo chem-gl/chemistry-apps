@@ -69,6 +69,14 @@
         <p>{{ 'tunnel.result.labels.kappaTst' | transloco }} {{ formatOutputValue(resultData.kappaTst) }}</p>
       </div>
 
+      <!-- Diagrama científico de túnel: potencial de Eckart y función de onda |ψ|². -->
+      <div class="chart-block">
+        <app-tunneling-profile-chart [barrierKcalMol]="resultData.reactionBarrierZpe"
+          [reactionEnergyKcalMol]="resultData.reactionEnergyZpe" [u]="resultData.u"
+          [alpha1]="resultData.alpha1" [alpha2]="resultData.alpha2" [temperatureK]="resultData.temperature"
+          [ariaLabel]="'tunnel.result.chart.ariaLabel' | transloco" />
+      </div>
+
       <div class="action-row export-row">
         <button class="btn-secondary" (click)="exportCsv()" [disabled]="workflow.resultData() === null">
           {{ 'tunnel.actions.exportCsv' | transloco }}

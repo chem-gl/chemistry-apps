@@ -60,6 +60,15 @@
   }
 }
 
+/* Diagrama de túnel: tarjeta con el potencial de Eckart y la función de onda |ψ|². */
+.chart-block {
+  margin-top: 0.65rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 0.5rem 0.6rem 0.2rem;
+}
+
 .kv-grid {
   display: grid;
   grid-template-columns: max-content 1fr;

@@ -315,6 +315,16 @@
         </div>
       </div>
 
+      <!-- Diagrama científico de túnel: potencial de Eckart y función de onda |ψ|². -->
+      @if (resultData.tunnelU !== null && resultData.tunnelAlpha1 !== null && resultData.tunnelAlpha2 !== null) {
+      <div class="chart-block">
+        <app-tunneling-profile-chart [barrierKcalMol]="resultData.gibbsActivationKcalMol"
+          [reactionEnergyKcalMol]="resultData.gibbsReactionKcalMol" [u]="resultData.tunnelU"
+          [alpha1]="resultData.tunnelAlpha1" [alpha2]="resultData.tunnelAlpha2"
+          [temperatureK]="resultData.temperatureK" [ariaLabel]="'easyRate.result.chart.ariaLabel' | transloco" />
+      </div>
+      }
+
       }
 
     </section>

@@ -1,0 +1,4 @@
+<!-- tunneling-profile-chart.component.html: Host del diagrama de túnel; no renderiza nada sin datos válidos. -->
+@if (chartOptions(); as options) {
+<app-scientific-chart [options]="options" [ariaLabel]="resolvedAriaLabel()" [chartHeight]="chartHeight" />
+}
