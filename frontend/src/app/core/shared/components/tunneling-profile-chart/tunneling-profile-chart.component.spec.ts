@@ -111,21 +111,33 @@ describe('buildPotentialProfile', () => {
     expect(Math.abs(maximum - 3.5)).toBeLessThanOrEqual(0.01);
   });
 
-  it('tiende a 0 en -∞ y a ΔE en +∞', () => {
+  it('es una campana sech² simétrica: colas a 0 y máximo V₀ en el TS', () => {
     const profile = buildPotentialProfile(3.5, -8.2);
     expect(profile).not.toBeNull();
     const points = profile ?? [];
     const firstValue = points[0][1];
     const lastValue = points[points.length - 1][1];
+    const peakIndex = points.reduce(
+      (best, point, index) => (point[1] > points[best][1] ? index : best),
+      0,
+    );
 
-    expect(Math.abs(firstValue - 0)).toBeLessThanOrEqual(0.01);
-    expect(Math.abs(lastValue - -8.2)).toBeLessThanOrEqual(0.01);
+    // Colas a ambos lados tienden a 0 (campana centrada en x = 0).
+    expect(firstValue).toBeLessThanOrEqual(0.01);
+    expect(lastValue).toBeLessThanOrEqual(0.01);
+    expect(Math.abs(points[peakIndex][0])).toBeLessThanOrEqual(0.01);
+    // Simetría: V(-x) == V(x).
+    expect(Math.abs(points[0][1] - points[points.length - 1][1])).toBeLessThanOrEqual(1e-9);
   });
 
-  it('cubre x ∈ [-2.5L, 2.5L] y devuelve null sin barrera positiva', () => {
+  it('cubre un rango simétrico alrededor de x = 0 y devuelve null sin barrera positiva', () => {
     const profile = buildPotentialProfile(3.5, -8.2);
-    expect(profile?.[0][0]).toBeCloseTo(-2.5, 10);
-    expect(profile?.[(profile?.length ?? 1) - 1][0]).toBeCloseTo(2.5, 10);
+    const firstX = profile?.[0][0] ?? 0;
+    const lastX = profile?.[(profile?.length ?? 1) - 1][0] ?? 0;
+    // Simétrico y suficientemente ancho para ver las colas planas de la barrera.
+    expect(firstX).toBeLessThan(-1);
+    expect(lastX).toBeGreaterThan(1);
+    expect(firstX).toBeCloseTo(-lastX, 10);
     expect(buildPotentialProfile(0, -8.2)).toBeNull();
     expect(buildPotentialProfile(3.5, 4)).toBeNull();
   });
@@ -149,10 +161,12 @@ describe('buildTunnelingSeries', () => {
 
   it('deriva k_BT del modelo cuando no hay temperatura', () => {
     const series = buildTunnelingSeries({ ...validParameters, temperatureK: null });
+    // k_BT = 2π·V‡/(α₁·u); con el ejemplo coincide con R·T a 298.15 K.
     expect(series?.thermalEnergyKcalMol).toBeCloseTo(
-      3.5 / (EXAMPLE_ALPHA1 * EXAMPLE_U),
+      (2 * Math.PI * 3.5) / (EXAMPLE_ALPHA1 * EXAMPLE_U),
       10,
     );
+    expect(series?.thermalEnergyKcalMol).toBeCloseTo(0.5925, 3);
   });
 });
 

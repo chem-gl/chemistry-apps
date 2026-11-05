@@ -8,17 +8,19 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 const PI = Math.PI;
 
-/** Longitud característica L del potencial de Eckart (coordenada de reacción adimensional). */
-const CHARACTERISTIC_LENGTH = 1;
+/** Longitud característica L del potencial de Eckart (coordenada de reacción adimensional).
+ *  Pequeña a propósito: la barrera debe verse estrecha, no una joroba ancha. */
+const CHARACTERISTIC_LENGTH = 0.9;
 /** Puntos de muestreo del perfil de potencial (~400 como pide la especificación). */
 const POTENTIAL_SAMPLE_COUNT = 400;
-/** Extensión del perfil de potencial en múltiplos de L (±2.5L). */
-const PROFILE_EXTENT_IN_LENGTHS = 2.5;
+/** Extensión del perfil de potencial en múltiplos de L (±1.6L). */
+const PROFILE_EXTENT_IN_LENGTHS = 1.6;
 /** Semi-anchura de la barrera estilizada en la función de onda, en múltiplos de L. */
 const BARRIER_HALF_WIDTH_IN_LENGTHS = 0.5;
-// Número de onda estilizado: con 4π/L y bordes en ±0.5L la onda llega a un máximo de
-// interferencia justo en x = ±0.5L, así los tres tramos empalman sin saltos visibles.
-const WAVE_NUMBER = 4 * PI;
+// Número de onda elegido para que el borde de la barrera caiga en un máximo de |ψ|²
+// (k·edge = π): el empalme entre los tres tramos es continuo y quedan ~2 oscilaciones
+// por lado, como en los diagramas de túnel de libro de texto.
+const WAVE_NUMBER = PI / (BARRIER_HALF_WIDTH_IN_LENGTHS * CHARACTERISTIC_LENGTH);
 /** Muestreo por tramo de la función de onda (izquierda, barrera, derecha). */
 const LEFT_SEGMENT_SAMPLE_COUNT = 200;
 const BARRIER_SEGMENT_SAMPLE_COUNT = 40;
@@ -27,8 +29,6 @@ const RIGHT_SEGMENT_SAMPLE_COUNT = 160;
 const GAS_CONSTANT_KCAL_PER_MOL_K = 0.00198720425864083;
 /** Probabilidad mínima como denominador del decaimiento (evita log(0)). */
 const MIN_TRANSMISSION_FOR_DECAY = 1e-12;
-/** Iteraciones de bisección para resolver la amplitud del término sech². */
-const AMPLITUDE_SOLVE_ITERATIONS = 80;
 
 /** Punto de una serie ECharts: [coordenada de reacción, valor]. */
 export type ChartPoint = [number, number];
@@ -155,29 +155,19 @@ export function transmissionProbability(
 /**
  * Energía térmica en kcal/mol de la línea horizontal del gráfico.
  * Si el job trae temperatura se usa k_BT = R·T; si no, se deriva del propio modelo:
- * α₁ = V‡/(h c ν̃) y u = h c ν̃/(k_BT) ⇒ k_BT = V‡/(α₁·u).
+ * α₁ = 2π·V‡/(h c ν̃) (backend) y u = h c ν̃/(k_BT) ⇒ k_BT = 2π·V‡/(α₁·u).
  */
 export function resolveThermalEnergyKcalMol(parameters: ValidTunnelingParameters): number {
   if (parameters.temperatureK !== null && Number.isFinite(parameters.temperatureK)) {
     return GAS_CONSTANT_KCAL_PER_MOL_K * parameters.temperatureK;
   }
 
-  return parameters.barrierKcalMol / (parameters.alpha1 * parameters.u);
-}
-
-function logisticValue(scaledCoordinate: number): number {
-  // Sigmoide s(x) = 1/(1+exp(-2πx/L)); se evita el desbordamiento del exponencial.
-  if (scaledCoordinate > 700) {
-    return 1;
-  }
-  if (scaledCoordinate < -700) {
-    return 0;
-  }
-  return 1 / (1 + Math.exp(-scaledCoordinate));
+  return (2 * Math.PI * parameters.barrierKcalMol) / (parameters.alpha1 * parameters.u);
 }
 
 function sechSquaredValue(scaledCoordinate: number): number {
-  if (Math.abs(scaledCoordinate) > 350) {
+  // sech^2 con guarda numérica: cosh desborda para |z| > ~700.
+  if (Math.abs(scaledCoordinate) > 40) {
     return 0;
   }
   const hyperbolicCosine = Math.cosh(scaledCoordinate);
@@ -185,19 +175,13 @@ function sechSquaredValue(scaledCoordinate: number): number {
 }
 
 /**
- * Potencial asimétrico de Eckart: V(x) = ΔE·s(x) + A·sech²(2πx/L).
- * A es la amplitud del término sech² resuelta para que max(V) coincida con la barrera.
+ * Potencial de Eckart canónico: campana simétrica V(x) = V₀·sech²(2πx/L).
+ * Es la forma que representa el túnel a través de una barrera: máximo V₀ en el
+ * TS (x = 0) y colas que tienden a 0 a ambos lados. La energía de reacción ΔE
+ * se dibuja como línea de referencia de los productos, no deformando la campana.
  */
-export function evaluateEckartPotential(
-  x: number,
-  reactionEnergyKcalMol: number,
-  sechAmplitudeKcalMol: number,
-): number {
-  const scaledCoordinate = (2 * PI * x) / CHARACTERISTIC_LENGTH;
-  return (
-    reactionEnergyKcalMol * logisticValue(scaledCoordinate) +
-    sechAmplitudeKcalMol * sechSquaredValue(scaledCoordinate)
-  );
+export function evaluateEckartPotential(x: number, barrierKcalMol: number): number {
+  return barrierKcalMol * sechSquaredValue((2 * PI * x) / CHARACTERISTIC_LENGTH);
 }
 
 function buildUniformCoordinates(start: number, end: number, sampleCount: number): number[] {
@@ -209,65 +193,6 @@ function buildUniformCoordinates(start: number, end: number, sampleCount: number
   return coordinates;
 }
 
-function maxPotentialOnGrid(
-  coordinates: ReadonlyArray<number>,
-  reactionEnergyKcalMol: number,
-  sechAmplitudeKcalMol: number,
-): number {
-  let maximum = -Infinity;
-  for (const x of coordinates) {
-    const value = evaluateEckartPotential(x, reactionEnergyKcalMol, sechAmplitudeKcalMol);
-    if (value > maximum) {
-      maximum = value;
-    }
-  }
-  return maximum;
-}
-
-/**
- * Resuelve la amplitud A del término sech² tal que max(V(x)) == barrera.
- * El máximo crece de forma monótona con A (A no es negativo), así que basta una
- * bisección sobre [0, A_alto]; A_alto se duplica hasta sobrepasar la barrera.
- * Devuelve null si no existe solución (p. ej. ΔE por encima de la barrera).
- */
-function solveSechAmplitude(
-  reactionEnergyKcalMol: number,
-  barrierKcalMol: number,
-  coordinates: ReadonlyArray<number>,
-): number | null {
-  if (
-    maxPotentialOnGrid(coordinates, reactionEnergyKcalMol, 0) >= barrierKcalMol ||
-    maxPotentialOnGrid(coordinates, reactionEnergyKcalMol, 0) === -Infinity
-  ) {
-    return null;
-  }
-
-  let low = 0;
-  let high = Math.max(barrierKcalMol, 1);
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    if (maxPotentialOnGrid(coordinates, reactionEnergyKcalMol, high) >= barrierKcalMol) {
-      break;
-    }
-    high *= 2;
-  }
-
-  for (let iteration = 0; iteration < AMPLITUDE_SOLVE_ITERATIONS; iteration += 1) {
-    const middle = (low + high) / 2;
-    if (maxPotentialOnGrid(coordinates, reactionEnergyKcalMol, middle) >= barrierKcalMol) {
-      high = middle;
-    } else {
-      low = middle;
-    }
-  }
-
-  const amplitude = (low + high) / 2;
-  return Number.isFinite(amplitude) && amplitude > 0 ? amplitude : null;
-}
-
-/**
- * Perfil de potencial V(x) en x ∈ [-2.5L, 2.5L] con ~400 puntos.
- * Devuelve null si la barrera no es positiva o si la forma no admite el ajuste.
- */
 export function buildPotentialProfile(
   barrierKcalMol: number,
   reactionEnergyKcalMol: number,
@@ -275,26 +200,16 @@ export function buildPotentialProfile(
   if (
     !Number.isFinite(barrierKcalMol) ||
     !Number.isFinite(reactionEnergyKcalMol) ||
-    barrierKcalMol <= 0
+    barrierKcalMol <= 0 ||
+    reactionEnergyKcalMol >= barrierKcalMol
   ) {
+    // Sin barrera positiva, o productos por encima del TS (no físico en este modelo).
     return null;
   }
 
   const extent = PROFILE_EXTENT_IN_LENGTHS * CHARACTERISTIC_LENGTH;
   const coordinates = buildUniformCoordinates(-extent, extent, POTENTIAL_SAMPLE_COUNT);
-  const sechAmplitude = solveSechAmplitude(
-    reactionEnergyKcalMol,
-    barrierKcalMol,
-    coordinates,
-  );
-  if (sechAmplitude === null) {
-    return null;
-  }
-
-  return coordinates.map((x): ChartPoint => [
-    x,
-    evaluateEckartPotential(x, reactionEnergyKcalMol, sechAmplitude),
-  ]);
+  return coordinates.map((x): ChartPoint => [x, evaluateEckartPotential(x, barrierKcalMol)]);
 }
 
 /**
@@ -308,17 +223,30 @@ export function buildProbabilityDensityProfile(
   xMin: number,
   xMax: number,
 ): ChartPoint[] {
-  const probability = Math.min(Math.max(transmission, 0), 1);
+  const safeTransmission = Number.isFinite(transmission) ? transmission : 0;
+  const probability = Math.min(Math.max(safeTransmission, 0), 1);
   const reflectionAmplitude = Math.sqrt(1 - probability);
-  const transmittedAmplitude = Math.sqrt(probability);
   const barrierEdge = BARRIER_HALF_WIDTH_IN_LENGTHS * CHARACTERISTIC_LENGTH;
   const leftEdge = -barrierEdge;
   const rightEdge = barrierEdge;
-  // Con k = 4π/L los bordes caen en un máximo (cos = 1): el empalme es continuo.
-  const leftCrest = Math.pow(1 + reflectionAmplitude, 2);
+  // Amplitud transmitida efectiva: acota el decaimiento y la onda derecha, así el
+  // empalme en x = +edge es exacto también cuando P ≈ 0.
+  const transmittedDensity = Math.max(probability, MIN_TRANSMISSION_FOR_DECAY);
+
+  const leftDensity = (x: number): number => {
+    const reflectedPhase = WAVE_NUMBER * (2 * leftEdge - x);
+    const amplitude = Math.cos(WAVE_NUMBER * x) + reflectionAmplitude * Math.cos(reflectedPhase);
+    return amplitude * amplitude;
+  };
+
+  // Continuidad estricta en los bordes: se evalúa la onda incidente/reflejada en
+  // x = leftEdge y se arranca el decaimiento desde ese valor real (no desde un
+  // máximo teórico), de modo que no aparecen saltos verticales en la gráfica.
+  const leftBoundaryDensity = leftDensity(leftEdge);
+  const decayStart = Math.max(leftBoundaryDensity, transmittedDensity);
   const decayConstant =
-    Math.log(leftCrest / Math.max(probability, MIN_TRANSMISSION_FOR_DECAY)) /
-    (2 * (rightEdge - leftEdge));
+    Math.log(decayStart / transmittedDensity) / (2 * (rightEdge - leftEdge));
+  const transmittedAmplitude = Math.sqrt(transmittedDensity);
 
   const points: ChartPoint[] = [];
   const leftCoordinates = buildUniformCoordinates(
@@ -327,9 +255,7 @@ export function buildProbabilityDensityProfile(
     LEFT_SEGMENT_SAMPLE_COUNT,
   );
   for (const x of leftCoordinates) {
-    const reflectedPhase = WAVE_NUMBER * (2 * leftEdge - x);
-    const amplitude = Math.cos(WAVE_NUMBER * x) + reflectionAmplitude * Math.cos(reflectedPhase);
-    points.push([x, amplitude * amplitude]);
+    points.push([x, leftDensity(x)]);
   }
 
   const barrierCoordinates = buildUniformCoordinates(
@@ -338,7 +264,7 @@ export function buildProbabilityDensityProfile(
     BARRIER_SEGMENT_SAMPLE_COUNT,
   );
   for (const x of barrierCoordinates) {
-    const decayed = leftCrest * Math.exp(-2 * decayConstant * (x - leftEdge));
+    const decayed = decayStart * Math.exp(-2 * decayConstant * (x - leftEdge));
     points.push([x, decayed]);
   }
 
@@ -377,9 +303,10 @@ export function buildTunnelingSeries(
     return null;
   }
 
-  // Energía térmica adimensional del modelo reducido: E = u. Es la convención del
-  // backend, donde las energías se expresan en unidades de la energía del modo
-  // imaginario (u = h c ν̃ / k_BT); con E = u se evalúa P(E) una sola vez.
+  // P(E) se evalúa una sola vez, en E = u, tal como pide la especificación del
+  // diagrama. Ojo: en el modelo del backend las energías adimensionales están en
+  // unidades de k_BT (v₁ = V‡/k_BT), de modo que la energía térmica estricta sería
+  // E = 1; el valor se rotula como "P(E = u)" para no confundirlo con P(k_BT).
   const transmission = transmissionProbability(
     parameters.u,
     parameters.u,
@@ -449,7 +376,35 @@ export function buildTunnelingChartOptions(
         borderRadius: 10,
         padding: [4, 8],
       },
-      data: [{ name: 'barrier', coord: [series.barrierPeak[0], series.barrierPeak[1]] }],
+      data: [
+        { name: 'barrier', coord: [series.barrierPeak[0], series.barrierPeak[1]] },
+        {
+          name: 'reactants',
+          coord: [series.xMin, 0],
+          symbolSize: 7,
+          label: {
+            show: true,
+            position: 'bottom',
+            formatter: 'R (0)',
+            color: '#6a4c93',
+            fontSize: 11,
+            fontWeight: 700,
+          },
+        },
+        {
+          name: 'products',
+          coord: [series.xMax, parameters.reactionEnergyKcalMol],
+          symbolSize: 7,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: `P (${formatFixed(parameters.reactionEnergyKcalMol, 1)})`,
+            color: '#6a4c93',
+            fontSize: 11,
+            fontWeight: 700,
+          },
+        },
+      ],
     },
     markLine: {
       silent: true,
@@ -474,7 +429,6 @@ export function buildTunnelingChartOptions(
     showSymbol: false,
     lineStyle: { width: 1.8, color: '#0277bd' },
     itemStyle: { color: '#0277bd' },
-    areaStyle: { color: 'rgba(2, 119, 189, 0.12)' },
     z: 3,
   };
 
@@ -489,20 +443,6 @@ export function buildTunnelingChartOptions(
     silent: true,
     showSymbol: false,
     lineStyle: { color: '#d97706', type: 'dashed', width: 1.6 },
-    markPoint: {
-      silent: true,
-      symbol: 'circle',
-      symbolSize: 1,
-      label: {
-        show: true,
-        position: 'right',
-        formatter: `k_BT ≈ ${formatFixed(series.thermalEnergyKcalMol, 2)} kcal/mol`,
-        color: '#d97706',
-        fontSize: 11,
-      },
-      itemStyle: { color: '#d97706' },
-      data: [{ name: 'thermal', coord: [series.xMin, series.thermalEnergyKcalMol] }],
-    },
     z: 5,
   };
 
@@ -510,7 +450,10 @@ export function buildTunnelingChartOptions(
     parameters.temperatureK !== null && Number.isFinite(parameters.temperatureK)
       ? ` · T = ${formatFixed(parameters.temperatureK, 2)} K`
       : '';
-  const caption = `P(E) = ${formatFixed(series.transmissionProbability, 3)}${temperatureCaption}`;
+  const caption =
+    `P(E = u) = ${formatFixed(series.transmissionProbability, 3)}` +
+    ` · k_BT ≈ ${formatFixed(series.thermalEnergyKcalMol, 2)} kcal/mol` +
+    temperatureCaption;
 
   return {
     animation: false,
@@ -525,6 +468,18 @@ export function buildTunnelingChartOptions(
       data: ['V(x)', '|ψ|²', 'Thermal energy'],
     },
     graphic: [
+      {
+        type: 'text',
+        right: 30,
+        top: 34,
+        silent: true,
+        style: {
+          text: 'V(x) = V₀·sech²(2πx/L)',
+          fill: '#6a4c93',
+          fontSize: 11,
+          fontWeight: 600,
+        },
+      },
       {
         type: 'text',
         left: 16,
@@ -560,7 +515,9 @@ export function buildTunnelingChartOptions(
         name: 'V (kcal/mol)',
         nameLocation: 'middle',
         nameGap: 52,
-        scale: true,
+        // Rango explícito: la campana (0..V‡) y la referencia de productos (ΔE).
+        min: Math.min(0, parameters.reactionEnergyKcalMol) - 0.4,
+        max: parameters.barrierKcalMol + 0.6,
         nameTextStyle: { color: '#5a5163', fontSize: 13, fontWeight: 700 },
         axisLabel: {
           formatter: (axisValue: number) => formatFixed(axisValue, 1),
@@ -575,7 +532,8 @@ export function buildTunnelingChartOptions(
         nameLocation: 'middle',
         nameGap: 40,
         min: 0,
-        max: 1.05,
+        // Techo holgado: la onda no debe dominar visualmente el potencial.
+        max: 1.35,
         nameTextStyle: { color: '#0277bd', fontSize: 13, fontWeight: 700 },
         axisLabel: {
           formatter: (axisValue: number) => formatFixed(axisValue, 2),
