@@ -18,6 +18,7 @@ const testGlobals = {
 export default tseslint.config(
   {
     ignores: [
+      '.angular/**',
       'dist/**',
       'coverage/**',
       'node_modules/**',

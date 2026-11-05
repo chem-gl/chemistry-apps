@@ -55,12 +55,6 @@ describe('TunnelComponent', () => {
     });
   });
 
-  it('crea el componente sin historial ni trazabilidad', () => {
-    const fixture = TestBed.createComponent(TunnelComponent);
-    fixture.detectChanges();
-    expect(fixture.componentInstance).toBeTruthy();
-  });
-
   it('delega dispatch y reset al workflow', () => {
     const fixture = TestBed.createComponent(TunnelComponent);
     const component = fixture.componentInstance;

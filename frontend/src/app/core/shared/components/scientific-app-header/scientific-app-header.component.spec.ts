@@ -34,7 +34,7 @@ describe('ScientificAppHeaderComponent', () => {
     fixture.detectChanges();
 
     expect(element.querySelector<HTMLImageElement>('.module-icon')?.getAttribute('src')).toBe(
-      'assets/cadmapy_v3_noboxes.png',
+      'assets/thumbnails/icons/cadmapy_v3_noboxes-160.webp',
     );
     expect(element.querySelector('.module-strip')?.textContent?.trim()).toBe('');
   });

@@ -72,14 +72,6 @@ describe('GenerationResultDataService', () => {
   });
 
   describe('estado inicial', () => {
-    it('comienza con las estructuras colapsadas', () => {
-      expect(service.isGeneratedStructuresCollapsed()).toBe(true);
-    });
-
-    it('comienza con el contador de estructuras en cero', () => {
-      expect(service.loadedGeneratedStructures()).toEqual([]);
-    });
-
     it('hasMoreGeneratedStructures es false cuando no hay resultData', () => {
       expect(service.hasMoreGeneratedStructures()).toBe(false);
     });

@@ -50,3 +50,6 @@ dump.rdb
 
 # Config local de Pyright/basedpyright (venv de Poetry, específico de la máquina)
 pyrightconfig.json
+
+# Scripts temporales de sondeo del E2E (no se versionan).
+frontend/.e2e-tmp/

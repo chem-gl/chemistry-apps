@@ -47,8 +47,12 @@ function rememberReload(): void {
 }
 
 function recoverFromChunkError(reason: unknown): void {
-  const message =
-    reason instanceof Error ? reason.message : typeof reason === 'string' ? reason : '';
+  let message = '';
+  if (reason instanceof Error) {
+    message = reason.message;
+  } else if (typeof reason === 'string') {
+    message = reason;
+  }
   if (!isChunkLoadError(message) || withinCooldown()) {
     return;
   }

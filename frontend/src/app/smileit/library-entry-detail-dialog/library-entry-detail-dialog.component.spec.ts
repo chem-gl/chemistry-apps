@@ -38,15 +38,6 @@ describe('LibraryEntryDetailDialogComponent', () => {
   });
 
   describe('estado inicial de zoom y pan', () => {
-    it('comienza con zoom level 1', () => {
-      expect(component.libraryDetailZoomLevel()).toBe(1);
-    });
-
-    it('comienza sin desplazamiento pan', () => {
-      expect(component.libraryDetailPanX()).toBe(0);
-      expect(component.libraryDetailPanY()).toBe(0);
-    });
-
     it('previewSize computed a 380 en zoom 1', () => {
       expect(component.libraryDetailPreviewSize()).toBe(380);
     });

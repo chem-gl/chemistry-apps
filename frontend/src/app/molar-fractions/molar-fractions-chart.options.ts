@@ -33,7 +33,7 @@ function evaluateExactFractions(pKaValues: number[], phValue: number): number[] 
   }
 
   const total = terms.reduce((sum, value) => sum + value, 0);
-  if (!(total > 0)) {
+  if (total <= 0) {
     return terms.map(() => 0);
   }
   return terms.map((value) => sanitizeFraction(value / total));

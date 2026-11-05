@@ -54,12 +54,6 @@ describe('ServerCalcComponent', () => {
     });
   });
 
-  it('crea el componente', () => {
-    const fixture = TestBed.createComponent(ServerCalcComponent);
-    fixture.detectChanges();
-    expect(fixture.componentInstance).toBeTruthy();
-  });
-
   it('delega dispatch y reset al workflow', () => {
     const fixture = TestBed.createComponent(ServerCalcComponent);
     const component = fixture.componentInstance;

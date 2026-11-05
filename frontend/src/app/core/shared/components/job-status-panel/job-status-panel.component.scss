@@ -1,0 +1,7 @@
+/* job-status-panel.component.scss: El panel es presentacional y reutiliza las clases
+   (`result-empty-card`, `status-message`, `error-message`) definidas en el scss de cada
+   app; por eso no duplica estilos aquí. `display: contents` evita que el host altere
+   el layout flex/grid del panel de resultados de la app anfitriona. */
+:host {
+  display: contents;
+}

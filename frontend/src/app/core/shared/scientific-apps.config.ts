@@ -27,6 +27,8 @@ export interface ScientificAppRouteItem {
   thumbnailIllustration?: string;
   /** Icono circular de la app (assets/*.png). Opcional: sin él se usa la ilustración. */
   iconAsset?: string;
+  /** Srcset WebP del icono (80w/160w). Opcional: acompaña a `iconAsset`. */
+  iconAssetSrcSet?: string;
 }
 
 interface ScientificAppDefinition {
@@ -40,6 +42,7 @@ interface ScientificAppDefinition {
   thumbnailScreenshot?: string;
   thumbnailIllustration?: string;
   iconAsset?: string;
+  iconAssetSrcSet?: string;
 }
 
 function createScientificAppRouteItem(definition: ScientificAppDefinition): ScientificAppRouteItem {
@@ -56,6 +59,7 @@ function createScientificAppRouteItem(definition: ScientificAppDefinition): Scie
     thumbnailScreenshot: definition.thumbnailScreenshot,
     thumbnailIllustration: definition.thumbnailIllustration,
     iconAsset: definition.iconAsset,
+    iconAssetSrcSet: definition.iconAssetSrcSet,
   };
 }
 
@@ -79,7 +83,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
-    iconAsset: 'assets/pka_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/pka_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/pka_app_icon-80.webp 80w, assets/thumbnails/icons/pka_app_icon-160.webp 160w',
   },
   {
     key: 'tunnel',
@@ -91,7 +96,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/tunnel.jpg',
-    iconAsset: 'assets/tunnel_effect_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/tunnel_effect_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/tunnel_effect_app_icon-80.webp 80w, assets/thumbnails/icons/tunnel_effect_app_icon-160.webp 160w',
   },
   {
     key: 'easy-rate',
@@ -103,7 +109,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/easy-rate.jpg',
-    iconAsset: 'assets/tst_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/tst_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/tst_app_icon-80.webp 80w, assets/thumbnails/icons/tst_app_icon-160.webp 160w',
   },
   {
     key: 'marcus',
@@ -115,7 +122,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'others',
     thumbnailScreenshot: 'assets/thumbnails/marcus.jpg',
-    iconAsset: 'assets/marcus_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/marcus_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/marcus_app_icon-80.webp 80w, assets/thumbnails/icons/marcus_app_icon-160.webp 160w',
   },
   {
     key: 'smileit',
@@ -127,7 +135,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/smileit.jpg',
-    iconAsset: 'assets/smileit_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/smileit_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/smileit_app_icon-80.webp 80w, assets/thumbnails/icons/smileit_app_icon-160.webp 160w',
   },
   {
     key: 'sa-score',
@@ -139,7 +148,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/sa-score.jpg',
-    iconAsset: 'assets/synth_access_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/synth_access_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/synth_access_app_icon-80.webp 80w, assets/thumbnails/icons/synth_access_app_icon-160.webp 160w',
   },
   {
     key: 'toxicity-properties',
@@ -151,7 +161,8 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     freeAccess: true,
     group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/toxicity-properties.jpg',
-    iconAsset: 'assets/toxicity_app_icon.png',
+    iconAsset: 'assets/thumbnails/icons/toxicity_app_icon-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/toxicity_app_icon-80.webp 80w, assets/thumbnails/icons/toxicity_app_icon-160.webp 160w',
   },
   {
     key: 'cadma-py',
@@ -160,10 +171,12 @@ const SCIENTIFIC_APP_DEFINITIONS: ReadonlyArray<ScientificAppDefinition> = [
     description:
       'Reference-family management, transparent selection scores and ergonomic comparison charts for compound prioritization.',
     visibleInMenus: true,
-    freeAccess: true,
+    // Con cuenta siempre: sin ruta pública en el backend (docs §19).
+    freeAccess: false,
     group: 'cadma',
     thumbnailScreenshot: 'assets/thumbnails/cadma-py.jpg',
-    iconAsset: 'assets/cadmapy_v3_noboxes.png',
+    iconAsset: 'assets/thumbnails/icons/cadmapy_v3_noboxes-160.webp',
+    iconAssetSrcSet: 'assets/thumbnails/icons/cadmapy_v3_noboxes-80.webp 80w, assets/thumbnails/icons/cadmapy_v3_noboxes-160.webp 160w',
   },
   {
     key: 'server-calc',

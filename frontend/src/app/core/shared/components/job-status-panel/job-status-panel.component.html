@@ -1,0 +1,35 @@
+<!-- job-status-panel.component.html: Ramas idle/dispatching/progress/error con las mismas
+     clases (`result-empty-card`, `status-message`, `error-message`) que los templates de app. -->
+@if (showIdleWhen() && activeSection() === 'idle') {
+<div class="result-empty-card">
+  @if (titleKey(); as idleTitleKey) {
+  <strong>{{ idleTitleKey | transloco }}</strong>
+  }
+  @if (subtitleKey(); as idleSubtitleKey) {
+  <p>{{ idleSubtitleKey | transloco }}</p>
+  }
+  @if (runHintKey(); as idleRunHintKey) {
+  <span class="result-empty-hint">{{ idleRunHintKey | transloco }}</span>
+  }
+</div>
+}
+
+@if (activeSection() === 'dispatching') {
+@if (submittingKey(); as dispatchingKey) {
+<p class="status-message">{{ dispatchingKey | transloco }}</p>
+}
+}
+
+@if (activeSection() === 'progress') {
+@if (useProgressCard()) {
+<app-job-progress-card [jobId]="jobId()" [progressPercentage]="progressPercentage()"
+  [progressMessage]="progressMessage() ?? ''"
+  [progressAriaLabel]="(progressAriaLabelKey() ?? '') | transloco"></app-job-progress-card>
+} @else {
+<p class="status-message">{{ progressMessage() }}</p>
+}
+}
+
+@if (activeSection() === 'error' && errorMessage(); as currentError) {
+<p class="error-message" role="alert">{{ currentError }}</p>
+}

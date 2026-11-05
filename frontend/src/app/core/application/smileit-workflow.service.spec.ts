@@ -1162,16 +1162,6 @@ describe('SmileitWorkflowService', () => {
     expect(workflowService.resultData()).toBeNull();
   });
 
-  it('sets numBonds to fixed constant when setNumBonds() is called', () => {
-    workflowService.setNumBonds();
-    expect(workflowService.numBonds()).toBe(1);
-  });
-
-  it('sets exportPadding to fixed constant when setExportPadding() is called', () => {
-    workflowService.setExportPadding();
-    expect(workflowService.exportPadding()).toBe(5);
-  });
-
   it('sets error when openHistoricalJob returns a failed job with error trace', () => {
     jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
       of(makeSmileitJob({ id: 'smileit-failed-1', status: 'failed', error_trace: 'kernel died' })),

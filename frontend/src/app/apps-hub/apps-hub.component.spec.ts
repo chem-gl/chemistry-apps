@@ -71,14 +71,14 @@ describe('AppsHubComponent', () => {
     expect(hub.appGroups().map((group) => group.id)).toEqual(['cadma', 'others']);
   });
 
-  it('no bloquea para invitados las apps de acceso libre', () => {
+  it('bloquea para invitados solo las apps que piden cuenta', () => {
     sessionStub.isAuthenticated.set(false);
 
     const cadmaPy = CADMA_GROUP_APP_ROUTE_ITEMS.find((appItem) => appItem.key === 'cadma-py');
     const molarFractions = OTHER_GROUP_APP_ROUTE_ITEMS[0];
 
     expect(cadmaPy).toBeDefined();
-    expect(hub.isLocked(cadmaPy!)).toBe(false);
+    expect(hub.isLocked(cadmaPy!)).toBe(true);
     expect(hub.isLocked(molarFractions)).toBe(false);
   });
 
@@ -89,7 +89,7 @@ describe('AppsHubComponent', () => {
     expect(hub.isLocked(molarFractions)).toBe(true);
   });
 
-  it('lista CADMA Py con sesion aunque no tenga permiso explicito', () => {
+  it('muestra las apps con cuenta sin permiso, pero bloqueadas', () => {
     sessionStub.isAuthenticated.set(true);
     sessionStub.canAccessRoute = (_appKey: string): boolean => false;
 
@@ -100,7 +100,7 @@ describe('AppsHubComponent', () => {
 
     const cadmaPy = cadmaGroup?.apps.find((appItem) => appItem.key === 'cadma-py');
     const molarFractions = OTHER_GROUP_APP_ROUTE_ITEMS[0];
-    expect(hub.isLocked(cadmaPy!)).toBe(false);
+    expect(hub.isLocked(cadmaPy!)).toBe(true);
     expect(hub.isLocked(molarFractions)).toBe(false);
   });
 

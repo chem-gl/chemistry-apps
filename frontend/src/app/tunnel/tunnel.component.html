@@ -47,21 +47,10 @@
     <section class="result-panel" [attr.aria-label]="'tunnel.result.ariaLabel' | transloco">
       <h3>{{ 'tunnel.result.title' | transloco }}</h3>
 
-      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
-      @if (workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'tunnel.result.ariaLabel' | transloco }}</strong>
-        <span class="result-empty-hint">{{ 'tunnel.actions.run' | transloco }}</span>
-      </div>
-      }
-
-      @if (workflow.activeSection() === 'dispatching') {
-      <p class="status-message">{{ 'tunnel.result.submitting' | transloco }}</p>
-      }
-
-      @if (workflow.activeSection() === 'progress') {
-      <p class="status-message">{{ workflow.progressMessage() }}</p>
-      }
+      <!-- Estado inicial, envío, progreso y error: panel compartido de estado del job. -->
+      <app-job-status-panel [activeSection]="workflow.activeSection()" [titleKey]="'tunnel.result.ariaLabel'"
+        [runHintKey]="'tunnel.actions.run'" [submittingKey]="'tunnel.result.submitting'"
+        [progressMessage]="workflow.progressMessage()" [errorMessage]="workflow.errorMessage()" />
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
       <div class="metadata-grid">
@@ -85,10 +74,6 @@
           {{ 'tunnel.actions.exportCsv' | transloco }}
         </button>
       </div>
-      }
-
-      @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
-      <p class="error-message" role="alert">{{ currentError }}</p>
       }
     </section>
   </div>

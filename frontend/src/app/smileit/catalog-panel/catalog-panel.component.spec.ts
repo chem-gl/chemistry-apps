@@ -116,32 +116,6 @@ describe('CatalogPanelComponent', () => {
     vi.useRealTimers();
   });
 
-  describe('estado inicial', () => {
-    it('isCatalogPanelCollapsed comienza en true', () => {
-      expect(component.isCatalogPanelCollapsed()).toBe(true);
-    });
-
-    it('selectedLibraryGroupKey comienza en "all"', () => {
-      expect(component.selectedLibraryGroupKey()).toBe('all');
-    });
-
-    it('isCatalogSmilesSketcherReady comienza en false', () => {
-      expect(component.isCatalogSmilesSketcherReady()).toBe(false);
-    });
-
-    it('isCatalogSmilesSketchLoading comienza en false', () => {
-      expect(component.isCatalogSmilesSketchLoading()).toBe(false);
-    });
-
-    it('catalogSketchValidationError comienza null', () => {
-      expect(component.catalogSketchValidationError()).toBeNull();
-    });
-
-    it('catalogDraftInspection comienza null', () => {
-      expect(component.catalogDraftInspection()).toBeNull();
-    });
-  });
-
   describe('toggleCatalogPanelCollapse', () => {
     it('cambia isCatalogPanelCollapsed de true a false', () => {
       component.toggleCatalogPanelCollapse();

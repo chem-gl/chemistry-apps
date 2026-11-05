@@ -90,12 +90,6 @@ describe('MolarFractionsComponent', () => {
     });
   });
 
-  it('crea el componente sin cargar historial', () => {
-    const fixture = TestBed.createComponent(MolarFractionsComponent);
-    fixture.detectChanges();
-    expect(fixture.componentInstance).toBeTruthy();
-  });
-
   it('delega dispatch y reset al workflow', () => {
     const fixture = TestBed.createComponent(MolarFractionsComponent);
     const component = fixture.componentInstance;

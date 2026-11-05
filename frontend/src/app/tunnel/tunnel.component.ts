@@ -10,6 +10,7 @@ import {
 } from '../core/application/tunnel-workflow.service';
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
+import { JobStatusPanelComponent } from '../core/shared/components/job-status-panel/job-status-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
 
@@ -20,6 +21,7 @@ import { TUNNEL_DOC_TABS } from './tunnel-doc-content';
     FormsModule,
     TranslocoPipe,
     ScientificAppHeaderComponent,
+    JobStatusPanelComponent,
     ScientificDocPanelComponent,
   ],
   providers: [TunnelWorkflowService],

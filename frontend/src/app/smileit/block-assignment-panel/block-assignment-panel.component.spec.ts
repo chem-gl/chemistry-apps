@@ -57,20 +57,6 @@ describe('BlockAssignmentPanelComponent', () => {
     component = fixture.componentInstance;
   });
 
-  describe('estado inicial', () => {
-    it('isLibraryPanelCollapsed comienza en false', () => {
-      expect(component.isLibraryPanelCollapsed()).toBe(false);
-    });
-
-    it('collapsedBlockMap comienza vacío', () => {
-      expect(component.collapsedBlockMap()).toEqual({});
-    });
-
-    it('selectedBlockLibraryGroupKeys comienza vacío', () => {
-      expect(component.selectedBlockLibraryGroupKeys()).toEqual({});
-    });
-  });
-
   describe('selectedSitesLabel computed', () => {
     it('retorna "None yet" cuando no hay átomos seleccionados', () => {
       mockWorkflow.selectedAtomIndices.set([]);

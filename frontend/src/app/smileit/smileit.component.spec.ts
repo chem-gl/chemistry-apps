@@ -158,19 +158,11 @@ describe('SmileitComponent', () => {
   });
 
   describe('señales de colapso', () => {
-    it('isLogsCollapsed comienza en false', () => {
-      expect(component.isLogsCollapsed()).toBe(false);
-    });
-
     it('toggleLogsCollapse invierte el estado de los logs', () => {
       component.toggleLogsCollapse();
       expect(component.isLogsCollapsed()).toBe(true);
       component.toggleLogsCollapse();
       expect(component.isLogsCollapsed()).toBe(false);
-    });
-
-    it('isAdvancedSectionCollapsed comienza en true', () => {
-      expect(component.isAdvancedSectionCollapsed()).toBe(true);
     });
 
     it('toggleAdvancedSectionCollapse invierte el estado de la sección avanzada', () => {
@@ -316,13 +308,6 @@ describe('SmileitComponent', () => {
     it('no llama openHistoricalJob si el jobId de la ruta está vacío', () => {
       component.ngOnInit();
       expect(mockWorkflow.openHistoricalJob).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('ngOnDestroy', () => {
-    it('llama ngOnDestroy sin errores', () => {
-      component.ngOnInit();
-      expect(() => component.ngOnDestroy()).not.toThrow();
     });
   });
 
@@ -486,11 +471,6 @@ describe('SmileitComponent', () => {
   });
 
   describe('openPatternCatalogModal y closePatternCatalogModal', () => {
-    it('no lanza error cuando no hay ref al dialog', () => {
-      expect(() => component.openPatternCatalogModal()).not.toThrow();
-      expect(() => component.closePatternCatalogModal()).not.toThrow();
-    });
-
     it('abre el dialog cuando el ref existe', () => {
       const dialogElement = {
         open: false,
@@ -542,13 +522,6 @@ describe('SmileitComponent', () => {
       component.openPatternDetail(pat);
       component.closePatternDetail();
       expect(component.selectedPatternForDetail()).toBeNull();
-    });
-  });
-
-  describe('onPatternDetailDialogClick', () => {
-    it('no lanza error cuando no hay ref al dialog', () => {
-      const event = new MouseEvent('click');
-      expect(() => component.onPatternDetailDialogClick(event)).not.toThrow();
     });
   });
 

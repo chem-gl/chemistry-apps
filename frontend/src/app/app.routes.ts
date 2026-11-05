@@ -118,9 +118,10 @@ export const routes: Routes = [
     loadComponent: () => import('./sa-score/sa-score.component').then((m) => m.SaScoreComponent),
   },
   {
-    // Igual que el resto: visible y usable con sesión (modo cerrado).
+    // Visible para todos; requiere sesión y permiso del grupo (appAccessGuard).
     path: 'cadma-py',
-    canActivate: [freeAccessGuard],
+    canActivate: [authGuard, appAccessGuard],
+    data: { appKey: 'cadma-py' },
     loadComponent: () => import('./cadma-py/cadma-py.component').then((m) => m.CadmaPyComponent),
   },
   {

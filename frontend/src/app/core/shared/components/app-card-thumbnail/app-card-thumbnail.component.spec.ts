@@ -15,7 +15,9 @@ const ITEM_WITH_SCREENSHOT: ScientificAppRouteItem = {
   freeAccess: true,
   group: 'others',
   thumbnailScreenshot: 'assets/thumbnails/molar-fractions.jpg',
-  iconAsset: 'assets/pka_app_icon.png',
+  iconAsset: 'assets/thumbnails/icons/pka_app_icon-160.webp',
+  iconAssetSrcSet:
+    'assets/thumbnails/icons/pka_app_icon-80.webp 80w, assets/thumbnails/icons/pka_app_icon-160.webp 160w',
 };
 
 describe('AppCardThumbnailComponent', () => {
@@ -64,6 +66,7 @@ describe('AppCardThumbnailComponent', () => {
 
     expect(component.showIcon()).toBe(true);
     expect(component.showScreenshot()).toBe(false);
+    expect(component.iconSrcSet()).toContain('pka_app_icon-80.webp 80w');
   });
 
   it('usa la ilustración en modo icon sin icono o si falla la carga', () => {

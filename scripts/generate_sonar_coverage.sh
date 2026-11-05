@@ -45,10 +45,11 @@ generate_backend_reports() {
   # Ejecutamos tests con el runner de Django para usar base de test aislada.
   # Esto evita bloqueos de sqlite que pueden aparecer al ejecutar pytest sin pytest-django.
   poetry run python -m coverage erase
-  poetry run python -m coverage run --source=apps,config,libs manage.py test
+  poetry run python -m coverage run --branch --source=apps,config,libs manage.py test
   poetry run python -m coverage xml -o coverage.xml
-  # El scanner corre desde la raíz: las rutas deben incluir el prefijo backend/.
-  sed -i 's|filename="|filename="backend/|' coverage.xml
+  # Sonar resuelve las rutas contra la raíz del repo: se eliminan <sources>
+  # absolutos y se prefija "backend/" (ver scripts/normalize_coverage_xml.py).
+  poetry run python "${SCRIPT_DIR}/normalize_coverage_xml.py" "${BACKEND_DIR}/coverage.xml" --prefix backend
   popd >/dev/null
 }
 

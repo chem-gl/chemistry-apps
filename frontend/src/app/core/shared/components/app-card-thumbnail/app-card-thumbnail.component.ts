@@ -36,6 +36,9 @@ export class AppCardThumbnailComponent {
       !this.iconFailed(),
   );
 
+  // Srcset WebP del icono (80w/160w); undefined si la app no lo define.
+  readonly iconSrcSet = computed<string | undefined>(() => this.appItem().iconAssetSrcSet);
+
   onScreenshotError(): void {
     this.screenshotFailed.set(true);
   }

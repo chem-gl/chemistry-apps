@@ -16,6 +16,7 @@
   <img
     class="card-icon-img"
     [src]="appItem().iconAsset"
+    [attr.srcset]="iconSrcSet()"
     [alt]="'scientificApps.' + appItem().key + '.title' | transloco"
     width="80"
     height="80"

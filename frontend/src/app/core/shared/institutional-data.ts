@@ -3,6 +3,8 @@ export interface DeveloperEntry {
   roleKey: string;
   affiliationKey: string | null;
   photoUrl: string | null;
+  // Srcset WebP de la foto (160w/320w). Opcional: acompaña a `photoUrl`.
+  photoSrcSet?: string;
   initials: string;
   avatarColor: string;
   link: string;
@@ -22,7 +24,8 @@ export function getDeveloperEntries(): DeveloperEntry[] {
       nameKey: 'login.developers.anniaGalano',
       roleKey: 'login.developers.roleDirector',
       affiliationKey: 'login.developers.affUAM',
-      photoUrl: 'assets/team/annia-galano.png',
+      photoUrl: 'assets/team/thumbs/annia-galano-320.webp',
+      photoSrcSet: 'assets/team/thumbs/annia-galano-160.webp 160w, assets/team/thumbs/annia-galano-320.webp 320w',
       initials: 'AG',
       avatarColor: '#4A725A',
       link: 'https://agalano.com/',
@@ -31,7 +34,8 @@ export function getDeveloperEntries(): DeveloperEntry[] {
       nameKey: 'login.developers.miguelReina',
       roleKey: 'login.developers.roleResearcher',
       affiliationKey: 'login.developers.affUNAM',
-      photoUrl: 'assets/team/miguel-reina.jpg',
+      photoUrl: 'assets/team/thumbs/miguel-reina-320.webp',
+      photoSrcSet: 'assets/team/thumbs/miguel-reina-160.webp 160w, assets/team/thumbs/miguel-reina-320.webp 320w',
       initials: 'MR',
       avatarColor: '#003C71',
       link: 'https://scholar.google.com.mx/citations?user=6icbJxoAAAAJ&hl=es',
@@ -40,7 +44,8 @@ export function getDeveloperEntries(): DeveloperEntry[] {
       nameKey: 'login.developers.luisAyala',
       roleKey: 'login.developers.roleResearcher',
       affiliationKey: 'login.developers.affUNAM',
-      photoUrl: 'assets/team/luis-ayala.jpeg',
+      photoUrl: 'assets/team/thumbs/luis-ayala-320.webp',
+      photoSrcSet: 'assets/team/thumbs/luis-ayala-160.webp 160w, assets/team/thumbs/luis-ayala-320.webp 320w',
       initials: 'LF',
       avatarColor: '#003C71',
       link: 'https://scholar.google.com.mx/citations?user=TXDPjp4AAAAJ&hl=es',
@@ -49,7 +54,8 @@ export function getDeveloperEntries(): DeveloperEntry[] {
       nameKey: 'login.developers.cesarGuzman',
       roleKey: 'login.developers.roleDeveloper',
       affiliationKey: null,
-      photoUrl: 'assets/team/cesar-guzman.jpeg',
+      photoUrl: 'assets/team/thumbs/cesar-guzman-320.webp',
+      photoSrcSet: 'assets/team/thumbs/cesar-guzman-160.webp 160w, assets/team/thumbs/cesar-guzman-320.webp 320w',
       initials: 'CG',
       avatarColor: '#6E967E',
       link: 'https://github.com/CesarGuzmanLopez',
@@ -58,7 +64,8 @@ export function getDeveloperEntries(): DeveloperEntry[] {
       nameKey: 'login.developers.eduardoGuzman',
       roleKey: 'login.developers.roleCreator',
       affiliationKey: null,
-      photoUrl: 'assets/team/eduardo-guzman.png',
+      photoUrl: 'assets/team/thumbs/eduardo-guzman-320.webp',
+      photoSrcSet: 'assets/team/thumbs/eduardo-guzman-160.webp 160w, assets/team/thumbs/eduardo-guzman-320.webp 320w',
       initials: 'EG',
       avatarColor: '#317154',
       link: 'https://scholar.google.com.mx/citations?user=yPVWngwAAAAJ&hl=es',

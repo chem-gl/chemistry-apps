@@ -7,7 +7,8 @@
         [attr.aria-label]="developer.nameKey | transloco">
         <div class="developer-avatar" [style.background]="developer.avatarColor">
           @if (developer.photoUrl) {
-          <img [src]="developer.photoUrl" [alt]="developer.nameKey | transloco" class="developer-photo"
+          <img [src]="developer.photoUrl" [attr.srcset]="developer.photoSrcSet" [alt]="developer.nameKey | transloco" class="developer-photo"
+            width="80" height="80" sizes="(max-width: 480px) 64px, 80px" loading="lazy" decoding="async"
             (error)="onDeveloperPhotoError($event, developer)" />
           } @else {
           <span class="developer-initials">{{ developer.initials }}</span>

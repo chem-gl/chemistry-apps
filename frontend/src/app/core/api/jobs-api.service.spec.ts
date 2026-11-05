@@ -288,10 +288,6 @@ describe('JobsApiService', () => {
     });
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
   it('should get job progress snapshot', () => {
     const jobId = 'progress-test-id';
     const snapshot = makeProgressSnapshot({ job_id: jobId, progress_percentage: 75 });

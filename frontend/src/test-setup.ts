@@ -15,6 +15,33 @@ try {
   // esta llamada asegura que TestBed quede operativo sin romper el flujo existente.
 }
 
+// El jsdom del builder expone window/navigator pero no localStorage en este
+// entorno (30 specs lo usan: sesión, drafts, open-mode). Polyfill en memoria
+// solo para tests; el código productivo no cambia.
+if (globalThis.localStorage === undefined) {
+  const memoryStore = new Map<string, string>();
+  globalThis.localStorage = {
+    get length(): number {
+      return memoryStore.size;
+    },
+    clear(): void {
+      memoryStore.clear();
+    },
+    getItem(key: string): string | null {
+      return memoryStore.has(key) ? (memoryStore.get(key) as string) : null;
+    },
+    key(index: number): string | null {
+      return Array.from(memoryStore.keys())[index] ?? null;
+    },
+    removeItem(key: string): void {
+      memoryStore.delete(key);
+    },
+    setItem(key: string, value: string): void {
+      memoryStore.set(String(key), String(value));
+    },
+  } as Storage;
+}
+
 function isKnownJsdomCssNoise(logArguments: unknown[]): boolean {
   return logArguments.some((argumentValue: unknown) => {
     if (typeof argumentValue === 'string') {
