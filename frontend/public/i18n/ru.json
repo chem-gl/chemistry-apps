@@ -1089,6 +1089,9 @@
         "inputEvents": "Input events:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "Диаграмма туннелирования: барьер Эккарта, волновая функция и тепловая энергия"
+      },
       "submitting": "Submitting tunnel effect job to backend...",
       "title": "Output",
       "ariaLabel": "Results and progress"
@@ -1557,6 +1560,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "Диаграмма туннелирования реакции: барьер Эккарта, волновая функция и тепловая энергия"
+      },
       "defaultTitle": "Easy-rate result",
       "thermochemistry": "Thermochemistry",
       "deltaG": "ΔG (kcal/mol)",
@@ -1702,7 +1708,21 @@
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
       "showTitleAttr": "Показать",
-      "ariaLabel": "Structural annotations"
+      "ariaLabel": "Structural annotations",
+      "controlsTitle": "Фильтры предупреждений",
+      "disableAllAlerts": "Отключить все предупреждения",
+      "enableAllAlerts": "Включить все предупреждения",
+      "privilegedToggle": "Привилегированные каркасы",
+      "categories": {
+        "hepatotoxicity": "Гепатотоксичность",
+        "reactivity": "Реакционная способность",
+        "metabolic_interference": "Метаболическое вмешательство",
+        "mutagenicity_ames": "Мутагенность (Эймс)",
+        "herg_cardiotoxicity": "Кардиотоксичность hERG",
+        "genotoxicity": "Генотоксичность",
+        "privileged_scaffold": "Привилегированный каркас",
+        "other": "Прочие предупреждения"
+      }
     },
     "inspection": {
       "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",

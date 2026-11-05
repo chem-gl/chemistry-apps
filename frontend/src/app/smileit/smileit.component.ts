@@ -26,7 +26,18 @@ import {
   SmileitCatalogEntryView,
   SmileitPatternEntryView,
   SmileitStructureInspectionView,
+  SmileitStructuralAnnotationView,
 } from '../core/api/jobs-api.service';
+import {
+  AnnotationLegendGroupView,
+  PRIVILEGED_CATEGORY_KEY,
+  RISK_CATEGORY_KEYS,
+  RiskCategoryGroupView,
+  RiskCategoryKey,
+  resolveAnnotationRiskCategory,
+  resolvePatternRiskCategory,
+  riskCategoryColor,
+} from './smileit-risk.utils';
 import {
   SmileitAssignmentBlockDraft,
   SmileitBlockWorkflowService,
@@ -87,22 +98,99 @@ export class SmileitComponent implements OnInit, OnDestroy {
   readonly isAdvancedSectionCollapsed = signal<boolean>(true);
   readonly selectedPatternForDetail = signal<SmileitPatternEntryView | null>(null);
   readonly patternEnabledState = signal<Record<string, boolean>>({});
+  /** Categorías de riesgo desactivadas por el usuario; ausencia de clave = activa. */
+  readonly disabledRiskCategories = signal<Record<string, boolean>>({});
+  /** Los andamios privilegiados se controlan con un interruptor independiente. */
+  readonly privilegedAnnotationsEnabled = signal<boolean>(true);
   readonly selectedLibraryEntryForDetail = signal<SmileitCatalogEntryView | null>(null);
   readonly libraryDetailOpenContext = signal<'browser' | 'reference'>('browser');
   readonly libraryEntryInspections = signal<Record<string, SmileitStructureInspectionView | null>>(
     {},
   );
   readonly libraryEntryInspectionErrors = signal<Record<string, string | null>>({});
-  readonly visibleInspectionAnnotations = computed(() => {
+  /** Categoría de riesgo de cada patrón del catálogo, indexada por stable_id. */
+  private readonly patternRiskCategoryByStableId = computed<Map<string, RiskCategoryKey>>(() => {
+    const categoryByStableId: Map<string, RiskCategoryKey> = new Map();
+    this.patternEntries().forEach((pattern: SmileitPatternEntryView) => {
+      categoryByStableId.set(pattern.stable_id, resolvePatternRiskCategory(pattern));
+    });
+    return categoryByStableId;
+  });
+  readonly visibleInspectionAnnotations = computed<SmileitStructuralAnnotationView[]>(() => {
     const inspectionResult: SmileitStructureInspectionView | null = this.workflow.inspection();
     if (inspectionResult === null) {
       return [];
     }
 
     const enabledState: Record<string, boolean> = this.patternEnabledState();
-    return inspectionResult.annotations.filter((annotation) => {
-      const isEnabled: boolean = enabledState[annotation.pattern_stable_id] ?? true;
-      return isEnabled;
+    return inspectionResult.annotations.filter((annotation: SmileitStructuralAnnotationView) => {
+      const isPatternEnabled: boolean = enabledState[annotation.pattern_stable_id] ?? true;
+      return isPatternEnabled && this.isAnnotationCategoryEnabled(annotation);
+    });
+  });
+  readonly annotationsAreVisible = computed<boolean>(
+    () => this.visibleInspectionAnnotations().length > 0,
+  );
+  /** Categorías presentes en el catálogo de patrones, con sus patrones y su conteo de coincidencias. */
+  readonly riskCategoryGroups = computed<RiskCategoryGroupView[]>(() => {
+    const patternsByCategory: Map<RiskCategoryKey, SmileitPatternEntryView[]> = new Map();
+    this.patternEntries().forEach((pattern: SmileitPatternEntryView) => {
+      const categoryKey: RiskCategoryKey = resolvePatternRiskCategory(pattern);
+      const patterns: SmileitPatternEntryView[] = patternsByCategory.get(categoryKey) ?? [];
+      patterns.push(pattern);
+      patternsByCategory.set(categoryKey, patterns);
+    });
+
+    const matchCountByCategory: Map<RiskCategoryKey, number> = this.countAnnotationsByCategory();
+
+    return RISK_CATEGORY_KEYS.filter((categoryKey: RiskCategoryKey) =>
+      patternsByCategory.has(categoryKey),
+    ).map((categoryKey: RiskCategoryKey): RiskCategoryGroupView => {
+      return {
+        key: categoryKey,
+        patterns: patternsByCategory.get(categoryKey) ?? [],
+        isEnabled: this.isRiskCategoryEnabled(categoryKey),
+        matchCount: matchCountByCategory.get(categoryKey) ?? 0,
+      };
+    });
+  });
+  /** Indica si todas las categorías toxicofóricas están activas (para el botón global). */
+  readonly allAlertsEnabled = computed<boolean>(() =>
+    this.riskCategoryGroups()
+      .filter((group: RiskCategoryGroupView) => group.key !== PRIVILEGED_CATEGORY_KEY)
+      .every((group: RiskCategoryGroupView) => group.isEnabled),
+  );
+  /**
+   * Anotaciones de la inspección agrupadas por categoría para la leyenda.
+   * Se conservan las anotaciones ocultas a nivel de patrón para poder restaurarlas
+   * con el ojo de cada chip; el estado del grupo refleja la categoría.
+   */
+  readonly annotationLegendGroups = computed<AnnotationLegendGroupView[]>(() => {
+    const inspectionResult: SmileitStructureInspectionView | null = this.workflow.inspection();
+    if (inspectionResult === null) {
+      return [];
+    }
+
+    const annotationsByCategory: Map<
+      RiskCategoryKey,
+      SmileitStructuralAnnotationView[]
+    > = new Map();
+    inspectionResult.annotations.forEach((annotation: SmileitStructuralAnnotationView) => {
+      const categoryKey: RiskCategoryKey = this.resolveAnnotationCategory(annotation);
+      const annotations: SmileitStructuralAnnotationView[] =
+        annotationsByCategory.get(categoryKey) ?? [];
+      annotations.push(annotation);
+      annotationsByCategory.set(categoryKey, annotations);
+    });
+
+    return RISK_CATEGORY_KEYS.filter((categoryKey: RiskCategoryKey) =>
+      annotationsByCategory.has(categoryKey),
+    ).map((categoryKey: RiskCategoryKey): AnnotationLegendGroupView => {
+      return {
+        key: categoryKey,
+        annotations: annotationsByCategory.get(categoryKey) ?? [],
+        isEnabled: this.isRiskCategoryEnabled(categoryKey),
+      };
     });
   });
   private readonly libraryEntryPreviewSubscriptions = new Map<string, Subscription>();
@@ -348,6 +436,89 @@ export class SmileitComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Indica si una categoría de riesgo está activa (los privilegiados usan su propio switch). */
+  isRiskCategoryEnabled(categoryKey: RiskCategoryKey): boolean {
+    if (categoryKey === PRIVILEGED_CATEGORY_KEY) {
+      return this.privilegedAnnotationsEnabled();
+    }
+
+    return !(this.disabledRiskCategories()[categoryKey] ?? false);
+  }
+
+  /** Indica si la anotación pertenece a una categoría activa. */
+  isAnnotationCategoryEnabled(annotation: SmileitStructuralAnnotationView): boolean {
+    return this.isRiskCategoryEnabled(this.resolveAnnotationCategory(annotation));
+  }
+
+  /** Indica si la anotación se pinta en el SVG (patrón y categoría activos). */
+  isAnnotationVisible(annotation: SmileitStructuralAnnotationView): boolean {
+    return this.isAnnotationEnabled(annotation.pattern_stable_id) &&
+      this.isAnnotationCategoryEnabled(annotation);
+  }
+
+  /** Nombre traducido de la categoría de riesgo. */
+  riskCategoryLabel(categoryKey: RiskCategoryKey): string {
+    return this.translocoService.translate(`smileit.annotations.categories.${categoryKey}`);
+  }
+
+  /** Color de acento de la categoría (rojo toxicofórico / verde privilegiado). */
+  riskCategoryAccent(categoryKey: RiskCategoryKey): string {
+    return riskCategoryColor(categoryKey);
+  }
+
+  /**
+   * Activa o desactiva una categoría de riesgo.
+   * La categoría privilegiada se delega al interruptor independiente.
+   */
+  toggleRiskCategory(categoryKey: RiskCategoryKey): void {
+    if (categoryKey === PRIVILEGED_CATEGORY_KEY) {
+      this.togglePrivilegedAnnotations();
+      return;
+    }
+
+    this.disabledRiskCategories.update((currentState: Record<string, boolean>) => {
+      const nextState: Record<string, boolean> = { ...currentState };
+      if (nextState[categoryKey] === true) {
+        delete nextState[categoryKey];
+      } else {
+        nextState[categoryKey] = true;
+      }
+      return nextState;
+    });
+  }
+
+  /** Desactiva de golpe todas las categorías toxicofóricas presentes en el catálogo. */
+  disableAllToxicophoreCategories(): void {
+    const nextState: Record<string, boolean> = { ...this.disabledRiskCategories() };
+    this.riskCategoryGroups().forEach((group: RiskCategoryGroupView) => {
+      if (group.key !== PRIVILEGED_CATEGORY_KEY) {
+        nextState[group.key] = true;
+      }
+    });
+    this.disabledRiskCategories.set(nextState);
+  }
+
+  /** Reactiva todas las categorías, incluidas las privilegiadas. */
+  enableAllRiskCategories(): void {
+    this.disabledRiskCategories.set({});
+    this.privilegedAnnotationsEnabled.set(true);
+  }
+
+  /** Muestra u oculta las anotaciones de andamios privilegiados. */
+  togglePrivilegedAnnotations(): void {
+    this.privilegedAnnotationsEnabled.update((currentValue: boolean) => !currentValue);
+  }
+
+  /** Alterna entre "desactivar todo" y "activar todo" según el estado actual. */
+  toggleAllAlerts(): void {
+    if (this.allAlertsEnabled()) {
+      this.disableAllToxicophoreCategories();
+      return;
+    }
+
+    this.enableAllRiskCategories();
+  }
+
   beginPatternEntryEdition(pattern: SmileitPatternEntryView): void {
     if (this.accessMode.isOpenMode()) return;
     this.workflow.catalog.beginPatternEntryEdition(pattern);
@@ -469,6 +640,31 @@ export class SmileitComponent implements OnInit, OnDestroy {
 
   private resolveAtomIndexFromPointer(mouseEvent: MouseEvent): number | null {
     return this.inspectionService.extractAtomIndexFromEvent(mouseEvent);
+  }
+
+  /** Categoría de riesgo de una anotación, resuelta con el catálogo de patrones. */
+  private resolveAnnotationCategory(
+    annotation: SmileitStructuralAnnotationView,
+  ): RiskCategoryKey {
+    return resolveAnnotationRiskCategory(annotation, this.patternRiskCategoryByStableId());
+  }
+
+  /** Cuenta las anotaciones de la inspección actual por categoría de riesgo. */
+  private countAnnotationsByCategory(): Map<RiskCategoryKey, number> {
+    const annotationCountByCategory: Map<RiskCategoryKey, number> = new Map();
+    const inspectionResult: SmileitStructureInspectionView | null = this.workflow.inspection();
+    if (inspectionResult === null) {
+      return annotationCountByCategory;
+    }
+
+    inspectionResult.annotations.forEach((annotation: SmileitStructuralAnnotationView) => {
+      const categoryKey: RiskCategoryKey = this.resolveAnnotationCategory(annotation);
+      annotationCountByCategory.set(
+        categoryKey,
+        (annotationCountByCategory.get(categoryKey) ?? 0) + 1,
+      );
+    });
+    return annotationCountByCategory;
   }
 
   /**

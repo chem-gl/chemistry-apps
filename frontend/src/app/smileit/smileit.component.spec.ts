@@ -18,21 +18,31 @@ import { JobsApiService } from '../core/api/jobs-api.service';
 import { SmileitWorkflowService } from '../core/application/smileit-workflow.service';
 import { SmileitInspectionService } from './core/services/smileit-inspection.service';
 import { SmileitComponent } from './smileit.component';
+import { RISK_CATEGORY_METADATA_KEY } from './smileit-risk.utils';
 
 // Helpers para construir objetos mínimos de dominio
-const buildMockPattern = (stableId: string, name = 'pattern'): SmileitPatternEntryView =>
+const buildMockPattern = (
+  stableId: string,
+  name = 'pattern',
+  provenanceMetadata: Record<string, string> = {},
+): SmileitPatternEntryView =>
   ({
     stable_id: stableId,
     name,
     color: '#ff0000',
     caption: '',
+    provenance_metadata: provenanceMetadata,
   }) as unknown as SmileitPatternEntryView;
 
-const buildMockAnnotation = (patternStableId: string) => ({
+const buildMockAnnotation = (
+  patternStableId: string,
+  overrides: Record<string, unknown> = {},
+) => ({
   pattern_stable_id: patternStableId,
   atom_indices: [0],
   color: '#00ff00',
   caption: '',
+  ...overrides,
 });
 
 /** Mock mínimo del SmileitWorkflowService con señales controlables. */
@@ -405,6 +415,172 @@ describe('SmileitComponent', () => {
       // pat-Y habilitado por defecto
       const visible = component.visibleInspectionAnnotations();
       expect(visible).toHaveLength(1);
+    });
+  });
+
+  describe('filtrado por categorías de riesgo', () => {
+    const buildRiskCatalog = (): void => {
+      mockWorkflow.patterns.set([
+        buildMockPattern('pat-hep', 'Hepatotoxic pattern', {
+          [RISK_CATEGORY_METADATA_KEY]: 'hepatotoxicity',
+        }),
+        buildMockPattern('pat-react', 'Reactive pattern', {
+          [RISK_CATEGORY_METADATA_KEY]: 'reactivity',
+        }),
+        buildMockPattern('pat-priv', 'Privileged scaffold', {
+          [RISK_CATEGORY_METADATA_KEY]: 'privileged_scaffold',
+        }),
+      ] as never);
+      mockWorkflow.inspection.set({
+        annotations: [
+          buildMockAnnotation('pat-hep', { pattern_type: 'toxicophore', color: '#d93a2f' }),
+          buildMockAnnotation('pat-react', { pattern_type: 'toxicophore', color: '#d93a2f' }),
+          buildMockAnnotation('pat-priv', { pattern_type: 'privileged', color: '#2f9e44' }),
+        ],
+      } as never);
+    };
+
+    const visiblePatternIds = (): string[] =>
+      component.visibleInspectionAnnotations().map((annotation) => annotation.pattern_stable_id);
+
+    it('disableAllToxicophoreCategories oculta las anotaciones rojas y mantiene las verdes', () => {
+      buildRiskCatalog();
+
+      component.disableAllToxicophoreCategories();
+
+      expect(visiblePatternIds()).toEqual(['pat-priv']);
+      expect(component.privilegedAnnotationsEnabled()).toBe(true);
+      expect(component.isRiskCategoryEnabled('hepatotoxicity')).toBe(false);
+      expect(component.isRiskCategoryEnabled('reactivity')).toBe(false);
+      expect(component.isRiskCategoryEnabled('privileged_scaffold')).toBe(true);
+    });
+
+    it('desactivar una categoría oculta solo los patrones de esa categoría', () => {
+      buildRiskCatalog();
+
+      component.toggleRiskCategory('hepatotoxicity');
+
+      expect(visiblePatternIds()).toEqual(['pat-react', 'pat-priv']);
+      expect(component.isRiskCategoryEnabled('hepatotoxicity')).toBe(false);
+      expect(component.isRiskCategoryEnabled('reactivity')).toBe(true);
+    });
+
+    it('togglePrivilegedAnnotations oculta solo las anotaciones verdes', () => {
+      buildRiskCatalog();
+
+      component.togglePrivilegedAnnotations();
+
+      expect(visiblePatternIds()).toEqual(['pat-hep', 'pat-react']);
+      expect(component.isRiskCategoryEnabled('privileged_scaffold')).toBe(false);
+    });
+
+    it('enableAllRiskCategories restaura las anotaciones tras desactivar todo', () => {
+      buildRiskCatalog();
+      component.disableAllToxicophoreCategories();
+      component.togglePrivilegedAnnotations();
+      expect(component.annotationsAreVisible()).toBe(false);
+
+      component.enableAllRiskCategories();
+
+      expect(component.annotationsAreVisible()).toBe(true);
+      expect(component.visibleInspectionAnnotations()).toHaveLength(3);
+      expect(component.privilegedAnnotationsEnabled()).toBe(true);
+    });
+
+    it('el toggle por patrón convive con el toggle de categoría', () => {
+      buildRiskCatalog();
+      component.togglePatternEnabled('pat-hep');
+      expect(visiblePatternIds()).toEqual(['pat-react', 'pat-priv']);
+
+      component.toggleRiskCategory('reactivity');
+      expect(visiblePatternIds()).toEqual(['pat-priv']);
+
+      component.toggleRiskCategory('reactivity');
+      // pat-hep sigue oculto por su toggle individual
+      expect(visiblePatternIds()).toEqual(['pat-react', 'pat-priv']);
+
+      component.togglePatternEnabled('pat-hep');
+      expect(visiblePatternIds()).toEqual(['pat-hep', 'pat-react', 'pat-priv']);
+    });
+
+    it('toggleAllAlerts desactiva y reactiva todas las categorías según el estado', () => {
+      buildRiskCatalog();
+      expect(component.allAlertsEnabled()).toBe(true);
+
+      component.toggleAllAlerts();
+      expect(component.allAlertsEnabled()).toBe(false);
+      expect(visiblePatternIds()).toEqual(['pat-priv']);
+
+      component.toggleAllAlerts();
+      expect(component.allAlertsEnabled()).toBe(true);
+      expect(visiblePatternIds()).toEqual(['pat-hep', 'pat-react', 'pat-priv']);
+    });
+
+    it('riskCategoryGroups agrupa los patrones presentes con su conteo de coincidencias', () => {
+      buildRiskCatalog();
+
+      const groups = component.riskCategoryGroups();
+
+      expect(groups.map((group) => group.key)).toEqual([
+        'hepatotoxicity',
+        'reactivity',
+        'privileged_scaffold',
+      ]);
+      expect(groups[0].patterns.map((pattern) => pattern.stable_id)).toEqual(['pat-hep']);
+      expect(groups[0].matchCount).toBe(1);
+      expect(groups.every((group) => group.isEnabled)).toBe(true);
+
+      component.toggleRiskCategory('hepatotoxicity');
+      expect(component.riskCategoryGroups()[0].isEnabled).toBe(false);
+    });
+
+    it('annotationLegendGroups agrupa las anotaciones por categoría y expone su estado', () => {
+      buildRiskCatalog();
+
+      const groups = component.annotationLegendGroups();
+
+      expect(groups.map((group) => group.key)).toEqual([
+        'hepatotoxicity',
+        'reactivity',
+        'privileged_scaffold',
+      ]);
+      expect(groups[0].annotations.map((annotation) => annotation.pattern_stable_id)).toEqual([
+        'pat-hep',
+      ]);
+      expect(groups.every((group) => group.isEnabled)).toBe(true);
+
+      component.togglePrivilegedAnnotations();
+      const privilegedGroup = component
+        .annotationLegendGroups()
+        .find((group) => group.key === 'privileged_scaffold');
+      expect(privilegedGroup?.isEnabled).toBe(false);
+    });
+
+    it('los patrones sin categoría conocida caen en la categoría other', () => {
+      mockWorkflow.patterns.set([
+        buildMockPattern('pat-legacy', 'Legacy pattern', { other: 'unrelated' }),
+        buildMockPattern('pat-null'),
+        buildMockPattern('pat-priv', 'Privileged scaffold', {
+          [RISK_CATEGORY_METADATA_KEY]: 'privileged_scaffold',
+        }),
+      ] as never);
+      mockWorkflow.inspection.set({
+        annotations: [
+          buildMockAnnotation('pat-legacy'),
+          buildMockAnnotation('pat-null'),
+          buildMockAnnotation('pat-unregistered', { pattern_type: 'privileged' }),
+        ],
+      } as never);
+
+      const groups = component.riskCategoryGroups();
+      expect(groups.map((group) => group.key)).toEqual(['other', 'privileged_scaffold']);
+      expect(groups[0].matchCount).toBe(2);
+
+      const legendKeys = component.annotationLegendGroups().map((group) => group.key);
+      expect(legendKeys).toEqual(['other', 'privileged_scaffold']);
+
+      component.toggleRiskCategory('privileged_scaffold');
+      expect(visiblePatternIds()).toEqual(['pat-legacy', 'pat-null']);
     });
   });
 

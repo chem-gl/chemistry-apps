@@ -1089,6 +1089,9 @@
         "inputEvents": "Input events:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "トンネル図：エッカート障壁、波動関数、熱エネルギー"
+      },
       "submitting": "Submitting tunnel effect job to backend...",
       "title": "Output",
       "ariaLabel": "Results and progress"
@@ -1557,6 +1560,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "反応のトンネル図：エッカート障壁、波動関数、熱エネルギー"
+      },
       "defaultTitle": "Easy-rate result",
       "thermochemistry": "Thermochemistry",
       "deltaG": "ΔG (kcal/mol)",
@@ -1702,7 +1708,21 @@
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
       "showTitleAttr": "表示",
-      "ariaLabel": "Structural annotations"
+      "ariaLabel": "Structural annotations",
+      "controlsTitle": "アラートフィルター",
+      "disableAllAlerts": "すべてのアラートを無効化",
+      "enableAllAlerts": "すべてのアラートを有効化",
+      "privilegedToggle": "特権スキャフォールド",
+      "categories": {
+        "hepatotoxicity": "肝毒性",
+        "reactivity": "反応性",
+        "metabolic_interference": "代謝干渉",
+        "mutagenicity_ames": "変異原性（Ames）",
+        "herg_cardiotoxicity": "hERG心毒性",
+        "genotoxicity": "遺伝毒性",
+        "privileged_scaffold": "特権スキャフォールド",
+        "other": "その他のアラート"
+      }
     },
     "inspection": {
       "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",

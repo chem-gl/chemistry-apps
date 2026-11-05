@@ -1089,6 +1089,9 @@
         "inputEvents": "Input events:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "Tunneldiagramm: Eckart-Barriere, Wellenfunktion und thermische Energie"
+      },
       "submitting": "Submitting tunnel effect job to backend...",
       "title": "Output",
       "ariaLabel": "Results and progress"
@@ -1557,6 +1560,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "Tunneldiagramm der Reaktion: Eckart-Barriere, Wellenfunktion und thermische Energie"
+      },
       "defaultTitle": "Easy-rate result",
       "thermochemistry": "Thermochemistry",
       "deltaG": "ΔG (kcal/mol)",
@@ -1702,7 +1708,21 @@
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
       "showTitleAttr": "Anzeigen",
-      "ariaLabel": "Structural annotations"
+      "ariaLabel": "Structural annotations",
+      "controlsTitle": "Alarmfilter",
+      "disableAllAlerts": "Alle Warnungen deaktivieren",
+      "enableAllAlerts": "Alle Warnungen aktivieren",
+      "privilegedToggle": "Privilegierte Gerüste",
+      "categories": {
+        "hepatotoxicity": "Hepatotoxizität",
+        "reactivity": "Reaktivität",
+        "metabolic_interference": "Metabolische Interferenz",
+        "mutagenicity_ames": "Mutagenität (Ames)",
+        "herg_cardiotoxicity": "hERG-Kardiotoxizität",
+        "genotoxicity": "Genotoxizität",
+        "privileged_scaffold": "Privilegiertes Gerüst",
+        "other": "Weitere Warnungen"
+      }
     },
     "inspection": {
       "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",

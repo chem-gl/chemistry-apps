@@ -167,38 +167,90 @@
 
               @if (inspectionResult.annotations.length > 0) {
               <div class="annotation-legend" [attr.aria-label]="'smileit.annotations.ariaLabel' | transloco">
-                @for (
-                annotation of inspectionResult.annotations;
-                track annotation.pattern_stable_id + '-' + $index
-                ) {
-                <article class="annotation-chip" [class.annotation-chip-hidden]="
-                          !isAnnotationEnabled(annotation.pattern_stable_id)
-                        " [style.--annotation-color]="annotation.color">
-                  <div class="annotation-chip-header">
-                    <span class="annotation-type">{{
-                      patternTypeLabel(annotation.pattern_type)
-                      }}</span>
-                    <button type="button" class="annotation-eye-btn"
-                      (click)="togglePatternEnabled(annotation.pattern_stable_id)" [attr.aria-label]="
-                              isAnnotationEnabled(annotation.pattern_stable_id)
-                                ? ('smileit.annotations.hidePatternAria' | transloco)
-                                : ('smileit.annotations.showPatternAria' | transloco)
-                            " [attr.title]="
-                              isAnnotationEnabled(annotation.pattern_stable_id)
-                                ? ('smileit.annotations.hideTitleAttr' | transloco)
-                                : ('smileit.annotations.showTitleAttr' | transloco)
-                            ">
-                      {{
-                      isAnnotationEnabled(annotation.pattern_stable_id)
-                      ? ('smileit.patterns.showPattern' | transloco)
-                      : ('smileit.patterns.hidePattern' | transloco)
-                      }}
-                    </button>
+                <div class="annotation-controls">
+                  <div class="annotation-controls-header">
+                    <h5>{{ 'smileit.annotations.controlsTitle' | transloco }}</h5>
+                    <div class="annotation-controls-actions">
+                      <button type="button" class="annotation-control-btn" (click)="toggleAllAlerts()"
+                        [attr.aria-pressed]="allAlertsEnabled()" [attr.aria-label]="
+                          (allAlertsEnabled()
+                            ? 'smileit.annotations.disableAllAlerts'
+                            : 'smileit.annotations.enableAllAlerts') | transloco
+                        ">
+                        {{ (allAlertsEnabled()
+                          ? 'smileit.annotations.disableAllAlerts'
+                          : 'smileit.annotations.enableAllAlerts') | transloco }}
+                      </button>
+                      <label class="annotation-privileged-switch">
+                        <input type="checkbox" [checked]="privilegedAnnotationsEnabled()"
+                          (change)="togglePrivilegedAnnotations()"
+                          [attr.aria-label]="'smileit.annotations.privilegedToggle' | transloco" />
+                        <span>{{ 'smileit.annotations.privilegedToggle' | transloco }}</span>
+                      </label>
+                    </div>
                   </div>
-                  <strong>{{ annotation.name }}</strong>
-                  <p>{{ annotation.caption }}</p>
-                  <small>{{ 'smileit.patterns.atoms' | transloco }} {{ annotation.atom_indices.join(', ') }}</small>
-                </article>
+
+                  @if (riskCategoryGroups().length > 0) {
+                  <div class="annotation-category-chips">
+                    @for (category of riskCategoryGroups(); track category.key) {
+                    <button type="button" class="annotation-category-chip"
+                      [class.annotation-category-chip-active]="category.isEnabled"
+                      [class.annotation-category-chip-privileged]="category.key === 'privileged_scaffold'"
+                      [style.--annotation-color]="riskCategoryAccent(category.key)"
+                      [attr.aria-pressed]="category.isEnabled"
+                      [attr.aria-label]="riskCategoryLabel(category.key) + ' · ' + category.matchCount"
+                      (click)="toggleRiskCategory(category.key)">
+                      <span class="annotation-category-name">{{ riskCategoryLabel(category.key) }}</span>
+                      <span class="annotation-category-count">{{ category.matchCount }}</span>
+                    </button>
+                    }
+                  </div>
+                  }
+                </div>
+
+                @for (group of annotationLegendGroups(); track group.key) {
+                <section class="annotation-group" [class.annotation-group-hidden]="!group.isEnabled"
+                  [style.--annotation-color]="riskCategoryAccent(group.key)"
+                  [attr.aria-label]="riskCategoryLabel(group.key)">
+                  <header class="annotation-group-header">
+                    <h5>{{ riskCategoryLabel(group.key) }}</h5>
+                    <span class="annotation-group-state">{{ (group.isEnabled ? 'smileit.patterns.active' :
+                      'smileit.patterns.hidden') | transloco }}</span>
+                  </header>
+
+                  @for (
+                  annotation of group.annotations;
+                  track annotation.pattern_stable_id + '-' + $index
+                  ) {
+                  <article class="annotation-chip" [class.annotation-chip-hidden]="!isAnnotationVisible(annotation)"
+                    [style.--annotation-color]="annotation.color">
+                    <div class="annotation-chip-header">
+                      <span class="annotation-type">{{
+                        patternTypeLabel(annotation.pattern_type)
+                        }}</span>
+                      <button type="button" class="annotation-eye-btn"
+                        (click)="togglePatternEnabled(annotation.pattern_stable_id)" [attr.aria-label]="
+                                isAnnotationEnabled(annotation.pattern_stable_id)
+                                  ? ('smileit.annotations.hidePatternAria' | transloco)
+                                  : ('smileit.annotations.showPatternAria' | transloco)
+                              " [attr.title]="
+                                isAnnotationEnabled(annotation.pattern_stable_id)
+                                  ? ('smileit.annotations.hideTitleAttr' | transloco)
+                                  : ('smileit.annotations.showTitleAttr' | transloco)
+                              ">
+                        {{
+                        isAnnotationEnabled(annotation.pattern_stable_id)
+                        ? ('smileit.patterns.showPattern' | transloco)
+                        : ('smileit.patterns.hidePattern' | transloco)
+                        }}
+                      </button>
+                    </div>
+                    <strong>{{ annotation.name }}</strong>
+                    <p>{{ annotation.caption }}</p>
+                    <small>{{ 'smileit.patterns.atoms' | transloco }} {{ annotation.atom_indices.join(', ') }}</small>
+                  </article>
+                  }
+                </section>
                 }
               </div>
               }

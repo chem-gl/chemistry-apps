@@ -67,6 +67,25 @@ def _is_substituent_user_editable(substituent: SmileitSubstituent) -> bool:
     return str(seed_flag).strip().lower() not in {"true", "1", "yes"}
 
 
+def _is_seed_entry(entry: object) -> bool:
+    """Detecta entradas semilla por `source_reference` o por metadata `seed`.
+
+    Los patrones del catálogo guardan la cita bibliográfica en `source_reference`,
+    por lo que la marca `seed` de `provenance_metadata` es la que identifica su
+    origen semilla a efectos de visibilidad y permisos.
+    """
+    source_reference = getattr(entry, "source_reference", "").strip().lower()
+    if source_reference in {"legacy-smileit", "smileit-seed"}:
+        return True
+
+    metadata = getattr(entry, "provenance_metadata", {})
+    if not isinstance(metadata, dict):
+        return False
+
+    seed_flag = metadata.get("seed")
+    return str(seed_flag).strip().lower() in {"true", "1", "yes"}
+
+
 def _normalize_metadata(raw_metadata: dict[str, str]) -> dict[str, str]:
     """Normaliza metadata textual removiendo claves vacías."""
     normalized: dict[str, str] = {}
@@ -215,6 +234,11 @@ def list_active_patterns(
         if filter_mode == "root-only" and actor_role == "root":
             if get_entry_source_reference(pattern) != "root":
                 continue
+
+        # Los patrones semilla son visibles para todos los actores.
+        if _is_seed_entry(pattern):
+            visible_patterns.append(_serialize_pattern(pattern))
+            continue
 
         # Usar función de permisos
         if can_user_view_entry(
@@ -787,7 +811,7 @@ def update_pattern_entry(
         raise ValueError("No existe un patrón activo para el stable_id indicado.")
 
     # Validar permisos con la nueva función
-    if not can_user_edit_entry(
+    if _is_seed_entry(current_pattern) or not can_user_edit_entry(
         entry=current_pattern,
         actor_user_id=actor_user_id,
         actor_role=actor_role,
@@ -879,7 +903,7 @@ def delete_pattern_entry(
         raise ValueError("No existe un patrón activo para el stable_id indicado.")
 
     # Validar permisos con la nueva función
-    if not can_user_delete_entry(
+    if _is_seed_entry(pattern) or not can_user_delete_entry(
         entry=pattern,
         actor_user_id=actor_user_id,
         actor_role=actor_role,

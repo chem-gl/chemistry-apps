@@ -255,6 +255,137 @@ select:not(.property-input):focus {
   color: var(--chem-ink);
 }
 
+.annotation-controls {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-inset);
+  padding: 0.75rem 0.85rem;
+}
+
+.annotation-controls-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.annotation-controls-header h5 {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.annotation-controls-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.annotation-control-btn {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: 999px;
+  background: var(--chem-surface);
+  color: var(--chem-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+
+.annotation-control-btn:hover {
+  background: var(--chem-surface-elevated);
+}
+
+.annotation-privileged-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #2f9e44;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.annotation-privileged-switch input {
+  accent-color: #2f9e44;
+}
+
+.annotation-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.annotation-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--chem-border-subtle);
+  border-left: 5px solid var(--annotation-color);
+  border-radius: 999px;
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  opacity: 0.55;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.annotation-category-chip-active {
+  opacity: 1;
+  color: var(--chem-ink);
+}
+
+.annotation-category-chip:focus-visible {
+  outline: 2px solid var(--annotation-color);
+  outline-offset: 2px;
+}
+
+.annotation-category-count {
+  border-radius: 999px;
+  background: var(--chem-surface-inset);
+  padding: 0 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.annotation-group {
+  display: grid;
+  gap: 0.55rem;
+  border-left: 4px solid var(--annotation-color);
+  padding-left: 0.6rem;
+}
+
+.annotation-group-hidden {
+  opacity: 0.55;
+}
+
+.annotation-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.annotation-group-header h5 {
+  margin: 0;
+  color: var(--chem-ink);
+}
+
+.annotation-group-state {
+  color: var(--chem-ink-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .annotation-type,
 .block-priority {
   display: inline-flex;

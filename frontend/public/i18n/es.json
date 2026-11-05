@@ -1182,6 +1182,9 @@
         "inputEvents": "Eventos de entrada:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "Diagrama de túnel: barrera de Eckart, función de onda y energía térmica"
+      },
       "submitting": "Enviando job de efecto túnel al backend...",
       "title": "Salida",
       "ariaLabel": "Resultados y progreso"
@@ -1595,6 +1598,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activación",
       "flagNegativeActivation": "⚠ Activación negativa",
+      "chart": {
+        "ariaLabel": "Diagrama de túnel de la reacción: barrera de Eckart, función de onda y energía térmica"
+      },
       "defaultTitle": "Resultado Easy-rate",
       "thermochemistry": "Termoquímica",
       "deltaG": "ΔG (kcal/mol)",
@@ -1740,7 +1746,21 @@
       "showPatternAria": "Mostrar patrón",
       "hidePatternAria": "Ocultar patrón",
       "showTitleAttr": "Mostrar",
-      "ariaLabel": "Anotaciones estructurales"
+      "ariaLabel": "Anotaciones estructurales",
+      "controlsTitle": "Filtros de alertas",
+      "disableAllAlerts": "Desactivar todas las alertas",
+      "enableAllAlerts": "Activar todas las alertas",
+      "privilegedToggle": "Andamios privilegiados",
+      "categories": {
+        "hepatotoxicity": "Hepatotoxicidad",
+        "reactivity": "Reactividad",
+        "metabolic_interference": "Interferencia metabólica",
+        "mutagenicity_ames": "Mutagenicidad (Ames)",
+        "herg_cardiotoxicity": "Cardiotoxicidad hERG",
+        "genotoxicity": "Genotoxicidad",
+        "privileged_scaffold": "Andamio privilegiado",
+        "other": "Otras alertas"
+      }
     },
     "inspection": {
       "clickTip": "Consejo: haz clic directamente en la imagen de la molécula para seleccionar átomos con el ratón.",

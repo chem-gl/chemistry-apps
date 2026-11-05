@@ -1089,6 +1089,9 @@
         "inputEvents": "Input events:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "隧道效应图：埃卡特势垒、波函数与热能"
+      },
       "submitting": "Submitting tunnel effect job to backend...",
       "title": "Output",
       "ariaLabel": "Results and progress"
@@ -1557,6 +1560,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "反应隧道效应图：埃卡特势垒、波函数与热能"
+      },
       "defaultTitle": "Easy-rate result",
       "thermochemistry": "Thermochemistry",
       "deltaG": "ΔG (kcal/mol)",
@@ -1702,7 +1708,21 @@
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
       "showTitleAttr": "显示",
-      "ariaLabel": "Structural annotations"
+      "ariaLabel": "Structural annotations",
+      "controlsTitle": "警报过滤器",
+      "disableAllAlerts": "禁用所有警报",
+      "enableAllAlerts": "启用所有警报",
+      "privilegedToggle": "优势骨架",
+      "categories": {
+        "hepatotoxicity": "肝毒性",
+        "reactivity": "反应性",
+        "metabolic_interference": "代谢干扰",
+        "mutagenicity_ames": "致突变性（Ames）",
+        "herg_cardiotoxicity": "hERG 心脏毒性",
+        "genotoxicity": "遗传毒性",
+        "privileged_scaffold": "优势骨架",
+        "other": "其他警报"
+      }
     },
     "inspection": {
       "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",

@@ -1089,6 +1089,9 @@
         "inputEvents": "Input events:",
         "kappaTst": "Kappa TST:"
       },
+      "chart": {
+        "ariaLabel": "टनलिंग आरेख: एकार्ट बैरियर, तरंग फलन और तापीय ऊर्जा"
+      },
       "submitting": "Submitting tunnel effect job to backend...",
       "title": "Output",
       "ariaLabel": "Results and progress"
@@ -1557,6 +1560,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "अभिक्रिया का टनलिंग आरेख: एकार्ट बैरियर, तरंग फलन और तापीय ऊर्जा"
+      },
       "defaultTitle": "Easy-rate result",
       "thermochemistry": "Thermochemistry",
       "deltaG": "ΔG (kcal/mol)",
@@ -1702,7 +1708,21 @@
       "showPatternAria": "Show pattern",
       "hidePatternAria": "Hide pattern",
       "showTitleAttr": "दिखाएँ",
-      "ariaLabel": "Structural annotations"
+      "ariaLabel": "Structural annotations",
+      "controlsTitle": "अलर्ट फ़िल्टर",
+      "disableAllAlerts": "सभी अलर्ट बंद करें",
+      "enableAllAlerts": "सभी अलर्ट चालू करें",
+      "privilegedToggle": "विशेष स्कैफ़ोल्ड",
+      "categories": {
+        "hepatotoxicity": "हेपेटोटॉक्सिसिटी",
+        "reactivity": "प्रतिक्रियाशीलता",
+        "metabolic_interference": "चयापचय हस्तक्षेप",
+        "mutagenicity_ames": "उत्परिवर्तनकता (Ames)",
+        "herg_cardiotoxicity": "hERG कार्डियोटॉक्सिसिटी",
+        "genotoxicity": "जीनोटॉक्सिसिटी",
+        "privileged_scaffold": "विशेष स्कैफ़ोल्ड",
+        "other": "अन्य अलर्ट"
+      }
     },
     "inspection": {
       "clickTip": "Tip: click directly on the molecule image to select atoms with the mouse.",

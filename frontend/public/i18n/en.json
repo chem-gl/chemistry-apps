@@ -567,6 +567,9 @@
         "alpha2": "Alpha 2:",
         "g": "G:",
         "kappaTst": "Kappa TST:"
+      },
+      "chart": {
+        "ariaLabel": "Tunneling diagram: Eckart barrier, wavefunction and thermal energy"
       }
     },
     "trace": {
@@ -795,7 +798,10 @@
       "condViscosity": "Viscosity",
       "flagCageEffects": "Cage effects",
       "flagDiffusion": "Diffusion",
-      "flagNegativeActivation": "⚠ Negative activation"
+      "flagNegativeActivation": "⚠ Negative activation",
+      "chart": {
+        "ariaLabel": "Reaction tunneling diagram: Eckart barrier, wavefunction and thermal energy"
+      }
     },
     "history": {
       "empty": "No historical Easy-rate jobs yet.",
@@ -1232,7 +1238,21 @@
       "hidePatternAria": "Hide pattern",
       "showPatternAria": "Show pattern",
       "hideTitleAttr": "Hide",
-      "showTitleAttr": "Show"
+      "showTitleAttr": "Show",
+      "controlsTitle": "Alert filters",
+      "disableAllAlerts": "Disable all alerts",
+      "enableAllAlerts": "Enable all alerts",
+      "privilegedToggle": "Privileged scaffolds",
+      "categories": {
+        "hepatotoxicity": "Hepatotoxicity",
+        "reactivity": "Reactivity",
+        "metabolic_interference": "Metabolic interference",
+        "mutagenicity_ames": "Mutagenicity (Ames)",
+        "herg_cardiotoxicity": "hERG cardiotoxicity",
+        "genotoxicity": "Genotoxicity",
+        "privileged_scaffold": "Privileged scaffold",
+        "other": "Other alerts"
+      }
     },
     "catalogStudio": {
       "ariaLabel": "SMILES catalog studio",

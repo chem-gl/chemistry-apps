@@ -1140,6 +1140,9 @@
         "inputEvents": "Événements de saisie :",
         "kappaTst": "Kappa TST :"
       },
+      "chart": {
+        "ariaLabel": "Diagramme d’effet tunnel : barrière d’Eckart, fonction d’onde et énergie thermique"
+      },
       "submitting": "Envoi du job d’effet tunnel au backend...",
       "title": "Sortie",
       "ariaLabel": "Résultats et progression"
@@ -1608,6 +1611,9 @@
       "imagFreq": "ν‡ (cm⁻¹)",
       "thermActivation": "Activation",
       "flagNegativeActivation": "⚠ Activation négative",
+      "chart": {
+        "ariaLabel": "Diagramme d’effet tunnel de la réaction : barrière d’Eckart, fonction d’onde et énergie thermique"
+      },
       "defaultTitle": "Résultat Easy-rate",
       "thermochemistry": "Thermochimie",
       "deltaG": "ΔG (kcal/mol)",
@@ -1753,7 +1759,21 @@
       "showPatternAria": "Afficher le motif",
       "hidePatternAria": "Masquer le motif",
       "showTitleAttr": "Afficher",
-      "ariaLabel": "Annotations structurales"
+      "ariaLabel": "Annotations structurales",
+      "controlsTitle": "Filtres d'alertes",
+      "disableAllAlerts": "Désactiver toutes les alertes",
+      "enableAllAlerts": "Activer toutes les alertes",
+      "privilegedToggle": "Échafaudages privilégiés",
+      "categories": {
+        "hepatotoxicity": "Hépatotoxicité",
+        "reactivity": "Réactivité",
+        "metabolic_interference": "Interférence métabolique",
+        "mutagenicity_ames": "Mutagénicité (Ames)",
+        "herg_cardiotoxicity": "Cardiotoxicité hERG",
+        "genotoxicity": "Génotoxicité",
+        "privileged_scaffold": "Échafaudage privilégié",
+        "other": "Autres alertes"
+      }
     },
     "inspection": {
       "clickTip": "Astuce : cliquez directement sur l’image de la molécule pour sélectionner les atomes à la souris.",

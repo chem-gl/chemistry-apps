@@ -16,6 +16,7 @@ from django.db.models import Model
 from .seed_data import (
     CATEGORY_SEED_DEFINITIONS,
     PATTERN_SEED_DEFINITIONS,
+    RISK_CATEGORY_METADATA_KEY,
     SUBSTITUENT_SEED_DEFINITIONS,
 )
 
@@ -88,8 +89,13 @@ def apply_smileit_seed_data(
                 "is_active": True,
                 "smarts": pattern_seed.smarts,
                 "caption": pattern_seed.caption,
-                "source_reference": PATTERN_SOURCE_REFERENCE,
-                "provenance_metadata": SEED_PROVENANCE,
+                "source_reference": (
+                    pattern_seed.source_reference or PATTERN_SOURCE_REFERENCE
+                ),
+                "provenance_metadata": {
+                    **SEED_PROVENANCE,
+                    RISK_CATEGORY_METADATA_KEY: pattern_seed.risk_category,
+                },
             },
         )
 
@@ -109,7 +115,4 @@ def deactivate_smileit_seed_data(
         source_reference=SUBSTITUENT_SOURCE_REFERENCE,
         provenance_metadata__seed=True,
     ).update(is_active=False)
-    pattern_model.objects.filter(
-        source_reference=PATTERN_SOURCE_REFERENCE,
-        provenance_metadata__seed=True,
-    ).update(is_active=False)
+    pattern_model.objects.filter(provenance_metadata__seed=True).update(is_active=False)
