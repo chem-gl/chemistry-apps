@@ -3,6 +3,7 @@
 
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, vi } from 'vitest';
@@ -15,6 +16,7 @@ import {
 import { EasyRateWorkflowService } from '../core/application/easy-rate-workflow.service';
 import { JobAccessModeService } from '../core/auth/job-access-mode.service';
 import { EasyRateResultData } from '../core/application/easy-rate-workflow.types';
+import { TunnelingProfileChartComponent } from '../core/shared/components/tunneling-profile-chart/tunneling-profile-chart.component';
 import { provideTestingTransloco } from '../core/i18n/testing-transloco.provider';
 import { EasyRateComponent, EasyRateInputSlotView } from './easy-rate.component';
 
@@ -397,5 +399,85 @@ describe('EasyRateComponent', () => {
       noteKey: null,
     } satisfies EasyRateInputSlotView);
     expect(result).toBe('product_2_file');
+  });
+
+  it('dibuja el diagrama de túnel con las energías ZPE del resultado', () => {
+    workflowMock.activeSection.set('result');
+    workflowMock.resultData.set({
+      title: 'Example run',
+      rateConstant: 15.339,
+      rateConstantTst: 3.25,
+      rateConstantDiffusionCorrected: null,
+      kDiff: null,
+      gibbsReactionKcalMol: -7.736,
+      gibbsActivationKcalMol: 29.032,
+      enthalpyReactionKcalMol: -7.766,
+      enthalpyActivationKcalMol: 17.479,
+      zpeReactionKcalMol: -6.3,
+      zpeActivationKcalMol: 17.425,
+      tunnelU: 12.152,
+      tunnelAlpha1: 15.206,
+      tunnelAlpha2: 22.018,
+      tunnelG: 4.7e-5,
+      kappaTst: 4718225406.88,
+      temperatureK: 298.15,
+      imaginaryFrequencyCm1: 2518.151,
+      warnNegativeActivation: false,
+      cageEffectsApplied: false,
+      diffusionApplied: false,
+      solventUsed: 'Gas phase (Air)',
+      viscosityPaS: null,
+      reactionPathDegeneracy: 1,
+      isHistoricalSummary: false,
+      summaryMessage: '',
+    } as unknown as EasyRateResultData);
+
+    const fixture = TestBed.createComponent(EasyRateComponent);
+    fixture.detectChanges();
+
+    const chart = fixture.debugElement.query(By.directive(TunnelingProfileChartComponent));
+    expect(chart).not.toBeNull();
+    // El potencial usa ZPE (coherente con u, α₁ y α₂), no las energías de Gibbs.
+    const chartInstance = chart.componentInstance as TunnelingProfileChartComponent;
+    expect(chartInstance.barrierKcalMol()).toBe(17.425);
+    expect(chartInstance.reactionEnergyKcalMol()).toBe(-6.3);
+    expect(chartInstance.u()).toBe(12.152);
+  });
+
+  it('oculta el diagrama cuando el resultado no trae parámetros de túnel', () => {
+    workflowMock.activeSection.set('result');
+    workflowMock.resultData.set({
+      title: 'Example run',
+      rateConstant: 15.339,
+      rateConstantTst: 3.25,
+      rateConstantDiffusionCorrected: null,
+      kDiff: null,
+      gibbsReactionKcalMol: -7.736,
+      gibbsActivationKcalMol: 29.032,
+      enthalpyReactionKcalMol: -7.766,
+      enthalpyActivationKcalMol: 17.479,
+      zpeReactionKcalMol: -6.3,
+      zpeActivationKcalMol: 17.425,
+      tunnelU: null,
+      tunnelAlpha1: null,
+      tunnelAlpha2: null,
+      tunnelG: 4.7e-5,
+      kappaTst: 4718225406.88,
+      temperatureK: 298.15,
+      imaginaryFrequencyCm1: 2518.151,
+      warnNegativeActivation: false,
+      cageEffectsApplied: false,
+      diffusionApplied: false,
+      solventUsed: 'Gas phase (Air)',
+      viscosityPaS: null,
+      reactionPathDegeneracy: 1,
+      isHistoricalSummary: false,
+      summaryMessage: '',
+    } as unknown as EasyRateResultData);
+
+    const fixture = TestBed.createComponent(EasyRateComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-tunneling-profile-chart')).toBeNull();
   });
 });

@@ -16,4 +16,9 @@ export const MOLAR_FRACTIONS_DOC_TABS: DocTab[] = [
     titleKey: 'scientificDoc.tabReferences',
     contentKey: 'scientificDoc.docs.molarFractions.references',
   },
+  {
+    id: 'example',
+    titleKey: 'scientificDoc.tabExample',
+    contentKey: 'scientificDoc.docs.molarFractions.example',
+  },
 ];

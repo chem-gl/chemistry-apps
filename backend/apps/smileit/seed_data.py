@@ -17,6 +17,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# Referencias bibliográficas reutilizadas por varias alertas (evita literales repetidos).
+BENIGNI_BOSSA_REFERENCE = "Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)"
+OECD_QSAR_REFERENCE = "OECD QSAR Toolbox v4 structural alerts (public documentation)"
+KALGUTKAR_DIDIUK_REFERENCE = "Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)"
+WELSCH_REFERENCE = "Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)"
+
 
 @dataclass(frozen=True, slots=True)
 class SmileitCategorySeedDefinition:
@@ -216,7 +222,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Nitroaromatic groups undergo nitroreduction to nitroso and "
             "hydroxylamine metabolites that can injure the liver."
         ),
-        source_reference="Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)",
+        source_reference=BENIGNI_BOSSA_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Thiocarbamate Hepatotoxicity Alert",
@@ -227,7 +233,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Thiocarbamates are bioactivated to reactive sulfoxide and "
             "isothiocyanate intermediates associated with hepatotoxicity."
         ),
-        source_reference="OECD QSAR Toolbox v4 structural alerts (public documentation)",
+        source_reference=OECD_QSAR_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Hydrazine Hepatotoxicity Alert",
@@ -238,7 +244,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "N-N bonds in hydrazines and hydrazides generate reactive "
             "nitrogen species that can cause hepatic necrosis."
         ),
-        source_reference="OECD QSAR Toolbox v4 structural alerts (public documentation)",
+        source_reference=OECD_QSAR_REFERENCE,
     ),
     # --- Reactividad intrínseca -----------------------------------------
     SmileitPatternSeedDefinition(
@@ -250,7 +256,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Strained oxirane rings are electrophiles that alkylate "
             "nucleophiles and drive covalent protein binding."
         ),
-        source_reference="Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)",
+        source_reference=KALGUTKAR_DIDIUK_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Michael Acceptor Reactivity Alert",
@@ -261,7 +267,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Alpha,beta-unsaturated carbonyls are soft electrophiles that "
             "adduct glutathione and protein thiols."
         ),
-        source_reference="Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)",
+        source_reference=KALGUTKAR_DIDIUK_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Quinone Reactivity Alert",
@@ -272,7 +278,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Quinones arylate thiols and redox cycle, generating reactive "
             "oxygen species and protein adducts."
         ),
-        source_reference="OECD QSAR Toolbox v4 structural alerts (public documentation)",
+        source_reference=OECD_QSAR_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Alkyl Halide Reactivity Alert",
@@ -283,7 +289,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "sp3 carbons bearing chlorine, bromine or iodine are SN2 leaving "
             "groups that alkylate biological nucleophiles."
         ),
-        source_reference="OECD QSAR Toolbox v4 structural alerts (public documentation)",
+        source_reference=OECD_QSAR_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Isocyanate Reactivity Alert",
@@ -294,7 +300,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Isocyanates carbamoylate amines and proteins, a sensitisation "
             "and hepatotoxicity hazard."
         ),
-        source_reference="Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)",
+        source_reference=KALGUTKAR_DIDIUK_REFERENCE,
     ),
     # --- Interferencia metabólica ---------------------------------------
     SmileitPatternSeedDefinition(
@@ -306,7 +312,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Catechols oxidise to ortho-quinones that deplete glutathione and "
             "propagate redox cycling and protein adducts."
         ),
-        source_reference="OECD QSAR Toolbox v4 structural alerts (public documentation)",
+        source_reference=OECD_QSAR_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Hydroquinone and p-Aminophenol Redox Alert",
@@ -317,7 +323,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Para-dihydroxy and para-aminophenol motifs oxidise to quinones "
             "and quinone imines that cause redox cycling and hepatic injury."
         ),
-        source_reference="Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)",
+        source_reference=KALGUTKAR_DIDIUK_REFERENCE,
     ),
     # --- Mutagenicidad (Ames) -------------------------------------------
     SmileitPatternSeedDefinition(
@@ -329,7 +335,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Primary aromatic amines are N-oxidised to nitrenium ions that "
             "form DNA adducts and give positive Ames results."
         ),
-        source_reference="Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)",
+        source_reference=BENIGNI_BOSSA_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Azo Bond Ames Alert",
@@ -340,7 +346,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Azo bonds are cleaved by azoreductases to aromatic amines and "
             "can be mutagenic in the Ames assay."
         ),
-        source_reference="Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)",
+        source_reference=BENIGNI_BOSSA_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="N-Nitrosamine Ames Alert",
@@ -351,7 +357,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "N-Nitrosamines are activated to diazonium and carbonium ions "
             "that alkylate DNA, a potent Ames-positive alert."
         ),
-        source_reference="Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)",
+        source_reference=BENIGNI_BOSSA_REFERENCE,
     ),
     # --- Cardiotoxicidad hERG -------------------------------------------
     SmileitPatternSeedDefinition(
@@ -408,7 +414,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
         pattern_type="privileged",
         risk_category="privileged_scaffold",
         caption="Indole is a privileged scaffold with broad kinase and GPCR bioactivity.",
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Piperazine Privileged Scaffold",
@@ -419,7 +425,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Piperazine is a privileged saturated heterocycle used to tune "
             "basicity, solubility and binding interactions."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Quinoline Privileged Scaffold",
@@ -430,7 +436,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Quinoline is a privileged aromatic scaffold frequent in kinase "
             "inhibitors and antimalarial ligands."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Benzimidazole Privileged Scaffold",
@@ -441,7 +447,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Benzimidazole is a privileged bicyclic scaffold that mimics "
             "purines and binds many target families."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Pyrimidine Privileged Scaffold",
@@ -452,7 +458,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Pyrimidine is a privileged aromatic core in kinase inhibitors "
             "and nucleobase analogues."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Thiazole Privileged Scaffold",
@@ -463,7 +469,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Thiazole is a privileged five-membered heteroaromatic that "
             "engages kinase hinges and metal centres."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Morpholine Privileged Scaffold",
@@ -474,7 +480,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Morpholine is a privileged saturated heterocycle used for "
             "solubility and basicity tuning."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
     SmileitPatternSeedDefinition(
         name="Pyrrolidine Privileged Scaffold",
@@ -485,7 +491,7 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
             "Pyrrolidine is a privileged saturated amine that constrains "
             "basic substituents in ligand design."
         ),
-        source_reference="Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)",
+        source_reference=WELSCH_REFERENCE,
     ),
 )
 

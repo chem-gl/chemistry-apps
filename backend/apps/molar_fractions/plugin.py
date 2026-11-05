@@ -11,6 +11,7 @@ Cómo se usa:
 from __future__ import annotations
 
 import logging
+import math
 from typing import cast
 
 from apps.core.processing import PluginRegistry
@@ -176,15 +177,17 @@ def _build_ph_grid(ph_min: float, ph_max: float, ph_step: float) -> list[float]:
 
 
 def _compute_beta_values(pka_values: list[float]) -> list[float]:
-    """Calcula betas acumuladas replicando el algoritmo del legado Tkinter."""
-    beta_values: list[float] = [1.0]
-    pka_count: int = len(pka_values)
+    """Betas de formación: beta_k = producto de las primeras k constantes Ka.
 
-    for k_index in range(1, pka_count + 1):
-        exponent_value: float = 0.0
-        for reverse_index in range(k_index):
-            exponent_value += pka_values[pka_count - reverse_index - 1]
-        beta_values.append(10**exponent_value)
+    La especie i=0 es la máximamente protonada (ver `generate_species_labels`),
+    así que beta_0 = 1 y beta_k = Ka_1 · ... · Ka_k = 10^(-(pKa_1 + ... + pKa_k)).
+    """
+    beta_values: list[float] = [1.0]
+    accumulated_pka: float = 0.0
+
+    for pka_value in pka_values:
+        accumulated_pka += pka_value
+        beta_values.append(10 ** (-accumulated_pka))
 
     return beta_values
 
@@ -193,14 +196,16 @@ def _compute_fraction_row(
     ph_value: float, beta_values: list[float]
 ) -> MolarFractionRow:
     """Calcula fracciones molares f0..fn para un valor de pH puntual."""
-    hydrogen_concentration: float = 10 ** (-ph_value)
-
-    denominator: float = 0.0
-    indexed_terms: list[float] = []
-    for species_index, beta_value in enumerate(beta_values):
-        term_value: float = beta_value * (hydrogen_concentration**species_index)
-        indexed_terms.append(term_value)
-        denominator += term_value
+    # f_i = beta_i · [H+]^(n-i) / Σ, calculado en logaritmos para no desbordar
+    # ni colapsar a cero con pH extremos (10^-42 y similares).
+    species_count: int = len(beta_values)
+    log_terms: list[float] = [
+        math.log10(beta_value) - (species_count - 1 - species_index) * ph_value
+        for species_index, beta_value in enumerate(beta_values)
+    ]
+    max_log_term: float = max(log_terms)
+    indexed_terms: list[float] = [10 ** (value - max_log_term) for value in log_terms]
+    denominator: float = float(sum(indexed_terms))
 
     if denominator == 0:
         raise ValueError("El denominador del cálculo de fracciones resultó en cero.")

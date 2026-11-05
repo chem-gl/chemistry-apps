@@ -42,6 +42,23 @@ if (globalThis.localStorage === undefined) {
   } as Storage;
 }
 
+// ngx-echarts necesita ResizeObserver; jsdom no lo implementa y los specs que
+// montan una gráfica fallarían en ngOnInit. Stub inerte solo para tests.
+if (globalThis.ResizeObserver === undefined) {
+  class ResizeObserverStub {
+    observe(): void {
+      // Sin layout real en jsdom: no hay nada que observar.
+    }
+    unobserve(): void {
+      // No-op.
+    }
+    disconnect(): void {
+      // No-op.
+    }
+  }
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+}
+
 function isKnownJsdomCssNoise(logArguments: unknown[]): boolean {
   return logArguments.some((argumentValue: unknown) => {
     if (typeof argumentValue === 'string') {

@@ -509,7 +509,7 @@ export class SmileitComponent implements OnInit, OnDestroy {
     this.privilegedAnnotationsEnabled.update((currentValue: boolean) => !currentValue);
   }
 
-  /** Alterna entre "desactivar todo" y "activar todo" según el estado actual. */
+  /** Alterna entre desactivar y activar todas las alertas según el estado actual. */
   toggleAllAlerts(): void {
     if (this.allAlertsEnabled()) {
       this.disableAllToxicophoreCategories();

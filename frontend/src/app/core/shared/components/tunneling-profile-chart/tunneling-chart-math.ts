@@ -315,7 +315,7 @@ export function buildTunnelingSeries(
   );
 
   const xMin = potential[0][0];
-  const xMax = potential[potential.length - 1][0];
+  const xMax = potential.at(-1)?.[0] ?? 0;
   const probabilityDensity = buildProbabilityDensityProfile(transmission, xMin, xMax);
 
   const barrierPeak = potential.reduce(
@@ -493,7 +493,7 @@ export function buildTunnelingChartOptions(
         },
       },
     ],
-    grid: { top: 64, right: 24, bottom: 30, left: 24, containLabel: true },
+    grid: { top: 64, right: 28, bottom: 30, left: 58, containLabel: true },
     xAxis: {
       type: 'value',
       name: 'Reaction coordinate',
@@ -514,7 +514,7 @@ export function buildTunnelingChartOptions(
         type: 'value',
         name: 'V (kcal/mol)',
         nameLocation: 'middle',
-        nameGap: 52,
+        nameGap: 76,
         // Rango explícito: la campana (0..V‡) y la referencia de productos (ΔE).
         min: Math.min(0, parameters.reactionEnergyKcalMol) - 0.4,
         max: parameters.barrierKcalMol + 0.6,

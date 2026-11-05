@@ -17,7 +17,7 @@ APP_ROUTE_BASENAME: Final[str] = "molar-fractions-job"
 APP_API_BASE_PATH: Final[str] = "/api/molar-fractions/jobs/"
 
 PLUGIN_NAME: Final[str] = "molar-fractions"
-DEFAULT_ALGORITHM_VERSION: Final[str] = "1.0.0"
+DEFAULT_ALGORITHM_VERSION: Final[str] = "1.1.0"  # 1.1.0: corrige el orden f0..fn (caché invalidada)
 DEFAULT_LABEL: Final[str] = "A"
 DEFAULT_INITIAL_CHARGE: Final[str] = "q"
 

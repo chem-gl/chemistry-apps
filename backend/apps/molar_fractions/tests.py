@@ -20,6 +20,7 @@ from apps.core.types import JSONMap
 
 from ._species_labels import generate_species_labels
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
+from .plugin import _compute_beta_values, _compute_fraction_row
 
 
 class MolarFractionsContractApiTests(TestCase):
@@ -454,3 +455,53 @@ class MolarFractionsSpeciesLabelTests(TestCase):
             ["H₂Aq", "HAq⁻¹", "Aq⁻²"],
         )
         self.assertEqual(label_payload["labels_ascii"], ["H2Aq", "HAq-1", "Aq-2"])
+
+
+class MolarFractionsPhysicsRegressionTests(TestCase):
+    """Regresión: las fracciones deben seguir la química ácido-base real.
+
+    La especie i=0 es la máximamente protonada; por encima del pKa domina la
+    desprotonada. Un bug histórico invertía los exponentes y devolvía el
+    resultado espejado, lo que se propagaba a la tabla y a la gráfica.
+    """
+
+    def test_single_pka_above_pka_deprotonated_species_dominates(self) -> None:
+        beta_values = _compute_beta_values([4.75])
+        row = _compute_fraction_row(7.4, beta_values)
+
+        protonated, deprotonated = row["fractions"]
+        self.assertLess(protonated, 0.01)
+        self.assertGreater(deprotonated, 0.99)
+        self.assertAlmostEqual(sum(row["fractions"]), 1.0, places=9)
+
+    def test_single_pka_at_pka_is_fifty_fifty(self) -> None:
+        row = _compute_fraction_row(4.75, _compute_beta_values([4.75]))
+
+        self.assertAlmostEqual(row["fractions"][0], 0.5, places=9)
+        self.assertAlmostEqual(row["fractions"][1], 0.5, places=9)
+
+    def test_triprotic_species_sequence_matches_ph(self) -> None:
+        beta_values = _compute_beta_values([2.2, 7.2, 12.3])
+
+        acidic = _compute_fraction_row(2.0, beta_values)["fractions"]
+        self.assertGreater(acidic[0], 0.6)
+        self.assertLess(acidic[2], 1e-5)
+
+        # En el segundo pKa (pH 7.2) dominan las dos especies centrales; el resto
+        # es despreciable (las colas valen ~1e-5 por los pKa extremos).
+        neutral = _compute_fraction_row(7.2, beta_values)["fractions"]
+        self.assertAlmostEqual(neutral[1], 0.5, places=4)
+        self.assertAlmostEqual(neutral[2], 0.5, places=4)
+        self.assertLess(neutral[0], 1e-4)
+        self.assertLess(neutral[3], 1e-4)
+
+        basic = _compute_fraction_row(12.3, beta_values)["fractions"]
+        self.assertAlmostEqual(basic[2], 0.5, places=4)
+        self.assertAlmostEqual(basic[3], 0.5, places=4)
+
+    def test_extreme_ph_does_not_underflow_to_zero_denominator(self) -> None:
+        beta_values = _compute_beta_values([2.2, 7.2, 12.3])
+
+        for ph_value in (0.0, 14.0):
+            row = _compute_fraction_row(ph_value, beta_values)
+            self.assertAlmostEqual(sum(row["fractions"]), 1.0, places=9)
