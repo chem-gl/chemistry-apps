@@ -2,9 +2,10 @@
 """generate_docs_diagrams.py: Genera los diagramas científicos de los manuales.
 
 Este script sustituye el diagrama esquemático del ejemplo de Marcus por el
-diagrama clásico de dos parábolas desplazadas y añade el tab `example` de
+diagrama clásico de dos parábolas desplazadas, añade el tab `example` de
 fracciones molares con curvas de especiación calculadas a partir de la fórmula
-ácido-base (no dibujadas a mano).
+ácido-base (no dibujadas a mano) y regenera la curva T(E) del ejemplo de
+túnel (barrera Eckart simétrica V0 = 1, m = 1, d = 1, ħ = 1).
 
 Física de Marcus usada (ejemplo del manual: λ = 5.020, ΔG° = -1.883):
 
@@ -346,6 +347,110 @@ def build_molar_example(locale: str) -> str:
     )
 
 
+# Barrera Eckart simétrica del ejemplo de túnel (V0 = 1, m = 1, d = 1, ħ = 1).
+# Replica el script de referencia: T(E) frente a E/V0 con límite clásico en 1.
+TUNNEL_V0: Final[float] = 1.0
+TUNNEL_MASS: Final[float] = 1.0
+TUNNEL_WIDTH: Final[float] = 1.0
+TUNNEL_HBAR: Final[float] = 1.0
+TUNNEL_E_MAX: Final[float] = 3.0
+TUNNEL_Y_MIN: Final[float] = -0.05
+TUNNEL_Y_MAX: Final[float] = 1.05
+TUNNEL_SAMPLE_COUNT: Final[int] = 151
+
+TUNNEL_CAPTION: Final[dict[str, str]] = {
+    "en": "Transmission curve for a symmetric Eckart barrier (V₀ = 1, m = 1, d = 1, ħ = 1):",
+    "es": "Curva de transmisión para una barrera Eckart simétrica (V₀ = 1, m = 1, d = 1, ħ = 1):",
+    "fr": "Courbe de transmission pour une barrière d'Eckart symétrique (V₀ = 1, m = 1, d = 1, ħ = 1) :",
+}
+
+TUNNEL_OLD_CAPTIONS: Final[tuple[str, ...]] = (
+    "<p>Energy picture of this example:</p>",
+    "<p>Diagrama de energía de este ejemplo:</p>",
+    "<p>Schéma énergétique de cet exemple :</p>",
+)
+
+
+def tunnel_transmission(energy: float) -> float:
+    """Coeficiente T(E) de la barrera Eckart simétrica del script de referencia."""
+    if energy <= 0.0:
+        return 0.0
+    wave_number = math.sqrt(2.0 * TUNNEL_MASS * energy) / TUNNEL_HBAR
+    phase = math.pi * wave_number * TUNNEL_WIDTH
+    delta = (2.0 * TUNNEL_MASS * TUNNEL_V0 * TUNNEL_WIDTH**2) / TUNNEL_HBAR**2
+    argument = delta - 0.25
+    numerator = math.sinh(phase) ** 2
+    if argument >= 0.0:
+        denominator = numerator + math.cosh(math.pi * math.sqrt(argument)) ** 2
+    else:
+        denominator = numerator + math.cos(math.pi * math.sqrt(-argument)) ** 2
+    if denominator == 0.0:
+        return 0.0
+    return min(max(numerator / denominator, 0.0), 1.0)
+
+
+def build_tunnel_svg() -> str:
+    """Genera la curva T(E) frente a E/V0 con el límite clásico en E = V0."""
+    pad_left, pad_right, pad_top, pad_bottom = 44, 16, 30, 34
+    plot_width = WIDTH - pad_left - pad_right
+    plot_height = HEIGHT - pad_top - pad_bottom
+    axis_bottom = HEIGHT - pad_bottom
+
+    def to_x(energy_ratio: float) -> float:
+        return pad_left + energy_ratio / TUNNEL_E_MAX * plot_width
+
+    def to_y(transmission: float) -> float:
+        return (
+            pad_top
+            + (TUNNEL_Y_MAX - transmission)
+            / (TUNNEL_Y_MAX - TUNNEL_Y_MIN)
+            * plot_height
+        )
+
+    curve = [
+        (
+            to_x(TUNNEL_E_MAX * index / (TUNNEL_SAMPLE_COUNT - 1)),
+            to_y(tunnel_transmission(TUNNEL_E_MAX * index / (TUNNEL_SAMPLE_COUNT - 1))),
+        )
+        for index in range(TUNNEL_SAMPLE_COUNT)
+    ]
+    classical_x = to_x(1.0)
+
+    grid_v = "\n".join(
+        f'<line x1="{to_x(tick):.1f}" y1="{pad_top}" x2="{to_x(tick):.1f}" y2="{axis_bottom}" '
+        f'stroke="currentColor" stroke-width="0.7" stroke-dasharray="1,3" opacity="0.25"/>'
+        for tick in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0)
+    )
+    grid_h = "\n".join(
+        f'<line x1="{pad_left}" y1="{to_y(tick):.1f}" x2="{WIDTH - pad_right}" y2="{to_y(tick):.1f}" '
+        f'stroke="currentColor" stroke-width="0.7" stroke-dasharray="1,3" opacity="0.25"/>'
+        for tick in (0.0, 0.25, 0.5, 0.75, 1.0)
+    )
+
+    return f"""<svg viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-label="Eckart transmission coefficient T(E) versus normalized energy E over V0 with classical limit at 1">
+<text x="{WIDTH / 2:.1f}" y="13" font-size="11" font-weight="bold" fill="currentColor" text-anchor="middle">Transmission Coefficient - Eckart Barrier</text>
+{grid_v}
+{grid_h}
+<line x1="{pad_left}" y1="{axis_bottom}" x2="{WIDTH - pad_right}" y2="{axis_bottom}" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+<line x1="{pad_left}" y1="{pad_top}" x2="{pad_left}" y2="{axis_bottom}" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+<line x1="{classical_x:.1f}" y1="{pad_top}" x2="{classical_x:.1f}" y2="{axis_bottom}" stroke="#dc143c" stroke-width="1.4" stroke-dasharray="5,3" opacity="0.9"/>
+<path d="{build_path(curve)}" fill="none" stroke="navy" stroke-width="2.5" stroke-linecap="round"/>
+<text x="{to_x(0.0):.1f}" y="{axis_bottom + 12}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="middle">0</text>
+<text x="{to_x(1.0):.1f}" y="{axis_bottom + 12}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="middle">1</text>
+<text x="{to_x(2.0):.1f}" y="{axis_bottom + 12}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="middle">2</text>
+<text x="{to_x(3.0):.1f}" y="{axis_bottom + 12}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="middle">3</text>
+<text x="{pad_left - 4}" y="{to_y(0.0) + 3:.1f}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="end">0</text>
+<text x="{pad_left - 4}" y="{to_y(0.5) + 3:.1f}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="end">0.5</text>
+<text x="{pad_left - 4}" y="{to_y(1.0) + 3:.1f}" font-size="8" fill="currentColor" opacity="0.7" text-anchor="end">1</text>
+<text x="{(pad_left + WIDTH - pad_right) / 2:.1f}" y="{HEIGHT - 6}" font-size="9" fill="currentColor" opacity="0.75" text-anchor="middle">Normalized Particle Energy (E / V0)</text>
+<text x="11" y="{pad_top + plot_height / 2:.1f}" font-size="9" fill="currentColor" opacity="0.7" text-anchor="middle" transform="rotate(-90 11 {pad_top + plot_height / 2:.1f})">Transmission Coefficient T(E)</text>
+<line x1="{pad_left + 6}" y1="{pad_top + 8}" x2="{pad_left + 22}" y2="{pad_top + 8}" stroke="navy" stroke-width="2.5"/>
+<text x="{pad_left + 26}" y="{pad_top + 11}" font-size="8" fill="currentColor">T(E) (Tunneling / Quantum Effect)</text>
+<line x1="{pad_left + 6}" y1="{pad_top + 20}" x2="{pad_left + 22}" y2="{pad_top + 20}" stroke="#dc143c" stroke-width="1.4" stroke-dasharray="5,3"/>
+<text x="{pad_left + 26}" y="{pad_top + 23}" font-size="8" fill="currentColor">Classical Limit (E = V0)</text>
+</svg>"""
+
+
 def update_locale(locale_path: Path, *, dry_run: bool) -> bool:
     """Actualiza los diagramas de un catálogo i18n. Retorna si cambió."""
     payload = json.loads(locale_path.read_text(encoding="utf-8"))
@@ -377,6 +482,28 @@ def update_locale(locale_path: Path, *, dry_run: bool) -> bool:
             molar_section["example"] = replacement
             changed = True
 
+    tunnel_section = docs.get("tunnel")
+    if isinstance(tunnel_section, dict) and locale in TUNNEL_CAPTION:
+        tunnel_example = tunnel_section.get("example")
+        if (
+            isinstance(tunnel_example, str)
+            and "<svg" in tunnel_example
+            and "</svg>" in tunnel_example
+        ):
+            start = tunnel_example.index("<svg")
+            end = tunnel_example.index("</svg>") + len("</svg>")
+            replacement = build_tunnel_svg()
+            updated = tunnel_example[:start] + replacement + tunnel_example[end:]
+            for old_caption in TUNNEL_OLD_CAPTIONS:
+                if old_caption in updated:
+                    updated = updated.replace(
+                        old_caption, f"<p>{TUNNEL_CAPTION[locale]}</p>"
+                    )
+                    break
+            if updated != tunnel_example:
+                tunnel_section["example"] = updated
+                changed = True
+
     if changed and not dry_run:
         locale_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -386,7 +513,7 @@ def update_locale(locale_path: Path, *, dry_run: bool) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Regenera los diagramas de los manuales (Marcus y fracciones molares)."
+        description="Regenera los diagramas de los manuales (Marcus, fracciones molares y túnel)."
     )
     parser.add_argument(
         "--dry-run", action="store_true", help="No escribe los catálogos."
