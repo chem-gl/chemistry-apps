@@ -86,7 +86,6 @@ function makeSmileitJob(overrides: Partial<SmileitJobResponseView> = {}): Smilei
       assignment_blocks: [],
       r_substitutes: 1,
       num_bonds: 1,
-      max_structures: 300,
       site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
       export_name_base: 'open_run',
       export_padding: 5,

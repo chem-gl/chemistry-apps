@@ -17,15 +17,14 @@ import { SmileitAssignmentBlockInputRequest } from './smileitAssignmentBlockInpu
 export interface SmileitJobCreateRequest { 
     version?: string;
     principal_smiles: string;
+    /**
+     * Índices de los átomos seleccionados como sitios de sustitución, en el orden atómico del SMILES canónico (el mismo que devuelve el endpoint de inspección).
+     */
     selected_atom_indices: Array<number>;
     assignment_blocks: Array<SmileitAssignmentBlockInputRequest>;
     site_overlap_policy?: SiteOverlapPolicyEnum;
     r_substitutes?: number;
     num_bonds?: number;
-    /**
-     * Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.
-     */
-    max_structures?: number;
     export_name_base?: string;
     export_padding?: number;
 }

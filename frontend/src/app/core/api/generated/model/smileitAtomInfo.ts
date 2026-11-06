@@ -17,5 +17,6 @@ export interface SmileitAtomInfo {
     symbol: string;
     implicit_hydrogens: number;
     is_aromatic: boolean;
+    is_substitutable: boolean;
 }
 

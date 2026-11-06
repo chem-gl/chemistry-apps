@@ -116,12 +116,12 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
   });
 
   describe('historicalJobDisplayName', () => {
-    it('retorna export_name_base con el id del job para mantener unicidad visible', () => {
+    it('retorna solo export_name_base, sin el id del job', () => {
       const job = buildScientificJob({
         id: 'abc-12345678',
         parameters: { export_name_base: 'Mi experimento' },
       });
-      expect(component.historicalJobDisplayName(job)).toBe('Mi experimento_abc-12345678');
+      expect(component.historicalJobDisplayName(job)).toBe('Mi experimento');
     });
 
     it('retorna un fallback basado en job cuando no hay export_name_base', () => {
@@ -129,7 +129,7 @@ describe('GenerationResultPanelComponent - métodos de ayuda puros', () => {
         id: 'abc12345-extra',
         parameters: {},
       });
-      expect(component.historicalJobDisplayName(job)).toBe('job_abc12345-extra');
+      expect(component.historicalJobDisplayName(job)).toBe('job');
     });
   });
 

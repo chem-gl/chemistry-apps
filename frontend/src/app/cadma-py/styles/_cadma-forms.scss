@@ -440,10 +440,6 @@
 .btn-ghost,
 .btn-danger {
   border: 0;
-  border-radius: var(--chem-radius);
-  padding: 0.72rem 1.1rem;
-  font-size: var(--chem-text-sm);
-  font-weight: 600;
   cursor: pointer;
   transition:
     background 0.15s,

@@ -259,7 +259,7 @@
     "actions": {
       "processing": "Procesando...",
       "reset": "Restablecer",
-      "run": "Ejecutar Propiedades de Toxicidad",
+      "run": "Ejecutar",
       "exporting": "Exportando...",
       "exportCsv": "Exportar CSV"
     },
@@ -297,10 +297,7 @@
       "references": "Referencias científicas",
       "filteredCount": "filas visibles",
       "modelLabel": "Modelo: ADMET-AI",
-      "colDevTox": "Dev. Toxicity",
-      "emptyTitle": "Aún no hay resultados",
-      "emptyBody": "Ejecuta un cálculo para ver aquí las propiedades ADMET predichas de tus moléculas.",
-      "emptyHint": "Configura la entrada y pulsa Ejecutar."
+      "colDevTox": "Dev. Toxicity"
     },
     "moleculeModal": {
       "title": "Molecule preview"
@@ -318,7 +315,7 @@
     "actions": {
       "processing": "Procesando...",
       "reset": "Restablecer",
-      "run": "Ejecutar SA Score",
+      "run": "Ejecutar",
       "exporting": "Exportando...",
       "exportCsv": "Exportar CSV"
     },
@@ -378,7 +375,7 @@
       "processing": "Procesando...",
       "clearFiles": "Limpiar archivos",
       "reset": "Restablecer",
-      "run": "Ejecutar Marcus"
+      "run": "Ejecutar"
     },
     "fileSlots": {
       "reactant1": "Reactivo 1",
@@ -404,9 +401,8 @@
       "rateConstants": "Constantes de velocidad",
       "adiabaticEnergy": "ΔE adiabático (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "Esperando el envío — configura las entradas y ejecuta un trabajo para ver aquí los resultados.",
       "submitting": "Enviando job de Marcus al backend...",
-      "title": "Salida",
+      "title": "Resultados",
       "kFinal": "k (final)",
       "ariaLabel": "Resultados y progreso",
       "marcusEnergies": "Energías de Marcus",
@@ -901,7 +897,7 @@
       "generatePanelTitle": "Generar desde Smile-it",
       "files": "Archivos",
       "tableCandidate": "Candidato",
-      "running": "Ejecutando CADMA Py…",
+      "running": "Ejecutando…",
       "toxicityMissing": "Toxicidad faltante",
       "selectSmileitJobPlaceholder": "Selecciona un job de Smile-it...",
       "skipSa": "Saltar — sin datos SA",
@@ -909,9 +905,9 @@
       "quickFillSaReady": "SA ya adjuntado",
       "saReady": "SA ✓",
       "manualPanelDesc": "Sube uno o más archivos CSV. Puedes proporcionar un archivo combinado o archivos separados de SMILES, Toxicidad y SA.",
-      "runCadmaPy": "Ejecutar CADMA Py →",
+      "runCadmaPy": "Ejecutar →",
       "change": "Cambiar",
-      "submitting": "Enviando job de CADMA Py…",
+      "submitting": "Enviando job…",
       "clearFiles": "Limpiar archivos",
       "guideToxicity": "Toxicidad de",
       "quickFillTitle": "Carga rápida desde la guía actual de candidatos o ejecuciones previas",
@@ -1005,7 +1001,8 @@
       "profile": "Perfil",
       "identity": "Identidad",
       "groups": "Grupos",
-      "apps": "Apps"
+      "apps": "Apps",
+      "userMenu": "Menú de usuario"
     },
     "brand": {
       "title": "Química Computacional para Evaluar la Naturaleza",
@@ -1160,7 +1157,7 @@
       "exportLog": "Exportar LOG (entradas + resultados)",
       "processing": "Procesando...",
       "reset": "Restablecer",
-      "run": "Datos ok, ejecutar Túnel",
+      "run": "Ejecutar",
       "exporting": "Exportando...",
       "exportCsv": "Exportar CSV",
       "clearTrace": "Limpiar traza de entrada"
@@ -1187,7 +1184,7 @@
         "ariaLabel": "Diagrama de túnel: barrera de Eckart, función de onda y energía térmica"
       },
       "submitting": "Enviando job de efecto túnel al backend...",
-      "title": "Salida",
+      "title": "Resultados",
       "ariaLabel": "Resultados y progreso"
     }
   },
@@ -1202,7 +1199,7 @@
     "actions": {
       "processing": "Procesando...",
       "reset": "Restablecer",
-      "run": "Datos ok, ejecutar Server Calc",
+      "run": "Ejecutar",
       "exportCsv": "Exportar CSV"
     },
     "result": {
@@ -1215,9 +1212,8 @@
         "filePath": "Guardado en (qta):"
       },
       "submitting": "Enviando job de server calc al backend...",
-      "title": "Salida",
-      "ariaLabel": "Resultados y progreso",
-      "emptyHint": "Ejecuta un cálculo para ver el resultado y el archivo escrito en qta."
+      "title": "Resultados",
+      "ariaLabel": "Resultados y progreso"
     },
     "logs": {
       "title": "Logs de conexión",
@@ -1252,7 +1248,7 @@
     "actions": {
       "processing": "Procesando...",
       "reset": "Restablecer",
-      "run": "Ejecutar Fracciones Molares",
+      "run": "Ejecutar",
       "exportCsv": "Exportar CSV"
     },
     "history": {
@@ -1557,7 +1553,7 @@
       "processing": "Procesando...",
       "clearFiles": "Limpiar archivos",
       "reset": "Restablecer",
-      "run": "Ejecutar Easy-rate"
+      "run": "Ejecutar"
     },
     "fileSlots": {
       "product1": "Product 1",
@@ -1614,7 +1610,7 @@
       "kTst": "k (TST)",
       "submitting": "Enviando job de Easy-rate al backend...",
       "tunnelCorrection": "Corrección por túnel (Eckart)",
-      "title": "Salida",
+      "title": "Resultados",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1684,6 +1680,10 @@
       "all": "Todos",
       "status": "Estado",
       "app": "App"
+    },
+    "panels": {
+      "input": "Entrada",
+      "results": "Resultados"
     }
   },
   "smileit": {
@@ -1847,7 +1847,7 @@
       "applyButton": "Aplicar al borrador"
     },
     "step1": {
-      "title": "1. Molécula principal y vista previa del scaffold",
+      "title": "Molécula principal",
       "description": "Define el SMILES principal, inspecciónalo visualmente y elige los sitios de sustitución que luego serán asignados a tus moléculas de bloque.",
       "ariaLabel": "Parámetros de entrada"
     },
@@ -1892,9 +1892,9 @@
       "sketchLoading": "Cargando editor de moléculas…",
       "sketchHint": "Usa el sketcher de abajo para editar la molécula principal.",
       "pending": "SMILES principal pendiente",
-      "inspect": "Inspeccionar estructura",
+      "inspect": "Insertar",
       "sketchTitle": "Editor de sketch principal",
-      "openSketch": "✏ Abrir editor de sketch",
+      "openSketch": "Dibujar molécula",
       "cancelButton": "Cancelar",
       "label": "SMILES principal",
       "inspecting": "Inspeccionando...",
@@ -1936,7 +1936,9 @@
       "blockMappingHint": "Crea bloques primero, luego mapea estos sitios al bloque que debe poseerlos.",
       "title": "Seleccionar sitios de sustitución en el scaffold",
       "hint": "Haz clic en los átomos del visor para marcar donde se colocarán las sustituciones.",
-      "blocksAvailableSuffix": "bloques disponibles"
+      "blocksAvailableSuffix": "bloques disponibles",
+      "nonSubstitutableAtom": "Sin valencia libre: no admite sustituyentes.",
+      "nonSubstitutableSelected": "Átomos seleccionados sin valencia libre (no sustituibles): {{sites}}"
     },
     "step4": {
       "loadedInView": "Cargados en la vista actual:",
@@ -1997,7 +1999,10 @@
       "placeholderMapping": "Mapeo de marcadores:",
       "openBelow": "Abrir abajo",
       "previousJobsHint": "Abre una ejecución histórica para inspeccionar las estructuras actualmente renderizadas.",
-      "showingOfTotal": "Mostrando {shown} de {total} derivados"
+      "showingOfTotal": "Mostrando {shown} de {total} derivados",
+      "estimatedDerivatives": "≈ {count} derivados estimados",
+      "combinatorialWarning": "La combinatoria supera {limit} derivados: la generación será completa y puede tardar.",
+      "hardLimitExceeded": "Supera el máximo de {limit} derivados. Reduce sitios, sustituyentes o R-substituciones."
     },
     "catalogPanel": {
       "maximizeSection": "Maximizar sección",

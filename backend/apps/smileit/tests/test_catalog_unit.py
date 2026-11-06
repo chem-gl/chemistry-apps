@@ -247,7 +247,9 @@ class AssertAnchorIndicesAtomCountTests(TestCase):
         mock_mol = MagicMock()
         mock_mol.GetNumAtoms.return_value = 0
 
-        with patch("apps.smileit.catalog.Chem.MolFromSmiles", return_value=mock_mol):
+        with patch(
+            "apps.smileit.catalog_anchors.Chem.MolFromSmiles", return_value=mock_mol
+        ):
             with self.assertRaises(ValueError) as ctx:
                 _assert_anchor_indices("CC", [0])
         self.assertIn("al menos un átomo", str(ctx.exception))
@@ -330,3 +332,51 @@ class NormalizeManualSubstituentPureTests(TestCase):
         with self.assertRaises(ValueError) as ctx:
             normalize_manual_substituent(entry)  # type: ignore[arg-type]
         self.assertIn("SMILES inválido", str(ctx.exception))
+
+
+# =========================
+# Remapeo de anclajes crudo -> canónico (regresión)
+# =========================
+
+
+class RemapSubstituentAnchorsTests(TestCase):
+    """Prueba que los anclajes en espacio crudo se remapeen al canónico."""
+
+    def test_raw_anchor_index_is_remapped_to_canonical_space(self) -> None:
+        """C(=O)O con ancla [0] (C crudo) debe persistirse como [1] en O=CO."""
+        entry = {
+            "name": "carboxyl",
+            "smiles": "C(=O)O",
+            "anchor_atom_indices": [0],
+            "categories": [],
+        }
+        with patch("apps.smileit.catalog.get_category_map", return_value={}):
+            result = normalize_manual_substituent(entry)  # type: ignore[arg-type]
+        self.assertEqual(result["smiles"], "O=CO")
+        self.assertEqual(result["anchor_atom_indices"], [1])
+
+    def test_canonical_anchor_index_is_stable(self) -> None:
+        """Un ancla ya expresada en espacio canónico debe conservarse."""
+        entry = {
+            "name": "carboxyl",
+            "smiles": "O=CO",
+            "anchor_atom_indices": [1],
+            "categories": [],
+        }
+        with patch("apps.smileit.catalog.get_category_map", return_value={}):
+            result = normalize_manual_substituent(entry)  # type: ignore[arg-type]
+        self.assertEqual(result["smiles"], "O=CO")
+        self.assertEqual(result["anchor_atom_indices"], [1])
+
+    def test_out_of_range_anchor_raises_value_error(self) -> None:
+        """Un ancla fuera de rango debe rechazarse aunque el SMILES sea válido."""
+        entry = {
+            "name": "ethanol",
+            "smiles": "CCO",
+            "anchor_atom_indices": [99],
+            "categories": [],
+        }
+        with patch("apps.smileit.catalog.get_category_map", return_value={}):
+            with self.assertRaises(ValueError) as ctx:
+                normalize_manual_substituent(entry)  # type: ignore[arg-type]
+        self.assertIn("fuera de rango", str(ctx.exception))

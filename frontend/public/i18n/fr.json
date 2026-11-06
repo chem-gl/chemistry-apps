@@ -217,7 +217,7 @@
     "actions": {
       "processing": "Traitement...",
       "reset": "Réinitialiser",
-      "run": "Exécuter les propriétés de toxicité",
+      "run": "Exécuter",
       "exporting": "Exportation...",
       "exportCsv": "Exporter en CSV"
     },
@@ -255,10 +255,7 @@
       "references": "Références scientifiques",
       "filteredCount": "lignes visibles",
       "modelLabel": "Modèle : ADMET-AI",
-      "colDevTox": "Tox. dév.",
-      "emptyTitle": "Aucun résultat pour le moment",
-      "emptyBody": "Lancez un calcul pour visualiser ici les propriétés ADMET prédites de vos molécules.",
-      "emptyHint": "Configurez la saisie, puis lancez le calcul."
+      "colDevTox": "Tox. dév."
     },
     "moleculeModal": {
       "title": "Aperçu moléculaire"
@@ -276,7 +273,7 @@
     "actions": {
       "processing": "Traitement...",
       "reset": "Réinitialiser",
-      "run": "Exécuter le score SA",
+      "run": "Exécuter",
       "exporting": "Exportation...",
       "exportCsv": "Exporter en CSV"
     },
@@ -336,7 +333,7 @@
       "processing": "Traitement...",
       "clearFiles": "Effacer les fichiers",
       "reset": "Réinitialiser",
-      "run": "Exécuter Marcus"
+      "run": "Exécuter"
     },
     "fileSlots": {
       "reactant1": "Réactif 1",
@@ -362,9 +359,8 @@
       "rateConstants": "Constantes de vitesse",
       "adiabaticEnergy": "ΔE adiabatique (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "En attente d'envoi — configurez les entrées et lancez un job pour voir les résultats ici.",
       "submitting": "Envoi du job Marcus au backend...",
-      "title": "Sortie",
+      "title": "Résultats",
       "kFinal": "k (finale)",
       "ariaLabel": "Résultats et progression",
       "marcusEnergies": "Énergies de Marcus",
@@ -854,7 +850,7 @@
       "generatePanelTitle": "Générer depuis Smile-it",
       "files": "Fichiers",
       "tableCandidate": "Candidat",
-      "running": "Exécution de CADMA Py...",
+      "running": "Exécution...",
       "toxicityMissing": "Toxicité manquante",
       "selectSmileitJobPlaceholder": "Sélectionnez un job Smile-it...",
       "skipSa": "Ignorer — sans données SA",
@@ -862,9 +858,9 @@
       "quickFillSaReady": "SA déjà joint",
       "saReady": "SA ✓",
       "manualPanelDesc": "Importez un ou plusieurs fichiers CSV. Vous pouvez fournir un fichier combiné ou des fichiers SMILES, Toxicité et SA séparés.",
-      "runCadmaPy": "Lancer CADMA Py →",
+      "runCadmaPy": "Lancer →",
       "change": "Modifier",
-      "submitting": "Envoi du job CADMA Py...",
+      "submitting": "Envoi du job...",
       "clearFiles": "Effacer les fichiers",
       "guideToxicity": "Toxicité de",
       "backToStep2": "Retour à l’étape 2",
@@ -963,7 +959,8 @@
       "profile": "Profil",
       "identity": "Identité",
       "groups": "Groupes",
-      "apps": "Applications"
+      "apps": "Applications",
+      "userMenu": "Menu utilisateur"
     },
     "brand": {
       "title": "Centre de contrôle scientifique",
@@ -1118,7 +1115,7 @@
       "exportLog": "Exporter le LOG (entrées + résultats)",
       "processing": "Traitement...",
       "reset": "Réinitialiser",
-      "run": "Données ok, lancer Tunnel",
+      "run": "Exécuter",
       "exporting": "Exportation...",
       "exportCsv": "Exporter en CSV",
       "clearTrace": "Effacer le journal de saisie"
@@ -1145,7 +1142,7 @@
         "ariaLabel": "Diagramme d’effet tunnel : barrière d’Eckart, fonction d’onde et énergie thermique"
       },
       "submitting": "Envoi du job d’effet tunnel au backend...",
-      "title": "Sortie",
+      "title": "Résultats",
       "ariaLabel": "Résultats et progression"
     }
   },
@@ -1177,7 +1174,7 @@
     "actions": {
       "processing": "Traitement...",
       "reset": "Réinitialiser",
-      "run": "Exécuter les fractions molaires",
+      "run": "Exécuter",
       "exportCsv": "Exporter en CSV"
     },
     "history": {
@@ -1570,7 +1567,7 @@
       "processing": "Traitement...",
       "clearFiles": "Effacer les fichiers",
       "reset": "Réinitialiser",
-      "run": "Exécuter Easy-rate"
+      "run": "Exécuter"
     },
     "fileSlots": {
       "product1": "Produit 1",
@@ -1627,7 +1624,7 @@
       "kTst": "k (TST)",
       "submitting": "Envoi du job Easy-rate au backend...",
       "tunnelCorrection": "Correction tunnel (Eckart)",
-      "title": "Sortie",
+      "title": "Résultats",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1697,6 +1694,10 @@
       "all": "Tous",
       "status": "Statut",
       "app": "App"
+    },
+    "panels": {
+      "input": "Entrée",
+      "results": "Résultats"
     }
   },
   "smileit": {
@@ -1860,7 +1861,7 @@
       "applyButton": "Appliquer au brouillon"
     },
     "step1": {
-      "title": "1. Molécule principale et aperçu de l’échafaudage",
+      "title": "Molécule principale",
       "description": "Définissez le SMILES principal, inspectez-le visuellement, puis choisissez les sites de substitution qui seront ensuite attribués à vos molécules de bloc.",
       "ariaLabel": "Paramètres d’entrée"
     },
@@ -1905,9 +1906,9 @@
       "sketchLoading": "Chargement de l’éditeur moléculaire…",
       "sketchHint": "Utilisez l’éditeur ci-dessous pour modifier la molécule principale.",
       "pending": "SMILES principal en attente",
-      "inspect": "Inspecter la structure",
+      "inspect": "Insérer",
       "sketchTitle": "Éditeur de dessin du principal",
-      "openSketch": "✏ Ouvrir l’éditeur de dessin",
+      "openSketch": "Dessiner la molécule",
       "cancelButton": "Annuler",
       "label": "SMILES principal",
       "inspecting": "Inspection en cours...",
@@ -1949,7 +1950,9 @@
       "blockMappingHint": "Créez d’abord les blocs, puis associez ces sites sélectionnés au bloc qui doit les posséder.",
       "title": "Sélectionnez les sites de substitution sur l’échafaudage",
       "hint": "Cliquez sur les atomes dans l’aperçu visuel pour marquer où les substitutions pourront être placées.",
-      "blocksAvailableSuffix": "blocs disponibles"
+      "blocksAvailableSuffix": "blocs disponibles",
+      "nonSubstitutableAtom": "Aucune valence libre : ne peut pas accepter de substituants.",
+      "nonSubstitutableSelected": "Atomes sélectionnés sans valence libre (non substituables) : {{sites}}"
     },
     "step4": {
       "loadedInView": "Chargés dans la vue actuelle :",
@@ -2010,7 +2013,10 @@
       "placeholderMapping": "Correspondance des positions :",
       "openBelow": "Ouvrir ci-dessous",
       "previousJobsHint": "Ouvrez un job historique pour inspecter les structures affichées ci-dessous.",
-      "showingOfTotal": "Affichage de {shown} sur {total} dérivés"
+      "showingOfTotal": "Affichage de {shown} sur {total} dérivés",
+      "estimatedDerivatives": "≈ {count} dérivés estimés",
+      "combinatorialWarning": "La combinatoire dépasse {limit} dérivés : la génération sera complète et peut être longue.",
+      "hardLimitExceeded": "Dépasse le maximum de {limit} dérivés. Réduisez les sites, substituants ou R-substitutions."
     },
     "catalogPanel": {
       "maximizeSection": "Agrandir la section",
@@ -2129,7 +2135,7 @@
       "exportCsv": "Exporter le CSV",
       "processing": "Traitement...",
       "reset": "Réinitialiser",
-      "run": "Données ok, lancer Server Calc"
+      "run": "Exécuter"
     },
     "form": {
       "a": "Première valeur (a)",
@@ -2144,7 +2150,6 @@
     },
     "result": {
       "ariaLabel": "Résultats et progression",
-      "emptyHint": "Lancez un calcul pour voir le résultat et le fichier écrit sur qta.",
       "labels": {
         "a": "A :",
         "b": "B :",
@@ -2154,7 +2159,7 @@
         "result": "Résultat :"
       },
       "submitting": "Envoi du job Server Calc au backend...",
-      "title": "Sortie"
+      "title": "Résultats"
     }
   }
 }

@@ -191,6 +191,7 @@ export class SmileitApiService {
             symbol: atom.symbol,
             implicitHydrogens: atom.implicit_hydrogens,
             isAromatic: atom.is_aromatic,
+            isSubstitutable: atom.is_substitutable,
           })),
           svg: raw.svg,
           quickProperties: raw.quick_properties,
@@ -317,7 +318,6 @@ export class SmileitApiService {
       site_overlap_policy: params.siteOverlapPolicy,
       r_substitutes: params.rSubstitutes,
       num_bonds: params.numBonds,
-      max_structures: params.maxStructures,
       export_name_base: params.exportNameBase,
       export_padding: params.exportPadding,
     };

@@ -6,6 +6,7 @@ generación combinatoria que no son alcanzadas por los tests de integración.
 
 from __future__ import annotations
 
+import itertools
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -15,7 +16,6 @@ from ..engine.generation import (
     _build_render_progress_percentage,
     _emit_log,
     _generate_derivatives,
-    _report_generation_limit_reached,
     _report_generation_progress,
     _resolve_principal_site_index_maps_for_node,
 )
@@ -137,40 +137,6 @@ class BuildRenderProgressPercentageTests(TestCase):
         self.assertLessEqual(result, 99)
         result_low = _build_render_progress_percentage(item_index=0, item_total=9999)
         self.assertGreaterEqual(result_low, 86)
-
-
-# =========================
-# _report_generation_limit_reached
-# =========================
-
-
-class ReportGenerationLimitReachedTests(TestCase):
-    """Prueba que el log de límite alcanzado invoca el callback correctamente."""
-
-    def test_no_log_callback_does_not_raise(self) -> None:
-        """Sin callback de log el reporte de límite no lanza excepción."""
-        _report_generation_limit_reached(
-            log_callback=None,
-            attempts_processed=500,
-            generated_count=100,
-            rejected_fusions=50,
-            max_structures=100,
-        )
-
-    def test_with_log_callback_emits_warning(self) -> None:
-        """Con callback, el reporte de límite emite un log de warning."""
-        mock_log = MagicMock()
-        _report_generation_limit_reached(
-            log_callback=mock_log,
-            attempts_processed=200,
-            generated_count=50,
-            rejected_fusions=10,
-            max_structures=50,
-        )
-        mock_log.assert_called_once()
-        # El primer argumento es el nivel, debe ser warning
-        level_arg = mock_log.call_args[0][0]
-        self.assertIn("warn", str(level_arg).lower())
 
 
 # =========================
@@ -323,7 +289,6 @@ class GenerateDerivativesEmbeddingExpansionTests(TestCase):
                 site_option_map=self._build_site_option_map(),
                 r_substitutes=2,
                 num_bonds=1,
-                max_structures=None,
                 export_name_base="SERIES",
                 export_padding=3,
                 progress_callback=lambda _percentage, _stage, _message: None,
@@ -373,3 +338,109 @@ class GenerateDerivativesEmbeddingExpansionTests(TestCase):
             attempt_cache_size=8,
         )
         mock_progress.assert_called_once()
+
+
+# =========================
+# _generate_derivatives — tope duro de seguridad
+# =========================
+
+
+class GenerateDerivativesHardLimitTests(TestCase):
+    """El bucle debe rechazar (nunca truncar) si supera el tope duro."""
+
+    def _build_two_site_map(self) -> dict[int, list[SiteOption]]:
+        """Mapa mínimo de dos sitios con un sustituyente para forzar crecimiento."""
+        return {
+            0: [
+                SiteOption(
+                    site_atom_index=0,
+                    block_label="GroupA",
+                    block_priority=1,
+                    substituent={
+                        "source_kind": "catalog",
+                        "stable_id": "sub-a",
+                        "version": 1,
+                        "name": "A",
+                        "smiles": "A",
+                        "selected_atom_index": 0,
+                        "categories": [],
+                    },
+                )
+            ],
+            1: [
+                SiteOption(
+                    site_atom_index=1,
+                    block_label="GroupB",
+                    block_priority=1,
+                    substituent={
+                        "source_kind": "catalog",
+                        "stable_id": "sub-b",
+                        "version": 1,
+                        "name": "B",
+                        "smiles": "B",
+                        "selected_atom_index": 0,
+                        "categories": [],
+                    },
+                )
+            ],
+        }
+
+    def test_raises_value_error_when_hard_limit_is_reached(self) -> None:
+        """Con el tope reducido, una combinatoria mayor debe lanzar ValueError."""
+        candidate_counter = itertools.count(1)
+
+        def fake_resolve(
+            principal_smiles: str,
+            derivative_smiles: str,
+            selected_atom_indices: list[int],
+        ) -> list[dict[int, int]]:
+            del principal_smiles, derivative_smiles, selected_atom_indices
+            return [{0: 0, 1: 1}]
+
+        def fake_fuse(
+            principal_smiles: str,
+            substituent_smiles: str,
+            principal_atom_idx: int | None,
+            substituent_atom_idx: int | None,
+            bond_order: int,
+        ) -> str | None:
+            del (
+                principal_smiles,
+                substituent_smiles,
+                principal_atom_idx,
+                substituent_atom_idx,
+                bond_order,
+            )
+            return f"X{next(candidate_counter)}"
+
+        with (
+            patch(
+                "apps.smileit.engine.generation._resolve_principal_site_index_maps_for_node",
+                side_effect=fake_resolve,
+            ),
+            patch(
+                "apps.smileit.engine.generation.is_fusion_candidate_viable",
+                return_value=True,
+            ),
+            patch(
+                "apps.smileit.engine.builders.fuse_molecules",
+                side_effect=fake_fuse,
+            ),
+            patch(
+                "apps.smileit.engine.generation.MAX_DERIVATIVES_HARD_LIMIT",
+                2,
+            ),
+        ):
+            with self.assertRaises(ValueError) as ctx:
+                _generate_derivatives(
+                    principal_smiles="P",
+                    selected_atom_indices=[0, 1],
+                    site_option_map=self._build_two_site_map(),
+                    r_substitutes=5,
+                    num_bonds=1,
+                    export_name_base="SERIES",
+                    export_padding=3,
+                    progress_callback=lambda _percentage, _stage, _message: None,
+                    log_callback=None,
+                )
+        self.assertIn("tope duro", str(ctx.exception))

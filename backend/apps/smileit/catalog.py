@@ -11,11 +11,12 @@ Cómo se usa:
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
 from dataclasses import dataclass
 
 from django.db import transaction
-from rdkit import Chem
 
 from apps.core.permissions import (
     can_user_delete_entry,
@@ -25,7 +26,15 @@ from apps.core.permissions import (
     get_source_reference_for_role,
 )
 
-from .engine import canonicalize_smiles, validate_smarts, verify_substituent_category
+from .catalog_anchors import (
+    _assert_anchor_indices,
+    _remap_substituent_anchors_or_raise,
+)
+from .engine import (
+    canonicalize_smiles,
+    validate_smarts,
+    verify_substituent_category,
+)
 from .models import (
     SmileitCategory,
     SmileitPattern,
@@ -285,30 +294,6 @@ def validate_substituent_categories(
     return validations
 
 
-def _assert_anchor_indices(smiles: str, anchor_atom_indices: list[int]) -> list[int]:
-    """Valida índices de anclaje y retorna lista normalizada ordenada sin repetidos."""
-    molecule = Chem.MolFromSmiles(smiles)
-    if molecule is None:
-        raise ValueError("SMILES inválido para validar índices de anclaje.")
-
-    atom_count = molecule.GetNumAtoms()
-    if atom_count <= 0:
-        raise ValueError("El sustituyente debe contener al menos un átomo.")
-
-    normalized_indices: list[int] = sorted(
-        {int(value) for value in anchor_atom_indices}
-    )
-    if len(normalized_indices) == 0:
-        raise ValueError("Debe indicar al menos un índice de anclaje válido.")
-
-    for atom_index in normalized_indices:
-        if atom_index < 0 or atom_index >= atom_count:
-            raise ValueError(
-                "Se detectó un índice de anclaje fuera de rango para el sustituyente."
-            )
-    return normalized_indices
-
-
 def _resolve_category_map_or_raise(
     category_keys: list[str],
 ) -> dict[str, SmileitCategory]:
@@ -439,9 +424,13 @@ def create_catalog_substituent(
     if canonical_smiles is None:
         raise ValueError("El SMILES del sustituyente es inválido.")
 
-    anchor_indices = _assert_anchor_indices(
-        canonical_smiles, payload["anchor_atom_indices"]
+    # Los anclajes llegan en el espacio del SMILES crudo y RDKit puede
+    # reordenar átomos al canonicalizar: se remapean antes de validar para
+    # que apunten al mismo átomo en el SMILES canónico persistido.
+    _, remapped_anchors = _remap_substituent_anchors_or_raise(
+        payload["smiles"], payload["anchor_atom_indices"], payload["name"]
     )
+    anchor_indices = _assert_anchor_indices(canonical_smiles, remapped_anchors)
 
     category_map = _resolve_category_map_or_raise(payload["category_keys"])
     _assert_no_latest_duplicate_substituent(canonical_smiles, anchor_indices)
@@ -554,9 +543,12 @@ def update_catalog_substituent(
     if canonical_smiles is None:
         raise ValueError("El SMILES del sustituyente es inválido.")
 
-    anchor_indices = _assert_anchor_indices(
-        canonical_smiles, payload["anchor_atom_indices"]
+    # Igual que en la creación: los anclajes crudos se remapean al espacio
+    # canónico antes de validar para no desplazar el átomo de anclaje.
+    _, remapped_anchors = _remap_substituent_anchors_or_raise(
+        payload["smiles"], payload["anchor_atom_indices"], payload["name"]
     )
+    anchor_indices = _assert_anchor_indices(canonical_smiles, remapped_anchors)
 
     category_map = _resolve_category_map_or_raise(payload["category_keys"])
     _assert_no_latest_duplicate_substituent(
@@ -724,6 +716,35 @@ def resolve_catalog_substituents_by_categories(
     return [_serialize_substituent(entry) for entry in entries]
 
 
+def _build_manual_substituent_stable_id(
+    *,
+    name: str,
+    canonical_smiles: str,
+    anchor_indices: list[int],
+    category_keys: list[str],
+) -> str:
+    """Deriva un identificador estable del contenido del sustituyente manual.
+
+    Con `uuid4()` cada request producía un `stable_id` distinto, el `job_hash`
+    cambiaba entre requests idénticas y la caché de resultados nunca acertaba.
+    El fingerprint depende sólo de los datos que definen la química del
+    sustituyente, así que dos requests equivalentes comparten caché.
+    """
+    fingerprint_payload = json.dumps(
+        {
+            "name": name,
+            "smiles": canonical_smiles,
+            "anchor_indices": [int(value) for value in anchor_indices],
+            "categories": sorted(str(value) for value in category_keys),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    fingerprint = hashlib.sha256(fingerprint_payload.encode("utf-8")).hexdigest()
+    return f"manual::{fingerprint[:32]}"
+
+
 def normalize_manual_substituent(
     entry: SmileitManualSubstituentInput,
 ) -> SmileitCatalogEntry:
@@ -734,9 +755,12 @@ def normalize_manual_substituent(
             f"El sustituyente manual '{entry['name']}' tiene SMILES inválido."
         )
 
-    anchor_indices = _assert_anchor_indices(
-        canonical_smiles, entry["anchor_atom_indices"]
+    # Igual que en el catálogo persistente: los anclajes manuales llegan en
+    # espacio crudo y deben remapearse al canónico antes de validar/expandir.
+    _, remapped_anchors = _remap_substituent_anchors_or_raise(
+        entry["smiles"], entry["anchor_atom_indices"], entry["name"]
     )
+    anchor_indices = _assert_anchor_indices(canonical_smiles, remapped_anchors)
     category_map = get_category_map(entry["categories"])
     if len(category_map) != len(set(entry["categories"])):
         raise ValueError(
@@ -761,7 +785,12 @@ def normalize_manual_substituent(
     provenance_metadata = entry.get("provenance_metadata", {})
     return SmileitCatalogEntry(
         id="",
-        stable_id=f"manual::{uuid.uuid4()}",
+        stable_id=_build_manual_substituent_stable_id(
+            name=entry["name"].strip(),
+            canonical_smiles=canonical_smiles,
+            anchor_indices=anchor_indices,
+            category_keys=sorted(category_map.keys()),
+        ),
         version=1,
         name=entry["name"].strip(),
         smiles=canonical_smiles,

@@ -2,21 +2,10 @@
 /* smileit.component.scss: Estilos de la experiencia Smile-it con tokens --chem-*. */
 .smileit-shell {
   display: grid;
-  gap: 1.2rem;
+  gap: 1rem;
   padding-bottom: 1rem;
 }
 
-.hero-strip {
-  display: grid;
-  gap: 0.85rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.catalog-overview-strip {
-  grid-row: auto;
-}
-
-.hero-card,
 .catalog-panel,
 .entry-panel,
 .library-panel,
@@ -28,32 +17,29 @@
   border: 1px solid var(--chem-border-subtle);
   border-radius: var(--chem-radius);
   background: var(--chem-surface);
+  padding: 1.1rem;
 }
 
-.hero-card {
-  padding: 1rem 1.1rem;
-  background: var(--chem-surface-elevated);
-}
-
-.hero-card strong {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 1.5rem;
-  color: var(--chem-ink);
-}
-
-.hero-card p,
-.hero-label {
-  margin: 0;
-  color: var(--chem-ink-secondary);
-}
-
-.hero-label {
+/* Métricas compactas dentro del header de un panel (sin tarjetas sueltas). */
+.metric-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-right: 1rem;
+  color: var(--chem-ink-soft);
   font-size: 0.78rem;
+}
+
+.metric-inline strong {
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 0.95rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-family: var(--chem-font-label);
+}
+
+.metric-inline-warning,
+.metric-inline-warning strong {
+  color: var(--chem-warning);
 }
 
 .floating-workspace-shell {
@@ -125,17 +111,6 @@
   order: 3;
 }
 
-.catalog-panel,
-.entry-panel,
-.library-panel,
-.pattern-panel,
-.result-panel,
-.advanced-panel,
-.logs-card,
-.history-card {
-  padding: 1.1rem;
-}
-
 .advanced-grid {
   display: grid;
   gap: 0.9rem;
@@ -187,16 +162,18 @@
 
 .principal-pattern-action .pattern-open-button {
   align-self: flex-end;
-  border-radius: 0;
-  border-color: transparent;
-  background: linear-gradient(
-    90deg,
-    rgba(46, 125, 50, 0.8) 0%,
-    rgba(211, 47, 47, 0.72) 68%,
-    rgba(211, 47, 47, 0.46) 100%
-  );
-  color: #fff;
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--chem-border-subtle);
+  border-left: 3px solid var(--chem-success);
+  border-right: 3px solid var(--chem-error);
+  background: var(--chem-card-bg);
+  color: var(--chem-ink-secondary);
   margin-left: auto;
+}
+
+.principal-pattern-action .pattern-open-button:hover {
+  color: var(--chem-ink);
+  background: var(--chem-surface-elevated);
 }
 
 .guided-action {
@@ -215,12 +192,14 @@
 .site-toolbar-summary {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   min-width: auto;
-  padding: 0.45rem 0.6rem;
+  padding: 0.2rem 0.45rem;
   border: 1px solid var(--chem-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--btn-radius);
   background: var(--chem-surface-elevated);
+  font-family: var(--chem-font-mono);
+  font-size: 0.68rem;
 }
 
 .site-toolbar-summary strong {

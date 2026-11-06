@@ -18,6 +18,7 @@ import { JobProgressCardComponent } from '../core/shared/components/job-progress
 import { JobResultFooterComponent } from '../core/shared/components/job-result-footer/job-result-footer.component';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
+import { ScientificPanelComponent } from '../core/shared/components/scientific-panel/scientific-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { TunnelingProfileChartComponent } from '../core/shared/components/tunneling-profile-chart/tunneling-profile-chart.component';
 import { EASY_RATE_DOC_TABS } from './easy-rate-doc-content';
@@ -39,6 +40,7 @@ export interface EasyRateInputSlotView {
     DiffusionFieldsComponent,
     JobResultFooterComponent,
     ScientificAppHeaderComponent,
+    ScientificPanelComponent,
     ScientificDocPanelComponent,
     TunnelingProfileChartComponent,
   ],

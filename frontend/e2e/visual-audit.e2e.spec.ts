@@ -93,7 +93,7 @@ test.describe('Auditoría visual', { tag: '@visual' }, () => {
     await useEnglish(page);
     await page.goto('/molar-fractions');
     await expect(
-      page.getByRole('button', { name: 'Run Molar Fractions' }),
+      page.getByRole('button', { name: 'Run', exact: true }),
     ).toBeVisible();
     await expectNoAxeViolations(page);
   });

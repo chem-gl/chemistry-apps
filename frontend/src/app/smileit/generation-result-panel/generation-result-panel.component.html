@@ -32,9 +32,7 @@
           <input type="text" [ngModel]="workflow.exportNameBase()" (ngModelChange)="workflow.exportNameBase.set($event)"
             [disabled]="workflow.isProcessing()" [placeholder]="'smileit.step4.jobNamePlaceholder' | transloco" />
         </label>
-      </div>
 
-      <div class="options-grid">
         <label>
           {{ 'smileit.step4.rSubstitutes' | transloco }}
           <input type="number" min="1" [max]="workflow.maxRSubstitutesByPositions()" [ngModel]="workflow.rSubstitutes()"
@@ -43,7 +41,21 @@
           @if (workflow.selectedAtomIndices().length > 0) {
           <small class="hint">
             {{ 'smileit.step4.maxHint' | transloco: {max: workflow.maxRSubstitutesByPositions(), sites:
-            workflow.selectedAtomIndices().length} }}
+            workflow.substitutableSelectedSites().length} }}
+          </small>
+          }
+          @if (workflow.estimatedDerivatives() > 0) {
+          <small class="hint">
+            {{ 'smileit.step4.estimatedDerivatives' | transloco: {count: workflow.estimatedDerivatives()} }}
+          </small>
+          }
+          @if (workflow.exceedsHardLimit()) {
+          <small class="combinatorial-warning" role="alert">
+            {{ 'smileit.step4.hardLimitExceeded' | transloco: {limit: 1000000} }}
+          </small>
+          } @else if (workflow.showsCombinatorialWarning()) {
+          <small class="combinatorial-notice">
+            {{ 'smileit.step4.combinatorialWarning' | transloco: {limit: 1000} }}
           </small>
           }
         </label>
@@ -63,104 +75,6 @@
         </button>
       </div>
     </fieldset>
-  </article>
-
-  <article class="generation-card" [attr.aria-label]="'smileit.step4.previousEnumAriaLabel' | transloco">
-    <div class="subsection-header">
-      <div>
-        <h4>{{ 'smileit.step4.previousJobs' | transloco }}</h4>
-        <p class="hint">{{ 'smileit.step4.previousJobsHint' | transloco }}</p>
-      </div>
-      <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
-        [disabled]="workflow.isHistoryLoading()">
-        {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) : ('smileit.step4.reloadJobs'
-        | transloco) }}
-      </button>
-    </div>
-
-    @if (isShowingCurrentResultBelow()) {
-    <p class="history-context-note">
-      {{ 'smileit.step4.currentRunDisplayed' | transloco }}
-    </p>
-    }
-
-    @if (visibleHistoryJobs().length === 0) {
-    <p class="hint">{{ 'smileit.step4.noPreviousEnumerations' | transloco }}</p>
-    } @else {
-    <section class="history-table-shell" [attr.aria-label]="'smileit.step4.histAriaLabel' | transloco">
-      <table class="history-table history-table-detailed">
-        <thead>
-          <tr>
-            <th scope="col">{{ 'smileit.step4.histColRun' | transloco }}</th>
-            <th scope="col">{{ 'smileit.step4.histColStatus' | transloco }}</th>
-            <th scope="col">{{ 'smileit.step4.histColBlocks' | transloco }}</th>
-            <th scope="col">{{ 'smileit.step4.histColUpdated' | transloco }}</th>
-            <th scope="col">{{ 'smileit.step4.histColView' | transloco }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (historyJob of visibleHistoryJobs(); track historyJob.id) {
-          <tr class="history-row" [class.is-selected-history-job]="isHistoricalJobSelected(historyJob.id)"
-            [attr.aria-current]="isHistoricalJobSelected(historyJob.id) ? 'true' : null">
-            <td class="history-primary-cell">
-              <button type="button" class="history-open-link" (click)="openHistoricalJob(historyJob.id)">
-                {{ historicalJobDisplayName(historyJob) }}
-              </button>
-              <p class="catalog-smiles mono history-principal-smiles">
-                {{ historicalJobPrincipalSmiles(historyJob) }}
-              </p>
-              <p class="history-job-id mono">ID {{ historyJob.id }}</p>
-            </td>
-            <td>
-              <span [class]="historicalStatusClass(historyJob.status)">{{ historyJob.status }}</span>
-            </td>
-            <td class="history-blocks-cell">
-              @if (historicalJobBlockSummaries(historyJob).length === 0) {
-              <span class="history-empty-value">{{ 'smileit.step4.noBlocks' | transloco }}</span>
-              } @else {
-              <div class="history-block-list">
-                @for (blockSummary of historicalJobBlockSummaries(historyJob); track blockSummary.label + '-' + $index)
-                {
-                <div class="history-block-pill">
-                  <strong>{{ blockSummary.label }}</strong>
-                  <span>{{ 'smileit.step4.histSites' | transloco }} {{ blockSummary.positions }}</span>
-                  <small class="catalog-smiles mono">{{ blockSummary.smiles }}</small>
-                </div>
-                }
-              </div>
-              }
-            </td>
-            <td>
-              @if (historicalJobUpdatedAt(historyJob); as updatedAt) {
-              {{ updatedAt | date: 'yyyy-MM-dd HH:mm' }}
-              } @else {
-              <span class="history-empty-value">{{ 'smileit.step4.unknown' | transloco }}</span>
-              }
-            </td>
-            <td>
-              <div class="history-view-cell">
-                <span [class]="historicalJobViewStateClass(historyJob.id)">
-                  {{ historicalJobViewStateLabel(historyJob.id) }}
-                </span>
-                <button type="button" class="history-open-btn" (click)="openHistoricalJob(historyJob.id)"
-                  [disabled]="isHistoricalJobSelected(historyJob.id)">
-                  {{ isHistoricalJobSelected(historyJob.id) ? ('smileit.step4.openBelow' | transloco) :
-                  ('smileit.step4.open' | transloco) }}
-                </button>
-                @if (canDeleteHistoricalJob(historyJob)) {
-                <button type="button" class="history-open-btn history-delete-btn"
-                  (click)="deleteHistoricalJob(historyJob.id)">
-                  {{ 'common.actions.delete' | transloco }}
-                </button>
-                }
-              </div>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </section>
-    }
   </article>
 
   @if (workflow.activeSection() === 'dispatching') {
@@ -235,10 +149,7 @@
   } @else {
   <section class="structures-list-card" [attr.aria-label]="'smileit.step4.derivativesAriaLabel' | transloco">
     <div class="subsection-header">
-      <div>
-        <h4>{{ 'smileit.step4.derivativesTitle' | transloco }}</h4>
-
-      </div>
+      <h4>{{ 'smileit.step4.derivativesTitle' | transloco }}</h4>
       <button class="btn-secondary small" type="button" (click)="toggleGeneratedStructuresCollapse()">
         {{ isGeneratedStructuresCollapsed() ? ('smileit.step2.expand' | transloco) : ('smileit.step2.minimize' |
         transloco) }}
@@ -246,14 +157,18 @@
     </div>
     @if (isGeneratedStructuresCollapsed()) {
     <div class="block-collapsed-summary">
-      <p><strong>{{ 'smileit.step4.availableDerivatives' | transloco }}</strong> {{ resultData.totalGenerated }}</p>
-      <p>
-        <strong>{{ 'smileit.step4.loadedInView' | transloco }}</strong> {{ visibleGeneratedStructures().length }}
-      </p>
-      <p>
-        <strong>{{ 'smileit.step4.inspectionLabel' | transloco }}</strong> {{ 'smileit.step4.inspectionHint' | transloco
-        }}
-      </p>
+      <span class="collapsed-metric">
+        <span class="collapsed-metric-label">{{ 'smileit.step4.availableDerivatives' | transloco }}</span>
+        <strong class="collapsed-metric-value">{{ resultData.totalGenerated }}</strong>
+      </span>
+      <span class="collapsed-metric">
+        <span class="collapsed-metric-label">{{ 'smileit.step4.loadedInView' | transloco }}</span>
+        <span class="collapsed-metric-value">{{ visibleGeneratedStructures().length }}</span>
+      </span>
+      <span class="collapsed-metric">
+        <span class="collapsed-metric-label">{{ 'smileit.step4.inspectionLabel' | transloco }}</span>
+        <span class="collapsed-metric-value">{{ 'smileit.step4.inspectionHint' | transloco }}</span>
+      </span>
     </div>
     } @else {
     <div class="derivatives-grid">
@@ -334,6 +249,93 @@
   @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
   <p class="error-message" role="alert">{{ currentError }}</p>
   }
+
+
+
+  <article class="generation-card" [attr.aria-label]="'smileit.step4.previousEnumAriaLabel' | transloco">
+    <div class="subsection-header">
+      <div>
+        <h4>{{ 'smileit.step4.previousJobs' | transloco }}</h4>
+        <p class="hint">{{ 'smileit.step4.previousJobsHint' | transloco }}</p>
+      </div>
+      <button class="btn-secondary" type="button" (click)="workflow.loadHistory()"
+        [disabled]="workflow.isHistoryLoading()">
+        {{ workflow.isHistoryLoading() ? ('shared.jobHistoryTable.reloading' | transloco) : ('smileit.step4.reloadJobs'
+        | transloco) }}
+      </button>
+    </div>
+
+    @if (isShowingCurrentResultBelow()) {
+    <p class="history-context-note">
+      {{ 'smileit.step4.currentRunDisplayed' | transloco }}
+    </p>
+    }
+
+    @if (visibleHistoryJobs().length === 0) {
+    <p class="hint">{{ 'smileit.step4.noPreviousEnumerations' | transloco }}</p>
+    } @else {
+    <section class="history-table-shell" [attr.aria-label]="'smileit.step4.histAriaLabel' | transloco">
+      <table class="history-table history-table-detailed">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'smileit.step4.histColRun' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColBlocks' | transloco }}</th>
+            <th scope="col">{{ 'smileit.step4.histColView' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (historyJob of visibleHistoryJobs(); track historyJob.id) {
+          <tr class="history-row" [class.is-selected-history-job]="isHistoricalJobSelected(historyJob.id)"
+            [attr.aria-current]="isHistoricalJobSelected(historyJob.id) ? 'true' : null">
+            <td class="history-primary-cell">
+              <button type="button" class="history-open-link" (click)="openHistoricalJob(historyJob.id)">
+                {{ historicalJobDisplayName(historyJob) }}
+              </button>
+              <p class="catalog-smiles mono history-principal-smiles">
+                {{ historicalJobPrincipalSmiles(historyJob) }}
+              </p>
+            </td>
+            <td class="history-blocks-cell">
+              @if (historicalJobBlockSummaries(historyJob).length === 0) {
+              <span class="history-empty-value">{{ 'smileit.step4.noBlocks' | transloco }}</span>
+              } @else {
+              <div class="history-block-list">
+                @for (blockSummary of historicalJobBlockSummaries(historyJob); track blockSummary.label + '-' + $index)
+                {
+                <div class="history-block-pill">
+                  <strong>{{ blockSummary.label }}</strong>
+                  <span>{{ 'smileit.step4.histSites' | transloco }} {{ blockSummary.positions }}</span>
+                  <small class="catalog-smiles mono">{{ blockSummary.smiles }}</small>
+                </div>
+                }
+              </div>
+              }
+            </td>
+            <td>
+              <div class="history-view-cell">
+                <span [class]="historicalJobViewStateClass(historyJob.id)">
+                  {{ historicalJobViewStateLabel(historyJob.id) }}
+                </span>
+                <button type="button" class="history-open-btn" (click)="openHistoricalJob(historyJob.id)"
+                  [disabled]="isHistoricalJobSelected(historyJob.id)">
+                  {{ isHistoricalJobSelected(historyJob.id) ? ('smileit.step4.openBelow' | transloco) :
+                  ('smileit.step4.open' | transloco) }}
+                </button>
+                @if (canDeleteHistoricalJob(historyJob)) {
+                <button type="button" class="history-open-btn history-delete-btn"
+                  (click)="deleteHistoricalJob(historyJob.id)">
+                  {{ 'common.actions.delete' | transloco }}
+                </button>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+  </article>
 
   <dialog #generatedStructureDialog class="generated-structure-dialog" (click)="onGeneratedStructureDialogClick($event)"
     (keydown.enter)="onGeneratedStructureDialogClick($event)"

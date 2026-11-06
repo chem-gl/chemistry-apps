@@ -69,10 +69,6 @@
 
 .btn-primary,
 .btn-secondary {
-  border-radius: 999px;
-  padding: 0.42rem 0.9rem;
-  font-weight: 700;
-  font-size: var(--chem-text-sm);
   cursor: pointer;
   transition: opacity var(--chem-transition), background var(--chem-transition), border-color var(--chem-transition), color var(--chem-transition);
   &:disabled {

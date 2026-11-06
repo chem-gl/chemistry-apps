@@ -41,7 +41,6 @@ from .definitions import (
 # Re-exportados arriba vía `from ._catalog_schemas import (...)`
 
 
-
 class SmileitAssignmentBlockInputSerializer(serializers.Serializer):
     """Bloque de asignación de sustituyentes a uno o más sitios."""
 
@@ -139,8 +138,6 @@ class SmileitAssignmentBlockInputSerializer(serializers.Serializer):
                 "site_overlap_policy": "last_block_wins",
                 "r_substitutes": 2,
                 "num_bonds": 1,
-                "allow_repeated": False,
-                "max_structures": 600,
                 "export_name_base": "BENZENE_SERIES",
                 "export_padding": 5,
             },
@@ -157,6 +154,11 @@ class SmileitJobCreateSerializer(serializers.Serializer):
         child=serializers.IntegerField(min_value=0),
         min_length=1,
         max_length=MAX_SELECTED_ATOMS,
+        help_text=(
+            "Índices de los átomos seleccionados como sitios de sustitución, en el "
+            "orden atómico del SMILES canónico (el mismo que devuelve el endpoint "
+            "de inspección)."
+        ),
     )
     assignment_blocks = SmileitAssignmentBlockInputSerializer(
         many=True,
@@ -172,11 +174,6 @@ class SmileitJobCreateSerializer(serializers.Serializer):
     )
     num_bonds = serializers.IntegerField(
         min_value=1, max_value=MAX_NUM_BONDS, default=1
-    )
-    max_structures = serializers.IntegerField(
-        min_value=0,
-        default=0,
-        help_text="Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.",
     )
     export_name_base = serializers.CharField(max_length=120, default="SMILEIT")
     export_padding = serializers.IntegerField(
@@ -272,8 +269,6 @@ class SmileitParametersSerializer(serializers.Serializer):
     )
     r_substitutes = serializers.IntegerField(min_value=1, required=False, default=1)
     num_bonds = serializers.IntegerField(min_value=1, required=False, default=1)
-    allow_repeated = serializers.BooleanField(required=False, default=False)
-    max_structures = serializers.IntegerField(min_value=0, required=False, default=0)
     site_overlap_policy = serializers.ChoiceField(
         choices=SITE_OVERLAP_POLICY_CHOICES,
         required=False,
@@ -396,7 +391,15 @@ class SmileitResultSerializer(serializers.Serializer):
         required=False,
         default=list,
     )
-    truncated = serializers.BooleanField(required=False, default=False)
+    truncated = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text=(
+            "Legado: siempre False. La generación es completa o se rechaza "
+            "(nunca se trunca); se conserva por compatibilidad con resultados "
+            "históricos persistidos."
+        ),
+    )
     principal_smiles = serializers.CharField(max_length=2000)
     selected_atom_indices = serializers.ListField(
         child=serializers.IntegerField(min_value=0)

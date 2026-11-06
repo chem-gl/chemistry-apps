@@ -4035,8 +4035,6 @@ paths:
                   site_overlap_policy: last_block_wins
                   r_substitutes: 2
                   num_bonds: 1
-                  allow_repeated: false
-                  max_structures: 600
                   export_name_base: BENZENE_SERIES
                   export_padding: 5
                 summary: Generación por bloques mixtos
@@ -5598,8 +5596,6 @@ paths:
                   site_overlap_policy: last_block_wins
                   r_substitutes: 2
                   num_bonds: 1
-                  allow_repeated: false
-                  max_structures: 600
                   export_name_base: BENZENE_SERIES
                   export_padding: 5
                 summary: Generación por bloques mixtos
@@ -8949,7 +8945,7 @@ components:
         version:
           type: string
           minLength: 1
-          default: 1.0.0
+          default: 1.1.0
           maxLength: 50
         pka_values:
           type: array
@@ -10177,10 +10173,13 @@ components:
           minimum: 0
         is_aromatic:
           type: boolean
+        is_substitutable:
+          type: boolean
       required:
       - implicit_hydrogens
       - index
       - is_aromatic
+      - is_substitutable
       - symbol
     SmileitCatalogEntry:
       type: object
@@ -10394,6 +10393,9 @@ components:
           items:
             type: integer
             minimum: 0
+          description: Índices de los átomos seleccionados como sitios de sustitución,
+            en el orden atómico del SMILES canónico (el mismo que devuelve el endpoint
+            de inspección).
           maxItems: 20
           minItems: 1
         assignment_blocks:
@@ -10414,11 +10416,6 @@ components:
           maximum: 1
           minimum: 1
           default: 1
-        max_structures:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Máximo de estructuras a generar. Usa 0 para ejecutar sin límite.
         export_name_base:
           type: string
           minLength: 1
@@ -10574,13 +10571,6 @@ components:
           type: integer
           minimum: 1
           default: 1
-        allow_repeated:
-          type: boolean
-          default: false
-        max_structures:
-          type: integer
-          minimum: 0
-          default: 0
         site_overlap_policy:
           allOf:
           - $ref: '#/components/schemas/SiteOverlapPolicyEnum'
@@ -10825,6 +10815,9 @@ components:
         truncated:
           type: boolean
           default: false
+          description: 'Legado: siempre False. La generación es completa o se rechaza
+            (nunca se trunca); se conserva por compatibilidad con resultados históricos
+            persistidos.'
         principal_smiles:
           type: string
           maxLength: 2000

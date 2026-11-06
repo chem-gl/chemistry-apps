@@ -34,6 +34,10 @@ MAX_MANUAL_SUBSTITUENTS_PER_BLOCK: Final[int] = 120
 
 # --- Límites de seguridad combinatoria ---
 MAX_R_SUBSTITUTES: Final[int] = 10
+# Aviso al usuario cuando la combinatoria estimada supera este umbral.
+DERIVATIVE_WARNING_THRESHOLD: Final[int] = 1_000
+# Tope duro: por encima no se ejecuta (nunca se trunca la generación).
+MAX_DERIVATIVES_HARD_LIMIT: Final[int] = 1_000_000
 MAX_SUBSTITUENTS_IN_LIST: Final[int] = 50
 MAX_SELECTED_ATOMS: Final[int] = 20
 MAX_NUM_BONDS: Final[int] = 1

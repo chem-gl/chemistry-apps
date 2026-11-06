@@ -38,7 +38,7 @@ describe('PrincipalMoleculeEditorComponent', () => {
   it('should emit inspectRequested when inspect button is clicked', () => {
     const emitSpy = vi.spyOn(component.inspectRequested, 'emit');
     const actionButtons: HTMLButtonElement[] = fixture.debugElement
-      .queryAll(By.css('.principal-actions-row button'))
+      .queryAll(By.css('.principal-input-row button'))
       .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
     const inspectButton: HTMLButtonElement = actionButtons[1];
 
@@ -49,7 +49,7 @@ describe('PrincipalMoleculeEditorComponent', () => {
 
   it('should open sketch modifier modal when sketch button is clicked', () => {
     const actionButtons: HTMLButtonElement[] = fixture.debugElement
-      .queryAll(By.css('.principal-actions-row button'))
+      .queryAll(By.css('.principal-input-row button'))
       .map((debugElement) => debugElement.nativeElement as HTMLButtonElement);
     const openSketchButton: HTMLButtonElement = actionButtons[0];
 

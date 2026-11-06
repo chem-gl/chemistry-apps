@@ -4,44 +4,41 @@
     <div class="catalog-card-header">
       <div>
         <h3>{{ 'smileit.step2.title' | transloco }}</h3>
-
+        @if (isCatalogPanelCollapsed()) {
+        <p class="panel-caption">
+          <span class="metric-inline">
+            <strong>{{ workflow.catalogEntries().length }}</strong>
+            {{ 'smileit.step2.storedEntries' | transloco }}
+          </span>
+          <span class="metric-inline">
+            <strong>{{ workflow.catalogGroups().length }}</strong>
+            {{ 'smileit.step2.catalogGroups' | transloco }}
+          </span>
+          <span class="metric-inline">
+            <strong>{{ workflow.categories().length }}</strong>
+            {{ 'smileit.step2.validatedCategories' | transloco }}
+          </span>
+        </p>
+        }
       </div>
-       @if (!accessMode.isOpenMode()) {
-       <div class="catalog-card-header-actions">
+      <div class="catalog-card-header-actions">
+        @if (!accessMode.isOpenMode()) {
         <button class="btn-secondary" (click)="openCatalogStudioModal()" [disabled]="workflow.isProcessing()">
           {{ 'smileit.step2.manageCatalog' | transloco }}
         </button>
-       </div>
-       }
+        }
+        <button type="button" class="icon-action-btn collapsed-toggle"
+          (click)="toggleCatalogPanelCollapse()"
+          [attr.aria-label]="(isCatalogPanelCollapsed()
+            ? 'smileit.catalogPanel.maximizeSection'
+            : 'smileit.catalogPanel.minimizeSection') | transloco">{{ isCatalogPanelCollapsed() ? '+' : '−' }}</button>
+      </div>
     </div>
 
-    @if (isCatalogPanelCollapsed()) {
-    <article class="collapsed-panel-card" [attr.aria-label]="'smileit.step2.collapsedAriaLabel' | transloco">
-      <button type="button" class="btn-secondary small collapsed-toggle" (click)="toggleCatalogPanelCollapse()"
-        [attr.aria-label]="'smileit.catalogPanel.maximizeSection' | transloco">
-        +
-      </button>
-
-      <div class="metadata-grid catalog-collapsed-metrics">
-        <p><strong>{{ 'smileit.step2.storedEntries' | transloco }}</strong> {{ workflow.catalogEntries().length }}</p>
-        <p><strong>{{ 'smileit.step2.catalogGroups' | transloco }}</strong> {{ workflow.catalogGroups().length }}</p>
-        <p><strong>{{ 'smileit.step2.validatedCategories' | transloco }}</strong> {{ workflow.categories().length }}</p>
-      </div>
-    </article>
-    } @else {
+    @if (!isCatalogPanelCollapsed()) {
     <section class="catalog-browser-panel" [attr.aria-label]="'smileit.step2.storedCatalogAriaLabel' | transloco">
-      <button type="button" class="btn-secondary small collapsed-toggle expanded-toggle"
-        (click)="toggleCatalogPanelCollapse()" [attr.aria-label]="'smileit.catalogPanel.minimizeSection' | transloco">
-        -
-      </button>
 
       <div class="subsection-header block-catalog-tools-row">
-        <div>
-          <h4>{{ 'smileit.step2.storedSubstituents' | transloco }}</h4>
-          <p class="hint">
-            {{ 'smileit.step2.browseHint' | transloco }}
-          </p>
-        </div>
         <label class="library-group-filter" [attr.aria-label]="'smileit.step2.groupFilterAria' | transloco">
           {{ 'smileit.step2.groupFilter' | transloco }}
           <select [ngModel]="selectedLibraryGroupKey()" (ngModelChange)="onLibraryGroupChange($event)">

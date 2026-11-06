@@ -217,7 +217,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Toxicity Properties",
+      "run": "运行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -255,10 +255,7 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity",
-      "emptyTitle": "暂无结果",
-      "emptyBody": "运行计算后即可在此查看分子的 ADMET 性质预测结果。",
-      "emptyHint": "配置输入内容，然后点击“开始计算”。"
+      "colDevTox": "Dev. Toxicity"
     },
     "moleculeModal": {
       "title": "Molecule preview"
@@ -276,7 +273,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run SA Score",
+      "run": "运行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -336,7 +333,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Marcus"
+      "run": "运行"
     },
     "fileSlots": {
       "reactant1": "Reactant 1",
@@ -362,9 +359,8 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "等待提交 — 配置输入并运行任务，结果将显示在此处。",
       "submitting": "Submitting Marcus job to backend...",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "ariaLabel": "Results and progress",
       "marcusEnergies": "Marcus Energies",
@@ -854,7 +850,7 @@
       "generatePanelTitle": "Generate from Smile-it",
       "files": "Files",
       "tableCandidate": "Candidate",
-      "running": "Running CADMA Py…",
+      "running": "Running…",
       "toxicityMissing": "Toxicity missing",
       "selectSmileitJobPlaceholder": "Select a Smile-it job...",
       "skipSa": "Skip — no SA data",
@@ -862,9 +858,9 @@
       "quickFillSaReady": "SA already attached",
       "saReady": "SA ✓",
       "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
-      "runCadmaPy": "Run CADMA Py →",
+      "runCadmaPy": "Run →",
       "change": "Change",
-      "submitting": "Submitting CADMA Py job…",
+      "submitting": "Submitting job…",
       "clearFiles": "Clear files",
       "guideToxicity": "Toxicity from",
       "backToStep2": "Back to step 2",
@@ -963,7 +959,8 @@
       "profile": "个人资料",
       "identity": "身份管理",
       "groups": "Groups",
-      "apps": "应用"
+      "apps": "应用",
+      "userMenu": "用户菜单"
     },
     "brand": {
       "title": "科学控制中心",
@@ -1066,7 +1063,7 @@
       "exportLog": "Export LOG (inputs + results)",
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Data ok, Run Tunnel",
+      "run": "运行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV",
       "clearTrace": "Clear input trace"
@@ -1093,7 +1090,7 @@
         "ariaLabel": "隧道效应图：埃卡特势垒、波函数与热能"
       },
       "submitting": "Submitting tunnel effect job to backend...",
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress"
     }
   },
@@ -1125,7 +1122,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Molar Fractions",
+      "run": "运行",
       "exportCsv": "Export CSV"
     },
     "history": {
@@ -1518,7 +1515,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Easy-rate"
+      "run": "运行"
     },
     "fileSlots": {
       "product1": "Product 1",
@@ -1575,7 +1572,7 @@
       "kTst": "k (TST)",
       "submitting": "Submitting Easy-rate job to backend...",
       "tunnelCorrection": "Tunnel Correction (Eckart)",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1645,6 +1642,10 @@
       "all": "全部",
       "status": "状态",
       "app": "应用"
+    },
+    "panels": {
+      "input": "输入",
+      "results": "结果"
     }
   },
   "smileit": {
@@ -1808,7 +1809,7 @@
       "applyButton": "Apply to draft"
     },
     "step1": {
-      "title": "1. Principal molecule and scaffold preview",
+      "title": "主分子",
       "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
       "ariaLabel": "Input parameters"
     },
@@ -1853,9 +1854,9 @@
       "sketchLoading": "Loading molecule sketcher…",
       "sketchHint": "Use the sketcher below to edit the principal molecule.",
       "pending": "Pending principal SMILES",
-      "inspect": "Inspect structure",
+      "inspect": "插入",
       "sketchTitle": "Principal sketch modifier",
-      "openSketch": "✏ Open sketch modifier",
+      "openSketch": "绘制分子",
       "cancelButton": "Cancel",
       "label": "Principal SMILES",
       "inspecting": "Inspecting...",
@@ -1897,7 +1898,9 @@
       "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
       "title": "Select substitution sites on the scaffold",
       "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
-      "blocksAvailableSuffix": "blocks available"
+      "blocksAvailableSuffix": "blocks available",
+      "nonSubstitutableAtom": "无自由价：不能接受取代基。",
+      "nonSubstitutableSelected": "所选原子无自由价（不可取代）：{{sites}}"
     },
     "step4": {
       "loadedInView": "Loaded in current view:",
@@ -1958,7 +1961,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "显示 {total} 个中的 {shown} 个衍生物"
+      "showingOfTotal": "显示 {total} 个中的 {shown} 个衍生物",
+      "estimatedDerivatives": "预计约 {count} 个衍生物",
+      "combinatorialWarning": "组合数超过 {limit} 个衍生物：将完整生成，可能需要较长时间。",
+      "hardLimitExceeded": "超过 {limit} 个衍生物的上限。请减少位点、取代基或R取代数。"
     },
     "catalogPanel": {
       "maximizeSection": "最大化区块",
@@ -2077,7 +2083,7 @@
       "exportCsv": "导出 CSV",
       "processing": "处理中...",
       "reset": "重置",
-      "run": "数据就绪，运行 Server Calc"
+      "run": "运行"
     },
     "form": {
       "a": "第一个值 (a)",
@@ -2092,7 +2098,6 @@
     },
     "result": {
       "ariaLabel": "结果与进度",
-      "emptyHint": "运行计算以查看结果和写入 qta 的文件。",
       "labels": {
         "a": "A:",
         "b": "B:",
@@ -2102,7 +2107,7 @@
         "result": "结果："
       },
       "submitting": "正在将 Server Calc 任务提交到后端...",
-      "title": "输出"
+      "title": "Results"
     }
   }
 }

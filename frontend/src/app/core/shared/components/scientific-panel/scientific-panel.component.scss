@@ -1,0 +1,12 @@
+// scientific-panel.component.scss: el host es el ítem del grid, así que debe
+// estirarse para igualar la altura de la caja vecina (entrada ↔ resultado).
+:host {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.sci-panel {
+  height: 100%;
+  box-sizing: border-box;
+}

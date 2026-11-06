@@ -13,6 +13,7 @@ from .fusion import (
     _has_enough_implicit_hydrogens,
     _has_free_valence,
     clear_smileit_caches,
+    find_sites_without_free_valence,
     fuse_molecules,
     is_fusion_candidate_viable,
 )
@@ -84,6 +85,7 @@ __all__ = [
     # fusion
     "fuse_molecules",
     "is_fusion_candidate_viable",
+    "find_sites_without_free_valence",
     "clear_smileit_caches",
     "_bond_order_to_type",
     "_has_enough_implicit_hydrogens",

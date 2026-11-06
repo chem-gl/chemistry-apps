@@ -165,15 +165,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border-radius: 999px;
-  padding: 0.38rem 0.78rem;
-  font-size: 0.83rem;
-  font-weight: 700;
   cursor: pointer;
   border: 1px solid var(--chem-border);
   color: var(--chem-ink);
   background: var(--chem-surface-elevated);
-  font-family: inherit;
   transition:
     background var(--chem-transition),
     border-color var(--chem-transition);

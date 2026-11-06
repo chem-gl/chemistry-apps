@@ -27,6 +27,7 @@ import {
   splitSpeciesLabelForDisplay,
 } from './molar-fractions-computation';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
+import { ScientificPanelComponent } from '../core/shared/components/scientific-panel/scientific-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { MOLAR_FRACTIONS_DOC_TABS } from './molar-fractions-doc-content';
 
@@ -38,6 +39,7 @@ import { MOLAR_FRACTIONS_DOC_TABS } from './molar-fractions-doc-content';
     TranslocoPipe,
     ScientificChartComponent,
     ScientificAppHeaderComponent,
+    ScientificPanelComponent,
     ScientificDocPanelComponent,
   ],
   providers: [MolarFractionsWorkflowService],

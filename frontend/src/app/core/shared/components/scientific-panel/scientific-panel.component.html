@@ -1,0 +1,15 @@
+<!-- scientific-panel.component.html: Tarjeta única entrada/resultado con título opcional. -->
+<section
+  class="sci-panel"
+  [class.sci-panel--entry]="kind() === 'entry'"
+  [class.sci-panel--result]="kind() === 'result'"
+  [class.sci-panel--sticky]="sticky()"
+  [class.sci-panel--scroll]="scrollable()"
+  [attr.aria-label]="ariaLabelKey() ? (ariaLabelKey()! | transloco) : null"
+>
+  @if (titleKey(); as panelTitleKey) {
+    <h3 class="sci-panel-title">{{ panelTitleKey | transloco }}</h3>
+  }
+  <ng-content select="[panel-title]" />
+  <ng-content />
+</section>

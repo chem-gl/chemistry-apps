@@ -84,6 +84,7 @@ class SmileitAtomInfo(TypedDict):
     symbol: str
     implicit_hydrogens: int
     is_aromatic: bool
+    is_substitutable: bool
 
 
 class SmileitStructuralAnnotation(TypedDict):
@@ -164,8 +165,6 @@ class SmileitGenerationOptions(TypedDict):
 
     r_substitutes: int
     num_bonds: int
-    allow_repeated: bool
-    max_structures: int
     site_overlap_policy: SmileitSiteOverlapPolicy
     export_name_base: str
     export_padding: int
@@ -248,6 +247,9 @@ class SmileitResult(TypedDict):
     total_generated: int
     generated_structures: list[SmileitGeneratedStructure]
     traceability_rows: list[SmileitTraceabilityRow]
+    # Legado: la generación es completa o se rechaza (aviso >1000, rechazo
+    # >1e6); nunca se trunca. Se conserva siempre en False por compatibilidad
+    # con payloads históricos persistidos. No usar para lógica nueva.
     truncated: bool
     principal_smiles: str
     selected_atom_indices: list[int]
@@ -264,8 +266,6 @@ class SmileitMetadata(TypedDict):
     assignment_blocks_count: int
     r_substitutes: int
     num_bonds: int
-    allow_repeated: bool
-    max_structures: int
     site_overlap_policy: SmileitSiteOverlapPolicy
     version: str
 
@@ -300,8 +300,6 @@ class SmileitJobCreatePayload(TypedDict):
     assignment_blocks: list[SmileitAssignmentBlockInput]
     r_substitutes: int
     num_bonds: int
-    allow_repeated: bool
-    max_structures: int
     version: str
     site_overlap_policy: SmileitSiteOverlapPolicy
     export_name_base: str

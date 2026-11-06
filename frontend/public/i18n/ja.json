@@ -217,7 +217,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Toxicity Properties",
+      "run": "実行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -255,10 +255,7 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity",
-      "emptyTitle": "まだ結果はありません",
-      "emptyBody": "計算を実行すると、分子のADMET予測プロパティがここに表示されます。",
-      "emptyHint": "入力を設定してから「実行」を押してください。"
+      "colDevTox": "Dev. Toxicity"
     },
     "moleculeModal": {
       "title": "Molecule preview"
@@ -276,7 +273,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run SA Score",
+      "run": "実行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -336,7 +333,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Marcus"
+      "run": "実行"
     },
     "fileSlots": {
       "reactant1": "Reactant 1",
@@ -362,9 +359,8 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "送信待ち — 入力を設定してジョブを実行すると、ここに結果が表示されます。",
       "submitting": "Submitting Marcus job to backend...",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "ariaLabel": "Results and progress",
       "marcusEnergies": "Marcus Energies",
@@ -854,7 +850,7 @@
       "generatePanelTitle": "Generate from Smile-it",
       "files": "Files",
       "tableCandidate": "Candidate",
-      "running": "Running CADMA Py…",
+      "running": "Running…",
       "toxicityMissing": "Toxicity missing",
       "selectSmileitJobPlaceholder": "Select a Smile-it job...",
       "skipSa": "Skip — no SA data",
@@ -862,9 +858,9 @@
       "quickFillSaReady": "SA already attached",
       "saReady": "SA ✓",
       "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
-      "runCadmaPy": "Run CADMA Py →",
+      "runCadmaPy": "Run →",
       "change": "Change",
-      "submitting": "Submitting CADMA Py job…",
+      "submitting": "Submitting job…",
       "clearFiles": "Clear files",
       "guideToxicity": "Toxicity from",
       "backToStep2": "Back to step 2",
@@ -963,7 +959,8 @@
       "profile": "プロフィール",
       "identity": "アイデンティティ",
       "groups": "Groups",
-      "apps": "アプリ"
+      "apps": "アプリ",
+      "userMenu": "ユーザーメニュー"
     },
     "brand": {
       "title": "サイエンス管理デスク",
@@ -1066,7 +1063,7 @@
       "exportLog": "Export LOG (inputs + results)",
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Data ok, Run Tunnel",
+      "run": "実行",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV",
       "clearTrace": "Clear input trace"
@@ -1093,7 +1090,7 @@
         "ariaLabel": "トンネル図：エッカート障壁、波動関数、熱エネルギー"
       },
       "submitting": "Submitting tunnel effect job to backend...",
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress"
     }
   },
@@ -1125,7 +1122,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Molar Fractions",
+      "run": "実行",
       "exportCsv": "Export CSV"
     },
     "history": {
@@ -1518,7 +1515,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Easy-rate"
+      "run": "実行"
     },
     "fileSlots": {
       "product1": "Product 1",
@@ -1575,7 +1572,7 @@
       "kTst": "k (TST)",
       "submitting": "Submitting Easy-rate job to backend...",
       "tunnelCorrection": "Tunnel Correction (Eckart)",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1645,6 +1642,10 @@
       "all": "すべて",
       "status": "ステータス",
       "app": "アプリ"
+    },
+    "panels": {
+      "input": "入力",
+      "results": "結果"
     }
   },
   "smileit": {
@@ -1808,7 +1809,7 @@
       "applyButton": "Apply to draft"
     },
     "step1": {
-      "title": "1. Principal molecule and scaffold preview",
+      "title": "主要分子",
       "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
       "ariaLabel": "Input parameters"
     },
@@ -1853,9 +1854,9 @@
       "sketchLoading": "Loading molecule sketcher…",
       "sketchHint": "Use the sketcher below to edit the principal molecule.",
       "pending": "Pending principal SMILES",
-      "inspect": "Inspect structure",
+      "inspect": "挿入",
       "sketchTitle": "Principal sketch modifier",
-      "openSketch": "✏ Open sketch modifier",
+      "openSketch": "分子を描画",
       "cancelButton": "Cancel",
       "label": "Principal SMILES",
       "inspecting": "Inspecting...",
@@ -1897,7 +1898,9 @@
       "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
       "title": "Select substitution sites on the scaffold",
       "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
-      "blocksAvailableSuffix": "blocks available"
+      "blocksAvailableSuffix": "blocks available",
+      "nonSubstitutableAtom": "自由原子価がありません：置換基を受け付けられません。",
+      "nonSubstitutableSelected": "自由原子価のない選択原子（置換不可）：{{sites}}"
     },
     "step4": {
       "loadedInView": "Loaded in current view:",
@@ -1958,7 +1961,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "{total} 件中 {shown} 個の誘導体を表示"
+      "showingOfTotal": "{total} 件中 {shown} 個の誘導体を表示",
+      "estimatedDerivatives": "推定 {count} 個の誘導体",
+      "combinatorialWarning": "組み合わせが {limit} 個を超えます。生成は完全に行われ、時間がかかる場合があります。",
+      "hardLimitExceeded": "{limit} 個の上限を超えています。サイト、置換基、R置換を減らしてください。"
     },
     "catalogPanel": {
       "maximizeSection": "セクションを最大化",
@@ -2077,7 +2083,7 @@
       "exportCsv": "CSV をエクスポート",
       "processing": "処理中...",
       "reset": "リセット",
-      "run": "データOK、Server Calc を実行"
+      "run": "実行"
     },
     "form": {
       "a": "1つ目の値 (a)",
@@ -2092,7 +2098,6 @@
     },
     "result": {
       "ariaLabel": "結果と進行状況",
-      "emptyHint": "計算を実行すると、結果と qta に保存されたファイルが表示されます。",
       "labels": {
         "a": "A:",
         "b": "B:",
@@ -2102,7 +2107,7 @@
         "result": "結果:"
       },
       "submitting": "Server Calc ジョブをバックエンドに送信中...",
-      "title": "出力"
+      "title": "Results"
     }
   }
 }

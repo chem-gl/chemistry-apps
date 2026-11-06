@@ -32,6 +32,8 @@ export interface SmileitAtomInfoView {
   symbol: string;
   implicitHydrogens: number;
   isAromatic: boolean;
+  /** False cuando el átomo no tiene valencia libre y nunca admitirá sustituyentes. */
+  isSubstitutable: boolean;
 }
 
 /** Resultado de inspección estructural normalizado para la UI. */
@@ -98,7 +100,6 @@ export interface SmileitGenerationParams {
   siteOverlapPolicy?: SiteOverlapPolicyEnum;
   rSubstitutes?: number;
   numBonds?: number;
-  maxStructures?: number;
   exportNameBase?: string;
   exportPadding?: number;
   version?: string;

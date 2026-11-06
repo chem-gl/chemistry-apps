@@ -14,6 +14,8 @@ from apps.core.processing import PluginRegistry
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
 from .definitions import (
+    DERIVATIVE_WARNING_THRESHOLD,
+    MAX_DERIVATIVES_HARD_LIMIT,
     DEFAULT_EXPORT_PADDING,
     MAX_NUM_BONDS,
     MAX_R_SUBSTITUTES,
@@ -21,11 +23,12 @@ from .definitions import (
 )
 from .engine import (
     clear_smileit_caches,
+    find_sites_without_free_valence,
     parse_smiles_cached,
     remap_anchor_indices_to_canonical,
     validate_smiles,
 )
-from .engine.builders import _build_site_option_map
+from .engine.builders import _build_site_option_map, estimate_derivative_count
 from .engine.generation import (
     SMILEIT_LOG_SOURCE,
     _emit_log,
@@ -44,6 +47,30 @@ from .types import (
 # =========================
 
 
+def _safe_int(raw_value: object, default: int) -> int:
+    """Convierte a int sin romper ante None o texto no numérico.
+
+    Los parámetros llegan serializados desde el router (ya validados), pero el
+    plugin es invocable directamente: sin esta guarda, `int(None)` abortaría
+    con TypeError crípticos. Ante valor ausente o no numérico se usa `default`.
+    """
+    if raw_value is None:
+        return default
+    if isinstance(raw_value, str) and raw_value.strip() == "":
+        return default
+    try:
+        return int(raw_value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_str(raw_value: object, default: str = "") -> str:
+    """Convierte a str sin producir el literal "None" ante valor nulo."""
+    if raw_value is None:
+        return default
+    return str(raw_value)
+
+
 def _normalize_resolved_substituent(
     raw_value: dict[str, object],
 ) -> SmileitResolvedSubstituent:
@@ -55,12 +82,12 @@ def _normalize_resolved_substituent(
         else []
     )
     return SmileitResolvedSubstituent(
-        source_kind=str(raw_value.get("source_kind", "catalog")),
-        stable_id=str(raw_value.get("stable_id", "")),
-        version=int(raw_value.get("version", 1)),
-        name=str(raw_value.get("name", "")),
-        smiles=str(raw_value.get("smiles", "")),
-        selected_atom_index=int(raw_value.get("selected_atom_index", 0)),
+        source_kind=_safe_str(raw_value.get("source_kind"), "catalog"),
+        stable_id=_safe_str(raw_value.get("stable_id", "")),
+        version=_safe_int(raw_value.get("version", 1), 1),
+        name=_safe_str(raw_value.get("name", "")),
+        smiles=_safe_str(raw_value.get("smiles", "")),
+        selected_atom_index=_safe_int(raw_value.get("selected_atom_index", 0), 0),
         categories=categories,
     )
 
@@ -82,8 +109,8 @@ def _normalize_assignment_block(
                 resolved_substituents.append(_normalize_resolved_substituent(item))
 
     return SmileitResolvedAssignmentBlock(
-        label=str(raw_block.get("label", "block")),
-        priority=int(raw_block.get("priority", 1)),
+        label=_safe_str(raw_block.get("label"), "block"),
+        priority=_safe_int(raw_block.get("priority", 1), 1),
         site_atom_indices=sites,
         resolved_substituents=resolved_substituents,
     )
@@ -154,8 +181,6 @@ def _build_smileit_input(parameters: JSONMap) -> SmileitInput:
         options={
             "r_substitutes": int(parameters.get("r_substitutes", 1)),
             "num_bonds": int(parameters.get("num_bonds", 1)),
-            "allow_repeated": bool(parameters.get("allow_repeated", False)),
-            "max_structures": int(parameters.get("max_structures", 0)),
             "site_overlap_policy": str(
                 parameters.get("site_overlap_policy", "last_block_wins")
             ),
@@ -346,12 +371,47 @@ def smileit_plugin(
         options = parsed_input["options"]
         r_substitutes = max(1, min(int(options["r_substitutes"]), MAX_R_SUBSTITUTES))
         num_bonds = max(1, min(int(options["num_bonds"]), MAX_NUM_BONDS))
-        max_structures_raw = int(options["max_structures"])
-        max_structures = max_structures_raw if max_structures_raw > 0 else None
         export_name_base = options["export_name_base"].strip() or "SMILEIT"
         export_padding = int(options["export_padding"])
 
         progress_callback(5, "running", "Validando cobertura de bloques para Smile-it.")
+
+        # Un sitio sin valencia libre nunca admite sustituyentes: si se acepta, la
+        # generación se satura y devuelve el mismo conjunto para cualquier
+        # `r_substitutes` (síntoma reportado: 3 runs con r distinto → mismos derivados).
+        # El router ya normaliza el principal al espacio canónico y responde 409;
+        # esta validación es el backstop para invocaciones directas del plugin.
+        non_substitutable_sites = find_sites_without_free_valence(
+            smiles=canonical_principal,
+            site_indices=canonical_sites,
+        )
+        if len(non_substitutable_sites) > 0:
+            raise ValueError(
+                "Los sitios seleccionados {} del SMILES principal {!r} no tienen "
+                "valencia libre o están fuera de rango: no admiten sustituyentes. "
+                "Selecciona átomos con al menos un hidrógeno disponible o valencia "
+                "libre.".format(non_substitutable_sites, canonical_principal)
+            )
+
+        # El número de rondas útiles no puede superar el de sitios sustituibles;
+        # redondear por encima solo añade rondas vacías y resultados idénticos.
+        max_useful_rounds = max(1, len(canonical_sites))
+        if r_substitutes > max_useful_rounds:
+            _emit_log(
+                log_callback,
+                level="warning",
+                source=SMILEIT_LOG_SOURCE,
+                message=(
+                    "R-substituciones ajustadas de {} a {}: solo hay {} sitios "
+                    "sustituibles seleccionados."
+                ).format(r_substitutes, max_useful_rounds, max_useful_rounds),
+                payload={
+                    "requested_r_substitutes": r_substitutes,
+                    "effective_r_substitutes": max_useful_rounds,
+                    "substitutable_sites": canonical_sites,
+                },
+            )
+            r_substitutes = max_useful_rounds
 
         site_option_map = _build_site_option_map(
             selected_atom_indices=canonical_sites,
@@ -363,6 +423,29 @@ def smileit_plugin(
         if len(missing_sites) > 0:
             raise ValueError(
                 f"No se puede ejecutar Smile-it con sitios sin cobertura: {missing_sites}."
+            )
+
+        estimated_derivatives = estimate_derivative_count(
+            site_option_map=site_option_map,
+            r_substitutes=r_substitutes,
+        )
+        if estimated_derivatives > MAX_DERIVATIVES_HARD_LIMIT:
+            raise ValueError(
+                "La combinatoria estimada ({:,}) supera el máximo permitido de {:,} "
+                "derivados. Reduce sitios, sustituyentes o R-substituciones.".format(
+                    estimated_derivatives, MAX_DERIVATIVES_HARD_LIMIT
+                )
+            )
+        if estimated_derivatives > DERIVATIVE_WARNING_THRESHOLD:
+            _emit_log(
+                log_callback,
+                level="warning",
+                source=SMILEIT_LOG_SOURCE,
+                message=(
+                    "La combinatoria estimada supera {:,} derivados; la generación "
+                    "será completa y puede tardar."
+                ).format(DERIVATIVE_WARNING_THRESHOLD),
+                payload={"estimated_derivatives": estimated_derivatives},
             )
 
         _emit_log(
@@ -378,7 +461,7 @@ def smileit_plugin(
                 ),
                 "r_substitutes": r_substitutes,
                 "num_bonds": num_bonds,
-                "max_structures": max_structures,
+                "estimated_derivatives": estimated_derivatives,
             },
         )
 
@@ -392,7 +475,6 @@ def smileit_plugin(
             site_option_map=site_option_map,
             r_substitutes=r_substitutes,
             num_bonds=num_bonds,
-            max_structures=max_structures,
             export_name_base=export_name_base,
             export_padding=export_padding,
             progress_callback=progress_callback,

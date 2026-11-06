@@ -39,11 +39,7 @@ export function buildPrincipalExportName(rawJobName: string | null | undefined):
   return `${normalizedJobName} molecula principal`;
 }
 
-/** Construye el nombre de visualización del trabajo histórico con su id. */
-export function buildHistoricalJobDisplayName(
-  rawJobName: string | null | undefined,
-  jobId: string,
-): string {
-  const visibleJobName = rawJobName?.trim() ? rawJobName.trim() : DEFAULT_JOB_NAME;
-  return `${visibleJobName}_${jobId}`;
+/** Nombre visible del trabajo histórico (sin id: el id ya no se muestra en la tabla). */
+export function buildHistoricalJobDisplayName(rawJobName: string | null | undefined): string {
+  return rawJobName?.trim() ? rawJobName.trim() : DEFAULT_JOB_NAME;
 }

@@ -59,9 +59,9 @@ describe('App', () => {
       (anchorElement: Element) => anchorElement.textContent?.trim().replace('▾', '').trim() ?? '',
     );
 
-    expect(allLinks).toContain('Jobs Monitor');
     expect(allLinks).toContain('Apps');
     expect(allLinks).not.toContain('Dashboard');
+    expect(allLinks).not.toContain('Jobs Monitor');
     expect(allLinks[0]).toBe('Apps');
   });
 

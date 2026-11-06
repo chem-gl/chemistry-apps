@@ -83,7 +83,6 @@ const buildMockWorkflow = () => {
     siteOverlapPolicy: signal('last_block_wins'),
     rSubstitutes: signal(false),
     numBonds: signal(1),
-    maxStructures: signal(1000),
     exportNameBase: signal('smileit_run'),
     exportPadding: signal(5),
     activeSection: signal('idle'),

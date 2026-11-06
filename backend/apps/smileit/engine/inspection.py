@@ -12,6 +12,7 @@ from ..types import (
     SmileitPatternEntry,
     SmileitStructureInspectionResult,
 )
+from .fusion import _has_free_valence
 from .parsing import display_atom_symbol, get_implicit_hydrogens
 from .rendering import render_molecule_svg_with_indices
 from .verification import (
@@ -46,6 +47,7 @@ def inspect_smiles_structure(smiles: str) -> SmileitStructureInspectionResult:
                 symbol=display_atom_symbol(atom),
                 implicit_hydrogens=get_implicit_hydrogens(atom),
                 is_aromatic=atom.GetIsAromatic(),
+                is_substitutable=_has_free_valence(atom, 1),
             )
         )
 

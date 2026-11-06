@@ -14,9 +14,9 @@ label {
 
 input {
   border: 1px solid var(--chem-border);
-  border-radius: 14px;
-  padding: 0.62rem 0.78rem;
-  font-size: 0.94rem;
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: var(--chem-text-sm);
   background: var(--chem-surface-elevated);
   color: var(--chem-ink);
 }
@@ -26,17 +26,42 @@ input:focus {
   border-color: var(--chem-accent);
 }
 
-.principal-actions-row {
-  margin-top: 0.55rem;
+.principal-input-row {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
-  justify-content: flex-end;
+  min-width: 0;
+}
+
+.principal-smiles-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--chem-border);
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-family: var(--chem-font-mono);
+  font-size: var(--chem-text-sm);
+  background: var(--chem-surface-elevated);
+  color: var(--chem-ink);
+}
+
+.principal-smiles-input:focus {
+  outline: var(--chem-focus-ring);
+  border-color: var(--chem-accent);
+}
+
+@media (max-width: 760px) {
+  .principal-input-row {
+    flex-wrap: wrap;
+  }
+
+  .principal-smiles-input {
+    order: -1;
+    flex-basis: 100%;
+  }
 }
 
 .btn-secondary {
-  border-radius: 999px;
-  padding: 0.52rem 0.9rem;
-  font-weight: 700;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -117,11 +142,11 @@ input:focus {
 textarea {
   width: 100%;
   border: 1px solid var(--chem-border);
-  border-radius: 12px;
-  padding: 0.65rem;
+  border-radius: var(--chem-radius-sm);
+  padding: 0.5rem 0.6rem;
   resize: vertical;
   min-height: 90px;
-  font-size: 0.93rem;
+  font: inherit;
   color: var(--chem-ink);
   background: var(--chem-surface-elevated);
 }

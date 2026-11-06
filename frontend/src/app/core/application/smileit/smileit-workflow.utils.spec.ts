@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { VerificationRuleEnum } from '../../api/generated';
 import {
   buildCatalogGroups,
+  COMBINATORIAL_HARD_LIMIT,
   dedupeVersionedEntries,
+  estimateCombinatorialTotal,
   detectChemicalNotation,
   escapeRegExp,
   extractRequestErrorMessage,
@@ -260,5 +262,24 @@ describe('buildCatalogGroups', () => {
 
   it('retorna array vacío para entradas vacías', () => {
     expect(buildCatalogGroups([], categories)).toEqual([]);
+  });
+});
+
+describe('estimateCombinatorialTotal', () => {
+  it('cuenta permutaciones ordenadas igual que el backend', () => {
+    expect(estimateCombinatorialTotal([2, 2], 1)).toBe(4);
+    expect(estimateCombinatorialTotal([2, 2], 2)).toBe(8 + 4);
+    expect(estimateCombinatorialTotal([2, 2, 2], 2)).toBe(6 + 24);
+    expect(estimateCombinatorialTotal([1], 1)).toBe(1);
+  });
+
+  it('ignora sitios sin opciones y devuelve 0 sin sitios', () => {
+    expect(estimateCombinatorialTotal([], 3)).toBe(0);
+    expect(estimateCombinatorialTotal([0, 2], 1)).toBe(2);
+  });
+
+  it('corta en el tope duro devolviendo límite + 1', () => {
+    const perSite: number[] = new Array(10).fill(10);
+    expect(estimateCombinatorialTotal(perSite, 10)).toBe(COMBINATORIAL_HARD_LIMIT + 1);
   });
 });

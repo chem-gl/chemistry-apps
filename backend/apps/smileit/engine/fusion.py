@@ -57,6 +57,33 @@ def _has_free_valence(atom: Chem.Atom, bond_order: int) -> bool:
     return False
 
 
+def find_sites_without_free_valence(
+    smiles: str,
+    site_indices: list[int],
+    bond_order: int = 1,
+) -> list[int]:
+    """Retorna los sitios indicados que no admiten un enlace nuevo.
+
+    Un sitio sin valencia libre (p. ej. un carbono aromático de fusión o un
+    nitrógeno cuaternario) nunca podrá recibir un sustituyente: si se deja pasar,
+    la generación se satura en silencio y devuelve el mismo conjunto para
+    cualquier `r_substitutes`. Se respeta el orden de entrada y los índices
+    fuera de rango se reportan como inválidos.
+    """
+    molecule = parse_smiles_cached(smiles)
+    if molecule is None:
+        return list(site_indices)
+
+    unavailable_sites: list[int] = []
+    for site_index in site_indices:
+        if site_index < 0 or site_index >= molecule.GetNumAtoms():
+            unavailable_sites.append(site_index)
+            continue
+        if not _has_free_valence(molecule.GetAtomWithIdx(site_index), bond_order):
+            unavailable_sites.append(site_index)
+    return unavailable_sites
+
+
 def _has_enough_implicit_hydrogens(
     atom_p: Chem.Atom, atom_s: Chem.Atom, bond_order: int
 ) -> bool:

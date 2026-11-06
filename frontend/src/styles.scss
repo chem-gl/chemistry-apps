@@ -27,7 +27,7 @@
 
   /* === Superficies (jerarquía de profundidad) === */
   --chem-bg: #f8faf9;
-  --chem-surface: #f0f4f1;
+  --chem-surface: #fefeff;
   --chem-surface-alt: #e6ede8;
   --chem-surface-elevated: #ffffff;
   --chem-surface-inset: #e2e9e4;
@@ -39,11 +39,9 @@
 
   /* === Gradientes === */
   --chem-gradient-subtle: linear-gradient(128deg, rgba(49, 113, 84, 0.04), rgba(12, 32, 33, 0.02));
-  --chem-gradient-header: linear-gradient(
-    135deg,
-    rgba(0, 60, 113, 0.08),
-    rgba(49, 113, 84, 0.04)
-  );
+  --chem-gradient-header: linear-gradient(135deg,
+      rgba(0, 60, 113, 0.08),
+      rgba(49, 113, 84, 0.04));
 
   /* === Bordes === */
   --chem-border: #ccd5ce;
@@ -131,8 +129,10 @@
   --z-base: 1;
   --z-sticky: 2;
   --z-dropdown: 3;
-  --z-backdrop: 59; /* Modalbackdrop justo debajo de modales */
-  --z-modal: 60; /* Modales encima de Ketcher (que usa 40-63) */
+  --z-backdrop: 59;
+  /* Modalbackdrop justo debajo de modales */
+  --z-modal: 60;
+  /* Modales encima de Ketcher (que usa 40-63) */
 
   /* === Escala de espaciado (design-overhaul 2026-09) === */
   --space-1: 0.25rem;
@@ -145,6 +145,16 @@
 
   /* === Alturas de control únicas === */
   --chem-input-h: 2.5rem;
+  /* === Botones (plantilla única; variantes en styles.scss) === */
+  --btn-min-h: 2.05rem;
+  --btn-min-h-sm: 1.7rem;
+  --btn-pad-x: 0.75rem;
+  --btn-pad-x-sm: 0.55rem;
+  --btn-radius: var(--chem-radius-sm);
+  --btn-font: var(--chem-font-mono);
+  --btn-font-size: 0.68rem;
+  --btn-font-size-sm: 0.64rem;
+  --btn-tracking: 0.08em;
   --chem-btn-h: 2.6rem;
 
   /* === Tarjetas (derivados de tokens existentes) === */
@@ -185,11 +195,12 @@ select,
 textarea {
   font-family: var(--chem-font-body);
   font-size: var(--chem-text-sm);
+  line-height: 1.35;
   color: var(--chem-ink);
   background: var(--chem-input-bg);
   border: 1px solid var(--chem-input-border);
-  border-radius: var(--chem-radius);
-  padding: 0.55rem 0.75rem;
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 0.6rem;
   transition:
     border-color var(--chem-transition),
     box-shadow var(--chem-transition);
@@ -355,7 +366,7 @@ tbody tr:hover {
   /* min() con 100% evita scroll horizontal en viewports < 372px. */
   grid-template-columns: minmax(min(340px, 100%), 420px) minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
   min-width: 0;
 }
 
@@ -372,6 +383,88 @@ tbody tr:hover {
 
   .workspace-form {
     position: static;
+  }
+}
+
+/* ── 4b. Panel científico entrada/resultado (estilo unificado tunnel) ──
+   Usado por `app-scientific-panel`; nuevas apps lo reutilizan sin CSS propio. */
+.sci-panel {
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface);
+  padding: 1.1rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.sci-panel-title {
+  margin: 0 0 0.8rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Subsección dentro de un panel (h4): un escalón por debajo del título. */
+.section-title {
+  margin: 1.1rem 0 0.6rem;
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sci-panel-title+.section-title {
+  margin-top: 0;
+}
+
+.sci-panel--sticky {
+  position: sticky;
+  top: 1rem;
+}
+
+.sci-panel--scroll {
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 1100px) {
+  .sci-panel--sticky {
+    position: static;
+  }
+}
+
+/* ── 4c. Estado vacío de resultados (plano: vive dentro de .sci-panel) ──
+   Sin borde ni fondo propios para que nunca se vean dos tarjetas anidadas. */
+.result-empty-card {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  max-width: 40rem;
+  padding: 0;
+
+  strong {
+    color: var(--chem-ink);
+    font-family: var(--chem-font-heading);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--chem-ink-soft);
+  }
+}
+
+.result-empty-hint {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--chem-accent);
+
+  &::before {
+    content: '→ ';
   }
 }
 
@@ -425,6 +518,7 @@ tbody tr:hover {
 }
 
 @media (max-width: 560px) {
+
   .grid-2,
   .grid-3 {
     grid-template-columns: minmax(0, 1fr);
@@ -496,20 +590,23 @@ tbody tr:hover {
 /* ── 7. Botones ──────────────────────────────────────────────────── */
 /* Forma base en placeholder: las variantes la extienden y funcionan con o
    sin la clase .btn (muchas plantillas usan solo btn-primary/btn-secondary).
-   Así conservan altura, píldora, tipografía, foco y estado deshabilitado. */
+   Estilo alineado con el botón DOCUMENTATION de la cabecera: mono, versalitas,
+   radio pequeño y padding ajustado. */
 %btn-base {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: var(--chem-btn-h);
-  padding: 0 1.1rem;
+  min-height: var(--btn-min-h);
+  padding: 0.35rem var(--btn-pad-x);
   border: 1px solid transparent;
-  border-radius: var(--chem-radius-pill);
+  border-radius: var(--btn-radius);
   background: transparent;
-  font-family: var(--chem-font-label);
-  font-size: var(--chem-text-sm);
+  font-family: var(--chem-font-mono);
+  font-size: var(--btn-font-size);
   font-weight: 600;
+  letter-spacing: var(--btn-tracking);
+  text-transform: uppercase;
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
@@ -577,9 +674,42 @@ tbody tr:hover {
 
 /* Variante compacta para acciones dentro de tablas y chips. */
 .btn-sm {
-  height: calc(var(--chem-btn-h) - 0.7rem);
-  padding: 0 0.7rem;
-  font-size: var(--chem-text-xs);
+  min-height: var(--btn-min-h-sm);
+  padding: 0.25rem var(--btn-pad-x-sm);
+  font-size: var(--btn-font-size-sm);
+}
+
+/* Botón de icono (collapse/expand, acciones de una sola letra). */
+.btn-icon,
+.icon-action-btn {
+  @extend %btn-base;
+  width: var(--btn-min-h);
+  min-width: var(--btn-min-h);
+  height: var(--btn-min-h);
+  padding: 0;
+  border-color: var(--chem-border-strong);
+  background: var(--chem-card-bg);
+  color: var(--chem-ink-secondary);
+  font-size: 0.8rem;
+  box-shadow: var(--chem-shadow-sm);
+}
+
+.btn-icon:hover:not(:disabled):not(.disabled),
+.icon-action-btn:hover:not(:disabled):not(.disabled) {
+  border-color: var(--chem-accent);
+  color: var(--chem-accent);
+  background: var(--chem-accent-light);
+}
+
+/* Variante destructiva. */
+.btn-danger {
+  @extend %btn-base;
+  border-color: var(--chem-error);
+  color: var(--chem-error);
+}
+
+.btn-danger:hover:not(:disabled):not(.disabled) {
+  background: var(--chem-error-bg);
 }
 
 /* ── 8. Contenedor de tablas con scroll horizontal ───────────────── */
@@ -740,12 +870,10 @@ tbody tr:hover {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    520px circle at var(--glow-x, 50%) var(--glow-y, 20%),
-    rgba(178, 150, 0, 0.11),
-    rgba(49, 113, 84, 0.05) 38%,
-    transparent 62%
-  );
+  background: radial-gradient(520px circle at var(--glow-x, 50%) var(--glow-y, 20%),
+      rgba(178, 150, 0, 0.11),
+      rgba(49, 113, 84, 0.05) 38%,
+      transparent 62%);
   opacity: 0;
   transition: opacity 320ms ease;
 }
@@ -758,6 +886,7 @@ tbody tr:hover {
 
 /* ── Accesibilidad: movimiento reducido ───────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+
   /* Se listan las variantes además de .btn porque %btn-base no se propaga
      dentro de los @media del placeholder extendido. */
   .btn,

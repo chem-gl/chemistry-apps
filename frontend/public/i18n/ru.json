@@ -217,7 +217,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Toxicity Properties",
+      "run": "Запустить",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -255,10 +255,7 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity",
-      "emptyTitle": "Результатов пока нет",
-      "emptyBody": "Запустите расчёт, чтобы увидеть здесь предсказанные ADMET-свойства ваших молекул.",
-      "emptyHint": "Настройте входные данные и нажмите «Запустить»."
+      "colDevTox": "Dev. Toxicity"
     },
     "moleculeModal": {
       "title": "Molecule preview"
@@ -276,7 +273,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run SA Score",
+      "run": "Запустить",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -336,7 +333,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Marcus"
+      "run": "Запустить"
     },
     "fileSlots": {
       "reactant1": "Reactant 1",
@@ -362,9 +359,8 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "Ожидание отправки — настройте входные данные и запустите задачу, чтобы увидеть результаты здесь.",
       "submitting": "Submitting Marcus job to backend...",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "ariaLabel": "Results and progress",
       "marcusEnergies": "Marcus Energies",
@@ -854,7 +850,7 @@
       "generatePanelTitle": "Generate from Smile-it",
       "files": "Files",
       "tableCandidate": "Candidate",
-      "running": "Running CADMA Py…",
+      "running": "Running…",
       "toxicityMissing": "Toxicity missing",
       "selectSmileitJobPlaceholder": "Select a Smile-it job...",
       "skipSa": "Skip — no SA data",
@@ -862,9 +858,9 @@
       "quickFillSaReady": "SA already attached",
       "saReady": "SA ✓",
       "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
-      "runCadmaPy": "Run CADMA Py →",
+      "runCadmaPy": "Run →",
       "change": "Change",
-      "submitting": "Submitting CADMA Py job…",
+      "submitting": "Submitting job…",
       "clearFiles": "Clear files",
       "guideToxicity": "Toxicity from",
       "backToStep2": "Back to step 2",
@@ -963,7 +959,8 @@
       "profile": "Профиль",
       "identity": "Идентификация",
       "groups": "Groups",
-      "apps": "Приложения"
+      "apps": "Приложения",
+      "userMenu": "Меню пользователя"
     },
     "brand": {
       "title": "Научный центр управления",
@@ -1066,7 +1063,7 @@
       "exportLog": "Export LOG (inputs + results)",
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Data ok, Run Tunnel",
+      "run": "Запустить",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV",
       "clearTrace": "Clear input trace"
@@ -1093,7 +1090,7 @@
         "ariaLabel": "Диаграмма туннелирования: барьер Эккарта, волновая функция и тепловая энергия"
       },
       "submitting": "Submitting tunnel effect job to backend...",
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress"
     }
   },
@@ -1125,7 +1122,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Molar Fractions",
+      "run": "Запустить",
       "exportCsv": "Export CSV"
     },
     "history": {
@@ -1518,7 +1515,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Easy-rate"
+      "run": "Запустить"
     },
     "fileSlots": {
       "product1": "Product 1",
@@ -1575,7 +1572,7 @@
       "kTst": "k (TST)",
       "submitting": "Submitting Easy-rate job to backend...",
       "tunnelCorrection": "Tunnel Correction (Eckart)",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1645,6 +1642,10 @@
       "all": "Все",
       "status": "Статус",
       "app": "Приложение"
+    },
+    "panels": {
+      "input": "Ввод",
+      "results": "Результаты"
     }
   },
   "smileit": {
@@ -1808,7 +1809,7 @@
       "applyButton": "Apply to draft"
     },
     "step1": {
-      "title": "1. Principal molecule and scaffold preview",
+      "title": "Основная молекула",
       "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
       "ariaLabel": "Input parameters"
     },
@@ -1853,9 +1854,9 @@
       "sketchLoading": "Loading molecule sketcher…",
       "sketchHint": "Use the sketcher below to edit the principal molecule.",
       "pending": "Pending principal SMILES",
-      "inspect": "Inspect structure",
+      "inspect": "Вставить",
       "sketchTitle": "Principal sketch modifier",
-      "openSketch": "✏ Open sketch modifier",
+      "openSketch": "Нарисовать молекулу",
       "cancelButton": "Cancel",
       "label": "Principal SMILES",
       "inspecting": "Inspecting...",
@@ -1897,7 +1898,9 @@
       "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
       "title": "Select substitution sites on the scaffold",
       "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
-      "blocksAvailableSuffix": "blocks available"
+      "blocksAvailableSuffix": "blocks available",
+      "nonSubstitutableAtom": "Нет свободной валентности: не может принять заместители.",
+      "nonSubstitutableSelected": "Выбранные атомы без свободной валентности (незамещаемые): {{sites}}"
     },
     "step4": {
       "loadedInView": "Loaded in current view:",
@@ -1958,7 +1961,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "Показано {shown} из {total} производных"
+      "showingOfTotal": "Показано {shown} из {total} производных",
+      "estimatedDerivatives": "≈ {count} производных",
+      "combinatorialWarning": "Комбинаторика превышает {limit} производных: генерация будет полной и может занять время.",
+      "hardLimitExceeded": "Превышен максимум {limit} производных. Уменьшите число сайтов, заместителей или R-замещений."
     },
     "catalogPanel": {
       "maximizeSection": "Развернуть раздел",
@@ -2077,7 +2083,7 @@
       "exportCsv": "Экспорт CSV",
       "processing": "Обработка...",
       "reset": "Сбросить",
-      "run": "Данные готовы, запустить Server Calc"
+      "run": "Запустить"
     },
     "form": {
       "a": "Первое значение (a)",
@@ -2092,7 +2098,6 @@
     },
     "result": {
       "ariaLabel": "Результаты и прогресс",
-      "emptyHint": "Запустите расчёт, чтобы увидеть результат и файл, записанный на qta.",
       "labels": {
         "a": "A:",
         "b": "B:",
@@ -2102,7 +2107,7 @@
         "result": "Результат:"
       },
       "submitting": "Отправка задания Server Calc в бэкенд...",
-      "title": "Вывод"
+      "title": "Results"
     }
   }
 }

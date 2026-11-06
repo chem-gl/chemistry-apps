@@ -6,18 +6,18 @@ label {
   color: var(--chem-ink);
 }
 
-input:not(.property-input),
-select:not(.property-input) {
+input,
+select {
   border: 1px solid var(--chem-border);
-  border-radius: var(--chem-radius);
-  padding: 0.62rem 0.78rem;
-  font-size: 0.94rem;
+  border-radius: var(--chem-radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: var(--chem-text-sm);
   background: var(--chem-surface);
   color: var(--chem-ink);
 }
 
-input:not(.property-input):focus,
-select:not(.property-input):focus {
+input:focus,
+select:focus {
   outline: 2px solid rgba(123, 90, 158, 0.25);
   border-color: var(--chem-accent);
 }
@@ -33,12 +33,35 @@ select:not(.property-input):focus {
 .btn-secondary,
 .catalog-add,
 .remove-btn,
-.history-open-btn,
-.filter-chip,
+.history-open-btn {
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.filter-chip {
+  border-radius: var(--btn-radius);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
 .atom-chip {
-  border-radius: 999px;
-  padding: 0.52rem 0.9rem;
-  font-weight: 700;
+  border-radius: var(--btn-radius);
+  padding: 0.12rem 0.4rem;
+  font-family: var(--chem-font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -91,10 +114,10 @@ select:not(.property-input):focus {
 .structures-list-card,
 .traceability-card,
 .block-card {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: var(--chem-radius);
-  background: var(--chem-surface-elevated);
-  padding: 0.95rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   margin-top: 0.9rem;
 }
 
@@ -104,72 +127,73 @@ select:not(.property-input):focus {
   gap: 0.35rem;
 }
 
-.inspection-metadata p,
+/* Ficha de inspección: canonical primero, stats en una fila y propiedades
+   fisicoquímicas como lista vertical discreta (nombre sobre valor). */
+.canonical-line {
+  margin: 0 0 0.35rem;
+  color: var(--chem-ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.inspection-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--chem-ink-soft);
+  font-size: 0.8rem;
+}
+
+.stat-inline strong {
+  color: var(--chem-ink);
+  font-family: var(--chem-font-heading);
+  font-size: 0.92rem;
+}
+
+.property-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.property-item {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.property-item dt {
+  color: var(--chem-ink-soft);
+  font-family: var(--chem-font-label);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.property-item dd {
+  margin: 0;
+  color: var(--chem-ink);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .metadata-grid p {
   margin: 0;
   color: var(--chem-ink-secondary);
 }
 
-.property-grid {
-  margin-top: 0.85rem;
-  display: grid;
-  gap: 0.6rem 1rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  overflow: hidden;
-}
 
-/* Fila individual de propiedad: evita que la regla global label{display:grid} cause solapamientos */
-.property-row {
-  display: block;
-  box-sizing: border-box;
-  min-width: 0;
-  overflow: hidden;
-}
 
-.property-label {
-  display: block !important;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: var(--chem-ink-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  line-height: 1.2;
-  white-space: normal;
-  word-break: break-word;
-  margin-bottom: 0.15rem;
-  font-family: var(--chem-font-label);
-}
-
-/* Se mantiene !important en display/width porque la regla global
-   input:not(.property-input) excluye este selector, pero Angular
-   ViewEncapsulation.None puede alterar especificidad. */
-.property-input {
-  display: block !important;
-  width: 100% !important;
-  min-width: 0;
-  box-sizing: border-box;
-  border: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  font-size: 0.93rem;
-  font-weight: 600;
-  color: var(--chem-ink);
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: auto;
-  line-height: 1.3;
-  cursor: default;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-}
-
-.property-input:focus {
-  outline: none;
-}
 
 .property-card {
   padding: 0.7rem 0.8rem;
@@ -207,14 +231,47 @@ select:not(.property-input):focus {
 }
 
 .annotation-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.5rem;
   border: 1px solid var(--chem-border-subtle);
   border-left: 6px solid var(--annotation-color);
-  border-radius: var(--chem-radius);
   background: var(--chem-surface);
-  padding: 0.75rem 0.85rem;
+  padding: 0.5rem;
   transition:
     opacity 0.18s ease,
     filter 0.18s ease;
+}
+
+.annotation-chip-body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong {
+    color: var(--chem-ink);
+    font-size: var(--chem-text-sm);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+/* SMARTS literal del patrón (sin imagen). */
+.annotation-smarts {
+  display: block;
+  font-family: var(--chem-font-mono);
+  font-size: 0.6rem;
+  line-height: 1.3;
+  color: var(--chem-ink-soft);
+  word-break: break-all;
+  align-self: start;
+}
+
+.annotation-caption {
+  font-size: 12px;
 }
 
 .annotation-chip-hidden {
@@ -224,30 +281,25 @@ select:not(.property-input):focus {
 
 .annotation-chip-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 0.4rem;
-  margin-bottom: 0.15rem;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+
+  strong {
+    color: var(--chem-ink);
+    font-size: var(--chem-text-sm);
+    min-width: 0;
+  }
 }
 
-.annotation-eye-btn {
+.annotation-toggle-checkbox {
   flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 0.1rem 0.25rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--annotation-color, var(--chem-primary));
   cursor: pointer;
-  font-size: 0.95rem;
-  line-height: 1;
-  border-radius: 6px;
-  opacity: 0.65;
-  transition:
-    opacity 0.14s,
-    background 0.14s;
-}
-
-.annotation-eye-btn:hover {
-  opacity: 1;
-  background: var(--chem-surface-elevated);
 }
 
 .annotation-chip strong,
@@ -284,33 +336,52 @@ select:not(.property-input):focus {
   gap: 0.6rem;
 }
 
-.annotation-control-btn {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 999px;
-  background: var(--chem-surface);
-  color: var(--chem-ink);
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.3rem 0.75rem;
-  cursor: pointer;
-}
-
-.annotation-control-btn:hover {
-  background: var(--chem-surface-elevated);
-}
-
+/* Ambos controles del encabezado comparten forma de chip: uno gobierna los
+   patrones "rojos" (alertas) y el otro los "verdes" (scaffolds privilegiados). */
+.annotation-control-btn,
 .annotation-privileged-switch {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: #2f9e44;
-  font-size: 0.78rem;
-  font-weight: 700;
+  border: 1px solid var(--chem-border-subtle);
+  border-left: 5px solid var(--chem-border-strong);
+  border-radius: var(--btn-radius);
+  background: var(--chem-surface);
+  color: var(--chem-ink-secondary);
+  font-family: var(--chem-font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
   cursor: pointer;
+  opacity: 0.6;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.annotation-privileged-switch input {
-  accent-color: #2f9e44;
+.annotation-control-btn[aria-pressed='true'] {
+  opacity: 1;
+  color: var(--chem-ink);
+  border-left-color: var(--chem-error);
+}
+
+.annotation-privileged-switch {
+  border-left-color: var(--chem-success);
+}
+
+.annotation-privileged-switch[aria-pressed='true'] {
+  opacity: 1;
+  color: var(--chem-ink);
+  border-color: var(--chem-success);
+}
+
+.annotation-control-btn:focus-visible,
+.annotation-privileged-switch:focus-visible {
+  outline: 2px solid var(--chem-accent);
+  outline-offset: 2px;
 }
 
 .annotation-category-chips {

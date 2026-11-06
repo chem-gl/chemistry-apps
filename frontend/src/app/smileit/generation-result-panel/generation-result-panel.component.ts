@@ -126,9 +126,9 @@ export class GenerationResultPanelComponent {
     const jobParameters = historyJob.parameters as Record<string, unknown> | null;
     const exportBaseName = jobParameters?.['export_name_base'];
     if (typeof exportBaseName === 'string' && exportBaseName.trim() !== '') {
-      return buildHistoricalJobDisplayName(exportBaseName, historyJob.id);
+      return buildHistoricalJobDisplayName(exportBaseName);
     }
-    return buildHistoricalJobDisplayName('job', historyJob.id);
+    return buildHistoricalJobDisplayName('job');
   }
 
   historicalJobPrincipalSmiles(historyJob: ScientificJobView): string {

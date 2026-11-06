@@ -23,6 +23,7 @@ import type {
   JobProgressSnapshotView,
   ScientificJobView,
   SmileitAssignmentBlockParams,
+  SmileitCatalogEntryView as SmileitCatalogEntry,
   SmileitGenerationParams,
   SmileitJobResponseView,
   SmileitManualSubstituentParams,
@@ -48,6 +49,7 @@ import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 import type {
   SmileitAssignmentBlockDraft,
   SmileitManualSubstituentDraft,
+  SmileitResolvedSubstituentDraft,
   SmileitResultData,
 } from './smileit/smileit-workflow.types';
 
@@ -117,8 +119,10 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly patternEditingStableId = this.state.patternEditingStableId;
   readonly siteOverlapPolicy = this.state.siteOverlapPolicy;
   readonly rSubstitutes = this.state.rSubstitutes;
+  readonly estimatedDerivatives = this.state.estimatedDerivatives;
+  readonly showsCombinatorialWarning = this.state.showsCombinatorialWarning;
+  readonly exceedsHardLimit = this.state.exceedsHardLimit;
   readonly numBonds = this.state.numBonds;
-  readonly maxStructures = this.state.maxStructures;
   readonly exportNameBase = this.state.exportNameBase;
   readonly exportPadding = this.state.exportPadding;
   readonly activeSection = this.state.activeSection;
@@ -144,6 +148,8 @@ export class SmileitWorkflowService implements OnDestroy {
   readonly canConfigureGeneration = this.state.canConfigureGeneration;
   readonly canDispatch = this.state.canDispatch;
   readonly maxRSubstitutesByPositions = this.state.maxRSubstitutesByPositions;
+  readonly substitutableSelectedSites = this.state.substitutableSelectedSites;
+  readonly nonSubstitutableSelectedSites = this.state.nonSubstitutableSelectedSites;
   readonly isCatalogEditing = this.state.isCatalogEditing;
   readonly isPatternEditing = this.state.isPatternEditing;
   readonly hasQueuedCatalogDrafts = this.state.hasQueuedCatalogDrafts;
@@ -167,6 +173,7 @@ export class SmileitWorkflowService implements OnDestroy {
     this.smileitApiService.inspectSmileitStructure(rawSmiles).subscribe({
       next: (inspectionResult: SmileitStructureInspectionView) => {
         this.state.inspection.set(inspectionResult);
+        this.state.inspectedPrincipalSmiles.set(rawSmiles);
         const previousSelectionCount: number = this.state.selectedAtomIndices().length;
         this.state.selectedAtomIndices.update((currentSelection: number[]) =>
           currentSelection.filter((atomIndex: number) => atomIndex < inspectionResult.atomCount),
@@ -186,6 +193,11 @@ export class SmileitWorkflowService implements OnDestroy {
 
   /** Alterna la selección de un átomo en la estructura principal. */
   toggleSelectedAtom(atomIndex: number): void {
+    // Un átomo sin valencia libre nunca admitirá sustituyentes: seleccionarlo
+    // saturaba la generación y devolvía los mismos derivados para cualquier r.
+    if (!this.isAtomSubstitutable(atomIndex)) {
+      return;
+    }
     const previousSelectionCount: number = this.state.selectedAtomIndices().length;
     this.state.selectedAtomIndices.update((currentSelection: number[]) => {
       const nextSelection: number[] = currentSelection.includes(atomIndex)
@@ -238,10 +250,6 @@ export class SmileitWorkflowService implements OnDestroy {
     this.state.numBonds.set(this.FIXED_NUM_BONDS);
   }
 
-  setMaxStructures(rawValue: number): void {
-    this.state.maxStructures.set(Math.max(0, Math.trunc(rawValue)));
-  }
-
   setExportPadding(): void {
     this.state.exportPadding.set(this.FIXED_EXPORT_PADDING);
   }
@@ -261,6 +269,13 @@ export class SmileitWorkflowService implements OnDestroy {
 
   /** Despacha un job Smileit al backend. */
   dispatch(): void {
+    if (this.state.hasStaleInspection()) {
+      this.state.activeSection.set('error');
+      this.state.errorMessage.set(
+        'The principal structure changed since the last inspection. Inspect it again before dispatching.',
+      );
+      return;
+    }
     if (!this.state.canDispatch()) {
       this.state.activeSection.set('error');
       this.state.errorMessage.set(
@@ -440,6 +455,24 @@ export class SmileitWorkflowService implements OnDestroy {
     return this.accessMode?.isOpenMode() ?? false;
   }
 
+  /**
+   * Comprueba si un átomo admite sustituyentes según la última inspección.
+   *
+   * Sin inspección cargada no hay información de valencia: se permite el toggle
+   * (el backend sigue validando y rechaza sitios sin valencia libre).
+   */
+  private isAtomSubstitutable(atomIndex: number): boolean {
+    const inspectionResult = this.state.inspection();
+    if (inspectionResult === null) {
+      return true;
+    }
+
+    const inspectedAtom = inspectionResult.atoms.find(
+      (atom) => atom.index === atomIndex,
+    );
+    return inspectedAtom === undefined || inspectedAtom.isSubstitutable;
+  }
+
   /** Elimina un job histórico y sincroniza estado local del panel. */
   deleteHistoryJob(jobId: string): void {
     if (this.isOpenMode()) {
@@ -549,20 +582,39 @@ export class SmileitWorkflowService implements OnDestroy {
 
   private buildDispatchParams(): SmileitGenerationParams {
     return {
-      principalSmiles: this.state.principalSmiles().trim(),
+      principalSmiles: this.state.dispatchPrincipalSmiles(),
       selectedAtomIndices: [...this.state.selectedAtomIndices()],
       assignmentBlocks: this.state.assignmentBlocks().map(
         (block: SmileitAssignmentBlockDraft): SmileitAssignmentBlockParams => ({
           label: block.label.trim() || 'Unnamed block',
           siteAtomIndices: block.siteAtomIndices,
           categoryKeys: [...block.categoryKeys],
-          substituentRefs: block.catalogRefs.map(
+          substituentRefs: (block.resolvedSubstituents?.length ?? 0) > 0
+            ? []
+            : block.catalogRefs.map(
             (entry: { stable_id: string; version: number }) => ({
               stableId: entry.stable_id,
               version: entry.version,
             }),
           ),
-          manualSubstituents: block.manualSubstituents.map(
+          manualSubstituents: [
+            ...block.manualSubstituents,
+            ...(block.resolvedSubstituents ?? [])
+              .filter((entry) => entry.sourceKind === 'catalog')
+              .map(
+                (entry): SmileitManualSubstituentParams => ({
+                  name: entry.name,
+                  smiles: entry.smiles,
+                  anchorAtomIndices: [entry.selectedAtomIndex],
+                  categories: [],
+                  sourceReference: `historical-catalog:${entry.stableId}@${entry.version}`,
+                  provenanceMetadata: {
+                    stable_id: entry.stableId,
+                    version: String(entry.version),
+                  },
+                }),
+              ),
+          ].map(
             (entry: SmileitManualSubstituentDraft): SmileitManualSubstituentParams => ({
               name: entry.name,
               smiles: entry.smiles,
@@ -577,7 +629,6 @@ export class SmileitWorkflowService implements OnDestroy {
       siteOverlapPolicy: this.FIXED_SITE_OVERLAP_POLICY,
       rSubstitutes: this.state.rSubstitutes(),
       numBonds: this.FIXED_NUM_BONDS,
-      maxStructures: this.state.maxStructures(),
       exportNameBase: this.state.exportNameBase().trim() || 'smileit_run',
       exportPadding: this.FIXED_EXPORT_PADDING,
       version: this.FIXED_ALGORITHM_VERSION,
@@ -744,6 +795,7 @@ export class SmileitWorkflowService implements OnDestroy {
         inspectionRequest.subscribe({
           next: (inspectionResult: SmileitStructureInspectionView) => {
             this.state.inspection.set(inspectionResult);
+            this.state.inspectedPrincipalSmiles.set(principalSmiles);
           },
           error: () => {},
         });
@@ -758,8 +810,6 @@ export class SmileitWorkflowService implements OnDestroy {
     const rSubstitutes = this.pickNumber(rawParameters, 'r_substitutes', 'rSubstitutes');
     if (rSubstitutes !== null) this.state.rSubstitutes.set(rSubstitutes);
 
-    const maxStructures = this.pickNumber(rawParameters, 'max_structures', 'maxStructures');
-    if (maxStructures !== null) this.state.maxStructures.set(maxStructures);
 
     const exportNameBase = this.pickString(rawParameters, 'export_name_base', 'exportNameBase');
     if (exportNameBase !== '') this.state.exportNameBase.set(exportNameBase);
@@ -781,8 +831,9 @@ export class SmileitWorkflowService implements OnDestroy {
           label: this.pickString(rawBlock, 'label') || `Recovered block ${index + 1}`,
           siteAtomIndices: this.pickNumberArray(rawBlock, 'site_atom_indices', 'siteAtomIndices'),
           categoryKeys: this.pickStringArray(rawBlock, 'category_keys', 'categoryKeys'),
-          catalogRefs: [],
-          manualSubstituents: [],
+          catalogRefs: this.restoreHistoricalCatalogRefs(rawBlock),
+          resolvedSubstituents: this.restoreHistoricalResolvedSubstituents(rawBlock),
+          manualSubstituents: this.restoreHistoricalManualSubstituents(rawBlock),
           draftManualName: '',
           draftManualSmiles: '',
           draftManualAnchorIndicesText: '',
@@ -791,6 +842,179 @@ export class SmileitWorkflowService implements OnDestroy {
         };
       })
       .filter((block): block is SmileitAssignmentBlockDraft => block !== null);
+  }
+
+  /**
+   * Recupera las referencias al catálogo guardadas en el job histórico.
+   * El backend serializa el bloque ya resuelto (`resolved_substituents`), así que
+   * ambas fuentes se contemplan: refs explícitas y sustituciones resueltas.
+   */
+  private restoreHistoricalCatalogRefs(rawBlock: Record<string, unknown>): SmileitCatalogEntry[] {
+    const catalogEntries: SmileitCatalogEntry[] = this.state.catalogEntries();
+    const resolvedRefs: SmileitCatalogEntry[] = [];
+    const seenKeys: Set<string> = new Set();
+
+    const sourceCandidates: unknown[] = [
+      ...this.asRecordArray(rawBlock['substituent_refs'] ?? rawBlock['substituentRefs']),
+      ...this.asRecordArray(rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents']),
+    ];
+
+    sourceCandidates.forEach((rawRef: unknown) => {
+      if (!this.isRecord(rawRef)) {
+        return;
+      }
+
+      const sourceKind: string = this.pickString(rawRef, 'source_kind', 'sourceKind');
+      if (sourceKind !== '' && sourceKind !== 'catalog') {
+        return;
+      }
+
+      const stableId: string = this.pickString(rawRef, 'stable_id', 'stableId');
+      if (stableId === '') {
+        return;
+      }
+      const version: number | null = this.pickNumber(rawRef, 'version');
+      const entryKey: string = `${stableId}@${version ?? ''}`;
+      if (seenKeys.has(entryKey)) {
+        return;
+      }
+
+      const resolvedEntry: SmileitCatalogEntry | undefined = catalogEntries.find(
+        (entry: SmileitCatalogEntry) =>
+          entry.stable_id === stableId && (version === null || entry.version === version),
+      );
+      const fallbackAnchorIndex: number | null = this.pickNumber(
+        rawRef,
+        'selected_atom_index',
+        'selectedAtomIndex',
+      );
+      const fallbackEntry: SmileitCatalogEntry = {
+        id: '',
+        stable_id: stableId,
+        version: version ?? 1,
+        name: this.pickString(rawRef, 'name') || stableId,
+        smiles: this.pickString(rawRef, 'smiles'),
+        anchor_atom_indices: [fallbackAnchorIndex ?? 0],
+        categories: this.pickStringArray(rawRef, 'categories'),
+        source_reference: 'historical-catalog',
+        provenance_metadata: {},
+      };
+      let entryToRestore: SmileitCatalogEntry | undefined = resolvedEntry;
+      if (entryToRestore === undefined && fallbackEntry.smiles !== '') {
+        entryToRestore = fallbackEntry;
+      }
+      if (entryToRestore === undefined) return;
+
+      seenKeys.add(entryKey);
+      resolvedRefs.push({
+        ...entryToRestore,
+        anchor_atom_indices: [this.resolveRestoredAnchorIndex(rawRef, entryToRestore)],
+      });
+    });
+
+    return resolvedRefs;
+  }
+
+  /**
+   * Resuelve el índice de anclaje al restaurar una referencia histórica.
+   * Prefiere el `selected_atom_index` guardado y cae al ancla del catálogo.
+   */
+  private resolveRestoredAnchorIndex(
+    rawRef: Record<string, unknown>,
+    entryToRestore: SmileitCatalogEntry,
+  ): number {
+    const selectedAtomIndex: number | null = this.pickNumber(
+      rawRef,
+      'selected_atom_index',
+      'selectedAtomIndex',
+    );
+    if (selectedAtomIndex !== null) {
+      return selectedAtomIndex;
+    }
+    const catalogAnchorIndex: number | undefined = entryToRestore.anchor_atom_indices[0];
+    if (catalogAnchorIndex !== undefined) {
+      return catalogAnchorIndex;
+    }
+    return 0;
+  }
+
+  private restoreHistoricalResolvedSubstituents(
+    rawBlock: Record<string, unknown>,
+  ): SmileitResolvedSubstituentDraft[] {
+    return this.asRecordArray(rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents'])
+      .filter((entry): entry is Record<string, unknown> => this.isRecord(entry))
+      .filter((entry) => this.pickString(entry, 'source_kind', 'sourceKind') === 'catalog')
+      .map((entry) => ({
+        sourceKind: 'catalog' as const,
+        stableId: this.pickString(entry, 'stable_id', 'stableId'),
+        version: this.pickNumber(entry, 'version') ?? 1,
+        name: this.pickString(entry, 'name'),
+        smiles: this.pickString(entry, 'smiles'),
+        selectedAtomIndex: this.pickNumber(entry, 'selected_atom_index', 'selectedAtomIndex') ?? 0,
+        categories: this.pickStringArray(entry, 'categories'),
+      }))
+      .filter((entry) => entry.stableId !== '' && entry.smiles !== '');
+  }
+
+  /** Recupera los sustituyentes manuales guardados en el job histórico. */
+  private restoreHistoricalManualSubstituents(
+    rawBlock: Record<string, unknown>,
+  ): SmileitManualSubstituentDraft[] {
+    const sourceCandidates: unknown[] = [
+      ...this.asRecordArray(rawBlock['manual_substituents'] ?? rawBlock['manualSubstituents']),
+      ...this.asRecordArray(rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents']),
+    ];
+    const restoredManual: SmileitManualSubstituentDraft[] = [];
+
+    sourceCandidates.forEach((rawEntry: unknown) => {
+      if (!this.isRecord(rawEntry)) {
+        return;
+      }
+
+      const sourceKind: string = this.pickString(rawEntry, 'source_kind', 'sourceKind');
+      const isExplicitManual: boolean = Array.isArray(
+        rawBlock['manual_substituents'] ?? rawBlock['manualSubstituents'],
+      );
+      if (isExplicitManual === false && sourceKind === 'catalog') {
+        return;
+      }
+
+      const smiles: string = this.pickString(rawEntry, 'smiles');
+      if (smiles === '') {
+        return;
+      }
+
+      const anchorAtomIndices: number[] = this.pickNumberArray(
+        rawEntry,
+        'anchor_atom_indices',
+        'anchorAtomIndices',
+      );
+      const selectedAtomIndex: number | null = this.pickNumber(
+        rawEntry,
+        'selected_atom_index',
+        'selectedAtomIndex',
+      );
+
+      let restoredAnchorIndices: number[] = anchorAtomIndices;
+      if (restoredAnchorIndices.length === 0 && selectedAtomIndex !== null) {
+        restoredAnchorIndices = [selectedAtomIndex];
+      }
+
+      restoredManual.push({
+        name: this.pickString(rawEntry, 'name') || smiles,
+        smiles,
+        anchorAtomIndices: restoredAnchorIndices,
+        categories: this.pickStringArray(rawEntry, 'categories'),
+        sourceReference: this.pickString(rawEntry, 'source_reference', 'sourceReference'),
+        provenanceMetadata: {},
+      });
+    });
+
+    return restoredManual;
+  }
+
+  private asRecordArray(rawValue: unknown): unknown[] {
+    return Array.isArray(rawValue) ? rawValue : [];
   }
 
   private pickString(rawRecord: Record<string, unknown>, ...keys: string[]): string {

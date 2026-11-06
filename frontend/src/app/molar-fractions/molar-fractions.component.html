@@ -3,7 +3,7 @@
   <app-scientific-app-header appKey="molar-fractions" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
-    <div class="form-card entry-panel" [attr.aria-label]="'molarFractions.form.title' | transloco">
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="molarFractions.form.title">
       <div class="mode-toggle" [attr.aria-label]="'molarFractions.form.inputMode' | transloco">
         <button type="button" class="mode-toggle-btn" [attr.aria-pressed]="inputMode() === 'single'"
           [class.is-active]="inputMode() === 'single'" (click)="onInputModeChange('single')">
@@ -27,7 +27,7 @@
       </div>
 
       <div class="pka-block">
-        <h3>{{ 'molarFractions.form.pkaValues' | transloco }}</h3>
+        <h4 class="section-title">{{ 'molarFractions.form.pkaValues' | transloco }}</h4>
         <div class="pka-grid">
           @for (slotIndex of workflow.pkaInputSlots(); track slotIndex) {
           <label>
@@ -41,7 +41,7 @@
       </div>
 
       <div class="range-block species-meta-block">
-        <h3>{{ 'molarFractions.form.speciesSettings' | transloco }}</h3>
+        <h4 class="section-title">{{ 'molarFractions.form.speciesSettings' | transloco }}</h4>
         <p class="field-hint">{{ 'molarFractions.form.speciesSettingsOptional' | transloco }}</p>
         <div class="species-meta-grid">
           <label>
@@ -79,7 +79,7 @@
       }
       @if (workflow.phMode() !== 'single') {
       <div class="range-block">
-        <h3>{{ 'molarFractions.form.phRange' | transloco }}</h3>
+        <h4 class="section-title">{{ 'molarFractions.form.phRange' | transloco }}</h4>
         <div class="range-grid">
           <label>
             {{ 'molarFractions.form.phMin' | transloco }}
@@ -135,7 +135,7 @@
       </div>
 
       <div class="range-block batch-parameter-block">
-        <h3>{{ 'molarFractions.batch.parameters' | transloco }}</h3>
+        <h4 class="section-title">{{ 'molarFractions.batch.parameters' | transloco }}</h4>
         <div class="range-grid batch-grid">
           <label>
             {{ 'molarFractions.batch.targetPh' | transloco }}
@@ -161,21 +161,9 @@
         </button>
       </div>
       }
-    </div>
+    </app-scientific-panel>
 
-    <div class="result-panel" [attr.aria-label]="'molarFractions.result.ariaLabel' | transloco">
-      <div class="panel-heading result-heading">
-        <h3>{{ 'molarFractions.result.title' | transloco }}</h3>
-      </div>
-
-      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
-      @if (inputMode() === 'single' && workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'molarFractions.result.chart.title' | transloco }}</strong>
-        <p>{{ 'molarFractions.result.chart.subtitle' | transloco }}</p>
-        <span class="result-empty-hint">{{ 'molarFractions.actions.run' | transloco }}</span>
-      </div>
-      }
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="molarFractions.result.ariaLabel">
 
       @if (inputMode() === 'single') {
       @if (workflow.activeSection() === 'dispatching') {
@@ -217,8 +205,7 @@
       <div class="chart-card" [attr.aria-label]="'molarFractions.result.chart.ariaLabel' | transloco">
         <div class="chart-header">
           <h4>{{ 'molarFractions.result.chart.title' | transloco }}</h4>
-          <p>{{ 'molarFractions.result.chart.subtitle' | transloco }}</p>
-        </div>
+          </div>
 
         <div class="probe-card">
           <div class="probe-controls">
@@ -372,7 +359,7 @@
       }
       }
       }
-    </div>
+    </app-scientific-panel>
   </div>
 
   <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />

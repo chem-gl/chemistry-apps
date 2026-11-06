@@ -3,8 +3,7 @@
   <app-scientific-app-header appKey="tunnel" [showDoc]="true" (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
-    <section class="entry-panel" [attr.aria-label]="'tunnel.form.ariaLabel' | transloco">
-      <h3>{{ 'tunnel.form.title' | transloco }}</h3>
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="tunnel.form.ariaLabel">
 
       <div class="field-grid">
         <label>
@@ -42,14 +41,13 @@
           {{ 'tunnel.actions.reset' | transloco }}
         </button>
       </div>
-    </section>
+    </app-scientific-panel>
 
-    <section class="result-panel" [attr.aria-label]="'tunnel.result.ariaLabel' | transloco">
-      <h3>{{ 'tunnel.result.title' | transloco }}</h3>
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="tunnel.result.ariaLabel">
 
       <!-- Estado inicial, envío, progreso y error: panel compartido de estado del job. -->
-      <app-job-status-panel [activeSection]="workflow.activeSection()" [titleKey]="'tunnel.result.ariaLabel'"
-        [runHintKey]="'tunnel.actions.run'" [submittingKey]="'tunnel.result.submitting'"
+      <app-job-status-panel [activeSection]="workflow.activeSection()"
+        [submittingKey]="'tunnel.result.submitting'"
         [progressMessage]="workflow.progressMessage()" [errorMessage]="workflow.errorMessage()" />
 
       @if (workflow.activeSection() === 'result' && workflow.resultData(); as resultData) {
@@ -83,7 +81,7 @@
         </button>
       </div>
       }
-    </section>
+    </app-scientific-panel>
   </div>
 
   <app-scientific-doc-panel [open]="showDocPanel()" [tabs]="docTabs" (closePanel)="showDocPanel.set(false)" />

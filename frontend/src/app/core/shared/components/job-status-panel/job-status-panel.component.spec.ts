@@ -28,8 +28,14 @@ describe('JobStatusPanelComponent', () => {
       'Results and progress',
     );
     expect(element.querySelector('.result-empty-hint')?.textContent?.trim()).toBe(
-      'Data ok, Run Tunnel',
+      'Run',
     );
+  });
+
+  it('no pinta tarjeta idle sin título ni pistas', () => {
+    fixture.detectChanges();
+
+    expect(element.querySelector('.result-empty-card')).toBeNull();
   });
 
   it('oculta la tarjeta idle cuando showIdleWhen es false', () => {

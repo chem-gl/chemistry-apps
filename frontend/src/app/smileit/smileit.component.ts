@@ -234,6 +234,14 @@ export class SmileitComponent implements OnInit, OnDestroy {
   private readonly patternDetailDialogRef?: ElementRef<HTMLDialogElement>;
 
   readonly patternEntries = computed<SmileitPatternEntryView[]>(() => this.workflow.patterns());
+  /** SMARTS por patrón: fallback textual cuando no hay miniatura dibujable. */
+  readonly patternSmartsByStableId = computed<Map<string, string>>(() => {
+    const smartsByStableId: Map<string, string> = new Map();
+    this.patternEntries().forEach((pattern: SmileitPatternEntryView) => {
+      smartsByStableId.set(pattern.stable_id, pattern.smarts);
+    });
+    return smartsByStableId;
+  });
   readonly editingPatternEntry = computed<SmileitPatternEntryView | null>(() => {
     const editingStableId: string | null = this.workflow.patternEditingStableId();
     if (editingStableId === null) {

@@ -3,8 +3,7 @@
   <app-scientific-app-header appKey="server-calc" />
 
   <div class="workspace-grid">
-    <section class="entry-panel" [attr.aria-label]="'serverCalc.form.ariaLabel' | transloco">
-      <h3>{{ 'serverCalc.form.title' | transloco }}</h3>
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="serverCalc.form.ariaLabel">
 
       <div class="field-grid">
         <label>
@@ -39,17 +38,9 @@
           {{ 'serverCalc.actions.reset' | transloco }}
         </button>
       </div>
-    </section>
+    </app-scientific-panel>
 
-    <section class="result-panel" [attr.aria-label]="'serverCalc.result.ariaLabel' | transloco">
-      <h3>{{ 'serverCalc.result.title' | transloco }}</h3>
-
-      @if (workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'serverCalc.result.ariaLabel' | transloco }}</strong>
-        <span class="result-empty-hint">{{ 'serverCalc.result.emptyHint' | transloco }}</span>
-      </div>
-      }
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="serverCalc.result.ariaLabel">
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'serverCalc.result.submitting' | transloco }}</p>
@@ -89,7 +80,7 @@
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
       <p class="error-message" role="alert">{{ currentError }}</p>
       }
-    </section>
+    </app-scientific-panel>
   </div>
 
   @if (workflow.jobLogs().length > 0) {

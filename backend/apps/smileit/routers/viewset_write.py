@@ -42,7 +42,12 @@ from ..catalog import (
     update_pattern_entry,
 )
 from ..definitions import DEFAULT_ALGORITHM_VERSION, PLUGIN_NAME
-from ..engine import inspect_smiles_structure_with_patterns
+from ..engine import (
+    canonicalize_smiles,
+    find_sites_without_free_valence,
+    inspect_smiles_structure_with_patterns,
+    remap_anchor_indices_to_canonical,
+)
 from ..schemas import SmileitJobCreateSerializer, SmileitJobResponseSerializer
 from ..types import (
     SmileitJobCreatePayload,
@@ -417,14 +422,81 @@ class SmileitWriteActionsMixin:
         serializer.is_valid(raise_exception=True)
         payload = cast(SmileitJobCreatePayload, serializer.validated_data)
 
+        # Contrato: `selected_atom_indices` llega en el orden atómico del SMILES
+        # canónico (es lo que devuelve /inspect-structure y lo que usa la UI).
+        # Normalizar aquí el principal a ese mismo espacio hace que el remapeo del
+        # plugin sea identidad. Sin esto, un principal no canónico desplazaba los
+        # sitios a otros átomos (algunos sin valencia libre) y la generación se
+        # saturaba: mismos derivados para cualquier `r_substitutes`.
+        canonical_principal_smiles = canonicalize_smiles(payload["principal_smiles"])
+        if canonical_principal_smiles is None:
+            return Response(
+                {"detail": "SMILES principal inválido para Smile-it."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        selected_mapping = remap_anchor_indices_to_canonical(
+            payload["principal_smiles"], payload["selected_atom_indices"]
+        )
+        if selected_mapping is None or len(selected_mapping[1]) != len(
+            payload["selected_atom_indices"]
+        ):
+            return Response(
+                {
+                    "detail": (
+                        "Los índices seleccionados no se pudieron mapear al espacio "
+                        "canónico del SMILES principal."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        canonical_selected_sites = sorted(set(selected_mapping[1]))
+        non_substitutable_sites = find_sites_without_free_valence(
+            smiles=canonical_principal_smiles,
+            site_indices=canonical_selected_sites,
+        )
+        if len(non_substitutable_sites) > 0:
+            return Response(
+                {
+                    "detail": (
+                        "Los sitios seleccionados "
+                        f"{non_substitutable_sites} no tienen valencia libre o están "
+                        "fuera de rango y no admiten sustituyentes. Selecciona átomos "
+                        "con al menos un hidrógeno disponible."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
         try:
             resolved_blocks, references = resolve_assignment_blocks(payload)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
+        canonical_blocks = []
+        for block in resolved_blocks:
+            block_copy = block.copy()
+            block_mapping = remap_anchor_indices_to_canonical(
+                payload["principal_smiles"], block["site_atom_indices"]
+            )
+            if block_mapping is None or len(block_mapping[1]) != len(
+                block["site_atom_indices"]
+            ):
+                return Response(
+                    {
+                        "detail": (
+                            f"Los sitios del bloque {block['label']!r} no se pudieron "
+                            "mapear al espacio canónico del SMILES principal."
+                        )
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+            block_copy["site_atom_indices"] = sorted(set(block_mapping[1]))
+            canonical_blocks.append(block_copy)
+
         pending_sites = validate_effective_coverage(
-            selected_sites=payload["selected_atom_indices"],
-            resolved_blocks=resolved_blocks,
+            selected_sites=canonical_selected_sites,
+            resolved_blocks=canonical_blocks,
         )
         if len(pending_sites) > 0:
             return Response(
@@ -440,13 +512,11 @@ class SmileitWriteActionsMixin:
         version = payload.get("version", DEFAULT_ALGORITHM_VERSION)
         parameters_payload: JSONMap = {
             "version": version,
-            "principal_smiles": payload["principal_smiles"],
-            "selected_atom_indices": payload["selected_atom_indices"],
-            "assignment_blocks": cast(list[dict[str, object]], list(resolved_blocks)),
+            "principal_smiles": canonical_principal_smiles,
+            "selected_atom_indices": canonical_selected_sites,
+            "assignment_blocks": cast(list[dict[str, object]], list(canonical_blocks)),
             "r_substitutes": payload["r_substitutes"],
             "num_bonds": payload["num_bonds"],
-            "allow_repeated": False,
-            "max_structures": payload["max_structures"],
             "site_overlap_policy": payload["site_overlap_policy"],
             "export_name_base": payload["export_name_base"],
             "export_padding": payload["export_padding"],

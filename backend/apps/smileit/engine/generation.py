@@ -11,6 +11,7 @@ from typing import Final, cast
 
 from apps.core.types import JSONMap, PluginLogCallback, PluginProgressCallback
 
+from ..definitions import MAX_DERIVATIVES_HARD_LIMIT
 from ..types import (
     SmileitGeneratedStructure,
     SmileitSubstitutionTraceEvent,
@@ -266,29 +267,6 @@ def _report_generation_progress(
     )
 
 
-def _report_generation_limit_reached(
-    *,
-    log_callback: PluginLogCallback | None,
-    attempts_processed: int,
-    generated_count: int,
-    rejected_fusions: int,
-    max_structures: int | None,
-) -> None:
-    """Publica evento único cuando la generación alcanza el límite máximo."""
-    _emit_log(
-        log_callback,
-        level="warning",
-        source=SMILEIT_LOG_SOURCE,
-        message="Se alcanzó el límite configurado de estructuras para Smile-it.",
-        payload={
-            "attempts_processed": attempts_processed,
-            "generated_structures": generated_count,
-            "rejected_fusions": rejected_fusions,
-            "max_structures": max_structures,
-        },
-    )
-
-
 def _materialize_generated_structures(
     principal_smiles: str,
     generated_candidates: list[GeneratedCandidate],
@@ -537,18 +515,6 @@ def _expand_derivatives_from_node(
             )
         )
 
-        if (
-            context.max_structures is not None
-            and len(context.generated_candidates) >= context.max_structures
-        ):
-            return ExpansionSummary(
-                derivative_counter=derivative_counter,
-                attempts_processed=attempts_processed,
-                rejected_fusions=rejected_fusions,
-                duplicate_structures=duplicate_structures,
-                reached_limit=True,
-            )
-
     return ExpansionSummary(
         derivative_counter=derivative_counter,
         attempts_processed=attempts_processed,
@@ -564,7 +530,6 @@ def _generate_derivatives(
     site_option_map: dict[int, list[SiteOption]],
     r_substitutes: int,
     num_bonds: int,
-    max_structures: int | None,
     export_name_base: str,
     export_padding: int,
     progress_callback: PluginProgressCallback,
@@ -579,7 +544,7 @@ def _generate_derivatives(
 
     derivative_rows: list[SmileitTraceabilityRow] = []
     generated_candidates: list[GeneratedCandidate] = []
-    truncated = False
+    truncated = False  # sin truncado: la generación siempre es completa
     derivative_counter = 1
     last_reported_generated = 0
     last_reported_attempts = 0
@@ -605,7 +570,6 @@ def _generate_derivatives(
             generated_candidates=generated_candidates,
             derivative_rows=derivative_rows,
             next_frontier_nodes=next_frontier_nodes,
-            max_structures=max_structures,
         )
 
         for node_index, node in enumerate(round_frontier, start=1):
@@ -619,6 +583,18 @@ def _generate_derivatives(
             attempts_processed += expansion_summary.attempts_processed
             rejected_fusions += expansion_summary.rejected_fusions
             duplicate_structures += expansion_summary.duplicate_structures
+
+            # Defensa en profundidad: la pre-estimación (`estimate_derivative_count`)
+            # puede subestimar por múltiples embeddings del principal, así que el
+            # bucle impone el tope real. Se rechaza (nunca se trunca): la política
+            # del proyecto es aviso >1000 y rechazo >1e6, sin truncado silencioso.
+            if len(generated_candidates) >= MAX_DERIVATIVES_HARD_LIMIT:
+                raise ValueError(
+                    "La generación combinatoria alcanzó el tope duro de "
+                    f"{MAX_DERIVATIVES_HARD_LIMIT:,} derivados y se rechaza en "
+                    "lugar de truncar: reduce sitios, sustituyentes o "
+                    "R-sustituciones."
+                )
 
             current_generated = len(generated_candidates)
             should_report_generated = (
@@ -644,17 +620,6 @@ def _generate_derivatives(
                 )
                 last_reported_generated = current_generated
                 last_reported_attempts = attempts_processed
-
-            if expansion_summary.reached_limit:
-                _report_generation_limit_reached(
-                    log_callback=log_callback,
-                    attempts_processed=attempts_processed,
-                    generated_count=len(generated_candidates),
-                    rejected_fusions=rejected_fusions,
-                    max_structures=max_structures,
-                )
-                truncated = True
-                return generated_candidates, derivative_rows, truncated
 
         if len(next_frontier_nodes) == 0:
             break

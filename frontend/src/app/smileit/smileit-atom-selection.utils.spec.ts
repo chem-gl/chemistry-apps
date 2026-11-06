@@ -19,10 +19,10 @@ describe('smileit-atom-selection.utils', () => {
     canonicalSmiles: 'C[H]ON',
     atomCount: 4,
     atoms: [
-      { index: 0, symbol: 'C', implicitHydrogens: 0, isAromatic: false },
-      { index: 1, symbol: 'H', implicitHydrogens: 0, isAromatic: false },
-      { index: 2, symbol: 'O', implicitHydrogens: 0, isAromatic: false },
-      { index: 3, symbol: 'N', implicitHydrogens: 0, isAromatic: false },
+      { index: 0, symbol: 'C', implicitHydrogens: 0, isAromatic: false, isSubstitutable: true },
+      { index: 1, symbol: 'H', implicitHydrogens: 0, isAromatic: false, isSubstitutable: false },
+      { index: 2, symbol: 'O', implicitHydrogens: 0, isAromatic: false, isSubstitutable: true },
+      { index: 3, symbol: 'N', implicitHydrogens: 0, isAromatic: false, isSubstitutable: true },
     ],
     svg: '<svg></svg>',
     quickProperties: {

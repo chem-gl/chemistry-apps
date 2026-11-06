@@ -35,7 +35,10 @@ import {
 import {
   buildCatalogGroups,
   buildEffectiveCoverage,
+  COMBINATORIAL_HARD_LIMIT,
+  COMBINATORIAL_WARNING_THRESHOLD,
   detectChemicalNotation,
+  estimateCombinatorialTotal,
   parseSingleAnchorIndexInput,
 } from './smileit-workflow.utils';
 
@@ -54,6 +57,14 @@ export class SmileitWorkflowState {
   // ── Estructura principal ──────────────────────────────────────────────
   readonly principalSmiles = signal<string>('c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O');
   readonly inspection = signal<SmileitStructureInspectionView | null>(null);
+  /**
+   * SMILES con el que se obtuvo la última inspección.
+   *
+   * Los índices de sitio viven en el espacio atómico canónico que devuelve
+   * /inspect-structure; para despachar hay que enviar ese mismo canónico y no el
+   * texto crudo del usuario, o el backend remapearía los índices dos veces.
+   */
+  readonly inspectedPrincipalSmiles = signal<string>('');
   readonly selectedAtomIndices = signal<number[]>([]);
 
   // ── Datos de referencia ───────────────────────────────────────────────
@@ -83,7 +94,6 @@ export class SmileitWorkflowState {
   readonly siteOverlapPolicy = signal<SiteOverlapPolicyEnum>(SiteOverlapPolicyEnum.LastBlockWins);
   readonly rSubstitutes = signal<number>(1);
   readonly numBonds = signal<number>(1);
-  readonly maxStructures = signal<number>(0);
   readonly exportNameBase = signal<string>('smileit_run');
   readonly exportPadding = signal<number>(5);
 
@@ -126,13 +136,72 @@ export class SmileitWorkflowState {
     buildEffectiveCoverage(this.selectedAtomIndices(), this.assignmentBlocks()),
   );
 
-  readonly uncoveredSelectedSites = computed<number[]>(() => {
-    const coveredSites: Set<number> = new Set(
-      this.selectedSiteCoverage().map(
-        (coverageItem: SmileitSiteCoverageView) => coverageItem.siteAtomIndex,
-      ),
+  /**
+   * Sitios seleccionados que sí admiten sustituyentes (valencia libre).
+   *
+   * Los índices llegan del endpoint de inspección, que ya marca cada átomo con
+   * `isSubstitutable`. Seleccionar un carbono de fusión o un nitrógeno cuaternario
+   * saturaba la generación: `r_substitutes` no cambiaba el número de derivados.
+   */
+  readonly substitutableSelectedSites = computed<number[]>(() => {
+    const inspectionResult: SmileitStructureInspectionView | null = this.inspection();
+    if (inspectionResult === null) {
+      return [...this.selectedAtomIndices()];
+    }
+
+    const substitutableByIndex: Map<number, boolean> = new Map(
+      inspectionResult.atoms.map((atom) => [atom.index, atom.isSubstitutable]),
     );
-    return this.selectedAtomIndices().filter((atomIndex: number) => !coveredSites.has(atomIndex));
+    return this.selectedAtomIndices().filter(
+      (atomIndex: number) => substitutableByIndex.get(atomIndex) !== false,
+    );
+  });
+
+  /** Sitios seleccionados que nunca admitirán sustituyentes (aviso en la UI). */
+  readonly nonSubstitutableSelectedSites = computed<number[]>(() => {
+    const substitutableSites: Set<number> = new Set(this.substitutableSelectedSites());
+    return this.selectedAtomIndices().filter(
+      (atomIndex: number) => !substitutableSites.has(atomIndex),
+    );
+  });
+
+  /** SMILES principal normalizado (trim) para comparaciones internas. */
+  private readonly currentPrincipalTrimmed = computed<string>(() =>
+    this.principalSmiles().trim(),
+  );
+
+  /**
+   * `principal_smiles` que debe viajar al backend.
+   *
+   * Si la inspección corresponde al SMILES actual se envía el canónico (mismo
+   * espacio atómico que `selectedAtomIndices`); si el usuario editó el SMILES
+   * después de inspeccionar, la selección quedó obsoleta y `dispatch` lo bloquea.
+   */
+  readonly dispatchPrincipalSmiles = computed<string>(() => {
+    const inspectionResult: SmileitStructureInspectionView | null = this.inspection();
+    if (inspectionResult !== null && !this.hasStaleInspection()) {
+      return inspectionResult.canonicalSmiles;
+    }
+    return this.currentPrincipalTrimmed();
+  });
+
+  /** True cuando hay inspección cargada pero corresponde a otro SMILES. */
+  readonly hasStaleInspection = computed<boolean>(
+    () =>
+      this.inspection() !== null &&
+      this.inspectedPrincipalSmiles() !== this.currentPrincipalTrimmed(),
+  );
+
+  /**
+   * Sitios seleccionados que aún no están asignados a ningún bloque.
+   * La cobertura "efectiva" (con sustituyentes) se mide aparte en
+   * `selectedSiteCoverage`, para que asignar un sitio no dependa del catálogo.
+   */
+  readonly uncoveredSelectedSites = computed<number[]>(() => {
+    const assignedSites: Set<number> = new Set(
+      this.assignmentBlocks().flatMap((block: SmileitAssignmentBlockDraft) => block.siteAtomIndices),
+    );
+    return this.selectedAtomIndices().filter((atomIndex: number) => !assignedSites.has(atomIndex));
   });
 
   readonly canConfigureGeneration = computed(() => {
@@ -145,12 +214,56 @@ export class SmileitWorkflowState {
     );
   });
 
-  readonly canDispatch = computed(() => this.canConfigureGeneration() && !this.isProcessing());
+  /**
+   * Estimación de derivados generables (misma fórmula que el backend):
+   * suma de k! · e_k(opciones por sitio) para k = 1..r.
+   * Solo se usa para avisar/bloquear; el backend es la fuente de verdad.
+   */
+  readonly estimatedDerivatives = computed<number>(() => {
+    const optionCountBySite: Map<number, number> = new Map();
+    this.assignmentBlocks().forEach((block: SmileitAssignmentBlockDraft) => {
+      const directOptions: number = block.catalogRefs.length + block.manualSubstituents.length;
+      const categoryOptions: number = block.categoryKeys.reduce(
+        (total: number, categoryKey: string) =>
+          total +
+          this.catalogEntries().filter((entry) =>
+            (entry.categories ?? []).includes(categoryKey),
+          ).length,
+        0,
+      );
+      const blockOptions: number = directOptions + categoryOptions;
+      block.siteAtomIndices.forEach((siteAtomIndex: number) => {
+        const previousOptions: number = optionCountBySite.get(siteAtomIndex) ?? 0;
+        optionCountBySite.set(siteAtomIndex, Math.max(previousOptions, blockOptions));
+      });
+    });
+
+    return estimateCombinatorialTotal(
+      Array.from(optionCountBySite.values()).filter((options: number) => options > 0),
+      this.rSubstitutes(),
+    );
+  });
+
+  readonly showsCombinatorialWarning = computed<boolean>(
+    () => this.estimatedDerivatives() > COMBINATORIAL_WARNING_THRESHOLD,
+  );
+
+  readonly exceedsHardLimit = computed<boolean>(
+    () => this.estimatedDerivatives() > COMBINATORIAL_HARD_LIMIT,
+  );
+
+  readonly canDispatch = computed(
+    () =>
+      this.canConfigureGeneration() &&
+      !this.isProcessing() &&
+      !this.exceedsHardLimit() &&
+      !this.hasStaleInspection(),
+  );
 
   readonly maxRSubstitutesByPositions = computed<number>(() => {
-    const numSelectedPositions: number = this.selectedAtomIndices().length;
+    const numSubstitutablePositions: number = this.substitutableSelectedSites().length;
     const MAX_R_SUBSTITUTES_HARD_LIMIT: number = 10;
-    return Math.min(numSelectedPositions, MAX_R_SUBSTITUTES_HARD_LIMIT);
+    return Math.min(numSubstitutablePositions, MAX_R_SUBSTITUTES_HARD_LIMIT);
   });
 
   // ── Computed: catálogo ────────────────────────────────────────────────

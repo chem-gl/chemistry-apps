@@ -133,13 +133,11 @@
 
 /* Secciones principales de cada paso */
 .step-section {
-  background: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  border: 0;
-  border-top: 1px solid var(--chem-border-subtle);
-  border-radius: 0;
-  padding: 1.5rem 0 0;
+  background: var(--chem-surface);
+  border: 1px solid var(--chem-border-subtle);
+  border-radius: var(--chem-radius);
+  padding: 1.1rem;
+  box-shadow: none;
   display: grid;
   gap: 1.25rem;
 }

@@ -20,7 +20,10 @@ from apps.core.types import JSONMap
 from ..engine import canonicalize_smiles
 from ..plugin import (
     _canonicalize_principal_with_sites,
+    _normalize_assignment_block,
+    _normalize_resolved_substituent,
     _remap_assignment_blocks,
+    _remap_principal_and_sites,
     _remap_sites_to_canonical_space,
     smileit_plugin,
 )
@@ -80,8 +83,6 @@ def _build_parameters(
         "assignment_blocks": blocks,
         "r_substitutes": r_substitutes,
         "num_bonds": 1,
-        "allow_repeated": False,
-        "max_structures": 0,
         "site_overlap_policy": "last_block_wins",
         "export_name_base": "SMILEIT_TEST",
         "export_padding": 5,
@@ -210,9 +211,7 @@ class SmileitPluginCanonicalSitesTests(TestCase):
 
     def test_raw_sites_generate_as_many_derivatives_as_canonical_sites(self) -> None:
         """El caso del indol: sitios crudos [5,18] == sitios canónicos [2,9] > 0."""
-        raw_result, _ = _run_plugin(
-            _build_parameters(RAW_INDOL, list(RAW_SITES))
-        )
+        raw_result, _ = _run_plugin(_build_parameters(RAW_INDOL, list(RAW_SITES)))
         canonical_indol = canonicalize_smiles(RAW_INDOL) or ""
         canonical_result, _ = _run_plugin(
             _build_parameters(canonical_indol, list(CANONICAL_SITES))
@@ -236,9 +235,7 @@ class SmileitPluginCanonicalSitesTests(TestCase):
 
     def test_benzene_with_first_site_is_unchanged(self) -> None:
         """Benceno: el canónico es idéntico al crudo, así que nada cambia."""
-        result, logged = _run_plugin(
-            _build_parameters(BENZENE, [0], r_substitutes=1)
-        )
+        result, logged = _run_plugin(_build_parameters(BENZENE, [0], r_substitutes=1))
 
         self.assertGreater(_total(result), 0)
         self.assertEqual(result["selected_atom_indices"], [0])
@@ -286,3 +283,64 @@ class SmileitPluginCanonicalSitesTests(TestCase):
             )
 
         self.assertIn("sin cobertura", str(ctx.exception))
+
+
+# =========================
+# Guards de normalización (None/raro) e identidad del backstop
+# =========================
+
+
+class NormalizeGuardsTests(TestCase):
+    """Los casts de normalización no deben romper ante None o texto raro."""
+
+    def test_resolved_substituent_with_none_fields_uses_defaults(self) -> None:
+        """None en campos escalares debe degradar a defaults, no lanzar TypeError."""
+        result = _normalize_resolved_substituent(
+            {
+                "source_kind": None,
+                "stable_id": None,
+                "version": None,
+                "name": None,
+                "smiles": None,
+                "selected_atom_index": None,
+                "categories": None,
+            }
+        )
+        self.assertEqual(result["version"], 1)
+        self.assertEqual(result["selected_atom_index"], 0)
+        self.assertEqual(result["categories"], [])
+
+    def test_resolved_substituent_with_garbage_ints_uses_defaults(self) -> None:
+        """Texto no numérico en version/ancla debe degradar a defaults."""
+        result = _normalize_resolved_substituent(
+            {
+                "source_kind": "catalog",
+                "stable_id": "sub-x",
+                "version": "not-a-number",
+                "name": "X",
+                "smiles": "C",
+                "selected_atom_index": "NaN",
+                "categories": ["group"],
+            }
+        )
+        self.assertEqual(result["version"], 1)
+        self.assertEqual(result["selected_atom_index"], 0)
+
+    def test_assignment_block_with_garbage_priority_uses_default(self) -> None:
+        """Prioridad no numérica debe degradar a 1 sin romper el bloque."""
+        result = _normalize_assignment_block(
+            {
+                "label": "block-a",
+                "priority": "alta",
+                "site_atom_indices": [0],
+                "resolved_substituents": [],
+            }
+        )
+        self.assertEqual(result["priority"], 1)
+        self.assertEqual(result["site_atom_indices"], [0])
+
+    def test_canonical_principal_remap_is_identity(self) -> None:
+        """El backstop del plugin es identidad con el principal ya canónico."""
+        canonical, sites = _remap_principal_and_sites(BENZENE, [0, 1], "sites")
+        self.assertEqual(canonical, "c1ccccc1")
+        self.assertEqual(sites, [0, 1])

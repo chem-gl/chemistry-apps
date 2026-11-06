@@ -117,15 +117,15 @@ describe('CatalogPanelComponent', () => {
   });
 
   describe('toggleCatalogPanelCollapse', () => {
-    it('cambia isCatalogPanelCollapsed de true a false', () => {
-      component.toggleCatalogPanelCollapse();
+    it('arranca expandido (catálogo visible)', () => {
       expect(component.isCatalogPanelCollapsed()).toBe(false);
     });
 
-    it('regresa a true en la segunda llamada', () => {
-      component.toggleCatalogPanelCollapse();
+    it('alterna colapsado y expandido', () => {
       component.toggleCatalogPanelCollapse();
       expect(component.isCatalogPanelCollapsed()).toBe(true);
+      component.toggleCatalogPanelCollapse();
+      expect(component.isCatalogPanelCollapsed()).toBe(false);
     });
   });
 

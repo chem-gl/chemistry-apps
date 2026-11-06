@@ -217,7 +217,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Toxicity Properties",
+      "run": "चलाएँ",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -255,10 +255,7 @@
       "references": "Scientific references",
       "filteredCount": "visible rows",
       "modelLabel": "Model: ADMET-AI",
-      "colDevTox": "Dev. Toxicity",
-      "emptyTitle": "अभी कोई परिणाम नहीं",
-      "emptyBody": "अपने अणुओं की अनुमानित ADMET संपत्तियाँ यहाँ देखने के लिए गणना चलाएँ।",
-      "emptyHint": "इनपुट कॉन्फ़िगर करें, फिर रन दबाएँ।"
+      "colDevTox": "Dev. Toxicity"
     },
     "moleculeModal": {
       "title": "Molecule preview"
@@ -276,7 +273,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run SA Score",
+      "run": "चलाएँ",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV"
     },
@@ -336,7 +333,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Marcus"
+      "run": "चलाएँ"
     },
     "fileSlots": {
       "reactant1": "Reactant 1",
@@ -362,9 +359,8 @@
       "rateConstants": "Rate Constants",
       "adiabaticEnergy": "ΔE adiabatic (kcal/mol)",
       "kTst": "k (TST)",
-      "idleHint": "सबमिशन की प्रतीक्षा — परिणाम यहाँ देखने के लिए इनपुट कॉन्फ़िगर करें और job चलाएँ।",
       "submitting": "Submitting Marcus job to backend...",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "ariaLabel": "Results and progress",
       "marcusEnergies": "Marcus Energies",
@@ -854,7 +850,7 @@
       "generatePanelTitle": "Generate from Smile-it",
       "files": "Files",
       "tableCandidate": "Candidate",
-      "running": "Running CADMA Py…",
+      "running": "Running…",
       "toxicityMissing": "Toxicity missing",
       "selectSmileitJobPlaceholder": "Select a Smile-it job...",
       "skipSa": "Skip — no SA data",
@@ -862,9 +858,9 @@
       "quickFillSaReady": "SA already attached",
       "saReady": "SA ✓",
       "manualPanelDesc": "Upload one or more CSV files. You can provide a combined file or separate SMILES, Toxicity and SA files.",
-      "runCadmaPy": "Run CADMA Py →",
+      "runCadmaPy": "Run →",
       "change": "Change",
-      "submitting": "Submitting CADMA Py job…",
+      "submitting": "Submitting job…",
       "clearFiles": "Clear files",
       "guideToxicity": "Toxicity from",
       "backToStep2": "Back to step 2",
@@ -963,7 +959,8 @@
       "profile": "प्रोफाइल",
       "identity": "पहचान",
       "groups": "Groups",
-      "apps": "ऐप्स"
+      "apps": "ऐप्स",
+      "userMenu": "उपयोगकर्ता मेनू"
     },
     "brand": {
       "title": "वैज्ञानिक नियंत्रण डेस्क",
@@ -1066,7 +1063,7 @@
       "exportLog": "Export LOG (inputs + results)",
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Data ok, Run Tunnel",
+      "run": "चलाएँ",
       "exporting": "Exporting...",
       "exportCsv": "Export CSV",
       "clearTrace": "Clear input trace"
@@ -1093,7 +1090,7 @@
         "ariaLabel": "टनलिंग आरेख: एकार्ट बैरियर, तरंग फलन और तापीय ऊर्जा"
       },
       "submitting": "Submitting tunnel effect job to backend...",
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress"
     }
   },
@@ -1125,7 +1122,7 @@
     "actions": {
       "processing": "Processing...",
       "reset": "Reset",
-      "run": "Run Molar Fractions",
+      "run": "चलाएँ",
       "exportCsv": "Export CSV"
     },
     "history": {
@@ -1518,7 +1515,7 @@
       "processing": "Processing...",
       "clearFiles": "Clear files",
       "reset": "Reset",
-      "run": "Run Easy-rate"
+      "run": "चलाएँ"
     },
     "fileSlots": {
       "product1": "Product 1",
@@ -1575,7 +1572,7 @@
       "kTst": "k (TST)",
       "submitting": "Submitting Easy-rate job to backend...",
       "tunnelCorrection": "Tunnel Correction (Eckart)",
-      "title": "Output",
+      "title": "Results",
       "kFinal": "k (final)",
       "kDiff": "k_diff",
       "tunnelAlpha1": "α₁",
@@ -1645,6 +1642,10 @@
       "all": "सभी",
       "status": "स्थिति",
       "app": "ऐप"
+    },
+    "panels": {
+      "input": "इनपुट",
+      "results": "परिणाम"
     }
   },
   "smileit": {
@@ -1808,7 +1809,7 @@
       "applyButton": "Apply to draft"
     },
     "step1": {
-      "title": "1. Principal molecule and scaffold preview",
+      "title": "मुख्य अणु",
       "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
       "ariaLabel": "Input parameters"
     },
@@ -1853,9 +1854,9 @@
       "sketchLoading": "Loading molecule sketcher…",
       "sketchHint": "Use the sketcher below to edit the principal molecule.",
       "pending": "Pending principal SMILES",
-      "inspect": "Inspect structure",
+      "inspect": "सम्मिलित करें",
       "sketchTitle": "Principal sketch modifier",
-      "openSketch": "✏ Open sketch modifier",
+      "openSketch": "अणु बनाएँ",
       "cancelButton": "Cancel",
       "label": "Principal SMILES",
       "inspecting": "Inspecting...",
@@ -1897,7 +1898,9 @@
       "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
       "title": "Select substitution sites on the scaffold",
       "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
-      "blocksAvailableSuffix": "blocks available"
+      "blocksAvailableSuffix": "blocks available",
+      "nonSubstitutableAtom": "मुक्त संयोजकता नहीं: प्रतिस्थापी स्वीकार नहीं कर सकता।",
+      "nonSubstitutableSelected": "चयनित परमाणु बिना मुक्त संयोजकता (प्रतिस्थापन योग्य नहीं): {{sites}}"
     },
     "step4": {
       "loadedInView": "Loaded in current view:",
@@ -1958,7 +1961,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "{total} में से {shown} व्युत्पन्न दिखा रहे हैं"
+      "showingOfTotal": "{total} में से {shown} व्युत्पन्न दिखा रहे हैं",
+      "estimatedDerivatives": "≈ {count} व्युत्पन्न अनुमानित",
+      "combinatorialWarning": "संयोजन {limit} व्युत्पन्न से अधिक है: निर्माण पूरा होगा और समय लग सकता है।",
+      "hardLimitExceeded": "{limit} व्युत्पन्न की अधिकतम सीमा पार हो गई। साइट, प्रतिस्थापी या R-प्रतिस्थापन घटाएँ।"
     },
     "catalogPanel": {
       "maximizeSection": "अनुभाग अधिकतम करें",
@@ -2077,7 +2083,7 @@
       "exportCsv": "CSV निर्यात करें",
       "processing": "प्रोसेसिंग...",
       "reset": "रीसेट",
-      "run": "डेटा ठीक है, Server Calc चलाएँ"
+      "run": "चलाएँ"
     },
     "form": {
       "a": "पहला मान (a)",
@@ -2092,7 +2098,6 @@
     },
     "result": {
       "ariaLabel": "परिणाम और प्रगति",
-      "emptyHint": "परिणाम और qta पर लिखी फ़ाइल देखने के लिए गणना चलाएँ।",
       "labels": {
         "a": "A:",
         "b": "B:",
@@ -2102,7 +2107,7 @@
         "result": "परिणाम:"
       },
       "submitting": "Server Calc जॉब बैकएंड को भेजा जा रहा है...",
-      "title": "आउटपुट"
+      "title": "Results"
     }
   }
 }

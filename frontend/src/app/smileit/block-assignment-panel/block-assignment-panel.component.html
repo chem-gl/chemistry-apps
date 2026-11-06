@@ -1,23 +1,24 @@
 <!-- block-assignment-panel.component.html: Panel de asignación por bloques y cobertura de sitios. -->
-<div class="workspace-right-column">
-  <section class="hero-strip catalog-overview-strip" [attr.aria-label]="'smileit.step3.overviewAriaLabel' | transloco">
-    <article class="hero-card">
-      <span class="hero-label">{{ 'smileit.step3.selectedSites' | transloco }}</span>
-      <strong>{{ workflow.selectedAtomIndices().length }}</strong>
-      <p>{{ workflow.selectedAtomIndices().join(', ') || ('smileit.step3.noneYet' | transloco) }}</p>
-    </article>
-    <article class="hero-card">
-      <span class="hero-label">{{ 'smileit.step3.effectiveCoverage' | transloco }}</span>
-      <strong>{{ workflow.selectedSiteCoverage().length }}</strong>
-      <p>{{ workflow.uncoveredSelectedSites().length }} {{ 'smileit.step3.uncovered' | transloco }}</p>
-    </article>
-  </section>
-
-  <div class="workspace-side-column">
-    <section class="library-panel" [attr.aria-label]="'smileit.step3.ariaLabel' | transloco">
-      <header class="panel-header-row">
+<section class="library-panel" [attr.aria-label]="'smileit.step3.ariaLabel' | transloco">
+  <header class="panel-header-row">
         <section class="panel-header-copy">
           <h3>{{ 'smileit.step3.title' | transloco }}</h3>
+          <p class="panel-caption">
+            <span class="metric-inline">
+              <strong>{{ workflow.selectedAtomIndices().length }}</strong>
+              {{ 'smileit.step3.selectedSites' | transloco }}
+            </span>
+            <span class="metric-inline">
+              <strong>{{ workflow.selectedSiteCoverage().length }}</strong>
+              {{ 'smileit.step3.effectiveCoverage' | transloco }}
+            </span>
+            @if (workflow.uncoveredSelectedSites().length > 0) {
+            <span class="metric-inline metric-inline-warning">
+              <strong>{{ workflow.uncoveredSelectedSites().length }}</strong>
+              {{ 'smileit.step3.uncovered' | transloco }}
+            </span>
+            }
+          </p>
         </section>
         <section class="panel-header-actions">
           @if (!isLibraryPanelCollapsed()) {
@@ -52,14 +53,7 @@
         </div>
       </article>
       } @else {
-      @if (workflow.assignmentBlocks().length === 0) {
-      <!-- Sin bloques: tarjeta de estado vacio en vez de texto huerfano. -->
-      <div class="blocks-empty-card">
-        <strong>{{ 'smileit.blocks.substLibTitle' | transloco }}</strong>
-        <p class="hint">{{ 'smileit.step3.createFirstBlock' | transloco }}</p>
-        <span class="blocks-empty-action">{{ 'smileit.step3.newBlock' | transloco }}</span>
-      </div>
-      } @else {
+      @if (workflow.assignmentBlocks().length > 0) {
       <div class="block-stack">
         @for (block of workflow.assignmentBlocks(); track block.id; let blockIndex = $index) {
         <article class="block-card">
@@ -272,6 +266,4 @@
       </div>
       }
       }
-    </section>
-  </div>
-</div>
+</section>

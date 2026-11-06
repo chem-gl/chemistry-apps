@@ -7,6 +7,8 @@ en paralelo. No depende de engine/generation ni de plugin para evitar ciclos.
 
 from __future__ import annotations
 
+from ..definitions import MAX_DERIVATIVES_HARD_LIMIT
+
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -75,7 +77,6 @@ class ExpansionContext:
     generated_candidates: list[GeneratedCandidate]
     derivative_rows: list[SmileitTraceabilityRow]
     next_frontier_nodes: list[GeneratedNode]
-    max_structures: int | None
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,49 @@ class PendingFusionAttempt:
 # =========================
 # CONSTRUCTORES DE OPCIONES Y TRAZABILIDAD
 # =========================
+
+
+def estimate_derivative_count(
+    site_option_map: dict[int, list[SiteOption]],
+    r_substitutes: int,
+) -> int:
+    """Cuenta exacta de derivados generables: suma de productos por subconjunto de sitios.
+
+    Se corta en `MAX_DERIVATIVES_HARD_LIMIT + 1` para no calcular números enormes.
+    """
+    option_counts: list[int] = [
+        len(options) for options in site_option_map.values() if len(options) > 0
+    ]
+    if len(option_counts) == 0:
+        return 0
+
+    max_rounds: int = max(1, min(int(r_substitutes), len(option_counts)))
+    total: int = 0
+    subset_products: list[int] = [1]  # coeficientes elementales simétricos acumulados
+    for options_in_site in option_counts:
+        updated_products: list[int] = subset_products + [0]
+        for index in range(len(subset_products) - 1, 0, -1):
+            updated_products[index] = (
+                subset_products[index] + subset_products[index - 1] * options_in_site
+            )
+        updated_products[len(subset_products)] = (
+            subset_products[len(subset_products) - 1] * options_in_site
+        )
+        subset_products = updated_products
+        if len(subset_products) > max_rounds + 1:
+            subset_products = subset_products[: max_rounds + 1]
+
+    total: int = 0
+    ordered_factor: int = (
+        1  # k! porque el generador trata el orden de fusión como distinto
+    )
+    for round_index in range(1, max_rounds + 1):
+        ordered_factor *= round_index
+        total += ordered_factor * subset_products[round_index]
+        if total > MAX_DERIVATIVES_HARD_LIMIT:
+            return MAX_DERIVATIVES_HARD_LIMIT + 1
+
+    return total
 
 
 def _build_site_option_map(

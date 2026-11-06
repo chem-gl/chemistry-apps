@@ -407,24 +407,15 @@ describe('ToxicityPropertiesComponent', () => {
     ).not.toBeNull();
   });
 
-  it('muestra el empty-state con copy dedicado en lugar de claves de ARIA/form', () => {
-    // El panel en 'idle' debe usar las claves result.emptyTitle/emptyBody/emptyHint
-    // (nunca ariaLabel, form.title ni actions.run como texto visible).
+  it('no pinta tarjeta vacía cuando aún no hay resultados', () => {
+    // El panel solo muestra su título ("Results"); sin texto de relleno duplicado.
     const fixture = TestBed.createComponent(ToxicityPropertiesComponent);
     workflowMock.activeSection.set('idle');
     fixture.detectChanges();
 
-    const emptyCard = (fixture.nativeElement as HTMLElement).querySelector(
-      '.result-empty-card',
-    ) as HTMLElement;
-    expect(emptyCard).not.toBeNull();
-    expect(emptyCard.querySelector('strong')?.textContent?.trim()).toBe('No results yet');
-    expect(emptyCard.querySelector('p')?.textContent?.trim()).toContain(
-      'Run a calculation to see the predicted ADMET properties',
-    );
-    expect(emptyCard.querySelector('.result-empty-hint')?.textContent?.trim()).toBe(
-      'Configure the input, then press Run.',
-    );
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('.result-empty-card')).toBeNull();
+    expect(host.querySelector('section.result-panel, .sci-panel--result')).not.toBeNull();
   });
 
   it('renders error banner and history table states from workflow signals', () => {

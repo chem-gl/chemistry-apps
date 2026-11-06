@@ -5,8 +5,7 @@
     (openDocs)="showDocPanel.set(true)" />
 
   <div class="workspace-grid">
-    <section class="entry-panel" [attr.aria-label]="'toxicityProperties.form.ariaLabel' | transloco">
-      <h3>{{ 'toxicityProperties.form.title' | transloco }}</h3>
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="toxicityProperties.form.ariaLabel">
 
       <app-smiles-batch-input [smilesValue]="workflow.smilesInput()" [isDisabled]="workflow.isProcessing()"
         [lineCount]="lineCount()" [inputRows]="workflow.inputRows()"
@@ -35,19 +34,9 @@
           {{ 'toxicityProperties.actions.reset' | transloco }}
         </button>
       </div>
-    </section>
+    </app-scientific-panel>
 
-    <section class="result-panel" [attr.aria-label]="'toxicityProperties.result.ariaLabel' | transloco">
-      <h3>{{ 'toxicityProperties.result.title' | transloco }}</h3>
-
-      <!-- Estado inicial: tarjeta guia en lugar del area morfa (copy propio). -->
-      @if (workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'toxicityProperties.result.emptyTitle' | transloco }}</strong>
-        <p>{{ 'toxicityProperties.result.emptyBody' | transloco }}</p>
-        <span class="result-empty-hint">{{ 'toxicityProperties.result.emptyHint' | transloco }}</span>
-      </div>
-      }
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="toxicityProperties.result.ariaLabel">
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'toxicityProperties.result.submitting' | transloco }}</p>
@@ -197,7 +186,7 @@
       @if (workflow.activeSection() === 'error' && workflow.errorMessage(); as currentError) {
       <p class="error-message" role="alert">{{ currentError }}</p>
       }
-    </section>
+    </app-scientific-panel>
   </div>
 
   <app-job-logs-panel [logs]="workflow.jobLogs()"></app-job-logs-panel>

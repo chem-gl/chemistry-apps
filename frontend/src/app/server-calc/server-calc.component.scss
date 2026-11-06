@@ -5,34 +5,21 @@
   gap: 1rem;
 }
 
-.workspace-grid {
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
-  align-items: stretch;
-}
-
-.entry-panel,
-.result-panel {
+.logs-panel {
   border: 0;
   border-radius: 0;
   background: none;
   padding: 0;
   min-width: 0;
   box-shadow: none;
+  margin-top: 1.2rem;
 }
 
-.result-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.entry-panel h3,
-.result-panel h3 {
-  margin: 0 0 0.8rem;
+.logs-panel h3 {
+  margin: 0 0 0.6rem;
   color: var(--chem-ink);
   font-family: var(--chem-font-heading);
-  font-size: var(--chem-text-lg);
+  font-size: 1rem;
 }
 
 .field-grid {
@@ -58,10 +45,6 @@
 
 .btn-primary,
 .btn-secondary {
-  border-radius: 999px;
-  padding: 0.42rem 0.8rem;
-  font-weight: 700;
-  font-size: 0.82rem;
   cursor: pointer;
   transition: background var(--chem-transition), color var(--chem-transition);
 }
@@ -91,36 +74,6 @@
   margin: 0;
   color: var(--chem-ink-secondary);
   font-size: 0.86rem;
-}
-
-.result-empty-card {
-  display: grid;
-  flex: 1;
-  gap: 0.4rem;
-  align-content: center;
-  justify-items: start;
-  min-height: 16rem;
-  padding: 1.4rem 1.5rem;
-  border: 1px dashed var(--chem-border-strong);
-  border-radius: var(--chem-radius);
-  background: var(--chem-glass-bg);
-
-  strong {
-    color: var(--chem-ink);
-    font-family: var(--chem-font-heading);
-    font-size: 1.02rem;
-  }
-}
-
-.result-empty-hint {
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--chem-accent);
-
-  &::before {
-    content: '→ ';
-  }
 }
 
 .metadata-grid {
@@ -221,15 +174,6 @@
 
 .metadata-grid code {
   font-size: 0.82rem;
-}
-
-.logs-panel {
-  margin-top: 1.2rem;
-}
-
-.logs-panel h3 {
-  margin: 0 0 0.6rem;
-  font-size: 1rem;
 }
 
 .logs-list {

@@ -108,6 +108,25 @@ class HashingTests(TestCase):
 
         self.assertEqual(hash_one, hash_two)
 
+    def test_hash_changes_when_r_substitutes_changes(self) -> None:
+        """Regresión: dos jobs con distinto `r_substitutes` nunca comparten hash."""
+        payload_r_two: JSONMap = {"r_substitutes": 2, "sites": [0, 1]}
+        payload_r_three: JSONMap = {"r_substitutes": 3, "sites": [0, 1]}
+
+        hash_two: str = generate_job_hash("smileit", "2.0.1", payload_r_two)
+        hash_three: str = generate_job_hash("smileit", "2.0.1", payload_r_three)
+
+        self.assertNotEqual(hash_two, hash_three)
+
+    def test_hash_changes_when_selected_sites_change(self) -> None:
+        first_payload: JSONMap = {"r_substitutes": 2, "sites": [0, 1]}
+        second_payload: JSONMap = {"r_substitutes": 2, "sites": [0, 2]}
+
+        hash_one: str = generate_job_hash("smileit", "2.0.1", first_payload)
+        hash_two: str = generate_job_hash("smileit", "2.0.1", second_payload)
+
+        self.assertNotEqual(hash_one, hash_two)
+
 
 class JobServiceTests(TestCase):
     """Prueba flujo de ejecucion y cache en capa de servicios."""
@@ -164,6 +183,25 @@ class JobServiceTests(TestCase):
         self.assertEqual(cached_job.status, "completed")
         self.assertTrue(cached_job.cache_hit)
         self.assertFalse(cached_job.cache_miss)
+
+    def test_cache_hit_requires_identical_parameters(self) -> None:
+        """Un único parámetro distinto invalida el hit (nunca se reutiliza)."""
+        base_payload: JSONMap = {"op": "add", "a": 2, "b": 3, "r_substitutes": 2}
+        base_job: ScientificJob = JobService.create_job(
+            "calculator", "1.0.0", base_payload
+        )
+        JobService.run_job(str(base_job.id))
+
+        same_payload_job: ScientificJob = JobService.create_job(
+            "calculator", "1.0.0", dict(base_payload)
+        )
+        different_payload_job: ScientificJob = JobService.create_job(
+            "calculator", "1.0.0", {**base_payload, "r_substitutes": 3}
+        )
+
+        self.assertTrue(same_payload_job.cache_hit)
+        self.assertFalse(different_payload_job.cache_hit)
+        self.assertNotEqual(same_payload_job.job_hash, different_payload_job.job_hash)
 
     def test_run_job_skips_cache_when_result_payload_exceeds_limit(self) -> None:
         """Un resultado demasiado grande debe completar el job sin persistir cache."""

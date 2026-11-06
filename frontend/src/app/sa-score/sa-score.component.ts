@@ -27,6 +27,7 @@ import {
 import { SmilesMoleculesBaseComponent } from '../core/shared/smiles-molecules-base.component';
 import { LocalResultRecord } from '../core/shared/local-results.store';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
+import { ScientificPanelComponent } from '../core/shared/components/scientific-panel/scientific-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { SA_SCORE_DOC_TABS } from './sa-score-doc-content';
 
@@ -42,6 +43,7 @@ import { SA_SCORE_DOC_TABS } from './sa-score-doc-content';
     JobHistoryTableComponent,
     SmilesBatchInputComponent,
     ScientificAppHeaderComponent,
+    ScientificPanelComponent,
     ScientificDocPanelComponent,
   ],
   providers: [SaScoreWorkflowService],

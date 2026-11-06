@@ -6,17 +6,17 @@
    ============================================================ */
 .cadma-shell {
   display: grid;
-  gap: 1.25rem;
-  padding: 1rem 1rem 2.5rem;
-  max-width: 1140px;
-  margin: 0 auto;
+  gap: 1rem;
+  padding: 0 0 1rem;
+  max-width: none;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .cadma-shell {
-    padding: 0.75rem 0.5rem 2rem;
+    padding: 0 0 1rem;
     gap: 1rem;
   }
 }

@@ -1,6 +1,6 @@
 <!-- smiles-batch-input.component.html: Textarea SMILES + fila de herramientas (sketch y carga archivo).
-     El editor completo vive en una tarjeta (.panel-card global) con sus herramientas en .action-bar. -->
-<div class="panel-card batch-shell">
+     Contenido plano: la tarjeta exterior la pone el entry-panel de cada app. -->
+<div class="batch-shell">
 <label class="smiles-label">
     {{ 'shared.smilesBatchInput.label' | transloco }}
     <textarea rows="10" [ngModel]="smilesValue" (ngModelChange)="smilesChange.emit($event)"

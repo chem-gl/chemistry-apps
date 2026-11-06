@@ -379,7 +379,6 @@ describe('PublicJobsApiService', () => {
           siteOverlapPolicy: 'last_block_wins',
           rSubstitutes: 2,
           numBonds: 1,
-          maxStructures: 50,
           exportNameBase: 'serie',
           exportPadding: 5,
         })
@@ -412,7 +411,6 @@ describe('PublicJobsApiService', () => {
         site_overlap_policy: 'last_block_wins',
         r_substitutes: 2,
         num_bonds: 1,
-        max_structures: 50,
         export_name_base: 'serie',
         export_padding: 5,
       });
@@ -543,8 +541,8 @@ describe('PublicJobsApiService', () => {
         canonical_smiles: 'CCO',
         atom_count: 2,
         atoms: [
-          { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false },
-          { index: 1, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false },
+          { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false, is_substitutable: true },
+          { index: 1, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false, is_substitutable: true },
         ],
         svg: '<svg></svg>',
         quick_properties: {

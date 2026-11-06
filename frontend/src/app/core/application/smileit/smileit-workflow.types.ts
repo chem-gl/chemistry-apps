@@ -46,6 +46,16 @@ export interface SmileitGeneratedStructureView {
 /** Borrador de sustituyente manual para un bloque de asignación. */
 export type SmileitManualSubstituentDraft = SmileitManualSubstituentParams;
 
+export interface SmileitResolvedSubstituentDraft {
+  sourceKind: 'catalog' | 'manual';
+  stableId: string;
+  version: number;
+  name: string;
+  smiles: string;
+  selectedAtomIndex: number;
+  categories: string[];
+}
+
 /** Borrador de un bloque de asignación con sus referencias de catálogo y sustituyentes manuales. */
 export interface SmileitAssignmentBlockDraft {
   id: string;
@@ -53,6 +63,7 @@ export interface SmileitAssignmentBlockDraft {
   siteAtomIndices: number[];
   categoryKeys: string[];
   catalogRefs: SmileitCatalogEntryView[];
+  resolvedSubstituents?: SmileitResolvedSubstituentDraft[];
   manualSubstituents: SmileitManualSubstituentDraft[];
   draftManualName: string;
   draftManualSmiles: string;
@@ -117,6 +128,10 @@ export interface SmileitBlockCollapsedSummary {
 export interface SmileitResultData {
   totalGenerated: number;
   generatedStructures: SmileitGeneratedStructureView[];
+  /**
+   * Legado: siempre false. La generación es completa o se rechaza (nunca se
+   * trunca); se conserva por compatibilidad con payloads históricos.
+   */
   truncated: boolean;
   principalSmiles: string;
   selectedAtomIndices: number[];

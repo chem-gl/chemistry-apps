@@ -1,6 +1,7 @@
 <!-- job-status-panel.component.html: Ramas idle/dispatching/progress/error con las mismas
      clases (`result-empty-card`, `status-message`, `error-message`) que los templates de app. -->
 @if (showIdleWhen() && activeSection() === 'idle') {
+@if (titleKey() || subtitleKey() || runHintKey()) {
 <div class="result-empty-card">
   @if (titleKey(); as idleTitleKey) {
   <strong>{{ idleTitleKey | transloco }}</strong>
@@ -12,6 +13,7 @@
   <span class="result-empty-hint">{{ idleRunHintKey | transloco }}</span>
   }
 </div>
+}
 }
 
 @if (activeSection() === 'dispatching') {

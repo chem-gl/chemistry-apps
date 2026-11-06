@@ -56,6 +56,7 @@ export class App implements OnInit {
   private readonly router = inject(Router);
   readonly isScrolled = signal(false);
   readonly isMobileNavOpen = signal(false);
+  readonly isUserMenuOpen = signal(false);
   readonly isAuthPage = signal(false);
 
   /** Items del dropdown de Apps. */
@@ -86,14 +87,28 @@ export class App implements OnInit {
 
     return [
       SCIENTIFIC_APP_NAV_ITEM,
-      { labelKey: 'app.nav.jobsMonitor', path: '/jobs', hintKey: 'app.navHints.jobsMonitor' },
-      ...(this.sessionService.canAccessAdminArea()
-        ? [
-            { labelKey: 'app.nav.groups', path: '/admin/groups', hintKey: 'app.navHints.groups' },
-            { labelKey: 'app.nav.users', path: '/admin/users', hintKey: 'app.navHints.users' },
-          ]
-        : []),
     ];
+  });
+
+  /** Submenú de la tarjeta de usuario: perfil, monitor y administración. */
+  readonly userMenuItems = computed<ReadonlyArray<PrimaryNavigationItem>>(() => {
+    if (!this.sessionService.isAuthenticated()) {
+      return [];
+    }
+
+    const items: PrimaryNavigationItem[] = [
+      { labelKey: 'app.nav.profile', path: '/profile', hintKey: 'app.navHints.profile' },
+      { labelKey: 'app.nav.jobsMonitor', path: '/jobs', hintKey: 'app.navHints.jobsMonitor' },
+    ];
+
+    if (this.sessionService.canAccessAdminArea()) {
+      items.push(
+        { labelKey: 'app.nav.groups', path: '/admin/groups', hintKey: 'app.navHints.groups' },
+        { labelKey: 'app.nav.users', path: '/admin/users', hintKey: 'app.navHints.users' },
+      );
+    }
+
+    return items;
   });
 
   /** Apps con submenu tiene items? */
@@ -139,6 +154,24 @@ export class App implements OnInit {
   onDocumentClick(): void {
     if (this.isMobileNavOpen()) {
       this.isMobileNavOpen.set(false);
+    }
+    if (this.isUserMenuOpen()) {
+      this.isUserMenuOpen.set(false);
+    }
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.isUserMenuOpen.update((isOpen) => !isOpen);
+  }
+
+  closeUserMenu(): void {
+    this.isUserMenuOpen.set(false);
+  }
+
+  onUserMenuKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.closeUserMenu();
     }
   }
 

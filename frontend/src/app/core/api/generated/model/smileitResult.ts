@@ -18,6 +18,9 @@ export interface SmileitResult {
     total_generated: number;
     generated_structures?: Array<SmileitGeneratedStructure>;
     traceability_rows?: Array<SmileitTraceabilityRow>;
+    /**
+     * Legado: siempre False. La generación es completa o se rechaza (nunca se trunca); se conserva por compatibilidad con resultados históricos persistidos.
+     */
     truncated?: boolean;
     principal_smiles: string;
     selected_atom_indices: Array<number>;

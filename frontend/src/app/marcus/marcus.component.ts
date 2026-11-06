@@ -13,6 +13,7 @@ import { JobResultFooterComponent } from '../core/shared/components/job-result-f
 import { downloadBlobFile } from '../core/shared/scientific-app-ui.utils';
 import { ScientificFileAppBaseComponent } from '../core/shared/scientific-file-app-base.component';
 import { ScientificAppHeaderComponent } from '../core/shared/components/scientific-app-header/scientific-app-header.component';
+import { ScientificPanelComponent } from '../core/shared/components/scientific-panel/scientific-panel.component';
 import { ScientificDocPanelComponent } from '../core/shared/components/scientific-doc-panel/scientific-doc-panel.component';
 import { MARCUS_DOC_TABS } from './marcus-doc-content';
 
@@ -26,6 +27,7 @@ import { MARCUS_DOC_TABS } from './marcus-doc-content';
     DiffusionFieldsComponent,
     JobResultFooterComponent,
     ScientificAppHeaderComponent,
+    ScientificPanelComponent,
     ScientificDocPanelComponent,
   ],
   providers: [MarcusWorkflowService],

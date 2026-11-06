@@ -1,22 +1,18 @@
-<!-- principal-molecule-editor.component.html: Entrada de SMILES principal y acción de inspección del scaffold. -->
+<!-- principal-molecule-editor.component.html: SMILES principal con acciones inline y sketcher. -->
 
-<label>
-  {{ 'smileit.principalEditor.label' | transloco }}
-  <input type="text" [ngModel]="principalSmiles" (ngModelChange)="onPrincipalSmilesChange($event)"
-    [disabled]="isProcessing" [placeholder]="'smileit.principalEditor.placeholder' | transloco" />
-</label>
-
-<div class="principal-actions-row">
+<div class="principal-input-row">
   <button class="btn-secondary" type="button" (click)="openSketchModifier()">
     {{ 'smileit.principalEditor.openSketch' | transloco }}
   </button>
+  <input class="principal-smiles-input" type="text" [ngModel]="principalSmiles"
+    (ngModelChange)="onPrincipalSmilesChange($event)" [disabled]="isProcessing"
+    [placeholder]="'smileit.principalEditor.placeholder' | transloco" />
   <button class="btn-secondary" type="button" (click)="requestInspect()" [disabled]="isProcessing">
     {{ isInspecting ? ('smileit.principalEditor.inspecting' | transloco) : ('smileit.principalEditor.inspect' |
     transloco) }}
   </button>
 </div>
 
-<p class="catalog-smiles mono">{{ principalSmiles || ('smileit.principalEditor.pending' | transloco) }}</p>
 <dialog #sketchModifierDialog class="sketch-modifier-dialog" (click)="onSketchModifierDialogClick($event)"
   (keydown)="onSketchModifierDialogClick($event)">
   <section class="sketch-modifier-modal" [attr.aria-label]="'smileit.principalEditor.sketchAriaLabel' | transloco">

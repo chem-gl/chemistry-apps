@@ -2,6 +2,7 @@
 
 <div class="principal-preview-wrap">
   <div class="principal-zoom-controls">
+    <span class="preview-tip"><ng-content select="[preview-tip]" /></span>
     <button type="button" class="zoom-btn" (click)="zoomOut()" [disabled]="zoomLevel === minZoomLevel"
       [attr.aria-label]="'smileit.catalogDetail.zoomOut' | transloco">
       －

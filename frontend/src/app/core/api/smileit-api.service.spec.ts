@@ -62,9 +62,9 @@ const inspectionResponse: SmileitStructureInspectionResponse = {
   canonical_smiles: 'CCO',
   atom_count: 3,
   atoms: [
-    { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false },
-    { index: 1, symbol: 'C', implicit_hydrogens: 2, is_aromatic: false },
-    { index: 2, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false },
+    { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false, is_substitutable: true },
+    { index: 1, symbol: 'C', implicit_hydrogens: 2, is_aromatic: false, is_substitutable: true },
+    { index: 2, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false, is_substitutable: true },
   ],
   svg: '<svg></svg>',
   quick_properties: {
@@ -249,9 +249,9 @@ describe('SmileitApiService', () => {
       canonical_smiles: 'CCO',
       atom_count: 3,
       atoms: [
-        { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false },
-        { index: 1, symbol: 'C', implicit_hydrogens: 2, is_aromatic: false },
-        { index: 2, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false },
+        { index: 0, symbol: 'C', implicit_hydrogens: 3, is_aromatic: false, is_substitutable: true },
+        { index: 1, symbol: 'C', implicit_hydrogens: 2, is_aromatic: false, is_substitutable: true },
+        { index: 2, symbol: 'O', implicit_hydrogens: 1, is_aromatic: false, is_substitutable: true },
       ],
       svg: '<svg></svg>',
       quick_properties: {
@@ -280,9 +280,9 @@ describe('SmileitApiService', () => {
       canonicalSmiles: 'CCO',
       atomCount: 3,
       atoms: [
-        { index: 0, symbol: 'C', implicitHydrogens: 3, isAromatic: false },
-        { index: 1, symbol: 'C', implicitHydrogens: 2, isAromatic: false },
-        { index: 2, symbol: 'O', implicitHydrogens: 1, isAromatic: false },
+        { index: 0, symbol: 'C', implicitHydrogens: 3, isAromatic: false, isSubstitutable: true },
+        { index: 1, symbol: 'C', implicitHydrogens: 2, isAromatic: false, isSubstitutable: true },
+        { index: 2, symbol: 'O', implicitHydrogens: 1, isAromatic: false, isSubstitutable: true },
       ],
       svg: '<svg></svg>',
       quickProperties: {
@@ -344,7 +344,6 @@ describe('SmileitApiService', () => {
       siteOverlapPolicy: SiteOverlapPolicyEnum.LastBlockWins,
       rSubstitutes: 1,
       numBonds: 2,
-      maxStructures: 10,
       exportNameBase: 'smileit',
       exportPadding: 3,
     };
@@ -377,7 +376,6 @@ describe('SmileitApiService', () => {
       site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
       r_substitutes: 1,
       num_bonds: 2,
-      max_structures: 10,
       export_name_base: 'smileit',
       export_padding: 3,
     });

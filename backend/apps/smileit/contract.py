@@ -15,8 +15,6 @@ Uso:
             "substituents": [{"name": "Amine", "smiles": "[NH2]", "selected_atom_index": 0}],
             "r_substitutes": 1,
             "num_bonds": 1,
-            "allow_repeated": False,
-            "max_structures": 0,
         },
     )
 """

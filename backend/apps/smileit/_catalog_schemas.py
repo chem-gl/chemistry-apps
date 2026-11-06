@@ -170,6 +170,9 @@ class SmileitAtomInfoSerializer(serializers.Serializer):
     symbol = serializers.CharField(max_length=10)
     implicit_hydrogens = serializers.IntegerField(min_value=0)
     is_aromatic = serializers.BooleanField()
+    # Un sitio sin valencia libre nunca podrá recibir un sustituyente; la UI lo
+    # deshabilita para que `r_substitutes` no se sature en silencio.
+    is_substitutable = serializers.BooleanField()
 
 
 class SmileitStructuralAnnotationSerializer(serializers.Serializer):

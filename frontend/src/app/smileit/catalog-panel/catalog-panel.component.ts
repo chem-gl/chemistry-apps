@@ -64,7 +64,7 @@ export class CatalogPanelComponent implements OnDestroy {
   // --- Estado interno del panel ---
   private catalogDraftInspectionSubscription: Subscription | null = null;
   private catalogDraftInspectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  readonly isCatalogPanelCollapsed = signal<boolean>(true);
+  readonly isCatalogPanelCollapsed = signal<boolean>(false);
   readonly catalogDraftInspection = signal<SmileitStructureInspectionView | null>(null);
   readonly catalogDraftInspectionError = signal<string | null>(null);
   readonly selectedLibraryGroupKey = signal<string>('all');

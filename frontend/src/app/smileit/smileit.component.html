@@ -23,9 +23,6 @@
             <div class="panel-header-row">
               <div>
                 <h3>{{ 'smileit.step1.title' | transloco }}</h3>
-                <p class="panel-caption">
-                  {{ 'smileit.step1.description' | transloco }}
-                </p>
               </div>
             </div>
 
@@ -39,92 +36,54 @@
           @if (workflow.inspection(); as inspectionResult) {
           <section class="inspection-floating-panel" [attr.aria-label]="'smileit.inspection.ariaLabel' | transloco">
             <div class="inspection-card">
-              <div class="inspection-metadata">
-                <p><strong>{{ 'smileit.inspection.atoms' | transloco }}</strong> {{ inspectionResult.atomCount }}</p>
-                <p>
-                  <strong>{{ 'smileit.inspection.patternsVisible' | transloco }}</strong> {{
-                  visibleInspectionAnnotations().length }}
-                </p>
-              </div>
-
-              <p class="catalog-smiles mono">{{ 'smileit.inspection.canonical' | transloco }} {{
+              <p class="canonical-line mono">{{ 'smileit.inspection.canonical' | transloco }} {{
                 inspectionResult.canonicalSmiles }}</p>
 
+              <p class="inspection-stats">
+                <span class="stat-inline">
+                  <strong>{{ inspectionResult.atomCount }}</strong> {{ 'smileit.inspection.atoms' | transloco }}
+                </span>
+                <span class="stat-inline">
+                  <strong>{{ visibleInspectionAnnotations().length }}</strong> {{ 'smileit.inspection.patternsVisible' | transloco }}
+                </span>
+              </p>
+
               @if (workflow.quickProperties(); as quickProperties) {
-              <div class="property-grid" [attr.aria-label]="'smileit.properties.ariaLabel' | transloco">
-                <div class="property-row">
-                  <label class="property-label" for="property-mw">{{ 'smileit.properties.mwLabel' | transloco }}</label>
-                  <input id="property-mw" class="property-input" type="text"
-                    value="{{ quickProperties.molecular_weight | number: '1.1-1' }}"
-                    [title]="'smileit.properties.mwAria' | transloco"
-                    placeholder="{{ quickProperties.molecular_weight | number: '1.1-1' }}"
-                    [attr.aria-label]="'smileit.properties.mwAria' | transloco" readonly />
+              <dl class="property-list" [attr.aria-label]="'smileit.properties.ariaLabel' | transloco">
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.mwLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.molecular_weight | number: '1.1-1' }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-clogp">{{ 'smileit.properties.clogpLabel' | transloco
-                    }}</label>
-                  <input id="property-clogp" class="property-input" type="text"
-                    value="{{ quickProperties.clogp | number: '1.1-2' }}"
-                    [title]="'smileit.properties.clogpAria' | transloco"
-                    placeholder="{{ quickProperties.clogp | number: '1.1-2' }}"
-                    [attr.aria-label]="'smileit.properties.clogpAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.clogpLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.clogp | number: '1.1-2' }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-tpsa">{{ 'smileit.properties.tpsaLabel' | transloco
-                    }}</label>
-                  <input id="property-tpsa" class="property-input" type="text"
-                    value="{{ quickProperties.tpsa | number: '1.1-1' }}"
-                    [title]="'smileit.properties.tpsaAria' | transloco"
-                    placeholder="{{ quickProperties.tpsa | number: '1.1-1' }}"
-                    [attr.aria-label]="'smileit.properties.tpsaAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.tpsaLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.tpsa | number: '1.1-1' }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-rotatable-bonds">{{
-                    'smileit.properties.rotatableBondsLabel' | transloco }}</label>
-                  <input id="property-rotatable-bonds" class="property-input" type="text"
-                    value="{{ quickProperties.rotatable_bonds }}"
-                    [title]="'smileit.properties.rotatableBondsAria' | transloco"
-                    placeholder="{{ quickProperties.rotatable_bonds }}"
-                    [attr.aria-label]="'smileit.properties.rotatableBondsAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.rotatableBondsLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.rotatable_bonds }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-hbd">{{ 'smileit.properties.hbdLabel' | transloco
-                    }}</label>
-                  <input id="property-hbd" class="property-input" type="text" value="{{ quickProperties.hbond_donors }}"
-                    [title]="'smileit.properties.hbdAria' | transloco" placeholder="{{ quickProperties.hbond_donors }}"
-                    [attr.aria-label]="'smileit.properties.hbdAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.hbdLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.hbond_donors }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-hba">{{ 'smileit.properties.hbaLabel' | transloco
-                    }}</label>
-                  <input id="property-hba" class="property-input" type="text"
-                    value="{{ quickProperties.hbond_acceptors }}" [title]="'smileit.properties.hbaAria' | transloco"
-                    placeholder="{{ quickProperties.hbond_acceptors }}"
-                    [attr.aria-label]="'smileit.properties.hbaAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.hbaLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.hbond_acceptors }}</dd>
                 </div>
-
-                <div class="property-row">
-                  <label class="property-label" for="property-aromatic-rings">{{ 'smileit.properties.aromaticRingsLabel'
-                    | transloco }}</label>
-                  <input id="property-aromatic-rings" class="property-input" type="text"
-                    value="{{ quickProperties.aromatic_rings }}"
-                    [title]="'smileit.properties.aromaticRingsAria' | transloco"
-                    placeholder="{{ quickProperties.aromatic_rings }}"
-                    [attr.aria-label]="'smileit.properties.aromaticRingsAria' | transloco" readonly />
+                <div class="property-item">
+                  <dt>{{ 'smileit.properties.aromaticRingsLabel' | transloco }}</dt>
+                  <dd class="mono">{{ quickProperties.aromatic_rings }}</dd>
                 </div>
-              </div>
+              </dl>
               }
 
-              <p class="hint">
-                {{ 'smileit.inspection.clickTip' | transloco }}
-              </p>
               <app-principal-svg-viewer [inspectionSvg]="toTrustedInspectionSvg()"
                 [isProcessing]="workflow.isProcessing()" (inspectionSvgClicked)="onInspectionSvgClick($event)">
+                <span preview-tip class="hint">{{ 'smileit.inspection.clickTip' | transloco }}</span>
               </app-principal-svg-viewer>
 
               <!-- Selección de átomos: bloque visual unido al visor SVG -->
@@ -142,7 +101,11 @@
                 <div class="atom-grid">
                   @for (atom of inspectionResult.atoms; track atom.index) {
                   <button type="button" class="atom-chip" [class.selected]="isAtomSelected(atom.index)"
-                    (click)="workflow.toggleSelectedAtom(atom.index)" [disabled]="workflow.isProcessing()">
+                    [class.non-substitutable]="!atom.isSubstitutable"
+                    [attr.aria-disabled]="!atom.isSubstitutable"
+                    [disabled]="workflow.isProcessing()"
+                    [attr.title]="atom.isSubstitutable ? null : ('smileit.siteSelection.nonSubstitutableAtom' | transloco)"
+                    (click)="workflow.toggleSelectedAtom(atom.index)">
                     <span>#{{ atom.index }} {{ atom.symbol }}</span>
                     @if (coverageLabel(atom.index); as coverage) {
                     <small>{{ coverage }}</small>
@@ -150,6 +113,12 @@
                   </button>
                   }
                 </div>
+                @if (workflow.nonSubstitutableSelectedSites().length > 0) {
+                <p class="warning-message" role="alert">
+                  {{ 'smileit.siteSelection.nonSubstitutableSelected' | transloco: {
+                  sites: workflow.nonSubstitutableSelectedSites().join(', ') } }}
+                </p>
+                }
                 @if (workflow.uncoveredSelectedSites().length > 0) {
                 <p class="warning-message" role="alert">
                   {{ 'smileit.siteSelection.pendingAssignment' | transloco }}
@@ -181,12 +150,12 @@
                           ? 'smileit.annotations.disableAllAlerts'
                           : 'smileit.annotations.enableAllAlerts') | transloco }}
                       </button>
-                      <label class="annotation-privileged-switch">
-                        <input type="checkbox" [checked]="privilegedAnnotationsEnabled()"
-                          (change)="togglePrivilegedAnnotations()"
-                          [attr.aria-label]="'smileit.annotations.privilegedToggle' | transloco" />
-                        <span>{{ 'smileit.annotations.privilegedToggle' | transloco }}</span>
-                      </label>
+                      <button type="button" class="annotation-privileged-switch"
+                        [attr.aria-pressed]="privilegedAnnotationsEnabled()"
+                        [attr.aria-label]="'smileit.annotations.privilegedToggle' | transloco"
+                        (click)="togglePrivilegedAnnotations()">
+                        {{ 'smileit.annotations.privilegedToggle' | transloco }}
+                      </button>
                     </div>
                   </div>
 
@@ -224,30 +193,23 @@
                   ) {
                   <article class="annotation-chip" [class.annotation-chip-hidden]="!isAnnotationVisible(annotation)"
                     [style.--annotation-color]="annotation.color">
-                    <div class="annotation-chip-header">
-                      <span class="annotation-type">{{
-                        patternTypeLabel(annotation.pattern_type)
-                        }}</span>
-                      <button type="button" class="annotation-eye-btn"
-                        (click)="togglePatternEnabled(annotation.pattern_stable_id)" [attr.aria-label]="
-                                isAnnotationEnabled(annotation.pattern_stable_id)
-                                  ? ('smileit.annotations.hidePatternAria' | transloco)
-                                  : ('smileit.annotations.showPatternAria' | transloco)
-                              " [attr.title]="
-                                isAnnotationEnabled(annotation.pattern_stable_id)
-                                  ? ('smileit.annotations.hideTitleAttr' | transloco)
-                                  : ('smileit.annotations.showTitleAttr' | transloco)
-                              ">
-                        {{
-                        isAnnotationEnabled(annotation.pattern_stable_id)
-                        ? ('smileit.patterns.showPattern' | transloco)
-                        : ('smileit.patterns.hidePattern' | transloco)
-                        }}
-                      </button>
+                    <input type="checkbox" class="annotation-toggle-checkbox"
+                      [checked]="isAnnotationEnabled(annotation.pattern_stable_id)"
+                      (change)="togglePatternEnabled(annotation.pattern_stable_id)" [attr.title]="
+                              isAnnotationEnabled(annotation.pattern_stable_id)
+                                ? ('smileit.annotations.hideTitleAttr' | transloco)
+                                : ('smileit.annotations.showTitleAttr' | transloco)
+                            " [attr.aria-label]="
+                              isAnnotationEnabled(annotation.pattern_stable_id)
+                                ? ('smileit.annotations.hidePatternAria' | transloco)
+                                : ('smileit.annotations.showPatternAria' | transloco)
+                            " />
+                    <div class="annotation-chip-body">
+                      <strong>{{ annotation.name }}</strong>
+                      <code class="annotation-smarts">{{ patternSmartsByStableId().get(annotation.pattern_stable_id) ?? '—'
+                        }}</code>
+                      <p class="annotation-caption">{{ annotation.caption }}</p>
                     </div>
-                    <strong>{{ annotation.name }}</strong>
-                    <p>{{ annotation.caption }}</p>
-                    <small>{{ 'smileit.patterns.atoms' | transloco }} {{ annotation.atom_indices.join(', ') }}</small>
                   </article>
                   }
                 </section>

@@ -42,7 +42,6 @@ def _valid_job_payload() -> dict[str, object]:
         "site_overlap_policy": "last_block_wins",
         "r_substitutes": 1,
         "num_bonds": 1,
-        "max_structures": 10,
         "export_name_base": "EXTENDED_TEST",
         "export_padding": 5,
     }
@@ -152,7 +151,6 @@ class SmileitJobLifecycleTests(SmileitSeedTestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 1,
             "num_bonds": 1,
-            "max_structures": 20,
             "export_name_base": "MANUAL_SERIES",
             "export_padding": 3,
         }
@@ -191,7 +189,6 @@ class SmileitJobLifecycleTests(SmileitSeedTestCase):
             "site_overlap_policy": "last_block_wins",
             "r_substitutes": 1,
             "num_bonds": 1,
-            "max_structures": 5,
             "export_name_base": "BAD_MANUAL",
             "export_padding": 3,
         }

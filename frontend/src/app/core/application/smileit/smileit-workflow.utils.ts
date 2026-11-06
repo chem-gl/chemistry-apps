@@ -325,3 +325,46 @@ export function buildEffectiveCoverage(
       left.siteAtomIndex - right.siteAtomIndex,
   );
 }
+
+/** Aviso cuando la combinatoria estimada supera este número de derivados. */
+export const COMBINATORIAL_WARNING_THRESHOLD = 1_000;
+/** Tope duro: por encima no se permite ejecutar (nunca se trunca la generación). */
+export const COMBINATORIAL_HARD_LIMIT = 1_000_000;
+
+/**
+ * Estimación combinatoria de derivados: suma de k!·e_k para k = 1..r,
+ * donde e_k son los coeficientes simétricos elementales de las opciones por sitio.
+ * Misma fórmula que el backend para que aviso y bloqueo coincidan.
+ */
+export function estimateCombinatorialTotal(
+  optionsPerSite: readonly number[],
+  rSubstitutes: number,
+): number {
+  const usableOptions: number[] = optionsPerSite.filter((options: number) => options > 0);
+  if (usableOptions.length === 0) {
+    return 0;
+  }
+
+  const maxRounds: number = Math.max(1, Math.min(Math.trunc(rSubstitutes), usableOptions.length));
+  let subsetProducts: number[] = [1];
+  for (const optionsInSite of usableOptions) {
+    const updatedProducts: number[] = subsetProducts.concat(0);
+    for (let index = subsetProducts.length - 1; index > 0; index -= 1) {
+      updatedProducts[index] = subsetProducts[index] + subsetProducts[index - 1] * optionsInSite;
+    }
+    updatedProducts[subsetProducts.length] = (subsetProducts.at(-1) ?? 0) * optionsInSite;
+    subsetProducts = updatedProducts.slice(0, maxRounds + 1);
+  }
+
+  let total: number = 0;
+  let orderedFactor: number = 1;
+  for (let roundIndex = 1; roundIndex <= maxRounds; roundIndex += 1) {
+    orderedFactor *= roundIndex;
+    total += orderedFactor * subsetProducts[roundIndex];
+    if (total > COMBINATORIAL_HARD_LIMIT) {
+      return COMBINATORIAL_HARD_LIMIT + 1;
+    }
+  }
+
+  return total;
+}

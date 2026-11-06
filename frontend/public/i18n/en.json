@@ -31,7 +31,8 @@
       "apps": "Apps",
       "identity": "Identity",
       "groups": "Groups",
-      "users": "Users"
+      "users": "Users",
+      "userMenu": "User menu"
     },
     "navHints": {
       "signIn": "Authenticate to load your workspace",
@@ -100,6 +101,10 @@
     "fallback": {
       "unknownUser": "Unknown user",
       "noGroup": "No group"
+    },
+    "panels": {
+      "input": "Input",
+      "results": "Results"
     }
   },
   "login": {
@@ -544,7 +549,7 @@
       "temperature": "Temperature (K)"
     },
     "actions": {
-      "run": "Data ok, Run Tunnel",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "clearTrace": "Clear input trace",
@@ -553,7 +558,7 @@
       "exportLog": "Export LOG (inputs + results)"
     },
     "result": {
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress",
       "submitting": "Submitting tunnel effect job to backend...",
       "labels": {
@@ -600,13 +605,13 @@
       "operator": "Operator"
     },
     "actions": {
-      "run": "Data ok, Run Server Calc",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "exportCsv": "Export CSV"
     },
     "result": {
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress",
       "submitting": "Submitting server calc job to backend...",
       "labels": {
@@ -616,8 +621,7 @@
         "executedOn": "Executed on:",
         "fileName": "Result file:",
         "filePath": "Saved at (qta):"
-      },
-      "emptyHint": "Run a calculation to see the result and the file written on qta."
+      }
     },
     "logs": {
       "title": "Connection logs",
@@ -650,7 +654,7 @@
       "phStep": "Step"
     },
     "actions": {
-      "run": "Run Molar Fractions",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "exportCsv": "Export CSV"
@@ -764,13 +768,13 @@
       "notTerminated": "Not terminated"
     },
     "actions": {
-      "run": "Run Easy-rate",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "clearFiles": "Clear files"
     },
     "result": {
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress",
       "ariaProgressLabel": "Easy-rate job progress",
       "submitting": "Submitting Easy-rate job to backend...",
@@ -864,15 +868,14 @@
       "browse": "Browse .log / .out / .txt"
     },
     "actions": {
-      "run": "Run Marcus",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "clearFiles": "Clear files"
     },
     "result": {
-      "title": "Output",
+      "title": "Results",
       "ariaLabel": "Results and progress",
-      "idleHint": "Waiting for submission — configure the inputs and run a job to see results here.",
       "submitting": "Submitting Marcus job to backend...",
       "defaultTitle": "Marcus result",
       "marcusEnergies": "Marcus Energies",
@@ -913,7 +916,7 @@
       "allMethods": "All methods"
     },
     "actions": {
-      "run": "Run SA Score",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "exportCsv": "Export CSV",
@@ -965,7 +968,7 @@
       "jobNameHint": "If left empty, the first CSV name is used when available; otherwise current behavior is preserved."
     },
     "actions": {
-      "run": "Run Toxicity Properties",
+      "run": "Run",
       "processing": "Processing...",
       "reset": "Reset",
       "exportCsv": "Export CSV",
@@ -992,10 +995,7 @@
       "colMutagenicity": "Mutagenicity",
       "colAmesScore": "Ames Score",
       "colDevTox": "Dev. Toxicity",
-      "colDevtoxScore": "DevTox Score",
-      "emptyTitle": "No results yet",
-      "emptyBody": "Run a calculation to see the predicted ADMET properties of your molecules here.",
-      "emptyHint": "Configure the input, then press Run."
+      "colDevtoxScore": "DevTox Score"
     },
     "sketch": {
       "title": "Draw SMILES",
@@ -1019,7 +1019,7 @@
       "ariaLabel": "Smileit scientific app"
     },
     "step1": {
-      "title": "1. Principal molecule and scaffold preview",
+      "title": "Principal molecule",
       "description": "Define the principal SMILES, inspect it visually, and then choose the substitution sites that later will be assigned to your block molecules.",
       "ariaLabel": "Input parameters"
     },
@@ -1158,14 +1158,17 @@
       "loadingDerivatives": "Loading...",
       "generatedModalAriaLabel": "Generated molecule preview",
       "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)",
-      "showingOfTotal": "Showing {shown} of {total} derivatives"
+      "showingOfTotal": "Showing {shown} of {total} derivatives",
+      "estimatedDerivatives": "≈ {count} derivatives estimated",
+      "combinatorialWarning": "Combinatorics exceed {limit} derivatives: generation will be complete and may take a while.",
+      "hardLimitExceeded": "Exceeds the maximum of {limit} derivatives. Reduce sites, substituents or R-substitutions."
     },
     "principalEditor": {
       "label": "Principal SMILES",
       "placeholder": "c1(O)c(NCCC=C)c2c([nH]cc2)c([N+](=O)[O-])c1O",
-      "openSketch": "✏ Open sketch modifier",
+      "openSketch": "Draw molecule",
       "inspecting": "Inspecting...",
-      "inspect": "Inspect structure",
+      "inspect": "Insert",
       "pending": "Pending principal SMILES",
       "sketchAriaLabel": "Principal sketch modifier",
       "sketchTitle": "Principal sketch modifier",
@@ -1192,7 +1195,9 @@
       "hint": "Click atoms in the visual preview to mark where later substitutions may be placed.",
       "blocksAvailableSuffix": "blocks available",
       "blockMappingHint": "Create blocks first, then map these selected sites to the block that should own them.",
-      "pendingAssignment": "Selected sites pending assignment:"
+      "pendingAssignment": "Selected sites pending assignment:",
+      "nonSubstitutableAtom": "No free valence: cannot accept substituents.",
+      "nonSubstitutableSelected": "Selected atoms without free valence (not substitutable): {{sites}}"
     },
     "patterns": {
       "title": "Structural patterns",
@@ -1795,13 +1800,13 @@
       "quickFillNamesFallback": "Names will fall back to SMILES",
       "quickFillToxicityReady": "Toxicity already attached",
       "quickFillSaReady": "SA already attached",
-      "runCadmaPy": "Run CADMA Py →",
-      "running": "Running CADMA Py…",
+      "runCadmaPy": "Run →",
+      "running": "Running…",
       "saveProgress": "Save progress & pause",
       "clearFiles": "Clear files",
       "exportCsv": "Export CSV",
       "draftHint": "You can pause once the project label and main SMILES guide are ready, then return later to add the remaining CSV files.",
-      "submitting": "Submitting CADMA Py job…",
+      "submitting": "Submitting job…",
       "quickFillTitle": "Quick fill from the current candidate guide or previous runs"
     },
     "step3": {

@@ -63,13 +63,13 @@
 .chip-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.3rem;
 }
 
 .compact-grid .atom-chip,
 .atom-chip.compact {
-  padding: 0.36rem 0.64rem;
-  font-size: 0.78rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.66rem;
 }
 
 .atom-chip {
@@ -85,6 +85,13 @@
   background: var(--chem-ink);
   color: var(--chem-surface-elevated);
   box-shadow: 0 10px 24px rgba(123, 90, 158, 0.18);
+}
+
+/* Átomo sin valencia libre: no puede recibir sustituyentes (selección bloqueada). */
+.atom-chip.non-substitutable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
 }
 
 .options-grid,
@@ -107,9 +114,10 @@
 }
 
 .block-card {
-  background:
-    radial-gradient(circle at top right, rgba(123, 90, 158, 0.08), transparent 34%),
-    linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
+  background: transparent;
+  border-top: 1px solid var(--chem-border-subtle);
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
 .block-title-wrap {
@@ -265,19 +273,19 @@
 }
 
 .block-placement-section {
-  background: rgba(237, 233, 240, 0.72);
-  border-radius: 14px;
-  padding: 0.95rem 0 0;
+  background: none;
+  border-radius: 0;
+  padding: 0.85rem 0 0;
 }
 
 .collapsed-panel-card,
 .block-collapsed-summary,
 .catalog-preview-card,
 .pattern-reference-card {
-  border: 1px solid var(--chem-border-subtle);
-  border-radius: 14px;
-  background: var(--chem-surface-elevated);
-  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
   margin-top: 0.75rem;
 }
 
@@ -361,16 +369,6 @@
 
 .catalog-panel .catalog-browser-panel {
   position: relative;
-  padding-top: 2.7rem;
-}
-
-.catalog-panel .catalog-browser-panel .expanded-toggle {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-  min-width: 2rem;
-  padding-inline: 0.6rem;
-  text-align: center;
 }
 
 .catalog-panel .catalog-collapsed-metrics {
@@ -394,11 +392,10 @@
   margin-top: 0.8rem;
 }
 
-.catalog-editor-form,
-.catalog-browser-panel {
+.catalog-editor-form {
   border: 1px solid var(--chem-border-subtle);
-  border-radius: 18px;
-  background: linear-gradient(180deg, var(--chem-surface-elevated) 0%, var(--chem-surface) 100%);
+  border-radius: var(--chem-radius);
+  background: var(--chem-surface-elevated);
   padding: 0.95rem;
 }
 

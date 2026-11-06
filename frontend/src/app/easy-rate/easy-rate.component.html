@@ -4,8 +4,8 @@
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────── -->
-    <section class="entry-panel" [attr.aria-label]="'easyRate.form.ariaLabel' | transloco">
-      <h3 class="section-sub">{{ 'easyRate.form.parameters' | transloco }}</h3>
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="easyRate.form.ariaLabel">
+      <h4 class="section-title">{{ 'easyRate.form.parameters' | transloco }}</h4>
 
       <div class="param-grid">
         <label>
@@ -66,7 +66,7 @@
         (radiusReactant2Change)="workflow.updateRadiusReactant2($event)"
         (reactionDistanceChange)="workflow.updateReactionDistance($event)"></app-diffusion-fields>
 
-      <h3>{{ 'easyRate.form.title' | transloco }}</h3>
+      <h4 class="section-title">{{ 'easyRate.form.title' | transloco }}</h4>
 
       <div class="file-grid">
         @for (slot of inputSlots; track trackInputSlot($index, slot)) {
@@ -194,20 +194,10 @@
           {{ 'easyRate.actions.clearFiles' | transloco }}
         </button>
       </div>
-    </section>
+    </app-scientific-panel>
 
     <!-- ── Panel de resultado ────────────────────────────────────── -->
-    <section class="result-panel" [attr.aria-label]="'easyRate.result.ariaLabel' | transloco">
-      <h3>{{ 'easyRate.result.title' | transloco }}</h3>
-
-      <!-- Estado inicial: tarjeta guia en lugar del area morfa. -->
-      @if (workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'easyRate.result.ariaLabel' | transloco }}</strong>
-        <p>{{ 'easyRate.form.title' | transloco }}</p>
-        <span class="result-empty-hint">{{ 'easyRate.actions.run' | transloco }}</span>
-      </div>
-      }
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="easyRate.result.ariaLabel">
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'easyRate.result.submitting' | transloco }}</p>
@@ -329,7 +319,7 @@
 
       }
 
-    </section>
+    </app-scientific-panel>
   </div>
 
   <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->

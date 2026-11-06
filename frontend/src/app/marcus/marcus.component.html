@@ -4,11 +4,11 @@
 
   <div class="workspace-grid">
     <!-- ── Panel de entrada ─────────────────────────────────────────── -->
-    <section class="entry-panel" [attr.aria-label]="'marcus.form.parameters' | transloco">
-      <h3>
+    <app-scientific-panel kind="entry" titleKey="common.panels.input" ariaLabelKey="marcus.form.parameters">
+      <h4 class="section-title">
         {{ 'marcus.fileGroups.inputFilesTitle' | transloco }}
         <span class="all-required-badge">{{ 'marcus.fileGroups.allRequired' | transloco }}</span>
-      </h3>
+      </h4>
 
       <div class="file-group">
         <h4 class="file-group-title">{{ 'marcus.fileGroups.reactants' | transloco }}</h4>
@@ -103,7 +103,7 @@
         </div>
       </div>
 
-      <h3 class="section-sub">{{ 'marcus.form.parameters' | transloco }}</h3>
+      <h4 class="section-title">{{ 'marcus.form.parameters' | transloco }}</h4>
 
       <div class="param-grid">
         <label>
@@ -139,20 +139,10 @@
           {{ 'marcus.actions.clearFiles' | transloco }}
         </button>
       </div>
-    </section>
+    </app-scientific-panel>
 
     <!-- ── Panel de resultado ──────────────────────────────────────── -->
-    <section class="result-panel" [attr.aria-label]="'marcus.result.ariaLabel' | transloco">
-      <h3>{{ 'marcus.result.title' | transloco }}</h3>
-
-      <!-- Estado inicial: mensaje neutro de espera (no de envío). -->
-      @if (workflow.activeSection() === 'idle') {
-      <div class="result-empty-card">
-        <strong>{{ 'marcus.result.ariaLabel' | transloco }}</strong>
-        <p>{{ 'marcus.result.idleHint' | transloco }}</p>
-        <span class="result-empty-hint">{{ 'marcus.actions.run' | transloco }}</span>
-      </div>
-      }
+    <app-scientific-panel kind="result" titleKey="common.panels.results" ariaLabelKey="marcus.result.ariaLabel">
 
       @if (workflow.activeSection() === 'dispatching') {
       <p class="status-message">{{ 'marcus.result.submitting' | transloco }}</p>
@@ -231,7 +221,7 @@
 
       }
 
-    </section>
+    </app-scientific-panel>
   </div>
 
   <!-- ── Footer reutilizable: exportación, logs e historial ──────── -->

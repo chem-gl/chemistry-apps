@@ -71,7 +71,7 @@ test.describe('Puerta de entrada', () => {
 
     await page.locator('a.node-link', { hasText: 'Molar Fractions' }).first().click();
     await expect(page).toHaveURL(/\/molar-fractions$/);
-    await expect(page.getByRole('button', { name: 'Run Molar Fractions' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeVisible();
   });
 
   test('el invitado llega al modo libre desde la puerta de entrada', async ({ page }) => {
