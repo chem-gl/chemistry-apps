@@ -38,6 +38,14 @@ class AuthorizationService:
         )
 
     @staticmethod
+    def has_explicit_admin_role(actor: AbstractUser) -> bool:
+        """Indica rol admin explícito (atributo o perfil), sin inferirlo de is_staff."""
+        if getattr(actor, "role", "") == "admin":
+            return True
+        profile = AuthorizationService._get_identity_profile(actor)
+        return profile is not None and profile.role == "admin"
+
+    @staticmethod
     def can_manage_user(actor: AbstractUser, target: AbstractUser) -> bool:
         if AuthorizationService.is_root(actor):
             return True

@@ -5,7 +5,9 @@ Objetivo del archivo:
   ideal para pruebas operativas, debugging y automatizaciones.
 
 Cómo se usa:
-- Submit simple: `python manage.py run_declarative_job calculator --parameters '{...}'`.
+- Submit simple: `python manage.py run_declarative_job molar-fractions --parameters '{...}'`.
+- Plugins disponibles: molar-fractions, tunnel-effect, easy-rate, marcus-kinetics,
+  smileit, sa-score, toxicity-properties.
 - Submit + wait: agregar `--wait --timeout <segundos>`.
 """
 
@@ -33,13 +35,21 @@ class Command(BaseCommand):
         parser.add_argument(
             "plugin",
             type=str,
-            help="Nombre del plugin registrado, por ejemplo: calculator o molar-fractions.",
+            help=(
+                "Nombre del plugin registrado: molar-fractions, tunnel-effect, "
+                "easy-rate, marcus-kinetics, smileit, sa-score o toxicity-properties."
+            ),
         )
         parser.add_argument(
-            "--version",
+            "--algorithm-version",
+            dest="version",
             type=str,
             default="1.0",
-            help="Versión del algoritmo a ejecutar (default: 1.0).",
+            help=(
+                "Versión del algoritmo a ejecutar. El default genérico es 1.0; "
+                "para plugins con otra versión (p. ej. server-calc) pásala "
+                "explícitamente con el DEFAULT_ALGORITHM_VERSION del plugin."
+            ),
         )
         parser.add_argument(
             "--parameters",

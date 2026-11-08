@@ -18,7 +18,9 @@ import uuid
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.contrib.auth.models import AbstractUser
+from django.test import TestCase, override_settings
+from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from apps.core.services import JobService
@@ -191,6 +193,67 @@ class ServerCalcPluginUnitTests(TestCase):
         self.assertIn("'*'", invoked_args)
         self.assertIn("abcd1234", invoked_args)
 
+    def test_run_remote_calc_verifies_host_key_with_dedicated_known_hosts(
+        self,
+    ) -> None:
+        """SSH verifica la host key (accept-new) con known_hosts dedicado."""
+        fake_completed = subprocess.CompletedProcess(
+            args=["ssh"],
+            returncode=0,
+            stdout=_remote_ok_stdout(),
+            stderr="",
+        )
+        with patch(
+            "apps.server_calc.plugin.subprocess.run",
+            return_value=fake_completed,
+        ) as run_mock:
+            _run_remote_calc(
+                7.0,
+                "*",
+                6.0,
+                "abcd1234",
+                "qta-host",
+                "qta-user",
+                "/tmp/key",
+                25,
+                "/tmp/qta_known_hosts",
+            )
+
+        invoked_args: list[str] = run_mock.call_args[0][0]
+        options = [
+            invoked_args[index + 1]
+            for index, token in enumerate(invoked_args)
+            if token == "-o"
+        ]
+        self.assertIn("StrictHostKeyChecking=accept-new", options)
+        self.assertIn("UserKnownHostsFile=/tmp/qta_known_hosts", options)
+        self.assertIn("BatchMode=yes", options)
+        self.assertIn("IdentitiesOnly=yes", options)
+        self.assertIn("ConnectTimeout=25", options)
+        self.assertFalse(any("StrictHostKeyChecking=no" == opt for opt in options))
+        self.assertFalse(any("/dev/null" in opt for opt in options))
+
+    @override_settings(QTA_SSH_KNOWN_HOSTS_PATH="/tmp/settings_known_hosts")
+    def test_plugin_uses_known_hosts_path_from_settings(self) -> None:
+        """El plugin pasa QTA_SSH_KNOWN_HOSTS_PATH de settings a ssh."""
+        fake_completed = subprocess.CompletedProcess(
+            args=["ssh"],
+            returncode=0,
+            stdout=_remote_ok_stdout(),
+            stderr="",
+        )
+        with patch(
+            "apps.server_calc.plugin.subprocess.run",
+            return_value=fake_completed,
+        ) as run_mock:
+            server_calc_plugin(
+                {"a": 7.0, "op": "*", "b": 6.0}, _silent_progress, _silent_log
+            )
+
+        invoked_args: list[str] = run_mock.call_args[0][0]
+        self.assertIn("UserKnownHostsFile=/tmp/settings_known_hosts", invoked_args)
+        self.assertIn("StrictHostKeyChecking=accept-new", invoked_args)
+
 
 class ServerCalcContractApiTests(TestCase):
     """Valida contrato HTTP y ejecución del plugin Server Calc."""
@@ -353,6 +416,120 @@ class ServerCalcAdminPermissionTests(TestCase):
                 format="json",
             )
         self.assertEqual(response.status_code, 201)
+
+    def _create_response(self, client: APIClient) -> Response:
+        """Intenta crear un job de Server Calc con el cliente dado."""
+        with patch("apps.server_calc.routers.dispatch_scientific_job") as dispatch_mock:
+            dispatch_mock.return_value = True
+            return client.post(
+                APP_API_BASE_PATH,
+                {"version": "1.2.0", "a": 1.0, "op": "+", "b": 2.0},
+                format="json",
+            )
+
+    def _client_for_user(
+        self, *, is_staff: bool = False
+    ) -> tuple[APIClient, AbstractUser]:
+        """Crea usuario (opcionalmente staff) y devuelve cliente autenticado."""
+        user_model = get_user_model()
+        username = f"perm-{uuid.uuid4().hex[:8]}"
+        user = user_model.objects.create_user(
+            username=username,
+            email=f"{username}@example.com",
+            password=None,
+            is_staff=is_staff,
+            is_superuser=False,
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return client, user
+
+    def test_root_superuser_create_is_allowed(self) -> None:
+        """Root (superusuario) recibe 201."""
+        user_model = get_user_model()
+        root = user_model.objects.create_user(
+            username=f"root-{uuid.uuid4().hex[:8]}",
+            email=f"root-{uuid.uuid4().hex[:8]}@example.com",
+            password=None,
+            is_staff=True,
+            is_superuser=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=root)
+        self.assertEqual(self._create_response(client).status_code, 201)
+
+    def test_staff_without_admin_role_is_forbidden(self) -> None:
+        """is_staff sin rol admin ni grupo qta recibe 403 (is_staff no da acceso)."""
+        client, user = self._client_for_user()
+        # Simula que la API de identidad fijó is_staff sin otorgar rol admin:
+        # update() evita el save() que promueve is_staff a rol admin.
+        user_model = get_user_model()
+        user_model.objects.filter(pk=user.pk).update(is_staff=True)
+        user.refresh_from_db()
+        self.assertTrue(user.is_staff)
+        self.assertEqual(self._create_response(client).status_code, 403)
+
+    def test_explicit_admin_role_create_is_allowed(self) -> None:
+        """Usuario con rol admin explícito en el perfil recibe 201."""
+        from apps.core.models import UserIdentityProfile
+
+        client, user = self._client_for_user()
+        UserIdentityProfile.objects.update_or_create(
+            user=user, defaults={"role": "admin"}
+        )
+        self.assertEqual(self._create_response(client).status_code, 201)
+
+    def test_user_without_group_is_forbidden(self) -> None:
+        """Usuario normal sin membresía qta-operators recibe 403."""
+        client, _ = self._client_for_user()
+        self.assertEqual(self._create_response(client).status_code, 403)
+
+    def test_qta_operator_member_create_is_allowed(self) -> None:
+        """Miembro de qta-operators con server-calc habilitado recibe 201."""
+        from apps.core.models import GroupMembership, WorkGroup
+
+        from .bootstrap_qta import ensure_qta_operators_group
+
+        ensure_qta_operators_group()
+        group = WorkGroup.objects.get(slug="qta-operators")
+        client, user = self._client_for_user()
+        GroupMembership.objects.create(
+            user=user, group=group, role_in_group=GroupMembership.ROLE_MEMBER
+        )
+        self.assertEqual(self._create_response(client).status_code, 201)
+
+    def test_qta_operator_with_disabled_permission_is_forbidden(self) -> None:
+        """Miembro de qta-operators sin permiso server-calc habilitado: 403."""
+        from apps.core.models import AppPermission, GroupMembership, WorkGroup
+
+        from .bootstrap_qta import ensure_qta_operators_group
+
+        ensure_qta_operators_group()
+        group = WorkGroup.objects.get(slug="qta-operators")
+        AppPermission.objects.filter(app_name=PLUGIN_NAME, group=group).update(
+            is_enabled=False
+        )
+        client, user = self._client_for_user()
+        GroupMembership.objects.create(
+            user=user, group=group, role_in_group=GroupMembership.ROLE_MEMBER
+        )
+        self.assertEqual(self._create_response(client).status_code, 403)
+
+    def test_non_member_of_other_group_is_forbidden(self) -> None:
+        """Membresía en otro grupo no concede acceso a Server Calc."""
+        from apps.core.models import GroupMembership, WorkGroup
+
+        from .bootstrap_qta import ensure_qta_operators_group
+
+        ensure_qta_operators_group()
+        other_group = WorkGroup.objects.create(
+            name="Otro grupo", slug="otro-grupo-perm-test"
+        )
+        client, user = self._client_for_user()
+        GroupMembership.objects.create(
+            user=user, group=other_group, role_in_group=GroupMembership.ROLE_MEMBER
+        )
+        self.assertEqual(self._create_response(client).status_code, 403)
 
 
 class ServerCalcContractTests(TestCase):

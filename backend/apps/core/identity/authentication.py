@@ -14,6 +14,8 @@ Consideraciones de seguridad:
 
 from __future__ import annotations
 
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.plumbing import build_bearer_security_scheme_object
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -45,3 +47,23 @@ class QueryStringJWTAuthentication(JWTAuthentication):
 
         validated_token: Token = self.get_validated_token(str(raw_token).strip())
         return self.get_user(validated_token), validated_token
+
+
+class QueryStringJWTAuthenticationScheme(OpenApiAuthenticationExtension):
+    """Esquema OpenAPI para `QueryStringJWTAuthentication` (bearer JWT).
+
+    La cabecera `Authorization: Bearer` es el mecanismo principal; el query
+    `?token=` solo aplica a métodos seguros (streams SSE/WebSocket).
+    """
+
+    target_class = "apps.core.identity.authentication.QueryStringJWTAuthentication"
+    name = "QueryStringJWTAuthentication"
+
+    def get_security_definition(self, auto_schema: object) -> dict[str, object]:
+        """Devuelve el esquema bearer JWT equivalente a la cabecera de simplejwt."""
+        del auto_schema
+        return build_bearer_security_scheme_object(
+            header_name="Authorization",
+            token_prefix="Bearer",
+            bearer_format="JWT",
+        )

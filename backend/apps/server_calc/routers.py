@@ -4,7 +4,7 @@ Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
 (retrieve, report-csv, report-log, report-error) y define solo:
 1. create() con validación propia de Server Calc.
 2. build_csv_content() con formato CSV de entradas/salidas del cálculo.
-3. Permiso IsServerCalcAdmin: solo root/admin pueden usar estos endpoints.
+3. Permiso IsServerCalcAdmin: root/admin y miembros de qta-operators con permiso.
 """
 
 from typing import cast
@@ -23,24 +23,35 @@ from apps.core.schemas import ErrorResponseSerializer
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
 
+from .bootstrap_qta import is_qta_operator
 from .definitions import PLUGIN_NAME
 from .schemas import ServerCalcJobCreateSerializer, ServerCalcJobResponseSerializer
 from .types import ServerCalcCalculationResult, ServerCalcJobCreatePayload
 
 
 class IsServerCalcAdmin(BasePermission):
-    """Permite solo a root/admin operar la app Server Calc."""
+    """Permite operar Server Calc a root, admin real o miembros de qta-operators.
 
-    message = "Server Calc está restringido a administradores."
+    Decisión: root (superusuario o rol root) y admin con rol explícito siempre
+    tienen acceso. `is_staff` NO concede acceso: la API de identidad permite
+    fijarlo. Un usuario normal solo lo tiene si es miembro del grupo
+    `qta-operators` y su AppPermission `server-calc` está habilitada (ver
+    `bootstrap_qta.is_qta_operator`). Sin membresía o con el permiso
+    deshabilitado responde 403.
+    """
+
+    message = "Server Calc está restringido a administradores y operadores de qta."
 
     def has_permission(self, request: Request, view: object) -> bool:
-        """Valida rol admin sobre el actor autenticado."""
+        """Valida root/admin explícito o membresía operadora sobre el actor."""
         actor = getattr(request, "user", None)
         if not bool(getattr(actor, "is_authenticated", False)):
             return False
-        return AuthorizationService.is_root(actor) or AuthorizationService.is_admin(
-            actor
-        )
+        if AuthorizationService.is_root(actor):
+            return True
+        if AuthorizationService.has_explicit_admin_role(actor):
+            return True
+        return is_qta_operator(actor)
 
 
 @extend_schema(tags=["ServerCalc"])

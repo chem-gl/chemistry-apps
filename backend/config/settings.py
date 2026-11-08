@@ -271,9 +271,7 @@ REST_FRAMEWORK = {
     ),
     # Cerrado por defecto: solo las rutas públicas explícitas (apps libres,
     # login, refresh y registro) declaran AllowAny. Todo lo demás exige sesión.
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_THROTTLE_RATES": {
         "public-dispatch": PUBLIC_DISPATCH_RATE,
         "public-read": PUBLIC_READ_RATE,
@@ -357,8 +355,8 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "ServerCalc",
             "description": (
-                "Endpoints PoC para suma remota ejecutada en el servidor qta "
-                "vía SSH con fallback local."
+                "Endpoints para cálculo remoto en qta vía SSH "
+                "(sin fallback local); solo administradores."
             ),
         },
         {
@@ -424,13 +422,19 @@ SPECTACULAR_SETTINGS = {
 
 # ---------------------------------------------------------------------------
 # Conexión SSH al servidor remoto qta (app Server Calc, PoC).
-# QTA_SSH_HOST/USER/KEY_PATH/TIMEOUT: destino, usuario, clave y timeout (s).
+# QTA_SSH_HOST/USER/KEY_PATH/KNOWN_HOSTS_PATH/TIMEOUT: destino, usuario, clave,
+# known_hosts dedicado (verificación de host key, StrictHostKeyChecking=accept-new)
+# y timeout (s).
 # ---------------------------------------------------------------------------
 QTA_SSH_HOST: str = os.getenv("QTA_SSH_HOST", "192.168.1.20")
 QTA_SSH_USER: str = os.getenv("QTA_SSH_USER", "chemistry-apps")
 QTA_SSH_KEY_PATH: str = os.getenv(
     "QTA_SSH_KEY_PATH",
     os.path.expanduser("~/.ssh/chemistry-apps_qta_ed25519"),
+)
+QTA_SSH_KNOWN_HOSTS_PATH: str = os.getenv(
+    "QTA_SSH_KNOWN_HOSTS_PATH",
+    os.path.expanduser("~/.ssh/chemistry-apps_qta_known_hosts"),
 )
 QTA_SSH_TIMEOUT: int = _get_env_int("QTA_SSH_TIMEOUT", 25)
 
@@ -499,9 +503,7 @@ ARTIFACT_LARGE_FILE_TTL_DAYS: int = max(
 # ANONYMOUS_MAX_UPLOAD_BYTES / REGISTERED_MAX_UPLOAD_BYTES:
 #   Tope por archivo según el rol del job (10 MB anónimo, 50 MB registrado).
 # ---------------------------------------------------------------------------
-MAX_PARAMETERS_BYTES: int = max(
-    1024, _get_env_int("MAX_PARAMETERS_BYTES", 256 * 1024)
-)
+MAX_PARAMETERS_BYTES: int = max(1024, _get_env_int("MAX_PARAMETERS_BYTES", 256 * 1024))
 DATA_UPLOAD_MAX_MEMORY_SIZE: int = MAX_PARAMETERS_BYTES
 
 ANONYMOUS_MAX_UPLOAD_BYTES: int = max(

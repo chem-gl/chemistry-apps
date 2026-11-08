@@ -76,7 +76,6 @@ source = ["."]
 omit = [
     "*/migrations/*.py",
     "*/management/commands/*.py",
-    "apps/core/declarative_api_usage_examples.py",
     "libs/**",
     "conftest.py",
     ".venv/**",

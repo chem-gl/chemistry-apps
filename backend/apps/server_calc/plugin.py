@@ -40,22 +40,37 @@ SUPPORTED_OPERATORS: tuple[str, ...] = ("+", "-", "*", "/")
 DEFAULT_QTA_SSH_HOST = "192.168.1.20"
 DEFAULT_QTA_SSH_USER = "chemistry-apps"
 DEFAULT_QTA_SSH_KEY_PATH = os.path.expanduser("~/.ssh/chemistry-apps_qta_ed25519")
+DEFAULT_QTA_SSH_KNOWN_HOSTS_PATH = os.path.expanduser(
+    "~/.ssh/chemistry-apps_qta_known_hosts"
+)
 DEFAULT_QTA_SSH_TIMEOUT = 25
 
 
-def _read_ssh_settings() -> tuple[str, str, str, int]:
-    """Lee la configuración SSH desde Django settings con defaults seguros."""
+def _read_ssh_settings() -> tuple[str, str, str, str, int]:
+    """Lee la configuración SSH desde Django settings con defaults seguros.
+
+    Retorna (host, user, key_path, known_hosts_path, timeout_s).
+    """
     host_value: str = str(getattr(settings, "QTA_SSH_HOST", DEFAULT_QTA_SSH_HOST))
     user_value: str = str(getattr(settings, "QTA_SSH_USER", DEFAULT_QTA_SSH_USER))
     key_value: str = str(
         getattr(settings, "QTA_SSH_KEY_PATH", DEFAULT_QTA_SSH_KEY_PATH)
+    )
+    known_hosts_value: str = os.path.expanduser(
+        str(
+            getattr(
+                settings,
+                "QTA_SSH_KNOWN_HOSTS_PATH",
+                DEFAULT_QTA_SSH_KNOWN_HOSTS_PATH,
+            )
+        )
     )
     raw_timeout: object = getattr(settings, "QTA_SSH_TIMEOUT", DEFAULT_QTA_SSH_TIMEOUT)
     try:
         timeout_value: int = int(str(raw_timeout))
     except (TypeError, ValueError):
         timeout_value = DEFAULT_QTA_SSH_TIMEOUT
-    return host_value, user_value, key_value, timeout_value
+    return host_value, user_value, key_value, known_hosts_value, timeout_value
 
 
 def _apply_operator(a: float, op: str, b: float) -> float:
@@ -99,10 +114,15 @@ def _run_remote_calc(
     user: str,
     key_path: str,
     timeout_s: int,
+    known_hosts_path: str = DEFAULT_QTA_SSH_KNOWN_HOSTS_PATH,
 ) -> dict:
     """Ejecuta el cálculo remoto vía SSH y retorna el JSON parseado.
 
     Lanza excepción si el comando falla, expira o la salida no es JSON válido.
+
+    La verificación de la clave del host usa un known_hosts dedicado: la
+    primera conexión registra la clave (accept-new) y las siguientes exigen
+    que coincida; una clave cambiada aborta la conexión (anti-MITM).
 
     Los argumentos del script se citan con shlex.quote porque ssh los
     concatena y el shell remoto los reinterpreta (sin cita, `*` se expandiría
@@ -110,16 +130,16 @@ def _run_remote_calc(
     """
     ssh_command: list[str] = [
         "ssh",
+        "-o",
+        "IdentitiesOnly=yes",
         "-i",
         key_path,
         "-o",
         "BatchMode=yes",
         "-o",
-        "StrictHostKeyChecking=no",
+        "StrictHostKeyChecking=accept-new",
         "-o",
-        "UserKnownHostsFile=/dev/null",
-        "-o",
-        "GlobalKnownHostsFile=/dev/null",
+        f"UserKnownHostsFile={known_hosts_path}",
         "-o",
         f"ConnectTimeout={timeout_s}",
         f"{user}@{host}",
@@ -182,7 +202,7 @@ def server_calc_plugin(
         {"a": a_value, "op": op_value, "b": b_value},
     )
 
-    host, user, key_path, timeout_s = _read_ssh_settings()
+    host, user, key_path, known_hosts_path, timeout_s = _read_ssh_settings()
     raw_job_id: object = parameters.get("job_id", "local")
     job_label: str = str(raw_job_id)[:8] if str(raw_job_id).strip() != "" else "local"
 
@@ -190,7 +210,15 @@ def server_calc_plugin(
 
     try:
         remote_payload: dict = _run_remote_calc(
-            a_value, op_value, b_value, job_label, host, user, key_path, timeout_s
+            a_value,
+            op_value,
+            b_value,
+            job_label,
+            host,
+            user,
+            key_path,
+            timeout_s,
+            known_hosts_path,
         )
     except Exception as exc:
         emit_log(

@@ -14,8 +14,8 @@ Uso esperado:
 
     # Crear y ejecutar job de forma no-wait (recomendado)
     submit_result = api.submit_job(
-        plugin="calculator",
-        parameters={"op": "add", "a": 2.0, "b": 3.0},
+        plugin="molar-fractions",
+        parameters={"pKa": 4.76, "pH": 7.0},
     ).run()
 
     if submit_result.is_success():
