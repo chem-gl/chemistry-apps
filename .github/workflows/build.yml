@@ -29,7 +29,11 @@ on:
     # BACKEND_PUBLIC_URL se lee como vars.BACKEND_PUBLIC_URL.
 
 env:
-  DEPLOY_COMPOSE_FILE: docker-compose.yml
+  # Stack VIVO de producción: `docker-compose.libres.yml` (apps.agalano.com).
+  # `docker-compose.yml` es el stack retirado (apps.guzman-lopez.com) y ya no
+  # lo despliega nadie: publicarlo como asset de la release inducía a desplegar
+  # una pila muerta.
+  DEPLOY_COMPOSE_FILE: docker-compose.libres.yml
   DEPLOY_BUNDLE_PREFIX: chemistry-apps
 
 jobs:
