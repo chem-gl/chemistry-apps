@@ -31,6 +31,8 @@ backend/
     smileit/             # Generación combinatoria SMILES
     sa_score/            # Synthetic Accessibility Score
     toxicity_properties/ # Predicciones ADMET-AI
+    cadma_py/            # Ranking de compuestos (CADMA Py)
+    server_calc/         # Calculadora remota en qta vía SSH (root/admin/qta-operators)
   config/                # settings.py, urls.py, celery.py, asgi.py
   libs/                  # Librerías compartidas entre apps
 frontend/
