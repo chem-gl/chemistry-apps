@@ -51,15 +51,18 @@ FROM base AS deps-prod
 #   1. poetry instala solo main (Django, DRF, celery, rdkit, etc.)
 #   2. pip instala torch CPU-only desde el indice oficial de PyTorch
 #   3. pip instala admet-ai y sus dependencias (usa el torch CPU ya instalado)
+# El pin de admet-ai debe coincidir con backend/pyproject.toml
+# ([tool.poetry.group.scientific] admet_ai = "2.0.1"): sin él, una versión
+# nueva entraría en producción sin tocar el repo.
 RUN poetry install --only main --no-root --no-ansi \
     && pip install torch --index-url https://download.pytorch.org/whl/cpu \
-    && pip install admet-ai \
+    && pip install admet-ai==2.0.1 \
     && python -c "import torch; assert not torch.cuda.is_available(); print('CPU-only OK:', torch.__version__)"
 
 FROM base AS deps-dev
 RUN poetry install --with dev --no-root --no-ansi \
     && pip install torch --index-url https://download.pytorch.org/whl/cpu \
-    && pip install admet-ai
+    && pip install admet-ai==2.0.1
 
 FROM deps-dev AS dev
 
