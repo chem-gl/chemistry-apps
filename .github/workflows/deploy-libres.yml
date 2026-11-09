@@ -2,15 +2,34 @@
 #
 # Despliegue de PRODUCCIÓN: https://apps.agalano.com, servido por el stack
 # Docker Compose aislado (`docker-compose.libres.yml` en
-# `/home/deploy/chemistry-apps-libres`) con el modo libre activo.
+# `/home/deploy/chemistry-apps-libres`). El modo libre es un interruptor
+# (`OPEN_MODE_ENABLED`): hoy está CERRADO por `vars.LIBRES_OPEN_MODE_ENABLED=0`
+# desde 2026-09-26, así que el sitio sirve catálogo público en solo lectura.
+# El default es 0 también en `docker-compose.libres.yml` y en el `.env` que se
+# genera aquí: sin la variable del repo el sitio no queda abierto (fail-closed).
 #
-# Autónomo a propósito: NO reutiliza `deploy.yml`, asociado al stack antiguo
-# (`apps.guzman-lopez.com` / `back-apps.guzman-lopez.com`), retirado el
-# 2026-09-25. Construye el bundle con `git archive` del commit que se empuja
-# y despliega en su propio directorio.
+# Autónomo a propósito: no comparte pasos ni vars con `ci-deploy.yml`. El
+# antiguo workflow reutilizable `deploy.yml` (asociado al stack retirado el
+# 2026-09-25) se eliminó del repo el 2026-11-08; este archivo nunca lo usó.
+# Construye el bundle con `git archive` del commit que se empuja y despliega en
+# su propio directorio.
 #
 # Triggers: push a `main` publica producción; también puede lanzarse a mano
 # con workflow_dispatch.
+#
+# GATE DE CI: `push` a main dispara en paralelo "CI / CD" (`ci-deploy.yml`) y
+# este despliegue. El primer paso ("Wait for CI on this commit") bloquea hasta
+# que el run de CI / CD sobre EL MISMO commit termine en `success`; si falla,
+# se cancela o no aparece en el plazo límite, aborta sin tocar el host. No se
+# usa `needs:` porque los workflows de distintos trigger no pueden encadenarse
+# sin `workflow_run`, y eso reordenaría los runs: consultar la API de Actions
+# mantiene ambos workflows desacoplados y aun así es imposible desplegar un
+# main roto.
+#
+# `workflow_dispatch` acepta el input booleano `skip_ci_wait` (default false):
+# OMITE el gate y despliega el commit tal cual. Solo para emergencias (p. ej.
+# runner de CI caído con un hotfix ya validado a mano); deja un warning
+# visible en el log del run.
 
 name: Deploy production apps.agalano.com
 
@@ -24,12 +43,26 @@ on:
       - 'docs/**'
       - 'research/**'
       - '.github/instructions/**'
-  workflow_dispatch: {}
+      # Stack retirado (apps.guzman-lopez.com): tocarlo no debe desplegar
+      # producción. El stack vivo es `docker-compose.libres.yml`.
+      - 'docker-compose.yml'
+  workflow_dispatch:
+    inputs:
+      skip_ci_wait:
+        description: 'EMERGENCIA: despliega sin esperar el gate de CI / CD del commit'
+        type: boolean
+        default: false
 
 # Un despliegue a la vez sobre el mismo stack; nunca se interrumpe a la mitad.
 concurrency:
   group: apps-libres-deploy
   cancel-in-progress: false
+
+# `actions: read` = consultar los runs de CI / CD del commit (gate).
+# `contents: read` = checkout + `git archive` del bundle. Nada más se escribe.
+permissions:
+  contents: read
+  actions: read
 
 env:
   LIBRES_COMPOSE_FILE: docker-compose.libres.yml
@@ -38,12 +71,94 @@ env:
   LIBRES_STAGING_DIR: /tmp/apps-libres-deploy-${{ github.run_id }}-${{ github.run_attempt }}
   # Guarda de disco: el host tiene ~41 GB libres e imágenes de 10-17 GB.
   LIBRES_MIN_FREE_GB: "15"
+  # Gate de CI: workflow a vigilar (por ruta; el nombre "CI / CD" coincide con
+  # `gh api repos/<repo>/actions/workflows --jq '.workflows[]|{name,path}'`) y
+  # plazo máximo. Los runs de CI / CD duran 2-6 min con cachés tibios; 1800 s
+  # cubre un build Docker de backend en runner frío sin bloquear el deploy.
+  LIBRES_CI_WORKFLOW_FILE: ci-deploy.yml
+  LIBRES_CI_WAIT_TIMEOUT_SECONDS: "1800"
+  LIBRES_CI_WAIT_POLL_SECONDS: "20"
 
 jobs:
   deploy:
     name: Deploy open mode site
     runs-on: ubuntu-latest
     steps:
+      # GATE DE CI (ver comentario del trigger): primer paso, falla antes de
+      # leer secrets, construir el bundle o tocar el host.
+      - name: Wait for CI on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_HEAD_SHA: ${{ github.sha }}
+          CI_WORKFLOW_FILE: ${{ env.LIBRES_CI_WORKFLOW_FILE }}
+          CI_TIMEOUT_SECONDS: ${{ env.LIBRES_CI_WAIT_TIMEOUT_SECONDS }}
+          CI_POLL_SECONDS: ${{ env.LIBRES_CI_WAIT_POLL_SECONDS }}
+          SKIP_CI_WAIT: ${{ inputs.skip_ci_wait }}
+        run: |
+          set -uo pipefail
+
+          if [ "${SKIP_CI_WAIT:-}" = "true" ]; then
+            echo "::warning::skip_ci_wait=true: se omite el gate de CI / CD (despliegue de emergencia)."
+            exit 0
+          fi
+
+          SHA="${CI_HEAD_SHA:?commit sin SHA: no se puede validar su CI}"
+          QUERY="repos/${GITHUB_REPOSITORY}/actions/workflows/${CI_WORKFLOW_FILE}/runs?head_sha=${SHA}&per_page=100"
+          # Una sola línea: status|conclusion|html_url del run automático más
+          # nuevo de este commit. `sort_by(.run_id)` escoge el re-intento más
+          # reciente; los runs lanzados a mano (workflow_dispatch) no certifican
+          # este push, así que solo cuentan push y pull_request. Si no hay runs,
+          # la expresión devuelve "pending".
+          JQ_PROG='[.workflow_runs[]
+            | select(.event == "push" or .event == "pull_request")]
+            | sort_by(.run_id)
+            | map([.status, (.conclusion // "-"), .html_url] | join("|"))
+            | .[-1] // "pending|-|-"'
+          deadline=$(( $(date +%s) + CI_TIMEOUT_SECONDS ))
+
+          echo "Esperando el run de CI / CD (${CI_WORKFLOW_FILE}) de ${SHA}."
+          echo "Timeout: ${CI_TIMEOUT_SECONDS}s | Sondeo: cada ${CI_POLL_SECONDS}s"
+
+          while :; do
+            # `gh api` sale con código != 0 ante errores HTTP por sí solo; NO
+            # usar `--exit-status` (ese flag no existe en todas las versiones
+            # del CLI y rompería el paso con "unknown flag").
+            if ! row="$(timeout 30 gh api --jq "$JQ_PROG" "$QUERY" 2>&1)"; then
+              if printf '%s' "$row" | grep -qiE 'HTTP 404|Not Found'; then
+                echo "::error::No se encontró el workflow ${CI_WORKFLOW_FILE} en ${GITHUB_REPOSITORY}: el gate no puede validarse."
+                exit 1
+              fi
+              echo "AVISO: API de Actions no disponible ($(printf '%s' "$row" | tr '\n' ' ' | tr -d '\r')); reintentando."
+              row=""
+            fi
+
+            if printf '%s' "$row" | grep -q '|'; then
+              status="${row%%|*}"
+              rest="${row#*|}"
+              conclusion="${rest%%|*}"
+              url="${rest#*|}"
+              echo "  status=${status} conclusion=${conclusion} ${url}"
+              if [ "$status" = "completed" ]; then
+                if [ "$conclusion" = "success" ]; then
+                  echo "Gate OK: CI / CD pasó en ${SHA}; se puede desplegar."
+                  exit 0
+                fi
+                # failure, cancelled, timed_out, action_required, stale: nada
+                # de esto es código verificado, así que no se publica.
+                echo "::error::CI / CD terminó con '${conclusion}' en ${SHA}; el despliegue se aborta. ${url}"
+                exit 1
+              fi
+            else
+              echo "  (sin run de CI / CD terminado para este commit; esperando)"
+            fi
+
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::CI / CD no completó en ${CI_TIMEOUT_SECONDS}s para ${SHA}; el despliegue se aborta."
+              exit 1
+            fi
+            sleep "${CI_POLL_SECONDS}"
+          done
+
       - name: Validate required config (vars + secrets)
         env:
           _PROJECT_PATH: ${{ vars.LIBRES_VM_PROJECT_PATH }}
@@ -88,6 +203,9 @@ jobs:
           ANONYMOUS_MAX_CONCURRENT_JOBS: ${{ vars.LIBRES_ANONYMOUS_MAX_CONCURRENT_JOBS }}
           OPEN_MODE_ENABLED: ${{ vars.LIBRES_OPEN_MODE_ENABLED }}
           GOOGLE_CLIENT_ID: ${{ vars.LIBRES_GOOGLE_CLIENT_ID }}
+          # Vacío = el worker usa el default de docker-compose.libres.yml
+          # (known_hosts persistente en /app/media/runtime-tools).
+          QTA_SSH_KNOWN_HOSTS_PATH: ${{ vars.LIBRES_QTA_SSH_KNOWN_HOSTS_PATH }}
           BACKEND_INTERNAL_PORT: ${{ vars.LIBRES_EXTERNAL_BACKEND_PORT }}
           FRONTEND_INTERNAL_PORT: ${{ vars.LIBRES_EXTERNAL_FRONTEND_PORT }}
           IMAGE_TAG: ${{ github.sha }}
@@ -112,15 +230,24 @@ jobs:
           BACKEND_INTERNAL_PORT=${BACKEND_INTERNAL_PORT:-8090}
           FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT:-4220}
           PUBLIC_DISPATCH_RATE=${PUBLIC_DISPATCH_RATE:-60/hour}
-          PUBLIC_READ_RATE=${PUBLIC_READ_RATE:-120/hour}
+          # 600/h: coincide con el default de settings.py. Los 120/h antiguos
+          # agotaban la cuota en aulas y redes NAT (varias personas comparten
+          # la misma IP).
+          PUBLIC_READ_RATE=${PUBLIC_READ_RATE:-600/hour}
           ANONYMOUS_JOB_TTL_HOURS=${ANONYMOUS_JOB_TTL_HOURS:-24}
           SHARED_CACHE_TTL_DAYS=${SHARED_CACHE_TTL_DAYS:-7}
           ANONYMOUS_MAX_CONCURRENT_JOBS=${ANONYMOUS_MAX_CONCURRENT_JOBS:-2}
-          OPEN_MODE_ENABLED=${OPEN_MODE_ENABLED:-1}
+          # Fail-closed: si la variable del repo falta, el modo libre queda
+          # CERRADO (es el estado intencional desde 2026-09-26).
+          OPEN_MODE_ENABLED=${OPEN_MODE_ENABLED:-0}
           # Vacío = login con Google deshabilitado (ver /api/auth/providers/).
           GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
           CELERY_HEAVY_PLUGINS=toxicity-properties
           CELERY_HEAVY_QUEUE=heavy
+          # Server Calc: archivo known_hosts para Host Key Checking dentro de los
+          # workers Celery. Vacío = default del compose (ruta persistente en
+          # /app/media/runtime-tools); HOME=/app no tiene /app/.ssh escribible.
+          QTA_SSH_KNOWN_HOSTS_PATH=${QTA_SSH_KNOWN_HOSTS_PATH:-}
           DEFAULT_REGISTRATION_GROUP_SLUG=abierto
           IMAGE_TAG=${IMAGE_TAG}
           IMAGE_TAG_BACKEND=${IMAGE_TAG}

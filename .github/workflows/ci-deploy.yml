@@ -9,7 +9,8 @@ on:
       - main
       - dev
       # Este workflow solo valida (tests y build); el despliegue de
-      # producción lo hace `deploy-libres.yml`.
+      # producción lo hace `deploy-libres.yml`, que espera la conclusión
+      # exitosa del run de este workflow sobre el mismo commit.
   workflow_dispatch: {}
 
 jobs:
@@ -48,28 +49,40 @@ jobs:
   tests:
     name: Backend tests
     runs-on: ubuntu-latest
-    # Cancela tests obsoletos si llega otro push a dev. NUNCA toca main:
-    # en main/PRs este job ni siquiera existe (if) y el deploy no participa.
+    # Gate de lo que se publica: la suite corre en cada push a main, cada push
+    # a dev y cada PR hacia main. En main no se cancela a media corrida: un run
+    # cancelado dejaría el commit sin validar y bloquearía su despliegue
+    # (`deploy-libres.yml` espera la conclusión del run de este commit).
     concurrency:
       group: ci-tests-${{ github.ref }}
-      cancel-in-progress: true
-    # Los tests corren en push a dev; en main y PRs ya debieron pasar en dev.
-    # El frontend se valida compilando su imagen Docker en el job Build
-    # (evita `npm ci` + `npm run build` duplicados).
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    # El resto del frontend se valida compilando su imagen Docker en el job
+    # Build (evita `npm ci` + `npm run build` duplicados); los catálogos i18n se
+    # validan aparte en el job `i18n`, porque la imagen compila aunque el JSON
+    # esté roto (son assets estáticos).
     needs: [changes]
     if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/dev' &&
-      needs.changes.outputs.backend == 'true'
+      needs.changes.outputs.backend == 'true' &&
+      (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) ||
+        github.event_name == 'pull_request'
+      )
+
+    env:
+      # Fuente única de la versión de Python del job. Un anchor YAML (`&x`) no
+      # se puede interpolar dentro de `${{ ... }}`, así que la comparten
+      # `setup-python` y la clave del caché vía `env` (actionlint exige que todo
+      # anchor definido se use; sin esto quedaba muerto en el archivo).
+      PYTHON_VERSION: "3.12"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Python 3.12
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v6
         with:
-          python-version: &python_version "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: backend/poetry.lock
 
@@ -79,7 +92,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: backend/.venv
-          key: poetry-venv-${{ runner.os }}-3.12-${{ hashFiles('backend/poetry.lock') }}
+          key: poetry-venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/poetry.lock') }}
 
       - name: Install backend deps
         working-directory: backend
@@ -90,32 +103,165 @@ jobs:
           poetry env use python
           poetry install --with dev --no-interaction --no-ansi
 
-      - name: Run backend tests
+      - name: Run backend tests with coverage gate
         working-directory: backend
         env:
+          # Sin broker/worker: la suite no encola jobs reales en Celery.
           JOB_DISPATCH_ENABLED: "0"
-        run: poetry run python manage.py test
+        # `manage.py test` no instrumenta nada: el `fail_under = 91` de
+        # backend/pyproject.toml ([tool.coverage.report]) solo se aplica cuando
+        # `coverage` envuelve la suite (antes, en CI, nunca se aplicaba). Con
+        # `coverage run` + `coverage report`, un total por debajo del umbral
+        # sale con código != 0 y tumba el job — igual que en local con
+        # `scripts/generate_sonar_coverage.sh`. `--source=.` y los `omit`
+        # (migraciones, management/commands, libs/, .venv/, manage.py, config/)
+        # se resuelven desde `backend/`, el mismo layout del runner.
+        run: |
+          poetry run coverage run --source=. manage.py test
+          poetry run coverage report
+
+  i18n:
+    name: i18n catalogs
+    runs-on: ubuntu-latest
+    # Regresión real (2026-11-08): escrituras concurrentes dejaron `de.json` y
+    # `ru.json` con JSON inválido. Transloco no puede cargar el catálogo, la app
+    # cae a inglés con error de consola y NADA en CI lo detectaba: la imagen
+    # Docker del frontend compila igual (los JSON son assets estáticos) y no hay
+    # job de `ng test` en este workflow. Gate barato: parsear los 8 catálogos y
+    # exigir el mismo conjunto de claves hoja que `en.json`.
+    # La paridad de placeholders (`{{name}}` compacto) y el recuento base los
+    # cubre `frontend/src/app/core/i18n/i18n-catalog-parity.spec.ts` en
+    # `npx ng test --watch=false` (local / `scripts/generate_sonar_coverage.sh`).
+    needs: [changes]
+    if: |
+      needs.changes.outputs.frontend == 'true' &&
+      (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) ||
+        github.event_name == 'pull_request'
+      )
+    concurrency:
+      group: ci-i18n-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate catalogs (JSON válido + paridad con en.json)
+        env:
+          I18N_DIR: frontend/public/i18n
+        # `python3` viene instalado en ubuntu-latest; no se toca npm ni el
+        # `package-lock.json`, así que el paso cuesta ~2 s. Herencia de claves
+        # (dict anidado + arrays indexados) igual que el spec de paridad.
+        run: |
+          python3 - "$I18N_DIR" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          CATALOG_DIR = pathlib.Path(sys.argv[1])
+          # Los idiomas se descubren leyendo el directorio (evita una lista
+          # hardcodeada que se desincroniza al añadir un catálogo). El conjunto
+          # esperado lo valida `i18n-catalog-parity.spec.ts` contra
+          # SUPPORTED_LANGUAGE_CODES; aquí basta JSON válido + paridad de claves.
+          LANGUAGES = sorted(path.stem for path in CATALOG_DIR.glob("*.json"))
+          if not LANGUAGES:
+              print(f"::error:: no hay catálogos i18n en {CATALOG_DIR}")
+              sys.exit(1)
+
+          def leaf_paths(node, prefix=""):
+              """Rutas de las hojas string del catálogo (`a.b[0].c`)."""
+              if isinstance(node, str):
+                  return {prefix} if prefix else set()
+              if isinstance(node, list):
+                  found = set()
+                  for index, item in enumerate(node):
+                      found |= leaf_paths(item, f"{prefix}[{index}]")
+                  return found
+              if isinstance(node, dict):
+                  found = set()
+                  for key, value in node.items():
+                      found |= leaf_paths(value, f"{prefix}.{key}" if prefix else key)
+                  return found
+              return set()
+
+          problems = []
+          catalogs = {}
+          for language in LANGUAGES:
+              path = CATALOG_DIR / f"{language}.json"
+              if not path.is_file():
+                  problems.append(f"{language}.json: archivo ausente en {CATALOG_DIR}")
+                  continue
+              try:
+                  catalogs[language] = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError as error:
+                  problems.append(
+                      f"{language}.json: JSON inválido en línea {error.lineno} "
+                      f"columna {error.colno} ({error.msg})"
+                  )
+
+          if problems or "en" not in catalogs:
+              for problem in problems:
+                  print(f"::error:: {problem}")
+              sys.exit(1)
+
+          reference = leaf_paths(catalogs["en"])
+          print(f"en.json: {len(reference)} claves hoja (referencia).")
+
+          for language in LANGUAGES:
+              if language == "en" or language not in catalogs:
+                  continue
+              keys = leaf_paths(catalogs[language])
+              missing = sorted(reference - keys)
+              extra = sorted(keys - reference)
+              if not missing and not extra:
+                  print(f"{language}.json: OK ({len(keys)} claves).")
+                  continue
+              if missing:
+                  print(f"::error:: {language}.json pierde {len(missing)} claves de en.json.")
+                  for key in missing[:20]:
+                      print(f"  - {key}")
+              if extra:
+                  print(f"::error:: {language}.json declara {len(extra)} claves ajenas a en.json.")
+                  for key in extra[:20]:
+                      print(f"  + {key}")
+              sys.exit(1)
+          PY
 
   build:
     name: Build reusable workflow
-    # Corre en dev, main y PRs; acepta tests skipped.
+    # Corre en dev, main y PRs. Exige tests en `success` siempre que el cambio
+    # toca backend: un `skipped` de tests solo se acepta cuando NO toca backend
+    # (solo frontend/docs). Así el build y el release quedan imposibles si la
+    # suite falla, se cancela o ni siquiera se ejecutó sobre código backend.
+    # Mismo criterio con `i18n` cuando el cambio toca frontend: un catálogo
+    # roto no se empaqueta en imagen ni en release.
     if: |
       always() &&
-      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
       needs.changes.result == 'success' &&
+      (
+        needs.tests.result == 'success' ||
+        (needs.tests.result == 'skipped' && needs.changes.outputs.backend != 'true')
+      ) &&
+      (
+        needs.i18n.result == 'success' ||
+        (needs.i18n.result == 'skipped' && needs.changes.outputs.frontend != 'true')
+      ) &&
       (
         github.event_name == 'pull_request' ||
         github.ref == 'refs/heads/main' ||
         github.ref == 'refs/heads/dev'
       )
-    needs: [changes, tests]
+    needs: [changes, tests, i18n]
     permissions:
       contents: write
       # El workflow llamado (build.yml) pide `actions: write` para el caché
       # de capas Docker: el caller debe otorgarlo o el run muere en arranque.
       actions: write
-    # Cancela builds obsoletos ante un nuevo push (el deploy, job aparte
-    # sin concurrency, jamás se interrumpe una vez en curso).
+    # Cancela builds obsoletos ante un nuevo push: si un commit queda anulado en
+    # main, su run de CI / CD termina `cancelled` y el gate de
+    # `deploy-libres.yml` se niega a desplegarlo (solo se publica el commit cuyo
+    # CI llegó a término). El despliegue en sí es un workflow aparte, sin
+    # `cancel-in-progress`, y nunca se interrumpe a la mitad.
     concurrency:
       group: ci-build-${{ github.ref }}
       cancel-in-progress: true
@@ -126,39 +272,55 @@ jobs:
       rebuild_frontend: ${{ needs.changes.outputs.frontend == 'true' }}
     secrets: inherit
 
-  # El stack antiguo (apps.guzman-lopez.com / back-apps.guzman-lopez.com,
-  # `docker-compose.yml` en /home/deploy/chemistry-apps) fue retirado el
-  # 2026-09-25. La producción es https://apps.agalano.com y la despliega
-  # `.github/workflows/deploy-libres.yml`. Se conserva el job documentado y
-  # desactivado de forma permanente con una condición imposible (`if: false`)
-  # para que el historial de CI deje constancia del retiro.
-  deploy:
-    name: Deploy reusable workflow (LEGADO RETIRADO — nunca corre)
-    if: false
-    needs: [build, changes]
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
-    uses: ./.github/workflows/deploy.yml
-    with:
-      image_tag: ${{ needs.build.outputs.image_tag }}
-      rebuild_backend: ${{ needs.changes.outputs.backend == 'true' }}
-      rebuild_frontend: ${{ needs.changes.outputs.frontend == 'true' }}
-    secrets: inherit
+  # El job `deploy` (stack antiguo apps.guzman-lopez.com /
+  # back-apps.guzman-lopez.com, `docker-compose.yml`) y su workflow reutilizable
+  # `.github/workflows/deploy.yml` se eliminaron el 2026-11-08. Ambos estaban
+  # retirados desde el 2026-09-25 (`if: false`): el código muerto solo confundía.
+  # La producción es https://apps.agalano.com y la despliega
+  # `.github/workflows/deploy-libres.yml`, que se apoya en el job `ci-check` de
+  # este workflow como punto único de verdad. El historial de GitHub conserva los
+  # runs antiguos de "Reusable Deploy".
 
   ci-check:
     name: CI checks
+    # Punto único de verdad del pipeline: `deploy-libres.yml` consulta la
+    # conclusión del run de este workflow, así que cualquier job omitido por
+    # error tiene que fallar aquí.
     if: always()
-    needs: [changes, tests, build]
+    needs: [changes, tests, i18n, build]
     runs-on: ubuntu-latest
+    env:
+      CHANGES_RESULT: ${{ needs.changes.result }}
+      TESTS_RESULT: ${{ needs.tests.result }}
+      I18N_RESULT: ${{ needs.i18n.result }}
+      BUILD_RESULT: ${{ needs.build.result }}
+      BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
+      FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
     steps:
       - name: All applicable checks passed
         run: |
           fail=0
-          [ "${{ needs.changes.result }}" = "success" ] || { echo "ERROR: detección de cambios falló."; fail=1; }
-          if [ "${{ needs.tests.result }}" != "success" ] && [ "${{ needs.tests.result }}" != "skipped" ]; then
-            echo "ERROR: tests fallaron (${{ needs.tests.result }})."; fail=1
+          [ "$CHANGES_RESULT" = "success" ] || { echo "ERROR: detección de cambios falló ($CHANGES_RESULT)."; fail=1; }
+
+          # Mismo criterio que el job Build: tests son obligatorios cuando el
+          # cambio toca backend; `skipped` solo se acepta si NO toca backend.
+          if [ "$TESTS_RESULT" = "success" ]; then
+            echo "Backend validado por la suite."
+          elif [ "$TESTS_RESULT" = "skipped" ] && [ "$BACKEND_CHANGED" != "true" ]; then
+            echo "Tests omitidos: el cambio no toca backend."
+          else
+            echo "ERROR: backend sin validar (tests=$TESTS_RESULT, changes.backend=$BACKEND_CHANGED)."; fail=1
           fi
-          [ "${{ needs.build.result }}" = "success" ] || { echo "ERROR: build falló (${{ needs.build.result }})."; fail=1; }
+
+          # Mismo criterio para los catálogos i18n: obligatorios si toca frontend.
+          if [ "$I18N_RESULT" = "success" ]; then
+            echo "Catálogos i18n validados."
+          elif [ "$I18N_RESULT" = "skipped" ] && [ "$FRONTEND_CHANGED" != "true" ]; then
+            echo "Validación i18n omitida: el cambio no toca frontend."
+          else
+            echo "ERROR: i18n sin validar (i18n=$I18N_RESULT, changes.frontend=$FRONTEND_CHANGED)."; fail=1
+          fi
+
+          [ "$BUILD_RESULT" = "success" ] || { echo "ERROR: build falló ($BUILD_RESULT)."; fail=1; }
           [ "$fail" -eq 0 ] || exit 1
           echo "CI completado; los jobs no afectados fueron omitidos."
