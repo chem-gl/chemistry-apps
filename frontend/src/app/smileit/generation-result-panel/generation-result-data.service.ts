@@ -3,7 +3,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import JSZip from 'jszip';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { JobsApiService, SmileitDerivationPageItemView } from '../../core/api/jobs-api.service';
 import {
   SmileitGeneratedStructureView,
@@ -26,6 +26,9 @@ export class GenerationResultDataService implements OnDestroy {
   /** SVGs pendientes de publicar en la signal, indexados por structureIndex. */
   private readonly pendingThumbnailSvgs = new Map<number, string>();
   private thumbnailFlushTimeout: ReturnType<typeof setTimeout> | null = null;
+  /** Peticiones de thumbnail en vuelo, para cortarlas al destruir el panel. */
+  private readonly thumbnailSubscription = new Subscription();
+  private isDestroyed = false;
 
   readonly isGeneratedStructuresCollapsed = signal<boolean>(true);
   readonly visibleStructuresCount = signal<number>(100);
@@ -79,6 +82,8 @@ export class GenerationResultDataService implements OnDestroy {
   );
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
+    this.thumbnailSubscription.unsubscribe();
     this.visibleStructuresResetEffect.destroy();
     if (this.thumbnailFlushTimeout !== null) {
       clearTimeout(this.thumbnailFlushTimeout);
@@ -407,26 +412,35 @@ export class GenerationResultDataService implements OnDestroy {
         return;
       }
 
-      this.jobsApiService
-        .getSmileitDerivationSvg(currentJobId, structureItem.structureIndex, 'thumb')
-        .subscribe({
-          next: (svgMarkup: string) => {
-            this.storeSvgInSessionCache(
-              currentJobId,
-              structureItem.structureIndex!,
-              'thumb',
-              svgMarkup,
-            );
-            this.patchLoadedStructureSvg(structureItem.structureIndex!, svgMarkup);
-          },
-          error: () => {
-            // Mantener tarjeta usable sin bloquear UX si un thumbnail puntual falla.
-          },
-        });
+      const structureIndex = structureItem.structureIndex;
+      this.thumbnailSubscription.add(
+        this.jobsApiService
+          .getSmileitDerivationSvg(currentJobId, structureIndex, 'thumb')
+          .subscribe({
+            next: (svgMarkup: string) => {
+              // La respuesta puede llegar después de que el usuario cambie de
+              // job o cierre el panel. Sin este filtro se escribiría el SVG de
+              // un job en la tarjeta del mismo índice de otro job (los índices
+              // son relativos a cada job) y se programaría un timer tras la
+              // destrucción del componente.
+              if (this.isDestroyed || this.workflow.currentJobId() !== currentJobId) {
+                return;
+              }
+              this.storeSvgInSessionCache(currentJobId, structureIndex, 'thumb', svgMarkup);
+              this.patchLoadedStructureSvg(structureIndex, svgMarkup);
+            },
+            error: () => {
+              // Mantener tarjeta usable sin bloquear UX si un thumbnail puntual falla.
+            },
+          }),
+      );
     });
   }
 
   private patchLoadedStructureSvg(structureIndex: number, svgMarkup: string): void {
+    if (this.isDestroyed) {
+      return;
+    }
     // Los thumbnails llegan de golpe (hasta 100 GET en paralelo). Escribir la
     // signal por cada respuesta disparaba 100 pasadas de change detection sobre
     // las 100 tarjetas; agrupando ~40 ms las respuestas se aplican en 1-3
