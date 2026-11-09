@@ -260,6 +260,24 @@ Registrar en:
 
 ---
 
+## CI/CD
+
+- `ci-deploy.yml` ("CI / CD") es el gate único: jobs `changes` → `tests` (backend +
+  cobertura ≥91%), `i18n` (catálogos), `frontend` (`npm run build` + `ng test`, Node
+  siguiendo `frontend/Dockerfile`) → `build` (workflow reutilizable) → `ci-check`.
+  Un job que falla **o queda sin correr** sobre código afectado rompe el gate.
+- `build.yml` compila y valida las imágenes Docker y crea la release con el bundle
+  `git archive` + `docker-compose.libres.yml` (el único stack vivo).
+- `deploy-libres.yml` **espera** el run "CI / CD" del mismo SHA (máx. 30 min) antes de
+  desplegar: si está `failure`/`cancelled`/`timed_out` o no aparece, aborta. Solo
+  `workflow_dispatch` con `skip_ci_wait=true` lo bypasea.
+- El modo libre (`/api/public/*`) está **cerrado por default en el código**
+  (`OPEN_MODE_ENABLED=False`): se abre explícitamente con `OPEN_MODE_ENABLED=1|True`
+  (`backend/.env` en dev). Los tests que lo ejercitan deben poner
+  `@override_settings(OPEN_MODE_ENABLED=True)`.
+
+---
+
 ## Comandos de referencia
 
 ```bash
@@ -296,7 +314,7 @@ cd frontend && npm run api:generate
 - Project key: `chemistry-apps`
 - Para cobertura real, generar reportes antes del scan: `bash scripts/generate_sonar_coverage.sh`
 - Cobertura local 2026-11-09: backend 95% (`backend/coverage.xml`, line-rate 0.9453, gate `fail_under=91`) con `ruff.json` 0 issues (SARIF: 1 run, 0 vulnerabilidades); frontend 85.2% lcov (`frontend/coverage/frontend/lcov-sonar.info`, 176 entradas SF: 137 de código + 39 e2e) con `eslint.json` 0 errores / 0 warnings
-- Suites 2026-11-09: backend 1288 tests OK (`skipped=1`); frontend `ng test` 1190 tests / 92 archivos
+- Suites 2026-11-09: backend 1290 tests OK (`skipped=1`); frontend `ng test` 1190 tests / 92 archivos (ambas en CI: jobs `tests` y `frontend`)
 - Sonar server 2026-11-09: coverage global 84.7% (line 88.4%, branch 76.4%), quality gate OK (new_coverage 82.1 ≥ 80, 0 violations, duplicación nueva 0.67%, hotspots revisados 100%), bugs 0, vulns 0, smells 0, hotspots 0, duplicación global 0.7%
 - Escáner: el CLI local `/opt/sonar-scanner` (5.0.1.3006) recorre todo el repo y aborta con `java.nio.file.AccessDeniedException` en `.docker/dev/redis/appendonlydir` (volumen del Redis de dev: uid 999, modo 700); `sonar.exclusions` no lo evita y `sonar.scanner.scanAll=false` (ya en `sonar-project.properties`) no lo respeta esa versión → fallback con la imagen oficial y `--user root`:
   `docker run --rm --user root --network=host -e SONAR_TOKEN=$SONAR_TOKEN -v $(pwd):/usr/src sonarsource/sonar-scanner-cli:latest -D sonar.projectBaseDir=/usr/src -D sonar.host.url=http://localhost:9000 -D sonar.scanner.scanAll=false`

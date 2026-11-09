@@ -41,6 +41,10 @@ jobs:
               - '.github/workflows/**'
             frontend:
               - 'frontend/**'
+              # `frontend/**` no surel ficheros que empiezan con punto según la
+              # config de micromatch del action; se explicita el .dockerignore
+              # porque cambia el contenido del `COPY . .` de la imagen del front.
+              - 'frontend/.dockerignore'
               - 'docker-compose*.yml'
               - '.github/workflows/**'
             # NOTA: solo-docs (README*) no disparan builds; en main igual se
@@ -56,10 +60,9 @@ jobs:
     concurrency:
       group: ci-tests-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-    # El resto del frontend se valida compilando su imagen Docker en el job
-    # Build (evita `npm ci` + `npm run build` duplicados); los catálogos i18n se
-    # validan aparte en el job `i18n`, porque la imagen compila aunque el JSON
-    # esté roto (son assets estáticos).
+    # El resto del frontend se valida en el job `frontend` (npm ci + build +
+    # `ng test`); los catálogos i18n se validan aparte en el job `i18n`, porque la
+    # imagen compila aunque el JSON esté roto (son assets estáticos).
     needs: [changes]
     if: |
       needs.changes.outputs.backend == 'true' &&
@@ -126,12 +129,13 @@ jobs:
     # Regresión real (2026-11-08): escrituras concurrentes dejaron `de.json` y
     # `ru.json` con JSON inválido. Transloco no puede cargar el catálogo, la app
     # cae a inglés con error de consola y NADA en CI lo detectaba: la imagen
-    # Docker del frontend compila igual (los JSON son assets estáticos) y no hay
+    # Docker del frontend compila igual (los JSON son assets estáticos) y no había
     # job de `ng test` en este workflow. Gate barato: parsear los 8 catálogos y
     # exigir el mismo conjunto de claves hoja que `en.json`.
     # La paridad de placeholders (`{{name}}` compacto) y el recuento base los
     # cubre `frontend/src/app/core/i18n/i18n-catalog-parity.spec.ts` en
-    # `npx ng test --watch=false` (local / `scripts/generate_sonar_coverage.sh`).
+    # `npx ng test --watch=false` (job `frontend`, local y
+    # `scripts/generate_sonar_coverage.sh`).
     needs: [changes]
     if: |
       needs.changes.outputs.frontend == 'true' &&
@@ -227,14 +231,89 @@ jobs:
               sys.exit(1)
           PY
 
+  frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    # Regresión estructural: la suite del frontend (1190 tests en 92 archivos)
+    # corría SOLO en local y en `scripts/generate_sonar_coverage.sh`. En CI no
+    # había job de `ng test`: `build.yml` se limita a compilar la imagen Docker
+    # (que ejecuta `ng build` dentro del `frontend/Dockerfile`) y `i18n` valida
+    # los catálogos JSON. Un commit que rompiese un componente, un template o el
+    # tipado de un servicio llegaba a producción con el gate en verde. Este job es
+    # el equivalente frontend de `tests`: compila y ejecuta la suite antes de
+    # que `build` empaquete imagen o release. Sin cobertura ni lcov a propósito:
+    # el gate de cobertura del frontend no existe en CI (los reportes de Sonar los
+    # genera el script local, no el pipeline).
+    # Ojo con el nombre: `build.yml` (workflow reutilizable) tiene SU propio job
+    # `frontend`, que compila la imagen Docker. No colisionan: los jobs de un
+    # workflow llamado no se exponen al caller. Aquí `frontend` = suite de tests.
+    needs: [changes]
+    if: |
+      needs.changes.outputs.frontend == 'true' &&
+      (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) ||
+        github.event_name == 'pull_request'
+      )
+    # Mismo criterio que `tests` e `i18n`: en main no se cancela a media corrida
+    # (un run cancelado deja el commit sin validar y bloquea su despliegue).
+    concurrency:
+      group: ci-frontend-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+    env:
+      # Fuente única de la versión de Node del job. Debe seguir el stage `build`
+      # de `frontend/Dockerfile` (`FROM node:22-alpine AS build`): `@angular/*` 21
+      # pide `^20.19 || ^22.12`, `@axe-core/playwright` y `commander` piden
+      # `>=22.12`, y `lighthouse@13` exige `>=22.19`. Con node 20 el `npm ci` del
+      # runner soltaba `npm warn EBADENGINE`. `cache: npm` usa el hash del lockfile
+      # real, no esta variable, así que cambiarla no invalida el caché.
+      NODE_VERSION: "22"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias del frontend
+        working-directory: frontend
+        # `npm ci` (no `npm install`): respeta `package-lock.json` al pie de la
+        # letra, igual que el stage `build` del Dockerfile; así el job valida el
+        # árbol exacto que se empaquetará.
+        run: npm ci
+
+      - name: Compilar la aplicación (ng build)
+        working-directory: frontend
+        # Primero el build: si un template o el tipado de un componente rompen la
+        # compilación, el fallo se ve aquí (rápido y con la ruta del archivo) en
+        # vez de hundido en la salida de vitest. `npm run build` = `ng build`, el
+        # mismo comando del Dockerfile, y aplica los `budgets` de producción
+        # (initial <= 1MB) que `ng test` no comprueba. Duplica el `ng build` que
+        # corre dentro de la imagen en `build.yml`: cuesta ~10 s y ahí se ve el
+        # error de frente, además de que esa imagen no ejecuta ni un test.
+        run: npm run build
+
+      - name: Ejecutar suite unitaria (ng test)
+        working-directory: frontend
+        # Builder `@angular/build:unit-test` (angular.json) sobre vitest con
+        # entorno jsdom: no necesita navegador real ni `CHROME_BIN` en el runner.
+        # `--watch=false` para que termine (exit != 0 si algún test falla).
+        run: npx ng test --watch=false
+
   build:
     name: Build reusable workflow
     # Corre en dev, main y PRs. Exige tests en `success` siempre que el cambio
     # toca backend: un `skipped` de tests solo se acepta cuando NO toca backend
     # (solo frontend/docs). Así el build y el release quedan imposibles si la
     # suite falla, se cancela o ni siquiera se ejecutó sobre código backend.
-    # Mismo criterio con `i18n` cuando el cambio toca frontend: un catálogo
-    # roto no se empaqueta en imagen ni en release.
+    # Mismo criterio con `i18n` y `frontend` cuando el cambio toca frontend: ni un
+    # catálogo JSON inválido ni la suite de `ng test` sin correr se empaquetan en
+    # imagen ni en release.
     if: |
       always() &&
       needs.changes.result == 'success' &&
@@ -247,11 +326,15 @@ jobs:
         (needs.i18n.result == 'skipped' && needs.changes.outputs.frontend != 'true')
       ) &&
       (
+        needs.frontend.result == 'success' ||
+        (needs.frontend.result == 'skipped' && needs.changes.outputs.frontend != 'true')
+      ) &&
+      (
         github.event_name == 'pull_request' ||
         github.ref == 'refs/heads/main' ||
         github.ref == 'refs/heads/dev'
       )
-    needs: [changes, tests, i18n]
+    needs: [changes, tests, i18n, frontend]
     permissions:
       contents: write
       # El workflow llamado (build.yml) pide `actions: write` para el caché
@@ -287,12 +370,13 @@ jobs:
     # conclusión del run de este workflow, así que cualquier job omitido por
     # error tiene que fallar aquí.
     if: always()
-    needs: [changes, tests, i18n, build]
+    needs: [changes, tests, i18n, frontend, build]
     runs-on: ubuntu-latest
     env:
       CHANGES_RESULT: ${{ needs.changes.result }}
       TESTS_RESULT: ${{ needs.tests.result }}
       I18N_RESULT: ${{ needs.i18n.result }}
+      FRONTEND_RESULT: ${{ needs.frontend.result }}
       BUILD_RESULT: ${{ needs.build.result }}
       BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
       FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
@@ -319,6 +403,17 @@ jobs:
             echo "Validación i18n omitida: el cambio no toca frontend."
           else
             echo "ERROR: i18n sin validar (i18n=$I18N_RESULT, changes.frontend=$FRONTEND_CHANGED)."; fail=1
+          fi
+
+          # Mismo criterio para la suite del frontend: obligatoria si toca frontend
+          # (build + `ng test`). Sin esto el job quedaba fuera del punto único de
+          # verdad y `deploy-libres.yml` desplegaba con frontend sin validar.
+          if [ "$FRONTEND_RESULT" = "success" ]; then
+            echo "Frontend validado por ng test."
+          elif [ "$FRONTEND_RESULT" = "skipped" ] && [ "$FRONTEND_CHANGED" != "true" ]; then
+            echo "Suite del frontend omitida: el cambio no toca frontend."
+          else
+            echo "ERROR: frontend sin validar (frontend=$FRONTEND_RESULT, changes.frontend=$FRONTEND_CHANGED)."; fail=1
           fi
 
           [ "$BUILD_RESULT" = "success" ] || { echo "ERROR: build falló ($BUILD_RESULT)."; fail=1; }
