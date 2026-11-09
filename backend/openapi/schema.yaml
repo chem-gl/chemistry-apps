@@ -27,6 +27,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -59,6 +60,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -78,6 +80,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -112,6 +115,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       - {}
       responses:
         '200':
@@ -164,6 +168,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -192,6 +197,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -211,6 +217,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       - {}
       responses:
         '200':
@@ -275,6 +282,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       - {}
       responses:
         '201':
@@ -305,6 +313,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -341,6 +350,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -368,6 +378,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -407,6 +418,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -446,6 +458,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -485,6 +498,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -509,6 +523,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -557,6 +572,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -601,6 +617,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -655,6 +672,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -698,6 +716,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -742,6 +761,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -790,6 +810,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -827,6 +848,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -882,6 +904,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -941,6 +964,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -990,6 +1014,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1027,6 +1052,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1054,6 +1080,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1084,6 +1111,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1121,6 +1149,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1160,6 +1189,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1196,6 +1226,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -1223,6 +1254,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1262,6 +1294,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1301,6 +1334,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1340,6 +1374,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1374,6 +1409,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1396,6 +1432,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1425,6 +1462,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1458,6 +1496,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1479,6 +1518,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '204':
           description: No response body
@@ -1491,6 +1531,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1520,6 +1561,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1553,6 +1595,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1574,6 +1617,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '204':
           description: No response body
@@ -1597,6 +1641,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1634,6 +1679,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1650,6 +1696,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1679,6 +1726,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1712,6 +1760,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1733,6 +1782,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '204':
           description: No response body
@@ -1749,6 +1799,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1782,6 +1833,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1808,6 +1860,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '204':
           description: No response body
@@ -1820,6 +1873,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1838,6 +1892,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1867,6 +1922,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -1900,6 +1956,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -1921,6 +1978,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '204':
           description: No response body
@@ -1948,6 +2006,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2002,6 +2061,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -2038,6 +2098,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2070,6 +2131,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2114,6 +2176,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2157,6 +2220,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2206,6 +2270,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2268,6 +2333,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2308,6 +2374,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2345,6 +2412,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2388,6 +2456,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2425,6 +2494,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2455,6 +2525,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2490,6 +2561,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -2526,6 +2598,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -2553,6 +2626,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2592,6 +2666,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2631,6 +2706,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2670,6 +2746,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2735,6 +2812,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -2771,6 +2849,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -2798,6 +2877,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2837,6 +2917,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2876,6 +2957,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -2915,6 +2997,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5058,6 +5141,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -5094,6 +5178,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -5121,6 +5206,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5170,6 +5256,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5216,6 +5303,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5255,6 +5343,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5294,6 +5383,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5341,6 +5431,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -5383,6 +5474,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -5410,6 +5502,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5449,6 +5542,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5488,6 +5582,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5527,6 +5622,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5609,6 +5705,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -5653,6 +5750,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5689,6 +5787,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5739,6 +5838,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5777,6 +5877,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5816,6 +5917,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5854,6 +5956,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5893,6 +5996,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5932,6 +6036,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -5965,6 +6070,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6003,6 +6109,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6033,6 +6140,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6090,6 +6198,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6156,6 +6265,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6197,6 +6307,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6230,6 +6341,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6267,6 +6379,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6297,6 +6410,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6357,6 +6471,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6419,6 +6534,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6458,6 +6574,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6501,6 +6618,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -6537,6 +6655,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -6564,6 +6683,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6603,6 +6723,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6642,6 +6763,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6681,6 +6803,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6738,6 +6861,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '201':
           content:
@@ -6774,6 +6898,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           description: No response body
@@ -6801,6 +6926,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6840,6 +6966,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6879,6 +7006,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -6918,6 +7046,7 @@ paths:
       security:
       - jwtAuth: []
       - cookieAuth: []
+      - QueryStringJWTAuthentication: []
       responses:
         '200':
           content:
@@ -11706,6 +11835,10 @@ components:
       - name
       - slug
   securitySchemes:
+    QueryStringJWTAuthentication:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     cookieAuth:
       type: apiKey
       in: cookie
@@ -11730,8 +11863,8 @@ tags:
   description: Endpoints para cálculo del efecto túnel con teoría de Eckart asimétrica
     y trazabilidad de cambios de entrada.
 - name: ServerCalc
-  description: Endpoints PoC para suma remota ejecutada en el servidor qta vía SSH
-    con fallback local.
+  description: Endpoints para cálculo remoto en qta vía SSH (sin fallback local);
+    solo administradores.
 - name: EasyRate
   description: Endpoints para cinética Easy-rate con carga de archivos Gaussian y
     persistencia de entradas para reproducibilidad.

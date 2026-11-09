@@ -61,6 +61,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -135,6 +138,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -185,6 +191,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -237,6 +246,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -288,6 +300,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -338,6 +353,9 @@ export class MolarFractionsService extends BaseService implements MolarFractions
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 

@@ -88,6 +88,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -161,6 +164,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -216,6 +222,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityAppPermissionsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -278,6 +287,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -357,6 +369,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -434,6 +449,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -494,6 +512,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -568,6 +589,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -623,6 +647,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityGroupsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -685,6 +712,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -759,6 +789,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -832,6 +865,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -887,6 +923,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityMembershipsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -949,6 +988,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1023,6 +1065,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1096,6 +1141,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1151,6 +1199,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityRegistrationTokensList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1208,6 +1259,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityScientificAppsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1269,6 +1323,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1343,6 +1400,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1398,6 +1458,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
     public identityUsersList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1460,6 +1523,9 @@ export class IdentityService extends BaseService implements IdentityServiceInter
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 

@@ -92,6 +92,15 @@ constructor({ accessToken, apiKeys, basePath, credentials, encodeParam, encoder,
         this.encodeParam = encodeParam ?? (param => this.defaultEncodeParam(param));
         this.credentials = credentials ?? {};
 
+        // init default QueryStringJWTAuthentication credential
+        if (!this.credentials['QueryStringJWTAuthentication']) {
+            this.credentials['QueryStringJWTAuthentication'] = () => {
+                return typeof this.accessToken === 'function'
+                    ? this.accessToken()
+                    : this.accessToken;
+            };
+        }
+
         // init default cookieAuth credential
         if (!this.credentials['cookieAuth']) {
             this.credentials['cookieAuth'] = () => {

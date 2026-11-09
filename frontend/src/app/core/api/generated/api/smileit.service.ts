@@ -899,6 +899,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -973,6 +976,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1030,6 +1036,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
     public smileitJobsCatalogList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1093,6 +1102,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1164,6 +1176,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1225,6 +1240,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1322,6 +1340,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1401,6 +1422,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1452,6 +1476,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1539,6 +1566,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1614,6 +1644,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1684,6 +1717,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1747,6 +1783,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1822,6 +1861,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1872,6 +1914,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -1924,6 +1969,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -1974,6 +2022,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -2026,6 +2077,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -2076,6 +2130,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -2128,6 +2185,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -2178,6 +2238,9 @@ export class SmileitService extends BaseService implements SmileitServiceInterfa
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 

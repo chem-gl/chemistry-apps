@@ -85,6 +85,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -219,6 +222,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -269,6 +275,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -321,6 +330,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -372,6 +384,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -422,6 +437,9 @@ export class MarcusService extends BaseService implements MarcusServiceInterface
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 

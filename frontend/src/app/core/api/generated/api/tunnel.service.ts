@@ -370,6 +370,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -444,6 +447,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -494,6 +500,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
@@ -546,6 +555,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -597,6 +609,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
 
         let localVarHeaders = this.defaultHeaders;
 
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
+
         // authentication (cookieAuth) required
 
         // authentication (jwtAuth) required
@@ -647,6 +662,9 @@ export class TunnelService extends BaseService implements TunnelServiceInterface
         }
 
         let localVarHeaders = this.defaultHeaders;
+
+        // authentication (QueryStringJWTAuthentication) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('QueryStringJWTAuthentication', 'Authorization', localVarHeaders, 'Bearer ');
 
         // authentication (cookieAuth) required
 
