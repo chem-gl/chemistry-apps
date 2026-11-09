@@ -53,8 +53,8 @@ def _create_job(**overrides: object) -> ScientificJob:
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class PayloadTooLargeTests(TestCase):
     """Verifica que un cuerpo JSON excesivo responde 413 y no 400."""
@@ -84,7 +84,9 @@ class PayloadTooLargeTests(TestCase):
         self.assertEqual(response.status_code, 413)
 
     def test_payload_within_limit_is_not_rejected_for_size(self) -> None:
-        with patch("apps.molar_fractions.routers.dispatch_scientific_job", return_value=True):
+        with patch(
+            "apps.molar_fractions.routers.dispatch_scientific_job", return_value=True
+        ):
             response = self.client.post(
                 PRIVATE_MOLAR_URL,
                 {
@@ -102,8 +104,8 @@ class PayloadTooLargeTests(TestCase):
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class ArtifactSizeLimitTests(TestCase):
     """Verifica los topes de archivo por rol (anónimo vs registrado)."""
@@ -174,8 +176,8 @@ class ArtifactSizeLimitTests(TestCase):
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class UploadHandlerTests(TestCase):
     """Verifica el corte temprano del multipart (evita el DoS por disco)."""

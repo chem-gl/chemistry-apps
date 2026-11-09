@@ -52,14 +52,20 @@ from apps.molar_fractions.schemas import (
     MolarFractionsJobResponseSerializer,
 )
 from apps.sa_score.routers import SaScoreJobViewSet
-from apps.sa_score.schemas import SaScoreJobCreateSerializer, SaScoreJobResponseSerializer
+from apps.sa_score.schemas import (
+    SaScoreJobCreateSerializer,
+    SaScoreJobResponseSerializer,
+)
 from apps.smileit._catalog_schemas import (
     SmileitCatalogEntrySerializer,
     SmileitCategorySerializer,
     SmileitPatternEntrySerializer,
 )
 from apps.smileit.routers.viewset import SmileitJobViewSet
-from apps.smileit.schemas import SmileitJobCreateSerializer, SmileitJobResponseSerializer
+from apps.smileit.schemas import (
+    SmileitJobCreateSerializer,
+    SmileitJobResponseSerializer,
+)
 from apps.toxicity_properties.routers import ToxicityPropertiesJobViewSet
 from apps.toxicity_properties.schemas import (
     ToxicityJobCreateSerializer,
@@ -135,9 +141,7 @@ def _public_job_schema(
     request_serializer=MolarFractionsJobCreateSerializer,
     response_serializer=MolarFractionsJobResponseSerializer,
 )
-class PublicMolarFractionsJobViewSet(
-    PublicAppViewSetMixin, MolarFractionsJobViewSet
-):
+class PublicMolarFractionsJobViewSet(PublicAppViewSetMixin, MolarFractionsJobViewSet):
     """Versión sin login de Molar Fractions."""
 
 
@@ -253,7 +257,7 @@ class PublicCatalogView(APIView):
     )
     def get(self, request: Request) -> Response:
         del request
-        open_mode_enabled: bool = bool(getattr(settings, "OPEN_MODE_ENABLED", True))
+        open_mode_enabled: bool = bool(getattr(settings, "OPEN_MODE_ENABLED", False))
         apps: list[dict[str, object]] = []
 
         if open_mode_enabled:

@@ -6,7 +6,10 @@ capability URL, superficie mínima de endpoints y límite de tasa en el despacho
 
 from __future__ import annotations
 
+import importlib
+import os
 from datetime import timedelta
+from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -20,6 +23,7 @@ from ..models import ScientificJob
 
 MOLAR_CREATE_URL = "/api/public/molar-fractions/jobs/"
 PUBLIC_CATALOG_URL = "/api/public/catalog/"
+LOCAL_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 MOLAR_PAYLOAD: dict[str, object] = {
     "version": "1.0.0",
     "pka_values": [4.75],
@@ -53,8 +57,8 @@ def _create_molar_job(**overrides: object) -> ScientificJob:
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class PublicDispatchTests(TestCase):
     """Verifica la creación de jobs anónimos desde la ruta pública."""
@@ -99,8 +103,8 @@ class PublicDispatchTests(TestCase):
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class PublicRetrieveTests(TestCase):
     """Verifica el acceso por capability URL a jobs anónimos."""
@@ -144,8 +148,8 @@ class PublicRetrieveTests(TestCase):
 
 
 # El modo abierto se fuerza aquí: estos tests verifican la superficie pública,
-# no el interruptor global (con `OPEN_MODE_ENABLED=False` del `.env` local todo
-# lo público respondería 404).
+# no el interruptor global (con el default cerrado del código —sin
+# `OPEN_MODE_ENABLED`— todo lo público respondería 404).
 @override_settings(OPEN_MODE_ENABLED=True)
 class PublicSurfaceTests(TestCase):
     """Verifica el contrato del modo abierto sobre la superficie pública.
@@ -262,7 +266,7 @@ class PublicSurfaceTests(TestCase):
             "public-read": "2/hour",
             "registered-dispatch": "600/hour",
         }
-    }
+    },
 )
 class PublicThrottleTests(TestCase):
     """Verifica los topes del modo libre: despacho, lectura y polling libre."""
@@ -389,6 +393,72 @@ class PublicDisabledModeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["mode"], "closed")
         self.assertEqual(response.data["apps"], [])
+
+
+def _open_mode_code_default() -> bool:
+    """Resuelve el default REAL de `OPEN_MODE_ENABLED` en el código.
+
+    `config/settings.py` aplica `backend/.env` (gitignored) con
+    `os.environ.setdefault` antes de leer la variable, así que en dev local el
+    valor vigente puede estar abierto aunque el código esté cerrado. Se recalcula
+    el módulo sin la variable de entorno y sin ese archivo para observar el
+    default del código, y después se recarga una vez más para dejar el módulo
+    exactamente como estaba.
+    """
+    original_read_text = Path.read_text
+
+    def _stub_dotenv_read(self: Path, *args: object, **kwargs: object) -> str:
+        if self == LOCAL_ENV_FILE:
+            return ""
+        return original_read_text(self, *args, **kwargs)
+
+    settings_module = importlib.import_module("config.settings")
+
+    with (
+        patch.dict(os.environ, clear=False),
+        patch.object(Path, "read_text", _stub_dotenv_read),
+    ):
+        os.environ.pop("OPEN_MODE_ENABLED", None)
+        code_default: bool = bool(importlib.reload(settings_module).OPEN_MODE_ENABLED)
+
+    importlib.reload(settings_module)
+    return code_default
+
+
+class PublicOpenModeDefaultTests(TestCase):
+    """El default del código es cerrado: nadie abre el modo libre por ti.
+
+    Cubre el arranque sin configurar (runserver suelto, un stack nuevo, un
+    `manage.py` en otra máquina o un `.env` roto), que era el agujero fail-open.
+    No declara `@override_settings` de clase: lee el default real de
+    `config.settings` y exige que sea cerrado.
+    """
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        cache.clear()
+
+    def tearDown(self) -> None:
+        cache.clear()
+
+    def test_settings_default_is_closed_when_nothing_configures_the_mode(self) -> None:
+        self.assertFalse(_open_mode_code_default())
+
+    def test_default_closed_returns_404_and_reports_closed_catalog(self) -> None:
+        # Se propaga el valor que el código resuelve solo: no se fuerza abierto
+        # ni cerrado, se verifica el default.
+        with override_settings(OPEN_MODE_ENABLED=_open_mode_code_default()):
+            dispatch = self.client.post(MOLAR_CREATE_URL, MOLAR_PAYLOAD, format="json")
+            catalog = self.client.get(PUBLIC_CATALOG_URL)
+
+        self.assertEqual(dispatch.status_code, 404)
+        self.assertEqual(catalog.status_code, 200)
+        self.assertEqual(catalog.data["mode"], "closed")
+        self.assertEqual(catalog.data["apps"], [])
+        # Documentado: el catálogo sigue siendo legible en modo cerrado para que
+        # el SPA pueda resolver el modo y mostrar el aviso correspondiente.
+        self.assertIn("job_ttl_hours", catalog.data["limits"])
+        self.assertIn("max_upload_bytes", catalog.data["limits"])
 
 
 class PublicOpenApiContractTests(TestCase):

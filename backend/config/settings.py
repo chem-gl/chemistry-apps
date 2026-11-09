@@ -240,10 +240,16 @@ ROOT_BOOTSTRAP_EMAIL: str = os.getenv("ROOT_BOOTSTRAP_EMAIL", "admin@chemistry.l
 # Límites de tasa (fase 1 apps libres): estrictos para anónimos, holgados para
 # usuarios registrados. Configurables por entorno sin tocar código.
 # OPEN_MODE_ENABLED: interruptor del modo libre (apps sin login).
-#   True (default): las rutas `/api/public/*` operan normal.
-#   False: todo lo público responde 404 y el catálogo declara modo cerrado.
-# Permite ocultar las apps libres en un entorno sin borrar el feature.
-OPEN_MODE_ENABLED: bool = _get_env_bool("OPEN_MODE_ENABLED", True)
+#   False (default): todo `/api/public/*` responde 404 y el catálogo declara
+#     modo cerrado. Se cierra por defecto para que ningún arranque sin
+#     configurar (runserver suelto, un stack nuevo, `manage.py` en otra máquina
+#     o un `.env` roto) deje expuesta la API pública con cálculos anónimos.
+#   True: las rutas `/api/public/*` operan normal.
+# Se abre por entorno con `OPEN_MODE_ENABLED` en `1|true|yes|on`
+# (case-insensitive, lo que ya acepta `_get_env_bool`); en dev local se abre
+# desde `backend/.env` (gitignored), que `_load_dotenv_file` aplica con
+# `os.environ.setdefault`. Sigue siendo un feature reversible por entorno.
+OPEN_MODE_ENABLED: bool = _get_env_bool("OPEN_MODE_ENABLED", False)
 
 PUBLIC_DISPATCH_RATE: str = os.getenv("PUBLIC_DISPATCH_RATE", "60/hour")
 REGISTERED_DISPATCH_RATE: str = os.getenv("REGISTERED_DISPATCH_RATE", "600/hour")

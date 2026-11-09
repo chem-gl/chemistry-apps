@@ -123,7 +123,10 @@ class PublicAppViewSetMixin:
         Corre antes que el resto de `initial` para no reservar cupos ni gastar
         cuota cuando el modo está cerrado.
         """
-        if not getattr(settings, "OPEN_MODE_ENABLED", True):
+        # Fallback coherente con el default de `config.settings`: cerrado. Un
+        # settings sin la clave (o un entorno raro de test) no puede exponer
+        # `/api/public/*`.
+        if not getattr(settings, "OPEN_MODE_ENABLED", False):
             raise Http404("Modo abierto desactivado.")
         super().initial(request, *args, **kwargs)
 
@@ -183,9 +186,7 @@ class PublicAppViewSetMixin:
             return [throttle_class() for throttle_class in self.throttle_classes]
 
         if action_name in self.public_read_throttled_actions:
-            return [
-                throttle_class() for throttle_class in self.read_throttle_classes
-            ]
+            return [throttle_class() for throttle_class in self.read_throttle_classes]
 
         return []
 

@@ -136,7 +136,9 @@ class AcquireSlotTests(TestCase):
         self.assertIsNotNone(lease)
         self.assertTrue(lease.is_noop)  # type: ignore[union-attr]
 
-    @override_settings(ANONYMOUS_MAX_CONCURRENT_JOBS=3, ANONYMOUS_CONCURRENCY_LEASE_SECONDS=120)
+    @override_settings(
+        ANONYMOUS_MAX_CONCURRENT_JOBS=3, ANONYMOUS_CONCURRENCY_LEASE_SECONDS=120
+    )
     def test_configured_limits_are_passed_to_the_script(self) -> None:
         fake_client = FakeRedis(result=1)
 
@@ -184,8 +186,8 @@ class PublicDispatchConcurrencyTests(TestCase):
     """Verifica la integración del semáforo con el create público.
 
     Fuerza el modo abierto: estos tests miden el semáforo de concurrencia, no
-    el interruptor global `OPEN_MODE_ENABLED` (que en local puede estar
-    apagado y respondería 404 a toda la superficie pública).
+    el interruptor global `OPEN_MODE_ENABLED` (cerrado por defecto en el código,
+    y respondería 404 a toda la superficie pública).
     """
 
     def setUp(self) -> None:
@@ -227,7 +229,9 @@ class PublicDispatchConcurrencyTests(TestCase):
             patch("apps.core.public_api.acquire_slot", return_value=lease),
             patch("apps.core.public_api.release_lease") as mock_release,
         ):
-            response = self.client.post(PUBLIC_MOLAR_URL, {"bad": "payload"}, format="json")
+            response = self.client.post(
+                PUBLIC_MOLAR_URL, {"bad": "payload"}, format="json"
+            )
 
         self.assertEqual(response.status_code, 400)
         mock_release.assert_called_once_with(lease)
@@ -526,8 +530,11 @@ class StaleWorkerLeaseRaceTests(TestCase):
         ScientificJob.objects.filter(pk=persisted.pk).update(runtime_state={})
 
         finish_with_result(
-            job=worker_copy, job_id=str(worker_copy.id), result_payload={},
-            from_cache=False, **self.PUBLISHERS,
+            job=worker_copy,
+            job_id=str(worker_copy.id),
+            result_payload={},
+            from_cache=False,
+            **self.PUBLISHERS,
         )
 
         persisted.refresh_from_db()
@@ -717,7 +724,9 @@ class RegisteredDispatchConcurrencyTests(TestCase):
             patch("apps.core.base_router.acquire_registered_slot", return_value=lease),
             patch("apps.core.base_router.release_lease") as mock_release,
         ):
-            response = self.client.post(PRIVATE_MOLAR_URL, {"bad": "payload"}, format="json")
+            response = self.client.post(
+                PRIVATE_MOLAR_URL, {"bad": "payload"}, format="json"
+            )
 
         self.assertEqual(response.status_code, 400)
         mock_release.assert_called_once_with(lease)
