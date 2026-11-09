@@ -15,11 +15,17 @@ import {
   normalizeJobNameIdentifier,
 } from './generation-result-naming.utils';
 
+const THUMBNAIL_FLUSH_INTERVAL_MS = 40;
+
 @Injectable()
 export class GenerationResultDataService implements OnDestroy {
   readonly workflow = inject(SmileitWorkflowService);
   private readonly jobsApiService = inject(JobsApiService);
   private readonly injector = inject(Injector);
+
+  /** SVGs pendientes de publicar en la signal, indexados por structureIndex. */
+  private readonly pendingThumbnailSvgs = new Map<number, string>();
+  private thumbnailFlushTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly isGeneratedStructuresCollapsed = signal<boolean>(true);
   readonly visibleStructuresCount = signal<number>(100);
@@ -51,6 +57,7 @@ export class GenerationResultDataService implements OnDestroy {
         this.lastDerivationsReloadKey.set('');
         this.visibleStructuresCount.set(100);
         this.loadedGeneratedStructures.set([]);
+        this.pendingThumbnailSvgs.clear();
         this.generatedStructuresOffset.set(0);
         this.isGeneratedStructuresCollapsed.set(true);
         return;
@@ -73,6 +80,11 @@ export class GenerationResultDataService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.visibleStructuresResetEffect.destroy();
+    if (this.thumbnailFlushTimeout !== null) {
+      clearTimeout(this.thumbnailFlushTimeout);
+      this.thumbnailFlushTimeout = null;
+    }
+    this.pendingThumbnailSvgs.clear();
   }
 
   toggleGeneratedStructuresCollapse(): void {
@@ -415,16 +427,40 @@ export class GenerationResultDataService implements OnDestroy {
   }
 
   private patchLoadedStructureSvg(structureIndex: number, svgMarkup: string): void {
-    this.loadedGeneratedStructures.update((currentItems: SmileitGeneratedStructureView[]) =>
-      currentItems.map((item: SmileitGeneratedStructureView) => {
-        if (item.structureIndex !== structureIndex) {
-          return item;
-        }
-        return {
-          ...item,
-          svg: svgMarkup,
-        };
-      }),
+    // Los thumbnails llegan de golpe (hasta 100 GET en paralelo). Escribir la
+    // signal por cada respuesta disparaba 100 pasadas de change detection sobre
+    // las 100 tarjetas; agrupando ~40 ms las respuestas se aplican en 1-3
+    // actualizaciones y el `@for` solo reescribe las tarjetas que cambiaron.
+    this.pendingThumbnailSvgs.set(structureIndex, svgMarkup);
+    if (this.thumbnailFlushTimeout !== null) {
+      return;
+    }
+    this.thumbnailFlushTimeout = setTimeout(() => {
+      this.thumbnailFlushTimeout = null;
+      this.flushPendingThumbnailSvgs();
+    }, THUMBNAIL_FLUSH_INTERVAL_MS);
+  }
+
+  private flushPendingThumbnailSvgs(): void {
+    if (this.pendingThumbnailSvgs.size === 0) {
+      return;
+    }
+
+    const pendingSvgs = new Map(this.pendingThumbnailSvgs);
+    this.pendingThumbnailSvgs.clear();
+    this.loadedGeneratedStructures.update(
+      (currentItems: SmileitGeneratedStructureView[]) =>
+        currentItems.map((item: SmileitGeneratedStructureView) => {
+          const pendingSvg =
+            item.structureIndex === undefined ? undefined : pendingSvgs.get(item.structureIndex);
+          if (pendingSvg === undefined || pendingSvg === item.svg) {
+            return item;
+          }
+          return {
+            ...item,
+            svg: pendingSvg,
+          };
+        }),
     );
   }
 

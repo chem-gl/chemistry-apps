@@ -246,7 +246,15 @@ class SmileitReadActionsMixin:
                 status=status.HTTP_409_CONFLICT,
             )
 
-        return HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
+        # El SVG de un derivado concreto no cambia nunca (job inmutable, mismo
+        # índice y variante) y hoy se re-renderiza en RDKit en cada visita a la
+        # vista de resultados: el front pide hasta 100 thumbnails por página y
+        # sin esta cabecera cada navegación vuelve a pagar los 100 renders.
+        # `private`: la respuesta va autenticada por capability/owner y no debe
+        # quedar en caches compartidos.
+        response = HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
+        response["Cache-Control"] = "private, max-age=86400"
+        return response
 
     @extend_schema(
         summary="Descargar Export Principal SMILES Enumerado",

@@ -19,6 +19,9 @@ import {
   resolveJobNameLabel,
 } from './generation-result-naming.utils';
 
+/** Tope del cache de SafeHtml: por encima se vacía (los SVG de un job rondan 5-20 KB). */
+const TRUSTED_SVG_CACHE_LIMIT = 512;
+
 @Component({
   selector: 'app-generation-result-panel',
   standalone: true,
@@ -260,8 +263,26 @@ export class GenerationResultPanelComponent {
     return [...uniqueNames].slice(0, 4);
   }
 
+  private readonly trustedSvgCache = new Map<string, SafeHtml>();
+
   toTrustedSvg(svgMarkup: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(svgMarkup); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
+    // El template llama a este método por cada tarjeta en cada detección de
+    // cambios. `bypassSecurityTrustHtml` devuelve una instancia NUEVA, y Angular
+    // reescribe el `innerHTML` de la tarjeta aunque el SVG sea idéntico: con 100
+    // tarjetas y un tick por evento de progreso eso son miles de reescrituras.
+    // Cachear por contenido devuelve siempre la misma instancia (y el `@for`
+    // reutiliza el nodo) con coste de un `Map.get`.
+    const cachedSvg = this.trustedSvgCache.get(svgMarkup);
+    if (cachedSvg !== undefined) {
+      return cachedSvg;
+    }
+
+    const trustedSvg = this.sanitizer.bypassSecurityTrustHtml(svgMarkup); // NOSONAR: S6268 - el SVG proviene del backend interno validado, nunca de entrada directa del usuario
+    if (this.trustedSvgCache.size >= TRUSTED_SVG_CACHE_LIMIT) {
+      this.trustedSvgCache.clear();
+    }
+    this.trustedSvgCache.set(svgMarkup, trustedSvg);
+    return trustedSvg;
   }
 
   openGeneratedStructureModal(generatedStructure: SmileitGeneratedStructureView): void {
