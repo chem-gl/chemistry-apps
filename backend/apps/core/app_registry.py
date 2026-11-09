@@ -33,6 +33,10 @@ class ScientificAppDefinition:
     `available_features` declara las características opcionales de la app que pueden
     habilitarse o deshabilitarse por grupo vía GroupAppConfig. Permite al frontend
     construir toggles estructurados en el panel de administración de grupos.
+
+    `default_algorithm_version` replica el `DEFAULT_ALGORITHM_VERSION` de la app para
+    que consumidores transversales del registro (p. ej. comandos de administración)
+    puedan crear jobs con la versión correcta sin importar módulos de la app.
     """
 
     app_config_name: str
@@ -42,6 +46,7 @@ class ScientificAppDefinition:
     route_basename: str
     supports_pause_resume: bool = False
     available_features: tuple[str, ...] = ()
+    default_algorithm_version: str = "1.0"
 
     @property
     def route_key(self) -> str:
@@ -94,6 +99,20 @@ class ScientificAppRegistry:
         if definition is None:
             return False
         return bool(definition.supports_pause_resume)
+
+    @classmethod
+    def get_default_algorithm_version(cls, plugin_name: str) -> str | None:
+        """Versión de algoritmo por defecto de la app registrada (None si no existe).
+
+        Evita que el core y los comandos de administración importen
+        `DEFAULT_ALGORITHM_VERSION` de cada app científica.
+        """
+        definition: ScientificAppDefinition | None = cls._definitions_by_plugin.get(
+            plugin_name
+        )
+        if definition is None:
+            return None
+        return definition.default_algorithm_version
 
     @classmethod
     def get_definition_by_plugin(

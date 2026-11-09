@@ -192,6 +192,25 @@ class JobTimeoutError(DomainError):
         )
 
 
+class JobPausedTimeoutError(DomainError):
+    """La espera expiró con el job detenido en `paused` (estado no terminal).
+
+    `paused` significa que el plugin cooperativo guardó checkpoint y dejó de
+    ejecutar: no es un resultado. Se expone como error propio para que ningún
+    consumidor (CLI, tests, integraciones) confunda un job pausado con uno
+    completado.
+    """
+
+    def __init__(self, *, job_id: str, timeout_seconds: int) -> None:
+        self.job_id = job_id
+        self.timeout_seconds = timeout_seconds
+        super().__init__(
+            f"Job {job_id} está pausado, se excedió el tiempo de espera "
+            f"({timeout_seconds} s) sin ser reanudado; reanúdalo con resume() "
+            "y vuelve a esperar el resultado."
+        )
+
+
 class JobValidationError(DomainError):
     """Input parameters failed domain validation."""
 
@@ -447,10 +466,13 @@ class JobHandle[S](ABC):
     def wait_for_terminal(
         self, timeout_seconds: int = 60
     ) -> Result[JSONMap, DomainError]:
-        """Block until job reaches terminal state (completed/failed/paused).
+        """Block until job reaches terminal state (completed/failed/cancelled).
+
+        `paused` NO es terminal: la espera continúa hasta que el job se reanude y
+        llegue a un estado terminal o se agote el timeout. Al expirar con el job
+        pausado se retorna `JobPausedTimeoutError` (distinto de `JobTimeoutError`).
 
         Returns Result[JSONMap, DomainError] where success is the final result.
-        Timeout raises JobTimeoutError.
         """
         pass
 

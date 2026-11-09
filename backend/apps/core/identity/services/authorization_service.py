@@ -26,10 +26,18 @@ class AuthorizationService:
     ROLE_PRIORITY: dict[str, int] = {"user": 0, "admin": 1, "root": 2}
 
     @staticmethod
-    def is_root(actor: AbstractUser) -> bool:
-        return bool(getattr(actor, "is_superuser", False)) or (
-            AuthorizationService._resolve_role(actor) == "root"
-        )
+    def is_root(
+        actor: AbstractUser, *, profile: UserIdentityProfile | None = None
+    ) -> bool:
+        """Indica si el actor es root (superusuario o rol root en su perfil).
+
+        `profile` permite reusar un perfil ya resuelto por el llamador (evita
+        volver a consultarlo cuando se evalúan varios permisos sobre el mismo
+        actor en una request).
+        """
+        if bool(getattr(actor, "is_superuser", False)):
+            return True
+        return AuthorizationService._resolve_role(actor, profile=profile) == "root"
 
     @staticmethod
     def is_admin(actor: AbstractUser) -> bool:
@@ -38,11 +46,14 @@ class AuthorizationService:
         )
 
     @staticmethod
-    def has_explicit_admin_role(actor: AbstractUser) -> bool:
+    def has_explicit_admin_role(
+        actor: AbstractUser, *, profile: UserIdentityProfile | None = None
+    ) -> bool:
         """Indica rol admin explícito (atributo o perfil), sin inferirlo de is_staff."""
         if getattr(actor, "role", "") == "admin":
             return True
-        profile = AuthorizationService._get_identity_profile(actor)
+        if profile is None:
+            profile = AuthorizationService._get_identity_profile(actor)
         return profile is not None and profile.role == "admin"
 
     @staticmethod
@@ -400,13 +411,16 @@ class AuthorizationService:
         return profile.primary_group_id
 
     @staticmethod
-    def _resolve_role(actor: AbstractUser) -> str:
+    def _resolve_role(
+        actor: AbstractUser, *, profile: UserIdentityProfile | None = None
+    ) -> str:
         role_candidates: list[str] = []
         explicit_role = getattr(actor, "role", "")
         if explicit_role in {"root", "admin", "user"}:
             role_candidates.append(str(explicit_role))
 
-        profile = AuthorizationService._get_identity_profile(actor)
+        if profile is None:
+            profile = AuthorizationService._get_identity_profile(actor)
         if profile is not None and profile.role in {"root", "admin", "user"}:
             role_candidates.append(str(profile.role))
 
@@ -422,6 +436,17 @@ class AuthorizationService:
             role_candidates,
             key=lambda current_role: AuthorizationService.ROLE_PRIORITY[current_role],
         )
+
+    @staticmethod
+    def resolve_identity_profile(
+        actor: AbstractUser,
+    ) -> UserIdentityProfile | None:
+        """Perfil de identidad del actor (o None), para reutilizarlo varias veces.
+
+        Expuesto públicamente para que un llamador que evalúa varios permisos sobre
+        el mismo actor lo resuelva una sola vez en lugar de una consulta por chequeo.
+        """
+        return AuthorizationService._get_identity_profile(actor)
 
     @staticmethod
     def _get_identity_profile(actor: AbstractUser) -> UserIdentityProfile | None:

@@ -15,20 +15,24 @@ from __future__ import annotations
 import json
 import subprocess
 import uuid
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.test import TestCase, override_settings
 from rest_framework.response import Response
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APIRequestFactory
 
+from apps.core.identity.services.authorization_service import AuthorizationService
+from apps.core.models import UserIdentityProfile
 from apps.core.services import JobService
 from apps.core.test_utils import build_authenticated_api_client
 from apps.core.types import JSONMap
 
+from . import plugin as plugin_module
 from .definitions import APP_API_BASE_PATH, PLUGIN_NAME
 from .plugin import _run_remote_calc, server_calc_plugin
+from .routers import IsServerCalcAdmin, _identity_profile_for_request
 
 
 def _silent_progress(_percent: int, _stage: str, _message: str) -> None:
@@ -61,6 +65,7 @@ def _remote_ok_stdout(
     )
 
 
+@override_settings(QTA_SSH_HOST="qta.test.local")
 class ServerCalcPluginUnitTests(TestCase):
     """Valida el plugin Server Calc con SSH simulado, sin red real."""
 
@@ -254,7 +259,35 @@ class ServerCalcPluginUnitTests(TestCase):
         self.assertIn("UserKnownHostsFile=/tmp/settings_known_hosts", invoked_args)
         self.assertIn("StrictHostKeyChecking=accept-new", invoked_args)
 
+    def test_plugin_falla_sin_qta_ssh_host_configurado(self) -> None:
+        """Sin destino configurado el plugin falla antes de invocar `ssh`.
 
+        `QTA_SSH_HOST` dejó de tener default en settings y el plugin tampoco puede
+        reintroducir una IP de red local: vaciar la variable debe producir un
+        error claro, no una conexión contra un host arbitrario.
+        """
+        for unconfigured_host in ("", "   ", None):
+            with self.subTest(qta_ssh_host=unconfigured_host):
+                with override_settings(QTA_SSH_HOST=unconfigured_host):
+                    with patch(
+                        "apps.server_calc.plugin.subprocess.run",
+                        side_effect=AssertionError("no debe llamarse a SSH"),
+                    ):
+                        with self.assertRaises(ValueError) as error_context:
+                            server_calc_plugin(
+                                {"a": 7.0, "op": "*", "b": 6.0},
+                                _silent_progress,
+                                _silent_log,
+                            )
+
+                self.assertIn("QTA_SSH_HOST", str(error_context.exception))
+
+    def test_el_plugin_no_reintroduce_un_host_por_defecto(self) -> None:
+        """El módulo del plugin no define una IP fija como destino de qta."""
+        self.assertNotIn("DEFAULT_QTA_SSH_HOST", vars(plugin_module))
+
+
+@override_settings(QTA_SSH_HOST="qta.test.local")
 class ServerCalcContractApiTests(TestCase):
     """Valida contrato HTTP y ejecución del plugin Server Calc."""
 
@@ -357,7 +390,7 @@ class ServerCalcContractApiTests(TestCase):
                 "file_path": "/home/chemistry-apps/server-apps/results/calc_x.txt",
                 "metadata": {
                     "executed_on": "qta",
-                    "remote_host": "192.168.1.20",
+                    "remote_host": "qta.test.local",
                 },
             },
         )
@@ -530,6 +563,80 @@ class ServerCalcAdminPermissionTests(TestCase):
             user=user, group=other_group, role_in_group=GroupMembership.ROLE_MEMBER
         )
         self.assertEqual(self._create_response(client).status_code, 403)
+
+
+class ServerCalcPermissionProfileCacheTests(TestCase):
+    """`IsServerCalcAdmin` resuelve el perfil de identidad una vez por request."""
+
+    def _actor(self, label: str) -> AbstractUser:
+        user_model = get_user_model()
+        return user_model.objects.create_user(
+            username=f"profile-{label}-{uuid.uuid4().hex[:6]}",
+            email=f"profile-{label}@example.com",
+            password=None,
+            is_staff=False,
+            is_superuser=False,
+        )
+
+    @patch("apps.server_calc.routers.AuthorizationService.resolve_identity_profile")
+    def test_el_perfil_se_memoiza_en_la_request(
+        self, mocked_resolve_profile: Mock
+    ) -> None:
+        """Dos lecturas del mismo actor en una request cuestan una sola consulta."""
+        mocked_resolve_profile.return_value = None
+
+        request = APIRequestFactory().post("/")
+        actor = self._actor("memo")
+
+        first = _identity_profile_for_request(request, actor)
+        second = _identity_profile_for_request(request, actor)
+
+        self.assertIsNone(first)
+        self.assertIs(second, first)
+        mocked_resolve_profile.assert_called_once_with(actor)
+
+    @patch(
+        "apps.core.identity.services.authorization_service."
+        "AuthorizationService._get_identity_profile"
+    )
+    def test_is_root_usa_el_perfil_ya_resuelto(self, mocked_get_profile: Mock) -> None:
+        """`is_root` consume el perfil recibido y no vuelve a la BD por él."""
+        actor = self._actor("root-profile")
+        root_profile = UserIdentityProfile(user=actor, role="root")
+
+        self.assertTrue(AuthorizationService.is_root(actor, profile=root_profile))
+        mocked_get_profile.assert_not_called()
+
+    @patch(
+        "apps.core.identity.services.authorization_service."
+        "AuthorizationService._get_identity_profile"
+    )
+    def test_has_explicit_admin_role_usa_el_perfil_ya_resuelto(
+        self, mocked_get_profile: Mock
+    ) -> None:
+        """`has_explicit_admin_role` también consume el perfil memoizado."""
+        actor = self._actor("admin-profile")
+        admin_profile = UserIdentityProfile(user=actor, role="admin")
+
+        self.assertTrue(
+            AuthorizationService.has_explicit_admin_role(actor, profile=admin_profile)
+        )
+        mocked_get_profile.assert_not_called()
+
+    def test_actor_sin_perfil_de_identidad_no_es_root(self) -> None:
+        """Sin perfil en BD (y sin perfil explícito), la decisión sigue siendo no-root."""
+        actor = self._actor("sin-perfil")
+
+        self.assertFalse(AuthorizationService.is_root(actor))
+        self.assertFalse(AuthorizationService.has_explicit_admin_role(actor))
+
+    def test_permiso_sigue_denegando_a_usuario_normal(self) -> None:
+        """La memoización no cambia la decisión: sin membresía, 403."""
+        actor = self._actor("denied")
+        request = APIRequestFactory().post("/")
+        request.user = actor
+
+        self.assertFalse(IsServerCalcAdmin().has_permission(request, view=object()))
 
 
 class ServerCalcContractTests(TestCase):

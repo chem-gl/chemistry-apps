@@ -15,6 +15,7 @@ from .definitions import (
     APP_CONFIG_NAME,
     APP_ROUTE_BASENAME,
     APP_ROUTE_PREFIX,
+    DEFAULT_ALGORITHM_VERSION,
     PLUGIN_NAME,
 )
 
@@ -36,6 +37,7 @@ class MarcusConfig(AppConfig):
             api_base_path=APP_API_BASE_PATH,
             route_basename=APP_ROUTE_BASENAME,
             supports_pause_resume=False,
+            default_algorithm_version=DEFAULT_ALGORITHM_VERSION,
         )
         ScientificAppRegistry.register(app_definition)
 

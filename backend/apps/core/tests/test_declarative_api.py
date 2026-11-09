@@ -6,12 +6,49 @@ para consumo multicanal sin acoplamiento HTTP.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.test import TestCase
 
 from ..declarative_api import ConcreteJobHandle, DeclarativeJobAPI
 from ..models import ScientificJob, ScientificJobLogEvent
+from ..types import JobPausedTimeoutError
+
+PARKED_TIME = 10_000_000.0
+
+
+@contextmanager
+def fake_clock(
+    ticks: list[float], on_sleep: Callable[[float], None] | None = None
+) -> Iterator[None]:
+    """Reloj falso acotado al módulo `declarative_api`.
+
+    Se reemplaza el NOMBRE `time` dentro del módulo, no el atributo del módulo
+    stdlib: `patch("...declarative_api.time.time")` alcanzaría al `time` global
+    del proceso y cualquier llamada ajena (logging, sqlite, hilos) consumiría los
+    `ticks`, causando `StopIteration` intermitente en la suite completa.
+
+    Agotados los `ticks`, `time()` devuelve un valor fijo muy grande para que un
+    eventual sondeo extra corte por timeout en vez de lanzar `StopIteration`.
+    """
+    remaining = list(ticks)
+
+    def _time() -> float:
+        return remaining.pop(0) if remaining else PARKED_TIME
+
+    def _sleep(seconds: float) -> None:
+        if on_sleep is not None:
+            on_sleep(seconds)
+
+    with patch(
+        "apps.core.declarative_api.time", SimpleNamespace(time=_time, sleep=_sleep)
+    ):
+        yield
 
 
 class ConcreteJobHandleTests(TestCase):
@@ -61,71 +98,80 @@ class ConcreteJobHandleTests(TestCase):
         self.assertEqual(logs["results"][0]["message"], "inicio")
         self.assertFalse(handle.supports_pause_resume)
 
-    @patch("apps.core.declarative_api.time.sleep", return_value=None)
-    @patch("apps.core.declarative_api.time.time")
-    def test_wait_for_terminal_returns_timeout_error_for_non_terminal_job(
-        self,
-        mocked_time: object,
-        _mocked_sleep: object,
-    ) -> None:
-        mocked_time.side_effect = [0.0, 100.0]
+    def test_wait_for_terminal_returns_timeout_error_for_non_terminal_job(self) -> None:
         job = self._create_job(status="running")
         handle = ConcreteJobHandle(job)
 
-        result = handle.wait_for_terminal(timeout_seconds=10)
+        with fake_clock([0.0, 100.0]):
+            result = handle.wait_for_terminal(timeout_seconds=10)
 
         self.assertTrue(result.is_failure())
         self.assertIn(
             "did not complete", str(result.fold(lambda err: err, lambda _: ""))
         )
 
-    @patch("apps.core.declarative_api.time.sleep", return_value=None)
-    @patch("apps.core.declarative_api.time.time")
-    def test_wait_for_terminal_returns_failure_for_failed_job(
-        self,
-        mocked_time: object,
-        _mocked_sleep: object,
-    ) -> None:
-        mocked_time.side_effect = [0.0, 0.0]
+    def test_wait_for_terminal_returns_failure_for_failed_job(self) -> None:
         job = self._create_job(status="failed", error_trace="boom")
         handle = ConcreteJobHandle(job)
 
-        result = handle.wait_for_terminal(timeout_seconds=10)
+        with fake_clock([0.0, 0.0]):
+            result = handle.wait_for_terminal(timeout_seconds=10)
 
         self.assertTrue(result.is_failure())
         self.assertIn("failed", str(result.fold(lambda err: err, lambda _: "")))
 
-    @patch("apps.core.declarative_api.time.sleep", return_value=None)
-    @patch("apps.core.declarative_api.time.time")
-    def test_wait_for_terminal_returns_success_for_completed_job(
-        self,
-        mocked_time: object,
-        _mocked_sleep: object,
-    ) -> None:
-        mocked_time.side_effect = [0.0, 0.0]
+    def test_wait_for_terminal_returns_success_for_completed_job(self) -> None:
         job = self._create_job(status="completed", results={"value": 5})
         handle = ConcreteJobHandle(job)
 
-        result = handle.wait_for_terminal(timeout_seconds=10)
+        with fake_clock([0.0, 0.0]):
+            result = handle.wait_for_terminal(timeout_seconds=10)
 
         self.assertTrue(result.is_success())
         self.assertEqual(result.get_or_else({}), {"value": 5})
 
-    @patch("apps.core.declarative_api.time.sleep", return_value=None)
-    @patch("apps.core.declarative_api.time.time")
-    def test_wait_for_terminal_returns_failure_for_cancelled_job(
-        self,
-        mocked_time: object,
-        _mocked_sleep: object,
-    ) -> None:
-        mocked_time.side_effect = [0.0, 0.0]
+    def test_wait_for_terminal_returns_failure_for_cancelled_job(self) -> None:
         job = self._create_job(status="cancelled")
         handle = ConcreteJobHandle(job)
 
-        result = handle.wait_for_terminal(timeout_seconds=10)
+        with fake_clock([0.0, 0.0]):
+            result = handle.wait_for_terminal(timeout_seconds=10)
 
         self.assertTrue(result.is_failure())
         self.assertIn("cancel", str(result.fold(lambda err: err, lambda _: "")))
+
+    def test_wait_for_terminal_treats_paused_as_non_terminal(self) -> None:
+        """Un job pausado no es éxito: agota la espera y reporta `JobPausedTimeoutError`."""
+        job = self._create_job(
+            status="paused",
+            supports_pause_resume=True,
+            results={"checkpoint": "parcial"},
+        )
+        handle = ConcreteJobHandle(job)
+
+        with fake_clock([0.0, 0.0, 100.0]):
+            result = handle.wait_for_terminal(timeout_seconds=10)
+
+        self.assertTrue(result.is_failure())
+        error: object = result.fold(lambda err: err, lambda _: None)
+        self.assertIsInstance(error, JobPausedTimeoutError)
+        self.assertIn("pausado", str(error))
+
+    def test_wait_for_terminal_retorna_resultado_si_el_job_se_reanuda(self) -> None:
+        """Si el job se reanuda y completa durante la espera, el éxito llega igual."""
+        job = self._create_job(status="paused", supports_pause_resume=True)
+        handle = ConcreteJobHandle(job)
+
+        def resume_job(_seconds: float) -> None:
+            ScientificJob.objects.filter(pk=job.pk).update(
+                status="completed", results={"value": 9}
+            )
+
+        with fake_clock([0.0] * 8, on_sleep=resume_job):
+            result = handle.wait_for_terminal(timeout_seconds=10)
+
+        self.assertTrue(result.is_success())
+        self.assertEqual(result.get_or_else({}), {"value": 9})
 
     @patch("apps.core.declarative_api.JobService.request_pause")
     def test_request_pause_returns_failure_when_pause_not_supported(
@@ -295,7 +341,11 @@ class ConcreteJobHandleTests(TestCase):
 class DeclarativeJobAPITests(TestCase):
     """Pruebas de API declarativa para submit, lookup y listado."""
 
-    def _create_job(self, plugin_name: str = "calculator") -> ScientificJob:
+    def _create_job(
+        self,
+        plugin_name: str = "calculator",
+        owner: AbstractUser | None = None,
+    ) -> ScientificJob:
         return ScientificJob.objects.create(
             job_hash="job-hash-api",
             plugin_name=plugin_name,
@@ -307,6 +357,14 @@ class DeclarativeJobAPITests(TestCase):
             progress_stage="pending",
             progress_message="pending",
             progress_event_index=0,
+            owner=owner,
+        )
+
+    def _create_actor(self, label: str) -> AbstractUser:
+        """Usuario desechable para probar alcance por dueño."""
+        user_model = get_user_model()
+        return user_model.objects.create_user(
+            username=f"scope-{label}", email=f"scope-{label}@example.com", password=None
         )
 
     @patch("apps.core.declarative_api.JobService.register_dispatch_result")
@@ -398,6 +456,51 @@ class DeclarativeJobAPITests(TestCase):
 
         self.assertTrue(result.is_failure())
         self.assertIn("db broken", str(result.fold(lambda err: err, lambda _: "")))
+
+    def test_get_job_handle_sin_owner_id_es_de_confianza_interna(self) -> None:
+        """Sin alcance, devuelve cualquier job: solo apto para código interno."""
+        owner = self._create_actor("internal")
+        created_job = self._create_job(owner=owner)
+        api = DeclarativeJobAPI()
+
+        result = api.get_job_handle(job_id=str(created_job.id))
+
+        self.assertTrue(result.is_success())
+        self.assertEqual(result.get_or_else(None).job_id, str(created_job.id))
+
+    def test_get_job_handle_con_owner_id_rechaza_jobs_de_otros(self) -> None:
+        """Con `owner_id`, un job ajeno responde igual que uno inexistente (anti-IDOR)."""
+        owner = self._create_actor("dueno")
+        stranger = self._create_actor("extrano")
+        created_job = self._create_job(owner=owner)
+        api = DeclarativeJobAPI()
+
+        foreign_result = api.get_job_handle(
+            job_id=str(created_job.id), owner_id=stranger.id
+        )
+        self.assertTrue(foreign_result.is_failure())
+        self.assertIn(
+            "not found", str(foreign_result.fold(lambda err: err, lambda _: ""))
+        )
+
+        own_result = api.get_job_handle(job_id=str(created_job.id), owner_id=owner.id)
+        self.assertTrue(own_result.is_success())
+        self.assertEqual(own_result.get_or_else(None).job_id, str(created_job.id))
+
+    def test_list_jobs_con_owner_id_filtra_por_dueno(self) -> None:
+        """El alcance por dueño acota el listado a los jobs del actor."""
+        owner = self._create_actor("list-owner")
+        stranger = self._create_actor("list-stranger")
+        self._create_job(plugin_name="calculator", owner=owner)
+        self._create_job(plugin_name="sa_score", owner=stranger)
+        api = DeclarativeJobAPI()
+
+        result = api.list_jobs(owner_id=owner.id, limit=20)
+
+        self.assertTrue(result.is_success())
+        handles = result.get_or_else([])
+        self.assertEqual(len(handles), 1)
+        self.assertEqual(handles[0].status, "pending")
 
     @patch("apps.core.declarative_api.JobService.create_job")
     @patch("apps.core.declarative_api.ScientificAppRegistry.get_definition_by_plugin")

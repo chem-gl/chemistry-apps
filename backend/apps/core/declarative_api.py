@@ -27,6 +27,14 @@ Uso esperado:
         on_failure=lambda err: {"error": str(err)},
         on_success=lambda result: {"success": result},
     )
+
+Contratos que conviene conocer antes de consumir esta API:
+    - `wait_for_terminal` trata como terminales completed/failed/cancelled. Un job
+      `paused` (pausa cooperativa, solo en apps con `supports_pause_resume`) NO es
+      terminal: la espera sigue sondeando y, si agota el timeout pausado, retorna
+      `JobPausedTimeoutError` en lugar de un `Success` vacío.
+    - `get_job_handle` y `list_jobs` son operaciones de CONFIANZA INTERNA: no
+      aplican RBAC. Con entrada no confiable, pasa `owner_id` con el id del actor.
 """
 
 from __future__ import annotations
@@ -49,6 +57,7 @@ from .types import (
     JobHandle,
     JobLogLevel,
     JobLogListResponse,
+    JobPausedTimeoutError,
     JobPauseNotSupportedError,
     JobProgressSnapshot,
     JobStatus,
@@ -135,46 +144,65 @@ class ConcreteJobHandle(JobHandle[JSONMap]):
     ) -> Result[JSONMap, DomainError]:
         """Espera bloqueante hasta estado terminal o timeout.
 
+        Estados terminales: `completed`, `failed` y `cancelled`. `paused` NO es
+        terminal: es un checkpoint cooperativo sin resultado definitivo, así que la
+        espera continúa hasta que el job se reanude y termine o se agote el timeout.
+        Al expirar con el job pausado se retorna `JobPausedTimeoutError`, de modo que
+        un `--wait` nunca reporte éxito sobre un job pausado.
+
+        El soporte de pausa es por app: `ScientificAppDefinition.supports_pause_resume`
+        se propaga a `ScientificJob.supports_pause_resume` al crear el job. Las apps
+        sin soporte no pueden quedar en `paused`, así que para ellas el comportamiento
+        es idéntico al de antes de este cambio.
+
         Esta operación es sincrónica y hace polling a BD cada 0.5s.
         Mantiene ejecución asíncrona en broker (no fallback inline).
         """
         start_time = time.time()
         poll_interval = 0.5
+        last_observed_status: JobStatus | None = None
 
         while True:
             elapsed = time.time() - start_time
             if elapsed > timeout_seconds:
+                # Un job pausado no es un job lento: se reporta como error propio.
+                if last_observed_status == "paused":
+                    return Failure(
+                        JobPausedTimeoutError(
+                            job_id=self.job_id, timeout_seconds=timeout_seconds
+                        )
+                    )
                 return Failure(
                     JobTimeoutError(job_id=self.job_id, timeout_seconds=timeout_seconds)
                 )
 
             # Refrescar estado desde BD
             self._job.refresh_from_db()
+            last_observed_status = cast(JobStatus, self._job.status)
 
             # Chequear si alcanzó estado terminal
-            if self._job.status in ("completed", "failed", "paused", "cancelled"):
-                if self._job.status == "failed":
-                    error_reason = self._job.error_trace or "Unknown error"
-                    return Failure(
-                        JobExecutionError(
-                            plugin_name=self._job.plugin_name,
-                            job_id=self.job_id,
-                            reason=error_reason,
-                            error_trace=self._job.error_trace,
-                        )
+            if last_observed_status == "failed":
+                error_reason = self._job.error_trace or "Unknown error"
+                return Failure(
+                    JobExecutionError(
+                        plugin_name=self._job.plugin_name,
+                        job_id=self.job_id,
+                        reason=error_reason,
+                        error_trace=self._job.error_trace,
                     )
-                if self._job.status == "cancelled":
-                    return Failure(
-                        JobCancelError(
-                            job_id=self.job_id,
-                            reason="El job fue cancelado durante la ejecución.",
-                        )
+                )
+            if last_observed_status == "cancelled":
+                return Failure(
+                    JobCancelError(
+                        job_id=self.job_id,
+                        reason="El job fue cancelado durante la ejecución.",
                     )
-                # Completed o paused: retornar resultados
+                )
+            if last_observed_status == "completed":
                 results = self._job.results or {}
                 return Success(results)
 
-            # Aún en ejecución, esperar y reintentar
+            # pending | running | paused: aún no terminal, esperar y reintentar
             time.sleep(poll_interval)
 
     def request_pause(self) -> Task[None, DomainError]:
@@ -346,10 +374,27 @@ class DeclarativeJobAPI:
 
         return DeferredTask(submit_computation)
 
-    def get_job_handle(self, *, job_id: str) -> Result[JobHandle[JSONMap], DomainError]:
-        """Obtiene handle para job existente."""
+    def get_job_handle(
+        self, *, job_id: str, owner_id: int | None = None
+    ) -> Result[JobHandle[JSONMap], DomainError]:
+        """Obtiene handle para job existente.
+
+        OPERACIÓN DE CONFIANZA INTERNA: la invocan código interno (workers,
+        servicios, comandos de administración). No aplica RBAC por sí misma, así
+        que un llamador que reciba un `job_id` desde entrada no confiable (HTTP,
+        CLI de terceros) DEBE pasar `owner_id` con el id del actor para acotarla
+        a sus propios jobs; exponerla sin alcance abre un IDOR.
+
+        Con `owner_id` definido, un job de otro dueño responde igual que uno
+        inexistente ("not found") para no revelar la existencia de jobs ajenos.
+        El filtrado fino por grupo/rol sigue viviendo en la capa HTTP
+        (`AuthorizationService.can_view_job`), no aquí.
+        """
         try:
             job = ScientificJob.objects.get(id=job_id)
+            if owner_id is not None and job.owner_id != owner_id:
+                return Failure(DomainError(f"Job {job_id} not found"))
+
             handle = ConcreteJobHandle(
                 job=job,
                 dispatch_callback=self._dispatch_callback,
@@ -446,8 +491,15 @@ class DeclarativeJobAPI:
         plugin_name: str | None = None,
         status: JobStatus | None = None,
         limit: int = 100,
+        owner_id: int | None = None,
     ) -> Result[list[JobHandle[JSONMap]], DomainError]:
-        """Lista jobs con filtros opcionales (no diferido)."""
+        """Lista jobs con filtros opcionales (no diferido).
+
+        OPERACIÓN DE CONFIANZA INTERNA: itera el queryset completo de jobs, sin
+        aplicar RBAC. Desde un contexto HTTP pasa siempre `owner_id` con el id del
+        actor (o usa los viewsets de `apps.core`, que ya filtran por visibilidad
+        con `AuthorizationService`); llamarla sin alcance lista jobs ajenos.
+        """
         try:
             query = ScientificJob.objects.all()
 
@@ -456,6 +508,9 @@ class DeclarativeJobAPI:
 
             if status is not None:
                 query = query.filter(status=status)
+
+            if owner_id is not None:
+                query = query.filter(owner_id=owner_id)
 
             jobs = query.order_by("-created_at")[:limit]
             handles = [

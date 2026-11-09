@@ -3,6 +3,8 @@
 Objetivo del archivo:
 - Ejecutar a op b en el servidor remoto qta, desacoplado de HTTP/ORM.
 - Sin cálculo de respaldo: si qta no responde, el job falla con traza clara.
+- Sin `QTA_SSH_HOST` configurado el job falla antes de invocar `ssh`: el destino
+  remoto nunca se infiere de una IP hardcodeada en el código.
 
 Cómo se usa:
 - `PluginRegistry` ejecuta `server_calc_plugin` desde `JobService.run_job`.
@@ -37,7 +39,10 @@ REMOTE_CALC_SCRIPT = "/home/chemistry-apps/server-apps/calc.py"
 LOCAL_VERIFICATION_TOLERANCE = 1e-9
 SUPPORTED_OPERATORS: tuple[str, ...] = ("+", "-", "*", "/")
 
-DEFAULT_QTA_SSH_HOST = "192.168.1.20"
+# Fallbacks de configuración usados SOLO si el atributo no existe en Django
+# settings; `QTA_SSH_HOST` se excluye a propósito: el destino remoto nunca se
+# deduce de un valor fijo en el código (settings.py es la fuente de verdad y su
+# default está vacío).
 DEFAULT_QTA_SSH_USER = "chemistry-apps"
 DEFAULT_QTA_SSH_KEY_PATH = os.path.expanduser("~/.ssh/chemistry-apps_qta_ed25519")
 DEFAULT_QTA_SSH_KNOWN_HOSTS_PATH = os.path.expanduser(
@@ -45,13 +50,25 @@ DEFAULT_QTA_SSH_KNOWN_HOSTS_PATH = os.path.expanduser(
 )
 DEFAULT_QTA_SSH_TIMEOUT = 25
 
+QTA_SSH_NOT_CONFIGURED_MESSAGE = (
+    "Server Calc no está configurado: define QTA_SSH_HOST con el host o la "
+    "dirección del servidor qta (variable de entorno leída por Django settings)."
+)
+
 
 def _read_ssh_settings() -> tuple[str, str, str, str, int]:
-    """Lee la configuración SSH desde Django settings con defaults seguros.
+    """Lee y valida la configuración SSH desde Django settings.
 
     Retorna (host, user, key_path, known_hosts_path, timeout_s).
+
+    El host no tiene default: si `QTA_SSH_HOST` llega vacío (entorno sin
+    configurar), falla aquí con un mensaje claro antes de invocar `ssh`, en lugar
+    de conectar contra una IP arbitraria hardcodeada.
     """
-    host_value: str = str(getattr(settings, "QTA_SSH_HOST", DEFAULT_QTA_SSH_HOST))
+    host_value: str = str(getattr(settings, "QTA_SSH_HOST", "") or "").strip()
+    if host_value == "":
+        raise ValueError(QTA_SSH_NOT_CONFIGURED_MESSAGE)
+
     user_value: str = str(getattr(settings, "QTA_SSH_USER", DEFAULT_QTA_SSH_USER))
     key_value: str = str(
         getattr(settings, "QTA_SSH_KEY_PATH", DEFAULT_QTA_SSH_KEY_PATH)
@@ -71,6 +88,22 @@ def _read_ssh_settings() -> tuple[str, str, str, str, int]:
     except (TypeError, ValueError):
         timeout_value = DEFAULT_QTA_SSH_TIMEOUT
     return host_value, user_value, key_value, known_hosts_value, timeout_value
+
+
+def _read_settings_or_fail(
+    emit_log: PluginLogCallback,
+) -> tuple[str, str, str, str, int]:
+    """Lee la configuración SSH y deja trazabilidad en los logs si falta el host."""
+    try:
+        return _read_ssh_settings()
+    except ValueError as config_error:
+        emit_log(
+            "error",
+            SERVER_CALC_LOG_SOURCE,
+            "Configuración SSH de Server Calc incompleta.",
+            {"reason": str(config_error)},
+        )
+        raise
 
 
 def _apply_operator(a: float, op: str, b: float) -> float:
@@ -202,7 +235,7 @@ def server_calc_plugin(
         {"a": a_value, "op": op_value, "b": b_value},
     )
 
-    host, user, key_path, known_hosts_path, timeout_s = _read_ssh_settings()
+    host, user, key_path, known_hosts_path, timeout_s = _read_settings_or_fail(emit_log)
     raw_job_id: object = parameters.get("job_id", "local")
     job_label: str = str(raw_job_id)[:8] if str(raw_job_id).strip() != "" else "local"
 

@@ -6,9 +6,12 @@ Objetivo del archivo:
 
 Cómo se usa:
 - Submit simple: `python manage.py run_declarative_job molar-fractions --parameters '{...}'`.
-- Plugins disponibles: molar-fractions, tunnel-effect, easy-rate, marcus-kinetics,
-  smileit, sa-score, toxicity-properties.
-- Submit + wait: agregar `--wait --timeout <segundos>`.
+- Plugins disponibles: se derivan en tiempo de ayuda del `ScientificAppRegistry`
+  (`python manage.py run_declarative_job --help`); no hay lista fija aquí.
+- Versión de algoritmo: si se omite `--algorithm-version` se usa la que cada app
+  publicó como `DEFAULT_ALGORITHM_VERSION` en su definición registrada.
+- Submit + wait: agregar `--wait --timeout <segundos>`. Con `--wait`, un job que
+  quede pausado se reporta como error (`JobPausedTimeoutError`), no como éxito.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from typing import cast
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
+from apps.core.app_registry import ScientificAppDefinition, ScientificAppRegistry
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.types import JSONMap
 
@@ -36,19 +40,19 @@ class Command(BaseCommand):
             "plugin",
             type=str,
             help=(
-                "Nombre del plugin registrado: molar-fractions, tunnel-effect, "
-                "easy-rate, marcus-kinetics, smileit, sa-score o toxicity-properties."
+                "Nombre del plugin registrado en el ScientificAppRegistry "
+                f"(uno de: {self._registered_plugin_names()})."
             ),
         )
         parser.add_argument(
             "--algorithm-version",
             dest="version",
             type=str,
-            default="1.0",
+            default=None,
             help=(
-                "Versión del algoritmo a ejecutar. El default genérico es 1.0; "
-                "para plugins con otra versión (p. ej. server-calc) pásala "
-                "explícitamente con el DEFAULT_ALGORITHM_VERSION del plugin."
+                "Versión del algoritmo a ejecutar. Si se omite, se usa la versión "
+                "por defecto que el plugin publicó en el registro "
+                "(DEFAULT_ALGORITHM_VERSION de la app), no un 1.0 genérico."
             ),
         )
         parser.add_argument(
@@ -74,7 +78,10 @@ class Command(BaseCommand):
         del args
 
         plugin_name: str = str(options["plugin"])
-        version_value: str = str(options["version"])
+        requested_version: str = str(options["version"] or "").strip()
+        version_value: str = self._resolve_algorithm_version(
+            plugin_name=plugin_name, requested_version=requested_version
+        )
         wait_for_terminal: bool = bool(options["wait"])
         timeout_seconds: int = int(options["timeout"])
         parameters_raw: str = str(options["parameters"])
@@ -99,6 +106,42 @@ class Command(BaseCommand):
             version_value=version_value,
             parameters_payload=parameters_payload,
         )
+
+    @staticmethod
+    def _registered_plugin_names() -> str:
+        """Nombres de plugin registrados, ordenados, para el `--help` del CLI.
+
+        Se leen del `ScientificAppRegistry` en tiempo de ayuda: así el listado
+        nunca queda desactualizado cuando se agrega o quita una app científica
+        (antes estaba escrito a mano y omitía `server-calc`).
+        """
+        registered_names: list[str] = sorted(
+            definition.plugin_name
+            for definition in ScientificAppRegistry.list_definitions()
+        )
+        if len(registered_names) == 0:
+            return "ninguno disponible (apps científicas sin registrar)"
+        return ", ".join(registered_names)
+
+    def _resolve_algorithm_version(
+        self, *, plugin_name: str, requested_version: str
+    ) -> str:
+        """Resuelve la versión de algoritmo sin importar apps científicas.
+
+        Prioriza `--algorithm-version`; si viene vacía usa la versión por defecto
+        que la app publicó en su `ScientificAppDefinition` al registrarse.
+        """
+        app_definition: ScientificAppDefinition | None = (
+            ScientificAppRegistry.get_definition_by_plugin(plugin_name)
+        )
+        if app_definition is None:
+            raise CommandError(
+                f"Plugin '{plugin_name}' no está registrado. "
+                f"Disponibles: {self._registered_plugin_names()}."
+            )
+        if requested_version:
+            return requested_version
+        return app_definition.default_algorithm_version
 
     def _parse_parameters(self, raw_parameters: str) -> JSONMap:
         """Convierte el string JSON de parámetros a JSONMap tipado."""

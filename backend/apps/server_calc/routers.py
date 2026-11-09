@@ -9,6 +9,7 @@ Este módulo usa ScientificAppViewSetMixin para heredar los endpoints comunes
 
 from typing import cast
 
+from django.contrib.auth.models import AbstractUser
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import BasePermission, IsAuthenticated
@@ -18,7 +19,7 @@ from rest_framework.response import Response
 from apps.core.base_router import ScientificAppViewSetMixin
 from apps.core.declarative_api import DeclarativeJobAPI
 from apps.core.identity.services.authorization_service import AuthorizationService
-from apps.core.models import ScientificJob
+from apps.core.models import ScientificJob, UserIdentityProfile
 from apps.core.schemas import ErrorResponseSerializer
 from apps.core.tasks import dispatch_scientific_job
 from apps.core.types import JSONMap
@@ -27,6 +28,32 @@ from .bootstrap_qta import is_qta_operator
 from .definitions import PLUGIN_NAME
 from .schemas import ServerCalcJobCreateSerializer, ServerCalcJobResponseSerializer
 from .types import ServerCalcCalculationResult, ServerCalcJobCreatePayload
+
+
+REQUEST_PROFILE_CACHE_ATTR = "_server_calc_identity_profiles"
+
+
+def _identity_profile_for_request(
+    request: Request, actor: AbstractUser
+) -> UserIdentityProfile | None:
+    """Resuelve el perfil de identidad del actor y lo memoiza en la request.
+
+    La memoria vive en el objeto request (indexada por pk del actor), de modo que
+    las varias verificaciones de permiso de una misma request comparten una única
+    consulta a `UserIdentityProfile`.
+    """
+    profiles_by_actor: dict[int | None, UserIdentityProfile | None] = getattr(
+        request, REQUEST_PROFILE_CACHE_ATTR, {}
+    )
+    actor_key: int | None = getattr(actor, "pk", None)
+
+    if actor_key not in profiles_by_actor:
+        profiles_by_actor[actor_key] = AuthorizationService.resolve_identity_profile(
+            actor
+        )
+        setattr(request, REQUEST_PROFILE_CACHE_ATTR, profiles_by_actor)
+
+    return profiles_by_actor[actor_key]
 
 
 class IsServerCalcAdmin(BasePermission):
@@ -38,6 +65,11 @@ class IsServerCalcAdmin(BasePermission):
     `qta-operators` y su AppPermission `server-calc` está habilitada (ver
     `bootstrap_qta.is_qta_operator`). Sin membresía o con el permiso
     deshabilitado responde 403.
+
+    Coste: el perfil de identidad se resuelve UNA sola vez por request (memoizado
+    en el objeto request) y se reusa en `is_root` y `has_explicit_admin_role`;
+    antes cada verificación volvía a consultarlo. La semántica del permiso no
+    cambia: mismas decisiones y mismos 403.
     """
 
     message = "Server Calc está restringido a administradores y operadores de qta."
@@ -47,9 +79,15 @@ class IsServerCalcAdmin(BasePermission):
         actor = getattr(request, "user", None)
         if not bool(getattr(actor, "is_authenticated", False)):
             return False
-        if AuthorizationService.is_root(actor):
+
+        identity_profile = _identity_profile_for_request(
+            request, cast(AbstractUser, actor)
+        )
+        if AuthorizationService.is_root(actor, profile=identity_profile):
             return True
-        if AuthorizationService.has_explicit_admin_role(actor):
+        if AuthorizationService.has_explicit_admin_role(
+            actor, profile=identity_profile
+        ):
             return True
         return is_qta_operator(actor)
 

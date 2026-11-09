@@ -425,8 +425,12 @@ SPECTACULAR_SETTINGS = {
 # QTA_SSH_HOST/USER/KEY_PATH/KNOWN_HOSTS_PATH/TIMEOUT: destino, usuario, clave,
 # known_hosts dedicado (verificación de host key, StrictHostKeyChecking=accept-new)
 # y timeout (s).
+# QTA_SSH_HOST no tiene default: sin host configurado el plugin Server Calc falla
+# con un mensaje explícito en lugar de conectar contra una IP de red local que
+# solo tendría sentido en una máquina concreta (y sería un destino arbitrario).
+# En despliegue se fija por entorno (docker-compose.libres.yml define QTA_SSH_HOST).
 # ---------------------------------------------------------------------------
-QTA_SSH_HOST: str = os.getenv("QTA_SSH_HOST", "192.168.1.20")
+QTA_SSH_HOST: str = os.getenv("QTA_SSH_HOST", "")
 QTA_SSH_USER: str = os.getenv("QTA_SSH_USER", "chemistry-apps")
 QTA_SSH_KEY_PATH: str = os.getenv(
     "QTA_SSH_KEY_PATH",

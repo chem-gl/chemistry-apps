@@ -4,11 +4,13 @@ Cubre: RealtimeHelpersTests (serialización y broadcasting WebSocket),
 CalculatorTemplateIntegrationTests (integración de la app plantilla),
 PluginRegistryValidationTests (unicidad de plugins),
 ScientificAppRegistryValidationTests (unicidad de definiciones de app),
+ScientificAppRegistryVersionTests (versión de algoritmo publicada por cada app),
 DevelopmentUpCommandTests (comando manage.py up para desarrollo local).
 """
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -332,6 +334,65 @@ class ScientificAppRegistryValidationTests(TestCase):
         ScientificAppRegistry.register(first_definition)
         with self.assertRaises(ImproperlyConfigured):
             ScientificAppRegistry.register(second_definition)
+
+    def test_default_algorithm_version_es_retrocompatible(self) -> None:
+        """Una definición que no publica versión conserva el histórico "1.0"."""
+        definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.calculator",
+            plugin_name="calculator",
+            api_route_prefix="calculator/jobs",
+            api_base_path="/api/calculator/jobs/",
+            route_basename="calculator-job",
+        )
+        ScientificAppRegistry.register(definition)
+
+        self.assertEqual(definition.default_algorithm_version, "1.0")
+        self.assertEqual(
+            ScientificAppRegistry.get_default_algorithm_version("calculator"), "1.0"
+        )
+
+    def test_get_default_algorithm_version_de_la_app_registrada(self) -> None:
+        """El registro expone la versión que cada app publicó, sin importar la app."""
+        definition: ScientificAppDefinition = ScientificAppDefinition(
+            app_config_name="apps.server_calc",
+            plugin_name="server-calc",
+            api_route_prefix="server-calc/jobs",
+            api_base_path="/api/server-calc/jobs/",
+            route_basename="server-calc-job",
+            default_algorithm_version="1.2.0",
+        )
+        ScientificAppRegistry.register(definition)
+
+        self.assertEqual(
+            ScientificAppRegistry.get_default_algorithm_version("server-calc"), "1.2.0"
+        )
+
+    def test_get_default_algorithm_version_plugin_desconocido(self) -> None:
+        """Un plugin inexistente no tiene versión: devuelve None, no un default."""
+        self.assertIsNone(
+            ScientificAppRegistry.get_default_algorithm_version("plugin-fantasma")
+        )
+
+
+class ScientificAppRegistryVersionTests(TestCase):
+    """Cada app científica registrada publica su DEFAULT_ALGORITHM_VERSION."""
+
+    def test_definitions_de_app_exponen_su_version(self) -> None:
+        """Evita que una app nueva se registre sin versión y caiga en el "1.0" genérico."""
+        definitions: list[ScientificAppDefinition] = (
+            ScientificAppRegistry.list_definitions()
+        )
+        self.assertGreaterEqual(len(definitions), 8)
+
+        for definition in definitions:
+            with self.subTest(plugin=definition.plugin_name):
+                app_definitions = importlib.import_module(
+                    f"{definition.app_config_name}.definitions"
+                )
+                self.assertEqual(
+                    definition.default_algorithm_version,
+                    app_definitions.DEFAULT_ALGORITHM_VERSION,
+                )
 
 
 class DevelopmentUpCommandTests(TestCase):
