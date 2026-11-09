@@ -7,7 +7,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiResponse, OpenApiTypes, extend_schema
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiTypes,
+    extend_schema,
+)
 from rest_framework import permissions, status, views
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -226,7 +231,28 @@ class CurrentUserAccessibleAppsView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccessibleScientificAppSerializer
 
-    @extend_schema(responses=AccessibleScientificAppSerializer(many=True))
+    @extend_schema(
+        responses=AccessibleScientificAppSerializer(many=True),
+        parameters=[
+            OpenApiParameter(
+                name="group_id",
+                type=int,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "Identificador del grupo activo desde el que se resuelve el "
+                    "RBAC. Sin el parámetro: root y admin reciben el catálogo "
+                    "global (todas las apps habilitadas) y un usuario normal se "
+                    "evalúa contra su grupo primario. Con el parámetro: el acceso "
+                    "se resuelve estrictamente contra ese grupo, también para "
+                    "root, y `enabled` sigue la precedencia regla de grupo -> "
+                    "regla de usuario -> denegado. Solo root o miembros del grupo "
+                    "(membresía o grupo primario) pueden consultarlo: responde 403 "
+                    "para un grupo ajeno y 400 si no es un entero válido."
+                ),
+            ),
+        ],
+    )
     def get(self, request: Request) -> Response:
         raw_group_id = request.query_params.get("group_id")
         active_group_id: int | None = None

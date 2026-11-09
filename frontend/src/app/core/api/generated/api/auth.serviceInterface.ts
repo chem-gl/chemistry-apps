@@ -55,8 +55,9 @@ export interface AuthServiceInterface {
      * 
      * Expone apps disponibles para el usuario actual con RBAC resuelto.  Acepta &#x60;?group_id&#x3D;X&#x60; para evaluar acceso estrictamente desde el grupo activo.
      * @endpoint get /api/auth/apps/
+     * @param groupId Identificador del grupo activo desde el que se resuelve el RBAC. Sin el parámetro: root y admin reciben el catálogo global (todas las apps habilitadas) y un usuario normal se evalúa contra su grupo primario. Con el parámetro: el acceso se resuelve estrictamente contra ese grupo, también para root, y &#x60;enabled&#x60; sigue la precedencia regla de grupo -&gt; regla de usuario -&gt; denegado. Solo root o miembros del grupo (membresía o grupo primario) pueden consultarlo: responde 403 para un grupo ajeno y 400 si no es un entero válido.
      */
-    authAppsList(extraHttpRequestParams?: any): Observable<Array<AccessibleScientificApp>>;
+    authAppsList(groupId?: number, extraHttpRequestParams?: any): Observable<Array<AccessibleScientificApp>>;
 
     /**
      * 
