@@ -48,6 +48,4 @@ ALL_METRIC_NAMES: Final[tuple[str, ...]] = (
     *OPTIONAL_METRIC_NAMES,
 )
 
-ROOT_SAMPLE_SOURCE_REFERENCE: Final[str] = "root"
-# En el CADMA.py original, la línea de referencia visible para S_S se dibuja en 1.0.
 DEFAULT_SCORE_REFERENCE_LINE: Final[float] = 1.0

@@ -86,15 +86,6 @@ class JobProgressSnapshot(TypedDict):
     updated_at: str
 
 
-class JobControlSnapshot(TypedDict):
-    """Snapshot tipado de control cooperativo de ejecución de un job."""
-
-    job_id: str
-    pause_requested: bool
-    supports_pause_resume: bool
-    status: JobStatus
-
-
 class JobLogEntry(TypedDict):
     """Evento tipado de logging en tiempo real por job."""
 

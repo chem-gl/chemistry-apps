@@ -38,7 +38,6 @@ MAX_R_SUBSTITUTES: Final[int] = 10
 DERIVATIVE_WARNING_THRESHOLD: Final[int] = 1_000
 # Tope duro: por encima no se ejecuta (nunca se trunca la generación).
 MAX_DERIVATIVES_HARD_LIMIT: Final[int] = 1_000_000
-MAX_SUBSTITUENTS_IN_LIST: Final[int] = 50
 MAX_SELECTED_ATOMS: Final[int] = 20
 MAX_NUM_BONDS: Final[int] = 1
 DEFAULT_EXPORT_PADDING: Final[int] = 5

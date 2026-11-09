@@ -46,8 +46,6 @@ import type {
   JobLogEntryView,
   JobLogsPageView,
   JobLogsQuery,
-  JobsRealtimeEvent,
-  JobsRealtimeQuery,
   MarcusParams,
   MolarFractionsParams,
   SaScoreJobResponseView,
@@ -136,11 +134,6 @@ export class JobsApiService {
   /** Stream SSE de logs en tiempo real para un job específico */
   streamJobLogEvents(jobId: string): Observable<JobLogEntryView> {
     return this.streamingApi.streamJobLogEvents(jobId);
-  }
-
-  /** Stream WebSocket global o filtrado para jobs, progreso y logs */
-  streamJobsRealtime(query: JobsRealtimeQuery = {}): Observable<JobsRealtimeEvent> {
-    return this.streamingApi.streamJobsRealtime(query);
   }
 
   /** Polling de progreso periódico hasta estado terminal (fallback robusto sin SSE) */

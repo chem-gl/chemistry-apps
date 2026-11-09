@@ -142,131 +142,8 @@ function makeEasyRateResponse(overrides: Partial<EasyRateJobResponse> = {}): Eas
 describe('JobsApiService', () => {
   let service: JobsApiService;
   let httpMock: HttpTestingController;
-  let capturedWebSocketUrls: string[];
-  let originalWebSocket: typeof WebSocket | undefined;
-  let mockSocketInstance: {
-    readyState: number;
-    close: () => void;
-    onmessage: ((event: MessageEvent<string>) => void) | null;
-    onerror: (() => void) | null;
-    onclose: (() => void) | null;
-  };
 
   beforeEach(() => {
-    originalWebSocket = globalThis.WebSocket;
-    capturedWebSocketUrls = [];
-    type SocketState = {
-      readyState: number;
-      close: () => void;
-      onmessage: ((event: MessageEvent<string>) => void) | null;
-      onerror: (() => void) | null;
-      onclose: (() => void) | null;
-    };
-    let latestSocketInstance: {
-      readyState: number;
-      close: () => void;
-      onmessage: ((event: MessageEvent<string>) => void) | null;
-      onerror: (() => void) | null;
-      onclose: (() => void) | null;
-    } | null = null;
-    mockSocketInstance = {
-      readyState: 1,
-      close: vi.fn(),
-      onmessage: null,
-      onerror: null,
-      onclose: null,
-    };
-    class MockWebSocket {
-      readyState: number = 1;
-      close: () => void = vi.fn();
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onerror: (() => void) | null = null;
-      onclose: (() => void) | null = null;
-
-      constructor(url: string) {
-        capturedWebSocketUrls.push(url);
-        const currentSocketState: SocketState = {
-          readyState: 1,
-          close: this.close,
-          onmessage: this.onmessage,
-          onerror: this.onerror,
-          onclose: this.onclose,
-        };
-
-        Object.defineProperty(this, 'readyState', {
-          get: () => currentSocketState.readyState,
-          set: (nextValue: number) => {
-            currentSocketState.readyState = nextValue;
-          },
-          configurable: true,
-        });
-        Object.defineProperty(this, 'onmessage', {
-          get: () => currentSocketState.onmessage,
-          set: (nextHandler: ((event: MessageEvent<string>) => void) | null) => {
-            currentSocketState.onmessage = nextHandler;
-          },
-          configurable: true,
-        });
-        Object.defineProperty(this, 'onerror', {
-          get: () => currentSocketState.onerror,
-          set: (nextHandler: (() => void) | null) => {
-            currentSocketState.onerror = nextHandler;
-          },
-          configurable: true,
-        });
-        Object.defineProperty(this, 'onclose', {
-          get: () => currentSocketState.onclose,
-          set: (nextHandler: (() => void) | null) => {
-            currentSocketState.onclose = nextHandler;
-          },
-          configurable: true,
-        });
-
-        latestSocketInstance = currentSocketState;
-      }
-    }
-
-    mockSocketInstance = {
-      get readyState(): number {
-        return latestSocketInstance?.readyState ?? 1;
-      },
-      close: vi.fn(() => {
-        if (latestSocketInstance !== null) {
-          latestSocketInstance.close();
-        }
-      }),
-      get onmessage(): ((event: MessageEvent<string>) => void) | null {
-        return latestSocketInstance?.onmessage ?? null;
-      },
-      set onmessage(nextHandler: ((event: MessageEvent<string>) => void) | null) {
-        if (latestSocketInstance !== null) {
-          latestSocketInstance.onmessage = nextHandler;
-        }
-      },
-      get onerror(): (() => void) | null {
-        return latestSocketInstance?.onerror ?? null;
-      },
-      set onerror(nextHandler: (() => void) | null) {
-        if (latestSocketInstance !== null) {
-          latestSocketInstance.onerror = nextHandler;
-        }
-      },
-      get onclose(): (() => void) | null {
-        return latestSocketInstance?.onclose ?? null;
-      },
-      set onclose(nextHandler: (() => void) | null) {
-        if (latestSocketInstance !== null) {
-          latestSocketInstance.onclose = nextHandler;
-        }
-      },
-    };
-
-    Object.defineProperty(globalThis, 'WebSocket', {
-      value: MockWebSocket,
-      writable: true,
-      configurable: true,
-    });
-
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -281,11 +158,6 @@ describe('JobsApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    Object.defineProperty(globalThis, 'WebSocket', {
-      value: originalWebSocket,
-      writable: true,
-      configurable: true,
-    });
   });
 
   it('should get job progress snapshot', () => {
@@ -466,42 +338,6 @@ describe('JobsApiService', () => {
     );
     expect(req.request.method).toBe('GET');
     req.flush(logsResponse);
-  });
-
-  it('should open jobs realtime websocket and map snapshot and updates', () => {
-    const receivedEvents: Array<string> = [];
-
-    service.streamJobsRealtime({ pluginName: 'molar-fractions', includeLogs: false }).subscribe({
-      next: (event) => {
-        receivedEvents.push(event.event);
-      },
-    });
-
-    expect(capturedWebSocketUrls.length).toBe(1);
-    expect(capturedWebSocketUrls[0]).toContain('plugin_name=molar-fractions');
-    expect(capturedWebSocketUrls[0]).toContain('include_logs=false');
-
-    mockSocketInstance.onmessage?.(
-      new MessageEvent('message', {
-        data: JSON.stringify({
-          event: 'jobs.snapshot',
-          data: {
-            items: [makeScientificJob({ id: 'socket-job-1' })],
-          },
-        }),
-      }),
-    );
-
-    mockSocketInstance.onmessage?.(
-      new MessageEvent('message', {
-        data: JSON.stringify({
-          event: 'job.updated',
-          data: makeScientificJob({ id: 'socket-job-2', status: 'running' }),
-        }),
-      }),
-    );
-
-    expect(receivedEvents).toEqual(['jobs.snapshot', 'job.updated']);
   });
 
   it('should download molar fractions CSV report from backend endpoint', () => {

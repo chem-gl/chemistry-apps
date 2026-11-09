@@ -1,19 +1,18 @@
 // jobs-streaming-api.service.spec.ts: Pruebas unitarias del sub-servicio de streaming en tiempo real.
-// Verifica normalización de logs, streams SSE/WebSocket y fallback de polling terminal.
+// Verifica normalización de logs, streams SSE y fallback de polling terminal.
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
+import { API_BASE_URL } from '../shared/constants';
 import { IdentitySessionService } from '../auth/identity-session.service';
 import {
   JobLogList,
   JobProgressSnapshot,
   ProgressStageEnum,
   provideApi,
-  ScientificJob,
   StatusEnum,
 } from './generated';
 import { JobsStreamingApiService } from './jobs-streaming-api.service';
@@ -92,74 +91,17 @@ function makeLogList(overrides: Partial<JobLogList> = {}): JobLogList {
   };
 }
 
-/** Crea un job científico mínimo para eventos WebSocket tipados. */
-function makeScientificJob(overrides: Partial<ScientificJob> = {}): ScientificJob {
-  return {
-    id: 'job-1',
-    job_hash: 'hash-1',
-    plugin_name: 'molar-fractions',
-    algorithm_version: '1.0.0',
-    status: StatusEnum.Pending,
-    cache_hit: false,
-    cache_miss: true,
-    progress_percentage: 0,
-    progress_stage: ProgressStageEnum.Pending,
-    progress_message: 'Pending',
-    progress_event_index: 1,
-    supports_pause_resume: false,
-    pause_requested: false,
-    runtime_state: {},
-    paused_at: null,
-    resumed_at: null,
-    parameters: null,
-    results: null,
-    error_trace: '',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    ...overrides,
-  } as ScientificJob;
-}
-
 describe('JobsStreamingApiService', () => {
   let service: JobsStreamingApiService;
   const sessionTokenStub = { accessToken: vi.fn<() => string | null>(() => null) };
   let httpMock: HttpTestingController;
   let originalEventSource: typeof EventSource | undefined;
-  let originalWebSocket: typeof WebSocket | undefined;
-  let mockSocketInstance: {
-    readyState: number;
-    close: ReturnType<typeof vi.fn>;
-    onmessage: ((event: MessageEvent<string>) => void) | null;
-    onerror: (() => void) | null;
-    onclose: (() => void) | null;
-  };
-  let capturedWebSocketUrl: string | null;
 
   beforeEach(() => {
     originalEventSource = globalThis.EventSource;
-    originalWebSocket = globalThis.WebSocket;
     MockEventSource.instances.length = 0;
 
     globalThis.EventSource = MockEventSource as unknown as typeof EventSource;
-
-    capturedWebSocketUrl = null;
-    mockSocketInstance = {
-      readyState: 1,
-      close: vi.fn(),
-      onmessage: null,
-      onerror: null,
-      onclose: null,
-    };
-
-    function MockWebSocket(this: unknown, url: string): object {
-      capturedWebSocketUrl = url;
-      return mockSocketInstance;
-    }
-
-    (MockWebSocket as unknown as { OPEN: number; CONNECTING: number }).OPEN = 1;
-    (MockWebSocket as unknown as { OPEN: number; CONNECTING: number }).CONNECTING = 0;
-
-    globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
     TestBed.configureTestingModule({
       providers: [
@@ -182,7 +124,6 @@ describe('JobsStreamingApiService', () => {
   afterEach(() => {
     httpMock.verify();
     globalThis.EventSource = originalEventSource ?? globalThis.EventSource;
-    globalThis.WebSocket = originalWebSocket ?? globalThis.WebSocket;
     vi.useRealTimers();
   });
 
@@ -226,8 +167,8 @@ describe('JobsStreamingApiService', () => {
     expect(source.close).toHaveBeenCalled();
   });
 
-  it('adjunta el access token a SSE y WebSocket para autenticar el streaming', () => {
-    // EventSource/WebSocket no permiten cabeceras: el token viaja como ?token=.
+  it('adjunta el access token a SSE para autenticar el streaming', () => {
+    // EventSource no permite cabeceras: el token viaja como ?token=.
     sessionTokenStub.accessToken.mockReturnValue('jwt-test-token');
 
     service.streamJobEvents('job-9').subscribe();
@@ -241,10 +182,6 @@ describe('JobsStreamingApiService', () => {
     expect(logsSource.url).toBe(
       `${API_BASE_URL}/api/jobs/job-9/logs/events/?token=jwt-test-token`,
     );
-
-    service.streamJobsRealtime({ jobId: 'job-9' }).subscribe();
-    expect(capturedWebSocketUrl).toContain('token=jwt-test-token');
-    expect(capturedWebSocketUrl).toContain('job_id=job-9');
   });
 
   it('ignora eventos SSE malformados y sigue procesando el stream', () => {
@@ -302,56 +239,6 @@ describe('JobsStreamingApiService', () => {
     };
     expect(firstEvent.level).toBe('info');
     expect(firstEvent.payload).toEqual({});
-  });
-
-  it('normaliza frames WebSocket para snapshot, progress, update y log', () => {
-    // Verifica traducción de frames WS a eventos tipados consumibles por facades/workflows.
-    const receivedEvents: unknown[] = [];
-    const subscription = service
-      .streamJobsRealtime({ pluginName: 'smileit', includeLogs: true, activeOnly: true })
-      .subscribe((event) => receivedEvents.push(event));
-
-    expect(capturedWebSocketUrl).not.toBeNull();
-    if (capturedWebSocketUrl === null) {
-      throw new Error('Expected websocket URL to be captured in test setup.');
-    }
-    expect(capturedWebSocketUrl).toContain(JOBS_WEBSOCKET_URL.split('?')[0]);
-    expect(capturedWebSocketUrl).toContain('plugin_name=smileit');
-    expect(capturedWebSocketUrl).toContain('include_logs=true');
-    expect(capturedWebSocketUrl).toContain('active_only=true');
-
-    const job = makeScientificJob();
-
-    mockSocketInstance.onmessage?.({
-      data: JSON.stringify({ event: 'jobs.snapshot', data: { items: [job] } }),
-    } as MessageEvent<string>);
-
-    mockSocketInstance.onmessage?.({
-      data: JSON.stringify({ event: 'job.updated', data: job }),
-    } as MessageEvent<string>);
-
-    mockSocketInstance.onmessage?.({
-      data: JSON.stringify({ event: 'job.progress', data: makeProgressSnapshot() }),
-    } as MessageEvent<string>);
-
-    mockSocketInstance.onmessage?.({
-      data: JSON.stringify({
-        event: 'job.log',
-        data: {
-          job_id: 'job-1',
-          event_index: 12,
-          level: 'warning',
-          source: 'plugin',
-          message: 'warn',
-          payload: { reason: 'slow' },
-          created_at: new Date().toISOString(),
-        },
-      }),
-    } as MessageEvent<string>);
-
-    expect(receivedEvents).toHaveLength(4);
-    subscription.unsubscribe();
-    expect(mockSocketInstance.close).toHaveBeenCalled();
   });
 
   it('hace polling hasta estado terminal y emite solo el snapshot final', async () => {

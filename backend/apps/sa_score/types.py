@@ -10,10 +10,7 @@ Cómo se usa:
 - Los TypedDict son serializables a JSONMap directamente.
 """
 
-from typing import Literal, TypedDict
-
-# Tipo literal para los métodos de SA score soportados
-SaScoreMethod = Literal["ambit", "brsa", "rdkit"]
+from typing import TypedDict
 
 
 class SaScoreMoleculeInput(TypedDict):
@@ -27,7 +24,7 @@ class SaScoreJobParameters(TypedDict):
     """Parámetros de entrada para un job de SA score."""
 
     molecules: list[SaScoreMoleculeInput]
-    methods: list[str]  # valores de SaScoreMethod
+    methods: list[str]  # valores: "ambit", "brsa", "rdkit"
 
 
 class SaMoleculeResult(TypedDict):

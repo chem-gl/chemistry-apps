@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from django.core.files.uploadedfile import UploadedFile
-
 
 class EasyRateArtifactDescriptor(TypedDict):
     """Metadatos resumidos de un archivo cargado en create multipart."""
@@ -22,32 +20,6 @@ class EasyRateArtifactDescriptor(TypedDict):
     content_type: str
     sha256: str
     size_bytes: int
-
-
-class EasyRateCreateValidatedPayload(TypedDict):
-    """Payload validado en router para creación de jobs Easy-rate."""
-
-    version: str
-    title: str
-    reaction_path_degeneracy: float
-    cage_effects: bool
-    diffusion: bool
-    solvent: str
-    custom_viscosity: float | None
-    radius_reactant_1: float | None
-    radius_reactant_2: float | None
-    reaction_distance: float | None
-    print_data_input: bool
-    reactant_1_execution_index: int | None
-    reactant_2_execution_index: int | None
-    transition_state_execution_index: int | None
-    product_1_execution_index: int | None
-    product_2_execution_index: int | None
-    reactant_1_file: UploadedFile | None
-    reactant_2_file: UploadedFile | None
-    transition_state_file: UploadedFile
-    product_1_file: UploadedFile | None
-    product_2_file: UploadedFile | None
 
 
 class EasyRateJobParameters(TypedDict):

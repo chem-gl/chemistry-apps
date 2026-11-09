@@ -1,5 +1,5 @@
 // identity-api.service.spec.ts: Pruebas del wrapper HTTP transversal de identidad.
-// Verifica rutas y payloads para usuarios, grupos, membresías, permisos y configs.
+// Verifica rutas y payloads para usuarios, grupos, membresías y permisos.
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -29,40 +29,19 @@ describe('IdentityApiService', () => {
     httpMock.verify();
   });
 
-  it('construye las requests de apps accesibles y configuración del usuario actual', () => {
-    // Verifica las rutas auth con y sin filtro de grupo para evitar URLs mal cableadas.
+  it('construye la request de apps accesibles con filtro de grupo', () => {
+    // Verifica la ruta auth con filtro de grupo para evitar URLs mal cableadas.
     service.listAccessibleApps(7).subscribe();
-    service.getCurrentAppConfig('smileit').subscribe();
-    service.updateCurrentAppConfig('smileit', { mode: 'advanced' }).subscribe();
 
     const appsRequest = httpMock.expectOne(
       (request) =>
         request.method === 'GET' &&
         request.urlWithParams === `${API_BASE_URL}/api/auth/apps/?group_id=7`,
     );
-    const configRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'GET' && request.url === `${API_BASE_URL}/api/auth/app-configs/smileit/`,
-    );
-    const updateConfigRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'PATCH' &&
-        request.url === `${API_BASE_URL}/api/auth/app-configs/smileit/`,
-    );
 
     expect(appsRequest.request.method).toBe('GET');
-    expect(configRequest.request.method).toBe('GET');
-    expect(updateConfigRequest.request.method).toBe('PATCH');
-    expect(updateConfigRequest.request.body).toEqual({ config: { mode: 'advanced' } });
 
     appsRequest.flush([]);
-    configRequest.flush({});
-    updateConfigRequest.flush({
-      id: 1,
-      user: 2,
-      app_name: 'smileit',
-      config: { mode: 'advanced' },
-    });
   });
 
   it('listAccessibleApps sin groupId no envía group_id en la query', () => {
@@ -88,11 +67,9 @@ describe('IdentityApiService', () => {
       .createUser({ username: 'alice', email: 'alice@test.local', password: '123', role: 'user' })
       .subscribe();
     service.updateUser(8, { is_active: false }).subscribe();
-    service.deleteUser(8).subscribe();
     service.listGroups().subscribe();
     service.listScientificApps().subscribe();
     service.createGroup({ name: 'Alpha', slug: 'alpha', description: 'Main group' }).subscribe();
-    service.updateGroup(3, { description: 'Updated' }).subscribe();
     service.deleteGroup(3).subscribe();
 
     const listUsersRequest = httpMock.expectOne(
@@ -107,10 +84,6 @@ describe('IdentityApiService', () => {
       (request) =>
         request.method === 'PATCH' && request.url === `${API_BASE_URL}/api/identity/users/8/`,
     );
-    const deleteUserRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'DELETE' && request.url === `${API_BASE_URL}/api/identity/users/8/`,
-    );
     const listGroupsRequest = httpMock.expectOne(
       (request) =>
         request.method === 'GET' && request.url === `${API_BASE_URL}/api/identity/groups/`,
@@ -122,10 +95,6 @@ describe('IdentityApiService', () => {
     const createGroupRequest = httpMock.expectOne(
       (request) =>
         request.method === 'POST' && request.url === `${API_BASE_URL}/api/identity/groups/`,
-    );
-    const updateGroupRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'PATCH' && request.url === `${API_BASE_URL}/api/identity/groups/3/`,
     );
     const deleteGroupRequest = httpMock.expectOne(
       (request) =>
@@ -140,7 +109,6 @@ describe('IdentityApiService', () => {
       role: 'user',
     });
     expect(updateUserRequest.request.body).toEqual({ is_active: false });
-    expect(deleteUserRequest.request.method).toBe('DELETE');
     expect(listGroupsRequest.request.method).toBe('GET');
     expect(listScientificAppsRequest.request.method).toBe('GET');
     expect(createGroupRequest.request.body).toEqual({
@@ -148,21 +116,18 @@ describe('IdentityApiService', () => {
       slug: 'alpha',
       description: 'Main group',
     });
-    expect(updateGroupRequest.request.body).toEqual({ description: 'Updated' });
     expect(deleteGroupRequest.request.method).toBe('DELETE');
 
     listUsersRequest.flush([]);
     createUserRequest.flush({});
     updateUserRequest.flush({});
-    deleteUserRequest.flush({});
     listGroupsRequest.flush([]);
     listScientificAppsRequest.flush([]);
     createGroupRequest.flush({});
-    updateGroupRequest.flush({});
     deleteGroupRequest.flush({});
   });
 
-  it('construye CRUD de membresías, permisos y configs grupales', () => {
+  it('construye CRUD de membresías y permisos de app', () => {
     // Verifica endpoints secundarios que alimentan la administración RBAC.
     service.listMemberships().subscribe();
     service.createMembership({ user: 1, group: 2, role_in_group: 'admin' }).subscribe();
@@ -171,9 +136,6 @@ describe('IdentityApiService', () => {
     service.listAppPermissions().subscribe();
     service.createAppPermission({ app_name: 'smileit', group: 2, is_enabled: true }).subscribe();
     service.updateAppPermission(9, { is_enabled: false }).subscribe();
-    service.deleteAppPermission(9).subscribe();
-    service.getGroupAppConfig(2, 'smileit').subscribe();
-    service.updateGroupAppConfig(2, 'smileit', { export_name_base: 'SERIE' }).subscribe();
 
     const listMembershipsRequest = httpMock.expectOne(
       (request) =>
@@ -206,21 +168,6 @@ describe('IdentityApiService', () => {
         request.method === 'PATCH' &&
         request.url === `${API_BASE_URL}/api/identity/app-permissions/9/`,
     );
-    const deletePermissionRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'DELETE' &&
-        request.url === `${API_BASE_URL}/api/identity/app-permissions/9/`,
-    );
-    const getGroupConfigRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'GET' &&
-        request.url === `${API_BASE_URL}/api/identity/groups/2/app-configs/smileit/`,
-    );
-    const updateGroupConfigRequest = httpMock.expectOne(
-      (request) =>
-        request.method === 'PATCH' &&
-        request.url === `${API_BASE_URL}/api/identity/groups/2/app-configs/smileit/`,
-    );
 
     expect(listMembershipsRequest.request.method).toBe('GET');
     expect(createMembershipRequest.request.body).toEqual({
@@ -237,11 +184,6 @@ describe('IdentityApiService', () => {
       is_enabled: true,
     });
     expect(updatePermissionRequest.request.body).toEqual({ is_enabled: false });
-    expect(deletePermissionRequest.request.method).toBe('DELETE');
-    expect(getGroupConfigRequest.request.method).toBe('GET');
-    expect(updateGroupConfigRequest.request.body).toEqual({
-      config: { export_name_base: 'SERIE' },
-    });
 
     listMembershipsRequest.flush([]);
     createMembershipRequest.flush({});
@@ -250,8 +192,5 @@ describe('IdentityApiService', () => {
     listPermissionsRequest.flush([]);
     createPermissionRequest.flush({});
     updatePermissionRequest.flush({});
-    deletePermissionRequest.flush({});
-    getGroupConfigRequest.flush({});
-    updateGroupConfigRequest.flush({});
   });
 });

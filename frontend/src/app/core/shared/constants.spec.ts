@@ -1,8 +1,8 @@
 // constants.spec.ts: Pruebas unitarias para las constantes de configuración del frontend.
-// Cubre las ramas de resolución de URL de API y WebSocket usando las funciones exportadas.
+// Cubre las ramas de resolución de URL de API usando la función exportada.
 
 import { describe, expect, it } from 'vitest';
-import { resolveApiBaseUrl, resolveWebSocketBaseUrl } from './constants';
+import { resolveApiBaseUrl } from './constants';
 
 describe('resolveApiBaseUrl', () => {
   it('strips trailing slash from valid URL and returns it unchanged when hostnames match', () => {
@@ -49,29 +49,5 @@ describe('resolveApiBaseUrl', () => {
         Object.defineProperty(globalThis, 'location', originalHostname);
       }
     }
-  });
-});
-
-describe('resolveWebSocketBaseUrl', () => {
-  it('converts http:// to ws://', () => {
-    // Cubre rama startsWith('http://') → true.
-    expect(resolveWebSocketBaseUrl('http://api.example.com:8000')).toBe(
-      'ws://api.example.com:8000',
-    );
-  });
-
-  it('converts https:// to wss://', () => {
-    // Cubre rama startsWith('https://') → true.
-    expect(resolveWebSocketBaseUrl('https://api.example.com')).toBe('wss://api.example.com');
-  });
-
-  it('returns raw URL when it does not use http or https', () => {
-    // Cubre la rama fallback (ni http ni https).
-    expect(resolveWebSocketBaseUrl('ws://raw.example.com')).toBe('ws://raw.example.com');
-  });
-
-  it('strips trailing slash before conversion', () => {
-    // Verifica normalización del trailing slash antes de comparar protocolo.
-    expect(resolveWebSocketBaseUrl('http://localhost:8000/')).toBe('ws://localhost:8000');
   });
 });

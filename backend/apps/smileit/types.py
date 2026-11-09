@@ -232,15 +232,6 @@ class SmileitTraceabilityRow(TypedDict):
     bond_order: int
 
 
-class SmileitCoverageItem(TypedDict):
-    """Cobertura efectiva de sitio contra bloque seleccionado."""
-
-    site_atom_index: int
-    covered: bool
-    block_label: str
-    block_priority: int
-
-
 class SmileitResult(TypedDict):
     """Resultado completo de ejecución del plugin Smile-it."""
 

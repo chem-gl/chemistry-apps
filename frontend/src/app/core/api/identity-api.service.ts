@@ -8,14 +8,11 @@ import {
   AccessibleScientificApp,
   AppPermission,
   AuthService,
-  EffectiveAppConfig,
-  GroupAppConfig,
   GroupMembership,
   IdentityService,
   IdentityUserSummary,
   RegistrationToken,
   ScientificAppCatalog,
-  UserAppConfig,
   WorkGroup,
 } from './generated';
 
@@ -40,14 +37,6 @@ export interface ScientificAppCatalogItemView {
   api_base_path: string;
   supports_pause_resume: boolean;
   available_features: string[];
-}
-
-export interface EffectiveAppConfigView {
-  app_name: string;
-  enabled: boolean;
-  effective_config: Record<string, unknown>;
-  group_config: Record<string, unknown>;
-  user_config: Record<string, unknown>;
 }
 
 export interface IdentityUserSummaryView {
@@ -112,14 +101,6 @@ export interface CreateRegistrationTokenPayload {
   expires_at?: string | null;
 }
 
-export interface GroupAppConfigView {
-  id?: number;
-  group?: number;
-  app_name: string;
-  config: Record<string, unknown>;
-  updated_at?: string;
-}
-
 export interface CreateIdentityUserPayload {
   username: string;
   email: string;
@@ -162,21 +143,6 @@ export class IdentityApiService {
       .pipe(map((items) => items.map((raw) => this.mapAccessibleApp(raw))));
   }
 
-  getCurrentAppConfig(appName: string): Observable<EffectiveAppConfigView> {
-    return this.authClient
-      .authAppConfigsRetrieve(appName, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map((raw) => this.mapEffectiveAppConfig(raw)));
-  }
-
-  updateCurrentAppConfig(
-    appName: string,
-    config: Record<string, unknown>,
-  ): Observable<{ id: number; user: number; app_name: string; config: Record<string, unknown> }> {
-    return this.authClient
-      .authAppConfigsPartialUpdate(appName, { config }, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map((raw) => this.mapUserAppConfig(raw)));
-  }
-
   // ── Usuarios ──────────────────────────────────────────────────────
 
   listUsers(): Observable<IdentityUserSummaryView[]> {
@@ -200,12 +166,6 @@ export class IdentityApiService {
       .pipe(map((raw) => this.mapUser(raw)));
   }
 
-  deleteUser(userId: number): Observable<void> {
-    return this.identityClient
-      .identityUsersDestroy(userId, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map(() => {}));
-  }
-
   // ── Grupos ────────────────────────────────────────────────────────
 
   listGroups(): Observable<WorkGroupView[]> {
@@ -227,15 +187,6 @@ export class IdentityApiService {
   }): Observable<WorkGroupView> {
     return this.identityClient
       .identityGroupsCreate(payload, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map((raw) => this.mapWorkGroup(raw)));
-  }
-
-  updateGroup(
-    groupId: number,
-    payload: Partial<Pick<WorkGroupView, 'name' | 'slug' | 'description'>>,
-  ): Observable<WorkGroupView> {
-    return this.identityClient
-      .identityGroupsPartialUpdate(groupId, payload, 'body', false, NO_TRANSFER_CACHE)
       .pipe(map((raw) => this.mapWorkGroup(raw)));
   }
 
@@ -312,39 +263,6 @@ export class IdentityApiService {
       .pipe(map((raw) => this.mapAppPermission(raw)));
   }
 
-  deleteAppPermission(permissionId: number): Observable<void> {
-    return this.identityClient
-      .identityAppPermissionsDestroy(permissionId, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map(() => {}));
-  }
-
-  // ── Configuración de app por grupo ────────────────────────────────
-
-  getGroupAppConfig(groupId: number, appName: string): Observable<GroupAppConfigView> {
-    // El generado invierte el orden de argumentos: (appName, groupId).
-    return this.identityClient
-      .identityGroupsAppConfigsRetrieve(appName, groupId, 'body', false, NO_TRANSFER_CACHE)
-      .pipe(map((raw) => this.mapGroupAppConfig(raw)));
-  }
-
-  updateGroupAppConfig(
-    groupId: number,
-    appName: string,
-    config: Record<string, unknown>,
-  ): Observable<GroupAppConfigView> {
-    // El generado invierte el orden de argumentos: (appName, groupId, body).
-    return this.identityClient
-      .identityGroupsAppConfigsPartialUpdate(
-        appName,
-        groupId,
-        { config },
-        'body',
-        false,
-        NO_TRANSFER_CACHE,
-      )
-      .pipe(map((raw) => this.mapGroupAppConfig(raw)));
-  }
-
   // ── Registration Tokens ──────────────────────────────────────────
 
   listRegistrationTokens(): Observable<RegistrationTokenView[]> {
@@ -379,27 +297,6 @@ export class IdentityApiService {
       enabled: raw.enabled,
       group_permission: raw.group_permission,
       user_permission: raw.user_permission,
-    };
-  }
-
-  private mapEffectiveAppConfig(raw: EffectiveAppConfig): EffectiveAppConfigView {
-    return {
-      app_name: raw.app_name,
-      enabled: raw.enabled,
-      effective_config: (raw.effective_config ?? {}) as Record<string, unknown>,
-      group_config: (raw.group_config ?? {}) as Record<string, unknown>,
-      user_config: (raw.user_config ?? {}) as Record<string, unknown>,
-    };
-  }
-
-  private mapUserAppConfig(
-    raw: UserAppConfig,
-  ): { id: number; user: number; app_name: string; config: Record<string, unknown> } {
-    return {
-      id: raw.id,
-      user: raw.user,
-      app_name: raw.app_name,
-      config: (raw.config ?? {}) as Record<string, unknown>,
     };
   }
 
@@ -478,13 +375,4 @@ export class IdentityApiService {
     };
   }
 
-  private mapGroupAppConfig(raw: GroupAppConfig): GroupAppConfigView {
-    return {
-      id: raw.id,
-      group: raw.group,
-      app_name: raw.app_name,
-      config: (raw.config ?? {}) as Record<string, unknown>,
-      updated_at: raw.updated_at,
-    };
-  }
 }

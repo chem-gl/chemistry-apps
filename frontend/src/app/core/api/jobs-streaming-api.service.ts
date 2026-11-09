@@ -1,18 +1,16 @@
 // jobs-streaming-api.service.ts: Sub-servicio para streaming en tiempo real de jobs.
-// Concentra SSE, WebSocket, polling y consulta de logs para todas las apps científicas.
+// Concentra SSE, polling y consulta de logs para todas las apps científicas.
 
 import { Injectable, inject } from '@angular/core';
 import { Observable, filter, interval, map, shareReplay, switchMap, take } from 'rxjs';
 import { IdentitySessionService } from '../auth/identity-session.service';
-import { API_BASE_URL, JOBS_WEBSOCKET_URL } from '../shared/constants';
-import { JobLogList, JobProgressSnapshot, JobsService, ScientificJob } from './generated';
+import { API_BASE_URL } from '../shared/constants';
+import { JobLogList, JobProgressSnapshot, JobsService } from './generated';
 import type {
   JobLogEntryView,
   JobLogLevel,
   JobLogsPageView,
   JobLogsQuery,
-  JobsRealtimeEvent,
-  JobsRealtimeQuery,
 } from './types';
 
 @Injectable({
@@ -115,40 +113,6 @@ export class JobsStreamingApiService {
     });
   }
 
-  /** Abre stream WebSocket global o filtrado para jobs, progreso y logs. */
-  streamJobsRealtime(query: JobsRealtimeQuery = {}): Observable<JobsRealtimeEvent> {
-    return new Observable<JobsRealtimeEvent>((observer) => {
-      const socket = new WebSocket(this.buildJobsRealtimeUrl(query));
-
-      socket.onmessage = (messageEvent: MessageEvent<string>) => {
-        try {
-          const parsedPayload: unknown = JSON.parse(messageEvent.data);
-          const normalizedEvent: JobsRealtimeEvent | null =
-            this.normalizeRealtimeEvent(parsedPayload);
-          if (normalizedEvent !== null) {
-            observer.next(normalizedEvent);
-          }
-        } catch {
-          // Ignorar frames malformados y continuar escuchando.
-        }
-      };
-
-      socket.onerror = () => {
-        observer.error(new Error('WebSocket jobs stream connection error'));
-      };
-
-      socket.onclose = () => {
-        observer.complete();
-      };
-
-      return () => {
-        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-          socket.close();
-        }
-      };
-    });
-  }
-
   /**
    * Polling de progreso mediante snapshots periódicos hasta estado terminal.
    * Alternativa robusta cuando SSE no está disponible o hay problemas de red.
@@ -197,43 +161,12 @@ export class JobsStreamingApiService {
     };
   }
 
-  private buildJobsRealtimeUrl(query: JobsRealtimeQuery = {}): string {
-    const url: URL = new URL(JOBS_WEBSOCKET_URL);
-
-    if (query.jobId !== undefined) {
-      url.searchParams.set('job_id', query.jobId);
-    }
-
-    if (query.pluginName !== undefined) {
-      url.searchParams.set('plugin_name', query.pluginName);
-    }
-
-    if (query.includeLogs !== undefined) {
-      url.searchParams.set('include_logs', String(query.includeLogs));
-    }
-
-    if (query.includeSnapshot !== undefined) {
-      url.searchParams.set('include_snapshot', String(query.includeSnapshot));
-    }
-
-    if (query.activeOnly !== undefined) {
-      url.searchParams.set('active_only', String(query.activeOnly));
-    }
-
-    const accessToken = this.resolveStreamingAccessToken();
-    if (accessToken !== null) {
-      url.searchParams.set('token', accessToken);
-    }
-
-    return url.toString();
-  }
-
   /**
    * Resuelve el access token para streaming.
    *
-   * `EventSource` y `WebSocket` no permiten adjuntar cabeceras HTTP, así que el
-   * backend acepta `?token=<jwt>` como fallback en estas rutas. El token de
-   * acceso vive 30 minutos, lo que acota la ventana de exposición.
+   * `EventSource` no permite adjuntar cabeceras HTTP, así que el backend acepta
+   * `?token=<jwt>` como fallback en estas rutas. El token de acceso vive 30
+   * minutos, lo que acota la ventana de exposición.
    */
   private resolveStreamingAccessToken(): string | null {
     const accessToken: string | null = this.identitySession.accessToken();
@@ -248,75 +181,5 @@ export class JobsStreamingApiService {
   private buildStreamingTokenQuery(): string {
     const accessToken = this.resolveStreamingAccessToken();
     return accessToken === null ? '' : `?token=${encodeURIComponent(accessToken)}`;
-  }
-
-  private normalizeScientificJob(rawJob: ScientificJob): ScientificJob {
-    return rawJob;
-  }
-
-  private normalizeRealtimeEvent(rawEvent: unknown): JobsRealtimeEvent | null {
-    if (rawEvent === null || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) {
-      return null;
-    }
-
-    const candidateEvent: Record<string, unknown> = rawEvent as Record<string, unknown>;
-    const rawEventName: unknown = candidateEvent['event'];
-    const rawData: unknown = candidateEvent['data'];
-
-    if (typeof rawEventName !== 'string' || rawData === null || rawData === undefined) {
-      return null;
-    }
-
-    if (rawEventName === 'jobs.snapshot') {
-      const snapshotContainer: Record<string, unknown> | null =
-        typeof rawData === 'object' && !Array.isArray(rawData)
-          ? (rawData as Record<string, unknown>)
-          : null;
-      const rawItems: unknown[] = Array.isArray(snapshotContainer?.['items'])
-        ? (snapshotContainer?.['items'] as unknown[])
-        : [];
-
-      return {
-        event: 'jobs.snapshot',
-        data: {
-          items: rawItems.map((rawItem: unknown) =>
-            this.normalizeScientificJob(rawItem as ScientificJob),
-          ),
-        },
-      };
-    }
-
-    if (rawEventName === 'job.updated') {
-      return {
-        event: 'job.updated',
-        data: this.normalizeScientificJob(rawData as ScientificJob),
-      };
-    }
-
-    if (rawEventName === 'job.progress') {
-      return {
-        event: 'job.progress',
-        data: rawData as JobProgressSnapshot,
-      };
-    }
-
-    if (rawEventName === 'job.log') {
-      return {
-        event: 'job.log',
-        data: this.normalizeLogEntry(
-          rawData as {
-            job_id: string;
-            event_index: number;
-            level: string;
-            source: string;
-            message: string;
-            payload: unknown;
-            created_at: string;
-          },
-        ),
-      };
-    }
-
-    return null;
   }
 }

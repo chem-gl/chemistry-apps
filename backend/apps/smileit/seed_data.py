@@ -20,7 +20,9 @@ from dataclasses import dataclass
 # Referencias bibliográficas reutilizadas por varias alertas (evita literales repetidos).
 BENIGNI_BOSSA_REFERENCE = "Benigni & Bossa, Mutagenesis 2008 (OECD QSAR Toolbox)"
 OECD_QSAR_REFERENCE = "OECD QSAR Toolbox v4 structural alerts (public documentation)"
-KALGUTKAR_DIDIUK_REFERENCE = "Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)"
+KALGUTKAR_DIDIUK_REFERENCE = (
+    "Kalgutkar & Didiuk, Chem Biol Drug Des 2013 (reactive metabolites)"
+)
 WELSCH_REFERENCE = "Welsch et al., Curr Opin Chem Biol 2010 (privileged scaffolds)"
 
 
@@ -493,15 +495,4 @@ PATTERN_SEED_DEFINITIONS: tuple[SmileitPatternSeedDefinition, ...] = (
         ),
         source_reference=WELSCH_REFERENCE,
     ),
-)
-
-
-MINIMAL_TEST_CATEGORY_KEYS: frozenset[str] = frozenset(
-    {"aromatic", "hbond_donor", "hbond_acceptor", "hydrophobic"}
-)
-MINIMAL_TEST_SUBSTITUENT_NAMES: frozenset[str] = frozenset(
-    {"Benzene", "Amine", "Chlorine"}
-)
-MINIMAL_TEST_PATTERN_NAMES: frozenset[str] = frozenset(
-    {"Nitroaromatic Hepatotoxicity Alert"}
 )
