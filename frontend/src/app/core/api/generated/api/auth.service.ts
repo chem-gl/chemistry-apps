@@ -206,14 +206,26 @@ export class AuthService extends BaseService implements AuthServiceInterface {
     /**
      * Expone apps disponibles para el usuario actual con RBAC resuelto.  Acepta &#x60;?group_id&#x3D;X&#x60; para evaluar acceso estrictamente desde el grupo activo.
      * @endpoint get /api/auth/apps/
+     * @param groupId Identificador del grupo activo desde el que se resuelve el RBAC. Sin el parámetro: root y admin reciben el catálogo global (todas las apps habilitadas) y un usuario normal se evalúa contra su grupo primario. Con el parámetro: el acceso se resuelve estrictamente contra ese grupo, también para root, y &#x60;enabled&#x60; sigue la precedencia regla de grupo -&gt; regla de usuario -&gt; denegado. Solo root o miembros del grupo (membresía o grupo primario) pueden consultarlo: responde 403 para un grupo ajeno y 400 si no es un entero válido.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public authAppsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AccessibleScientificApp>>;
-    public authAppsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AccessibleScientificApp>>>;
-    public authAppsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AccessibleScientificApp>>>;
-    public authAppsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public authAppsList(groupId?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<AccessibleScientificApp>>;
+    public authAppsList(groupId?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<AccessibleScientificApp>>>;
+    public authAppsList(groupId?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<AccessibleScientificApp>>>;
+    public authAppsList(groupId?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'group_id',
+            <any>groupId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -253,6 +265,7 @@ export class AuthService extends BaseService implements AuthServiceInterface {
         return this.httpClient.request<Array<AccessibleScientificApp>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

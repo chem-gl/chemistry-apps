@@ -329,6 +329,98 @@ class IdentityApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_accessible_apps_group_id_returns_strict_filtered_catalog(self) -> None:
+        """`?group_id=` resuelve el RBAC estrictamente contra el grupo indicado."""
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="tunnel-effect",
+            group=self.group_alpha,
+            is_enabled=False,
+        )
+        AppPermission.objects.create(
+            app_name="marcus-kinetics",
+            group=self.group_beta,
+            is_enabled=True,
+        )
+        self._authenticate(self.standard_user)
+
+        response = self.client.get(f"/api/auth/apps/?group_id={self.group_alpha.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        entries_by_app = {entry["app_name"]: entry for entry in response.data}
+        self.assertTrue(entries_by_app["smileit"]["enabled"])
+        self.assertTrue(entries_by_app["smileit"]["group_permission"])
+        self.assertFalse(entries_by_app["tunnel-effect"]["enabled"])
+        self.assertFalse(entries_by_app["marcus-kinetics"]["enabled"])
+        self.assertIsNone(entries_by_app["marcus-kinetics"]["group_permission"])
+
+    def test_accessible_apps_group_id_narrows_admin_catalog(self) -> None:
+        """Un admin ve el catálogo global sin filtro y estricto con `?group_id=`."""
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=False,
+        )
+        self._authenticate(self.admin_user)
+
+        global_response = self.client.get("/api/auth/apps/")
+        group_response = self.client.get(
+            f"/api/auth/apps/?group_id={self.group_alpha.id}"
+        )
+
+        self.assertEqual(global_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(group_response.status_code, status.HTTP_200_OK)
+        global_entries = {entry["app_name"]: entry for entry in global_response.data}
+        group_entries = {entry["app_name"]: entry for entry in group_response.data}
+        self.assertEqual(set(global_entries), set(group_entries))
+        self.assertTrue(global_entries["smileit"]["enabled"])
+        self.assertIsNone(global_entries["smileit"]["group_permission"])
+        self.assertFalse(group_entries["smileit"]["enabled"])
+        self.assertFalse(group_entries["smileit"]["group_permission"])
+
+    def test_accessible_apps_without_group_id_uses_primary_group(self) -> None:
+        """Sin `?group_id=` un usuario normal se evalúa contra su grupo primario."""
+        AppPermission.objects.create(
+            app_name="smileit",
+            group=self.group_alpha,
+            is_enabled=True,
+        )
+        AppPermission.objects.create(
+            app_name="marcus-kinetics",
+            group=self.group_beta,
+            is_enabled=True,
+        )
+        self._authenticate(self.standard_user)
+
+        implicit_response = self.client.get("/api/auth/apps/")
+        explicit_response = self.client.get(
+            f"/api/auth/apps/?group_id={self.group_alpha.id}"
+        )
+
+        self.assertEqual(implicit_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [entry["app_name"] for entry in implicit_response.data],
+            [entry["app_name"] for entry in explicit_response.data],
+        )
+        implicit_entries = {
+            entry["app_name"]: entry for entry in implicit_response.data
+        }
+        self.assertTrue(implicit_entries["smileit"]["enabled"])
+        self.assertFalse(implicit_entries["marcus-kinetics"]["enabled"])
+
+    def test_accessible_apps_rejects_non_integer_group_id(self) -> None:
+        """Un `group_id` no numérico devuelve 400 antes de resolver permisos."""
+        self._authenticate(self.standard_user)
+
+        response = self.client.get("/api/auth/apps/?group_id=alpha")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("group_id", str(response.data["detail"]))
+
     def test_root_group_filter_is_strict_for_selected_group(self) -> None:
         """Root debe respetar estrictamente el grupo seleccionado al resolver apps visibles."""
         AppPermission.objects.create(

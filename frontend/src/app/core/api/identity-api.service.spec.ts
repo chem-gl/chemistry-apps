@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../shared/constants';
+import { provideApi } from './generated';
 import { IdentityApiService } from './identity-api.service';
 
 describe('IdentityApiService', () => {
@@ -13,7 +14,11 @@ describe('IdentityApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideApi(API_BASE_URL),
+      ],
     });
 
     service = TestBed.inject(IdentityApiService);
@@ -58,6 +63,22 @@ describe('IdentityApiService', () => {
       app_name: 'smileit',
       config: { mode: 'advanced' },
     });
+  });
+
+  it('listAccessibleApps sin groupId no envía group_id en la query', () => {
+    // Verifica que la omisión del parámetro opcional no emite group_id= vacío.
+    service.listAccessibleApps().subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.method === 'GET' &&
+        req.url === `${API_BASE_URL}/api/auth/apps/` &&
+        !req.params.has('group_id'),
+    );
+
+    expect(request.request.urlWithParams).toBe(`${API_BASE_URL}/api/auth/apps/`);
+
+    request.flush([]);
   });
 
   it('construye CRUD de usuarios y grupos con payloads esperados', () => {

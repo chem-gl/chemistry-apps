@@ -9,22 +9,32 @@ import type { EChartsCoreOption } from 'echarts/core';
 const PI = Math.PI;
 
 /** Longitud característica L del potencial de Eckart (coordenada de reacción adimensional).
- *  Pequeña a propósito: la barrera debe verse estrecha, no una joroba ancha. */
+ *  Pequeña a propósito: la barrera debe verse estrecha, no una joroba ancha.
+ *  No se toca: la anchura de la campana está ligada al modelo Eckart, no al dibujo. */
 const CHARACTERISTIC_LENGTH = 0.9;
-/** Puntos de muestreo del perfil de potencial (~400 como pide la especificación). */
-const POTENTIAL_SAMPLE_COUNT = 400;
-/** Extensión del perfil de potencial en múltiplos de L (±1.6L). */
-const PROFILE_EXTENT_IN_LENGTHS = 1.6;
+/** Puntos de muestreo del perfil de potencial. 1000 (antes 400): con ~0.6 puntos por
+ *  píxel horizontal la polilínea deja de mostrar facetas en los flancos de la campana;
+ *  1000 puntos por serie son coste despreciable para el renderer de canvas. */
+const POTENTIAL_SAMPLE_COUNT = 1000;
+/** Extensión del perfil de potencial en múltiplos de L. ±1.0L (antes ±1.6L): con el
+ *  recorte anterior la campana ocupaba solo el 8 % del ancho visible y se leía como una
+ *  espina; ahora el FWHM es ~14 % del ancho y el giro en el vértice baja de ~29° a ~5°
+ *  medido en las coordenadas del eje. Aun así las colas llegan a ~5·10⁻⁵·V‡ en los
+ *  bordes, muy por debajo del 1 % que exige el diagrama. No bajar de 0.5L: ahí xMin
+ *  coincidiría con el borde izquierdo de la barrera y el tramo izquierdo de |ψ|²
+ *  quedaría degenerado. */
+const PROFILE_EXTENT_IN_LENGTHS = 1.0;
 /** Semi-anchura de la barrera estilizada en la función de onda, en múltiplos de L. */
 const BARRIER_HALF_WIDTH_IN_LENGTHS = 0.5;
 // Número de onda elegido para que el borde de la barrera caiga en un máximo de |ψ|²
-// (k·edge = π): el empalme entre los tres tramos es continuo y quedan ~2 oscilaciones
+// (k·edge = π): el empalme entre los tres tramos es continuo y quedan ~1 oscilación
 // por lado, como en los diagramas de túnel de libro de texto.
 const WAVE_NUMBER = PI / (BARRIER_HALF_WIDTH_IN_LENGTHS * CHARACTERISTIC_LENGTH);
-/** Muestreo por tramo de la función de onda (izquierda, barrera, derecha). */
-const LEFT_SEGMENT_SAMPLE_COUNT = 200;
-const BARRIER_SEGMENT_SAMPLE_COUNT = 40;
-const RIGHT_SEGMENT_SAMPLE_COUNT = 160;
+/** Muestreo de |ψ|²: una única malla uniforme sobre la ventana visible. 1200 puntos
+ *  (antes 200/40/160 por tramo, con puntos duplicados en los empalmes) dejan ~600
+ *  muestras dentro de la barrera, así el decaimiento y los flancos de los nodos se
+ *  dibujan sin facetas. */
+const DENSITY_SAMPLE_COUNT = 1200;
 /** Constante de los gases ideales en kcal/(mol·K). */
 const GAS_CONSTANT_KCAL_PER_MOL_K = 0.00198720425864083;
 /** Probabilidad mínima como denominador del decaimiento (evita log(0)). */
@@ -212,11 +222,21 @@ export function buildPotentialProfile(
   return coordinates.map((x): ChartPoint => [x, evaluateEckartPotential(x, barrierKcalMol)]);
 }
 
+/** Interpolación de Hermite cúbica 3t²-2t³: une 0→1 con derivada nula en los extremos. */
+function smoothStep(ratio: number): number {
+  return ratio * ratio * (3 - 2 * ratio);
+}
+
 /**
  * |ψ|² estilizada pero consistente con P(E): onda incidente y reflejada que interfieren
- * a la izquierda, decaimiento exponencial dentro de la barrera y onda transmitida a la
- * derecha. La amplitud reflejada es √(1-P) y la transmitida √P, de modo que |ψ|²
- * coincide con las probabilidades del modelo. Se normaliza para que el máximo valga 1.
+ * a la izquierda, decaimiento dentro de la barrera y onda transmitida a la derecha. La
+ * amplitud reflejada es √(1-P) y la transmitida √P, de modo que |ψ|² coincide con las
+ * probabilidades del modelo. Se normaliza para que el máximo valga 1.
+ *
+ * Los tres tramos se evalúan en una malla uniforme única y el decaimiento de la barrera
+ * se interpola con un smoothstep entre el valor del borde izquierdo y P: las dos ondas
+ * alcanzan un máximo justo en los bordes (pendiente 0), así que el empalme es C¹ y no se
+ * ve el quiebro, sin mover ningún valor físico (extremos y nodos intactos).
  */
 export function buildProbabilityDensityProfile(
   transmission: number,
@@ -244,39 +264,34 @@ export function buildProbabilityDensityProfile(
   // máximo teórico), de modo que no aparecen saltos verticales en la gráfica.
   const leftBoundaryDensity = leftDensity(leftEdge);
   const decayStart = Math.max(leftBoundaryDensity, transmittedDensity);
-  const decayConstant =
-    Math.log(decayStart / transmittedDensity) / (2 * (rightEdge - leftEdge));
   const transmittedAmplitude = Math.sqrt(transmittedDensity);
 
-  const points: ChartPoint[] = [];
-  const leftCoordinates = buildUniformCoordinates(
-    xMin,
-    leftEdge,
-    LEFT_SEGMENT_SAMPLE_COUNT,
-  );
-  for (const x of leftCoordinates) {
-    points.push([x, leftDensity(x)]);
-  }
-
-  const barrierCoordinates = buildUniformCoordinates(
-    leftEdge,
-    rightEdge,
-    BARRIER_SEGMENT_SAMPLE_COUNT,
-  );
-  for (const x of barrierCoordinates) {
-    const decayed = decayStart * Math.exp(-2 * decayConstant * (x - leftEdge));
-    points.push([x, decayed]);
-  }
-
-  const rightCoordinates = buildUniformCoordinates(
-    rightEdge,
-    xMax,
-    RIGHT_SEGMENT_SAMPLE_COUNT,
-  );
-  for (const x of rightCoordinates) {
+  // Exponente del decaimiento: ln(P / ρ(izquierda)) ≤ 0. Al repartirlo con un smoothstep
+  // sobre la barrera, ρ pasa de decayStart a P de forma monótona, con pendiente nula en
+  // ambos bordes (que es justo la pendiente de las ondas, que allí tienen un máximo) y
+  // sin tocar los valores físicos de los extremos.
+  const decayExponent = Math.log(transmittedDensity / decayStart);
+  const barrierDensity = (x: number): number =>
+    decayStart *
+    Math.exp(decayExponent * smoothStep((x - leftEdge) / (rightEdge - leftEdge)));
+  const transmittedDensityAt = (x: number): number => {
     const amplitude = transmittedAmplitude * Math.cos(WAVE_NUMBER * (x - rightEdge));
-    points.push([x, amplitude * amplitude]);
-  }
+    return amplitude * amplitude;
+  };
+
+  const densityAt = (x: number): number => {
+    if (x <= leftEdge) {
+      return leftDensity(x);
+    }
+    if (x <= rightEdge) {
+      return barrierDensity(x);
+    }
+    return transmittedDensityAt(x);
+  };
+
+  const points = buildUniformCoordinates(xMin, xMax, DENSITY_SAMPLE_COUNT).map(
+    (x): ChartPoint => [x, densityAt(x)],
+  );
 
   const maximum = points.reduce((currentMax, point) => Math.max(currentMax, point[1]), 0);
   if (maximum <= 0) {
@@ -340,7 +355,8 @@ function formatFixed(value: number, digits: number): string {
 
 /**
  * Opciones ECharts del diagrama: potencial en kcal/mol (eje izquierdo), |ψ|² en el
- * eje derecho y la recta de energía térmica. Sin tooltip ni animación (es ilustrativa).
+ * eje derecho y la recta de energía térmica. Sin tooltip; con una transición corta
+ * de entrada para que el trazo no aparezca de golpe.
  */
 export function buildTunnelingChartOptions(
   parameters: TunnelingParameters,
@@ -356,6 +372,11 @@ export function buildTunnelingChartOptions(
     yAxisIndex: 0,
     data: series.potential,
     showSymbol: false,
+    // Solo el potencial se dibuja suavizado: los nodos de |ψ|² son datos físicos y
+    // un spline los desplazaría. smoothMonotone evita que el spline se salga del
+    // rango (sobrepasar V₀ en el TS o hundirse bajo 0 en las colas).
+    smooth: true,
+    smoothMonotone: 'x',
     lineStyle: { width: 3, color: '#6a4c93' },
     itemStyle: { color: '#6a4c93' },
     z: 4,
@@ -456,7 +477,14 @@ export function buildTunnelingChartOptions(
     temperatureCaption;
 
   return {
-    animation: false,
+    // Transición corta y sobria de entrada (antes estaba desactivada): el trazo se
+    // dibuja progresivamente sin que el usuario lo perciba como una animación.
+    animation: true,
+    animationDuration: 300,
+    animationEasing: 'cubicOut',
+    // Umbral alto a propósito: con el muestreo nuevo (~1000-1200 puntos por serie)
+    // ECharts desactivaría la animación al acercarse a su umbral por defecto (2000).
+    animationThreshold: 10_000,
     aria: { enabled: true },
     tooltip: { show: false },
     legend: {

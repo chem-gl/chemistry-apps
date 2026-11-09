@@ -189,6 +189,9 @@ class SmileitReadActionsExtendedTests(SmileitSeedTestCase):
         self.assertEqual(
             success_response["Content-Type"], "image/svg+xml; charset=utf-8"
         )
+        # El SVG de un derivado es inmutable: se cachea en el navegador un día
+        # para no re-renderizar en RDKit los 100 thumbnails en cada visita.
+        self.assertEqual(success_response["Cache-Control"], "private, max-age=86400")
         self.assertIn("<svg", success_response.content.decode("utf-8"))
         self.assertEqual(missing_response.status_code, status.HTTP_404_NOT_FOUND)
 

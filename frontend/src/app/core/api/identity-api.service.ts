@@ -1,9 +1,23 @@
 // identity-api.service.ts: Wrapper transversal para usuarios, grupos, permisos y configs.
+// Delega en los clientes OpenAPI generados (AuthService, IdentityService) y mapea los
+// modelos readonly a las vistas planas que consumen los componentes.
 
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../shared/constants';
+import { Observable, map } from 'rxjs';
+import {
+  AccessibleScientificApp,
+  AppPermission,
+  AuthService,
+  EffectiveAppConfig,
+  GroupAppConfig,
+  GroupMembership,
+  IdentityService,
+  IdentityUserSummary,
+  RegistrationToken,
+  ScientificAppCatalog,
+  UserAppConfig,
+  WorkGroup,
+} from './generated';
 
 /** Roles de identidad disponibles en el dominio transversal. */
 export type IdentityRole = 'root' | 'admin' | 'user';
@@ -129,71 +143,81 @@ export interface UpdateIdentityUserPayload {
   is_staff?: boolean;
 }
 
+/** Sin transferencia de caché: preserva el comportamiento previo del wrapper. */
+const NO_TRANSFER_CACHE = { transferCache: false };
+
 @Injectable({
   providedIn: 'root',
 })
 export class IdentityApiService {
-  private readonly httpClient = inject(HttpClient);
-  private readonly identityBaseUrl = `${API_BASE_URL}/api/identity`;
-  private readonly authBaseUrl = `${API_BASE_URL}/api/auth`;
+  private readonly authClient = inject(AuthService);
+  private readonly identityClient = inject(IdentityService);
+
+  // ── Auth: apps y configuración del usuario actual ──────────────────
 
   /** Lista apps accesibles. Si se provee groupId, el acceso se evalúa estrictamente para ese grupo. */
   listAccessibleApps(groupId?: number): Observable<AccessibleScientificAppView[]> {
-    const params =
-      groupId === undefined ? undefined : new HttpParams().set('group_id', String(groupId));
-    return this.httpClient.get<AccessibleScientificAppView[]>(`${this.authBaseUrl}/apps/`, {
-      params,
-    });
+    return this.authClient
+      .authAppsList(groupId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapAccessibleApp(raw))));
   }
 
   getCurrentAppConfig(appName: string): Observable<EffectiveAppConfigView> {
-    return this.httpClient.get<EffectiveAppConfigView>(
-      `${this.authBaseUrl}/app-configs/${appName}/`,
-    );
+    return this.authClient
+      .authAppConfigsRetrieve(appName, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapEffectiveAppConfig(raw)));
   }
 
   updateCurrentAppConfig(
     appName: string,
     config: Record<string, unknown>,
   ): Observable<{ id: number; user: number; app_name: string; config: Record<string, unknown> }> {
-    return this.httpClient.patch<{
-      id: number;
-      user: number;
-      app_name: string;
-      config: Record<string, unknown>;
-    }>(`${this.authBaseUrl}/app-configs/${appName}/`, { config });
+    return this.authClient
+      .authAppConfigsPartialUpdate(appName, { config }, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapUserAppConfig(raw)));
   }
 
+  // ── Usuarios ──────────────────────────────────────────────────────
+
   listUsers(): Observable<IdentityUserSummaryView[]> {
-    return this.httpClient.get<IdentityUserSummaryView[]>(`${this.identityBaseUrl}/users/`);
+    return this.identityClient
+      .identityUsersList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapUser(raw))));
   }
 
   createUser(payload: CreateIdentityUserPayload): Observable<IdentityUserSummaryView> {
-    return this.httpClient.post<IdentityUserSummaryView>(`${this.identityBaseUrl}/users/`, payload);
+    return this.identityClient
+      .identityUsersCreate(payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapUser(raw)));
   }
 
   updateUser(
     userId: number,
     payload: UpdateIdentityUserPayload,
   ): Observable<IdentityUserSummaryView> {
-    return this.httpClient.patch<IdentityUserSummaryView>(
-      `${this.identityBaseUrl}/users/${userId}/`,
-      payload,
-    );
+    return this.identityClient
+      .identityUsersPartialUpdate(userId, payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapUser(raw)));
   }
 
   deleteUser(userId: number): Observable<void> {
-    return this.httpClient.delete<void>(`${this.identityBaseUrl}/users/${userId}/`);
+    return this.identityClient
+      .identityUsersDestroy(userId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map(() => {}));
   }
 
+  // ── Grupos ────────────────────────────────────────────────────────
+
   listGroups(): Observable<WorkGroupView[]> {
-    return this.httpClient.get<WorkGroupView[]>(`${this.identityBaseUrl}/groups/`);
+    return this.identityClient
+      .identityGroupsList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapWorkGroup(raw))));
   }
 
   listScientificApps(): Observable<ScientificAppCatalogItemView[]> {
-    return this.httpClient.get<ScientificAppCatalogItemView[]>(
-      `${this.identityBaseUrl}/scientific-apps/`,
-    );
+    return this.identityClient
+      .identityScientificAppsList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapScientificAppCatalog(raw))));
   }
 
   createGroup(payload: {
@@ -201,25 +225,32 @@ export class IdentityApiService {
     slug: string;
     description: string;
   }): Observable<WorkGroupView> {
-    return this.httpClient.post<WorkGroupView>(`${this.identityBaseUrl}/groups/`, payload);
+    return this.identityClient
+      .identityGroupsCreate(payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapWorkGroup(raw)));
   }
 
   updateGroup(
     groupId: number,
     payload: Partial<Pick<WorkGroupView, 'name' | 'slug' | 'description'>>,
   ): Observable<WorkGroupView> {
-    return this.httpClient.patch<WorkGroupView>(
-      `${this.identityBaseUrl}/groups/${groupId}/`,
-      payload,
-    );
+    return this.identityClient
+      .identityGroupsPartialUpdate(groupId, payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapWorkGroup(raw)));
   }
 
   deleteGroup(groupId: number): Observable<void> {
-    return this.httpClient.delete<void>(`${this.identityBaseUrl}/groups/${groupId}/`);
+    return this.identityClient
+      .identityGroupsDestroy(groupId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map(() => {}));
   }
 
+  // ── Membresías ────────────────────────────────────────────────────
+
   listMemberships(): Observable<GroupMembershipView[]> {
-    return this.httpClient.get<GroupMembershipView[]>(`${this.identityBaseUrl}/memberships/`);
+    return this.identityClient
+      .identityMembershipsList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapGroupMembership(raw))));
   }
 
   createMembership(payload: {
@@ -227,28 +258,32 @@ export class IdentityApiService {
     group: number;
     role_in_group: 'admin' | 'member';
   }): Observable<GroupMembershipView> {
-    return this.httpClient.post<GroupMembershipView>(
-      `${this.identityBaseUrl}/memberships/`,
-      payload,
-    );
+    return this.identityClient
+      .identityMembershipsCreate(payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapGroupMembership(raw)));
   }
 
   updateMembership(
     membershipId: number,
     payload: { role_in_group: 'admin' | 'member' },
   ): Observable<GroupMembershipView> {
-    return this.httpClient.patch<GroupMembershipView>(
-      `${this.identityBaseUrl}/memberships/${membershipId}/`,
-      payload,
-    );
+    return this.identityClient
+      .identityMembershipsPartialUpdate(membershipId, payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapGroupMembership(raw)));
   }
 
   deleteMembership(membershipId: number): Observable<void> {
-    return this.httpClient.delete<void>(`${this.identityBaseUrl}/memberships/${membershipId}/`);
+    return this.identityClient
+      .identityMembershipsDestroy(membershipId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map(() => {}));
   }
 
+  // ── Permisos de app ───────────────────────────────────────────────
+
   listAppPermissions(): Observable<AppPermissionView[]> {
-    return this.httpClient.get<AppPermissionView[]>(`${this.identityBaseUrl}/app-permissions/`);
+    return this.identityClient
+      .identityAppPermissionsList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapAppPermission(raw))));
   }
 
   createAppPermission(payload: {
@@ -257,30 +292,39 @@ export class IdentityApiService {
     user?: number | null;
     is_enabled: boolean;
   }): Observable<AppPermissionView> {
-    return this.httpClient.post<AppPermissionView>(
-      `${this.identityBaseUrl}/app-permissions/`,
-      payload,
-    );
+    return this.identityClient
+      .identityAppPermissionsCreate(payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapAppPermission(raw)));
   }
 
   updateAppPermission(
     permissionId: number,
     payload: { is_enabled: boolean },
   ): Observable<AppPermissionView> {
-    return this.httpClient.patch<AppPermissionView>(
-      `${this.identityBaseUrl}/app-permissions/${permissionId}/`,
-      payload,
-    );
+    return this.identityClient
+      .identityAppPermissionsPartialUpdate(
+        permissionId,
+        payload,
+        'body',
+        false,
+        NO_TRANSFER_CACHE,
+      )
+      .pipe(map((raw) => this.mapAppPermission(raw)));
   }
 
   deleteAppPermission(permissionId: number): Observable<void> {
-    return this.httpClient.delete<void>(`${this.identityBaseUrl}/app-permissions/${permissionId}/`);
+    return this.identityClient
+      .identityAppPermissionsDestroy(permissionId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map(() => {}));
   }
 
+  // ── Configuración de app por grupo ────────────────────────────────
+
   getGroupAppConfig(groupId: number, appName: string): Observable<GroupAppConfigView> {
-    return this.httpClient.get<GroupAppConfigView>(
-      `${this.identityBaseUrl}/groups/${groupId}/app-configs/${appName}/`,
-    );
+    // El generado invierte el orden de argumentos: (appName, groupId).
+    return this.identityClient
+      .identityGroupsAppConfigsRetrieve(appName, groupId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapGroupAppConfig(raw)));
   }
 
   updateGroupAppConfig(
@@ -288,32 +332,159 @@ export class IdentityApiService {
     appName: string,
     config: Record<string, unknown>,
   ): Observable<GroupAppConfigView> {
-    return this.httpClient.patch<GroupAppConfigView>(
-      `${this.identityBaseUrl}/groups/${groupId}/app-configs/${appName}/`,
-      { config },
-    );
+    // El generado invierte el orden de argumentos: (appName, groupId, body).
+    return this.identityClient
+      .identityGroupsAppConfigsPartialUpdate(
+        appName,
+        groupId,
+        { config },
+        'body',
+        false,
+        NO_TRANSFER_CACHE,
+      )
+      .pipe(map((raw) => this.mapGroupAppConfig(raw)));
   }
 
-  // ── Registration Tokens ──────────────────────────────────────────────
+  // ── Registration Tokens ──────────────────────────────────────────
 
   listRegistrationTokens(): Observable<RegistrationTokenView[]> {
-    return this.httpClient.get<RegistrationTokenView[]>(
-      `${this.identityBaseUrl}/registration-tokens/`,
-    );
+    return this.identityClient
+      .identityRegistrationTokensList('body', false, NO_TRANSFER_CACHE)
+      .pipe(map((items) => items.map((raw) => this.mapRegistrationToken(raw))));
   }
 
   createRegistrationToken(
     payload: CreateRegistrationTokenPayload,
   ): Observable<RegistrationTokenView> {
-    return this.httpClient.post<RegistrationTokenView>(
-      `${this.identityBaseUrl}/registration-tokens/`,
-      payload,
-    );
+    return this.identityClient
+      .identityRegistrationTokensCreate(payload, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map((raw) => this.mapRegistrationToken(raw)));
   }
 
   revokeRegistrationToken(tokenId: string): Observable<void> {
-    return this.httpClient.delete<void>(
-      `${this.identityBaseUrl}/registration-tokens/${tokenId}/`,
-    );
+    return this.identityClient
+      .identityRegistrationTokensDestroy(tokenId, 'body', false, NO_TRANSFER_CACHE)
+      .pipe(map(() => {}));
+  }
+
+  // ── Mappers privados (modelo generado → vista) ────────────────────
+
+  private mapAccessibleApp(raw: AccessibleScientificApp): AccessibleScientificAppView {
+    return {
+      app_name: raw.app_name,
+      route_key: raw.route_key,
+      api_base_path: raw.api_base_path,
+      supports_pause_resume: raw.supports_pause_resume,
+      available_features: [...raw.available_features],
+      enabled: raw.enabled,
+      group_permission: raw.group_permission,
+      user_permission: raw.user_permission,
+    };
+  }
+
+  private mapEffectiveAppConfig(raw: EffectiveAppConfig): EffectiveAppConfigView {
+    return {
+      app_name: raw.app_name,
+      enabled: raw.enabled,
+      effective_config: (raw.effective_config ?? {}) as Record<string, unknown>,
+      group_config: (raw.group_config ?? {}) as Record<string, unknown>,
+      user_config: (raw.user_config ?? {}) as Record<string, unknown>,
+    };
+  }
+
+  private mapUserAppConfig(
+    raw: UserAppConfig,
+  ): { id: number; user: number; app_name: string; config: Record<string, unknown> } {
+    return {
+      id: raw.id,
+      user: raw.user,
+      app_name: raw.app_name,
+      config: (raw.config ?? {}) as Record<string, unknown>,
+    };
+  }
+
+  private mapUser(raw: IdentityUserSummary): IdentityUserSummaryView {
+    return {
+      id: raw.id,
+      username: raw.username,
+      email: raw.email,
+      first_name: raw.first_name,
+      last_name: raw.last_name,
+      is_active: raw.is_active,
+      is_staff: raw.is_staff,
+      is_superuser: raw.is_superuser,
+      role: raw.role as IdentityRole,
+      account_status: raw.account_status as 'active' | 'inactive',
+      primary_group_id: raw.primary_group_id,
+    };
+  }
+
+  private mapWorkGroup(raw: WorkGroup): WorkGroupView {
+    return {
+      id: raw.id,
+      name: raw.name,
+      slug: raw.slug,
+      description: raw.description ?? '',
+      created_by: raw.created_by,
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
+    };
+  }
+
+  private mapScientificAppCatalog(raw: ScientificAppCatalog): ScientificAppCatalogItemView {
+    return {
+      plugin_name: raw.plugin_name,
+      route_key: raw.route_key,
+      api_base_path: raw.api_base_path,
+      supports_pause_resume: raw.supports_pause_resume,
+      available_features: [...raw.available_features],
+    };
+  }
+
+  private mapGroupMembership(raw: GroupMembership): GroupMembershipView {
+    return {
+      id: raw.id,
+      user: raw.user,
+      group: raw.group,
+      role_in_group: (raw.role_in_group ?? 'member') as 'admin' | 'member',
+      joined_at: raw.joined_at,
+    };
+  }
+
+  private mapAppPermission(raw: AppPermission): AppPermissionView {
+    return {
+      id: raw.id,
+      app_name: raw.app_name,
+      group: raw.group ?? null,
+      user: raw.user ?? null,
+      is_enabled: raw.is_enabled ?? true,
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
+    };
+  }
+
+  private mapRegistrationToken(raw: RegistrationToken): RegistrationTokenView {
+    return {
+      id: raw.id,
+      token: raw.token,
+      group: raw.group,
+      group_name: raw.group_name,
+      description: raw.description ?? '',
+      is_active: raw.is_active ?? true,
+      max_uses: raw.max_uses ?? 0,
+      use_count: raw.use_count,
+      expires_at: raw.expires_at ?? null,
+      created_at: raw.created_at,
+    };
+  }
+
+  private mapGroupAppConfig(raw: GroupAppConfig): GroupAppConfigView {
+    return {
+      id: raw.id,
+      group: raw.group,
+      app_name: raw.app_name,
+      config: (raw.config ?? {}) as Record<string, unknown>,
+      updated_at: raw.updated_at,
+    };
   }
 }

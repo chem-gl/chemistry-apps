@@ -12,6 +12,7 @@ import {
   buildTunnelingSeries,
   isValidTunnelingParameters,
   transmissionProbability,
+  type ChartPoint,
   type TunnelingParameters,
 } from './tunneling-chart-math';
 
@@ -61,6 +62,34 @@ function referenceTransmissionProbability(
   return (Math.cosh(a1 + a2) - Math.cosh(a1 - a2)) / (Math.cosh(a1 + a2) + df);
 }
 
+/** Ángulo interior (grados) entre los dos segmentos que concurren en un vértice de la
+ *  polilínea. x se normaliza al ancho total de la serie e y al rango vertical del eje
+ *  real, así el ángulo refleja lo que se ve en pantalla y no la escala de los datos. */
+function interiorAngleAt(points: readonly ChartPoint[], index: number, ySpan: number): number {
+  const [previousX, previousY] = points[index - 1];
+  const [currentX, currentY] = points[index];
+  const [nextX, nextY] = points[index + 1];
+  const xSpan = points[points.length - 1][0] - points[0][0];
+  const incoming: ChartPoint = [
+    (previousX - currentX) / xSpan,
+    (previousY - currentY) / ySpan,
+  ];
+  const outgoing: ChartPoint = [(nextX - currentX) / xSpan, (nextY - currentY) / ySpan];
+  const dot = incoming[0] * outgoing[0] + incoming[1] * outgoing[1];
+  const scale = Math.hypot(incoming[0], incoming[1]) * Math.hypot(outgoing[0], outgoing[1]);
+  const cosine = Math.min(Math.max(dot / scale, -1), 1);
+  return (Math.acos(cosine) * 180) / Math.PI;
+}
+
+/** Mayor giro (180° - ángulo interior) de una serie: mide cuán "quebrada" se ve. */
+function sharpestTurn(points: readonly ChartPoint[], ySpan: number): number {
+  let sharpest = 0;
+  for (let index = 1; index < points.length - 1; index += 1) {
+    sharpest = Math.max(sharpest, 180 - interiorAngleAt(points, index, ySpan));
+  }
+  return sharpest;
+}
+
 describe('transmissionProbability', () => {
   it('devuelve probabilidades en [0, 1] monótonas crecientes con la energía', () => {
     const energies: readonly number[] = [0, 0.5, 1, 2, EXAMPLE_U, 5, 8];
@@ -107,8 +136,16 @@ describe('buildPotentialProfile', () => {
     const values = (profile ?? []).map((point) => point[1]);
     const maximum = Math.max(...values);
 
-    expect(profile?.length).toBe(400);
+    // 1000 muestras (antes 400): resolución de dibujo, no de física.
+    expect(profile?.length).toBe(1000);
     expect(Math.abs(maximum - 3.5)).toBeLessThanOrEqual(0.01);
+  });
+
+  it('se dibuja sin facetas: el vértice gira menos de 20° respecto a V₀', () => {
+    const profile = buildPotentialProfile(3.5, -8.2) ?? [];
+    // Normalizado por 0..V₀, el spline suavizado no necesita giros cerrados; antes de
+    // ampliar la ventana y subir el muestreo el vértice giraba ~64°.
+    expect(sharpestTurn(profile, 3.5)).toBeLessThan(20);
   });
 
   it('es una campana sech² simétrica: colas a 0 y máximo V₀ en el TS', () => {
@@ -122,7 +159,8 @@ describe('buildPotentialProfile', () => {
       0,
     );
 
-    // Colas a ambos lados tienden a 0 (campana centrada en x = 0).
+    // Colas a ambos lados tienden a 0 (campana centrada en x = 0). Con la ventana
+    // ±1.0L el borde vale ~5·10⁻⁵·V‡, tres órdenes por debajo del 1 % exigido.
     expect(firstValue).toBeLessThanOrEqual(0.01);
     expect(lastValue).toBeLessThanOrEqual(0.01);
     expect(Math.abs(points[peakIndex][0])).toBeLessThanOrEqual(0.01);
@@ -132,12 +170,22 @@ describe('buildPotentialProfile', () => {
 
   it('cubre un rango simétrico alrededor de x = 0 y devuelve null sin barrera positiva', () => {
     const profile = buildPotentialProfile(3.5, -8.2);
-    const firstX = profile?.[0][0] ?? 0;
-    const lastX = profile?.[(profile?.length ?? 1) - 1][0] ?? 0;
-    // Simétrico y suficientemente ancho para ver las colas planas de la barrera.
-    expect(firstX).toBeLessThan(-1);
-    expect(lastX).toBeGreaterThan(1);
+    const points = profile ?? [];
+    const firstX = points[0]?.[0] ?? 0;
+    const lastX = points[points.length - 1]?.[0] ?? 0;
+    // Ventana ±1.0L (0.9): simétrica y lo bastante ancha para ver las colas planas,
+    // pero sin el recorte extra que dejaba la campana en el 8 % del ancho visible.
+    expect(firstX).toBeLessThan(-0.85);
+    expect(lastX).toBeGreaterThan(0.85);
     expect(firstX).toBeCloseTo(-lastX, 10);
+
+    // La campana ocupa al menos el 13 % del ancho visible a media altura (antes 8.3 %).
+    const halfMaximumWidth = lastX - firstX;
+    const aboveHalfMaximum = points.filter((point) => point[1] >= 1.75);
+    const fullWidthHalfMaximum =
+      aboveHalfMaximum[aboveHalfMaximum.length - 1][0] - aboveHalfMaximum[0][0];
+    expect(fullWidthHalfMaximum / halfMaximumWidth).toBeGreaterThanOrEqual(0.13);
+
     expect(buildPotentialProfile(0, -8.2)).toBeNull();
     expect(buildPotentialProfile(3.5, 4)).toBeNull();
   });
@@ -159,6 +207,36 @@ describe('buildTunnelingSeries', () => {
     expect(series.transmissionProbability).toBeGreaterThan(0.9);
   });
 
+  it('muestrea |ψ|² en una malla estrictamente creciente (sin duplicados en los empalmes)', () => {
+    const series = buildTunnelingSeries(validParameters);
+    const density = series?.probabilityDensity ?? [];
+    // 1200 puntos repartidos en una sola malla: ~600 caen dentro de la barrera.
+    expect(density.length).toBe(1200);
+    const strictlyIncreasing = density.every(
+      (point, index) => index === 0 || point[0] > density[index - 1][0],
+    );
+    expect(strictlyIncreasing).toBe(true);
+  });
+
+  it('arranca y cierra el decaimiento tangente a las ondas (empalme C¹)', () => {
+    const density = buildTunnelingSeries(validParameters)?.probabilityDensity ?? [];
+    const peakIndex = density.findIndex((point) => point[0] >= -0.45);
+    const endIndex = density.findIndex((point) => point[0] >= 0.45);
+    // Cinco muestras ≈ 0.008 en la coordenada de reacción.
+    const step = 5;
+
+    const peak = density[peakIndex][1];
+    const barrierEnd = density[endIndex][1];
+    const barrierDrop = peak - barrierEnd;
+
+    // El decaimiento es monótono y tangente en ambos bordes: en el primer y en el último
+    // tramo apenas cae, porque las ondas tienen allí un máximo (pendiente 0). Un empalme
+    // C⁰ (exponencial pura) caía ~0.8 % de la barrera ya en esas cinco muestras.
+    expect(barrierDrop).toBeGreaterThan(0);
+    expect(peak - density[peakIndex + step][1]).toBeLessThan(barrierDrop * 0.002);
+    expect(density[endIndex - step][1] - barrierEnd).toBeLessThan(barrierDrop * 0.002);
+  });
+
   it('deriva k_BT del modelo cuando no hay temperatura', () => {
     const series = buildTunnelingSeries({ ...validParameters, temperatureK: null });
     // k_BT = 2π·V‡/(α₁·u); con el ejemplo coincide con R·T a 298.15 K.
@@ -174,8 +252,31 @@ describe('buildTunnelingChartOptions', () => {
   it('devuelve opciones válidas con datos completos', () => {
     const options = buildTunnelingChartOptions(validParameters);
     expect(options).not.toBeNull();
-    expect(options?.animation).toBe(false);
     expect(Array.isArray(options?.['series'])).toBe(true);
+  });
+
+  it('anima la entrada con una transición corta en lugar de aparecer de golpe', () => {
+    const options = buildTunnelingChartOptions(validParameters);
+    expect(options?.animation).toBe(true);
+    expect(options?.animationDuration).toBe(300);
+    expect(options?.animationEasing).toBe('cubicOut');
+    // Umbral alto: con ~1000-1200 puntos por serie ECharts desactivaría la animación.
+    expect(options?.animationThreshold).toBe(10_000);
+  });
+
+  it('suaviza solo el potencial: los nodos de |ψ|² son datos físicos', () => {
+    const options = buildTunnelingChartOptions(validParameters);
+    const series = (options?.['series'] ?? []) as Array<{
+      name?: string;
+      smooth?: boolean;
+      smoothMonotone?: string;
+    }>;
+    const potential = series.find((entry) => entry.name === 'V(x)');
+    const density = series.find((entry) => entry.name === '|ψ|²');
+
+    expect(potential?.smooth).toBe(true);
+    expect(potential?.smoothMonotone).toBe('x');
+    expect(density?.smooth).toBeUndefined();
   });
 
   it('devuelve null con entradas inválidas', () => {

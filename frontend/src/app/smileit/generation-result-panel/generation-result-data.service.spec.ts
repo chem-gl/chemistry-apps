@@ -3,8 +3,8 @@
 
 import { EnvironmentInjector, Injector, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Subject, of, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsApiService } from '../../core/api/jobs-api.service';
 import {
   SmileitGeneratedStructureView,
@@ -446,6 +446,130 @@ describe('GenerationResultDataService', () => {
       TestBed.flushEffects();
 
       expect(service.loadedGeneratedStructures()[0].name).toBe('dEDA6');
+    });
+  });
+
+  describe('hidratación de thumbnails', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('agrupa múltiples respuestas de thumbnail en una sola actualización de la signal', () => {
+      vi.useFakeTimers();
+
+      const derivationItems = [
+        {
+          structureIndex: 0,
+          name: 'Mol A',
+          smiles: 'C',
+          placeholderAssignments: [],
+          traceability: [],
+        },
+        {
+          structureIndex: 1,
+          name: 'Mol B',
+          smiles: 'CC',
+          placeholderAssignments: [],
+          traceability: [],
+        },
+      ];
+
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(
+        of({ totalGenerated: 2, offset: 0, limit: 100, items: derivationItems }),
+      );
+      mockJobsApi.getSmileitDerivationSvg = vi
+        .fn()
+        .mockReturnValueOnce(of('<svg-0/>'))
+        .mockReturnValueOnce(of('<svg-1/>'));
+
+      mockWorkflow.currentJobId.set('job-thumb-batch');
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 2 }));
+
+      const updateSpy = vi.spyOn(service.loadedGeneratedStructures, 'update');
+
+      TestBed.flushEffects();
+
+      // Tras la carga síncrona: items añadidos vía update, thumbnails en cola de flush.
+      const callsAfterLoad = updateSpy.mock.calls.length;
+      expect(callsAfterLoad).toBeGreaterThanOrEqual(1);
+
+      vi.advanceTimersByTime(50);
+
+      // El flush agrupa ambos SVGs en una sola actualización adicional (no una por tarjeta).
+      expect(updateSpy.mock.calls.length - callsAfterLoad).toBe(1);
+      expect(service.loadedGeneratedStructures()[0].svg).toBe('<svg-0/>');
+      expect(service.loadedGeneratedStructures()[1].svg).toBe('<svg-1/>');
+
+      updateSpy.mockRestore();
+      sessionStorage.removeItem('smileit:job-thumb-batch:page:0:100');
+      sessionStorage.removeItem('smileit:job-thumb-batch:svg:thumb:0');
+      sessionStorage.removeItem('smileit:job-thumb-batch:svg:thumb:1');
+    });
+
+    it('descarta respuestas de thumbnail cuando el job activo cambia antes de la emisión', () => {
+      vi.useFakeTimers();
+
+      const svgSubjects: Subject<string>[] = [];
+
+      const derivationItems = [
+        {
+          structureIndex: 0,
+          name: 'Mol A',
+          smiles: 'C',
+          placeholderAssignments: [],
+          traceability: [],
+        },
+        {
+          structureIndex: 1,
+          name: 'Mol B',
+          smiles: 'CC',
+          placeholderAssignments: [],
+          traceability: [],
+        },
+      ];
+
+      mockJobsApi.listSmileitDerivations = vi.fn().mockReturnValue(
+        of({ totalGenerated: 2, offset: 0, limit: 100, items: derivationItems }),
+      );
+      mockJobsApi.getSmileitDerivationSvg = vi.fn().mockImplementation(() => {
+        const subject = new Subject<string>();
+        svgSubjects.push(subject);
+        return subject;
+      });
+
+      mockWorkflow.currentJobId.set('job-stale-a');
+      mockWorkflow.resultData.set(buildResultData({ totalGenerated: 2 }));
+
+      const updateSpy = vi.spyOn(service.loadedGeneratedStructures, 'update');
+
+      TestBed.flushEffects();
+
+      // Items de job-a cargados; Subjects[0] y Subjects[1] pendientes de emisión.
+      expect(service.loadedGeneratedStructures()).toHaveLength(2);
+
+      // El usuario cambia a otro job; se fuerza el effect para que cargue job-b.
+      mockWorkflow.currentJobId.set('job-stale-b');
+      TestBed.flushEffects();
+
+      // Items de job-b cargados; Subjects[2] y Subjects[3] pendientes.
+      const callsAfterSecondLoad = updateSpy.mock.calls.length;
+
+      // Los SVGs del job obsoleto llegan después del cambio.
+      svgSubjects[0].next('<svg-stale-0/>');
+      svgSubjects[1].next('<svg-stale-1/>');
+
+      vi.advanceTimersByTime(50);
+
+      // Ninguna actualización adicional: el guard descartó las respuestas obsoletas.
+      expect(updateSpy.mock.calls.length).toBe(callsAfterSecondLoad);
+      // Las tarjetas del job activo conservan el SVG vacío.
+      expect(service.loadedGeneratedStructures()[0].svg).toBe('');
+      expect(service.loadedGeneratedStructures()[1].svg).toBe('');
+
+      svgSubjects.forEach((subject) => subject.complete());
+      updateSpy.mockRestore();
+      sessionStorage.removeItem('smileit:job-stale-a:page:0:100');
+      sessionStorage.removeItem('smileit:job-stale-b:page:0:100');
     });
   });
 
