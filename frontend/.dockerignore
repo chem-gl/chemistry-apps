@@ -1,0 +1,34 @@
+# .dockerignore: Excluye del contexto de build de Docker lo que no debe entrar
+# en la imagen del frontend.
+#
+# Por qué importa: los stages `dev` y `build` de frontend/Dockerfile hacen
+# `RUN npm ci` y DESPUES `COPY . .`. Sin este archivo, el `node_modules`, `dist`
+# y `.angular` del host se copian encima de los que npm instaló en la imagen:
+# el build deja de ser reproducible (dependencias compiladas para el SO del
+# host) y el contexto pesa ~670 MB en lugar de ~15 MB.
+
+# Dependencias y artefactos de build del host
+node_modules/
+dist/
+.angular/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+e2e/
+
+# Entorno local y secrets (nunca viajan en la imagen)
+.env
+.env.*
+!.env.example
+
+# Reportes e informes generados
+eslint.json
+npm-debug.log*
+yarn-error.log*
+
+# Git y temporales
+.git/
+.gitignore
+*.swp
+.DS_Store

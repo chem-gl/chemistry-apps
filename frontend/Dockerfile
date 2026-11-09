@@ -1,7 +1,12 @@
 # frontend/Dockerfile: Imagenes Docker para desarrollo (watch) y produccion (build + nginx).
 # Build timestamp: 2026-09-24T16:00:00Z - force fresh build
+# Node 22 (la imagen trae v22.23.4 + npm 10.9.9): lo exigen @axe-core/playwright
+# 4.14 y commander 15.1 (>=22.12, igual que @angular/{cli,build} 21) y
+# lighthouse 13 (>=22.19). Con node:20 el `npm ci` de este stage tiraba
+# `npm warn EBADENGINE`. El job `frontend` de .github/workflows/ci-deploy.yml
+# (NODE_VERSION) tiene que seguir esta version.
 
-FROM node:20-alpine AS dev
+FROM node:22-alpine AS dev
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -9,7 +14,7 @@ COPY . .
 EXPOSE 4200
 CMD ["npm", "run", "start"]
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 ARG API_BASE_URL=/api
 ARG BUILD_TIMESTAMP=unknown

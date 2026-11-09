@@ -70,7 +70,7 @@
     "eslint": "^9.35.0",
     "globals": "^16.4.0",
     "jsdom": "^27.1.0",
-    "lighthouse": "^12.8.2",
+    "lighthouse": "^13.6.0",
     "monocart-coverage-reports": "^2.12.9",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
