@@ -391,7 +391,12 @@ cd frontend && npm install && npm start  # http://localhost:4200
 
 `up --without-celery` levanta solo la API (jobs quedan en `pending`). Verificar: `curl http://localhost:8000/api/schema/` y abrir `/login` (redirige a `/dashboard`). Beat opcional para tareas periódicas. Comandos de test/lint por capa en `AGENTS.md`.
 
-Probar el modo abierto en local exige broker y worker reales: Redis en `localhost:6379` y `poetry run celery -A config worker -l info` desde `backend/`. Sin broker el despacho no avanza y el job queda en `pending` (ver §19).
+Probar el modo abierto en local exige broker y worker reales: Redis en
+`localhost:6380` (el `docker-compose.dev.yml` lo publica en ese puerto; `REDIS_HOST_PORT`
+lo cambia) y `poetry run celery -A config worker -l info` desde `backend/`. Sin broker el
+despacho no avanza y el job queda en `pending` (ver §19). El modo abierto además hay que
+haberlo encendido: `OPEN_MODE_ENABLED=True` en `backend/.env` (el default del código es
+cerrado).
 
 ## 11) Docker (solo producción)
 
@@ -594,7 +599,7 @@ El stack principal no tenía beat, por eso la purga no corría en producción. S
 
 ### Despliegue de producción
 
-`docker-compose.libres.yml` levanta el stack aislado de producción (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps.agalano.com` con certificado gestionado por certbot. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado. El modo libre está **cerrado desde 2026-09-26** (`LIBRES_OPEN_MODE_ENABLED=0`; el default del código sigue siendo abierto y el feature intacto/reversible). La cuota de lectura anónima es de 600/h: `PUBLIC_READ_RATE=600/hour` por defecto en el compose y en el `.env` que genera el deploy (antes 120/h, que se agotaba en aulas y redes NAT).
+`docker-compose.libres.yml` levanta el stack aislado de producción (proyecto, puertos `8090`/`4220`, volúmenes, base de datos y colas propios) en `/home/deploy/chemistry-apps-libres` del host `plata`, servido en `https://apps.agalano.com` con certificado gestionado por certbot. Mismo origen: Nginx proxya `/api`, `/ws`, `/static` y `/media` al backend aislado. El modo libre está **cerrado desde 2026-09-26** (`LIBRES_OPEN_MODE_ENABLED=0`). Desde 2026-11-08 el **default del código es cerrado** (`OPEN_MODE_ENABLED=False` cuando la variable no está en el entorno), así que ningún arranque sin configurar expone `/api/public/*`; se abre con `OPEN_MODE_ENABLED=1` (en dev local, desde `backend/.env` con `OPEN_MODE_ENABLED=True`) y el feature sigue intacto/reversible. La cuota de lectura anónima es de 600/h: `PUBLIC_READ_RATE=600/hour` por defecto en el compose y en el `.env` que genera el deploy (antes 120/h, que se agotaba en aulas y redes NAT).
 
 **Server Calc**: los workers ejecutan el cálculo remoto en el host `qta` por SSH (`QTA_SSH_HOST`, llave `QTA_SSH_PRIVATE_KEY` montada en `/run/secrets/qta_ssh_key`). La verificación de la host key usa un known_hosts dedicado (`QTA_SSH_KNOWN_HOSTS_PATH`, por defecto `/app/media/runtime-tools/qta_known_hosts`, persistente en el bind mount) con `StrictHostKeyChecking=accept-new`: la primera conexión registra la clave y cualquier cambio posterior aborta la conexión (anti-MITM).
 
