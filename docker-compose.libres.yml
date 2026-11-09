@@ -79,8 +79,11 @@ services:
       NUM_PROXIES: ${NUM_PROXIES:-1}
 
       # Interruptor del modo libre: 0 = todo con cuenta (solo lectura del
-      # catálogo en modo cerrado). Llega vía .env del deploy.
-      OPEN_MODE_ENABLED: ${OPEN_MODE_ENABLED:-1}
+      # catálogo en modo cerrado). Llega vía .env del deploy. Default 0 a
+      # propósito: sin la variable (arranque manual, .env incompleto) el sitio
+      # NO queda abierto al público. Para abrirlo se pone
+      # LIBRES_OPEN_MODE_ENABLED=1 en las variables del repo.
+      OPEN_MODE_ENABLED: ${OPEN_MODE_ENABLED:-0}
 
       # Login con Google (GIS): vacío = deshabilitado. El Client ID web es
       # público y también es la audiencia que valida el token en backend.
@@ -99,7 +102,9 @@ services:
 
       # Modo abierto: topes, TTL y cola pesada.
       PUBLIC_DISPATCH_RATE: ${PUBLIC_DISPATCH_RATE:-60/hour}
-      PUBLIC_READ_RATE: ${PUBLIC_READ_RATE:-120/hour}
+      # 600/h: mismo default que settings.py y el .env del deploy; 120/h
+      # agotaba la cuota en aulas/NAT (varios usuarios comparten una IP).
+      PUBLIC_READ_RATE: ${PUBLIC_READ_RATE:-600/hour}
       REGISTERED_DISPATCH_RATE: ${REGISTERED_DISPATCH_RATE:-600/hour}
       ANONYMOUS_JOB_TTL_HOURS: ${ANONYMOUS_JOB_TTL_HOURS:-24}
       SHARED_CACHE_TTL_DAYS: ${SHARED_CACHE_TTL_DAYS:-7}
@@ -197,9 +202,23 @@ services:
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
 
       # Server Calc: ejecución remota en qta vía SSH (solo root/admin).
+      # Este compose es la fuente de verdad de PRODUCCIÓN: la IP de qta
+      # alcanzable desde el host de despliegue. El default de settings.py
+      # (192.168.1.20) es la red local y solo aplica en desarrollo, donde este
+      # archivo no interviene.
       QTA_SSH_HOST: ${QTA_SSH_HOST:-100.98.230.18}
       QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
       QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
+      # known_hosts dedicado (ssh usa StrictHostKeyChecking=accept-new). No
+      # puede quedar en el default (~/.ssh/...): HOME=/app y /app/.ssh no
+      # existe ni es escribible, así que OpenSSH aborta al registrar la host
+      # key y Server Calc queda roto. RUNTIME_TOOLS_DIR está en el bind mount
+      # ./backend/media (escribible por HOST_UID) y su directorio lo crea
+      # ensure_runtime_tools antes de arrancar Celery. Elegimos persistencia
+      # sobre /tmp: la host key se fija una vez y un cambio posterior aborta la
+      # conexión (anti-MITM real); en /tmp cada reinicio volvería a confiar
+      # a ciegas (TOFU repetido).
+      QTA_SSH_KNOWN_HOSTS_PATH: ${QTA_SSH_KNOWN_HOSTS_PATH:-/app/media/runtime-tools/qta_known_hosts}
       QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
       HOST_UID: "${HOST_UID:-1000}"
       HOST_GID: "${HOST_GID:-1000}"
@@ -258,9 +277,23 @@ services:
       CELERY_HEAVY_QUEUE: ${CELERY_HEAVY_QUEUE:-heavy}
 
       # Server Calc: ejecución remota en qta vía SSH (solo root/admin).
+      # Este compose es la fuente de verdad de PRODUCCIÓN: la IP de qta
+      # alcanzable desde el host de despliegue. El default de settings.py
+      # (192.168.1.20) es la red local y solo aplica en desarrollo, donde este
+      # archivo no interviene.
       QTA_SSH_HOST: ${QTA_SSH_HOST:-100.98.230.18}
       QTA_SSH_USER: ${QTA_SSH_USER:-chemistry-apps}
       QTA_SSH_KEY_PATH: ${QTA_SSH_KEY_PATH:-/run/secrets/qta_ssh_key}
+      # known_hosts dedicado (ssh usa StrictHostKeyChecking=accept-new). No
+      # puede quedar en el default (~/.ssh/...): HOME=/app y /app/.ssh no
+      # existe ni es escribible, así que OpenSSH aborta al registrar la host
+      # key y Server Calc queda roto. RUNTIME_TOOLS_DIR está en el bind mount
+      # ./backend/media (escribible por HOST_UID) y su directorio lo crea
+      # ensure_runtime_tools antes de arrancar Celery. Elegimos persistencia
+      # sobre /tmp: la host key se fija una vez y un cambio posterior aborta la
+      # conexión (anti-MITM real); en /tmp cada reinicio volvería a confiar
+      # a ciegas (TOFU repetido).
+      QTA_SSH_KNOWN_HOSTS_PATH: ${QTA_SSH_KNOWN_HOSTS_PATH:-/app/media/runtime-tools/qta_known_hosts}
       QTA_SSH_TIMEOUT: ${QTA_SSH_TIMEOUT:-25}
       HOST_UID: "${HOST_UID:-1000}"
       HOST_GID: "${HOST_GID:-1000}"
