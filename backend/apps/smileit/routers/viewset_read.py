@@ -195,13 +195,16 @@ class SmileitReadActionsMixin:
                 {"detail": validation_error}, status=status.HTTP_409_CONFLICT
             )
 
-        try:
-            resolved_index = int(structure_index or "")
-        except ValueError:
+        # El `url_path` restringe el parámetro a `\d+`, así que aquí siempre llega
+        # un entero: no hace falta try/except (la rama de 400 era inalcanzable y el
+        # contrato no la declaraba). Si llegara vacío sería por una ruta mal
+        # montada: 404 explícito en vez de servir el derivado 0.
+        if structure_index is None:
             return Response(
-                {"detail": "structure_index debe ser entero."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "No existe derivado para structure_index solicitado."},
+                status=status.HTTP_404_NOT_FOUND,
             )
+        resolved_index = int(structure_index)
 
         results_payload = cast(SmileitResult, job.results)
         structure = resolve_job_structure_by_index(results_payload, resolved_index)
