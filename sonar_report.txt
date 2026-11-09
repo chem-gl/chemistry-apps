@@ -1,6 +1,0 @@
-=== Código duplicado (SonarQube) ===
-Resumen del proyecto: bloques=0 | líneas=0 | densidad=0.0%
-No se encontraron archivos con duplicación visible en la respuesta de Sonar.
-
-=== Security Hotspots (SonarQube) ===
-No se encontraron hotspots.
