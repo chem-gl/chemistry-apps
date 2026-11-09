@@ -276,8 +276,9 @@ cd frontend && npx eslint .
 
 # SonarQube
 bash scripts/generate_sonar_coverage.sh
-docker run --rm --network=host -e SONAR_TOKEN=$TOKEN -v $(pwd):/usr/src sonarsource/sonar-scanner-cli:latest \
+docker run --rm --user root --network=host -e SONAR_TOKEN=$TOKEN -v $(pwd):/usr/src sonarsource/sonar-scanner-cli:latest \
   -D sonar.projectBaseDir=/usr/src -D sonar.host.url=http://localhost:9000 \
+  -D sonar.scanner.scanAll=false \
   -D sonar.python.coverage.reportPaths=backend/coverage.xml \
   -D sonar.javascript.lcov.reportPaths=frontend/coverage/frontend/lcov-sonar.info
 
@@ -294,8 +295,12 @@ cd frontend && npm run api:generate
 - Token: no se versiona — créalo en SonarQube y expórtalo como `SONAR_TOKEN` en tu `.env` local (gitignored)
 - Project key: `chemistry-apps`
 - Para cobertura real, generar reportes antes del scan: `bash scripts/generate_sonar_coverage.sh`
-- Cobertura local 2026-10-23: backend 94% (`backend/coverage.xml`, line-rate 0.9418) con `ruff.json` 0 issues; frontend 84.6% lcov (`frontend/coverage/frontend/lcov-sonar.info`, 131 archivos) con `eslint.json` 0 errors / 10 warnings
-- Sonar server 2026-10-23: coverage global 51.0% (falta e2e `frontend/coverage/e2e/lcov.info`), quality gate OK (new_coverage 81.5, 0 violations), bugs 0, vulns 0, smells 1 (`typescript:S3358` `chunk-load-recovery.ts:51`), duplicación 0.7%
+- Cobertura local 2026-11-09: backend 95% (`backend/coverage.xml`, line-rate 0.9453, gate `fail_under=91`) con `ruff.json` 0 issues (SARIF: 1 run, 0 vulnerabilidades); frontend 85.2% lcov (`frontend/coverage/frontend/lcov-sonar.info`, 176 entradas SF: 137 de código + 39 e2e) con `eslint.json` 0 errores / 0 warnings
+- Suites 2026-11-09: backend 1288 tests OK (`skipped=1`); frontend `ng test` 1190 tests / 92 archivos
+- Sonar server 2026-11-09: coverage global 84.7% (line 88.4%, branch 76.4%), quality gate OK (new_coverage 82.1 ≥ 80, 0 violations, duplicación nueva 0.67%, hotspots revisados 100%), bugs 0, vulns 0, smells 0, hotspots 0, duplicación global 0.7%
+- Escáner: el CLI local `/opt/sonar-scanner` (5.0.1.3006) recorre todo el repo y aborta con `java.nio.file.AccessDeniedException` en `.docker/dev/redis/appendonlydir` (volumen del Redis de dev: uid 999, modo 700); `sonar.exclusions` no lo evita y `sonar.scanner.scanAll=false` (ya en `sonar-project.properties`) no lo respeta esa versión → fallback con la imagen oficial y `--user root`:
+  `docker run --rm --user root --network=host -e SONAR_TOKEN=$SONAR_TOKEN -v $(pwd):/usr/src sonarsource/sonar-scanner-cli:latest -D sonar.projectBaseDir=/usr/src -D sonar.host.url=http://localhost:9000 -D sonar.scanner.scanAll=false`
+- e2e: la cobertura e2e entra por `sonar.javascript.lcov.reportPaths` (ya no rompe el import del lcov JS) y `scripts/generate_sonar_coverage.sh` la genera con `npm run e2e:coverage:sonar` (`SONAR_INCLUDE_E2E_COVERAGE=1` por defecto) y la consolida en `frontend/coverage/frontend/lcov-sonar.info`; tras upgrades de dependencias, `@playwright/test` 1.65.0 exige el build de Chromium 1254 — si no está descargado, todos los specs e2e fallan con `browserType.launch: Executable doesn't exist` (no es regresión de producto): `cd frontend && npx playwright install chromium`
 
 ---
 
