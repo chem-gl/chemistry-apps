@@ -7,7 +7,7 @@
     "build": "ng build",
     "e2e": "playwright test",
     "e2e:visual": "playwright test --grep @visual",
-    "audit:perf": "lighthouse http://127.0.0.1:4200/apps --preset=desktop --only-categories=performance,accessibility --budget-path=e2e/perf-budget.json --chrome-flags=\"--headless --no-sandbox\" --output=html --output-path=/tmp/opencode/lighthouse-apps.html",
+    "audit:perf": "lighthouse http://127.0.0.1:4200/apps --preset=desktop --only-categories=performance,accessibility --chrome-flags=\"--headless --no-sandbox\" --output=html --output-path=/tmp/opencode/lighthouse-apps.html",
     "e2e:coverage:sonar": "node scripts/playwright-sonar-coverage.mjs",
     "e2e:headed": "playwright test --headed",
     "e2e:install": "playwright install chromium",

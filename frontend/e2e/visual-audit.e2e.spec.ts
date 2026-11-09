@@ -3,6 +3,8 @@
 // Cubre: screenshots por viewport, axe sin violaciones, presupuestos duros
 // (1 h1, sin overflow, sin <nav> vacío, sin errores JS).
 // Perf (INP ≤200ms, Lighthouse ≥90): `npm run audit:perf` con dev server arriba.
+// Umbrales y dónde se aplican: `e2e/performance-budgets.md` (Lighthouse 12 ya
+// no soporta --budget-path; los budgets de tamaño viven en angular.json).
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
