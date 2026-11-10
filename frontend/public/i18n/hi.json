@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "{total} में से {shown} व्युत्पन्न दिखा रहे हैं",
-      "estimatedDerivatives": "≈ {count} व्युत्पन्न अनुमानित",
-      "combinatorialWarning": "संयोजन {limit} व्युत्पन्न से अधिक है: निर्माण पूरा होगा और समय लग सकता है।",
-      "hardLimitExceeded": "{limit} व्युत्पन्न की अधिकतम सीमा पार हो गई। साइट, प्रतिस्थापी या R-प्रतिस्थापन घटाएँ।"
+      "showingOfTotal": "{{shown}} व्युत्पन्न दिखा रहे हैं (कुल {{total}} में से)",
+      "estimatedDerivatives": "≈ {{count}} व्युत्पन्न अनुमानित",
+      "combinatorialWarning": "संयोजन {{limit}} व्युत्पन्न से अधिक है: निर्माण पूरा होगा और समय लग सकता है।",
+      "hardLimitExceeded": "{{limit}} व्युत्पन्न की अधिकतम सीमा पार हो गई। साइट, प्रतिस्थापी या R-प्रतिस्थापन घटाएँ।"
     },
     "catalogPanel": {
       "maximizeSection": "अनुभाग अधिकतम करें",

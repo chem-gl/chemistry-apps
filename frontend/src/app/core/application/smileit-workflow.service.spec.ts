@@ -950,7 +950,9 @@ describe('SmileitWorkflowService', () => {
   });
 
   it('restaura catalogRefs desde resolved_substituents cuando no hay substituent_refs', () => {
-    workflowService.catalogEntries.set([makeCatalogEntry()]);
+    workflowService.catalogEntries.set([
+      { ...makeCatalogEntry(), anchor_atom_indices: [0, 1] },
+    ]);
 
     jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
       of(
@@ -972,7 +974,7 @@ describe('SmileitWorkflowService', () => {
                     version: 3,
                     name: 'Aniline',
                     smiles: '[NH2]c1ccccc1',
-                    selected_atom_index: 0,
+                    selected_atom_index: 5,
                     categories: ['aromatic'],
                   },
                 ],
@@ -993,9 +995,237 @@ describe('SmileitWorkflowService', () => {
     const recoveredBlock: SmileitAssignmentBlockDraft = workflowService.assignmentBlocks()[0];
     expect(recoveredBlock.catalogRefs).toHaveLength(1);
     expect(recoveredBlock.catalogRefs[0].stable_id).toBe('aniline');
+    // El panel muestra las anclas del catálogo (las que el backend expandirá),
+    // no el `selected_atom_index` que guardó el job histórico.
+    expect(recoveredBlock.catalogRefs[0].anchor_atom_indices).toEqual([0, 1]);
     expect(recoveredBlock.manualSubstituents).toHaveLength(0);
     expect(recoveredBlock.siteAtomIndices).toEqual([1]);
     expect(recoveredBlock.categoryKeys).toEqual(['aromatic']);
+  });
+
+  it('envía todas las refs de catálogo del bloque histórico, incluidas las añadidas después', () => {
+    const historicalEntry: SmileitCatalogEntryView = makeCatalogEntry();
+    const thiolEntry: SmileitCatalogEntryView = {
+      ...makeCatalogEntry(),
+      id: 'catalog-thiol-1',
+      stable_id: 'thiol',
+      version: 1,
+      name: 'Thiol',
+      smiles: '[SH]',
+      anchor_atom_indices: [0],
+      categories: ['sulfur'],
+    };
+    workflowService.catalogEntries.set([historicalEntry, thiolEntry]);
+
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-history-add-ref',
+          parameters: {
+            principal_smiles: 'c1ccccc1',
+            selected_atom_indices: [1],
+            assignment_blocks: [
+              {
+                label: 'Historical block',
+                priority: 1,
+                site_atom_indices: [1],
+                category_keys: [],
+                resolved_substituents: [
+                  {
+                    source_kind: 'catalog',
+                    stable_id: historicalEntry.stable_id,
+                    version: historicalEntry.version,
+                    name: historicalEntry.name,
+                    smiles: historicalEntry.smiles,
+                    selected_atom_index: 0,
+                    categories: ['aromatic'],
+                  },
+                ],
+              },
+            ],
+            r_substitutes: 1,
+            num_bonds: 1,
+            site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
+            export_name_base: 'smileit_run',
+            export_padding: 5,
+          } as unknown as SmileitJobResponseView['parameters'],
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('smileit-history-add-ref');
+    const recoveredBlock: SmileitAssignmentBlockDraft = workflowService.assignmentBlocks()[0];
+    expect(recoveredBlock.catalogRefs.map((entry) => entry.stable_id)).toEqual([
+      historicalEntry.stable_id,
+    ]);
+
+    // El usuario añade una ref nueva después de abrir el job histórico.
+    workflowService.blocks.addCatalogReferenceToBlock(recoveredBlock.id, thiolEntry);
+    workflowService.dispatch();
+
+    // Ambas refs viajan como `substituentRefs`: el backend las expande con las
+    // anclas y categorías del catálogo, sin duplicarlas como manuales.
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentBlocks: [
+          expect.objectContaining({
+            substituentRefs: [
+              { stableId: 'aniline', version: 3 },
+              { stableId: 'thiol', version: 1 },
+            ],
+            manualSubstituents: [],
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('despacha los sustituyentes manuales históricos sin source_reference con un valor no vacío', () => {
+    workflowService.catalogEntries.set([]);
+
+    jobsApiServiceMock.getSmileitJobStatus.mockReturnValue(
+      of(
+        makeSmileitJob({
+          id: 'smileit-history-manual-no-source',
+          parameters: {
+            principal_smiles: 'c1ccccc1',
+            selected_atom_indices: [1],
+            assignment_blocks: [
+              {
+                label: 'Manual only',
+                priority: 1,
+                site_atom_indices: [1],
+                category_keys: [],
+                // Los jobs reales guardan los manuales resueltos, sin
+                // `source_reference` ni `anchor_atom_indices`.
+                resolved_substituents: [
+                  {
+                    source_kind: 'manual',
+                    stable_id: 'manual::aldehyde',
+                    version: 1,
+                    name: 'Aldehyde',
+                    smiles: '[CH]=O',
+                    selected_atom_index: 1,
+                    categories: [],
+                  },
+                  {
+                    source_kind: 'manual',
+                    stable_id: 'manual::amine',
+                    version: 1,
+                    name: 'Amine',
+                    smiles: '[NH2]',
+                    selected_atom_index: 1,
+                    categories: [],
+                  },
+                ],
+              },
+            ],
+            r_substitutes: 1,
+            num_bonds: 1,
+            site_overlap_policy: SiteOverlapPolicyEnum.LastBlockWins,
+            export_name_base: 'smileit_run',
+            export_padding: 5,
+          } as unknown as SmileitJobResponseView['parameters'],
+        }),
+      ),
+    );
+
+    workflowService.openHistoricalJob('smileit-history-manual-no-source');
+    const recoveredBlock: SmileitAssignmentBlockDraft = workflowService.assignmentBlocks()[0];
+    expect(recoveredBlock.manualSubstituents).toHaveLength(2);
+    expect(
+      recoveredBlock.manualSubstituents.every(
+        (entry) => entry.sourceReference === 'historical-manual',
+      ),
+    ).toBe(true);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentBlocks: [
+          expect.objectContaining({
+            substituentRefs: [],
+            manualSubstituents: [
+              expect.objectContaining({ name: 'Aldehyde', sourceReference: 'historical-manual' }),
+              expect.objectContaining({ name: 'Amine', sourceReference: 'historical-manual' }),
+            ],
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('usa "manual" como sourceReference cuando un borrador manual lo trae en blanco', () => {
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        catalogRefs: [],
+        manualSubstituents: [
+          {
+            name: 'Manual blank source',
+            smiles: 'CO',
+            anchorAtomIndices: [0],
+            categories: [],
+            sourceReference: '   ',
+            provenanceMetadata: {},
+          },
+        ],
+      },
+    ]);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentBlocks: [
+          expect.objectContaining({
+            substituentRefs: [],
+            manualSubstituents: [
+              expect.objectContaining({
+                name: 'Manual blank source',
+                sourceReference: 'manual',
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('deja de enviar una ref de catálogo cuando el usuario la quita del bloque', () => {
+    const catalogEntry: SmileitCatalogEntryView = makeCatalogEntry();
+    workflowService.principalSmiles.set('c1ccccc1');
+    workflowService.selectedAtomIndices.set([1]);
+    workflowService.assignmentBlocks.set([
+      {
+        ...makeAssignmentBlock(),
+        catalogRefs: [catalogEntry],
+        manualSubstituents: [],
+      },
+    ]);
+
+    workflowService.blocks.removeCatalogReferenceFromBlock(
+      'block-1',
+      catalogEntry.stable_id,
+      catalogEntry.version,
+    );
+    expect(workflowService.assignmentBlocks()[0].catalogRefs).toEqual([]);
+
+    workflowService.dispatch();
+
+    expect(jobsApiServiceMock.dispatchSmileitJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentBlocks: [
+          expect.objectContaining({
+            substituentRefs: [],
+            manualSubstituents: [],
+          }),
+        ],
+      }),
+    );
   });
 
   it('restaura sustituyentes con variantes camelCase (substituentRefs, manualSubstituents)', () => {
@@ -1148,7 +1378,7 @@ describe('SmileitWorkflowService', () => {
     expect(recoveredBlock.catalogRefs[0].anchor_atom_indices).toEqual([7]);
   });
 
-  it('usa ancla 0 cuando ni la ref ni el catálogo aportan índice', () => {
+  it('no inventa anclas cuando el catálogo restaurado no aporta índices', () => {
     workflowService.catalogEntries.set([
       { ...makeCatalogEntry(), anchor_atom_indices: [] },
     ]);
@@ -1192,7 +1422,7 @@ describe('SmileitWorkflowService', () => {
 
     const recoveredBlock: SmileitAssignmentBlockDraft = workflowService.assignmentBlocks()[0];
     expect(recoveredBlock.catalogRefs).toHaveLength(1);
-    expect(recoveredBlock.catalogRefs[0].anchor_atom_indices).toEqual([0]);
+    expect(recoveredBlock.catalogRefs[0].anchor_atom_indices).toEqual([]);
   });
 
   it('falls back to polling, de-duplicates log events and resolves the final Smileit result', () => {

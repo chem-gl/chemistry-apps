@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "显示 {total} 个中的 {shown} 个衍生物",
-      "estimatedDerivatives": "预计约 {count} 个衍生物",
-      "combinatorialWarning": "组合数超过 {limit} 个衍生物：将完整生成，可能需要较长时间。",
-      "hardLimitExceeded": "超过 {limit} 个衍生物的上限。请减少位点、取代基或R取代数。"
+      "showingOfTotal": "显示 {{shown}} 个衍生物（共 {{total}} 个）",
+      "estimatedDerivatives": "预计约 {{count}} 个衍生物",
+      "combinatorialWarning": "组合数超过 {{limit}} 个衍生物：将完整生成，可能需要较长时间。",
+      "hardLimitExceeded": "超过 {{limit}} 个衍生物的上限。请减少位点、取代基或R取代数。"
     },
     "catalogPanel": {
       "maximizeSection": "最大化区块",

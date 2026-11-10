@@ -49,7 +49,6 @@ import { SmileitWorkflowState } from './smileit/smileit-workflow-state.service';
 import type {
   SmileitAssignmentBlockDraft,
   SmileitManualSubstituentDraft,
-  SmileitResolvedSubstituentDraft,
   SmileitResultData,
 } from './smileit/smileit-workflow.types';
 
@@ -585,46 +584,38 @@ export class SmileitWorkflowService implements OnDestroy {
       principalSmiles: this.state.dispatchPrincipalSmiles(),
       selectedAtomIndices: [...this.state.selectedAtomIndices()],
       assignmentBlocks: this.state.assignmentBlocks().map(
-        (block: SmileitAssignmentBlockDraft): SmileitAssignmentBlockParams => ({
-          label: block.label.trim() || 'Unnamed block',
-          siteAtomIndices: block.siteAtomIndices,
-          categoryKeys: [...block.categoryKeys],
-          substituentRefs: (block.resolvedSubstituents?.length ?? 0) > 0
-            ? []
-            : block.catalogRefs.map(
-            (entry: { stable_id: string; version: number }) => ({
+        (block: SmileitAssignmentBlockDraft): SmileitAssignmentBlockParams => {
+          // WYSIWYG: una ref de catálogo viaja siempre como `substituentRef`. El
+          // backend la expande con las anclas y categorías del catálogo, así que
+          // duplicarla como manual perdería su identidad y sus categorías.
+          const substituentRefs: SmileitAssignmentBlockParams['substituentRefs'] =
+            block.catalogRefs.map((entry: SmileitCatalogEntry) => ({
               stableId: entry.stable_id,
               version: entry.version,
-            }),
-          ),
-          manualSubstituents: [
-            ...block.manualSubstituents,
-            ...(block.resolvedSubstituents ?? [])
-              .filter((entry) => entry.sourceKind === 'catalog')
-              .map(
-                (entry): SmileitManualSubstituentParams => ({
-                  name: entry.name,
-                  smiles: entry.smiles,
-                  anchorAtomIndices: [entry.selectedAtomIndex],
-                  categories: [],
-                  sourceReference: `historical-catalog:${entry.stableId}@${entry.version}`,
-                  provenanceMetadata: {
-                    stable_id: entry.stableId,
-                    version: String(entry.version),
-                  },
-                }),
-              ),
-          ].map(
-            (entry: SmileitManualSubstituentDraft): SmileitManualSubstituentParams => ({
-              name: entry.name,
-              smiles: entry.smiles,
-              anchorAtomIndices: entry.anchorAtomIndices,
-              categories: [...entry.categories],
-              sourceReference: entry.sourceReference,
-              provenanceMetadata: entry.provenanceMetadata,
-            }),
-          ),
-        }),
+            }));
+
+          // Los sustituyentes manuales del bloque se envían siempre. El backend
+          // rechaza `source_reference` vacío y los jobs históricos pueden no traerlo.
+          const manualSubstituents: SmileitManualSubstituentParams[] =
+            block.manualSubstituents.map(
+              (entry: SmileitManualSubstituentDraft): SmileitManualSubstituentParams => ({
+                name: entry.name,
+                smiles: entry.smiles,
+                anchorAtomIndices: entry.anchorAtomIndices,
+                categories: [...entry.categories],
+                sourceReference: entry.sourceReference?.trim() || 'manual',
+                provenanceMetadata: entry.provenanceMetadata,
+              }),
+            );
+
+          return {
+            label: block.label.trim() || 'Unnamed block',
+            siteAtomIndices: block.siteAtomIndices,
+            categoryKeys: [...block.categoryKeys],
+            substituentRefs,
+            manualSubstituents,
+          };
+        },
       ),
       siteOverlapPolicy: this.FIXED_SITE_OVERLAP_POLICY,
       rSubstitutes: this.state.rSubstitutes(),
@@ -832,7 +823,6 @@ export class SmileitWorkflowService implements OnDestroy {
           siteAtomIndices: this.pickNumberArray(rawBlock, 'site_atom_indices', 'siteAtomIndices'),
           categoryKeys: this.pickStringArray(rawBlock, 'category_keys', 'categoryKeys'),
           catalogRefs: this.restoreHistoricalCatalogRefs(rawBlock),
-          resolvedSubstituents: this.restoreHistoricalResolvedSubstituents(rawBlock),
           manualSubstituents: this.restoreHistoricalManualSubstituents(rawBlock),
           draftManualName: '',
           draftManualSmiles: '',
@@ -906,76 +896,36 @@ export class SmileitWorkflowService implements OnDestroy {
       if (entryToRestore === undefined) return;
 
       seenKeys.add(entryKey);
-      resolvedRefs.push({
-        ...entryToRestore,
-        anchor_atom_indices: [this.resolveRestoredAnchorIndex(rawRef, entryToRestore)],
-      });
+      // La entrada real del catálogo manda: el backend expandirá la ref con sus
+      // anclas y categorías, así que el panel debe mostrar esas mismas anclas.
+      resolvedRefs.push(entryToRestore);
     });
 
     return resolvedRefs;
-  }
-
-  /**
-   * Resuelve el índice de anclaje al restaurar una referencia histórica.
-   * Prefiere el `selected_atom_index` guardado y cae al ancla del catálogo.
-   */
-  private resolveRestoredAnchorIndex(
-    rawRef: Record<string, unknown>,
-    entryToRestore: SmileitCatalogEntry,
-  ): number {
-    const selectedAtomIndex: number | null = this.pickNumber(
-      rawRef,
-      'selected_atom_index',
-      'selectedAtomIndex',
-    );
-    if (selectedAtomIndex !== null) {
-      return selectedAtomIndex;
-    }
-    const catalogAnchorIndex: number | undefined = entryToRestore.anchor_atom_indices[0];
-    if (catalogAnchorIndex !== undefined) {
-      return catalogAnchorIndex;
-    }
-    return 0;
-  }
-
-  private restoreHistoricalResolvedSubstituents(
-    rawBlock: Record<string, unknown>,
-  ): SmileitResolvedSubstituentDraft[] {
-    return this.asRecordArray(rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents'])
-      .filter((entry): entry is Record<string, unknown> => this.isRecord(entry))
-      .filter((entry) => this.pickString(entry, 'source_kind', 'sourceKind') === 'catalog')
-      .map((entry) => ({
-        sourceKind: 'catalog' as const,
-        stableId: this.pickString(entry, 'stable_id', 'stableId'),
-        version: this.pickNumber(entry, 'version') ?? 1,
-        name: this.pickString(entry, 'name'),
-        smiles: this.pickString(entry, 'smiles'),
-        selectedAtomIndex: this.pickNumber(entry, 'selected_atom_index', 'selectedAtomIndex') ?? 0,
-        categories: this.pickStringArray(entry, 'categories'),
-      }))
-      .filter((entry) => entry.stableId !== '' && entry.smiles !== '');
   }
 
   /** Recupera los sustituyentes manuales guardados en el job histórico. */
   private restoreHistoricalManualSubstituents(
     rawBlock: Record<string, unknown>,
   ): SmileitManualSubstituentDraft[] {
+    // El backend persiste los manuales dentro de `resolved_substituents`; la
+    // lista explícita solo aparece en payloads sin resolver. Los resueltos de
+    // catálogo quedan fuera porque ya los restaura `restoreHistoricalCatalogRefs`.
+    const resolvedRows: unknown[] = this.asRecordArray(
+      rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents'],
+    ).filter(
+      (rawEntry: unknown): boolean =>
+        this.isRecord(rawEntry) &&
+        this.pickString(rawEntry, 'source_kind', 'sourceKind') === 'manual',
+    );
     const sourceCandidates: unknown[] = [
       ...this.asRecordArray(rawBlock['manual_substituents'] ?? rawBlock['manualSubstituents']),
-      ...this.asRecordArray(rawBlock['resolved_substituents'] ?? rawBlock['resolvedSubstituents']),
+      ...resolvedRows,
     ];
     const restoredManual: SmileitManualSubstituentDraft[] = [];
 
     sourceCandidates.forEach((rawEntry: unknown) => {
       if (!this.isRecord(rawEntry)) {
-        return;
-      }
-
-      const sourceKind: string = this.pickString(rawEntry, 'source_kind', 'sourceKind');
-      const isExplicitManual: boolean = Array.isArray(
-        rawBlock['manual_substituents'] ?? rawBlock['manualSubstituents'],
-      );
-      if (isExplicitManual === false && sourceKind === 'catalog') {
         return;
       }
 
@@ -1005,7 +955,12 @@ export class SmileitWorkflowService implements OnDestroy {
         smiles,
         anchorAtomIndices: restoredAnchorIndices,
         categories: this.pickStringArray(rawEntry, 'categories'),
-        sourceReference: this.pickString(rawEntry, 'source_reference', 'sourceReference'),
+        // Los bloques históricos pueden guardar `manual_substituents` sin
+        // `source_reference`; se marca el origen para no enviar el campo vacío
+        // (el backend lo rechaza).
+        sourceReference:
+          this.pickString(rawEntry, 'source_reference', 'sourceReference').trim() ||
+          'historical-manual',
         provenanceMetadata: {},
       });
     });

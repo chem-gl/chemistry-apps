@@ -139,9 +139,10 @@
           } @else {
           <div class="block-section">
             <h4>{{ 'smileit.blocks.substituentsAdded' | transloco }}</h4>
-            @if (block.catalogRefs.length === 0) {
+            @if (block.catalogRefs.length === 0 && block.manualSubstituents.length === 0) {
             <p class="hint">{{ 'smileit.blocks.noSubstituentsYet' | transloco }}</p>
             } @else {
+            @if (block.catalogRefs.length > 0) {
             <div class="library-thumbnail-grid block-library-thumbnail-grid catalog-ref-thumbnail-grid">
               @for (entry of block.catalogRefs; track entry.stable_id + '-' + entry.version + '-' + entry.id) {
               <article class="block-library-thumb catalog-ref-thumb">
@@ -179,6 +180,29 @@
               </article>
               }
             </div>
+            }
+            @if (block.manualSubstituents.length > 0) {
+            <div class="manual-substituent-group">
+              <h5>{{ 'smileit.blocks.manualSubstituentsLabel' | transloco }}</h5>
+              <div class="library-thumbnail-grid block-library-thumbnail-grid manual-substituent-grid">
+                @for (entry of block.manualSubstituents; track $index) {
+                <article class="block-library-thumb manual-substituent-thumb">
+                  <span class="thumb-name">{{ entry.name }}</span>
+                  <span class="thumb-smiles mono">{{ entry.smiles }}</span>
+                  <small class="thumb-anchor">{{ 'smileit.blocks.anchorLabel' | transloco }} {{
+                    entry.anchorAtomIndices.join(', ') || '—' }}</small>
+                  <div class="block-thumb-actions">
+                    <button class="remove-btn small"
+                      (click)="workflow.blocks.removeManualSubstituent(block.id, $index)"
+                      [disabled]="workflow.isProcessing()">
+                      {{ 'smileit.blocks.removeButton' | transloco }}
+                    </button>
+                  </div>
+                </article>
+                }
+              </div>
+            </div>
+            }
             }
             @if (workflow.blocks.getAutoCatalogEntriesForBlock(block).length === 0) {
             <p class="hint">
