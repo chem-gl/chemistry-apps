@@ -6,6 +6,7 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SmileitWorkflowService } from '../../core/application/smileit-workflow.service';
+import type { SmileitAssignmentBlockDraft } from '../../core/application/smileit-workflow.service';
 import {
   BlockAssignmentPanelComponent,
   BlockPanelLibraryDetailRequest,
@@ -403,5 +404,111 @@ describe('BlockAssignmentPanelComponent', () => {
       component.openLibraryEntryDetail(entry, 'reference');
       expect(emittedEvents[0]).toEqual({ catalogEntry: entry, openContext: 'reference' });
     });
+  });
+});
+
+/** Workflow mínimo para montar la plantilla real del panel (sin stub de template). */
+const buildRenderWorkflow = () => ({
+  selectedAtomIndices: signal<number[]>([1]),
+  selectedSiteCoverage: signal<unknown[]>([]),
+  uncoveredSelectedSites: signal<number[]>([]),
+  assignmentBlocks: signal<SmileitAssignmentBlockDraft[]>([]),
+  catalogEntries: signal<unknown[]>([]),
+  catalogGroups: signal<{ key: string; entries: unknown[] }[]>([]),
+  isProcessing: signal<boolean>(false),
+  blocks: {
+    addAssignmentBlock: vi.fn(),
+    addCatalogReferenceToBlock: vi.fn(),
+    removeCatalogReferenceFromBlock: vi.fn(),
+    removeManualSubstituent: vi.fn(),
+    getAutoCatalogEntriesForBlock: vi.fn().mockReturnValue([]),
+  },
+  catalog: {
+    isCatalogEntryReferenced: vi.fn().mockReturnValue(false),
+  },
+});
+
+function makeManualOnlyBlock(): SmileitAssignmentBlockDraft {
+  return {
+    id: 'block-manual',
+    label: 'Manual block',
+    siteAtomIndices: [1],
+    categoryKeys: [],
+    catalogRefs: [],
+    manualSubstituents: [
+      {
+        name: 'Aldehyde',
+        smiles: '[CH]=O',
+        anchorAtomIndices: [1],
+        categories: [],
+        sourceReference: 'manual',
+        provenanceMetadata: {},
+      },
+      {
+        name: 'Amine',
+        smiles: '[NH2]',
+        anchorAtomIndices: [1],
+        categories: [],
+        sourceReference: 'manual',
+        provenanceMetadata: {},
+      },
+    ],
+    draftManualName: '',
+    draftManualSmiles: '',
+    draftManualAnchorIndicesText: '',
+    draftManualSourceReference: 'manual-ui',
+    draftManualCategoryKeys: [],
+  };
+}
+
+describe('BlockAssignmentPanelComponent (plantilla real, sustituyentes manuales)', () => {
+  let fixture: ComponentFixture<BlockAssignmentPanelComponent>;
+  let renderWorkflow: ReturnType<typeof buildRenderWorkflow>;
+
+  beforeEach(async () => {
+    renderWorkflow = buildRenderWorkflow();
+
+    await TestBed.configureTestingModule({
+      imports: [BlockAssignmentPanelComponent],
+    })
+      .overrideComponent(BlockAssignmentPanelComponent, {
+        set: {
+          providers: [{ provide: SmileitWorkflowService, useValue: renderWorkflow }],
+          schemas: [NO_ERRORS_SCHEMA],
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(BlockAssignmentPanelComponent);
+    fixture.componentRef.setInput('libraryEntryInspections', {});
+    fixture.componentRef.setInput('libraryEntryInspectionErrors', {});
+    fixture.componentRef.setInput('catalogEntryPreviewSvgResolver', () => null);
+    fixture.componentRef.setInput('catalogEntryPreviewErrorResolver', () => null);
+  });
+
+  it('pinta las tarjetas de los sustituyentes manuales y no muestra el estado vacío', () => {
+    renderWorkflow.assignmentBlocks.set([makeManualOnlyBlock()]);
+    fixture.detectChanges();
+
+    const renderedText: string = fixture.nativeElement.textContent ?? '';
+    expect(renderedText).toContain('Aldehyde');
+    expect(renderedText).toContain('[CH]=O');
+    expect(renderedText).toContain('Amine');
+    expect(renderedText).toContain('[NH2]');
+    expect(renderedText).not.toContain('No substituents added to this block yet.');
+    expect(fixture.nativeElement.querySelectorAll('.manual-substituent-thumb')).toHaveLength(2);
+  });
+
+  it('el botón Remove de un sustituyente manual llama a removeManualSubstituent con su índice', () => {
+    renderWorkflow.assignmentBlocks.set([makeManualOnlyBlock()]);
+    fixture.detectChanges();
+
+    const removeButton = fixture.nativeElement.querySelector(
+      '.manual-substituent-thumb .remove-btn',
+    ) as HTMLButtonElement;
+    expect(removeButton).not.toBeNull();
+    removeButton.click();
+
+    expect(renderWorkflow.blocks.removeManualSubstituent).toHaveBeenCalledWith('block-manual', 0);
   });
 });

@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "Zeige {shown} von {total} Derivaten",
-      "estimatedDerivatives": "≈ {count} Derivate geschätzt",
-      "combinatorialWarning": "Die Kombinatorik überschreitet {limit} Derivate: die Generierung ist vollständig und kann dauern.",
-      "hardLimitExceeded": "Überschreitet das Maximum von {limit} Derivaten. Reduzieren Sie Stellen, Substituenten oder R-Substitutionen."
+      "showingOfTotal": "Zeige {{shown}} von {{total}} Derivaten",
+      "estimatedDerivatives": "≈ {{count}} Derivate geschätzt",
+      "combinatorialWarning": "Die Kombinatorik überschreitet {{limit}} Derivate: die Generierung ist vollständig und kann dauern.",
+      "hardLimitExceeded": "Überschreitet das Maximum von {{limit}} Derivaten. Reduzieren Sie Stellen, Substituenten oder R-Substitutionen."
     },
     "catalogPanel": {
       "maximizeSection": "Abschnitt maximieren",

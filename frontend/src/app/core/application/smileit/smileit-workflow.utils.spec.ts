@@ -266,11 +266,18 @@ describe('buildCatalogGroups', () => {
 });
 
 describe('estimateCombinatorialTotal', () => {
-  it('cuenta permutaciones ordenadas igual que el backend', () => {
+  it('cuenta moléculas distintas (Σ e_k) igual que el backend', () => {
     expect(estimateCombinatorialTotal([2, 2], 1)).toBe(4);
-    expect(estimateCombinatorialTotal([2, 2], 2)).toBe(8 + 4);
-    expect(estimateCombinatorialTotal([2, 2, 2], 2)).toBe(6 + 24);
+    expect(estimateCombinatorialTotal([2, 2], 2)).toBe(8);
+    expect(estimateCombinatorialTotal([2, 2, 2], 2)).toBe(6 + 12);
     expect(estimateCombinatorialTotal([1], 1)).toBe(1);
+  });
+
+  it('coincide con el backend en casos verificados (sin k!)', () => {
+    // 4 sitios × 4 opciones, r = 4: 16 + 96 + 256 + 256 = 624 (antes 7888).
+    expect(estimateCombinatorialTotal([4, 4, 4, 4], 4)).toBe(624);
+    // 4 sitios × 3 opciones, r = 4: 12 + 54 + 108 + 81 = 255 (antes 2712).
+    expect(estimateCombinatorialTotal([3, 3, 3, 3], 4)).toBe(255);
   });
 
   it('ignora sitios sin opciones y devuelve 0 sin sitios', () => {

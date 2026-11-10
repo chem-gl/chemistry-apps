@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Correspondance des positions :",
       "openBelow": "Ouvrir ci-dessous",
       "previousJobsHint": "Ouvrez un job historique pour inspecter les structures affichées ci-dessous.",
-      "showingOfTotal": "Affichage de {shown} sur {total} dérivés",
-      "estimatedDerivatives": "≈ {count} dérivés estimés",
-      "combinatorialWarning": "La combinatoire dépasse {limit} dérivés : la génération sera complète et peut être longue.",
-      "hardLimitExceeded": "Dépasse le maximum de {limit} dérivés. Réduisez les sites, substituants ou R-substitutions."
+      "showingOfTotal": "Affichage de {{shown}} sur {{total}} dérivés",
+      "estimatedDerivatives": "≈ {{count}} dérivés estimés",
+      "combinatorialWarning": "La combinatoire dépasse {{limit}} dérivés : la génération sera complète et peut être longue.",
+      "hardLimitExceeded": "Dépasse le maximum de {{limit}} dérivés. Réduisez les sites, substituants ou R-substitutions."
     },
     "catalogPanel": {
       "maximizeSection": "Agrandir la section",

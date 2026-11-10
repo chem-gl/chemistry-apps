@@ -128,7 +128,14 @@ def estimate_derivative_count(
     site_option_map: dict[int, list[SiteOption]],
     r_substitutes: int,
 ) -> int:
-    """Cuenta exacta de derivados generables: suma de productos por subconjunto de sitios.
+    """Cota superior de moléculas distintas generables por Smile-it.
+
+    Cuenta asignaciones (subconjunto de sitios × un sustituyente por sitio) sumando
+    los coeficientes elementales simétricos de los recuentos de opciones por sitio:
+    `Σ_{k=1..r} e_k`. El generador deduplica por SMILES canónico
+    (`ExpansionContext.seen_smiles`), así que las `k!` ordenaciones de fusión del
+    mismo conjunto de sustituyentes producen la misma molécula y no se cuentan.
+    Los intentos de fusión reales pueden llegar a `r!` veces esta cifra.
 
     Se corta en `MAX_DERIVATIVES_HARD_LIMIT + 1` para no calcular números enormes.
     """
@@ -139,7 +146,6 @@ def estimate_derivative_count(
         return 0
 
     max_rounds: int = max(1, min(int(r_substitutes), len(option_counts)))
-    total: int = 0
     subset_products: list[int] = [1]  # coeficientes elementales simétricos acumulados
     for options_in_site in option_counts:
         updated_products: list[int] = subset_products + [0]
@@ -155,12 +161,8 @@ def estimate_derivative_count(
             subset_products = subset_products[: max_rounds + 1]
 
     total: int = 0
-    ordered_factor: int = (
-        1  # k! porque el generador trata el orden de fusión como distinto
-    )
     for round_index in range(1, max_rounds + 1):
-        ordered_factor *= round_index
-        total += ordered_factor * subset_products[round_index]
+        total += subset_products[round_index]
         if total > MAX_DERIVATIVES_HARD_LIMIT:
             return MAX_DERIVATIVES_HARD_LIMIT + 1
 

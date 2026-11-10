@@ -13,6 +13,7 @@ import uuid
 
 from django.db.models import Model
 
+from .catalog_anchors import _remap_substituent_anchors_or_raise
 from .seed_data import (
     CATEGORY_SEED_DEFINITIONS,
     PATTERN_SEED_DEFINITIONS,
@@ -53,6 +54,15 @@ def apply_smileit_seed_data(
         categories_by_key[category_seed.key] = category
 
     for substituent_seed in SUBSTITUENT_SEED_DEFINITIONS:
+        # RDKit puede reordenar átomos al canonicalizar (`C(=O)O` → `O=CO`): si se
+        # guarda el ancla cruda 0 junto al SMILES canónico, el ancla apunta a otro
+        # átomo y la fusión falla en silencio en todos los sitios. Se remapea igual
+        # que en el alta vía API (`catalog.py`).
+        canonical_smiles, remapped_anchors = _remap_substituent_anchors_or_raise(
+            substituent_seed.smiles,
+            [0],
+            substituent_seed.name,
+        )
         substituent, _ = substituent_model.objects.get_or_create(
             name=substituent_seed.name,
             version=1,
@@ -61,8 +71,8 @@ def apply_smileit_seed_data(
                 "is_latest": True,
                 "is_active": True,
                 "smiles_input": substituent_seed.smiles,
-                "smiles_canonical": substituent_seed.smiles,
-                "anchor_atom_indices": [0],
+                "smiles_canonical": canonical_smiles,
+                "anchor_atom_indices": remapped_anchors,
                 "source_reference": SUBSTITUENT_SOURCE_REFERENCE,
                 "provenance_metadata": SEED_PROVENANCE,
             },

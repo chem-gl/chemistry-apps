@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "{total} 件中 {shown} 個の誘導体を表示",
-      "estimatedDerivatives": "推定 {count} 個の誘導体",
-      "combinatorialWarning": "組み合わせが {limit} 個を超えます。生成は完全に行われ、時間がかかる場合があります。",
-      "hardLimitExceeded": "{limit} 個の上限を超えています。サイト、置換基、R置換を減らしてください。"
+      "showingOfTotal": "{{shown}} 個の誘導体を表示（全 {{total}} 件中）",
+      "estimatedDerivatives": "推定 {{count}} 個の誘導体",
+      "combinatorialWarning": "組み合わせが {{limit}} 個を超えます。生成は完全に行われ、時間がかかる場合があります。",
+      "hardLimitExceeded": "{{limit}} 個の上限を超えています。サイト、置換基、R置換を減らしてください。"
     },
     "catalogPanel": {
       "maximizeSection": "セクションを最大化",

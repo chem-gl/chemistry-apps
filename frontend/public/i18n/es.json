@@ -1999,10 +1999,10 @@
       "placeholderMapping": "Mapeo de marcadores:",
       "openBelow": "Abrir abajo",
       "previousJobsHint": "Abre una ejecución histórica para inspeccionar las estructuras actualmente renderizadas.",
-      "showingOfTotal": "Mostrando {shown} de {total} derivados",
-      "estimatedDerivatives": "≈ {count} derivados estimados",
-      "combinatorialWarning": "La combinatoria supera {limit} derivados: la generación será completa y puede tardar.",
-      "hardLimitExceeded": "Supera el máximo de {limit} derivados. Reduce sitios, sustituyentes o R-substituciones."
+      "showingOfTotal": "Mostrando {{shown}} de {{total}} derivados",
+      "estimatedDerivatives": "≈ {{count}} derivados estimados",
+      "combinatorialWarning": "La combinatoria supera {{limit}} derivados: la generación será completa y puede tardar.",
+      "hardLimitExceeded": "Supera el máximo de {{limit}} derivados. Reduce sitios, sustituyentes o R-substituciones."
     },
     "catalogPanel": {
       "maximizeSection": "Maximizar sección",

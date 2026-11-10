@@ -332,8 +332,13 @@ export const COMBINATORIAL_WARNING_THRESHOLD = 1_000;
 export const COMBINATORIAL_HARD_LIMIT = 1_000_000;
 
 /**
- * Estimación combinatoria de derivados: suma de k!·e_k para k = 1..r,
- * donde e_k son los coeficientes simétricos elementales de las opciones por sitio.
+ * Estimación combinatoria de derivados: suma de los coeficientes simétricos
+ * elementales e_k para k = 1..r (subconjunto de sitios × asignación de un
+ * sustituyente por sitio), sin el factor k!.
+ *
+ * Es una cota superior de **moléculas distintas**: el generador deduplica por
+ * SMILES canónico, así que las secuencias de fusión ordenadas no cuentan.
+ * Los intentos reales de fusión son hasta r! veces esa cifra.
  * Misma fórmula que el backend para que aviso y bloqueo coincidan.
  */
 export function estimateCombinatorialTotal(
@@ -357,10 +362,8 @@ export function estimateCombinatorialTotal(
   }
 
   let total: number = 0;
-  let orderedFactor: number = 1;
   for (let roundIndex = 1; roundIndex <= maxRounds; roundIndex += 1) {
-    orderedFactor *= roundIndex;
-    total += orderedFactor * subsetProducts[roundIndex];
+    total += subsetProducts[roundIndex];
     if (total > COMBINATORIAL_HARD_LIMIT) {
       return COMBINATORIAL_HARD_LIMIT + 1;
     }

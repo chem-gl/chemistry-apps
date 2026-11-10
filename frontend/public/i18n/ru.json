@@ -2013,10 +2013,10 @@
       "placeholderMapping": "Placeholder mapping:",
       "openBelow": "Open below",
       "previousJobsHint": "Open a historical run to inspect the structures currently rendered below.",
-      "showingOfTotal": "Показано {shown} из {total} производных",
-      "estimatedDerivatives": "≈ {count} производных",
-      "combinatorialWarning": "Комбинаторика превышает {limit} производных: генерация будет полной и может занять время.",
-      "hardLimitExceeded": "Превышен максимум {limit} производных. Уменьшите число сайтов, заместителей или R-замещений."
+      "showingOfTotal": "Показано {{shown}} из {{total}} производных",
+      "estimatedDerivatives": "≈ {{count}} производных",
+      "combinatorialWarning": "Комбинаторика превышает {{limit}} производных: генерация будет полной и может занять время.",
+      "hardLimitExceeded": "Превышен максимум {{limit}} производных. Уменьшите число сайтов, заместителей или R-замещений."
     },
     "catalogPanel": {
       "maximizeSection": "Развернуть раздел",

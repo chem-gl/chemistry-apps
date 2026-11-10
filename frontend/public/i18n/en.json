@@ -1158,10 +1158,10 @@
       "loadingDerivatives": "Loading...",
       "generatedModalAriaLabel": "Generated molecule preview",
       "generatedModalDerivativeTitle": "Generated derivative (substituent highlighted)",
-      "showingOfTotal": "Showing {shown} of {total} derivatives",
-      "estimatedDerivatives": "≈ {count} derivatives estimated",
-      "combinatorialWarning": "Combinatorics exceed {limit} derivatives: generation will be complete and may take a while.",
-      "hardLimitExceeded": "Exceeds the maximum of {limit} derivatives. Reduce sites, substituents or R-substitutions."
+      "showingOfTotal": "Showing {{shown}} of {{total}} derivatives",
+      "estimatedDerivatives": "≈ {{count}} derivatives estimated",
+      "combinatorialWarning": "Combinatorics exceed {{limit}} derivatives: generation will be complete and may take a while.",
+      "hardLimitExceeded": "Exceeds the maximum of {{limit}} derivatives. Reduce sites, substituents or R-substitutions."
     },
     "principalEditor": {
       "label": "Principal SMILES",
