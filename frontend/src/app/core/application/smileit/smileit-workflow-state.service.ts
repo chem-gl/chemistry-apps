@@ -216,7 +216,9 @@ export class SmileitWorkflowState {
 
   /**
    * Estimación de derivados generables (misma fórmula que el backend):
-   * suma de k! · e_k(opciones por sitio) para k = 1..r.
+   * suma de los coeficientes elementales simétricos e_k(opciones por sitio)
+   * para k = 1..r. Es una cota superior de moléculas distintas (el generador
+   * deduplica por SMILES canónico; los intentos de fusión son hasta r!× esa cifra).
    * Solo se usa para avisar/bloquear; el backend es la fuente de verdad.
    */
   readonly estimatedDerivatives = computed<number>(() => {

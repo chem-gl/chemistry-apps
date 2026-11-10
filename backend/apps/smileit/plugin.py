@@ -24,6 +24,7 @@ from .definitions import (
 from .engine import (
     clear_smileit_caches,
     find_sites_without_free_valence,
+    is_fusion_candidate_viable,
     parse_smiles_cached,
     remap_anchor_indices_to_canonical,
     validate_smiles,
@@ -351,6 +352,68 @@ def _canonicalize_generation_input(
     return canonical_principal, canonical_sites, canonical_blocks
 
 
+def _warn_unfusible_substituents(
+    principal_smiles: str,
+    site_atom_indices: list[int],
+    assignment_blocks: list[SmileitResolvedAssignmentBlock],
+    num_bonds: int,
+    log_callback: PluginLogCallback | None,
+) -> None:
+    """Avisa de sustituyentes que no pueden fusionarse en ningún sitio seleccionado.
+
+    Sin este aviso el job termina `completed` con menos derivados de los esperados
+    y sin pista del motivo (p. ej. un ancla en un átomo sin hidrógeno). Solo
+    trazabilidad: no altera resultados ni aborta la ejecución.
+    """
+    resolved_substituents: list[SmileitResolvedSubstituent] = []
+    seen_keys: set[tuple[str, int, int]] = set()
+    for block in assignment_blocks:
+        for substituent in block["resolved_substituents"]:
+            dedupe_key = (
+                substituent["stable_id"],
+                substituent["version"],
+                substituent["selected_atom_index"],
+            )
+            if dedupe_key in seen_keys:
+                continue
+            seen_keys.add(dedupe_key)
+            resolved_substituents.append(substituent)
+
+    for substituent in resolved_substituents:
+        is_viable_somewhere = False
+        for site_atom_index in site_atom_indices:
+            for bond_order in range(1, num_bonds + 1):
+                if is_fusion_candidate_viable(
+                    principal_smiles,
+                    substituent["smiles"],
+                    site_atom_index,
+                    substituent["selected_atom_index"],
+                    bond_order,
+                ):
+                    is_viable_somewhere = True
+                    break
+            if is_viable_somewhere:
+                break
+
+        if is_viable_somewhere:
+            continue
+
+        _emit_log(
+            log_callback,
+            level="warning",
+            source=SMILEIT_LOG_SOURCE,
+            message=(
+                "El sustituyente {!r} no puede fusionarse en ningún sitio "
+                "seleccionado y no generará derivados."
+            ).format(substituent["name"]),
+            payload={
+                "stable_id": substituent["stable_id"],
+                "version": substituent["version"],
+                "name": substituent["name"],
+            },
+        )
+
+
 @PluginRegistry.register(PLUGIN_NAME)
 def smileit_plugin(
     parameters: JSONMap,
@@ -424,6 +487,14 @@ def smileit_plugin(
             raise ValueError(
                 f"No se puede ejecutar Smile-it con sitios sin cobertura: {missing_sites}."
             )
+
+        _warn_unfusible_substituents(
+            principal_smiles=canonical_principal,
+            site_atom_indices=canonical_sites,
+            assignment_blocks=canonical_blocks,
+            num_bonds=num_bonds,
+            log_callback=log_callback,
+        )
 
         estimated_derivatives = estimate_derivative_count(
             site_option_map=site_option_map,

@@ -59,13 +59,13 @@ describe('SmileitWorkflowState estimación combinatoria', () => {
     expect(state.exceedsHardLimit()).toBe(false);
   });
 
-  it('estima la combinatoria y avisa sobre 1000 sin bloquear', () => {
+  it('estima la cota de moléculas distintas y avisa sobre 1000 sin bloquear', () => {
     state.selectedAtomIndices.set([0, 1]);
     state.assignmentBlocks.set([makeBlock([0, 1], 40)]);
     state.rSubstitutes.set(2);
 
-    // e1 = 80, e2 = 1600 → 80 + 2·1600 = 3280.
-    expect(state.estimatedDerivatives()).toBe(3280);
+    // e1 = 80, e2 = 1600 → 80 + 1600 = 1680 moléculas distintas (sin k!).
+    expect(state.estimatedDerivatives()).toBe(1680);
     expect(state.showsCombinatorialWarning()).toBe(true);
     expect(state.exceedsHardLimit()).toBe(false);
   });

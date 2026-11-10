@@ -522,7 +522,12 @@ class NoTruncationTests(TestCase):
         self.assertIn("máximo permitido", str(error_context.exception))
 
     def test_warning_when_estimate_exceeds_threshold(self) -> None:
-        """Entre 1_000 y 1_000_000 se emite aviso y se genera completo."""
+        """Sobre el umbral de aviso se emite warning y se genera completo.
+
+        El umbral se baja con `patch` porque el estimador cuenta moléculas
+        distintas (sin factor `k!`) y la combinatoria de este caso queda por
+        debajo del valor real de `DERIVATIVE_WARNING_THRESHOLD`.
+        """
         subs = [_make_sub(f"s{index}", "[OH]", f"Sub{index}") for index in range(4)]
         warnings: list[str] = []
 
@@ -532,16 +537,17 @@ class NoTruncationTests(TestCase):
             if level == "warning":
                 warnings.append(message)
 
-        result = smileit_plugin(
-            _build_params(
-                "CCCCCC",
-                [1, 2, 3, 4, 5],
-                subs,
-                r_substitutes=3,
-            ),
-            _noop_progress,
-            _capture_log,
-        )
+        with patch("apps.smileit.plugin.DERIVATIVE_WARNING_THRESHOLD", 500):
+            result = smileit_plugin(
+                _build_params(
+                    "CCCCCC",
+                    [1, 2, 3, 4, 5],
+                    subs,
+                    r_substitutes=3,
+                ),
+                _noop_progress,
+                _capture_log,
+            )
 
         self.assertFalse(result["truncated"])
         self.assertTrue(
